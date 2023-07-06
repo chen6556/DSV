@@ -5,7 +5,7 @@ PLTSpirit::PLTSpirit()
 {
     const Scanner end = Scanner(';');
     const Scanner coord = Scanners::num << Scanner(',') << Scanners::num << Scanner::optional(',');
-    const Scanner skip = Scanners::alpha_b << Scanners::alpha_b << Scanner::optional(!end) << end;
+    const Scanner skip = Scanners::alphas << Scanner::optional(!end) << end;
     const Scanner positive_num = Scanners::digits << Scanner::optional(Scanner('.') << Scanners::digits);
 
     bind(Scanner('\n'), &PLTSpirit::pass);
@@ -27,6 +27,7 @@ void PLTSpirit::pu(const std::string &value)
 {
     _last_cmd = _cur_cmd;
     _cur_cmd = Command::PU;
+    store_points();
 }
 
 void PLTSpirit::pd(const std::string &value)
@@ -76,7 +77,11 @@ void PLTSpirit::radius(const std::string &value)
 
 void PLTSpirit::store_points()
 {
-    if (_points.front() == _points.back())
+    if (_points.empty())
+    {
+        return;
+    }
+    if (_points.front() == _points.back() && _points.size() >= 3)
     {
         _graph->container_groups().back().append(new Container(Geo::Polygon(_points.cbegin(), _points.cend())));
     }
@@ -100,7 +105,7 @@ void PLTSpirit::exec(const std::string &value)
 {
     switch (_cur_cmd)
     {
-    case Command::PD:
+    // case Command::PD:
     case Command::CI:
         _exec = true;
         break;
@@ -113,9 +118,9 @@ void PLTSpirit::exec()
 {
     switch (_cur_cmd)
     {
-    case Command::PD:
+    /* case Command::PD:
         store_points();
-        break;
+        break; */
     case Command::CI:
         store_circle();
         break;
