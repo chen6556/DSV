@@ -1,6 +1,7 @@
 #include "ui/MainWindow.hpp"
 #include "./ui_mainwindow.h"
 #include "io/File.hpp"
+#include "io/PLT.hpp"
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QJsonObject>
@@ -94,12 +95,23 @@ void MainWindow::open_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "Files: (*.json *.JSON)");
+    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "Files: (*.json *.JSON);;PLT: (*.plt *.PLT)");
     if (!path.isEmpty())
     {
         _editer.delete_graph();
         Graph *g = new Graph;
-        File::read(path, g);
+        if (path.endsWith(".json") || path.endsWith(".JSON"))
+        {
+            File::read(path, g);
+        }
+        else if (path.endsWith(".plt") || path.endsWith(".PLT"))
+        {
+            PLTSpirit spirit;
+            spirit.load_graph(g);
+            std::fstream file(path.toStdString(), std::ios_base::in);
+            spirit.parse(file);
+            file.close();
+        }
         _editer.load_graph(g, path);
         _editer.reset_modified();
         _info_labels[2]->setText(path);

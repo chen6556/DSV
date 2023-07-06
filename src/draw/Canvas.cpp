@@ -510,7 +510,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
 void Canvas::wheelEvent(QWheelEvent *event)
 {
     const double center_x = _mouse_pos_1.x(), center_y = _mouse_pos_1.y();
-    if (event->angleDelta().y() > 0 && _ratio < 16)
+    if (event->angleDelta().y() > 0 && _ratio < 256)
     {
         _ratio *= 1.25;
         if (!_circle_cache.empty())
@@ -531,7 +531,7 @@ void Canvas::wheelEvent(QWheelEvent *event)
         }
         update();
     }
-    else if (event->angleDelta().y() < 0 && _ratio > (1.0 / 16.0))
+    else if (event->angleDelta().y() < 0 && _ratio > (1.0 / 256.0))
     {
         _ratio *= 0.75;
         if (!_circle_cache.empty())
