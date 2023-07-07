@@ -55,13 +55,13 @@ void PLTSpirit::pr(const std::string &value)
 void PLTSpirit::coord(const std::string &value)
 {
     size_t pos = 0;
-    while ('0' <= value[pos] && value[pos] <= '9')
+    while (('0' <= value[pos] && value[pos] <= '9') || value[pos] == '.' || value[pos] == '-')
     {
         ++pos;
     }
     const double x = std::atof(value.substr(0, pos).c_str());
     
-    while ('0' > value[pos] && value[pos] > '9')
+    while (('0' > value[pos] || value[pos] > '9') && value[pos] != '.' && value[pos] != '-')
     {
         ++pos;
     }
