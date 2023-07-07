@@ -247,7 +247,7 @@ void Editer::append_bezier(const size_t order)
     _point_cache.clear();
 }
 
-void Editer::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1)
+void Editer::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1, const bool change_shape)
 {
     switch (points->memo()["Type"].to_int())
     {
@@ -255,7 +255,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         {
             Container *temp = reinterpret_cast<Container *>(points);
             size_t count = 0;
-            if (!points->shape_fixed())
+            if (change_shape && !points->shape_fixed())
             {
                 for (Geo::Point &point : temp->shape())
                 {
@@ -283,7 +283,9 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     case 1:
         {
             CircleContainer *temp = reinterpret_cast<CircleContainer *>(points);
-            if (!points->shape_fixed() && (std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x0, y0))) <= 2 || std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x1, y1))) <= 2))
+            if (change_shape && !points->shape_fixed() &&
+                (std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x0, y0))) <= 2 ||
+                 std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x1, y1))) <= 2))
             {
                 temp->radius() = Geo::distance(temp->center(), Geo::Point(x1, y1));
             }
@@ -296,7 +298,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     case 2:
         {
             Link *temp = reinterpret_cast<Link *>(points);
-            if (!points->shape_fixed())
+            if (change_shape && !points->shape_fixed())
             {
                 for (Geo::Point &point : *temp)
                 {
@@ -315,7 +317,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     case 20:
         {
             Geo::Polyline *temp = reinterpret_cast<Geo::Polyline *>(points);
-            if (!points->shape_fixed())
+            if (change_shape && !points->shape_fixed())
             {
                 for (Geo::Point &point : *temp)
                 {
