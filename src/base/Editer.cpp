@@ -1202,3 +1202,225 @@ void Editer::append_group(const size_t index)
         _graph->insert_group(index);
     }
 }
+
+
+
+void Editer::auto_layering()
+{
+    if (_graph == nullptr || _graph->empty())
+    {
+        return;
+    }
+
+    std::vector<Geo::Geometry *> all_containers, all_polylines;
+    std::vector<Link *> all_links;
+    for (ContainerGroup &group : _graph->container_groups())
+    {
+        while (!group.empty())
+        {
+            switch (group.back()->memo()["Type"].to_int())
+            {
+            case 2:
+                all_links.emplace_back(reinterpret_cast<Link *>(group.pop_back()));
+                break;
+            case 20:
+            case 21:
+                all_polylines.emplace_back(group.pop_back());
+                break;
+            default:
+                all_containers.emplace_back(group.pop_back());
+                break;
+            }
+        }
+    }
+    _graph->clear();
+
+    if (all_containers.empty())
+    {
+        _graph->append_group();
+        for (Geo::Geometry *item : all_polylines)
+        {
+            switch (item->memo()["Type"].to_int())
+            {
+            case 20:
+                _graph->back().append(reinterpret_cast<Geo::Polyline *>(item));
+                break;
+            case 21:
+                _graph->back().append(reinterpret_cast<Geo::Bezier *>(item));
+                break;
+            default:
+                break;
+            }
+        }
+        return;
+    }
+
+    std::sort(all_containers.begin(), all_containers.end(), [](const Geo::Geometry *a, const Geo::Geometry *b)
+        {return a->bounding_rect().area() < b->bounding_rect().area();});
+    _graph->append_group();
+    for (size_t i = all_containers.size() - 1; _graph->back().empty() && i > 0; --i)
+    {
+        switch (all_containers.front()->memo()["Type"].to_int())
+        {
+        case 0:
+            _graph->back().append(reinterpret_cast<Container *>(all_containers[i]));
+            all_containers.erase(all_containers.begin() + i);
+            break;
+        case 1:
+            _graph->back().append(reinterpret_cast<CircleContainer *>(all_containers[i]));
+            all_containers.erase(all_containers.begin() + i);
+            break;
+        default:
+            break;
+        }
+    }
+    
+    bool flag;
+    Container *container = nullptr;
+    CircleContainer *circle_container = nullptr;
+    std::vector<Geo::Geometry *>::iterator it;
+    while (!all_containers.empty())
+    {
+        for (size_t i = 0, count = all_containers.size(); i < count; ++i)
+        {
+            flag = true;
+            switch (all_containers[i]->memo()["Type"].to_int())
+            {
+            case 0:
+                container = reinterpret_cast<Container *>(all_containers[i]);
+                for (Geo::Geometry *geo : _graph->front())
+                {
+                    switch (geo->memo()["Type"].to_int())
+                    {
+                    case 0:
+                        if (Geo::is_intersected(container->shape(), reinterpret_cast<Container *>(geo)->shape()))
+                        {
+                            flag = false;
+                        }
+                        break;
+                    case 1:
+                        if (Geo::is_inside(reinterpret_cast<CircleContainer *>(geo)->center(), container->shape()))
+                        {
+                            flag = false;
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+                    if (!flag)
+                    {
+                        break;
+                    }
+                }
+                if (flag)
+                {
+                    _graph->front().append(container);
+                    all_containers.erase(all_containers.begin() + i--);
+                    --count;
+                }
+                break;
+            case 1:
+                circle_container = reinterpret_cast<CircleContainer *>(all_containers[i]);
+                for (Geo::Geometry *geo : _graph->front())
+                {
+                    switch (geo->memo()["Type"].to_int())
+                    {
+                    case 0:
+                        if (Geo::is_inside(circle_container->center(), reinterpret_cast<Container *>(geo)->shape()))
+                        {
+                            flag = false;
+                        }
+                        break;
+                    case 1:
+                        if (Geo::is_intersected(circle_container->shape(), reinterpret_cast<CircleContainer *>(geo)->shape()))
+                        {
+                            flag = false;
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+                    if (!flag)
+                    {
+                        break;
+                    }
+                }
+                if (flag)
+                {
+                    _graph->front().append(circle_container);
+                    all_containers.erase(all_containers.begin() + i--);
+                    --count;
+                }
+                break;
+            default:
+                break;
+            }
+        }
+
+        for (size_t i = 0, count = all_links.size(); i < count; ++i)
+        {
+            for (Geo::Geometry *geo : _graph->front())
+            {
+                if (geo == all_links[i]->head())
+                {
+                    _graph->front().append(all_links[i--]);
+                    --count;
+                    it = std::find(all_containers.begin(), all_containers.end(), all_links[i]->tail());
+                    if (it != all_containers.end())
+                    {
+                        switch ((*it)->memo()["Type"].to_int())
+                        {
+                        case 0:
+                            _graph->front().append(reinterpret_cast<Container *>(*it));
+                            break;
+                        case 1:
+                            _graph->front().append(reinterpret_cast<CircleContainer *>(*it));
+                            break;
+                        default:
+                            break;
+                        }
+                        all_containers.erase(it);
+                    }
+                }
+                else if (geo == all_links[i]->tail())
+                {
+                    _graph->front().append(all_links[i--]);
+                    --count;
+                    it = std::find(all_containers.begin(), all_containers.end(), all_links[i]->head());
+                    if (it != all_containers.end())
+                    {
+                        switch ((*it)->memo()["Type"].to_int())
+                        {
+                        case 0:
+                            _graph->front().append(reinterpret_cast<Container *>(*it));
+                            break;
+                        case 1:
+                            _graph->front().append(reinterpret_cast<CircleContainer *>(*it));
+                            break;
+                        default:
+                            break;
+                        }
+                        all_containers.erase(it);
+                    }
+                }
+            }
+        }
+    
+        _graph->insert_group(0);
+    }
+    
+    _graph->insert_group(0);
+    for (Link *link : all_links)
+    {
+        _graph->front().append(link);
+    }
+
+    for (size_t i = 0, count = _graph->container_groups().size(); i < count; ++i)
+    {
+        if (_graph->container_group(i).empty())
+        {
+            _graph->container_groups().erase(_graph->container_groups().begin() + i--);
+            --count;
+        }
+    }
+}

@@ -98,4 +98,8 @@ public:
     void remove_group(const size_t index);
 
     void append_group(const size_t index = SIZE_MAX);
+
+
+
+    void auto_layering();
 };
