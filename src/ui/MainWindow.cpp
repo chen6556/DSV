@@ -129,7 +129,8 @@ void MainWindow::save_file()
         return;
     }
 
-    if (_info_labels[2]->text().isEmpty())
+    if (_info_labels[2]->text().isEmpty() || !(_info_labels[2]->text().endsWith(".json") 
+        || _info_labels[2]->text().endsWith(".JSON")))
     {
         QFileDialog *dialog = new QFileDialog();
         dialog->setModal(true);
@@ -152,7 +153,8 @@ void MainWindow::save_file()
 
 void MainWindow::auto_save()
 {
-    if (!ui->auto_save->isChecked() || _editer.path().isEmpty())
+    if (!ui->auto_save->isChecked() || _editer.path().isEmpty() ||
+        !(_editer.path().endsWith(".json") || _editer.path().endsWith(".JSON")))
     {
         return;
     }
