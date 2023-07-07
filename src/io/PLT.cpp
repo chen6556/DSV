@@ -4,7 +4,7 @@
 PLTSpirit::PLTSpirit()
 {
     const Scanner end = Scanner(';');
-    const Scanner coord = Scanners::num << Scanner(',') << Scanners::num << Scanner::optional(',');
+    const Scanner coord = Scanners::num << (Scanner(',') | Scanners::space) << Scanners::num << Scanner::optional(',');
     const Scanner skip = Scanners::alphas << Scanner::optional(!end) << end;
     const Scanner positive_num = Scanners::digits << Scanner::optional(Scanner('.') << Scanners::digits);
 
@@ -54,9 +54,19 @@ void PLTSpirit::pr(const std::string &value)
 
 void PLTSpirit::coord(const std::string &value)
 {
-    const size_t pos = value.find(',');
+    size_t pos = 0;
+    while ('0' <= value[pos] && value[pos] <= '9')
+    {
+        ++pos;
+    }
     const double x = std::atof(value.substr(0, pos).c_str());
+    
+    while ('0' > value[pos] && value[pos] > '9')
+    {
+        ++pos;
+    }
     const double y = std::atof(value.substr(pos + 1).c_str());
+    
     if (_relative_coord)
     {
         _points.emplace_back(_last_coord.x + x, _last_coord.y + y);
