@@ -113,7 +113,10 @@ void MainWindow::open_file()
             file.close();
         }
         _editer.load_graph(g, path);
-        _editer.auto_layering();
+        if (ui->auto_layering->isChecked())
+        {
+            _editer.auto_layering();
+        }
         _editer.reset_modified();
         _info_labels[2]->setText(path);
         _layers_manager->load_layers(g);
