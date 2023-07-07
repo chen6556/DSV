@@ -12,7 +12,7 @@ private:
     Geo::Coord _last_coord;
     double _radius = -1;
 
-    enum Command {NONE, PU, PD, CI};
+    enum Command {NONE, PU, PD, CI, AA, AR};
     Command _last_cmd = Command::NONE, _cur_cmd = Command::NONE;
     bool _relative_coord = false;
 
@@ -31,6 +31,10 @@ private:
 
     void radius(const std::string &value);
 
+    void aa(const std::string &value);
+
+    void ar(const std::string &value);
+
     
     void exec(const std::string &value);
 
@@ -38,6 +42,8 @@ private:
     void store_points();
 
     void store_circle();
+
+    void store_arc();
 
 protected:
     void exec();
