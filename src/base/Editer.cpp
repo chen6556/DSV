@@ -1262,7 +1262,7 @@ void Editer::auto_layering()
     _graph->append_group();
     for (size_t i = all_containers.size() - 1; _graph->back().empty() && i > 0; --i)
     {
-        switch (all_containers.front()->memo()["Type"].to_int())
+        switch (all_containers[i]->memo()["Type"].to_int())
         {
         case 0:
             _graph->back().append(reinterpret_cast<Container *>(all_containers[i]));
@@ -1290,7 +1290,7 @@ void Editer::auto_layering()
             {
             case 0:
                 container = reinterpret_cast<Container *>(all_containers[i]);
-                for (Geo::Geometry *geo : _graph->front())
+                for (Geo::Geometry *geo : _graph->back())
                 {
                     switch (geo->memo()["Type"].to_int())
                     {
@@ -1316,14 +1316,14 @@ void Editer::auto_layering()
                 }
                 if (flag)
                 {
-                    _graph->front().append(container);
+                    _graph->back().append(container);
                     all_containers.erase(all_containers.begin() + i--);
                     --count;
                 }
                 break;
             case 1:
                 circle_container = reinterpret_cast<CircleContainer *>(all_containers[i]);
-                for (Geo::Geometry *geo : _graph->front())
+                for (Geo::Geometry *geo : _graph->back())
                 {
                     switch (geo->memo()["Type"].to_int())
                     {
@@ -1349,7 +1349,7 @@ void Editer::auto_layering()
                 }
                 if (flag)
                 {
-                    _graph->front().append(circle_container);
+                    _graph->back().append(circle_container);
                     all_containers.erase(all_containers.begin() + i--);
                     --count;
                 }
@@ -1361,11 +1361,11 @@ void Editer::auto_layering()
 
         for (size_t i = 0, count = all_links.size(); i < count; ++i)
         {
-            for (Geo::Geometry *geo : _graph->front())
+            for (Geo::Geometry *geo : _graph->back())
             {
                 if (geo == all_links[i]->head())
                 {
-                    _graph->front().append(all_links[i--]);
+                    _graph->back().append(all_links[i--]);
                     --count;
                     it = std::find(all_containers.begin(), all_containers.end(), all_links[i]->tail());
                     if (it != all_containers.end())
@@ -1373,10 +1373,10 @@ void Editer::auto_layering()
                         switch ((*it)->memo()["Type"].to_int())
                         {
                         case 0:
-                            _graph->front().append(reinterpret_cast<Container *>(*it));
+                            _graph->back().append(reinterpret_cast<Container *>(*it));
                             break;
                         case 1:
-                            _graph->front().append(reinterpret_cast<CircleContainer *>(*it));
+                            _graph->back().append(reinterpret_cast<CircleContainer *>(*it));
                             break;
                         default:
                             break;
@@ -1386,7 +1386,7 @@ void Editer::auto_layering()
                 }
                 else if (geo == all_links[i]->tail())
                 {
-                    _graph->front().append(all_links[i--]);
+                    _graph->back().append(all_links[i--]);
                     --count;
                     it = std::find(all_containers.begin(), all_containers.end(), all_links[i]->head());
                     if (it != all_containers.end())
@@ -1394,10 +1394,10 @@ void Editer::auto_layering()
                         switch ((*it)->memo()["Type"].to_int())
                         {
                         case 0:
-                            _graph->front().append(reinterpret_cast<Container *>(*it));
+                            _graph->back().append(reinterpret_cast<Container *>(*it));
                             break;
                         case 1:
-                            _graph->front().append(reinterpret_cast<CircleContainer *>(*it));
+                            _graph->back().append(reinterpret_cast<CircleContainer *>(*it));
                             break;
                         default:
                             break;
@@ -1408,13 +1408,20 @@ void Editer::auto_layering()
             }
         }
     
-        _graph->insert_group(0);
+        _graph->append_group();
     }
     
-    _graph->insert_group(0);
-    for (Link *link : all_links)
+    _graph->append_group();
+    for (Geo::Geometry *geo : all_polylines)
     {
-        _graph->front().append(link);
+        if (dynamic_cast<Geo::Bezier *>(geo) != nullptr)
+        {
+            _graph->back().append(reinterpret_cast<Geo::Bezier *>(geo));
+        }
+        else
+        {
+            _graph->back().append(reinterpret_cast<Geo::Polyline *>(geo));
+        }
     }
 
     for (size_t i = 0, count = _graph->container_groups().size(); i < count; ++i)
