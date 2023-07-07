@@ -210,7 +210,14 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         }
         break;
     case Qt::Key_A:
-        _editer.reset_selected_mark(true);
+        if (event->modifiers() == Qt::ControlModifier)
+        {
+            _editer.reset_selected_mark(true);
+            _painter.update();
+        }
+        break;
+    case Qt::Key_B:
+        _painter.use_tool(3);
         break;
     case Qt::Key_S:
         if (event->modifiers() == Qt::ControlModifier)

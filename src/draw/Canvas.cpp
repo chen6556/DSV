@@ -488,7 +488,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             for (Geo::Geometry *obj : _editer->selected())
             {
-                _editer->translate_points(obj, _mouse_pos_0.x(), _mouse_pos_0.y(), _mouse_pos_1.x(), _mouse_pos_1.y());
+                _editer->translate_points(obj, _mouse_pos_0.x(), _mouse_pos_0.y(), _mouse_pos_1.x(), _mouse_pos_1.y(), event->modifiers() == Qt::ControlModifier);
             }
             if (_info_labels[1])
             {
