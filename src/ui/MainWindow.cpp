@@ -306,11 +306,13 @@ void MainWindow::load_settings()
     {
         _editer.set_path("D:/");
         ui->auto_save->setChecked(false);
+        ui->auto_layering->setChecked(true);
     }
     else
     {
         _editer.set_path(obj["file_path"].toString());
         ui->auto_save->setChecked(obj["auto_save"].toBool());
+        ui->auto_layering->setChecked(obj["auto_layering"].toBool());
     }
 }
 
@@ -319,6 +321,7 @@ void MainWindow::save_settings()
     QJsonObject obj;
     obj.insert("file_path", _editer.path());
     obj.insert("auto_save", ui->auto_save->isChecked());
+    obj.insert("auto_layering", ui->auto_layering->isChecked());
 
     QJsonDocument doc;
     doc.setObject(obj);
