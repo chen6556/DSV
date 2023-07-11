@@ -20,6 +20,7 @@ PDFSpirit::PDFSpirit()
     bind(Scanner('l') << end, &PDFSpirit::line);
     bind(Scanner('c') << end, &PDFSpirit::curve);
     bind(Scanner('S') << end, &PDFSpirit::store);
+    bind(Scanner("re") << end, &PDFSpirit::rect);
 
     bind(Scanners::alphas, &PDFSpirit::skip);
     bind(key_cmd, &PDFSpirit::skip);
@@ -80,6 +81,24 @@ void PDFSpirit::curve(const std::string &value)
     {
         _points.emplace_back(point);
     }
+}
+
+void PDFSpirit::rect(const std::string &value)
+{
+    ACTIVE
+
+    _points.clear();
+    _points.emplace_back(Geo::Point(_values[_values.size() - 4], _values[_values.size() - 3]));
+    _points.emplace_back(Geo::Point(_values[_values.size() - 4] + _values[_values.size() - 2], _values[_values.size() - 3]));
+    _points.emplace_back(Geo::Point(_values[_values.size() - 4] + _values[_values.size() - 2], _values[_values.size() - 3] + _values.back()));
+    _points.emplace_back(Geo::Point(_values[_values.size() - 4], _values[_values.size() - 3] + _values.back()));
+    _points.emplace_back(Geo::Point(_values[_values.size() - 4], _values[_values.size() - 3]));
+
+    _values.clear();
+    _values.push_back(_points.back().coord().x);
+    _values.push_back(_points.back().coord().y);
+    _start_point.x = _values.front();
+    _start_point.y = _values.back();
 }
 
 

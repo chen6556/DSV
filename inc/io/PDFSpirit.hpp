@@ -24,6 +24,8 @@ private:
     void line(const std::string &value);
 
     void curve(const std::string &value);
+
+    void rect(const std::string &value);
     
 
     void store(const std::string &value);
