@@ -1,7 +1,7 @@
 #include "ui/MainWindow.hpp"
 #include "./ui_mainwindow.h"
 #include "io/File.hpp"
-#include "io/PLT.hpp"
+#include "io/PLTSpirit.hpp"
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QJsonObject>
