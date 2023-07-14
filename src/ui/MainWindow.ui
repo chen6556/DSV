@@ -37,7 +37,7 @@ QToolButton{background:rgb(142,142,142);}</string>
      <widget class="QWidget" name="widget" native="true">
       <property name="maximumSize">
        <size>
-        <width>106</width>
+        <width>120</width>
         <height>16777215</height>
        </size>
       </property>
@@ -170,6 +170,74 @@ QToolButton{background:rgb(142,142,142);}</string>
           <string>Insert</string>
          </property>
         </widget>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QPushButton" name="rotate_btn">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Rotate</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="rotate_angle">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::NoButtons</enum>
+           </property>
+           <property name="suffix">
+            <string>°</string>
+           </property>
+           <property name="minimum">
+            <number>-360</number>
+           </property>
+           <property name="maximum">
+            <number>360</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_3">
+         <item>
+          <widget class="QPushButton" name="flipx_btn">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Flip X</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="flipy_btn">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Flip Y</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
        </item>
        <item>
         <spacer name="verticalSpacer">
@@ -309,11 +377,62 @@ QToolButton{background:rgb(142,142,142);}</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>rotate_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>rotate()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>501</x>
+     <y>289</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>527</x>
+     <y>273</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>flipx_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>flip_x()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>501</x>
+     <y>322</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>527</x>
+     <y>273</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>flipy_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>flip_y()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>554</x>
+     <y>322</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>527</x>
+     <y>273</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
   <slot>save_file()</slot>
   <slot>saveas_file()</slot>
   <slot>auto_svae()</slot>
+  <slot>rotate()</slot>
+  <slot>flip_x()</slot>
+  <slot>flip_y()</slot>
  </slots>
 </ui>

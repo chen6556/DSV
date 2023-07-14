@@ -1204,3 +1204,76 @@ void Editer::append_group(const size_t index)
         _graph->insert_group(index);
     }
 }
+
+
+
+void Editer::rotate(const double angle, const bool unitary)
+{
+    const double rad = angle * Geo::PI / 180;
+    Geo::Coord coord;
+    if (unitary)
+    {
+        coord = _graph->container_group(_current_group).bounding_rect().center().coord();
+        for (Geo::Geometry *geo : _graph->container_group(_current_group))
+        {
+            geo->rotate(coord.x, coord.y, rad);
+        }
+    }
+    else
+    {
+        for (Geo::Geometry *geo : _graph->container_group(_current_group))
+        {
+            if (geo->memo()["is_selected"].to_bool())
+            {
+                coord = geo->bounding_rect().center().coord();
+                geo->rotate(coord.x, coord.y, rad);
+            }
+        }
+    }
+}
+
+void Editer::flip(const bool direction, const bool unitary)
+{
+    Geo::Coord coord;
+    if (unitary)
+    {
+        coord = _graph->container_group(_current_group).bounding_rect().center().coord();
+        for (Geo::Geometry *geo : _graph->container_group(_current_group))
+        {
+            if (direction)
+            {
+                geo->translate(-coord.x, 0);
+                geo->transform(-1, 0, 0, 0, 1, 0);
+                geo->translate(coord.x, 0);
+            }
+            else
+            {
+                geo->translate(0, -coord.y);
+                geo->transform(1, 0, 0, 0, -1, 0);
+                geo->translate(0, coord.y);
+            }
+        }
+    }
+    else
+    {
+        for (Geo::Geometry *geo : _graph->container_group(_current_group))
+        {
+            if (geo->memo()["is_selected"].to_bool())
+            {
+                coord = geo->bounding_rect().center().coord();
+                if (direction)
+                {
+                    geo->translate(-coord.x, 0);
+                    geo->transform(-1, 0, 0, 0, 1, 0);
+                    geo->translate(coord.x, 0);
+                }
+                else
+                {
+                    geo->translate(0, -coord.y);
+                    geo->transform(1, 0, 0, 0, -1, 0);
+                    geo->translate(0, coord.y);
+                }
+            }
+        }
+    }
+}

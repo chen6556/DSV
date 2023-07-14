@@ -98,4 +98,13 @@ public:
     void remove_group(const size_t index);
 
     void append_group(const size_t index = SIZE_MAX);
+
+
+
+
+
+    void rotate(const double angle, const bool unitary);
+
+    // true:X false:Y
+    void flip(const bool direction, const bool unitary);
 };

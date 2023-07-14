@@ -60,6 +60,13 @@ private slots:
 
     void show_layers_manager();
 
+
+    void rotate();
+
+    void flip_x();
+
+    void flip_y();
+
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
