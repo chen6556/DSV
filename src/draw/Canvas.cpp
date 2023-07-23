@@ -227,12 +227,9 @@ void Canvas::paint_select_rect()
     QPainter painter(this);
     painter.setPen(QPen(QColor(0, 0, 255, 140), 1));
     painter.setBrush(QColor(0, 120, 215, 10));
-    QPolygonF points;
-    for (const Geo::Point &point : _select_rect)
-    {
-        points.append(QPointF(point.coord().x, point.coord().y));
-    }
-    painter.drawPolygon(points);
+    
+    painter.drawPolygon(QRect(_select_rect[0].coord().x, _select_rect[0].coord().y, 
+        Geo::distance(_select_rect[0], _select_rect[1]), Geo::distance(_select_rect[1], _select_rect[2])));
 }
 
 
