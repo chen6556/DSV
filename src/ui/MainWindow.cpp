@@ -2,11 +2,14 @@
 #include "./ui_mainwindow.h"
 #include "io/File.hpp"
 #include "io/PLTSpirit.hpp"
+#include "io/PDFSpirit.hpp"
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QAbstractItemView>
+#include <qpdf/QPDF.hh>
+#include <qpdf/QPDFWriter.hh>
  
 
 MainWindow::MainWindow(QWidget *parent)
@@ -95,7 +98,7 @@ void MainWindow::open_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;JSON: (*.json *.JSON);;PLT: (*.plt *.PLT)", &_file_type);
+    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;JSON: (*.json *.JSON);;PLT: (*.plt *.PLT);;PDF (*.pdf *.PDF)", &_file_type);
     if (!path.isEmpty())
     {
         _editer.delete_graph();
@@ -120,6 +123,29 @@ void MainWindow::open_file()
             if (ui->remember_file_type->isChecked())
             {
                 _file_type = "PLT: (*.plt *.PLT)";
+            }
+        }
+		else if (path.endsWith(".pdf") || path.endsWith(".PDF"))
+        {
+            QPDF pdf;
+            pdf.processFile(path.toStdString().c_str());
+
+            QPDFWriter outpdf(pdf);
+            outpdf.setStreamDataMode(qpdf_stream_data_e::qpdf_s_uncompress);
+            outpdf.setDecodeLevel(qpdf_stream_decode_level_e::qpdf_dl_all);
+            outpdf.setOutputMemory();
+            outpdf.setNewlineBeforeEndstream(true);
+            outpdf.write();
+            std::shared_ptr<Buffer> buffer = outpdf.getBufferSharedPointer();
+
+            std::stringstream ss(reinterpret_cast<char *>(buffer->getBuffer()), std::ios::in);
+            PDFSpirit spirit;
+            spirit.load_graph(g);
+            spirit.parse(ss);
+
+			if (ui->remember_file_type->isChecked())
+            {
+                _file_type = "PDF: (*.pdf *.PDF)";
             }
         }
         _editer.load_graph(g, path);
