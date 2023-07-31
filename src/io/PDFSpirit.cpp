@@ -22,8 +22,8 @@ PDFSpirit::PDFSpirit()
     bind(Scanner('S') << end, &PDFSpirit::store);
     bind(Scanner("re") << end, &PDFSpirit::rect);
 
-    bind(Scanners::alphas, &PDFSpirit::skip);
-    bind(key_cmd, &PDFSpirit::skip);
+    bind(Scanners::alphas, &PDFSpirit::pass);
+    bind(key_cmd, &PDFSpirit::pass);
     bind(!Scanner('\n'), &PDFSpirit::pass);
 }
 
@@ -44,14 +44,7 @@ void PDFSpirit::start(const std::string &value)
 void PDFSpirit::store_value(const std::string &value)
 {
     ACTIVE
-    _values.push_back(std::atof(value.c_str()));
-}
-
-void PDFSpirit::skip(const std::string &value)
-{
-    ACTIVE
-    _start_point.x = _start_point.y = 0;
-    _values.clear();
+    _values.push_back(std::stod(value));
 }
 
 void PDFSpirit::line(const std::string &value)

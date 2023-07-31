@@ -1,0 +1,11 @@
+/build
+/files
+/install
+/output
+
+*.json
+*.yaml
+*.log
+*.tlog
+*.7z
+*.exe

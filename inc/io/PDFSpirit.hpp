@@ -19,8 +19,6 @@ private:
 
     void store_value(const std::string &value);
 
-    void skip(const std::string &value);
-
     void line(const std::string &value);
 
     void curve(const std::string &value);
