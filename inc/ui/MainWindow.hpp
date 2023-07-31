@@ -31,7 +31,7 @@ private:
     QComboBox *_layers_cbx = nullptr;
     LayersManager *_layers_manager = nullptr;
     QToolButton *_layers_btn = nullptr;
-
+    QString _file_type = "All Files: (*.*)";
 
 private:
     void init();

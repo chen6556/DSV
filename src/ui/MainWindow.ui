@@ -280,6 +280,7 @@ QToolButton{background:rgb(142,142,142);}</string>
      <string>setting</string>
     </property>
     <addaction name="auto_layering"/>
+    <addaction name="remember_file_type"/>
    </widget>
    <addaction name="file_menu"/>
    <addaction name="menusetting"/>
@@ -326,6 +327,17 @@ QToolButton{background:rgb(142,142,142);}</string>
    </property>
    <property name="text">
     <string>auto layering</string>
+   </property>
+  </action>
+  <action name="remember_file_type">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>remeber file type</string>
    </property>
   </action>
  </widget>

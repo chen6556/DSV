@@ -95,7 +95,7 @@ void MainWindow::open_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "AllFiles: (*.);;JSON: (*.json *.JSON);;PLT: (*.plt *.PLT)");
+    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;JSON: (*.json *.JSON);;PLT: (*.plt *.PLT)", &_file_type);
     if (!path.isEmpty())
     {
         _editer.delete_graph();
@@ -103,6 +103,11 @@ void MainWindow::open_file()
         if (path.endsWith(".json") || path.endsWith(".JSON"))
         {
             File::read(path, g);
+            
+            if (ui->remember_file_type->isChecked())
+            {
+                _file_type = "JSON: (*.json *.JSON)";
+            }
         }
         else if (path.endsWith(".plt") || path.endsWith(".PLT"))
         {
@@ -111,6 +116,11 @@ void MainWindow::open_file()
             std::fstream file(path.toStdString(), std::ios_base::in);
             spirit.parse(file);
             file.close();
+            
+            if (ui->remember_file_type->isChecked())
+            {
+                _file_type = "PLT: (*.plt *.PLT)";
+            }
         }
         _editer.load_graph(g, path);
         if (ui->auto_layering->isChecked())
@@ -307,12 +317,18 @@ void MainWindow::load_settings()
         _editer.set_path("D:/");
         ui->auto_save->setChecked(false);
         ui->auto_layering->setChecked(true);
+        ui->remember_file_type->setChecked(true);
     }
     else
     {
         _editer.set_path(obj["file_path"].toString());
         ui->auto_save->setChecked(obj["auto_save"].toBool());
         ui->auto_layering->setChecked(obj["auto_layering"].toBool());
+        ui->remember_file_type->setChecked(obj["remember_file_type"].toBool());
+        if (ui->remember_file_type->isChecked())
+        {
+            _file_type = obj["file_type"].toString();
+        }
     }
 }
 
@@ -322,6 +338,11 @@ void MainWindow::save_settings()
     obj.insert("file_path", _editer.path());
     obj.insert("auto_save", ui->auto_save->isChecked());
     obj.insert("auto_layering", ui->auto_layering->isChecked());
+    obj.insert("remember_file_type", ui->remember_file_type->isChecked());
+    if (ui->remember_file_type->isChecked())
+    {
+        obj.insert("file_type", _file_type);
+    }
 
     QJsonDocument doc;
     doc.setObject(obj);
