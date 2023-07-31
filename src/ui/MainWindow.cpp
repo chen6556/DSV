@@ -1,6 +1,7 @@
 #include "ui/MainWindow.hpp"
 #include "./ui_mainwindow.h"
 #include "io/File.hpp"
+#include "io/PLTSpirit.hpp"
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QJsonObject>
@@ -94,13 +95,28 @@ void MainWindow::open_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "Files: (*.json *.JSON)");
+    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "AllFiles: (*.);;JSON: (*.json *.JSON);;PLT: (*.plt *.PLT)");
     if (!path.isEmpty())
     {
         _editer.delete_graph();
         Graph *g = new Graph;
-        File::read(path, g);
+        if (path.endsWith(".json") || path.endsWith(".JSON"))
+        {
+            File::read(path, g);
+        }
+        else if (path.endsWith(".plt") || path.endsWith(".PLT"))
+        {
+            PLTSpirit spirit;
+            spirit.load_graph(g);
+            std::fstream file(path.toStdString(), std::ios_base::in);
+            spirit.parse(file);
+            file.close();
+        }
         _editer.load_graph(g, path);
+        if (ui->auto_layering->isChecked())
+        {
+            _editer.auto_layering();
+        }
         _editer.reset_modified();
         _info_labels[2]->setText(path);
         _layers_manager->load_layers(g);
@@ -117,7 +133,8 @@ void MainWindow::save_file()
         return;
     }
 
-    if (_info_labels[2]->text().isEmpty())
+    if (_info_labels[2]->text().isEmpty() || !(_info_labels[2]->text().endsWith(".json") 
+        || _info_labels[2]->text().endsWith(".JSON")))
     {
         QFileDialog *dialog = new QFileDialog();
         dialog->setModal(true);
@@ -140,7 +157,8 @@ void MainWindow::save_file()
 
 void MainWindow::auto_save()
 {
-    if (!ui->auto_save->isChecked() || _editer.path().isEmpty())
+    if (!ui->auto_save->isChecked() || _editer.path().isEmpty() ||
+        !(_editer.path().endsWith(".json") || _editer.path().endsWith(".JSON")))
     {
         return;
     }
@@ -288,11 +306,13 @@ void MainWindow::load_settings()
     {
         _editer.set_path("D:/");
         ui->auto_save->setChecked(false);
+        ui->auto_layering->setChecked(true);
     }
     else
     {
         _editer.set_path(obj["file_path"].toString());
         ui->auto_save->setChecked(obj["auto_save"].toBool());
+        ui->auto_layering->setChecked(obj["auto_layering"].toBool());
     }
 }
 
@@ -301,6 +321,7 @@ void MainWindow::save_settings()
     QJsonObject obj;
     obj.insert("file_path", _editer.path());
     obj.insert("auto_save", ui->auto_save->isChecked());
+    obj.insert("auto_layering", ui->auto_layering->isChecked());
 
     QJsonDocument doc;
     doc.setObject(obj);

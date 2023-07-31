@@ -275,7 +275,14 @@ QToolButton{background:rgb(142,142,142);}</string>
     <addaction name="saveas_file"/>
     <addaction name="auto_save"/>
    </widget>
+   <widget class="QMenu" name="menusetting">
+    <property name="title">
+     <string>setting</string>
+    </property>
+    <addaction name="auto_layering"/>
+   </widget>
    <addaction name="file_menu"/>
+   <addaction name="menusetting"/>
   </widget>
   <widget class="QStatusBar" name="statusBar">
    <property name="font">
@@ -308,6 +315,17 @@ QToolButton{background:rgb(142,142,142);}</string>
    </property>
    <property name="text">
     <string>auto save</string>
+   </property>
+  </action>
+  <action name="auto_layering">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>auto layering</string>
    </property>
   </action>
  </widget>
