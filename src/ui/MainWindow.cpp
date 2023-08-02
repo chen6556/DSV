@@ -336,31 +336,31 @@ void MainWindow::refresh_tool_label(const int &value)
 void MainWindow::load_settings()
 {   
     GlobalSetting::get_instance()->load_setting();
-    const Memo &setting = GlobalSetting::get_instance()->setting();
+    const QJsonObject &setting = GlobalSetting::get_instance()->setting();
 
-    _editer.set_path(QString::fromStdString(setting["file_path"].to_string()));
-    ui->auto_save->setChecked(setting["auto_save"].to_bool());
-    ui->auto_layering->setChecked(setting["auto_layering"].to_bool());
-    ui->auto_aligning->setChecked(setting["auto_aligning"].to_bool());
-    ui->remember_file_type->setChecked(setting["remember_file_type"].to_bool());
+    _editer.set_path(setting["file_path"].toString());
+    ui->auto_save->setChecked(setting["auto_save"].toBool());
+    ui->auto_layering->setChecked(setting["auto_layering"].toBool());
+    ui->auto_aligning->setChecked(setting["auto_aligning"].toBool());
+    ui->remember_file_type->setChecked(setting["remember_file_type"].toBool());
     if (ui->remember_file_type->isChecked())
     {
-       _file_type = QString::fromStdString(setting["file_type"].to_string());
+       _file_type = setting["file_type"].toString();
     }
 }
 
 void MainWindow::save_settings()
 {
-    Memo &setting = GlobalSetting::get_instance()->setting();
+    QJsonObject &setting = GlobalSetting::get_instance()->setting();
     
-    setting["file_path"] = _editer.path().toStdString();
+    setting["file_path"] = _editer.path();
     setting["auto_save"] = ui->auto_save->isChecked();
     setting["auto_layering"] = ui->auto_layering->isChecked();
     setting["auto_aligning"] = ui->auto_aligning->isChecked();
     setting["remember_file_type"] = ui->remember_file_type->isChecked();
     if (ui->remember_file_type->isChecked())
     {
-        setting["file_type"] = _file_type.toStdString();
+        setting["file_type"] = _file_type;
     }
 
     GlobalSetting::get_instance()->save_setting();

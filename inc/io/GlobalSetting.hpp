@@ -1,11 +1,11 @@
 #pragma once
-#include "base/Memo.hpp"
+#include <QJsonObject>
 
 
 class GlobalSetting
 {
 private:
-    Memo _setting;
+    QJsonObject _setting;
     static std::unique_ptr<GlobalSetting> _instance;
     
 private:
@@ -14,7 +14,7 @@ private:
 public:
     static std::unique_ptr<GlobalSetting> &get_instance();
 
-    Memo &setting();
+    QJsonObject &setting();
 
     void load_setting();
     

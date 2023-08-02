@@ -89,7 +89,7 @@ void Canvas::paint_cache()
         }
     }
 
-    if (GlobalSetting::get_instance()->setting()["auto_aligning"].to_bool() && !_reflines.empty())
+    if (GlobalSetting::get_instance()->setting()["auto_aligning"].toBool() && !_reflines.empty())
     {
         painter.setPen(QPen(QColor(0, 140, 255), 3));
         for (const QLineF &line : _reflines)
@@ -343,7 +343,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 }
                 _bool_flags[4] = true;
                 _bool_flags[5] = true;
-                if (GlobalSetting::get_instance()->setting()["auto_aligning"].to_bool())
+                if (GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
                 {
                     _editer->auto_aligning(_clicked_obj, _reflines);
                 }
@@ -502,7 +502,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             {
                 _editer->translate_points(obj, _mouse_pos_0.x(), _mouse_pos_0.y(), _mouse_pos_1.x(), _mouse_pos_1.y(), event->modifiers() == Qt::ControlModifier);
             }
-            if (GlobalSetting::get_instance()->setting()["auto_aligning"].to_bool())
+            if (GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
             {
                 _editer->auto_aligning(_clicked_obj, _reflines);
             }
