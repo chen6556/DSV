@@ -29,8 +29,10 @@ void GlobalSetting::load_setting()
         _instance->_setting["auto_save"] = false;
         _instance->_setting["auto_layering"] = true;
         _instance->_setting["auto_aligning"] = false;
+        _instance->_setting["backup_times"] = 50;
         _instance->_setting["remember_file_type"] = true;
-        _instance->_setting["file_type"] = "All File: (*.*)";
+        _instance->_setting["file_type"] = "All Files: (*.*)";
+        _instance->_setting["catch_distance"] = 2;
     }
 }
 

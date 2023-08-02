@@ -13,7 +13,6 @@ private:
     bool _modified = false;
     std::list<Graph *> _backup;
     std::list<Geo::Geometry *> _paste_table;
-    const static size_t backup_times = 50;
     size_t _current_group = 0;
 
 private:

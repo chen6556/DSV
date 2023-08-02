@@ -1,4 +1,5 @@
 #include "base/Editer.hpp"
+#include "io/GlobalSetting.hpp"
 
 
 Editer::Editer(Graph *graph)
@@ -47,7 +48,7 @@ void Editer::init()
 void Editer::store_backup()
 {
     _backup.push_back(_graph->clone());
-    if (_backup.size() > backup_times)
+    if (_backup.size() > GlobalSetting::get_instance()->setting()["backup_times"].toInt())
     {
         delete _backup.front();
         _backup.pop_front();
@@ -249,6 +250,7 @@ void Editer::append_bezier(const size_t order)
 
 void Editer::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1, const bool change_shape)
 {
+    const double catch_distance = GlobalSetting::get_instance()->setting()["catch_distance"].toDouble();
     switch (points->memo()["Type"].to_int())
     {
     case 0:
@@ -260,8 +262,8 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                 for (Geo::Point &point : temp->shape())
                 {
                     ++count;
-                    if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= 2 ||
-                        Geo::distance(x1, y1, point.coord().x, point.coord().y) <= 2)
+                    if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= catch_distance ||
+                        Geo::distance(x1, y1, point.coord().x, point.coord().y) <= catch_distance)
                     {
                         if (temp->size() == 5)
                         {
@@ -332,8 +334,8 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         {
             CircleContainer *temp = reinterpret_cast<CircleContainer *>(points);
             if (change_shape && !points->shape_fixed() &&
-                (std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x0, y0))) <= 2 ||
-                 std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x1, y1))) <= 2))
+                (std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x0, y0))) <= catch_distance ||
+                 std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x1, y1))) <= catch_distance))
             {
                 temp->radius() = Geo::distance(temp->center(), Geo::Point(x1, y1));
             }
@@ -350,8 +352,8 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             {
                 for (Geo::Point &point : *temp)
                 {
-                    if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= 2 ||
-                        Geo::distance(x1, y1, point.coord().x, point.coord().y) <= 2)
+                    if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= catch_distance ||
+                        Geo::distance(x1, y1, point.coord().x, point.coord().y) <= catch_distance)
                     {
                         point.translate(x1 - x0, y1 - y0);
                         _modified = true;
@@ -369,8 +371,8 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             {
                 for (Geo::Point &point : *temp)
                 {
-                    if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= 2 ||
-                        Geo::distance(x1, y1, point.coord().x, point.coord().y) <= 2)
+                    if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= catch_distance ||
+                        Geo::distance(x1, y1, point.coord().x, point.coord().y) <= catch_distance)
                     {
                         point.translate(x1 - x0, y1 - y0);
                         _modified = true;
@@ -388,8 +390,8 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             {
                 for (size_t i = 0, count = temp->size(); i < count; ++i)
                 {
-                    if (Geo::distance(x0, y0, (*temp)[i].coord().x, (*temp)[i].coord().y) <= 3 ||
-                        Geo::distance(x1, y1, (*temp)[i].coord().x, (*temp)[i].coord().y) <= 3)
+                    if (Geo::distance(x0, y0, (*temp)[i].coord().x, (*temp)[i].coord().y) <= catch_distance ||
+                        Geo::distance(x1, y1, (*temp)[i].coord().x, (*temp)[i].coord().y) <= catch_distance)
                     {
                         (*temp)[i].translate(x1 - x0, y1 - y0);
                         if (i > 2 && i % temp->order() == 1)

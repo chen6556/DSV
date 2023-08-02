@@ -81,7 +81,7 @@ void MainWindow::init()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (_editer.modified() && QMessageBox::question(this, "文件已修改", "是否保存修改?") == QMessageBox::Yes)
+    if (_editer.modified() && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
     {
         save_file();
     }
@@ -93,7 +93,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::open_file()
 {
-    if (_editer.modified() && QMessageBox::question(this, "文件已修改", "是否保存修改?") == QMessageBox::Yes)
+    if (_editer.modified() && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
     {
         save_file();
     }
