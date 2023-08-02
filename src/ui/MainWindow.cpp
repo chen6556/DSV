@@ -14,7 +14,7 @@
  
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), _builder(new Graph, &_painter)
+    : QMainWindow(parent), ui(new Ui::MainWindow), _builder(new Graph, &_painter), _setting(new Setting(this))
 {
     ui->setupUi(this);
     init();
@@ -54,6 +54,7 @@ void MainWindow::init()
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
     QObject::connect(ui->auto_aligning, &QAction::triggered, this, [this]() {GlobalSetting::get_instance()->setting()["auto_aligning"] = ui->auto_aligning->isChecked();});
+    QObject::connect(ui->actionadvanced, &QAction::triggered, this, [this]() { _setting->show(); });
 
     for (size_t i = 0; i < 3; ++i)
     {

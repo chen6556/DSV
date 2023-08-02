@@ -7,6 +7,7 @@
 #include "base/Editer.hpp"
 #include "simulation/StructureBuilder.hpp"
 #include "simulation/StructureMover.hpp"
+#include "ui/Setting.hpp"
 #include <QTimer>
 #include <QString>
 
@@ -23,6 +24,7 @@ private:
     Ui::MainWindow *ui = nullptr;
     Canvas _painter;
     Editer _editer;
+    Setting *_setting = nullptr;
     StructureBuilder _builder;
     std::vector<Qt::Key> _keys;
     QTimer _clock;

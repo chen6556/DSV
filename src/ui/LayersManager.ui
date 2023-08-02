@@ -13,6 +13,9 @@
   <property name="windowTitle">
    <string>Layers</string>
   </property>
+  <property name="locale">
+   <locale language="English" country="UnitedStates"/>
+  </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QListView" name="layers_view">

@@ -25,6 +25,9 @@
    <string notr="true">QMainWindow#MainWindow{background:rgb(142,142,142);}
 QToolButton{background:rgb(142,142,142);}</string>
   </property>
+  <property name="locale">
+   <locale language="English" country="UnitedStates"/>
+  </property>
   <property name="iconSize">
    <size>
     <width>128</width>
@@ -282,6 +285,7 @@ QToolButton{background:rgb(142,142,142);}</string>
     <addaction name="auto_layering"/>
     <addaction name="remember_file_type"/>
     <addaction name="auto_aligning"/>
+    <addaction name="actionadvanced"/>
    </widget>
    <addaction name="file_menu"/>
    <addaction name="menusetting"/>
@@ -346,7 +350,12 @@ QToolButton{background:rgb(142,142,142);}</string>
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>auto_aligning</string>
+    <string>auto aligning</string>
+   </property>
+  </action>
+  <action name="actionadvanced">
+   <property name="text">
+    <string>advanced</string>
    </property>
   </action>
  </widget>
