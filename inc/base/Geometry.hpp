@@ -606,4 +606,6 @@ namespace Geo
 
     const bool is_intersected(const Rectangle &rect, const Circle &circle, const bool inside = true);
 
+    const bool is_rectangle(const Polygon &polygon);
+
 };

@@ -263,14 +263,62 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                     if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= 2 ||
                         Geo::distance(x1, y1, point.coord().x, point.coord().y) <= 2)
                     {
-                        point.translate(x1 - x0, y1 - y0);
+                        if (temp->size() == 5)
+                        {
+                            if (temp->shape()[0].coord().y == temp->shape()[1].coord().y
+                                && temp->shape()[2].coord().y == temp->shape()[3].coord().y
+                                && temp->shape()[0].coord().x == temp->shape()[3].coord().x
+                                && temp->shape()[2].coord().x == temp->shape()[1].coord().x)
+                            {
+                                point.translate(x1 - x0, y1 - y0);
+                                if (count % 2 != 0)
+                                {
+                                    temp->shape()[count == 1 ? 3 : 1].coord().x = point.coord().x;
+                                    temp->shape()[count].coord().y = point.coord().y;
+                                }
+                                else
+                                {
+                                    temp->shape()[count - 2].coord().y = point.coord().y;
+                                    temp->shape()[count].coord().x = point.coord().x;
+                                    if (count == 4)
+                                    {
+                                        temp->shape().front().coord().x = temp->shape().back().coord().x;
+                                    }
+                                }
+                            }
+                            else if (temp->shape()[0].coord().x == temp->shape()[1].coord().x
+                                && temp->shape()[2].coord().x == temp->shape()[3].coord().x
+                                && temp->shape()[0].coord().y == temp->shape()[3].coord().y
+                                && temp->shape()[2].coord().y == temp->shape()[1].coord().y)
+                            {
+                                point.translate(x1 - x0, y1 - y0);
+                                if (count % 2 == 0)
+                                {
+                                    temp->shape()[count - 2].coord().x = point.coord().x;
+                                    temp->shape()[count].coord().y = point.coord().y;
+                                    if (count == 4)
+                                    {
+                                        temp->shape().front().coord().y = temp->shape().back().coord().y;
+                                    }
+                                }
+                                else
+                                {
+                                    temp->shape()[count == 1 ? 3 : 1].coord().y = point.coord().y;
+                                    temp->shape()[count].coord().x = point.coord().x;
+                                }
+                            }
+                            else
+                            {
+                                point.translate(x1 - x0, y1 - y0);
+                            }
+                        }
+                        else
+                        {
+                            point.translate(x1 - x0, y1 - y0);
+                        }
                         if (count == 1)
                         {
-                            temp->shape().back() = temp->shape().front();
-                        }
-                        else if (count == temp->shape().size())
-                        {
-                            temp->shape().front() = temp->shape().back();
+                            temp->shape().back().coord() = temp->shape().front().coord();
                         }
                         _modified = true;
                         return;
@@ -1290,7 +1338,7 @@ bool Editer::auto_aligning(Geo::Geometry *object, std::list<QLineF> &reflines)
     const Geo::Coord center(rect.center().coord());
     const double left = rect.left(), top = rect.top(), right = rect.right(), bottom = rect.bottom();
     const double heigh = top - bottom, width = right - left;
-    Geo::Geometry *dst;
+    Geo::Geometry *dst = nullptr;
     double temp, distance = DBL_MAX;
 
     for (ContainerGroup &group : _graph->container_groups())
@@ -1320,6 +1368,11 @@ bool Editer::auto_aligning(Geo::Geometry *object, std::list<QLineF> &reflines)
                 distance = temp;
             }
         }
+    }
+
+    if (dst == nullptr)
+    {
+        return false;
     }
 
     const Geo::Rectangle dst_rect(dst->bounding_rect());

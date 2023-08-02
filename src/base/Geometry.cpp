@@ -2346,3 +2346,32 @@ const bool Geo::is_intersected(const Rectangle &rect, const Circle &circle, cons
     }
     return false;
 }
+
+
+const bool Geo::is_rectangle(const Polygon &polygon)
+{
+    Geo::Polygon points(polygon);
+    if (polygon.size() > 5)
+    {
+        for (size_t i = 2, count = polygon.size(); i < count; ++i)
+        {
+            if (Geo::is_inside(points[i - 1], points[i - 2], points[i]))
+            {
+                points.remove(--i);
+                --count;
+            }
+        }
+    }
+
+    if (Geo::distance(points[0], points[1]) == Geo::distance(points[2], points[3]) &&
+        Geo::distance(points[1], points[2]) == Geo::distance(points[0], points[3]))
+    {
+        const Geo::Coord vec0 = (points[0] - points[1]).coord(), vec1 = (points[2] - points[1]).coord();
+        return std::abs(vec0.x * vec1.x + vec0.y * vec1.y) == 0;
+    }
+    else
+    {
+        return false;
+    }
+}
+
