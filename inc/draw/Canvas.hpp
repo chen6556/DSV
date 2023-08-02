@@ -14,6 +14,7 @@ class Canvas : public QWidget
 private:
     Geo::Circle _circle_cache;
     Geo::Rectangle _rectangle_cache, _select_rect;
+    std::list<QLineF> _reflines;
     Editer *_editer = nullptr;
     QLabel **_info_labels = nullptr;
     QLineEdit _input_line;

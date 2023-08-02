@@ -281,6 +281,7 @@ QToolButton{background:rgb(142,142,142);}</string>
     </property>
     <addaction name="auto_layering"/>
     <addaction name="remember_file_type"/>
+    <addaction name="auto_aligning"/>
    </widget>
    <addaction name="file_menu"/>
    <addaction name="menusetting"/>
@@ -338,6 +339,14 @@ QToolButton{background:rgb(142,142,142);}</string>
    </property>
    <property name="text">
     <string>remeber file type</string>
+   </property>
+  </action>
+  <action name="auto_aligning">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>auto_aligning</string>
    </property>
   </action>
  </widget>

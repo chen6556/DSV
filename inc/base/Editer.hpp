@@ -1,6 +1,7 @@
 #pragma once
 #include "draw/Graph.hpp"
 #include "Structure.hpp"
+#include <QLineF>
 
 
 class Editer
@@ -102,6 +103,8 @@ public:
 
     // true:X false:Y
     void flip(const bool direction, const bool unitary);
+
+    bool auto_aligning(Geo::Geometry *object, std::list<QLineF> &reflines);
 
 
 

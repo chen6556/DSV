@@ -750,6 +750,30 @@ Rectangle::Rectangle(const Rectangle &&rect)
     _memo["Type"] = 30;
 }
 
+const double Rectangle::left() const
+{
+    assert(!_points.empty());
+    return _points.front().coord().x;
+}
+
+const double Rectangle::top() const
+{
+    assert(!_points.empty());
+    return _points.front().coord().y;
+}
+
+const double Rectangle::right() const
+{
+    assert(!_points.empty());
+    return _points[2].coord().x;
+}
+
+const double Rectangle::bottom() const
+{
+    assert(!_points.empty());
+    return _points[2].coord().y;
+}
+
 Rectangle& Rectangle::operator=(const Rectangle &rect)
 {
     if (this != &rect)
@@ -1814,6 +1838,26 @@ const double Geo::distance(const Point &point, const Point &start, const Point &
     }
 }
 
+const double Geo::distance(const Point &point, const Polyline &polyline)
+{
+    double dis = DBL_MAX;
+    for (size_t i = 1, count = polyline.size(); i < count; ++i)
+    {
+        dis = std::min(dis, Geo::distance(point, polyline[i - 1], polyline[i]));
+    }
+    return dis;
+}
+
+const double Geo::distance(const Point &point, const Polygon &polygon)
+{
+    double dis = DBL_MAX;
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        dis = std::min(dis, Geo::distance(point, polygon[i - 1], polygon[i]));
+    }
+    return dis;
+}
+
 
 const bool Geo::is_inside(const Point &point, const Line &line, const bool infinite)
 {
@@ -2027,7 +2071,7 @@ const bool Geo::is_intersected(const Line &line0, const Line &line1, Point &outp
     return Geo::is_intersected(line0.front(), line0.back(), line1.front(), line1.back(), output, infinite);
 }
 
-const bool Geo::is_intersected(const Rectangle &rect0, const Rectangle &rect1)
+const bool Geo::is_intersected(const Rectangle &rect0, const Rectangle &rect1, const bool inside)
 {
     if (rect0.empty() || rect1.empty())
     {
@@ -2051,18 +2095,21 @@ const bool Geo::is_intersected(const Rectangle &rect0, const Rectangle &rect1)
         }
     }
 
-    for (const Point &point : rect0)
+    if (inside)
     {
-        if (Geo::is_inside(point, rect1, true))
+        for (const Point &point : rect0)
         {
-            return true;
+            if (Geo::is_inside(point, rect1, true))
+            {
+                return true;
+            }
         }
-    }
-    for (const Point &point : rect1)
-    {
-        if (Geo::is_inside(point, rect0, true))
+        for (const Point &point : rect1)
         {
-            return true;
+            if (Geo::is_inside(point, rect0, true))
+            {
+                return true;
+            }
         }
     }
     
@@ -2089,7 +2136,39 @@ const bool Geo::is_intersected(const Polyline &polyline0, const Polyline &polyli
     return false;
 }
 
-const bool Geo::is_intersected(const Polygon &polygon0, const Polygon &polygon1)
+const bool Geo::is_intersected(const Polyline &polyline, const Polygon &polygon, const bool inside)
+{
+    if (polyline.empty() || polygon.empty() || !Geo::is_intersected(polygon.bounding_rect(), polyline.bounding_rect()))
+    {
+        return false;
+    }
+
+    Point point;
+    for (size_t i = 1, count0 = polyline.size(); i < count0; ++i)
+    {
+        for (size_t j = 1, count1 = polygon.size(); j < count1; ++j)
+        {
+            if (Geo::is_intersected(polyline[i-1], polyline[i], polygon[j-1], polygon[j], point))
+            {
+                return true;
+            }
+            else if (inside && Geo::is_inside(polyline[i-1], polygon))
+            {
+                return true;
+            }
+        }
+    }
+    if (inside)
+    {
+        return Geo::is_inside(polyline.back(), polygon);
+    }
+    else
+    {
+        return false;
+    }
+}
+
+const bool Geo::is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside)
 {
     if (polygon0.empty() || polygon1.empty() || !Geo::is_intersected(polygon0.bounding_rect(), polygon1.bounding_rect()))
     {
@@ -2106,12 +2185,37 @@ const bool Geo::is_intersected(const Polygon &polygon0, const Polygon &polygon1)
             }
         }
     }
+    if (inside)
+    {
+        for (const Point &point : polygon0)
+        {
+            if (Geo::is_inside(point, polygon1, true))
+            {
+                return true;
+            }
+        }
+        for (const Point &point : polygon1)
+        {
+            if (Geo::is_inside(point, polygon0, true))
+            {
+                return true;
+            }
+        }
+    }
     return false;
 }
 
-const bool Geo::is_intersected(const Circle &circle0, const Circle& circle1)
+const bool Geo::is_intersected(const Circle &circle0, const Circle& circle1, const bool inside)
 {
-    return Geo::distance(circle0.center(), circle1.center()) <= circle0.radius() + circle1.radius();
+    if (inside)
+    {
+        return Geo::distance(circle0.center(), circle1.center()) <= circle0.radius() + circle1.radius();
+    }
+    else
+    {
+        const double distance = Geo::distance(circle0.center(), circle1.center());
+        return distance <= circle0.radius() + circle1.radius() && distance >= std::abs(circle0.radius() - circle1.radius());
+    }
 }
 
 const bool Geo::is_intersected(const Rectangle &rect, const Point &point0, const Point &point1, const bool inside)

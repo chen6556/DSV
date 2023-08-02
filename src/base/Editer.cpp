@@ -1278,6 +1278,113 @@ void Editer::flip(const bool direction, const bool unitary)
     }
 }
 
+bool Editer::auto_aligning(Geo::Geometry *object, std::list<QLineF> &reflines)
+{   
+    reflines.clear();
+    if (object == nullptr || _graph == nullptr || _graph->empty())
+    {
+        return false;
+    }
+
+    const Geo::Rectangle rect(object->bounding_rect());
+    const Geo::Coord center(rect.center().coord());
+    const double left = rect.left(), top = rect.top(), right = rect.right(), bottom = rect.bottom();
+    const double heigh = top - bottom, width = right - left;
+    Geo::Geometry *dst;
+    double temp, distance = DBL_MAX;
+
+    for (ContainerGroup &group : _graph->container_groups())
+    {
+        for (Geo::Geometry *geo : group)
+        {
+            if (geo->memo()["Type"].to_int() / 10 == 2 || geo->memo()["Type"].to_int() == 2 || geo == object)
+            {
+                continue;
+            }
+
+            switch (geo->memo()["Type"].to_int())
+            {
+            case 0:
+                temp = Geo::distance(center, reinterpret_cast<Container *>(geo)->shape());
+                break;
+            case 1:
+                temp = Geo::distance(center, reinterpret_cast<CircleContainer *>(geo)->center());
+                break;
+            default:
+                break;
+            }
+            
+            if (temp < distance)
+            {
+                dst = geo;
+                distance = temp;
+            }
+        }
+    }
+
+    const Geo::Rectangle dst_rect(dst->bounding_rect());
+    const Geo::Coord dst_center(dst_rect.center().coord());
+    const double dst_left = dst_rect.left(), dst_top = dst_rect.top(), dst_right = dst_rect.right(), dst_bottom = dst_rect.bottom();
+    const double dst_heigh = dst_top - dst_bottom, dst_width = dst_right - dst_left;
+
+    const double out_left = std::min(left, dst_left), out_top = std::min(top, dst_top),
+        out_right = std::max(right, dst_right), out_bottom = std::max(bottom, dst_bottom);
+
+    if (std::abs(dst_center.x - center.x) < 2)
+    {
+        reflines.emplace_back(QLineF(dst_center.x, out_top, dst_center.x, out_bottom));
+        object->translate(dst_center.x - center.x, 0);
+    }
+    if (std::abs(dst_center.y - center.y) < 2)
+    {
+        reflines.emplace_back(QLineF(out_left, dst_center.y, out_right, dst_center.y));
+        object->translate(0, dst_center.y - center.y);
+    }
+    if (std::abs(dst_top - top) < 2)
+    {
+        reflines.emplace_back(QLineF(out_left, dst_top, out_right, dst_top));
+        object->translate(0, dst_top - top);
+    }
+    if (std::abs(dst_bottom - top) < 2)
+    {
+        reflines.emplace_back(QLineF(out_left, dst_bottom, out_right, dst_bottom));
+        object->translate(0, dst_bottom - top);
+    }
+    if (std::abs(dst_top - bottom) < 2)
+    {
+        reflines.emplace_back(QLineF(out_left, dst_top, out_right, dst_top));
+        object->translate(0, dst_top - bottom);
+    }
+    if (std::abs(dst_bottom - bottom) < 2)
+    {
+        reflines.emplace_back(QLineF(out_left, dst_bottom, out_right, dst_bottom));
+        object->translate(0, dst_bottom - bottom);
+    }
+    if (std::abs(dst_left - left) < 2)
+    {
+        reflines.emplace_back(QLineF(dst_left, out_bottom, dst_left, out_top));
+        object->translate(dst_left - left, 0);
+    }
+    if (std::abs(dst_right - left) < 2)
+    {
+        reflines.emplace_back(QLineF(dst_right, out_bottom, dst_right, out_top));
+        object->translate(dst_right - left, 0);
+    }
+    if (std::abs(dst_left - right) < 2)
+    {
+        reflines.emplace_back(QLineF(dst_left, out_bottom, dst_left, out_top));
+        object->translate(dst_left - right, 0);
+    }
+    if (std::abs(dst_right - right) < 2)
+    {
+        reflines.emplace_back(QLineF(dst_right, out_bottom, dst_right, out_top));
+        object->translate(dst_right - right, 0);
+    }
+    
+    return !reflines.empty();
+}
+
+
 
 
 void Editer::auto_layering()

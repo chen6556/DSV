@@ -275,6 +275,14 @@ namespace Geo
 
         Rectangle(const Rectangle &&rect);
 
+        const double left() const;
+
+        const double top() const;
+
+        const double right() const;
+
+        const double bottom() const;
+
         Rectangle &operator=(const Rectangle &reac);
 
         Rectangle &operator=(const Rectangle &&reac);
@@ -558,6 +566,10 @@ namespace Geo
 
     const double distance(const Point &point, const Point &start, const Point &end, const bool infinite = false);
 
+    const double distance(const Point &point, const Polyline &polyline);
+
+    const double distance(const Point &point, const Polygon &polygon);
+
     const bool is_inside(const Point &point, const Line &line, const bool infinite = false);
 
     const bool is_inside(const Point &point, const Point &start, const Point &end, const bool infinite = false);
@@ -572,15 +584,17 @@ namespace Geo
 
     const bool is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite = false);
 
-    const bool is_intersected(const Line &line0, const Line &line1, Point &output, const bool infinite = false);
+    const bool is_intersected(const Line &line0, const Line &line1, Point &output, const bool infinite = true);
 
-    const bool is_intersected(const Rectangle &rect0, const Rectangle &rect1);
+    const bool is_intersected(const Rectangle &rect0, const Rectangle &rect1, const bool inside = true);
 
     const bool is_intersected(const Polyline &polyline0, const Polyline &polyline1);
 
-    const bool is_intersected(const Polygon &polygon0, const Polygon &polygon1);
+    const bool is_intersected(const Polyline &polyline, const Polygon &polygon, const bool inside = true);
 
-    const bool is_intersected(const Circle &circle0, const Circle &circle1);
+    const bool is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside = true);
+
+    const bool is_intersected(const Circle &circle0, const Circle &circle1, const bool inside = true);
 
     const bool is_intersected(const Rectangle &rect, const Point &point0, const Point &point1, const bool inside = true);
 

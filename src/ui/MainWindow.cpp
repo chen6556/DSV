@@ -10,6 +10,7 @@
 #include <QAbstractItemView>
 #include <qpdf/QPDF.hh>
 #include <qpdf/QPDFWriter.hh>
+#include "io/GlobalSetting.hpp"
  
 
 MainWindow::MainWindow(QWidget *parent)
@@ -51,6 +52,8 @@ void MainWindow::init()
     QObject::connect(ui->rect_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(2); });
     QObject::connect(ui->curve_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(3); _painter.set_bezier_order(ui->curve_sbx->value());});
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
+
+    QObject::connect(ui->auto_aligning, &QAction::triggered, this, [this]() {GlobalSetting::get_instance()->setting()["auto_aligning"] = ui->auto_aligning->isChecked();});
 
     for (size_t i = 0; i < 3; ++i)
     {
@@ -331,51 +334,36 @@ void MainWindow::refresh_tool_label(const int &value)
 }
 
 void MainWindow::load_settings()
-{
-    QFile file("./config.json");
-    file.open(QIODevice::ReadOnly);
-    QJsonParseError jerr;
-    QJsonObject obj = QJsonDocument::fromJson(file.readAll(), &jerr).object();
-    file.close();
+{   
+    GlobalSetting::get_instance()->load_setting();
+    const Memo &setting = GlobalSetting::get_instance()->setting();
 
-    if (obj.isEmpty())
+    _editer.set_path(QString::fromStdString(setting["file_path"].to_string()));
+    ui->auto_save->setChecked(setting["auto_save"].to_bool());
+    ui->auto_layering->setChecked(setting["auto_layering"].to_bool());
+    ui->auto_aligning->setChecked(setting["auto_aligning"].to_bool());
+    ui->remember_file_type->setChecked(setting["remember_file_type"].to_bool());
+    if (ui->remember_file_type->isChecked())
     {
-        _editer.set_path("D:/");
-        ui->auto_save->setChecked(false);
-        ui->auto_layering->setChecked(true);
-        ui->remember_file_type->setChecked(true);
-    }
-    else
-    {
-        _editer.set_path(obj["file_path"].toString());
-        ui->auto_save->setChecked(obj["auto_save"].toBool());
-        ui->auto_layering->setChecked(obj["auto_layering"].toBool());
-        ui->remember_file_type->setChecked(obj["remember_file_type"].toBool());
-        if (ui->remember_file_type->isChecked())
-        {
-            _file_type = obj["file_type"].toString();
-        }
+       _file_type = QString::fromStdString(setting["file_type"].to_string());
     }
 }
 
 void MainWindow::save_settings()
 {
-    QJsonObject obj;
-    obj.insert("file_path", _editer.path());
-    obj.insert("auto_save", ui->auto_save->isChecked());
-    obj.insert("auto_layering", ui->auto_layering->isChecked());
-    obj.insert("remember_file_type", ui->remember_file_type->isChecked());
+    Memo &setting = GlobalSetting::get_instance()->setting();
+    
+    setting["file_path"] = _editer.path().toStdString();
+    setting["auto_save"] = ui->auto_save->isChecked();
+    setting["auto_layering"] = ui->auto_layering->isChecked();
+    setting["auto_aligning"] = ui->auto_aligning->isChecked();
+    setting["remember_file_type"] = ui->remember_file_type->isChecked();
     if (ui->remember_file_type->isChecked())
     {
-        obj.insert("file_type", _file_type);
+        setting["file_type"] = _file_type.toStdString();
     }
 
-    QJsonDocument doc;
-    doc.setObject(obj);
-    QFile file("./config.json");
-    file.open(QIODevice::WriteOnly);
-    file.write(doc.toJson());
-    file.close();
+    GlobalSetting::get_instance()->save_setting();
 }
 
 void MainWindow::show_layers_manager()

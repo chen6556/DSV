@@ -1,5 +1,6 @@
 #include "draw/Canvas.hpp"
 #include <QPalette>
+#include "io/GlobalSetting.hpp"
 
 
 Canvas::Canvas(QLabel **labels, QWidget *parent)
@@ -85,6 +86,15 @@ void Canvas::paint_cache()
         {
             painter.setPen(QPen(Qt::blue, 6));
             painter.drawPoints(points);
+        }
+    }
+
+    if (GlobalSetting::get_instance()->setting()["auto_aligning"].to_bool() && !_reflines.empty())
+    {
+        painter.setPen(QPen(QColor(0, 140, 255), 3));
+        for (const QLineF &line : _reflines)
+        {
+            painter.drawLine(line);
         }
     }
 }
@@ -313,7 +323,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         }
         else
         {
-            _clicked_obj = _editer->select(_mouse_pos_1.x(), _mouse_pos_1.y(), !(event->modifiers() == Qt::ControlModifier));
+            _clicked_obj = _editer->select(_mouse_pos_1.x(), _mouse_pos_1.y(), false);
             std::list<Geo::Geometry *> selected_objs = _editer->selected();
             if (_clicked_obj == nullptr)
             {
@@ -333,8 +343,10 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 }
                 _bool_flags[4] = true;
                 _bool_flags[5] = true;
-                _last_clicked_obj = _clicked_obj;
-                _clicked_obj = nullptr;
+                if (GlobalSetting::get_instance()->setting()["auto_aligning"].to_bool())
+                {
+                    _editer->auto_aligning(_clicked_obj, _reflines);
+                }
             }
             update();
         }
@@ -373,6 +385,9 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
                 _info_labels[1]->clear();
             }
             _bool_flags[6] = false;
+            _last_clicked_obj = _clicked_obj;
+            _editer->auto_aligning(nullptr, _reflines);
+            _clicked_obj = nullptr;
             update();
         }
         break;
@@ -487,6 +502,10 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             {
                 _editer->translate_points(obj, _mouse_pos_0.x(), _mouse_pos_0.y(), _mouse_pos_1.x(), _mouse_pos_1.y(), event->modifiers() == Qt::ControlModifier);
             }
+            if (GlobalSetting::get_instance()->setting()["auto_aligning"].to_bool())
+            {
+                _editer->auto_aligning(_clicked_obj, _reflines);
+            }
             if (_info_labels[1])
             {
                 _info_labels[1]->clear();
@@ -549,6 +568,7 @@ void Canvas::wheelEvent(QWheelEvent *event)
         }
         update();
     }
+    _editer->auto_aligning(_clicked_obj, _reflines);
 }
 
 void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
