@@ -444,7 +444,25 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             break;
         case 1:
-            _editer->point_cache().back() = Geo::Point(_mouse_pos_1.x(), _mouse_pos_1.y());
+            if (event->modifiers() == Qt::ControlModifier)
+            {
+                const Geo::Coord &coord =_editer->point_cache().at(_editer->point_cache().size() - 2).coord();
+                if (std::abs(_mouse_pos_1.x() - coord.x) > std::abs(_mouse_pos_1.y() - coord.y))
+                {
+                    _editer->point_cache().back().coord().x = _mouse_pos_1.x();
+                    _editer->point_cache().back().coord().y = coord.y;
+                }
+                else
+                {
+                    _editer->point_cache().back().coord().x = coord.x;
+                    _editer->point_cache().back().coord().y = _mouse_pos_1.y();
+                }
+            }
+            else
+            {
+                _editer->point_cache().back().coord().x = _mouse_pos_1.x();
+                _editer->point_cache().back().coord().y = _mouse_pos_1.y();
+            }
             if (_info_labels[1] != nullptr)
             {
                 _info_labels[1]->setText(std::string("Length:").append(std::to_string(Geo::distance(_editer->point_cache().back(),
