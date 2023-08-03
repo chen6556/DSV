@@ -24,17 +24,17 @@ void Canvas::init()
 {
     _input_line.hide();
 
-    QObject::connect(&_input_line, &QLineEdit::editingFinished, this, [this]()
+    QObject::connect(&_input_line, &QTextEdit::textChanged, this, [this]()
                      {
                                                             if (_last_clicked_obj)
                                                             {
                                                                 if (dynamic_cast<Container*>(_last_clicked_obj))
                                                                 {
-                                                                    reinterpret_cast<Container*>(_last_clicked_obj)->set_text(_input_line.text());
+                                                                    reinterpret_cast<Container*>(_last_clicked_obj)->set_text(_input_line.toPlainText());
                                                                 }
                                                                 else
                                                                 {
-                                                                    reinterpret_cast<CircleContainer*>(_last_clicked_obj)->set_text(_input_line.text());
+                                                                    reinterpret_cast<CircleContainer*>(_last_clicked_obj)->set_text(_input_line.toPlainText());
                                                                 }
                                                             } });
 }
@@ -107,7 +107,12 @@ void Canvas::paint_graph()
     }
     QPainter painter(this);
     painter.setBrush(QColor(250, 250, 250));
-    painter.setFont(QFont("SimHei", 12, QFont::Bold, true));
+    const bool scale_text = GlobalSetting::get_instance()->setting()["scale_text"].toBool();
+    const double suffix_text_width = 4 * (scale_text ? _ratio : 1), text_heigh_ratio = (scale_text ? _ratio : 1);
+    painter.setFont(QFont("SimHei", scale_text ? 12 * _ratio : 12, QFont::Bold, true));
+
+    QFontMetrics font_metrics(painter.font());
+    QRectF text_rect;
     QPolygonF points;
 
     Container *container;
@@ -175,9 +180,11 @@ void Canvas::paint_graph()
                 if (!container->text().isEmpty())
                 {
                     painter.setPen(QPen(text_color, 2));
-                    painter.drawText(QPointF(container->center().coord().x - container->text().length() * 4,
-                                             container->center().coord().y + 6),
-                                     container->text());
+                    text_rect = font_metrics.boundingRect(container->text());
+                    text_rect.setWidth(text_rect.width() + suffix_text_width);
+                    text_rect.setHeight(4 * text_heigh_ratio + 14 * (container->text().count('\n') + 1) * text_heigh_ratio);
+                    text_rect.translate(points.boundingRect().center() - text_rect.center());
+                    painter.drawText(text_rect, container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                 }
                 break;
             case 1:
@@ -634,8 +641,10 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         {
             if (_bool_flags[5])
             {
-                _input_line.move(_last_clicked_obj->bounding_rect().center().coord().x - _input_line.width() / 2 - 18,
-                                 _last_clicked_obj->bounding_rect().center().coord().y - _input_line.height() / 2);
+                const Geo::Rectangle rect(_last_clicked_obj->bounding_rect());
+                _input_line.setMaximumSize(std::max(100.0, rect.width()), std::max(100.0, rect.heigh()));
+                _input_line.move(rect.center().coord().x - _input_line.rect().center().x(),
+                                 rect.center().coord().y - _input_line.rect().center().y());
                 if (dynamic_cast<Container *>(_last_clicked_obj))
                 {
                     _input_line.setText(reinterpret_cast<Container *>(_last_clicked_obj)->text());

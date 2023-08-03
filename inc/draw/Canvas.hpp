@@ -3,7 +3,7 @@
 #include <QPaintEvent>
 #include <QPainter>
 #include <QLabel>
-#include <QLineEdit>
+#include <QTextEdit>
 #include "base/Editer.hpp"
 
 
@@ -17,7 +17,7 @@ private:
     std::list<QLineF> _reflines;
     Editer *_editer = nullptr;
     QLabel **_info_labels = nullptr;
-    QLineEdit _input_line;
+    QTextEdit _input_line;
 
     double _ratio = 1; // 缩放系数
     size_t _bezier_order = 3; // 贝塞尔曲线阶数

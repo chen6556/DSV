@@ -297,6 +297,10 @@ namespace Geo
 
         const double area() const;
 
+        const double width() const;
+
+        const double heigh() const;
+
         virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f);
 
         virtual void transform(const double mat[6]);

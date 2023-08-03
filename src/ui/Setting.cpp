@@ -20,6 +20,8 @@ void Setting::init()
 
     ui->catch_distance->setValue(setting["catch_distance"].toDouble());
     ui->backup_times->setValue(setting["backup_times"].toInt());
+
+    ui->scale_text->setChecked(setting["scale_text"].toBool());
 }
 
 void Setting::accept()
@@ -28,6 +30,8 @@ void Setting::accept()
 
     setting["catch_distance"] = ui->catch_distance->value();
     setting["backup_times"] = ui->backup_times->value();
+
+    setting["scale_text"] = ui->scale_text->isChecked();
 
     QDialog::accept();
 }

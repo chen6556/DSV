@@ -833,6 +833,30 @@ const double Rectangle::area() const
     }
 }
 
+const double Rectangle::width() const
+{
+    if (!_points.empty())
+    {
+        return Geo::distance(_points.front(), _points[1]);
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+const double Rectangle::heigh() const
+{
+    if (!_points.empty())
+    {
+        return Geo::distance(_points[1], _points[2]);
+    }
+    else
+    {
+        return -1;
+    }
+}
+
 void Rectangle::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
     std::for_each(_points.begin(), _points.end(), [&](Point &point){point.transform(a,b,c,d,e,f);});
