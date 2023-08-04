@@ -195,9 +195,12 @@ void Canvas::paint_graph()
                 if (!circlecontainer->text().isEmpty())
                 {
                     painter.setPen(QPen(text_color, 2));
-                    painter.drawText(QPointF(circlecontainer->center().coord().x - circlecontainer->text().length() * 4,
-                                             circlecontainer->center().coord().y + 6),
-                                     circlecontainer->text());
+                    text_rect = font_metrics.boundingRect(circlecontainer->text());
+                    text_rect.setWidth(text_rect.width() + suffix_text_width);
+                    text_rect.setHeight(4 * text_heigh_ratio + 14 * (circlecontainer->text().count('\n') + 1) * text_heigh_ratio);
+                    text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
+                        circlecontainer->center().coord().y - text_rect.center().y());
+                    painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                 }
                 break;
             case 20:
@@ -645,6 +648,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                 _input_line.setMaximumSize(std::max(100.0, rect.width()), std::max(100.0, rect.heigh()));
                 _input_line.move(rect.center().coord().x - _input_line.rect().center().x(),
                                  rect.center().coord().y - _input_line.rect().center().y());
+                _input_line.setFocus();
                 if (dynamic_cast<Container *>(_last_clicked_obj))
                 {
                     _input_line.setText(reinterpret_cast<Container *>(_last_clicked_obj)->text());
@@ -653,6 +657,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                 {
                     _input_line.setText(reinterpret_cast<CircleContainer *>(_last_clicked_obj)->text());
                 }
+                _input_line.moveCursor(QTextCursor::End);
                 _input_line.show();
             }
         }
