@@ -1328,84 +1328,17 @@ void Editer::flip(const bool direction, const bool unitary)
     }
 }
 
-bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, const bool current_group_only)
+bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines)
 {   
-    if (points == nullptr || _graph == nullptr || _graph->empty())
+    if (src == nullptr || dst == nullptr || src->memo()["Type"].to_int() > 1 || dst->memo()["Type"].to_int() > 1)
     {
         return false;
     }
 
-    const Geo::Rectangle rect(points->bounding_rect());
+    const Geo::Rectangle rect(src->bounding_rect()); 
     Geo::Coord center(rect.center().coord());
     double left = rect.left(), top = rect.top(), right = rect.right(), bottom = rect.bottom();
     const double heigh = top - bottom, width = right - left;
-    Geo::Geometry *dst = nullptr;
-    double temp, distance = DBL_MAX;
-
-    if (current_group_only)
-    {
-        for (Geo::Geometry *geo : _graph->container_group(_current_group))
-        {
-            if (geo->memo()["Type"].to_int() / 10 == 2 || geo->memo()["Type"].to_int() == 2 || geo == points)
-            {
-                continue;
-            }
-
-            switch (geo->memo()["Type"].to_int())
-            {
-            case 0:
-                temp = Geo::distance(center, reinterpret_cast<Container *>(geo)->shape());
-                break;
-            case 1:
-                temp = Geo::distance(center, reinterpret_cast<CircleContainer *>(geo)->center());
-                break;
-            default:
-                break;
-            }
-            
-            if (temp < distance)
-            {
-                dst = geo;
-                distance = temp;
-            }
-        }
-    }
-    else
-    {
-        for (ContainerGroup &group : _graph->container_groups())
-        {
-            for (Geo::Geometry *geo : group)
-            {
-                if (geo->memo()["Type"].to_int() / 10 == 2 || geo->memo()["Type"].to_int() == 2 || geo == points)
-                {
-                    continue;
-                }
-
-                switch (geo->memo()["Type"].to_int())
-                {
-                case 0:
-                    temp = Geo::distance(center, reinterpret_cast<Container *>(geo)->shape());
-                    break;
-                case 1:
-                    temp = Geo::distance(center, reinterpret_cast<CircleContainer *>(geo)->center());
-                    break;
-                default:
-                    break;
-                }
-                
-                if (temp < distance)
-                {
-                    dst = geo;
-                    distance = temp;
-                }
-            }
-        }
-    }
-
-    if (dst == nullptr)
-    {
-        return false;
-    }
 
     const size_t count = reflines.size();
     const Geo::Rectangle dst_rect(dst->bounding_rect());
@@ -1416,7 +1349,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
     if (std::abs(dst_center.x - center.x) < 2)
     {
         reflines.emplace_back(QLineF(dst_center.x, std::min(top, dst_top), dst_center.x, std::max(bottom, dst_bottom)));
-        points->translate(dst_center.x - center.x, 0);
+        src->translate(dst_center.x - center.x, 0);
         left += (dst_center.x - center.x);
         right += (dst_center.x - center.x);
         center.x = dst_center.x;
@@ -1424,7 +1357,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
     if (std::abs(dst_center.y - center.y) < 2)
     {
         reflines.emplace_back(QLineF(std::min(left, dst_left), dst_center.y, std::max(right, dst_right), dst_center.y));
-        points->translate(0, dst_center.y - center.y);
+        src->translate(0, dst_center.y - center.y);
         top += (dst_center.y - center.y);
         bottom += (dst_center.y - center.y);
         center.y = dst_center.y;
@@ -1432,7 +1365,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
     if (std::abs(dst_top - top) < 2)
     {
         reflines.emplace_back(QLineF(std::min(left, dst_left), dst_top, std::max(right, dst_right), dst_top));
-        points->translate(0, dst_top - top);
+        src->translate(0, dst_top - top);
         center.y += (dst_top - top);
         bottom += (dst_top - top);
         top = dst_top;
@@ -1440,7 +1373,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
     if (std::abs(dst_bottom - top) < 2)
     {
         reflines.emplace_back(QLineF(std::min(left, dst_left), dst_bottom, std::max(right, dst_right), dst_bottom));
-        points->translate(0, dst_bottom - top);
+        src->translate(0, dst_bottom - top);
         center.y += (dst_bottom - top);
         bottom += (dst_bottom - top);
         top = dst_bottom;
@@ -1448,7 +1381,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
     if (std::abs(dst_top - bottom) < 2)
     {
         reflines.emplace_back(QLineF(std::min(left, dst_left), dst_top, std::max(right, dst_right), dst_top));
-        points->translate(0, dst_top - bottom);
+        src->translate(0, dst_top - bottom);
         center.y += (dst_top - bottom);
         top += (dst_top - bottom);
         bottom = dst_top;
@@ -1456,7 +1389,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
     if (std::abs(dst_bottom - bottom) < 2)
     {
         reflines.emplace_back(QLineF(std::min(left, dst_left), dst_bottom, std::max(right, dst_right), dst_bottom));
-        points->translate(0, dst_bottom - bottom);
+        src->translate(0, dst_bottom - bottom);
         center.y += (dst_bottom - bottom);
         top += (dst_bottom - bottom);
         bottom = dst_bottom;
@@ -1464,7 +1397,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
     if (std::abs(dst_left - left) < 2)
     {
         reflines.emplace_back(QLineF(dst_left, std::max(bottom, dst_bottom), dst_left, std::min(top, dst_top)));
-        points->translate(dst_left - left, 0);
+        src->translate(dst_left - left, 0);
         center.x += (dst_left - left);
         right += (dst_left - left);
         left = dst_left;
@@ -1472,7 +1405,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
     if (std::abs(dst_right - left) < 2)
     {
         reflines.emplace_back(QLineF(dst_right, std::max(bottom, dst_bottom), dst_right, std::min(top, dst_top)));
-        points->translate(dst_right - left, 0);
+        src->translate(dst_right - left, 0);
         center.x += (dst_right - left);
         right += (dst_right - left);
         left = dst_right;
@@ -1480,7 +1413,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
     if (std::abs(dst_left - right) < 2)
     {
         reflines.emplace_back(QLineF(dst_left, std::max(bottom, dst_bottom), dst_left, std::min(top, dst_top)));
-        points->translate(dst_left - right, 0);
+        src->translate(dst_left - right, 0);
         center.x += (dst_left - right);
         left += (dst_left - right);
         right = dst_left;
@@ -1488,264 +1421,23 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
     if (std::abs(dst_right - right) < 2)
     {
         reflines.emplace_back(QLineF(dst_right, std::max(bottom, dst_bottom), dst_right, std::min(top, dst_top)));
-        points->translate(dst_right - right, 0);
+        src->translate(dst_right - right, 0);
         center.x += (dst_right - right);
         left += (dst_right - right);
         right = dst_right;
     }
-    
+
     return count != reflines.size();
 }
 
-bool Editer::auto_aligning(Geo::Geometry *points, const double x, const double y, std::list<QLineF> &reflines, const bool current_group_only)
+bool Editer::auto_aligning(Geo::Coord &coord, const Geo::Geometry *dst, std::list<QLineF> &reflines)
 {
-    if (points == nullptr || _graph == nullptr || _graph->empty())
-    {
-        return false;
-    }
-
-    const Geo::Rectangle rect(points->bounding_rect());
-    const Geo::Point anchor(x, y);
-    Geo::Coord center(rect.center().coord());
-    double left = rect.left(), top = rect.top(), right = rect.right(), bottom = rect.bottom();
-    const double heigh = top - bottom, width = right - left;
-    Geo::Geometry *dst = nullptr;
-    double temp, distance = DBL_MAX;
-
-    if (current_group_only)
-    {
-        for (Geo::Geometry *geo : _graph->container_group(_current_group))
-        {
-            if (geo->memo()["Type"].to_int() / 10 == 2 || geo->memo()["Type"].to_int() == 2 || geo == points)
-            {
-                continue;
-            }
-
-            switch (geo->memo()["Type"].to_int())
-            {
-            case 0:
-                temp = Geo::distance(anchor, reinterpret_cast<Container *>(geo)->shape());
-                break;
-            case 1:
-                temp = Geo::distance(anchor, reinterpret_cast<CircleContainer *>(geo)->center());
-                break;
-            default:
-                break;
-            }
-            
-            if (temp < distance)
-            {
-                dst = geo;
-                distance = temp;
-            }
-        }
-    }
-    else
-    {
-        for (ContainerGroup &group : _graph->container_groups())
-        {
-            for (Geo::Geometry *geo : group)
-            {
-                if (geo->memo()["Type"].to_int() / 10 == 2 || geo->memo()["Type"].to_int() == 2 || geo == points)
-                {
-                    continue;
-                }
-
-                switch (geo->memo()["Type"].to_int())
-                {
-                case 0:
-                    temp = Geo::distance(anchor, reinterpret_cast<Container *>(geo)->shape());
-                    break;
-                case 1:
-                    temp = Geo::distance(anchor, reinterpret_cast<CircleContainer *>(geo)->center());
-                    break;
-                default:
-                    break;
-                }
-                
-                if (temp < distance)
-                {
-                    dst = geo;
-                    distance = temp;
-                }
-            }
-        }
-    }
-
-    if (dst == nullptr)
+    if (dst == nullptr || dst->memo()["Type"].to_int() > 1)
     {
         return false;
     }
 
     const size_t count = reflines.size();
-    const Geo::Rectangle dst_rect(dst->bounding_rect());
-    const Geo::Coord dst_center(dst_rect.center().coord());
-    const double dst_left = dst_rect.left(), dst_top = dst_rect.top(), dst_right = dst_rect.right(), dst_bottom = dst_rect.bottom();
-    const double dst_heigh = dst_top - dst_bottom, dst_width = dst_right - dst_left;
-
-    if (std::abs(dst_center.x - center.x) < 2)
-    {
-        reflines.emplace_back(QLineF(dst_center.x, std::min(top, dst_top), dst_center.x, std::max(bottom, dst_bottom)));
-        points->translate(dst_center.x - center.x, 0);
-        left += (dst_center.x - center.x);
-        right += (dst_center.x - center.x);
-        center.x = dst_center.x;
-    }
-    if (std::abs(dst_center.y - center.y) < 2)
-    {
-        reflines.emplace_back(QLineF(std::min(left, dst_left), dst_center.y, std::max(right, dst_right), dst_center.y));
-        points->translate(0, dst_center.y - center.y);
-        top += (dst_center.y - center.y);
-        bottom += (dst_center.y - center.y);
-        center.y = dst_center.y;
-    }
-    if (std::abs(dst_top - top) < 2)
-    {
-        reflines.emplace_back(QLineF(std::min(left, dst_left), dst_top, std::max(right, dst_right), dst_top));
-        points->translate(0, dst_top - top);
-        center.y += (dst_top - top);
-        bottom += (dst_top - top);
-        top = dst_top;
-    }
-    if (std::abs(dst_bottom - top) < 2)
-    {
-        reflines.emplace_back(QLineF(std::min(left, dst_left), dst_bottom, std::max(right, dst_right), dst_bottom));
-        points->translate(0, dst_bottom - top);
-        center.y += (dst_bottom - top);
-        bottom += (dst_bottom - top);
-        top = dst_bottom;
-    }
-    if (std::abs(dst_top - bottom) < 2)
-    {
-        reflines.emplace_back(QLineF(std::min(left, dst_left), dst_top, std::max(right, dst_right), dst_top));
-        points->translate(0, dst_top - bottom);
-        center.y += (dst_top - bottom);
-        top += (dst_top - bottom);
-        bottom = dst_top;
-    }
-    if (std::abs(dst_bottom - bottom) < 2)
-    {
-        reflines.emplace_back(QLineF(std::min(left, dst_left), dst_bottom, std::max(right, dst_right), dst_bottom));
-        points->translate(0, dst_bottom - bottom);
-        center.y += (dst_bottom - bottom);
-        top += (dst_bottom - bottom);
-        bottom = dst_bottom;
-    }
-    if (std::abs(dst_left - left) < 2)
-    {
-        reflines.emplace_back(QLineF(dst_left, std::max(bottom, dst_bottom), dst_left, std::min(top, dst_top)));
-        points->translate(dst_left - left, 0);
-        center.x += (dst_left - left);
-        right += (dst_left - left);
-        left = dst_left;
-    }
-    if (std::abs(dst_right - left) < 2)
-    {
-        reflines.emplace_back(QLineF(dst_right, std::max(bottom, dst_bottom), dst_right, std::min(top, dst_top)));
-        points->translate(dst_right - left, 0);
-        center.x += (dst_right - left);
-        right += (dst_right - left);
-        left = dst_right;
-    }
-    if (std::abs(dst_left - right) < 2)
-    {
-        reflines.emplace_back(QLineF(dst_left, std::max(bottom, dst_bottom), dst_left, std::min(top, dst_top)));
-        points->translate(dst_left - right, 0);
-        center.x += (dst_left - right);
-        left += (dst_left - right);
-        right = dst_left;
-    }
-    if (std::abs(dst_right - right) < 2)
-    {
-        reflines.emplace_back(QLineF(dst_right, std::max(bottom, dst_bottom), dst_right, std::min(top, dst_top)));
-        points->translate(dst_right - right, 0);
-        center.x += (dst_right - right);
-        left += (dst_right - right);
-        right = dst_right;
-    }
-    
-    return count != reflines.size();
-}
-
-bool Editer::coord_aligning(Geo::Coord &coord, std::list<QLineF> &reflines, const bool current_group_only)
-{
-    if (_graph == nullptr || _graph->empty())
-    {
-        return false;
-    }
-
-    const size_t count = reflines.size();
-    const Geo::Point anchor(coord);
-    Geo::Geometry *dst = nullptr;
-    double temp, distance = DBL_MAX;
-
-    if (current_group_only)
-    {
-        for (Geo::Geometry *geo : _graph->container_group(_current_group))
-        {
-            if (geo->memo()["Type"].to_int() / 10 == 2 || geo->memo()["Type"].to_int() == 2
-                || geo->memo()["is_selected"].to_bool())
-            {
-                continue;
-            }
-
-            switch (geo->memo()["Type"].to_int())
-            {
-            case 0:
-                temp = Geo::distance(anchor, reinterpret_cast<Container *>(geo)->shape());
-                break;
-            case 1:
-                temp = Geo::distance(anchor, reinterpret_cast<CircleContainer *>(geo)->center());
-                break;
-            default:
-                break;
-            }
-            
-            if (temp < distance)
-            {
-                dst = geo;
-                distance = temp;
-            }
-        }
-    }
-    else
-    {
-        for (ContainerGroup &group : _graph->container_groups())
-        {
-            for (Geo::Geometry *geo : group)
-            {
-                if (geo->memo()["Type"].to_int() / 10 == 2 || geo->memo()["Type"].to_int() == 2
-                    || geo->memo()["is_selected"].to_bool())
-                {
-                    continue;
-                }
-
-                switch (geo->memo()["Type"].to_int())
-                {
-                case 0:
-                    temp = Geo::distance(anchor, reinterpret_cast<Container *>(geo)->shape());
-                    break;
-                case 1:
-                    temp = Geo::distance(anchor, reinterpret_cast<CircleContainer *>(geo)->center());
-                    break;
-                default:
-                    break;
-                }
-                
-                if (temp < distance)
-                {
-                    dst = geo;
-                    distance = temp;
-                }
-            }
-        }
-    }
-
-    if (dst == nullptr)
-    {
-        return false;
-    }
-
     const Geo::Rectangle dst_rect(dst->bounding_rect());
     const Geo::Coord dst_center(dst_rect.center().coord());
     const double dst_left = dst_rect.left(), dst_top = dst_rect.top(), dst_right = dst_rect.right(), dst_bottom = dst_rect.bottom();
@@ -1781,8 +1473,281 @@ bool Editer::coord_aligning(Geo::Coord &coord, std::list<QLineF> &reflines, cons
         reflines.emplace_back(QLineF(dst_right, std::max(coord.y, dst_bottom), dst_right, std::min(coord.y, dst_top)));
         coord.x = dst_right;
     }
-    
+
     return count != reflines.size();
+}
+
+bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, const bool current_group_only)
+{   
+    if (points == nullptr || _graph == nullptr || _graph->empty())
+    {
+        return false;
+    }
+
+    const Geo::Coord center(points->bounding_rect().center().coord());
+    Geo::Geometry *dst = nullptr;
+    double temp, distance = DBL_MAX;
+
+    if (current_group_only)
+    {
+        for (Geo::Geometry *geo : _graph->container_group(_current_group))
+        {
+            if (geo->memo()["Type"].to_int() > 1 || geo == points)
+            {
+                continue;
+            }
+
+            switch (geo->memo()["Type"].to_int())
+            {
+            case 0:
+                temp = Geo::distance(center, reinterpret_cast<Container *>(geo)->shape());
+                break;
+            case 1:
+                temp = Geo::distance(center, reinterpret_cast<CircleContainer *>(geo)->center());
+                break;
+            default:
+                break;
+            }
+            
+            if (temp < distance)
+            {
+                dst = geo;
+                distance = temp;
+            }
+        }
+    }
+    else
+    {
+        for (ContainerGroup &group : _graph->container_groups())
+        {
+            for (Geo::Geometry *geo : group)
+            {
+                if (geo->memo()["Type"].to_int() > 1 || geo == points)
+                {
+                    continue;
+                }
+
+                switch (geo->memo()["Type"].to_int())
+                {
+                case 0:
+                    temp = Geo::distance(center, reinterpret_cast<Container *>(geo)->shape());
+                    break;
+                case 1:
+                    temp = Geo::distance(center, reinterpret_cast<CircleContainer *>(geo)->center());
+                    break;
+                default:
+                    break;
+                }
+                
+                if (temp < distance)
+                {
+                    dst = geo;
+                    distance = temp;
+                }
+            }
+        }
+    }
+    
+    bool flag = false;
+    if (points != _catched_points && auto_aligning(points, _catched_points, reflines))
+    {
+        flag = true;
+    }
+    else
+    {
+        _catched_points = nullptr;
+    }
+    if (dst != _catched_points && auto_aligning(points, dst, reflines))
+    {
+        flag = true;
+        if (_catched_points == nullptr)
+        {
+            _catched_points = dst;
+        }
+    }
+    return flag;
+}
+
+bool Editer::auto_aligning(Geo::Geometry *points, const double x, const double y, std::list<QLineF> &reflines, const bool current_group_only)
+{
+    if (points == nullptr || _graph == nullptr || _graph->empty())
+    {
+        return false;
+    }
+
+    const Geo::Point anchor(x, y);
+    Geo::Geometry *dst = nullptr;
+    double temp, distance = DBL_MAX;
+
+    if (current_group_only)
+    {
+        for (Geo::Geometry *geo : _graph->container_group(_current_group))
+        {
+            if (geo->memo()["Type"].to_int() > 1 || geo == points)
+            {
+                continue;
+            }
+
+            switch (geo->memo()["Type"].to_int())
+            {
+            case 0:
+                temp = Geo::distance(anchor, reinterpret_cast<Container *>(geo)->shape());
+                break;
+            case 1:
+                temp = Geo::distance(anchor, reinterpret_cast<CircleContainer *>(geo)->center());
+                break;
+            default:
+                break;
+            }
+            
+            if (temp < distance)
+            {
+                dst = geo;
+                distance = temp;
+            }
+        }
+    }
+    else
+    {
+        for (ContainerGroup &group : _graph->container_groups())
+        {
+            for (Geo::Geometry *geo : group)
+            {
+                if (geo->memo()["Type"].to_int() > 1 || geo == points)
+                {
+                    continue;
+                }
+
+                switch (geo->memo()["Type"].to_int())
+                {
+                case 0:
+                    temp = Geo::distance(anchor, reinterpret_cast<Container *>(geo)->shape());
+                    break;
+                case 1:
+                    temp = Geo::distance(anchor, reinterpret_cast<CircleContainer *>(geo)->center());
+                    break;
+                default:
+                    break;
+                }
+                
+                if (temp < distance)
+                {
+                    dst = geo;
+                    distance = temp;
+                }
+            }
+        }
+    }
+
+    bool flag = false;
+    if (points != _catched_points && auto_aligning(points, _catched_points, reflines))
+    {
+        flag = true;
+    }
+    else
+    {
+        _catched_points = nullptr;
+    }
+    if (dst != _catched_points && auto_aligning(points, dst, reflines))
+    {
+        flag = true;
+        if (_catched_points == nullptr)
+        {
+            _catched_points = dst;
+        }
+    }
+    return flag;
+}
+
+bool Editer::coord_aligning(Geo::Coord &coord, std::list<QLineF> &reflines, const bool current_group_only)
+{
+    if (_graph == nullptr || _graph->empty())
+    {
+        return false;
+    }
+
+    const Geo::Point anchor(coord);
+    Geo::Geometry *dst = nullptr;
+    double temp, distance = DBL_MAX;
+
+    if (current_group_only)
+    {
+        for (Geo::Geometry *geo : _graph->container_group(_current_group))
+        {
+            if (geo->memo()["Type"].to_int() > 1 || geo->memo()["is_selected"].to_bool())
+            {
+                continue;
+            }
+
+            switch (geo->memo()["Type"].to_int())
+            {
+            case 0:
+                temp = Geo::distance(anchor, reinterpret_cast<Container *>(geo)->shape());
+                break;
+            case 1:
+                temp = Geo::distance(anchor, reinterpret_cast<CircleContainer *>(geo)->center());
+                break;
+            default:
+                break;
+            }
+            
+            if (temp < distance)
+            {
+                dst = geo;
+                distance = temp;
+            }
+        }
+    }
+    else
+    {
+        for (ContainerGroup &group : _graph->container_groups())
+        {
+            for (Geo::Geometry *geo : group)
+            {
+                if (geo->memo()["Type"].to_int() > 1 || geo->memo()["is_selected"].to_bool())
+                {
+                    continue;
+                }
+
+                switch (geo->memo()["Type"].to_int())
+                {
+                case 0:
+                    temp = Geo::distance(anchor, reinterpret_cast<Container *>(geo)->shape());
+                    break;
+                case 1:
+                    temp = Geo::distance(anchor, reinterpret_cast<CircleContainer *>(geo)->center());
+                    break;
+                default:
+                    break;
+                }
+                
+                if (temp < distance)
+                {
+                    dst = geo;
+                    distance = temp;
+                }
+            }
+        }
+    }
+ 
+    bool flag = false;
+    if (auto_aligning(coord, _catched_points, reflines))
+    {
+        flag = true;
+    }
+    else
+    {
+        _catched_points = nullptr;
+    }
+    if (dst != _catched_points && auto_aligning(coord, dst, reflines))
+    {
+        flag = true;
+        if (_catched_points == nullptr)
+        {
+            _catched_points = dst;
+        }
+    }
+    return flag;
 }
 
 

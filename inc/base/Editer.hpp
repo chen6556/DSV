@@ -15,6 +15,8 @@ private:
     std::list<Geo::Geometry *> _paste_table;
     size_t _current_group = 0;
 
+    Geo::Geometry *_catched_points = nullptr;
+
 private:
     void init();
 
@@ -102,6 +104,10 @@ public:
 
     // true:X false:Y
     void flip(const bool direction, const bool unitary);
+
+    bool auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines);
+
+    bool auto_aligning(Geo::Coord &coord, const Geo::Geometry *dst, std::list<QLineF> &reflines);
 
     bool auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, const bool current_group_only = true);
 
