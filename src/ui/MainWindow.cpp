@@ -240,6 +240,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         break; */
     case Qt::Key_Escape:
         _painter.cancel_painting();
+        _editer.reset_selected_mark();
         break;
     case Qt::Key_Space:
         _painter.use_last_tool();

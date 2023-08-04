@@ -22,6 +22,7 @@ void Setting::init()
     ui->backup_times->setValue(setting["backup_times"].toInt());
 
     ui->scale_text->setChecked(setting["scale_text"].toBool());
+    ui->catch_only->setChecked(setting["active_layer_catch_only"].toBool());
 }
 
 void Setting::accept()
@@ -32,6 +33,7 @@ void Setting::accept()
     setting["backup_times"] = ui->backup_times->value();
 
     setting["scale_text"] = ui->scale_text->isChecked();
+    setting["active_layer_catch_only"] = ui->catch_only->isChecked();
 
     QDialog::accept();
 }

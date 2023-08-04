@@ -89,13 +89,14 @@ void Canvas::paint_cache()
         }
     }
 
-    if (GlobalSetting::get_instance()->setting()["auto_aligning"].toBool() && !_reflines.empty())
+    if (!_reflines.empty())
     {
         painter.setPen(QPen(QColor(0, 140, 255), 3));
         for (const QLineF &line : _reflines)
         {
             painter.drawLine(line);
         }
+        _reflines.clear();
     }
 }
 
@@ -355,7 +356,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 _bool_flags[5] = true;
                 if (GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
                 {
-                    _editer->auto_aligning(_clicked_obj, _reflines);
+                    _editer->auto_aligning(_clicked_obj, _mouse_pos_1.x(), _mouse_pos_1.y(), _reflines,
+                        GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool());
                 }
             }
             update();
@@ -396,7 +398,6 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
             }
             _bool_flags[6] = false;
             _last_clicked_obj = _clicked_obj;
-            _editer->auto_aligning(nullptr, _reflines);
             _clicked_obj = nullptr;
             update();
         }
@@ -416,6 +417,16 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     const double center_x = size().width() / 2.0, center_y = size().height() / 2.0;
     std::swap(_mouse_pos_0, _mouse_pos_1);
     _mouse_pos_1 = event->localPos();
+    if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool())
+    {
+        Geo::Coord pos(_mouse_pos_1.x(), _mouse_pos_1.y());
+        if (_editer->coord_aligning(pos, _reflines, GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool()))
+        {
+            _mouse_pos_1.setX(pos.x);
+            _mouse_pos_1.setY(pos.y);
+            QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
+        }
+    }
     if (_info_labels[0])
     {
         _info_labels[0]->setText(std::string("X:").append(std::to_string(static_cast<int>(_mouse_pos_1.x()))).append(" Y:").append(std::to_string(static_cast<int>(_mouse_pos_1.y()))).c_str());
@@ -530,9 +541,10 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             {
                 _editer->translate_points(obj, _mouse_pos_0.x(), _mouse_pos_0.y(), _mouse_pos_1.x(), _mouse_pos_1.y(), event->modifiers() == Qt::ControlModifier);
             }
-            if (GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
+            if (event->modifiers() != Qt::ControlModifier && GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
             {
-                _editer->auto_aligning(_clicked_obj, _reflines);
+                _editer->auto_aligning(_clicked_obj, _mouse_pos_1.x(), _mouse_pos_1.y(), _reflines,
+                    GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool());
             }
             if (_info_labels[1])
             {

@@ -103,7 +103,11 @@ public:
     // true:X false:Y
     void flip(const bool direction, const bool unitary);
 
-    bool auto_aligning(Geo::Geometry *object, std::list<QLineF> &reflines);
+    bool auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, const bool current_group_only = true);
+
+    bool auto_aligning(Geo::Geometry *points, const double x, const double y, std::list<QLineF> &reflines, const bool current_group_only = true);
+
+    bool coord_aligning(Geo::Coord &coord, std::list<QLineF> &reflines, const bool current_group_only = true);
 
 
 
