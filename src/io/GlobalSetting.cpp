@@ -36,6 +36,7 @@ void GlobalSetting::load_setting()
         _instance->_setting["file_type"] = "All Files: (*.*)";
         _instance->_setting["remember_file_type"] = true;
         _instance->_setting["scale_text"] = true;
+        _instance->_setting["show_points"] = false;
     }
 }
 

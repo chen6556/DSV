@@ -98,13 +98,12 @@ void Canvas::paint_cache()
         }
         _reflines.clear();
     }
-    if (!_catched_points.empty())
+    /* if (GlobalSetting::get_instance()->setting()["show_points"].toBool() && !_catched_points.empty())
     {
         painter.setRenderHint(QPainter::Antialiasing);
         painter.setPen(QPen(QColor(0, 140, 255), 6));
         painter.drawPoints(_catched_points);
-        _catched_points.clear();
-    }
+    } */
 }
 
 void Canvas::paint_graph()
@@ -119,6 +118,8 @@ void Canvas::paint_graph()
     const double suffix_text_width = 4 * (scale_text ? _ratio : 1), text_heigh_ratio = (scale_text ? _ratio : 1);
     painter.setFont(QFont("SimHei", scale_text ? 12 * _ratio : 12, QFont::Bold, true));
 
+    const bool show_points = GlobalSetting::get_instance()->setting()["show_points"].toBool();
+
     QFontMetrics font_metrics(painter.font());
     QRectF text_rect;
     QPolygonF points;
@@ -131,6 +132,8 @@ void Canvas::paint_graph()
     const QPen pen_selected(selected_shape_color, 3), pen_not_selected(shape_color, 3);
 
     Geo::Point temp_point;
+    Geo::Coord center;
+    double radius;
     for (const ContainerGroup &group : _editer->graph()->container_groups())
     {
         if (!group.visible())
@@ -168,7 +171,14 @@ void Canvas::paint_graph()
                 temp_point = link->head()->bounding_rect().center();
             }
             points.append(QPointF(temp_point.coord().x, temp_point.coord().y));
+            _catched_points.append(points);
             painter.drawPolyline(points);
+            if (show_points)
+            {
+                painter.setRenderHint(QPainter::Antialiasing);
+                painter.setPen(QPen(QColor(0, 140, 255), 6));
+                painter.drawPoints(points);
+            }
         }
 
         for (const Geo::Geometry *geo : group)
@@ -184,7 +194,14 @@ void Canvas::paint_graph()
                     points.append(QPointF(point.coord().x, point.coord().y));
                 }
                 points.pop_back();
+                _catched_points.append(points);
                 painter.drawPolygon(points);
+                if (show_points)
+                {
+                    painter.setRenderHint(QPainter::Antialiasing);
+                    painter.setPen(QPen(QColor(0, 140, 255), 6));
+                    painter.drawPoints(points);
+                }
                 if (!container->text().isEmpty())
                 {
                     painter.setPen(QPen(text_color, 2));
@@ -197,9 +214,24 @@ void Canvas::paint_graph()
                 break;
             case 1:
                 circlecontainer = reinterpret_cast<CircleContainer *>(const_cast<Geo::Geometry *>(geo));
-                painter.drawEllipse(circlecontainer->center().coord().x - circlecontainer->radius(),
-                                    circlecontainer->center().coord().y - circlecontainer->radius(),
-                                    circlecontainer->radius() * 2, circlecontainer->radius() * 2);
+                center = circlecontainer->center().coord();
+                radius = circlecontainer->radius();
+                painter.drawEllipse(center.x - radius, center.y - radius, radius * 2, radius * 2);
+                _catched_points.emplace_back(QPointF(center.x, center.y));
+                _catched_points.emplace_back(QPointF(center.x, center.y + radius));
+                _catched_points.emplace_back(QPointF(center.x + radius, center.y));
+                _catched_points.emplace_back(QPointF(center.x, center.y - radius));
+                _catched_points.emplace_back(QPointF(center.x - radius, center.y));
+                if (show_points)
+                {
+                    painter.setRenderHint(QPainter::Antialiasing);
+                    painter.setPen(QPen(QColor(0, 140, 255), 6));
+                    painter.drawPoint(center.x, center.y);
+                    painter.drawPoint(center.x, center.y + radius);
+                    painter.drawPoint(center.x + radius, center.y);
+                    painter.drawPoint(center.x, center.y - radius);
+                    painter.drawPoint(center.x - radius, center.y);
+                }
                 if (!circlecontainer->text().isEmpty())
                 {
                     painter.setPen(QPen(text_color, 2));
@@ -217,7 +249,14 @@ void Canvas::paint_graph()
                 {
                     points.append(QPointF(point.coord().x, point.coord().y));
                 }
+                _catched_points.append(points);
                 painter.drawPolyline(points);
+                if (show_points)
+                {
+                    painter.setRenderHint(QPainter::Antialiasing);
+                    painter.setPen(QPen(QColor(0, 140, 255), 6));
+                    painter.drawPoints(points);
+                }
                 break;
             case 21:
                 if (geo->memo()["is_selected"].to_bool())
@@ -238,6 +277,13 @@ void Canvas::paint_graph()
                     points.append(QPointF(point.coord().x, point.coord().y));
                 }
                 painter.drawPolyline(points);
+                if (show_points)
+                {
+                    painter.setRenderHint(QPainter::Antialiasing);
+                    painter.setPen(QPen(QColor(0, 140, 255), 6));
+                    painter.drawPoint(points.front());
+                    painter.drawPoint(points.back());
+                }
                 break;
             default:
                 break;
@@ -270,6 +316,7 @@ void Canvas::paintEvent(QPaintEvent *event)
         _editer->select(_select_rect);
     }
 
+    _catched_points.clear();
     paint_graph();
 
     paint_cache();
@@ -361,7 +408,23 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 }
                 _bool_flags[4] = true;
                 _bool_flags[5] = true;
-                if (GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
+                bool catched_point = false;
+                if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool())
+                {
+                    const double catch_distance = GlobalSetting::get_instance()->setting()["catch_distance"].toDouble();
+                    for (const QPointF &point : _catched_points)
+                    {
+                        if (Geo::distance(point.x(), point.y(), _mouse_pos_1.x(), _mouse_pos_1.y()) < catch_distance)
+                        {
+                            catched_point = true;
+                            _mouse_pos_1.setX(point.x());
+                            _mouse_pos_1.setY(point.y());
+                            QCursor::setPos(this->mapToGlobal(point).x(), this->mapToGlobal(point).y());
+                            break;
+                        }
+                    }
+                }
+                if (!catched_point && GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
                 {
                     _editer->auto_aligning(_clicked_obj, _mouse_pos_1.x(), _mouse_pos_1.y(), _reflines,
                         GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool());
@@ -424,17 +487,6 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     const double center_x = size().width() / 2.0, center_y = size().height() / 2.0;
     std::swap(_mouse_pos_0, _mouse_pos_1);
     _mouse_pos_1 = event->localPos();
-    if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool() && _clicked_obj == nullptr)
-    {
-        const bool value = GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool();
-        Geo::Coord pos(_mouse_pos_1.x(), _mouse_pos_1.y());
-        if (_editer->auto_aligning(pos, _reflines, value))
-        {
-            _mouse_pos_1.setX(pos.x);
-            _mouse_pos_1.setY(pos.y);
-            QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
-        }
-    }
     if (_info_labels[0])
     {
         _info_labels[0]->setText(std::string("X:").append(std::to_string(static_cast<int>(_mouse_pos_1.x()))).append(" Y:").append(std::to_string(static_cast<int>(_mouse_pos_1.y()))).c_str());
@@ -569,6 +621,18 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         }
         update();
     }
+
+    if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool() && _clicked_obj == nullptr)
+    {
+        const bool value = GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool();
+        Geo::Coord pos(_mouse_pos_1.x(), _mouse_pos_1.y());
+        if (_editer->auto_aligning(pos, _reflines, value))
+        {
+            _mouse_pos_1.setX(pos.x);
+            _mouse_pos_1.setY(pos.y);
+            QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
+        }
+    }
 }
 
 void Canvas::wheelEvent(QWheelEvent *event)
@@ -662,23 +726,25 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         }
         else
         {
-            if (_bool_flags[5])
+            if (_bool_flags[5] && _last_clicked_obj->memo()["Type"].to_int() < 2)
             {
                 const Geo::Rectangle rect(_last_clicked_obj->bounding_rect());
                 _input_line.setMaximumSize(std::max(100.0, rect.width()), std::max(100.0, rect.heigh()));
                 _input_line.move(rect.center().coord().x - _input_line.rect().center().x(),
                                  rect.center().coord().y - _input_line.rect().center().y());
                 _input_line.setFocus();
-                if (dynamic_cast<Container *>(_last_clicked_obj))
+                if (dynamic_cast<Container *>(_last_clicked_obj) != nullptr)
                 {
                     _input_line.setText(reinterpret_cast<Container *>(_last_clicked_obj)->text());
+                    _input_line.moveCursor(QTextCursor::End);
+                    _input_line.show();
                 }
                 else
                 {
                     _input_line.setText(reinterpret_cast<CircleContainer *>(_last_clicked_obj)->text());
+                    _input_line.moveCursor(QTextCursor::End);
+                    _input_line.show();
                 }
-                _input_line.moveCursor(QTextCursor::End);
-                _input_line.show();
             }
         }
         break;
