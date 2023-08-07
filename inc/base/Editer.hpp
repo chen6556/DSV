@@ -2,6 +2,7 @@
 #include "draw/Graph.hpp"
 #include "Structure.hpp"
 #include <QLineF>
+#include <QPolygonF>
 
 
 class Editer
@@ -113,7 +114,7 @@ public:
 
     bool auto_aligning(Geo::Geometry *points, const double x, const double y, std::list<QLineF> &reflines, const bool current_group_only = true);
 
-    bool coord_aligning(Geo::Coord &coord, std::list<QLineF> &reflines, const bool current_group_only = true);
+    bool auto_aligning(Geo::Coord &coord, std::list<QLineF> &reflines, const bool current_group_only = true);
 
 
 

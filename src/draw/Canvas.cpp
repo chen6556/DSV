@@ -98,6 +98,13 @@ void Canvas::paint_cache()
         }
         _reflines.clear();
     }
+    if (!_catched_points.empty())
+    {
+        painter.setRenderHint(QPainter::Antialiasing);
+        painter.setPen(QPen(QColor(0, 140, 255), 6));
+        painter.drawPoints(_catched_points);
+        _catched_points.clear();
+    }
 }
 
 void Canvas::paint_graph()
@@ -417,10 +424,11 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     const double center_x = size().width() / 2.0, center_y = size().height() / 2.0;
     std::swap(_mouse_pos_0, _mouse_pos_1);
     _mouse_pos_1 = event->localPos();
-    if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool())
+    if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool() && _clicked_obj == nullptr)
     {
+        const bool value = GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool();
         Geo::Coord pos(_mouse_pos_1.x(), _mouse_pos_1.y());
-        if (_editer->coord_aligning(pos, _reflines, GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool()))
+        if (_editer->auto_aligning(pos, _reflines, value))
         {
             _mouse_pos_1.setX(pos.x);
             _mouse_pos_1.setY(pos.y);
