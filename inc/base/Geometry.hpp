@@ -10,6 +10,8 @@ namespace Geo
 
     class Rectangle;
 
+    class Polygon;
+
     class Geometry
     {
     protected:
@@ -56,7 +58,9 @@ namespace Geo
 
         virtual void scale(const double x, const double y, const double k);
 
-        virtual Rectangle bounding_rect() const;
+        virtual Polygon convex_hull() const;
+
+        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
     };
 
     struct Coord
@@ -131,7 +135,7 @@ namespace Geo
 
         virtual void scale(const double x, const double y, const double k);
 
-        virtual Rectangle bounding_rect() const;
+        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
 
         Point operator*(const double k) const;
 
@@ -256,7 +260,9 @@ namespace Geo
 
         virtual void scale(const double x, const double y, const double k);
 
-        virtual Rectangle bounding_rect() const;
+        virtual Polygon convex_hull() const;
+
+        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
     };
 
     class Rectangle : public Geometry // Type:30
@@ -311,7 +317,9 @@ namespace Geo
 
         virtual void scale(const double x, const double y, const double k);
 
-        virtual Rectangle bounding_rect() const;
+        virtual Polygon convex_hull() const;
+
+        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
 
         std::vector<Point>::const_iterator begin() const;
 
@@ -443,7 +451,7 @@ namespace Geo
 
         virtual void scale(const double x, const double y, const double k);
 
-        virtual Rectangle bounding_rect() const;
+        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
 
         Circle operator+(const Point &point) const;
 
@@ -557,7 +565,9 @@ namespace Geo
 
         virtual void scale(const double x, const double y, const double k);
 
-        virtual Rectangle bounding_rect() const;
+        virtual Polygon convex_hull() const;
+
+        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
     };
 
     // functions

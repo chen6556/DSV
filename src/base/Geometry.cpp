@@ -76,7 +76,12 @@ void Geometry::rotate(const double x, const double y, const double rad){}
 
 void Geometry::scale(const double x, const double y, const double k){}
 
-Rectangle Geometry::bounding_rect() const {return Rectangle();}
+Polygon Geometry::convex_hull() const
+{
+    return Geo::Polygon();
+}
+
+Rectangle Geometry::bounding_rect(const bool orthogonality) const {return Rectangle();}
 
 // Coord
 
@@ -263,7 +268,7 @@ void Point::scale(const double x, const double y, const double k)
     _pos.y = k * y_ + y * (1 - k);
 }
 
-Rectangle Point::bounding_rect() const
+Rectangle Point::bounding_rect(const bool orthogonality) const
 {
     if (length() == 0)
     {
@@ -662,21 +667,128 @@ void Polyline::scale(const double x, const double y, const double k)
     std::for_each(_points.begin(), _points.end(), [&](Point &point){point.scale(x, y, k);});
 }
 
-Rectangle Polyline::bounding_rect() const
+Polygon Polyline::convex_hull() const
+{
+    std::vector<Point> points(_points);
+    std::sort(points.begin(), points.end(), [](const Point &a, const Point &b)
+        {return a.coord().y < b.coord().y;});
+    const Point origin(points.front());
+    std::for_each(points.begin(), points.end(), [&](Point &p){p -= origin;});
+    std::sort(points.begin() + 1, points.end(), [](const Point &a, const Point &b)
+        {
+            if (a.coord().x / a.length() != b.coord().x / b.length())
+            {
+                return a.coord().x / a.length() > b.coord().x / b.length();
+            }
+            else
+            {
+                return a.length() < b.length();
+            }
+        });
+    std::for_each(points.begin(), points.end(), [&](Point &p){p += origin;});
+
+    std::vector<Point> hull(points.begin(), points.begin() + 2);
+    size_t count = hull.size(), index = 0;
+    Geo::Vector vec0, vec1;
+    std::vector<bool> used(points.size(), false);
+    for (size_t i = 2, end = points.size(); i < end; ++i)
+    {        
+        vec0 = hull.back() - hull[count - 2];
+        vec1 = vec0 + points[i] - hull.back();
+        while (count >= 2 && vec0.coord().x * vec1.coord().y - vec1.coord().x * vec0.coord().y < 0)
+        {
+            hull.pop_back();
+            --count;
+            vec0 = hull.back() - hull[count - 2];
+            vec1 = vec0 + points[i] - hull.back();
+        }
+        ++count;
+        hull.emplace_back(points[i]);
+        used[i] = true;
+    }
+
+    for (size_t i = 1; count < 2; ++i)
+    {
+        if (used[i])
+        {
+            continue;
+        }
+        hull.emplace_back(points[points.size() - i]);
+        ++count;
+        used[points.size() - i] = true;  
+    }
+
+    for (size_t i = points.size() - 1; i > 0; --i)   
+    {
+        if (used[i])
+        {
+            continue;
+        }
+
+        vec0 = hull.back() - hull[count - 2];
+        vec1 = vec0 + points[i] - hull.back();
+        while (count >= 2 && vec0.coord().x * vec1.coord().y - vec1.coord().x * vec0.coord().y < 0)
+        {
+            hull.pop_back();
+            --count;
+            vec0 = hull.back() - hull[count - 2];
+            vec1 = vec0 + points[i] - hull.back();
+        }
+        ++count;
+        hull.emplace_back(points[i]);
+    }
+
+    vec0 = hull.back() - hull[count - 2];
+    vec1 = vec0 + points.front() - hull.back();
+    if (count >= 2 && vec0.coord().x * vec1.coord().y - vec0.coord().y * vec1.coord().x < 0)
+    {
+        hull.pop_back();
+    }
+    
+    hull.emplace_back(points.front());    
+    return Polygon(hull.cbegin(), hull.cend());
+}
+
+Rectangle Polyline::bounding_rect(const bool orthogonality) const
 {
     if (_points.empty())
     {
         return Rectangle();
     }
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
-    for (const Point &point : _points)
+    if (orthogonality)
     {
-        x0 = std::min(x0, point.coord().x);
-        y0 = std::min(y0, point.coord().y);
-        x1 = std::max(x1, point.coord().x);
-        y1 = std::max(y1, point.coord().y);
+        double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
+        for (const Point &point : _points)
+        {
+            x0 = std::min(x0, point.coord().x);
+            y0 = std::min(y0, point.coord().y);
+            x1 = std::max(x1, point.coord().x);
+            y1 = std::max(y1, point.coord().y);
+        }
+        return Rectangle(x0, y0, x1, y1);
     }
-    return Rectangle(x0, y0, x1, y1);
+    else
+    {
+        double cs, area = DBL_MAX;
+        Rectangle rect, temp;
+        const Polygon hull(convex_hull());
+        Coord coord;
+        for (size_t i = 1, count = hull.size(); i < count; ++i)
+        {
+            Polygon polygon(hull);
+            coord = polygon[i - 1].coord();
+            cs = (coord.x * polygon[i].coord().y - polygon[i].coord().x *coord.y) / (polygon[i].length() * polygon[i - 1].length());
+            polygon.rotate(coord.x, coord.y, std::acos(cs));
+            temp = polygon.bounding_rect();
+            if (temp.area() < area)
+            {
+                rect = temp;
+                area = temp.area();
+                rect.rotate(coord.x, coord.y, -std::acos(cs));
+            }
+        }
+        return rect;
+    }
 }
 
 // Rectangle
@@ -882,21 +994,33 @@ void Rectangle::scale(const double x, const double y, const double k)
     std::for_each(_points.begin(), _points.end(), [&](Point &point){point.scale(x, y, k);});
 }
 
-Rectangle Rectangle::bounding_rect() const
+Polygon Rectangle::convex_hull() const
+{
+    return Polygon(_points.cbegin(), _points.cend());
+}
+
+Rectangle Rectangle::bounding_rect(const bool orthogonality) const
 {
     if (_points.empty())
     {
         return Rectangle();
     }
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
-    for (const Point &point : _points)
+    if (orthogonality)
     {
-        x0 = std::min(x0, point.coord().x);
-        y0 = std::min(y0, point.coord().y);
-        x1 = std::max(x1, point.coord().x);
-        y1 = std::max(y1, point.coord().y);
+        double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
+        for (const Point &point : _points)
+        {
+            x0 = std::min(x0, point.coord().x);
+            y0 = std::min(y0, point.coord().y);
+            x1 = std::max(x1, point.coord().x);
+            y1 = std::max(y1, point.coord().y);
+        }
+        return Rectangle(x0, y0, x1, y1);
     }
-    return Rectangle(x0, y0, x1, y1);
+    else
+    {
+        return *this;
+    }
 }
 
 std::vector<Point>::const_iterator Rectangle::begin() const
@@ -1334,7 +1458,7 @@ void Circle::scale(const double x, const double y, const double k)
     _radius *= k;
 }
 
-Rectangle Circle::bounding_rect() const
+Rectangle Circle::bounding_rect(const bool orthogonality) const
 {
     if (_radius == 0)
     {
@@ -1716,9 +1840,14 @@ void Bezier::scale(const double x, const double y, const double k)
     _shape.scale(x, y, k);
 }
 
-Rectangle Bezier::bounding_rect() const
+Polygon Bezier::convex_hull() const
 {
-    return _shape.bounding_rect();
+    return _shape.convex_hull();
+}
+
+Rectangle Bezier::bounding_rect(const bool orthogonality) const
+{
+    return _shape.bounding_rect(orthogonality);
 }
 
 

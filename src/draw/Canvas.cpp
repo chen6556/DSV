@@ -244,7 +244,7 @@ void Canvas::paint_graph()
                 }
                 break;
             case 20:
-                polyline = reinterpret_cast<Geo::Polyline *>(const_cast<Geo::Geometry *>(geo));
+                polyline = reinterpret_cast<Geo::Polyline *>(const_cast<Geo::Geometry *>(geo));        
                 for (const Geo::Point &point : *polyline)
                 {
                     points.append(QPointF(point.coord().x, point.coord().y));
