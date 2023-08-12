@@ -818,6 +818,186 @@ bool Editer::paste(const double tx, const double ty)
     return true;
 }
 
+bool Editer::connect(const double connect_distance)
+{
+    if (_graph == nullptr || _graph->empty())
+    {
+        return false;
+    }
+
+    std::map<size_t, Geo::Polyline*> polylines;
+    std::vector<size_t> indexs;
+    ContainerGroup &group = _graph->container_group(_current_group);
+    for (size_t i = 0, count = group.size(); i < count; ++i)
+    {
+        if (group[i]->memo()["is_selected"].to_bool() && group[i]->memo()["Type"].to_int() / 10 == 2)
+        {
+            polylines[i] = dynamic_cast<Geo::Polyline *>(group[i]);
+            indexs.push_back(i);
+        }
+    }
+
+    store_backup();
+    bool flag;
+    const size_t num = indexs.size();
+    for (size_t i = 0, count = indexs.size(); i < count; ++i)
+    {
+        flag = false;
+        for (size_t j = i + 1; j < count; ++j)
+        {
+            if (Geo::distance(polylines[indexs[i]]->front(), polylines[indexs[j]]->front()) < connect_distance)
+            {
+                std::reverse(polylines[indexs[j]]->begin(), polylines[indexs[j]]->end());
+                if (polylines[indexs[i]]->memo()["Type"].to_int() == 20)
+                {
+                    if (polylines[indexs[j]]->memo()["Type"].to_int() == 20)
+                    {
+                        polylines[indexs[i]]->insert(0, *polylines[indexs[j]]);
+                    }
+                    else
+                    {
+                        reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
+                        polylines[indexs[i]]->insert(0, reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                    }
+                }
+                else
+                {
+                    Geo::Polyline *polyline = new Geo::Polyline(reinterpret_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
+                    polyline->memo()["is_selected"] = true;
+                    if (polylines[indexs[j]]->memo()["Type"].to_int() == 20)
+                    {
+                        polyline->insert(0, *polylines[indexs[j]]);
+                    }
+                    else
+                    {
+                        reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
+                        polyline->insert(0, reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                    }
+                    group.remove(indexs[i]);
+                    group.insert(indexs[i], polyline);
+                    polylines[indexs[i]] = polyline;
+                }
+                flag = true;
+            }
+            else if (Geo::distance(polylines[indexs[i]]->front(), polylines[indexs[j]]->back()) < connect_distance)
+            {
+                if (polylines[indexs[i]]->memo()["Type"].to_int() == 20)
+                {
+                    if (polylines[indexs[j]]->memo()["Type"].to_int() == 20)
+                    {
+                        polylines[indexs[i]]->insert(0, *polylines[indexs[j]]);
+                    }
+                    else
+                    {
+                        polylines[indexs[i]]->insert(0, reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                    }
+                }
+                else
+                {
+                    Geo::Polyline *polyline = new Geo::Polyline(reinterpret_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
+                    polyline->memo()["is_selected"] = true;
+                    if (polylines[indexs[j]]->memo()["Type"].to_int() == 20)
+                    {
+                        polyline->insert(0, *polylines[indexs[j]]);
+                    }
+                    else
+                    {
+                        polyline->insert(0, reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                    }
+                    group.remove(indexs[i]);
+                    group.insert(indexs[i], polyline);
+                    polylines[indexs[i]] = polyline;
+                }
+                flag = true;
+            }
+            else if (Geo::distance(polylines[indexs[i]]->back(), polylines[indexs[j]]->front()) < connect_distance)
+            {
+                if (polylines[indexs[i]]->memo()["Type"].to_int() == 20)
+                {
+                    if (polylines[j]->memo()["Type"].to_int() == 20)
+                    {
+                        polylines[indexs[i]]->append(*polylines[indexs[j]]);
+                    }
+                    else
+                    {
+                        polylines[indexs[i]]->append(reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                    }
+                }
+                else
+                {
+                    Geo::Polyline *polyline = new Geo::Polyline(reinterpret_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
+                    polyline->memo()["is_selected"] = true;
+                    if (polylines[indexs[j]]->memo()["Type"].to_int() == 20)
+                    {
+                        polyline->append(*polylines[indexs[j]]);
+                    }
+                    else
+                    {
+                        polyline->append(reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                    }
+                    group.remove(indexs[i]);
+                    group.insert(indexs[i], polyline);
+                    polylines[indexs[i]] = polyline;
+                }
+                flag = true;
+            }
+            else if (Geo::distance(polylines[indexs[i]]->back(), polylines[indexs[j]]->back()) < connect_distance)
+            {
+                std::reverse(polylines[indexs[j]]->begin(), polylines[indexs[j]]->end());
+                if (polylines[indexs[i]]->memo()["Type"].to_int() == 20)
+                {
+                    if (polylines[indexs[j]]->memo()["Type"].to_int() == 20)
+                    {
+                        polylines[indexs[i]]->append(*polylines[indexs[j]]);
+                    }
+                    else
+                    {
+                        reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
+                        polylines[indexs[i]]->append(reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                    }
+                }
+                else
+                {
+                    Geo::Polyline *polyline = new Geo::Polyline(reinterpret_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
+                    polyline->memo()["is_selected"] = true;
+                    if (polylines[indexs[j]]->memo()["Type"].to_int() == 20)
+                    {
+                        polyline->append(*polylines[indexs[j]]);
+                    }
+                    else
+                    {
+                        reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
+                        polyline->append(reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                    }
+                    group.remove(indexs[i]);
+                    group.insert(indexs[i], polyline);
+                    polylines[indexs[i]] = polyline;
+                }
+                flag = true;
+            }
+            if (flag)
+            {
+                polylines.erase(indexs[j]);
+                group.remove(indexs[j]);
+                indexs.erase(indexs.begin() + j);
+                --i;
+                --count;
+                break;
+            }
+        }
+    }
+
+    if (num != indexs.size())
+    {
+        return true;
+    }
+    else
+    {
+        delete _backup.back();
+        _backup.pop_back();
+        return false;
+    }
+}
 
 
 
@@ -1253,6 +1433,7 @@ void Editer::append_group(const size_t index)
 
 void Editer::rotate(const double angle, const bool unitary)
 {
+    store_backup();
     const double rad = angle * Geo::PI / 180;
     Geo::Coord coord;
     if (unitary)
@@ -1278,6 +1459,7 @@ void Editer::rotate(const double angle, const bool unitary)
 
 void Editer::flip(const bool direction, const bool unitary)
 {
+    store_backup();
     Geo::Coord coord;
     if (unitary)
     {

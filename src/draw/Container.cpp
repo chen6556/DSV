@@ -1041,6 +1041,31 @@ void ContainerGroup::append(Geo::Bezier *bezier)
     _containers.push_back(bezier);
 }
 
+void ContainerGroup::insert(const size_t index, Container *container)
+{
+    _containers.insert(_containers.begin() + index, container);
+}
+
+void ContainerGroup::insert(const size_t index, CircleContainer *container)
+{
+    _containers.insert(_containers.begin() + index, container);
+}
+
+void ContainerGroup::insert(const size_t index, Link *container)
+{
+    _containers.insert(_containers.begin() + index, container);
+}
+
+void ContainerGroup::insert(const size_t index, Geo::Polyline *container)
+{
+    _containers.insert(_containers.begin() + index, container);
+}
+
+void ContainerGroup::insert(const size_t index, Geo::Bezier *bezier)
+{
+    _containers.insert(_containers.begin() + index, bezier);
+}
+
 std::vector<Geo::Geometry *>::iterator ContainerGroup::remove(const size_t index)
 {
     assert(index < _containers.size());

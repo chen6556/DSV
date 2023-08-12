@@ -207,6 +207,16 @@ public:
 
     void append(Geo::Bezier *bezier);
 
+    void insert(const size_t index, Container *container);
+
+    void insert(const size_t index, CircleContainer *container);
+
+    void insert(const size_t index, Link *container);
+
+    void insert(const size_t index, Geo::Polyline *container);
+
+    void insert(const size_t index, Geo::Bezier *bezier);
+
     std::vector<Geo::Geometry *>::iterator remove(const size_t index);
 
     std::vector<Geo::Geometry *>::iterator remove(const std::vector<Geo::Geometry *>::iterator &it);
