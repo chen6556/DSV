@@ -567,13 +567,14 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             if (_editer->point_cache().size() > _bezier_order && (_editer->point_cache().size() - 2) % _bezier_order == 0) 
             {
                 const size_t count = _editer->point_cache().size();
-                _editer->point_cache().back().coord().x = _mouse_pos_1.x();
                 if (_editer->point_cache()[count - 2].coord().x == _editer->point_cache()[count - 3].coord().x)
                 {
+                    _editer->point_cache().back().coord().x = _editer->point_cache()[count - 2].coord().x;
                     _editer->point_cache().back().coord().y = _mouse_pos_1.y();
                 }
                 else
                 {
+                    _editer->point_cache().back().coord().x = _mouse_pos_1.x();
                     _editer->point_cache().back().coord().y = (_editer->point_cache()[count - 3].coord().y - _editer->point_cache()[count - 2].coord().y) /
                         (_editer->point_cache()[count - 3].coord().x - _editer->point_cache()[count - 2].coord().x) * 
                         (_mouse_pos_1.x() - _editer->point_cache()[count - 2].coord().x) + _editer->point_cache()[count - 2].coord().y;
