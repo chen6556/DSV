@@ -182,7 +182,13 @@ void LayersManager::remove_layer()
     const int index = count - 1 - ui->layers_view->currentIndex().row();
     _graph->remove_group(index);
     _layers.remove(count - 1 - index);
-    _layers_model->setStringList(_layers);
+    if (_layers.empty())
+    {
+        _layers.append("O 0");
+        _graph->append_group();
+        _graph->back().memo()["layer_name"] = "0";
+    }
+    _layers_model->setStringList(_layers);    
 }
 
 void LayersManager::change_layer_name(const QModelIndex &row, const QModelIndex &col, const QList<int> &roles)
