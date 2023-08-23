@@ -19,6 +19,8 @@ private:
     Ui::LayersManager *ui = nullptr;
     QMenu *_menu = nullptr;
     QAction *_show = nullptr;
+    QAction *_up = nullptr;
+    QAction *_down = nullptr;
     QAction *_add = nullptr;
     QAction *_insert = nullptr;
     QAction *_del = nullptr;
@@ -36,6 +38,10 @@ protected:
 
 private slots:
     void show_layer();
+
+    void layer_up();
+
+    void layer_down();
 
     void add_layer();
 

@@ -639,6 +639,14 @@ ContainerGroup *ContainerGroup::clone() const
     return graph;
 }
 
+void ContainerGroup::transfer(ContainerGroup &group)
+{
+    group.clear();
+    group._containers.assign(_containers.begin(), _containers.end());
+    group._memo = _memo;
+    _containers.clear();
+}
+
 ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
 {
     if (this != &group)

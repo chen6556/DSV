@@ -17,6 +17,8 @@ public:
 
     Graph *clone() const;
 
+    void transfer(Graph &graph);
+
     Graph &operator=(const Graph &graph);
 
     Graph &operator=(const Graph &&graph);
@@ -28,6 +30,10 @@ public:
     std::vector<ContainerGroup> &container_groups();
 
     const std::vector<ContainerGroup> &container_groups() const;
+
+    ContainerGroup &operator[](const size_t index);
+
+    const ContainerGroup &operator[](const size_t index) const;
 
     const bool empty() const;
 

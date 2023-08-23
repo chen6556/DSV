@@ -24,6 +24,18 @@ Graph *Graph::clone() const
     return new Graph(*this);
 }
 
+void Graph::transfer(Graph &graph)
+{
+    graph.clear();
+    graph._memo = _memo;
+    for (ContainerGroup &group : _container_groups)
+    {
+        graph.append_group();
+        group.transfer(graph.back());
+    }
+    clear();
+}
+
 Graph &Graph::operator=(const Graph &graph)
 {
     if (this != &graph)
@@ -76,6 +88,18 @@ std::vector<ContainerGroup> &Graph::container_groups()
 const std::vector<ContainerGroup> &Graph::container_groups() const
 {
     return _container_groups;
+}
+
+ContainerGroup &Graph::operator[](const size_t index)
+{
+    assert(index < _container_groups.size());
+    return _container_groups[index];
+}
+
+const ContainerGroup &Graph::operator[](const size_t index) const
+{
+    assert(index < _container_groups.size());
+    return _container_groups[index];
 }
 
 const bool Graph::empty() const

@@ -147,6 +147,8 @@ public:
 
     ContainerGroup *clone() const;
 
+    void transfer(ContainerGroup &group);
+
     ContainerGroup &operator=(const ContainerGroup &group);
 
     ContainerGroup &operator=(const ContainerGroup &&group);
