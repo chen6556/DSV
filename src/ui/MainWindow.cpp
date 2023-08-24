@@ -77,7 +77,7 @@ void MainWindow::init()
     _layers_cbx->view()->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->statusBar->addPermanentWidget(_layers_cbx);
     _layers_cbx->setModel(_layers_manager->model());
-    connect(_layers_cbx, &QComboBox::currentIndexChanged, this, [this](const int index){_editer.set_current_group(index);});
+    connect(_layers_cbx, &QComboBox::currentIndexChanged, this, [this](const int index){_editer.set_current_group(_editer.groups_count() - 1 - index);});
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
