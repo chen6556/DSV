@@ -1,0 +1,429 @@
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Qt.labs.platform
+import DSV.MainWindow
+import DSV.Canvas
+
+Window
+{
+    id: root
+    visible: true
+    width: 1200
+    height: 710
+    color: "#8E8E8E"
+    title: "DSV"
+
+    FileDialog
+    {
+        id: fileDialog
+        title: qsTr("Please choose an image file")
+        nameFilters: ["All Files (*.*)", "JSON: (*.json *.JSON)", "PLT (*.plt *.PLT)", "PDF (*.pdf *.PDF)"]
+        onAccepted:
+        {
+            var path = fileDialog.file.toString()
+            filePath.text = path.slice(8)
+            bridge.open_file(path.slice(8).toString())
+        }
+    }
+
+
+    MenuBar
+    {
+        Menu
+        {
+            title: "file"
+            MenuItem
+            {
+                text: "open"
+                onTriggered: fileDialog.open()
+            }
+            MenuItem
+            {
+                text: "save"
+            }
+            MenuItem
+            {
+                text: "save as"
+            }
+            MenuItem
+            {
+                text: "auto save"
+                checkable: true
+            }
+        }
+
+        Menu
+        {
+            title: "setting"
+            MenuItem
+            {
+                text: "atuo layering"
+                checkable: true
+            }
+            MenuItem
+            {
+                text: "rember file type"
+                checkable: true
+            }
+            MenuItem
+            {
+                text: "atuo aligning"
+                checkable: true
+            }
+            MenuItem
+            {
+                text: "advanced"
+            }
+        }
+    }
+
+    Text
+    {
+        id: currentTool
+        width: 120
+        height: 24
+        anchors.left: parent.left
+        anchors.leftMargin: 10
+        anchors.top: parent.top
+        anchors.topMargin: 10
+        anchors.bottomMargin: 10
+
+        font.pointSize: 12
+        horizontalAlignment: Text.AlignHCenter
+    }
+
+    Button
+    {
+        id: noTool
+        width: 102
+        height: 25
+        anchors.horizontalCenter: currentTool.horizontalCenter
+        anchors.top: currentTool.bottom
+        anchors.topMargin: 10
+        anchors.bottomMargin: 10
+
+        text: "←"
+        font.pointSize: 10
+        onClicked:
+        {
+            canvas.use_last_tool()
+        }
+    }
+
+    Button
+    {
+        id: polylineTool
+        width: 102
+        height: 25
+        anchors.horizontalCenter: currentTool.horizontalCenter
+        anchors.top: noTool.bottom
+        anchors.topMargin: 10
+        anchors.bottomMargin: 10
+
+        text: "Polyline"
+        font.pointSize: 10
+
+        onClicked: canvas.use_tool(1)
+    }
+
+    Button
+    {
+        id: rectangleTool
+        width: 102
+        height: 25
+        anchors.horizontalCenter: currentTool.horizontalCenter
+        anchors.top: polylineTool.bottom
+        anchors.topMargin: 10
+        anchors.bottomMargin: 10
+
+        text: "Rectangle"
+        font.pointSize: 10
+
+        onClicked: canvas.use_tool(2)
+    }
+
+    Button
+    {
+        id: circleTool
+        width: 102
+        height: 25
+        anchors.horizontalCenter: currentTool.horizontalCenter
+        anchors.top: rectangleTool.bottom
+        anchors.topMargin: 10
+        anchors.bottomMargin: 10
+
+        text: "Circle"
+        font.pointSize: 10
+
+        onClicked: canvas.use_tool(0)
+    }
+
+    Button
+    {
+        id: curveTool
+        width: 52
+        height: 25
+        anchors.top: circleTool.bottom
+        anchors.left: circleTool.left
+        anchors.topMargin: 10
+        anchors.bottomMargin: 10
+        anchors.rightMargin: 3
+
+        text: "Curve"
+        font.pointSize: 10
+
+        onClicked:
+        {
+            canvas.set_bezier_order(curveOrder.value)
+            canvas.use_tool(3)
+        }
+    }
+
+    SpinBox
+    {
+        id: curveOrder
+        width: 46
+        height: 24
+        anchors.top: circleTool.bottom
+        anchors.left: curveTool.right
+        anchors.topMargin: 10
+        anchors.bottomMargin: 10
+        anchors.leftMargin: 3
+
+        from: 2
+        to: 5
+        value: 3
+    }
+
+    Button
+    {
+        id: rotateTool
+        width: 52
+        height: 25
+        anchors.top: curveTool.bottom
+        anchors.left: circleTool.left
+        anchors.topMargin: 10
+        anchors.bottomMargin: 10
+        anchors.rightMargin: 3
+
+        text: "Rotate"
+        font.pointSize: 10
+    }
+
+    Rectangle
+    {
+        width: 46
+        height: 25
+        anchors.top: curveTool.bottom
+        anchors.left: rotateTool.right
+        anchors.topMargin: 10
+        anchors.bottomMargin: 10
+        anchors.leftMargin: 3
+        radius: 2
+
+        TextInput
+        {
+            id: rotateAnlge
+            width: 28
+            height: 18
+            anchors.left: parent.left
+            anchors.leftMargin: 5
+            anchors.bottom: parent.bottom
+            anchors.topMargin: 8
+            clip: true
+
+            font.pointSize: 10
+            validator: IntValidator
+            {
+                bottom: -360
+                top: 360
+            }
+        }
+
+        Label
+        {
+            width: 8
+            height: 25
+            anchors.right: parent.right
+            anchors.top: rotateAnlge.top
+            text: "°"
+        }
+    }
+
+    Button
+    {
+        id: flipXTool
+        width: 50
+        height: 25
+        anchors.top: rotateTool.bottom
+        anchors.left: rotateTool.left
+        anchors.topMargin: 10
+        anchors.bottomMargin: 10
+        anchors.rightMargin: 3
+
+        text: "FlipX"
+        font.pointSize: 10
+    }
+
+    Button
+    {
+        id: flipYTool
+        width: 50
+        height: 25
+        anchors.top: rotateTool.bottom
+        anchors.left: flipXTool.right
+        anchors.topMargin: 10
+        anchors.bottomMargin: 10
+        anchors.leftMargin: 3
+
+        text: "FlipY"
+        font.pointSize: 10
+    }
+
+    Rectangle
+    {
+        width: parent.width - 147
+        height: parent.height - 4
+        anchors.left: parent.left
+        anchors.leftMargin: 145
+        anchors.top: parent.top
+        anchors.topMargin: 4
+
+        DSVCanvas
+        {
+            id: canvas
+            anchors.fill: parent
+        }
+    }
+
+    Rectangle
+    {
+        width: parent.width
+        height: 30
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        color: "#8E8E8E"
+
+        Text
+        {
+            id: coord
+            height: 24
+            width: 70
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: 2
+            anchors.rightMargin: 2
+
+            font.pointSize: 12
+            text: "text"
+        }
+
+        Rectangle
+        {
+            id: sparator1
+            width: 1
+            height: 24
+            anchors.left: coord.right
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.leftMargin: 4
+            anchors.rightMargin: 4
+            color: "black"
+        }
+
+        Text
+        {
+            id: info
+            height: 24
+            width: 140
+            anchors.left: sparator1.right
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: 2
+            anchors.rightMargin: 2
+
+            font.pointSize: 12
+            text: "text"
+        }
+
+        Rectangle
+        {
+            id: sparator2
+            width: 1
+            height: 24
+            anchors.left: info.right
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.leftMargin: 4
+            anchors.rightMargin: 4
+            color: "black"
+        }
+
+        Text
+        {
+            id: filePath
+            height: 24
+            width: 240
+            anchors.left: sparator2.right
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: 2
+            anchors.rightMargin: 2
+
+            font.pointSize: 12
+            text: "text"
+        }
+
+        ComboBox
+        {
+            id: layersCbx
+            width: 60
+            height: 24
+
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.rightMargin: 6
+        }
+
+        Button
+        {
+            id: layers
+            width: 52
+            height: 26
+            anchors.right: layersCbx.left
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.rightMargin: 4
+            background: Rectangle
+            {
+                color: "#8D8D8D"
+                border.width: 1
+                radius: 2
+            }
+
+            text: "Layers"
+        }
+    }
+
+
+    Connections
+    {
+        target: canvas
+        onToolChanged:
+        {
+            switch(tool)
+            {
+            case 0:
+                currentTool.text = "Circle"
+                break
+            case 1:
+                currentTool.text = "Polyline"
+                break
+            case 2:
+                currentTool.text = "Rectangle"
+                break
+            case 3:
+                currentTool.text = "Bezier Curve"
+                break
+            default:
+                currentTool.text = ""
+            }
+        }
+    }
+}

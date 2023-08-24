@@ -19,7 +19,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/output/)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Gui Core)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Gui Core Quick)
 find_package(qpdf)
 
 add_subdirectory(src)
@@ -40,7 +40,15 @@ qt_add_executable(DSV
     src/resource/icon.rc
 )
 
-target_link_libraries(DSV PRIVATE Qt6::Widgets Qt6::Gui Qt6::Core qpdf::libqpdf)
+qt_add_qml_module(DSV
+    URI DSV
+    VERSION 1.0
+    
+    QML_FILES
+    src/ui/MainWindow.qml
+)
+
+target_link_libraries(DSV PRIVATE Qt6::Widgets Qt6::Gui Qt6::Core Qt6::Quick qpdf::libqpdf)
 
 set_target_properties(DSV PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com

@@ -1,24 +1,22 @@
 #pragma once
-#include <QWidget>
+
+#include <QQuickPaintedItem>
 #include <QPaintEvent>
 #include <QPainter>
-#include <QLabel>
-#include <QTextEdit>
 #include "base/Editer.hpp"
 
 
-class Canvas : public QWidget
+class Canvas : public QQuickPaintedItem
 {
     Q_OBJECT
+    Q_PROPERTY(int tool NOTIFY toolChanged)
 
 private:
     Geo::Circle _circle_cache;
     Geo::Rectangle _rectangle_cache, _select_rect;
     std::list<QLineF> _reflines;
     QPolygonF _catched_points;
-    Editer *_editer = nullptr;
-    QLabel **_info_labels = nullptr;
-    QTextEdit _input_line;
+    Editer _editer;
 
     double _ratio = 1; // 缩放系数
     size_t _bezier_order = 3; // 贝塞尔曲线阶数
@@ -38,20 +36,20 @@ private:
 private:
     void init();
 
-    void paint_cache();
+    void paint_cache(QPainter *painter);
 
-    void paint_graph();
+    void paint_graph(QPainter *painter);
 
-    void paint_select_rect();
+    void paint_select_rect(QPainter *painter);
 
-protected:
-    void paintEvent(QPaintEvent *event);
-
+public:
     void mousePressEvent(QMouseEvent *event);
 
     void mouseReleaseEvent(QMouseEvent *event);
 
     void mouseMoveEvent(QMouseEvent *event);
+
+    void hoverMoveEvent(QHoverEvent *event);
 
     void wheelEvent(QWheelEvent *event);
 
@@ -59,14 +57,14 @@ protected:
 
 public:
 signals:
-    void tool_changed(const int &);
+    void toolChanged(const int tool);
 
 public:
-    Canvas(QLabel **labels = nullptr, QWidget *parent = nullptr);
+    Canvas(QQuickPaintedItem *parent = nullptr);
 
-    void bind_editer(Editer *editer);
+    void paint(QPainter *painter) Q_DECL_OVERRIDE;
 
-    void use_tool(const int value);
+    Q_INVOKABLE void use_tool(const int value);
 
     const bool is_painting() const;
 
@@ -80,7 +78,7 @@ public:
 
     const size_t groups_count() const;
 
-    void set_bezier_order(const size_t order);
+    Q_INVOKABLE void set_bezier_order(const size_t order);
     
     const size_t bezier_order() const;
 
@@ -96,9 +94,7 @@ public:
 
     void cancel_painting();
 
-    void use_last_tool();
-
-    void set_info_labels(QLabel **labels);
+    Q_INVOKABLE void use_last_tool();
 
     void copy();
 

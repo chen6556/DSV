@@ -1,38 +1,29 @@
 #pragma once
-#include <QMainWindow>
-#include <QComboBox>
-#include <QToolButton>
-#include "ui/LayersManager.hpp"
+#include <QQuickPaintedItem>
+// #include "ui/LayersManager.hpp"
 #include "draw/Canvas.hpp"
 #include "base/Editer.hpp"
 #include "simulation/StructureBuilder.hpp"
 #include "simulation/StructureMover.hpp"
-#include "ui/Setting.hpp"
+// #include "ui/Setting.hpp"
 #include <QTimer>
 #include <QString>
 
 
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow;}
-QT_END_NAMESPACE
-
-class MainWindow : public QMainWindow
+class MainWindow : public QQuickPaintedItem
 {
     Q_OBJECT
 
 private:
-    Ui::MainWindow *ui = nullptr;
     Canvas _painter;
     Editer _editer;
-    Setting *_setting = nullptr;
+    // Setting *_setting = nullptr;
     StructureBuilder _builder;
     std::vector<Qt::Key> _keys;
     QTimer _clock;
-    QLabel *_info_labels[3] = {nullptr, nullptr, nullptr};
 
-    QComboBox *_layers_cbx = nullptr;
-    LayersManager *_layers_manager = nullptr;
-    QToolButton *_layers_btn = nullptr;
+    // LayersManager *_layers_manager = nullptr;
+    // QToolButton *_layers_btn = nullptr;
     QString _file_type = "All Files: (*.*)";
 
 private:
@@ -45,31 +36,33 @@ protected:
 
     void closeEvent(QCloseEvent *event);
 
-private slots:
-    void open_file();
+public:
+    Q_INVOKABLE void open_file(const QString &path);
 
-    void save_file();
+    Q_INVOKABLE void save_file();
 
-    void auto_save();
+    Q_INVOKABLE void auto_save();
 
-    void saveas_file();
+    Q_INVOKABLE void saveas_file();
 
-    void refresh_tool_label(const int &value);
+    Q_INVOKABLE void refresh_tool_label(const int &value);
 
-    void load_settings();
+    Q_INVOKABLE void load_settings();
 
-    void save_settings();
+    Q_INVOKABLE void save_settings();
 
-    void show_layers_manager();
+    Q_INVOKABLE void show_layers_manager();
 
 
-    void rotate();
+    Q_INVOKABLE void rotate();
 
-    void flip_x();
+    Q_INVOKABLE void flip_x();
 
-    void flip_y();
+    Q_INVOKABLE void flip_y();
 
 public:
-    MainWindow(QWidget *parent = nullptr);
+    MainWindow(QQuickPaintedItem *parent = nullptr);
     ~MainWindow();
+
+    void paint(QPainter *p) Q_DECL_OVERRIDE;
 };
