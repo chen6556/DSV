@@ -430,10 +430,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         _bool_flags[4] = false;
         if (_bool_flags[1]) // paintable
         {
-           /*  if (_circle_cache.empty() && _rectangle_cache.empty() && _info_labels[1])
-            {
-                _info_labels[1]->clear();
-            } */
+            emit infoChanged(QString());
         }
         else
         {
@@ -444,10 +441,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
 
             _select_rect.clear();
             _last_point.clear();
-            /* if (_info_labels[1])
-            {
-                _info_labels[1]->clear();
-            } */
+            emit infoChanged(QString());
             _bool_flags[6] = false;
             _last_clicked_obj = _clicked_obj;
             _clicked_obj = nullptr;
@@ -470,10 +464,6 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     std::swap(_mouse_pos_0, _mouse_pos_1);
     _mouse_pos_1 = event->position();
     emit mousePosChanged();
-    /* if (_info_labels[0])
-    {
-        _info_labels[0]->setText(std::string("X:").append(std::to_string(static_cast<int>(_mouse_pos_1.x()))).append(" Y:").append(std::to_string(static_cast<int>(_mouse_pos_1.y()))).c_str());
-    } */
     const double x = _mouse_pos_1.x() - _mouse_pos_0.x(), y = _mouse_pos_1.y() - _mouse_pos_0.y();
     if (_bool_flags[0]) // 视图可移动
     {
@@ -502,10 +492,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         case 0:
             _circle_cache.radius() = Geo::distance(_mouse_pos_1.x(), _mouse_pos_1.y(),
                                                    _circle_cache.center().coord().x, _circle_cache.center().coord().y);
-            /* if (_info_labels[1] != nullptr)
-            {
-                _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius())).c_str());
-            } */
+            emit infoChanged(QString("Radius:") + QString::fromStdString(std::to_string(_circle_cache.radius())));
             break;
         case 1:
             if (event->modifiers() == Qt::ControlModifier)
@@ -527,19 +514,13 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 _editer.point_cache().back().coord().x = _mouse_pos_1.x();
                 _editer.point_cache().back().coord().y = _mouse_pos_1.y();
             }
-            /* if (_info_labels[1] != nullptr)
-            {
-                _info_labels[1]->setText(std::string("Length:").append(std::to_string(Geo::distance(_editer.point_cache().back(),
-                                                                                                    _editer.point_cache()[_editer.point_cache().size() - 2])))
-                                             .c_str());
-            } */
+            emit infoChanged(QString("Length:") + QString::fromStdString(
+                std::to_string(Geo::distance(_editer.point_cache().back(), _editer.point_cache()[_editer.point_cache().size() - 2]))));
             break;
         case 2:
             _rectangle_cache = Geo::Rectangle(_last_point, Geo::Point(_mouse_pos_1.x(), _mouse_pos_1.y()));
-            /* if (_info_labels[1] != nullptr)
-            {
-                _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(_mouse_pos_1.x() - _last_point.coord().x))).append(" Height:").append(std::to_string(std::abs(_mouse_pos_1.y() - _last_point.coord().y))).c_str());
-            } */
+            emit infoChanged(QString("Width:") + QString::fromStdString(std::to_string(std::abs(_mouse_pos_1.x() - _last_point.coord().x))) +
+                "Height:" + QString::fromStdString(std::to_string(std::abs(_mouse_pos_1.y() - _last_point.coord().y))) );
             break;
         case 3:
             if (_editer.point_cache().size() > _bezier_order && (_editer.point_cache().size() - 2) % _bezier_order == 0) 
@@ -564,10 +545,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             break;
         default:
-           /*  if (_info_labels[1] != nullptr)
-            {
-                _info_labels[1]->clear();
-            } */
+            emit infoChanged(QString());
             break;
         }
         update();
@@ -590,18 +568,13 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 _editer.auto_aligning(_clicked_obj, _mouse_pos_1.x(), _mouse_pos_1.y(), _reflines,
                     GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool());
             }
-            /* if (_info_labels[1])
-            {
-                _info_labels[1]->clear();
-            } */
+            emit infoChanged(QString());
         }
         else if (!_select_rect.empty())
         {
             _select_rect = Geo::Rectangle(_last_point.coord().x, _last_point.coord().y, _mouse_pos_1.x(), _mouse_pos_1.y());
-           /*  if (_info_labels[1])
-            {
-                _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(_mouse_pos_1.x() - _last_point.coord().x))).append(" Height:").append(std::to_string(std::abs(_mouse_pos_1.y() - _last_point.coord().y))).c_str());
-            } */
+            emit infoChanged(QString("Width:") + QString::fromStdString(std::to_string(std::abs(_mouse_pos_1.x() - _last_point.coord().x))) +
+                "Height:" + QString::fromStdString(std::to_string(std::abs(_mouse_pos_1.y() - _last_point.coord().y))));
         }
         update();
     }
@@ -627,10 +600,6 @@ void Canvas::hoverMoveEvent(QHoverEvent *event)
     std::swap(_mouse_pos_0, _mouse_pos_1);
     _mouse_pos_1 = event->position();
     emit mousePosChanged();
-    /* if (_info_labels[0])
-    {
-        _info_labels[0]->setText(std::string("X:").append(std::to_string(static_cast<int>(_mouse_pos_1.x()))).append(" Y:").append(std::to_string(static_cast<int>(_mouse_pos_1.y()))).c_str());
-    } */
     const double x = _mouse_pos_1.x() - _mouse_pos_0.x(), y = _mouse_pos_1.y() - _mouse_pos_0.y();
     if (_bool_flags[0]) // 视图可移动
     {
@@ -659,10 +628,7 @@ void Canvas::hoverMoveEvent(QHoverEvent *event)
         case 0:
             _circle_cache.radius() = Geo::distance(_mouse_pos_1.x(), _mouse_pos_1.y(),
                                                    _circle_cache.center().coord().x, _circle_cache.center().coord().y);
-            /* if (_info_labels[1] != nullptr)
-            {
-                _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius())).c_str());
-            } */
+            emit infoChanged(QString("Radius:") + QString::fromStdString(std::to_string(_circle_cache.radius())));
             break;
         case 1:
             if (event->modifiers() == Qt::ControlModifier)
@@ -684,19 +650,13 @@ void Canvas::hoverMoveEvent(QHoverEvent *event)
                 _editer.point_cache().back().coord().x = _mouse_pos_1.x();
                 _editer.point_cache().back().coord().y = _mouse_pos_1.y();
             }
-            /* if (_info_labels[1] != nullptr)
-            {
-                _info_labels[1]->setText(std::string("Length:").append(std::to_string(Geo::distance(_editer.point_cache().back(),
-                                                                                                    _editer.point_cache()[_editer.point_cache().size() - 2])))
-                                             .c_str());
-            } */
+            emit infoChanged(QString("Length:") + QString::fromStdString(
+                std::to_string(Geo::distance(_editer.point_cache().back(), _editer.point_cache()[_editer.point_cache().size() - 2]))));
             break;
         case 2:
             _rectangle_cache = Geo::Rectangle(_last_point, Geo::Point(_mouse_pos_1.x(), _mouse_pos_1.y()));
-            /* if (_info_labels[1] != nullptr)
-            {
-                _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(_mouse_pos_1.x() - _last_point.coord().x))).append(" Height:").append(std::to_string(std::abs(_mouse_pos_1.y() - _last_point.coord().y))).c_str());
-            } */
+            emit infoChanged(QString("Width:") + QString::fromStdString(std::to_string(std::abs(_mouse_pos_1.x() - _last_point.coord().x))) +
+                "Height:" + QString::fromStdString(std::to_string(std::abs(_mouse_pos_1.y() - _last_point.coord().y))) );
             break;
         case 3:
             if (_editer.point_cache().size() > _bezier_order && (_editer.point_cache().size() - 2) % _bezier_order == 0) 
@@ -721,10 +681,7 @@ void Canvas::hoverMoveEvent(QHoverEvent *event)
             }
             break;
         default:
-           /*  if (_info_labels[1] != nullptr)
-            {
-                _info_labels[1]->clear();
-            } */
+            emit infoChanged(QString());
             break;
         }
         update();
@@ -747,18 +704,13 @@ void Canvas::hoverMoveEvent(QHoverEvent *event)
                 _editer.auto_aligning(_clicked_obj, _mouse_pos_1.x(), _mouse_pos_1.y(), _reflines,
                     GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool());
             }
-            /* if (_info_labels[1])
-            {
-                _info_labels[1]->clear();
-            } */
+            emit infoChanged(QString());
         }
         else if (!_select_rect.empty())
         {
             _select_rect = Geo::Rectangle(_last_point.coord().x, _last_point.coord().y, _mouse_pos_1.x(), _mouse_pos_1.y());
-           /*  if (_info_labels[1])
-            {
-                _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(_mouse_pos_1.x() - _last_point.coord().x))).append(" Height:").append(std::to_string(std::abs(_mouse_pos_1.y() - _last_point.coord().y))).c_str());
-            } */
+            emit infoChanged(QString("Width:") + QString::fromStdString(std::to_string(std::abs(_mouse_pos_1.x() - _last_point.coord().x))) +
+                "Height:" + QString::fromStdString(std::to_string(std::abs(_mouse_pos_1.y() - _last_point.coord().y))));
         }
         update();
     }

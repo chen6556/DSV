@@ -332,16 +332,15 @@ Window
 
         Text
         {
-            id: info
+            id: infomation
             height: 24
-            width: 140
+            width: Math.max(contentWidth, 140)
             anchors.left: sparator1.right
             anchors.bottom: parent.bottom
             anchors.leftMargin: 2
             anchors.rightMargin: 2
 
             font.pointSize: 12
-            text: "text"
         }
 
         Rectangle
@@ -349,7 +348,7 @@ Window
             id: sparator2
             width: 1
             height: 24
-            anchors.left: info.right
+            anchors.left: infomation.right
             anchors.verticalCenter: parent.verticalCenter
             anchors.leftMargin: 4
             anchors.rightMargin: 4
@@ -367,7 +366,6 @@ Window
             anchors.rightMargin: 2
 
             font.pointSize: 12
-            text: "text"
         }
 
         ComboBox
@@ -423,6 +421,15 @@ Window
             default:
                 currentTool.text = ""
             }
+        }
+    }
+
+    Connections
+    {
+        target: canvas
+        function onInfoChanged(info)
+        {
+           infomation.text = info
         }
     }
 }

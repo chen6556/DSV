@@ -12,6 +12,7 @@ class Canvas : public QQuickPaintedItem
     Q_PROPERTY(int tool NOTIFY toolChanged)
     Q_PROPERTY(int mouseX READ mouseX NOTIFY mousePosChanged)
     Q_PROPERTY(int mouseY READ mouseY NOTIFY mousePosChanged)
+    Q_PROPERTY(QString info NOTIFY infoChanged)
 
 private:
     Geo::Circle _circle_cache;
@@ -65,6 +66,8 @@ signals:
     void toolChanged(const int tool);
 
     void mousePosChanged();
+
+    void infoChanged(const QString info);
 
 public:
     Canvas(QQuickPaintedItem *parent = nullptr);
