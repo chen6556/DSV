@@ -10,6 +10,8 @@ class Canvas : public QQuickPaintedItem
 {
     Q_OBJECT
     Q_PROPERTY(int tool NOTIFY toolChanged)
+    Q_PROPERTY(int mouseX READ mouseX NOTIFY mousePosChanged)
+    Q_PROPERTY(int mouseY READ mouseY NOTIFY mousePosChanged)
 
 private:
     Geo::Circle _circle_cache;
@@ -28,6 +30,7 @@ private:
     int _int_flags[2] = {-1, -1};
 
     QPointF _mouse_pos_0, _mouse_pos_1, _stored_mouse_pos;
+    int _mouseX, _mouseY;
     Geo::Point _last_point;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
 
@@ -42,7 +45,7 @@ private:
 
     void paint_select_rect(QPainter *painter);
 
-public:
+protected:
     void mousePressEvent(QMouseEvent *event);
 
     void mouseReleaseEvent(QMouseEvent *event);
@@ -59,10 +62,16 @@ public:
 signals:
     void toolChanged(const int tool);
 
+    void mousePosChanged();
+
 public:
     Canvas(QQuickPaintedItem *parent = nullptr);
 
     void paint(QPainter *painter) Q_DECL_OVERRIDE;
+
+    int mouseX();
+
+    int mouseY();
 
     Q_INVOKABLE void use_tool(const int value);
 

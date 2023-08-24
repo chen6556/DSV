@@ -309,14 +309,14 @@ Window
         {
             id: coord
             height: 24
-            width: 70
+            width: Math.max(contentWidth, 80)
             anchors.left: parent.left
             anchors.bottom: parent.bottom
             anchors.leftMargin: 2
             anchors.rightMargin: 2
 
             font.pointSize: 12
-            text: "text"
+            text: "X" + canvas.mouseX + " Y" + canvas.mouseY
         }
 
         Rectangle
@@ -405,7 +405,7 @@ Window
     Connections
     {
         target: canvas
-        onToolChanged:
+        function onToolChanged(tool)
         {
             switch(tool)
             {

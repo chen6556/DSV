@@ -32,6 +32,7 @@ void Canvas::init()
     setAcceptHoverEvents(true);
     setAcceptedMouseButtons(Qt::MouseButton::AllButtons);
     setFlag(QQuickItem::Flag::ItemAcceptsInputMethod, true);
+    setCursor(QCursor(Qt::CursorShape::CrossCursor));
 }
 
 void Canvas::paint_cache(QPainter *painter)
@@ -467,6 +468,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     const double center_x = size().width() / 2.0, center_y = size().height() / 2.0;
     std::swap(_mouse_pos_0, _mouse_pos_1);
     _mouse_pos_1 = event->position();
+    emit mousePosChanged();
     /* if (_info_labels[0])
     {
         _info_labels[0]->setText(std::string("X:").append(std::to_string(static_cast<int>(_mouse_pos_1.x()))).append(" Y:").append(std::to_string(static_cast<int>(_mouse_pos_1.y()))).c_str());
@@ -614,6 +616,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
         }
     }
+
+    QQuickPaintedItem::mouseMoveEvent(event);
 }
 
 void Canvas::hoverMoveEvent(QHoverEvent *event)
@@ -621,6 +625,7 @@ void Canvas::hoverMoveEvent(QHoverEvent *event)
     const double center_x = size().width() / 2.0, center_y = size().height() / 2.0;
     std::swap(_mouse_pos_0, _mouse_pos_1);
     _mouse_pos_1 = event->position();
+    emit mousePosChanged();
     /* if (_info_labels[0])
     {
         _info_labels[0]->setText(std::string("X:").append(std::to_string(static_cast<int>(_mouse_pos_1.x()))).append(" Y:").append(std::to_string(static_cast<int>(_mouse_pos_1.y()))).c_str());
@@ -768,6 +773,8 @@ void Canvas::hoverMoveEvent(QHoverEvent *event)
             QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
         }
     }
+
+    QQuickPaintedItem::hoverEnterEvent(event);
 }
 
 void Canvas::wheelEvent(QWheelEvent *event)
@@ -938,6 +945,18 @@ void Canvas::use_tool(const int value)
     default:
         break;
     }
+}
+
+int Canvas::mouseX()
+{
+    _mouseX = _mouse_pos_1.x();
+    return _mouseX;
+}
+
+int Canvas::mouseY()
+{
+    _mouseY = _mouse_pos_1.y();
+    return _mouseY;
 }
 
 const bool Canvas::is_painting() const
