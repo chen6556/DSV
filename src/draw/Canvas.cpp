@@ -33,6 +33,7 @@ void Canvas::init()
     setAcceptedMouseButtons(Qt::MouseButton::AllButtons);
     setFlag(QQuickItem::Flag::ItemAcceptsInputMethod, true);
     setCursor(QCursor(Qt::CursorShape::CrossCursor));
+    setFocus(true);
 }
 
 void Canvas::paint_cache(QPainter *painter)
@@ -918,6 +919,87 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
     }
 
     // QQuickPaintedItem::mouseDoubleClickEvent(event);
+}
+
+void Canvas::keyReleaseEvent(QKeyEvent *event)
+{
+    if (is_typing())
+    {
+        return;
+    }
+    switch (event->key())
+    {
+    case Qt::Key_Escape:
+        cancel_painting();
+        _editer.reset_selected_mark();
+        break;
+    case Qt::Key_Space:
+        use_last_tool();
+        break;
+    case Qt::Key_D:
+    case Qt::Key_Delete:
+    case Qt::Key_Backspace:
+        if (_editer.remove_selected())
+        {
+           update();
+        }
+        break;
+    case Qt::Key_A:
+        if (event->modifiers() == Qt::ControlModifier)
+        {
+            _editer.reset_selected_mark(true);
+            update();
+        }
+        break;
+    case Qt::Key_B:
+        use_tool(3);
+        break;
+    case Qt::Key_S:
+        if (event->modifiers() == Qt::ControlModifier)
+        {
+            // save_file();
+        }
+        break;
+    case Qt::Key_C:
+        if (event->modifiers() == Qt::ControlModifier)
+        {
+            copy();
+        }
+        else
+        {
+            use_tool(0);
+        }
+        break;
+    case Qt::Key_X:
+        if (event->modifiers() == Qt::ControlModifier)
+        {
+            cut();
+            update();
+        }
+        break;
+    case Qt::Key_V:
+        if (event->modifiers() == Qt::ControlModifier)
+        {
+            paste();
+            update();
+        }
+        break;
+    case Qt::Key_L:
+        use_tool(1);
+        break;
+    case Qt::Key_R:
+        use_tool(2);
+        break;
+    case Qt::Key_Z:
+        if (event->modifiers() == Qt::ControlModifier && !is_painting())
+        {
+            _editer.load_backup();
+            update();
+        }
+    default:
+        break;
+    }
+    // QMainWindow::keyPressEvent(event);
 }
 
 

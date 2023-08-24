@@ -58,6 +58,8 @@ protected:
 
     void mouseDoubleClickEvent(QMouseEvent *event);
 
+    void keyReleaseEvent(QKeyEvent *event);
+
 public:
 signals:
     void toolChanged(const int tool);
