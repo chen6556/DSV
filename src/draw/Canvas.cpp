@@ -2,6 +2,10 @@
 #include <QCursor>
 #include "io/GlobalSetting.hpp"
 #include "io/File.hpp"
+#include "io/PLTSpirit.hpp"
+#include "io/PDFSpirit.hpp"
+#include <qpdf/QPDF.hh>
+#include <qpdf/QPDFWriter.hh>
 
 
 Canvas::Canvas(QQuickPaintedItem *parent)
@@ -909,7 +913,7 @@ void Canvas::keyReleaseEvent(QKeyEvent *event)
     case Qt::Key_S:
         if (event->modifiers() == Qt::ControlModifier)
         {
-            // save_file();
+            emit saveFile();
         }
         break;
     case Qt::Key_C:
@@ -951,7 +955,6 @@ void Canvas::keyReleaseEvent(QKeyEvent *event)
     default:
         break;
     }
-    // QMainWindow::keyPressEvent(event);
 }
 
 
@@ -1178,4 +1181,62 @@ void Canvas::paste()
     {
         update();
     }
+}
+
+
+
+bool Canvas::modified() const
+{
+    return _editer.modified();
+}
+
+void Canvas::open_file(const QString &path)
+{
+    if (path.isEmpty())
+    {
+        return;
+    }
+
+    _editer.delete_graph();
+    Graph *g = new Graph;
+    if (path.endsWith(".json") || path.endsWith(".JSON"))
+    {
+        File::read(path, g);
+    }
+    else if (path.endsWith(".plt") || path.endsWith(".PLT"))
+    {
+        PLTSpirit spirit;
+        spirit.load_graph(g);
+        std::fstream file(path.toStdString(), std::ios_base::in);
+        spirit.parse(file);
+        file.close();
+    }
+    else if (path.endsWith(".pdf") || path.endsWith(".PDF"))
+    {
+        QPDF pdf;
+        pdf.processFile(path.toStdString().c_str());
+
+        QPDFWriter outpdf(pdf);
+        outpdf.setStreamDataMode(qpdf_stream_data_e::qpdf_s_uncompress);
+        outpdf.setDecodeLevel(qpdf_stream_decode_level_e::qpdf_dl_all);
+        outpdf.setOutputMemory();
+        outpdf.setNewlineBeforeEndstream(true);
+        outpdf.write();
+        std::shared_ptr<Buffer> buffer = outpdf.getBufferSharedPointer();
+
+        std::stringstream ss(reinterpret_cast<char *>(buffer->getBuffer()), std::ios::in);
+        PDFSpirit spirit;
+        spirit.load_graph(g);
+        spirit.parse(ss);
+    }
+    _editer.load_graph(g, path);
+    _editer.reset_modified();
+    g = nullptr;
+}
+
+void Canvas::save_file(const QString &path)
+{
+    File::write(path, _editer.graph());
+    _editer.set_path(path);
+    _editer.reset_modified();
 }

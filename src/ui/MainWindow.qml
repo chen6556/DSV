@@ -15,17 +15,48 @@ Window
 
     FileDialog
     {
-        id: fileDialog
-        title: qsTr("Please choose an image file")
+        id: openFileDialog
+        title: qsTr("Open")
         nameFilters: ["All Files (*.*)", "JSON: (*.json *.JSON)", "PLT (*.plt *.PLT)", "PDF (*.pdf *.PDF)"]
         onAccepted:
         {
-            var path = fileDialog.file.toString()
-            filePath.text = path.slice(8)
-            bridge.open_file(path.slice(8).toString())
+            filePath.text = openFileDialog.file.toString().slice(8)
+            if (filePath.text.length > 0)
+            {
+                canvas.open_file(filePath.text)
+            }
         }
     }
 
+    FileDialog
+    {
+        id: saveFileDialog
+        title: qsTr("Save")
+        nameFilters: ["All Files (*.*)", "JSON: (*.json *.JSON)", "PLT (*.plt *.PLT)", "PDF (*.pdf *.PDF)"]
+        onAccepted:
+        {
+            filePath.text = saveFileDialog.file.toString().slice(8)
+            if (filePath.text.length > 0)
+            {
+                canvas.save_file(filePath.text)
+            }
+        }
+    }
+
+    Timer
+    {
+        id: autoSave
+        interval: 3000
+        repeat: true
+        triggeredOnStart: true
+        onTriggered:
+        {
+            if (filePath.text.length > 0)
+            {
+                save.triggered()
+            }
+        }
+    }
 
     MenuBar
     {
@@ -35,20 +66,52 @@ Window
             MenuItem
             {
                 text: "open"
-                onTriggered: fileDialog.open()
+                onTriggered:
+                {
+                    if (canvas.modifed)
+                    {
+                        saveAs.triggered()
+                    }
+                    openFileDialog.open()
+                }
             }
             MenuItem
             {
+                id: save
                 text: "save"
+                onTriggered:
+                {
+                    if (filePath.text.length > 0)
+                    {
+                        canvas.save_file(filePath.text)
+                    }
+                    else
+                    {
+                        saveAs.triggered()
+                    }
+                }
             }
             MenuItem
             {
+                id: saveAs
                 text: "save as"
+                onTriggered: saveFileDialog.open()
             }
             MenuItem
             {
                 text: "auto save"
                 checkable: true
+                onCheckedChanged:
+                {
+                    if (checked)
+                    {
+                        autoSave.start()
+                    }
+                    else
+                    {
+                        autoSave.stop()
+                    }
+                }
             }
         }
 
@@ -430,6 +493,15 @@ Window
         function onInfoChanged(info)
         {
            infomation.text = info
+        }
+    }
+
+    Connections
+    {
+        target: canvas
+        function onSaveFile()
+        {
+           save.triggered()
         }
     }
 }

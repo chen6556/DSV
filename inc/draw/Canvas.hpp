@@ -9,10 +9,8 @@
 class Canvas : public QQuickPaintedItem
 {
     Q_OBJECT
-    Q_PROPERTY(int tool NOTIFY toolChanged)
     Q_PROPERTY(int mouseX READ mouseX NOTIFY mousePosChanged)
     Q_PROPERTY(int mouseY READ mouseY NOTIFY mousePosChanged)
-    Q_PROPERTY(QString info NOTIFY infoChanged)
 
 private:
     Geo::Circle _circle_cache;
@@ -69,6 +67,8 @@ signals:
 
     void infoChanged(const QString info);
 
+    void saveFile();
+
 public:
     Canvas(QQuickPaintedItem *parent = nullptr);
 
@@ -115,4 +115,11 @@ public:
     void cut();
 
     void paste();
+
+
+    Q_INVOKABLE bool modified() const;
+
+    Q_INVOKABLE void open_file(const QString &path);
+
+    Q_INVOKABLE void save_file(const QString &path);
 };
