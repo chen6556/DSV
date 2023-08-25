@@ -19,6 +19,7 @@ Window
         id: openFileDialog
         title: qsTr("Open")
         nameFilters: ["All Files (*.*)", "JSON: (*.json *.JSON)", "PLT (*.plt *.PLT)", "PDF (*.pdf *.PDF)"]
+        fileMode: FileDialog.OpenFile
         onAccepted:
         {
             filePath.text = openFileDialog.file.toString().slice(8)
@@ -33,7 +34,8 @@ Window
     {
         id: saveFileDialog
         title: qsTr("Save")
-        nameFilters: ["All Files (*.*)", "JSON: (*.json *.JSON)", "PLT (*.plt *.PLT)", "PDF (*.pdf *.PDF)"]
+        nameFilters: ["JSON: (*.json *.JSON)"]
+        fileMode: FileDialog.SaveFile
         onAccepted:
         {
             filePath.text = saveFileDialog.file.toString().slice(8)
@@ -52,7 +54,7 @@ Window
         triggeredOnStart: true
         onTriggered:
         {
-            if (filePath.text.length > 0)
+            if (filePath.text.length > 0 && (filePath.text.endWith(".json") || filePath.text.endWith(".JSON")))
             {
                 save.triggered()
             }
@@ -78,6 +80,7 @@ Window
                     {
                         saveAs.triggered()
                     }
+                    openFileDialog.selectedNameFilter.index = openFileDialog.nameFilters.indexOf(setting.FileType)
                     openFileDialog.open()
                 }
             }
@@ -87,7 +90,7 @@ Window
                 text: "save"
                 onTriggered:
                 {
-                    if (filePath.text.length > 0)
+                    if (filePath.text.length > 0 && (filePath.txt.endWith(".json") || filePath.text.endWith(".JSON")))
                     {
                         canvas.save_file(filePath.text)
                     }

@@ -1230,6 +1230,10 @@ void Canvas::open_file(const QString &path)
         spirit.parse(ss);
     }
     _editer.load_graph(g, path);
+    if (GlobalSetting::get_instance()->setting()["auto_layering"].toBool())
+    {
+        _editer.auto_layering();
+    }
     _editer.reset_modified();
     g = nullptr;
 }
