@@ -9,8 +9,8 @@
 class Canvas : public QQuickPaintedItem
 {
     Q_OBJECT
-    Q_PROPERTY(int mouseX READ mouseX NOTIFY mousePosChanged)
-    Q_PROPERTY(int mouseY READ mouseY NOTIFY mousePosChanged)
+    Q_PROPERTY(int mouseX READ mouseX NOTIFY mousePosChanged);
+    Q_PROPERTY(int mouseY READ mouseY NOTIFY mousePosChanged);
 
 private:
     Geo::Circle _circle_cache;

@@ -3,6 +3,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Qt.labs.platform
 import DSV.Canvas
+import DSV.Setting
 
 Window
 {
@@ -45,7 +46,7 @@ Window
 
     Timer
     {
-        id: autoSave
+        id: autoSaveTimer
         interval: 3000
         repeat: true
         triggeredOnStart: true
@@ -56,6 +57,11 @@ Window
                 save.triggered()
             }
         }
+    }
+
+    DSVSetting
+    {
+        id: setting
     }
 
     MenuBar
@@ -99,18 +105,20 @@ Window
             }
             MenuItem
             {
+                id: autoSave
                 text: "auto save"
                 checkable: true
                 onCheckedChanged:
                 {
                     if (checked)
                     {
-                        autoSave.start()
+                        autoSaveTimer.start()
                     }
                     else
                     {
-                        autoSave.stop()
+                        autoSaveTimer.stop()
                     }
+                    setting.AutoSave = checked
                 }
             }
         }
@@ -120,18 +128,23 @@ Window
             title: "setting"
             MenuItem
             {
-                text: "atuo layering"
+                id: autoLayering
+                text: "auto layering"
                 checkable: true
+                onCheckedChanged: setting.AutoLayering = checked
             }
             MenuItem
             {
-                text: "rember file type"
+                id: rememberFileType
+                text: "remember file type"
                 checkable: true
+                onCheckedChanged: setting.RememberFileType = checked
             }
             MenuItem
             {
-                text: "atuo aligning"
-                checkable: true
+                id: autoAligning
+                text: "auto aligning"
+                onCheckedChanged: setting.AutoAligning = checked
             }
             MenuItem
             {
@@ -503,5 +516,13 @@ Window
         {
            save.triggered()
         }
+    }
+
+    Component.onCompleted:
+    {
+        autoSave.checked = setting.AutoSave
+        autoLayering.checked = setting.AutoLayering
+        rememberFileType.checked = setting.RememberFileType
+        autoAligning.checked = setting.AutoAligning
     }
 }
