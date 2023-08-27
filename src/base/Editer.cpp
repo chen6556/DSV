@@ -100,9 +100,9 @@ const bool &Editer::modified() const
     return _modified;
 }
 
-void Editer::reset_modified()
+void Editer::reset_modified(const bool value)
 {
-    _modified = false;
+    _modified = value;
 }
 
 const QString &Editer::path() const

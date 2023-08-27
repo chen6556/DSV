@@ -42,7 +42,7 @@ public:
 
     const bool &modified() const;
 
-    void reset_modified();
+    void reset_modified(const bool value = false);
 
     const QString &path() const;
 
