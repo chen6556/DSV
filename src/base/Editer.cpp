@@ -95,14 +95,14 @@ const Graph *Editer::graph() const
     return _graph;
 }
 
-const bool &Editer::modified() const
+const bool Editer::modified() const
 {
-    return _modified;
+    return _graph->memo()["modified"].to_bool();
 }
 
 void Editer::reset_modified(const bool value)
 {
-    _modified = value;
+    _graph->memo()["modified"] = value;
 }
 
 const QString &Editer::path() const
@@ -164,7 +164,7 @@ void Editer::append_points()
             _graph->append(new Link(Geo::Polyline(), tail_geo, head_geo), _current_group);
         }
         _point_cache.clear();
-        _modified = true;
+        _graph->memo()["modified"] = true;
         return;
     }
 
@@ -200,7 +200,7 @@ void Editer::append_points()
     }
     _point_cache.clear();
 
-    _modified = true;
+    _graph->memo()["modified"] = true;
 }
 
 void Editer::append(const Geo::Circle &circle)
@@ -216,7 +216,7 @@ void Editer::append(const Geo::Circle &circle)
     }
     store_backup();
     _graph->append(new CircleContainer(circle), _current_group);
-    _modified = true;
+    _graph->memo()["modified"] = true;
 }
 
 void Editer::append(const Geo::Rectangle &rect)
@@ -232,7 +232,7 @@ void Editer::append(const Geo::Rectangle &rect)
     }
     store_backup();
     _graph->append(new Container(rect), _current_group);
-    _modified = true;
+    _graph->memo()["modified"] = true;
 }
 
 void Editer::append_bezier(const size_t order)
@@ -316,7 +316,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                     {
                         temp->shape().back().coord() = temp->shape().front().coord();
                     }
-                    _modified = true;
+                    _graph->memo()["modified"] = true;
                     return;
                 }
             }
@@ -350,7 +350,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                     Geo::distance(x1, y1, point.coord().x, point.coord().y) <= catch_distance)
                 {
                     point.translate(x1 - x0, y1 - y0);
-                    _modified = true;
+                    _graph->memo()["modified"] = true;
                     return;
                 }
             }
@@ -369,7 +369,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                     Geo::distance(x1, y1, point.coord().x, point.coord().y) <= catch_distance)
                 {
                     point.translate(x1 - x0, y1 - y0);
-                    _modified = true;
+                    _graph->memo()["modified"] = true;
                     return;
                 }
             }
@@ -435,7 +435,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                         }
                     }
                     temp->update_shape();
-                    _modified = true;
+                    _graph->memo()["modified"] = true;
                     return;
                 }
             }
@@ -446,7 +446,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     default:
         break;
     }
-    _modified = true;
+    _graph->memo()["modified"] = true;
 }
 
 bool Editer::remove_selected()

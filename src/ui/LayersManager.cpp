@@ -127,6 +127,7 @@ void LayersManager::layer_up()
     }
     _layers.remove(count - index);
     _layers_model->setStringList(_layers);
+    _graph->memo()["modified"] = true;
 }  
 
 void LayersManager::layer_down()
@@ -156,6 +157,7 @@ void LayersManager::layer_down()
     }
     _layers.remove(count - 1 - index);
     _layers_model->setStringList(_layers);
+    _graph->memo()["modified"] = true;
 }
 
 void LayersManager::add_layer()
@@ -164,6 +166,7 @@ void LayersManager::add_layer()
     _graph->container_groups().back().memo()["layer_name"] = std::to_string(_layers.size());
     _layers.push_front(QString("O ") + std::to_string(_layers.size()).c_str());
     _layers_model->setStringList(_layers);
+    _graph->memo()["modified"] = true;
 }
 
 void LayersManager::insert_layer()
@@ -174,6 +177,7 @@ void LayersManager::insert_layer()
     _graph->container_group(index).memo()["layer_name"] = std::to_string(_layers.size());
     _layers.insert(count - 1 - index, QString("O ") + std::to_string(_layers.size()).c_str());
     _layers_model->setStringList(_layers);
+    _graph->memo()["modified"] = true;
 }
 
 void LayersManager::remove_layer()
@@ -188,7 +192,8 @@ void LayersManager::remove_layer()
         _graph->append_group();
         _graph->back().memo()["layer_name"] = "0";
     }
-    _layers_model->setStringList(_layers);    
+    _layers_model->setStringList(_layers);
+    _graph->memo()["modified"] = true;  
 }
 
 void LayersManager::change_layer_name(const QModelIndex &row, const QModelIndex &col, const QList<int> &roles)
@@ -203,6 +208,7 @@ void LayersManager::change_layer_name(const QModelIndex &row, const QModelIndex 
     _layers[row.row()] = (_graph->container_group(count - 1 - row.row()).visible() ? QString("O ") : QString("X ")) + new_name;
     _graph->container_group(count - 1 - row.row()).memo()["layer_name"] = new_name.toStdString();
     _layers_model->setStringList(_layers);
+    _graph->memo()["modified"] = true;
 }
 
 

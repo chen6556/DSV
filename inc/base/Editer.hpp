@@ -11,7 +11,6 @@ private:
     Graph *_graph = nullptr;
     QString _file_path;
     std::vector<Geo::Point> _point_cache;
-    bool _modified = false;
     std::list<Graph *> _backup;
     std::list<Geo::Geometry *> _paste_table;
     size_t _current_group = 0;
@@ -40,7 +39,7 @@ public:
 
     const Graph *graph() const;
 
-    const bool &modified() const;
+    const bool modified() const;
 
     void reset_modified(const bool value = false);
 
