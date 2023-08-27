@@ -373,7 +373,19 @@ Window
             id: canvas
             anchors.fill: parent
         }
-    }
+
+        Rectangle
+        {
+            id: textInputRect
+            visible: false
+            TextEdit
+            {
+                id: textInput
+                anchors.fill: parent
+                wrapMode: TextEdit.Wrap
+            }
+        }
+    }    
 
     Rectangle
     {
@@ -518,6 +530,33 @@ Window
         function onSaveFile()
         {
            save.triggered()
+        }
+    }
+
+    Connections
+    {
+        target: canvas
+        function onInputText(x, y, w, h, str)
+        {
+            textInputRect.x = x
+            textInputRect.y = y
+            textInputRect.width = w
+            textInputRect.height = h
+            textInputRect.visible = true
+            textInput.text = str
+            textInput.focus = true
+        }
+    }
+
+    Connections
+    {
+        target: canvas
+        function onInputTextOver()
+        {
+            textInputRect.visible = false
+            canvas.set_container_text(textInput.text)
+            textInput.focus = false
+            canvas.focus = true
         }
     }
 

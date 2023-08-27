@@ -378,7 +378,11 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 _last_point.coord().x = _mouse_pos_1.x();
                 _last_point.coord().y = _mouse_pos_1.y();
                 _bool_flags[5] = false;
-                // _input_line.hide();
+                if (_bool_flags[7])
+                {
+                    emit inputTextOver();
+                    _bool_flags[7] = false;
+                }
             }
             else
             {
@@ -819,26 +823,23 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         }
         else
         {
-            /* if (_bool_flags[5] && _last_clicked_obj->memo()["Type"].to_int() < 2)
+            if (_bool_flags[5] && _last_clicked_obj->memo()["Type"].to_int() < 2)
             {
                 const Geo::Rectangle rect(_last_clicked_obj->bounding_rect());
-                _input_line.setMaximumSize(std::max(100.0, rect.width()), std::max(100.0, rect.heigh()));
-                _input_line.move(rect.center().coord().x - _input_line.rect().center().x(),
-                                 rect.center().coord().y - _input_line.rect().center().y());
-                _input_line.setFocus();
+                const double w = std::max(100.0, rect.width() - 3);
+                const double h = std::max(100.0, rect.heigh() - 3);
                 if (dynamic_cast<Container *>(_last_clicked_obj) != nullptr)
                 {
-                    _input_line.setText(reinterpret_cast<Container *>(_last_clicked_obj)->text());
-                    _input_line.moveCursor(QTextCursor::End);
-                    _input_line.show();
+                    emit inputText(rect.center().coord().x - w / 2, rect.center().coord().y - h / 2,
+                        w, h, reinterpret_cast<Container *>(_last_clicked_obj)->text());
                 }
                 else
                 {
-                    _input_line.setText(reinterpret_cast<CircleContainer *>(_last_clicked_obj)->text());
-                    _input_line.moveCursor(QTextCursor::End);
-                    _input_line.show();
+                    emit inputText(rect.center().coord().x - w / 2, rect.center().coord().y - h / 2,
+                        w, h, reinterpret_cast<CircleContainer *>(_last_clicked_obj)->text());
                 }
-            } */
+                _bool_flags[7] = true;
+            }
         }
         break;
     case Qt::RightButton:
@@ -881,7 +882,7 @@ void Canvas::keyReleaseEvent(QKeyEvent *event)
 {
     if (is_typing())
     {
-        return;
+        return QQuickPaintedItem::keyReleaseEvent(event);
     }
     switch (event->key())
     {
@@ -955,6 +956,8 @@ void Canvas::keyReleaseEvent(QKeyEvent *event)
     default:
         break;
     }
+
+    QQuickPaintedItem::keyReleaseEvent(event);
 }
 
 
@@ -1003,8 +1006,7 @@ const bool Canvas::is_painting() const
 
 const bool Canvas::is_typing() const
 {
-    // return _input_line.isVisible();
-    return false;
+    return _bool_flags[7];
 }
 
 const bool Canvas::is_moving() const
@@ -1033,6 +1035,18 @@ void Canvas::set_bezier_order(const size_t order)
     _bezier_order = order;
 }
     
+void Canvas::set_container_text(const QString &text)
+{
+    if (dynamic_cast<Container *>(_last_clicked_obj) != nullptr)
+    {
+        reinterpret_cast<Container *>(_last_clicked_obj)->set_text(text);
+    }
+    else if (dynamic_cast<CircleContainer *>(_last_clicked_obj) != nullptr)
+    {
+        reinterpret_cast<CircleContainer *>(_last_clicked_obj)->set_text(text);
+    }
+}
+
 const size_t Canvas::bezier_order() const
 {
     return _bezier_order;
