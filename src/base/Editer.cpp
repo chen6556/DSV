@@ -42,6 +42,12 @@ void Editer::init()
         {
             _graph->append_group();
         }
+
+        while (!_backup.empty())
+        {
+            delete _backup.back();
+            _backup.pop_back();
+        }
     }
 }
 
@@ -61,7 +67,7 @@ void Editer::load_graph(Graph *graph, const QString &path)
     {
         _graph = graph;
         init();
-        _file_path = path;
+        _file_path = path;   
     }
 }
 
@@ -71,7 +77,7 @@ void Editer::load_graph(Graph *graph)
     {
         _graph = graph;
         init();
-        _file_path.clear();
+        _file_path.clear();  
     }
 }
 
@@ -82,6 +88,11 @@ void Editer::delete_graph()
         delete _graph;
         _graph = nullptr;
         _file_path.clear();
+        while (!_backup.empty())
+        {
+            delete _backup.back();
+            _backup.pop_back();
+        }   
     }
 }
 

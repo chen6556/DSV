@@ -24,7 +24,10 @@ namespace Geo
 
         Geometry(const Geometry &geo);
 
-        virtual ~Geometry(){};
+        virtual ~Geometry()
+        {
+            int a = 0;
+        };
 
         Geometry &operator=(const Geometry &geo);
 

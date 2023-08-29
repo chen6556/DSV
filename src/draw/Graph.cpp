@@ -6,7 +6,7 @@ Graph::Graph(const Graph &graph)
 {
     for (const ContainerGroup &group : graph._container_groups)
     {
-        _container_groups.push_back(*group.clone());
+        _container_groups.emplace_back(group);
     }
 }
 
@@ -15,7 +15,7 @@ Graph::Graph(const Graph &&graph)
 {
     for (const ContainerGroup &group : graph._container_groups)
     {
-        _container_groups.push_back(*group.clone());
+        _container_groups.emplace_back(group);
     }
 }
 
@@ -45,7 +45,7 @@ Graph &Graph::operator=(const Graph &graph)
         _container_groups.shrink_to_fit();
         for (const ContainerGroup &group : graph._container_groups)
         {
-            _container_groups.push_back(*group.clone());
+            _container_groups.emplace_back(group);
         }
         _ratio = graph._ratio;
     }
@@ -61,7 +61,7 @@ Graph &Graph::operator=(const Graph &&graph)
         _container_groups.shrink_to_fit();
         for (const ContainerGroup &group : graph._container_groups)
         {
-            _container_groups.push_back(*group.clone());
+            _container_groups.emplace_back(group);
         }
         _ratio = std::move(graph._ratio);
     }
