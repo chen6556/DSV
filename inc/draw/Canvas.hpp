@@ -11,6 +11,7 @@ class Canvas : public QQuickPaintedItem
     Q_OBJECT
     Q_PROPERTY(int mouseX READ mouseX NOTIFY mousePosChanged);
     Q_PROPERTY(int mouseY READ mouseY NOTIFY mousePosChanged);
+    Q_PROPERTY(Graph* graph READ graph);
 
 private:
     Geo::Circle _circle_cache;
@@ -18,6 +19,10 @@ private:
     std::list<QLineF> _reflines;
     QPolygonF _catched_points;
     Editer _editer;
+
+    QStringList _layers;
+    QList<bool> _visibles;
+    bool _append_to_last = true;
 
     double _ratio = 1; // 缩放系数
     size_t _bezier_order = 3; // 贝塞尔曲线阶数
@@ -82,6 +87,8 @@ public:
 
     int mouseY();
 
+    Graph *graph();
+
     Q_INVOKABLE void use_tool(const int value);
 
     const bool is_painting() const;
@@ -128,4 +135,20 @@ public:
     Q_INVOKABLE void open_file(const QString &path);
 
     Q_INVOKABLE void save_file(const QString &path);
+
+
+    Q_INVOKABLE void show_layer(const int index);
+
+    Q_INVOKABLE void add_layer();
+
+    Q_INVOKABLE void insert_layer(const int index);
+
+    Q_INVOKABLE void remove_layer(const int index);
+
+    Q_INVOKABLE void change_layer_name(const int index, const QString &name);
+
+    Q_INVOKABLE QStringList &names();
+
+    Q_INVOKABLE QList<bool> &visibles();
+
 };

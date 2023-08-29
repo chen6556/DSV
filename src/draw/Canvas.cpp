@@ -999,6 +999,11 @@ int Canvas::mouseY()
     return _mouseY;
 }
 
+Graph *Canvas::graph()
+{
+    return _editer.graph();
+}
+
 const bool Canvas::is_painting() const
 {
     return _bool_flags[2];
@@ -1257,4 +1262,57 @@ void Canvas::save_file(const QString &path)
     File::write(path, _editer.graph());
     _editer.set_path(path);
     _editer.reset_modified();
+}
+
+
+
+
+void Canvas::show_layer(const int index)
+{
+    if (_editer.graph()->container_group(index).visible())
+    {
+        _editer.graph()->container_group(index).hide();
+    }
+    else
+    {
+        _editer.graph()->container_group(index).show();
+    }
+    _layers[index] = QString::fromStdString(_editer.graph()->container_group(index).memo()["layer_name"].to_string());
+}
+
+void Canvas::add_layer()
+{
+    _editer.graph()->append_group();
+    _editer.graph()->container_groups().back().memo()["layer_name"] = std::to_string(_layers.size());
+    _layers.append(QString::fromStdString(std::to_string(_layers.size())));
+}
+
+void Canvas::insert_layer(const int index)
+{
+    _editer.graph()->insert_group(index);
+    _editer.graph()->container_group(index).memo()["layer_name"] = std::to_string(_layers.size());
+    _layers.insert(index, QString::fromStdString(std::to_string(_layers.size())));
+}
+
+void Canvas::remove_layer(const int index)
+{
+    _editer.graph()->remove_group(index);
+    _layers.remove(index);
+}
+
+void Canvas::change_layer_name(const int index, const QString &name)
+{
+    _layers[index] = name;
+    _editer.graph()->container_group(index).memo()["layer_name"] = name.toStdString();
+}
+
+
+QStringList &Canvas::names()
+{
+    return _layers;
+}
+
+QList<bool> &Canvas::visibles()
+{
+    return _visibles;
 }

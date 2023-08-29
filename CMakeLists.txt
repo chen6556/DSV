@@ -28,8 +28,6 @@ include_directories(inc)
 qt_add_executable(DSV
     MANUAL_FINALIZATION
     src/main.cpp
-    inc/ui/LayersManager.hpp
-    inc/ui/MainWindow.hpp
     inc/draw/Canvas.hpp
     inc/io/GUISetting.hpp
     
@@ -47,6 +45,7 @@ qt_add_qml_module(DSV
     
     QML_FILES
     src/ui/MainWindow.qml
+    src/ui/LayersManagerDialog.qml
 )
 
 target_link_libraries(DSV PRIVATE Qt6::Widgets Qt6::Gui Qt6::Core Qt6::Quick qpdf::libqpdf)

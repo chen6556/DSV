@@ -5,6 +5,7 @@ import Qt.labs.platform
 import DSV.Canvas
 import DSV.Setting
 
+
 Window
 {
     id: root
@@ -44,6 +45,11 @@ Window
                 canvas.save_file(filePath.text)
             }
         }
+    }
+
+    LayersManagerDialog
+    {
+        id: layerManager
     }
 
     Timer
@@ -486,6 +492,11 @@ Window
             }
 
             text: "Layers"
+            onClicked:
+            {
+                layerManager.load(canvas.names, canvas.visibles)
+                layerManager.open()
+            }
         }
     }
 
