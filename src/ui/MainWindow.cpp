@@ -133,6 +133,13 @@ void MainWindow::open_file()
         {
             QPDF pdf;
             pdf.processFile(path.toStdString().c_str());
+            for (int i = 0, count = pdf.getObjectCount(); i < count; ++i)
+            {
+                if (pdf.getObject(i, 0).isImage() || pdf.getObject(i, 0).isFormXObject())
+                {
+                    pdf.replaceObject(i, 0, QPDFObjectHandle::newNull());
+                }
+            }
 
             QPDFWriter outpdf(pdf);
             outpdf.setStreamDataMode(qpdf_stream_data_e::qpdf_s_uncompress);

@@ -53,18 +53,6 @@ void PDFSpirit::store_value(const std::string &value)
     _values.push_back(std::stod(value));
 }
 
-void PDFSpirit::store_trans_mat(const std::string &value)
-{
-    ACTIVE
-    _trans_mats.push(_trans_mat);
-}
-
-void PDFSpirit::pop_trans_mat(const std::string &value)
-{
-    ACTIVE
-    _trans_mat = _trans_mats.top();
-    _trans_mats.pop();
-}
 
 
 
@@ -84,6 +72,19 @@ void PDFSpirit::change_trans_mat(const std::string &value)
     _trans_mat[5] = _values[5];
 
     _values.clear();
+}
+
+void PDFSpirit::store_trans_mat(const std::string &value)
+{
+    ACTIVE
+    _trans_mats.push(_trans_mat);
+}
+
+void PDFSpirit::pop_trans_mat(const std::string &value)
+{
+    ACTIVE
+    _trans_mat = _trans_mats.top();
+    _trans_mats.pop();
 }
 
 
