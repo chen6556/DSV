@@ -6,8 +6,8 @@
 PDFSpirit::PDFSpirit()
 {
     const Scanner end = Scanner('\n') | Scanners::space;
-    const Scanner skip_cmd = Scanner("cm") | Scanner('q') | Scanner('Q') | Scanner('W') | Scanner('J') 
-        | Scanner('j') | Scanner('M') | Scanner('d') | Scanner("ri") | Scanner('i') | Scanner("gs");
+    const Scanner skip_cmd = Scanner('W') | Scanner('J') | Scanner('j') | Scanner('M') |
+        Scanner('d') | Scanner("ri") | Scanner('i') | Scanner("gs");
     const Scanner key_cmd = Scanner('/') << Scanners::alphas;
 
     bind(Scanner('\n'), &PDFSpirit::pass);
@@ -16,9 +16,15 @@ PDFSpirit::PDFSpirit()
     bind(Scanner("endstream"), &PDFSpirit::off);
     
     bind(Scanners::num, &PDFSpirit::store_value);
+
+    bind(Scanner("cm"), &PDFSpirit::change_trans_mat);
+    bind(Scanner('q'), &PDFSpirit::store_trans_mat);
+    bind(Scanner('Q'), &PDFSpirit::pop_trans_mat);
+
     bind(Scanner('m') << end, &PDFSpirit::start);
     bind(Scanner('l') << end, &PDFSpirit::line);
     bind(Scanner('c') << end, &PDFSpirit::curve);
+    bind(Scanner('h') << end, &PDFSpirit::close_shape);
     bind(Scanner('S') << end, &PDFSpirit::store);
     bind(Scanner("re") << end, &PDFSpirit::rect);
 
@@ -46,6 +52,43 @@ void PDFSpirit::store_value(const std::string &value)
     ACTIVE
     _values.push_back(std::stod(value));
 }
+
+void PDFSpirit::store_trans_mat(const std::string &value)
+{
+    ACTIVE
+    _trans_mats.push(_trans_mat);
+}
+
+void PDFSpirit::pop_trans_mat(const std::string &value)
+{
+    ACTIVE
+    _trans_mat = _trans_mats.top();
+    _trans_mats.pop();
+}
+
+
+
+void PDFSpirit::change_trans_mat(const std::string &value)
+{
+    ACTIVE
+    if (_values.size() > 6)
+    {
+        _values.erase(_values.begin(), _values.begin() + _values.size() - 6);
+    }
+
+    _trans_mat[0] = _values[0];
+    _trans_mat[1] = _values[2];
+    _trans_mat[2] = _values[4];
+    _trans_mat[3] = _values[1];
+    _trans_mat[4] = _values[3];
+    _trans_mat[5] = _values[5];
+
+    _values.clear();
+}
+
+
+
+
 
 void PDFSpirit::line(const std::string &value)
 {
@@ -94,6 +137,12 @@ void PDFSpirit::rect(const std::string &value)
     _start_point.y = _values.back();
 }
 
+void PDFSpirit::close_shape(const std::string &value)
+{
+    ACTIVE
+    _points.emplace_back(_points.front());
+}
+
 
 
 void PDFSpirit::store(const std::string &value)
@@ -109,6 +158,8 @@ void PDFSpirit::store(const std::string &value)
     {
         _graph->back().append(new Geo::Polyline(_points.cbegin(), _points.cend()));
     }
+    _graph->back().back()->transform(_trans_mat[0], _trans_mat[1],
+        _trans_mat[2], _trans_mat[3], _trans_mat[4], _trans_mat[5]);
 
     _start_point.x = _start_point.y = 0;
     _values.clear();
