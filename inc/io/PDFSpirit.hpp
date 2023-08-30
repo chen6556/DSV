@@ -39,6 +39,8 @@ private:
     void rect(const std::string &value);
 
     void close_shape(const std::string &value);
+
+    void close_and_store_shape(const std::string &value);
     
 
     void store(const std::string &value);

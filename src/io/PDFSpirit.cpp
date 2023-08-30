@@ -17,15 +17,16 @@ PDFSpirit::PDFSpirit()
     
     bind(Scanners::num, &PDFSpirit::store_value);
 
-    bind(Scanner("cm"), &PDFSpirit::change_trans_mat);
-    bind(Scanner('q'), &PDFSpirit::store_trans_mat);
-    bind(Scanner('Q'), &PDFSpirit::pop_trans_mat);
+    bind(Scanner("cm") << end, &PDFSpirit::change_trans_mat);
+    bind(Scanner('q') << end, &PDFSpirit::store_trans_mat);
+    bind(Scanner('Q') << end, &PDFSpirit::pop_trans_mat);
 
     bind(Scanner('m') << end, &PDFSpirit::start);
     bind(Scanner('l') << end, &PDFSpirit::line);
     bind(Scanner('c') << end, &PDFSpirit::curve);
     bind(Scanner('h') << end, &PDFSpirit::close_shape);
     bind(Scanner('S') << end, &PDFSpirit::store);
+    bind(Scanner("W*") << end, &PDFSpirit::close_and_store_shape);
     bind(Scanner("re") << end, &PDFSpirit::rect);
 
     bind(Scanners::alphas, &PDFSpirit::pass);
@@ -45,6 +46,7 @@ void PDFSpirit::start(const std::string &value)
     _points.clear();
     _start_point.x = _values.front();
     _start_point.y = _values.back();
+    _points.emplace_back(Geo::Point(_start_point));
 }
 
 void PDFSpirit::store_value(const std::string &value)
@@ -144,14 +146,27 @@ void PDFSpirit::close_shape(const std::string &value)
     _points.emplace_back(_points.front());
 }
 
+void PDFSpirit::close_and_store_shape(const std::string &value)
+{
+    ACTIVE
+
+    _graph->back().append(new Container(Geo::Polygon(_points.cbegin(), _points.cend())));
+    _graph->back().back()->transform(_trans_mat[0], _trans_mat[1],
+        _trans_mat[2], _trans_mat[3], _trans_mat[4], _trans_mat[5]);
+
+    _start_point.x = _start_point.y = 0;
+    _values.clear();
+    _points.clear();
+}
+
 
 
 void PDFSpirit::store(const std::string &value)
 {
     ACTIVE
 
-    if (_start_point.x == _values[_values.size() - 2] 
-        && _start_point.y == _values.back())
+    if ((_start_point.x == _values[_values.size() - 2] && _start_point.y == _values.back())
+        || _points.front() == _points.back())
     {
         _graph->back().append(new Container(Geo::Polygon(_points.cbegin(), _points.cend())));
     }
