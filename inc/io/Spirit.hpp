@@ -11,7 +11,6 @@ private:
 
 protected:
     bool _running = true;
-    bool _finished = true;
 
     virtual void pass(const std::string &){};
 
@@ -40,7 +39,11 @@ public:
     virtual bool parse(std::fstream &file)
     {
         _running = true;
-        while (_running && !file.eof())
+        file.seekg(0, std::ios_base::end);
+        const size_t length = file.tellg();
+        size_t pos = 0;
+        file.seekg(0, std::ios_base::beg);
+        while (_running && pos < length)
         {
             _running = false;
             for (const Rule<T> &rule : _rules)
@@ -51,15 +54,19 @@ public:
                     break;
                 }
             }
-        } 
-        _finished = (file.peek() == EOF);
+            pos = file.tellg();
+        }
         return _running;
     };
     
     virtual bool parse(std::stringstream &str)
     {
         _running = true;
-        while (_running && !str.eof())
+        str.seekg(0, std::ios_base::end);
+        const size_t length = str.tellg();
+        size_t pos = 0;
+        str.seekg(0, std::ios_base::beg);
+        while (_running && pos < length)
         {
             _running = false;
             for (const Rule<T> &rule : _rules)
@@ -70,8 +77,8 @@ public:
                     break;
                 }
             }
+            pos = str.tellg();
         }
-        _finished = (str.peek() == EOF);
         return _running;
     };
 };

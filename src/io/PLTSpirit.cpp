@@ -3,7 +3,7 @@
 
 PLTSpirit::PLTSpirit()
 {
-    const Scanner end = Scanner(';');
+    const Scanner end = Scanner(';') | Scanners::enter;
     const Scanner coord = Scanners::num << (Scanner(',') | Scanners::space) << Scanners::num << Scanner::optional(',');
     const Scanner skip = Scanner::repeat(!end) << end;
     const Scanner sp = Scanner("SP") << Scanners::num;
@@ -12,8 +12,7 @@ PLTSpirit::PLTSpirit()
     bind(coord, &PLTSpirit::coord);
     bind(Scanners::num, &PLTSpirit::radius);
     bind(end, &PLTSpirit::exec);
-    
-    bind(Scanners::enter, &PLTSpirit::pass);
+
     bind(Scanner("PU"), &PLTSpirit::pu);
     bind(Scanner("PD"), &PLTSpirit::pd);
     
