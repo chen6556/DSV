@@ -286,7 +286,7 @@ std::string Scanner::operator()(std::fstream &file) const
             if (_repeat_tiems == 0)
             {
                 result_temp.push_back(_scanners.front()(file));             
-                while (!result_temp.front().empty())
+                while (!result_temp.back().empty())
                 {
                     result.append(result_temp.back().begin(), result_temp.back().end());
                     file.seekg(result_temp.back().size(), std::ios::cur);
@@ -300,7 +300,7 @@ std::string Scanner::operator()(std::fstream &file) const
                 result_temp.push_back(_scanners.front()(file));
                 while (count++ < _repeat_tiems && !result_temp.back().empty())
                 {
-                    result.append(result_temp.back().begin(), result_temp.back().end());
+                    result.append(result_temp.front().begin(), result_temp.front().end());
                     file.seekg(result_temp.back().size(), std::ios::cur);
                     result_temp.pop_back();
                     result_temp.push_back(_scanners.front()(file));
@@ -418,7 +418,7 @@ std::string Scanner::operator()(std::fstream &file) const
     {
         file.clear();
     }
-    file.seekg(pos);
+    file.seekg(pos, std::ios_base::beg);
     return result;
 }
 
@@ -436,6 +436,10 @@ std::string Scanner::operator()(std::stringstream &str) const
     std::vector<std::string> result_temp;
     if (_txt.empty())
     {
+        if (_scanners.empty())
+        {
+            return result;
+        }
         switch (_type)
         {
         case NONE:
@@ -564,6 +568,7 @@ std::string Scanner::operator()(std::stringstream &str) const
             if (index > 0)
             {
                 result.erase(result.size() - index, index);
+                str.seekg(-index, std::ios::cur);
             }     
             break;
         case NOT:

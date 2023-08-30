@@ -47,9 +47,6 @@ private:
 
     void store_arc();
 
-protected:
-    void exec();
-
 public:
     PLTSpirit();
 

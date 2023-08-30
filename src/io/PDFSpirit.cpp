@@ -5,12 +5,12 @@
 
 PDFSpirit::PDFSpirit()
 {
-    const Scanner end = Scanner('\n') | Scanners::space;
+    const Scanner end = Scanners::enter | Scanners::space;
     const Scanner skip_cmd = Scanner('W') | Scanner('J') | Scanner('j') | Scanner('M') |
         Scanner('d') | Scanner("ri") | Scanner('i') | Scanner("gs");
     const Scanner key_cmd = Scanner('/') << Scanners::alphas;
 
-    bind(Scanner('\n'), &PDFSpirit::pass);
+    bind(Scanners::enter, &PDFSpirit::pass);
     bind(Scanners::space, &PDFSpirit::pass);
     bind(Scanner("stream"), &PDFSpirit::on);
     bind(Scanner("endstream"), &PDFSpirit::off);
@@ -31,7 +31,7 @@ PDFSpirit::PDFSpirit()
 
     bind(Scanners::alphas, &PDFSpirit::pass);
     bind(key_cmd, &PDFSpirit::pass);
-    bind(!Scanner('\n'), &PDFSpirit::pass);
+    bind(!Scanners::enter, &PDFSpirit::pass);
 }
 
 

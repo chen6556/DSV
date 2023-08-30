@@ -5,18 +5,22 @@ PLTSpirit::PLTSpirit()
 {
     const Scanner end = Scanner(';');
     const Scanner coord = Scanners::num << (Scanner(',') | Scanners::space) << Scanners::num << Scanner::optional(',');
-    const Scanner skip = Scanners::alphas << Scanner::optional(!end) << end;
+    const Scanner skip = Scanner::repeat(!end) << end;
     const Scanner sp = Scanner("SP") << Scanners::num;
 
-    bind(Scanner('\n'), &PLTSpirit::pass);
-    bind(Scanner("PU"), &PLTSpirit::pu);
-    bind(Scanner("PD"), &PLTSpirit::pd);
+
     bind(coord, &PLTSpirit::coord);
     bind(Scanners::num, &PLTSpirit::radius);
     bind(end, &PLTSpirit::exec);
+    
+    bind(Scanners::enter, &PLTSpirit::pass);
+    bind(Scanner("PU"), &PLTSpirit::pu);
+    bind(Scanner("PD"), &PLTSpirit::pd);
+    
     bind(Scanner("CI"), &PLTSpirit::ci);
     bind(Scanner("AA"), &PLTSpirit::aa);
     bind(Scanner("AR"), &PLTSpirit::ar);
+    bind(Scanner("LT"), &PLTSpirit::pass);
     bind(sp, &PLTSpirit::sp);
     
     bind(skip, &PLTSpirit::pass);
@@ -69,7 +73,7 @@ void PLTSpirit::coord(const std::string &value)
     {
         ++pos;
     }
-    const double x = std::atof(value.substr(0, pos).c_str());
+    const double x = std::stod(value.substr(0, pos));
     
     if (('0' > value[pos + 1] || value[pos + 1] > '9') && value[pos + 1] != '.' && value[pos + 1] != '-')
     {
@@ -78,7 +82,7 @@ void PLTSpirit::coord(const std::string &value)
             ++pos;
         }
     }
-    const double y = std::atof(value.substr(pos + 1).c_str());
+    const double y = std::stod(value.substr(pos + 1));
     
     if (_relative_coord)
     {
@@ -93,7 +97,7 @@ void PLTSpirit::coord(const std::string &value)
 
 void PLTSpirit::radius(const std::string &value)
 {
-    _radius = std::atof(value.c_str());
+    _radius = std::stod(value);
 }
 
 void PLTSpirit::aa(const std::string &value)
@@ -137,19 +141,8 @@ void PLTSpirit::store_circle()
     }
     else
     {
-        Geo::Polygon polygon;
-        const Geo::Point center(_points.front());
-        Geo::Vector dir(0, _points.back().coord().x);
-        const double step = _points.back().coord().y >= 15 ? _points.back().coord().y : _points.back().coord().y * 180 / Geo::PI;
-        double angle = 0;
-        while (angle < 360)
-        {
-            polygon.append(center + dir);
-            dir.rotate(0, 0, step * Geo::PI / 180.0);
-            angle += step;
-        }
-        polygon.insert(0, center + Geo::Vector(0, _points.back().coord().x));
-        _graph->container_groups().back().append(new Container(polygon));
+        _graph->container_groups().back().append(new CircleContainer(QString(), 
+            _points.front().coord().x, _points.front().coord().y, _points.back().coord().x));
         _points.clear();
     }
 }
@@ -214,20 +207,6 @@ void PLTSpirit::exec(const std::string &value)
     switch (_cur_cmd)
     {
     case Command::CI:
-    case Command::AA:
-    case Command::AR:
-        _exec = true;
-        break;
-    default:
-        break;
-    }
-}
-
-void PLTSpirit::exec()
-{
-    switch (_cur_cmd)
-    {
-    case Command::CI:
         store_circle();
         break;
     case Command::AA:
@@ -237,4 +216,6 @@ void PLTSpirit::exec()
     default:
         break;
     }
+    _last_cmd = _cur_cmd;
+    _cur_cmd = Command::NONE;
 }

@@ -10,7 +10,6 @@ private:
     std::vector<Rule<T>> _rules;
 
 protected:
-    bool _exec = false;
     bool _running = true;
     bool _finished = true;
 
@@ -31,10 +30,10 @@ protected:
         _rules.push_back(rule);
     }
 
-    virtual void exec(){};
 
 public:
-    Spirit(){
+    Spirit()
+    {
         bind(Scanner(char(255)), &Spirit::pass);
     };
 
@@ -43,11 +42,6 @@ public:
         _running = true;
         while (_running && !file.eof())
         {
-            if (_exec)
-            {
-                exec();
-                _exec = false;
-            }
             _running = false;
             for (const Rule<T> &rule : _rules)
             {
@@ -67,11 +61,6 @@ public:
         _running = true;
         while (_running && !str.eof())
         {
-            if (_exec)
-            {
-                exec();
-                _exec = false;
-            }
             _running = false;
             for (const Rule<T> &rule : _rules)
             {
