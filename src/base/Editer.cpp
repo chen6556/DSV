@@ -1992,9 +1992,9 @@ void Editer::auto_layering()
     }
 
     std::sort(all_containers.begin(), all_containers.end(), [](const Geo::Geometry *a, const Geo::Geometry *b)
-              { return a->bounding_rect().area() < b->bounding_rect().area(); });
+              { return a->bounding_rect().area() > b->bounding_rect().area(); });
     _graph->append_group();
-    for (size_t i = all_containers.size() - 1; _graph->back().empty() && i > 0; --i)
+    for (size_t i = 0, count = all_containers.size(); _graph->back().empty() && i < count; ++i)
     {
         switch (all_containers[i]->memo()["Type"].to_int())
         {
