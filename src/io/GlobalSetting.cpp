@@ -34,6 +34,7 @@ void GlobalSetting::load_setting()
         _instance->_setting["cursor_catch"] = false;
         _instance->_setting["file_path"] = "D:/";
         _instance->_setting["file_type"] = "All Files: (*.*)";
+        _instance->_setting["multiple_select"] = false;
         _instance->_setting["remember_file_type"] = true;
         _instance->_setting["scale_text"] = true;
         _instance->_setting["show_points"] = false;

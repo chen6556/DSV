@@ -388,7 +388,9 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         }
         else
         {
-            _clicked_obj = _editer->select(_mouse_pos_1.x(), _mouse_pos_1.y(), false);
+            const bool reset = !(GlobalSetting::get_instance()->setting()["multiple_select"].toBool()
+                || event->modifiers() == Qt::ControlModifier);
+            _clicked_obj = _editer->select(_mouse_pos_1.x(), _mouse_pos_1.y(), reset);
             std::list<Geo::Geometry *> selected_objs = _editer->selected();
             if (_clicked_obj == nullptr)
             {
