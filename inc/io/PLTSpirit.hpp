@@ -21,6 +21,8 @@ private:
 
     void pd(const std::string &value);
 
+    void sp(const std::string &value);
+
     void ci(const std::string &value);
 
     void pa(const std::string &value);

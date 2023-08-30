@@ -6,6 +6,7 @@ PLTSpirit::PLTSpirit()
     const Scanner end = Scanner(';');
     const Scanner coord = Scanners::num << (Scanner(',') | Scanners::space) << Scanners::num << Scanner::optional(',');
     const Scanner skip = Scanners::alphas << Scanner::optional(!end) << end;
+    const Scanner sp = Scanner("SP") << Scanners::num;
 
     bind(Scanner('\n'), &PLTSpirit::pass);
     bind(Scanner("PU"), &PLTSpirit::pu);
@@ -16,6 +17,7 @@ PLTSpirit::PLTSpirit()
     bind(Scanner("CI"), &PLTSpirit::ci);
     bind(Scanner("AA"), &PLTSpirit::aa);
     bind(Scanner("AR"), &PLTSpirit::ar);
+    bind(sp, &PLTSpirit::sp);
     
     bind(skip, &PLTSpirit::pass);
 }
@@ -37,6 +39,11 @@ void PLTSpirit::pd(const std::string &value)
 {
     _last_cmd = _cur_cmd;
     _cur_cmd = Command::PD;
+}
+
+void PLTSpirit::sp(const std::string &value)
+{
+    store_points();
 }
 
 void PLTSpirit::ci(const std::string &value)
