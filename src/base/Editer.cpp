@@ -1442,17 +1442,31 @@ void Editer::append_group(const size_t index)
 
 
 
-void Editer::rotate(const double angle, const bool unitary)
+void Editer::rotate(const double angle, const bool unitary, const bool all_layers)
 {
     store_backup();
     const double rad = angle * Geo::PI / 180;
     Geo::Coord coord;
     if (unitary)
     {
-        coord = _graph->container_group(_current_group).bounding_rect().center().coord();
-        for (Geo::Geometry *geo : _graph->container_group(_current_group))
+        if (all_layers)
         {
-            geo->rotate(coord.x, coord.y, rad);
+            coord = _graph->bounding_rect().center().coord();
+            for (ContainerGroup &group : _graph->container_groups())
+            {
+                for (Geo::Geometry *geo : group)
+                {
+                    geo->rotate(coord.x, coord.y, rad);
+                }
+            }
+        }
+        else
+        {
+            coord = _graph->container_group(_current_group).bounding_rect().center().coord();
+            for (Geo::Geometry *geo : _graph->container_group(_current_group))
+            {
+                geo->rotate(coord.x, coord.y, rad);
+            }
         }
     }
     else
@@ -1468,28 +1482,53 @@ void Editer::rotate(const double angle, const bool unitary)
     }
 }
 
-void Editer::flip(const bool direction, const bool unitary)
+void Editer::flip(const bool direction, const bool unitary, const bool all_layers)
 {
     store_backup();
     Geo::Coord coord;
     if (unitary)
     {
-        coord = _graph->container_group(_current_group).bounding_rect().center().coord();
-        for (Geo::Geometry *geo : _graph->container_group(_current_group))
+        if (all_layers)
         {
-            if (direction)
+            coord = _graph->bounding_rect().center().coord();
+            for (ContainerGroup &group : _graph->container_groups())
             {
-                geo->translate(-coord.x, 0);
-                geo->transform(-1, 0, 0, 0, 1, 0);
-                geo->translate(coord.x, 0);
-            }
-            else
-            {
-                geo->translate(0, -coord.y);
-                geo->transform(1, 0, 0, 0, -1, 0);
-                geo->translate(0, coord.y);
+                for (Geo::Geometry *geo : group)
+                {
+                    if (direction)
+                    {
+                        geo->translate(-coord.x, 0);
+                        geo->transform(-1, 0, 0, 0, 1, 0);
+                        geo->translate(coord.x, 0);
+                    }
+                    else
+                    {
+                        geo->translate(0, -coord.y);
+                        geo->transform(1, 0, 0, 0, -1, 0);
+                        geo->translate(0, coord.y);
+                    }
+                }
             }
         }
+        else
+        {
+            coord = _graph->container_group(_current_group).bounding_rect().center().coord();
+            for (Geo::Geometry *geo : _graph->container_group(_current_group))
+            {
+                if (direction)
+                {
+                    geo->translate(-coord.x, 0);
+                    geo->transform(-1, 0, 0, 0, 1, 0);
+                    geo->translate(coord.x, 0);
+                }
+                else
+                {
+                    geo->translate(0, -coord.y);
+                    geo->transform(1, 0, 0, 0, -1, 0);
+                    geo->translate(0, coord.y);
+                }
+            }
+        } 
     }
     else
     {

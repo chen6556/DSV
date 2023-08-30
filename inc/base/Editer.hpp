@@ -102,10 +102,10 @@ public:
     void remove_group(const size_t index);
 
     void append_group(const size_t index = SIZE_MAX);
-	void rotate(const double angle, const bool unitary);
+	void rotate(const double angle, const bool unitary, const bool all_layers);
 
     // true:X false:Y
-    void flip(const bool direction, const bool unitary);
+    void flip(const bool direction, const bool unitary, const bool all_layers);
 
     bool auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines);
 

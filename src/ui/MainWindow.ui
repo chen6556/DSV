@@ -175,6 +175,21 @@ QToolButton{background:rgb(142,142,142);}</string>
         </widget>
        </item>
        <item>
+        <widget class="QCheckBox" name="to_all_layers">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>To All Layers</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
           <widget class="QPushButton" name="rotate_btn">
