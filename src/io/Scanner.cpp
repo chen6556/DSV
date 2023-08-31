@@ -185,9 +185,19 @@ Scanner Scanner::operator<<(const Scanner &scanner) const
 
 Scanner operator!(const Scanner &scanner)
 {
-    Scanner s(scanner);
-    s._type = Scanner::Type::NOT;
-    return s;
+    if (scanner._type == Scanner::Type::NONE)
+    {
+        Scanner s(scanner);
+        s._type = Scanner::Type::NOT;
+        return s;
+    }
+    else
+    {
+        Scanner s;
+        s._scanners.emplace_back(scanner);
+        s._type = Scanner::Type::NOT;
+        return s;
+    }
 }
 
 
