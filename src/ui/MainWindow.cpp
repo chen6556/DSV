@@ -8,6 +8,7 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QAbstractItemView>
+#include <QMimeData>
 #include <qpdf/QPDF.hh>
 #include <qpdf/QPDFWriter.hh>
 #include "io/GlobalSetting.hpp"
@@ -38,6 +39,7 @@ MainWindow::~MainWindow()
 void MainWindow::init()
 {
     setWindowIcon(QIcon("./DSV2.ico"));
+    setAcceptDrops(true);
 
     _painter.resize(800, 600);
     ui->horizontalLayout->addWidget(&_painter);
@@ -103,73 +105,7 @@ void MainWindow::open_file()
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
     QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;JSON: (*.json *.JSON);;PLT: (*.plt *.PLT);;PDF: (*.pdf *.PDF)", &_file_type);
-    if (!path.isEmpty())
-    {
-        _editer.delete_graph();
-        Graph *g = new Graph;
-        if (path.endsWith(".json") || path.endsWith(".JSON"))
-        {
-            File::read(path, g);
-            
-            if (ui->remember_file_type->isChecked())
-            {
-                _file_type = "JSON: (*.json *.JSON)";
-            }
-        }
-        else if (path.endsWith(".plt") || path.endsWith(".PLT"))
-        {
-            PLTSpirit spirit;
-            spirit.load_graph(g);
-            std::fstream file(path.toStdString(), std::ios_base::in);
-            spirit.parse(file);
-            file.close();
-            
-            if (ui->remember_file_type->isChecked())
-            {
-                _file_type = "PLT: (*.plt *.PLT)";
-            }
-        }
-		else if (path.endsWith(".pdf") || path.endsWith(".PDF"))
-        {
-            QPDF pdf;
-            pdf.processFile(path.toStdString().c_str());
-            for (int i = 0, count = pdf.getObjectCount(); i < count; ++i)
-            {
-                if (pdf.getObject(i, 0).isImage() || pdf.getObject(i, 0).isFormXObject())
-                {
-                    pdf.replaceObject(i, 0, QPDFObjectHandle::newNull());
-                }
-            }
-
-            QPDFWriter outpdf(pdf);
-            outpdf.setStreamDataMode(qpdf_stream_data_e::qpdf_s_uncompress);
-            outpdf.setDecodeLevel(qpdf_stream_decode_level_e::qpdf_dl_all);
-            outpdf.setOutputMemory();
-            outpdf.setNewlineBeforeEndstream(true);
-            outpdf.write();
-            std::shared_ptr<Buffer> buffer = outpdf.getBufferSharedPointer();
-
-            std::stringstream ss(reinterpret_cast<char *>(buffer->getBuffer()), std::ios::in);
-            PDFSpirit spirit;
-            spirit.load_graph(g);
-            spirit.parse(ss);
-
-			if (ui->remember_file_type->isChecked())
-            {
-                _file_type = "PDF: (*.pdf *.PDF)";
-            }
-        }
-        _editer.load_graph(g, path);
-        if (ui->auto_layering->isChecked())
-        {
-            _editer.auto_layering();
-        }
-        _editer.reset_modified();
-        _info_labels[2]->setText(path);
-        _layers_manager->load_layers(g);
-        _layers_cbx->setModel(_layers_manager->model());
-        g = nullptr;
-    }
+    open_file(path);
     delete dialog;
 }
 
@@ -318,6 +254,28 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     QMainWindow::keyPressEvent(event);
 }
 
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if(event->mimeData()->hasUrls())
+    {
+        event->acceptProposedAction();
+    }
+    else
+    {
+        event->ignore();
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    const QString suffixs = "json JSON pdf PDF plt PLT";
+    QFileInfo file_info(event->mimeData()->urls().front().toLocalFile());
+    if( file_info.isFile() && suffixs.contains(file_info.suffix()))
+    {
+        open_file(file_info.absoluteFilePath());
+    }
+}
+
 void MainWindow::refresh_tool_label(const int &value)
 {
     switch (value)
@@ -402,6 +360,87 @@ void MainWindow::flip_y()
     _editer.flip(false, _editer.selected_count() == 0, ui->to_all_layers->isChecked());
     _painter.update();
 }
+
+
+
+
+void MainWindow::open_file(const QString &path)
+{
+    if (!QFileInfo(path).isFile())
+    {
+        return;
+    }
+    else if (_editer.modified() && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
+    {
+        save_file();
+    }
+
+    _editer.delete_graph();
+    Graph *g = new Graph;
+    if (path.endsWith(".json") || path.endsWith(".JSON"))
+    {
+        File::read(path, g);
+        
+        if (ui->remember_file_type->isChecked())
+        {
+            _file_type = "JSON: (*.json *.JSON)";
+        }
+    }
+    else if (path.endsWith(".plt") || path.endsWith(".PLT"))
+    {
+        PLTSpirit spirit;
+        spirit.load_graph(g);
+        std::fstream file(path.toStdString(), std::ios_base::in);
+        spirit.parse(file);
+        file.close();
+        
+        if (ui->remember_file_type->isChecked())
+        {
+            _file_type = "PLT: (*.plt *.PLT)";
+        }
+    }
+    else if (path.endsWith(".pdf") || path.endsWith(".PDF"))
+    {
+        QPDF pdf;
+        pdf.processFile(path.toStdString().c_str());
+        for (int i = 0, count = pdf.getObjectCount(); i < count; ++i)
+        {
+            if (pdf.getObject(i, 0).isImage() || pdf.getObject(i, 0).isFormXObject())
+            {
+                pdf.replaceObject(i, 0, QPDFObjectHandle::newNull());
+            }
+        }
+
+        QPDFWriter outpdf(pdf);
+        outpdf.setStreamDataMode(qpdf_stream_data_e::qpdf_s_uncompress);
+        outpdf.setDecodeLevel(qpdf_stream_decode_level_e::qpdf_dl_all);
+        outpdf.setOutputMemory();
+        outpdf.setNewlineBeforeEndstream(true);
+        outpdf.write();
+        std::shared_ptr<Buffer> buffer = outpdf.getBufferSharedPointer();
+
+        std::stringstream ss(reinterpret_cast<char *>(buffer->getBuffer()), std::ios::in);
+        PDFSpirit spirit;
+        spirit.load_graph(g);
+        spirit.parse(ss);
+
+        if (ui->remember_file_type->isChecked())
+        {
+            _file_type = "PDF: (*.pdf *.PDF)";
+        }
+    }
+    _editer.load_graph(g, path);
+    if (ui->auto_layering->isChecked())
+    {
+        _editer.auto_layering();
+    }
+    _editer.reset_modified();
+    _info_labels[2]->setText(path);
+    _layers_manager->load_layers(g);
+    _layers_cbx->setModel(_layers_manager->model());
+    g = nullptr;
+}
+
 
 
 /* void MainWindow::test()

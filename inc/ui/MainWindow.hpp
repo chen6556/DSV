@@ -45,6 +45,10 @@ protected:
 
     void closeEvent(QCloseEvent *event);
 
+    void dragEnterEvent(QDragEnterEvent *event);
+
+    void dropEvent(QDropEvent *event);
+
 private slots:
     void open_file();
 
@@ -68,6 +72,9 @@ private slots:
     void flip_x();
 
     void flip_y();
+
+private:
+    void open_file(const QString &path);
 
 public:
     MainWindow(QWidget *parent = nullptr);
