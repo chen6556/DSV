@@ -1,7 +1,7 @@
 #include "ui/MainWindow.hpp"
 #include "./ui_mainwindow.h"
 #include "io/File.hpp"
-#include "io/PLTSpirit.hpp"
+#include "io/PLTParser.hpp"
 #include "io/PDFSpirit.hpp"
 #include <QFileDialog>
 #include <QMessageBox>
@@ -388,10 +388,8 @@ void MainWindow::open_file(const QString &path)
     }
     else if (path.endsWith(".plt") || path.endsWith(".PLT"))
     {
-        PLTSpirit spirit;
-        spirit.load_graph(g);
-        std::fstream file(path.toStdString(), std::ios_base::in);
-        spirit.parse(file);
+        std::ifstream file(path.toStdString(), std::ios_base::in);
+        PLTParser::parse(file, g);
         file.close();
         
         if (ui->remember_file_type->isChecked())
