@@ -460,6 +460,85 @@ inline auto list(const Parser<A> &value, const Parser<B> &exp)
     return value >> *(exp >> value);
 }
 
+
+template <typename L, typename R>
+inline Parser<std::vector<char>> pair(const Parser<L> &left, const Parser<R> &right)
+{
+    return Parser<std::vector<char>>(std::function<std::optional<std::vector<char>>(std::string_view &)>(
+        [=](std::string_view &stream) -> std::optional<std::vector<char>>
+        {
+            if (stream.empty())
+            {
+                return std::nullopt;
+            }
+            std::string_view stream_copy(stream);
+            if (!left(stream_copy).has_value())
+            {
+                return std::nullopt;
+            }
+            std::vector<char> result;
+            size_t pari_count = 1;
+            while (pari_count > 0 && !stream_copy.empty())
+            {
+                if (right(stream_copy).has_value())
+                {
+                    --pari_count;
+                }
+                else if (left(stream_copy).has_value())
+                {
+                    ++pari_count;
+                }
+                else
+                {
+                    stream_copy.remove_prefix(1);
+                }
+            }
+            if (pari_count == 0)
+            {
+                std::vector<char> reuslt(stream.begin(), stream.begin() + stream.length() - stream_copy.length());
+                stream.remove_prefix(stream.length() - stream_copy.length());
+                return result;
+            }
+            else
+            {
+                return std::nullopt;
+            }
+        }));
+}
+
+template <typename T>
+inline Parser<std::vector<T>> repeat(const size_t times, const Parser<T> &parser)
+{
+    return Parser<std::vector<T>>(std::function<std::optional<std::vector<char>>(std::string_view &)>(
+        [=](std::string_view &stream) -> std::optional<std::vector<char>>
+        {
+            if (stream.empty())
+            {
+                return std::nullopt;
+            }
+
+            std::vector<T> result;
+            std::optional<T> temp;
+            for (size_t i = 0; i < times; ++i)
+            {
+                temp = parser(stream).has_value();
+                if (temp.has_value())
+                {
+                    result.emplace_back(temp.value());
+                }
+            }
+
+            if (result.size() == times)
+            {
+                return result;
+            }
+            else
+            {
+                return std::nullopt;
+            }
+        }));
+}
+
 // operator>>
 
 template <typename L, typename R>
