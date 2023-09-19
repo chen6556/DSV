@@ -52,8 +52,6 @@ public:
     void load_graph(Graph *g);
 
     void reset();
-
-    void print(const std::string &value);
 };
 
 

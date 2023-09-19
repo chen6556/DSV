@@ -154,11 +154,6 @@ void Importer::reset()
     }
 }    
 
-void Importer::print(const std::string &value)
-{
-    int a = 0;
-}
-
 
 static Importer importer;
 
@@ -174,8 +169,6 @@ static Action<void> S_a(&importer, &Importer::store);
 static Action<void> re_a(&importer, &Importer::rect);
 static Action<void> h_a(&importer, &Importer::close_shape);
 static Action<void> W8_a(&importer, &Importer::close_and_store_shape);
-
-static Action<std::string> print_a(&importer, &Importer::print);
 
 static Parser<char> end = eol_p() | ch_p(' ');
 static Parser<char> space = ch_p(' ');
@@ -225,7 +218,7 @@ static Parser<std::vector<char>> text = confix_p(ch_p('<'), *anychar_p(), ch_p('
 static Parser<std::vector<char>> annotation = pair(ch_p('['), eol_p());
 static auto command = *(parameter | key | text | space) >> order;
 static auto array = pair(ch_p('['), ch_p(']')) >> !eol_p();
-static auto dict = pair(str_p("<<"), str_p(">>"))[print_a] >> !eol_p();
+static auto dict = pair(str_p("<<"), str_p(">>")) >> !eol_p();
 static Parser<std::vector<double>> code = confix_p(ch_p('<'), repeat(4, parameter), ch_p('>'));
 static auto font_info = str_p("/CIDInit /ProcSet findresource begin") >> (+anychar_p() - (str_p("beginbfchar") >> eol_p()))
     	                >> str_p("beginbfchar") >> end >> +(code >> eol_p()) >> !eol_p() >> str_p("endbfchar")
