@@ -192,7 +192,6 @@ struct Parser<std::vector<char>>
     }
 };
 
-
 template <>
 struct Parser<double>
 {
@@ -326,218 +325,6 @@ struct Parser<int>
 };
 
 
-inline Parser<std::string> str_p(const std::string &value)
-{
-    return Parser<std::string>(value);
-}
-
-/* inline Parser<std::string> str_p(const char value[])
-{
-    return Parser<std::string>(std::string(value));
-} */
-
-inline Parser<char> ch_p(const char value)
-{
-    return Parser<char>(value);
-}
-
-
-inline Parser<char> anychar_p()
-{
-    return Parser<char>(std::function<std::optional<char>(std::string_view &)>(
-        [=](std::string_view &stream) -> std::optional<char>
-        {
-            if (!stream.empty())
-            {
-                const char ch = stream.front();
-                stream.remove_prefix(1);
-                return ch;
-            }
-            else
-            {
-                return std::nullopt;
-            }
-        }));
-}
-
-inline Parser<char> alpha_p()
-{
-    return Parser<char>(std::function<std::optional<char>(std::string_view &)>(
-        [=](std::string_view &stream) -> std::optional<char>
-        {
-            if (!stream.empty() && (('a' <= stream.front() && stream.front() <= 'z') 
-                || ('A' <= stream.front() && stream.front() <= 'Z')))
-            {
-                const char ch = stream.front();
-                stream.remove_prefix(1);
-                return ch;
-            }
-            else
-            {
-                return std::nullopt;
-            }
-        }));
-}
-
-inline Parser<char> alphaa_p()
-{
-    return Parser<char>(std::function<std::optional<char>(std::string_view &)>(
-        [=](std::string_view &stream) -> std::optional<char>
-        {
-            if (!stream.empty() && 'A' <= stream.front() && stream.front() <= 'Z')
-            {
-                const char ch = stream.front();
-                stream.remove_prefix(1);
-                return ch;
-            }
-            else
-            {
-                return std::nullopt;
-            }
-        }));
-}
-
-inline Parser<char> alphab_p()
-{
-    return Parser<char>(std::function<std::optional<char>(std::string_view &)>(
-        [=](std::string_view &stream) -> std::optional<char>
-        {
-            if (!stream.empty() && 'a' <= stream.front() && stream.front() <= 'b')
-            {
-                const char ch = stream.front();
-                stream.remove_prefix(1);
-                return ch;
-            }
-            else
-            {
-                return std::nullopt;
-            }
-        }));
-}
-
-inline Parser<char> eol_p()
-{
-    return Parser<char>(10);
-}
-
-inline Parser<double> float_p()
-{
-    return Parser<double>();
-}
-
-inline Parser<int> int_p()
-{
-    return Parser<int>();
-}
-
-inline Parser<int> digit_p()
-{
-    return Parser<int>(std::function<std::optional<int>(std::string_view &)>(
-        [=](std::string_view &stream) -> std::optional<int>
-        {
-            if (!stream.empty() && '0' <= stream.front() && stream.front() <= '9')
-            {
-                const int value = stream.front() - '0';
-                stream.remove_prefix(1);
-                return value;
-            }
-            else
-            {
-                return std::nullopt;
-            }
-        }));
-}
-
-template <typename A, typename B, typename C>
-inline auto confix_p(const Parser<A> &left, const Parser<B> &exp, const Parser<C> &right)
-{
-    return left >> (exp - right) >> right;
-}
-
-template <typename A, typename B>
-inline auto list(const Parser<A> &value, const Parser<B> &exp)
-{
-    return value >> *(exp >> value);
-}
-
-
-template <typename L, typename R>
-inline Parser<std::vector<char>> pair(const Parser<L> &left, const Parser<R> &right)
-{
-    return Parser<std::vector<char>>(std::function<std::optional<std::vector<char>>(std::string_view &)>(
-        [=](std::string_view &stream) -> std::optional<std::vector<char>>
-        {
-            if (stream.empty())
-            {
-                return std::nullopt;
-            }
-            std::string_view stream_copy(stream);
-            if (!left(stream_copy).has_value())
-            {
-                return std::nullopt;
-            }
-
-            size_t pari_count = 1;
-            while (pari_count > 0 && !stream_copy.empty())
-            {
-                if (right(stream_copy).has_value())
-                {
-                    --pari_count;
-                }
-                else if (left(stream_copy).has_value())
-                {
-                    ++pari_count;
-                }
-                else
-                {
-                    stream_copy.remove_prefix(1);
-                }
-            }
-            if (pari_count == 0)
-            {
-                std::vector<char> result(stream.begin(), stream.begin() + stream.length() - stream_copy.length());
-                stream.remove_prefix(stream.length() - stream_copy.length());
-                return result;
-            }
-            else
-            {
-                return std::nullopt;
-            }
-        }));
-}
-
-template <typename T>
-inline Parser<std::vector<T>> repeat(const size_t times, const Parser<T> &parser)
-{
-    return Parser<std::vector<T>>(std::function<std::optional<std::vector<T>>(std::string_view &)>(
-        [=](std::string_view &stream) -> std::optional<std::vector<T>>
-        {
-            if (stream.empty())
-            {
-                return std::nullopt;
-            }
-
-            std::vector<T> result;
-            std::optional<T> temp;
-            for (size_t i = 0; i < times; ++i)
-            {
-                temp = parser(stream).has_value();
-                if (temp.has_value())
-                {
-                    result.emplace_back(temp.value());
-                }
-            }
-
-            if (result.size() == times)
-            {
-                return result;
-            }
-            else
-            {
-                return std::nullopt;
-            }
-        }));
-}
 
 // operator>>
 
@@ -913,6 +700,7 @@ inline Parser<char> operator>>(const Parser<std::vector<std::string>> &left, con
 }
 
 
+
 // operator|
 
 template <typename L, typename R>
@@ -1117,3 +905,212 @@ Parser<L> operator-(const Parser<L> &left, const Parser<R> &right)
             }));
 }
 
+
+
+// functions
+
+inline Parser<std::string> str_p(const std::string &value)
+{
+    return Parser<std::string>(value);
+}
+
+inline Parser<char> ch_p(const char value)
+{
+    return Parser<char>(value);
+}
+
+inline Parser<char> anychar_p()
+{
+    return Parser<char>(std::function<std::optional<char>(std::string_view &)>(
+        [=](std::string_view &stream) -> std::optional<char>
+        {
+            if (!stream.empty())
+            {
+                const char ch = stream.front();
+                stream.remove_prefix(1);
+                return ch;
+            }
+            else
+            {
+                return std::nullopt;
+            }
+        }));
+}
+
+inline Parser<char> alpha_p()
+{
+    return Parser<char>(std::function<std::optional<char>(std::string_view &)>(
+        [=](std::string_view &stream) -> std::optional<char>
+        {
+            if (!stream.empty() && (('a' <= stream.front() && stream.front() <= 'z') 
+                || ('A' <= stream.front() && stream.front() <= 'Z')))
+            {
+                const char ch = stream.front();
+                stream.remove_prefix(1);
+                return ch;
+            }
+            else
+            {
+                return std::nullopt;
+            }
+        }));
+}
+
+inline Parser<char> alphaa_p()
+{
+    return Parser<char>(std::function<std::optional<char>(std::string_view &)>(
+        [=](std::string_view &stream) -> std::optional<char>
+        {
+            if (!stream.empty() && 'A' <= stream.front() && stream.front() <= 'Z')
+            {
+                const char ch = stream.front();
+                stream.remove_prefix(1);
+                return ch;
+            }
+            else
+            {
+                return std::nullopt;
+            }
+        }));
+}
+
+inline Parser<char> alphab_p()
+{
+    return Parser<char>(std::function<std::optional<char>(std::string_view &)>(
+        [=](std::string_view &stream) -> std::optional<char>
+        {
+            if (!stream.empty() && 'a' <= stream.front() && stream.front() <= 'b')
+            {
+                const char ch = stream.front();
+                stream.remove_prefix(1);
+                return ch;
+            }
+            else
+            {
+                return std::nullopt;
+            }
+        }));
+}
+
+inline Parser<char> eol_p()
+{
+    return Parser<char>(10) | Parser<char>(13);
+}
+
+inline Parser<double> float_p()
+{
+    return Parser<double>();
+}
+
+inline Parser<int> int_p()
+{
+    return Parser<int>();
+}
+
+inline Parser<int> digit_p()
+{
+    return Parser<int>(std::function<std::optional<int>(std::string_view &)>(
+        [=](std::string_view &stream) -> std::optional<int>
+        {
+            if (!stream.empty() && '0' <= stream.front() && stream.front() <= '9')
+            {
+                const int value = stream.front() - '0';
+                stream.remove_prefix(1);
+                return value;
+            }
+            else
+            {
+                return std::nullopt;
+            }
+        }));
+}
+
+template <typename A, typename B, typename C>
+inline auto confix_p(const Parser<A> &left, const Parser<B> &exp, const Parser<C> &right)
+{
+    return left >> (exp - right) >> right;
+}
+
+template <typename A, typename B>
+inline auto list(const Parser<A> &value, const Parser<B> &exp)
+{
+    return value >> *(exp >> value);
+}
+
+template <typename L, typename R>
+inline Parser<std::vector<char>> pair(const Parser<L> &left, const Parser<R> &right)
+{
+    return Parser<std::vector<char>>(std::function<std::optional<std::vector<char>>(std::string_view &)>(
+        [=](std::string_view &stream) -> std::optional<std::vector<char>>
+        {
+            if (stream.empty())
+            {
+                return std::nullopt;
+            }
+            std::string_view stream_copy(stream);
+            if (!left(stream_copy).has_value())
+            {
+                return std::nullopt;
+            }
+
+            size_t pari_count = 1;
+            while (pari_count > 0 && !stream_copy.empty())
+            {
+                if (right(stream_copy).has_value())
+                {
+                    --pari_count;
+                }
+                else if (left(stream_copy).has_value())
+                {
+                    ++pari_count;
+                }
+                else
+                {
+                    stream_copy.remove_prefix(1);
+                }
+            }
+            if (pari_count == 0)
+            {
+                std::vector<char> result(stream.begin(), stream.begin() + stream.length() - stream_copy.length());
+                stream.remove_prefix(stream.length() - stream_copy.length());
+                return result;
+            }
+            else
+            {
+                return std::nullopt;
+            }
+        }));
+}
+
+template <typename T>
+inline Parser<std::vector<T>> repeat(const size_t times, const Parser<T> &parser)
+{
+    return Parser<std::vector<T>>(std::function<std::optional<std::vector<T>>(std::string_view &)>(
+        [=](std::string_view &stream) -> std::optional<std::vector<T>>
+        {
+            if (stream.empty())
+            {
+                return std::nullopt;
+            }
+
+            std::vector<T> result;
+            std::optional<T> temp;
+            for (size_t i = 0; i < times; ++i)
+            {
+                temp = parser(stream).has_value();
+                if (temp.has_value())
+                {
+                    result.emplace_back(temp.value());
+                }
+            }
+
+            if (result.size() == times)
+            {
+                return result;
+            }
+            else
+            {
+                return std::nullopt;
+            }
+        }));
+}
