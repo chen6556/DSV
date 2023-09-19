@@ -18,6 +18,7 @@ void Importer::reset()
     _parameters.clear();
     _last_coord.x = _last_coord.y = 0;
     _relative_coord = false;
+    _texts.clear();
 }
 
 
@@ -171,6 +172,47 @@ void Importer::ar()
     store_points();
 }
 
+void Importer::store_text(const std::string &text)
+{
+    _texts.emplace_back(Text(text, _points.back()));
+    _points.clear();
+}
+
+void Importer::end()
+{
+    for (Text &text : _texts)
+    {
+        for (Geo::Geometry *geo : _graph->container_group())
+        {
+            if (geo->memo()["Type"].to_int() == 0 && Geo::is_inside(text.pos, reinterpret_cast<Container *>(geo)->shape(), true))
+            {
+                if (reinterpret_cast<Container *>(geo)->text().isEmpty())
+                {
+                    reinterpret_cast<Container *>(geo)->set_text(QString::fromStdString(text.txt));
+                }
+                else
+                {
+                    reinterpret_cast<Container *>(geo)->set_text(reinterpret_cast<Container *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
+                }
+                break;
+            }
+            else if (geo->memo()["Type"].to_int() == 1 && Geo::is_inside(text.pos, reinterpret_cast<CircleContainer *>(geo)->shape(), true))
+            {
+                if (reinterpret_cast<CircleContainer *>(geo)->text().isEmpty())
+                {
+                    reinterpret_cast<CircleContainer *>(geo)->set_text(QString::fromStdString(text.txt));
+                }
+                else
+                {
+                    reinterpret_cast<CircleContainer *>(geo)->set_text(reinterpret_cast<CircleContainer *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
+                }
+                break;
+            }
+        }
+    }
+    _texts.clear();
+}
+
 
 static Importer importer;
 
@@ -185,6 +227,8 @@ static Action<void> ci_a(&importer, &Importer::ci);
 static Action<void> aa_a(&importer, &Importer::aa);
 static Action<void> ar_a(&importer, &Importer::ar);
 static Action<void> in_a(&importer, &Importer::reset);
+static Action<std::string> lb_a(&importer, &Importer::store_text);
+static Action<void> end_a(&importer, &Importer::end);
 
 static Parser<char> separator = ch_p(',') | ch_p(' ');
 static Parser<std::vector<char>> end = +(ch_p(';') | ch_p('\n') | eol_p());
@@ -201,11 +245,11 @@ static auto aa = (str_p("AA") >> coord >> separator >> parameter >> !parameter)[
 static auto ar = (str_p("AR") >> coord >> separator >> parameter >> !parameter)[ar_a] >> end;
 
 static Parser<std::vector<char>> unkown_cmds = confix_p(alphaa_p() | ch_p(28), *anychar_p(), end);
-static Parser<std::vector<char>> lb = confix_p(str_p("LB"), *anychar_p(), end);
+static Parser<std::vector<char>> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], end);
 static auto all_cmds = in | pu | pd | pa | pr | sp | ci | aa | ar | lb | unkown_cmds;
 
 static Parser<std::vector<char>> dci = confix_p(ch_p(27), *anychar_p(), end);
-static auto plt = *(all_cmds | dci);
+static auto plt = (*(all_cmds | dci))[end_a];
 
 
 

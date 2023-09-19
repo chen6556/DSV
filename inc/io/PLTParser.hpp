@@ -16,6 +16,16 @@ private:
 
     bool _relative_coord = false;
 
+    struct Text
+    {
+        std::string txt;
+        Geo::Point pos;
+
+        Text(const std::string &text, const Geo::Point &position)
+            : txt(text), pos(position) {};
+    };
+    std::list<Text> _texts;
+
 private:
     void store_points();
 
@@ -42,6 +52,10 @@ public:
     void aa();
 
     void ar();
+
+    void store_text(const std::string &text);
+
+    void end();
 
 
     void load_graph(Graph *g);
