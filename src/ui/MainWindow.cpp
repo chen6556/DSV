@@ -2,7 +2,7 @@
 #include "./ui_mainwindow.h"
 #include "io/File.hpp"
 #include "io/PLTParser.hpp"
-#include "io/PDFSpirit.hpp"
+#include "io/PDFParser.hpp"
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QJsonObject>
@@ -417,10 +417,8 @@ void MainWindow::open_file(const QString &path)
         outpdf.write();
         std::shared_ptr<Buffer> buffer = outpdf.getBufferSharedPointer();
 
-        std::stringstream ss(reinterpret_cast<char *>(buffer->getBuffer()), std::ios::in);
-        PDFSpirit spirit;
-        spirit.load_graph(g);
-        spirit.parse(ss);
+        std::string_view sv(reinterpret_cast<char *>(buffer->getBuffer()), buffer->getSize());
+        PDFParser::parse(sv, g);
 
         if (ui->remember_file_type->isChecked())
         {
