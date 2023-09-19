@@ -476,7 +476,7 @@ inline Parser<std::vector<char>> pair(const Parser<L> &left, const Parser<R> &ri
             {
                 return std::nullopt;
             }
-            std::vector<char> result;
+
             size_t pari_count = 1;
             while (pari_count > 0 && !stream_copy.empty())
             {
@@ -495,7 +495,7 @@ inline Parser<std::vector<char>> pair(const Parser<L> &left, const Parser<R> &ri
             }
             if (pari_count == 0)
             {
-                std::vector<char> reuslt(stream.begin(), stream.begin() + stream.length() - stream_copy.length());
+                std::vector<char> result(stream.begin(), stream.begin() + stream.length() - stream_copy.length());
                 stream.remove_prefix(stream.length() - stream_copy.length());
                 return result;
             }
