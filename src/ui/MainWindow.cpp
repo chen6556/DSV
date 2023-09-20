@@ -420,10 +420,6 @@ void MainWindow::open_file(const QString &path)
         std::string_view sv(reinterpret_cast<char *>(buffer->getBuffer()), buffer->getSize());
         PDFParser::parse(sv, g);
 
-        /* std::ofstream o("F:/Code/DSV/files/PDF/text.txt");
-        o << std::string(reinterpret_cast<char *>(buffer->getBuffer()), buffer->getSize());
-        o.close(); */
-
         if (ui->remember_file_type->isChecked())
         {
             _file_type = "PDF: (*.pdf *.PDF)";
