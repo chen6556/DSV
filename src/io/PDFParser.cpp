@@ -113,6 +113,98 @@ void Importer::close_and_store_shape()
 }
 
 
+void Importer::store_text(const std::string &value)
+{
+    _text = value;
+}
+
+void Importer::store_encoding(const std::string &value)
+{
+    if (_text.empty())
+    {
+        _text = value;
+    }
+    else
+    {
+        _encoding_map[_text] = value;
+        _text.clear();
+    }
+}
+
+void Importer::BT()
+{
+    _text.clear();
+}
+
+void Importer::ET()
+{
+    _texts.back().txt = _text;
+	_text.clear();
+}
+
+void Importer::Tm()
+{
+    if (_values.size() > 6)
+    {
+        _values.erase(_values.begin(), _values.begin() + _values.size() - 6);
+    }
+	_texts.emplace_back(Text(_text, _points.back()));
+
+	const double a = _trans_mat[0] * _values[0] + _trans_mat[1] * _values[1];
+    const double b = _trans_mat[0] * _values[2] + _trans_mat[1] * _values[3];
+    const double c = _trans_mat[0] * _values[4] + _trans_mat[1] * _values[5] + _trans_mat[2];
+    const double d = _trans_mat[3] * _values[0] + _trans_mat[4] * _values[1];
+    const double e = _trans_mat[3] * _values[2] + _trans_mat[4] * _values[3];
+    const double f = _trans_mat[3] * _values[4] + _trans_mat[4] * _values[5] + _trans_mat[5];
+	_texts.back().pos.transform(a, b, c, d, e, f);
+}
+
+void Importer::end()
+{
+    std::vector<ushort> values;
+    for (Text &text : _texts)
+    {
+        for (unsigned int i = 0, count = text.txt.length(); i < count; i+= 4)
+        {
+            values.emplace_back(std::stoi(_encoding_map[text.txt.substr(i, 4)], nullptr, 16));
+        }
+        text.txt = QString::fromUtf16(&values.front(), values.size()).toStdString();
+        values.clear();
+
+        for (Geo::Geometry *geo : _graph->container_group())
+        {
+            if (geo->memo()["Type"].to_int() == 0 && Geo::is_inside(text.pos, reinterpret_cast<Container *>(geo)->shape(), true))
+            {
+                if (reinterpret_cast<Container *>(geo)->text().isEmpty())
+                {
+                    reinterpret_cast<Container *>(geo)->set_text(QString::fromStdString(text.txt));
+                }
+                else
+                {
+                    reinterpret_cast<Container *>(geo)->set_text(reinterpret_cast<Container *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
+                }
+                break;
+            }
+            else if (geo->memo()["Type"].to_int() == 1 && Geo::is_inside(text.pos, reinterpret_cast<CircleContainer *>(geo)->shape(), true))
+            {
+                if (reinterpret_cast<CircleContainer *>(geo)->text().isEmpty())
+                {
+                    reinterpret_cast<CircleContainer *>(geo)->set_text(QString::fromStdString(text.txt));
+                }
+                else
+                {
+                    reinterpret_cast<CircleContainer *>(geo)->set_text(reinterpret_cast<CircleContainer *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
+                }
+                break;
+            }
+        }
+    }
+    _texts.clear();
+    _text.clear();
+    _encoding_map.clear();
+}
+
+
 void Importer::store()
 {
     if ((_start_point.x == _values[_values.size() - 2] && _start_point.y == _values.back())
@@ -152,6 +244,9 @@ void Importer::reset()
     {
         _trans_mats.pop();
     }
+    _encoding_map.clear();
+    _text.clear();
+    _texts.clear();
 }    
 
 
@@ -166,9 +261,16 @@ static Action<void> m_a(&importer, &Importer::start);
 static Action<void> l_a(&importer, &Importer::line);
 static Action<void> c_a(&importer, &Importer::curve);
 static Action<void> S_a(&importer, &Importer::store);
+static Action<void> s_a(&importer, &Importer::close_and_store_shape);
 static Action<void> re_a(&importer, &Importer::rect);
 static Action<void> h_a(&importer, &Importer::close_shape);
 static Action<void> W8_a(&importer, &Importer::close_and_store_shape);
+static Action<std::string> text_a(&importer, &Importer::store_text);
+static Action<std::string> encoding_a(&importer, &Importer::store_encoding);
+static Action<void> end_a(&importer, &Importer::end);
+static Action<void> BT_a(&importer, &Importer::BT);
+static Action<void> ET_a(&importer, &Importer::ET);
+static Action<void> Tm_a(&importer, &Importer::Tm);
 
 static Parser<char> end = eol_p() | ch_p(' ');
 static Parser<char> space = ch_p(' ');
@@ -189,16 +291,16 @@ static Parser<char> l = ch_p('l')[l_a] >> end;
 static Parser<char> c = ch_p('c')[c_a] >> end;
 static Parser<char> v = ch_p('v') >> end;
 static Parser<char> S = ch_p('S')[S_a] >> end;
-static Parser<char> s = ch_p('s') >> end;
+static Parser<char> s = ch_p('s')[s_a] >> end;
 static Parser<char> re = str_p("re")[re_a] >> end;
 static Parser<char> h = ch_p('h')[h_a] >> end;
 static Parser<char> W8 = str_p("W*")[W8_a] >> end;
 static Parser<char> B = ch_p('B') >> end;
 static Parser<char> f = ch_p('f') >> end;
 
-static Parser<char> BT = str_p("BT") >> end;
-static Parser<char> ET = str_p("ET") >> end;
-static Parser<char> Tm = str_p("Tm") >> end;
+static Parser<char> BT = str_p("BT")[BT_a] >> end;
+static Parser<char> ET = str_p("ET")[ET_a] >> end;
+static Parser<char> Tm = str_p("Tm")[Tm_a] >> end;
 static Parser<char> TL = str_p("TL") >> end;
 
 static auto order = cm | q | Q | m | l | c | v | CS | cs | G | g | RG | rg | K | k | re | h |
@@ -213,15 +315,15 @@ static auto order = cm | q | Q | m | l | c | v | CS | cs | G | g | RG | rg | K |
             S | s | B | f;
 
 static Parser<double> parameter = float_p()[parameter_a];
-static Parser<std::vector<char>> key = confix_p(ch_p('/'), *anychar_p(), eol_p());
-static Parser<std::vector<char>> text = confix_p(ch_p('<'), *anychar_p(), ch_p('>'));
+static Parser<std::vector<char>> key = confix_p(ch_p('/'), *alnum_p(), end);
+static Parser<std::vector<char>> text = confix_p(ch_p('<'), (*alnum_p())[text_a], ch_p('>'));
 static Parser<std::vector<char>> annotation = pair(ch_p('['), eol_p());
 static auto command = *(parameter | key | text | space) >> order;
 static auto array = pair(ch_p('['), ch_p(']')) >> !eol_p();
 static auto dict = pair(str_p("<<"), str_p(">>")) >> !eol_p();
-static Parser<std::vector<double>> code = confix_p(ch_p('<'), repeat(4, parameter), ch_p('>'));
+static Parser<std::vector<char>> code = confix_p(ch_p('<'), (+alnum_p())[encoding_a], ch_p('>'));
 static auto font_info = str_p("/CIDInit /ProcSet findresource begin") >> (+anychar_p() - (str_p("beginbfchar") >> eol_p()))
-    	                >> str_p("beginbfchar") >> end >> +(code >> eol_p()) >> !eol_p() >> str_p("endbfchar")
+    	                >> str_p("beginbfchar") >> end >> +(code >> end) >> !eol_p() >> str_p("endbfchar")
                         >> end >> (+anychar_p() - (str_p("end") >> eol_p())) >> +(str_p("end") >> eol_p());
 static Parser<std::vector<char>> xml = pair(str_p("<?xpacket"), str_p("<?xpacket end=\"w\"?>")) >> eol_p();
 static Parser<std::vector<char>> others = (+anychar_p() - str_p("endstream"));
@@ -233,7 +335,7 @@ static auto object = (int_p() >> space >> int_p() >> space >> str_p("obj") >> eo
 					*(int_p() | dict | stream | array) >> str_p("endobj") >> eol_p());
 
 static auto head = str_p("%PDF-") >> float_p() >> (+anychar_p() - ch_p('%')) >> ch_p('%') >> (*anychar_p() - eol_p()) >> eol_p();
-static Parser<std::vector<char>> tail = (str_p("xref") >> *anychar_p());
+static Parser<std::vector<char>> tail = (str_p("xref") >> *anychar_p())[end_a];
 static auto pdf = head >> *(annotation | object | eol_p()) >> tail;
 
 

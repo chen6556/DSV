@@ -992,6 +992,26 @@ inline Parser<char> alphab_p()
         }));
 }
 
+inline Parser<char> alnum_p()
+{
+    return Parser<char>(std::function<std::optional<char>(std::string_view &)>(
+        [=](std::string_view &stream) -> std::optional<char>
+        {
+            if (!stream.empty() && (('a' <= stream.front() && stream.front() <= 'z') 
+                || ('A' <= stream.front() && stream.front() <= 'Z') 
+                || ('0' <= stream.front() && stream.front() <= '9')))
+            {
+                const char ch = stream.front();
+                stream.remove_prefix(1);
+                return ch;
+            }
+            else
+            {
+                return std::nullopt;
+            }
+        }));
+}
+
 inline Parser<char> eol_p()
 {
     return Parser<char>(10) | Parser<char>(13);
@@ -1097,7 +1117,7 @@ inline Parser<std::vector<T>> repeat(const size_t times, const Parser<T> &parser
             std::optional<T> temp;
             for (size_t i = 0; i < times; ++i)
             {
-                temp = parser(stream).has_value();
+                temp = parser(stream);
                 if (temp.has_value())
                 {
                     result.emplace_back(temp.value());

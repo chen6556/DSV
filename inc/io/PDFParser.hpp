@@ -22,6 +22,18 @@ private:
     std::array<double, 6> _trans_mat = {1, 0, 0, 0, 1, 0};
     std::stack<std::array<double, 6>> _trans_mats;
 
+    std::map<std::string, std::string> _encoding_map;
+    std::string _text;
+    struct Text
+    {
+        std::string txt;
+        Geo::Point pos;
+
+        Text(const std::string &text, const Geo::Point &position)
+            : txt(text), pos(position) {};
+    };
+    std::list<Text> _texts;
+
 public:
 
     void start();
@@ -45,6 +57,19 @@ public:
     void close_shape();
 
     void close_and_store_shape();
+
+
+    void store_text(const std::string &value);
+
+    void store_encoding(const std::string &value);
+
+    void BT();
+
+    void ET();
+
+    void Tm();
+    
+    void end();
     
 
     void store();
