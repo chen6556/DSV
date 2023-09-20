@@ -76,32 +76,21 @@ void Geometry::rotate(const double x, const double y, const double rad){}
 
 void Geometry::scale(const double x, const double y, const double k){}
 
-Polygon Geometry::convex_hull() const
-{
-    return Geo::Polygon();
-}
+Polygon Geometry::convex_hull() const { return Polygon(); }
 
-Rectangle Geometry::bounding_rect(const bool orthogonality) const {return Rectangle();}
+Rectangle Geometry::bounding_rect(const bool orthogonality) const { return Rectangle(); }
 
 // Coord
 
 Coord::Coord(const double x_, const double y_)
-{
-    x = x_;
-    y = y_;
-}
+    : x(x_), y(y_) {}
 
 Coord::Coord(const Coord &coord)
-{
-    x = coord.x;
-    y = coord.y;
-}
+    : x(coord.x), y(coord.y) {}
 
 Coord::Coord(const Coord &&coord)
-{
-    x = std::move(coord.x);
-    y = std::move(coord.y);
-}
+    : x(std::move(coord.x)),
+    y(std::move(coord.y)) {}
 
 Coord& Coord::operator=(const Coord &coord)
 {

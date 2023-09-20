@@ -20,14 +20,11 @@ namespace Geo
         bool _shape_fixed = false;
 
     public:
-        Geometry(){};
+        Geometry() {};
 
         Geometry(const Geometry &geo);
 
-        virtual ~Geometry()
-        {
-            int a = 0;
-        };
+        virtual ~Geometry() {};
 
         Geometry &operator=(const Geometry &geo);
 

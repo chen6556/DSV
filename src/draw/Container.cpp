@@ -964,7 +964,7 @@ void ContainerGroup::rescale(const double x, const double y)
     }
 }
 
-Geo::Rectangle ContainerGroup::bounding_rect() const
+Geo::Rectangle ContainerGroup::bounding_rect(const bool orthogonality) const
 {
     if (_containers.empty())
     {
@@ -1047,6 +1047,27 @@ void ContainerGroup::append(Geo::Polyline *container)
 void ContainerGroup::append(Geo::Bezier *bezier)
 {
     _containers.push_back(bezier);
+}
+
+void ContainerGroup::append(Combination *combination)
+{
+    _containers.push_back(combination);
+}
+
+void ContainerGroup::append(ContainerGroup &group, const bool merge)
+{
+    if (merge)
+    {
+        _containers.insert(_containers.end(), group._containers.begin(), group._containers.end());
+        group._containers.clear();
+    }
+    else
+    {
+        for (Geo::Geometry *geo : group)
+        {
+            _containers.emplace_back(geo->clone());
+        }
+    }
 }
 
 void ContainerGroup::insert(const size_t index, Container *container)
@@ -1187,3 +1208,119 @@ void ContainerGroup::remove_back()
         _containers.pop_back();
     }
 }
+
+// Combination
+
+Combination::Combination()
+{
+    _memo["Type"] = 3;
+}
+
+Combination::Combination(const Combination &combination)
+    : _border(combination._border)
+{
+    _memo["Type"] = 3;
+}
+
+Combination::Combination(const Combination &&combination)
+    : _border(std::move(combination._border))
+{
+    _memo["Type"] = 3;
+}
+
+void Combination::append(Combination *combination)
+{
+    while (!combination->empty())
+    {
+        append(combination->pop_back());
+    }
+}
+
+void Combination::append(Geo::Geometry *geo)
+{
+    switch (geo->memo()["Type"].to_int())
+    {
+    case 0:
+        append(reinterpret_cast<Container *>(geo));
+        break;
+    case 1:
+        append(reinterpret_cast<CircleContainer *>(geo));
+        break;
+    case 2:
+        append(reinterpret_cast<Link *>(geo));
+        break;
+    case 3:
+        append(reinterpret_cast<Combination *>(geo));
+        break;
+    case 20:
+        append(reinterpret_cast<Geo::Polyline *>(geo));
+        break;
+    default:
+        break;
+    }
+}
+
+Combination *Combination::clone() const
+{
+    return new Combination(*this);
+}
+
+void Combination::transfer(Combination &combination)
+{
+    ContainerGroup::transfer(combination);
+    combination._border = _border;
+}
+
+void Combination::clear()
+{
+    ContainerGroup::clear();
+    _border.clear();
+}
+
+void Combination::transform(const double a, const double b, const double c, const double d, const double e, const double f)
+{
+    ContainerGroup::transform(a, b, c, d, e, f);
+    _border.transform(a, b, c, d, e, f);
+}
+
+void Combination::transform(const double mat[6])
+{
+    ContainerGroup::transform(mat);
+    _border.transform(mat);
+}
+
+void Combination::translate(const double tx, const double ty)
+{
+    ContainerGroup::translate(tx, ty);
+    _border.translate(tx, ty);
+}
+
+void Combination::rotate(const double x, const double y, const double rad)
+{
+    ContainerGroup::rotate(x, y, rad);
+    _border.rotate(x, y, rad);
+}
+
+void Combination::scale(const double x, const double y, const double k)
+{
+    ContainerGroup::scale(x, y, k);
+    _border.scale(x, y, k);
+}
+
+void Combination::update_border()
+{
+    if (empty())
+    {
+        _border.clear();
+    }
+    else
+    {
+        _border = bounding_rect();
+    }
+}
+
+const Geo::Rectangle &Combination::border() const
+{
+    return _border;
+}
+
