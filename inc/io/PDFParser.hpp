@@ -369,11 +369,16 @@ private:
 
     double _stroking_color[4] = { 0.0, 0.0, 0.0, 0.0 };
     ColorSpace _stroking_color_space = ColorSpace::RGB;
+    double _nonstroking_color[4] = { 0.0, 0.0, 0.0, 0.0 };
+    ColorSpace _nonstroking_color_space = ColorSpace::RGB;
     int _cur_color_map_index = -1;
 	std::map<std::string, int> _color_map_index; // 颜色编码索引
 	std::map<int, DeviceColor> _color_map; // 颜色编码
     std::vector<std::string> _keys;
 
+    int _cur_object = 0;
+	std::vector<int> _objects;
+        
 public:
 
     void start();
@@ -384,13 +389,21 @@ public:
 
     void CS();
 
+    void cs();
+
     void SCN();
 
     void G();
 
+    void g();
+
     void RG();
 
+    void rg();
+
     void K();
+
+    void k();
 
 
     void change_trans_mat();
@@ -398,6 +411,8 @@ public:
     void store_trans_mat();
 
     void pop_trans_mat();
+
+    void store_object(const int value);
 
 
     void line();

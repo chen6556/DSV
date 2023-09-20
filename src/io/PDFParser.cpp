@@ -52,6 +52,29 @@ void Importer::CS()
     _values.clear();
 }
 
+void Importer::cs()
+{
+    if (_keys.back() == "DeviceGray")
+    {
+        _nonstroking_color_space = ColorSpace::Gray;
+    }
+    else if (_keys.back() == "DeviceCMYK")
+    {
+        _nonstroking_color_space = ColorSpace::CMYK;
+    }
+    else if (_keys.back() == "DeviceRGB")
+    {
+        _nonstroking_color_space = ColorSpace::RGB;
+    }
+    else if (_color_map_index.find(_keys.back()) != _color_map_index.end())
+    {
+        _cur_color_map_index = _color_map_index[_keys.back()];
+    }
+
+    _keys.clear();
+    _values.clear();
+}
+
 void Importer::SCN()
 {
     if (_cur_color_map_index > -1)
@@ -72,7 +95,15 @@ void Importer::G()
 {
     _stroking_color[0] = _values.back();
 	_stroking_color[1] = _stroking_color[2] = _stroking_color[3] = 0;
-    
+
+	_values.clear();
+}
+
+void Importer::g()
+{
+    _nonstroking_color[0] = _values.back();
+	_nonstroking_color[1] = _nonstroking_color[2] = _nonstroking_color[3] = 0;
+
 	_values.clear();
 }
 
@@ -91,6 +122,21 @@ void Importer::RG()
     _values.clear();
 }
 
+void Importer::rg()
+{
+    if (_values.size() > 3)
+    {
+        _values.erase(_values.begin(), _values.begin() + _values.size() - 3);
+    }
+
+    _nonstroking_color[0] = _values[0];
+    _nonstroking_color[1] = _values[1];
+    _nonstroking_color[2] = _values[2];
+    _nonstroking_color[3] = 0;
+
+    _values.clear();
+}
+
 void Importer::K()
 {
     if (_values.size() > 4)
@@ -102,6 +148,21 @@ void Importer::K()
     _stroking_color[1] = _values[1];
     _stroking_color[2] = _values[2];
     _stroking_color[3] = _values[3];
+
+    _values.clear();
+}
+
+void Importer::k()
+{
+    if (_values.size() > 4)
+    {
+        _values.erase(_values.begin(), _values.begin() + _values.size() - 4);
+    }
+
+    _nonstroking_color[0] = _values[0];
+    _nonstroking_color[1] = _values[1];
+    _nonstroking_color[2] = _values[2];
+    _nonstroking_color[3] = _values[3];
 
     _values.clear();
 }
@@ -133,6 +194,12 @@ void Importer::pop_trans_mat()
 {
     _trans_mat = _trans_mats.top();
     _trans_mats.pop();
+}
+
+void Importer::store_object(const int value)
+{
+    _cur_object = value;
+    _objects.emplace_back(value);
 }
 
 
@@ -587,9 +654,18 @@ void Importer::reset()
     {
         _trans_mats.pop();
     }
+
+    _cur_object = 0;
+    _objects.clear();
+
     _encoding_map.clear();
     _text.clear();
     _texts.clear();
+
+    std::fill_n(_stroking_color, 4, 0);
+    _stroking_color_space = ColorSpace::RGB;
+    std::fill_n(_nonstroking_color, 4, 0);
+    _nonstroking_color_space = ColorSpace::RGB;
     _cur_color_map_index = -1;
     _color_map.clear();
     _color_map_index.clear();
@@ -601,12 +677,17 @@ static Importer importer;
 
 
 static Action<double> parameter_a(&importer, &Importer::store_value);
+static Action<int> object_a(&importer, &Importer::store_object);
 static Action<void> cm_a(&importer, &Importer::change_trans_mat);
 static Action<void> CS_a(&importer, &Importer::CS);
+static Action<void> cs_a(&importer, &Importer::cs);
 static Action<void> SCN_a(&importer, &Importer::SCN);
 static Action<void> G_a(&importer, &Importer::G);
+static Action<void> g_a(&importer, &Importer::g);
 static Action<void> RG_a(&importer, &Importer::RG);
+static Action<void> rg_a(&importer, &Importer::rg);
 static Action<void> K_a(&importer, &Importer::K);
+static Action<void> k_a(&importer, &Importer::k);
 static Action<void> Q_a(&importer, &Importer::pop_trans_mat);
 static Action<void> q_a(&importer, &Importer::store_trans_mat);
 static Action<void> m_a(&importer, &Importer::start);
@@ -628,14 +709,14 @@ static Action<std::string> key_a(&importer, &Importer::store_key);
 static Parser<char> end = eol_p() | ch_p(' ');
 static Parser<char> space = ch_p(' ');
 static Parser<char> CS = str_p("CS")[CS_a] >> end;
-static Parser<char> cs = str_p("cs") >> end;
+static Parser<char> cs = str_p("cs")[cs_a] >> end;
 static Parser<char> SCN = str_p("SCN")[SCN_a] >> end;
 static Parser<char> G = ch_p('G')[G_a] >> end;
-static Parser<char> g = ch_p('g') >> end;
+static Parser<char> g = ch_p('g')[g_a] >> end;
 static Parser<char> RG = str_p("RG")[RG_a] >> end;
-static Parser<char> rg = str_p("rg") >> end;
+static Parser<char> rg = str_p("rg")[rg_a] >> end;
 static Parser<char> K = ch_p('K')[K_a] >> end;
-static Parser<char> k = ch_p('k') >> end;
+static Parser<char> k = ch_p('k')[k_a] >> end;
 static Parser<char> cm = str_p("cm")[cm_a] >> end;
 static Parser<char> Q = ch_p('Q')[Q_a] >> end;
 static Parser<char> q = ch_p('q')[q_a] >> end;
@@ -684,7 +765,7 @@ static Parser<std::vector<char>> others = (+anychar_p() - str_p("endstream"));
 static Parser<char> stream_start = str_p("stream") >> eol_p();
 static Parser<char>	stream_end = str_p("endstream") >> eol_p();
 static auto stream = stream_start >> +(command | dict | float_p() | space | eol_p() | font_info | xml | others) >> stream_end;
-static auto object = (int_p() >> space >> int_p() >> space >> str_p("obj") >> eol_p() >>
+static auto object = (int_p()[object_a] >> space >> int_p() >> space >> str_p("obj") >> eol_p() >>
 					*(int_p() | dict | stream | array) >> str_p("endobj") >> eol_p());
 
 static auto head = str_p("%PDF-") >> float_p() >> (+anychar_p() - ch_p('%')) >> ch_p('%') >> (*anychar_p() - eol_p()) >> eol_p();
