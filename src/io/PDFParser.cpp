@@ -1,6 +1,7 @@
 #include "io/PDFParser.hpp"
 #include "io/Parser.hpp"
 #include <sstream>
+#include <QStringList>
 
 
 namespace PDFParser
@@ -21,6 +22,88 @@ void Importer::start()
 void Importer::store_value(const double value)
 {
     _values.emplace_back(value);
+}
+
+void Importer::store_key(const std::string &value)
+{
+    _keys.emplace_back(value);
+}
+
+void Importer::CS()
+{
+    if (_keys.back() == "DeviceGray")
+    {
+        _stroking_color_space = ColorSpace::Gray;
+    }
+    else if (_keys.back() == "DeviceCMYK")
+    {
+        _stroking_color_space = ColorSpace::CMYK;
+    }
+    else if (_keys.back() == "DeviceRGB")
+    {
+        _stroking_color_space = ColorSpace::RGB;
+    }
+    else if (_color_map_index.find(_keys.back()) != _color_map_index.end())
+    {
+        _cur_color_map_index = _color_map_index[_keys.back()];
+    }
+
+    _keys.clear();
+    _values.clear();
+}
+
+void Importer::SCN()
+{
+    if (_cur_color_map_index > -1)
+    {
+        std::fill_n(_stroking_color, 4, 0);
+        _stroking_color_space = _color_map[_cur_color_map_index]._color_space;
+        int i = 0;
+        for (const double value : _color_map[_cur_color_map_index](_values))
+        {
+            _stroking_color[i++] = value;
+        }
+        _cur_color_map_index = -1;
+        _values.clear();
+    }
+}
+
+void Importer::G()
+{
+    _stroking_color[0] = _values.back();
+	_stroking_color[1] = _stroking_color[2] = _stroking_color[3] = 0;
+    
+	_values.clear();
+}
+
+void Importer::RG()
+{
+    if (_values.size() > 3)
+    {
+        _values.erase(_values.begin(), _values.begin() + _values.size() - 3);
+    }
+
+    _stroking_color[0] = _values[0];
+    _stroking_color[1] = _values[1];
+    _stroking_color[2] = _values[2];
+    _stroking_color[3] = 0;
+
+    _values.clear();
+}
+
+void Importer::K()
+{
+    if (_values.size() > 4)
+    {
+        _values.erase(_values.begin(), _values.begin() + _values.size() - 4);
+    }
+
+    _stroking_color[0] = _values[0];
+    _stroking_color[1] = _values[1];
+    _stroking_color[2] = _values[2];
+    _stroking_color[3] = _values[3];
+
+    _values.clear();
 }
 
 
@@ -205,6 +288,266 @@ void Importer::end()
 }
 
 
+void Importer::get_color_map_index(const std::string_view &stream)
+{
+    const size_t pos = stream.find("/ColorSpace");
+    if (pos != std::string::npos)
+    {
+        QString items = QString::fromStdString(std::string(stream.substr(stream.find("<<", pos) + 2, stream.find(">>", pos) - stream.find("<<", pos) - 2)));
+        for (QString &item : items.split('R'))
+        {
+            QStringList values = item.split(' ');
+            if (values.size() < 3)
+            {
+                break;
+            }
+            if (values.front().length() < 3)
+            {
+                values.pop_front();
+            }
+            _color_map_index[values.front().toStdString().substr(1)] = values[1].toInt();
+        }
+    }
+}
+
+void Importer::get_color_map(const std::string_view &stream)
+{
+    size_t pos0, pos1, pos = stream.find(" obj");
+    size_t mapPos = stream.find("FunctionType") - 2;
+    if (mapPos == std::string::npos - 2)
+    {
+        return;
+    }
+    while (stream[mapPos] != '<' && stream[mapPos - 1] != '<')
+    {
+        --mapPos;
+    }
+    int index, i;
+    while (pos != std::string::npos)
+    {
+        pos1 = pos;
+        while (stream[--pos1] != ' ');
+        pos0 = pos1 - 1;
+        while (stream[pos0] >= '0' && stream[pos0] <= '9')
+        {
+            --pos0;
+        }
+        ++pos0;
+
+        pos = stream.find("endobj", pos);
+        if (mapPos < pos)
+        {
+            index = std::stoi(std::string(stream.substr(pos0, pos1 - pos0)));
+            _color_map[index] = DeviceColor();
+            QString items = QString::fromStdString(std::string(stream.substr(mapPos, stream.find(">>", mapPos) - mapPos - 1)));
+            for (QString &item : items.split('/'))
+            {
+                if (item.startsWith("FunctionType"))
+                {
+                    item.remove(0, item.indexOf('e') + 1);
+                    switch (item.toInt())
+                    {
+                    case 0:
+                        _color_map[index]._func = std::make_shared<FunctionType0>(FunctionType0());
+                        break;
+                    case 2:
+                        _color_map[index]._func = std::make_shared<FunctionType2>(FunctionType2());
+                        break;
+                    case 3:
+                        _color_map[index]._func = std::make_shared<FunctionType3>(FunctionType3());
+                        break;
+                    default:
+                        break;
+                    }
+                    _color_map[index]._func->_type = item.toInt();
+                    break;
+                }
+            }
+
+            for (QString &item : items.split('/'))
+            {
+                if (item.startsWith("Domain"))
+                {
+                    item.remove(0, item.indexOf('[') + 1);
+                    item.remove("]");
+                    for (QString &value : item.split(' '))
+                    {
+                        if (value.length() > 0)
+                        {
+                            _color_map[index]._func->_domain.push_back(value.toDouble());
+                        }
+                    }
+                }
+                else if (item.startsWith("Range"))
+                {
+                    item.remove(0, item.indexOf('[') + 1);
+                    item.remove("]");
+                    i = 0;
+                    for (QString &value : item.split(' '))
+                    {
+                        if (value.length() > 0)
+                        {
+                            _color_map[index]._func->_range.push_back(value.toDouble());
+                            ++i;
+                        }
+                    }
+                    switch (i)
+                    {
+                    case 2:
+                        _color_map[index]._color_space = ColorSpace::Gray;
+                        break;
+                    case 8:
+                        _color_map[index]._color_space = ColorSpace::CMYK;
+                        break;
+                    default:
+                        break;
+                    }
+                }
+
+                else if (item.startsWith("Size"))
+                {
+                    item.remove(0, item.indexOf('[') + 1);
+                    item.remove("]");
+                    for (QString &value : item.split(' '))
+                    {
+                        if (value.length() > 0)
+                        {
+                            std::dynamic_pointer_cast<FunctionType0>(_color_map[index]._func)->_size.push_back(value.toInt());
+                        }
+                    }
+                }
+                else if (item.startsWith("Encode"))
+                {
+                    item.remove(0, item.indexOf('[') + 1);
+                    item.remove("]");
+                    if (_color_map[index]._func->_type == 0)
+                    {
+                        for (QString &value : item.split(' '))
+                        {
+                            if (value.length() > 0)
+                            {
+                                std::dynamic_pointer_cast<FunctionType0>(_color_map[index]._func)->_encoded.push_back(value.toDouble());
+                            }
+                        }
+                    }
+                    else
+                    {
+                        for (QString &value : item.split(' '))
+                        {
+                            if (value.length() > 0)
+                            {
+                                std::dynamic_pointer_cast<FunctionType3>(_color_map[index]._func)->_encode.push_back(value.toDouble());
+                            }
+                        }
+                    }
+                }
+                else if (item.startsWith("Dncode"))
+                {
+                    item.remove(0, item.indexOf('[') + 1);
+                    item.remove("]");
+                    for (QString &value : item.split(' '))
+                    {
+                        if (value.length() > 0)
+                        {
+                            std::dynamic_pointer_cast<FunctionType0>(_color_map[index]._func)->_decoded.push_back(value.toDouble());
+                        }
+                    }
+                }
+                else if (item.startsWith("BitsPerSample"))
+                {
+                    item.remove(0, item.indexOf('l') + 2);
+                    std::dynamic_pointer_cast<FunctionType0>(_color_map[index]._func)->_bits_per_sample = item.toInt();
+                }
+                
+                else if (item.startsWith("C0"))
+                {
+                    item.remove(0, item.indexOf('[') + 1);
+                    item.remove("]");			
+                    for (QString &value : item.split(' '))
+                    {
+                        if (value.length() > 0)
+                        {
+                            std::dynamic_pointer_cast<FunctionType2>(_color_map[index]._func)->_C0.push_back(value.toDouble());
+                        }
+                    }
+                }
+                else if (item.startsWith("C1"))
+                {
+                    item.remove(0, item.indexOf('[') + 1);
+                    item.remove("]");
+                    for (QString &value : item.split(' '))
+                    {
+                        if (value.length() > 0)
+                        {
+                            std::dynamic_pointer_cast<FunctionType2>(_color_map[index]._func)->_C1.push_back(value.toDouble());
+                        }
+                    }
+                }
+                else if (item.startsWith("N"))
+                {
+                    item.remove(0, item.indexOf('N') + 1);
+                    std::dynamic_pointer_cast<FunctionType2>(_color_map[index]._func)->_N = item.toDouble();
+                }
+
+                else if (item.startsWith("Bounds"))
+                {
+                    item.remove(0, item.indexOf('[') + 1);
+                    item.remove("]");
+                    for (QString &value : item.split(' '))
+                    {
+                        if (value.length() > 0)
+                        {
+                            std::dynamic_pointer_cast<FunctionType3>(_color_map[index]._func)->_bounds.push_back(value.toDouble());
+                        }
+                    }
+                }
+                else if (item.startsWith("Functions"))
+                {
+                    item.remove(0, item.indexOf('[') + 1);
+                    item.remove("]");
+                    for (QString &value : item.split(' '))
+                    {
+                        if (value.length() > 0 && value.toInt() > 0)
+                        {
+                            _color_map[index]._function_index.push_back(value.toInt());
+                        }
+                    }
+                }
+            }
+
+            if (_color_map[index]._func->_type == 0)
+            {
+                const size_t streamPos = stream.find("stream", mapPos) + 7, endstreamPos = stream.find("endstream", mapPos);
+                std::dynamic_pointer_cast<FunctionType0>(_color_map[index]._func)->read_samples(std::string(stream.substr(streamPos, endstreamPos - streamPos)));
+            }
+        
+            mapPos = stream.find("FunctionType", pos) - 2;
+            if (mapPos == std::string::npos - 2)
+            {
+                break;
+            }
+            while (stream[mapPos] != '<' && stream[mapPos - 1] != '<')
+            {
+                --mapPos;
+            }
+        }
+
+        pos = stream.find(" obj", pos);
+    }
+
+    for (std::pair<const int, DeviceColor> &pair : _color_map)
+    {
+        if (pair.second._func->_type == 3)
+        {
+            for (const int index : pair.second._function_index)
+            {
+                std::dynamic_pointer_cast<FunctionType3>(pair.second._func)->_functions.push_back(_color_map[index]._func);
+            }
+        }				
+    }
+}
+
+
 void Importer::store()
 {
     if ((_start_point.x == _values[_values.size() - 2] && _start_point.y == _values.back())
@@ -247,6 +590,10 @@ void Importer::reset()
     _encoding_map.clear();
     _text.clear();
     _texts.clear();
+    _cur_color_map_index = -1;
+    _color_map.clear();
+    _color_map_index.clear();
+    _keys.clear();
 }    
 
 
@@ -255,6 +602,11 @@ static Importer importer;
 
 static Action<double> parameter_a(&importer, &Importer::store_value);
 static Action<void> cm_a(&importer, &Importer::change_trans_mat);
+static Action<void> CS_a(&importer, &Importer::CS);
+static Action<void> SCN_a(&importer, &Importer::SCN);
+static Action<void> G_a(&importer, &Importer::G);
+static Action<void> RG_a(&importer, &Importer::RG);
+static Action<void> K_a(&importer, &Importer::K);
 static Action<void> Q_a(&importer, &Importer::pop_trans_mat);
 static Action<void> q_a(&importer, &Importer::store_trans_mat);
 static Action<void> m_a(&importer, &Importer::start);
@@ -271,17 +623,18 @@ static Action<void> end_a(&importer, &Importer::end);
 static Action<void> BT_a(&importer, &Importer::BT);
 static Action<void> ET_a(&importer, &Importer::ET);
 static Action<void> Tm_a(&importer, &Importer::Tm);
+static Action<std::string> key_a(&importer, &Importer::store_key);
 
 static Parser<char> end = eol_p() | ch_p(' ');
 static Parser<char> space = ch_p(' ');
-static Parser<char> CS = str_p("CS") >> end;
+static Parser<char> CS = str_p("CS")[CS_a] >> end;
 static Parser<char> cs = str_p("cs") >> end;
-static Parser<char> SCN = str_p("SCN") >> end;
-static Parser<char> G = ch_p('G') >> end;
+static Parser<char> SCN = str_p("SCN")[SCN_a] >> end;
+static Parser<char> G = ch_p('G')[G_a] >> end;
 static Parser<char> g = ch_p('g') >> end;
-static Parser<char> RG = str_p("RG") >> end;
+static Parser<char> RG = str_p("RG")[RG_a] >> end;
 static Parser<char> rg = str_p("rg") >> end;
-static Parser<char> K = ch_p('K') >> end;
+static Parser<char> K = ch_p('K')[K_a] >> end;
 static Parser<char> k = ch_p('k') >> end;
 static Parser<char> cm = str_p("cm")[cm_a] >> end;
 static Parser<char> Q = ch_p('Q')[Q_a] >> end;
@@ -303,7 +656,7 @@ static Parser<char> ET = str_p("ET")[ET_a] >> end;
 static Parser<char> Tm = str_p("Tm")[Tm_a] >> end;
 static Parser<char> TL = str_p("TL") >> end;
 
-static auto order = cm | q | Q | m | l | c | v | CS | cs | G | g | RG | rg | K | k | re | h |
+static auto order = cm | q | Q | m | l | v | CS | cs | c | G | g | RG | rg | K | k | re | h |
             BT | ET | Tm | SCN | W8 | TL |
             ((ch_p('w') | ch_p('J') | ch_p('j') | ch_p('M') | ch_p('d') | str_p("ri") | ch_p('i') |
             str_p("gs") | ch_p('y') | str_p("f*") | ch_p('F') | str_p("B*") | str_p("b*") | ch_p('b') |
@@ -315,7 +668,7 @@ static auto order = cm | q | Q | m | l | c | v | CS | cs | G | g | RG | rg | K |
             S | s | B | f;
 
 static Parser<double> parameter = float_p()[parameter_a];
-static Parser<std::vector<char>> key = confix_p(ch_p('/'), *alnum_p(), end);
+static Parser<std::vector<char>> key = confix_p(ch_p('/'), (*alnum_p())[key_a], end);
 static Parser<std::vector<char>> text = confix_p(ch_p('<'), (*alnum_p())[text_a], ch_p('>'));
 static Parser<std::vector<char>> annotation = pair(ch_p('['), eol_p());
 static auto command = *(parameter | key | text | space) >> order;
@@ -344,6 +697,8 @@ bool PDFParser::parse(std::string_view &stream, Graph *graph)
 {
     importer.reset();
     importer.load_graph(graph);
+    importer.get_color_map_index(stream);
+    importer.get_color_map(stream);
     return pdf(stream).has_value();
 }
 
@@ -355,6 +710,8 @@ bool PDFParser::parse(std::ifstream &stream, Graph *graph)
     sstream << stream.rdbuf();
     std::string str(sstream.str());
     std::string_view temp(str);
+    importer.get_color_map_index(temp);
+    importer.get_color_map(temp);
     return pdf(temp).has_value();
 }
 
