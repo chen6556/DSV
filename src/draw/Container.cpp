@@ -358,6 +358,9 @@ ContainerGroup::ContainerGroup(const ContainerGroup &containers)
         case 2:
             _containers.push_back(reinterpret_cast<Link *>(const_cast<Geo::Geometry *>(geo))->clone());
             break;
+        case 3:
+            _containers.push_back(reinterpret_cast<Combination *>(const_cast<Geo::Geometry *>(geo))->clone());
+            break;
         case 20:
             _containers.push_back(reinterpret_cast<Geo::Polyline *>(const_cast<Geo::Geometry *>(geo))->clone());
             break;
@@ -444,6 +447,9 @@ ContainerGroup::ContainerGroup(const ContainerGroup &&containers)
             break;
         case 2:
             _containers.push_back(reinterpret_cast<Link *>(const_cast<Geo::Geometry *>(geo))->clone());
+            break;
+        case 3:
+            _containers.push_back(reinterpret_cast<Combination *>(const_cast<Geo::Geometry *>(geo))->clone());
             break;
         case 20:
             _containers.push_back(reinterpret_cast<Geo::Polyline *>(const_cast<Geo::Geometry *>(geo))->clone());
@@ -565,6 +571,9 @@ ContainerGroup *ContainerGroup::clone() const
         case 2:
             containers.push_back(reinterpret_cast<Link *>(const_cast<Geo::Geometry *>(geo))->clone());
             break;
+        case 3:
+            containers.push_back(reinterpret_cast<Combination *>(const_cast<Geo::Geometry *>(geo))->clone());
+            break;
         case 20:
             containers.push_back(reinterpret_cast<Geo::Polyline *>(const_cast<Geo::Geometry *>(geo))->clone());
             break;
@@ -671,6 +680,9 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
             case 2:
                 _containers.push_back(reinterpret_cast<Link *>(const_cast<Geo::Geometry *>(geo))->clone());
                 break;
+            case 3:
+                _containers.push_back(reinterpret_cast<Combination *>(const_cast<Geo::Geometry *>(geo))->clone());
+                break;
             case 20:
                 _containers.push_back(reinterpret_cast<Geo::Polyline *>(const_cast<Geo::Geometry *>(geo))->clone());
                 break;
@@ -767,6 +779,9 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &&group)
                 break;
             case 2:
                 _containers.push_back(reinterpret_cast<Link *>(const_cast<Geo::Geometry *>(geo))->clone());
+                break;
+            case 3:
+                _containers.push_back(reinterpret_cast<Combination *>(const_cast<Geo::Geometry *>(geo))->clone());
                 break;
             case 20:
                 _containers.push_back(reinterpret_cast<Geo::Polyline *>(const_cast<Geo::Geometry *>(geo))->clone());
@@ -993,6 +1008,15 @@ Geo::Rectangle ContainerGroup::bounding_rect(const bool orthogonality) const
             x1 = std::max(x1, coord.x + r);
             y1 = std::max(y1, coord.y + r);
             break;
+        case 3:
+            {
+                const Geo::Rectangle rect(reinterpret_cast<const Combination *>(continer)->bounding_rect());
+                x0 = std::min(x0, rect.left());
+                y0 = std::min(y0, rect.top());
+                x1 = std::max(x1, rect.right());
+                y1 = std::max(y1, rect.bottom());
+            }
+            break;
         case 2:
         case 20:
             for (const Geo::Point &point : *reinterpret_cast<Geo::Polyline *>(const_cast<Geo::Geometry *>(continer)))
@@ -1217,13 +1241,13 @@ Combination::Combination()
 }
 
 Combination::Combination(const Combination &combination)
-    : _border(combination._border)
+    : ContainerGroup(combination), _border(combination._border)
 {
     _memo["Type"] = 3;
 }
 
 Combination::Combination(const Combination &&combination)
-    : _border(std::move(combination._border))
+    : ContainerGroup(combination), _border(std::move(combination._border))
 {
     _memo["Type"] = 3;
 }
@@ -1241,16 +1265,19 @@ void Combination::append(Geo::Geometry *geo)
     switch (geo->memo()["Type"].to_int())
     {
     case 0:
-        append(reinterpret_cast<Container *>(geo));
+        ContainerGroup::append(reinterpret_cast<Container *>(geo));
         break;
     case 1:
-        append(reinterpret_cast<CircleContainer *>(geo));
+        ContainerGroup::append(reinterpret_cast<CircleContainer *>(geo));
         break;
     case 3:
         append(reinterpret_cast<Combination *>(geo));
         break;
     case 20:
-        append(reinterpret_cast<Geo::Polyline *>(geo));
+        ContainerGroup::append(reinterpret_cast<Geo::Polyline *>(geo));
+        break;
+    case 21:
+        ContainerGroup::append(reinterpret_cast<Geo::Bezier *>(geo));
         break;
     default:
         break;

@@ -265,195 +265,198 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     switch (points->memo()["Type"].to_int())
     {
     case 0:
-    {
-        Container *temp = reinterpret_cast<Container *>(points);
-        size_t count = 0;
-        if (change_shape && !points->shape_fixed())
         {
-            for (Geo::Point &point : temp->shape())
+            Container *temp = reinterpret_cast<Container *>(points);
+            size_t count = 0;
+            if (change_shape && !points->shape_fixed())
             {
-                ++count;
-                if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= catch_distance ||
-                    Geo::distance(x1, y1, point.coord().x, point.coord().y) <= catch_distance)
+                for (Geo::Point &point : temp->shape())
                 {
-                    if (temp->size() == 5)
+                    ++count;
+                    if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= catch_distance ||
+                        Geo::distance(x1, y1, point.coord().x, point.coord().y) <= catch_distance)
                     {
-                        if (temp->shape()[0].coord().y == temp->shape()[1].coord().y && temp->shape()[2].coord().y == temp->shape()[3].coord().y && temp->shape()[0].coord().x == temp->shape()[3].coord().x && temp->shape()[2].coord().x == temp->shape()[1].coord().x)
+                        if (temp->size() == 5)
                         {
-                            point.translate(x1 - x0, y1 - y0);
-                            if (count % 2 != 0)
+                            if (temp->shape()[0].coord().y == temp->shape()[1].coord().y && temp->shape()[2].coord().y == temp->shape()[3].coord().y && temp->shape()[0].coord().x == temp->shape()[3].coord().x && temp->shape()[2].coord().x == temp->shape()[1].coord().x)
                             {
-                                temp->shape()[count == 1 ? 3 : 1].coord().x = point.coord().x;
-                                temp->shape()[count].coord().y = point.coord().y;
+                                point.translate(x1 - x0, y1 - y0);
+                                if (count % 2 != 0)
+                                {
+                                    temp->shape()[count == 1 ? 3 : 1].coord().x = point.coord().x;
+                                    temp->shape()[count].coord().y = point.coord().y;
+                                }
+                                else
+                                {
+                                    temp->shape()[count - 2].coord().y = point.coord().y;
+                                    temp->shape()[count].coord().x = point.coord().x;
+                                    if (count == 4)
+                                    {
+                                        temp->shape().front().coord().x = temp->shape().back().coord().x;
+                                    }
+                                }
+                            }
+                            else if (temp->shape()[0].coord().x == temp->shape()[1].coord().x && temp->shape()[2].coord().x == temp->shape()[3].coord().x && temp->shape()[0].coord().y == temp->shape()[3].coord().y && temp->shape()[2].coord().y == temp->shape()[1].coord().y)
+                            {
+                                point.translate(x1 - x0, y1 - y0);
+                                if (count % 2 == 0)
+                                {
+                                    temp->shape()[count - 2].coord().x = point.coord().x;
+                                    temp->shape()[count].coord().y = point.coord().y;
+                                    if (count == 4)
+                                    {
+                                        temp->shape().front().coord().y = temp->shape().back().coord().y;
+                                    }
+                                }
+                                else
+                                {
+                                    temp->shape()[count == 1 ? 3 : 1].coord().y = point.coord().y;
+                                    temp->shape()[count].coord().x = point.coord().x;
+                                }
                             }
                             else
                             {
-                                temp->shape()[count - 2].coord().y = point.coord().y;
-                                temp->shape()[count].coord().x = point.coord().x;
-                                if (count == 4)
-                                {
-                                    temp->shape().front().coord().x = temp->shape().back().coord().x;
-                                }
-                            }
-                        }
-                        else if (temp->shape()[0].coord().x == temp->shape()[1].coord().x && temp->shape()[2].coord().x == temp->shape()[3].coord().x && temp->shape()[0].coord().y == temp->shape()[3].coord().y && temp->shape()[2].coord().y == temp->shape()[1].coord().y)
-                        {
-                            point.translate(x1 - x0, y1 - y0);
-                            if (count % 2 == 0)
-                            {
-                                temp->shape()[count - 2].coord().x = point.coord().x;
-                                temp->shape()[count].coord().y = point.coord().y;
-                                if (count == 4)
-                                {
-                                    temp->shape().front().coord().y = temp->shape().back().coord().y;
-                                }
-                            }
-                            else
-                            {
-                                temp->shape()[count == 1 ? 3 : 1].coord().y = point.coord().y;
-                                temp->shape()[count].coord().x = point.coord().x;
+                                point.translate(x1 - x0, y1 - y0);
                             }
                         }
                         else
                         {
                             point.translate(x1 - x0, y1 - y0);
                         }
+                        if (count == 1)
+                        {
+                            temp->shape().back().coord() = temp->shape().front().coord();
+                        }
+                        _graph->memo()["modified"] = true;
+                        return;
                     }
-                    else
-                    {
-                        point.translate(x1 - x0, y1 - y0);
-                    }
-                    if (count == 1)
-                    {
-                        temp->shape().back().coord() = temp->shape().front().coord();
-                    }
-                    _graph->memo()["modified"] = true;
-                    return;
                 }
             }
-        }
-        temp->translate(x1 - x0, y1 - y0);
-    }
-    break;
-    case 1:
-    {
-        CircleContainer *temp = reinterpret_cast<CircleContainer *>(points);
-        if (change_shape && !points->shape_fixed() &&
-            (std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x0, y0))) <= catch_distance ||
-             std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x1, y1))) <= catch_distance))
-        {
-            temp->radius() = Geo::distance(temp->center(), Geo::Point(x1, y1));
-        }
-        else
-        {
             temp->translate(x1 - x0, y1 - y0);
         }
-    }
-    break;
+        break;
+    case 1:
+        {
+            CircleContainer *temp = reinterpret_cast<CircleContainer *>(points);
+            if (change_shape && !points->shape_fixed() &&
+                (std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x0, y0))) <= catch_distance ||
+                std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x1, y1))) <= catch_distance))
+            {
+                temp->radius() = Geo::distance(temp->center(), Geo::Point(x1, y1));
+            }
+            else
+            {
+                temp->translate(x1 - x0, y1 - y0);
+            }
+        }
+        break;
     case 2:
-    {
-        Link *temp = reinterpret_cast<Link *>(points);
-        if (change_shape && !points->shape_fixed())
         {
-            for (Geo::Point &point : *temp)
+            Link *temp = reinterpret_cast<Link *>(points);
+            if (change_shape && !points->shape_fixed())
             {
-                if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= catch_distance ||
-                    Geo::distance(x1, y1, point.coord().x, point.coord().y) <= catch_distance)
+                for (Geo::Point &point : *temp)
                 {
-                    point.translate(x1 - x0, y1 - y0);
-                    _graph->memo()["modified"] = true;
-                    return;
+                    if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= catch_distance ||
+                        Geo::distance(x1, y1, point.coord().x, point.coord().y) <= catch_distance)
+                    {
+                        point.translate(x1 - x0, y1 - y0);
+                        _graph->memo()["modified"] = true;
+                        return;
+                    }
                 }
             }
+            temp->translate(x1 - x0, y1 - y0);
         }
-        temp->translate(x1 - x0, y1 - y0);
-    }
-    break;
-    case 20:
-    {
-        Geo::Polyline *temp = reinterpret_cast<Geo::Polyline *>(points);
-        if (change_shape && !points->shape_fixed())
-        {
-            for (Geo::Point &point : *temp)
-            {
-                if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= catch_distance ||
-                    Geo::distance(x1, y1, point.coord().x, point.coord().y) <= catch_distance)
-                {
-                    point.translate(x1 - x0, y1 - y0);
-                    _graph->memo()["modified"] = true;
-                    return;
-                }
-            }
-        }
-        temp->translate(x1 - x0, y1 - y0);
-    }
-    break;
-    case 21:
-    {
-        Geo::Bezier *temp = reinterpret_cast<Geo::Bezier *>(points);
-        if (temp->memo()["is_selected"].to_bool())
-        {
-            for (size_t i = 0, count = temp->size(); i < count; ++i)
-            {
-                if (Geo::distance(x0, y0, (*temp)[i].coord().x, (*temp)[i].coord().y) <= catch_distance ||
-                    Geo::distance(x1, y1, (*temp)[i].coord().x, (*temp)[i].coord().y) <= catch_distance)
-                {
-                    (*temp)[i].translate(x1 - x0, y1 - y0);
-                    if (i > 2 && i % temp->order() == 1)
-                    {
-                        (*temp)[i - 2] = (*temp)[i - 1] + ((*temp)[i - 1] - (*temp)[i]).normalize() * Geo::distance((*temp)[i - 2], (*temp)[i - 1]);
-                        if (temp->order() == 2)
-                        {
-                            for (int j = i; j + 2 < count; j += 2)
-                            {
-                                (*temp)[j + 2] = (*temp)[j + 1] + ((*temp)[j + 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j + 1], (*temp)[j + 2]);
-                            }
-                            for (int j = i - 2; j > 2; j -= 2)
-                            {
-                                (*temp)[j - 2] = (*temp)[j - 1] + ((*temp)[j - 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j - 2], (*temp)[j - 1]);
-                            }
-                        }
-                    }
-                    else if (i + 2 < temp->size() && i % temp->order() == temp->order() - 1)
-                    {
-                        (*temp)[i + 2] = (*temp)[i + 1] + ((*temp)[i + 1] - (*temp)[i]).normalize() * Geo::distance((*temp)[i + 1], (*temp)[i + 2]);
-                        if (temp->order() == 2)
-                        {
-                            for (int j = i + 2; j + 2 < count; j += 2)
-                            {
-                                (*temp)[j + 2] = (*temp)[j + 1] + ((*temp)[j + 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j + 1], (*temp)[j + 2]);
-                            }
-                            for (int j = i; j > 2; j -= 2)
-                            {
-                                (*temp)[j - 2] = (*temp)[j - 1] + ((*temp)[j - 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j - 2], (*temp)[j - 1]);
-                            }
-                        }
-                    }
-                    else if (i % temp->order() == 0 && i > 0 && i < count - 1)
-                    {
-                        (*temp)[i - 1].translate(x1 - x0, y1 - y0);
-                        (*temp)[i + 1].translate(x1 - x0, y1 - y0);
-                        if (temp->order() == 2)
-                        {
-                            for (int j = i + 1; j + 2 < count; j += 2)
-                            {
-                                (*temp)[j + 2] = (*temp)[j + 1] + ((*temp)[j + 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j + 1], (*temp)[j + 2]);
-                            }
-                            for (int j = i - 1; j > 2; j -= 2)
-                            {
-                                (*temp)[j - 2] = (*temp)[j - 1] + ((*temp)[j - 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j - 2], (*temp)[j - 1]);
-                            }
-                        }
-                    }
-                    temp->update_shape();
-                    _graph->memo()["modified"] = true;
-                    return;
-                }
-            }
-        }
+        break;
+    case 3:
         points->translate(x1 - x0, y1 - y0);
-    }
-    break;
+        break;
+    case 20:
+        {
+            Geo::Polyline *temp = reinterpret_cast<Geo::Polyline *>(points);
+            if (change_shape && !points->shape_fixed())
+            {
+                for (Geo::Point &point : *temp)
+                {
+                    if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= catch_distance ||
+                        Geo::distance(x1, y1, point.coord().x, point.coord().y) <= catch_distance)
+                    {
+                        point.translate(x1 - x0, y1 - y0);
+                        _graph->memo()["modified"] = true;
+                        return;
+                    }
+                }
+            }
+            temp->translate(x1 - x0, y1 - y0);
+        }
+        break;
+    case 21:
+        {
+            Geo::Bezier *temp = reinterpret_cast<Geo::Bezier *>(points);
+            if (temp->memo()["is_selected"].to_bool())
+            {
+                for (size_t i = 0, count = temp->size(); i < count; ++i)
+                {
+                    if (Geo::distance(x0, y0, (*temp)[i].coord().x, (*temp)[i].coord().y) <= catch_distance ||
+                        Geo::distance(x1, y1, (*temp)[i].coord().x, (*temp)[i].coord().y) <= catch_distance)
+                    {
+                        (*temp)[i].translate(x1 - x0, y1 - y0);
+                        if (i > 2 && i % temp->order() == 1)
+                        {
+                            (*temp)[i - 2] = (*temp)[i - 1] + ((*temp)[i - 1] - (*temp)[i]).normalize() * Geo::distance((*temp)[i - 2], (*temp)[i - 1]);
+                            if (temp->order() == 2)
+                            {
+                                for (int j = i; j + 2 < count; j += 2)
+                                {
+                                    (*temp)[j + 2] = (*temp)[j + 1] + ((*temp)[j + 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j + 1], (*temp)[j + 2]);
+                                }
+                                for (int j = i - 2; j > 2; j -= 2)
+                                {
+                                    (*temp)[j - 2] = (*temp)[j - 1] + ((*temp)[j - 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j - 2], (*temp)[j - 1]);
+                                }
+                            }
+                        }
+                        else if (i + 2 < temp->size() && i % temp->order() == temp->order() - 1)
+                        {
+                            (*temp)[i + 2] = (*temp)[i + 1] + ((*temp)[i + 1] - (*temp)[i]).normalize() * Geo::distance((*temp)[i + 1], (*temp)[i + 2]);
+                            if (temp->order() == 2)
+                            {
+                                for (int j = i + 2; j + 2 < count; j += 2)
+                                {
+                                    (*temp)[j + 2] = (*temp)[j + 1] + ((*temp)[j + 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j + 1], (*temp)[j + 2]);
+                                }
+                                for (int j = i; j > 2; j -= 2)
+                                {
+                                    (*temp)[j - 2] = (*temp)[j - 1] + ((*temp)[j - 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j - 2], (*temp)[j - 1]);
+                                }
+                            }
+                        }
+                        else if (i % temp->order() == 0 && i > 0 && i < count - 1)
+                        {
+                            (*temp)[i - 1].translate(x1 - x0, y1 - y0);
+                            (*temp)[i + 1].translate(x1 - x0, y1 - y0);
+                            if (temp->order() == 2)
+                            {
+                                for (int j = i + 1; j + 2 < count; j += 2)
+                                {
+                                    (*temp)[j + 2] = (*temp)[j + 1] + ((*temp)[j + 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j + 1], (*temp)[j + 2]);
+                                }
+                                for (int j = i - 1; j > 2; j -= 2)
+                                {
+                                    (*temp)[j - 2] = (*temp)[j - 1] + ((*temp)[j - 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j - 2], (*temp)[j - 1]);
+                                }
+                            }
+                        }
+                        temp->update_shape();
+                        _graph->memo()["modified"] = true;
+                        return;
+                    }
+                }
+            }
+            points->translate(x1 - x0, y1 - y0);
+        }
+        break;
     default:
         break;
     }
@@ -1007,6 +1010,46 @@ bool Editer::connect(const double connect_distance)
         delete _backup.back();
         _backup.pop_back();
         return false;
+    }
+}
+
+bool Editer::combinate()
+{
+    if (_graph == nullptr || _graph->empty())
+    {
+        return false;
+    }
+
+    Combination *combination = new Combination();
+    size_t index = 0;
+    std::vector<size_t> indexs;
+    for (Geo::Geometry *geo : _graph->container_group(_current_group))
+    {
+        if (geo->memo()["is_selected"].to_bool() && (geo->memo()["Type"].to_int() < 2 || 
+            geo->memo()["Type"].to_int() == 3 || geo->memo()["Type"].to_int() / 10 == 2))
+        {
+            indexs.emplace_back(index);
+        }
+        ++index;
+    }
+    std::reverse(indexs.begin(), indexs.end());
+    for (size_t i : indexs)
+    {
+        combination->append(_graph->container_group(_current_group).pop(i));
+    }
+    std::reverse(combination->begin(), combination->end());
+    
+    if (combination->empty())
+    {
+        delete combination;
+        return false;
+    }
+    else
+    {
+        combination->memo()["is_selected"] = true;
+        combination->update_border();
+        _graph->container_group(_current_group).append(combination);
+        return true;
     }
 }
 

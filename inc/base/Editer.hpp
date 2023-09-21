@@ -79,6 +79,8 @@ public:
 
     bool connect(const double connect_distance);
 
+    bool combinate();
+
 
 
     Geo::Geometry *select(const Geo::Point &point, const bool reset_others = true);

@@ -53,6 +53,7 @@ void MainWindow::init()
     QObject::connect(ui->line_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(1); });
     QObject::connect(ui->rect_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(2); });
     QObject::connect(ui->curve_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(3); _painter.set_bezier_order(ui->curve_sbx->value());});
+    QObject::connect(ui->combinate_btn, &QPushButton::clicked, this, [this](){ _editer.combinate(); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
     QObject::connect(ui->auto_aligning, &QAction::triggered, this, [this]() {GlobalSetting::get_instance()->setting()["auto_aligning"] = ui->auto_aligning->isChecked();});

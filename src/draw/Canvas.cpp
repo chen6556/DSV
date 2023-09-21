@@ -248,7 +248,7 @@ void Canvas::paint_graph()
                 for (const Geo::Geometry *item : *reinterpret_cast<const Combination *>(geo))
                 {
                     points.clear();
-                    switch (geo->memo()["Type"].to_int())
+                    switch (item->memo()["Type"].to_int())
                     {
                     case 0:
                         container = reinterpret_cast<Container *>(const_cast<Geo::Geometry *>(item));
