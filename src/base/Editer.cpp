@@ -496,6 +496,9 @@ bool Editer::remove_selected()
                 }
                 it = _graph->container_group(_current_group).remove(it);
                 break;
+            case 3:
+                it = _graph->container_group(_current_group).remove(it);
+                break;
             case 20:
             case 21:
                 it = _graph->container_group(_current_group).remove(it);
@@ -591,6 +594,9 @@ bool Editer::copy_selected()
                         }
                     }
                 }
+                break;
+            case 3:
+                _paste_table.push_back(reinterpret_cast<Combination *>(const_cast<Geo::Geometry *>(container))->clone());
                 break;
             case 20:
                 _paste_table.push_back(reinterpret_cast<Geo::Polyline *>(const_cast<Geo::Geometry *>(container))->clone());
@@ -699,6 +705,9 @@ bool Editer::cut_selected()
                     }
                 }
                 break;
+            case 3:
+                _paste_table.push_back(reinterpret_cast<Combination *>(const_cast<Geo::Geometry *>(*it))->clone());
+                break;
             case 20:
                 _paste_table.push_back(reinterpret_cast<Geo::Polyline *>(const_cast<Geo::Geometry *>(*it))->clone());
                 break;
@@ -783,6 +792,9 @@ bool Editer::paste(const double tx, const double ty)
             break;
         case 2:
             _graph->container_group(_current_group).append(reinterpret_cast<Link *>(geo)->clone());
+            break;
+        case 3:
+            _graph->container_group(_current_group).append(reinterpret_cast<Combination *>(geo)->clone());
             break;
         case 20:
             _graph->container_group(_current_group).append(reinterpret_cast<Geo::Polyline *>(geo)->clone());
@@ -1032,16 +1044,45 @@ bool Editer::combinate()
         }
         ++index;
     }
-    if (indexs.empty())
+    if (indexs.size() < 2)
     {
         return false;
     }
-    
+
     store_backup();
     std::reverse(indexs.begin(), indexs.end());
     for (const size_t i : indexs)
     {
         combination->append(_graph->container_group(_current_group).pop(i));
+        if (combination->back()->memo()["Type"].to_int() <= 1)
+        {
+            for (Geo::Geometry *link : combination->back()->related())
+            {
+                if (dynamic_cast<Link *>(link) != nullptr)
+                {
+                    link->memo()["remove"] = true;
+                    if (reinterpret_cast<Link *>(link)->tail() == combination->back())
+                    {
+                        reinterpret_cast<Link *>(link)->set_tail(nullptr);
+                    }
+                    else
+                    {
+                        reinterpret_cast<Link *>(link)->set_head(nullptr);
+                    }
+                }
+            }
+        }
+    }
+    for (std::vector<Geo::Geometry *>::iterator it = _graph->container_group(_current_group).begin(); it != _graph->container_group(_current_group).end();)
+    {
+        if ((*it)->memo().has("remove"))
+        {
+            it = _graph->container_group(_current_group).remove(it);
+        }
+        else
+        {
+            ++it;
+        }
     }
     std::reverse(combination->begin(), combination->end());
     combination->memo()["is_selected"] = true;
