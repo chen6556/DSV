@@ -175,6 +175,75 @@ void File::write(const QString &path, Graph *graph)
                 link_objs.append(obj2);
                 link = nullptr;
                 break;
+            case 3:
+                for (Geo::Geometry *item : *reinterpret_cast<Combination *>(geo))
+                {
+                    QJsonObject obj2;
+                    QJsonArray array;
+                    switch (item->memo()["Type"].to_int())
+                    {
+                    case 0:
+                        container = reinterpret_cast<Container *>(item);
+                        for (const Geo::Point &point : container->shape())
+                        {
+                            array.append(point.coord().x);
+                            array.append(point.coord().y);
+                        }
+                        obj2.insert("shape", array);
+                        obj2.insert("text", container->text());
+                        obj2.insert("id", ++container_id * 10);
+                        container_objs.append(obj2);
+                        container->memo()["id"] = container_id * 10;
+                        container = nullptr;
+                        break;
+                    case 1:
+                        circlecontainer = reinterpret_cast<CircleContainer *>(item);
+                        array.append(circlecontainer->center().coord().x);
+                        array.append(circlecontainer->center().coord().y);
+                        array.append(circlecontainer->radius());
+                        obj2.insert("shape", array);
+                        obj2.insert("text", circlecontainer->text());
+                        obj2.insert("id", ++circlecontainer_id * 10 + 1);
+                        circlecontainer_objs.append(obj2);
+                        circlecontainer->memo()["id"] = circlecontainer_id * 10 + 1;
+                        circlecontainer = nullptr;
+                        break;
+                    case 20:
+                        polyline = reinterpret_cast<Geo::Polyline *>(item);
+                        if (polyline->empty())
+                        {
+                            break;
+                        }
+                        for (const Geo::Point &point : *polyline)
+                        {
+                            array.append(point.coord().x);
+                            array.append(point.coord().y);
+                        }
+                        obj2.insert("shape", array);
+                        polyline_objs.append(obj2);
+                        polyline = nullptr;
+                        break;
+                    case 21:
+                        bezier = reinterpret_cast<Geo::Bezier *>(item);
+                        if (bezier->empty())
+                        {
+                            break;
+                        }
+                        for (const Geo::Point &point : *bezier)
+                        {
+                            array.append(point.coord().x);
+                            array.append(point.coord().y);
+                        }
+                        obj2.insert("shape", array);
+                        obj2.insert("order", static_cast<int>(bezier->order()));
+                        bezier_objs.append(obj2);
+                        bezier = nullptr;
+                        break;
+                    default:
+                        break;
+                    }
+                }
+                break;
             case 20:
                 polyline = reinterpret_cast<Geo::Polyline *>(geo);
                 if (polyline->empty())
