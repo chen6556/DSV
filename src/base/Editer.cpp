@@ -1032,25 +1032,56 @@ bool Editer::combinate()
         }
         ++index;
     }
+    if (indexs.empty())
+    {
+        return false;
+    }
+    
+    store_backup();
     std::reverse(indexs.begin(), indexs.end());
-    for (size_t i : indexs)
+    for (const size_t i : indexs)
     {
         combination->append(_graph->container_group(_current_group).pop(i));
     }
     std::reverse(combination->begin(), combination->end());
-    
-    if (combination->empty())
+    combination->memo()["is_selected"] = true;
+    combination->update_border();
+    _graph->container_group(_current_group).append(combination);
+    return true;
+}
+
+bool Editer::split()
+{
+    if (_graph == nullptr || _graph->empty())
     {
-        delete combination;
         return false;
     }
-    else
+
+    size_t index = 0;
+    std::vector<size_t> indexs;
+    for (Geo::Geometry *geo : _graph->container_group(_current_group))
     {
-        combination->memo()["is_selected"] = true;
-        combination->update_border();
-        _graph->container_group(_current_group).append(combination);
-        return true;
+        if (geo->memo()["is_selected"].to_bool() && geo->memo()["Type"].to_int() == 3)
+        {
+            indexs.emplace_back(index);
+        }
+        ++index;
     }
+    if (indexs.empty())
+    {
+        return false;
+    }
+    store_backup();
+    std::reverse(indexs.begin(), indexs.end());
+    
+    Combination *combination = nullptr;
+    for (const size_t i : indexs)
+    {
+        combination = reinterpret_cast<Combination *>(_graph->container_group(_current_group).pop(i));
+        _graph->container_group(_current_group).append(*reinterpret_cast<ContainerGroup *>(combination));
+        delete combination;
+    }
+    return true;
 }
 
 

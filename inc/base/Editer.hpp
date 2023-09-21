@@ -81,6 +81,8 @@ public:
 
     bool combinate();
 
+    bool split();
+
 
 
     Geo::Geometry *select(const Geo::Point &point, const bool reset_others = true);
