@@ -1029,6 +1029,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
     Link *l = nullptr;
     Geo::Polyline *p = nullptr;
     Geo::Bezier *b = nullptr;
+    Combination *cb = nullptr;
     for (std::vector<Geo::Geometry *>::reverse_iterator it = _graph->container_group(_current_group).rbegin(),
                                                         end = _graph->container_group(_current_group).rend();
          it != end; ++it)
@@ -1162,6 +1163,67 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                 }
             }
             l = nullptr;
+            break;
+        case 3:
+            cb = reinterpret_cast<Combination *>(*it);
+            if (Geo::is_inside(point, cb->border(), true))
+            {
+                for (Geo::Geometry *item : *cb)
+                {
+                    switch (item->memo()["Type"].to_int())
+                    {
+                    case 0:
+                        if (Geo::is_inside(point, reinterpret_cast<Container *>(item)->shape(), true))
+                        {
+                            cb->memo()["is_selected"] = true;
+                            _graph->container_group(_current_group).pop(it);
+                            _graph->container_group(_current_group).append(cb);
+                            return cb;
+                        }
+                        break;
+                    case 1:
+                        if (Geo::is_inside(point, reinterpret_cast<CircleContainer *>(item)->shape(), true))
+                        {
+                            cb->memo()["is_selected"] = true;
+                            _graph->container_group(_current_group).pop(it);
+                            _graph->container_group(_current_group).append(cb);
+                            return cb;
+                        }
+                        break;
+                    case 20:
+                        p = reinterpret_cast<Geo::Polyline *>(item);
+                        for (size_t i = 1, count = p->size(); i < count; ++i)
+                        {
+                            if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= 2)
+                            {
+                                cb->memo()["is_selected"] = true;
+                                _graph->container_group(_current_group).pop(it);
+                                _graph->container_group(_current_group).append(cb);
+                                return cb;
+                            }
+                        }
+                        p = nullptr;
+                        break;
+                    case 21:
+                        b = reinterpret_cast<Geo::Bezier *>(*it);
+                        for (size_t i = 1, count = b->shape().size(); i < count; ++i)
+                        {
+                            if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= 2)
+                            {
+                                cb->memo()["is_selected"] = true;
+                                _graph->container_group(_current_group).pop(it);
+                                _graph->container_group(_current_group).append(cb);
+                                return cb;
+                            }
+                        }
+                        b = nullptr;
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            cb = nullptr;
             break;
         case 20:
             p = reinterpret_cast<Geo::Polyline *>(*it);
@@ -1334,6 +1396,55 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::Rectangle &rect)
                 }
             }
             link = nullptr;
+            break;
+        case 3:
+            if (Geo::is_intersected(rect, reinterpret_cast<Combination *>(container)->border(), true))
+            {
+                bool end = false;
+                for (Geo::Geometry *item : *reinterpret_cast<Combination *>(container))
+                {
+                    switch (item->memo()["Type"].to_int())
+                    {
+                    case 0:
+                        if (Geo::is_intersected(rect, reinterpret_cast<Container *>(item)->shape(), true))
+                        {
+                            end = true;
+                        }
+                        break;
+                    case 1:
+                        if (Geo::is_intersected(rect, reinterpret_cast<CircleContainer *>(item)->shape(), true))
+                        {
+                            end = true;
+                        }
+                        break;
+                    case 20:
+                        if (Geo::is_intersected(rect, *reinterpret_cast<Geo::Polyline *>(item)))
+                        {
+                            end = true;
+                        }
+                        break;
+                    case 21:
+                        if (Geo::is_intersected(rect, reinterpret_cast<Geo::Bezier *>(item)->shape()))
+                        {
+                            end = true;
+                        }
+                        break;
+                    }
+                    if (end)
+                    {
+                        break;
+                    }
+                }
+                if (end)
+                {
+                    container->memo()["is_selected"] = true;
+                    result.push_back(container);
+                }
+                else
+                {
+                    container->memo()["is_selected"] = false;
+                }
+            }
             break;
         case 20:
             if (Geo::is_intersected(rect, *reinterpret_cast<Geo::Polyline *>(container)))

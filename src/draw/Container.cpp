@@ -1246,9 +1246,6 @@ void Combination::append(Geo::Geometry *geo)
     case 1:
         append(reinterpret_cast<CircleContainer *>(geo));
         break;
-    case 2:
-        append(reinterpret_cast<Link *>(geo));
-        break;
     case 3:
         append(reinterpret_cast<Combination *>(geo));
         break;

@@ -243,6 +243,103 @@ void Canvas::paint_graph()
                     painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                 }
                 break;
+            case 3:
+                painter.setPen(geo->memo()["is_selected"].to_bool() ? pen_selected : pen_not_selected);
+                for (const Geo::Geometry *item : *reinterpret_cast<const Combination *>(geo))
+                {
+                    points.clear();
+                    switch (geo->memo()["Type"].to_int())
+                    {
+                    case 0:
+                        container = reinterpret_cast<Container *>(const_cast<Geo::Geometry *>(item));
+                        for (const Geo::Point &point : container->shape())
+                        {
+                            points.append(QPointF(point.coord().x, point.coord().y));
+                        }
+                        points.pop_back();
+                        _catched_points.append(points);
+                        painter.drawPolygon(points);
+                        if (show_points)
+                        {
+                            painter.setRenderHint(QPainter::Antialiasing);
+                            painter.setPen(QPen(QColor(0, 140, 255), 6));
+                            painter.drawPoints(points);
+                        }
+                        if (!container->text().isEmpty())
+                        {
+                            painter.setPen(QPen(text_color, 2));
+                            text_rect = font_metrics.boundingRect(container->text());
+                            text_rect.setWidth(text_rect.width() + suffix_text_width);
+                            text_rect.setHeight(4 * text_heigh_ratio + 14 * (container->text().count('\n') + 1) * text_heigh_ratio);
+                            text_rect.translate(points.boundingRect().center() - text_rect.center());
+                            painter.drawText(text_rect, container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                        }
+                        break;
+                    case 1:
+                        circlecontainer = reinterpret_cast<CircleContainer *>(const_cast<Geo::Geometry *>(item));
+                        center = circlecontainer->center().coord();
+                        radius = circlecontainer->radius();
+                        painter.drawEllipse(center.x - radius, center.y - radius, radius * 2, radius * 2);
+                        _catched_points.emplace_back(QPointF(center.x, center.y));
+                        _catched_points.emplace_back(QPointF(center.x, center.y + radius));
+                        _catched_points.emplace_back(QPointF(center.x + radius, center.y));
+                        _catched_points.emplace_back(QPointF(center.x, center.y - radius));
+                        _catched_points.emplace_back(QPointF(center.x - radius, center.y));
+                        if (show_points)
+                        {
+                            painter.setRenderHint(QPainter::Antialiasing);
+                            painter.setPen(QPen(QColor(0, 140, 255), 6));
+                            painter.drawPoint(center.x, center.y);
+                            painter.drawPoint(center.x, center.y + radius);
+                            painter.drawPoint(center.x + radius, center.y);
+                            painter.drawPoint(center.x, center.y - radius);
+                            painter.drawPoint(center.x - radius, center.y);
+                        }
+                        if (!circlecontainer->text().isEmpty())
+                        {
+                            painter.setPen(QPen(text_color, 2));
+                            text_rect = font_metrics.boundingRect(circlecontainer->text());
+                            text_rect.setWidth(text_rect.width() + suffix_text_width);
+                            text_rect.setHeight(4 * text_heigh_ratio + 14 * (circlecontainer->text().count('\n') + 1) * text_heigh_ratio);
+                            text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
+                                circlecontainer->center().coord().y - text_rect.center().y());
+                            painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                        }
+                        break;
+                    case 20:
+                        polyline = reinterpret_cast<Geo::Polyline *>(const_cast<Geo::Geometry *>(item));        
+                        for (const Geo::Point &point : *polyline)
+                        {
+                            points.append(QPointF(point.coord().x, point.coord().y));
+                        }
+                        _catched_points.append(points);
+                        painter.drawPolyline(points);
+                        if (show_points)
+                        {
+                            painter.setRenderHint(QPainter::Antialiasing);
+                            painter.setPen(QPen(QColor(0, 140, 255), 6));
+                            painter.drawPoints(points);
+                        }
+                        break;
+                    case 21:
+                        for (const Geo::Point &point : reinterpret_cast<Geo::Bezier *>(const_cast<Geo::Geometry *>(item))->shape())
+                        {
+                            points.append(QPointF(point.coord().x, point.coord().y));
+                        }
+                        painter.drawPolyline(points);
+                        if (show_points)
+                        {
+                            painter.setRenderHint(QPainter::Antialiasing);
+                            painter.setPen(QPen(QColor(0, 140, 255), 6));
+                            painter.drawPoint(points.front());
+                            painter.drawPoint(points.back());
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+                }
+                break;
             case 20:
                 polyline = reinterpret_cast<Geo::Polyline *>(const_cast<Geo::Geometry *>(geo));        
                 for (const Geo::Point &point : *polyline)
@@ -855,7 +952,7 @@ void Canvas::set_bezier_order(const size_t order)
 {
     _bezier_order = order;
 }
-    
+
 const size_t Canvas::bezier_order() const
 {
     return _bezier_order;
