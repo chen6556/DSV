@@ -606,7 +606,11 @@ namespace Geo
 
     const bool is_intersected(const Polyline &polyline, const Polygon &polygon, const bool inside = true);
 
+    const bool is_intersected(const Polyline &polyline, const Circle &circle);
+
     const bool is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside = true);
+
+    const bool is_intersected(const Polygon &polygon, const Circle &circle, const bool inside = true);
 
     const bool is_intersected(const Circle &circle0, const Circle &circle1, const bool inside = true);
 

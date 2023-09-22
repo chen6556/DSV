@@ -2310,6 +2310,18 @@ const bool Geo::is_intersected(const Polyline &polyline, const Polygon &polygon,
     }
 }
 
+const bool Geo::is_intersected(const Polyline &polyline, const Circle &circle)
+{
+    for (size_t i = 0, count = polyline.size(); i < count; ++i)
+    {
+        if (Geo::distance(circle.center(), polyline[i - 1], polyline[1]) < circle.radius())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 const bool Geo::is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside)
 {
     if (polygon0.empty() || polygon1.empty() || !Geo::is_intersected(polygon0.bounding_rect(), polygon1.bounding_rect()))
@@ -2344,6 +2356,29 @@ const bool Geo::is_intersected(const Polygon &polygon0, const Polygon &polygon1,
             }
         }
     }
+    return false;
+}
+
+const bool Geo::is_intersected(const Polygon &polygon, const Circle &circle, const bool inside)
+{
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        if (Geo::distance(circle.center(), polygon[i - 1], polygon[1]) < circle.radius())
+        {
+            return true;
+        }
+    }
+
+    if (!inside)
+    {
+        return false;
+    }
+
+    if (Geo::is_inside(circle.center(), polygon, true) || std::any_of(polygon.begin(), polygon.end(), [&](const Geo::Point &point) { return Geo::is_inside(point, circle, true); }))
+    {
+        return true;
+    }
+
     return false;
 }
 
