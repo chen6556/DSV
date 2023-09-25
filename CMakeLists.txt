@@ -9,6 +9,8 @@ if (MSVC)
     add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
     add_compile_options("/arch:AVX2")
     add_compile_options("/bigobj")
+    add_compile_options("/GL")
+    add_link_options("/LTCG")
 endif()
 
 set(CMAKE_AUTOUIC ON)

@@ -12,6 +12,7 @@
 #include <qpdf/QPDF.hh>
 #include <qpdf/QPDFWriter.hh>
 #include "io/GlobalSetting.hpp"
+#include "base/Pretreatment.hpp"
  
 
 MainWindow::MainWindow(QWidget *parent)
@@ -427,6 +428,9 @@ void MainWindow::open_file(const QString &path)
             _file_type = "PDF: (*.pdf *.PDF)";
         }
     }
+    
+    Pretreatment pretreatment(g);
+    
     _editer.load_graph(g, path);
     if (ui->auto_layering->isChecked())
     {
