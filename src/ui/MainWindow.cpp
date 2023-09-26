@@ -429,7 +429,10 @@ void MainWindow::open_file(const QString &path)
         }
     }
     
-    Pretreatment pretreatment(g);
+    if (GlobalSetting::get_instance()->setting()["pretreatment"].toBool())
+    {
+        Pretreatment pretreatment(g);
+    }
     
     _editer.load_graph(g, path);
     if (ui->auto_layering->isChecked())

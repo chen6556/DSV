@@ -17,10 +17,6 @@ private:
 
     void connect_lines(const double value);
 
-    void connect_lines(const double value, const size_t cores);
-
-    void connect_lines_subfunc(const double value, const size_t start, const size_t end);
-
     void finish();
 
 public:

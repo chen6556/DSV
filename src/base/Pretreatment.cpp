@@ -1,11 +1,12 @@
 #include "base/Pretreatment.hpp"
+#include "io/GlobalSetting.hpp"
 
 
 Pretreatment::Pretreatment(Graph *graph)
     : _graph(graph)
 {
     split();    
-    connect_lines(3);
+    connect_lines(GlobalSetting::get_instance()->setting()["connect_distance"].toDouble());
 
     finish();
 };

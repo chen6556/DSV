@@ -31,10 +31,12 @@ void GlobalSetting::load_setting()
         _instance->_setting["auto_save"] = false;
         _instance->_setting["backup_times"] = 50;
         _instance->_setting["catch_distance"] = 2;
+        _instance->_setting["connect_distance"] = 0;
         _instance->_setting["cursor_catch"] = false;
         _instance->_setting["file_path"] = "D:/";
         _instance->_setting["file_type"] = "All Files: (*.*)";
         _instance->_setting["multiple_select"] = false;
+        _instance->_setting["pretreatment"] = false;
         _instance->_setting["remember_file_type"] = true;
         _instance->_setting["scale_text"] = true;
         _instance->_setting["show_points"] = false;

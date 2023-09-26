@@ -20,12 +20,14 @@ void Setting::init()
 
     ui->catch_distance->setValue(setting["catch_distance"].toDouble());
     ui->backup_times->setValue(setting["backup_times"].toInt());
+    ui->connect_distance->setValue(setting["connect_distance"].toDouble());
 
     ui->scale_text->setChecked(setting["scale_text"].toBool());
     ui->catch_only->setChecked(setting["active_layer_catch_only"].toBool());
     ui->multiple_select->setChecked(setting["multiple_select"].toBool());
     ui->cursor_catch->setChecked(setting["cursor_catch"].toBool());
     ui->show_points->setChecked(setting["show_points"].toBool());
+    ui->pretreatment->setChecked(setting["pretreatment"].toBool());
 }
 
 void Setting::accept()
@@ -34,12 +36,14 @@ void Setting::accept()
 
     setting["catch_distance"] = ui->catch_distance->value();
     setting["backup_times"] = ui->backup_times->value();
+    setting["connect_distance"] = ui->connect_distance->value();
 
     setting["scale_text"] = ui->scale_text->isChecked();
     setting["active_layer_catch_only"] = ui->catch_only->isChecked();
     setting["multiple_select"] = ui->multiple_select->isChecked();
     setting["cursor_catch"] = ui->cursor_catch->isChecked();
     setting["show_points"] = ui->show_points->isChecked();
+    setting["pretreatment"] = ui->pretreatment->isChecked();
 
     QDialog::accept();
 }
