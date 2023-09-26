@@ -1,19 +1,11 @@
 #include "base/Pretreatment.hpp"
-#include <thread>
 
 
 Pretreatment::Pretreatment(Graph *graph)
     : _graph(graph)
 {
-    split();
-    if (_all_polylines.size() < 80)
-    {
-        connect_lines(3);
-    }
-    else
-    {
-        connect_lines(3, 8);
-    }
+    split();    
+    connect_lines(3);
 
     finish();
 };
@@ -171,153 +163,6 @@ void Pretreatment::connect_lines(const double value)
         [](const Container *a, const Container *b) { return a->area() < b->area(); });
     std::sort(_all_circles.begin(), _all_circles.end(), 
         [](const CircleContainer *a, const CircleContainer *b) { return a->area() < b->area(); });
-}
-
-void Pretreatment::connect_lines(const double value, const size_t cores)
-{
-    const size_t polyline_num = _all_polylines.size();
-    const size_t step = polyline_num / cores;
-    std::list<std::thread> threads;
-    size_t i = 0;
-    for (; i < cores - 1; ++i)
-    {
-        threads.emplace_back(std::thread(&Pretreatment::connect_lines_subfunc, this, 3, step * i, step * (i + 1)));
-    }
-    threads.emplace_back(std::thread(&Pretreatment::connect_lines_subfunc, this, 3, step * i, polyline_num));
-    for (std::thread &t : threads)
-    {
-        t.join();
-    }
-
-    std::sort(_removed_polyliens.begin(), _removed_polyliens.end(),
-        [](const size_t a, const size_t b) { return a > b; });
-    for (const size_t index : _removed_polyliens)
-    {
-        delete _all_polylines[index];
-        _all_polylines.erase(_all_polylines.begin() + index);
-    }
-    _removed_polyliens.clear();
-
-    std::sort(_all_containers.begin(), _all_containers.end(), 
-        [](const Container *a, const Container *b) { return a->area() < b->area(); });
-    std::sort(_all_circles.begin(), _all_circles.end(), 
-        [](const CircleContainer *a, const CircleContainer *b) { return a->area() < b->area(); });
-}
-
-void Pretreatment::connect_lines_subfunc(const double value, const size_t start, const size_t end)
-{
-    bool flag = false;
-    for (size_t i = start, count0 = end; i < count0; ++i)
-    {
-        flag = false;
-        for (size_t j = i + 1; j < count0; ++j)
-        {
-            _mtx.lock();
-            if (std::find(_removed_polyliens.begin(), _removed_polyliens.end(), j) != _removed_polyliens.end())
-            {
-                _mtx.unlock();
-                continue;
-            }
-            _mtx.unlock();
-
-            if (_all_polylines[i]->front() == _all_polylines[j]->front() ||
-                Geo::distance(_all_polylines[i]->front(), _all_polylines[j]->front()) < value)
-            {
-                _mtx.lock();
-                std::reverse(_all_polylines[j]->begin(), _all_polylines[j]->end());
-                _all_polylines[i]->insert(0, *_all_polylines[j]);
-                _removed_polyliens.push_back(j);
-                _mtx.unlock();
-                --count0;
-                --i;
-                flag = true;
-                break;
-            }
-            else if (_all_polylines[i]->front() == _all_polylines[j]->back() ||
-                Geo::distance(_all_polylines[i]->front(), _all_polylines[j]->back()) < value)
-            {
-                _mtx.lock();
-                _all_polylines[i]->insert(0, *_all_polylines[j]);
-                _removed_polyliens.push_back(j);
-                _mtx.unlock();
-                --count0;
-                --i;
-                flag = true;
-                break;
-            }
-            else if (_all_polylines[i]->back() == _all_polylines[j]->front() ||
-                Geo::distance(_all_polylines[i]->back(), _all_polylines[j]->front()) < value)
-            {
-                _mtx.lock();
-                _all_polylines[i]->append(*_all_polylines[j]);
-                _removed_polyliens.push_back(j);
-                _mtx.unlock();
-                --count0;
-                --i;
-                flag = true;
-                break;
-            }
-            else if (_all_polylines[i]->back() == _all_polylines[j]->back() ||
-                Geo::distance(_all_polylines[i]->back(), _all_polylines[j]->back()) < value)
-            {
-                _mtx.lock();
-                std::reverse(_all_polylines[j]->begin(), _all_polylines[j]->end());
-                _all_polylines[i]->append(*_all_polylines[j]);
-                _removed_polyliens.push_back(j);
-                _mtx.unlock();
-                --count0;
-                --i;
-                flag = true;
-                break;
-            }
-        }
-    
-        /* if (flag)
-        {
-            continue;
-        }
-        for (size_t j = 0, count1 = _all_beziers.size(); j < count1; ++j)
-        {
-            if (_all_polylines[i]->front() == _all_beziers[j]->front())
-            {
-                std::reverse(_all_beziers[j]->begin(), _all_beziers[j]->end());
-                _all_beziers[j]->update_shape();
-                _all_polylines[i]->insert(0, _all_beziers[j]->shape());
-                delete _all_beziers[j];
-                _all_beziers.erase(_all_beziers.begin() + j);
-                --i;
-                break;
-            }
-            else if (_all_polylines[i]->front() == _all_beziers[j]->back())
-            {
-                _all_beziers[j]->update_shape();
-                _all_polylines[i]->insert(0, _all_beziers[j]->shape());
-                delete _all_beziers[j];
-                _all_beziers.erase(_all_beziers.begin() + j);
-                --i;
-                break;
-            }
-            else if (_all_polylines[i]->back() == _all_beziers[j]->front())
-            {
-                _all_beziers[j]->update_shape();
-                _all_polylines[i]->append(_all_beziers[j]->shape());
-                delete _all_beziers[j];
-                _all_beziers.erase(_all_beziers.begin() + j);
-                --i;
-                break;
-            }
-            else if (_all_polylines[i]->back() == _all_beziers[j]->back())
-            {
-                std::reverse(_all_beziers[j]->begin(), _all_beziers[j]->end());
-                _all_beziers[j]->update_shape();
-                _all_polylines[i]->append(_all_beziers[j]->shape());
-                delete _all_beziers[j];
-                _all_beziers.erase(_all_beziers.begin() + j);
-                --i;
-                break;
-            }
-        } */
-    }
 }
 
 void Pretreatment::finish()
