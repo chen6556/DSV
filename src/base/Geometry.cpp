@@ -475,7 +475,7 @@ void Polyline::append(const Polyline &polyline)
     }
 }
 
-void Polyline::append(std::vector<Point>::const_iterator &begin, std::vector<Point>::const_iterator &end)
+void Polyline::append(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
 {
     if (_points.empty() || _points.back() != *begin)
     {
@@ -511,7 +511,7 @@ void Polyline::insert(const size_t index, const Polyline& polyline)
     _points.insert(_points.cbegin() + index, polyline._points.cbegin() + i, polyline._points.cend() - j);
 }
 
-void Polyline::insert(const size_t index, std::vector<Point>::const_iterator &begin, std::vector<Point>::const_iterator &end)
+void Polyline::insert(const size_t index, std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
 {
     assert(index < _points.size());
     int i = (index > 0 && _points[index] == *begin);
