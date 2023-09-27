@@ -54,7 +54,7 @@ void MainWindow::init()
     QObject::connect(ui->line_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(1); });
     QObject::connect(ui->rect_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(2); });
     QObject::connect(ui->curve_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(3); _painter.set_bezier_order(ui->curve_sbx->value());});
-    QObject::connect(ui->combinate_btn, &QPushButton::clicked, this, [this](){ _editer.combinate(); });
+    QObject::connect(ui->combine_btn, &QPushButton::clicked, this, [this](){ _editer.combine(); });
     QObject::connect(ui->split_btn, &QPushButton::clicked, this, [this](){ _editer.split(); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 

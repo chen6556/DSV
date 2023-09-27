@@ -79,7 +79,7 @@ public:
 
     bool connect(const double connect_distance);
 
-    bool combinate();
+    bool combine();
 
     bool split();
 

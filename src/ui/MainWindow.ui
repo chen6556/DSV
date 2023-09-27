@@ -175,14 +175,14 @@ QToolButton{background:rgb(142,142,142);}</string>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="combinate_btn">
+        <widget class="QPushButton" name="combine_btn">
          <property name="font">
           <font>
            <pointsize>10</pointsize>
           </font>
          </property>
          <property name="text">
-          <string>Combinate</string>
+          <string>Combine</string>
          </property>
         </widget>
        </item>

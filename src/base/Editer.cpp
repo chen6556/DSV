@@ -1025,7 +1025,7 @@ bool Editer::connect(const double connect_distance)
     }
 }
 
-bool Editer::combinate()
+bool Editer::combine()
 {
     if (_graph == nullptr || _graph->empty())
     {
