@@ -5,9 +5,12 @@
 Pretreatment::Pretreatment(Graph *graph)
     : _graph(graph)
 {
-    split();    
+    split();
     connect_lines(GlobalSetting::get_instance()->setting()["connect_distance"].toDouble());
-    combine();
+    if (GlobalSetting::get_instance()->setting()["combine"].toBool())
+    {
+        combine();
+    }
     finish();
 };
 

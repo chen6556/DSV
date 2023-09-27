@@ -24,13 +24,14 @@ void GlobalSetting::load_setting()
     file.close();
 
     if (_instance->_setting.isEmpty())
-    {   
+    {
         _instance->_setting["active_layer_catch_only"] = true;
         _instance->_setting["auto_aligning"] = true;
         _instance->_setting["auto_layering"] = true;
         _instance->_setting["auto_save"] = false;
         _instance->_setting["backup_times"] = 50;
         _instance->_setting["catch_distance"] = 2;
+        _instance->_setting["combine"] = true;
         _instance->_setting["connect_distance"] = 0;
         _instance->_setting["cursor_catch"] = false;
         _instance->_setting["file_path"] = "D:/";
