@@ -264,6 +264,7 @@ void Canvas::paint_graph()
                             painter.setRenderHint(QPainter::Antialiasing);
                             painter.setPen(QPen(QColor(0, 140, 255), 6));
                             painter.drawPoints(points);
+                            painter.setPen(geo->memo()["is_selected"].to_bool() ? pen_selected : pen_not_selected);
                         }
                         if (!container->text().isEmpty())
                         {
@@ -294,6 +295,7 @@ void Canvas::paint_graph()
                             painter.drawPoint(center.x + radius, center.y);
                             painter.drawPoint(center.x, center.y - radius);
                             painter.drawPoint(center.x - radius, center.y);
+                            painter.setPen(geo->memo()["is_selected"].to_bool() ? pen_selected : pen_not_selected);
                         }
                         if (!circlecontainer->text().isEmpty())
                         {
@@ -319,6 +321,7 @@ void Canvas::paint_graph()
                             painter.setRenderHint(QPainter::Antialiasing);
                             painter.setPen(QPen(QColor(0, 140, 255), 6));
                             painter.drawPoints(points);
+                            painter.setPen(geo->memo()["is_selected"].to_bool() ? pen_selected : pen_not_selected);
                         }
                         break;
                     case 21:
@@ -333,6 +336,7 @@ void Canvas::paint_graph()
                             painter.setPen(QPen(QColor(0, 140, 255), 6));
                             painter.drawPoint(points.front());
                             painter.drawPoint(points.back());
+                            painter.setPen(geo->memo()["is_selected"].to_bool() ? pen_selected : pen_not_selected);
                         }
                         break;
                     default:
