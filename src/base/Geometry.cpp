@@ -2033,7 +2033,8 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
         {
             x = std::max(x, p.coord().x);
         }
-        Geo::Point temp, end(x + 80, point.coord().y);
+        Geo::Point last, temp, end(x + 80, point.coord().y);
+        std::vector<size_t> indexs;
         if (coincide)
         {
            for (size_t i = 1, len = polygon.size(); i < len; ++i)
@@ -2044,6 +2045,7 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
                 }
                 if (Geo::is_intersected(point, end, polygon[i-1], polygon[i], temp))
                 {
+                    indexs.emplace_back(i);
                     if (polygon[i - 1].coord().y == polygon[i].coord().y)
                     {
                         if ((polygon[i == 1 ? len-2 : i-2].coord().y < polygon[i].coord().y && polygon[i == len-1 ? 1 : i+1].coord().y > polygon[i].coord().y)
@@ -2054,8 +2056,20 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
                     }
                     else
                     {
-                        ++count;
+                        if (Geo::distance(temp, last) < 1e-10)
+                        {
+                            if ((polygon[i == 1 ? len-2 : i-2].coord().y > polygon[i-1].coord().y && polygon[i].coord().y > polygon[i-1].coord().y) ||
+                                (polygon[i == 1 ? len-2 : i-2].coord().y < polygon[i-1].coord().y && polygon[i].coord().y < polygon[i-1].coord().y))
+                            {
+                                ++count;
+                            }
+                        }
+                        else
+                        {
+                            ++count;
+                        }
                     }
+                    last = temp;
                 }
             }
         }
@@ -2079,12 +2093,32 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
                     }
                     else
                     {
-                        ++count;
+                        if (Geo::distance(temp, last) < 1e-10)
+                        {
+                            if ((polygon[i == 1 ? len-2 : i-2].coord().y > polygon[i-1].coord().y && polygon[i].coord().y > polygon[i-1].coord().y) ||
+                                (polygon[i == 1 ? len-2 : i-2].coord().y < polygon[i-1].coord().y && polygon[i].coord().y < polygon[i-1].coord().y))
+                            {
+                                ++count;
+                            }
+                        }
+                        else
+                        {
+                            ++count;
+                        }
                     }
+                    last = temp;
                 }
             }
         }
-        return count % 2 == 1;
+        
+        if (count % 2 == 1)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     else
     {
@@ -2165,6 +2199,17 @@ const bool Geo::is_inside(const Point &point, const Circle &circle, const bool c
     }
 }
 
+const bool Geo::is_inside(const Rectangle &rect, const Polygon &polygon, const bool coincide)
+{
+    for (size_t i = 0; i < 4; ++i)
+    {
+        if (!Geo::is_inside(rect[i], polygon, coincide))
+        {
+            return false;
+        }
+    }
+    return true;
+}
 
 const bool Geo::is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite)
 {

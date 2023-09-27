@@ -596,6 +596,8 @@ namespace Geo
 
     const bool is_inside(const Point &point, const Circle &circle, const bool coincide = false);
 
+    const bool is_inside(const Rectangle &rect, const Polygon &polygon, const bool coincide = false);
+
     const bool is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite = false);
 
     const bool is_intersected(const Line &line0, const Line &line1, Point &output, const bool infinite = true);
