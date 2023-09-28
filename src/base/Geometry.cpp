@@ -780,6 +780,39 @@ Rectangle Polyline::bounding_rect(const bool orthogonality) const
     }
 }
 
+const bool Polyline::operator==(const Polyline &polyline) const
+{
+    if (_points.size() != polyline._points.size())
+    {
+        return false;
+    }
+    for (size_t i = 0, count = _points.size(); i < count; ++i)
+    {
+        if (_points[i] != polyline._points[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+const bool Polyline::operator!=(const Polyline &polyline) const
+{
+    if (_points.size() != polyline._points.size())
+    {
+        return true;
+    }
+    for (size_t i = 0, count = _points.size(); i < count; ++i)
+    {
+        if (_points[i] != polyline._points[i])
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+
 // Rectangle
 
 Rectangle::Rectangle(const double x0, const double y0, const double x1, const double y1)
@@ -1094,6 +1127,56 @@ const Point& Rectangle::operator[](const size_t index) const
 {
     assert(!_points.empty() && index <= 4);
     return _points[index];
+}
+
+void Rectangle::reshape(const double x0, const double y0, const double x1, const double y1)
+{
+    if (x0 < x1)
+    {
+        if (y0 < y1)
+        {   
+            _points.assign({Point(x0, y0), Point(x1, y0), Point(x1, y1), Point(x0, y1), Point(x0, y0)});
+        }
+        else
+        {
+            _points.assign({Point(x0, y1), Point(x1, y1), Point(x1, y0), Point(x0, y0), Point(x0, y1)});
+        }
+    }
+    else
+    {
+        if (y0 < y1)
+        {   
+            _points.assign({Point(x1, y0), Point(x0, y0), Point(x0, y1), Point(x1, y1), Point(x1, y0)});
+        }
+        else
+        {
+            _points.assign({Point(x1, y1), Point(x0, y1), Point(x0, y0), Point(x1, y0), Point(x1, y1)});
+        }
+    }
+}
+
+const bool Rectangle::operator==(const Rectangle &rect) const
+{
+    for (size_t i = 0; i < 4; ++i)
+    {
+        if (_points[i] != rect._points[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+const bool Rectangle::operator!=(const Rectangle &rect) const
+{
+    for (size_t i = 0; i < 4; ++i)
+    {
+        if (_points[i] != rect._points[i])
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 
@@ -1479,6 +1562,16 @@ void Circle::operator-=(const Point &point)
     _center -= point;
 }
 
+const bool Circle::operator==(const Circle &circle) const
+{
+    return _radius == circle._radius && _center == circle._center;
+}
+
+const bool Circle::operator!=(const Circle &circle) const
+{
+    return _radius != circle._radius || _center != circle._center;
+}
+
 
 // Line
 
@@ -1642,6 +1735,16 @@ Point& Line::back()
 const Point& Line::back() const
 {
     return _end_point;
+}
+
+const bool Line::operator==(const Line &line) const
+{
+    return _start_point == line._start_point && _end_point == line._end_point;
+}
+
+const bool Line::operator!=(const Line &line) const
+{
+    return _start_point != line._start_point || _end_point != line._end_point;
 }
 
 

@@ -263,6 +263,10 @@ namespace Geo
         virtual Polygon convex_hull() const;
 
         virtual Rectangle bounding_rect(const bool orthogonality = true) const;
+
+        const bool operator==(const Polyline &polyline) const;
+
+        const bool operator!=(const Polyline &polyline) const;
     };
 
     class Rectangle : public Geometry // Type:30
@@ -350,6 +354,12 @@ namespace Geo
         const Point center() const;
 
         const Point &operator[](const size_t index) const;
+
+        void reshape(const double x0, const double y0, const double x1, const double y1);
+
+        const bool operator==(const Rectangle &rect) const;
+
+        const bool operator!=(const Rectangle &rect) const;
     };
 
     class Polygon : public Polyline // Type:40
@@ -460,6 +470,10 @@ namespace Geo
         void operator+=(const Point &point);
 
         void operator-=(const Point &point);
+
+        const bool operator==(const Circle &circle) const;
+
+        const bool operator!=(const Circle &circle) const;
     };
 
     class Line : public Geometry // Type:60
@@ -518,6 +532,10 @@ namespace Geo
         Point &back();
 
         const Point &back() const;
+
+        const bool operator==(const Line &line) const;
+
+        const bool operator!=(const Line &line) const;
     };
 
     class Bezier : public Polyline // Type:21
