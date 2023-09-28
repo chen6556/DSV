@@ -18,9 +18,13 @@ private:
 
     void connect_lines(const double value);
 
+    void remove_outer_border();
+
     void combine();
 
     void finish();
+
+    static const bool is_closed(const Geo::Polyline &polyline); 
 
 public:
     Pretreatment(Graph *graph);
