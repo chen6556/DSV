@@ -24,7 +24,7 @@ private:
 
     void finish();
 
-    static const bool is_closed(const Geo::Polyline &polyline); 
+    // static const bool is_closed(const Geo::Polyline &polyline); 
 
 public:
     Pretreatment(Graph *graph);

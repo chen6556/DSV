@@ -8,6 +8,7 @@ Pretreatment::Pretreatment(Graph *graph)
     split();
     remove_outer_border();
     connect_lines(GlobalSetting::get_instance()->setting()["connect_distance"].toDouble());
+    
     if (GlobalSetting::get_instance()->setting()["combine"].toBool())
     {
         combine();
@@ -269,7 +270,7 @@ void Pretreatment::remove_outer_border()
     for (size_t i = 0, count = _all_polylines.size(); i < count; ++i)
     {
         Geo::Rectangle rect(_all_polylines[i]->bounding_rect());
-        if (_all_polylines[i]->size() == 4 && !is_closed(*_all_polylines[i]))
+        if (_all_polylines[i]->size() == 4)
         {
             if (rect.heigh() > (top - bottom) * 0.95 && rect.width() < 16)
             {
@@ -399,11 +400,6 @@ void Pretreatment::remove_outer_border()
         }
         else
         {
-            if (is_closed(*_all_polylines[i]))
-            {
-                continue;
-            }
-
             Geo::Rectangle rect(_all_polylines[i]->bounding_rect());
             if (rect.heigh() / (top - bottom) > 0.95 || rect.width() / (right - left) > 0.95) // 位于四角的边框
             {
@@ -443,8 +439,7 @@ void Pretreatment::remove_outer_border()
                 continue;
             }
 
-            if (is_closed(*_all_polylines[i]) && _all_polylines[i]->size() == 4 
-                && _all_polylines[i]->bounding_rect() == outer_rect)
+            if (_all_polylines[i]->size() == 4 && _all_polylines[i]->bounding_rect() == outer_rect)
             {
                 if ((*_all_polylines[i])[0] == bottom_left && (*_all_polylines[i])[1] == top_left &&
                     (*_all_polylines[i])[2] == top_right && (*_all_polylines[i])[3] == bottom_right)
@@ -673,7 +668,7 @@ void Pretreatment::finish()
     _all_combinations.clear();
 }
 
-const bool Pretreatment::is_closed(const Geo::Polyline &polyline)
+/* const bool Pretreatment::is_closed(const Geo::Polyline &polyline)
 {
     const Geo::Point center(polyline.bounding_rect().center());
     size_t x_count = 0, y_count = 0;
@@ -705,4 +700,4 @@ const bool Pretreatment::is_closed(const Geo::Polyline &polyline)
         return polyline.size() > 3 && Geo::distance(polyline.front(), polyline.back()) <
                 GlobalSetting::get_instance()->setting()["connect_distance"].toDouble();
     }
-}
+} */
