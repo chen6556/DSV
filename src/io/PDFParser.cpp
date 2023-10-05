@@ -737,7 +737,7 @@ static Parser<char> ET = str_p("ET")[ET_a] >> end;
 static Parser<char> Tm = str_p("Tm")[Tm_a] >> end;
 static Parser<char> TL = str_p("TL") >> end;
 
-static auto order = cm | q | Q | m | l | v | CS | cs | c | G | g | RG | rg | K | k | re | h |
+static auto order = cm | q | Q | m | l | v | CS | cs | c | G | RG | rg | K | k | re | h |
             BT | ET | Tm | SCN | W8 | TL |
             ((ch_p('w') | ch_p('J') | ch_p('j') | ch_p('M') | ch_p('d') | str_p("ri") | ch_p('i') |
             str_p("gs") | ch_p('y') | str_p("f*") | ch_p('F') | str_p("B*") | str_p("b*") | ch_p('b') |
@@ -746,7 +746,7 @@ static auto order = cm | q | Q | m | l | v | CS | cs | c | G | g | RG | rg | K |
             ch_p('\"') | str_p("d0") | str_p("d1") | str_p("SC") | str_p("scn") | str_p("sc") | str_p("sh") |
             str_p("BI") | str_p("ID") | str_p("EI") | str_p("Do") | str_p("MP") | str_p("DP") |
             str_p("BMC") | str_p("BDC") | str_p("EMC") | str_p("BX") | str_p("EX")) >> end) |
-            S | s | B | f;
+            S | s | B | f | g ;
 
 static Parser<double> parameter = float_p()[parameter_a];
 static Parser<std::vector<char>> key = confix_p(ch_p('/'), (*alnum_p())[key_a], end);
