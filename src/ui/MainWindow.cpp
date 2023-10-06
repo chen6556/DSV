@@ -3,15 +3,19 @@
 #include "io/File.hpp"
 #include "io/PLTParser.hpp"
 #include "io/PDFParser.hpp"
+#include "io/GlobalSetting.hpp"
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QAbstractItemView>
 #include <QMimeData>
+
+#include "config.h"
+#ifdef USE_QPDF
 #include <qpdf/QPDF.hh>
 #include <qpdf/QPDFWriter.hh>
-#include "io/GlobalSetting.hpp"
+#endif //USE_QPDF
  
 
 MainWindow::MainWindow(QWidget *parent)
@@ -401,31 +405,7 @@ void MainWindow::open_file(const QString &path)
     }
     else if (path.endsWith(".pdf") || path.endsWith(".PDF"))
     {
-        QPDF pdf;
-        pdf.processFile(path.toStdString().c_str());
-        for (int i = 0, count = pdf.getObjectCount(); i < count; ++i)
-        {
-            if (pdf.getObject(i, 0).isImage() || pdf.getObject(i, 0).isFormXObject())
-            {
-                pdf.replaceObject(i, 0, QPDFObjectHandle::newNull());
-            }
-        }
-
-        QPDFWriter outpdf(pdf);
-        outpdf.setStreamDataMode(qpdf_stream_data_e::qpdf_s_uncompress);
-        outpdf.setDecodeLevel(qpdf_stream_decode_level_e::qpdf_dl_all);
-        outpdf.setOutputMemory();
-        outpdf.setNewlineBeforeEndstream(true);
-        outpdf.write();
-        std::shared_ptr<Buffer> buffer = outpdf.getBufferSharedPointer();
-
-        std::string_view sv(reinterpret_cast<char *>(buffer->getBuffer()), buffer->getSize());
-        PDFParser::parse(sv, g);
-
-        if (ui->remember_file_type->isChecked())
-        {
-            _file_type = "PDF: (*.pdf *.PDF)";
-        }
+        this->read_from_pdf(path,g);
     }
     _editer.load_graph(g, path);
     if (ui->auto_layering->isChecked())
@@ -439,7 +419,34 @@ void MainWindow::open_file(const QString &path)
     g = nullptr;
 }
 
-
+#ifdef USE_QPDF
+void MainWindow::read_from_pdf(const QString &path,Graph *graph){
+    QPDF pdf;
+    pdf.processFile(path.toStdString().c_str());
+    for (int i = 0, count = pdf.getObjectCount(); i < count; ++i)
+    {
+        if (pdf.getObject(i, 0).isImage() || pdf.getObject(i, 0).isFormXObject())
+        {
+            pdf.replaceObject(i, 0, QPDFObjectHandle::newNull());
+        }
+    }
+    QPDFWriter outpdf(pdf);
+    outpdf.setStreamDataMode(qpdf_stream_data_e::qpdf_s_uncompress);
+    outpdf.setDecodeLevel(qpdf_stream_decode_level_e::qpdf_dl_all);
+    outpdf.setOutputMemory();
+    outpdf.setNewlineBeforeEndstream(true);
+    outpdf.write();
+    std::shared_ptr<Buffer> buffer = outpdf.getBufferSharedPointer();
+    std::string_view sv(reinterpret_cast<char *>(buffer->getBuffer()), buffer->getSize());
+    PDFParser::parse(sv, g);
+    if (this->ui->remember_file_type->isChecked())
+    {
+        this->_file_type = "PDF: (*.pdf *.PDF)";
+    }
+}
+#else
+void MainWindow::read_from_pdf(const QString &path,Graph *graph){}
+#endif //USE_QPDF
 
 /* void MainWindow::test()
 {

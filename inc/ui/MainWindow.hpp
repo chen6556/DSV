@@ -75,6 +75,7 @@ private slots:
 
 private:
     void open_file(const QString &path);
+    void read_from_pdf(const QString &path,Graph* graph);
 
 public:
     MainWindow(QWidget *parent = nullptr);
