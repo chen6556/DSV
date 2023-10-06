@@ -1,5 +1,5 @@
 #include "ui/Setting.hpp"
-#include "./ui_setting.h"
+#include "./ui_Setting.h"
 #include "io/GlobalSetting.hpp"
 
 
