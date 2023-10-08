@@ -5,7 +5,7 @@
 class Graph : public Geo::Geometry
 {
 private:
-    std::vector<ContainerGroup> _container_groups;
+    std::list<ContainerGroup> _container_groups;
     double _ratio = 1;
 
 public:
@@ -27,9 +27,9 @@ public:
 
     const ContainerGroup &container_group(const size_t index = 0) const;
 
-    std::vector<ContainerGroup> &container_groups();
+    std::list<ContainerGroup> &container_groups();
 
-    const std::vector<ContainerGroup> &container_groups() const;
+    const std::list<ContainerGroup> &container_groups() const;
 
     ContainerGroup &operator[](const size_t index);
 
@@ -61,29 +61,29 @@ public:
 
 
 
-    std::vector<ContainerGroup>::iterator begin();
+    std::list<ContainerGroup>::iterator begin();
 
-    std::vector<ContainerGroup>::iterator end();
+    std::list<ContainerGroup>::iterator end();
 
-    std::vector<ContainerGroup>::const_iterator begin() const;
+    std::list<ContainerGroup>::const_iterator begin() const;
 
-    std::vector<ContainerGroup>::const_iterator end() const;
+    std::list<ContainerGroup>::const_iterator end() const;
 
-    std::vector<ContainerGroup>::const_iterator cbegin() const;
+    std::list<ContainerGroup>::const_iterator cbegin() const;
 
-    std::vector<ContainerGroup>::const_iterator cend() const;
+    std::list<ContainerGroup>::const_iterator cend() const;
 
-    std::vector<ContainerGroup>::reverse_iterator rbegin();
+    std::list<ContainerGroup>::reverse_iterator rbegin();
 
-    std::vector<ContainerGroup>::reverse_iterator rend();
+    std::list<ContainerGroup>::reverse_iterator rend();
 
-    std::vector<ContainerGroup>::const_reverse_iterator rbegin() const;
+    std::list<ContainerGroup>::const_reverse_iterator rbegin() const;
 
-    std::vector<ContainerGroup>::const_reverse_iterator rend() const;
+    std::list<ContainerGroup>::const_reverse_iterator rend() const;
 
-    std::vector<ContainerGroup>::const_reverse_iterator crbegin() const;
+    std::list<ContainerGroup>::const_reverse_iterator crbegin() const;
 
-    std::vector<ContainerGroup>::const_reverse_iterator crend() const;
+    std::list<ContainerGroup>::const_reverse_iterator crend() const;
 
     ContainerGroup &front();
 

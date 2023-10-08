@@ -42,7 +42,6 @@ Graph &Graph::operator=(const Graph &graph)
     {
         Geo::Geometry::operator=(graph);
         _container_groups.clear();
-        _container_groups.shrink_to_fit();
         for (const ContainerGroup &group : graph._container_groups)
         {
             _container_groups.emplace_back(group);
@@ -58,7 +57,6 @@ Graph &Graph::operator=(const Graph &&graph)
     {
         Geo::Geometry::operator=(graph);
         _container_groups.clear();
-        _container_groups.shrink_to_fit();
         for (const ContainerGroup &group : graph._container_groups)
         {
             _container_groups.emplace_back(group);
@@ -71,21 +69,57 @@ Graph &Graph::operator=(const Graph &&graph)
 ContainerGroup &Graph::container_group(const size_t index)
 {
     assert(index < _container_groups.size());
-    return _container_groups[index];
+    const size_t count = _container_groups.size();
+    if (index <= count / 2)
+    {
+        std::list<ContainerGroup>::iterator it = _container_groups.begin();
+        for (size_t i = 0; i < index; ++i)
+        {
+            ++it;
+        }
+        return *it;
+    }
+    else
+    {
+        std::list<ContainerGroup>::reverse_iterator it = _container_groups.rbegin();
+        for (size_t i = 1, end = count - index; i < end; ++i)
+        {
+            ++it;
+        }
+        return *it;
+    }
 }
 
 const ContainerGroup &Graph::container_group(const size_t index) const
 {
     assert(index < _container_groups.size());
-    return _container_groups[index];
+    const size_t count = _container_groups.size();
+    if (index <= count / 2)
+    {
+        std::list<ContainerGroup>::const_iterator it = _container_groups.cbegin();
+        for (size_t i = 0; i < index; ++i)
+        {
+            ++it;
+        }
+        return *it;
+    }
+    else
+    {
+        std::list<ContainerGroup>::const_reverse_iterator it = _container_groups.crbegin();
+        for (size_t i = 1, end = count - index; i < end; ++i)
+        {
+            ++it;
+        }
+        return *it;
+    }
 }
 
-std::vector<ContainerGroup> &Graph::container_groups()
+std::list<ContainerGroup> &Graph::container_groups()
 {
     return _container_groups;
 }
 
-const std::vector<ContainerGroup> &Graph::container_groups() const
+const std::list<ContainerGroup> &Graph::container_groups() const
 {
     return _container_groups;
 }
@@ -93,13 +127,49 @@ const std::vector<ContainerGroup> &Graph::container_groups() const
 ContainerGroup &Graph::operator[](const size_t index)
 {
     assert(index < _container_groups.size());
-    return _container_groups[index];
+    const size_t count = _container_groups.size();
+    if (index <= count / 2)
+    {
+        std::list<ContainerGroup>::iterator it = _container_groups.begin();
+        for (size_t i = 0; i < index; ++i)
+        {
+            ++it;
+        }
+        return *it;
+    }
+    else
+    {
+        std::list<ContainerGroup>::reverse_iterator it = _container_groups.rbegin();
+        for (size_t i = 1, end = count - index; i < end; ++i)
+        {
+            ++it;
+        }
+        return *it;
+    }
 }
 
 const ContainerGroup &Graph::operator[](const size_t index) const
 {
     assert(index < _container_groups.size());
-    return _container_groups[index];
+    const size_t count = _container_groups.size();
+    if (index <= count / 2)
+    {
+        std::list<ContainerGroup>::const_iterator it = _container_groups.cbegin();
+        for (size_t i = 0; i < index; ++i)
+        {
+            ++it;
+        }
+        return *it;
+    }
+    else
+    {
+        std::list<ContainerGroup>::const_reverse_iterator it = _container_groups.crbegin();
+        for (size_t i = 1, end = count - index; i < end; ++i)
+        {
+            ++it;
+        }
+        return *it;
+    }
 }
 
 const bool Graph::empty() const
@@ -111,7 +181,7 @@ const bool Graph::empty() const
 const bool Graph::empty(const size_t index) const
 {
     assert(index < _container_groups.size());
-    return _container_groups[index].empty();
+    return container_group(index).empty();
 }
 
 const size_t Graph::size() const
@@ -127,7 +197,7 @@ void Graph::clear()
 void Graph::clear(const size_t index)
 {
     assert(index < _container_groups.size());
-    _container_groups[index].clear();
+    container_group(index).clear();
 }
 
 void Graph::transform(const double a, const double b, const double c, const double d, const double e, const double f)
@@ -197,62 +267,62 @@ Geo::Rectangle Graph::bounding_rect() const
 
 
 
-std::vector<ContainerGroup>::iterator Graph::begin()
+std::list<ContainerGroup>::iterator Graph::begin()
 {
     return _container_groups.begin();
 }
 
-std::vector<ContainerGroup>::iterator Graph::end()
+std::list<ContainerGroup>::iterator Graph::end()
 {
     return _container_groups.end();
 }
 
-std::vector<ContainerGroup>::const_iterator Graph::begin() const
+std::list<ContainerGroup>::const_iterator Graph::begin() const
 {
     return _container_groups.cbegin();
 }
 
-std::vector<ContainerGroup>::const_iterator Graph::end() const
+std::list<ContainerGroup>::const_iterator Graph::end() const
 {
     return _container_groups.cend();
 }
 
-std::vector<ContainerGroup>::const_iterator Graph::cbegin() const
+std::list<ContainerGroup>::const_iterator Graph::cbegin() const
 {
     return _container_groups.cbegin();
 }
 
-std::vector<ContainerGroup>::const_iterator Graph::cend() const
+std::list<ContainerGroup>::const_iterator Graph::cend() const
 {
     return _container_groups.cend();
 }
 
-std::vector<ContainerGroup>::reverse_iterator Graph::rbegin()
+std::list<ContainerGroup>::reverse_iterator Graph::rbegin()
 {
     return _container_groups.rbegin();
 }
 
-std::vector<ContainerGroup>::reverse_iterator Graph::rend()
+std::list<ContainerGroup>::reverse_iterator Graph::rend()
 {
     return _container_groups.rend();
 }
 
-std::vector<ContainerGroup>::const_reverse_iterator Graph::rbegin() const
+std::list<ContainerGroup>::const_reverse_iterator Graph::rbegin() const
 {
     return _container_groups.crbegin();
 }
 
-std::vector<ContainerGroup>::const_reverse_iterator Graph::rend() const
+std::list<ContainerGroup>::const_reverse_iterator Graph::rend() const
 {
     return _container_groups.crend();
 }
 
-std::vector<ContainerGroup>::const_reverse_iterator Graph::crbegin() const
+std::list<ContainerGroup>::const_reverse_iterator Graph::crbegin() const
 {
     return _container_groups.crbegin();
 }
 
-std::vector<ContainerGroup>::const_reverse_iterator Graph::crend() const
+std::list<ContainerGroup>::const_reverse_iterator Graph::crend() const
 {
     return _container_groups.crend();
 }
@@ -288,7 +358,7 @@ void Graph::append(Container *container, const size_t index)
     assert(index < _container_groups.size());
     if (container->shape().size() > 3)
     {
-        _container_groups[index].append(container);
+        container_group(index).append(container);
         container->memo()["is_selected"] = false;
     }
 }
@@ -298,7 +368,7 @@ void Graph::append(CircleContainer *container, const size_t index)
     assert(index < _container_groups.size());
     if (!container->shape().empty())
     {
-        _container_groups[index].append(container);
+        container_group(index).append(container);
         container->memo()["is_selected"] = false;
     }
 }
@@ -308,7 +378,7 @@ void Graph::append(Link *link, const size_t index)
     assert(index < _container_groups.size());
     if (!link->empty())
     {
-        _container_groups[index].append(link);
+        container_group(index).append(link);
         link->tail()->related().push_back(link);
         link->head()->related().push_back(link);
         link->memo()["is_selected"] = false;
@@ -320,7 +390,7 @@ void Graph::append(Geo::Polyline *polyline, const size_t index)
     assert(index < _container_groups.size());
     if (polyline->size() > 1)
     {
-        _container_groups[index].append(polyline);
+        container_group(index).append(polyline);
         polyline->memo()["is_selected"] = false;
     }
 }
@@ -328,7 +398,7 @@ void Graph::append(Geo::Polyline *polyline, const size_t index)
 void Graph::append(Geo::Bezier *bezier, const size_t index)
 {
     assert(index < _container_groups.size());
-    _container_groups[index].append(bezier);
+    container_group(index).append(bezier);
 }
 
 void Graph::append_group()
@@ -349,23 +419,43 @@ void Graph::append_group(const ContainerGroup &&group)
 void Graph::insert_group(const size_t index)
 {
     assert(index < _container_groups.size());
-    _container_groups.insert(_container_groups.begin() + index, ContainerGroup());
+    std::list<ContainerGroup>::iterator it = _container_groups.begin();
+    for (size_t i = 0; i < index; ++i)
+    {
+        ++it;
+    }
+    _container_groups.insert(it, ContainerGroup());
 }
 
 void Graph::insert_group(const size_t index, const ContainerGroup &group)
 {
     assert(index < _container_groups.size());
-    _container_groups.insert(_container_groups.begin() + index, group);
+    std::list<ContainerGroup>::iterator it = _container_groups.begin();
+    for (size_t i = 0; i < index; ++i)
+    {
+        ++it;
+    }
+    _container_groups.insert(it, group);
 }
 
 void Graph::insert_group(const size_t index, const ContainerGroup &&group)
 {
     assert(index < _container_groups.size());
-    _container_groups.insert(_container_groups.begin() + index, std::move(group));
+    std::list<ContainerGroup>::iterator it = _container_groups.begin();
+    for (size_t i = 0; i < index; ++i)
+    {
+        ++it;
+    }
+    _container_groups.insert(it, std::move(group));
 }
 
 void Graph::remove_group(const size_t index)
 {
     assert(index < _container_groups.size());
-    _container_groups.erase(_container_groups.begin() + index);
+    std::list<ContainerGroup>::iterator it = _container_groups.begin();
+    for (size_t i = 0; i < index; ++i)
+    {
+        ++it;
+    }
+    _container_groups.erase(it);
 }

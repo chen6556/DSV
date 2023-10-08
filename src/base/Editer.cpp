@@ -1651,7 +1651,7 @@ void Editer::load_backup()
 void Editer::remove_group(const size_t index)
 {
     assert(index < _graph->container_groups().size());
-    _graph->container_groups().erase(_graph->begin() + index);
+    _graph->remove_group(index);
 }
 
 void Editer::append_group(const size_t index)
@@ -2427,7 +2427,7 @@ void Editer::auto_layering()
     {
         if (_graph->container_group(i).empty())
         {
-            _graph->container_groups().erase(_graph->container_groups().begin() + i--);
+            _graph->remove_group(i--);
             --count;
         }
     }
