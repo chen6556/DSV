@@ -343,7 +343,7 @@ void Link::set_head(Geo::Geometry *geo)
 // ContainerGroup
 
 ContainerGroup::ContainerGroup(const ContainerGroup &containers)
-    : Geo::Geometry(containers), _ratio(containers._ratio)
+    : Geo::Geometry(containers), _ratio(containers._ratio), _visible(containers._visible)
 {
     for (const Geo::Geometry *geo : containers)
     {
@@ -433,7 +433,7 @@ ContainerGroup::ContainerGroup(const ContainerGroup &containers)
 }
 
 ContainerGroup::ContainerGroup(const ContainerGroup &&containers)
-    : Geo::Geometry(containers), _ratio(std::move(containers._ratio))
+    : Geo::Geometry(containers), _ratio(std::move(containers._ratio)), _visible(containers._visible)
 {
     for (const Geo::Geometry *geo : containers)
     {
@@ -752,6 +752,7 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
             }
             ++link_it;
         }
+        _visible = group._visible;
     }
     return *this;
 }
@@ -852,6 +853,7 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &&group)
             }
             ++link_it;
         }
+        _visible = group._visible;
     }
     return *this;
 }
