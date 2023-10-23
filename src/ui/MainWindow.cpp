@@ -15,7 +15,7 @@
  
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), _builder(new Graph, &_painter), _setting(new Setting(this))
+    : QMainWindow(parent), ui(new Ui::MainWindow), _setting(new Setting(this))
 {
     ui->setupUi(this);
     init();
@@ -43,7 +43,7 @@ void MainWindow::init()
 
     _painter.resize(800, 600);
     ui->horizontalLayout->addWidget(&_painter);
-    _editer.load_graph(_builder.graph());
+    _editer.load_graph(new Graph());
     _painter.bind_editer(&_editer);
 
     _clock.start(5000);
@@ -179,10 +179,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     }
     switch (event->key())
     {
-    /* case Qt::Key_T:
-        test();
-        _painter.update();
-        break; */
     case Qt::Key_Escape:
         _painter.cancel_painting();
         _editer.reset_selected_mark();
@@ -438,32 +434,3 @@ void MainWindow::open_file(const QString &path)
     _layers_cbx->setModel(_layers_manager->model());
     g = nullptr;
 }
-
-
-
-/* void MainWindow::test()
-{
-    std::list<Geo::Geometry *> objs = _editer.selected();
-
-    if (objs.empty())
-    {
-        // _builder.store_linkedlist({"1", "2", "3", "3", "4"});
-        std::list<QString> values = {"1", "2", QString(), "3", "4", QString(), "5", "6"};
-        BinaryTreeNode<QString> *tree = BinaryTree::create_tree_preorder(values, QString());
-
-        _builder.store_binarytree(tree);
-
-        BinaryTree::delete_tree(tree);
-    }
-    else
-    {
-        for (Geo::Geometry *obj : objs)
-        {
-            if (dynamic_cast<Container *>(obj))
-            {
-                StructureMover::move(reinterpret_cast<Container *>(obj), 40, 0);
-                break;
-            }
-        }
-    }
-} */

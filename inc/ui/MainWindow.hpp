@@ -5,8 +5,6 @@
 #include "ui/LayersManager.hpp"
 #include "draw/Canvas.hpp"
 #include "base/Editer.hpp"
-#include "simulation/StructureBuilder.hpp"
-#include "simulation/StructureMover.hpp"
 #include "ui/Setting.hpp"
 #include <QTimer>
 #include <QString>
@@ -25,7 +23,6 @@ private:
     Canvas _painter;
     Editer _editer;
     Setting *_setting = nullptr;
-    StructureBuilder _builder;
     std::vector<Qt::Key> _keys;
     QTimer _clock;
     QLabel *_info_labels[3] = {nullptr, nullptr, nullptr};
@@ -37,8 +34,6 @@ private:
 
 private:
     void init();
-
-    // void test();
 
 protected:
     void keyPressEvent(QKeyEvent *event);

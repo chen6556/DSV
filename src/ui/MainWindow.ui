@@ -160,21 +160,6 @@ QToolButton{background:rgb(142,142,142);}</string>
         </layout>
        </item>
        <item>
-        <widget class="QLineEdit" name="input"/>
-       </item>
-       <item>
-        <widget class="QPushButton" name="insert_btn">
-         <property name="font">
-          <font>
-           <pointsize>10</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string>Insert</string>
-         </property>
-        </widget>
-       </item>
-       <item>
         <widget class="QPushButton" name="combinate_btn">
          <property name="font">
           <font>

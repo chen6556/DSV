@@ -1,6 +1,5 @@
 #pragma once
 #include "draw/Graph.hpp"
-#include "Structure.hpp"
 #include <QLineF>
 #include <QPolygonF>
 
