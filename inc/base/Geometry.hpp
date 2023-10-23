@@ -305,7 +305,7 @@ namespace Geo
 
         const double width() const;
 
-        const double heigh() const;
+        const double height() const;
 
         virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f);
 

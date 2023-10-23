@@ -143,7 +143,7 @@ void Canvas::paint_graph()
         for (const Geo::Geometry *geo : group)
         {
             link = dynamic_cast<const Link *>(geo);
-            if (link == nullptr || link->empty())
+            if (link == nullptr || link->empty() || !is_visible(*link))
             {
                 continue;
             }
@@ -189,6 +189,10 @@ void Canvas::paint_graph()
             {
             case 0:
                 container = reinterpret_cast<const Container *>(geo);
+                if (!is_visible(container->shape()))
+                {
+                    continue;
+                }
                 for (const Geo::Point &point : container->shape())
                 {
                     points.append(QPointF(point.coord().x, point.coord().y));
@@ -214,6 +218,10 @@ void Canvas::paint_graph()
                 break;
             case 1:
                 circlecontainer = reinterpret_cast<const CircleContainer *>(geo);
+                if (!is_visible(circlecontainer->shape()))
+                {
+                    continue;
+                }
                 center = circlecontainer->center().coord();
                 radius = circlecontainer->radius();
                 painter.drawEllipse(center.x - radius, center.y - radius, radius * 2, radius * 2);
@@ -252,6 +260,10 @@ void Canvas::paint_graph()
                     {
                     case 0:
                         container = reinterpret_cast<const Container *>(item);
+                        if (!is_visible(container->shape()))
+                        {
+                            continue;
+                        }
                         for (const Geo::Point &point : container->shape())
                         {
                             points.append(QPointF(point.coord().x, point.coord().y));
@@ -277,6 +289,10 @@ void Canvas::paint_graph()
                         break;
                     case 1:
                         circlecontainer = reinterpret_cast<const CircleContainer *>(item);
+                        if (!is_visible(circlecontainer->shape()))
+                        {
+                            continue;
+                        }
                         center = circlecontainer->center().coord();
                         radius = circlecontainer->radius();
                         painter.drawEllipse(center.x - radius, center.y - radius, radius * 2, radius * 2);
@@ -307,7 +323,11 @@ void Canvas::paint_graph()
                         }
                         break;
                     case 20:
-                        polyline = reinterpret_cast<const Geo::Polyline *>(item);  
+                        polyline = reinterpret_cast<const Geo::Polyline *>(item);
+                        if (!is_visible(*polyline))
+                        {
+                            continue;
+                        } 
                         for (const Geo::Point &point : *polyline)
                         {
                             points.append(QPointF(point.coord().x, point.coord().y));
@@ -322,6 +342,10 @@ void Canvas::paint_graph()
                         }
                         break;
                     case 21:
+                        if (!is_visible(reinterpret_cast<const Geo::Bezier *>(item)->shape()))
+                        {
+                            continue;
+                        }
                         for (const Geo::Point &point : reinterpret_cast<const Geo::Bezier *>(item)->shape())
                         {
                             points.append(QPointF(point.coord().x, point.coord().y));
@@ -341,7 +365,11 @@ void Canvas::paint_graph()
                 }
                 break;
             case 20:
-                polyline = reinterpret_cast<const Geo::Polyline *>(geo);     
+                polyline = reinterpret_cast<const Geo::Polyline *>(geo);
+                if (!is_visible(*polyline))
+                {
+                    continue;
+                }
                 for (const Geo::Point &point : *polyline)
                 {
                     points.append(QPointF(point.coord().x, point.coord().y));
@@ -356,6 +384,10 @@ void Canvas::paint_graph()
                 }
                 break;
             case 21:
+                if (!is_visible(reinterpret_cast<const Geo::Bezier *>(geo)->shape()))
+                {
+                    continue;
+                }
                 if (geo->memo()["is_selected"].to_bool())
                 {
                     painter.setPen(QPen(QColor(255, 140, 0), 2, Qt::DashLine));
@@ -413,12 +445,17 @@ void Canvas::paintEvent(QPaintEvent *event)
         _editer->select(_select_rect);
     }
 
+    // _pixmap.fill(Qt::white);
+
     _catched_points.clear();
     paint_graph();
 
     paint_cache();
 
     paint_select_rect();
+
+   /*  QPainter painter(this);
+    painter.drawPixmap(0, 0, _pixmap); */
 }
 
 void Canvas::mousePressEvent(QMouseEvent *event)
@@ -834,7 +871,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
             if (_bool_flags[5] && _last_clicked_obj->memo()["Type"].to_int() < 2)
             {
                 const Geo::Rectangle rect(_last_clicked_obj->bounding_rect());
-                _input_line.setMaximumSize(std::max(100.0, rect.width()), std::max(100.0, rect.heigh()));
+                _input_line.setMaximumSize(std::max(100.0, rect.width()), std::max(100.0, rect.height()));
                 _input_line.move(rect.center().coord().x - _input_line.rect().center().x(),
                                  rect.center().coord().y - _input_line.rect().center().y());
                 _input_line.setFocus();
@@ -889,6 +926,12 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
     QWidget::mouseDoubleClickEvent(event);
 }
 
+void Canvas::resizeEvent(QResizeEvent *event)
+{
+    const QRect rect(this->geometry());
+    _visible_area = Geo::Rectangle(0, 0, rect.width(), rect.height());
+    return QWidget::resizeEvent(event);
+}
 
 
 
@@ -1106,4 +1149,30 @@ void Canvas::paste()
     {
         update();
     }
+}
+
+
+
+bool Canvas::is_visible(const Geo::Point &point) const
+{
+    return point.coord().x > 0 && point.coord().x < _visible_area.width()
+        && point.coord().y < _visible_area.height() && point.coord().y > 0;
+}
+
+bool Canvas::is_visible(const Geo::Polyline &polyline) const
+{
+    return Geo::is_intersected(_visible_area, polyline);
+}
+
+bool Canvas::is_visible(const Geo::Polygon &polygon) const
+{
+    return Geo::is_intersected(_visible_area, polygon);
+}
+
+bool Canvas::is_visible(const Geo::Circle &circle) const
+{
+    return circle.center().coord().x > - circle.radius() &&
+        circle.center().coord().x < _visible_area.width() + circle.radius() &&
+        circle.center().coord().y < _visible_area.height() + circle.radius() &&
+        circle.center().coord().y > - circle.radius();
 }

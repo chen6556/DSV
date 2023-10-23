@@ -13,7 +13,7 @@ class Canvas : public QWidget
 
 private:
     Geo::Circle _circle_cache;
-    Geo::Rectangle _rectangle_cache, _select_rect;
+    Geo::Rectangle _rectangle_cache, _select_rect, _visible_area;
     std::list<QLineF> _reflines;
     QPolygonF _catched_points;
     Editer *_editer = nullptr;
@@ -56,6 +56,8 @@ protected:
     void wheelEvent(QWheelEvent *event);
 
     void mouseDoubleClickEvent(QMouseEvent *event);
+
+    void resizeEvent(QResizeEvent *event);
 
 public:
 signals:
@@ -105,4 +107,13 @@ public:
     void cut();
 
     void paste();
+
+
+    bool is_visible(const Geo::Point &point) const;
+
+    bool is_visible(const Geo::Polyline &polyline) const;
+
+    bool is_visible(const Geo::Polygon &polygon) const;
+
+    bool is_visible(const Geo::Circle &circle) const;
 };

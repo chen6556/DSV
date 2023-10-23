@@ -946,7 +946,7 @@ const double Rectangle::width() const
     }
 }
 
-const double Rectangle::heigh() const
+const double Rectangle::height() const
 {
     if (!_points.empty())
     {
