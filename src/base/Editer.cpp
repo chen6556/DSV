@@ -558,7 +558,7 @@ bool Editer::copy_selected()
             switch (container->memo()["Type"].to_int())
             {
             case 0:
-                _paste_table.push_back(reinterpret_cast<Container *>(const_cast<Geo::Geometry *>(container))->clone());
+                _paste_table.push_back(reinterpret_cast<const Container *>(container)->clone());
                 _paste_table.back()->memo()["id"] = ++container_id * 10;
                 for (Geo::Geometry *link : container->related())
                 {
@@ -577,7 +577,7 @@ bool Editer::copy_selected()
                 }
                 break;
             case 1:
-                _paste_table.push_back(reinterpret_cast<CircleContainer *>(const_cast<Geo::Geometry *>(container))->clone());
+                _paste_table.push_back(reinterpret_cast<const CircleContainer *>(container)->clone());
                 _paste_table.back()->memo()["id"] = ++circlecontainer_id * 10 + 1;
                 for (Geo::Geometry *link : container->related())
                 {
@@ -596,13 +596,13 @@ bool Editer::copy_selected()
                 }
                 break;
             case 3:
-                _paste_table.push_back(reinterpret_cast<Combination *>(const_cast<Geo::Geometry *>(container))->clone());
+                _paste_table.push_back(reinterpret_cast<const Combination *>(container)->clone());
                 break;
             case 20:
-                _paste_table.push_back(reinterpret_cast<Geo::Polyline *>(const_cast<Geo::Geometry *>(container))->clone());
+                _paste_table.push_back(reinterpret_cast<const Geo::Polyline *>(container)->clone());
                 break;
             case 21:
-                _paste_table.push_back(reinterpret_cast<Geo::Bezier *>(const_cast<Geo::Geometry *>(container))->clone());
+                _paste_table.push_back(reinterpret_cast<const Geo::Bezier *>(container)->clone());
                 break;
             default:
                 break;
@@ -666,7 +666,7 @@ bool Editer::cut_selected()
             switch ((*it)->memo()["Type"].to_int())
             {
             case 0:
-                _paste_table.push_back(reinterpret_cast<Container *>(const_cast<Geo::Geometry *>(*it))->clone());
+                _paste_table.push_back(reinterpret_cast<const Container *>(*it)->clone());
                 _paste_table.back()->memo()["id"] = ++container_id * 10;
                 for (Geo::Geometry *link : (*it)->related())
                 {
@@ -686,7 +686,7 @@ bool Editer::cut_selected()
                 }
                 break;
             case 1:
-                _paste_table.push_back(reinterpret_cast<CircleContainer *>(const_cast<Geo::Geometry *>(*it))->clone());
+                _paste_table.push_back(reinterpret_cast<const CircleContainer *>(*it)->clone());
                 _paste_table.back()->memo()["id"] = ++circlecontainer_id * 10 + 1;
                 for (Geo::Geometry *link : (*it)->related())
                 {
@@ -706,13 +706,13 @@ bool Editer::cut_selected()
                 }
                 break;
             case 3:
-                _paste_table.push_back(reinterpret_cast<Combination *>(const_cast<Geo::Geometry *>(*it))->clone());
+                _paste_table.push_back(reinterpret_cast<const Combination *>(*it)->clone());
                 break;
             case 20:
-                _paste_table.push_back(reinterpret_cast<Geo::Polyline *>(const_cast<Geo::Geometry *>(*it))->clone());
+                _paste_table.push_back(reinterpret_cast<const Geo::Polyline *>(*it)->clone());
                 break;
             case 21:
-                _paste_table.push_back(reinterpret_cast<Geo::Bezier *>(const_cast<Geo::Geometry *>(*it))->clone());
+                _paste_table.push_back(reinterpret_cast<const Geo::Bezier *>(*it)->clone());
                 break;
             default:
                 break;
