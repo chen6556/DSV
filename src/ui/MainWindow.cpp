@@ -118,38 +118,66 @@ void MainWindow::save_file()
         return;
     }
 
-    if (_info_labels[2]->text().isEmpty() || !(_info_labels[2]->text().endsWith(".json") 
-        || _info_labels[2]->text().endsWith(".JSON")))
+    if (_info_labels[2]->text().isEmpty() || !(_info_labels[2]->text().toLower().endsWith(".json") 
+        || _info_labels[2]->text().toLower().endsWith(".plt")))
     {
         QFileDialog *dialog = new QFileDialog();
         dialog->setModal(true);
-        QString path = dialog->getSaveFileName(dialog, nullptr, _editer.path(), "Files: (*.json *.JSON)");
+        QString path = dialog->getSaveFileName(dialog, nullptr, _editer.path(), "JSON: (*.json);;PLT: (*.plt)");
         if (!path.isEmpty())
         {
-            File::write(path, _editer.graph());
-            _editer.set_path(path);
-            _editer.reset_modified();
-            _info_labels[2]->setText(path);
+            bool flag = false;
+            if (path.toLower().endsWith(".json"))
+            {
+                File::write(path, _editer.graph(), File::JSON);
+                flag = true;
+            }
+            else if (path.toLower().endsWith(".plt"))
+            {
+                File::write(path, _editer.graph(), File::PLT);
+                flag = true;
+            }
+            if (flag)
+            {
+                _editer.set_path(path);
+                _editer.reset_modified();
+                _info_labels[2]->setText(path);
+            }
         }
         delete dialog;
     }
     else
     {
-        File::write(_info_labels[2]->text(), _editer.graph());
-        _editer.reset_modified();
+        if (_info_labels[2]->text().toLower().endsWith(".json"))
+        {
+            File::write(_info_labels[2]->text(), _editer.graph(), File::JSON);
+            _editer.reset_modified();
+        }
+        else if (_info_labels[2]->text().toLower().endsWith(".plt"))
+        {
+            File::write(_info_labels[2]->text(), _editer.graph(), File::PLT);
+            _editer.reset_modified();
+        }
     }
 }
 
 void MainWindow::auto_save()
 {
     if (!ui->auto_save->isChecked() || _editer.path().isEmpty() ||
-        !(_editer.path().endsWith(".json") || _editer.path().endsWith(".JSON")))
+        !(_editer.path().toLower().endsWith(".json") || _editer.path().toLower().endsWith(".plt")))
     {
         return;
     }
     if (_editer.modified())
     {
-        File::write(_editer.path(), _editer.graph());
+        if (_editer.path().toLower().endsWith(".json"))
+        {
+            File::write(_editer.path(), _editer.graph(), File::JSON);
+        }
+        else if (_editer.path().toLower().endsWith(".plt"))
+        {
+            File::write(_editer.path(), _editer.graph(), File::PLT);
+        }
         _editer.reset_modified();
     }
 }
@@ -162,10 +190,17 @@ void MainWindow::saveas_file()
     }
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
-    QString path = dialog->getSaveFileName(dialog, nullptr, _editer.path().isEmpty() ? "D:/output.json" : _editer.path(), "Files: (*.json *.JSON)");
+    QString path = dialog->getSaveFileName(dialog, nullptr, _editer.path().isEmpty() ? "D:/output.json" : _editer.path(), "JSON: (*.json);;PLT: (*.plt)");
     if (!path.isEmpty())
     {
-        File::write(path, _editer.graph());
+        if (path.toLower().endsWith(".json"))
+        {
+            File::write(path, _editer.graph(), File::JSON);
+        }
+        else if (path.toLower().endsWith(".plt"))
+        {
+            File::write(path, _editer.graph(), File::PLT);
+        }
         _editer.reset_modified();
     }
     delete dialog;

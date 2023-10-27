@@ -3,6 +3,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <fstream>
 
 
 void File::read(const QString &path, Graph *graph)
@@ -108,7 +109,7 @@ void File::read(const QString &path, Graph *graph)
     }
 }
 
-void File::write(const QString &path, Graph *graph)
+void File::write_json(const QString &path, Graph *graph)
 {
     const Geo::Point point = graph->bounding_rect()[0];
     graph->translate(10-point.coord().x, 10-point.coord().y);
@@ -298,4 +299,197 @@ void File::write(const QString &path, Graph *graph)
     file.open(QIODevice::WriteOnly);
     file.write(doc.toJson());
     file.close();
+}
+
+void File::wirte_plt(const std::string &path, Graph *graph)
+{
+    const Geo::Point point = graph->bounding_rect()[0];
+    graph->translate(10-point.coord().x, 10-point.coord().y);
+    Container *container = nullptr;
+    CircleContainer *circlecontainer = nullptr;
+    Link *link = nullptr;
+    Geo::Polyline *polyline = nullptr;
+    Geo::Bezier *bezier = nullptr;
+
+    std::ofstream output(path);
+    output << "IN;PA;SP1;" << std::endl;
+    for (const ContainerGroup &group : graph->container_groups())
+    {
+        for (Geo::Geometry *geo : group)
+        {
+            switch (geo->memo()["Type"].to_int())
+            {
+            case 0:
+                container = reinterpret_cast<Container *>(geo);
+                output << "PU" << container->shape().front().coord().x << ',' << container->shape().front().coord().y << ";PD";
+                for (const Geo::Point &point : container->shape())
+                {
+                    output << point.coord().x << ',' << point.coord().y << ',';
+                }
+                output.seekp(-1, std::ios::cur);
+                if (!container->text().isEmpty())
+                {
+                    output << ";PU" << container->center().coord().x << ',' << container->center().coord().y
+                        << ";LB" << container->text().toStdString();
+                }
+                output << ';' << std::endl;
+                container = nullptr;
+                break;
+            case 1:
+                circlecontainer = reinterpret_cast<CircleContainer *>(geo);
+                output << "PA" << circlecontainer->center().coord().x << ',' << circlecontainer->center().coord().y << ';';
+                output << "CI" << circlecontainer->radius() << ';';
+                if (circlecontainer->text().isEmpty())
+                {
+                    output << std::endl;
+                }
+                else
+                {
+                    output << "PU" << circlecontainer->center().coord().x << ',' << circlecontainer->center().coord().y
+                        << ";LB" << circlecontainer->text().toStdString() << ';' << std::endl;
+                }
+                circlecontainer = nullptr;
+                break;
+            case 2:
+                link = reinterpret_cast<Link *>(geo);
+                if (link->empty())
+                {
+                    break;
+                }
+                output << "PU" << link->front().coord().x << ',' << link->front().coord().y << ";PD";
+                for (const Geo::Point &point : *link)
+                {
+                    output << point.coord().x << ',' << point.coord().y << ',';
+                }
+                output.seekp(-1, std::ios::cur);
+                output << ';' << std::endl;
+                link = nullptr;
+                break;
+            case 3:
+                output << "Block;" << std::endl;
+                for (Geo::Geometry *item : *reinterpret_cast<Combination *>(geo))
+                {
+                    switch (item->memo()["Type"].to_int())
+                    {
+                    case 0:
+                        container = reinterpret_cast<Container *>(item);
+                        output << "PU" << container->shape().front().coord().x << ',' << container->shape().front().coord().y << ";PD";
+                        for (const Geo::Point &point : container->shape())
+                        {
+                            output << point.coord().x << ',' << point.coord().y << ',';
+                        }
+                        output.seekp(-1, std::ios::cur);
+                        if (!container->text().isEmpty())
+                        {
+                            output << ";PU" << container->center().coord().x << ',' << container->center().coord().y
+                                << ";LB" << container->text().toStdString();
+                        }
+                        output << ';' << std::endl;
+                        container = nullptr;
+                        break;
+                    case 1:
+                        circlecontainer = reinterpret_cast<CircleContainer *>(item);
+                        output << "PU" << circlecontainer->center().coord().x << ',' << circlecontainer->center().coord().y << ';';
+                        output << "CI" << circlecontainer->radius() << ';';
+                        if (circlecontainer->text().isEmpty())
+                        {
+                            output << std::endl;
+                        }
+                        else
+                        {
+                            output << "PU" << circlecontainer->center().coord().x << ',' << circlecontainer->center().coord().y
+                                << ";LB" << circlecontainer->text().toStdString() << ';' << std::endl;
+                        }
+                        circlecontainer = nullptr;
+                        break;
+                    case 20:
+                        polyline = reinterpret_cast<Geo::Polyline *>(item);
+                        if (polyline->empty())
+                        {
+                            break;
+                        }
+                        output << "PU" << polyline->front().coord().x << ',' << polyline->front().coord().y << ";PD";
+                        for (const Geo::Point &point : *polyline)
+                        {
+                            output << point.coord().x << ',' << point.coord().y << ',';
+                        }
+                        output.seekp(-1, std::ios::cur);
+                        output << ';' << std::endl;
+                        polyline = nullptr;
+                        break;
+                    case 21:
+                        bezier = reinterpret_cast<Geo::Bezier *>(item);
+                        if (bezier->empty())
+                        {
+                            break;
+                        }
+                        bezier->update_shape();
+                        output << "PU" << bezier->front().coord().x << ',' << bezier->front().coord().y << ";PD";
+                        for (const Geo::Point &point : bezier->shape())
+                        {
+                            output << point.coord().x << ',' << point.coord().y << ',';
+                        }
+                        output.seekp(-1, std::ios::cur);
+                        output << ';' << std::endl;
+                        bezier = nullptr;
+                        break;
+                    default:
+                        break;
+                    }
+                }
+                output << "BlockEnd;" << std::endl;
+                break;
+            case 20:
+                polyline = reinterpret_cast<Geo::Polyline *>(geo);
+                if (polyline->empty())
+                {
+                    break;
+                }
+                output << "PU" << polyline->front().coord().x << ',' << polyline->front().coord().y << ";PD";
+                for (const Geo::Point &point : *polyline)
+                {
+                    output << point.coord().x << ',' << point.coord().y << ',';
+                }
+                output.seekp(-1, std::ios::cur);
+                output << ';' << std::endl;
+                polyline = nullptr;
+                break;
+            case 21:
+                bezier = reinterpret_cast<Geo::Bezier *>(geo);
+                if (bezier->empty())
+                {
+                    break;
+                }
+                bezier->update_shape();
+                output << "PU" << bezier->front().coord().x << ',' << bezier->front().coord().y << ";PD";
+                for (const Geo::Point &point : bezier->shape())
+                {
+                    output << point.coord().x << ',' << point.coord().y << ',';
+                }
+                output.seekp(-1, std::ios::cur);
+                output << ';' << std::endl;
+                bezier = nullptr;
+                break;
+            default:
+                break;
+            }
+        }
+    }
+    output << "PU;";
+    output.close();
+
+    graph->translate(point.coord().x-10, point.coord().y-10);
+}
+
+void File::write(const QString &path, Graph *graph, const FileType type)
+{
+    switch (type)
+    {
+    case FileType::JSON:
+        return write_json(path, graph);
+    case FileType::PLT:
+        return wirte_plt(path.toStdString(), graph);
+    default:
+        break;
+    }
 }
