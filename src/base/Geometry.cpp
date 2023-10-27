@@ -2036,7 +2036,7 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
         Geo::Point temp, end(x + 80, point.coord().y);
         if (coincide)
         {
-           for (size_t i = 1, len = polygon.size(); i < len; ++i)
+            for (size_t i = 1, len = polygon.size(); i < len; ++i)
             {
                 if (Geo::is_inside(point, polygon[i-1], polygon[i]))
                 {
@@ -2054,7 +2054,10 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
                     }
                     else
                     {
-                        ++count;
+                        if (i < len - 2 || Geo::distance(temp, polygon.back()) > Geo::EPSILON)
+                        {
+                            ++count;
+                        }
                     }
                 }
             }
@@ -2079,7 +2082,10 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
                     }
                     else
                     {
-                        ++count;
+                        if (i < len - 2 || Geo::distance(temp, polygon.back()) > Geo::EPSILON)
+                        {
+                            ++count;
+                        }
                     }
                 }
             }
