@@ -57,6 +57,8 @@ public:
 
     void rescale(const double x, const double y);
 
+    double ratio() const;
+
     virtual Geo::Rectangle bounding_rect() const;
 
 

@@ -238,6 +238,7 @@ void Graph::scale(const double x, const double y, const double k)
     {
         group.scale(x, y, k);
     }
+    _ratio *= k;
 }
 
 void Graph::rescale(const double x, const double y)
@@ -246,6 +247,12 @@ void Graph::rescale(const double x, const double y)
     {
         group.rescale(x, y);
     }
+    _ratio = 1;
+}
+
+double Graph::ratio() const
+{
+    return _ratio;
 }
 
 Geo::Rectangle Graph::bounding_rect() const

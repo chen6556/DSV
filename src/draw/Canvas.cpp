@@ -1004,6 +1004,11 @@ const size_t Canvas::bezier_order() const
 
 
 
+double Canvas::ratio() const
+{
+    return _ratio;
+}
+
 Geo::Point Canvas::center() const
 {
     if (_circle_cache.empty() && _rectangle_cache.empty() && (_editer->graph() == nullptr || _editer->graph()->empty()))

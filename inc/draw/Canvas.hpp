@@ -88,6 +88,8 @@ public:
 
 
 
+    double ratio() const;
+
     Geo::Point center() const;
 
     Geo::Rectangle bounding_rect() const;

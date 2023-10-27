@@ -111,8 +111,6 @@ void File::read(const QString &path, Graph *graph)
 
 void File::write_json(const QString &path, Graph *graph)
 {
-    const Geo::Point point = graph->bounding_rect()[0];
-    graph->translate(10-point.coord().x, 10-point.coord().y);
     QJsonObject obj;
     Container *container = nullptr;
     CircleContainer *circlecontainer = nullptr;
@@ -292,7 +290,6 @@ void File::write_json(const QString &path, Graph *graph)
     }
     obj.insert("ContainerGroupCount", index);
 
-    graph->translate(point.coord().x-10, point.coord().y-10);
     QJsonDocument doc;
     doc.setObject(obj);
     QFile file(path);
@@ -301,10 +298,8 @@ void File::write_json(const QString &path, Graph *graph)
     file.close();
 }
 
-void File::wirte_plt(const std::string &path, Graph *graph)
+void File::write_plt(const std::string &path, Graph *graph)
 {
-    const Geo::Point point = graph->bounding_rect()[0];
-    graph->translate(10-point.coord().x, 10-point.coord().y);
     Container *container = nullptr;
     CircleContainer *circlecontainer = nullptr;
     Link *link = nullptr;
@@ -477,19 +472,25 @@ void File::wirte_plt(const std::string &path, Graph *graph)
     }
     output << "PU;";
     output.close();
-
-    graph->translate(point.coord().x-10, point.coord().y-10);
 }
 
 void File::write(const QString &path, Graph *graph, const FileType type)
 {
+    const double k = graph->ratio();
+    const Geo::Point point = graph->bounding_rect()[0];
+    graph->translate(10-point.coord().x, 10-point.coord().y);
+    graph->scale(10, 10, 1.0 / k);
     switch (type)
     {
     case FileType::JSON:
-        return write_json(path, graph);
+        write_json(path, graph);
+        break;
     case FileType::PLT:
-        return wirte_plt(path.toStdString(), graph);
+        write_plt(path.toStdString(), graph);
+        break;
     default:
         break;
     }
+    graph->scale(10, 10, k);
+    graph->translate(point.coord().x - 10,  point.coord().y - 10);
 }
