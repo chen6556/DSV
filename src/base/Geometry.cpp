@@ -2054,7 +2054,15 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
                     }
                     else
                     {
-                        if (i < len - 2 || Geo::distance(temp, polygon.back()) > Geo::EPSILON)
+                        if (Geo::distance(temp, polygon[i-1]) < Geo::EPSILON)
+                        {
+                            if ((polygon[i == 1 ? len-2 : i-2].coord().y < polygon[i-1].coord().y && polygon[i].coord().y < polygon[i-1].coord().y) ||
+                                (polygon[i == 1 ? len-2 : i-2].coord().y > polygon[i-1].coord().y && polygon[i].coord().y > polygon[i-1].coord().y))
+                            {
+                                ++count;
+                            }
+                        }
+                        else
                         {
                             ++count;
                         }
@@ -2082,7 +2090,15 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
                     }
                     else
                     {
-                        if (i < len - 2 || Geo::distance(temp, polygon.back()) > Geo::EPSILON)
+                        if (Geo::distance(temp, polygon[i-1]) < Geo::EPSILON)
+                        {
+                            if ((polygon[i == 1 ? len-2 : i-2].coord().y < polygon[i-1].coord().y && polygon[i].coord().y < polygon[i-1].coord().y) ||
+                                (polygon[i == 1 ? len-2 : i-2].coord().y > polygon[i-1].coord().y && polygon[i].coord().y > polygon[i-1].coord().y))
+                            {
+                                ++count;
+                            }
+                        }
+                        else
                         {
                             ++count;
                         }
