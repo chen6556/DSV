@@ -445,17 +445,12 @@ void Canvas::paintEvent(QPaintEvent *event)
         _editer->select(_select_rect);
     }
 
-    // _pixmap.fill(Qt::white);
-
     _catched_points.clear();
     paint_graph();
 
     paint_cache();
 
     paint_select_rect();
-
-   /*  QPainter painter(this);
-    painter.drawPixmap(0, 0, _pixmap); */
 }
 
 void Canvas::mousePressEvent(QMouseEvent *event)
