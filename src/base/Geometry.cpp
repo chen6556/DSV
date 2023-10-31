@@ -2561,6 +2561,10 @@ const bool Geo::is_rectangle(const Polygon &polygon)
             }
         }
     }
+    if (polygon.size() != 5)
+    {
+        return false;
+    }
 
     if (Geo::distance(points[0], points[1]) == Geo::distance(points[2], points[3]) &&
         Geo::distance(points[1], points[2]) == Geo::distance(points[0], points[3]))
