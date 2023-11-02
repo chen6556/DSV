@@ -59,9 +59,11 @@ void Canvas::paint_cache()
 
     if (!_circle_cache.empty())
     {
-        painter.drawEllipse(_circle_cache.center().coord().x - _circle_cache.radius(),
-                            _circle_cache.center().coord().y - _circle_cache.radius(),
-                            _circle_cache.radius() * 2, _circle_cache.radius() * 2);
+        Geo::Circle circle(_circle_cache);
+        circle.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
+        painter.drawEllipse(circle.center().coord().x - circle.radius(),
+                            circle.center().coord().y - circle.radius(),
+                            circle.radius() * 2, circle.radius() * 2);
     }
 
     QPolygonF points;
@@ -69,7 +71,8 @@ void Canvas::paint_cache()
     {
         for (const Geo::Point &point : _rectangle_cache)
         {
-            points.append(QPointF(point.coord().x, point.coord().y));
+            points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6], 
+                point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
         }
         points.pop_back();
         painter.drawPolygon(points);
@@ -79,7 +82,8 @@ void Canvas::paint_cache()
         points.clear();
         for (const Geo::Point &point : _editer->point_cache())
         {
-            points.append(QPointF(point.coord().x, point.coord().y));
+            points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6], 
+                point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
         }
         painter.drawPolyline(points);
         if (_int_flags[0] == 3)
@@ -133,6 +137,7 @@ void Canvas::paint_graph()
 
     Geo::Point temp_point;
     Geo::Coord center;
+    Geo::Circle circle;
     double radius;
     for (const ContainerGroup &group : _editer->graph()->container_groups())
     {
@@ -157,10 +162,12 @@ void Canvas::paint_graph()
             {
                 temp_point = link->tail()->bounding_rect().center();
             }
-            points.append(QPointF(temp_point.coord().x, temp_point.coord().y));
+            points.append(QPointF(temp_point.coord().x * _canvas_ctm[0] + temp_point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                temp_point.coord().x * _canvas_ctm[1] + temp_point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
             for (const Geo::Point &point : *link)
             {
-                points.append(QPointF(point.coord().x, point.coord().y));
+                points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                    point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
             }
             if (dynamic_cast<const CircleContainer *>(link->head()) != nullptr)
             {
@@ -170,7 +177,8 @@ void Canvas::paint_graph()
             {
                 temp_point = link->head()->bounding_rect().center();
             }
-            points.append(QPointF(temp_point.coord().x, temp_point.coord().y));
+            points.append(QPointF(temp_point.coord().x * _canvas_ctm[0] + temp_point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                temp_point.coord().x * _canvas_ctm[1] + temp_point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
             _catched_points.append(points);
             painter.drawPolyline(points);
             if (show_points)
@@ -195,7 +203,8 @@ void Canvas::paint_graph()
                 }
                 for (const Geo::Point &point : container->shape())
                 {
-                    points.append(QPointF(point.coord().x, point.coord().y));
+                    points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                        point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
                 }
                 points.pop_back();
                 _catched_points.append(points);
@@ -222,8 +231,12 @@ void Canvas::paint_graph()
                 {
                     continue;
                 }
-                center = circlecontainer->center().coord();
-                radius = circlecontainer->radius();
+                circle.radius() = circlecontainer->radius();
+                circle.center() = circlecontainer->center();
+                circle.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
+                
+                center = circle.center().coord();
+                radius = circle.radius();
                 painter.drawEllipse(center.x - radius, center.y - radius, radius * 2, radius * 2);
                 _catched_points.emplace_back(QPointF(center.x, center.y));
                 _catched_points.emplace_back(QPointF(center.x, center.y + radius));
@@ -266,7 +279,8 @@ void Canvas::paint_graph()
                         }
                         for (const Geo::Point &point : container->shape())
                         {
-                            points.append(QPointF(point.coord().x, point.coord().y));
+                            points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                                point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
                         }
                         points.pop_back();
                         _catched_points.append(points);
@@ -293,8 +307,11 @@ void Canvas::paint_graph()
                         {
                             continue;
                         }
-                        center = circlecontainer->center().coord();
-                        radius = circlecontainer->radius();
+                        circle.center() = circlecontainer->center();
+                        circle.radius() = circlecontainer->radius();
+
+                        center = circle.center().coord();
+                        radius = circle.radius();
                         painter.drawEllipse(center.x - radius, center.y - radius, radius * 2, radius * 2);
                         _catched_points.emplace_back(QPointF(center.x, center.y));
                         _catched_points.emplace_back(QPointF(center.x, center.y + radius));
@@ -330,7 +347,8 @@ void Canvas::paint_graph()
                         } 
                         for (const Geo::Point &point : *polyline)
                         {
-                            points.append(QPointF(point.coord().x, point.coord().y));
+                            points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                                point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
                         }
                         _catched_points.append(points);
                         painter.drawPolyline(points);
@@ -348,7 +366,8 @@ void Canvas::paint_graph()
                         }
                         for (const Geo::Point &point : reinterpret_cast<const Geo::Bezier *>(item)->shape())
                         {
-                            points.append(QPointF(point.coord().x, point.coord().y));
+                            points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                                point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
                         }
                         painter.drawPolyline(points);
                         if (show_points)
@@ -372,7 +391,8 @@ void Canvas::paint_graph()
                 }
                 for (const Geo::Point &point : *polyline)
                 {
-                    points.append(QPointF(point.coord().x, point.coord().y));
+                    points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                        point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
                 }
                 _catched_points.append(points);
                 painter.drawPolyline(points);
@@ -393,7 +413,8 @@ void Canvas::paint_graph()
                     painter.setPen(QPen(QColor(255, 140, 0), 2, Qt::DashLine));
                     for (const Geo::Point &point : *reinterpret_cast<const Geo::Bezier *>(geo))
                     {
-                        points.append(QPointF(point.coord().x, point.coord().y));
+                        points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                            point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
                     }
                     painter.drawPolyline(points);
                     painter.setPen(QPen(Qt::blue, 6));
@@ -403,7 +424,8 @@ void Canvas::paint_graph()
                 }
                 for (const Geo::Point &point : reinterpret_cast<const Geo::Bezier *>(geo)->shape())
                 {
-                    points.append(QPointF(point.coord().x, point.coord().y));
+                    points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                        point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
                 }
                 painter.drawPolyline(points);
                 if (show_points)
@@ -430,9 +452,11 @@ void Canvas::paint_select_rect()
     QPainter painter(this);
     painter.setPen(QPen(QColor(0, 0, 255, 140), 1));
     painter.setBrush(QColor(0, 120, 215, 10));
+
+    Geo::Rectangle rect(_select_rect);
+    rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
     
-    painter.drawPolygon(QRect(_select_rect[0].coord().x, _select_rect[0].coord().y, 
-        Geo::distance(_select_rect[0], _select_rect[1]), Geo::distance(_select_rect[1], _select_rect[2])));
+    painter.drawPolygon(QRect(rect[0].coord().x, rect[0].coord().y, rect.width(), rect.height()));
 }
 
 
@@ -456,6 +480,8 @@ void Canvas::paintEvent(QPaintEvent *event)
 void Canvas::mousePressEvent(QMouseEvent *event)
 {
     _mouse_pos_1 = event->localPos();
+    const double real_x1 = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
+    const double real_y1 = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
     switch (event->button())
     {
     case Qt::LeftButton:
@@ -466,7 +492,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             case 0:
                 if (!_bool_flags[2]) // not painting
                 {
-                    _circle_cache = Geo::Circle(_mouse_pos_1.x(), _mouse_pos_1.y(), 10);
+                    _circle_cache = Geo::Circle(real_x1, real_y1, 10);
                 }
                 else
                 {
@@ -483,21 +509,21 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             case 3:
                 if (_bool_flags[2])
                 {
-                    _editer->point_cache().push_back(Geo::Point(_mouse_pos_1.x(), _mouse_pos_1.y()));
+                    _editer->point_cache().emplace_back(Geo::Point(real_x1, real_y1));
                 }
                 else
                 {
-                    _editer->point_cache().push_back(Geo::Point(_mouse_pos_1.x(), _mouse_pos_1.y()));
-                    _editer->point_cache().push_back(Geo::Point(_mouse_pos_1.x(), _mouse_pos_1.y()));
+                    _editer->point_cache().emplace_back(Geo::Point(real_x1, real_y1));
+                    _editer->point_cache().emplace_back(Geo::Point(real_x1, real_y1));
                     _bool_flags[2] = true;
                 }
                 break;
             case 2:
                 if (!_bool_flags[2])
                 {
-                    _last_point.coord().x = _mouse_pos_1.x();
-                    _last_point.coord().y = _mouse_pos_1.y();
-                    _rectangle_cache = Geo::Rectangle(_mouse_pos_1.x(), _mouse_pos_1.y(), _mouse_pos_1.x() + 2, _mouse_pos_1.y() + 2);
+                    _last_point.coord().x = real_x1;
+                    _last_point.coord().y = real_y1;
+                    _rectangle_cache = Geo::Rectangle(real_x1, real_y1, real_x1 + 2, real_y1 + 2);
                 }
                 else
                 {
@@ -519,14 +545,14 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         {
             const bool reset = !(GlobalSetting::get_instance()->setting()["multiple_select"].toBool()
                 || event->modifiers() == Qt::ControlModifier);
-            _clicked_obj = _editer->select(_mouse_pos_1.x(), _mouse_pos_1.y(), reset);
+            _clicked_obj = _editer->select(real_x1, real_y1, reset);
             std::list<Geo::Geometry *> selected_objs = _editer->selected();
             if (_clicked_obj == nullptr)
             {
                 _editer->reset_selected_mark();
-                _select_rect = Geo::Rectangle(_mouse_pos_1.x(), _mouse_pos_1.y(), _mouse_pos_1.x() + 1, _mouse_pos_1.y() + 1);
-                _last_point.coord().x = _mouse_pos_1.x();
-                _last_point.coord().y = _mouse_pos_1.y();
+                _select_rect = Geo::Rectangle(real_x1, real_y1, real_x1 + 1, real_y1 + 1);
+                _last_point.coord().x = real_x1;
+                _last_point.coord().y = real_y1;
                 _bool_flags[5] = false;
                 _input_line.hide();
             }
@@ -545,7 +571,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     const double catch_distance = GlobalSetting::get_instance()->setting()["catch_distance"].toDouble();
                     for (const QPointF &point : _catched_points)
                     {
-                        if (Geo::distance(point.x(), point.y(), _mouse_pos_1.x(), _mouse_pos_1.y()) < catch_distance)
+                        if (Geo::distance(point.x(), point.y(), real_x1, real_y1) < catch_distance)
                         {
                             catched_point = true;
                             _mouse_pos_1.setX(point.x());
@@ -557,7 +583,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 }
                 if (!catched_point && GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
                 {
-                    _editer->auto_aligning(_clicked_obj, _mouse_pos_1.x(), _mouse_pos_1.y(), _reflines,
+                    _editer->auto_aligning(_clicked_obj, real_x1, real_y1, _reflines,
                         GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool());
                 }
             }
@@ -623,29 +649,23 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     const double center_x = size().width() / 2.0, center_y = size().height() / 2.0;
     std::swap(_mouse_pos_0, _mouse_pos_1);
     _mouse_pos_1 = event->localPos();
+    const double real_x1 = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
+    const double real_y1 = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
+    const double real_x0 = _mouse_pos_0.x() * _view_ctm[0] + _mouse_pos_0.y() * _view_ctm[3] + _view_ctm[6];
+    const double real_y0 = _mouse_pos_0.x() * _view_ctm[1] + _mouse_pos_0.y() * _view_ctm[4] + _view_ctm[7];
+    const double canvas_x0 = real_x0 * _canvas_ctm[0] + real_y0 * _canvas_ctm[3] + _canvas_ctm[6];
+    const double canvas_y0 = real_x0 * _canvas_ctm[1] + real_y0 * _canvas_ctm[4] + _canvas_ctm[7];
+    const double canvas_x1 = real_x1 * _canvas_ctm[0] + real_y1 * _canvas_ctm[3] + _canvas_ctm[6];
+    const double canvas_y1 = real_x1 * _canvas_ctm[1] + real_y1 * _canvas_ctm[4] + _canvas_ctm[7];
     if (_info_labels[0])
     {
-        _info_labels[0]->setText(std::string("X:").append(std::to_string(static_cast<int>(_mouse_pos_1.x()))).append(" Y:").append(std::to_string(static_cast<int>(_mouse_pos_1.y()))).c_str());
+        _info_labels[0]->setText(std::string("X:").append(std::to_string(static_cast<int>(real_x1))).append(" Y:").append(std::to_string(static_cast<int>(real_y1))).c_str());
     }
-    const double x = _mouse_pos_1.x() - _mouse_pos_0.x(), y = _mouse_pos_1.y() - _mouse_pos_0.y();
     if (_bool_flags[0]) // 视图可移动
     {
-        if (!_circle_cache.empty())
-        {
-            _circle_cache.translate(x, y);
-        }
-        if (!_rectangle_cache.empty())
-        {
-            _rectangle_cache.translate(x, y);
-        }
-        if (_editer->graph() != nullptr)
-        {
-            _editer->graph()->translate(x, y);
-            for (Geo::Point &point : _editer->point_cache())
-            {
-                point.translate(x, y);
-            }
-        }
+        _canvas_ctm[6] += (canvas_x1 - canvas_x0), _canvas_ctm[7] += (canvas_y1 - canvas_y0);
+        _view_ctm[6] -= (real_x1 - real_x0), _view_ctm[7] -= (real_y1 - real_y0);
+        _visible_area.translate(real_x0 - real_x1, real_y0 - real_y1);
         update();
     }
     if (_bool_flags[1] && _bool_flags[2]) // painting
@@ -653,7 +673,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         switch (_int_flags[0])
         {
         case 0:
-            _circle_cache.radius() = Geo::distance(_mouse_pos_1.x(), _mouse_pos_1.y(),
+            _circle_cache.radius() = Geo::distance(real_x1, real_y1,
                                                    _circle_cache.center().coord().x, _circle_cache.center().coord().y);
             if (_info_labels[1] != nullptr)
             {
@@ -664,21 +684,21 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             if (event->modifiers() == Qt::ControlModifier)
             {
                 const Geo::Coord &coord =_editer->point_cache().at(_editer->point_cache().size() - 2).coord();
-                if (std::abs(_mouse_pos_1.x() - coord.x) > std::abs(_mouse_pos_1.y() - coord.y))
+                if (std::abs(real_x1 - coord.x) > std::abs(real_y1 - coord.y))
                 {
-                    _editer->point_cache().back().coord().x = _mouse_pos_1.x();
+                    _editer->point_cache().back().coord().x = real_x1;
                     _editer->point_cache().back().coord().y = coord.y;
                 }
                 else
                 {
                     _editer->point_cache().back().coord().x = coord.x;
-                    _editer->point_cache().back().coord().y = _mouse_pos_1.y();
+                    _editer->point_cache().back().coord().y = real_y1;
                 }
             }
             else
             {
-                _editer->point_cache().back().coord().x = _mouse_pos_1.x();
-                _editer->point_cache().back().coord().y = _mouse_pos_1.y();
+                _editer->point_cache().back().coord().x = real_x1;
+                _editer->point_cache().back().coord().y = real_y1;
             }
             if (_info_labels[1] != nullptr)
             {
@@ -688,10 +708,10 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             break;
         case 2:
-            _rectangle_cache = Geo::Rectangle(_last_point, Geo::Point(_mouse_pos_1.x(), _mouse_pos_1.y()));
+            _rectangle_cache = Geo::Rectangle(_last_point, Geo::Point(real_x1, real_y1));
             if (_info_labels[1] != nullptr)
             {
-                _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(_mouse_pos_1.x() - _last_point.coord().x))).append(" Height:").append(std::to_string(std::abs(_mouse_pos_1.y() - _last_point.coord().y))).c_str());
+                _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.coord().x))).append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.coord().y))).c_str());
             }
             break;
         case 3:
@@ -701,11 +721,11 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 if (_editer->point_cache()[count - 2].coord().x == _editer->point_cache()[count - 3].coord().x)
                 {
                     _editer->point_cache().back().coord().x = _editer->point_cache()[count - 2].coord().x;
-                    _editer->point_cache().back().coord().y = _mouse_pos_1.y();
+                    _editer->point_cache().back().coord().y = real_y1;
                 }
                 else
                 {
-                    _editer->point_cache().back().coord().x = _mouse_pos_1.x();
+                    _editer->point_cache().back().coord().x = real_x1;
                     _editer->point_cache().back().coord().y = (_editer->point_cache()[count - 3].coord().y - _editer->point_cache()[count - 2].coord().y) /
                         (_editer->point_cache()[count - 3].coord().x - _editer->point_cache()[count - 2].coord().x) * 
                         (_mouse_pos_1.x() - _editer->point_cache()[count - 2].coord().x) + _editer->point_cache()[count - 2].coord().y;
@@ -713,7 +733,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             else
             {
-                _editer->point_cache().back() = Geo::Point(_mouse_pos_1.x(), _mouse_pos_1.y());
+                _editer->point_cache().back() = Geo::Point(real_x1, real_y1);
             }
             break;
         default:
@@ -736,11 +756,11 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             for (Geo::Geometry *obj : _editer->selected())
             {
-                _editer->translate_points(obj, _mouse_pos_0.x(), _mouse_pos_0.y(), _mouse_pos_1.x(), _mouse_pos_1.y(), event->modifiers() == Qt::ControlModifier);
+                _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier);
             }
             if (event->modifiers() != Qt::ControlModifier && GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
             {
-                _editer->auto_aligning(_clicked_obj, _mouse_pos_1.x(), _mouse_pos_1.y(), _reflines,
+                _editer->auto_aligning(_clicked_obj, real_x1, real_y1, _reflines,
                     GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool());
             }
             if (_info_labels[1])
@@ -750,10 +770,10 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         }
         else if (!_select_rect.empty())
         {
-            _select_rect = Geo::Rectangle(_last_point.coord().x, _last_point.coord().y, _mouse_pos_1.x(), _mouse_pos_1.y());
+            _select_rect = Geo::Rectangle(_last_point.coord().x, _last_point.coord().y, real_x1, real_y1);
             if (_info_labels[1])
             {
-                _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(_mouse_pos_1.x() - _last_point.coord().x))).append(" Height:").append(std::to_string(std::abs(_mouse_pos_1.y() - _last_point.coord().y))).c_str());
+                _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.coord().x))).append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.coord().y))).c_str());
             }
         }
         update();
@@ -762,7 +782,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool() && _clicked_obj == nullptr)
     {
         const bool value = GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool();
-        Geo::Coord pos(_mouse_pos_1.x(), _mouse_pos_1.y());
+        Geo::Coord pos(real_x1, real_y1);
         if (_editer->auto_aligning(pos, _reflines, value))
         {
             _mouse_pos_1.setX(pos.x);
@@ -774,47 +794,40 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
 
 void Canvas::wheelEvent(QWheelEvent *event)
 {
-    const double center_x = _mouse_pos_1.x(), center_y = _mouse_pos_1.y();
+    const double real_x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
+    const double real_y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
+    const double canvas_x = real_x * _canvas_ctm[0] + real_y * _canvas_ctm[3] + _canvas_ctm[6];
+    const double canvas_y = real_x * _canvas_ctm[1] + real_y * _canvas_ctm[4] + _canvas_ctm[7];
     if (event->angleDelta().y() > 0 && _ratio < 256)
     {
         _ratio *= 1.25;
-        if (!_circle_cache.empty())
-        {
-            _circle_cache.scale(center_x, center_y, 1.25);
-        }
-        if (!_rectangle_cache.empty())
-        {
-            _rectangle_cache.scale(center_x, center_y, 1.25);
-        }
-        if (_editer->graph() != nullptr)
-        {
-            _editer->graph()->scale(center_x, center_y, 1.25);
-            for (Geo::Point &point : _editer->point_cache())
-            {
-                point.scale(center_x, center_y, 1.25);
-            }
-        }
+        _canvas_ctm[0] *= 1.25;
+        _canvas_ctm[4] *= 1.25;
+        _canvas_ctm[6] = _canvas_ctm[6] * 1.25 - canvas_x * 0.25;
+        _canvas_ctm[7] = _canvas_ctm[7] * 1.25 - canvas_y * 0.25;
+
+        _view_ctm[0] *= 0.8;
+        _view_ctm[4] *= 0.8;
+        _view_ctm[6] = _view_ctm[6] * 0.8 + real_x * 0.2;
+        _view_ctm[7] = _view_ctm[7] * 0.8 + real_y * 0.2;
+
+        _visible_area.scale(real_x, real_y, 0.8);
         update();
     }
     else if (event->angleDelta().y() < 0 && _ratio > (1.0 / 256.0))
     {
-        _ratio *= 0.75;
-        if (!_circle_cache.empty())
-        {
-            _circle_cache.scale(center_x, center_y, 0.75);
-        }
-        if (!_rectangle_cache.empty())
-        {
-            _rectangle_cache.scale(center_x, center_y, 0.75);
-        }
-        if (_editer->graph() != nullptr)
-        {
-            _editer->graph()->scale(center_x, center_y, 0.75);
-            for (Geo::Point &point : _editer->point_cache())
-            {
-                point.scale(center_x, center_y, 0.75);
-            }
-        }
+        _ratio *= 0.8;
+        _canvas_ctm[0] *= 0.8;
+        _canvas_ctm[4] *= 0.8;
+        _canvas_ctm[6] = _canvas_ctm[6] * 0.8 + canvas_x * 0.2;
+        _canvas_ctm[7] = _canvas_ctm[7] * 0.8 + canvas_y * 0.2;
+
+        _view_ctm[0] *= 1.25;
+        _view_ctm[4] *= 1.25;
+        _view_ctm[6] = _view_ctm[6] * 1.25 - real_x * 0.25;
+        _view_ctm[7] = _view_ctm[7] * 1.25 - real_y * 0.25;
+
+        _visible_area.scale(real_x, real_y, 1.25);
         update();
     }
     _editer->auto_aligning(_clicked_obj, _reflines);
@@ -889,28 +902,10 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         break;
     case Qt::MiddleButton:
         _last_point = center();
-        if (!_circle_cache.empty())
-        {
-            _circle_cache.scale(_last_point.coord().x, _last_point.coord().y, 1.0 / _ratio);
-        }
-        if (!_rectangle_cache.empty())
-        {
-            _rectangle_cache.scale(_last_point.coord().x, _last_point.coord().y, 1.0 / _ratio);
-        }
-        if (_editer->graph() != nullptr && !_editer->graph()->empty())
-        {
-            _editer->graph()->rescale(_last_point.coord().x, _last_point.coord().y);
-            _editer->graph()->translate(size().width() / 2 - _last_point.coord().x, size().height() / 2 - _last_point.coord().y);
-        }
-        if (!_circle_cache.empty())
-        {
-            _circle_cache.translate(size().width() / 2 - _last_point.coord().x, size().height() / 2 - _last_point.coord().y);
-        }
-        if (!_rectangle_cache.empty())
-        {
-            _rectangle_cache.translate(size().width() / 2 - _last_point.coord().x, size().height() / 2 - _last_point.coord().y);
-        }
-
+        _canvas_ctm[0] = _canvas_ctm[4] = _canvas_ctm[8] = 1;
+        _canvas_ctm[1] = _canvas_ctm[2] = _canvas_ctm[3] = _canvas_ctm[5] = _canvas_ctm[6] = _canvas_ctm[7] = 0;
+        _view_ctm[0] = _view_ctm[4] = _view_ctm[8] = 1;
+        _view_ctm[1] = _view_ctm[2] = _view_ctm[3] = _view_ctm[5] = _view_ctm[6] = _view_ctm[7] = 0;
         _ratio = 1;
         update();
         break;

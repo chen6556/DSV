@@ -20,6 +20,8 @@ private:
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
 
+    double _canvas_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
+    double _view_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
     double _ratio = 1; // 缩放系数
     size_t _bezier_order = 3; // 贝塞尔曲线阶数
 
