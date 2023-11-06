@@ -98,16 +98,13 @@ void Canvas::paint_cache()
         painter.setPen(QPen(QColor(0, 140, 255), 3));
         for (const QLineF &line : _reflines)
         {
-            painter.drawLine(line);
+            painter.drawLine(line.x1() * _canvas_ctm[0] + line.y1() * _canvas_ctm[3] + _canvas_ctm[6],
+                line.x1() * _canvas_ctm[1] + line.y1() * _canvas_ctm[4] + _canvas_ctm[7],
+                line.x2() * _canvas_ctm[0] + line.y2() * _canvas_ctm[3] + _canvas_ctm[6],
+                line.x2() * _canvas_ctm[1] + line.y2() * _canvas_ctm[4] + _canvas_ctm[7]);
         }
         _reflines.clear();
     }
-    /* if (GlobalSetting::get_instance()->setting()["show_points"].toBool() && !_catched_points.empty())
-    {
-        painter.setRenderHint(QPainter::Antialiasing);
-        painter.setPen(QPen(QColor(0, 140, 255), 6));
-        painter.drawPoints(_catched_points);
-    } */
 }
 
 void Canvas::paint_graph()
@@ -441,6 +438,13 @@ void Canvas::paint_graph()
             }
         }
     }
+
+    for (QPointF &point : _catched_points)
+    {
+        Geo::Coord coord(canvas_coord_to_real_coord(point.x(), point.y()));
+        point.setX(coord.x);
+        point.setY(coord.y);
+    }
 }
 
 void Canvas::paint_select_rect()
@@ -574,9 +578,10 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         if (Geo::distance(point.x(), point.y(), real_x1, real_y1) < catch_distance)
                         {
                             catched_point = true;
-                            _mouse_pos_1.setX(point.x());
-                            _mouse_pos_1.setY(point.y());
-                            QCursor::setPos(this->mapToGlobal(point).x(), this->mapToGlobal(point).y());
+                            Geo::Coord coord(real_coord_to_view_coord(point.x(), point.y()));
+                            _mouse_pos_1.setX(coord.x);
+                            _mouse_pos_1.setY(coord.y);
+                            QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
                             break;
                         }
                     }
@@ -649,6 +654,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     const double center_x = size().width() / 2.0, center_y = size().height() / 2.0;
     std::swap(_mouse_pos_0, _mouse_pos_1);
     _mouse_pos_1 = event->localPos();
+    double mat[9];
+    std::memcpy(mat, _view_ctm, sizeof(double) * 9);
     const double real_x1 = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
     const double real_y1 = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
     const double real_x0 = _mouse_pos_0.x() * _view_ctm[0] + _mouse_pos_0.y() * _view_ctm[3] + _view_ctm[6];
@@ -785,8 +792,11 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         Geo::Coord pos(real_x1, real_y1);
         if (_editer->auto_aligning(pos, _reflines, value))
         {
-            _mouse_pos_1.setX(pos.x);
-            _mouse_pos_1.setY(pos.y);
+            const double k = mat[0] * mat[4] - mat[3] * mat[1];
+            const double x = (mat[4] * (pos.x - mat[6]) - mat[3] * (pos.y - mat[7])) / k;
+            const double y = (mat[0] * (pos.y - mat[7]) - mat[1] * (pos.x - mat[6])) / k;
+            _mouse_pos_1.setX(x);
+            _mouse_pos_1.setY(y);
             QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
         }
     }
@@ -878,7 +888,8 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         {
             if (_bool_flags[5] && _last_clicked_obj->memo()["Type"].to_int() < 2)
             {
-                const Geo::Rectangle rect(_last_clicked_obj->bounding_rect());
+                Geo::Rectangle rect(_last_clicked_obj->bounding_rect());
+                rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
                 _input_line.setMaximumSize(std::max(100.0, rect.width()), std::max(100.0, rect.height()));
                 _input_line.move(rect.center().coord().x - _input_line.rect().center().x(),
                                  rect.center().coord().y - _input_line.rect().center().y());
@@ -1170,4 +1181,33 @@ bool Canvas::is_visible(const Geo::Circle &circle) const
         circle.center().coord().x < _visible_area.width() + circle.radius() &&
         circle.center().coord().y < _visible_area.height() + circle.radius() &&
         circle.center().coord().y > - circle.radius();
+}
+
+
+Geo::Coord Canvas::real_coord_to_view_coord(const Geo::Coord &input) const
+{
+    const double k = _view_ctm[0] * _view_ctm[4] - _view_ctm[3] * _view_ctm[1];
+    return {(_view_ctm[4] * (input.x - _view_ctm[6]) - _view_ctm[3] * (input.y - _view_ctm[7])) / k,
+        (_view_ctm[0] * (input.y - _view_ctm[7]) - _view_ctm[1] * (input.x - _view_ctm[6])) / k};
+}
+
+Geo::Coord Canvas::real_coord_to_view_coord(const double x, const double y) const
+{
+    const double k = _view_ctm[0] * _view_ctm[4] - _view_ctm[3] * _view_ctm[1];
+    return {(_view_ctm[4] * (x - _view_ctm[6]) - _view_ctm[3] * (y - _view_ctm[7])) / k,
+        (_view_ctm[0] * (y - _view_ctm[7]) - _view_ctm[1] * (x - _view_ctm[6])) / k};
+}
+
+Geo::Coord Canvas::canvas_coord_to_real_coord(const Geo::Coord &input) const
+{
+    const double t = (input.y - _canvas_ctm[7] - _canvas_ctm[1] / _canvas_ctm[0] * (input.x - _canvas_ctm[6])) /
+        (_canvas_ctm[4] - _canvas_ctm[1] / _canvas_ctm[0] * _canvas_ctm[3]);
+    return {(input.x - _canvas_ctm[6] - _canvas_ctm[3] * t) / _canvas_ctm[0], t};
+}
+
+Geo::Coord Canvas::canvas_coord_to_real_coord(const double x, const double y) const
+{
+    const double t = (y - _canvas_ctm[7] - _canvas_ctm[1] / _canvas_ctm[0] * (x - _canvas_ctm[6])) /
+        (_canvas_ctm[4] - _canvas_ctm[1] / _canvas_ctm[0] * _canvas_ctm[3]);
+    return {(x - _canvas_ctm[6] - _canvas_ctm[3] * t) / _canvas_ctm[0], t};
 }

@@ -120,4 +120,13 @@ public:
     bool is_visible(const Geo::Polygon &polygon) const;
 
     bool is_visible(const Geo::Circle &circle) const;
+
+
+    Geo::Coord real_coord_to_view_coord(const Geo::Coord &input) const;
+
+    Geo::Coord real_coord_to_view_coord(const double x, const double y) const;
+
+    Geo::Coord canvas_coord_to_real_coord(const Geo::Coord &input) const;
+
+    Geo::Coord canvas_coord_to_real_coord(const double x, const double y) const;
 };
