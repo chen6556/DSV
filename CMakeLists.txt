@@ -11,6 +11,7 @@ if (MSVC)
     add_compile_options("/bigobj")
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
