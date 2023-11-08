@@ -1,4 +1,4 @@
-#include "ui/mainwindow.hpp"
+#include "ui/MainWindow.hpp"
 
 #include <QStyleFactory>
 #include <QApplication>
@@ -11,6 +11,6 @@ int main(int argc, char *argv[])
     MainWindow w;
 
     w.show();
-    
+
     return a.exec();
 }

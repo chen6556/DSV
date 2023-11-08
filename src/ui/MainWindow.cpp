@@ -1,5 +1,5 @@
 #include "ui/MainWindow.hpp"
-#include "./ui_mainwindow.h"
+#include "./ui_MainWindow.h"
 #include "io/File.hpp"
 #include "io/PLTParser.hpp"
 #include "io/PDFParser.hpp"
