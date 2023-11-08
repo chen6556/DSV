@@ -1,0 +1,27 @@
+---
+Language:        Cpp
+BasedOnStyle:  LLVM
+PointerAlignment: Right
+
+#禁止头文件重排序
+SortIncludes: Never
+
+#四格缩进
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# 大括号另起一行
+BreakBeforeBraces: Allman
+
+# 段落间两行空格
+MaxEmptyLinesToKeep: 2
+
+# 禁止将函数缩进成一行
+AllowShortFunctionsOnASingleLine: None
+
+# 构造列表一行，一行放不下时,以冒号开头另起一行
+BreakConstructorInitializers: BeforeColon
+
+# 禁用自动换行
+ColumnLimit: 0
