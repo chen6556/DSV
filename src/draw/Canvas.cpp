@@ -449,11 +449,21 @@ void Canvas::paint_graph()
 
 void Canvas::paint_select_rect()
 {
+    QPainter painter(this);
+
+    if (_bool_flags[7])
+    {
+        painter.setPen(QPen(Qt::black, 1, Qt::DotLine));
+        painter.drawLine(_canvas_ctm[6] - 20, _canvas_ctm[7], _canvas_ctm[6] + 20, _canvas_ctm[7]);
+        painter.drawLine(_canvas_ctm[6], _canvas_ctm[7] - 20, _canvas_ctm[6], _canvas_ctm[7] + 20);
+        painter.drawEllipse(QPoint(_canvas_ctm[6], _canvas_ctm[7]), 10, 10);
+    }
+
     if (_select_rect.empty())
     {
         return;
     }
-    QPainter painter(this);
+    
     painter.setPen(QPen(QColor(0, 0, 255, 140), 1));
     painter.setBrush(QColor(0, 120, 215, 10));
 
@@ -959,6 +969,21 @@ void Canvas::use_tool(const int value)
     default:
         break;
     }
+}
+
+void Canvas::show_origin()
+{
+    _bool_flags[7] = true;
+}
+
+void Canvas::hide_origin()
+{
+    _bool_flags[7] = false;
+}
+
+bool Canvas::origin_visible() const
+{
+    return _bool_flags[7];
 }
 
 const bool Canvas::is_painting() const

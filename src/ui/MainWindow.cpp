@@ -59,6 +59,7 @@ void MainWindow::init()
 
     QObject::connect(ui->auto_aligning, &QAction::triggered, this, [this]() {GlobalSetting::get_instance()->setting()["auto_aligning"] = ui->auto_aligning->isChecked();});
     QObject::connect(ui->actionadvanced, &QAction::triggered, this, [this]() { _setting->show(); });
+    QObject::connect(ui->show_origin, &QAction::triggered, this, [this]() { ui->show_origin->isChecked() ? _painter.show_origin() : _painter.hide_origin(); });
 
     for (size_t i = 0; i < 3; ++i)
     {
@@ -343,6 +344,15 @@ void MainWindow::load_settings()
     ui->auto_layering->setChecked(setting["auto_layering"].toBool());
     ui->auto_aligning->setChecked(setting["auto_aligning"].toBool());
     ui->remember_file_type->setChecked(setting["remember_file_type"].toBool());
+    ui->show_origin->setChecked(setting["show_origin"].toBool());
+    if (ui->show_origin->isChecked())
+    {
+        _painter.show_origin();
+    }
+    else
+    {
+        _painter.hide_origin();
+    }
     if (ui->remember_file_type->isChecked())
     {
        _file_type = setting["file_type"].toString();
@@ -358,6 +368,7 @@ void MainWindow::save_settings()
     setting["auto_layering"] = ui->auto_layering->isChecked();
     setting["auto_aligning"] = ui->auto_aligning->isChecked();
     setting["remember_file_type"] = ui->remember_file_type->isChecked();
+    setting["show_origin"] = ui->show_origin->isChecked();
     if (ui->remember_file_type->isChecked())
     {
         setting["file_type"] = _file_type;

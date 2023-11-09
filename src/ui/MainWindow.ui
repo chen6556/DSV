@@ -306,6 +306,7 @@ QToolButton{background:rgb(142,142,142);}</string>
     <property name="title">
      <string>setting</string>
     </property>
+    <addaction name="show_origin"/>
     <addaction name="auto_layering"/>
     <addaction name="remember_file_type"/>
     <addaction name="auto_aligning"/>
@@ -380,6 +381,17 @@ QToolButton{background:rgb(142,142,142);}</string>
   <action name="actionadvanced">
    <property name="text">
     <string>advanced</string>
+   </property>
+  </action>
+  <action name="show_origin">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>show origin</string>
    </property>
   </action>
  </widget>

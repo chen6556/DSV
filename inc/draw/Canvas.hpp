@@ -25,8 +25,8 @@ private:
     double _ratio = 1; // 缩放系数
     size_t _bezier_order = 3; // 贝塞尔曲线阶数
 
-    // 可移动视图, 可绘图, 正在绘图, 光标追踪, 可移动单个object, 选中一个obj, 正在移动obj
-    bool _bool_flags[7] = {false, false, false, false, false, false, false};
+    // 可移动视图, 可绘图, 正在绘图, 光标追踪, 可移动单个object, 选中一个obj, 正在移动obj, 显示坐标原点
+    bool _bool_flags[8] = {false, false, false, false, false, false, false, true};
 
     // current_tool:[-1:no-tool 0:circle 1:polyline 2:rectangle 3:curve], last_tool
     int _int_flags[2] = {-1, -1};
@@ -71,6 +71,12 @@ public:
     void bind_editer(Editer *editer);
 
     void use_tool(const int value);
+
+    void show_origin();
+
+    void hide_origin();
+
+    bool origin_visible() const;
 
     const bool is_painting() const;
 
