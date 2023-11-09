@@ -632,11 +632,6 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         }
         else
         {
-            if (event->modifiers() == Qt::AltModifier)
-            {
-                _editer->connect(GlobalSetting::get_instance()->setting()["catch_distance"].toDouble());
-            }
-
             _select_rect.clear();
             _last_point.clear();
             if (_info_labels[1])
