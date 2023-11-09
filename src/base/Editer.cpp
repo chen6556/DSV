@@ -202,7 +202,7 @@ void Editer::append_points()
             }
             if (head_geo != nullptr)
             {
-                tail_geo->memo()["is_selected"] = false;
+                head_geo->memo()["is_selected"] = false;
             }
             _point_cache.pop_back();
             _point_cache.pop_back();
