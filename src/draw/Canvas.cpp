@@ -922,6 +922,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         _canvas_ctm[1] = _canvas_ctm[2] = _canvas_ctm[3] = _canvas_ctm[5] = _canvas_ctm[6] = _canvas_ctm[7] = 0;
         _view_ctm[0] = _view_ctm[4] = _view_ctm[8] = 1;
         _view_ctm[1] = _view_ctm[2] = _view_ctm[3] = _view_ctm[5] = _view_ctm[6] = _view_ctm[7] = 0;
+        _visible_area = Geo::Rectangle(0, 0, this->geometry().width(), this->geometry().height());
         _ratio = 1;
         update();
         break;
