@@ -1181,26 +1181,64 @@ void Canvas::paste()
 
 bool Canvas::is_visible(const Geo::Point &point) const
 {
-    return point.coord().x > 0 && point.coord().x < _visible_area.width()
-        && point.coord().y < _visible_area.height() && point.coord().y > 0;
+    return point.coord().x > _visible_area[0].coord().x && point.coord().x < _visible_area[2].coord().x
+        && point.coord().y < _visible_area[2].coord().y && point.coord().y > _visible_area[0].coord().y;
 }
 
 bool Canvas::is_visible(const Geo::Polyline &polyline) const
 {
-    return Geo::is_intersected(_visible_area, polyline);
+    for (const Geo::Point &point : polyline)
+    {
+        if (point.coord().x > _visible_area[0].coord().x && point.coord().x < _visible_area[2].coord().x
+            && point.coord().y < _visible_area[2].coord().y && point.coord().y > _visible_area[0].coord().y)
+        {
+            return true;
+        }
+    }
+    Geo::Point output;
+    for (size_t i = 1, count = polyline.size(); i < count; ++i)
+    {
+        for (size_t j = 1; j < 5; ++j)
+        {
+            if (Geo::is_intersected(polyline[i - 1], polyline[i], _visible_area[j - 1], _visible_area[j], output))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 bool Canvas::is_visible(const Geo::Polygon &polygon) const
 {
-    return Geo::is_intersected(_visible_area, polygon);
+    for (const Geo::Point &point : polygon)
+    {
+        if (point.coord().x > _visible_area[0].coord().x && point.coord().x < _visible_area[2].coord().x
+            && point.coord().y < _visible_area[2].coord().y && point.coord().y > _visible_area[0].coord().y)
+        {
+            return true;
+        }
+    }
+    Geo::Point output;
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        for (size_t j = 1; j < 5; ++j)
+        {
+            if (Geo::is_intersected(polygon[i - 1], polygon[i], _visible_area[j - 1], _visible_area[j], output))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 bool Canvas::is_visible(const Geo::Circle &circle) const
 {
-    return circle.center().coord().x > - circle.radius() &&
-        circle.center().coord().x < _visible_area.width() + circle.radius() &&
-        circle.center().coord().y < _visible_area.height() + circle.radius() &&
-        circle.center().coord().y > - circle.radius();
+    return circle.center().coord().x > _visible_area[0].coord().x - circle.radius() &&
+        circle.center().coord().x < _visible_area[2].coord().x + circle.radius() &&
+        circle.center().coord().y < _visible_area[2].coord().y + circle.radius() &&
+        circle.center().coord().y > _visible_area[0].coord().y - circle.radius();
 }
 
 
