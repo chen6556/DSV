@@ -306,6 +306,7 @@ void Canvas::paint_graph()
                         }
                         circle.center() = circlecontainer->center();
                         circle.radius() = circlecontainer->radius();
+                        circle.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
 
                         center = circle.center().coord();
                         radius = circle.radius();
