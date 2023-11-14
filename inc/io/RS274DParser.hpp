@@ -8,6 +8,7 @@ namespace RS274DParser
 {
 
 static constexpr double UNIT_SACLES[2] = {1, 2.54};
+
 enum class Unit
 {
     mm = 0,
@@ -15,6 +16,7 @@ enum class Unit
     // mil实际上是100mil 等同于hectomil
     mil = 1
 };
+
 enum class CurveType
 {
     Linear = 0,
@@ -22,7 +24,7 @@ enum class CurveType
 
 class Importer
 {
-  private:
+private:
     Graph *_graph = nullptr;
     std::vector<Geo::Point> _points;
     Geo::Coord _last_coord;
@@ -34,7 +36,7 @@ class Importer
 
     Unit unit = Unit::mm;
 
-  public:
+public:
     void set_x_coord(const int value);
     void set_y_coord(const int value);
     void store_points();
@@ -57,11 +59,11 @@ class Importer
     void load_graph(Graph *g);
     void reset();
 
-  private:
+private:
     inline double unit_scale(int);
 };
 
 bool parse(std::string_view &stream, Graph *graph);
 
 bool parse(std::ifstream &stream, Graph *graph);
-}; // namespace EBNFParser
+}; // namespace RS274DParser
