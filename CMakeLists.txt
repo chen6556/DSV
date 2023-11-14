@@ -21,14 +21,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/output/)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets Gui Core)
+find_package(Qt5 REQUIRED COMPONENTS Widgets Gui Core)
 find_package(qpdf)
 
 add_subdirectory(src)
 include_directories(inc)
 
-qt_add_executable(DSV
-    MANUAL_FINALIZATION
+add_executable(DSV
     src/main.cpp
     inc/ui/LayersManager.hpp
     inc/ui/MainWindow.hpp
@@ -41,7 +40,7 @@ qt_add_executable(DSV
     src/resource/icon.rc
 )
 
-target_link_libraries(DSV PRIVATE Qt6::Widgets Qt6::Gui Qt6::Core qpdf::libqpdf)
+target_link_libraries(DSV PRIVATE Qt5::Widgets Qt5::Gui Qt5::Core qpdf::libqpdf)
 
 set_target_properties(DSV PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
@@ -51,7 +50,7 @@ set_target_properties(DSV PROPERTIES
     # WIN32_EXECUTABLE TRUE
 )
 
-qt_finalize_executable(DSV)
+
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

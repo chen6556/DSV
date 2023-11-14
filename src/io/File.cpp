@@ -3,6 +3,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QJsonValueRef>
 #include <fstream>
 
 
@@ -22,7 +23,7 @@ void File::read(const QString &path, Graph *graph)
         graph->append_group();
     
         QJsonArray containers = obj["ContainerGroup"].toArray();
-        for (QJsonValueConstRef container : containers)
+        for (QJsonValueRef container : containers)
         {
             QJsonArray coordinates = container.toObject()["shape"].toArray();
             for (size_t i = 1, count = coordinates.size(); i < count; i += 2)
@@ -35,7 +36,7 @@ void File::read(const QString &path, Graph *graph)
         }
 
         QJsonArray circlecontainers = obj["CircleContainerGroup"].toArray();
-        for (QJsonValueConstRef container : circlecontainers)
+        for (QJsonValueRef container : circlecontainers)
         {
             QJsonArray coordinates = container.toObject()["shape"].toArray();
             if (coordinates.size() < 3)
@@ -50,7 +51,7 @@ void File::read(const QString &path, Graph *graph)
         Geo::Geometry *head, *tail;
         int tail_id, head_id;
         std::vector<Geo::Geometry*>::iterator container_it;
-        for (QJsonValueConstRef link : links)
+        for (QJsonValueRef link : links)
         {
             QJsonArray coordinates = link.toObject()["shape"].toArray();
             if (link.toObject().find("tail_id") == link.toObject().end() || link.toObject().find("head_id") == link.toObject().end())
@@ -82,7 +83,7 @@ void File::read(const QString &path, Graph *graph)
         head = tail = nullptr;
 
         QJsonArray polylines = obj["PolylineGroup"].toArray();
-        for (QJsonValueConstRef polyline : polylines)
+        for (QJsonValueRef polyline : polylines)
         {
             QJsonArray coordinates = polyline.toObject()["shape"].toArray();
             for (size_t i = 1, count = coordinates.size(); i < count; i += 2)
@@ -94,7 +95,7 @@ void File::read(const QString &path, Graph *graph)
         }
     
         QJsonArray beziers = obj["BezierGroup"].toArray();
-        for (QJsonValueConstRef bezier : beziers)
+        for (QJsonValueRef bezier : beziers)
         {
             QJsonArray coordinates = bezier.toObject()["shape"].toArray();
             for (size_t i = 1, count = coordinates.size(); i < count; i += 2)

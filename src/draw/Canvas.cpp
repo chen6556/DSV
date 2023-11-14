@@ -235,11 +235,11 @@ void Canvas::paint_graph()
                 center = circle.center().coord();
                 radius = circle.radius();
                 painter.drawEllipse(center.x - radius, center.y - radius, radius * 2, radius * 2);
-                _catched_points.emplace_back(QPointF(center.x, center.y));
-                _catched_points.emplace_back(QPointF(center.x, center.y + radius));
-                _catched_points.emplace_back(QPointF(center.x + radius, center.y));
-                _catched_points.emplace_back(QPointF(center.x, center.y - radius));
-                _catched_points.emplace_back(QPointF(center.x - radius, center.y));
+                _catched_points.push_back(QPointF(center.x, center.y));
+                _catched_points.push_back(QPointF(center.x, center.y + radius));
+                _catched_points.push_back(QPointF(center.x + radius, center.y));
+                _catched_points.push_back(QPointF(center.x, center.y - radius));
+                _catched_points.push_back(QPointF(center.x - radius, center.y));
                 if (show_points)
                 {
                     painter.setRenderHint(QPainter::Antialiasing);
@@ -311,11 +311,11 @@ void Canvas::paint_graph()
                         center = circle.center().coord();
                         radius = circle.radius();
                         painter.drawEllipse(center.x - radius, center.y - radius, radius * 2, radius * 2);
-                        _catched_points.emplace_back(QPointF(center.x, center.y));
-                        _catched_points.emplace_back(QPointF(center.x, center.y + radius));
-                        _catched_points.emplace_back(QPointF(center.x + radius, center.y));
-                        _catched_points.emplace_back(QPointF(center.x, center.y - radius));
-                        _catched_points.emplace_back(QPointF(center.x - radius, center.y));
+                        _catched_points.push_back(QPointF(center.x, center.y));
+                        _catched_points.push_back(QPointF(center.x, center.y + radius));
+                        _catched_points.push_back(QPointF(center.x + radius, center.y));
+                        _catched_points.push_back(QPointF(center.x, center.y - radius));
+                        _catched_points.push_back(QPointF(center.x - radius, center.y));
                         if (show_points)
                         {
                             painter.setRenderHint(QPainter::Antialiasing);
@@ -592,7 +592,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                             Geo::Coord coord(real_coord_to_view_coord(point.x(), point.y()));
                             _mouse_pos_1.setX(coord.x);
                             _mouse_pos_1.setY(coord.y);
-                            QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
+                            QCursor::setPos(this->mapToGlobal(QPoint(_mouse_pos_1.rx(), _mouse_pos_1.ry())));
                             break;
                         }
                     }
@@ -803,7 +803,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             const double y = (mat[0] * (pos.y - mat[7]) - mat[1] * (pos.x - mat[6])) / k;
             _mouse_pos_1.setX(x);
             _mouse_pos_1.setY(y);
-            QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
+            QCursor::setPos(this->mapToGlobal(QPoint(_mouse_pos_1.rx(), _mouse_pos_1.ry())));
         }
     }
 }

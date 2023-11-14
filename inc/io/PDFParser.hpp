@@ -265,7 +265,7 @@ public:
     };
 };
 
-class FunctionType3 final  : public Function
+class FunctionType3 final : public Function
 {
 public:
     std::vector<std::shared_ptr<Function>> _functions;
