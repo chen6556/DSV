@@ -176,7 +176,7 @@ static Parser<std::vector<char>> unkown_cmds = confix_p(alphaa_p(), *anychar_p()
 
 static auto cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | blank | skip_cmd);
 static auto terminal_cmd = end | unkown_cmds;
-static auto rs274 = cmd>>terminal_cmd;
+static auto rs274 = cmd >> !terminal_cmd;
 // static auto cmd = *(coord | set_unit | pen_size | pen_move | interp | circle | steps | blank | eol_p() | unkown_cmds);
 
 
