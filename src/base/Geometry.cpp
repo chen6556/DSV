@@ -1422,13 +1422,13 @@ Circle * Circle::clone() const
 void Circle::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
     _center.transform(a,b,c,d,e,f);
-    _radius *= a;
+    _radius *= std::abs(a);
 }
 
 void Circle::transform(const double mat[6])
 {
     _center.transform(mat);
-    _radius *= mat[0];
+    _radius *= std::abs(mat[0]);
 }
 
 void Circle::translate(const double tx, const double ty)
