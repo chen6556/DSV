@@ -3,6 +3,12 @@
 /install
 /output
 
+# 排除三方库(cmake自动下载)
+/lib
+
+# 排除clangd缓存
+/.cache
+
 *.json
 *.yaml
 *.log

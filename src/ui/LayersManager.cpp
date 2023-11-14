@@ -1,5 +1,5 @@
 #include "ui/LayersManager.hpp"
-#include "./ui_layersmanager.h"
+#include "./ui_LayersManager.h"
 
 
 LayersManager::LayersManager(QWidget *parent)
