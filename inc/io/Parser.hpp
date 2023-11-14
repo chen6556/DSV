@@ -746,13 +746,13 @@ Parser<T> operator|(const Parser<T> &left, const Parser<T> &right)
 template <typename T>
 Parser<std::vector<T>> operator|(const Parser<T> &left, const Parser<std::vector<T>> &right)
 {
-    return Parser<std::vector<T>>(std::function<std::optional<T>(std::string_view& stream)>
+    return Parser<std::vector<T>>(std::function<std::optional<std::vector<T>>(std::string_view& stream)>
             ([=](std::string_view& stream)-> std::optional<std::vector<T>>
             {
                 std::optional<T> result_l = left(stream);
                 if (result_l.has_value())
                 {
-                    return {result_l.value()};
+                    return std::vector<T>({result_l.value()});
                 }
                 std::optional<std::vector<T>> result_r = right(stream);
                 if (result_r.has_value())
@@ -766,7 +766,7 @@ Parser<std::vector<T>> operator|(const Parser<T> &left, const Parser<std::vector
 template <typename T>
 Parser<std::vector<T>> operator|(const Parser<std::vector<T>> &left, const Parser<T> &right)
 {
-    return Parser<std::vector<T>>(std::function<std::optional<T>(std::string_view& stream)>
+    return Parser<std::vector<T>>(std::function<std::optional<std::vector<T>>(std::string_view& stream)>
             ([=](std::string_view& stream)-> std::optional<std::vector<T>>
             {
                 std::optional<std::vector<T>> result_l = left(stream);
@@ -777,7 +777,7 @@ Parser<std::vector<T>> operator|(const Parser<std::vector<T>> &left, const Parse
                 std::optional<T> result_r = right(stream);
                 if (result_r.has_value())
                 {
-                    return {result_r.value()};
+                    return std::vector<T>({result_r.value()});
                 };
                 return std::nullopt;
             }));
