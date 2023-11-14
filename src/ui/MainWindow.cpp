@@ -474,10 +474,7 @@ void MainWindow::open_file(const QString &path)
     {
 
         std::ifstream file(path.toStdString(), std::ios_base::in);
-        bool res=RS274DParser::parse(file,g);
-        if (!res) {
-            qDebug()<<"空";
-        }
+        RS274DParser::parse(file,g);
         file.close();
 
         if (ui->remember_file_type->isChecked())

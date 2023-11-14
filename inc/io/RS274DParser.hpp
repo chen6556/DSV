@@ -25,7 +25,6 @@ class Importer
   private:
     Graph *_graph = nullptr;
     std::vector<Geo::Point> _points;
-    std::vector<double> _parameters;
     Geo::Coord _last_coord;
 
     bool _is_pen_down = false;
@@ -39,6 +38,12 @@ class Importer
     void set_x_coord(const int value);
     void set_y_coord(const int value);
     void store_points();
+
+    void draw_circle(const int radius);
+    void draw_cricle_10();
+    void draw_cricle_20();
+    void draw_cricle_30();
+    void draw_cricle_40();
 
     void set_unit_mm();
     void set_unit_hectomil();
