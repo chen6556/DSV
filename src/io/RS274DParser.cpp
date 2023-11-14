@@ -10,15 +10,18 @@ double Importer::unit_scale(int value)
 {
     return (double)value * (UNIT_SACLES[static_cast<int>(this->unit)]);
 }
+
 void Importer::set_x_coord(const int value)
 {
     _last_coord.x = unit_scale(value);
 }
+
 void Importer::set_y_coord(const int value)
 {
     _last_coord.y = unit_scale(value);
     _points.emplace_back(Geo::Point(_last_coord));
 }
+
 void Importer::store_points()
 {
     if (_points.size() <= 1)
@@ -37,6 +40,7 @@ void Importer::store_points()
     }
     _points.clear();
 }
+
 void Importer::draw_circle(const int radius)
 {
     CircleContainer *cc = new CircleContainer(Geo::Circle(Geo::Point(_last_coord), radius));
@@ -47,6 +51,7 @@ void Importer::set_unit_mm()
 {
     this->unit = Unit::mm;
 }
+
 void Importer::set_unit_hectomil()
 {
     this->unit = Unit::hectomil;
@@ -57,6 +62,7 @@ void Importer::pen_down()
     this->_is_pen_down = true;
     _points.emplace_back(Geo::Point(_last_coord));
 }
+
 void Importer::pen_up()
 {
     this->_is_pen_down = false;
@@ -68,6 +74,7 @@ void Importer::knife_down()
     this->_is_knife_down = true;
     _points.emplace_back(Geo::Point(_last_coord));
 }
+
 void Importer::knife_up()
 {
     this->_is_knife_down = false;
@@ -78,14 +85,17 @@ void Importer::draw_cricle_10()
 {
     draw_circle(10);
 }
+
 void Importer::draw_cricle_20()
 {
     draw_circle(20);
 }
+
 void Importer::draw_cricle_30()
 {
     draw_circle(30);
 }
+
 void Importer::draw_cricle_40()
 {
     draw_circle(40);
@@ -96,14 +106,11 @@ void Importer::load_graph(Graph *g)
     _graph = g;
     _graph->append_group();
 }
+
 void Importer::reset()
 {
 }
 
-void Importer::unkown_handle(const std::string &cmd)
-{
-    qDebug() << "RS274D Unkown Cmd: " << cmd << "\n";
-}
 
 static Importer importer;
 
@@ -165,8 +172,7 @@ static Parser<int> steps = ch_p('N') >> int_p() >> separator;
 // 文件终止
 static Parser<char> end = str_p("M0") >> separator;
 // 未知命令
-static Action<std::string> unkown_a(&importer, &Importer::unkown_handle);
-static Parser<std::vector<char>> unkown_cmds = confix_p(alphaa_p(), *anychar_p(), separator)[unkown_a];
+static Parser<std::vector<char>> unkown_cmds = confix_p(alphaa_p(), *anychar_p(), separator);
 
 static auto cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | blank | skip_cmd);
 static auto terminal_cmd = end | unkown_cmds;

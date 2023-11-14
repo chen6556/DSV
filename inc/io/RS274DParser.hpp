@@ -54,8 +54,6 @@ class Importer
     void knife_down();
     void knife_up();
 
-    void unkown_handle(const std::string&);
-
     void load_graph(Graph *g);
     void reset();
 

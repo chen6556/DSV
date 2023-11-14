@@ -109,7 +109,7 @@ void MainWindow::open_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;JSON: (*.json *.JSON);;PLT: (*.plt *.PLT);;PDF: (*.pdf *.PDF);;RS274D: (*.cut)", &_file_type);
+    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;JSON: (*.json *.JSON);;PLT: (*.plt *.PLT);;PDF: (*.pdf *.PDF);;RS274D: (*.cut *.CUT)", &_file_type);
     open_file(path);
     delete dialog;
 }
@@ -470,7 +470,8 @@ void MainWindow::open_file(const QString &path)
         {
             _file_type = "PDF: (*.pdf *.PDF)";
         }
-    }else if(path.endsWith(".cut"))
+    }
+    else if(path.endsWith(".cut"))
     {
 
         std::ifstream file(path.toStdString(), std::ios_base::in);
@@ -479,7 +480,7 @@ void MainWindow::open_file(const QString &path)
 
         if (ui->remember_file_type->isChecked())
         {
-            _file_type = "RS274D: (*.cut)";
+            _file_type = "RS274D: (*.cut *.CUT)";
         }
     }
     _editer.load_graph(g, path);
