@@ -461,7 +461,7 @@ QToolButton{background:rgb(142,142,142);}</string>
    <sender>auto_save</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
-   <slot>auto_svae()</slot>
+   <slot>auto_save()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>-1</x>
@@ -526,7 +526,7 @@ QToolButton{background:rgb(142,142,142);}</string>
   <slot>open_file()</slot>
   <slot>save_file()</slot>
   <slot>saveas_file()</slot>
-  <slot>auto_svae()</slot>
+  <slot>auto_save()</slot>
   <slot>rotate()</slot>
   <slot>flip_x()</slot>
   <slot>flip_y()</slot>
