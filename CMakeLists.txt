@@ -42,6 +42,7 @@ qt_add_executable(DSV
 )
 
 target_link_libraries(DSV PRIVATE Qt6::Widgets Qt6::Gui Qt6::Core qpdf::libqpdf)
+target_compile_definitions(DSV PUBLIC POINTERHOLDER_TRANSITION=0)
 
 set_target_properties(DSV PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
