@@ -938,11 +938,7 @@ void Canvas::resizeEvent(QResizeEvent *event)
 {
     const QRect rect(this->geometry());
     _visible_area = Geo::Rectangle(0, 0, rect.width(), rect.height());
-    _canvas_ctm[0] = _canvas_ctm[4] = _canvas_ctm[8] = 1;
-    _canvas_ctm[1] = _canvas_ctm[2] = _canvas_ctm[3] = _canvas_ctm[5] = _canvas_ctm[6] = _canvas_ctm[7] = 0;
-    _view_ctm[0] = _view_ctm[4] = _view_ctm[8] = 1;
-    _view_ctm[1] = _view_ctm[2] = _view_ctm[3] = _view_ctm[5] = _view_ctm[6] = _view_ctm[7] = 0;
-    _ratio = 1;
+    _visible_area.transform(_view_ctm[0], _view_ctm[3], _view_ctm[6], _view_ctm[1], _view_ctm[4], _view_ctm[7]);
     return QWidget::resizeEvent(event);
 }
 
