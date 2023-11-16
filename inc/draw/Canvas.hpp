@@ -76,6 +76,8 @@ public:
 
     void hide_origin();
 
+    void show_overview();
+
     bool origin_visible() const;
 
     const bool is_painting() const;
@@ -93,8 +95,6 @@ public:
     void set_bezier_order(const size_t order);
     
     const size_t bezier_order() const;
-
-
 
     double ratio() const;
 
