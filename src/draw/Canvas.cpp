@@ -918,16 +918,18 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
     case Qt::RightButton:
         break;
     case Qt::MiddleButton:
+        _last_point = center();
         show_overview();
+        update();
         break;
     default:
         break;
     }
 
-    QWidget::mouseDoubleClickEvent(event);
+    // QWidget::mouseDoubleClickEvent(event);
 }
 
-void Canvas ::show_overview()
+void Canvas::show_overview()
 {
     Graph *graph = _editer->graph();
     if (graph->empty())
@@ -935,9 +937,8 @@ void Canvas ::show_overview()
         update();
         return;
     }
-    _last_point = center();
     // 获取graph的边界
-    const Geo::Rectangle bounding_area = graph->bounding_rect();
+    Geo::Rectangle bounding_area = graph->bounding_rect();
     // 整个绘图控件区域作为显示区域
     QRect view_area = this->geometry();
     // 选择合适的缩放倍率
@@ -963,7 +964,13 @@ void Canvas ::show_overview()
     _view_ctm[6] = -x_offset / _ratio;
     _view_ctm[7] = -y_offset / _ratio;
 
-    _visible_area = bounding_area;
+    // 可视区域为显示控件区域的反变换
+    double x0=0,y0=0,x1=view_area.width(),y1=view_area.height();
+    _visible_area = Geo::Rectangle(
+        x0 * _view_ctm[0] + y0 * _view_ctm[3] + _view_ctm[6],
+        x0 * _view_ctm[1] + y0 * _view_ctm[4] + _view_ctm[7],
+        x1 * _view_ctm[0] + y1 * _view_ctm[3] + _view_ctm[6],
+        x1 * _view_ctm[1] + y1 * _view_ctm[4] + _view_ctm[7]);
 
     update();
 }
