@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.20.0)
 project(DSV VERSION 0.4.0)
 
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 include(CTest)
 enable_testing()
 
@@ -20,9 +22,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/output/)
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/output/)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Gui Core)
-find_package(qpdf)
+include(qpdf)
 
 add_subdirectory(src)
 include_directories(inc)
@@ -41,7 +44,8 @@ qt_add_executable(DSV
     src/resource/icon.rc
 )
 
-target_link_libraries(DSV PRIVATE Qt6::Widgets Qt6::Gui Qt6::Core qpdf::libqpdf)
+target_link_libraries(DSV PRIVATE Qt6::Widgets Qt6::Gui Qt6::Core libqpdf)
+target_compile_definitions(DSV PUBLIC POINTERHOLDER_TRANSITION=0)
 
 set_target_properties(DSV PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
