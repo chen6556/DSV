@@ -48,7 +48,7 @@ struct Parser<std::string>
     Parser(const std::string &value)
         : func([=](std::string_view &stream) -> std::optional<std::string>
         {
-            if (stream.length() >= value.length() && stream._Starts_with(value))
+            if (stream.length() >= value.length() && stream.substr(0, value.length()) == value)
             {
                 stream.remove_prefix(value.length());
                 return value;
