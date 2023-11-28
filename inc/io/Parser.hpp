@@ -214,7 +214,7 @@ struct Parser<double>
                 num.emplace_back('-');
             }
             bool find_point = false;
-            while ( !stream.empty() && (('0' <= stream[index] && stream[index] <= '9')
+            while (index < stream.length() && (('0' <= stream[index] && stream[index] <= '9')
                 || (stream[index] == '.' && !find_point)) )
             {
                 num.emplace_back(stream[index]);
