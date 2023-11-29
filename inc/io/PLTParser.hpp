@@ -1,3 +1,5 @@
+#pragma once
+
 #include "draw/Graph.hpp"
 #include "base/Geometry.hpp"
 #include <fstream>

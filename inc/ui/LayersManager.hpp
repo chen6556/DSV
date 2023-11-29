@@ -1,4 +1,5 @@
 #pragma once
+
 #include <QDialog>
 #include <QMenu>
 #include <QAction>

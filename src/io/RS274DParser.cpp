@@ -1,6 +1,5 @@
-#include <QDebug>
-#include "io/Parser.hpp"
 #include "io/RS274DParser.hpp"
+#include "io/Parser.hpp"
 #include <sstream>
 
 namespace RS274DParser

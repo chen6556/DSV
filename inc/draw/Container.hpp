@@ -1,4 +1,5 @@
 #pragma once
+
 #include "base/Geometry.hpp"
 #include <QString>
 
