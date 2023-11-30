@@ -4,7 +4,7 @@
 
 
 Canvas::Canvas(QLabel **labels, QWidget *parent)
-    : QWidget(parent), _info_labels(labels), _input_line(this)
+    : QOpenGLWidget(parent), _info_labels(labels), _input_line(this)
 {
     QPalette palette;
     palette.setColor(QPalette::Window, QColor(255, 255, 255));
@@ -44,9 +44,8 @@ void Canvas::bind_editer(Editer *editer)
     _editer = editer;
 }
 
-void Canvas::paint_cache()
+void Canvas::paint_cache(QPainter &painter)
 {
-    QPainter painter(this);
     if (_int_flags[0] == 3)
     {
         painter.setPen(QPen(QColor(255, 140, 0), 2, Qt::DashLine));
@@ -107,13 +106,13 @@ void Canvas::paint_cache()
     }
 }
 
-void Canvas::paint_graph()
+void Canvas::paint_graph(QPainter &painter)
 {
     if (_editer->graph() == nullptr || _editer->graph()->empty())
     {
         return;
     }
-    QPainter painter(this);
+
     painter.setBrush(QColor(250, 250, 250));
     const bool scale_text = GlobalSetting::get_instance()->setting()["scale_text"].toBool();
     const double suffix_text_width = 4 * (scale_text ? _ratio : 1), text_heigh_ratio = (scale_text ? _ratio : 1);
@@ -448,10 +447,9 @@ void Canvas::paint_graph()
     }
 }
 
-void Canvas::paint_select_rect()
+void Canvas::paint_select_rect(QPainter &painter)
 {
-    QPainter painter(this);
-
+    painter.setBrush(Qt::NoBrush);
     if (_bool_flags[7])
     {
         painter.setPen(QPen(Qt::black, 1, Qt::DotLine));
@@ -485,11 +483,14 @@ void Canvas::paintEvent(QPaintEvent *event)
     }
 
     _catched_points.clear();
-    paint_graph();
+    QPainter painter(this);
+    painter.fillRect(-20, -20, width() + 40, height() + 40, Qt::white);
 
-    paint_cache();
+    paint_graph(painter);
 
-    paint_select_rect();
+    paint_cache(painter);
+
+    paint_select_rect(painter);
 }
 
 void Canvas::mousePressEvent(QMouseEvent *event)

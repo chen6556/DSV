@@ -1,6 +1,6 @@
 #pragma once
 
-#include <QWidget>
+#include <QOpenGLWidget>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QLabel>
@@ -8,7 +8,7 @@
 #include "base/Editer.hpp"
 
 
-class Canvas : public QWidget
+class Canvas : public QOpenGLWidget
 {
     Q_OBJECT
 
@@ -41,11 +41,11 @@ private:
 private:
     void init();
 
-    void paint_cache();
+    void paint_cache(QPainter &painter);
 
-    void paint_graph();
+    void paint_graph(QPainter &painter);
 
-    void paint_select_rect();
+    void paint_select_rect(QPainter &painter);
 
 protected:
     void paintEvent(QPaintEvent *event);
