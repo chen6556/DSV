@@ -1191,23 +1191,15 @@ bool Canvas::is_visible(const Geo::Point &point) const
 
 bool Canvas::is_visible(const Geo::Polyline &polyline) const
 {
-    for (const Geo::Point &point : polyline)
-    {
-        if (point.coord().x > _visible_area[0].coord().x && point.coord().x < _visible_area[2].coord().x
-            && point.coord().y < _visible_area[2].coord().y && point.coord().y > _visible_area[0].coord().y)
-        {
-            return true;
-        }
-    }
-    Geo::Point output;
+    const Geo::Point center(_visible_area.center());
+    const double len = std::min(_visible_area.width(), _visible_area.height());
     for (size_t i = 1, count = polyline.size(); i < count; ++i)
     {
-        for (size_t j = 1; j < 5; ++j)
+        if ((polyline[i].coord().x > _visible_area[0].coord().x && polyline[i].coord().x < _visible_area[2].coord().x
+            && polyline[i].coord().y < _visible_area[2].coord().y && polyline[i].coord().y > _visible_area[0].coord().y)
+            || Geo::distance(center, polyline[i - 1], polyline[i]) < len)
         {
-            if (Geo::is_intersected(polyline[i - 1], polyline[i], _visible_area[j - 1], _visible_area[j], output))
-            {
-                return true;
-            }
+            return true;
         }
     }
     return false;
@@ -1215,23 +1207,25 @@ bool Canvas::is_visible(const Geo::Polyline &polyline) const
 
 bool Canvas::is_visible(const Geo::Polygon &polygon) const
 {
-    for (const Geo::Point &point : polygon)
+    const Geo::Point center(_visible_area.center());
+    const double len = std::min(_visible_area.width(), _visible_area.height());
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
     {
-        if (point.coord().x > _visible_area[0].coord().x && point.coord().x < _visible_area[2].coord().x
-            && point.coord().y < _visible_area[2].coord().y && point.coord().y > _visible_area[0].coord().y)
+        if ((polygon[i].coord().x > _visible_area[0].coord().x && polygon[i].coord().x < _visible_area[2].coord().x
+            && polygon[i].coord().y < _visible_area[2].coord().y && polygon[i].coord().y > _visible_area[0].coord().y)
+            || Geo::distance(center, polygon[i - 1], polygon[i]) < len)
         {
             return true;
         }
     }
-    Geo::Point output;
-    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+
+    const Geo::Rectangle rect(polygon.bounding_rect());
+    for (const Geo::Point &point : _visible_area)
     {
-        for (size_t j = 1; j < 5; ++j)
+        if (point.coord().x > rect[0].coord().x && point.coord().x < rect[2].coord().x
+            && point.coord().y < rect[2].coord().y && point.coord().y > rect[0].coord().y)
         {
-            if (Geo::is_intersected(polygon[i - 1], polygon[i], _visible_area[j - 1], _visible_area[j], output))
-            {
-                return true;
-            }
+            return true;
         }
     }
     return false;
