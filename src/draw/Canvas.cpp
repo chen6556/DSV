@@ -919,20 +919,62 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         break;
     case Qt::MiddleButton:
         _last_point = center();
-        _canvas_ctm[0] = _canvas_ctm[4] = _canvas_ctm[8] = 1;
-        _canvas_ctm[1] = _canvas_ctm[2] = _canvas_ctm[3] = _canvas_ctm[5] = _canvas_ctm[6] = _canvas_ctm[7] = 0;
-        _view_ctm[0] = _view_ctm[4] = _view_ctm[8] = 1;
-        _view_ctm[1] = _view_ctm[2] = _view_ctm[3] = _view_ctm[5] = _view_ctm[6] = _view_ctm[7] = 0;
-        _visible_area = Geo::Rectangle(0, 0, this->geometry().width(), this->geometry().height());
-        _ratio = 1;
+        show_overview();
         update();
         break;
     default:
         break;
     }
 
-    QWidget::mouseDoubleClickEvent(event);
+    // QWidget::mouseDoubleClickEvent(event);
 }
+
+void Canvas::show_overview()
+{
+    Graph *graph = _editer->graph();
+    if (graph->empty())
+    {
+        update();
+        return;
+    }
+    // 获取graph的边界
+    Geo::Rectangle bounding_area = graph->bounding_rect();
+    // 整个绘图控件区域作为显示区域
+    QRect view_area = this->geometry();
+    // 选择合适的缩放倍率
+    double height_ratio = view_area.height() / bounding_area.height();
+    double width_ratio = view_area.width() / bounding_area.width();
+    _ratio = qMin(height_ratio, width_ratio);
+    // 缩放减少10%，使其与边界留出一些空间
+    _ratio = _ratio * 0.90;
+
+    // 置于控件中间
+    double x_offset = (view_area.width() - bounding_area.width() * _ratio) / 2 - bounding_area.left() * _ratio;
+    double y_offset = (view_area.height() - bounding_area.height() * _ratio) / 2 - bounding_area.top() * _ratio;
+
+    _canvas_ctm[0] = _canvas_ctm[4] = _ratio;
+    _canvas_ctm[1] = _canvas_ctm[2] = _canvas_ctm[3] = _canvas_ctm[5] = 0;
+    _canvas_ctm[8] = 1;
+    _canvas_ctm[6] = x_offset;
+    _canvas_ctm[7] = y_offset;
+
+    _view_ctm[0] = _view_ctm[4] = 1 / _ratio;
+    _view_ctm[1] = _view_ctm[2] = _view_ctm[3] = _view_ctm[5] = 0;
+    _view_ctm[8] = 1;
+    _view_ctm[6] = -x_offset / _ratio;
+    _view_ctm[7] = -y_offset / _ratio;
+
+    // 可视区域为显示控件区域的反变换
+    double x0=0,y0=0,x1=view_area.width(),y1=view_area.height();
+    _visible_area = Geo::Rectangle(
+        x0 * _view_ctm[0] + y0 * _view_ctm[3] + _view_ctm[6],
+        x0 * _view_ctm[1] + y0 * _view_ctm[4] + _view_ctm[7],
+        x1 * _view_ctm[0] + y1 * _view_ctm[3] + _view_ctm[6],
+        x1 * _view_ctm[1] + y1 * _view_ctm[4] + _view_ctm[7]);
+
+    update();
+}
+
 
 void Canvas::resizeEvent(QResizeEvent *event)
 {
