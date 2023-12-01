@@ -932,7 +932,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         break;
     }
 
-    QWidget::mouseDoubleClickEvent(event);
+    QOpenGLWidget::mouseDoubleClickEvent(event);
 }
 
 void Canvas::resizeEvent(QResizeEvent *event)
@@ -940,7 +940,7 @@ void Canvas::resizeEvent(QResizeEvent *event)
     const QRect rect(this->geometry());
     _visible_area = Geo::Rectangle(0, 0, rect.width(), rect.height());
     _visible_area.transform(_view_ctm[0], _view_ctm[3], _view_ctm[6], _view_ctm[1], _view_ctm[4], _view_ctm[7]);
-    return QWidget::resizeEvent(event);
+    return QOpenGLWidget::resizeEvent(event);
 }
 
 
