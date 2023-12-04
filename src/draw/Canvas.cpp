@@ -484,6 +484,7 @@ void Canvas::paintEvent(QPaintEvent *event)
 
     _catched_points.clear();
     QPainter painter(this);
+    painter.setRenderHint(QPainter::RenderHint::Antialiasing);
     painter.fillRect(-20, -20, width() + 40, height() + 40, Qt::white);
 
     paint_graph(painter);
