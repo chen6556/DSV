@@ -5,10 +5,11 @@
 #include <QPainter>
 #include <QLabel>
 #include <QTextEdit>
+#include <QOpenGLFunctions_4_5_Core>
 #include "base/Editer.hpp"
 
 
-class Canvas : public QOpenGLWidget
+class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
 {
     Q_OBJECT
 
@@ -20,6 +21,10 @@ private:
     Editer *_editer = nullptr;
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
+
+    unsigned int _shader_programs[3], _VAO;
+    unsigned int _VBO;
+    int _uniforms[4];
 
     double _canvas_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
     double _view_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
@@ -43,12 +48,16 @@ private:
 
     void paint_cache(QPainter &painter);
 
-    void paint_graph(QPainter &painter);
+    void paint_graph();
 
     void paint_select_rect(QPainter &painter);
 
 protected:
-    void paintEvent(QPaintEvent *event);
+    void initializeGL();
+
+    void resizeGL(int w, int h);
+
+    void paintGL();
 
     void mousePressEvent(QMouseEvent *event);
 
