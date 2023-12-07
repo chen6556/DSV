@@ -508,6 +508,7 @@ void Canvas::initializeGL()
     unsigned int fragment_shader;
 
     glPointSize(6.0f);
+    glLineWidth(3.0f);
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex_shader, 1, &GLSL::base_vss, NULL);
     glCompileShader(vertex_shader);
