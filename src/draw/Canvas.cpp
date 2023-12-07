@@ -1,4 +1,5 @@
 #include "draw/Canvas.hpp"
+#include "draw/GLSL.hpp"
 #include <QPalette>
 #include "io/GlobalSetting.hpp"
 
@@ -13,38 +14,7 @@ Canvas::Canvas(QLabel **labels, QWidget *parent)
     init();
 }
 
-const char *vertex_shader_source = "#version 450 core\n"
-    "layout (location = 0) in dvec2 pos;\n"
-    "uniform int w;\n"
-    "uniform int h;\n"
-    "uniform dvec3 vec0;\n"
-    "uniform dvec3 vec1;\n"
-    "void main()\n"
-    "{\n"
-    "   gl_Position = vec4((pos.x * vec0.x + pos.y * vec0.y + vec0.z) / w - 1.0,"
-            "1.0 - (pos.x * vec1.x + pos.y * vec1.y + vec1.z) / h, 0.0, 1.0);\n"
-    "}\0";
 
-const char *shape_fragment_shader_source = "#version 450 core\n"
-    "out vec4 FragColor;\n"
-    "void main()\n"
-    "{\n"
-    "    FragColor = vec4(0.9765f, 0.9765f, 0.9765f, 1.0f);\n"
-    "}\0";
-
-const char *path_fragment_shader_source = "#version 450 core\n"
-    "out vec4 FragColor;\n"
-    "void main()\n"
-    "{\n"
-    "    FragColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);\n"
-    "}\0";
-
-const char *point_fragment_shader_source = "#version 450 core\n"
-    "out vec4 FragColor;\n"
-    "void main()\n"
-    "{\n"
-    "    FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);\n"
-    "}\0";
 
 
 void Canvas::init()
@@ -517,10 +487,10 @@ void Canvas::initializeGL()
 
     glPointSize(6.0f);
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
+    glShaderSource(vertex_shader, 1, &GLSL::base_vss, NULL);
     glCompileShader(vertex_shader);
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &shape_fragment_shader_source, NULL);
+    glShaderSource(fragment_shader, 1, &GLSL::shape_fss, NULL);
     glCompileShader(fragment_shader);
 
     _shader_programs[0] = glCreateProgram();
@@ -530,7 +500,7 @@ void Canvas::initializeGL()
     glDeleteShader(fragment_shader);
 
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &path_fragment_shader_source, NULL);
+    glShaderSource(fragment_shader, 1, &GLSL::path_fss, NULL);
     glCompileShader(fragment_shader);
 
     _shader_programs[1] = glCreateProgram();
@@ -540,7 +510,7 @@ void Canvas::initializeGL()
     glDeleteShader(fragment_shader);
 
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &point_fragment_shader_source, NULL);
+    glShaderSource(fragment_shader, 1, &GLSL::point_fss, NULL);
     glCompileShader(fragment_shader);
 
     _shader_programs[2] = glCreateProgram();
