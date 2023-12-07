@@ -14,7 +14,7 @@ Canvas::Canvas(QLabel **labels, QWidget *parent)
 }
 
 const char *vertex_shader_source = "#version 450 core\n"
-    "layout (location = 0) in vec2 pos;\n"
+    "layout (location = 0) in dvec2 pos;\n"
     "uniform int w;\n"
     "uniform int h;\n"
     "uniform vec3 mat0;\n"
@@ -43,7 +43,7 @@ const char *point_fragment_shader_source = "#version 450 core\n"
     "out vec4 FragColor;\n"
     "void main()\n"
     "{\n"
-    "    FragColor = vec4(0.0f, 0.0f, 0.999f, 1.0f);\n"
+    "    FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);\n"
     "}\0";
 
 
@@ -563,17 +563,17 @@ void Canvas::initializeGL()
         glUniform3f(_uniforms[3], 0.0f, 1.0f, 0.0f);
     }
 
-    float points[] = {50, 0, 50, 50, 0, 50, 0, 0};
+    double points[] = {50, 0, 50, 50, 0, 50, 0, 0};
 
     glGenVertexArrays(1, &_VAO);
     glBindVertexArray(_VAO);
-    glVertexAttribFormat(0, 2, GL_FLOAT, GL_FALSE, 0);
+    glVertexAttribLFormat(0, 2, GL_DOUBLE, 0);
 
     glGenBuffers(1, &_VBO);
     glBindBuffer(GL_ARRAY_BUFFER, _VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)0);
+    glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), (void *)0);
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
