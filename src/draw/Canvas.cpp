@@ -17,12 +17,12 @@ const char *vertex_shader_source = "#version 450 core\n"
     "layout (location = 0) in dvec2 pos;\n"
     "uniform int w;\n"
     "uniform int h;\n"
-    "uniform vec3 mat0;\n"
-    "uniform vec3 mat1;\n"
+    "uniform dvec3 vec0;\n"
+    "uniform dvec3 vec1;\n"
     "void main()\n"
     "{\n"
-    "   gl_Position = vec4((pos.x * mat0.x + pos.y * mat0.y + mat0.z) / w - 1.0,"
-            "1.0 - (pos.x * mat1.x + pos.y * mat1.y + mat1.z) / h, 0.0, 1.0);\n"
+    "   gl_Position = vec4((pos.x * vec0.x + pos.y * vec0.y + vec0.z) / w - 1.0,"
+            "1.0 - (pos.x * vec1.x + pos.y * vec1.y + vec1.z) / h, 0.0, 1.0);\n"
     "}\0";
 
 const char *shape_fragment_shader_source = "#version 450 core\n"
@@ -515,6 +515,7 @@ void Canvas::initializeGL()
     unsigned int vertex_shader;
     unsigned int fragment_shader;
 
+    glPointSize(6.0f);
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex_shader, 1, &vertex_shader_source, NULL);
     glCompileShader(vertex_shader);
@@ -551,16 +552,14 @@ void Canvas::initializeGL()
     
     _uniforms[0] = glGetUniformLocation(_shader_programs[0], "w");
     _uniforms[1] = glGetUniformLocation(_shader_programs[0], "h");
-    _uniforms[2] = glGetUniformLocation(_shader_programs[0], "mat0");
-    _uniforms[3] = glGetUniformLocation(_shader_programs[0], "mat1");
+    _uniforms[2] = glGetUniformLocation(_shader_programs[0], "vec0");
+    _uniforms[3] = glGetUniformLocation(_shader_programs[0], "vec1");
 
     for (int i = 0; i < 3; ++i)
     {
         glUseProgram(_shader_programs[i]);
-        glUniform1i(_uniforms[0], 400);
-        glUniform1i(_uniforms[1], 300);
-        glUniform3f(_uniforms[2], 1.0f, 0.0f, 0.0f);
-        glUniform3f(_uniforms[3], 0.0f, 1.0f, 0.0f);
+        glUniform3d(_uniforms[2], 1.0, 0.0, 0.0);
+        glUniform3d(_uniforms[3], 0.0, 1.0, 0.0);
     }
 
     double points[] = {50, 0, 50, 50, 0, 50, 0, 0};
@@ -577,7 +576,7 @@ void Canvas::initializeGL()
     glEnableVertexAttribArray(0);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-    // glBindVertexArray(0);   
+    // glBindVertexArray(0);
 }
 
 void Canvas::resizeGL(int w, int h)
@@ -796,8 +795,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         for (int i = 0; i < 3; ++i)
         {
             glUseProgram(_shader_programs[i]);
-            glUniform3f(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
-            glUniform3f(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
+            glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
+            glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
         }
         doneCurrent();
         update();
@@ -971,8 +970,8 @@ void Canvas::wheelEvent(QWheelEvent *event)
     for (int i = 0; i < 3; ++i)
     {
         glUseProgram(_shader_programs[i]);
-        glUniform3f(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
-        glUniform3f(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
+        glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
+        glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
     }
     doneCurrent();
     _editer->auto_aligning(_clicked_obj, _reflines);
@@ -1054,6 +1053,14 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         _view_ctm[1] = _view_ctm[2] = _view_ctm[3] = _view_ctm[5] = _view_ctm[6] = _view_ctm[7] = 0;
         _visible_area = Geo::Rectangle(0, 0, this->geometry().width(), this->geometry().height());
         _ratio = 1;
+        makeCurrent();
+        for (int i = 0; i < 3; ++i)
+        {
+            glUseProgram(_shader_programs[i]);
+            glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
+            glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
+        }
+        doneCurrent();
         update();
         break;
     default:
