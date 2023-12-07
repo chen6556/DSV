@@ -10,7 +10,7 @@ private:
     QString _txt;
 
 public:
-    unsigned int VBO;
+    unsigned int index;
 
 public:
     Container(){_memo["Type"] = 0;};

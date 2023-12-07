@@ -195,15 +195,7 @@ void Canvas::paint_graph()
             {
             case 0:
                 container = reinterpret_cast<const Container *>(geo);
-                if (!is_visible(container->shape()))
-                {
-                    continue;
-                }
-                for (const Geo::Point &point : container->shape())
-                {
-                    // points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                    //     point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-                }
+                paint_container(container->index, container->size());
                 // points.pop_back();
                 // _catched_points.append(points);
                 // painter.drawPolygon(points);
@@ -474,13 +466,43 @@ void Canvas::paint_select_rect(QPainter &painter)
     painter.drawPolygon(QRect(rect[0].coord().x, rect[0].coord().y, rect.width(), rect.height()));
 }
 
+void Canvas::paint_container(const size_t index, const size_t count)
+{
+    makeCurrent();
+
+    glUseProgram(_shader_programs[0]);
+
+    glEnable(GL_STENCIL_TEST); //开启模板测试
+    glStencilMask(0xFF); //开启模板缓冲区写入
+    glClearStencil(0);
+
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT); //设置模板缓冲区更新方式(若通过则按位反转模板值)
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); //第一次绘制只是为了构造模板缓冲区，没有必要显示到屏幕上，所以设置不显示第一遍的多边形
+    glDrawArrays(GL_TRIANGLE_FAN, index, count - 1);
+
+    glStencilFunc(GL_NOTEQUAL, 0, 0xFF); //模板值不为0就通过，凹多边形就正确画出了
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glDrawArrays(GL_TRIANGLE_FAN, index, count - 1);
+
+    glDisable(GL_STENCIL_TEST);
+
+    glUseProgram(_shader_programs[1]);
+    glDrawArrays(GL_LINE_STRIP, index, count);
+
+    glUseProgram(_shader_programs[2]);
+    glDrawArrays(GL_POINTS, index, count - 1);
+
+    doneCurrent();
+}
 
 
 
 void Canvas::initializeGL()
 {
     initializeOpenGLFunctions();
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(0.999f, 0.999f, 0.999f, 1.0f);
 
     unsigned int vertex_shader;
     unsigned int fragment_shader;
@@ -532,21 +554,15 @@ void Canvas::initializeGL()
         glUniform3d(_uniforms[3], 0.0, 1.0, 0.0);
     }
 
-    double points[] = {50, 0, 50, 50, 0, 50, 0, 0};
-
     glGenVertexArrays(1, &_VAO);
     glBindVertexArray(_VAO);
     glVertexAttribLFormat(0, 2, GL_DOUBLE, 0);
 
     glGenBuffers(1, &_VBO);
     glBindBuffer(GL_ARRAY_BUFFER, _VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(points), points, GL_STATIC_DRAW);
 
     glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), (void *)0);
     glEnableVertexAttribArray(0);
-
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    // glBindVertexArray(0);
 }
 
 void Canvas::resizeGL(int w, int h)
@@ -562,16 +578,9 @@ void Canvas::resizeGL(int w, int h)
 
 void Canvas::paintGL()
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    glUseProgram(_shader_programs[0]);
-    glDrawArrays(GL_POLYGON, 0, 4);
-
-    glUseProgram(_shader_programs[1]);
-    glDrawArrays(GL_LINE_LOOP, 0, 4);
-
-    glUseProgram(_shader_programs[2]);
-    glDrawArrays(GL_POINTS, 0, 4);
+    paint_graph();
 }
 
 void Canvas::mousePressEvent(QMouseEvent *event)
@@ -1371,4 +1380,286 @@ Geo::Coord Canvas::canvas_coord_to_real_coord(const double x, const double y) co
     const double t = (y - _canvas_ctm[7] - _canvas_ctm[1] / _canvas_ctm[0] * (x - _canvas_ctm[6])) /
         (_canvas_ctm[4] - _canvas_ctm[1] / _canvas_ctm[0] * _canvas_ctm[3]);
     return {(x - _canvas_ctm[6] - _canvas_ctm[3] * t) / _canvas_ctm[0], t};
+}
+
+
+
+void Canvas::refresh_vbo()
+{
+    size_t len = 1024, count = 0;
+    double *data = new double[len];
+    Container *container = nullptr;
+
+    for (ContainerGroup &group : _editer->graph()->container_groups())
+    {
+        if (!group.visible())
+        {
+            continue;
+        }
+
+        for (Geo::Geometry *geo : group)
+        {
+            switch (geo->memo()["Type"].to_int())
+            {
+            case 0:
+                container = dynamic_cast<Container *>(geo);
+                container->index = count / 2;
+                for (const Geo::Point &point : container->shape())
+                {
+                    data[count++] = point.coord().x;
+                    data[count++] = point.coord().y;
+                    if (count == len)
+                    {
+                        len *= 2;
+                        double *temp = new double[len];
+                        std::memmove(temp, data, count * sizeof(double));
+                        delete data;
+                        data = temp;
+                    }
+                }
+                // points.pop_back();
+                // _catched_points.append(points);
+                // painter.drawPolygon(points);
+                // if (show_points)
+                // {
+                //     painter.setRenderHint(QPainter::Antialiasing);
+                //     painter.setPen(QPen(QColor(0, 140, 255), 6));
+                //     painter.drawPoints(points);
+                // }
+                // if (!container->text().isEmpty())
+                // {
+                //     painter.setPen(QPen(text_color, 2));
+                //     text_rect = font_metrics.boundingRect(container->text());
+                //     text_rect.setWidth(text_rect.width() + suffix_text_width);
+                //     text_rect.setHeight(4 * text_heigh_ratio + 14 * (container->text().count('\n') + 1) * text_heigh_ratio);
+                //     text_rect.translate(points.boundingRect().center() - text_rect.center());
+                //     painter.drawText(text_rect, container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                // }
+                break;
+            case 1:
+                // circlecontainer = reinterpret_cast<const CircleContainer *>(geo);
+                // if (!is_visible(circlecontainer->shape()))
+                // {
+                //     continue;
+                // }
+                // circle.radius() = circlecontainer->radius();
+                // circle.center() = circlecontainer->center();
+                // circle.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
+                
+                // center = circle.center().coord();
+                // radius = circle.radius();
+                // painter.drawEllipse(center.x - radius, center.y - radius, radius * 2, radius * 2);
+                // _catched_points.emplace_back(QPointF(center.x, center.y));
+                // _catched_points.emplace_back(QPointF(center.x, center.y + radius));
+                // _catched_points.emplace_back(QPointF(center.x + radius, center.y));
+                // _catched_points.emplace_back(QPointF(center.x, center.y - radius));
+                // _catched_points.emplace_back(QPointF(center.x - radius, center.y));
+                // if (show_points)
+                // {
+                //     painter.setRenderHint(QPainter::Antialiasing);
+                //     painter.setPen(QPen(QColor(0, 140, 255), 6));
+                //     painter.drawPoint(center.x, center.y);
+                //     painter.drawPoint(center.x, center.y + radius);
+                //     painter.drawPoint(center.x + radius, center.y);
+                //     painter.drawPoint(center.x, center.y - radius);
+                //     painter.drawPoint(center.x - radius, center.y);
+                // }
+                // if (!circlecontainer->text().isEmpty())
+                // {
+                //     painter.setPen(QPen(text_color, 2));
+                //     text_rect = font_metrics.boundingRect(circlecontainer->text());
+                //     text_rect.setWidth(text_rect.width() + suffix_text_width);
+                //     text_rect.setHeight(4 * text_heigh_ratio + 14 * (circlecontainer->text().count('\n') + 1) * text_heigh_ratio);
+                //     text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
+                //         circlecontainer->center().coord().y - text_rect.center().y());
+                //     painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                // }
+                break;
+            case 3:
+                // painter.setPen(geo->memo()["is_selected"].to_bool() ? pen_selected : pen_not_selected);
+                // for (const Geo::Geometry *item : *reinterpret_cast<const Combination *>(geo))
+                // {
+                //     points.clear();
+                //     switch (item->memo()["Type"].to_int())
+                //     {
+                //     case 0:
+                //         container = reinterpret_cast<const Container *>(item);
+                //         if (!is_visible(container->shape()))
+                //         {
+                //             continue;
+                //         }
+                //         for (const Geo::Point &point : container->shape())
+                //         {
+                //             points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                //                 point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
+                //         }
+                //         points.pop_back();
+                //         _catched_points.append(points);
+                //         painter.drawPolygon(points);
+                //         if (show_points)
+                //         {
+                //             painter.setRenderHint(QPainter::Antialiasing);
+                //             painter.setPen(QPen(QColor(0, 140, 255), 6));
+                //             painter.drawPoints(points);
+                //         }
+                //         if (!container->text().isEmpty())
+                //         {
+                //             painter.setPen(QPen(text_color, 2));
+                //             text_rect = font_metrics.boundingRect(container->text());
+                //             text_rect.setWidth(text_rect.width() + suffix_text_width);
+                //             text_rect.setHeight(4 * text_heigh_ratio + 14 * (container->text().count('\n') + 1) * text_heigh_ratio);
+                //             text_rect.translate(points.boundingRect().center() - text_rect.center());
+                //             painter.drawText(text_rect, container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                //         }
+                //         break;
+                //     case 1:
+                //         circlecontainer = reinterpret_cast<const CircleContainer *>(item);
+                //         if (!is_visible(circlecontainer->shape()))
+                //         {
+                //             continue;
+                //         }
+                //         circle.center() = circlecontainer->center();
+                //         circle.radius() = circlecontainer->radius();
+                //         circle.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
+
+                //         center = circle.center().coord();
+                //         radius = circle.radius();
+                //         painter.drawEllipse(center.x - radius, center.y - radius, radius * 2, radius * 2);
+                //         _catched_points.emplace_back(QPointF(center.x, center.y));
+                //         _catched_points.emplace_back(QPointF(center.x, center.y + radius));
+                //         _catched_points.emplace_back(QPointF(center.x + radius, center.y));
+                //         _catched_points.emplace_back(QPointF(center.x, center.y - radius));
+                //         _catched_points.emplace_back(QPointF(center.x - radius, center.y));
+                //         if (show_points)
+                //         {
+                //             painter.setRenderHint(QPainter::Antialiasing);
+                //             painter.setPen(QPen(QColor(0, 140, 255), 6));
+                //             painter.drawPoint(center.x, center.y);
+                //             painter.drawPoint(center.x, center.y + radius);
+                //             painter.drawPoint(center.x + radius, center.y);
+                //             painter.drawPoint(center.x, center.y - radius);
+                //             painter.drawPoint(center.x - radius, center.y);
+                //         }
+                //         if (!circlecontainer->text().isEmpty())
+                //         {
+                //             painter.setPen(QPen(text_color, 2));
+                //             text_rect = font_metrics.boundingRect(circlecontainer->text());
+                //             text_rect.setWidth(text_rect.width() + suffix_text_width);
+                //             text_rect.setHeight(4 * text_heigh_ratio + 14 * (circlecontainer->text().count('\n') + 1) * text_heigh_ratio);
+                //             text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
+                //                 circlecontainer->center().coord().y - text_rect.center().y());
+                //             painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                //         }
+                //         break;
+                //     case 20:
+                //         polyline = reinterpret_cast<const Geo::Polyline *>(item);
+                //         if (!is_visible(*polyline))
+                //         {
+                //             continue;
+                //         } 
+                //         for (const Geo::Point &point : *polyline)
+                //         {
+                //             points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                //                 point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
+                //         }
+                //         _catched_points.append(points);
+                //         painter.drawPolyline(points);
+                //         if (show_points)
+                //         {
+                //             painter.setRenderHint(QPainter::Antialiasing);
+                //             painter.setPen(QPen(QColor(0, 140, 255), 6));
+                //             painter.drawPoints(points);
+                //         }
+                //         break;
+                //     case 21:
+                //         if (!is_visible(reinterpret_cast<const Geo::Bezier *>(item)->shape()))
+                //         {
+                //             continue;
+                //         }
+                //         for (const Geo::Point &point : reinterpret_cast<const Geo::Bezier *>(item)->shape())
+                //         {
+                //             points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                //                 point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
+                //         }
+                //         painter.drawPolyline(points);
+                //         if (show_points)
+                //         {
+                //             painter.setRenderHint(QPainter::Antialiasing);
+                //             painter.setPen(QPen(QColor(0, 140, 255), 6));
+                //             painter.drawPoint(points.front());
+                //             painter.drawPoint(points.back());
+                //         }
+                //         break;
+                //     default:
+                //         break;
+                //     }
+                // }
+                break;
+            case 20:
+                // polyline = reinterpret_cast<const Geo::Polyline *>(geo);
+                // if (!is_visible(*polyline))
+                // {
+                //     continue;
+                // }
+                // for (const Geo::Point &point : *polyline)
+                // {
+                //     points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                //         point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
+                // }
+                // _catched_points.append(points);
+                // painter.drawPolyline(points);
+                // if (show_points)
+                // {
+                //     painter.setRenderHint(QPainter::Antialiasing);
+                //     painter.setPen(QPen(QColor(0, 140, 255), 6));
+                //     painter.drawPoints(points);
+                // }
+                break;
+            case 21:
+                // if (!is_visible(reinterpret_cast<const Geo::Bezier *>(geo)->shape()))
+                // {
+                //     continue;
+                // }
+                // if (geo->memo()["is_selected"].to_bool())
+                // {
+                //     painter.setPen(QPen(QColor(255, 140, 0), 2, Qt::DashLine));
+                //     for (const Geo::Point &point : *reinterpret_cast<const Geo::Bezier *>(geo))
+                //     {
+                //         points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                //             point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
+                //     }
+                //     painter.drawPolyline(points);
+                //     painter.setPen(QPen(Qt::blue, 6));
+                //     painter.drawPoints(points);
+                //     painter.setPen(pen_selected);
+                //     points.clear();
+                // }
+                // for (const Geo::Point &point : reinterpret_cast<const Geo::Bezier *>(geo)->shape())
+                // {
+                //     points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                //         point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
+                // }
+                // painter.drawPolyline(points);
+                // if (show_points)
+                // {
+                //     painter.setRenderHint(QPainter::Antialiasing);
+                //     painter.setPen(QPen(QColor(0, 140, 255), 6));
+                //     painter.drawPoint(points.front());
+                //     painter.drawPoint(points.back());
+                // }
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+
+    glDeleteBuffers(1, &_VBO);
+
+    glGenBuffers(1, &_VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(double) * count, data, GL_STATIC_DRAW);
+
+    delete data;
 }

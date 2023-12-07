@@ -52,6 +52,8 @@ private:
 
     void paint_select_rect(QPainter &painter);
 
+    void paint_container(const size_t index, const size_t count);
+
 protected:
     void initializeGL();
 
@@ -145,4 +147,8 @@ public:
     Geo::Coord canvas_coord_to_real_coord(const Geo::Coord &input) const;
 
     Geo::Coord canvas_coord_to_real_coord(const double x, const double y) const;
+
+
+
+    void refresh_vbo();
 };

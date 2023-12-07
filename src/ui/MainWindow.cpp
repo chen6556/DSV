@@ -489,6 +489,7 @@ void MainWindow::open_file(const QString &path)
         _editer.auto_layering();
     }
     _editer.reset_modified();
+    _painter.refresh_vbo();
     _info_labels[2]->setText(path);
     _layers_manager->load_layers(g);
     _layers_cbx->setModel(_layers_manager->model());
