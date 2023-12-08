@@ -15,13 +15,13 @@ Container::Container(const QString &txt, const Geo::Polygon &shape)
 }
 
 Container::Container(const Container &container)
-    : Geo::Polygon(container), _txt(container._txt), index(container.index)
+    : Geo::Polygon(container), _txt(container._txt)
 {
     _memo["Type"] = 0;
 }
 
 Container::Container(const Container &&container)
-    : Geo::Polygon(std::move(container)), _txt(std::move(container._txt)), index(container.index)
+    : Geo::Polygon(std::move(container)), _txt(std::move(container._txt))
 {
     _memo["Type"] = 0;
 }
@@ -32,7 +32,6 @@ Container &Container::operator=(const Container &container)
     {
         Geo::Polygon::operator=(container);
         _txt = container._txt;
-        index = container.index;
     }
     return *this;
 }
@@ -43,7 +42,6 @@ Container &Container::operator=(const Container &&container)
     {
         Geo::Polygon::operator=(container);
         _txt = std::move(container._txt);
-        index = container.index;
     }
     return *this;
 }

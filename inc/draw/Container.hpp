@@ -10,9 +10,6 @@ private:
     QString _txt;
 
 public:
-    unsigned int index;
-
-public:
     Container(){_memo["Type"] = 0;};
 
     Container(const Geo::Polygon &shape);

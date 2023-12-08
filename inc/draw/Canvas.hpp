@@ -22,9 +22,10 @@ private:
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
 
-    unsigned int _shader_programs[3], _VAO;
-    unsigned int _VBO;
+    unsigned int _shader_programs[3];
+    unsigned int _VAO, _VBO, _IBO;
     int _uniforms[4];
+    size_t _points_count = 0, _indexs_count = 0;
 
     double _canvas_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
     double _view_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
@@ -48,11 +49,11 @@ private:
 
     void paint_cache(QPainter &painter);
 
-    void paint_graph();
-
     void paint_select_rect(QPainter &painter);
 
     void paint_container(const size_t index, const size_t count);
+
+    void paint_polyline(const size_t index, const size_t count);
 
 protected:
     void initializeGL();
