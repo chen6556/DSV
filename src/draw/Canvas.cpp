@@ -269,6 +269,41 @@ void Canvas::resizeGL(int w, int h)
 
 void Canvas::paintGL()
 {
+    if (!_select_rect.empty())
+    {
+        _editer->select(_select_rect);
+        size_t index_len = 512, index_count = 0;
+        unsigned int *indexs = new unsigned int[index_len];
+        for (const Geo::Geometry *obj : _editer->selected())
+        {
+            for (size_t i = 0, index = obj->memo()["point_index"].to_ull(), count = obj->memo()["point_count"].to_ull(); i < count; ++i)
+            {
+                indexs[index_count++] = index++;
+                if (index_count == index_len)
+                {
+                    index_len *= 2;
+                    unsigned int *temp = new unsigned int[index_len];
+                    std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                    delete indexs;
+                    indexs = temp;
+                }
+            }
+            indexs[index_count++] = UINT_MAX;
+            if (index_count == index_len)
+            {
+                index_len *= 2;
+                unsigned int *temp = new unsigned int[index_len];
+                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                delete indexs;
+                indexs = temp;
+            }
+        }
+        _indexs_count[2] = index_count;
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
+        delete indexs;
+    }
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]);
@@ -373,6 +408,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             if (_clicked_obj == nullptr)
             {
                 _editer->reset_selected_mark();
+                _indexs_count[2] = 0;
                 makeCurrent();
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]);
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, NULL, GL_DYNAMIC_DRAW);
@@ -388,31 +424,45 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 if (std::find(selected_objs.begin(), selected_objs.end(), _clicked_obj) == selected_objs.end())
                 {
                     _editer->reset_selected_mark();
-                    unsigned int *indexs = nullptr;
-                    size_t indexs_len = 0;
-                    switch (_clicked_obj->memo()["Type"].to_int())
-                    {
-                    case 0:
-                        indexs_len = dynamic_cast<const Container *>(_clicked_obj)->size() - 1;                    
-                        break;
-                    case 20:
-                        indexs_len = dynamic_cast<const Geo::Polyline *>(_clicked_obj)->size();
-                        break;
-                    default:
-                        break;
-                    }
-                    indexs = new unsigned int[indexs_len];
-                    for (unsigned int i = 0, b = _clicked_obj->memo()["point_index"].to_ull(); i < indexs_len; ++i)
-                    {
-                        indexs[i] = b + i;
-                    }
-                    makeCurrent();
-                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]);
-                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexs_len * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
-                    doneCurrent();
-                    delete indexs;
                     _clicked_obj->memo()["is_selected"] = true;
                 }
+                
+                size_t index_len = 512, index_count = 0;
+                unsigned int *indexs = new unsigned int[index_len];
+                for (const Geo::Geometry *obj : selected_objs)
+                {
+                    if (obj->memo()["is_selected"].to_bool())
+                    {
+                        for (size_t i = 0, index = obj->memo()["point_index"].to_ull(), count = obj->memo()["point_count"].to_ull(); i < count; ++i)
+                        {
+                            indexs[index_count++] = index++;
+                            if (index_count == index_len)
+                            {
+                                index_len *= 2;
+                                unsigned int *temp = new unsigned int[index_len];
+                                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                                delete indexs;
+                                indexs = temp;
+                            }
+                        }
+                        indexs[index_count++] = UINT_MAX;
+                        if (index_count == index_len)
+                        {
+                            index_len *= 2;
+                            unsigned int *temp = new unsigned int[index_len];
+                            std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                            delete indexs;
+                            indexs = temp;
+                        }
+                    }
+                }
+                _indexs_count[2] = index_count;
+                makeCurrent();
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]);
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
+                doneCurrent();
+                delete indexs;
+
                 _bool_flags[4] = true;
                 _bool_flags[5] = true;
                 bool catched_point = false;
@@ -1187,6 +1237,7 @@ void Canvas::refresh_vbo()
                 }
                 polyline_indexs[polyline_index_count++] = UINT_MAX;
                 polygon_indexs[polygon_index_count - 1] = UINT_MAX;
+                container->memo()["point_count"] = container->shape().size();
                 // if (!container->text().isEmpty())
                 // {
                 //     painter.setPen(QPen(text_color, 2));
@@ -1381,6 +1432,7 @@ void Canvas::refresh_vbo()
                     }
                 }
                 polyline_indexs[polyline_index_count++] = UINT_MAX;
+                polyline->memo()["point_count"] = polyline->size();
                 break;
             case 21:
                 // if (geo->memo()["is_selected"].to_bool())
@@ -1414,7 +1466,7 @@ void Canvas::refresh_vbo()
             default:
                 break;
             }
-        
+
             if (polyline_index_count == polyline_index_len)
             {
                 polyline_index_len *= 2;

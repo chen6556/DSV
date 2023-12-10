@@ -1156,8 +1156,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             if (Geo::is_inside(point, c->shape(), true))
             {
                 c->memo()["is_selected"] = true;
-                _graph->container_group(_current_group).pop(it);
-                _graph->container_group(_current_group).append(c);
+                // _graph->container_group(_current_group).pop(it);
+                // _graph->container_group(_current_group).append(c);
                 return c;
             }
             c = nullptr;
@@ -1167,8 +1167,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             if (Geo::is_inside(point, cc->shape(), true))
             {
                 cc->memo()["is_selected"] = true;
-                _graph->container_group(_current_group).pop(it);
-                _graph->container_group(_current_group).append(cc);
+                // _graph->container_group(_current_group).pop(it);
+                // _graph->container_group(_current_group).append(cc);
                 return cc;
             }
             cc = nullptr;
@@ -1182,8 +1182,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     if (Geo::distance(point, (*l)[i - 1], (*l)[i]) <= 2)
                     {
                         l->memo()["is_selected"] = true;
-                        _graph->container_group(_current_group).pop(it);
-                        _graph->container_group(_current_group).append(l);
+                        // _graph->container_group(_current_group).pop(it);
+                        // _graph->container_group(_current_group).append(l);
                         return l;
                     }
                 }
@@ -1192,8 +1192,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     if (Geo::distance(point, reinterpret_cast<CircleContainer *>(l->tail())->center(), l->front()) <= 2)
                     {
                         l->memo()["is_selected"] = true;
-                        _graph->container_group(_current_group).pop(it);
-                        _graph->container_group(_current_group).append(l);
+                        // _graph->container_group(_current_group).pop(it);
+                        // _graph->container_group(_current_group).append(l);
                         return l;
                     }
                 }
@@ -1202,8 +1202,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     if (Geo::distance(point, l->tail()->bounding_rect().center(), l->front()) <= 2)
                     {
                         l->memo()["is_selected"] = true;
-                        _graph->container_group(_current_group).pop(it);
-                        _graph->container_group(_current_group).append(l);
+                        // _graph->container_group(_current_group).pop(it);
+                        // _graph->container_group(_current_group).append(l);
                         return l;
                     }
                 }
@@ -1212,8 +1212,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     if (Geo::distance(point, l->back(), reinterpret_cast<CircleContainer *>(l->head())->center()) <= 2)
                     {
                         l->memo()["is_selected"] = true;
-                        _graph->container_group(_current_group).pop(it);
-                        _graph->container_group(_current_group).append(l);
+                        // _graph->container_group(_current_group).pop(it);
+                        // _graph->container_group(_current_group).append(l);
                         return l;
                     }
                 }
@@ -1222,8 +1222,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     if (Geo::distance(point, l->back(), l->head()->bounding_rect().center()) <= 2)
                     {
                         l->memo()["is_selected"] = true;
-                        _graph->container_group(_current_group).pop(it);
-                        _graph->container_group(_current_group).append(l);
+                        // _graph->container_group(_current_group).pop(it);
+                        // _graph->container_group(_current_group).append(l);
                         return l;
                     }
                 }
@@ -1237,8 +1237,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         if (Geo::distance(point, reinterpret_cast<CircleContainer *>(l->tail())->center(), reinterpret_cast<CircleContainer *>(l->head())->center()) <= 2)
                         {
                             l->memo()["is_selected"] = true;
-                            _graph->container_group(_current_group).pop(it);
-                            _graph->container_group(_current_group).append(l);
+                            // _graph->container_group(_current_group).pop(it);
+                            // _graph->container_group(_current_group).append(l);
                             return l;
                         }
                     }
@@ -1247,8 +1247,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         if (Geo::distance(point, reinterpret_cast<CircleContainer *>(l->tail())->center(), l->head()->bounding_rect().center()) <= 2)
                         {
                             l->memo()["is_selected"] = true;
-                            _graph->container_group(_current_group).pop(it);
-                            _graph->container_group(_current_group).append(l);
+                            // _graph->container_group(_current_group).pop(it);
+                            // _graph->container_group(_current_group).append(l);
                             return l;
                         }
                     }
@@ -1260,8 +1260,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         if (Geo::distance(point, l->tail()->bounding_rect().center(), reinterpret_cast<CircleContainer *>(l->head())->center()) <= 2)
                         {
                             l->memo()["is_selected"] = true;
-                            _graph->container_group(_current_group).pop(it);
-                            _graph->container_group(_current_group).append(l);
+                            // _graph->container_group(_current_group).pop(it);
+                            // _graph->container_group(_current_group).append(l);
                             return l;
                         }
                     }
@@ -1270,8 +1270,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         if (Geo::distance(point, l->tail()->bounding_rect().center(), l->head()->bounding_rect().center()) <= 2)
                         {
                             l->memo()["is_selected"] = true;
-                            _graph->container_group(_current_group).pop(it);
-                            _graph->container_group(_current_group).append(l);
+                            // _graph->container_group(_current_group).pop(it);
+                            // _graph->container_group(_current_group).append(l);
                             return l;
                         }
                     }
@@ -1291,8 +1291,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         if (Geo::is_inside(point, reinterpret_cast<Container *>(item)->shape(), true))
                         {
                             cb->memo()["is_selected"] = true;
-                            _graph->container_group(_current_group).pop(it);
-                            _graph->container_group(_current_group).append(cb);
+                            // _graph->container_group(_current_group).pop(it);
+                            // _graph->container_group(_current_group).append(cb);
                             return cb;
                         }
                         break;
@@ -1300,8 +1300,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         if (Geo::is_inside(point, reinterpret_cast<CircleContainer *>(item)->shape(), true))
                         {
                             cb->memo()["is_selected"] = true;
-                            _graph->container_group(_current_group).pop(it);
-                            _graph->container_group(_current_group).append(cb);
+                            // _graph->container_group(_current_group).pop(it);
+                            // _graph->container_group(_current_group).append(cb);
                             return cb;
                         }
                         break;
@@ -1312,8 +1312,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                             if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= 2)
                             {
                                 cb->memo()["is_selected"] = true;
-                                _graph->container_group(_current_group).pop(it);
-                                _graph->container_group(_current_group).append(cb);
+                                // _graph->container_group(_current_group).pop(it);
+                                // _graph->container_group(_current_group).append(cb);
                                 return cb;
                             }
                         }
@@ -1326,8 +1326,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                             if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= 2)
                             {
                                 cb->memo()["is_selected"] = true;
-                                _graph->container_group(_current_group).pop(it);
-                                _graph->container_group(_current_group).append(cb);
+                                // _graph->container_group(_current_group).pop(it);
+                                // _graph->container_group(_current_group).append(cb);
                                 return cb;
                             }
                         }
@@ -1347,8 +1347,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                 if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= 2)
                 {
                     p->memo()["is_selected"] = true;
-                    _graph->container_group(_current_group).pop(it);
-                    _graph->container_group(_current_group).append(p);
+                    // _graph->container_group(_current_group).pop(it);
+                    // _graph->container_group(_current_group).append(p);
                     return p;
                 }
             }
@@ -1371,8 +1371,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                 if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= 2)
                 {
                     b->memo()["is_selected"] = true;
-                    _graph->container_group(_current_group).pop(it);
-                    _graph->container_group(_current_group).append(b);
+                    // _graph->container_group(_current_group).pop(it);
+                    // _graph->container_group(_current_group).append(b);
                     return b;
                 }
             }
@@ -1388,8 +1388,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
 
 Geo::Geometry *Editer::select(const double x, const double y, const bool reset_others)
 {
-    Geo::Geometry *p = select(Geo::Point(x, y), reset_others);
-    return p;
+    return select(Geo::Point(x, y), reset_others);
 }
 
 std::vector<Geo::Geometry *> Editer::select(const Geo::Rectangle &rect)
