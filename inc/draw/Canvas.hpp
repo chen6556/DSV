@@ -22,10 +22,10 @@ private:
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
 
-    unsigned int _shader_programs[3];
-    unsigned int _VAO, _VBO, _IBO[2]; //0:polyline 1:polygon
+    unsigned int _shader_programs[4]; //0:填充色 1:path_normal 2:path_selected 3:points
+    unsigned int _VAO, _VBO, _IBO[3]; //0:polyline 1:polygon 2:selected
     int _uniforms[4];
-    size_t _points_count, _indexs_count[2]; //0:polyline 1:polygon
+    size_t _points_count, _indexs_count[3]; //0:polyline 1:polygon 2:selected
 
     double _canvas_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
     double _view_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)

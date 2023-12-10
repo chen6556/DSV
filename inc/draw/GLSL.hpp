@@ -21,11 +21,18 @@ const char *shape_fss = "#version 450 core\n"
     "   FragColor = vec4(0.9765f, 0.9765f, 0.9765f, 1.0f);\n"
     "}\0";
 
-const char *path_fss = "#version 450 core\n"
+const char *path_normal_fss = "#version 450 core\n"
     "out vec4 FragColor;\n"
     "void main()\n"
     "{\n"
     "   FragColor = vec4(0.0f, 1.0f, 0.0f, 1.0f);\n"
+    "}\0";
+
+const char *path_selected_fss = "#version 450 core\n"
+    "out vec4 FragColor;\n"
+    "void main()\n"
+    "{\n"
+    "   FragColor = vec4(1.0f, 0.0f, 0.0f, 1.0f);\n"
     "}\0";
 
 const char *point_fss = "#version 450 core\n"

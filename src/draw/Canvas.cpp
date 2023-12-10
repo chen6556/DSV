@@ -200,7 +200,7 @@ void Canvas::initializeGL()
     glDeleteShader(fragment_shader);
 
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &GLSL::path_fss, NULL);
+    glShaderSource(fragment_shader, 1, &GLSL::path_normal_fss, NULL);
     glCompileShader(fragment_shader);
 
     _shader_programs[1] = glCreateProgram();
@@ -210,13 +210,23 @@ void Canvas::initializeGL()
     glDeleteShader(fragment_shader);
 
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &GLSL::point_fss, NULL);
+    glShaderSource(fragment_shader, 1, &GLSL::path_selected_fss, NULL);
     glCompileShader(fragment_shader);
 
     _shader_programs[2] = glCreateProgram();
     glAttachShader(_shader_programs[2], vertex_shader);
     glAttachShader(_shader_programs[2], fragment_shader);
     glLinkProgram(_shader_programs[2]);
+    glDeleteShader(fragment_shader);
+
+    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment_shader, 1, &GLSL::point_fss, NULL);
+    glCompileShader(fragment_shader);
+
+    _shader_programs[3] = glCreateProgram();
+    glAttachShader(_shader_programs[3], vertex_shader);
+    glAttachShader(_shader_programs[3], fragment_shader);
+    glLinkProgram(_shader_programs[3]);
     glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
     
@@ -225,7 +235,7 @@ void Canvas::initializeGL()
     _uniforms[2] = glGetUniformLocation(_shader_programs[0], "vec0");
     _uniforms[3] = glGetUniformLocation(_shader_programs[0], "vec1");
 
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         glUseProgram(_shader_programs[i]);
         glUniform3d(_uniforms[2], 1.0, 0.0, 0.0);
@@ -242,13 +252,13 @@ void Canvas::initializeGL()
     glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), NULL);
     glEnableVertexAttribArray(0);
 
-    glGenBuffers(2, _IBO);
-    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO);
+    glGenBuffers(3, _IBO);
+
 }
 
 void Canvas::resizeGL(int w, int h)
 {
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         glUseProgram(_shader_programs[i]);
         glUniform1i(_uniforms[0], w / 2);
@@ -279,9 +289,14 @@ void Canvas::paintGL()
     glDisable(GL_STENCIL_TEST);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]);
-    glUseProgram(_shader_programs[1]); // 绘制线
+    glUseProgram(_shader_programs[1]); // 绘制线 normal
     glDrawElements(GL_LINE_STRIP, _indexs_count[0], GL_UNSIGNED_INT, NULL);
-    glUseProgram(_shader_programs[2]); // 绘制点
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]);
+    glUseProgram(_shader_programs[2]); // 绘制线 selected
+    glDrawElements(GL_LINE_STRIP, _indexs_count[2], GL_UNSIGNED_INT, NULL);
+
+    glUseProgram(_shader_programs[3]); // 绘制点
     glDrawArrays(GL_POINTS, 0, _points_count);
 }
 
@@ -358,6 +373,10 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             if (_clicked_obj == nullptr)
             {
                 _editer->reset_selected_mark();
+                makeCurrent();
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]);
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, NULL, GL_DYNAMIC_DRAW);
+                doneCurrent();
                 _select_rect = Geo::Rectangle(real_x1, real_y1, real_x1 + 1, real_y1 + 1);
                 _last_point.coord().x = real_x1;
                 _last_point.coord().y = real_y1;
@@ -369,6 +388,29 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 if (std::find(selected_objs.begin(), selected_objs.end(), _clicked_obj) == selected_objs.end())
                 {
                     _editer->reset_selected_mark();
+                    unsigned int *indexs = nullptr;
+                    size_t indexs_len = 0;
+                    switch (_clicked_obj->memo()["Type"].to_int())
+                    {
+                    case 0:
+                        indexs_len = dynamic_cast<const Container *>(_clicked_obj)->size() - 1;                    
+                        break;
+                    case 20:
+                        indexs_len = dynamic_cast<const Geo::Polyline *>(_clicked_obj)->size();
+                        break;
+                    default:
+                        break;
+                    }
+                    indexs = new unsigned int[indexs_len];
+                    for (unsigned int i = 0, b = _clicked_obj->memo()["point_index"].to_ull(); i < indexs_len; ++i)
+                    {
+                        indexs[i] = b + i;
+                    }
+                    makeCurrent();
+                    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]);
+                    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexs_len * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
+                    doneCurrent();
+                    delete indexs;
                     _clicked_obj->memo()["is_selected"] = true;
                 }
                 _bool_flags[4] = true;
@@ -473,7 +515,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         _view_ctm[6] -= (real_x1 - real_x0), _view_ctm[7] -= (real_y1 - real_y0);
         _visible_area.translate(real_x0 - real_x1, real_y0 - real_y1);
         makeCurrent();
-        for (int i = 0; i < 3; ++i)
+        for (int i = 0; i < 4; ++i)
         {
             glUseProgram(_shader_programs[i]);
             glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
@@ -648,7 +690,7 @@ void Canvas::wheelEvent(QWheelEvent *event)
         update();
     }
     makeCurrent();
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 4; ++i)
     {
         glUseProgram(_shader_programs[i]);
         glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
@@ -735,7 +777,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         _visible_area = Geo::Rectangle(0, 0, this->geometry().width(), this->geometry().height());
         _ratio = 1;
         makeCurrent();
-        for (int i = 0; i < 3; ++i)
+        for (int i = 0; i < 4; ++i)
         {
             glUseProgram(_shader_programs[i]);
             glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
@@ -1107,6 +1149,7 @@ void Canvas::refresh_vbo()
 
         for (Geo::Geometry *geo : group)
         {
+            geo->memo()["point_index"] = data_count / 2;
             switch (geo->memo()["Type"].to_int())
             {
             case 0:
