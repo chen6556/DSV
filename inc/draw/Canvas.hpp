@@ -51,10 +51,6 @@ private:
 
     void paint_select_rect(QPainter &painter);
 
-    void paint_container(const size_t index, const size_t count);
-
-    void paint_polyline(const size_t index, const size_t count);
-
 protected:
     void initializeGL();
 

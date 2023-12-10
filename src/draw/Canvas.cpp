@@ -134,44 +134,6 @@ void Canvas::paint_select_rect(QPainter &painter)
     painter.drawPolygon(QRect(rect[0].coord().x, rect[0].coord().y, rect.width(), rect.height()));
 }
 
-void Canvas::paint_container(const size_t index, const size_t count)
-{
-    makeCurrent();
-
-    glUseProgram(_shader_programs[0]);
-
-    glEnable(GL_STENCIL_TEST); //开启模板测试
-    glStencilMask(0xFF); //开启模板缓冲区写入
-    glClearStencil(0);
-
-    glStencilFunc(GL_ALWAYS, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT); //设置模板缓冲区更新方式(若通过则按位反转模板值)
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); //第一次绘制只是为了构造模板缓冲区，没有必要显示到屏幕上，所以设置不显示第一遍的多边形
-    glDrawArrays(GL_TRIANGLE_FAN, index, count - 1);
-
-    glStencilFunc(GL_NOTEQUAL, 0, 0xFF); //模板值不为0就通过，凹多边形就正确画出了
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glDrawArrays(GL_TRIANGLE_FAN, index, count - 1);
-
-    glDisable(GL_STENCIL_TEST);
-
-    glUseProgram(_shader_programs[1]);
-    glDrawArrays(GL_LINE_STRIP, index, count);
-
-    doneCurrent();
-}
-
-void Canvas::paint_polyline(const size_t index, const size_t count)
-{
-    makeCurrent();
-
-    glUseProgram(_shader_programs[1]);
-    glDrawArrays(GL_LINE_STRIP, index, count);
-
-    doneCurrent();
-}
-
 
 
 void Canvas::initializeGL()
