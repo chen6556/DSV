@@ -235,15 +235,15 @@ void Canvas::initializeGL()
     glGenVertexArrays(1, &_VAO);
     glBindVertexArray(_VAO);
     glVertexAttribLFormat(0, 2, GL_DOUBLE, 0);
-
+    
     glGenBuffers(1, &_VBO);
     glBindBuffer(GL_ARRAY_BUFFER, _VBO);
 
-    glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), (void *)0);
+    glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), NULL);
     glEnableVertexAttribArray(0);
 
-    glGenBuffers(1, &_IBO);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO);
+    glGenBuffers(2, _IBO);
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO);
 }
 
 void Canvas::resizeGL(int w, int h)
@@ -261,10 +261,27 @@ void Canvas::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    glUseProgram(_shader_programs[1]);
-    glDrawElements(GL_LINE_STRIP, _indexs_count, GL_UNSIGNED_INT, NULL);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]);
+    glUseProgram(_shader_programs[0]); // 绘制填充色
+    glEnable(GL_STENCIL_TEST); //开启模板测试
+    glStencilMask(0xFF); //开启模板缓冲区写入
+    glClearStencil(0);
 
-    glUseProgram(_shader_programs[2]);
+    glStencilFunc(GL_ALWAYS, 1, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT); //设置模板缓冲区更新方式(若通过则按位反转模板值)
+    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); //第一次绘制只是为了构造模板缓冲区，没有必要显示到屏幕上，所以设置不显示第一遍的多边形
+    glDrawElements(GL_TRIANGLE_FAN, _indexs_count[1], GL_UNSIGNED_INT, NULL);
+
+    glStencilFunc(GL_NOTEQUAL, 0, 0xFF); //模板值不为0就通过，凹多边形就正确画出了
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glDrawElements(GL_TRIANGLE_FAN, _indexs_count[1], GL_UNSIGNED_INT, NULL);
+    glDisable(GL_STENCIL_TEST);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]);
+    glUseProgram(_shader_programs[1]); // 绘制线
+    glDrawElements(GL_LINE_STRIP, _indexs_count[0], GL_UNSIGNED_INT, NULL);
+    glUseProgram(_shader_programs[2]); // 绘制点
     glDrawArrays(GL_POINTS, 0, _points_count);
 }
 
@@ -1071,9 +1088,13 @@ Geo::Coord Canvas::canvas_coord_to_real_coord(const double x, const double y) co
 
 void Canvas::refresh_vbo()
 {
-    size_t data_len = 1024, index_len = 512, data_count = 0, index_count = 0;
+    size_t data_len = 1024, data_count = 0;
+    size_t polyline_index_len = 512, polyline_index_count = 0;
+    size_t polygon_index_len = 512, polygon_index_count = 0;
     double *data = new double[data_len];
-    unsigned int *indexs = new unsigned int[index_len];
+    unsigned int *polyline_indexs = new unsigned int[polyline_index_len];
+    unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
+    unsigned int indexs[512];
     Container *container = nullptr;
     Geo::Polyline *polyline = nullptr;
 
@@ -1092,7 +1113,8 @@ void Canvas::refresh_vbo()
                 container = dynamic_cast<Container *>(geo);
                 for (const Geo::Point &point : container->shape())
                 {
-                    indexs[index_count++] = data_count / 2;
+                    polyline_indexs[polyline_index_count++] = data_count / 2;
+                    polygon_indexs[polygon_index_count++] = data_count / 2;
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
                     if (data_count == data_len)
@@ -1102,18 +1124,26 @@ void Canvas::refresh_vbo()
                         std::memmove(temp, data, data_count * sizeof(double));
                         delete data;
                         data = temp;
-                        
                     }
-                    if (index_count == index_len)
+                    if (polyline_index_count == polyline_index_len)
                     {
-                        index_len *= 2;
-                        unsigned int *temp = new unsigned int[index_len];
-                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                        delete indexs;
-                        indexs = temp;
+                        polyline_index_len *= 2;
+                        unsigned int *temp = new unsigned int[polyline_index_len];
+                        std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                        delete polyline_indexs;
+                        polyline_indexs = temp;
+                    }
+                    if (polygon_index_count == polygon_index_len)
+                    {
+                        polygon_index_len *= 2;
+                        unsigned int *temp = new unsigned int[polygon_index_len];
+                        std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                        delete polygon_indexs;
+                        polygon_indexs = temp;
                     }
                 }
-                indexs[index_count++] = UINT_MAX;
+                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                polygon_indexs[polygon_index_count - 1] = UINT_MAX;
                 // if (!container->text().isEmpty())
                 // {
                 //     painter.setPen(QPen(text_color, 2));
@@ -1285,9 +1315,9 @@ void Canvas::refresh_vbo()
                 break;
             case 20:
                 polyline = dynamic_cast<Geo::Polyline *>(geo);
-                for (const Geo::Point &point : container->shape())
+                for (const Geo::Point &point : *polyline)
                 {
-                    indexs[index_count++] = data_count / 2;
+                    polyline_indexs[polyline_index_count++] = data_count / 2;
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
                     if (data_count == data_len)
@@ -1298,22 +1328,18 @@ void Canvas::refresh_vbo()
                         delete data;
                         data = temp;
                     }
-                    if (index_count == index_len)
+                    if (polyline_index_count == polyline_index_len)
                     {
-                        index_len *= 2;
-                        unsigned int *temp = new unsigned int[index_len];
-                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                        delete indexs;
-                        indexs = temp;
+                        polyline_index_len *= 2;
+                        unsigned int *temp = new unsigned int[polyline_index_len];
+                        std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                        delete polyline_indexs;
+                        polyline_indexs = temp;
                     }
                 }
-                indexs[index_count++] = UINT_MAX;
+                polyline_indexs[polyline_index_count++] = UINT_MAX;
                 break;
             case 21:
-                // if (!is_visible(reinterpret_cast<const Geo::Bezier *>(geo)->shape()))
-                // {
-                //     continue;
-                // }
                 // if (geo->memo()["is_selected"].to_bool())
                 // {
                 //     painter.setPen(QPen(QColor(255, 140, 0), 2, Qt::DashLine));
@@ -1345,18 +1371,41 @@ void Canvas::refresh_vbo()
             default:
                 break;
             }
+        
+            if (polyline_index_count == polyline_index_len)
+            {
+                polyline_index_len *= 2;
+                unsigned int *temp = new unsigned int[polyline_index_len];
+                std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                delete polyline_indexs;
+                polyline_indexs = temp;
+            }
+            if (polygon_index_count == polygon_index_len)
+            {
+                polygon_index_len *= 2;
+                unsigned int *temp = new unsigned int[polygon_index_len];
+                std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                delete polygon_indexs;
+                polygon_indexs = temp;
+            }
         }
     }
 
+    std::memmove(indexs, polygon_indexs, 512 * sizeof(unsigned int));
     _points_count = data_count / 2;
-    _indexs_count = index_count;
+    _indexs_count[0] = polyline_index_count;
+    _indexs_count[1] = polygon_index_count;
 
     glBindBuffer(GL_ARRAY_BUFFER, _VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polyline_index_count, polyline_indexs, GL_DYNAMIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_DYNAMIC_DRAW);
 
     delete data;
-    delete indexs;
+    delete polyline_indexs;
+    delete polygon_indexs;
 }
