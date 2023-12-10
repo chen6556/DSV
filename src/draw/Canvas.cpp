@@ -1350,14 +1350,10 @@ void Canvas::refresh_vbo()
 
     _points_count = data_count / 2;
     _indexs_count = index_count;
-    glDeleteBuffers(1, &_VBO);
-    glDeleteBuffers(1, &_IBO);
 
-    glGenBuffers(1, &_VBO);
     glBindBuffer(GL_ARRAY_BUFFER, _VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_STATIC_DRAW);
 
-    glGenBuffers(1, &_IBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_STATIC_DRAW);
 
