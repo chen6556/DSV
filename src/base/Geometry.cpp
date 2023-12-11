@@ -1,6 +1,7 @@
 #include "base/Geometry.hpp"
 #include<cassert>
 #include <algorithm>
+#include <list>
 
 
 using namespace Geo;
@@ -2187,6 +2188,13 @@ const bool Geo::is_inside(const Point &point, const Circle &circle, const bool c
     }
 }
 
+const bool Geo::is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2)
+{
+    return (point2.coord().x - point.coord().x) * (point0.coord().y - point.coord().y) >= (point0.coord().x - point.coord().x) * (point2.coord().y - point.coord().y)
+        && (point0.coord().x - point.coord().x) * (point1.coord().y - point.coord().y) >= (point1.coord().x - point.coord().x) * (point0.coord().y - point.coord().y)
+        && (point1.coord().x - point.coord().x) * (point2.coord().y - point.coord().y) >= (point2.coord().x - point.coord().x) * (point1.coord().y - point.coord().y);
+}
+
 
 const bool Geo::is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite)
 {
@@ -2579,22 +2587,122 @@ const bool Geo::is_rectangle(const Polygon &polygon)
 }
 
 
-Geo::Polygon Geo::circle_to_polygon(const double x, const double y, const double r)
+Polygon Geo::circle_to_polygon(const double x, const double y, const double r)
 {
     double c = 2 * r * Geo::PI;
     const double degree = std::asin(1 / r) * 2;
-    Geo::Vector vec(0, r);
-    const Geo::Point center(x, y);
-    std::vector<Geo::Point> points;
+    Vector vec(0, r);
+    const Point center(x, y);
+    std::vector<Point> points;
     while (c-- > 0)
     {
         points.emplace_back(center + vec);
         vec.rotate(0, 0, degree);
     }
-    return Geo::Polygon(points.cbegin(), points.cend());
+    return Polygon(points.cbegin(), points.cend());
 }
 
-Geo::Polygon Geo::circle_to_polygon(const Geo::Circle &circle)
+Polygon Geo::circle_to_polygon(const Circle &circle)
 {
     return Geo::circle_to_polygon(circle.center().coord().x, circle.center().coord().y, circle.radius());
+}
+
+
+std::vector<size_t> Geo::ear_cut_to_indexs(const Polygon &polygon)
+{
+    double area = 0;
+    std::list<size_t> indexs({0});
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        area += (polygon[i].coord().x * (polygon[i+1 != count ? i+1 : 0].coord().y - polygon[i-1].coord().y));
+        indexs.push_back(i);
+    }
+    indexs.back() = 0;
+    if (area < 0)
+    {
+        std::reverse(indexs.begin(), indexs.end());
+    }
+
+    std::vector<size_t> result;
+    std::list<size_t>::iterator it, end = indexs.end(), cur_it = indexs.begin();
+    size_t index0, index1, index2;
+    Geo::Coord vec0, vec1;
+    bool is_ear;
+    while (indexs.size() > 3)
+    {
+        it = cur_it;
+        index0 = *(it++);
+        if (it == end)
+        {
+            it = indexs.begin();
+        }
+        index1 = *(it++);
+        if (it == end)
+        {
+            it = indexs.begin();
+        }
+        index2 = *it;
+        vec0 = (polygon[index1] - polygon[index0]).coord();
+        vec1 = (polygon[index2] - polygon[index0]).coord();
+        if (vec0.x * vec1.y > vec0.y * vec1.x)
+        {
+            is_ear = true;
+            for (size_t i : indexs)
+            {
+                if (i != index0 && i != index1 && i != index2 &&
+                    is_inside(polygon[i], polygon[index0], polygon[index1], polygon[index2]))
+                {
+                    is_ear = false;
+                    break;
+                }
+            }
+            if (is_ear)
+            {
+                result.push_back(index0);
+                result.push_back(index1);
+                result.push_back(index2);
+                it = cur_it;
+                indexs.erase(++it);
+            }
+            else
+            {
+                ++cur_it;
+            }
+        }
+        else
+        {
+            ++cur_it;
+        }
+
+        if (cur_it == end)
+        {
+            cur_it = indexs.begin();
+        }
+    }
+    for (size_t i : indexs)
+    {
+        result.push_back(i);
+    }
+
+    return result;
+}
+
+std::vector<Coord> Geo::ear_cut_to_coords(const Polygon &polygon)
+{
+    std::vector<Coord> result;
+    for (size_t i : ear_cut_to_indexs(polygon))
+    {
+        result.emplace_back(polygon[i].coord());
+    }
+    return result;
+}
+
+std::vector<Point> Geo::ear_cut_to_points(const Polygon &polygon)
+{
+    std::vector<Point> result;
+    for (size_t i : ear_cut_to_indexs(polygon))
+    {
+        result.emplace_back(polygon[i]);
+    }
+    return result;
 }

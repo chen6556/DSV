@@ -270,20 +270,7 @@ void Canvas::paintGL()
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]);
     glUseProgram(_shader_programs[0]); // 绘制填充色
-    glEnable(GL_STENCIL_TEST); //开启模板测试
-    glStencilMask(0xFF); //开启模板缓冲区写入
-    glClearStencil(0);
-
-    glStencilFunc(GL_ALWAYS, 1, 0xFF);
-    glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT); //设置模板缓冲区更新方式(若通过则按位反转模板值)
-    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); //第一次绘制只是为了构造模板缓冲区，没有必要显示到屏幕上，所以设置不显示第一遍的多边形
-    glDrawElements(GL_TRIANGLE_FAN, _indexs_count[1], GL_UNSIGNED_INT, NULL);
-
-    glStencilFunc(GL_NOTEQUAL, 0, 0xFF); //模板值不为0就通过，凹多边形就正确画出了
-    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-    glDrawElements(GL_TRIANGLE_FAN, _indexs_count[1], GL_UNSIGNED_INT, NULL);
-    glDisable(GL_STENCIL_TEST);
+    glDrawElements(GL_TRIANGLES, _indexs_count[1], GL_UNSIGNED_INT, NULL);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]);
     glUseProgram(_shader_programs[1]); // 绘制线 normal
@@ -1217,10 +1204,21 @@ void Canvas::refresh_vbo()
             {
             case 0:
                 container = dynamic_cast<Container *>(geo);
+                for (size_t i : Geo::ear_cut_to_indexs(container->shape()))
+                {
+                    polygon_indexs[polygon_index_count++] = data_count / 2 + i;
+                    if (polygon_index_count == polygon_index_len)
+                    {
+                        polygon_index_len *= 2;
+                        unsigned int *temp = new unsigned int[polygon_index_len];
+                        std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                        delete polygon_indexs;
+                        polygon_indexs = temp;
+                    }
+                }
                 for (const Geo::Point &point : container->shape())
                 {
                     polyline_indexs[polyline_index_count++] = data_count / 2;
-                    polygon_indexs[polygon_index_count++] = data_count / 2;
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
                     if (data_count == data_len)
@@ -1239,17 +1237,8 @@ void Canvas::refresh_vbo()
                         delete polyline_indexs;
                         polyline_indexs = temp;
                     }
-                    if (polygon_index_count == polygon_index_len)
-                    {
-                        polygon_index_len *= 2;
-                        unsigned int *temp = new unsigned int[polygon_index_len];
-                        std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
-                        delete polygon_indexs;
-                        polygon_indexs = temp;
-                    }
                 }
                 polyline_indexs[polyline_index_count++] = UINT_MAX;
-                polygon_indexs[polygon_index_count - 1] = UINT_MAX;
                 container->memo()["point_count"] = container->shape().size();
                 // if (!container->text().isEmpty())
                 // {
@@ -1465,14 +1454,14 @@ void Canvas::refresh_vbo()
                 delete polyline_indexs;
                 polyline_indexs = temp;
             }
-            if (polygon_index_count == polygon_index_len)
-            {
-                polygon_index_len *= 2;
-                unsigned int *temp = new unsigned int[polygon_index_len];
-                std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
-                delete polygon_indexs;
-                polygon_indexs = temp;
-            }
+            // if (polygon_index_count == polygon_index_len)
+            // {
+            //     polygon_index_len *= 2;
+            //     unsigned int *temp = new unsigned int[polygon_index_len];
+            //     std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+            //     delete polygon_indexs;
+            //     polygon_indexs = temp;
+            // }
         }
     }
 
