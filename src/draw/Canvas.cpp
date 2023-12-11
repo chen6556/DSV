@@ -293,8 +293,11 @@ void Canvas::paintGL()
     glUseProgram(_shader_programs[2]); // 绘制线 selected
     glDrawElements(GL_LINE_STRIP, _indexs_count[2], GL_UNSIGNED_INT, NULL);
 
-    glUseProgram(_shader_programs[3]); // 绘制点
-    glDrawArrays(GL_POINTS, 0, _points_count);
+    if (GlobalSetting::get_instance()->setting()["show_points"].toBool())
+    {
+        glUseProgram(_shader_programs[3]); // 绘制点
+        glDrawArrays(GL_POINTS, 0, _points_count);
+    }
 }
 
 void Canvas::mousePressEvent(QMouseEvent *event)
@@ -1198,6 +1201,7 @@ void Canvas::refresh_vbo()
     unsigned int indexs[512];
     Container *container = nullptr;
     Geo::Polyline *polyline = nullptr;
+    CircleContainer *circlecontainer = nullptr;
 
     for (ContainerGroup &group : _editer->graph()->container_groups())
     {
@@ -1258,33 +1262,10 @@ void Canvas::refresh_vbo()
                 // }
                 break;
             case 1:
-                // circlecontainer = reinterpret_cast<const CircleContainer *>(geo);
-                // if (!is_visible(circlecontainer->shape()))
-                // {
-                //     continue;
-                // }
-                // circle.radius() = circlecontainer->radius();
-                // circle.center() = circlecontainer->center();
-                // circle.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
+                // circlecontainer = dynamic_cast<CircleContainer *>(geo);
                 
-                // center = circle.center().coord();
-                // radius = circle.radius();
-                // painter.drawEllipse(center.x - radius, center.y - radius, radius * 2, radius * 2);
-                // _catched_points.emplace_back(QPointF(center.x, center.y));
-                // _catched_points.emplace_back(QPointF(center.x, center.y + radius));
-                // _catched_points.emplace_back(QPointF(center.x + radius, center.y));
-                // _catched_points.emplace_back(QPointF(center.x, center.y - radius));
-                // _catched_points.emplace_back(QPointF(center.x - radius, center.y));
-                // if (show_points)
-                // {
-                //     painter.setRenderHint(QPainter::Antialiasing);
-                //     painter.setPen(QPen(QColor(0, 140, 255), 6));
-                //     painter.drawPoint(center.x, center.y);
-                //     painter.drawPoint(center.x, center.y + radius);
-                //     painter.drawPoint(center.x + radius, center.y);
-                //     painter.drawPoint(center.x, center.y - radius);
-                //     painter.drawPoint(center.x - radius, center.y);
-                // }
+                
+                
                 // if (!circlecontainer->text().isEmpty())
                 // {
                 //     painter.setPen(QPen(text_color, 2));

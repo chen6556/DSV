@@ -627,4 +627,8 @@ namespace Geo
 
     const bool is_rectangle(const Polygon &polygon);
 
+    Geo::Polygon circle_to_polygon(const double x, const double y, const double r);
+
+    Geo::Polygon circle_to_polygon(const Geo::Circle &circle);
+
 };

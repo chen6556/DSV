@@ -2578,3 +2578,23 @@ const bool Geo::is_rectangle(const Polygon &polygon)
     }
 }
 
+
+Geo::Polygon Geo::circle_to_polygon(const double x, const double y, const double r)
+{
+    double c = 2 * r * Geo::PI;
+    const double degree = std::asin(1 / r) * 2;
+    Geo::Vector vec(0, r);
+    const Geo::Point center(x, y);
+    std::vector<Geo::Point> points;
+    while (c-- > 0)
+    {
+        points.emplace_back(center + vec);
+        vec.rotate(0, 0, degree);
+    }
+    return Geo::Polygon(points.cbegin(), points.cend());
+}
+
+Geo::Polygon Geo::circle_to_polygon(const Geo::Circle &circle)
+{
+    return Geo::circle_to_polygon(circle.center().coord().x, circle.center().coord().y, circle.radius());
+}
