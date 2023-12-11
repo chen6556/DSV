@@ -622,10 +622,57 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 _editer->store_backup();
                 _bool_flags[6] = true;
             }
+            size_t data_len = 512, data_count;
+            double *data = new double[data_len];
+            makeCurrent();
+            glBindBuffer(GL_ARRAY_BUFFER, _VBO);
             for (Geo::Geometry *obj : _editer->selected())
             {
                 _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier);
+                data_count = data_len;
+                switch (obj->memo()["Type"].to_int())
+                {
+                case 0:
+                    while (dynamic_cast<const Container *>(obj)->shape().size() * 2 > data_len)
+                    {
+                        data_len *= 2;
+                    }
+                    if (data_count < data_len)
+                    {
+                        delete data;
+                        data = new double[data_len];
+                    }
+                    data_count = 0;
+                    for (const Geo::Point &point : dynamic_cast<const Container *>(obj)->shape())
+                    {
+                        data[data_count++] = point.coord().x;
+                        data[data_count++] = point.coord().y;
+                    }
+                    break;
+                case 20:
+                    while (dynamic_cast<const Geo::Polyline *>(obj)->size() * 2 > data_len)
+                    {
+                        data_len *= 2;
+                    }
+                    if (data_count < data_len)
+                    {
+                        delete data;
+                        data = new double[data_len];
+                    }
+                    data_count = 0;
+                    for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(obj))
+                    {
+                        data[data_count++] = point.coord().x;
+                        data[data_count++] = point.coord().y;
+                    }
+                    break;
+                default:
+                    break;
+                }
+                glBufferSubData(GL_ARRAY_BUFFER, obj->memo()["point_index"].to_ull() * 2 * sizeof(double), data_count * sizeof(double), data);
             }
+            doneCurrent();
+            delete data;
             if (event->modifiers() != Qt::ControlModifier && GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
             {
                 _editer->auto_aligning(_clicked_obj, real_x1, real_y1, _reflines,
