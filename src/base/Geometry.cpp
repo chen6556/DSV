@@ -1,7 +1,8 @@
 #include "base/Geometry.hpp"
 #include<cassert>
 #include <algorithm>
-#include <list>
+#include <array>
+#include "base/EarCut/EarCut.hpp"
 
 
 using namespace Geo;
@@ -2610,81 +2611,13 @@ Polygon Geo::circle_to_polygon(const Circle &circle)
 
 std::vector<size_t> Geo::ear_cut_to_indexs(const Polygon &polygon)
 {
-    double area = 0;
-    std::list<size_t> indexs({0});
-    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    std::vector<std::vector<std::array<double, 2>>> points;
+    points.emplace_back(std::vector<std::array<double, 2>>());
+    for (const Point &point : polygon)
     {
-        area += (polygon[i].coord().x * (polygon[i+1 != count ? i+1 : 0].coord().y - polygon[i-1].coord().y));
-        indexs.push_back(i);
+        points.front().emplace_back(std::array<double, 2>({point.coord().x, point.coord().y}));
     }
-    indexs.back() = 0;
-    if (area < 0)
-    {
-        std::reverse(indexs.begin(), indexs.end());
-    }
-
-    std::vector<size_t> result;
-    std::list<size_t>::iterator it, end = indexs.end(), cur_it = indexs.begin();
-    size_t index0, index1, index2;
-    Geo::Coord vec0, vec1;
-    bool is_ear;
-    while (indexs.size() > 3)
-    {
-        it = cur_it;
-        index0 = *(it++);
-        if (it == end)
-        {
-            it = indexs.begin();
-        }
-        index1 = *(it++);
-        if (it == end)
-        {
-            it = indexs.begin();
-        }
-        index2 = *it;
-        vec0 = (polygon[index1] - polygon[index0]).coord();
-        vec1 = (polygon[index2] - polygon[index0]).coord();
-        if (vec0.x * vec1.y > vec0.y * vec1.x)
-        {
-            is_ear = true;
-            for (size_t i : indexs)
-            {
-                if (i != index0 && i != index1 && i != index2 &&
-                    is_inside(polygon[i], polygon[index0], polygon[index1], polygon[index2]))
-                {
-                    is_ear = false;
-                    break;
-                }
-            }
-            if (is_ear)
-            {
-                result.push_back(index0);
-                result.push_back(index1);
-                result.push_back(index2);
-                it = cur_it;
-                indexs.erase(++it);
-            }
-            else
-            {
-                ++cur_it;
-            }
-        }
-        else
-        {
-            ++cur_it;
-        }
-
-        if (cur_it == end)
-        {
-            cur_it = indexs.begin();
-        }
-    }
-    for (size_t i : indexs)
-    {
-        result.push_back(i);
-    }
-
-    return result;
+    return mapbox::earcut<size_t>(points);
 }
 
 std::vector<Coord> Geo::ear_cut_to_coords(const Polygon &polygon)
