@@ -1138,6 +1138,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
         reset_selected_mark();
     }
 
+    const double catch_distance =  2 / _graph->ratio();
     std::vector<Link *> head_links, tail_links;
     Container *c = nullptr;
     CircleContainer *cc = nullptr;
@@ -1179,7 +1180,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             {
                 for (size_t i = 1, count = l->size(); i < count; ++i)
                 {
-                    if (Geo::distance(point, (*l)[i - 1], (*l)[i]) <= 2)
+                    if (Geo::distance(point, (*l)[i - 1], (*l)[i]) <= catch_distance)
                     {
                         l->memo()["is_selected"] = true;
                         // _graph->container_group(_current_group).pop(it);
@@ -1189,7 +1190,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                 }
                 if (dynamic_cast<CircleContainer *>(l->tail()) != nullptr)
                 {
-                    if (Geo::distance(point, reinterpret_cast<CircleContainer *>(l->tail())->center(), l->front()) <= 2)
+                    if (Geo::distance(point, reinterpret_cast<CircleContainer *>(l->tail())->center(), l->front()) <= catch_distance)
                     {
                         l->memo()["is_selected"] = true;
                         // _graph->container_group(_current_group).pop(it);
@@ -1199,7 +1200,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                 }
                 else
                 {
-                    if (Geo::distance(point, l->tail()->bounding_rect().center(), l->front()) <= 2)
+                    if (Geo::distance(point, l->tail()->bounding_rect().center(), l->front()) <= catch_distance)
                     {
                         l->memo()["is_selected"] = true;
                         // _graph->container_group(_current_group).pop(it);
@@ -1209,7 +1210,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                 }
                 if (dynamic_cast<CircleContainer *>(l->head()) != nullptr)
                 {
-                    if (Geo::distance(point, l->back(), reinterpret_cast<CircleContainer *>(l->head())->center()) <= 2)
+                    if (Geo::distance(point, l->back(), reinterpret_cast<CircleContainer *>(l->head())->center()) <= catch_distance)
                     {
                         l->memo()["is_selected"] = true;
                         // _graph->container_group(_current_group).pop(it);
@@ -1219,7 +1220,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                 }
                 else
                 {
-                    if (Geo::distance(point, l->back(), l->head()->bounding_rect().center()) <= 2)
+                    if (Geo::distance(point, l->back(), l->head()->bounding_rect().center()) <= catch_distance)
                     {
                         l->memo()["is_selected"] = true;
                         // _graph->container_group(_current_group).pop(it);
@@ -1234,7 +1235,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                 {
                     if (dynamic_cast<CircleContainer *>(l->head()) != nullptr)
                     {
-                        if (Geo::distance(point, reinterpret_cast<CircleContainer *>(l->tail())->center(), reinterpret_cast<CircleContainer *>(l->head())->center()) <= 2)
+                        if (Geo::distance(point, reinterpret_cast<CircleContainer *>(l->tail())->center(), reinterpret_cast<CircleContainer *>(l->head())->center()) <= catch_distance)
                         {
                             l->memo()["is_selected"] = true;
                             // _graph->container_group(_current_group).pop(it);
@@ -1244,7 +1245,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     }
                     else
                     {
-                        if (Geo::distance(point, reinterpret_cast<CircleContainer *>(l->tail())->center(), l->head()->bounding_rect().center()) <= 2)
+                        if (Geo::distance(point, reinterpret_cast<CircleContainer *>(l->tail())->center(), l->head()->bounding_rect().center()) <= catch_distance)
                         {
                             l->memo()["is_selected"] = true;
                             // _graph->container_group(_current_group).pop(it);
@@ -1257,7 +1258,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                 {
                     if (dynamic_cast<CircleContainer *>(l->head()) != nullptr)
                     {
-                        if (Geo::distance(point, l->tail()->bounding_rect().center(), reinterpret_cast<CircleContainer *>(l->head())->center()) <= 2)
+                        if (Geo::distance(point, l->tail()->bounding_rect().center(), reinterpret_cast<CircleContainer *>(l->head())->center()) <= catch_distance)
                         {
                             l->memo()["is_selected"] = true;
                             // _graph->container_group(_current_group).pop(it);
@@ -1267,7 +1268,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     }
                     else
                     {
-                        if (Geo::distance(point, l->tail()->bounding_rect().center(), l->head()->bounding_rect().center()) <= 2)
+                        if (Geo::distance(point, l->tail()->bounding_rect().center(), l->head()->bounding_rect().center()) <= catch_distance)
                         {
                             l->memo()["is_selected"] = true;
                             // _graph->container_group(_current_group).pop(it);
@@ -1309,7 +1310,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         p = reinterpret_cast<Geo::Polyline *>(item);
                         for (size_t i = 1, count = p->size(); i < count; ++i)
                         {
-                            if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= 2)
+                            if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= catch_distance)
                             {
                                 cb->memo()["is_selected"] = true;
                                 // _graph->container_group(_current_group).pop(it);
@@ -1323,7 +1324,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         b = reinterpret_cast<Geo::Bezier *>(*it);
                         for (size_t i = 1, count = b->shape().size(); i < count; ++i)
                         {
-                            if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= 2)
+                            if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance)
                             {
                                 cb->memo()["is_selected"] = true;
                                 // _graph->container_group(_current_group).pop(it);
@@ -1344,7 +1345,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             p = reinterpret_cast<Geo::Polyline *>(*it);
             for (size_t i = 1, count = p->size(); i < count; ++i)
             {
-                if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= 2)
+                if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= catch_distance)
                 {
                     p->memo()["is_selected"] = true;
                     // _graph->container_group(_current_group).pop(it);
@@ -1360,7 +1361,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             {
                 for (const Geo::Point &inner_point : *b)
                 {
-                    if (Geo::distance(point, inner_point) <= 3)
+                    if (Geo::distance(point, inner_point) <= catch_distance)
                     {
                         return b;
                     }
@@ -1368,7 +1369,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             }
             for (size_t i = 1, count = b->shape().size(); i < count; ++i)
             {
-                if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= 2)
+                if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance)
                 {
                     b->memo()["is_selected"] = true;
                     // _graph->container_group(_current_group).pop(it);
