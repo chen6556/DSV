@@ -147,6 +147,8 @@ void Canvas::initializeGL()
     glPointSize(6.0f);
     glLineWidth(3.0f);
     glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
 
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex_shader, 1, &GLSL::base_vss, NULL);
@@ -206,12 +208,12 @@ void Canvas::initializeGL()
 
     glGenVertexArrays(1, &_VAO);
     glBindVertexArray(_VAO);
-    glVertexAttribLFormat(0, 2, GL_DOUBLE, 0);
+    glVertexAttribLFormat(0, 3, GL_DOUBLE, 0);
     
     glGenBuffers(1, &_VBO);
     glBindBuffer(GL_ARRAY_BUFFER, _VBO);
 
-    glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), NULL);
+    glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
     glEnableVertexAttribArray(0);
 
     glGenBuffers(3, _IBO);
@@ -612,18 +614,20 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 _editer->store_backup();
                 _bool_flags[6] = true;
             }
-            size_t data_len = 512, data_count;
+            size_t data_len = 513, data_count;
             double *data = new double[data_len];
+            double deepth;
             makeCurrent();
             glBindBuffer(GL_ARRAY_BUFFER, _VBO);
             for (Geo::Geometry *obj : _editer->selected())
             {
                 _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier);
                 data_count = data_len;
+                deepth = obj->memo()["point_deepth"].to_double();
                 switch (obj->memo()["Type"].to_int())
                 {
                 case 0:
-                    while (dynamic_cast<const Container *>(obj)->shape().size() * 2 > data_len)
+                    while (dynamic_cast<const Container *>(obj)->shape().size() * 3 > data_len)
                     {
                         data_len *= 2;
                     }
@@ -637,10 +641,11 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
+                        data[data_count++] = deepth;
                     }
                     break;
                 case 20:
-                    while (dynamic_cast<const Geo::Polyline *>(obj)->size() * 2 > data_len)
+                    while (dynamic_cast<const Geo::Polyline *>(obj)->size() * 3 > data_len)
                     {
                         data_len *= 2;
                     }
@@ -654,12 +659,13 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
+                        data[data_count++] = deepth;
                     }
                     break;
                 default:
                     break;
                 }
-                glBufferSubData(GL_ARRAY_BUFFER, obj->memo()["point_index"].to_ull() * 2 * sizeof(double), data_count * sizeof(double), data);
+                glBufferSubData(GL_ARRAY_BUFFER, obj->memo()["point_index"].to_ull() * 3 * sizeof(double), data_count * sizeof(double), data);
             }
             doneCurrent();
             delete data;
@@ -1179,13 +1185,13 @@ Geo::Coord Canvas::canvas_coord_to_real_coord(const double x, const double y) co
 
 void Canvas::refresh_vbo()
 {
-    size_t data_len = 1024, data_count = 0;
+    size_t data_len = 1026, data_count = 0;
     size_t polyline_index_len = 512, polyline_index_count = 0;
     size_t polygon_index_len = 512, polygon_index_count = 0;
     double *data = new double[data_len];
     unsigned int *polyline_indexs = new unsigned int[polyline_index_len];
     unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
-    unsigned int indexs[512];
+    double deepth = 1.0;
     Container *container = nullptr;
     Geo::Polyline *polyline = nullptr;
     CircleContainer *circlecontainer = nullptr;
@@ -1199,14 +1205,15 @@ void Canvas::refresh_vbo()
 
         for (Geo::Geometry *geo : group)
         {
-            geo->memo()["point_index"] = data_count / 2;
+            geo->memo()["point_index"] = data_count / 3;
+            geo->memo()["point_deepth"] = deepth;
             switch (geo->memo()["Type"].to_int())
             {
             case 0:
                 container = dynamic_cast<Container *>(geo);
                 for (size_t i : Geo::ear_cut_to_indexs(container->shape()))
                 {
-                    polygon_indexs[polygon_index_count++] = data_count / 2 + i;
+                    polygon_indexs[polygon_index_count++] = data_count / 3 + i;
                     if (polygon_index_count == polygon_index_len)
                     {
                         polygon_index_len *= 2;
@@ -1218,9 +1225,10 @@ void Canvas::refresh_vbo()
                 }
                 for (const Geo::Point &point : container->shape())
                 {
-                    polyline_indexs[polyline_index_count++] = data_count / 2;
+                    polyline_indexs[polyline_index_count++] = data_count / 3;
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
+                    data[data_count++] = deepth;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -1390,9 +1398,10 @@ void Canvas::refresh_vbo()
                 polyline = dynamic_cast<Geo::Polyline *>(geo);
                 for (const Geo::Point &point : *polyline)
                 {
-                    polyline_indexs[polyline_index_count++] = data_count / 2;
+                    polyline_indexs[polyline_index_count++] = data_count / 3;
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
+                    data[data_count++] = deepth;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -1445,7 +1454,11 @@ void Canvas::refresh_vbo()
             default:
                 break;
             }
-
+            deepth -= 1e-6;
+            if (deepth <= 0)
+            {
+                deepth = 1.0;
+            }
             if (polyline_index_count == polyline_index_len)
             {
                 polyline_index_len *= 2;
@@ -1454,19 +1467,10 @@ void Canvas::refresh_vbo()
                 delete polyline_indexs;
                 polyline_indexs = temp;
             }
-            // if (polygon_index_count == polygon_index_len)
-            // {
-            //     polygon_index_len *= 2;
-            //     unsigned int *temp = new unsigned int[polygon_index_len];
-            //     std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
-            //     delete polygon_indexs;
-            //     polygon_indexs = temp;
-            // }
         }
     }
 
-    std::memmove(indexs, polygon_indexs, 512 * sizeof(unsigned int));
-    _points_count = data_count / 2;
+    _points_count = data_count / 3;
     _indexs_count[0] = polyline_index_count;
     _indexs_count[1] = polygon_index_count;
 
