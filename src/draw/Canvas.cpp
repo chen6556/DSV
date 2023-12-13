@@ -30,11 +30,11 @@ void Canvas::init()
                                                             {
                                                                 if (dynamic_cast<Container*>(_last_clicked_obj))
                                                                 {
-                                                                    reinterpret_cast<Container*>(_last_clicked_obj)->set_text(_input_line.toPlainText());
+                                                                    dynamic_cast<Container*>(_last_clicked_obj)->set_text(_input_line.toPlainText());
                                                                 }
                                                                 else
                                                                 {
-                                                                    reinterpret_cast<CircleContainer*>(_last_clicked_obj)->set_text(_input_line.toPlainText());
+                                                                    dynamic_cast<CircleContainer*>(_last_clicked_obj)->set_text(_input_line.toPlainText());
                                                                 }
                                                             } });
 }
@@ -127,7 +127,6 @@ void Canvas::paint_graph()
 
     const Container *container;
     const CircleContainer *circlecontainer;
-    const Link *link;
     const Geo::Polyline *polyline;
 
     const QPen pen_selected(selected_shape_color, 3), pen_not_selected(shape_color, 3);
@@ -142,49 +141,6 @@ void Canvas::paint_graph()
         {
             continue;
         }
-        for (const Geo::Geometry *geo : group)
-        {
-            link = dynamic_cast<const Link *>(geo);
-            if (link == nullptr || link->empty() || !is_visible(*link))
-            {
-                continue;
-            }
-            points.clear();
-            painter.setPen(link->memo()["is_selected"].to_bool() ? pen_selected : pen_not_selected);
-            if (dynamic_cast<const CircleContainer *>(link->tail()) != nullptr)
-            {
-                temp_point = reinterpret_cast<const CircleContainer *>(link->tail())->center();
-            }
-            else
-            {
-                temp_point = link->tail()->bounding_rect().center();
-            }
-            points.append(QPointF(temp_point.coord().x * _canvas_ctm[0] + temp_point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                temp_point.coord().x * _canvas_ctm[1] + temp_point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-            for (const Geo::Point &point : *link)
-            {
-                points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                    point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-            }
-            if (dynamic_cast<const CircleContainer *>(link->head()) != nullptr)
-            {
-                temp_point = reinterpret_cast<const CircleContainer *>(link->head())->center();
-            }
-            else
-            {
-                temp_point = link->head()->bounding_rect().center();
-            }
-            points.append(QPointF(temp_point.coord().x * _canvas_ctm[0] + temp_point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                temp_point.coord().x * _canvas_ctm[1] + temp_point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-            _catched_points.append(points);
-            painter.drawPolyline(points);
-            if (show_points)
-            {
-                painter.setRenderHint(QPainter::Antialiasing);
-                painter.setPen(QPen(QColor(0, 140, 255), 6));
-                painter.drawPoints(points);
-            }
-        }
 
         for (const Geo::Geometry *geo : group)
         {
@@ -193,7 +149,7 @@ void Canvas::paint_graph()
             switch (geo->memo()["Type"].to_int())
             {
             case 0:
-                container = reinterpret_cast<const Container *>(geo);
+                container = dynamic_cast<const Container *>(geo);
                 if (!is_visible(container->shape()))
                 {
                     continue;
@@ -223,7 +179,7 @@ void Canvas::paint_graph()
                 }
                 break;
             case 1:
-                circlecontainer = reinterpret_cast<const CircleContainer *>(geo);
+                circlecontainer = dynamic_cast<const CircleContainer *>(geo);
                 if (!is_visible(circlecontainer->shape()))
                 {
                     continue;
@@ -263,13 +219,13 @@ void Canvas::paint_graph()
                 break;
             case 3:
                 painter.setPen(geo->memo()["is_selected"].to_bool() ? pen_selected : pen_not_selected);
-                for (const Geo::Geometry *item : *reinterpret_cast<const Combination *>(geo))
+                for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
                 {
                     points.clear();
                     switch (item->memo()["Type"].to_int())
                     {
                     case 0:
-                        container = reinterpret_cast<const Container *>(item);
+                        container = dynamic_cast<const Container *>(item);
                         if (!is_visible(container->shape()))
                         {
                             continue;
@@ -299,7 +255,7 @@ void Canvas::paint_graph()
                         }
                         break;
                     case 1:
-                        circlecontainer = reinterpret_cast<const CircleContainer *>(item);
+                        circlecontainer = dynamic_cast<const CircleContainer *>(item);
                         if (!is_visible(circlecontainer->shape()))
                         {
                             continue;
@@ -338,7 +294,7 @@ void Canvas::paint_graph()
                         }
                         break;
                     case 20:
-                        polyline = reinterpret_cast<const Geo::Polyline *>(item);
+                        polyline = dynamic_cast<const Geo::Polyline *>(item);
                         if (!is_visible(*polyline))
                         {
                             continue;
@@ -358,11 +314,11 @@ void Canvas::paint_graph()
                         }
                         break;
                     case 21:
-                        if (!is_visible(reinterpret_cast<const Geo::Bezier *>(item)->shape()))
+                        if (!is_visible(dynamic_cast<const Geo::Bezier *>(item)->shape()))
                         {
                             continue;
                         }
-                        for (const Geo::Point &point : reinterpret_cast<const Geo::Bezier *>(item)->shape())
+                        for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
                         {
                             points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
                                 point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
@@ -382,7 +338,7 @@ void Canvas::paint_graph()
                 }
                 break;
             case 20:
-                polyline = reinterpret_cast<const Geo::Polyline *>(geo);
+                polyline = dynamic_cast<const Geo::Polyline *>(geo);
                 if (!is_visible(*polyline))
                 {
                     continue;
@@ -402,14 +358,14 @@ void Canvas::paint_graph()
                 }
                 break;
             case 21:
-                if (!is_visible(reinterpret_cast<const Geo::Bezier *>(geo)->shape()))
+                if (!is_visible(dynamic_cast<const Geo::Bezier *>(geo)->shape()))
                 {
                     continue;
                 }
                 if (geo->memo()["is_selected"].to_bool())
                 {
                     painter.setPen(QPen(QColor(255, 140, 0), 2, Qt::DashLine));
-                    for (const Geo::Point &point : *reinterpret_cast<const Geo::Bezier *>(geo))
+                    for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(geo))
                     {
                         points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
                             point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
@@ -420,7 +376,7 @@ void Canvas::paint_graph()
                     painter.setPen(pen_selected);
                     points.clear();
                 }
-                for (const Geo::Point &point : reinterpret_cast<const Geo::Bezier *>(geo)->shape())
+                for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(geo)->shape())
                 {
                     points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
                         point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
@@ -902,13 +858,13 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                 _input_line.setFocus();
                 if (dynamic_cast<Container *>(_last_clicked_obj) != nullptr)
                 {
-                    _input_line.setText(reinterpret_cast<Container *>(_last_clicked_obj)->text());
+                    _input_line.setText(dynamic_cast<Container *>(_last_clicked_obj)->text());
                     _input_line.moveCursor(QTextCursor::End);
                     _input_line.show();
                 }
                 else
                 {
-                    _input_line.setText(reinterpret_cast<CircleContainer *>(_last_clicked_obj)->text());
+                    _input_line.setText(dynamic_cast<CircleContainer *>(_last_clicked_obj)->text());
                     _input_line.moveCursor(QTextCursor::End);
                     _input_line.show();
                 }

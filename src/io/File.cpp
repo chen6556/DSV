@@ -46,41 +46,6 @@ void File::read(const QString &path, Graph *graph)
             graph->back().back()->memo()["id"] = container.toObject()["id"].toInt();
         }
 
-        QJsonArray links = obj["LinkGroup"].toArray();
-        Geo::Geometry *head, *tail;
-        int tail_id, head_id;
-        std::vector<Geo::Geometry*>::iterator container_it;
-        for (QJsonValueConstRef link : links)
-        {
-            QJsonArray coordinates = link.toObject()["shape"].toArray();
-            if (link.toObject().find("tail_id") == link.toObject().end() || link.toObject().find("head_id") == link.toObject().end())
-            {
-                continue;
-            }
-            head = tail = nullptr;
-
-            container_it = std::find_if(graph->back().begin(), graph->back().end(), [&](const Geo::Geometry *c){return c->memo().has("id") && c->memo()["id"].to_int() == tail_id;});
-            tail = (container_it == graph->back().end() ? nullptr : *container_it);
-
-            container_it = std::find_if(graph->back().begin(), graph->back().end(), [&](const Geo::Geometry *c){return c->memo().has("id") && c->memo()["id"].to_int() == head_id;});
-            head = (container_it == graph->back().end() ? nullptr : *container_it);
-
-            if (tail == nullptr || head == nullptr)
-            {
-                continue;
-            }
-            
-            for (size_t i = 1, count = coordinates.size(); i < count; i += 2)
-            {
-                points.push_back(Geo::Point(coordinates[i - 1].toDouble(), coordinates[i].toDouble()));
-            }
-            graph->back().append(new Link(Geo::Polyline(points.cbegin(), points.cend()), tail, head));
-            tail->related().push_back(graph->back().back());
-            head->related().push_back(graph->back().back());
-            points.clear();
-        }
-        head = tail = nullptr;
-
         QJsonArray polylines = obj["PolylineGroup"].toArray();
         for (QJsonValueConstRef polyline : polylines)
         {
@@ -114,7 +79,6 @@ void File::write_json(const QString &path, Graph *graph)
     QJsonObject obj;
     Container *container = nullptr;
     CircleContainer *circlecontainer = nullptr;
-    Link *link = nullptr;
     Geo::Polyline *polyline = nullptr;
     Geo::Bezier *bezier = nullptr;
     int container_id, circlecontainer_id, index = 0;
@@ -132,7 +96,7 @@ void File::write_json(const QString &path, Graph *graph)
             switch (geo->memo()["Type"].to_int())
             {
             case 0:
-                container = reinterpret_cast<Container *>(geo);
+                container = dynamic_cast<Container *>(geo);
                 for (const Geo::Point &point : container->shape())
                 {
                     array.append(point.coord().x);
@@ -146,7 +110,7 @@ void File::write_json(const QString &path, Graph *graph)
                 container = nullptr;
                 break;
             case 1:
-                circlecontainer = reinterpret_cast<CircleContainer *>(geo);
+                circlecontainer = dynamic_cast<CircleContainer *>(geo);
                 array.append(circlecontainer->center().coord().x);
                 array.append(circlecontainer->center().coord().y);
                 array.append(circlecontainer->radius());
@@ -157,32 +121,15 @@ void File::write_json(const QString &path, Graph *graph)
                 circlecontainer->memo()["id"] = circlecontainer_id * 10 + 1;
                 circlecontainer = nullptr;
                 break;
-            case 2:
-                link = reinterpret_cast<Link *>(geo);
-                if (link->empty())
-                {
-                    break;
-                }
-                for (const Geo::Point &point : *link)
-                {
-                    array.append(point.coord().x);
-                    array.append(point.coord().y);
-                }
-                obj2.insert("shape", array);
-                obj2.insert("tail_id", link->tail()->memo()["id"].to_int());
-                obj2.insert("head_id", link->head()->memo()["id"].to_int());
-                link_objs.append(obj2);
-                link = nullptr;
-                break;
             case 3:
-                for (Geo::Geometry *item : *reinterpret_cast<Combination *>(geo))
+                for (Geo::Geometry *item : *dynamic_cast<Combination *>(geo))
                 {
                     QJsonObject obj2;
                     QJsonArray array;
                     switch (item->memo()["Type"].to_int())
                     {
                     case 0:
-                        container = reinterpret_cast<Container *>(item);
+                        container = dynamic_cast<Container *>(item);
                         for (const Geo::Point &point : container->shape())
                         {
                             array.append(point.coord().x);
@@ -196,7 +143,7 @@ void File::write_json(const QString &path, Graph *graph)
                         container = nullptr;
                         break;
                     case 1:
-                        circlecontainer = reinterpret_cast<CircleContainer *>(item);
+                        circlecontainer = dynamic_cast<CircleContainer *>(item);
                         array.append(circlecontainer->center().coord().x);
                         array.append(circlecontainer->center().coord().y);
                         array.append(circlecontainer->radius());
@@ -208,7 +155,7 @@ void File::write_json(const QString &path, Graph *graph)
                         circlecontainer = nullptr;
                         break;
                     case 20:
-                        polyline = reinterpret_cast<Geo::Polyline *>(item);
+                        polyline = dynamic_cast<Geo::Polyline *>(item);
                         if (polyline->empty())
                         {
                             break;
@@ -223,7 +170,7 @@ void File::write_json(const QString &path, Graph *graph)
                         polyline = nullptr;
                         break;
                     case 21:
-                        bezier = reinterpret_cast<Geo::Bezier *>(item);
+                        bezier = dynamic_cast<Geo::Bezier *>(item);
                         if (bezier->empty())
                         {
                             break;
@@ -244,7 +191,7 @@ void File::write_json(const QString &path, Graph *graph)
                 }
                 break;
             case 20:
-                polyline = reinterpret_cast<Geo::Polyline *>(geo);
+                polyline = dynamic_cast<Geo::Polyline *>(geo);
                 if (polyline->empty())
                 {
                     break;
@@ -259,7 +206,7 @@ void File::write_json(const QString &path, Graph *graph)
                 polyline = nullptr;
                 break;
             case 21:
-                bezier = reinterpret_cast<Geo::Bezier *>(geo);
+                bezier = dynamic_cast<Geo::Bezier *>(geo);
                 if (bezier->empty())
                 {
                     break;
@@ -302,7 +249,6 @@ void File::write_plt(const std::string &path, Graph *graph)
 {
     Container *container = nullptr;
     CircleContainer *circlecontainer = nullptr;
-    Link *link = nullptr;
     Geo::Polyline *polyline = nullptr;
     Geo::Bezier *bezier = nullptr;
 
@@ -315,7 +261,7 @@ void File::write_plt(const std::string &path, Graph *graph)
             switch (geo->memo()["Type"].to_int())
             {
             case 0:
-                container = reinterpret_cast<Container *>(geo);
+                container = dynamic_cast<Container *>(geo);
                 output << "PU" << container->shape().front().coord().x << ',' << container->shape().front().coord().y << ";PD";
                 for (const Geo::Point &point : container->shape())
                 {
@@ -331,7 +277,7 @@ void File::write_plt(const std::string &path, Graph *graph)
                 container = nullptr;
                 break;
             case 1:
-                circlecontainer = reinterpret_cast<CircleContainer *>(geo);
+                circlecontainer = dynamic_cast<CircleContainer *>(geo);
                 output << "PA" << circlecontainer->center().coord().x << ',' << circlecontainer->center().coord().y << ';';
                 output << "CI" << circlecontainer->radius() << ';';
                 if (circlecontainer->text().isEmpty())
@@ -345,29 +291,14 @@ void File::write_plt(const std::string &path, Graph *graph)
                 }
                 circlecontainer = nullptr;
                 break;
-            case 2:
-                link = reinterpret_cast<Link *>(geo);
-                if (link->empty())
-                {
-                    break;
-                }
-                output << "PU" << link->front().coord().x << ',' << link->front().coord().y << ";PD";
-                for (const Geo::Point &point : *link)
-                {
-                    output << point.coord().x << ',' << point.coord().y << ',';
-                }
-                output.seekp(-1, std::ios::cur);
-                output << ';' << std::endl;
-                link = nullptr;
-                break;
             case 3:
                 output << "Block;" << std::endl;
-                for (Geo::Geometry *item : *reinterpret_cast<Combination *>(geo))
+                for (Geo::Geometry *item : *dynamic_cast<Combination *>(geo))
                 {
                     switch (item->memo()["Type"].to_int())
                     {
                     case 0:
-                        container = reinterpret_cast<Container *>(item);
+                        container = dynamic_cast<Container *>(item);
                         output << "PU" << container->shape().front().coord().x << ',' << container->shape().front().coord().y << ";PD";
                         for (const Geo::Point &point : container->shape())
                         {
@@ -383,7 +314,7 @@ void File::write_plt(const std::string &path, Graph *graph)
                         container = nullptr;
                         break;
                     case 1:
-                        circlecontainer = reinterpret_cast<CircleContainer *>(item);
+                        circlecontainer = dynamic_cast<CircleContainer *>(item);
                         output << "PU" << circlecontainer->center().coord().x << ',' << circlecontainer->center().coord().y << ';';
                         output << "CI" << circlecontainer->radius() << ';';
                         if (circlecontainer->text().isEmpty())
@@ -398,7 +329,7 @@ void File::write_plt(const std::string &path, Graph *graph)
                         circlecontainer = nullptr;
                         break;
                     case 20:
-                        polyline = reinterpret_cast<Geo::Polyline *>(item);
+                        polyline = dynamic_cast<Geo::Polyline *>(item);
                         if (polyline->empty())
                         {
                             break;
@@ -413,7 +344,7 @@ void File::write_plt(const std::string &path, Graph *graph)
                         polyline = nullptr;
                         break;
                     case 21:
-                        bezier = reinterpret_cast<Geo::Bezier *>(item);
+                        bezier = dynamic_cast<Geo::Bezier *>(item);
                         if (bezier->empty())
                         {
                             break;
@@ -435,7 +366,7 @@ void File::write_plt(const std::string &path, Graph *graph)
                 output << "BlockEnd;" << std::endl;
                 break;
             case 20:
-                polyline = reinterpret_cast<Geo::Polyline *>(geo);
+                polyline = dynamic_cast<Geo::Polyline *>(geo);
                 if (polyline->empty())
                 {
                     break;
@@ -450,7 +381,7 @@ void File::write_plt(const std::string &path, Graph *graph)
                 polyline = nullptr;
                 break;
             case 21:
-                bezier = reinterpret_cast<Geo::Bezier *>(geo);
+                bezier = dynamic_cast<Geo::Bezier *>(geo);
                 if (bezier->empty())
                 {
                     break;

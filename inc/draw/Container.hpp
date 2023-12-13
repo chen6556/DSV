@@ -78,48 +78,6 @@ public:
     virtual CircleContainer *clone() const;
 };
 
-class Link : public Geo::Polyline // id:2
-{
-private:
-    Geo::Geometry *_tail = nullptr;
-    Geo::Geometry *_head = nullptr;
-
-public:
-    Link(std::vector<Geo::Point>::const_iterator begin, std::vector<Geo::Point>::const_iterator end, Geo::Geometry *tail, Geo::Geometry *head);
-
-    Link(const Geo::Polyline &polyline, Geo::Geometry *tail, Geo::Geometry *head);
-
-    Link(const Link &link);
-
-    Link(const Link &&link);
-
-    Link &operator=(const Link &link);
-
-    Link &operator=(const Link &&link);
-
-    virtual const double length() const;
-
-    const bool empty() const;
-
-    virtual void clear();
-
-    virtual Link *clone() const;
-
-    virtual Geo::Rectangle bounding_rect() const;
-
-    Geo::Geometry *tail();
-
-    const Geo::Geometry *tail() const;
-
-    void set_tail(Geo::Geometry *geo);
-
-    Geo::Geometry *head();
-
-    const Geo::Geometry *head() const;
-
-    void set_head(Geo::Geometry *geo);
-};
-
 class Combination;
 
 class ContainerGroup : public Geo::Geometry
@@ -206,8 +164,6 @@ public:
 
     void append(CircleContainer *container);
 
-    void append(Link *container);
-
     void append(Geo::Polyline *container);
 
     void append(Geo::Bezier *bezier);
@@ -219,8 +175,6 @@ public:
     void insert(const size_t index, Container *container);
 
     void insert(const size_t index, CircleContainer *container);
-
-    void insert(const size_t index, Link *container);
 
     void insert(const size_t index, Geo::Polyline *container);
 

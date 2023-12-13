@@ -169,13 +169,6 @@ void Editer::append_points()
     store_backup();
     if (_point_cache.size() < 4)
     {
-        Geo::Geometry *tail_geo = select(_point_cache.front(), false), *head_geo = select(_point_cache.back());
-        if (tail_geo != nullptr && head_geo != nullptr && tail_geo != head_geo) // Link
-        {
-            _graph->append(new Link(Geo::Polyline(), tail_geo, head_geo), _current_group);
-        }
-        _point_cache.clear();
-        _graph->memo()["modified"] = true;
         return;
     }
 
@@ -187,27 +180,9 @@ void Editer::append_points()
     }
     else
     {
-        Geo::Geometry *tail_geo = select(_point_cache.front(), false), *head_geo = select(_point_cache.back());
-        if (tail_geo != nullptr && head_geo != nullptr && tail_geo != head_geo) // Link
-        {
-            _point_cache.pop_back();
-            _point_cache.pop_back();
-            _graph->append(new Link(_point_cache.cbegin() + 1, _point_cache.cend(), tail_geo, head_geo), _current_group);
-        }
-        else // Polyline
-        {
-            if (tail_geo != nullptr)
-            {
-                tail_geo->memo()["is_selected"] = false;
-            }
-            if (head_geo != nullptr)
-            {
-                head_geo->memo()["is_selected"] = false;
-            }
-            _point_cache.pop_back();
-            _point_cache.pop_back();
-            _graph->append(new Geo::Polyline(_point_cache.cbegin(), _point_cache.cend()), _current_group);
-        }
+        _point_cache.pop_back();
+        _point_cache.pop_back();
+        _graph->append(new Geo::Polyline(_point_cache.cbegin(), _point_cache.cend()), _current_group);
     }
     _point_cache.clear();
 
@@ -255,7 +230,7 @@ void Editer::append_bezier(const size_t order)
         _point_cache.pop_back();
     }
     _graph->append(new Geo::Bezier(_point_cache.begin(), _point_cache.end(), order), _current_group);
-    Geo::Bezier *b = reinterpret_cast<Geo::Bezier *>(_graph->back().back());
+    Geo::Bezier *b = dynamic_cast<Geo::Bezier *>(_graph->back().back());
     _point_cache.clear();
 }
 
@@ -266,7 +241,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     {
     case 0:
         {
-            Container *temp = reinterpret_cast<Container *>(points);
+            Container *temp = dynamic_cast<Container *>(points);
             size_t count = 0;
             if (change_shape && !points->shape_fixed())
             {
@@ -337,7 +312,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         break;
     case 1:
         {
-            CircleContainer *temp = reinterpret_cast<CircleContainer *>(points);
+            CircleContainer *temp = dynamic_cast<CircleContainer *>(points);
             if (change_shape && !points->shape_fixed() &&
                 (std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x0, y0))) <= catch_distance ||
                 std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x1, y1))) <= catch_distance))
@@ -350,31 +325,12 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             }
         }
         break;
-    case 2:
-        {
-            Link *temp = reinterpret_cast<Link *>(points);
-            if (change_shape && !points->shape_fixed())
-            {
-                for (Geo::Point &point : *temp)
-                {
-                    if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= catch_distance ||
-                        Geo::distance(x1, y1, point.coord().x, point.coord().y) <= catch_distance)
-                    {
-                        point.translate(x1 - x0, y1 - y0);
-                        _graph->memo()["modified"] = true;
-                        return;
-                    }
-                }
-            }
-            temp->translate(x1 - x0, y1 - y0);
-        }
-        break;
     case 3:
         points->translate(x1 - x0, y1 - y0);
         break;
     case 20:
         {
-            Geo::Polyline *temp = reinterpret_cast<Geo::Polyline *>(points);
+            Geo::Polyline *temp = dynamic_cast<Geo::Polyline *>(points);
             if (change_shape && !points->shape_fixed())
             {
                 for (Geo::Point &point : *temp)
@@ -393,7 +349,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         break;
     case 21:
         {
-            Geo::Bezier *temp = reinterpret_cast<Geo::Bezier *>(points);
+            Geo::Bezier *temp = dynamic_cast<Geo::Bezier *>(points);
             if (temp->memo()["is_selected"].to_bool())
             {
                 for (size_t i = 0, count = temp->size(); i < count; ++i)
@@ -475,58 +431,6 @@ bool Editer::remove_selected()
     { // Polyline Container CircleContainer
         if ((*it)->memo()["is_selected"].to_bool())
         {
-            switch ((*it)->memo()["Type"].to_int())
-            {
-            case 0:
-            case 1:
-                for (Geo::Geometry *link : (*it)->related())
-                {
-                    if (dynamic_cast<Link *>(link) != nullptr)
-                    {
-                        link->memo()["is_selected"] = true;
-                        if (reinterpret_cast<Link *>(link)->tail() == *it)
-                        {
-                            reinterpret_cast<Link *>(link)->set_tail(nullptr);
-                        }
-                        else
-                        {
-                            reinterpret_cast<Link *>(link)->set_head(nullptr);
-                        }
-                    }
-                }
-                it = _graph->container_group(_current_group).remove(it);
-                break;
-            case 3:
-                it = _graph->container_group(_current_group).remove(it);
-                break;
-            case 20:
-            case 21:
-                it = _graph->container_group(_current_group).remove(it);
-                break;
-            default:
-                break;
-            }
-        }
-        else
-        {
-            ++it;
-        }
-    }
-
-    for (std::vector<Geo::Geometry *>::iterator it = _graph->container_group(_current_group).begin(); it != _graph->container_group(_current_group).end();)
-    {
-        if ((*it)->memo()["is_selected"].to_bool() && dynamic_cast<Link *>(*it) != nullptr)
-        {
-            if (reinterpret_cast<Link *>(*it)->head() != nullptr)
-            {
-                reinterpret_cast<Link *>(*it)->head()->related().erase(std::find(reinterpret_cast<Link *>(*it)->head()->related().begin(),
-                    reinterpret_cast<Link *>(*it)->head()->related().end(), reinterpret_cast<Link *>(*it)));
-            }
-            if (reinterpret_cast<Link *>(*it)->tail() != nullptr)
-            {
-                reinterpret_cast<Link *>(*it)->tail()->related().erase(std::find(reinterpret_cast<Link *>(*it)->tail()->related().begin(),
-                    reinterpret_cast<Link *>(*it)->tail()->related().end(), reinterpret_cast<Link *>(*it)));
-            }
             it = _graph->container_group(_current_group).remove(it);
         }
         else
@@ -548,9 +452,7 @@ bool Editer::copy_selected()
     {
         return false;
     }
-    std::list<Link *> copyed_links;
-    std::list<Link *>::iterator tail_it, head_it;
-    int container_id = 0, circlecontainer_id = 0;
+
     for (const Geo::Geometry *container : _graph->container_group(_current_group))
     {
         if (container->memo()["is_selected"].to_bool())
@@ -558,87 +460,24 @@ bool Editer::copy_selected()
             switch (container->memo()["Type"].to_int())
             {
             case 0:
-                _paste_table.push_back(reinterpret_cast<const Container *>(container)->clone());
-                _paste_table.back()->memo()["id"] = ++container_id * 10;
-                for (Geo::Geometry *link : container->related())
-                {
-                    if (dynamic_cast<Link *>(link) != nullptr)
-                    {
-                        copyed_links.push_back(reinterpret_cast<Link *>(link));
-                        if (reinterpret_cast<Link *>(link)->tail() == container)
-                        {
-                            link->memo()["tail_id"] = container_id * 10;
-                        }
-                        else
-                        {
-                            link->memo()["head_id"] = container_id * 10;
-                        }
-                    }
-                }
+                _paste_table.push_back(dynamic_cast<const Container *>(container)->clone());
                 break;
             case 1:
-                _paste_table.push_back(reinterpret_cast<const CircleContainer *>(container)->clone());
-                _paste_table.back()->memo()["id"] = ++circlecontainer_id * 10 + 1;
-                for (Geo::Geometry *link : container->related())
-                {
-                    if (dynamic_cast<Link *>(link) != nullptr)
-                    {
-                        copyed_links.push_back(reinterpret_cast<Link *>(link));
-                        if (reinterpret_cast<Link *>(link)->tail() == container)
-                        {
-                            link->memo()["tail_id"] = circlecontainer_id * 10 + 1;
-                        }
-                        else
-                        {
-                            link->memo()["head_id"] = circlecontainer_id * 10 + 1;
-                        }
-                    }
-                }
+                _paste_table.push_back(dynamic_cast<const CircleContainer *>(container)->clone());
                 break;
             case 3:
-                _paste_table.push_back(reinterpret_cast<const Combination *>(container)->clone());
+                _paste_table.push_back(dynamic_cast<const Combination *>(container)->clone());
                 break;
             case 20:
-                _paste_table.push_back(reinterpret_cast<const Geo::Polyline *>(container)->clone());
+                _paste_table.push_back(dynamic_cast<const Geo::Polyline *>(container)->clone());
                 break;
             case 21:
-                _paste_table.push_back(reinterpret_cast<const Geo::Bezier *>(container)->clone());
+                _paste_table.push_back(dynamic_cast<const Geo::Bezier *>(container)->clone());
                 break;
             default:
                 break;
             }
         }
-    }
-
-    while (!copyed_links.empty())
-    {
-        if (std::count(copyed_links.cbegin(), copyed_links.cend(), copyed_links.back()) >= 2)
-        {
-            copyed_links.erase(std::find(copyed_links.begin(), copyed_links.end(), copyed_links.back()));
-            container_id = 0;
-            _paste_table.push_back(copyed_links.back()->clone());
-            /* for (Geo::Geometry *geo : _paste_table)
-            {
-                if (geo->memo().has("id"))
-                {
-                    if (geo->memo()["id"].to_int() == copyed_links.back()->memo()["tail_id"].to_int())
-                    {
-                        reinterpret_cast<Link*>(_paste_table.back())->set_tail(geo);
-                        ++container_id;
-                    }
-                    else if (geo->memo()["id"].to_int() == copyed_links.back()->memo()["head_id"].to_int())
-                    {
-                        reinterpret_cast<Link*>(_paste_table.back())->set_head(geo);
-                        ++container_id;
-                    }
-                    if (container_id == 2)
-                    {
-                        break;
-                    }
-                }
-            } */
-        }
-        copyed_links.pop_back();
     }
 
     reset_selected_mark();
@@ -657,8 +496,7 @@ bool Editer::cut_selected()
         return false;
     }
     store_backup();
-    std::list<Link *> copyed_links;
-    int container_id = 0, circlecontainer_id = 0;
+
     for (std::vector<Geo::Geometry *>::iterator it = _graph->container_group(_current_group).begin(); it != _graph->container_group(_current_group).end();)
     {
         if ((*it)->memo()["is_selected"].to_bool())
@@ -666,99 +504,23 @@ bool Editer::cut_selected()
             switch ((*it)->memo()["Type"].to_int())
             {
             case 0:
-                _paste_table.push_back(reinterpret_cast<const Container *>(*it)->clone());
-                _paste_table.back()->memo()["id"] = ++container_id * 10;
-                for (Geo::Geometry *link : (*it)->related())
-                {
-                    if (dynamic_cast<Link *>(link) != nullptr)
-                    {
-                        copyed_links.push_back(reinterpret_cast<Link *>(link));
-                        if (reinterpret_cast<Link *>(link)->tail() == *it)
-                        {
-                            link->memo()["tail_id"] = container_id * 10;
-                        }
-                        else
-                        {
-                            link->memo()["head_id"] = container_id * 10;
-                        }
-                        link->memo()["remove"] = true;
-                    }
-                }
+                _paste_table.push_back(dynamic_cast<const Container *>(*it)->clone());
                 break;
             case 1:
-                _paste_table.push_back(reinterpret_cast<const CircleContainer *>(*it)->clone());
-                _paste_table.back()->memo()["id"] = ++circlecontainer_id * 10 + 1;
-                for (Geo::Geometry *link : (*it)->related())
-                {
-                    if (dynamic_cast<Link *>(link) != nullptr)
-                    {
-                        copyed_links.push_back(reinterpret_cast<Link *>(link));
-                        if (reinterpret_cast<Link *>(link)->tail() == *it)
-                        {
-                            link->memo()["tail_id"] = circlecontainer_id * 10 + 1;
-                        }
-                        else
-                        {
-                            link->memo()["head_id"] = circlecontainer_id * 10 + 1;
-                        }
-                        link->memo()["remove"] = true;
-                    }
-                }
+                _paste_table.push_back(dynamic_cast<const CircleContainer *>(*it)->clone());
                 break;
             case 3:
-                _paste_table.push_back(reinterpret_cast<const Combination *>(*it)->clone());
+                _paste_table.push_back(dynamic_cast<const Combination *>(*it)->clone());
                 break;
             case 20:
-                _paste_table.push_back(reinterpret_cast<const Geo::Polyline *>(*it)->clone());
+                _paste_table.push_back(dynamic_cast<const Geo::Polyline *>(*it)->clone());
                 break;
             case 21:
-                _paste_table.push_back(reinterpret_cast<const Geo::Bezier *>(*it)->clone());
+                _paste_table.push_back(dynamic_cast<const Geo::Bezier *>(*it)->clone());
                 break;
             default:
                 break;
             }
-            it = _graph->container_group(_current_group).remove(it);
-        }
-        else
-        {
-            ++it;
-        }
-    }
-
-    while (!copyed_links.empty())
-    {
-        if (std::count(copyed_links.cbegin(), copyed_links.cend(), copyed_links.back()) >= 2)
-        {
-            copyed_links.erase(std::find(copyed_links.begin(), copyed_links.end(), copyed_links.back()));
-            container_id = 0;
-            _paste_table.push_back(reinterpret_cast<Link *>(copyed_links.back())->clone());
-            /*  for (Geo::Geometry *geo : _paste_table)
-             {
-                 if (geo->memo().has("id"))
-                 {
-                     if (geo->memo()["id"].to_int() == copyed_links.back()->memo()["tail_id"].to_int())
-                     {
-                         reinterpret_cast<Link*>(_paste_table.back())->set_tail(geo);
-                         ++container_id;
-                     }
-                     else if (geo->memo()["id"].to_int() == copyed_links.back()->memo()["head_id"].to_int())
-                     {
-                         reinterpret_cast<Link*>(_paste_table.back())->set_head(geo);
-                         ++container_id;
-                     }
-                     if (container_id == 2)
-                     {
-                         break;
-                     }
-                 }
-             } */
-        }
-        copyed_links.pop_back();
-    }
-    for (std::vector<Geo::Geometry *>::iterator it = _graph->container_group(_current_group).begin(); it != _graph->container_group(_current_group).end();)
-    {
-        if ((*it)->memo().has("remove") && (*it)->memo()["remove"].to_bool())
-        {
             it = _graph->container_group(_current_group).remove(it);
         }
         else
@@ -785,22 +547,19 @@ bool Editer::paste(const double tx, const double ty)
         switch (geo->memo()["Type"].to_int())
         {
         case 0:
-            _graph->container_group(_current_group).append(reinterpret_cast<Container *>(geo)->clone());
+            _graph->container_group(_current_group).append(dynamic_cast<Container *>(geo)->clone());
             break;
         case 1:
-            _graph->container_group(_current_group).append(reinterpret_cast<CircleContainer *>(geo)->clone());
-            break;
-        case 2:
-            _graph->container_group(_current_group).append(reinterpret_cast<Link *>(geo)->clone());
+            _graph->container_group(_current_group).append(dynamic_cast<CircleContainer *>(geo)->clone());
             break;
         case 3:
-            _graph->container_group(_current_group).append(reinterpret_cast<Combination *>(geo)->clone());
+            _graph->container_group(_current_group).append(dynamic_cast<Combination *>(geo)->clone());
             break;
         case 20:
-            _graph->container_group(_current_group).append(reinterpret_cast<Geo::Polyline *>(geo)->clone());
+            _graph->container_group(_current_group).append(dynamic_cast<Geo::Polyline *>(geo)->clone());
             break;
         case 21:
-            _graph->container_group(_current_group).append(reinterpret_cast<Geo::Bezier *>(geo)->clone());
+            _graph->container_group(_current_group).append(dynamic_cast<Geo::Bezier *>(geo)->clone());
             break;
         default:
             break;
@@ -808,39 +567,6 @@ bool Editer::paste(const double tx, const double ty)
         _graph->container_group(_current_group).back()->translate(tx, ty);
         pasted_containers.push_back(_graph->container_group(_current_group).back());
     }
-
-    size_t count;
-    for (Geo::Geometry *link : pasted_containers)
-    {
-        if (dynamic_cast<Link *>(link) == nullptr)
-        {
-            continue;
-        }
-        count = 0;
-        for (Geo::Geometry *geo : pasted_containers)
-        {
-            if (geo->memo().has("id"))
-            {
-                if (geo->memo()["id"].to_int() == reinterpret_cast<Link *>(link)->memo()["tail_id"].to_int())
-                {
-                    reinterpret_cast<Link *>(link)->set_tail(geo);
-                    geo->related().push_back(link);
-                    ++count;
-                }
-                else if (geo->memo()["id"].to_int() == reinterpret_cast<Link *>(link)->memo()["head_id"].to_int())
-                {
-                    reinterpret_cast<Link *>(link)->set_head(geo);
-                    geo->related().push_back(link);
-                    ++count;
-                }
-                if (count == 2)
-                {
-                    break;
-                }
-            }
-        }
-    }
-
     return true;
 }
 
@@ -882,13 +608,13 @@ bool Editer::connect(const double connect_distance)
                     }
                     else
                     {
-                        reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
-                        polylines[indexs[i]]->insert(0, reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                        dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
+                        polylines[indexs[i]]->insert(0, dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
                     }
                 }
                 else
                 {
-                    Geo::Polyline *polyline = new Geo::Polyline(reinterpret_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
+                    Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
                     polyline->memo()["is_selected"] = true;
                     if (polylines[indexs[j]]->memo()["Type"].to_int() == 20)
                     {
@@ -896,8 +622,8 @@ bool Editer::connect(const double connect_distance)
                     }
                     else
                     {
-                        reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
-                        polyline->insert(0, reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                        dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
+                        polyline->insert(0, dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
                     }
                     group.remove(indexs[i]);
                     group.insert(indexs[i], polyline);
@@ -915,12 +641,12 @@ bool Editer::connect(const double connect_distance)
                     }
                     else
                     {
-                        polylines[indexs[i]]->insert(0, reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                        polylines[indexs[i]]->insert(0, dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
                     }
                 }
                 else
                 {
-                    Geo::Polyline *polyline = new Geo::Polyline(reinterpret_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
+                    Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
                     polyline->memo()["is_selected"] = true;
                     if (polylines[indexs[j]]->memo()["Type"].to_int() == 20)
                     {
@@ -928,7 +654,7 @@ bool Editer::connect(const double connect_distance)
                     }
                     else
                     {
-                        polyline->insert(0, reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                        polyline->insert(0, dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
                     }
                     group.remove(indexs[i]);
                     group.insert(indexs[i], polyline);
@@ -946,12 +672,12 @@ bool Editer::connect(const double connect_distance)
                     }
                     else
                     {
-                        polylines[indexs[i]]->append(reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                        polylines[indexs[i]]->append(dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
                     }
                 }
                 else
                 {
-                    Geo::Polyline *polyline = new Geo::Polyline(reinterpret_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
+                    Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
                     polyline->memo()["is_selected"] = true;
                     if (polylines[indexs[j]]->memo()["Type"].to_int() == 20)
                     {
@@ -959,7 +685,7 @@ bool Editer::connect(const double connect_distance)
                     }
                     else
                     {
-                        polyline->append(reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                        polyline->append(dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
                     }
                     group.remove(indexs[i]);
                     group.insert(indexs[i], polyline);
@@ -978,13 +704,13 @@ bool Editer::connect(const double connect_distance)
                     }
                     else
                     {
-                        reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
-                        polylines[indexs[i]]->append(reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                        dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
+                        polylines[indexs[i]]->append(dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
                     }
                 }
                 else
                 {
-                    Geo::Polyline *polyline = new Geo::Polyline(reinterpret_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
+                    Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
                     polyline->memo()["is_selected"] = true;
                     if (polylines[indexs[j]]->memo()["Type"].to_int() == 20)
                     {
@@ -992,8 +718,8 @@ bool Editer::connect(const double connect_distance)
                     }
                     else
                     {
-                        reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
-                        polyline->append(reinterpret_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                        dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
+                        polyline->append(dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
                     }
                     group.remove(indexs[i]);
                     group.insert(indexs[i], polyline);
@@ -1054,24 +780,6 @@ bool Editer::combinate()
     for (const size_t i : indexs)
     {
         combination->append(_graph->container_group(_current_group).pop(i));
-        if (combination->back()->memo()["Type"].to_int() <= 1)
-        {
-            for (Geo::Geometry *link : combination->back()->related())
-            {
-                if (dynamic_cast<Link *>(link) != nullptr)
-                {
-                    link->memo()["remove"] = true;
-                    if (reinterpret_cast<Link *>(link)->tail() == combination->back())
-                    {
-                        reinterpret_cast<Link *>(link)->set_tail(nullptr);
-                    }
-                    else
-                    {
-                        reinterpret_cast<Link *>(link)->set_head(nullptr);
-                    }
-                }
-            }
-        }
     }
     for (std::vector<Geo::Geometry *>::iterator it = _graph->container_group(_current_group).begin(); it != _graph->container_group(_current_group).end();)
     {
@@ -1118,8 +826,8 @@ bool Editer::split()
     Combination *combination = nullptr;
     for (const size_t i : indexs)
     {
-        combination = reinterpret_cast<Combination *>(_graph->container_group(_current_group).pop(i));
-        _graph->container_group(_current_group).append(*reinterpret_cast<ContainerGroup *>(combination));
+        combination = dynamic_cast<Combination *>(_graph->container_group(_current_group).pop(i));
+        _graph->container_group(_current_group).append(*dynamic_cast<ContainerGroup *>(combination));
         delete combination;
     }
     return true;
@@ -1138,10 +846,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
         reset_selected_mark();
     }
 
-    std::vector<Link *> head_links, tail_links;
     Container *c = nullptr;
     CircleContainer *cc = nullptr;
-    Link *l = nullptr;
     Geo::Polyline *p = nullptr;
     Geo::Bezier *b = nullptr;
     Combination *cb = nullptr;
@@ -1152,7 +858,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
         switch ((*it)->memo()["Type"].to_int())
         {
         case 0:
-            c = reinterpret_cast<Container *>(*it);
+            c = dynamic_cast<Container *>(*it);
             if (Geo::is_inside(point, c->shape(), true))
             {
                 c->memo()["is_selected"] = true;
@@ -1163,7 +869,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             c = nullptr;
             break;
         case 1:
-            cc = reinterpret_cast<CircleContainer *>(*it);
+            cc = dynamic_cast<CircleContainer *>(*it);
             if (Geo::is_inside(point, cc->shape(), true))
             {
                 cc->memo()["is_selected"] = true;
@@ -1173,114 +879,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             }
             cc = nullptr;
             break;
-        case 2:
-            l = reinterpret_cast<Link *>(*it);
-            if (l->size() > 0)
-            {
-                for (size_t i = 1, count = l->size(); i < count; ++i)
-                {
-                    if (Geo::distance(point, (*l)[i - 1], (*l)[i]) <= 2)
-                    {
-                        l->memo()["is_selected"] = true;
-                        _graph->container_group(_current_group).pop(it);
-                        _graph->container_group(_current_group).append(l);
-                        return l;
-                    }
-                }
-                if (dynamic_cast<CircleContainer *>(l->tail()) != nullptr)
-                {
-                    if (Geo::distance(point, reinterpret_cast<CircleContainer *>(l->tail())->center(), l->front()) <= 2)
-                    {
-                        l->memo()["is_selected"] = true;
-                        _graph->container_group(_current_group).pop(it);
-                        _graph->container_group(_current_group).append(l);
-                        return l;
-                    }
-                }
-                else
-                {
-                    if (Geo::distance(point, l->tail()->bounding_rect().center(), l->front()) <= 2)
-                    {
-                        l->memo()["is_selected"] = true;
-                        _graph->container_group(_current_group).pop(it);
-                        _graph->container_group(_current_group).append(l);
-                        return l;
-                    }
-                }
-                if (dynamic_cast<CircleContainer *>(l->head()) != nullptr)
-                {
-                    if (Geo::distance(point, l->back(), reinterpret_cast<CircleContainer *>(l->head())->center()) <= 2)
-                    {
-                        l->memo()["is_selected"] = true;
-                        _graph->container_group(_current_group).pop(it);
-                        _graph->container_group(_current_group).append(l);
-                        return l;
-                    }
-                }
-                else
-                {
-                    if (Geo::distance(point, l->back(), l->head()->bounding_rect().center()) <= 2)
-                    {
-                        l->memo()["is_selected"] = true;
-                        _graph->container_group(_current_group).pop(it);
-                        _graph->container_group(_current_group).append(l);
-                        return l;
-                    }
-                }
-            }
-            else
-            {
-                if (dynamic_cast<CircleContainer *>(l->tail()) != nullptr)
-                {
-                    if (dynamic_cast<CircleContainer *>(l->head()) != nullptr)
-                    {
-                        if (Geo::distance(point, reinterpret_cast<CircleContainer *>(l->tail())->center(), reinterpret_cast<CircleContainer *>(l->head())->center()) <= 2)
-                        {
-                            l->memo()["is_selected"] = true;
-                            _graph->container_group(_current_group).pop(it);
-                            _graph->container_group(_current_group).append(l);
-                            return l;
-                        }
-                    }
-                    else
-                    {
-                        if (Geo::distance(point, reinterpret_cast<CircleContainer *>(l->tail())->center(), l->head()->bounding_rect().center()) <= 2)
-                        {
-                            l->memo()["is_selected"] = true;
-                            _graph->container_group(_current_group).pop(it);
-                            _graph->container_group(_current_group).append(l);
-                            return l;
-                        }
-                    }
-                }
-                else
-                {
-                    if (dynamic_cast<CircleContainer *>(l->head()) != nullptr)
-                    {
-                        if (Geo::distance(point, l->tail()->bounding_rect().center(), reinterpret_cast<CircleContainer *>(l->head())->center()) <= 2)
-                        {
-                            l->memo()["is_selected"] = true;
-                            _graph->container_group(_current_group).pop(it);
-                            _graph->container_group(_current_group).append(l);
-                            return l;
-                        }
-                    }
-                    else
-                    {
-                        if (Geo::distance(point, l->tail()->bounding_rect().center(), l->head()->bounding_rect().center()) <= 2)
-                        {
-                            l->memo()["is_selected"] = true;
-                            _graph->container_group(_current_group).pop(it);
-                            _graph->container_group(_current_group).append(l);
-                            return l;
-                        }
-                    }
-                }
-            }
-            l = nullptr;
-            break;
         case 3:
-            cb = reinterpret_cast<Combination *>(*it);
+            cb = dynamic_cast<Combination *>(*it);
             if (Geo::is_inside(point, cb->border(), true))
             {
                 for (Geo::Geometry *item : *cb)
@@ -1288,7 +888,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     switch (item->memo()["Type"].to_int())
                     {
                     case 0:
-                        if (Geo::is_inside(point, reinterpret_cast<Container *>(item)->shape(), true))
+                        if (Geo::is_inside(point, dynamic_cast<Container *>(item)->shape(), true))
                         {
                             cb->memo()["is_selected"] = true;
                             _graph->container_group(_current_group).pop(it);
@@ -1297,7 +897,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         }
                         break;
                     case 1:
-                        if (Geo::is_inside(point, reinterpret_cast<CircleContainer *>(item)->shape(), true))
+                        if (Geo::is_inside(point, dynamic_cast<CircleContainer *>(item)->shape(), true))
                         {
                             cb->memo()["is_selected"] = true;
                             _graph->container_group(_current_group).pop(it);
@@ -1306,7 +906,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         }
                         break;
                     case 20:
-                        p = reinterpret_cast<Geo::Polyline *>(item);
+                        p = dynamic_cast<Geo::Polyline *>(item);
                         for (size_t i = 1, count = p->size(); i < count; ++i)
                         {
                             if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= 2)
@@ -1320,7 +920,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         p = nullptr;
                         break;
                     case 21:
-                        b = reinterpret_cast<Geo::Bezier *>(*it);
+                        b = dynamic_cast<Geo::Bezier *>(*it);
                         for (size_t i = 1, count = b->shape().size(); i < count; ++i)
                         {
                             if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= 2)
@@ -1341,7 +941,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             cb = nullptr;
             break;
         case 20:
-            p = reinterpret_cast<Geo::Polyline *>(*it);
+            p = dynamic_cast<Geo::Polyline *>(*it);
             for (size_t i = 1, count = p->size(); i < count; ++i)
             {
                 if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= 2)
@@ -1355,7 +955,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             p = nullptr;
             break;
         case 21:
-            b = reinterpret_cast<Geo::Bezier *>(*it);
+            b = dynamic_cast<Geo::Bezier *>(*it);
             if (b->memo()["is_selected"].to_bool())
             {
                 for (const Geo::Point &inner_point : *b)
@@ -1400,13 +1000,12 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::Rectangle &rect)
         return result;
     }
 
-    Link *link = nullptr;
     for (Geo::Geometry *container : _graph->container_group(_current_group))
     {
         switch (container->memo()["Type"].to_int())
         {
         case 0:
-            if (Geo::is_intersected(rect, reinterpret_cast<Container *>(container)->shape()))
+            if (Geo::is_intersected(rect, dynamic_cast<Container *>(container)->shape()))
             {
                 container->memo()["is_selected"] = true;
                 result.push_back(container);
@@ -1417,7 +1016,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::Rectangle &rect)
             }
             break;
         case 1:
-            if (Geo::is_intersected(rect, reinterpret_cast<CircleContainer *>(container)->shape()))
+            if (Geo::is_intersected(rect, dynamic_cast<CircleContainer *>(container)->shape()))
             {
                 container->memo()["is_selected"] = true;
                 result.push_back(container);
@@ -1427,119 +1026,34 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::Rectangle &rect)
                 container->memo()["is_selected"] = false;
             }
             break;
-        case 2:
-            link = reinterpret_cast<Link *>(container);
-            if (link->size() > 0)
-            {
-                if (link->size() > 1 && Geo::is_intersected(rect, *link))
-                {
-                    link->memo()["is_selected"] = true;
-                    result.push_back(link);
-                }
-                if (dynamic_cast<CircleContainer *>(link->tail()) != nullptr)
-                {
-                    if (Geo::is_intersected(rect, reinterpret_cast<CircleContainer *>(link->tail())->center(), link->front()))
-                    {
-                        link->memo()["is_selected"] = true;
-                        result.push_back(link);
-                    }
-                }
-                else
-                {
-                    if (Geo::is_intersected(rect, link->tail()->bounding_rect().center(), link->front()))
-                    {
-                        link->memo()["is_selected"] = true;
-                        result.push_back(link);
-                    }
-                }
-                if (dynamic_cast<CircleContainer *>(link->head()) != nullptr)
-                {
-                    if (Geo::is_intersected(rect, link->back(), reinterpret_cast<CircleContainer *>(link->head())->center()))
-                    {
-                        link->memo()["is_selected"] = true;
-                        result.push_back(link);
-                    }
-                }
-                else
-                {
-                    if (Geo::is_intersected(rect, link->back(), link->head()->bounding_rect().center()))
-                    {
-                        link->memo()["is_selected"] = true;
-                        result.push_back(link);
-                    }
-                }
-            }
-            else
-            {
-                if (dynamic_cast<CircleContainer *>(link->tail()) != nullptr)
-                {
-                    if (dynamic_cast<CircleContainer *>(link->head()) != nullptr)
-                    {
-                        if (Geo::is_intersected(rect, reinterpret_cast<CircleContainer *>(link->tail())->center(), reinterpret_cast<CircleContainer *>(link->head())->center()))
-                        {
-                            link->memo()["is_selected"] = true;
-                            result.push_back(link);
-                        }
-                    }
-                    else
-                    {
-                        if (Geo::is_intersected(rect, reinterpret_cast<CircleContainer *>(link->tail())->center(), link->head()->bounding_rect().center()))
-                        {
-                            link->memo()["is_selected"] = true;
-                            result.push_back(link);
-                        }
-                    }
-                }
-                else
-                {
-                    if (dynamic_cast<CircleContainer *>(link->head()) != nullptr)
-                    {
-                        if (Geo::is_intersected(rect, link->tail()->bounding_rect().center(), reinterpret_cast<CircleContainer *>(link->head())->center()))
-                        {
-                            link->memo()["is_selected"] = true;
-                            result.push_back(link);
-                        }
-                    }
-                    else
-                    {
-                        if (Geo::is_intersected(rect, link->tail()->bounding_rect().center(), link->head()->bounding_rect().center()))
-                        {
-                            link->memo()["is_selected"] = true;
-                            result.push_back(link);
-                        }
-                    }
-                }
-            }
-            link = nullptr;
-            break;
         case 3:
-            if (Geo::is_intersected(rect, reinterpret_cast<Combination *>(container)->border(), true))
+            if (Geo::is_intersected(rect, dynamic_cast<Combination *>(container)->border(), true))
             {
                 bool end = false;
-                for (Geo::Geometry *item : *reinterpret_cast<Combination *>(container))
+                for (Geo::Geometry *item : *dynamic_cast<Combination *>(container))
                 {
                     switch (item->memo()["Type"].to_int())
                     {
                     case 0:
-                        if (Geo::is_intersected(rect, reinterpret_cast<Container *>(item)->shape(), true))
+                        if (Geo::is_intersected(rect, dynamic_cast<Container *>(item)->shape(), true))
                         {
                             end = true;
                         }
                         break;
                     case 1:
-                        if (Geo::is_intersected(rect, reinterpret_cast<CircleContainer *>(item)->shape(), true))
+                        if (Geo::is_intersected(rect, dynamic_cast<CircleContainer *>(item)->shape(), true))
                         {
                             end = true;
                         }
                         break;
                     case 20:
-                        if (Geo::is_intersected(rect, *reinterpret_cast<Geo::Polyline *>(item)))
+                        if (Geo::is_intersected(rect, *dynamic_cast<Geo::Polyline *>(item)))
                         {
                             end = true;
                         }
                         break;
                     case 21:
-                        if (Geo::is_intersected(rect, reinterpret_cast<Geo::Bezier *>(item)->shape()))
+                        if (Geo::is_intersected(rect, dynamic_cast<Geo::Bezier *>(item)->shape()))
                         {
                             end = true;
                         }
@@ -1562,7 +1076,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::Rectangle &rect)
             }
             break;
         case 20:
-            if (Geo::is_intersected(rect, *reinterpret_cast<Geo::Polyline *>(container)))
+            if (Geo::is_intersected(rect, *dynamic_cast<Geo::Polyline *>(container)))
             {
                 container->memo()["is_selected"] = true;
                 result.push_back(container);
@@ -1573,7 +1087,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::Rectangle &rect)
             }
             break;
         case 21:
-            if (Geo::is_intersected(rect, reinterpret_cast<Geo::Bezier *>(container)->shape()))
+            if (Geo::is_intersected(rect, dynamic_cast<Geo::Bezier *>(container)->shape()))
             {
                 container->memo()["is_selected"] = true;
                 result.push_back(container);
@@ -1952,10 +1466,10 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
             switch (geo->memo()["Type"].to_int())
             {
             case 0:
-                temp = Geo::distance(center, reinterpret_cast<Container *>(geo)->shape());
+                temp = Geo::distance(center, dynamic_cast<Container *>(geo)->shape());
                 break;
             case 1:
-                temp = Geo::distance(center, reinterpret_cast<CircleContainer *>(geo)->center());
+                temp = Geo::distance(center, dynamic_cast<CircleContainer *>(geo)->center());
                 break;
             default:
                 break;
@@ -1982,10 +1496,10 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
                 switch (geo->memo()["Type"].to_int())
                 {
                 case 0:
-                    temp = Geo::distance(center, reinterpret_cast<Container *>(geo)->shape());
+                    temp = Geo::distance(center, dynamic_cast<Container *>(geo)->shape());
                     break;
                 case 1:
-                    temp = Geo::distance(center, reinterpret_cast<CircleContainer *>(geo)->center());
+                    temp = Geo::distance(center, dynamic_cast<CircleContainer *>(geo)->center());
                     break;
                 default:
                     break;
@@ -2043,10 +1557,10 @@ bool Editer::auto_aligning(Geo::Geometry *points, const double x, const double y
             switch (geo->memo()["Type"].to_int())
             {
             case 0:
-                temp = Geo::distance(anchor, reinterpret_cast<Container *>(geo)->shape());
+                temp = Geo::distance(anchor, dynamic_cast<Container *>(geo)->shape());
                 break;
             case 1:
-                temp = Geo::distance(anchor, reinterpret_cast<CircleContainer *>(geo)->center());
+                temp = Geo::distance(anchor, dynamic_cast<CircleContainer *>(geo)->center());
                 break;
             default:
                 break;
@@ -2073,10 +1587,10 @@ bool Editer::auto_aligning(Geo::Geometry *points, const double x, const double y
                 switch (geo->memo()["Type"].to_int())
                 {
                 case 0:
-                    temp = Geo::distance(anchor, reinterpret_cast<Container *>(geo)->shape());
+                    temp = Geo::distance(anchor, dynamic_cast<Container *>(geo)->shape());
                     break;
                 case 1:
-                    temp = Geo::distance(anchor, reinterpret_cast<CircleContainer *>(geo)->center());
+                    temp = Geo::distance(anchor, dynamic_cast<CircleContainer *>(geo)->center());
                     break;
                 default:
                     break;
@@ -2134,10 +1648,10 @@ bool Editer::auto_aligning(Geo::Coord &coord, std::list<QLineF> &reflines, const
             switch (geo->memo()["Type"].to_int())
             {
             case 0:
-                temp = Geo::distance(anchor, reinterpret_cast<Container *>(geo)->shape());
+                temp = Geo::distance(anchor, dynamic_cast<Container *>(geo)->shape());
                 break;
             case 1:
-                temp = Geo::distance(anchor, reinterpret_cast<CircleContainer *>(geo)->center());
+                temp = Geo::distance(anchor, dynamic_cast<CircleContainer *>(geo)->center());
                 break;
             default:
                 break;
@@ -2164,10 +1678,10 @@ bool Editer::auto_aligning(Geo::Coord &coord, std::list<QLineF> &reflines, const
                 switch (geo->memo()["Type"].to_int())
                 {
                 case 0:
-                    temp = Geo::distance(anchor, reinterpret_cast<Container *>(geo)->shape());
+                    temp = Geo::distance(anchor, dynamic_cast<Container *>(geo)->shape());
                     break;
                 case 1:
-                    temp = Geo::distance(anchor, reinterpret_cast<CircleContainer *>(geo)->center());
+                    temp = Geo::distance(anchor, dynamic_cast<CircleContainer *>(geo)->center());
                     break;
                 default:
                     break;
@@ -2214,16 +1728,12 @@ void Editer::auto_layering()
     }
 
     std::vector<Geo::Geometry *> all_containers, all_polylines;
-    std::vector<Link *> all_links;
     for (ContainerGroup &group : _graph->container_groups())
     {
         while (!group.empty())
         {
             switch (group.back()->memo()["Type"].to_int())
             {
-            case 2:
-                all_links.emplace_back(reinterpret_cast<Link *>(group.pop_back()));
-                break;
             case 20:
             case 21:
                 all_polylines.emplace_back(group.pop_back());
@@ -2244,10 +1754,10 @@ void Editer::auto_layering()
             switch (item->memo()["Type"].to_int())
             {
             case 20:
-                _graph->back().append(reinterpret_cast<Geo::Polyline *>(item));
+                _graph->back().append(dynamic_cast<Geo::Polyline *>(item));
                 break;
             case 21:
-                _graph->back().append(reinterpret_cast<Geo::Bezier *>(item));
+                _graph->back().append(dynamic_cast<Geo::Bezier *>(item));
                 break;
             default:
                 break;
@@ -2264,11 +1774,11 @@ void Editer::auto_layering()
         switch (all_containers[i]->memo()["Type"].to_int())
         {
         case 0:
-            _graph->back().append(reinterpret_cast<Container *>(all_containers[i]));
+            _graph->back().append(dynamic_cast<Container *>(all_containers[i]));
             all_containers.erase(all_containers.begin() + i);
             break;
         case 1:
-            _graph->back().append(reinterpret_cast<CircleContainer *>(all_containers[i]));
+            _graph->back().append(dynamic_cast<CircleContainer *>(all_containers[i]));
             all_containers.erase(all_containers.begin() + i);
             break;
         default:
@@ -2288,19 +1798,19 @@ void Editer::auto_layering()
             switch (all_containers[i]->memo()["Type"].to_int())
             {
             case 0:
-                container = reinterpret_cast<Container *>(all_containers[i]);
+                container = dynamic_cast<Container *>(all_containers[i]);
                 for (Geo::Geometry *geo : _graph->back())
                 {
                     switch (geo->memo()["Type"].to_int())
                     {
                     case 0:
-                        if (Geo::is_intersected(container->shape(), reinterpret_cast<Container *>(geo)->shape()))
+                        if (Geo::is_intersected(container->shape(), dynamic_cast<Container *>(geo)->shape()))
                         {
                             flag = false;
                         }
                         break;
                     case 1:
-                        if (Geo::is_inside(reinterpret_cast<CircleContainer *>(geo)->center(), container->shape()))
+                        if (Geo::is_inside(dynamic_cast<CircleContainer *>(geo)->center(), container->shape()))
                         {
                             flag = false;
                         }
@@ -2321,19 +1831,19 @@ void Editer::auto_layering()
                 }
                 break;
             case 1:
-                circle_container = reinterpret_cast<CircleContainer *>(all_containers[i]);
+                circle_container = dynamic_cast<CircleContainer *>(all_containers[i]);
                 for (Geo::Geometry *geo : _graph->back())
                 {
                     switch (geo->memo()["Type"].to_int())
                     {
                     case 0:
-                        if (Geo::is_inside(circle_container->center(), reinterpret_cast<Container *>(geo)->shape()))
+                        if (Geo::is_inside(circle_container->center(), dynamic_cast<Container *>(geo)->shape()))
                         {
                             flag = false;
                         }
                         break;
                     case 1:
-                        if (Geo::is_intersected(circle_container->shape(), reinterpret_cast<CircleContainer *>(geo)->shape()))
+                        if (Geo::is_intersected(circle_container->shape(), dynamic_cast<CircleContainer *>(geo)->shape()))
                         {
                             flag = false;
                         }
@@ -2357,56 +1867,6 @@ void Editer::auto_layering()
                 break;
             }
         }
-
-        for (size_t i = 0, count = all_links.size(); i < count; ++i)
-        {
-            for (Geo::Geometry *geo : _graph->back())
-            {
-                if (geo == all_links[i]->head())
-                {
-                    _graph->back().append(all_links[i--]);
-                    --count;
-                    it = std::find(all_containers.begin(), all_containers.end(), all_links[i]->tail());
-                    if (it != all_containers.end())
-                    {
-                        switch ((*it)->memo()["Type"].to_int())
-                        {
-                        case 0:
-                            _graph->back().append(reinterpret_cast<Container *>(*it));
-                            break;
-                        case 1:
-                            _graph->back().append(reinterpret_cast<CircleContainer *>(*it));
-                            break;
-                        default:
-                            break;
-                        }
-                        all_containers.erase(it);
-                    }
-                }
-                else if (geo == all_links[i]->tail())
-                {
-                    _graph->back().append(all_links[i--]);
-                    --count;
-                    it = std::find(all_containers.begin(), all_containers.end(), all_links[i]->head());
-                    if (it != all_containers.end())
-                    {
-                        switch ((*it)->memo()["Type"].to_int())
-                        {
-                        case 0:
-                            _graph->back().append(reinterpret_cast<Container *>(*it));
-                            break;
-                        case 1:
-                            _graph->back().append(reinterpret_cast<CircleContainer *>(*it));
-                            break;
-                        default:
-                            break;
-                        }
-                        all_containers.erase(it);
-                    }
-                }
-            }
-        }
-    
         _graph->append_group();
     }
     
@@ -2415,11 +1875,11 @@ void Editer::auto_layering()
     {
         if (dynamic_cast<Geo::Bezier *>(geo) != nullptr)
         {
-            _graph->back().append(reinterpret_cast<Geo::Bezier *>(geo));
+            _graph->back().append(dynamic_cast<Geo::Bezier *>(geo));
         }
         else
         {
-            _graph->back().append(reinterpret_cast<Geo::Polyline *>(geo));
+            _graph->back().append(dynamic_cast<Geo::Polyline *>(geo));
         }
     }
 

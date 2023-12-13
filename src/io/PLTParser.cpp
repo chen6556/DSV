@@ -184,27 +184,27 @@ void Importer::end()
     {
         for (Geo::Geometry *geo : _graph->container_group())
         {
-            if (geo->memo()["Type"].to_int() == 0 && Geo::is_inside(text.pos, reinterpret_cast<Container *>(geo)->shape(), true))
+            if (geo->memo()["Type"].to_int() == 0 && Geo::is_inside(text.pos, dynamic_cast<Container *>(geo)->shape(), true))
             {
-                if (reinterpret_cast<Container *>(geo)->text().isEmpty())
+                if (dynamic_cast<Container *>(geo)->text().isEmpty())
                 {
-                    reinterpret_cast<Container *>(geo)->set_text(QString::fromStdString(text.txt));
+                    dynamic_cast<Container *>(geo)->set_text(QString::fromStdString(text.txt));
                 }
                 else
                 {
-                    reinterpret_cast<Container *>(geo)->set_text(reinterpret_cast<Container *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
+                    dynamic_cast<Container *>(geo)->set_text(dynamic_cast<Container *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
                 }
                 break;
             }
-            else if (geo->memo()["Type"].to_int() == 1 && Geo::is_inside(text.pos, reinterpret_cast<CircleContainer *>(geo)->shape(), true))
+            else if (geo->memo()["Type"].to_int() == 1 && Geo::is_inside(text.pos, dynamic_cast<CircleContainer *>(geo)->shape(), true))
             {
-                if (reinterpret_cast<CircleContainer *>(geo)->text().isEmpty())
+                if (dynamic_cast<CircleContainer *>(geo)->text().isEmpty())
                 {
-                    reinterpret_cast<CircleContainer *>(geo)->set_text(QString::fromStdString(text.txt));
+                    dynamic_cast<CircleContainer *>(geo)->set_text(QString::fromStdString(text.txt));
                 }
                 else
                 {
-                    reinterpret_cast<CircleContainer *>(geo)->set_text(reinterpret_cast<CircleContainer *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
+                    dynamic_cast<CircleContainer *>(geo)->set_text(dynamic_cast<CircleContainer *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
                 }
                 break;
             }

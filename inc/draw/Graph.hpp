@@ -103,8 +103,6 @@ public:
 
     void append(CircleContainer *container, const size_t index = 0);
 
-    void append(Link *link, const size_t index = 0);
-
     void append(Geo::Polyline *polyline, const size_t index = 0);
 
     void append(Geo::Bezier *bezier, const size_t index = 0);
