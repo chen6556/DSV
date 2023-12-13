@@ -152,6 +152,11 @@ const size_t Editer::groups_count() const
     return _graph->container_groups().size();
 }
 
+void Editer::set_ratio(const double value)
+{
+    _ratio = value;
+}
+
 
 
 void Editer::append_points()
@@ -846,6 +851,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
         reset_selected_mark();
     }
 
+    const double catch_distance = 2 / _ratio;
     Container *c = nullptr;
     CircleContainer *cc = nullptr;
     Geo::Polyline *p = nullptr;
@@ -909,7 +915,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         p = dynamic_cast<Geo::Polyline *>(item);
                         for (size_t i = 1, count = p->size(); i < count; ++i)
                         {
-                            if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= 2)
+                            if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= catch_distance)
                             {
                                 cb->memo()["is_selected"] = true;
                                 _graph->container_group(_current_group).pop(it);
@@ -923,7 +929,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         b = dynamic_cast<Geo::Bezier *>(*it);
                         for (size_t i = 1, count = b->shape().size(); i < count; ++i)
                         {
-                            if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= 2)
+                            if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance)
                             {
                                 cb->memo()["is_selected"] = true;
                                 _graph->container_group(_current_group).pop(it);
@@ -944,7 +950,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             p = dynamic_cast<Geo::Polyline *>(*it);
             for (size_t i = 1, count = p->size(); i < count; ++i)
             {
-                if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= 2)
+                if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= catch_distance)
                 {
                     p->memo()["is_selected"] = true;
                     _graph->container_group(_current_group).pop(it);
@@ -960,7 +966,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             {
                 for (const Geo::Point &inner_point : *b)
                 {
-                    if (Geo::distance(point, inner_point) <= 3)
+                    if (Geo::distance(point, inner_point) <= catch_distance * 1.5)
                     {
                         return b;
                     }
@@ -968,7 +974,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             }
             for (size_t i = 1, count = b->shape().size(); i < count; ++i)
             {
-                if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= 2)
+                if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance)
                 {
                     b->memo()["is_selected"] = true;
                     _graph->container_group(_current_group).pop(it);
@@ -1305,6 +1311,7 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
     Geo::Coord center(rect.center().coord());
     double left = rect.left(), top = rect.top(), right = rect.right(), bottom = rect.bottom();
     const double heigh = top - bottom, width = right - left;
+    const double align_distance = 2 / _ratio;
 
     const size_t count = reflines.size();
     const Geo::Rectangle dst_rect(dst->bounding_rect());
@@ -1312,7 +1319,7 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
     const double dst_left = dst_rect.left(), dst_top = dst_rect.top(), dst_right = dst_rect.right(), dst_bottom = dst_rect.bottom();
     const double dst_heigh = dst_top - dst_bottom, dst_width = dst_right - dst_left;
 
-    if (std::abs(dst_center.x - center.x) < 2)
+    if (std::abs(dst_center.x - center.x) < align_distance)
     {
         reflines.emplace_back(QLineF(dst_center.x, std::min(top, dst_top), dst_center.x, std::max(bottom, dst_bottom)));
         src->translate(dst_center.x - center.x, 0);
@@ -1320,7 +1327,7 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
         right += (dst_center.x - center.x);
         center.x = dst_center.x;
     }
-    if (std::abs(dst_center.y - center.y) < 2)
+    if (std::abs(dst_center.y - center.y) < align_distance)
     {
         reflines.emplace_back(QLineF(std::min(left, dst_left), dst_center.y, std::max(right, dst_right), dst_center.y));
         src->translate(0, dst_center.y - center.y);
@@ -1328,7 +1335,7 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
         bottom += (dst_center.y - center.y);
         center.y = dst_center.y;
     }
-    if (std::abs(dst_top - top) < 2)
+    if (std::abs(dst_top - top) < align_distance)
     {
         reflines.emplace_back(QLineF(std::min(left, dst_left), dst_top, std::max(right, dst_right), dst_top));
         src->translate(0, dst_top - top);
@@ -1336,7 +1343,7 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
         bottom += (dst_top - top);
         top = dst_top;
     }
-    if (std::abs(dst_bottom - top) < 2)
+    if (std::abs(dst_bottom - top) < align_distance)
     {
         reflines.emplace_back(QLineF(std::min(left, dst_left), dst_bottom, std::max(right, dst_right), dst_bottom));
         src->translate(0, dst_bottom - top);
@@ -1344,7 +1351,7 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
         bottom += (dst_bottom - top);
         top = dst_bottom;
     }
-    if (std::abs(dst_top - bottom) < 2)
+    if (std::abs(dst_top - bottom) < align_distance)
     {
         reflines.emplace_back(QLineF(std::min(left, dst_left), dst_top, std::max(right, dst_right), dst_top));
         src->translate(0, dst_top - bottom);
@@ -1352,7 +1359,7 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
         top += (dst_top - bottom);
         bottom = dst_top;
     }
-    if (std::abs(dst_bottom - bottom) < 2)
+    if (std::abs(dst_bottom - bottom) < align_distance)
     {
         reflines.emplace_back(QLineF(std::min(left, dst_left), dst_bottom, std::max(right, dst_right), dst_bottom));
         src->translate(0, dst_bottom - bottom);
@@ -1360,7 +1367,7 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
         top += (dst_bottom - bottom);
         bottom = dst_bottom;
     }
-    if (std::abs(dst_left - left) < 2)
+    if (std::abs(dst_left - left) < align_distance)
     {
         reflines.emplace_back(QLineF(dst_left, std::max(bottom, dst_bottom), dst_left, std::min(top, dst_top)));
         src->translate(dst_left - left, 0);
@@ -1368,7 +1375,7 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
         right += (dst_left - left);
         left = dst_left;
     }
-    if (std::abs(dst_right - left) < 2)
+    if (std::abs(dst_right - left) < align_distance)
     {
         reflines.emplace_back(QLineF(dst_right, std::max(bottom, dst_bottom), dst_right, std::min(top, dst_top)));
         src->translate(dst_right - left, 0);
@@ -1376,7 +1383,7 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
         right += (dst_right - left);
         left = dst_right;
     }
-    if (std::abs(dst_left - right) < 2)
+    if (std::abs(dst_left - right) < align_distance)
     {
         reflines.emplace_back(QLineF(dst_left, std::max(bottom, dst_bottom), dst_left, std::min(top, dst_top)));
         src->translate(dst_left - right, 0);
@@ -1384,7 +1391,7 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
         left += (dst_left - right);
         right = dst_left;
     }
-    if (std::abs(dst_right - right) < 2)
+    if (std::abs(dst_right - right) < align_distance)
     {
         reflines.emplace_back(QLineF(dst_right, std::max(bottom, dst_bottom), dst_right, std::min(top, dst_top)));
         src->translate(dst_right - right, 0);
@@ -1408,33 +1415,34 @@ bool Editer::auto_aligning(Geo::Coord &coord, const Geo::Geometry *dst, std::lis
     const Geo::Coord dst_center(dst_rect.center().coord());
     const double dst_left = dst_rect.left(), dst_top = dst_rect.top(), dst_right = dst_rect.right(), dst_bottom = dst_rect.bottom();
     const double dst_heigh = dst_top - dst_bottom, dst_width = dst_right - dst_left;
+    const double align_distance = 2 / _ratio;
 
-    if (std::abs(dst_center.x - coord.x) < 2)
+    if (std::abs(dst_center.x - coord.x) < align_distance)
     {
         reflines.emplace_back(QLineF(dst_center.x, std::min(coord.y, dst_top), dst_center.x, std::max(coord.y, dst_bottom)));
         coord.x = dst_center.x;
     }
-    if (std::abs(dst_center.y - coord.y) < 2)
+    if (std::abs(dst_center.y - coord.y) < align_distance)
     {
         reflines.emplace_back(QLineF(std::min(coord.x, dst_left), dst_center.y, std::max(coord.x, dst_right), dst_center.y));
         coord.y = dst_center.y;
     }
-    if (std::abs(dst_top - coord.y) < 2)
+    if (std::abs(dst_top - coord.y) < align_distance)
     {
         reflines.emplace_back(QLineF(std::min(coord.x, dst_left), dst_top, std::max(coord.x, dst_right), dst_top));
         coord.y = dst_top;
     }
-    if (std::abs(dst_bottom - coord.y) < 2)
+    if (std::abs(dst_bottom - coord.y) < align_distance)
     {
         reflines.emplace_back(QLineF(std::min(coord.x, dst_left), dst_bottom, std::max(coord.x, dst_right), dst_bottom));
         coord.y = dst_bottom;
     }
-    if (std::abs(dst_left - coord.x) < 2)
+    if (std::abs(dst_left - coord.x) < align_distance)
     {
         reflines.emplace_back(QLineF(dst_left, std::max(coord.y, dst_bottom), dst_left, std::min(coord.y, dst_top)));
         coord.x = dst_left;
     }
-    if (std::abs(dst_right - coord.x) < 2)
+    if (std::abs(dst_right - coord.x) < align_distance)
     {
         reflines.emplace_back(QLineF(dst_right, std::max(coord.y, dst_bottom), dst_right, std::min(coord.y, dst_top)));
         coord.x = dst_right;
