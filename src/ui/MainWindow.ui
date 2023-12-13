@@ -19,7 +19,7 @@
    <enum>Qt::StrongFocus</enum>
   </property>
   <property name="windowTitle">
-   <string>DSV</string>
+   <string>DSV 0.4.1</string>
   </property>
   <property name="styleSheet">
    <string notr="true">QMainWindow#MainWindow{background:rgb(142,142,142);}
