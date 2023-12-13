@@ -380,18 +380,6 @@ void Graph::append(CircleContainer *container, const size_t index)
     }
 }
 
-void Graph::append(Link *link, const size_t index)
-{
-    assert(index < _container_groups.size());
-    if (!link->empty())
-    {
-        container_group(index).append(link);
-        link->tail()->related().push_back(link);
-        link->head()->related().push_back(link);
-        link->memo()["is_selected"] = false;
-    }
-}
-
 void Graph::append(Geo::Polyline *polyline, const size_t index)
 {
     assert(index < _container_groups.size());

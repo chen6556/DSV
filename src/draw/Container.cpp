@@ -173,173 +173,6 @@ CircleContainer *CircleContainer::clone() const
     return new CircleContainer(*this);
 }
 
-// Link
-
-Link::Link(std::vector<Geo::Point>::const_iterator begin, std::vector<Geo::Point>::const_iterator end, Geo::Geometry *tail, Geo::Geometry *head)
-    :Geo::Polyline(begin, end), _tail(tail), _head(head)
-{
-    _memo["Type"] = 2;
-}
-
-Link::Link(const Geo::Polyline &polyline, Geo::Geometry *tail, Geo::Geometry *head)
-    : Geo::Polyline(polyline), _tail(tail), _head(head)
-{
-    _memo["Type"] = 2;
-}
-
-Link::Link(const Link &link)
-    : Geo::Polyline(link), _tail(link._tail), _head(link._head)
-{
-    _memo["Type"] = 2;
-}
-
-Link::Link(const Link &&link)
-    : Geo::Polyline(std::move(link)), _tail(std::move(link._tail)), _head(std::move(link._head))
-{
-    _memo["Type"] = 2;
-}
-
-Link &Link::operator=(const Link &link)
-{
-    if (this != &link)
-    {
-        Polyline::operator=(link);
-        _tail = link._tail;
-        _head = link._head;
-    }
-    return *this;
-}
-
-Link &Link::operator=(const Link &&link)
-{
-    if (this != &link)
-    {
-        Polyline::operator=(std::move(link));
-        _tail = std::move(link._tail);
-        _head = std::move(link._head);
-    }
-    return *this;
-}
-
-const double Link::length() const
-{
-    if (_head == nullptr || _tail == nullptr)
-    {
-        return 0;
-    }
-    if (Polyline::empty())
-    {
-        if (dynamic_cast<CircleContainer *>(_tail))
-        {
-            if (dynamic_cast<CircleContainer *>(_head))
-            {
-                return Geo::distance(reinterpret_cast<CircleContainer *>(_tail)->center(), reinterpret_cast<CircleContainer *>(_head)->center());
-            }
-            else
-            {
-                return Geo::distance(reinterpret_cast<CircleContainer *>(_tail)->center(), _head->bounding_rect().center());
-            }
-        }
-        else
-        {
-            if (dynamic_cast<CircleContainer *>(_head))
-            {
-                return Geo::distance(_tail->bounding_rect().center(), reinterpret_cast<CircleContainer *>(_head)->center());
-            }
-            else
-            {
-                return Geo::distance(_tail->bounding_rect().center(), _head->bounding_rect().center());
-            }
-        }
-    }
-    else
-    {
-        double result = 0;
-        if (dynamic_cast<CircleContainer *>(_tail))
-        {
-            result += Geo::distance(reinterpret_cast<CircleContainer *>(_tail)->center(), this->front());
-        }
-        else
-        {
-            result += Geo::distance(_tail->bounding_rect().center(), this->front());
-        }
-        result += Polyline::length();
-        if (dynamic_cast<CircleContainer *>(_head))
-        {
-            result += Geo::distance(reinterpret_cast<CircleContainer *>(_head)->center(), this->back());
-        }
-        else
-        {
-            result += Geo::distance(_head->bounding_rect().center(), this->back());
-        }
-        return result;
-    }
-}
-
-const bool Link::empty() const
-{
-    return _tail == nullptr || _head == nullptr;
-}
-
-void Link::clear()
-{
-    Polyline::clear();
-    _tail = nullptr;
-    _head = nullptr;
-}
-
-Link *Link::clone() const
-{
-    return new Link(*this);
-}
-
-Geo::Rectangle Link::bounding_rect() const
-{
-    if (empty())
-    {
-        return Geo::Rectangle();
-    }
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
-    for (const Geo::Point &point : *this)
-    {
-        x0 = std::min(x0, point.coord().x);
-        y0 = std::min(y0, point.coord().y);
-        x1 = std::max(x1, point.coord().x);
-        y1 = std::max(y1, point.coord().y);
-    }
-    return Geo::Rectangle(x0, y0, x1, y1);
-}
-
-Geo::Geometry *Link::tail()
-{
-    return _tail;
-}
-
-const Geo::Geometry *Link::tail() const
-{
-    return _tail;
-}
-
-void Link::set_tail(Geo::Geometry *geo)
-{
-    _tail = geo;
-}
-
-Geo::Geometry *Link::head()
-{
-    return _head;
-}
-
-const Geo::Geometry *Link::head() const
-{
-    return _head;
-}
-
-void Link::set_head(Geo::Geometry *geo)
-{
-    _head = geo;
-}
-
 // ContainerGroup
 
 ContainerGroup::ContainerGroup(const ContainerGroup &containers)
@@ -355,9 +188,6 @@ ContainerGroup::ContainerGroup(const ContainerGroup &containers)
         case 1:
             _containers.push_back(reinterpret_cast<const CircleContainer *>(geo)->clone());
             break;
-        case 2:
-            _containers.push_back(reinterpret_cast<const Link *>(geo)->clone());
-            break;
         case 3:
             _containers.push_back(reinterpret_cast<const Combination *>(geo)->clone());
             break;
@@ -370,65 +200,6 @@ ContainerGroup::ContainerGroup(const ContainerGroup &containers)
         default:
             break;
         }
-    }
-
-    std::vector<Geo::Geometry *>::iterator link_it = _containers.begin();
-    const Link *link;
-    const Container *container;
-    const CircleContainer *circlecontainer;
-    size_t count, index;
-    for (const Geo::Geometry *geo0 : containers)
-    {
-        link = dynamic_cast<const Link *>(geo0);
-        if (link == nullptr)
-        {
-            ++link_it;
-            continue;
-        }
-        count = index = 0;
-        for (const Geo::Geometry *geo1 : containers)
-        {
-            container = dynamic_cast<const Container *>(geo1);
-            circlecontainer = dynamic_cast<const CircleContainer *>(geo1);
-            if (container == nullptr && circlecontainer == nullptr)
-            {
-                ++index;
-                continue;
-            }
-            if (container == link->tail())
-            {
-                reinterpret_cast<Link *>(*link_it)->set_tail(_containers[index]);
-                _containers[index]->related().push_back(*link_it);
-                ++count;
-            }
-            else if (container == link->head())
-            {
-                reinterpret_cast<Link *>(*link_it)->set_head(_containers[index]);
-                _containers[index]->related().push_back(*link_it);
-                ++count;
-            }
-            else if (circlecontainer == link->tail())
-            {
-                reinterpret_cast<Link *>(*link_it)->set_tail(_containers[index]);
-                _containers[index]->related().push_back(*link_it);
-                ++count;
-            }
-            else if (circlecontainer == link->head())
-            {
-                reinterpret_cast<Link *>(*link_it)->set_head(_containers[index]);
-                _containers[index]->related().push_back(*link_it);
-                ++count;
-            }
-            if (count == 2)
-            {
-                break;
-            }
-            else
-            {
-                ++index;
-            }
-        }
-        ++link_it;
     }
 }
 
@@ -445,9 +216,6 @@ ContainerGroup::ContainerGroup(const ContainerGroup &&containers)
         case 1:
             _containers.push_back(reinterpret_cast<const CircleContainer *>(geo)->clone());
             break;
-        case 2:
-            _containers.push_back(reinterpret_cast<const Link *>(geo)->clone());
-            break;
         case 3:
             _containers.push_back(reinterpret_cast<const Combination *>(geo)->clone());
             break;
@@ -460,65 +228,6 @@ ContainerGroup::ContainerGroup(const ContainerGroup &&containers)
         default:
             break;
         }
-    }
-
-    std::vector<Geo::Geometry *>::iterator link_it = _containers.begin();
-    const Link *link;
-    const Container *container;
-    const CircleContainer *circlecontainer;
-    size_t count, index;
-    for (const Geo::Geometry *geo0 : containers)
-    {
-        link = dynamic_cast<const Link *>(geo0);
-        if (link == nullptr)
-        {
-            ++link_it;
-            continue;
-        }
-        count = index = 0;
-        for (const Geo::Geometry *geo1 : containers)
-        {
-            container = dynamic_cast<const Container *>(geo1);
-            circlecontainer = dynamic_cast<const CircleContainer *>(geo1);
-            if (container == nullptr && circlecontainer == nullptr)
-            {
-                ++index;
-                continue;
-            }
-            if (container == link->tail())
-            {
-                reinterpret_cast<Link *>(*link_it)->set_tail(_containers[index]);
-                _containers[index]->related().push_back(*link_it);
-                ++count;
-            }
-            else if (container == link->head())
-            {
-                reinterpret_cast<Link *>(*link_it)->set_head(_containers[index]);
-                _containers[index]->related().push_back(*link_it);
-                ++count;
-            }
-            else if (circlecontainer == link->tail())
-            {
-                reinterpret_cast<Link *>(*link_it)->set_tail(_containers[index]);
-                _containers[index]->related().push_back(*link_it);
-                ++count;
-            }
-            else if (circlecontainer == link->head())
-            {
-                reinterpret_cast<Link *>(*link_it)->set_head(_containers[index]);
-                _containers[index]->related().push_back(*link_it);
-                ++count;
-            }
-            if (count == 2)
-            {
-                break;
-            }
-            else
-            {
-                ++index;
-            }
-        }
-        ++link_it;
     }
 }
 
@@ -568,9 +277,6 @@ ContainerGroup *ContainerGroup::clone() const
         case 1:
             containers.push_back(reinterpret_cast<const CircleContainer *>(geo)->clone());
             break;
-        case 2:
-            containers.push_back(reinterpret_cast<const Link *>(geo)->clone());
-            break;
         case 3:
             containers.push_back(reinterpret_cast<const Combination *>(geo)->clone());
             break;
@@ -584,68 +290,7 @@ ContainerGroup *ContainerGroup::clone() const
             break;
         }
     }
-    ContainerGroup *graph = new ContainerGroup(containers.cbegin(), containers.cend());
-
-    std::vector<Geo::Geometry *>::iterator link_it = containers.begin();
-    const Link *link;
-    const Container *container;
-    const CircleContainer *circlecontainer;
-    size_t count, index;
-    for (const Geo::Geometry *geo0 : _containers)
-    {
-        link = dynamic_cast<const Link *>(geo0);
-        if (link == nullptr)
-        {
-            ++link_it;
-            continue;
-        }
-        count = index = 0;
-        for (const Geo::Geometry *geo1 : _containers)
-        {
-            container = dynamic_cast<const Container *>(geo1);
-            circlecontainer = dynamic_cast<const CircleContainer *>(geo1);
-            if (container == nullptr && circlecontainer == nullptr)
-            {
-                ++index;
-                continue;
-            }
-            if (container == link->tail())
-            {
-                reinterpret_cast<Link *>(*link_it)->set_tail(containers[index]);
-                containers[index]->related().push_back(*link_it);
-                ++count;
-            }
-            else if (container == link->head())
-            {
-                reinterpret_cast<Link *>(*link_it)->set_head(containers[index]);
-                containers[index]->related().push_back(*link_it);
-                ++count;
-            }
-            else if (circlecontainer == link->tail())
-            {
-                reinterpret_cast<Link *>(*link_it)->set_tail(containers[index]);
-                containers[index]->related().push_back(*link_it);
-                ++count;
-            }
-            else if (circlecontainer == link->head())
-            {
-                reinterpret_cast<Link *>(*link_it)->set_head(containers[index]);
-                containers[index]->related().push_back(*link_it);
-                ++count;
-            }
-            if (count == 2)
-            {
-                break;
-            }
-            else
-            {
-                ++index;
-            }
-        }
-        ++link_it;
-    }
-
-    return graph;
+    return new ContainerGroup(containers.cbegin(), containers.cend());
 }
 
 void ContainerGroup::transfer(ContainerGroup &group)
@@ -677,9 +322,6 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
             case 1:
                 _containers.push_back(reinterpret_cast<const CircleContainer *>(geo)->clone());
                 break;
-            case 2:
-                _containers.push_back(reinterpret_cast<const Link *>(geo)->clone());
-                break;
             case 3:
                 _containers.push_back(reinterpret_cast<const Combination *>(geo)->clone());
                 break;
@@ -694,64 +336,6 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
             }
         }
         _ratio = group._ratio;
-        std::vector<Geo::Geometry *>::iterator link_it = _containers.begin();
-        const Link *link;
-        const Container *container;
-        const CircleContainer *circlecontainer;
-        size_t count, index;
-        for (const Geo::Geometry *geo0 : group._containers)
-        {
-            link = dynamic_cast<const Link *>(geo0);
-            if (link == nullptr)
-            {
-                ++link_it;
-                continue;
-            }
-            count = index = 0;
-            for (const Geo::Geometry *geo1 : group._containers)
-            {
-                container = dynamic_cast<const Container *>(geo1);
-                circlecontainer = dynamic_cast<const CircleContainer *>(geo1);
-                if (container == nullptr && circlecontainer == nullptr)
-                {
-                    ++index;
-                    continue;
-                }
-                if (container == link->tail())
-                {
-                    reinterpret_cast<Link *>(*link_it)->set_tail(_containers[index]);
-                    _containers[index]->related().push_back(*link_it);
-                    ++count;
-                }
-                else if (container == link->head())
-                {
-                    reinterpret_cast<Link *>(*link_it)->set_head(_containers[index]);
-                    _containers[index]->related().push_back(*link_it);
-                    ++count;
-                }
-                else if (circlecontainer == link->tail())
-                {
-                    reinterpret_cast<Link *>(*link_it)->set_tail(_containers[index]);
-                    _containers[index]->related().push_back(*link_it);
-                    ++count;
-                }
-                else if (circlecontainer == link->head())
-                {
-                    reinterpret_cast<Link *>(*link_it)->set_head(_containers[index]);
-                    _containers[index]->related().push_back(*link_it);
-                    ++count;
-                }
-                if (count == 2)
-                {
-                    break;
-                }
-                else
-                {
-                    ++index;
-                }
-            }
-            ++link_it;
-        }
         _visible = group._visible;
     }
     return *this;
@@ -778,9 +362,6 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &&group)
             case 1:
                 _containers.push_back(reinterpret_cast<const CircleContainer *>(geo)->clone());
                 break;
-            case 2:
-                _containers.push_back(reinterpret_cast<const Link *>(geo)->clone());
-                break;
             case 3:
                 _containers.push_back(reinterpret_cast<const Combination *>(geo)->clone());
                 break;
@@ -795,64 +376,6 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &&group)
             }
         }
         _ratio = std::move(group._ratio);
-        std::vector<Geo::Geometry *>::iterator link_it = _containers.begin();
-        const Link *link;
-        const Container *container;
-        const CircleContainer *circlecontainer;
-        size_t count, index;
-        for (const Geo::Geometry *geo0 : group._containers)
-        {
-            link = dynamic_cast<const Link *>(geo0);
-            if (link == nullptr)
-            {
-                ++link_it;
-                continue;
-            }
-            count = index = 0;
-            for (const Geo::Geometry *geo1 : group._containers)
-            {
-                container = dynamic_cast<const Container *>(geo1);
-                circlecontainer = dynamic_cast<const CircleContainer *>(geo1);
-                if (container == nullptr && circlecontainer == nullptr)
-                {
-                    ++index;
-                    continue;
-                }
-                if (container == link->tail())
-                {
-                    reinterpret_cast<Link *>(*link_it)->set_tail(_containers[index]);
-                    _containers[index]->related().push_back(*link_it);
-                    ++count;
-                }
-                else if (container == link->head())
-                {
-                    reinterpret_cast<Link *>(*link_it)->set_head(_containers[index]);
-                    _containers[index]->related().push_back(*link_it);
-                    ++count;
-                }
-                else if (circlecontainer == link->tail())
-                {
-                    reinterpret_cast<Link *>(*link_it)->set_tail(_containers[index]);
-                    _containers[index]->related().push_back(*link_it);
-                    ++count;
-                }
-                else if (circlecontainer == link->head())
-                {
-                    reinterpret_cast<Link *>(*link_it)->set_head(_containers[index]);
-                    _containers[index]->related().push_back(*link_it);
-                    ++count;
-                }
-                if (count == 2)
-                {
-                    break;
-                }
-                else
-                {
-                    ++index;
-                }
-            }
-            ++link_it;
-        }
         _visible = group._visible;
     }
     return *this;
@@ -1060,11 +583,6 @@ void ContainerGroup::append(CircleContainer *container)
     _containers.push_back(container);
 }
 
-void ContainerGroup::append(Link *container)
-{
-    _containers.push_back(container);
-}
-
 void ContainerGroup::append(Geo::Polyline *container)
 {
     _containers.push_back(container);
@@ -1102,11 +620,6 @@ void ContainerGroup::insert(const size_t index, Container *container)
 }
 
 void ContainerGroup::insert(const size_t index, CircleContainer *container)
-{
-    _containers.insert(_containers.begin() + index, container);
-}
-
-void ContainerGroup::insert(const size_t index, Link *container)
 {
     _containers.insert(_containers.begin() + index, container);
 }
