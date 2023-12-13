@@ -392,18 +392,21 @@ void MainWindow::show_layers_manager()
 void MainWindow::rotate()
 {
     _editer.rotate(ui->rotate_angle->value(), _editer.selected_count() == 0, ui->to_all_layers->isChecked());
+    _painter.refresh_vbo(_editer.selected_count() == 0);
     _painter.update();
 }
 
 void MainWindow::flip_x()
 {
     _editer.flip(true, _editer.selected_count() == 0, ui->to_all_layers->isChecked());
+    _painter.refresh_vbo(_editer.selected_count() == 0);
     _painter.update();
 }
 
 void MainWindow::flip_y()
 {
     _editer.flip(false, _editer.selected_count() == 0, ui->to_all_layers->isChecked());
+    _painter.refresh_vbo(_editer.selected_count() == 0);
     _painter.update();
 }
 
