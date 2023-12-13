@@ -1214,7 +1214,7 @@ void Canvas::cut()
 
 void Canvas::paste()
 {
-    if (_editer->paste(_mouse_pos_1.x() - _stored_mouse_pos.x(), _mouse_pos_1.y() - _stored_mouse_pos.y()))
+    if (_editer->paste((_mouse_pos_1.x() - _stored_mouse_pos.x()) / _ratio, (_mouse_pos_1.y() - _stored_mouse_pos.y()) / _ratio))
     {
         update();
     }
