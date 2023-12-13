@@ -149,6 +149,8 @@ void Canvas::initializeGL()
     glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex_shader, 1, &GLSL::base_vss, NULL);
@@ -191,15 +193,35 @@ void Canvas::initializeGL()
     glAttachShader(_shader_programs[3], vertex_shader);
     glAttachShader(_shader_programs[3], fragment_shader);
     glLinkProgram(_shader_programs[3]);
-    glDeleteShader(vertex_shader);
     glDeleteShader(fragment_shader);
-    
+
+    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment_shader, 1, &GLSL::select_rect_shape_fss, NULL);
+    glCompileShader(fragment_shader);
+
+    _shader_programs[4] = glCreateProgram();
+    glAttachShader(_shader_programs[4], vertex_shader);
+    glAttachShader(_shader_programs[4], fragment_shader);
+    glLinkProgram(_shader_programs[4]);
+    glDeleteShader(fragment_shader);
+
+    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
+    glShaderSource(fragment_shader, 1, &GLSL::select_rect_path_fss, NULL);
+    glCompileShader(fragment_shader);
+
+    _shader_programs[5] = glCreateProgram();
+    glAttachShader(_shader_programs[5], vertex_shader);
+    glAttachShader(_shader_programs[5], fragment_shader);
+    glLinkProgram(_shader_programs[5]);
+    glDeleteShader(fragment_shader);
+
+    glDeleteShader(vertex_shader);
     _uniforms[0] = glGetUniformLocation(_shader_programs[0], "w");
     _uniforms[1] = glGetUniformLocation(_shader_programs[0], "h");
     _uniforms[2] = glGetUniformLocation(_shader_programs[0], "vec0");
     _uniforms[3] = glGetUniformLocation(_shader_programs[0], "vec1");
 
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 6; ++i)
     {
         glUseProgram(_shader_programs[i]);
         glUniform3d(_uniforms[2], 1.0, 0.0, 0.0);
@@ -207,12 +229,12 @@ void Canvas::initializeGL()
     }
 
     glGenVertexArrays(1, &_VAO);
+    glGenBuffers(2, _VBO);
+
     glBindVertexArray(_VAO);
     glVertexAttribLFormat(0, 3, GL_DOUBLE, 0);
-    
-    glGenBuffers(1, &_VBO);
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO);
 
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
     glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
     glEnableVertexAttribArray(0);
 
@@ -222,7 +244,7 @@ void Canvas::initializeGL()
 
 void Canvas::resizeGL(int w, int h)
 {
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 6; ++i)
     {
         glUseProgram(_shader_programs[i]);
         glUniform1i(_uniforms[0], w / 2);
@@ -286,6 +308,31 @@ void Canvas::paintGL()
     {
         glUseProgram(_shader_programs[3]); // 绘制点
         glDrawArrays(GL_POINTS, 0, _points_count);
+    }
+
+    if (!_select_rect.empty())
+    {
+        double data[12];
+        for (int i = 0; i < 4; ++i)
+        {
+            data[i * 3] = _select_rect[i].coord().x;
+            data[i * 3 + 1] = _select_rect[i].coord().y;
+            data[i * 3 + 2] = 0;
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]);
+        glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(double), data, GL_DYNAMIC_DRAW);
+        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glEnableVertexAttribArray(0);
+
+        glUseProgram(_shader_programs[4]);
+        glDrawArrays(GL_POLYGON, 0, 4);
+
+        glUseProgram(_shader_programs[5]);
+        glDrawArrays(GL_LINE_LOOP, 0, 4);
+
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
+        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glEnableVertexAttribArray(0);
     }
 }
 
@@ -519,7 +566,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         _view_ctm[6] -= (real_x1 - real_x0), _view_ctm[7] -= (real_y1 - real_y0);
         _visible_area.translate(real_x0 - real_x1, real_y0 - real_y1);
         makeCurrent();
-        for (int i = 0; i < 4; ++i)
+        for (int i = 0; i < 6; ++i)
         {
             glUseProgram(_shader_programs[i]);
             glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
@@ -618,7 +665,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             double *data = new double[data_len];
             double deepth;
             makeCurrent();
-            glBindBuffer(GL_ARRAY_BUFFER, _VBO);
+            glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
             for (Geo::Geometry *obj : _editer->selected())
             {
                 _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier);
@@ -745,7 +792,7 @@ void Canvas::wheelEvent(QWheelEvent *event)
         update();
     }
     makeCurrent();
-    for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 6; ++i)
     {
         glUseProgram(_shader_programs[i]);
         glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
@@ -832,7 +879,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         _visible_area = Geo::Rectangle(0, 0, this->geometry().width(), this->geometry().height());
         _ratio = 1;
         makeCurrent();
-        for (int i = 0; i < 4; ++i)
+        for (int i = 0; i < 6; ++i)
         {
             glUseProgram(_shader_programs[i]);
             glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
@@ -1474,7 +1521,7 @@ void Canvas::refresh_vbo()
     _indexs_count[0] = polyline_index_count;
     _indexs_count[1] = polygon_index_count;
 
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]);

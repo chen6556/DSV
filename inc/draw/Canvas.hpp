@@ -22,8 +22,8 @@ private:
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
 
-    unsigned int _shader_programs[4]; //0:填充色 1:path_normal 2:path_selected 3:points
-    unsigned int _VAO, _VBO, _IBO[3]; //0:polyline 1:polygon 2:selected
+    unsigned int _shader_programs[6]; //0:填充色 1:path_normal 2:path_selected 3:points 4:select brush 5:select rect
+    unsigned int _VAO, _VBO[2], _IBO[3]; //0:polyline 1:polygon 2:selected
     int _uniforms[4];
     size_t _points_count, _indexs_count[3]; //0:polyline 1:polygon 2:selected
 

@@ -42,4 +42,18 @@ const char *point_fss = "#version 450 core\n"
     "   FragColor = vec4(0.0f, 0.0f, 1.0f, 1.0f);\n"
     "}\0";
 
+const char *select_rect_shape_fss = "#version 450 core\n"
+    "out vec4 FragColor;\n"
+    "void main()\n"
+    "{\n"
+    "   FragColor = vec4(0.0f, 0.47f, 0.843f, 0.1f);\n"
+    "}\0";
+
+const char *select_rect_path_fss = "#version 450 core\n"
+    "out vec4 FragColor;\n"
+    "void main()\n"
+    "{\n"
+    "   FragColor = vec4(0.0f, 0.0f, 1.0f, 0.549f);\n"
+    "}\0";
+
 };
