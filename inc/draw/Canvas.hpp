@@ -22,9 +22,9 @@ private:
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
 
-    unsigned int _shader_programs[6]; //0:填充色 1:path_normal 2:path_selected 3:points 4:select brush 5:select rect
+    unsigned int _shader_program;
     unsigned int _VAO, _VBO[2], _IBO[3]; //0:polyline 1:polygon 2:selected
-    int _uniforms[4];
+    int _uniforms[5]; // w, h, vec0, vec1, color
     size_t _points_count, _indexs_count[3]; //0:polyline 1:polygon 2:selected
 
     double _canvas_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
@@ -42,14 +42,10 @@ private:
     Geo::Point _last_point;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
 
-    const static Qt::GlobalColor shape_color = Qt::green, selected_shape_color = Qt::red, text_color = Qt::black;
-
 private:
     void init();
 
     void paint_cache(QPainter &painter);
-
-    void paint_select_rect(QPainter &painter);
 
 protected:
     void initializeGL();

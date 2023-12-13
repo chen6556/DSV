@@ -55,7 +55,7 @@ void Canvas::paint_cache(QPainter &painter)
     }
     else
     {
-        painter.setPen(QPen(shape_color, 3));
+        // painter.setPen(QPen(shape_color, 3));
     }
     painter.setBrush(QColor(250, 250, 250));
 
@@ -109,31 +109,6 @@ void Canvas::paint_cache(QPainter &painter)
     }
 }
 
-void Canvas::paint_select_rect(QPainter &painter)
-{
-    painter.setBrush(Qt::NoBrush);
-    if (_bool_flags[7])
-    {
-        painter.setPen(QPen(Qt::black, 1, Qt::DotLine));
-        painter.drawLine(_canvas_ctm[6] - 20, _canvas_ctm[7], _canvas_ctm[6] + 20, _canvas_ctm[7]);
-        painter.drawLine(_canvas_ctm[6], _canvas_ctm[7] - 20, _canvas_ctm[6], _canvas_ctm[7] + 20);
-        painter.drawEllipse(QPoint(_canvas_ctm[6], _canvas_ctm[7]), 10, 10);
-    }
-
-    if (_select_rect.empty())
-    {
-        return;
-    }
-    
-    painter.setPen(QPen(QColor(0, 0, 255, 140), 1));
-    painter.setBrush(QColor(0, 120, 215, 10));
-
-    Geo::Rectangle rect(_select_rect);
-    rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
-    
-    painter.drawPolygon(QRect(rect[0].coord().x, rect[0].coord().y, rect.width(), rect.height()));
-}
-
 
 
 void Canvas::initializeGL()
@@ -156,83 +131,35 @@ void Canvas::initializeGL()
     glShaderSource(vertex_shader, 1, &GLSL::base_vss, NULL);
     glCompileShader(vertex_shader);
     fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &GLSL::shape_fss, NULL);
+    glShaderSource(fragment_shader, 1, &GLSL::base_fss, NULL);
     glCompileShader(fragment_shader);
 
-    _shader_programs[0] = glCreateProgram();
-    glAttachShader(_shader_programs[0], vertex_shader);
-    glAttachShader(_shader_programs[0], fragment_shader);
-    glLinkProgram(_shader_programs[0]);
-    glDeleteShader(fragment_shader);
-
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &GLSL::path_normal_fss, NULL);
-    glCompileShader(fragment_shader);
-
-    _shader_programs[1] = glCreateProgram();
-    glAttachShader(_shader_programs[1], vertex_shader);
-    glAttachShader(_shader_programs[1], fragment_shader);
-    glLinkProgram(_shader_programs[1]);
-    glDeleteShader(fragment_shader);
-
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &GLSL::path_selected_fss, NULL);
-    glCompileShader(fragment_shader);
-
-    _shader_programs[2] = glCreateProgram();
-    glAttachShader(_shader_programs[2], vertex_shader);
-    glAttachShader(_shader_programs[2], fragment_shader);
-    glLinkProgram(_shader_programs[2]);
-    glDeleteShader(fragment_shader);
-
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &GLSL::point_fss, NULL);
-    glCompileShader(fragment_shader);
-
-    _shader_programs[3] = glCreateProgram();
-    glAttachShader(_shader_programs[3], vertex_shader);
-    glAttachShader(_shader_programs[3], fragment_shader);
-    glLinkProgram(_shader_programs[3]);
-    glDeleteShader(fragment_shader);
-
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &GLSL::select_rect_shape_fss, NULL);
-    glCompileShader(fragment_shader);
-
-    _shader_programs[4] = glCreateProgram();
-    glAttachShader(_shader_programs[4], vertex_shader);
-    glAttachShader(_shader_programs[4], fragment_shader);
-    glLinkProgram(_shader_programs[4]);
-    glDeleteShader(fragment_shader);
-
-    fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragment_shader, 1, &GLSL::select_rect_path_fss, NULL);
-    glCompileShader(fragment_shader);
-
-    _shader_programs[5] = glCreateProgram();
-    glAttachShader(_shader_programs[5], vertex_shader);
-    glAttachShader(_shader_programs[5], fragment_shader);
-    glLinkProgram(_shader_programs[5]);
+    _shader_program = glCreateProgram();
+    glAttachShader(_shader_program, vertex_shader);
+    glAttachShader(_shader_program, fragment_shader);
+    glLinkProgram(_shader_program);
     glDeleteShader(fragment_shader);
 
     glDeleteShader(vertex_shader);
-    _uniforms[0] = glGetUniformLocation(_shader_programs[0], "w");
-    _uniforms[1] = glGetUniformLocation(_shader_programs[0], "h");
-    _uniforms[2] = glGetUniformLocation(_shader_programs[0], "vec0");
-    _uniforms[3] = glGetUniformLocation(_shader_programs[0], "vec1");
+    _uniforms[0] = glGetUniformLocation(_shader_program, "w");
+    _uniforms[1] = glGetUniformLocation(_shader_program, "h");
+    _uniforms[2] = glGetUniformLocation(_shader_program, "vec0");
+    _uniforms[3] = glGetUniformLocation(_shader_program, "vec1");
+    _uniforms[4] = glGetUniformLocation(_shader_program, "color");
 
-    for (int i = 0; i < 6; ++i)
-    {
-        glUseProgram(_shader_programs[i]);
-        glUniform3d(_uniforms[2], 1.0, 0.0, 0.0);
-        glUniform3d(_uniforms[3], 0.0, 1.0, 0.0);
-    }
+    glUseProgram(_shader_program);
+    glUniform3d(_uniforms[2], 1.0, 0.0, 0.0);
+    glUniform3d(_uniforms[3], 0.0, 1.0, 0.0);
 
     glGenVertexArrays(1, &_VAO);
     glGenBuffers(2, _VBO);
 
     glBindVertexArray(_VAO);
     glVertexAttribLFormat(0, 3, GL_DOUBLE, 0);
+
+    double data[24] = {-10, 0, 0, 10, 0, 0, 0, -10, 0, 0, 10, 0};
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]);
+    glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(double), data, GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
     glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
@@ -244,12 +171,8 @@ void Canvas::initializeGL()
 
 void Canvas::resizeGL(int w, int h)
 {
-    for (int i = 0; i < 6; ++i)
-    {
-        glUseProgram(_shader_programs[i]);
-        glUniform1i(_uniforms[0], w / 2);
-        glUniform1i(_uniforms[1], h / 2);
-    }
+    glUniform1i(_uniforms[0], w / 2);
+    glUniform1i(_uniforms[1], h / 2);
     glViewport(0, 0, w, h);
 }
 
@@ -293,21 +216,37 @@ void Canvas::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]);
-    glUseProgram(_shader_programs[0]); // 绘制填充色
+    glUniform4f(_uniforms[4], 0.9765f, 0.9765f, 0.9765f, 1.0f); // 绘制填充色
     glDrawElements(GL_TRIANGLES, _indexs_count[1], GL_UNSIGNED_INT, NULL);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]);
-    glUseProgram(_shader_programs[1]); // 绘制线 normal
+    glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // 绘制线 normal
     glDrawElements(GL_LINE_STRIP, _indexs_count[0], GL_UNSIGNED_INT, NULL);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]);
-    glUseProgram(_shader_programs[2]); // 绘制线 selected
+    glUniform4f(_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f); // 绘制线 selected
     glDrawElements(GL_LINE_STRIP, _indexs_count[2], GL_UNSIGNED_INT, NULL);
 
     if (GlobalSetting::get_instance()->setting()["show_points"].toBool())
     {
-        glUseProgram(_shader_programs[3]); // 绘制点
+        glUniform4f(_uniforms[4], 0.0f, 0.0f, 1.0f, 1.0f);
         glDrawArrays(GL_POINTS, 0, _points_count);
+    }
+
+    if (!_bool_flags[7] && _select_rect.empty() && _editer->point_cache().empty()
+        && _rectangle_cache.empty() && _circle_cache.empty())
+    {
+        return;
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]);
+    glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+    glEnableVertexAttribArray(0);
+
+    if (_bool_flags[7])
+    {
+        glUniform4f(_uniforms[4], 0.0f, 0.0f, 0.0f, 1.0f); // 画原点
+        glDrawArrays(GL_LINES, 0, 4);
     }
 
     if (!_select_rect.empty())
@@ -319,21 +258,21 @@ void Canvas::paintGL()
             data[i * 3 + 1] = _select_rect[i].coord().y;
             data[i * 3 + 2] = 0;
         }
-        glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]);
-        glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(double), data, GL_DYNAMIC_DRAW);
+        
+        glBufferSubData(GL_ARRAY_BUFFER, 12 * sizeof(double), 12 * sizeof(double), data);
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        glUseProgram(_shader_programs[4]);
-        glDrawArrays(GL_POLYGON, 0, 4);
+        glUniform4f(_uniforms[4], 0.0f, 0.47f, 0.843f, 0.1f);
+        glDrawArrays(GL_POLYGON, 4, 4);
 
-        glUseProgram(_shader_programs[5]);
-        glDrawArrays(GL_LINE_LOOP, 0, 4);
-
-        glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
-        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
-        glEnableVertexAttribArray(0);
+        glUniform4f(_uniforms[4], 0.0f, 0.0f, 1.0f, 0.549f);
+        glDrawArrays(GL_LINE_LOOP, 4, 4);
     }
+
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
+    glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+    glEnableVertexAttribArray(0);
 }
 
 void Canvas::mousePressEvent(QMouseEvent *event)
@@ -566,12 +505,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         _view_ctm[6] -= (real_x1 - real_x0), _view_ctm[7] -= (real_y1 - real_y0);
         _visible_area.translate(real_x0 - real_x1, real_y0 - real_y1);
         makeCurrent();
-        for (int i = 0; i < 6; ++i)
-        {
-            glUseProgram(_shader_programs[i]);
-            glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
-            glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
-        }
+        glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
+        glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
         doneCurrent();
         update();
     }
@@ -792,12 +727,11 @@ void Canvas::wheelEvent(QWheelEvent *event)
         update();
     }
     makeCurrent();
-    for (int i = 0; i < 6; ++i)
-    {
-        glUseProgram(_shader_programs[i]);
-        glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
-        glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
-    }
+    glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
+    glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
+    double data[12] = {-10 / _ratio, 0, 0, 10 / _ratio, 0, 0, 0, -10 / _ratio, 0, 0, 10 / _ratio, 0};
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), data);
     doneCurrent();
     _editer->auto_aligning(_clicked_obj, _reflines);
 }
@@ -879,11 +813,12 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         _visible_area = Geo::Rectangle(0, 0, this->geometry().width(), this->geometry().height());
         _ratio = 1;
         makeCurrent();
-        for (int i = 0; i < 6; ++i)
+        glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
+        glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
         {
-            glUseProgram(_shader_programs[i]);
-            glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
-            glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
+            double data[12] = {-10, 0, 0, 10, 0, 0, 0, -10, 0, 0, 10, 0};
+            glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), data);
         }
         doneCurrent();
         update();
