@@ -220,6 +220,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     case Qt::Key_Escape:
         _painter.cancel_painting();
         _editer.reset_selected_mark();
+        _painter.refresh_selected_ibo();
         break;
     case Qt::Key_Space:
         _painter.use_last_tool();
@@ -229,6 +230,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     case Qt::Key_Backspace:
         if (_editer.remove_selected())
         {
+            _painter.refresh_vbo();
             _painter.update();
         }
         break;
@@ -236,6 +238,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         if (event->modifiers() == Qt::ControlModifier)
         {
             _editer.reset_selected_mark(true);
+            _painter.refresh_selected_ibo();
             _painter.update();
         }
         break;
@@ -282,6 +285,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         if (event->modifiers() == Qt::ControlModifier && !_painter.is_painting())
         {
             _editer.load_backup();
+            _painter.refresh_vbo();
             _painter.update();
         }
     default:
