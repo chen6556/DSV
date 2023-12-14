@@ -427,7 +427,7 @@ void Canvas::paint_select_rect()
     Geo::Rectangle rect(_select_rect);
     rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
     
-    painter.drawPolygon(QRect(rect[0].coord().x, rect[0].coord().y, rect.width(), rect.height()));
+    painter.drawPolygon(QRect(rect[3].coord().x, rect[3].coord().y, rect.width(), rect.height()));
 }
 
 

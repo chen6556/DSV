@@ -786,7 +786,7 @@ Rectangle::Rectangle(const double x0, const double y0, const double x1, const do
 {
     if (x0 < x1)
     {
-        if (y0 < y1)
+        if (y0 > y1)
         {   
             _points.assign({Point(x0, y0), Point(x1, y0), Point(x1, y1), Point(x0, y1), Point(x0, y0)});
         }
@@ -797,7 +797,7 @@ Rectangle::Rectangle(const double x0, const double y0, const double x1, const do
     }
     else
     {
-        if (y0 < y1)
+        if (y0 > y1)
         {   
             _points.assign({Point(x1, y0), Point(x0, y0), Point(x0, y1), Point(x1, y1), Point(x1, y0)});
         }
@@ -814,7 +814,7 @@ Rectangle::Rectangle(const Point &point0, const Point &point1)
     const double x0 = point0.coord().x, y0 = point0.coord().y, x1 = point1.coord().x, y1 = point1.coord().y;
     if (x0 < x1)
     {
-        if (y0 < y1)
+        if (y0 > y1)
         {   
             _points.assign({Point(x0, y0), Point(x1, y0), Point(x1, y1), Point(x0, y1), Point(x0, y0)});
         }
@@ -825,7 +825,7 @@ Rectangle::Rectangle(const Point &point0, const Point &point1)
     }
     else
     {
-        if (y0 < y1)
+        if (y0 > y1)
         {   
             _points.assign({Point(x1, y0), Point(x0, y0), Point(x0, y1), Point(x1, y1), Point(x1, y0)});
         }
@@ -2121,6 +2121,17 @@ const bool Geo::is_inside(const Point &point, const Rectangle &rect, const bool 
         return false;
     }
     const double x = point.coord().x, y = point.coord().y;
+    if (rect[0].coord().y == rect[1].coord().y)
+    {
+        if (coincide)
+        {
+            return rect.left() <= x && x <= rect.right() && rect.bottom() <= y && y <= rect.top();
+        }
+        else
+        {
+            return rect.left() < x && x < rect.right() && rect.bottom() < y && y < rect.top();
+        }
+    }
     double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
     for (const Point &p : rect)
     {
