@@ -273,9 +273,73 @@ void Canvas::paintGL()
     }
     else if (!_rectangle_cache.empty())
     {
+        for (int i = 0; i < 4; ++i)
+        {
+            _cache[i * 3] = _rectangle_cache[i].coord().x;
+            _cache[i * 3 + 1] = _rectangle_cache[i].coord().y;
+            _cache[i * 3 + 2] = 0;
+        }
+
         glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), _cache);
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
+
+        glUniform4f(_uniforms[4], 0.9765f, 0.9765f, 0.9765f, 1.0f); // 绘制填充色
+        glDrawArrays(GL_POLYGON, 0, 4);
+
+        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // 绘制线
+        glDrawArrays(GL_LINE_LOOP, 0, 4);
+    }
+    else if (!_circle_cache.empty())
+    {
+        const Geo::Polygon points(Geo::circle_to_polygon(_circle_cache));
+        _cache_count = _cache_len;
+        while (_cache_len < points.size() * 3)
+        {
+            _cache_len *= 2;
+        }
+        if (_cache_count < _cache_len)
+        {
+            _cache_len *= 2;
+            delete _cache;
+            _cache = new double[_cache_len];
+            _cache_count = 0;
+            for (const Geo::Point &point : points)
+            {
+                _cache[_cache_count++] = point.coord().x;
+                _cache[_cache_count++] = point.coord().y;
+                _cache[_cache_count++] = 0;
+            }
+
+            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
+            glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+            glEnableVertexAttribArray(0);
+            glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_DYNAMIC_DRAW);
+        }
+        else
+        {
+            _cache_count = 0;
+            for (const Geo::Point &point : points)
+            {
+                _cache[_cache_count++] = point.coord().x;
+                _cache[_cache_count++] = point.coord().y;
+                _cache[_cache_count++] = 0;
+            }
+            
+            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
+            glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+            glEnableVertexAttribArray(0);
+            glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
+        }
+
+        _cache_count /= 3;
+        glUniform4f(_uniforms[4], 0.9765f, 0.9765f, 0.9765f, 1.0f); // 绘制填充色
+        glDrawArrays(GL_TRIANGLE_FAN, 0, _cache_count);
+
+        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // 绘制线
+        glDrawArrays(GL_LINE_LOOP, 0, _cache_count);
+        _cache_count = 0;
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]);
@@ -339,6 +403,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _int_flags[0] = -1;
                     _bool_flags[1] = false;
                     emit tool_changed(_int_flags[0]);
+                    refresh_vbo();
                 }
                 _bool_flags[2] = !_bool_flags[2];
                 break;
@@ -350,6 +415,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _cache[_cache_count++] = real_x1;
                     _cache[_cache_count++] = real_y1;
                     _cache[_cache_count++] = 0;
+                    makeCurrent();
+                    glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
                     if (_cache_count == _cache_len)
                     {
                         _cache_len *= 2;
@@ -357,10 +424,12 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         std::memmove(temp, _cache, _cache_count * sizeof(double));
                         delete _cache;
                         _cache = temp;
+                        glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_DYNAMIC_DRAW);
                     }
-                    makeCurrent();
-                    glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
-                    glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - 3) * sizeof(double), 3 * sizeof(double), &_cache[_cache_count - 3]);
+                    else
+                    {
+                        glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - 3) * sizeof(double), 3 * sizeof(double), &_cache[_cache_count - 3]);
+                    }
                     doneCurrent();
                 }
                 else
@@ -394,6 +463,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _int_flags[0] = -1;
                     _bool_flags[1] = false;
                     emit tool_changed(_int_flags[0]);
+                    refresh_vbo();
                 }
                 _bool_flags[2] = !_bool_flags[2];
                 break;
@@ -675,19 +745,19 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier);
                 data_count = data_len;
                 deepth = obj->memo()["point_deepth"].to_double();
+                while (obj->memo()["point_count"].to_ull() * 3 > data_len)
+                {
+                    data_len *= 2;
+                }
+                if (data_count < data_len)
+                {
+                    delete data;
+                    data = new double[data_len];
+                }
+                data_count = 0;
                 switch (obj->memo()["Type"].to_int())
                 {
                 case 0:
-                    while (dynamic_cast<const Container *>(obj)->shape().size() * 3 > data_len)
-                    {
-                        data_len *= 2;
-                    }
-                    if (data_count < data_len)
-                    {
-                        delete data;
-                        data = new double[data_len];
-                    }
-                    data_count = 0;
                     for (const Geo::Point &point : dynamic_cast<const Container *>(obj)->shape())
                     {
                         data[data_count++] = point.coord().x;
@@ -695,17 +765,15 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                         data[data_count++] = deepth;
                     }
                     break;
+                case 1:
+                    for (const Geo::Point &point : Geo::circle_to_polygon(dynamic_cast<const CircleContainer *>(obj)->shape()))
+                    {
+                        data[data_count++] = point.coord().x;
+                        data[data_count++] = point.coord().y;
+                        data[data_count++] = deepth;
+                    }
+                    break;
                 case 20:
-                    while (dynamic_cast<const Geo::Polyline *>(obj)->size() * 3 > data_len)
-                    {
-                        data_len *= 2;
-                    }
-                    if (data_count < data_len)
-                    {
-                        delete data;
-                        data = new double[data_len];
-                    }
-                    data_count = 0;
                     for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(obj))
                     {
                         data[data_count++] = point.coord().x;
@@ -827,6 +895,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                     _editer->append_points();
                     update();
                 }
+                _cache_count = 0;
                 break;
             case 2:
                 _rectangle_cache.clear();
@@ -1247,6 +1316,7 @@ void Canvas::refresh_vbo()
     unsigned int *polyline_indexs = new unsigned int[polyline_index_len];
     unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
     double deepth = 1.0;
+    Geo::Polygon points;
     Container *container = nullptr;
     Geo::Polyline *polyline = nullptr;
     CircleContainer *circlecontainer = nullptr;
@@ -1314,10 +1384,45 @@ void Canvas::refresh_vbo()
                 // }
                 break;
             case 1:
-                // circlecontainer = dynamic_cast<CircleContainer *>(geo);
-                
-                
-                
+                circlecontainer = dynamic_cast<CircleContainer *>(geo);
+                points = Geo::circle_to_polygon(circlecontainer->shape());
+                for (size_t i : Geo::ear_cut_to_indexs(points))
+                {
+                    polygon_indexs[polygon_index_count++] = data_count / 3 + i;
+                    if (polygon_index_count == polygon_index_len)
+                    {
+                        polygon_index_len *= 2;
+                        unsigned int *temp = new unsigned int[polygon_index_len];
+                        std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                        delete polygon_indexs;
+                        polygon_indexs = temp;
+                    }
+                }
+                for (const Geo::Point &point : points)
+                {
+                    polyline_indexs[polyline_index_count++] = data_count / 3;
+                    data[data_count++] = point.coord().x;
+                    data[data_count++] = point.coord().y;
+                    data[data_count++] = deepth;
+                    if (data_count == data_len)
+                    {
+                        data_len *= 2;
+                        double *temp = new double[data_len];
+                        std::memmove(temp, data, data_count * sizeof(double));
+                        delete data;
+                        data = temp;
+                    }
+                    if (polyline_index_count == polyline_index_len)
+                    {
+                        polyline_index_len *= 2;
+                        unsigned int *temp = new unsigned int[polyline_index_len];
+                        std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                        delete polyline_indexs;
+                        polyline_indexs = temp;
+                    }
+                }
+                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                circlecontainer->memo()["point_count"] = data_count / 3 - circlecontainer->memo()["point_index"].to_ull();
                 // if (!circlecontainer->text().isEmpty())
                 // {
                 //     painter.setPen(QPen(text_color, 2));
@@ -1529,6 +1634,7 @@ void Canvas::refresh_vbo()
     _indexs_count[0] = polyline_index_count;
     _indexs_count[1] = polygon_index_count;
 
+    makeCurrent();
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_STATIC_DRAW);
 
@@ -1537,6 +1643,7 @@ void Canvas::refresh_vbo()
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_DYNAMIC_DRAW);
+    doneCurrent();
 
     _indexs_count[2] = 0;
 
@@ -1554,14 +1661,14 @@ void Canvas::refresh_vbo(const bool unitary)
     makeCurrent();
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
 
-    for (ContainerGroup &group : _editer->graph()->container_groups())
+    for (const ContainerGroup &group : _editer->graph()->container_groups())
     {
         if (!group.visible())
         {
             continue;
         }
 
-        for (Geo::Geometry *geo : group)
+        for (const Geo::Geometry *geo : group)
         {
             if (!unitary && !geo->memo()["is_selected"].to_bool())
             {
@@ -1573,7 +1680,7 @@ void Canvas::refresh_vbo(const bool unitary)
             switch (geo->memo()["Type"].to_int())
             {
             case 0:
-                for (const Geo::Point &point : dynamic_cast<Container *>(geo)->shape())
+                for (const Geo::Point &point : dynamic_cast<const Container *>(geo)->shape())
                 {
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
@@ -1589,18 +1696,20 @@ void Canvas::refresh_vbo(const bool unitary)
                 }
                 break;
             case 1:
-                // circlecontainer = dynamic_cast<CircleContainer *>(geo);
-
-                // if (!circlecontainer->text().isEmpty())
-                // {
-                //     painter.setPen(QPen(text_color, 2));
-                //     text_rect = font_metrics.boundingRect(circlecontainer->text());
-                //     text_rect.setWidth(text_rect.width() + suffix_text_width);
-                //     text_rect.setHeight(4 * text_heigh_ratio + 14 * (circlecontainer->text().count('\n') + 1) * text_heigh_ratio);
-                //     text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
-                //         circlecontainer->center().coord().y - text_rect.center().y());
-                //     painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
-                // }
+                for (const Geo::Point &point : Geo::circle_to_polygon(dynamic_cast<const CircleContainer *>(geo)->shape()))
+                {
+                    data[data_count++] = point.coord().x;
+                    data[data_count++] = point.coord().y;
+                    data[data_count++] = deepth;
+                    if (data_count == data_len)
+                    {
+                        data_len *= 2;
+                        double *temp = new double[data_len];
+                        std::memmove(temp, data, data_count * sizeof(double));
+                        delete data;
+                        data = temp;
+                    }
+                }
                 break;
             case 3:
                 // painter.setPen(geo->memo()["is_selected"].to_bool() ? pen_selected : pen_not_selected);
@@ -1723,7 +1832,7 @@ void Canvas::refresh_vbo(const bool unitary)
                 // }
                 break;
             case 20:
-                for (const Geo::Point &point : *dynamic_cast<Geo::Polyline *>(geo))
+                for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(geo))
                 {
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
@@ -1784,6 +1893,7 @@ void Canvas::refresh_selected_ibo()
     size_t index_len = 512, index_count = 0;
     unsigned int *indexs = new unsigned int[index_len];
 
+    makeCurrent();
     for (ContainerGroup &group : _editer->graph()->container_groups())
     {
         if (!group.visible())
@@ -1801,6 +1911,7 @@ void Canvas::refresh_selected_ibo()
             switch (geo->memo()["Type"].to_int())
             {
             case 0:
+            case 1:
             case 20:
                 for (size_t index = geo->memo()["point_index"].to_ull(), i = 0, count = geo->memo()["point_count"].to_ull(); i < count; ++i)
                 {
@@ -1814,20 +1925,6 @@ void Canvas::refresh_selected_ibo()
                         indexs = temp;
                     }
                 }
-                break;
-            case 1:
-                // circlecontainer = dynamic_cast<CircleContainer *>(geo);      
-                
-                // if (!circlecontainer->text().isEmpty())
-                // {
-                //     painter.setPen(QPen(text_color, 2));
-                //     text_rect = font_metrics.boundingRect(circlecontainer->text());
-                //     text_rect.setWidth(text_rect.width() + suffix_text_width);
-                //     text_rect.setHeight(4 * text_heigh_ratio + 14 * (circlecontainer->text().count('\n') + 1) * text_heigh_ratio);
-                //     text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
-                //         circlecontainer->center().coord().y - text_rect.center().y());
-                //     painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
-                // }
                 break;
             case 3:
                 // painter.setPen(geo->memo()["is_selected"].to_bool() ? pen_selected : pen_not_selected);
@@ -1996,6 +2093,8 @@ void Canvas::refresh_selected_ibo()
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
+
+    doneCurrent();
     _indexs_count[2] = index_count;
     delete indexs;
 }

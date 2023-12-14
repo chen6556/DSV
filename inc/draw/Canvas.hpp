@@ -23,7 +23,7 @@ private:
     QTextEdit _input_line;
 
     unsigned int _shader_program, _VAO;
-    unsigned int _VBO[3]; //0:points 1:origin and select rect 3:cache
+    unsigned int _VBO[3]; //0:points 1:origin and select rect 2:cache
     unsigned int _IBO[3]; //0:polyline 1:polygon 2:selected
     int _uniforms[5]; // w, h, vec0, vec1, color
     size_t _points_count, _indexs_count[3]; //0:polyline 1:polygon 2:selected
