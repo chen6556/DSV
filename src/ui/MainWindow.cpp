@@ -73,7 +73,7 @@ void MainWindow::init()
 
     _layers_manager = new LayersManager(this);
     _layers_manager->load_layers(_editer.graph());
-    connect(_layers_manager, &LayersManager::accepted, this, [this](){_layers_cbx->setModel(_layers_manager->model());});
+    connect(_layers_manager, &LayersManager::accepted, this, [this](){_layers_cbx->setModel(_layers_manager->model()); _painter.refresh_vbo(); _editer.reset_selected_mark();});
 
     _layers_btn = new QToolButton(this);
     _layers_btn->setText("Layers");
@@ -286,6 +286,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         {
             _editer.load_backup();
             _painter.refresh_vbo();
+            _painter.refresh_selected_ibo();
             _painter.update();
         }
     default:
