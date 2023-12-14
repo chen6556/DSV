@@ -177,7 +177,7 @@ void Editer::append_points()
         return;
     }
 
-    if (_point_cache.size() > 3 && Geo::distance(_point_cache.front(), _point_cache.back()) <= 8) // Container
+    if (_point_cache.size() > 3 && Geo::distance(_point_cache.front(), _point_cache.back()) <= 8 / _ratio) // Container
     {
         _point_cache.pop_back();
         _point_cache.pop_back();
@@ -235,7 +235,7 @@ void Editer::append_bezier(const size_t order)
         _point_cache.pop_back();
     }
     _graph->append(new Geo::Bezier(_point_cache.begin(), _point_cache.end(), order), _current_group);
-    Geo::Bezier *b = dynamic_cast<Geo::Bezier *>(_graph->back().back());
+    _graph->memo()["modified"] = true;
     _point_cache.clear();
 }
 

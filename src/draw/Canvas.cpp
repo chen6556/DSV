@@ -1183,7 +1183,7 @@ void Canvas::paste()
 bool Canvas::is_visible(const Geo::Point &point) const
 {
     return point.coord().x > _visible_area[0].coord().x && point.coord().x < _visible_area[2].coord().x
-        && point.coord().y < _visible_area[2].coord().y && point.coord().y > _visible_area[0].coord().y;
+        && point.coord().y > _visible_area[2].coord().y && point.coord().y < _visible_area[0].coord().y;
 }
 
 bool Canvas::is_visible(const Geo::Polyline &polyline) const
@@ -1193,7 +1193,7 @@ bool Canvas::is_visible(const Geo::Polyline &polyline) const
     for (size_t i = 1, count = polyline.size(); i < count; ++i)
     {
         if ((polyline[i].coord().x > _visible_area[0].coord().x && polyline[i].coord().x < _visible_area[2].coord().x
-            && polyline[i].coord().y < _visible_area[2].coord().y && polyline[i].coord().y > _visible_area[0].coord().y)
+            && polyline[i].coord().y > _visible_area[2].coord().y && polyline[i].coord().y < _visible_area[0].coord().y)
             || Geo::distance(center, polyline[i - 1], polyline[i]) < len)
         {
             return true;
@@ -1209,7 +1209,7 @@ bool Canvas::is_visible(const Geo::Polygon &polygon) const
     for (size_t i = 1, count = polygon.size(); i < count; ++i)
     {
         if ((polygon[i].coord().x > _visible_area[0].coord().x && polygon[i].coord().x < _visible_area[2].coord().x
-            && polygon[i].coord().y < _visible_area[2].coord().y && polygon[i].coord().y > _visible_area[0].coord().y)
+            && polygon[i].coord().y > _visible_area[2].coord().y && polygon[i].coord().y < _visible_area[0].coord().y)
             || Geo::distance(center, polygon[i - 1], polygon[i]) < len)
         {
             return true;
@@ -1220,7 +1220,7 @@ bool Canvas::is_visible(const Geo::Polygon &polygon) const
     for (const Geo::Point &point : _visible_area)
     {
         if (point.coord().x > rect[0].coord().x && point.coord().x < rect[2].coord().x
-            && point.coord().y < rect[2].coord().y && point.coord().y > rect[0].coord().y)
+            && point.coord().y > rect[2].coord().y && point.coord().y < rect[0].coord().y)
         {
             return true;
         }
@@ -1232,8 +1232,8 @@ bool Canvas::is_visible(const Geo::Circle &circle) const
 {
     return circle.center().coord().x > _visible_area[0].coord().x - circle.radius() &&
         circle.center().coord().x < _visible_area[2].coord().x + circle.radius() &&
-        circle.center().coord().y < _visible_area[2].coord().y + circle.radius() &&
-        circle.center().coord().y > _visible_area[0].coord().y - circle.radius();
+        circle.center().coord().y > _visible_area[2].coord().y + circle.radius() &&
+        circle.center().coord().y < _visible_area[0].coord().y - circle.radius();
 }
 
 
