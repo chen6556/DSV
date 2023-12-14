@@ -2,6 +2,7 @@
 
 #include "Memo.hpp"
 #include <vector>
+#include <cstdlib>
 
 
 namespace Geo
@@ -12,6 +13,8 @@ namespace Geo
     class Rectangle;
 
     class Polygon;
+    class Line;
+    class Circle;
 
     class Geometry
     {
@@ -263,7 +266,7 @@ namespace Geo
 
     class Rectangle : public Geometry // Type:30
     {
-    private:
+    protected:
         std::vector<Point> _points;
 
     public:
@@ -277,13 +280,13 @@ namespace Geo
 
         Rectangle(const Rectangle &&rect);
 
-        const double left() const;
+        virtual const double left() const;
 
-        const double top() const;
+        virtual const double top() const;
 
-        const double right() const;
+        virtual const double right() const;
 
-        const double bottom() const;
+        virtual const double bottom() const;
 
         Rectangle &operator=(const Rectangle &reac);
 
@@ -297,11 +300,11 @@ namespace Geo
 
         virtual Rectangle *clone() const;
 
-        const double area() const;
+        virtual const double area() const;
 
-        const double width() const;
+        virtual const double width() const;
 
-        const double height() const;
+        virtual const double height() const;
 
         virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f);
 
@@ -347,6 +350,43 @@ namespace Geo
 
         const Point &operator[](const size_t index) const;
     };
+
+    class AxisAlignedBoundingBox : public Rectangle 
+    {
+      private:
+        double _height,_width;
+        Point _topLeft;
+      public:
+        AxisAlignedBoundingBox(const double x0, const double y0, const double x1, const double y1);
+        AxisAlignedBoundingBox(const Point &point0, const Point &point1);
+        AxisAlignedBoundingBox(const AxisAlignedBoundingBox &rect);
+        AxisAlignedBoundingBox(const AxisAlignedBoundingBox &&rect);
+        AxisAlignedBoundingBox &operator=(const AxisAlignedBoundingBox &reac);
+        AxisAlignedBoundingBox &operator=(const AxisAlignedBoundingBox &&reac);
+        AxisAlignedBoundingBox *clone() const override;
+
+      public:
+        const double left() const override;
+        const double top() const override;
+        const double right() const override;
+        const double bottom() const override;
+
+        const double area() const override;
+        const double width() const override;
+        const double height() const override;
+        const double length() const override;
+
+        const bool isPointInside(const double x, const double y, bool edgeConsider=true) const;
+        const bool isInside(const Point &point, bool edgeConsider = true) const;
+        const bool isInside(const Line &line, bool edgeConsider = true) const;
+        const bool isInside(const Circle &circle, bool edgeConsider = true) const;
+        const bool isIntersected(const Point &point, bool insideConsider = true) const;
+        const bool isIntersected(const Line &line, bool insideConsider = true) const;
+        const bool isIntersected(const Circle &circle, bool insideConsider = true) const;
+    };
+    // using a short name;
+    using AABB = AxisAlignedBoundingBox;
+
 
     class Polygon : public Polyline // Type:40
     {
