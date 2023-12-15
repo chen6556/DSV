@@ -268,7 +268,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                                     temp->shape()[count].coord().x = point.coord().x;
                                     if (count == 4)
                                     {
-                                        temp->shape().front().coord().x = temp->shape().back().coord().x;
+                                        temp->front().coord().x = temp->back().coord().x;
                                     }
                                 }
                             }
@@ -281,7 +281,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                                     temp->shape()[count].coord().y = point.coord().y;
                                     if (count == 4)
                                     {
-                                        temp->shape().front().coord().y = temp->shape().back().coord().y;
+                                        temp->front().coord().y = temp->back().coord().y;
                                     }
                                 }
                                 else
@@ -299,10 +299,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                         {
                             point.translate(x1 - x0, y1 - y0);
                         }
-                        if (count == 1)
-                        {
-                            temp->shape().back().coord() = temp->shape().front().coord();
-                        }
+                        temp->back().coord() = temp->front().coord();
                         _graph->memo()["modified"] = true;
                         return;
                     }
