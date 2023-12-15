@@ -1,6 +1,7 @@
 #include "draw/Canvas.hpp"
 #include <QPalette>
 #include "io/GlobalSetting.hpp"
+#include <cfloat>
 
 
 Canvas::Canvas(QLabel **labels, QWidget *parent)

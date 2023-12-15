@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Container.hpp"
+#include <list>
 
 
 class Graph : public Geo::Geometry

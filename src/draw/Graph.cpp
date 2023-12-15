@@ -1,5 +1,5 @@
 #include "draw/Graph.hpp"
-
+#include <cfloat>
 
 Graph::Graph(const Graph &graph)
     : Geo::Geometry(graph), _ratio(graph._ratio)

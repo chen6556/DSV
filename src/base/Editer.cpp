@@ -1,5 +1,6 @@
 #include "base/Editer.hpp"
 #include "io/GlobalSetting.hpp"
+#include <cfloat>
 
 
 Editer::Editer(Graph *graph)

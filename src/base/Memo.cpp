@@ -66,7 +66,7 @@ const Memo::Type& Memo::type() const
 void Memo::reset()
 {
     _type = Type::NONE;
-    _value.ivalue = NULL;
+    _value.ivalue = 0;
     _svalue.clear();
 }
 
@@ -102,14 +102,14 @@ void Memo::set(const std::string& value)
 {
     _type = Type::STRING;
     _svalue = value;
-    _value.ivalue = NULL;
+    _value.ivalue = 0;
 }
 
 void Memo::set(const char value[])
 {
     _type = Type::STRING;
     _svalue = value;
-    _value.ivalue = NULL;
+    _value.ivalue = 0;
 }
 
 void Memo::set(const Memo& memo)
@@ -125,7 +125,7 @@ void Memo::clear()
 {
     _type = Type::NONE;
     _svalue.clear();
-    _value.ivalue = NULL;
+    _value.ivalue = 0;
     _memos.clear();
 }
 

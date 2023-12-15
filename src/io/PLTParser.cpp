@@ -253,14 +253,14 @@ static auto plt = (*(all_cmds | dci))[end_a];
 
 
 
-bool PLTParser::parse(std::string_view &stream, Graph *graph)
+bool parse(std::string_view &stream, Graph *graph)
 {
     importer.reset();
     importer.load_graph(graph);
     return plt(stream).has_value();
 }
 
-bool PLTParser::parse(std::ifstream &stream, Graph *graph)
+bool parse(std::ifstream &stream, Graph *graph)
 {
     importer.reset();
     importer.load_graph(graph);

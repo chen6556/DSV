@@ -5,6 +5,7 @@
 #include <fstream>
 #include <stack>
 #include <array>
+#include <cfloat>
 
 
 namespace PDFParser

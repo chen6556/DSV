@@ -1,6 +1,7 @@
 #pragma once
 
 #include "draw/Graph.hpp"
+#include <list>
 #include <QLineF>
 #include <QPolygonF>
 

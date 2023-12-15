@@ -1,6 +1,8 @@
 #include "base/Geometry.hpp"
-#include<cassert>
+#include <cassert>
 #include <algorithm>
+#include <cmath>
+#include <cfloat>
 
 
 using namespace Geo;

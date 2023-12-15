@@ -14,7 +14,7 @@ private:
         bool bvalue;
         int ivalue;
         unsigned long long lvalue;
-        double dvalue = NULL;
+        double dvalue = 0.0;
     } _value;
     std::string _svalue;
     std::map<std::string, Memo> _memos;

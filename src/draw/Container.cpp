@@ -1,5 +1,5 @@
 #include "draw/Container.hpp"
-
+#include <cfloat>
 
 
 Container::Container(const Geo::Polygon &shape)

@@ -774,7 +774,7 @@ static auto pdf = head >> *(annotation | object | eol_p()) >> tail;
 
 
 
-bool PDFParser::parse(std::string_view &stream, Graph *graph)
+bool parse(std::string_view &stream, Graph *graph)
 {
     importer.reset();
     importer.load_graph(graph);
@@ -783,7 +783,7 @@ bool PDFParser::parse(std::string_view &stream, Graph *graph)
     return pdf(stream).has_value();
 }
 
-bool PDFParser::parse(std::ifstream &stream, Graph *graph)
+bool parse(std::ifstream &stream, Graph *graph)
 {
     importer.reset();
     importer.load_graph(graph);
