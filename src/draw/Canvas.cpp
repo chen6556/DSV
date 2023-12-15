@@ -1,5 +1,6 @@
 #include "draw/Canvas.hpp"
 #include <QPalette>
+#include "base/Geometry.hpp"
 #include "io/GlobalSetting.hpp"
 #include <cfloat>
 
@@ -522,7 +523,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             if (_clicked_obj == nullptr)
             {
                 _editer->reset_selected_mark();
-                _select_rect = Geo::Rectangle(real_x1, real_y1, real_x1 + 1, real_y1 + 1);
+                _select_rect = Geo::AABB(real_x1, real_y1, real_x1 + 1, real_y1 + 1);
                 _last_point.coord().x = real_x1;
                 _last_point.coord().y = real_y1;
                 _bool_flags[5] = false;
@@ -740,7 +741,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         }
         else if (!_select_rect.empty())
         {
-            _select_rect = Geo::Rectangle(_last_point.coord().x, _last_point.coord().y, real_x1, real_y1);
+            _select_rect = Geo::AABB(_last_point.coord().x, _last_point.coord().y, real_x1, real_y1);
             if (_info_labels[1])
             {
                 _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.coord().x))).append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.coord().y))).c_str());
@@ -852,7 +853,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         {
             if (_bool_flags[5] && _last_clicked_obj->memo()["Type"].to_int() < 2)
             {
-                Geo::Rectangle rect(_last_clicked_obj->bounding_rect());
+                Geo::Rectangle rect(_last_clicked_obj->bounding_box());
                 rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
                 _input_line.setMaximumSize(std::max(100.0, rect.width()), std::max(100.0, rect.height()));
                 _input_line.move(rect.center().coord().x - _input_line.rect().center().x(),
@@ -895,7 +896,7 @@ void Canvas::show_overview()
         return;
     }
     // 获取graph的边界
-    Geo::Rectangle bounding_area = graph->bounding_rect();
+    Geo::Rectangle bounding_area = graph->bounding_box();
     // 整个绘图控件区域作为显示区域
     QRect view_area = this->geometry();
     // 选择合适的缩放倍率
@@ -1062,7 +1063,7 @@ Geo::Point Canvas::center() const
 
     for (const ContainerGroup &group : _editer->graph()->container_groups())
     {
-        for (const Geo::Point &point : group.bounding_rect())
+        for (const Geo::Point &point : group.bounding_box())
         {
             x0 = std::min(x0, point.coord().x);
             y0 = std::min(y0, point.coord().y);
@@ -1074,11 +1075,11 @@ Geo::Point Canvas::center() const
     return Geo::Point((x0 + x1) / 2, (y0 + y1) / 2);
 }
 
-Geo::Rectangle Canvas::bounding_rect() const
+Geo::AxisAlignedBoundingBox Canvas::bounding_box() const
 {
     if (_circle_cache.empty() && _rectangle_cache.empty() && (_editer->graph() == nullptr || _editer->graph()->empty()))
     {
-        return Geo::Rectangle();
+        return Geo::AABB();
     }
 
     double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
@@ -1099,12 +1100,12 @@ Geo::Rectangle Canvas::bounding_rect() const
 
     if (_editer->graph() == nullptr || _editer->graph()->empty())
     {
-        return Geo::Rectangle(x0, y0, x1, y1);
+        return Geo::AABB(x0, y0, x1, y1);
     }
 
     for (const ContainerGroup &group : _editer->graph()->container_groups())
     {
-        for (const Geo::Point &point : group.bounding_rect())
+        for (const Geo::Point &point : group.bounding_box())
         {
             x0 = std::min(x0, point.coord().x);
             y0 = std::min(y0, point.coord().y);
@@ -1113,7 +1114,7 @@ Geo::Rectangle Canvas::bounding_rect() const
         }
     }
 
-    return Geo::Rectangle(x0, y0, x1, y1);
+    return Geo::AABB(x0, y0, x1, y1);
 }
 
 Geo::Coord Canvas::mouse_position() const
@@ -1217,7 +1218,7 @@ bool Canvas::is_visible(const Geo::Polygon &polygon) const
         }
     }
 
-    const Geo::Rectangle rect(polygon.bounding_rect());
+    const Geo::Rectangle rect(polygon.bounding_box());
     for (const Geo::Point &point : _visible_area)
     {
         if (point.coord().x > rect[0].coord().x && point.coord().x < rect[2].coord().x

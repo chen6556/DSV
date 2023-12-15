@@ -996,7 +996,7 @@ Geo::Geometry *Editer::select(const double x, const double y, const bool reset_o
     return p;
 }
 
-std::vector<Geo::Geometry *> Editer::select(const Geo::Rectangle &rect)
+std::vector<Geo::Geometry *> Editer::select(const Geo::AABB &rect)
 {
     std::vector<Geo::Geometry *> result;
     if (rect.empty() || _graph == nullptr || _graph->empty())
@@ -1006,6 +1006,9 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::Rectangle &rect)
 
     for (Geo::Geometry *container : _graph->container_group(_current_group))
     {
+        // if(!rect.isIntersected(container->bounding_box())){
+        //     continue;
+        // }
         switch (container->memo()["Type"].to_int())
         {
         case 0:
@@ -1195,7 +1198,7 @@ void Editer::rotate(const double angle, const bool unitary, const bool all_layer
     {
         if (all_layers)
         {
-            coord = _graph->bounding_rect().center().coord();
+            coord = _graph->bounding_box().center().coord();
             for (ContainerGroup &group : _graph->container_groups())
             {
                 for (Geo::Geometry *geo : group)
@@ -1206,7 +1209,7 @@ void Editer::rotate(const double angle, const bool unitary, const bool all_layer
         }
         else
         {
-            coord = _graph->container_group(_current_group).bounding_rect().center().coord();
+            coord = _graph->container_group(_current_group).bounding_box().center().coord();
             for (Geo::Geometry *geo : _graph->container_group(_current_group))
             {
                 geo->rotate(coord.x, coord.y, rad);
@@ -1219,7 +1222,7 @@ void Editer::rotate(const double angle, const bool unitary, const bool all_layer
         {
             if (geo->memo()["is_selected"].to_bool())
             {
-                coord = geo->bounding_rect().center().coord();
+                coord = geo->bounding_box().center().coord();
                 geo->rotate(coord.x, coord.y, rad);
             }
         }
@@ -1234,7 +1237,7 @@ void Editer::flip(const bool direction, const bool unitary, const bool all_layer
     {
         if (all_layers)
         {
-            coord = _graph->bounding_rect().center().coord();
+            coord = _graph->bounding_box().center().coord();
             for (ContainerGroup &group : _graph->container_groups())
             {
                 for (Geo::Geometry *geo : group)
@@ -1256,7 +1259,7 @@ void Editer::flip(const bool direction, const bool unitary, const bool all_layer
         }
         else
         {
-            coord = _graph->container_group(_current_group).bounding_rect().center().coord();
+            coord = _graph->container_group(_current_group).bounding_box().center().coord();
             for (Geo::Geometry *geo : _graph->container_group(_current_group))
             {
                 if (direction)
@@ -1280,7 +1283,7 @@ void Editer::flip(const bool direction, const bool unitary, const bool all_layer
         {
             if (geo->memo()["is_selected"].to_bool())
             {
-                coord = geo->bounding_rect().center().coord();
+                coord = geo->bounding_box().center().coord();
                 if (direction)
                 {
                     geo->translate(-coord.x, 0);
@@ -1305,14 +1308,14 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
         return false;
     }
 
-    const Geo::Rectangle rect(src->bounding_rect());
+    const Geo::Rectangle rect(src->bounding_box());
     Geo::Coord center(rect.center().coord());
     double left = rect.left(), top = rect.top(), right = rect.right(), bottom = rect.bottom();
     const double heigh = top - bottom, width = right - left;
     const double align_distance = 2 / _ratio;
 
     const size_t count = reflines.size();
-    const Geo::Rectangle dst_rect(dst->bounding_rect());
+    const Geo::Rectangle dst_rect(dst->bounding_box());
     const Geo::Coord dst_center(dst_rect.center().coord());
     const double dst_left = dst_rect.left(), dst_top = dst_rect.top(), dst_right = dst_rect.right(), dst_bottom = dst_rect.bottom();
     const double dst_heigh = dst_top - dst_bottom, dst_width = dst_right - dst_left;
@@ -1409,7 +1412,7 @@ bool Editer::auto_aligning(Geo::Coord &coord, const Geo::Geometry *dst, std::lis
     }
 
     const size_t count = reflines.size();
-    const Geo::Rectangle dst_rect(dst->bounding_rect());
+    const Geo::Rectangle dst_rect(dst->bounding_box());
     const Geo::Coord dst_center(dst_rect.center().coord());
     const double dst_left = dst_rect.left(), dst_top = dst_rect.top(), dst_right = dst_rect.right(), dst_bottom = dst_rect.bottom();
     const double dst_heigh = dst_top - dst_bottom, dst_width = dst_right - dst_left;
@@ -1456,7 +1459,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
         return false;
     }
 
-    const Geo::Coord center(points->bounding_rect().center().coord());
+    const Geo::Coord center(points->bounding_box().center().coord());
     Geo::Geometry *dst = nullptr;
     double temp, distance = DBL_MAX;
 
@@ -1773,7 +1776,7 @@ void Editer::auto_layering()
     }
 
     std::sort(all_containers.begin(), all_containers.end(), [](const Geo::Geometry *a, const Geo::Geometry *b)
-              { return a->bounding_rect().area() > b->bounding_rect().area(); });
+              { return a->bounding_box().area() > b->bounding_box().area(); });
     _graph->append_group();
     for (size_t i = 0, count = all_containers.size(); _graph->back().empty() && i < count; ++i)
     {

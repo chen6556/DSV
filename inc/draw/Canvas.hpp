@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QTextEdit>
 #include "base/Editer.hpp"
+#include "base/Geometry.hpp"
 
 
 class Canvas : public QWidget
@@ -14,7 +15,8 @@ class Canvas : public QWidget
 
 private:
     Geo::Circle _circle_cache;
-    Geo::Rectangle _rectangle_cache, _select_rect, _visible_area;
+    Geo::Rectangle _rectangle_cache, _visible_area;
+    Geo::AxisAlignedBoundingBox _select_rect;
     std::list<QLineF> _reflines;
     QPolygonF _catched_points;
     Editer *_editer = nullptr;
@@ -101,7 +103,7 @@ public:
 
     Geo::Point center() const;
 
-    Geo::Rectangle bounding_rect() const;
+    Geo::AxisAlignedBoundingBox bounding_box() const;
 
     Geo::Coord mouse_position() const;
 

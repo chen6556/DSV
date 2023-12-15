@@ -408,7 +408,7 @@ void File::write_plt(const std::string &path, Graph *graph)
 void File::write(const QString &path, Graph *graph, const FileType type)
 {
     const double k = graph->ratio();
-    const Geo::Point point = graph->bounding_rect()[0];
+    const Geo::Point point = graph->bounding_box()[0];
     graph->translate(10-point.coord().x, 10-point.coord().y);
     graph->scale(10, 10, 1.0 / k);
     switch (type)

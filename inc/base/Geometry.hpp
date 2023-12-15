@@ -3,7 +3,11 @@
 #include "Memo.hpp"
 #include <vector>
 #include <cstdlib>
-
+#include <list>
+#include <cmath>
+#include <limits>
+#include <algorithm>
+#include <cfloat>
 
 namespace Geo
 {
@@ -15,6 +19,7 @@ namespace Geo
     class Polygon;
     class Line;
     class Circle;
+    class AxisAlignedBoundingBox;
 
     class Geometry
     {
@@ -59,7 +64,7 @@ namespace Geo
 
         virtual Polygon convex_hull() const;
 
-        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
+        virtual AxisAlignedBoundingBox bounding_box() const;
     };
 
     struct Coord
@@ -116,25 +121,25 @@ namespace Geo
 
         Point normalized() const;
 
-        virtual const double length() const;
+        const double length() const override;
 
-        virtual const bool empty() const;
+        const bool empty() const override;
 
-        virtual void clear();
+        void clear() override;
 
-        virtual Point *clone() const;
+        Point *clone() const override;
 
-        virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f);
+        void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
 
-        virtual void transform(const double mat[6]);
+        void transform(const double mat[6]) override;
 
-        virtual void translate(const double tx, const double ty);
+        void translate(const double tx, const double ty) override;
 
-        virtual void rotate(const double x, const double y, const double rad);
+        void rotate(const double x, const double y, const double rad) override;
 
-        virtual void scale(const double x, const double y, const double k);
+        void scale(const double x, const double y, const double k) override;
 
-        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
+        AxisAlignedBoundingBox bounding_box() const override;
 
         Point operator*(const double k) const;
 
@@ -173,13 +178,13 @@ namespace Geo
 
         const size_t size() const;
 
-        virtual const bool empty() const;
+        const bool empty() const override;
 
-        virtual const double length() const;
+        const double length() const override;
 
-        virtual void clear();
+        void clear() override;
 
-        virtual Polyline *clone() const;
+        Polyline *clone() const override;
 
         Point &operator[](const size_t index);
 
@@ -249,19 +254,19 @@ namespace Geo
 
         std::vector<Point>::const_iterator find(const Point &point) const;
 
-        virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f);
+        void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
 
-        virtual void transform(const double mat[6]);
+        void transform(const double mat[6]) override;
 
-        virtual void translate(const double tx, const double ty);
+        void translate(const double tx, const double ty) override;
 
-        virtual void rotate(const double x, const double y, const double rad);
+        void rotate(const double x, const double y, const double rad) override;
 
-        virtual void scale(const double x, const double y, const double k);
+        void scale(const double x, const double y, const double k) override;
 
-        virtual Polygon convex_hull() const;
+        Polygon convex_hull() const override;
 
-        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
+        AxisAlignedBoundingBox bounding_box() const override;
     };
 
     class Rectangle : public Geometry // Type:30
@@ -292,13 +297,13 @@ namespace Geo
 
         Rectangle &operator=(const Rectangle &&reac);
 
-        virtual const bool empty() const;
+        const bool empty() const override;
 
-        virtual const double length() const;
+        const double length() const override;
 
-        virtual void clear();
+        void clear() override;
 
-        virtual Rectangle *clone() const;
+        Rectangle *clone() const override;
 
         virtual const double area() const;
 
@@ -306,19 +311,19 @@ namespace Geo
 
         virtual const double height() const;
 
-        virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f);
+        void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
 
-        virtual void transform(const double mat[6]);
+        void transform(const double mat[6]) override;
 
-        virtual void translate(const double tx, const double ty);
+        void translate(const double tx, const double ty) override;
 
-        virtual void rotate(const double x, const double y, const double rad); // 弧度制
+        void rotate(const double x, const double y, const double rad) override; // 弧度制
 
-        virtual void scale(const double x, const double y, const double k);
+        void scale(const double x, const double y, const double k) override;
 
-        virtual Polygon convex_hull() const;
+        Polygon convex_hull() const override;
 
-        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
+        AxisAlignedBoundingBox bounding_box() const override;
 
         std::vector<Point>::const_iterator begin() const;
 
@@ -357,6 +362,7 @@ namespace Geo
         double _height,_width;
         Point _topLeft;
       public:
+        AxisAlignedBoundingBox();
         AxisAlignedBoundingBox(const double x0, const double y0, const double x1, const double y1);
         AxisAlignedBoundingBox(const Point &point0, const Point &point1);
         AxisAlignedBoundingBox(const AxisAlignedBoundingBox &rect);
@@ -380,9 +386,11 @@ namespace Geo
         const bool isInside(const Point &point, bool edgeConsider = true) const;
         const bool isInside(const Line &line, bool edgeConsider = true) const;
         const bool isInside(const Circle &circle, bool edgeConsider = true) const;
+
         const bool isIntersected(const Point &point, bool insideConsider = true) const;
         const bool isIntersected(const Line &line, bool insideConsider = true) const;
         const bool isIntersected(const Circle &circle, bool insideConsider = true) const;
+        const bool isIntersected(const AxisAlignedBoundingBox &box, bool insideConsider = true) const;
     };
     // using a short name;
     using AABB = AxisAlignedBoundingBox;
@@ -409,23 +417,23 @@ namespace Geo
 
         Polygon &operator=(const Polygon &&polygon);
 
-        virtual Polygon *clone() const;
+        Polygon *clone() const override;
 
-        virtual void append(const Point &point);
+        void append(const Point &point) override;
 
-        virtual void append(const Polyline &polyline);
+        void append(const Polyline &polyline) override;
 
-        virtual void append(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end);
+        void append(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end) override;
 
-        virtual void insert(const size_t index, const Point &point);
+        void insert(const size_t index, const Point &point) override;
 
-        virtual void insert(const size_t index, const Polyline &polyline);
+        void insert(const size_t index, const Polyline &polyline) override;
 
-        virtual void insert(const size_t index, std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end);
+        void insert(const size_t index, std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end) override;
 
-        virtual void remove(const size_t index);
+        void remove(const size_t index) override;
 
-        virtual Point pop(const size_t index);
+        Point pop(const size_t index) override;
 
         Polygon operator+(const Point &point) const;
 
@@ -469,25 +477,25 @@ namespace Geo
 
         const double area() const;
 
-        virtual const double length() const;
+        const double length() const override;
 
-        virtual const bool empty() const;
+        const bool empty() const override;
 
-        virtual void clear();
+        void clear() override;
 
-        virtual Circle *clone() const;
+        Circle *clone() const override;
 
-        virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f);
+        void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
 
-        virtual void transform(const double mat[6]);
+        void transform(const double mat[6]) override;
 
-        virtual void translate(const double tx, const double ty);
+        void translate(const double tx, const double ty) override;
 
-        virtual void rotate(const double x, const double y, const double rad); // 弧度制
+        void rotate(const double x, const double y, const double rad) override; // 弧度制
 
-        virtual void scale(const double x, const double y, const double k);
+        void scale(const double x, const double y, const double k) override;
 
-        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
+        AxisAlignedBoundingBox bounding_box() const override;
 
         Circle operator+(const Point &point) const;
 
@@ -527,25 +535,25 @@ namespace Geo
 
         void operator-=(const Point &point);
 
-        virtual const double length() const;
+        const double length() const override;
 
-        virtual const bool empty() const;
+        const bool empty() const override;
 
-        virtual void clear();
+        void clear() override;
 
-        virtual Line *clone() const;
+        Line *clone() const override;
 
-        virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f);
+        void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
 
-        virtual void transform(const double mat[6]);
+        void transform(const double mat[6]) override;
 
-        virtual void translate(const double tx, const double ty);
+        void translate(const double tx, const double ty) override;
 
-        virtual void rotate(const double x, const double y, const double rad); // 弧度制
+        void rotate(const double x, const double y, const double rad) override; // 弧度制
 
-        virtual void scale(const double x, const double y, const double k);
+        void scale(const double x, const double y, const double k) override;
 
-        virtual Rectangle bounding_rect() const;
+        AxisAlignedBoundingBox bounding_box() const override;
 
         Point &front();
 
@@ -581,29 +589,29 @@ namespace Geo
 
         void append_shape(const double step = 0.01);
 
-        virtual const double length() const;
+        const double length() const override;
 
-        virtual void clear();
+        void clear() override;
 
-        virtual Bezier *clone() const;
+        Bezier *clone() const override;
 
         Bezier &operator=(const Bezier &bezier);
 
         Bezier &operator=(const Bezier &&bezier);
 
-        virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f);
+        void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
 
-        virtual void transform(const double mat[6]);
+        void transform(const double mat[6]) override;
 
-        virtual void translate(const double tx, const double ty);
+        void translate(const double tx, const double ty) override;
 
-        virtual void rotate(const double x, const double y, const double rad);
+        void rotate(const double x, const double y, const double rad) override;
 
-        virtual void scale(const double x, const double y, const double k);
+        void scale(const double x, const double y, const double k) override;
 
-        virtual Polygon convex_hull() const;
+        Polygon convex_hull() const override;
 
-        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
+        AxisAlignedBoundingBox bounding_box() const override;
     };
 
     // functions

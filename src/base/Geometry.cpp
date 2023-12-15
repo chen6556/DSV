@@ -70,7 +70,7 @@ void Geometry::scale(const double x, const double y, const double k){}
 
 Polygon Geometry::convex_hull() const { return Polygon(); }
 
-Rectangle Geometry::bounding_rect(const bool orthogonality) const { return Rectangle(); }
+AxisAlignedBoundingBox Geometry::bounding_box() const { return AABB(); }
 
 // Coord
 
@@ -249,15 +249,15 @@ void Point::scale(const double x, const double y, const double k)
     _pos.y = k * y_ + y * (1 - k);
 }
 
-Rectangle Point::bounding_rect(const bool orthogonality) const
+AxisAlignedBoundingBox Point::bounding_box() const
 {
     if (length() == 0)
     {
-        return Rectangle();
+        return AABB();
     }
     else
     {
-        return Rectangle(std::min(0.0, _pos.x), std::min(0.0, _pos.y), std::max(0.0, _pos.x), std::max(0.0, _pos.y));
+        return AABB(std::min(0.0, _pos.x), std::min(0.0, _pos.y), std::max(0.0, _pos.x), std::max(0.0, _pos.y));
     }
 }
 
@@ -730,46 +730,21 @@ Polygon Polyline::convex_hull() const
     return Polygon(hull.cbegin(), hull.cend());
 }
 
-Rectangle Polyline::bounding_rect(const bool orthogonality) const
+AxisAlignedBoundingBox Polyline::bounding_box() const
 {
     if (_points.empty())
     {
-        return Rectangle();
+        return AABB();
     }
-    if (orthogonality)
+    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
+    for (const Point &point : _points)
     {
-        double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
-        for (const Point &point : _points)
-        {
-            x0 = std::min(x0, point.coord().x);
-            y0 = std::min(y0, point.coord().y);
-            x1 = std::max(x1, point.coord().x);
-            y1 = std::max(y1, point.coord().y);
-        }
-        return Rectangle(x0, y0, x1, y1);
+        x0 = std::min(x0, point.coord().x);
+        y0 = std::min(y0, point.coord().y);
+        x1 = std::max(x1, point.coord().x);
+        y1 = std::max(y1, point.coord().y);
     }
-    else
-    {
-        double cs, area = DBL_MAX;
-        Rectangle rect, temp;
-        const Polygon hull(convex_hull());
-        Coord coord;
-        for (size_t i = 1, count = hull.size(); i < count; ++i)
-        {
-            Polygon polygon(hull);
-            coord = polygon[i - 1].coord();
-            cs = (coord.x * polygon[i].coord().y - polygon[i].coord().x *coord.y) / (polygon[i].length() * polygon[i - 1].length());
-            polygon.rotate(coord.x, coord.y, std::acos(cs));
-            temp = polygon.bounding_rect();
-            if (temp.area() < area)
-            {
-                rect = temp;
-                area = temp.area();
-                rect.rotate(coord.x, coord.y, -std::acos(cs));
-            }
-        }
-        return rect;
-    }
+    return AABB(x0, y0, x1, y1);
 }
 
 // Rectangle
@@ -980,28 +955,21 @@ Polygon Rectangle::convex_hull() const
     return Polygon(_points.cbegin(), _points.cend());
 }
 
-Rectangle Rectangle::bounding_rect(const bool orthogonality) const
+AxisAlignedBoundingBox Rectangle::bounding_box() const
 {
     if (_points.empty())
     {
-        return Rectangle();
+        return AABB();
     }
-    if (orthogonality)
+    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
+    for (const Point &point : _points)
     {
-        double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
-        for (const Point &point : _points)
-        {
-            x0 = std::min(x0, point.coord().x);
-            y0 = std::min(y0, point.coord().y);
-            x1 = std::max(x1, point.coord().x);
-            y1 = std::max(y1, point.coord().y);
-        }
-        return Rectangle(x0, y0, x1, y1);
+        x0 = std::min(x0, point.coord().x);
+        y0 = std::min(y0, point.coord().y);
+        x1 = std::max(x1, point.coord().x);
+        y1 = std::max(y1, point.coord().y);
     }
-    else
-    {
-        return *this;
-    }
+    return AABB(x0, y0, x1, y1);
 }
 
 std::vector<Point>::const_iterator Rectangle::begin() const
@@ -1439,15 +1407,15 @@ void Circle::scale(const double x, const double y, const double k)
     _radius *= k;
 }
 
-Rectangle Circle::bounding_rect(const bool orthogonality) const
+AxisAlignedBoundingBox Circle::bounding_box() const
 {
     if (_radius == 0)
     {
-        return Rectangle();
+        return AABB();
     }
     else
     {
-        return Rectangle(_center.coord().x - _radius, _center.coord().y - _radius, _center.coord().x + _radius, _center.coord().y + _radius);
+        return AABB(_center.coord().x - _radius, _center.coord().y - _radius, _center.coord().x + _radius, _center.coord().y + _radius);
     }
 }
 
@@ -1601,15 +1569,15 @@ void Line::scale(const double x, const double y, const double k)
     _end_point.scale(x, y, k);
 }
 
-Rectangle Line::bounding_rect() const
+AxisAlignedBoundingBox Line::bounding_box() const
 {
     if (_start_point == _end_point)
     {
-        return Rectangle();
+        return AABB();
     }
     else
     {
-        return Rectangle(std::min(_start_point.coord().x, _end_point.coord().x),
+        return AABB(std::min(_start_point.coord().x, _end_point.coord().x),
                          std::min(_start_point.coord().y, _end_point.coord().y),
                          std::max(_start_point.coord().x, _end_point.coord().x),
                          std::max(_start_point.coord().y, _end_point.coord().y));
@@ -1826,9 +1794,9 @@ Polygon Bezier::convex_hull() const
     return _shape.convex_hull();
 }
 
-Rectangle Bezier::bounding_rect(const bool orthogonality) const
+AxisAlignedBoundingBox Bezier::bounding_box() const
 {
-    return _shape.bounding_rect(orthogonality);
+    return _shape.bounding_box();
 }
 
 
@@ -2017,7 +1985,7 @@ const bool Geo::is_inside(const Point &point, const Polyline &polyline)
 
 const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coincide)
 {
-    if (!polygon.empty() && Geo::is_inside(point, polygon.bounding_rect(), coincide))
+    if (!polygon.empty() && Geo::is_inside(point, polygon.bounding_box(), coincide))
     {
         size_t count = 0;
         double x = (-FLT_MAX);
@@ -2285,7 +2253,7 @@ const bool Geo::is_intersected(const Rectangle &rect0, const Rectangle &rect1, c
 
 const bool Geo::is_intersected(const Polyline &polyline0, const Polyline &polyline1)
 {
-    if (polyline0.empty() || polyline1.empty() || !Geo::is_intersected(polyline0.bounding_rect(), polyline1.bounding_rect()))
+    if (polyline0.empty() || polyline1.empty() || !Geo::is_intersected(polyline0.bounding_box(), polyline1.bounding_box()))
     {
         return false;
     }
@@ -2305,7 +2273,7 @@ const bool Geo::is_intersected(const Polyline &polyline0, const Polyline &polyli
 
 const bool Geo::is_intersected(const Polyline &polyline, const Polygon &polygon, const bool inside)
 {
-    if (polyline.empty() || polygon.empty() || !Geo::is_intersected(polygon.bounding_rect(), polyline.bounding_rect()))
+    if (polyline.empty() || polygon.empty() || !Geo::is_intersected(polygon.bounding_box(), polyline.bounding_box()))
     {
         return false;
     }
@@ -2349,7 +2317,7 @@ const bool Geo::is_intersected(const Polyline &polyline, const Circle &circle)
 
 const bool Geo::is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside)
 {
-    if (polygon0.empty() || polygon1.empty() || !Geo::is_intersected(polygon0.bounding_rect(), polygon1.bounding_rect()))
+    if (polygon0.empty() || polygon1.empty() || !Geo::is_intersected(polygon0.bounding_box(), polygon1.bounding_box()))
     {
         return false;
     }
@@ -2451,7 +2419,7 @@ const bool Geo::is_intersected(const Rectangle &rect, const Line &line, const bo
 
 const bool Geo::is_intersected(const Rectangle &rect, const Polyline &polyline, const bool inside)
 {
-    if (polyline.empty() || !Geo::is_intersected(rect, polyline.bounding_rect()))
+    if (polyline.empty() || !Geo::is_intersected(rect, polyline.bounding_box()))
     {
         return false;
     }
@@ -2482,7 +2450,7 @@ const bool Geo::is_intersected(const Rectangle &rect, const Polyline &polyline, 
 
 const bool Geo::is_intersected(const Rectangle &rect, const Polygon &polygon, const bool inside)
 {
-    if (polygon.empty() || !Geo::is_intersected(rect, polygon.bounding_rect()))
+    if (polygon.empty() || !Geo::is_intersected(rect, polygon.bounding_box()))
     {
         return false;
     }
@@ -2520,7 +2488,7 @@ const bool Geo::is_intersected(const Rectangle &rect, const Polygon &polygon, co
 
 const bool Geo::is_intersected(const Rectangle &rect, const Circle &circle, const bool inside)
 {
-    if (circle.empty() || !Geo::is_intersected(rect, circle.bounding_rect()))
+    if (circle.empty() || !Geo::is_intersected(rect, circle.bounding_box()))
     {
         return false;
     }

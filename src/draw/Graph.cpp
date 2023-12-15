@@ -255,12 +255,12 @@ double Graph::ratio() const
     return _ratio;
 }
 
-Geo::Rectangle Graph::bounding_rect() const
+Geo::AxisAlignedBoundingBox Graph::bounding_box() const
 {
     double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
     for (const ContainerGroup &group : _container_groups)
     {
-        for (const Geo::Point &point : group.bounding_rect())
+        for (const Geo::Point &point : group.bounding_box())
         {
             x0 = std::min(x0, point.coord().x);
             y0 = std::min(y0, point.coord().y);
@@ -268,7 +268,7 @@ Geo::Rectangle Graph::bounding_rect() const
             y1 = std::max(y1, point.coord().y);
         }
     }
-    return Geo::Rectangle(x0, y0, x1, y1);
+    return Geo::AABB(x0, y0, x1, y1);
 }
 
 

@@ -17,7 +17,7 @@ public:
 
     Graph(const Graph &&graph);
 
-    Graph *clone() const;
+    Graph *clone() const override;
 
     void transfer(Graph &graph);
 
@@ -37,31 +37,31 @@ public:
 
     const ContainerGroup &operator[](const size_t index) const;
 
-    const bool empty() const;
+    const bool empty() const override;
 
     const bool empty(const size_t index) const;
 
     const size_t size() const;
 
-    virtual void clear();
+    void clear() override ;
 
     void clear(const size_t index);
 
-    virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f);
+    void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
 
-    virtual void transform(const double mat[6]);
+    void transform(const double mat[6]) override;
 
-    virtual void translate(const double tx, const double ty);
+    void translate(const double tx, const double ty) override;
 
-    virtual void rotate(const double x, const double y, const double rad); // 弧度制
+    void rotate(const double x, const double y, const double rad) override; // 弧度制
 
-    virtual void scale(const double x, const double y, const double k);
+    void scale(const double x, const double y, const double k) override;
 
     void rescale(const double x, const double y);
 
     double ratio() const;
 
-    virtual Geo::Rectangle bounding_rect() const;
+    Geo::AxisAlignedBoundingBox bounding_box() const override;
 
 
 

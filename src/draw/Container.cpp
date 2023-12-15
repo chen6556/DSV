@@ -73,7 +73,7 @@ void Container::clear_text()
 
 const Geo::Point Container::center() const
 {
-    return bounding_rect().center();
+    return bounding_box().center();
 }
 
 const bool Container::empty() const
@@ -536,7 +536,7 @@ Geo::Rectangle ContainerGroup::bounding_rect(const bool orthogonality) const
             break;
         case 3:
             {
-                const Geo::Rectangle rect(dynamic_cast<const Combination *>(continer)->bounding_rect());
+                const Geo::Rectangle rect(dynamic_cast<const Combination *>(continer)->bounding_box());
                 x0 = std::min(x0, rect.left());
                 y0 = std::min(y0, rect.top());
                 x1 = std::max(x1, rect.right());
@@ -855,7 +855,7 @@ void Combination::update_border()
     }
     else
     {
-        _border = bounding_rect();
+        _border = bounding_box();
     }
 }
 

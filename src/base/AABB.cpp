@@ -1,10 +1,16 @@
 #include "base/Geometry.hpp"
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <limits>
 #include <utility>
 
 using Geo::AxisAlignedBoundingBox;
+
+AxisAlignedBoundingBox::AxisAlignedBoundingBox()
+    : Rectangle(), _topLeft(), _width(0), _height(0)
+{
+}
 
 AxisAlignedBoundingBox::AxisAlignedBoundingBox(const double x0, const double y0, const double x1, const double y1)
     : Rectangle(x0, y0, x1, y1), _topLeft(std::min(x0, x1), std::min(y0, y1)), _width(std::abs(x1 - x0)), _height(std::abs(y1 - y0))
@@ -122,20 +128,28 @@ inline bool inOpenRange(double value, double left, double right)
 
 const bool AxisAlignedBoundingBox::isPointInside(const double x, const double y, bool edgeConsider) const
 {
+    if(this->empty())
+        return false;
     return inRange(x, left(), right(), edgeConsider, edgeConsider) && inRange(y, top(), bottom(), edgeConsider, edgeConsider);
 }
 
 const bool AxisAlignedBoundingBox::isInside(const Point &point, bool edgeConsider) const
 {
+    if(this->empty())
+        return false;
     return this->isPointInside(point.coord().x, point.coord().y, edgeConsider);
 }
 const bool AxisAlignedBoundingBox::isInside(const Line &line, bool edgeConsider) const
 {
+    if(this->empty())
+        return false;
     return this->isInside(line.front()) && this->isInside(line.back());
 }
 
 const bool AxisAlignedBoundingBox::isInside(const Circle &circle, bool edgeConsider) const
 {
+    if(this->empty())
+        return false;
     Point point = circle.center();
     if (!this->isInside(point, edgeConsider))
     {
@@ -148,6 +162,8 @@ const bool AxisAlignedBoundingBox::isInside(const Circle &circle, bool edgeConsi
 }
 const bool AxisAlignedBoundingBox::isIntersected(const Point &point, bool insideConsider) const
 {
+    if(this->empty())
+        return false;
     // 点与AABB相交仅考虑边框情况，除非设置insideConsider
     double x = point.coord().x, y = point.coord().y;
     bool result = doubleEq(x, left()) || doubleEq(x, right()) || doubleEq(y, top()) || doubleEq(y, bottom());
@@ -180,6 +196,8 @@ bool isOverLap(double begin0, double end0, double begin1, double end1)
 }
 const bool AxisAlignedBoundingBox::isIntersected(const Line &line, bool edgeConsider) const
 {
+    if(this->empty())
+        return false;
     // 分离轴定理
     // 计算线段法向量
     Point dir = line.back() - line.front();      // 方向向量
@@ -210,6 +228,8 @@ const bool AxisAlignedBoundingBox::isIntersected(const Line &line, bool edgeCons
 }
 const bool AxisAlignedBoundingBox::isIntersected(const Circle &circle, bool insideConsider) const
 {
+    if (this->empty())
+        return false;
     // AABB上最接近圆心的坐标
     double x, y;
     Coord c = circle.center().coord();
@@ -217,4 +237,14 @@ const bool AxisAlignedBoundingBox::isIntersected(const Circle &circle, bool insi
     y = c.y < top() ? top() : (c.y > bottom() ? bottom() : c.y);
     double distance = Geo::distance(Point(x, y), Point(c));
     return doubleLE(distance, circle.radius());
+}
+
+const bool AxisAlignedBoundingBox::isIntersected(const AxisAlignedBoundingBox &box, bool edgeConsider) const{
+    if(this->empty()||box.empty())
+        return false;
+    Vector v = box.center()-this->center();
+    double d_x = std::abs(v.coord().x);
+    double d_y = std::abs(v.coord().y);
+    return inRange(d_x, 0, (width() + box.width()) / 2,false, edgeConsider) 
+    && inRange(d_y, 0, (height() + box.height()) / 2, false, edgeConsider);
 }
