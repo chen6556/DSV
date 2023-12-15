@@ -857,6 +857,10 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     glBufferSubData(GL_ARRAY_BUFFER, obj->memo()["point_index"].to_ull() * 3 * sizeof(double), data_count * sizeof(double), data);
                 }
             }
+            if (event->modifiers() == Qt::ControlModifier)
+            {
+                refresh_brush_ibo();
+            }
             doneCurrent();
             delete data;
             if (event->modifiers() != Qt::ControlModifier && GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
@@ -2200,4 +2204,102 @@ void Canvas::refresh_selected_vbo()
     }
     doneCurrent();
     delete data;
+}
+
+void Canvas::refresh_brush_ibo()
+{
+    size_t polygon_index_len = 512, polygon_index_count = 0;
+    unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
+
+    for (ContainerGroup &group : _editer->graph()->container_groups())
+    {
+        if (!group.visible())
+        {
+            continue;
+        }
+
+        for (Geo::Geometry *geo : group)
+        {
+            switch (geo->memo()["Type"].to_int())
+            {
+            case 0:
+                for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Container *>(geo)->shape()))
+                {
+                    polygon_indexs[polygon_index_count++] = geo->memo()["point_index"].to_ull() + i;
+                    if (polygon_index_count == polygon_index_len)
+                    {
+                        polygon_index_len *= 2;
+                        unsigned int *temp = new unsigned int[polygon_index_len];
+                        std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                        delete polygon_indexs;
+                        polygon_indexs = temp;
+                    }
+                }
+                break;
+            case 1:
+                for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(dynamic_cast<const CircleContainer *>(geo)->shape())))
+                {
+                    polygon_indexs[polygon_index_count++] = geo->memo()["point_index"].to_ull() / 3 + i;
+                    if (polygon_index_count == polygon_index_len)
+                    {
+                        polygon_index_len *= 2;
+                        unsigned int *temp = new unsigned int[polygon_index_len];
+                        std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                        delete polygon_indexs;
+                        polygon_indexs = temp;
+                    }
+                }
+                break;
+            case 3:
+                for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                {
+                    switch (item->memo()["Type"].to_int())
+                    {
+                    case 0:
+                        for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Container *>(item)->shape()))
+                        {
+                            polygon_indexs[polygon_index_count++] = item->memo()["point_index"].to_ull() + i;
+                            if (polygon_index_count == polygon_index_len)
+                            {
+                                polygon_index_len *= 2;
+                                unsigned int *temp = new unsigned int[polygon_index_len];
+                                std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                                delete polygon_indexs;
+                                polygon_indexs = temp;
+                            }
+                        }
+                        break;
+                    case 1:
+                        for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(dynamic_cast<const CircleContainer *>(item)->shape())))
+                        {
+                            polygon_indexs[polygon_index_count++] = item->memo()["point_index"].to_ull() + i;
+                            if (polygon_index_count == polygon_index_len)
+                            {
+                                polygon_index_len *= 2;
+                                unsigned int *temp = new unsigned int[polygon_index_len];
+                                std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                                delete polygon_indexs;
+                                polygon_indexs = temp;
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+                }
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
+    _indexs_count[1] = polygon_index_count;
+
+    makeCurrent();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_DYNAMIC_DRAW);
+    doneCurrent();
+
+    delete polygon_indexs;
 }

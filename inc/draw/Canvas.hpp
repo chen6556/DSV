@@ -155,4 +155,7 @@ public:
     void refresh_selected_ibo();
 
     void refresh_selected_vbo();
+
+    void refresh_brush_ibo();
+
 };
