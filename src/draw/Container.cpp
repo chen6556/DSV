@@ -48,12 +48,12 @@ Container &Container::operator=(const Container &&container)
 
 Geo::Polygon &Container::shape()
 {
-    return *reinterpret_cast<Geo::Polygon *>(this);
+    return *dynamic_cast<Geo::Polygon *>(this);
 }
 
 const Geo::Polygon &Container::shape() const
 {
-    return *reinterpret_cast<const Geo::Polygon *>(this);
+    return *dynamic_cast<const Geo::Polygon *>(this);
 }
 
 const QString &Container::text() const
@@ -140,12 +140,12 @@ CircleContainer &CircleContainer::operator=(const CircleContainer &&container)
 
 Geo::Circle &CircleContainer::shape()
 {
-    return *reinterpret_cast<Geo::Circle *>(this);
+    return *dynamic_cast<Geo::Circle *>(this);
 }
 
 const Geo::Circle &CircleContainer::shape() const
 {
-    return *reinterpret_cast<const Geo::Circle *>(this);
+    return *dynamic_cast<const Geo::Circle *>(this);
 }
 
 const QString &CircleContainer::text() const
@@ -183,19 +183,19 @@ ContainerGroup::ContainerGroup(const ContainerGroup &containers)
         switch (geo->memo()["Type"].to_int())
         {
         case 0:
-            _containers.push_back(reinterpret_cast<const Container *>(geo)->clone());
+            _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
             break;
         case 1:
-            _containers.push_back(reinterpret_cast<const CircleContainer *>(geo)->clone());
+            _containers.push_back(dynamic_cast<const CircleContainer *>(geo)->clone());
             break;
         case 3:
-            _containers.push_back(reinterpret_cast<const Combination *>(geo)->clone());
+            _containers.push_back(dynamic_cast<const Combination *>(geo)->clone());
             break;
         case 20:
-            _containers.push_back(reinterpret_cast<const Geo::Polyline *>(geo)->clone());
+            _containers.push_back(dynamic_cast<const Geo::Polyline *>(geo)->clone());
             break;
         case 21:
-            _containers.push_back(reinterpret_cast<const Geo::Bezier *>(geo)->clone());
+            _containers.push_back(dynamic_cast<const Geo::Bezier *>(geo)->clone());
             break;
         default:
             break;
@@ -211,19 +211,19 @@ ContainerGroup::ContainerGroup(const ContainerGroup &&containers)
         switch (geo->memo()["Type"].to_int())
         {
         case 0:
-            _containers.push_back(reinterpret_cast<const Container *>(geo)->clone());
+            _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
             break;
         case 1:
-            _containers.push_back(reinterpret_cast<const CircleContainer *>(geo)->clone());
+            _containers.push_back(dynamic_cast<const CircleContainer *>(geo)->clone());
             break;
         case 3:
-            _containers.push_back(reinterpret_cast<const Combination *>(geo)->clone());
+            _containers.push_back(dynamic_cast<const Combination *>(geo)->clone());
             break;
         case 20:
-            _containers.push_back(reinterpret_cast<const Geo::Polyline *>(geo)->clone());
+            _containers.push_back(dynamic_cast<const Geo::Polyline *>(geo)->clone());
             break;
         case 21:
-            _containers.push_back(reinterpret_cast<const Geo::Bezier *>(geo)->clone());
+            _containers.push_back(dynamic_cast<const Geo::Bezier *>(geo)->clone());
             break;
         default:
             break;
@@ -272,19 +272,19 @@ ContainerGroup *ContainerGroup::clone() const
         switch (geo->memo()["Type"].to_int())
         {
         case 0:
-            containers.push_back(reinterpret_cast<const Container *>(geo)->clone());
+            containers.push_back(dynamic_cast<const Container *>(geo)->clone());
             break;
         case 1:
-            containers.push_back(reinterpret_cast<const CircleContainer *>(geo)->clone());
+            containers.push_back(dynamic_cast<const CircleContainer *>(geo)->clone());
             break;
         case 3:
-            containers.push_back(reinterpret_cast<const Combination *>(geo)->clone());
+            containers.push_back(dynamic_cast<const Combination *>(geo)->clone());
             break;
         case 20:
-            containers.push_back(reinterpret_cast<const Geo::Polyline *>(geo)->clone());
+            containers.push_back(dynamic_cast<const Geo::Polyline *>(geo)->clone());
             break;
         case 21:
-            containers.push_back(reinterpret_cast<const Geo::Bezier *>(geo)->clone());
+            containers.push_back(dynamic_cast<const Geo::Bezier *>(geo)->clone());
             break;
         default:
             break;
@@ -317,19 +317,19 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
             switch (geo->memo()["Type"].to_int())
             {
             case 0:
-                _containers.push_back(reinterpret_cast<const Container *>(geo)->clone());
+                _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
                 break;
             case 1:
-                _containers.push_back(reinterpret_cast<const CircleContainer *>(geo)->clone());
+                _containers.push_back(dynamic_cast<const CircleContainer *>(geo)->clone());
                 break;
             case 3:
-                _containers.push_back(reinterpret_cast<const Combination *>(geo)->clone());
+                _containers.push_back(dynamic_cast<const Combination *>(geo)->clone());
                 break;
             case 20:
-                _containers.push_back(reinterpret_cast<const Geo::Polyline *>(geo)->clone());
+                _containers.push_back(dynamic_cast<const Geo::Polyline *>(geo)->clone());
                 break;
             case 21:
-                _containers.push_back(reinterpret_cast<const Geo::Bezier *>(geo)->clone());
+                _containers.push_back(dynamic_cast<const Geo::Bezier *>(geo)->clone());
                 break;
             default:
                 break;
@@ -357,19 +357,19 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &&group)
             switch (geo->memo()["Type"].to_int())
             {
             case 0:
-                _containers.push_back(reinterpret_cast<const Container *>(geo)->clone());
+                _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
                 break;
             case 1:
-                _containers.push_back(reinterpret_cast<const CircleContainer *>(geo)->clone());
+                _containers.push_back(dynamic_cast<const CircleContainer *>(geo)->clone());
                 break;
             case 3:
-                _containers.push_back(reinterpret_cast<const Combination *>(geo)->clone());
+                _containers.push_back(dynamic_cast<const Combination *>(geo)->clone());
                 break;
             case 20:
-                _containers.push_back(reinterpret_cast<const Geo::Polyline *>(geo)->clone());
+                _containers.push_back(dynamic_cast<const Geo::Polyline *>(geo)->clone());
                 break;
             case 21:
-                _containers.push_back(reinterpret_cast<const Geo::Bezier *>(geo)->clone());
+                _containers.push_back(dynamic_cast<const Geo::Bezier *>(geo)->clone());
                 break;
             default:
                 break;
@@ -517,7 +517,7 @@ Geo::Rectangle ContainerGroup::bounding_rect(const bool orthogonality) const
         switch (continer->memo()["Type"].to_int())
         {
         case 0:
-            for (const Geo::Point &point : reinterpret_cast<const Container *>(continer)->shape())
+            for (const Geo::Point &point : dynamic_cast<const Container *>(continer)->shape())
             {
                 x0 = std::min(x0, point.coord().x);
                 y0 = std::min(y0, point.coord().y);
@@ -526,8 +526,8 @@ Geo::Rectangle ContainerGroup::bounding_rect(const bool orthogonality) const
             }
             break;
         case 1:
-            r = reinterpret_cast<const CircleContainer *>(continer)->radius();
-            coord = reinterpret_cast<const CircleContainer *>(continer)->center().coord();
+            r = dynamic_cast<const CircleContainer *>(continer)->radius();
+            coord = dynamic_cast<const CircleContainer *>(continer)->center().coord();
             x0 = std::min(x0, coord.x - r);
             y0 = std::min(y0, coord.y - r);
             x1 = std::max(x1, coord.x + r);
@@ -535,7 +535,7 @@ Geo::Rectangle ContainerGroup::bounding_rect(const bool orthogonality) const
             break;
         case 3:
             {
-                const Geo::Rectangle rect(reinterpret_cast<const Combination *>(continer)->bounding_rect());
+                const Geo::Rectangle rect(dynamic_cast<const Combination *>(continer)->bounding_rect());
                 x0 = std::min(x0, rect.left());
                 y0 = std::min(y0, rect.top());
                 x1 = std::max(x1, rect.right());
@@ -544,7 +544,7 @@ Geo::Rectangle ContainerGroup::bounding_rect(const bool orthogonality) const
             break;
         case 2:
         case 20:
-            for (const Geo::Point &point : *reinterpret_cast<const Geo::Polyline *>(continer))
+            for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(continer))
             {
                 x0 = std::min(x0, point.coord().x);
                 y0 = std::min(y0, point.coord().y);
@@ -553,7 +553,7 @@ Geo::Rectangle ContainerGroup::bounding_rect(const bool orthogonality) const
             }
             break;
         case 21:
-            for (const Geo::Point &point : reinterpret_cast<const Geo::Bezier *>(continer)->shape())
+            for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(continer)->shape())
             {
                 x0 = std::min(x0, point.coord().x);
                 y0 = std::min(y0, point.coord().y);
@@ -780,19 +780,19 @@ void Combination::append(Geo::Geometry *geo)
     switch (geo->memo()["Type"].to_int())
     {
     case 0:
-        ContainerGroup::append(reinterpret_cast<Container *>(geo));
+        ContainerGroup::append(dynamic_cast<Container *>(geo));
         break;
     case 1:
-        ContainerGroup::append(reinterpret_cast<CircleContainer *>(geo));
+        ContainerGroup::append(dynamic_cast<CircleContainer *>(geo));
         break;
     case 3:
-        append(reinterpret_cast<Combination *>(geo));
+        append(dynamic_cast<Combination *>(geo));
         break;
     case 20:
-        ContainerGroup::append(reinterpret_cast<Geo::Polyline *>(geo));
+        ContainerGroup::append(dynamic_cast<Geo::Polyline *>(geo));
         break;
     case 21:
-        ContainerGroup::append(reinterpret_cast<Geo::Bezier *>(geo));
+        ContainerGroup::append(dynamic_cast<Geo::Bezier *>(geo));
         break;
     default:
         break;

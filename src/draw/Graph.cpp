@@ -394,6 +394,7 @@ void Graph::append(Geo::Bezier *bezier, const size_t index)
 {
     assert(index < _container_groups.size());
     container_group(index).append(bezier);
+    bezier->memo()["is_selected"] = false;
 }
 
 void Graph::append_group()
