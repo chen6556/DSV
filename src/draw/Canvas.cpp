@@ -2104,3 +2104,100 @@ void Canvas::refresh_selected_ibo()
     _indexs_count[2] = index_count;
     delete indexs;
 }
+
+void Canvas::refresh_selected_vbo()
+{
+    size_t data_len = 513, data_count;
+    double *data = new double[data_len];
+    double deepth;
+    makeCurrent();
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
+    for (Geo::Geometry *obj : _editer->selected())
+    {
+        data_count = data_len;
+        deepth = obj->memo()["point_deepth"].to_double();
+        while (obj->memo()["point_count"].to_ull() * 3 > data_len)
+        {
+            data_len *= 2;
+        }
+        if (data_count < data_len)
+        {
+            delete data;
+            data = new double[data_len];
+        }
+        data_count = 0;
+        switch (obj->memo()["Type"].to_int())
+        {
+        case 0:
+            for (const Geo::Point &point : dynamic_cast<const Container *>(obj)->shape())
+            {
+                data[data_count++] = point.coord().x;
+                data[data_count++] = point.coord().y;
+                data[data_count++] = deepth;
+            }
+            break;
+        case 1:
+            for (const Geo::Point &point : Geo::circle_to_polygon(dynamic_cast<const CircleContainer *>(obj)->shape()))
+            {
+                data[data_count++] = point.coord().x;
+                data[data_count++] = point.coord().y;
+                data[data_count++] = deepth;
+            }
+            break;
+        case 3:
+            for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
+            {
+                data_count = 0;
+                deepth = item->memo()["point_deepth"].to_double();
+                switch (item->memo()["Type"].to_int())
+                {
+                case 0:
+                    for (const Geo::Point &point : dynamic_cast<const Container *>(item)->shape())
+                    {
+                        data[data_count++] = point.coord().x;
+                        data[data_count++] = point.coord().y;
+                        data[data_count++] = deepth;
+                    }
+                    break;
+                case 1:
+                    for (const Geo::Point &point : Geo::circle_to_polygon(dynamic_cast<const CircleContainer *>(item)->shape()))
+                    {
+                        data[data_count++] = point.coord().x;
+                        data[data_count++] = point.coord().y;
+                        data[data_count++] = deepth;
+                    }
+                    break;
+                case 20:
+                    for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(item))
+                    {
+                        data[data_count++] = point.coord().x;
+                        data[data_count++] = point.coord().y;
+                        data[data_count++] = deepth;
+                    }
+                    break;
+                default:
+                    break;
+                }
+                glBufferSubData(GL_ARRAY_BUFFER, item->memo()["point_index"].to_ull() * 3 * sizeof(double), data_count * sizeof(double), data);
+            }
+            data_count = 0;
+            break;
+        case 20:
+            for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(obj))
+            {
+                data[data_count++] = point.coord().x;
+                data[data_count++] = point.coord().y;
+                data[data_count++] = deepth;
+            }
+            break;
+        default:
+            break;
+        }
+        if (data_count > 0)
+        {
+            glBufferSubData(GL_ARRAY_BUFFER, obj->memo()["point_index"].to_ull() * 3 * sizeof(double), data_count * sizeof(double), data);
+        }
+    }
+    doneCurrent();
+    delete data;
+}

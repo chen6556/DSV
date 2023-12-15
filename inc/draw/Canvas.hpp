@@ -153,4 +153,6 @@ public:
     void refresh_vbo(const bool unitary);
 
     void refresh_selected_ibo();
+
+    void refresh_selected_vbo();
 };
