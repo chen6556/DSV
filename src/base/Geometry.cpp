@@ -9,7 +9,7 @@ Geometry::Geometry(const Geometry &geo)
     :_memo(geo._memo), _shape_fixed(geo._shape_fixed)
 {}
 
-Geometry& Geometry::operator=(const Geometry &geo)
+Geometry &Geometry::operator=(const Geometry &geo)
 {
     if (this != &geo)
     {
@@ -19,32 +19,22 @@ Geometry& Geometry::operator=(const Geometry &geo)
     return *this;
 }
 
-Memo& Geometry::memo()
+Memo &Geometry::memo()
 {
     return _memo;
 }
 
-const Memo& Geometry::memo() const
+const Memo &Geometry::memo() const
 {
     return _memo;
 }
 
-std::vector<Geo::Geometry*>& Geometry::related()
-{
-    return _related;
-}
-
-const std::vector<Geo::Geometry*> Geometry::related() const
-{
-    return _related;
-}
-
-bool& Geometry::shape_fixed()
+bool &Geometry::shape_fixed()
 {
     return _shape_fixed;
 }
 
-const bool& Geometry::shape_fixed() const
+const bool Geometry::shape_fixed() const
 {
     return _shape_fixed;
 }
@@ -61,7 +51,7 @@ const bool Geometry::empty() const
 
 void Geometry::clear(){}
 
-Geometry * Geometry::clone() const
+Geometry *Geometry::clone() const
 {
     return new Geometry(*this);
 }
@@ -92,7 +82,7 @@ Coord::Coord(const Coord &&coord)
     : x(std::move(coord.x)),
     y(std::move(coord.y)) {}
 
-Coord& Coord::operator=(const Coord &coord)
+Coord &Coord::operator=(const Coord &coord)
 {
     if (this != &coord)
     {
@@ -102,7 +92,7 @@ Coord& Coord::operator=(const Coord &coord)
     return *this;
 }
 
-Coord& Coord::operator=(const Coord &&coord)
+Coord &Coord::operator=(const Coord &&coord)
 {
     if (this != &coord)
     {
@@ -146,7 +136,7 @@ Point::Point(const Point &&point)
     ,_pos(std::move(point._pos))
 {}
 
-Point& Point::operator=(const Point &point)
+Point &Point::operator=(const Point &point)
 {
     if (this != &point)
     {
@@ -156,7 +146,7 @@ Point& Point::operator=(const Point &point)
     return *this;
 }
 
-Point& Point::operator=(const Point &&point)
+Point &Point::operator=(const Point &&point)
 {
     if (this != &point)
     {
@@ -166,12 +156,12 @@ Point& Point::operator=(const Point &&point)
     return *this;
 }
 
-Coord& Point::coord()
+Coord &Point::coord()
 {
     return _pos;
 }
 
-const Coord& Point::coord() const
+const Coord &Point::coord() const
 {
     return _pos;
 }
@@ -186,7 +176,7 @@ const bool Point::operator!=(const Point &point) const
     return _pos != point._pos;
 }
 
-const Point& Point::normalize()
+const Point &Point::normalize()
 {
     const double len = length();
     _pos.x /= len;
@@ -216,7 +206,7 @@ void Point::clear()
     _pos.y = 0;
 }
 
-Point * Point::clone() const
+Point *Point::clone() const
 {
     return new Point(*this);
 }
@@ -380,7 +370,7 @@ void Polyline::clear()
     _points.clear();
 }
 
-Polyline * Polyline::clone() const
+Polyline *Polyline::clone() const
 {
     return new Polyline(*this);
 }
@@ -397,7 +387,7 @@ const Point &Polyline::operator[](const size_t index) const
     return _points[index];
 }
 
-Polyline& Polyline::operator=(const Polyline &polyline)
+Polyline &Polyline::operator=(const Polyline &polyline)
 {
     if (this != &polyline)
     {
@@ -408,7 +398,7 @@ Polyline& Polyline::operator=(const Polyline &polyline)
     return *this;
 }
 
-Polyline& Polyline::operator=(const Polyline &&polyline)
+Polyline &Polyline::operator=(const Polyline &&polyline)
 {
     if (this != &polyline)
     {
@@ -537,25 +527,25 @@ Point Polyline::pop(const size_t index)
     return point;
 }
 
-Point& Polyline::front()
+Point &Polyline::front()
 {
     assert(!_points.empty());
     return _points.front();
 }
 
-const Point& Polyline::front() const
+const Point &Polyline::front() const
 {
     assert(!_points.empty());
     return _points.front();
 }
 
-Point& Polyline::back()
+Point &Polyline::back()
 {
     assert(!_points.empty());
     return _points.back();
 }
 
-const Point& Polyline::back() const
+const Point &Polyline::back() const
 {
     assert(!_points.empty());
     return _points.back();
@@ -875,7 +865,7 @@ const double Rectangle::bottom() const
     return _points[2].coord().y;
 }
 
-Rectangle& Rectangle::operator=(const Rectangle &rect)
+Rectangle &Rectangle::operator=(const Rectangle &rect)
 {
     if (this != &rect)
     {
@@ -886,7 +876,7 @@ Rectangle& Rectangle::operator=(const Rectangle &rect)
     return *this;
 }
 
-Rectangle& Rectangle::operator=(const Rectangle &&rect)
+Rectangle &Rectangle::operator=(const Rectangle &&rect)
 {
     if (this != &rect)
     {
@@ -917,7 +907,7 @@ void Rectangle::clear()
     _points.clear();
 }
 
-Rectangle * Rectangle::clone() const
+Rectangle *Rectangle::clone() const
 {
     return new Rectangle(*this);
 }
@@ -1090,7 +1080,7 @@ const Point Rectangle::center() const
     return (_points[0] + _points[2]) / 2;
 }
 
-const Point& Rectangle::operator[](const size_t index) const
+const Point &Rectangle::operator[](const size_t index) const
 {
     assert(!_points.empty() && index <= 4);
     return _points[index];
@@ -1150,7 +1140,7 @@ Polygon::Polygon(const Rectangle& rect)
     _memo["Type"] = 40; 
 }
 
-Polygon& Polygon::operator=(const Polygon &polygon)
+Polygon &Polygon::operator=(const Polygon &polygon)
 {
     if (this != &polygon)
     {
@@ -1160,7 +1150,7 @@ Polygon& Polygon::operator=(const Polygon &polygon)
     return *this;
 }
 
-Polygon& Polygon::operator=(const Polygon &&polygon)
+Polygon &Polygon::operator=(const Polygon &&polygon)
 {
     if (this != &polygon)
     {
@@ -1170,7 +1160,7 @@ Polygon& Polygon::operator=(const Polygon &&polygon)
     return *this;
 }
 
-Polygon * Polygon::clone() const
+Polygon *Polygon::clone() const
 {
     return new Polygon(*this);
 }
@@ -1349,7 +1339,7 @@ Circle::Circle(const Circle &&circle)
     _memo["Type"] = 50;
 }
 
-Circle& Circle::operator=(const Circle &circle)
+Circle &Circle::operator=(const Circle &circle)
 {
     if (this != &circle)
     {
@@ -1361,7 +1351,7 @@ Circle& Circle::operator=(const Circle &circle)
     return *this;
 }
 
-Circle& Circle::operator=(const Circle &&circle)
+Circle &Circle::operator=(const Circle &&circle)
 {
     if (this != &circle)
     {
@@ -1373,22 +1363,22 @@ Circle& Circle::operator=(const Circle &&circle)
     return *this;
 }
 
-Point& Circle::center()
+Point &Circle::center()
 {
     return _center;
 }
 
-const Point& Circle::center() const
+const Point &Circle::center() const
 {
     return _center;
 }
 
-double& Circle::radius()
+double &Circle::radius()
 {
     return _radius;
 }
 
-const double& Circle::radius() const
+const double Circle::radius() const
 {
     return _radius;
 }
@@ -1414,7 +1404,7 @@ void Circle::clear()
     _center.clear();
 }
 
-Circle * Circle::clone() const
+Circle *Circle::clone() const
 {
     return new Circle(*this);
 }
@@ -1512,7 +1502,7 @@ Line::Line(const Line &&line)
     _memo["Type"] = 60;
 }
 
-Line& Line::operator=(const Line &line)
+Line &Line::operator=(const Line &line)
 {
     if (this != &line)
     {
@@ -1524,7 +1514,7 @@ Line& Line::operator=(const Line &line)
     return *this;
 }
 
-Line& Line::operator=(const Line &&line)
+Line &Line::operator=(const Line &&line)
 {
     if (this != &line)
     {
@@ -1574,7 +1564,7 @@ void Line::clear()
     _end_point.clear();
 }
 
-Line * Line::clone() const
+Line *Line::clone() const
 {
     return new Line(*this);
 }
@@ -1624,22 +1614,22 @@ Rectangle Line::bounding_rect() const
     }
 }
 
-Point& Line::front()
+Point &Line::front()
 {
     return _start_point;
 }
 
-const Point& Line::front() const
+const Point &Line::front() const
 {
     return _start_point;
 }
 
-Point& Line::back()
+Point &Line::back()
 {
     return _end_point;
 }
 
-const Point& Line::back() const
+const Point &Line::back() const
 {
     return _end_point;
 }

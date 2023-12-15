@@ -17,7 +17,6 @@ namespace Geo
     {
     protected:
         Memo _memo;
-        std::vector<Geo::Geometry *> _related;
         bool _shape_fixed = false;
 
     public:
@@ -33,13 +32,9 @@ namespace Geo
 
         const Memo &memo() const;
 
-        std::vector<Geo::Geometry *> &related();
-
-        const std::vector<Geo::Geometry *> related() const;
-
         bool &shape_fixed();
 
-        const bool &shape_fixed() const;
+        const bool shape_fixed() const;
 
         virtual const double length() const;
 
@@ -430,7 +425,7 @@ namespace Geo
 
         double &radius();
 
-        const double &radius() const;
+        const double radius() const;
 
         const double area() const;
 
