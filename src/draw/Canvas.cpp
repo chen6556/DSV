@@ -767,14 +767,14 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             size_t data_len = 513, data_count;
             double *data = new double[data_len];
-            double deepth;
+            double depth;
             makeCurrent();
             glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
             for (Geo::Geometry *obj : _editer->selected())
             {
                 _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier);
                 data_count = data_len;
-                deepth = obj->memo()["point_deepth"].to_double();
+                depth = obj->memo()["point_depth"].to_double();
                 while (obj->memo()["point_count"].to_ull() * 3 > data_len)
                 {
                     data_len *= 2;
@@ -792,7 +792,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
-                        data[data_count++] = deepth;
+                        data[data_count++] = depth;
                     }
                     break;
                 case 1:
@@ -800,14 +800,14 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
-                        data[data_count++] = deepth;
+                        data[data_count++] = depth;
                     }
                     break;
                 case 3:
                     for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
                     {
                         data_count = 0;
-                        deepth = item->memo()["point_deepth"].to_double();
+                        depth = item->memo()["point_depth"].to_double();
                         switch (item->memo()["Type"].to_int())
                         {
                         case 0:
@@ -815,7 +815,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                             {
                                 data[data_count++] = point.coord().x;
                                 data[data_count++] = point.coord().y;
-                                data[data_count++] = deepth;
+                                data[data_count++] = depth;
                             }
                             break;
                         case 1:
@@ -823,7 +823,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                             {
                                 data[data_count++] = point.coord().x;
                                 data[data_count++] = point.coord().y;
-                                data[data_count++] = deepth;
+                                data[data_count++] = depth;
                             }
                             break;
                         case 20:
@@ -831,7 +831,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                             {
                                 data[data_count++] = point.coord().x;
                                 data[data_count++] = point.coord().y;
-                                data[data_count++] = deepth;
+                                data[data_count++] = depth;
                             }
                             break;
                         default:
@@ -846,7 +846,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
-                        data[data_count++] = deepth;
+                        data[data_count++] = depth;
                     }
                     break;
                 default:
@@ -1390,7 +1390,7 @@ void Canvas::refresh_vbo()
     double *data = new double[data_len];
     unsigned int *polyline_indexs = new unsigned int[polyline_index_len];
     unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
-    double deepth = 1.0;
+    double depth = 1.0;
     Geo::Polygon points;
     Container *container = nullptr;
     Geo::Polyline *polyline = nullptr;
@@ -1406,7 +1406,7 @@ void Canvas::refresh_vbo()
         for (Geo::Geometry *geo : group)
         {
             geo->memo()["point_index"] = data_count / 3;
-            geo->memo()["point_deepth"] = deepth;
+            geo->memo()["point_depth"] = depth;
             switch (geo->memo()["Type"].to_int())
             {
             case 0:
@@ -1428,7 +1428,7 @@ void Canvas::refresh_vbo()
                     polyline_indexs[polyline_index_count++] = data_count / 3;
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
-                    data[data_count++] = deepth;
+                    data[data_count++] = depth;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -1478,7 +1478,7 @@ void Canvas::refresh_vbo()
                     polyline_indexs[polyline_index_count++] = data_count / 3;
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
-                    data[data_count++] = deepth;
+                    data[data_count++] = depth;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -1514,7 +1514,7 @@ void Canvas::refresh_vbo()
                 for (Geo::Geometry *item : *dynamic_cast<Combination *>(geo))
                 {
                     item->memo()["point_index"] = data_count / 3;
-                    item->memo()["point_deepth"] = deepth;
+                    item->memo()["point_depth"] = depth;
                     switch (item->memo()["Type"].to_int())
                     {
                     case 0:
@@ -1536,7 +1536,7 @@ void Canvas::refresh_vbo()
                             polyline_indexs[polyline_index_count++] = data_count / 3;
                             data[data_count++] = point.coord().x;
                             data[data_count++] = point.coord().y;
-                            data[data_count++] = deepth;
+                            data[data_count++] = depth;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -1577,7 +1577,7 @@ void Canvas::refresh_vbo()
                             polyline_indexs[polyline_index_count++] = data_count / 3;
                             data[data_count++] = point.coord().x;
                             data[data_count++] = point.coord().y;
-                            data[data_count++] = deepth;
+                            data[data_count++] = depth;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -1605,7 +1605,7 @@ void Canvas::refresh_vbo()
                             polyline_indexs[polyline_index_count++] = data_count / 3;
                             data[data_count++] = point.coord().x;
                             data[data_count++] = point.coord().y;
-                            data[data_count++] = deepth;
+                            data[data_count++] = depth;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -1649,10 +1649,10 @@ void Canvas::refresh_vbo()
                         break;
                     }
 
-                    deepth -= 1e-6;
-                    if (deepth <= 0)
+                    depth -= 1e-6;
+                    if (depth <= 0)
                     {
-                        deepth = 1.0;
+                        depth = 1.0;
                     }
                     if (polyline_index_count == polyline_index_len)
                     {
@@ -1672,7 +1672,7 @@ void Canvas::refresh_vbo()
                     polyline_indexs[polyline_index_count++] = data_count / 3;
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
-                    data[data_count++] = deepth;
+                    data[data_count++] = depth;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -1725,10 +1725,10 @@ void Canvas::refresh_vbo()
             default:
                 break;
             }
-            deepth -= 1e-6;
-            if (deepth <= 0)
+            depth -= 1e-6;
+            if (depth <= 0)
             {
-                deepth = 1.0;
+                depth = 1.0;
             }
             if (polyline_index_count == polyline_index_len)
             {
@@ -1767,7 +1767,7 @@ void Canvas::refresh_vbo(const bool unitary)
 {
     size_t data_len = 1026, data_count = 0;
     double *data = new double[data_len];
-    double deepth;
+    double depth;
 
     makeCurrent();
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
@@ -1787,7 +1787,7 @@ void Canvas::refresh_vbo(const bool unitary)
             }
 
             data_count = 0;
-            deepth = geo->memo()["point_deepth"].to_double();
+            depth = geo->memo()["point_depth"].to_double();
             switch (geo->memo()["Type"].to_int())
             {
             case 0:
@@ -1795,7 +1795,7 @@ void Canvas::refresh_vbo(const bool unitary)
                 {
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
-                    data[data_count++] = deepth;
+                    data[data_count++] = depth;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -1811,7 +1811,7 @@ void Canvas::refresh_vbo(const bool unitary)
                 {
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
-                    data[data_count++] = deepth;
+                    data[data_count++] = depth;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -1826,7 +1826,7 @@ void Canvas::refresh_vbo(const bool unitary)
                 for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
                 {
                     data_count = 0;
-                    deepth = item->memo()["point_deepth"].to_double();
+                    depth = item->memo()["point_depth"].to_double();
                     switch (item->memo()["Type"].to_int())
                     {
                     case 0:
@@ -1834,7 +1834,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         {
                             data[data_count++] = point.coord().x;
                             data[data_count++] = point.coord().y;
-                            data[data_count++] = deepth;
+                            data[data_count++] = depth;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -1850,7 +1850,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         {
                             data[data_count++] = point.coord().x;
                             data[data_count++] = point.coord().y;
-                            data[data_count++] = deepth;
+                            data[data_count++] = depth;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -1866,7 +1866,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         {
                             data[data_count++] = point.coord().x;
                             data[data_count++] = point.coord().y;
-                            data[data_count++] = deepth;
+                            data[data_count++] = depth;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -1909,7 +1909,7 @@ void Canvas::refresh_vbo(const bool unitary)
                 {
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
-                    data[data_count++] = deepth;
+                    data[data_count++] = depth;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -2113,13 +2113,13 @@ void Canvas::refresh_selected_vbo()
 {
     size_t data_len = 513, data_count;
     double *data = new double[data_len];
-    double deepth;
+    double depth;
     makeCurrent();
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
     for (Geo::Geometry *obj : _editer->selected())
     {
         data_count = data_len;
-        deepth = obj->memo()["point_deepth"].to_double();
+        depth = obj->memo()["point_depth"].to_double();
         while (obj->memo()["point_count"].to_ull() * 3 > data_len)
         {
             data_len *= 2;
@@ -2137,7 +2137,7 @@ void Canvas::refresh_selected_vbo()
             {
                 data[data_count++] = point.coord().x;
                 data[data_count++] = point.coord().y;
-                data[data_count++] = deepth;
+                data[data_count++] = depth;
             }
             break;
         case 1:
@@ -2145,14 +2145,14 @@ void Canvas::refresh_selected_vbo()
             {
                 data[data_count++] = point.coord().x;
                 data[data_count++] = point.coord().y;
-                data[data_count++] = deepth;
+                data[data_count++] = depth;
             }
             break;
         case 3:
             for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
             {
                 data_count = 0;
-                deepth = item->memo()["point_deepth"].to_double();
+                depth = item->memo()["point_depth"].to_double();
                 switch (item->memo()["Type"].to_int())
                 {
                 case 0:
@@ -2160,7 +2160,7 @@ void Canvas::refresh_selected_vbo()
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
-                        data[data_count++] = deepth;
+                        data[data_count++] = depth;
                     }
                     break;
                 case 1:
@@ -2168,7 +2168,7 @@ void Canvas::refresh_selected_vbo()
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
-                        data[data_count++] = deepth;
+                        data[data_count++] = depth;
                     }
                     break;
                 case 20:
@@ -2176,7 +2176,7 @@ void Canvas::refresh_selected_vbo()
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
-                        data[data_count++] = deepth;
+                        data[data_count++] = depth;
                     }
                     break;
                 default:
@@ -2191,7 +2191,7 @@ void Canvas::refresh_selected_vbo()
             {
                 data[data_count++] = point.coord().x;
                 data[data_count++] = point.coord().y;
-                data[data_count++] = deepth;
+                data[data_count++] = depth;
             }
             break;
         default:
