@@ -198,13 +198,13 @@ namespace Geo
 
         virtual void append(const Polyline &polyline);
 
-        virtual void append(std::vector<Point>::const_iterator &begin, std::vector<Point>::const_iterator &end);
+        virtual void append(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end);
 
         virtual void insert(const size_t index, const Point &point);
 
         virtual void insert(const size_t index, const Polyline &polyline);
 
-        virtual void insert(const size_t index, std::vector<Point>::const_iterator &begin, std::vector<Point>::const_iterator &end);
+        virtual void insert(const size_t index, std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end);
 
         virtual void remove(const size_t index);
 
@@ -375,13 +375,13 @@ namespace Geo
 
         virtual void append(const Polyline &polyline);
 
-        virtual void append(std::vector<Point>::const_iterator &begin, std::vector<Point>::const_iterator &end);
+        virtual void append(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end);
 
         virtual void insert(const size_t index, const Point &point);
 
         virtual void insert(const size_t index, const Polyline &polyline);
 
-        virtual void insert(const size_t index, std::vector<Point>::const_iterator &begin, std::vector<Point>::const_iterator &end);
+        virtual void insert(const size_t index, std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end);
 
         virtual void remove(const size_t index);
 
