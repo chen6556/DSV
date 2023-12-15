@@ -796,7 +796,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     }
                     break;
                 case 1:
-                    for (const Geo::Point &point : Geo::circle_to_polygon(dynamic_cast<const CircleContainer *>(obj)->shape()))
+                    for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(obj)))
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
@@ -819,7 +819,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                             }
                             break;
                         case 1:
-                            for (const Geo::Point &point : Geo::circle_to_polygon(dynamic_cast<const CircleContainer *>(item)->shape()))
+                            for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item)))
                             {
                                 data[data_count++] = point.coord().x;
                                 data[data_count++] = point.coord().y;
@@ -1807,7 +1807,7 @@ void Canvas::refresh_vbo(const bool unitary)
                 }
                 break;
             case 1:
-                for (const Geo::Point &point : Geo::circle_to_polygon(dynamic_cast<const CircleContainer *>(geo)->shape()))
+                for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(geo)))
                 {
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
@@ -1846,7 +1846,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         }
                         break;
                     case 1:
-                        for (const Geo::Point &point : Geo::circle_to_polygon(dynamic_cast<const CircleContainer *>(item)->shape()))
+                        for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item)))
                         {
                             data[data_count++] = point.coord().x;
                             data[data_count++] = point.coord().y;
@@ -2141,7 +2141,7 @@ void Canvas::refresh_selected_vbo()
             }
             break;
         case 1:
-            for (const Geo::Point &point : Geo::circle_to_polygon(dynamic_cast<const CircleContainer *>(obj)->shape()))
+            for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(obj)))
             {
                 data[data_count++] = point.coord().x;
                 data[data_count++] = point.coord().y;
@@ -2164,7 +2164,7 @@ void Canvas::refresh_selected_vbo()
                     }
                     break;
                 case 1:
-                    for (const Geo::Point &point : Geo::circle_to_polygon(dynamic_cast<const CircleContainer *>(item)->shape()))
+                    for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item)))
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
@@ -2237,7 +2237,7 @@ void Canvas::refresh_brush_ibo()
                 }
                 break;
             case 1:
-                for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(dynamic_cast<const CircleContainer *>(geo)->shape())))
+                for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(geo))))
                 {
                     polygon_indexs[polygon_index_count++] = geo->memo()["point_index"].to_ull() / 3 + i;
                     if (polygon_index_count == polygon_index_len)
@@ -2270,7 +2270,7 @@ void Canvas::refresh_brush_ibo()
                         }
                         break;
                     case 1:
-                        for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(dynamic_cast<const CircleContainer *>(item)->shape())))
+                        for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item))))
                         {
                             polygon_indexs[polygon_index_count++] = item->memo()["point_index"].to_ull() + i;
                             if (polygon_index_count == polygon_index_len)
