@@ -23,20 +23,6 @@ Canvas::Canvas(QLabel **labels, QWidget *parent)
 void Canvas::init()
 {
     _input_line.hide();
-
-    QObject::connect(&_input_line, &QTextEdit::textChanged, this, [this]()
-                     {
-                                                            if (_last_clicked_obj)
-                                                            {
-                                                                if (dynamic_cast<Container*>(_last_clicked_obj))
-                                                                {
-                                                                    dynamic_cast<Container*>(_last_clicked_obj)->set_text(_input_line.toPlainText());
-                                                                }
-                                                                else
-                                                                {
-                                                                    dynamic_cast<CircleContainer*>(_last_clicked_obj)->set_text(_input_line.toPlainText());
-                                                                }
-                                                            } });
 }
 
 void Canvas::bind_editer(Editer *editer)
@@ -117,7 +103,7 @@ void Canvas::paint_graph()
     painter.setBrush(QColor(250, 250, 250));
     const bool scale_text = GlobalSetting::get_instance()->setting()["scale_text"].toBool();
     const double suffix_text_width = 4 * (scale_text ? _ratio : 1), text_heigh_ratio = (scale_text ? _ratio : 1);
-    painter.setFont(QFont("SimHei", scale_text ? 12 * _ratio : 12, QFont::Bold, true));
+    painter.setFont(QFont("SimSun", scale_text ? 12 * _ratio : 12, QFont::Bold, true));
 
     const bool show_points = GlobalSetting::get_instance()->setting()["show_points"].toBool();
 
@@ -525,7 +511,17 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 _last_point.coord().x = real_x1;
                 _last_point.coord().y = real_y1;
                 _bool_flags[5] = false;
-                _input_line.hide();
+                if (_input_line.isVisible() && _last_clicked_obj != nullptr)
+                {
+                    if (dynamic_cast<Container *>(_last_clicked_obj) != nullptr)
+                    {
+                        dynamic_cast<Container *>(_last_clicked_obj)->set_text(_input_line.toPlainText());   
+                    }
+                    else
+                    {
+                        dynamic_cast<CircleContainer *>(_last_clicked_obj)->set_text(_input_line.toPlainText());
+                    }
+                }
             }
             else
             {
@@ -559,6 +555,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool());
                 }
             }
+            _input_line.clear();
+            _input_line.hide();
             update();
         }
         break;
@@ -597,7 +595,6 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
             }
             _bool_flags[6] = false;
             _last_clicked_obj = _clicked_obj;
-            _clicked_obj = nullptr;
             update();
         }
         break;
