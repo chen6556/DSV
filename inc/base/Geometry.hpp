@@ -645,6 +645,6 @@ namespace Geo
 
     const bool is_intersected(const AABBRect &rect, const Circle &circle, const bool inside = true);
 
-    const bool is_AABBRect(const Polygon &polygon);
+    const bool is_Rectangle(const Polygon &polygon);
 
 };

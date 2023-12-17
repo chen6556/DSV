@@ -2177,64 +2177,13 @@ const bool Geo::is_inside(const Point &point, const AABBRect &rect, const bool c
         return false;
     }
     const double x = point.coord().x, y = point.coord().y;
-    if (rect[0].coord().y == rect[1].coord().y)
-    {
-        if (coincide)
-        {
-            return rect.left() <= x && x <= rect.right() && rect.bottom() <= y && y <= rect.top();
-        }
-        else
-        {
-            return rect.left() < x && x < rect.right() && rect.bottom() < y && y < rect.top();
-        }
-    }
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
-    for (const Point &p : rect)
-    {
-        x0 = std::min(x0, p.coord().x);
-        y0 = std::min(y0, p.coord().y);
-        x1 = std::max(x1, p.coord().x);
-        y1 = std::max(y1, p.coord().y);
-    }
-    Point output, end(x1 + 80, y);
-    size_t count = 0;
     if (coincide)
     {
-        if (x < x0 || x > x1 || y < y0 || y > y1)
-        {
-            return false;
-        }
-        for (size_t i = 1; i < 5; ++i)
-        {
-            if (Geo::is_inside(point, rect[i-1], rect[i]))
-            {
-                return true;
-            }
-            if (rect[i-1].coord().y != rect[i].coord().y && Geo::is_intersected(point, end, rect[i-1], rect[i], output))
-            {
-                ++count;
-            }
-        }
-        return count % 2 == 1;
+        return rect.left() <= x && x <= rect.right() && rect.bottom() <= y && y <= rect.top();
     }
     else
     {
-        if (x <= x0 || x >= x1 || y <= y0 || y >= y1)
-        {
-            return false;
-        }
-        for (size_t i = 1; i < 5; ++i)
-        {
-            if (Geo::is_inside(point, rect[i-1], rect[i]))
-            {
-                return false;
-            }
-            if (rect[i-1].coord().y != rect[i].coord().y && Geo::is_intersected(point, end, rect[i-1], rect[i], output))
-            {
-                ++count;
-            }
-        }
-        return count % 2 == 1;
+        return rect.left() < x && x < rect.right() && rect.bottom() < y && y < rect.top();
     }
 }
 
@@ -2308,43 +2257,21 @@ const bool Geo::is_intersected(const AABBRect &rect0, const AABBRect &rect1, con
     {
         return false;
     }
-    Geo::Point output;
-    if (Geo::is_intersected(rect0[0], rect0[2], rect1[0], rect1[2], output) || 
-        Geo::is_intersected(rect0[0], rect0[2], rect1[1], rect1[3], output))
+    
+    if (rect0.right() < rect1.left() || rect0.left() > rect1.right() || rect0.bottom() > rect1.top() || rect0.top() < rect1.bottom())
+    {
+        return false;
+    }
+    
+    if (inside)
     {
         return true;
     }
-
-    for (size_t i = 1; i < 5; ++i)
+    else
     {
-        for (size_t j = 1; j < 5; ++j)
-        {
-            if (Geo::is_intersected(rect0[i-1], rect0[i], rect1[j-1], rect1[j], output))
-            {
-                return true;
-            }
-        }
+        return !((rect0.top() < rect1.top() && rect0.right() < rect1.right() && rect0.bottom() > rect1.bottom() && rect0.left() > rect1.left())
+            || (rect1.top() < rect0.top() && rect1.right() < rect0.right() && rect1.bottom() > rect0.bottom() && rect1.left() > rect0.left()));
     }
-
-    if (inside)
-    {
-        for (const Point &point : rect0)
-        {
-            if (Geo::is_inside(point, rect1, true))
-            {
-                return true;
-            }
-        }
-        for (const Point &point : rect1)
-        {
-            if (Geo::is_inside(point, rect0, true))
-            {
-                return true;
-            }
-        }
-    }
-    
-    return false;
 }
 
 const bool Geo::is_intersected(const Polyline &polyline0, const Polyline &polyline1)
@@ -2614,7 +2541,7 @@ const bool Geo::is_intersected(const AABBRect &rect, const Circle &circle, const
 }
 
 
-const bool Geo::is_AABBRect(const Polygon &polygon)
+const bool Geo::is_Rectangle(const Polygon &polygon)
 {
     Geo::Polygon points(polygon);
     if (polygon.size() > 5)
