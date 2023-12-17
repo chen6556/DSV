@@ -36,9 +36,9 @@ public:
 
     const Geo::Point center() const;
 
-    virtual const bool empty() const;
+    const bool empty() const override;
 
-    virtual Container *clone() const;
+    Container *clone() const override;
 };
 
 class CircleContainer : public Geo::Circle // id:1
@@ -73,9 +73,9 @@ public:
 
     void clear_text();
 
-    virtual const bool empty() const;
+    const bool empty() const override;
 
-    virtual CircleContainer *clone() const;
+    CircleContainer *clone() const override;
 };
 
 class Combination;
@@ -142,21 +142,21 @@ public:
 
     const Geo::Geometry *operator[](const size_t index) const;
 
-    virtual void clear();
+    void clear() override;
 
-    virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f);
+    void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
 
-    virtual void transform(const double mat[6]);
+    void transform(const double mat[6]) override;
 
-    virtual void translate(const double tx, const double ty);
+    void translate(const double tx, const double ty) override;
 
-    virtual void rotate(const double x, const double y, const double rad); // 弧度制
+    void rotate(const double x, const double y, const double rad) override; // 弧度制
 
-    virtual void scale(const double x, const double y, const double k);
+    void scale(const double x, const double y, const double k) override;
 
     void rescale(const double x, const double y);
 
-    virtual Geo::AABBRect bounding_rect(const bool orthogonality = true) const;
+    Geo::AABBRect bounding_rect() const override;
 
     const size_t size() const;
 
@@ -231,17 +231,17 @@ public:
 
     void transfer(Combination &combination);
 
-    virtual void clear();
+    void clear() override;
 
-    virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f);
+    void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
 
-    virtual void transform(const double mat[6]);
+    void transform(const double mat[6]) override;
 
-    virtual void translate(const double tx, const double ty);
+    void translate(const double tx, const double ty) override;
 
-    virtual void rotate(const double x, const double y, const double rad); // 弧度制
+    void rotate(const double x, const double y, const double rad) override; // 弧度制
 
-    virtual void scale(const double x, const double y, const double k);
+    void scale(const double x, const double y, const double k) override;
 
     void update_border();
 

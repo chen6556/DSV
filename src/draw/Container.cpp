@@ -515,7 +515,7 @@ void ContainerGroup::rescale(const double x, const double y)
     }
 }
 
-Geo::AABBRect ContainerGroup::bounding_rect(const bool orthogonality) const
+Geo::AABBRect ContainerGroup::bounding_rect() const
 {
     if (_containers.empty())
     {

@@ -84,7 +84,9 @@ void Geometry::scale(const double x, const double y, const double k){}
 
 Polygon Geometry::convex_hull() const { return Polygon(); }
 
-AABBRect Geometry::bounding_rect(const bool orthogonality) const { return AABBRect(); }
+AABBRect Geometry::bounding_rect() const { return AABBRect(); }
+
+Polygon Geometry::mini_bounding_rect() const { return Polygon(); }
 
 // Coord
 
@@ -265,11 +267,23 @@ void Point::scale(const double x, const double y, const double k)
     _pos.y = k * y_ + y * (1 - k);
 }
 
-AABBRect Point::bounding_rect(const bool orthogonality) const
+AABBRect Point::bounding_rect() const
 {
     if (length() == 0)
     {
         return AABBRect();
+    }
+    else
+    {
+        return AABBRect(std::min(0.0, _pos.x), std::min(0.0, _pos.y), std::max(0.0, _pos.x), std::max(0.0, _pos.y));
+    }
+}
+
+Polygon Point::mini_bounding_rect() const
+{
+    if (length() == 0)
+    {
+        return Polygon();
     }
     else
     {
@@ -746,46 +760,50 @@ Polygon Polyline::convex_hull() const
     return Polygon(hull.cbegin(), hull.cend());
 }
 
-AABBRect Polyline::bounding_rect(const bool orthogonality) const
+AABBRect Polyline::bounding_rect() const
 {
     if (_points.empty())
     {
         return AABBRect();
     }
-    if (orthogonality)
+
+    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
+    for (const Point &point : _points)
     {
-        double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
-        for (const Point &point : _points)
-        {
-            x0 = std::min(x0, point.coord().x);
-            y0 = std::min(y0, point.coord().y);
-            x1 = std::max(x1, point.coord().x);
-            y1 = std::max(y1, point.coord().y);
-        }
-        return AABBRect(x0, y0, x1, y1);
+        x0 = std::min(x0, point.coord().x);
+        y0 = std::min(y0, point.coord().y);
+        x1 = std::max(x1, point.coord().x);
+        y1 = std::max(y1, point.coord().y);
     }
-    else
+    return AABBRect(x0, y0, x1, y1);
+}
+
+Polygon Polyline::mini_bounding_rect() const
+{
+    if (_points.empty())
     {
-        double cs, area = DBL_MAX;
-        AABBRect rect, temp;
-        const Polygon hull(convex_hull());
-        Coord coord;
-        for (size_t i = 1, count = hull.size(); i < count; ++i)
-        {
-            Polygon polygon(hull);
-            coord = polygon[i - 1].coord();
-            cs = (coord.x * polygon[i].coord().y - polygon[i].coord().x *coord.y) / (polygon[i].length() * polygon[i - 1].length());
-            polygon.rotate(coord.x, coord.y, std::acos(cs));
-            temp = polygon.bounding_rect();
-            if (temp.area() < area)
-            {
-                rect = temp;
-                area = temp.area();
-                rect.rotate(coord.x, coord.y, -std::acos(cs));
-            }
-        }
-        return rect;
+        return Polygon();
     }
+
+    double cs, area = DBL_MAX;
+    AABBRect rect, temp;
+    const Polygon hull(convex_hull());
+    Coord coord;
+    for (size_t i = 1, count = hull.size(); i < count; ++i)
+    {
+        Polygon polygon(hull);
+        coord = polygon[i - 1].coord();
+        cs = (coord.x * polygon[i].coord().y - polygon[i].coord().x *coord.y) / (polygon[i].length() * polygon[i - 1].length());
+        polygon.rotate(coord.x, coord.y, std::acos(cs));
+        temp = polygon.bounding_rect();
+        if (temp.area() < area)
+        {
+            rect = temp;
+            area = temp.area();
+            rect.rotate(coord.x, coord.y, -std::acos(cs));
+        }
+    }
+    return rect;
 }
 
 // AABBRect
@@ -996,28 +1014,26 @@ Polygon AABBRect::convex_hull() const
     return Polygon(_points.cbegin(), _points.cend());
 }
 
-AABBRect AABBRect::bounding_rect(const bool orthogonality) const
+AABBRect AABBRect::bounding_rect() const
 {
     if (_points.empty())
     {
         return AABBRect();
     }
-    if (orthogonality)
+    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
+    for (const Point &point : _points)
     {
-        double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
-        for (const Point &point : _points)
-        {
-            x0 = std::min(x0, point.coord().x);
-            y0 = std::min(y0, point.coord().y);
-            x1 = std::max(x1, point.coord().x);
-            y1 = std::max(y1, point.coord().y);
-        }
-        return AABBRect(x0, y0, x1, y1);
+        x0 = std::min(x0, point.coord().x);
+        y0 = std::min(y0, point.coord().y);
+        x1 = std::max(x1, point.coord().x);
+        y1 = std::max(y1, point.coord().y);
     }
-    else
-    {
-        return *this;
-    }
+    return AABBRect(x0, y0, x1, y1);
+}
+
+Polygon AABBRect::mini_bounding_rect() const
+{
+    return *this;
 }
 
 std::vector<Point>::const_iterator AABBRect::begin() const
@@ -1455,11 +1471,23 @@ void Circle::scale(const double x, const double y, const double k)
     _radius *= k;
 }
 
-AABBRect Circle::bounding_rect(const bool orthogonality) const
+AABBRect Circle::bounding_rect() const
 {
     if (_radius == 0)
     {
         return AABBRect();
+    }
+    else
+    {
+        return AABBRect(_center.coord().x - _radius, _center.coord().y - _radius, _center.coord().x + _radius, _center.coord().y + _radius);
+    }
+}
+
+Polygon Circle::mini_bounding_rect() const
+{
+    if (_radius == 0)
+    {
+        return Polygon();
     }
     else
     {
@@ -1622,6 +1650,21 @@ AABBRect Line::bounding_rect() const
     if (_start_point == _end_point)
     {
         return AABBRect();
+    }
+    else
+    {
+        return AABBRect(std::min(_start_point.coord().x, _end_point.coord().x),
+                         std::min(_start_point.coord().y, _end_point.coord().y),
+                         std::max(_start_point.coord().x, _end_point.coord().x),
+                         std::max(_start_point.coord().y, _end_point.coord().y));
+    }
+}
+
+Polygon Line::mini_bounding_rect() const
+{
+    if (_start_point == _end_point)
+    {
+        return Polygon();
     }
     else
     {
@@ -1842,9 +1885,14 @@ Polygon Bezier::convex_hull() const
     return _shape.convex_hull();
 }
 
-AABBRect Bezier::bounding_rect(const bool orthogonality) const
+AABBRect Bezier::bounding_rect() const
 {
-    return _shape.bounding_rect(orthogonality);
+    return _shape.bounding_rect();
+}
+
+Polygon Bezier::mini_bounding_rect() const
+{
+    return _shape.mini_bounding_rect();
 }
 
 
