@@ -33,7 +33,7 @@ void Canvas::bind_editer(Editer *editer)
 void Canvas::paint_cache()
 {
     QPainter painter(this);
-    if (_int_flags[0] == 3)
+    if (_tool_flags[0] == Tool::CURVE)
     {
         painter.setPen(QPen(QColor(255, 140, 0), 2, Qt::DashLine));
     }
@@ -72,7 +72,7 @@ void Canvas::paint_cache()
                 point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
         }
         painter.drawPolyline(points);
-        if (_int_flags[0] == 3)
+        if (_tool_flags[0] == Tool::CURVE)
         {
             painter.setPen(QPen(Qt::blue, 6));
             painter.drawPoints(points);
@@ -394,7 +394,7 @@ void Canvas::paint_select_rect()
 {
     QPainter painter(this);
 
-    if (_bool_flags[7])
+    if (origin_visible())
     {
         painter.setPen(QPen(Qt::black, 1, Qt::DotLine));
         painter.drawLine(_canvas_ctm[6] - 20, _canvas_ctm[7], _canvas_ctm[6] + 20, _canvas_ctm[7]);
@@ -442,12 +442,12 @@ void Canvas::mousePressEvent(QMouseEvent *event)
     switch (event->button())
     {
     case Qt::LeftButton:
-        if (_bool_flags[1]) // paintable
+        if (is_paintable()) // paintable
         {
-            switch (_int_flags[0])
+            switch (_tool_flags[0])
             {
-            case 0:
-                if (!_bool_flags[2]) // not painting
+            case Tool::CIRCLE:
+                if (!is_painting()) // not painting
                 {
                     _circle_cache = Geo::Circle(real_x1, real_y1, 10);
                 }
@@ -455,16 +455,16 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 {
                     _editer->append(_circle_cache);
                     _circle_cache.clear();
-                    _int_flags[1] = _int_flags[0];
-                    _int_flags[0] = -1;
-                    _bool_flags[1] = false;
-                    emit tool_changed(_int_flags[0]);
+                    _tool_flags[1] = _tool_flags[0];
+                    _tool_flags[0] = Tool::NONE;
+                    _bool_flags[1] = false; // moveable
+                    emit tool_changed(_tool_flags[0]);
                 }
-                _bool_flags[2] = !_bool_flags[2];
+                _bool_flags[2] = !_bool_flags[2]; // painting
                 break;
-            case 1:
-            case 3:
-                if (_bool_flags[2])
+            case Tool::POLYLINE:
+            case Tool::CURVE:
+                if (is_painting())
                 {
                     _editer->point_cache().emplace_back(Geo::Point(real_x1, real_y1));
                 }
@@ -472,11 +472,11 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 {
                     _editer->point_cache().emplace_back(Geo::Point(real_x1, real_y1));
                     _editer->point_cache().emplace_back(Geo::Point(real_x1, real_y1));
-                    _bool_flags[2] = true;
+                    _bool_flags[2] = true; // painting
                 }
                 break;
-            case 2:
-                if (!_bool_flags[2])
+            case Tool::RECT:
+                if (!is_painting())
                 {
                     _last_point.coord().x = real_x1;
                     _last_point.coord().y = real_y1;
@@ -486,12 +486,12 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 {
                     _editer->append(_AABBRect_cache);
                     _AABBRect_cache.clear();
-                    _int_flags[1] = _int_flags[0];
-                    _int_flags[0] = -1;
-                    _bool_flags[1] = false;
-                    emit tool_changed(_int_flags[0]);
+                    _tool_flags[1] = _tool_flags[0];
+                    _tool_flags[0] = Tool::NONE;
+                    _bool_flags[1] = false; // paintable
+                    emit tool_changed(_tool_flags[0]);
                 }
-                _bool_flags[2] = !_bool_flags[2];
+                _bool_flags[2] = !_bool_flags[2]; // painting
                 break;
             default:
                 break;
@@ -510,7 +510,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 _select_rect = Geo::AABBRect(real_x1, real_y1, real_x1 + 1, real_y1 + 1);
                 _last_point.coord().x = real_x1;
                 _last_point.coord().y = real_y1;
-                _bool_flags[5] = false;
+                _bool_flags[5] = false; // is obj selected
                 if (_input_line.isVisible() && _last_clicked_obj != nullptr)
                 {
                     if (dynamic_cast<Container *>(_last_clicked_obj) != nullptr)
@@ -530,8 +530,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _editer->reset_selected_mark();
                     _clicked_obj->is_selected() = true;
                 }
-                _bool_flags[4] = true;
-                _bool_flags[5] = true;
+                _bool_flags[4] = true; // is obj moveable
+                _bool_flags[5] = true; // is obj selected
                 bool catched_point = false;
                 if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool())
                 {
@@ -563,7 +563,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
     case Qt::RightButton:
         break;
     case Qt::MiddleButton:
-        _bool_flags[0] = true;
+        _bool_flags[0] = true; // view moveable
         break;
     default:
         break;
@@ -577,8 +577,8 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
     switch (event->button())
     {
     case Qt::LeftButton:
-        _bool_flags[4] = false;
-        if (_bool_flags[1]) // paintable
+        _bool_flags[4] = false; // is obj moveable
+        if (is_paintable()) // paintable
         {
             if (_circle_cache.empty() && _AABBRect_cache.empty() && _info_labels[1])
             {
@@ -593,7 +593,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
             {
                 _info_labels[1]->clear();
             }
-            _bool_flags[6] = false;
+            _bool_flags[6] = false; // is moving obj
             _last_clicked_obj = _clicked_obj;
             update();
         }
@@ -601,7 +601,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
     case Qt::RightButton:
         break;
     case Qt::MiddleButton:
-        _bool_flags[0] = false;
+        _bool_flags[0] = false; // view moveable
         break;
     default:
         break;
@@ -627,18 +627,18 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     {
         _info_labels[0]->setText(std::string("X:").append(std::to_string(static_cast<int>(real_x1))).append(" Y:").append(std::to_string(static_cast<int>(real_y1))).c_str());
     }
-    if (_bool_flags[0]) // 视图可移动
+    if (is_view_moveable()) // 视图可移动
     {
         _canvas_ctm[6] += (canvas_x1 - canvas_x0), _canvas_ctm[7] += (canvas_y1 - canvas_y0);
         _view_ctm[6] -= (real_x1 - real_x0), _view_ctm[7] -= (real_y1 - real_y0);
         _visible_area.translate(real_x0 - real_x1, real_y0 - real_y1);
         update();
     }
-    if (_bool_flags[1] && _bool_flags[2]) // painting
+    if (is_paintable() && is_painting()) // painting
     {
-        switch (_int_flags[0])
+        switch (_tool_flags[0])
         {
-        case 0:
+        case Tool::CIRCLE:
             _circle_cache.radius() = Geo::distance(real_x1, real_y1,
                                                    _circle_cache.center().coord().x, _circle_cache.center().coord().y);
             if (_info_labels[1] != nullptr)
@@ -646,7 +646,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius())).c_str());
             }
             break;
-        case 1:
+        case Tool::POLYLINE:
             if (event->modifiers() == Qt::ControlModifier)
             {
                 const Geo::Coord &coord =_editer->point_cache().at(_editer->point_cache().size() - 2).coord();
@@ -673,14 +673,14 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                                              .c_str());
             }
             break;
-        case 2:
+        case Tool::RECT:
             _AABBRect_cache = Geo::AABBRect(_last_point, Geo::Point(real_x1, real_y1));
             if (_info_labels[1] != nullptr)
             {
                 _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.coord().x))).append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.coord().y))).c_str());
             }
             break;
-        case 3:
+        case Tool::CURVE:
             if (_editer->point_cache().size() > _bezier_order && (_editer->point_cache().size() - 2) % _bezier_order == 0) 
             {
                 const size_t count = _editer->point_cache().size();
@@ -713,12 +713,12 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     }
     else
     {
-        if (_bool_flags[4])
+        if (is_obj_moveable())
         {
-            if (!_bool_flags[6])
+            if (!is_moving_obj())
             {
                 _editer->store_backup();
-                _bool_flags[6] = true;
+                _bool_flags[6] = true; // is moving obj
             }
             for (Geo::Geometry *obj : _editer->selected())
             {
@@ -809,28 +809,28 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
     switch (event->button())
     {
     case Qt::LeftButton:
-        if (_bool_flags[1] && _bool_flags[2]) // paintable and painting
+        if (is_paintable() && is_painting()) // paintable and painting
         {
-            _bool_flags[1] = false;
-            _bool_flags[2] = false;
-            switch (_int_flags[0])
+            _bool_flags[1] = false; // paintable
+            _bool_flags[2] = false; // painting
+            switch (_tool_flags[0])
             {
-            case 0:
+            case Tool::CIRCLE:
                 _circle_cache.clear();
                 update();
                 break;
-            case 1:
+            case Tool::POLYLINE:
                 if (_editer != nullptr)
                 {
                     _editer->append_points();
                     update();
                 }
                 break;
-            case 2:
+            case Tool::RECT:
                 _AABBRect_cache.clear();
                 update();
                 break;
-            case 3:
+            case Tool::CURVE:
                 if (_editer != nullptr)
                 {
                     _editer->append_bezier(_bezier_order);
@@ -840,13 +840,13 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
             default:
                 break;
             }
-            _int_flags[1] = _int_flags[0];
-            _int_flags[0] = -1;
-            emit tool_changed(_int_flags[0]);
+            _tool_flags[1] = _tool_flags[0];
+            _tool_flags[0] = Tool::NONE;
+            emit tool_changed(_tool_flags[0]);
         }
         else
         {
-            if (_bool_flags[5] && (_last_clicked_obj->type() == Geo::Type::CONTAINER || _last_clicked_obj->type() == Geo::Type::CIRCLECONTAINER))
+            if (is_obj_selected() && (_last_clicked_obj->type() == Geo::Type::CONTAINER || _last_clicked_obj->type() == Geo::Type::CIRCLECONTAINER))
             {
                 Geo::AABBRect rect(_last_clicked_obj->bounding_rect());
                 rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
@@ -939,24 +939,23 @@ void Canvas::resizeEvent(QResizeEvent *event)
 
 
 
-void Canvas::use_tool(const int value)
+void Canvas::use_tool(const Tool tool)
 {
-    switch (value)
+    switch (tool)
     {
-    case -1:
-    case 0:
-    case 1:
-    case 2:
-    case 3:
-        _int_flags[1] = _int_flags[0];
-        _int_flags[0] = value;
-        _bool_flags[1] = (value != -1);
-        _bool_flags[2] = false;
+    case Tool::NONE:
+    case Tool::CIRCLE:
+    case Tool::POLYLINE:
+    case Tool::RECT:
+    case Tool::CURVE:
+        _tool_flags[1] = _tool_flags[0];
+        _tool_flags[0] = tool;
+        _bool_flags[1] = (tool != Tool::NONE); // paintable
+        _bool_flags[2] = false; // painting
         _editer->point_cache().clear();
         _circle_cache.clear();
         _AABBRect_cache.clear();
-        // setMouseTracking(value != -1);
-        emit tool_changed(_int_flags[0]);
+        emit tool_changed(_tool_flags[0]);
         update();
         break;
     default:
@@ -979,6 +978,16 @@ bool Canvas::origin_visible() const
     return _bool_flags[7];
 }
 
+const bool Canvas::is_view_moveable() const
+{
+    return _bool_flags[0];
+}
+
+const bool Canvas::is_paintable() const
+{
+    return _bool_flags[1];
+}
+
 const bool Canvas::is_painting() const
 {
     return _bool_flags[2];
@@ -989,7 +998,22 @@ const bool Canvas::is_typing() const
     return _input_line.isVisible();
 }
 
-const bool Canvas::is_moving() const
+const bool Canvas::is_catching_cursor() const
+{
+    return _bool_flags[3];
+}
+
+const bool Canvas::is_obj_moveable() const
+{
+    return _bool_flags[4];
+}
+
+const bool Canvas::is_obj_selected() const
+{
+    return _bool_flags[5];
+}
+
+const bool Canvas::is_moving_obj() const
 {
     return _bool_flags[6];
 }
@@ -1125,11 +1149,11 @@ const bool Canvas::empty() const
 
 void Canvas::cancel_painting()
 {
-    _bool_flags[1] = false;
-    _bool_flags[2] = false;
-    _int_flags[1] = _int_flags[0];
-    _int_flags[0] = -1;
-    emit tool_changed(_int_flags[0]);
+    _bool_flags[1] = false; // paintable
+    _bool_flags[2] = false; // painting
+    _tool_flags[1] = _tool_flags[0];
+    _tool_flags[0] = Tool::NONE;
+    emit tool_changed(_tool_flags[0]);
     _editer->point_cache().clear();
     _circle_cache.clear();
     _AABBRect_cache.clear();
@@ -1138,15 +1162,15 @@ void Canvas::cancel_painting()
 
 void Canvas::use_last_tool()
 {
-    if (_bool_flags[2])
+    if (is_painting())
     {
         return;
     }
-    _int_flags[0] = _int_flags[1];
-    if (_int_flags[0] >= 0)
+    _tool_flags[0] = _tool_flags[1];
+    if (_tool_flags[0] != Tool::NONE)
     {
-        _bool_flags[1] = true;
-        emit tool_changed(_int_flags[0]);
+        _bool_flags[1] = true; // paintable
+        emit tool_changed(_tool_flags[0]);
     }
 }
 

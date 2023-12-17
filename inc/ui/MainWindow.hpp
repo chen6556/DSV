@@ -54,7 +54,7 @@ private slots:
 
     void saveas_file();
 
-    void refresh_tool_label(const int &value);
+    void refresh_tool_label(const Canvas::Tool tool);
 
     void load_settings();
 

@@ -12,6 +12,9 @@ class Canvas : public QWidget
 {
     Q_OBJECT
 
+public:
+    enum Tool {NONE, CIRCLE, POLYLINE, RECT, CURVE};
+
 private:
     Geo::Circle _circle_cache;
     Geo::AABBRect _AABBRect_cache, _select_rect, _visible_area;
@@ -29,8 +32,8 @@ private:
     // 可移动视图, 可绘图, 正在绘图, 光标追踪, 可移动单个object, 选中一个obj, 正在移动obj, 显示坐标原点
     bool _bool_flags[8] = {false, false, false, false, false, false, false, true};
 
-    // current_tool:[-1:no-tool 0:circle 1:polyline 2:AABBRect 3:curve], last_tool
-    int _int_flags[2] = {-1, -1};
+    // current_tool, last_tool
+    Tool _tool_flags[2] = {Tool::NONE, Tool::NONE};
 
     QPointF _mouse_pos_0, _mouse_pos_1, _stored_mouse_pos;
     Geo::Point _last_point;
@@ -64,14 +67,14 @@ protected:
 
 public:
 signals:
-    void tool_changed(const int &);
+    void tool_changed(const Tool);
 
 public:
     Canvas(QLabel **labels = nullptr, QWidget *parent = nullptr);
 
     void bind_editer(Editer *editer);
 
-    void use_tool(const int value);
+    void use_tool(const Tool tool);
 
     void show_origin();
 
@@ -81,11 +84,21 @@ public:
 
     bool origin_visible() const;
 
+    const bool is_view_moveable() const;
+
+    const bool is_paintable() const;
+
     const bool is_painting() const;
 
     const bool is_typing() const;
 
-    const bool is_moving() const;
+    const bool is_catching_cursor() const;
+
+    const bool is_obj_moveable() const;
+
+    const bool is_obj_selected() const;
+
+    const bool is_moving_obj() const;
 
     const size_t current_group() const;
 

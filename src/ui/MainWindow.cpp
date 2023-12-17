@@ -50,10 +50,10 @@ void MainWindow::init()
     _clock.start(5000);
     QObject::connect(&_painter, &Canvas::tool_changed, this, &MainWindow::refresh_tool_label);
     QObject::connect(ui->view_btn, &QPushButton::clicked, &_painter, &Canvas::cancel_painting);
-    QObject::connect(ui->circle_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(0); });
-    QObject::connect(ui->line_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(1); });
-    QObject::connect(ui->rect_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(2); });
-    QObject::connect(ui->curve_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(3); _painter.set_bezier_order(ui->curve_sbx->value());});
+    QObject::connect(ui->circle_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::CIRCLE); });
+    QObject::connect(ui->line_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::POLYLINE); });
+    QObject::connect(ui->rect_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::RECT); });
+    QObject::connect(ui->curve_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::CURVE); _painter.set_bezier_order(ui->curve_sbx->value());});
     QObject::connect(ui->connect_btn, &QPushButton::clicked, this, [this]() { _editer.connect(GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()); });
     QObject::connect(ui->combinate_btn, &QPushButton::clicked, this, [this](){ _editer.combinate(); });
     QObject::connect(ui->split_btn, &QPushButton::clicked, this, [this](){ _editer.split(); });
@@ -240,7 +240,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         }
         break;
     case Qt::Key_B:
-        _painter.use_tool(3);
+        _painter.use_tool(Canvas::Tool::CURVE);
         break;
     case Qt::Key_S:
         if (event->modifiers() == Qt::ControlModifier)
@@ -255,7 +255,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         }
         else
         {
-            _painter.use_tool(0);
+            _painter.use_tool(Canvas::Tool::CIRCLE);
         }
         break;
     case Qt::Key_X:
@@ -273,10 +273,10 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         }
         break;
     case Qt::Key_L:
-        _painter.use_tool(1);
+        _painter.use_tool(Canvas::Tool::POLYLINE);
         break;
     case Qt::Key_R:
-        _painter.use_tool(2);
+        _painter.use_tool(Canvas::Tool::RECT);
         break;
     case Qt::Key_Z:
         if (event->modifiers() == Qt::ControlModifier && !_painter.is_painting())
@@ -312,23 +312,23 @@ void MainWindow::dropEvent(QDropEvent *event)
     }
 }
 
-void MainWindow::refresh_tool_label(const int &value)
+void MainWindow::refresh_tool_label(const Canvas::Tool tool)
 {
-    switch (value)
+    switch (tool)
     {
-    case -1:
+    case Canvas::Tool::NONE:
         ui->current_tool->clear();
         break;
-    case 0:
+    case Canvas::Tool::CIRCLE:
         ui->current_tool->setText("Circle");
         break;
-    case 1:
+    case Canvas::Tool::POLYLINE:
         ui->current_tool->setText("Polyline");
         break;
-    case 2:
-        ui->current_tool->setText("Polygon");
+    case Canvas::Tool::RECT:
+        ui->current_tool->setText("Rectangle");
         break;
-    case 3:
+    case Canvas::Tool::CURVE:
         ui->current_tool->setText("Bezier Curve");
         break;
     default:
