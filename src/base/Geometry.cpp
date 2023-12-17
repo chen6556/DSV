@@ -6,7 +6,7 @@
 using namespace Geo;
 
 Geometry::Geometry(const Geometry &geo)
-    :_memo(geo._memo), _shape_fixed(geo._shape_fixed), _type(geo._type)
+    :_memo(geo._memo), _shape_fixed(geo._shape_fixed), _type(geo._type), _selected(geo._selected)
 {}
 
 Geometry &Geometry::operator=(const Geometry &geo)
@@ -16,6 +16,7 @@ Geometry &Geometry::operator=(const Geometry &geo)
         _memo = geo._memo;
         _shape_fixed = geo._shape_fixed;
         _type = geo._type;
+        _selected = geo._selected;
     }
     return *this;
 }
