@@ -10,7 +10,7 @@ private:
     QString _txt;
 
 public:
-    Container(){};
+    Container() { _type = Geo::Type::CONTAINER; };
 
     Container(const Geo::Polygon &shape);
 
@@ -47,7 +47,7 @@ private:
     QString _txt;
 
 public:
-    CircleContainer(){};
+    CircleContainer() { _type = Geo::Type::CIRCLECONTAINER; };
 
     CircleContainer(const Geo::Circle &shape);
 
@@ -88,7 +88,7 @@ private:
     bool _visible = true;
 
 public:
-    ContainerGroup(){};
+    ContainerGroup() { _type = Geo::Type::CONTAINERGROUP; };
 
     ContainerGroup(const ContainerGroup &containers);
 
@@ -156,7 +156,7 @@ public:
 
     void rescale(const double x, const double y);
 
-    virtual Geo::Rectangle bounding_rect(const bool orthogonality = true) const;
+    virtual Geo::AABBRect bounding_rect(const bool orthogonality = true) const;
 
     const size_t size() const;
 
@@ -214,10 +214,10 @@ public:
 class Combination : public ContainerGroup // id:3
 {
 private:
-    Geo::Rectangle _border;
+    Geo::AABBRect _border;
 
 public:
-    Combination();
+    Combination() { _type = Geo::Type::COMBINATION; };
 
     Combination(const Combination &combination);
 
@@ -245,5 +245,5 @@ public:
 
     void update_border();
 
-    const Geo::Rectangle &border() const;
+    const Geo::AABBRect &border() const;
 };

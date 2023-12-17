@@ -6,7 +6,7 @@
 using namespace Geo;
 
 Geometry::Geometry(const Geometry &geo)
-    :_memo(geo._memo), _shape_fixed(geo._shape_fixed)
+    :_memo(geo._memo), _shape_fixed(geo._shape_fixed), _type(geo._type)
 {}
 
 Geometry &Geometry::operator=(const Geometry &geo)
@@ -15,6 +15,7 @@ Geometry &Geometry::operator=(const Geometry &geo)
     {
         _memo = geo._memo;
         _shape_fixed = geo._shape_fixed;
+        _type = geo._type;
     }
     return *this;
 }
@@ -37,6 +38,21 @@ bool &Geometry::shape_fixed()
 const bool Geometry::shape_fixed() const
 {
     return _shape_fixed;
+}
+
+bool &Geometry::is_selected()
+{
+    return _selected;
+}
+
+const bool Geometry::is_selected() const
+{
+    return _selected;
+}
+
+const Type Geometry::type() const
+{
+    return _type;
 }
 
 const double Geometry::length() const
@@ -68,7 +84,7 @@ void Geometry::scale(const double x, const double y, const double k){}
 
 Polygon Geometry::convex_hull() const { return Polygon(); }
 
-Rectangle Geometry::bounding_rect(const bool orthogonality) const { return Rectangle(); }
+AABBRect Geometry::bounding_rect(const bool orthogonality) const { return AABBRect(); }
 
 // Coord
 
@@ -117,13 +133,13 @@ const bool Coord::operator!=(const Coord &coord) const
 Point::Point(const double x, const double y)
     : _pos(x, y)
 {
-    _memo["Type"] = 10;
+    _type = Type::POINT;
 }
 
 Point::Point(const Coord &coord)
     :_pos(coord)
 {
-    _memo["Type"] = 10;
+    _type = Type::POINT;
 }
 
 Point::Point(const Point &point)
@@ -142,6 +158,7 @@ Point &Point::operator=(const Point &point)
     {
         Geometry::operator=(point);
         _pos = point._pos;
+        _type = Type::POINT;
     }
     return *this;
 }
@@ -152,6 +169,7 @@ Point &Point::operator=(const Point &&point)
     {
         Geometry::operator=(point);
         _pos = std::move(point._pos);
+        _type = Type::POINT;
     }
     return *this;
 }
@@ -247,15 +265,15 @@ void Point::scale(const double x, const double y, const double k)
     _pos.y = k * y_ + y * (1 - k);
 }
 
-Rectangle Point::bounding_rect(const bool orthogonality) const
+AABBRect Point::bounding_rect(const bool orthogonality) const
 {
     if (length() == 0)
     {
-        return Rectangle();
+        return AABBRect();
     }
     else
     {
-        return Rectangle(std::min(0.0, _pos.x), std::min(0.0, _pos.y), std::max(0.0, _pos.x), std::max(0.0, _pos.y));
+        return AABBRect(std::min(0.0, _pos.x), std::min(0.0, _pos.y), std::max(0.0, _pos.x), std::max(0.0, _pos.y));
     }
 }
 
@@ -309,14 +327,14 @@ Polyline::Polyline(const Polyline &polyline)
     :Geometry(polyline)
     ,_points(polyline._points)
 {
-    _memo["Type"] = 20;
+    _type = Type::POLYLINE;
 }
 
 Polyline::Polyline(const Polyline &&polyline)
     :Geometry(polyline)
     ,_points(std::move(polyline._points))
 {
-    _memo["Type"] = 20;
+    _type = Type::POLYLINE;
 }
 
 Polyline::Polyline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
@@ -329,7 +347,7 @@ Polyline::Polyline(std::vector<Point>::const_iterator begin, std::vector<Point>:
             _points.push_back(*begin);
         }
     }
-    _memo["Type"] = 20;
+    _type = Type::POLYLINE;
 }
 
 Polyline::Polyline(const std::initializer_list<Point>& points)
@@ -342,7 +360,7 @@ Polyline::Polyline(const std::initializer_list<Point>& points)
             _points.push_back(point);
         }
     }
-    _memo["Type"] = 20;
+    _type = Type::POLYLINE;
 }
 
 const size_t Polyline::size() const
@@ -393,7 +411,7 @@ Polyline &Polyline::operator=(const Polyline &polyline)
     {
         Geometry::operator=(polyline);
         _points = polyline._points;
-        _memo["Type"] = 20;
+        _type = Type::POLYLINE;
     }
     return *this;
 }
@@ -404,7 +422,7 @@ Polyline &Polyline::operator=(const Polyline &&polyline)
     {
         Geometry::operator=(polyline);
         _points = std::move(polyline._points);
-        _memo["Type"] = 20;
+        _type = Type::POLYLINE;
     }
     return *this;
 }
@@ -728,11 +746,11 @@ Polygon Polyline::convex_hull() const
     return Polygon(hull.cbegin(), hull.cend());
 }
 
-Rectangle Polyline::bounding_rect(const bool orthogonality) const
+AABBRect Polyline::bounding_rect(const bool orthogonality) const
 {
     if (_points.empty())
     {
-        return Rectangle();
+        return AABBRect();
     }
     if (orthogonality)
     {
@@ -744,12 +762,12 @@ Rectangle Polyline::bounding_rect(const bool orthogonality) const
             x1 = std::max(x1, point.coord().x);
             y1 = std::max(y1, point.coord().y);
         }
-        return Rectangle(x0, y0, x1, y1);
+        return AABBRect(x0, y0, x1, y1);
     }
     else
     {
         double cs, area = DBL_MAX;
-        Rectangle rect, temp;
+        AABBRect rect, temp;
         const Polygon hull(convex_hull());
         Coord coord;
         for (size_t i = 1, count = hull.size(); i < count; ++i)
@@ -770,9 +788,9 @@ Rectangle Polyline::bounding_rect(const bool orthogonality) const
     }
 }
 
-// Rectangle
+// AABBRect
 
-Rectangle::Rectangle(const double x0, const double y0, const double x1, const double y1)
+AABBRect::AABBRect(const double x0, const double y0, const double x1, const double y1)
 {
     if (x0 < x1)
     {
@@ -796,10 +814,10 @@ Rectangle::Rectangle(const double x0, const double y0, const double x1, const do
             _points.assign({Point(x1, y1), Point(x0, y1), Point(x0, y0), Point(x1, y0), Point(x1, y1)});
         }
     }
-    _memo["Type"] = 30;
+    _type = Type::AABBRECT;
 }
 
-Rectangle::Rectangle(const Point &point0, const Point &point1)
+AABBRect::AABBRect(const Point &point0, const Point &point1)
 {
     const double x0 = point0.coord().x, y0 = point0.coord().y, x1 = point1.coord().x, y1 = point1.coord().y;
     if (x0 < x1)
@@ -824,75 +842,75 @@ Rectangle::Rectangle(const Point &point0, const Point &point1)
             _points.assign({Point(x1, y1), Point(x0, y1), Point(x0, y0), Point(x1, y0), Point(x1, y1)});
         }
     }
-    _memo["Type"] = 30;
+    _type = Type::AABBRECT;
 }
 
-Rectangle::Rectangle(const Rectangle &rect)
+AABBRect::AABBRect(const AABBRect &rect)
     :Geometry(rect)
     ,_points(rect._points)
 {
-    _memo["Type"] = 30;
+    _type = Type::AABBRECT;
 }
 
-Rectangle::Rectangle(const Rectangle &&rect)
+AABBRect::AABBRect(const AABBRect &&rect)
     :Geometry(rect)
     ,_points(std::move(rect._points))
 {
-    _memo["Type"] = 30;
+    _type = Type::AABBRECT;
 }
 
-const double Rectangle::left() const
+const double AABBRect::left() const
 {
     assert(!_points.empty());
     return _points.front().coord().x;
 }
 
-const double Rectangle::top() const
+const double AABBRect::top() const
 {
     assert(!_points.empty());
     return _points.front().coord().y;
 }
 
-const double Rectangle::right() const
+const double AABBRect::right() const
 {
     assert(!_points.empty());
     return _points[2].coord().x;
 }
 
-const double Rectangle::bottom() const
+const double AABBRect::bottom() const
 {
     assert(!_points.empty());
     return _points[2].coord().y;
 }
 
-Rectangle &Rectangle::operator=(const Rectangle &rect)
+AABBRect &AABBRect::operator=(const AABBRect &rect)
 {
     if (this != &rect)
     {
         Geometry::operator=(rect);
         _points = rect._points;
-        _memo["Type"] = 30;
+        _type = Type::AABBRECT;
     }
     return *this;
 }
 
-Rectangle &Rectangle::operator=(const Rectangle &&rect)
+AABBRect &AABBRect::operator=(const AABBRect &&rect)
 {
     if (this != &rect)
     {
         Geometry::operator=(rect);
         _points = std::move(rect._points);
-        _memo["Type"] = 30;
+        _type = Type::AABBRECT;
     }
     return *this;
 }
 
-const bool Rectangle::empty() const
+const bool AABBRect::empty() const
 {
     return _points.empty();
 }
 
-const double Rectangle::length() const
+const double AABBRect::length() const
 {
     double reuslt = 0;
     for (size_t i = 1, count = _points.size(); i < count; ++i)
@@ -902,17 +920,17 @@ const double Rectangle::length() const
     return reuslt;
 }
 
-void Rectangle::clear()
+void AABBRect::clear()
 {
     _points.clear();
 }
 
-Rectangle *Rectangle::clone() const
+AABBRect *AABBRect::clone() const
 {
-    return new Rectangle(*this);
+    return new AABBRect(*this);
 }
 
-const double Rectangle::area() const
+const double AABBRect::area() const
 {
     if (empty())
     {
@@ -924,7 +942,7 @@ const double Rectangle::area() const
     }
 }
 
-const double Rectangle::width() const
+const double AABBRect::width() const
 {
     if (!_points.empty())
     {
@@ -936,7 +954,7 @@ const double Rectangle::width() const
     }
 }
 
-const double Rectangle::height() const
+const double AABBRect::height() const
 {
     if (!_points.empty())
     {
@@ -948,41 +966,41 @@ const double Rectangle::height() const
     }
 }
 
-void Rectangle::transform(const double a, const double b, const double c, const double d, const double e, const double f)
+void AABBRect::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
     std::for_each(_points.begin(), _points.end(), [&](Point &point){point.transform(a,b,c,d,e,f);});
 }
 
-void Rectangle::transform(const double mat[6])
+void AABBRect::transform(const double mat[6])
 {
     transform(mat[0], mat[1], mat[2], mat[3], mat[4], mat[5]);
 }
     
-void Rectangle::translate(const double tx, const double ty)
+void AABBRect::translate(const double tx, const double ty)
 {
     std::for_each(_points.begin(), _points.end(), [&](Point &point){point.translate(tx, ty);});
 }
 
-void Rectangle::rotate(const double x, const double y, const double rad)
+void AABBRect::rotate(const double x, const double y, const double rad)
 {
     std::for_each(_points.begin(), _points.end(), [&](Point &point){point.rotate(x, y, rad);});
 }
 
-void Rectangle::scale(const double x, const double y, const double k)
+void AABBRect::scale(const double x, const double y, const double k)
 {
     std::for_each(_points.begin(), _points.end(), [&](Point &point){point.scale(x, y, k);});
 }
 
-Polygon Rectangle::convex_hull() const
+Polygon AABBRect::convex_hull() const
 {
     return Polygon(_points.cbegin(), _points.cend());
 }
 
-Rectangle Rectangle::bounding_rect(const bool orthogonality) const
+AABBRect AABBRect::bounding_rect(const bool orthogonality) const
 {
     if (_points.empty())
     {
-        return Rectangle();
+        return AABBRect();
     }
     if (orthogonality)
     {
@@ -994,7 +1012,7 @@ Rectangle Rectangle::bounding_rect(const bool orthogonality) const
             x1 = std::max(x1, point.coord().x);
             y1 = std::max(y1, point.coord().y);
         }
-        return Rectangle(x0, y0, x1, y1);
+        return AABBRect(x0, y0, x1, y1);
     }
     else
     {
@@ -1002,64 +1020,64 @@ Rectangle Rectangle::bounding_rect(const bool orthogonality) const
     }
 }
 
-std::vector<Point>::const_iterator Rectangle::begin() const
+std::vector<Point>::const_iterator AABBRect::begin() const
 {
     return _points.cbegin();
 }
 
-std::vector<Point>::const_iterator Rectangle::cbegin() const
+std::vector<Point>::const_iterator AABBRect::cbegin() const
 {
     return _points.cbegin();
 }
 
-std::vector<Point>::const_iterator Rectangle::end() const
+std::vector<Point>::const_iterator AABBRect::end() const
 {
     return _points.cend();
 }
 
-std::vector<Point>::const_iterator Rectangle::cend() const
+std::vector<Point>::const_iterator AABBRect::cend() const
 {
     return _points.cend();
 }
 
-std::vector<Point>::const_reverse_iterator Rectangle::rbegin() const
+std::vector<Point>::const_reverse_iterator AABBRect::rbegin() const
 {
     return _points.crbegin();
 }
 
-std::vector<Point>::const_reverse_iterator Rectangle::crbegin() const
+std::vector<Point>::const_reverse_iterator AABBRect::crbegin() const
 {
     return _points.crbegin();
 }
 
-std::vector<Point>::const_reverse_iterator Rectangle::rend() const
+std::vector<Point>::const_reverse_iterator AABBRect::rend() const
 {
     return _points.crend();
 }
 
-std::vector<Point>::const_reverse_iterator Rectangle::crend() const
+std::vector<Point>::const_reverse_iterator AABBRect::crend() const
 {
     return _points.crend();
 }
 
-std::vector<Point>::const_iterator Rectangle::find(const Point &point) const
+std::vector<Point>::const_iterator AABBRect::find(const Point &point) const
 {
     return std::find(_points.cbegin(), _points.cend(), point);
 }
 
-Rectangle Rectangle::operator+(const Point &point) const
+AABBRect AABBRect::operator+(const Point &point) const
 {
-    return Rectangle(_points[0].coord().x + point.coord().x, _points[0].coord().y + point.coord().y,
+    return AABBRect(_points[0].coord().x + point.coord().x, _points[0].coord().y + point.coord().y,
                     _points[2].coord().x + point.coord().x, _points[2].coord().y + point.coord().y);
 }
 
-Rectangle Rectangle::operator-(const Point &point) const
+AABBRect AABBRect::operator-(const Point &point) const
 {
-    return Rectangle(_points[0].coord().x - point.coord().x, _points[0].coord().y - point.coord().y,
+    return AABBRect(_points[0].coord().x - point.coord().x, _points[0].coord().y - point.coord().y,
                     _points[2].coord().x - point.coord().x, _points[2].coord().y - point.coord().y);
 }
 
-void Rectangle::operator+=(const Point &point)
+void AABBRect::operator+=(const Point &point)
 {
     for (Point &p : _points)
     {
@@ -1067,7 +1085,7 @@ void Rectangle::operator+=(const Point &point)
     }
 }
 
-void Rectangle::operator-=(const Point &point)
+void AABBRect::operator-=(const Point &point)
 {
     for (Point &p : _points)
     {
@@ -1075,12 +1093,12 @@ void Rectangle::operator-=(const Point &point)
     }
 }
 
-const Point Rectangle::center() const
+const Point AABBRect::center() const
 {
     return (_points[0] + _points[2]) / 2;
 }
 
-const Point &Rectangle::operator[](const size_t index) const
+const Point &AABBRect::operator[](const size_t index) const
 {
     assert(!_points.empty() && index <= 4);
     return _points[index];
@@ -1092,13 +1110,13 @@ const Point &Rectangle::operator[](const size_t index) const
 Polygon::Polygon(const Polygon &polygon)
     :Polyline(polygon)
 {
-    _memo["Type"] = 40; 
+    _type = Type::POLYGON;
 }
 
 Polygon::Polygon(const Polygon &&polygon)
     :Polyline(std::move(polygon))
 {
-    _memo["Type"] = 40; 
+    _type = Type::POLYGON;
 }
 
 Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
@@ -1109,7 +1127,7 @@ Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::c
     {
         Polyline::append(front());
     }
-    _memo["Type"] = 40; 
+    _type = Type::POLYGON; 
 }
 
 Polygon::Polygon(const std::initializer_list<Point>& points)
@@ -1120,7 +1138,7 @@ Polygon::Polygon(const std::initializer_list<Point>& points)
     {
         Polyline::append(front());
     }
-    _memo["Type"] = 40; 
+    _type = Type::POLYGON;
 }
 
 Polygon::Polygon(const Polyline &polyline)
@@ -1130,14 +1148,14 @@ Polygon::Polygon(const Polyline &polyline)
     {
         Polyline::append(polyline.front());
     }
-    _memo["Type"] = 40; 
+    _type = Type::POLYGON;
 }
 
-Polygon::Polygon(const Rectangle& rect)
+Polygon::Polygon(const AABBRect& rect)
     :Polyline(rect.cbegin(), rect.cend())
 {
     _memo = rect.memo();
-    _memo["Type"] = 40; 
+    _type = Type::POLYGON; 
 }
 
 Polygon &Polygon::operator=(const Polygon &polygon)
@@ -1145,7 +1163,7 @@ Polygon &Polygon::operator=(const Polygon &polygon)
     if (this != &polygon)
     {
         Polyline::operator=(polygon);
-        _memo["Type"] = 40;
+        _type = Type::POLYGON;
     }
     return *this;
 }
@@ -1155,7 +1173,7 @@ Polygon &Polygon::operator=(const Polygon &&polygon)
     if (this != &polygon)
     {
         Polyline::operator=(std::move(polygon));
-        _memo["Type"] = 40;
+        _type = Type::POLYGON;
     }
     return *this;
 }
@@ -1312,7 +1330,7 @@ Circle::Circle(const double x, const double y, const double r)
     ,_radius(r)
 {
     assert(r > 0);
-    _memo["Type"] = 50;
+    _type = Type::CIRCLE;
 }
 
 Circle::Circle(const Point &point, const double r)
@@ -1320,7 +1338,7 @@ Circle::Circle(const Point &point, const double r)
     ,_radius(r)
 {
     assert(r > 0);
-    _memo["Type"] = 50;
+    _type = Type::CIRCLE;
 }
 
 Circle::Circle(const Circle &circle)
@@ -1328,7 +1346,7 @@ Circle::Circle(const Circle &circle)
     ,_center(circle._center)
     ,_radius(circle._radius)
 {
-    _memo["Type"] = 50;
+    _type = Type::CIRCLE;
 }
 
 Circle::Circle(const Circle &&circle)
@@ -1336,7 +1354,7 @@ Circle::Circle(const Circle &&circle)
     ,_center(std::move(circle._center))
     ,_radius(std::move(circle._radius))
 {
-    _memo["Type"] = 50;
+    _type = Type::CIRCLE;
 }
 
 Circle &Circle::operator=(const Circle &circle)
@@ -1346,7 +1364,7 @@ Circle &Circle::operator=(const Circle &circle)
         Geometry::operator=(circle);
         _center = circle._center;
         _radius = circle._radius;
-        _memo["Type"] = 50;
+        _type = Type::CIRCLE;
     }
     return *this;
 }
@@ -1358,7 +1376,7 @@ Circle &Circle::operator=(const Circle &&circle)
         Geometry::operator=(circle);
         _center = std::move(circle._center);
         _radius = std::move(circle._radius);
-        _memo["Type"] = 50;
+        _type = Type::CIRCLE;
     }
     return *this;
 }
@@ -1437,15 +1455,15 @@ void Circle::scale(const double x, const double y, const double k)
     _radius *= k;
 }
 
-Rectangle Circle::bounding_rect(const bool orthogonality) const
+AABBRect Circle::bounding_rect(const bool orthogonality) const
 {
     if (_radius == 0)
     {
-        return Rectangle();
+        return AABBRect();
     }
     else
     {
-        return Rectangle(_center.coord().x - _radius, _center.coord().y - _radius, _center.coord().x + _radius, _center.coord().y + _radius);
+        return AABBRect(_center.coord().x - _radius, _center.coord().y - _radius, _center.coord().x + _radius, _center.coord().y + _radius);
     }
 }
 
@@ -1476,14 +1494,14 @@ Line::Line(const double x0, const double y0, const double x1, const double y1)
     :_start_point(x0, y0)
     ,_end_point(x1, y1)
 {
-    _memo["Type"] = 60;
+    _type = Type::LINE;
 }
 
 Line::Line(const Point &start, const Point &end)
     :_start_point(start)
     ,_end_point(end)
 {
-    _memo["Type"] = 60;
+    _type = Type::LINE;
 }
 
 Line::Line(const Line &line)
@@ -1491,7 +1509,7 @@ Line::Line(const Line &line)
     ,_start_point(line._start_point)
     ,_end_point(line._end_point)
 {
-    _memo["Type"] = 60;
+    _type = Type::LINE;
 }
 
 Line::Line(const Line &&line)
@@ -1499,7 +1517,7 @@ Line::Line(const Line &&line)
     ,_start_point(std::move(line._start_point))
     ,_end_point(std::move(line._end_point))
 {
-    _memo["Type"] = 60;
+    _type = Type::LINE;
 }
 
 Line &Line::operator=(const Line &line)
@@ -1509,7 +1527,7 @@ Line &Line::operator=(const Line &line)
         Geometry::operator=(line);
         _start_point = line._start_point;
         _end_point = line._end_point;
-        _memo["Type"] = 60;
+        _type = Type::LINE;
     }
     return *this;
 }
@@ -1521,7 +1539,7 @@ Line &Line::operator=(const Line &&line)
         Geometry::operator=(line);
         _start_point = std::move(line._start_point);
         _end_point = std::move(line._end_point);
-        _memo["Type"] = 60;
+        _type = Type::LINE;
     }
     return *this;
 }
@@ -1599,15 +1617,15 @@ void Line::scale(const double x, const double y, const double k)
     _end_point.scale(x, y, k);
 }
 
-Rectangle Line::bounding_rect() const
+AABBRect Line::bounding_rect() const
 {
     if (_start_point == _end_point)
     {
-        return Rectangle();
+        return AABBRect();
     }
     else
     {
-        return Rectangle(std::min(_start_point.coord().x, _end_point.coord().x),
+        return AABBRect(std::min(_start_point.coord().x, _end_point.coord().x),
                          std::min(_start_point.coord().y, _end_point.coord().y),
                          std::max(_start_point.coord().x, _end_point.coord().x),
                          std::max(_start_point.coord().y, _end_point.coord().y));
@@ -1639,28 +1657,28 @@ const Point &Line::back() const
 Bezier::Bezier(const size_t n)
     : _order(n)
 {
-    _memo["Type"] = 21;
+    _type = Type::BEZIER;
     _shape.shape_fixed() = true;
 }
 
 Bezier::Bezier(const Bezier &bezier)
     : Polyline(bezier), _order(bezier._order), _shape(bezier._shape)
 {
-    _memo["Type"] = 21;
+    _type = Type::BEZIER;
     _shape.shape_fixed() = true;
 }
 
 Bezier::Bezier(const Bezier &&bezier)
     : Polyline(std::move(bezier)), _order(std::move(bezier._order)), _shape(std::move(bezier._shape))
 {
-    _memo["Type"] = 21;
+    _type = Type::BEZIER;
     _shape.shape_fixed() = true;
 }
 
 Bezier::Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const size_t n)
     : Polyline(begin, end), _order(n)
 {
-    _memo["Type"] = 21;
+    _type = Type::BEZIER;
     _shape.shape_fixed() = true;
     update_shape();
 }
@@ -1668,7 +1686,7 @@ Bezier::Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::con
 Bezier::Bezier(const std::initializer_list<Point> &points, const size_t n)
     : Polyline(points), _order(n)
 {
-    _memo["Type"] = 21;
+    _type = Type::BEZIER;
     _shape.shape_fixed() = true;
     update_shape();
 }
@@ -1773,7 +1791,7 @@ Bezier &Bezier::operator=(const Bezier &bezier)
     {
         Polyline::operator=(bezier);
         _shape = bezier._shape;
-        _memo["Type"] = 21;
+        _type = Type::BEZIER;
     }
     return *this;
 }
@@ -1784,7 +1802,7 @@ Bezier &Bezier::operator=(const Bezier &&bezier)
     {
         Polyline::operator=(std::move(bezier));
         _shape = std::move(bezier._shape);
-        _memo["Type"] = 21;
+        _type = Type::BEZIER;
     }
     return *this;
 }
@@ -1824,7 +1842,7 @@ Polygon Bezier::convex_hull() const
     return _shape.convex_hull();
 }
 
-Rectangle Bezier::bounding_rect(const bool orthogonality) const
+AABBRect Bezier::bounding_rect(const bool orthogonality) const
 {
     return _shape.bounding_rect(orthogonality);
 }
@@ -2104,7 +2122,7 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
     }
 }
 
-const bool Geo::is_inside(const Point &point, const Rectangle &rect, const bool coincide)
+const bool Geo::is_inside(const Point &point, const AABBRect &rect, const bool coincide)
 {
     if (rect.empty())
     {
@@ -2236,7 +2254,7 @@ const bool Geo::is_intersected(const Line &line0, const Line &line1, Point &outp
     return Geo::is_intersected(line0.front(), line0.back(), line1.front(), line1.back(), output, infinite);
 }
 
-const bool Geo::is_intersected(const Rectangle &rect0, const Rectangle &rect1, const bool inside)
+const bool Geo::is_intersected(const AABBRect &rect0, const AABBRect &rect1, const bool inside)
 {
     if (rect0.empty() || rect1.empty())
     {
@@ -2418,9 +2436,9 @@ const bool Geo::is_intersected(const Circle &circle0, const Circle& circle1, con
     }
 }
 
-const bool Geo::is_intersected(const Rectangle &rect, const Point &point0, const Point &point1, const bool inside)
+const bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const Point &point1, const bool inside)
 {
-    if (!Geo::is_intersected(rect, Rectangle(point0, point1)))
+    if (!Geo::is_intersected(rect, AABBRect(point0, point1)))
     {
         return false;
     }
@@ -2442,12 +2460,12 @@ const bool Geo::is_intersected(const Rectangle &rect, const Point &point0, const
     return false;
 }
 
-const bool Geo::is_intersected(const Rectangle &rect, const Line &line, const bool inside)
+const bool Geo::is_intersected(const AABBRect &rect, const Line &line, const bool inside)
 {
     return Geo::is_intersected(rect, line.front(), line.back());
 }
 
-const bool Geo::is_intersected(const Rectangle &rect, const Polyline &polyline, const bool inside)
+const bool Geo::is_intersected(const AABBRect &rect, const Polyline &polyline, const bool inside)
 {
     if (polyline.empty() || !Geo::is_intersected(rect, polyline.bounding_rect()))
     {
@@ -2478,7 +2496,7 @@ const bool Geo::is_intersected(const Rectangle &rect, const Polyline &polyline, 
     return false;
 }
 
-const bool Geo::is_intersected(const Rectangle &rect, const Polygon &polygon, const bool inside)
+const bool Geo::is_intersected(const AABBRect &rect, const Polygon &polygon, const bool inside)
 {
     if (polygon.empty() || !Geo::is_intersected(rect, polygon.bounding_rect()))
     {
@@ -2516,7 +2534,7 @@ const bool Geo::is_intersected(const Rectangle &rect, const Polygon &polygon, co
     return false;
 }
 
-const bool Geo::is_intersected(const Rectangle &rect, const Circle &circle, const bool inside)
+const bool Geo::is_intersected(const AABBRect &rect, const Circle &circle, const bool inside)
 {
     if (circle.empty() || !Geo::is_intersected(rect, circle.bounding_rect()))
     {
@@ -2548,7 +2566,7 @@ const bool Geo::is_intersected(const Rectangle &rect, const Circle &circle, cons
 }
 
 
-const bool Geo::is_rectangle(const Polygon &polygon)
+const bool Geo::is_AABBRect(const Polygon &polygon)
 {
     Geo::Polygon points(polygon);
     if (polygon.size() > 5)

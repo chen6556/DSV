@@ -323,7 +323,7 @@ void Importer::end()
 
         for (Geo::Geometry *geo : _graph->container_group())
         {
-            if (geo->memo()["Type"].to_int() == 0 && Geo::is_inside(text.pos, dynamic_cast<Container *>(geo)->shape(), true))
+            if (geo->type() == Geo::Type::CONTAINER && Geo::is_inside(text.pos, dynamic_cast<Container *>(geo)->shape(), true))
             {
                 if (dynamic_cast<Container *>(geo)->text().isEmpty())
                 {
@@ -335,7 +335,7 @@ void Importer::end()
                 }
                 break;
             }
-            else if (geo->memo()["Type"].to_int() == 1 && Geo::is_inside(text.pos, dynamic_cast<CircleContainer *>(geo)->shape(), true))
+            else if (geo->type() == Geo::Type::CIRCLECONTAINER && Geo::is_inside(text.pos, dynamic_cast<CircleContainer *>(geo)->shape(), true))
             {
                 if (dynamic_cast<CircleContainer *>(geo)->text().isEmpty())
                 {

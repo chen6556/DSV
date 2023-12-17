@@ -60,7 +60,7 @@ public:
 
     double ratio() const;
 
-    virtual Geo::Rectangle bounding_rect() const;
+    virtual Geo::AABBRect bounding_rect() const;
 
 
 

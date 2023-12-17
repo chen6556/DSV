@@ -14,7 +14,7 @@ class Canvas : public QWidget
 
 private:
     Geo::Circle _circle_cache;
-    Geo::Rectangle _rectangle_cache, _select_rect, _visible_area;
+    Geo::AABBRect _AABBRect_cache, _select_rect, _visible_area;
     std::list<QLineF> _reflines;
     QPolygonF _catched_points;
     Editer *_editer = nullptr;
@@ -29,7 +29,7 @@ private:
     // 可移动视图, 可绘图, 正在绘图, 光标追踪, 可移动单个object, 选中一个obj, 正在移动obj, 显示坐标原点
     bool _bool_flags[8] = {false, false, false, false, false, false, false, true};
 
-    // current_tool:[-1:no-tool 0:circle 1:polyline 2:rectangle 3:curve], last_tool
+    // current_tool:[-1:no-tool 0:circle 1:polyline 2:AABBRect 3:curve], last_tool
     int _int_flags[2] = {-1, -1};
 
     QPointF _mouse_pos_0, _mouse_pos_1, _stored_mouse_pos;
@@ -101,7 +101,7 @@ public:
 
     Geo::Point center() const;
 
-    Geo::Rectangle bounding_rect() const;
+    Geo::AABBRect bounding_rect() const;
 
     Geo::Coord mouse_position() const;
 

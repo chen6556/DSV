@@ -53,9 +53,9 @@ void Canvas::paint_cache()
     }
 
     QPolygonF points;
-    if (!_rectangle_cache.empty())
+    if (!_AABBRect_cache.empty())
     {
-        for (const Geo::Point &point : _rectangle_cache)
+        for (const Geo::Point &point : _AABBRect_cache)
         {
             points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6], 
                 point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
@@ -131,10 +131,10 @@ void Canvas::paint_graph()
         for (const Geo::Geometry *geo : group)
         {
             points.clear();
-            painter.setPen(geo->memo()["is_selected"].to_bool() ? pen_selected : pen_not_selected);
-            switch (geo->memo()["Type"].to_int())
+            painter.setPen(geo->is_selected() ? pen_selected : pen_not_selected);
+            switch (geo->type())
             {
-            case 0:
+            case Geo::Type::CONTAINER:
                 container = dynamic_cast<const Container *>(geo);
                 if (!is_visible(container->shape()))
                 {
@@ -164,7 +164,7 @@ void Canvas::paint_graph()
                     painter.drawText(text_rect, container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                 }
                 break;
-            case 1:
+            case Geo::Type::CIRCLECONTAINER:
                 circlecontainer = dynamic_cast<const CircleContainer *>(geo);
                 if (!is_visible(circlecontainer->shape()))
                 {
@@ -203,14 +203,14 @@ void Canvas::paint_graph()
                     painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                 }
                 break;
-            case 3:
-                painter.setPen(geo->memo()["is_selected"].to_bool() ? pen_selected : pen_not_selected);
+            case Geo::Type::COMBINATION:
+                painter.setPen(geo->is_selected() ? pen_selected : pen_not_selected);
                 for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
                 {
                     points.clear();
-                    switch (item->memo()["Type"].to_int())
+                    switch (item->type())
                     {
-                    case 0:
+                    case Geo::Type::CONTAINER:
                         container = dynamic_cast<const Container *>(item);
                         if (!is_visible(container->shape()))
                         {
@@ -240,7 +240,7 @@ void Canvas::paint_graph()
                             painter.drawText(text_rect, container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                         }
                         break;
-                    case 1:
+                    case Geo::Type::CIRCLECONTAINER:
                         circlecontainer = dynamic_cast<const CircleContainer *>(item);
                         if (!is_visible(circlecontainer->shape()))
                         {
@@ -279,7 +279,7 @@ void Canvas::paint_graph()
                             painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                         }
                         break;
-                    case 20:
+                    case Geo::Type::POLYLINE:
                         polyline = dynamic_cast<const Geo::Polyline *>(item);
                         if (!is_visible(*polyline))
                         {
@@ -299,7 +299,7 @@ void Canvas::paint_graph()
                             painter.drawPoints(points);
                         }
                         break;
-                    case 21:
+                    case Geo::Type::BEZIER:
                         if (!is_visible(dynamic_cast<const Geo::Bezier *>(item)->shape()))
                         {
                             continue;
@@ -323,7 +323,7 @@ void Canvas::paint_graph()
                     }
                 }
                 break;
-            case 20:
+            case Geo::Type::POLYLINE:
                 polyline = dynamic_cast<const Geo::Polyline *>(geo);
                 if (!is_visible(*polyline))
                 {
@@ -343,12 +343,12 @@ void Canvas::paint_graph()
                     painter.drawPoints(points);
                 }
                 break;
-            case 21:
+            case Geo::Type::BEZIER:
                 if (!is_visible(dynamic_cast<const Geo::Bezier *>(geo)->shape()))
                 {
                     continue;
                 }
-                if (geo->memo()["is_selected"].to_bool())
+                if (geo->is_selected())
                 {
                     painter.setPen(QPen(QColor(255, 140, 0), 2, Qt::DashLine));
                     for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(geo))
@@ -410,7 +410,7 @@ void Canvas::paint_select_rect()
     painter.setPen(QPen(QColor(0, 0, 255, 140), 1));
     painter.setBrush(QColor(0, 120, 215, 10));
 
-    Geo::Rectangle rect(_select_rect);
+    Geo::AABBRect rect(_select_rect);
     rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
     
     painter.drawPolygon(QRect(rect[3].coord().x, rect[3].coord().y, rect.width(), rect.height()));
@@ -480,12 +480,12 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 {
                     _last_point.coord().x = real_x1;
                     _last_point.coord().y = real_y1;
-                    _rectangle_cache = Geo::Rectangle(real_x1, real_y1, real_x1 + 2, real_y1 + 2);
+                    _AABBRect_cache = Geo::AABBRect(real_x1, real_y1, real_x1 + 2, real_y1 + 2);
                 }
                 else
                 {
-                    _editer->append(_rectangle_cache);
-                    _rectangle_cache.clear();
+                    _editer->append(_AABBRect_cache);
+                    _AABBRect_cache.clear();
                     _int_flags[1] = _int_flags[0];
                     _int_flags[0] = -1;
                     _bool_flags[1] = false;
@@ -507,7 +507,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             if (_clicked_obj == nullptr)
             {
                 _editer->reset_selected_mark();
-                _select_rect = Geo::Rectangle(real_x1, real_y1, real_x1 + 1, real_y1 + 1);
+                _select_rect = Geo::AABBRect(real_x1, real_y1, real_x1 + 1, real_y1 + 1);
                 _last_point.coord().x = real_x1;
                 _last_point.coord().y = real_y1;
                 _bool_flags[5] = false;
@@ -528,7 +528,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 if (std::find(selected_objs.begin(), selected_objs.end(), _clicked_obj) == selected_objs.end())
                 {
                     _editer->reset_selected_mark();
-                    _clicked_obj->memo()["is_selected"] = true;
+                    _clicked_obj->is_selected() = true;
                 }
                 _bool_flags[4] = true;
                 _bool_flags[5] = true;
@@ -580,7 +580,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         _bool_flags[4] = false;
         if (_bool_flags[1]) // paintable
         {
-            if (_circle_cache.empty() && _rectangle_cache.empty() && _info_labels[1])
+            if (_circle_cache.empty() && _AABBRect_cache.empty() && _info_labels[1])
             {
                 _info_labels[1]->clear();
             }
@@ -674,7 +674,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             break;
         case 2:
-            _rectangle_cache = Geo::Rectangle(_last_point, Geo::Point(real_x1, real_y1));
+            _AABBRect_cache = Geo::AABBRect(_last_point, Geo::Point(real_x1, real_y1));
             if (_info_labels[1] != nullptr)
             {
                 _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.coord().x))).append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.coord().y))).c_str());
@@ -736,7 +736,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         }
         else if (!_select_rect.empty())
         {
-            _select_rect = Geo::Rectangle(_last_point.coord().x, _last_point.coord().y, real_x1, real_y1);
+            _select_rect = Geo::AABBRect(_last_point.coord().x, _last_point.coord().y, real_x1, real_y1);
             if (_info_labels[1])
             {
                 _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.coord().x))).append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.coord().y))).c_str());
@@ -827,7 +827,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                 }
                 break;
             case 2:
-                _rectangle_cache.clear();
+                _AABBRect_cache.clear();
                 update();
                 break;
             case 3:
@@ -846,9 +846,9 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         }
         else
         {
-            if (_bool_flags[5] && _last_clicked_obj->memo()["Type"].to_int() < 2)
+            if (_bool_flags[5] && (_last_clicked_obj->type() == Geo::Type::CONTAINER || _last_clicked_obj->type() == Geo::Type::CIRCLECONTAINER))
             {
-                Geo::Rectangle rect(_last_clicked_obj->bounding_rect());
+                Geo::AABBRect rect(_last_clicked_obj->bounding_rect());
                 rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
                 _input_line.setMaximumSize(std::max(100.0, rect.width()), std::max(100.0, rect.height()));
                 _input_line.move(rect.center().coord().x - _input_line.rect().center().x(),
@@ -891,7 +891,7 @@ void Canvas::show_overview()
         return;
     }
     // 获取graph的边界
-    Geo::Rectangle bounding_area = graph->bounding_rect();
+    Geo::AABBRect bounding_area = graph->bounding_rect();
     // 整个绘图控件区域作为显示区域
     QRect view_area = this->geometry();
     // 选择合适的缩放倍率
@@ -919,7 +919,7 @@ void Canvas::show_overview()
 
     // 可视区域为显示控件区域的反变换
     double x0=0, y0=0, x1=view_area.width(), y1=view_area.height();
-    _visible_area = Geo::Rectangle(
+    _visible_area = Geo::AABBRect(
         x0 * _view_ctm[0] + y0 * _view_ctm[3] + _view_ctm[6],
         x0 * _view_ctm[1] + y0 * _view_ctm[4] + _view_ctm[7],
         x1 * _view_ctm[0] + y1 * _view_ctm[3] + _view_ctm[6],
@@ -932,7 +932,7 @@ void Canvas::show_overview()
 void Canvas::resizeEvent(QResizeEvent *event)
 {
     const QRect rect(this->geometry());
-    _visible_area = Geo::Rectangle(0, 0, rect.width(), rect.height());
+    _visible_area = Geo::AABBRect(0, 0, rect.width(), rect.height());
     _visible_area.transform(_view_ctm[0], _view_ctm[3], _view_ctm[6], _view_ctm[1], _view_ctm[4], _view_ctm[7]);
     return QWidget::resizeEvent(event);
 }
@@ -954,7 +954,7 @@ void Canvas::use_tool(const int value)
         _bool_flags[2] = false;
         _editer->point_cache().clear();
         _circle_cache.clear();
-        _rectangle_cache.clear();
+        _AABBRect_cache.clear();
         // setMouseTracking(value != -1);
         emit tool_changed(_int_flags[0]);
         update();
@@ -1030,13 +1030,13 @@ double Canvas::ratio() const
 
 Geo::Point Canvas::center() const
 {
-    if (_circle_cache.empty() && _rectangle_cache.empty() && (_editer->graph() == nullptr || _editer->graph()->empty()))
+    if (_circle_cache.empty() && _AABBRect_cache.empty() && (_editer->graph() == nullptr || _editer->graph()->empty()))
     {
         return Geo::Point();
     }
 
     double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
-    for (const Geo::Point &point : _rectangle_cache)
+    for (const Geo::Point &point : _AABBRect_cache)
     {
         x0 = std::min(x0, point.coord().x);
         y0 = std::min(y0, point.coord().y);
@@ -1070,15 +1070,15 @@ Geo::Point Canvas::center() const
     return Geo::Point((x0 + x1) / 2, (y0 + y1) / 2);
 }
 
-Geo::Rectangle Canvas::bounding_rect() const
+Geo::AABBRect Canvas::bounding_rect() const
 {
-    if (_circle_cache.empty() && _rectangle_cache.empty() && (_editer->graph() == nullptr || _editer->graph()->empty()))
+    if (_circle_cache.empty() && _AABBRect_cache.empty() && (_editer->graph() == nullptr || _editer->graph()->empty()))
     {
-        return Geo::Rectangle();
+        return Geo::AABBRect();
     }
 
     double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
-    for (const Geo::Point &point : _rectangle_cache)
+    for (const Geo::Point &point : _AABBRect_cache)
     {
         x0 = std::min(x0, point.coord().x);
         y0 = std::min(y0, point.coord().y);
@@ -1095,7 +1095,7 @@ Geo::Rectangle Canvas::bounding_rect() const
 
     if (_editer->graph() == nullptr || _editer->graph()->empty())
     {
-        return Geo::Rectangle(x0, y0, x1, y1);
+        return Geo::AABBRect(x0, y0, x1, y1);
     }
 
     for (const ContainerGroup &group : _editer->graph()->container_groups())
@@ -1109,7 +1109,7 @@ Geo::Rectangle Canvas::bounding_rect() const
         }
     }
 
-    return Geo::Rectangle(x0, y0, x1, y1);
+    return Geo::AABBRect(x0, y0, x1, y1);
 }
 
 Geo::Coord Canvas::mouse_position() const
@@ -1119,7 +1119,7 @@ Geo::Coord Canvas::mouse_position() const
 
 const bool Canvas::empty() const
 {
-    return _circle_cache.empty() && _rectangle_cache.empty() &&
+    return _circle_cache.empty() && _AABBRect_cache.empty() &&
            (_editer == nullptr || _editer->graph() == nullptr || _editer->graph()->empty());
 }
 
@@ -1132,7 +1132,7 @@ void Canvas::cancel_painting()
     emit tool_changed(_int_flags[0]);
     _editer->point_cache().clear();
     _circle_cache.clear();
-    _rectangle_cache.clear();
+    _AABBRect_cache.clear();
     update();
 }
 
@@ -1213,7 +1213,7 @@ bool Canvas::is_visible(const Geo::Polygon &polygon) const
         }
     }
 
-    const Geo::Rectangle rect(polygon.bounding_rect());
+    const Geo::AABBRect rect(polygon.bounding_rect());
     for (const Geo::Point &point : _visible_area)
     {
         if (point.coord().x > rect[0].coord().x && point.coord().x < rect[2].coord().x

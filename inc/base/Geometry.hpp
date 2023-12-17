@@ -9,7 +9,10 @@ namespace Geo
     const static double PI = 3.14159265358979323846;
     const static double EPSILON = 1e-10;
 
-    class Rectangle;
+    enum Type {GEOMETRY, POINT, POLYLINE, AABBRECT, POLYGON, CIRCLE, LINE, BEZIER,
+        CONTAINER, CIRCLECONTAINER, CONTAINERGROUP, COMBINATION, GRAPH};
+
+    class AABBRect;
 
     class Polygon;
 
@@ -18,6 +21,8 @@ namespace Geo
     protected:
         Memo _memo;
         bool _shape_fixed = false;
+        bool _selected = false;
+        Type _type = Type::GEOMETRY;
 
     public:
         Geometry() {};
@@ -35,6 +40,12 @@ namespace Geo
         bool &shape_fixed();
 
         const bool shape_fixed() const;
+
+        bool &is_selected();
+
+        const bool is_selected() const;
+
+        const Type type() const;
 
         virtual const double length() const;
 
@@ -56,7 +67,7 @@ namespace Geo
 
         virtual Polygon convex_hull() const;
 
-        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
+        virtual AABBRect bounding_rect(const bool orthogonality = true) const;
     };
 
     struct Coord
@@ -87,7 +98,7 @@ namespace Geo
         Coord _pos;
 
     public:
-        Point() { _memo["Type"] = 10; };
+        Point() { _type = Type::POINT; };
 
         Point(const double x, const double y);
 
@@ -131,7 +142,7 @@ namespace Geo
 
         virtual void scale(const double x, const double y, const double k);
 
-        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
+        virtual AABBRect bounding_rect(const bool orthogonality = true) const;
 
         Point operator*(const double k) const;
 
@@ -158,7 +169,7 @@ namespace Geo
         std::vector<Point> _points;
 
     public:
-        Polyline() { _memo["Type"] = 20; };
+        Polyline() { _type = Type::POLYLINE; };
 
         Polyline(const Polyline &polyline);
 
@@ -258,24 +269,24 @@ namespace Geo
 
         virtual Polygon convex_hull() const;
 
-        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
+        virtual AABBRect bounding_rect(const bool orthogonality = true) const;
     };
 
-    class Rectangle : public Geometry // Type:30
+    class AABBRect : public Geometry // Type:30
     {
     private:
         std::vector<Point> _points;
 
     public:
-        Rectangle() { _memo["Type"] = 30; };
+        AABBRect() { _type = Geo::Type::AABBRECT; };
 
-        Rectangle(const double x0, const double y0, const double x1, const double y1);
+        AABBRect(const double x0, const double y0, const double x1, const double y1);
 
-        Rectangle(const Point &point0, const Point &point1);
+        AABBRect(const Point &point0, const Point &point1);
 
-        Rectangle(const Rectangle &rect);
+        AABBRect(const AABBRect &rect);
 
-        Rectangle(const Rectangle &&rect);
+        AABBRect(const AABBRect &&rect);
 
         const double left() const;
 
@@ -285,9 +296,9 @@ namespace Geo
 
         const double bottom() const;
 
-        Rectangle &operator=(const Rectangle &reac);
+        AABBRect &operator=(const AABBRect &reac);
 
-        Rectangle &operator=(const Rectangle &&reac);
+        AABBRect &operator=(const AABBRect &&reac);
 
         virtual const bool empty() const;
 
@@ -295,7 +306,7 @@ namespace Geo
 
         virtual void clear();
 
-        virtual Rectangle *clone() const;
+        virtual AABBRect *clone() const;
 
         const double area() const;
 
@@ -315,7 +326,7 @@ namespace Geo
 
         virtual Polygon convex_hull() const;
 
-        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
+        virtual AABBRect bounding_rect(const bool orthogonality = true) const;
 
         std::vector<Point>::const_iterator begin() const;
 
@@ -335,9 +346,9 @@ namespace Geo
 
         std::vector<Point>::const_iterator find(const Point &point) const;
 
-        Rectangle operator+(const Point &point) const;
+        AABBRect operator+(const Point &point) const;
 
-        Rectangle operator-(const Point &point) const;
+        AABBRect operator-(const Point &point) const;
 
         void operator+=(const Point &point);
 
@@ -351,7 +362,7 @@ namespace Geo
     class Polygon : public Polyline // Type:40
     {
     public:
-        Polygon() { _memo["Type"] = 40; };
+        Polygon() { _type = Type::POLYGON; };
 
         Polygon(const Polygon &polygon);
 
@@ -363,7 +374,7 @@ namespace Geo
 
         Polygon(const Polyline &polyline);
 
-        Polygon(const Rectangle &rect);
+        Polygon(const AABBRect &rect);
 
         Polygon &operator=(const Polygon &polygon);
 
@@ -405,7 +416,7 @@ namespace Geo
         double _radius = 0;
 
     public:
-        Circle() { _memo["Type"] = 50; };
+        Circle() { _type = Type::CIRCLE; };
 
         Circle(const double x, const double y, const double r);
 
@@ -447,7 +458,7 @@ namespace Geo
 
         virtual void scale(const double x, const double y, const double k);
 
-        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
+        virtual AABBRect bounding_rect(const bool orthogonality = true) const;
 
         Circle operator+(const Point &point) const;
 
@@ -465,7 +476,7 @@ namespace Geo
         Point _end_point;
 
     public:
-        Line() { _memo["Type"] = 60; };
+        Line() { _type = Type::LINE; };
 
         Line(const double x0, const double y0, const double x1, const double y1);
 
@@ -505,7 +516,7 @@ namespace Geo
 
         virtual void scale(const double x, const double y, const double k);
 
-        virtual Rectangle bounding_rect() const;
+        virtual AABBRect bounding_rect() const;
 
         Point &front();
 
@@ -563,7 +574,7 @@ namespace Geo
 
         virtual Polygon convex_hull() const;
 
-        virtual Rectangle bounding_rect(const bool orthogonality = true) const;
+        virtual AABBRect bounding_rect(const bool orthogonality = true) const;
     };
 
     // functions
@@ -588,7 +599,7 @@ namespace Geo
 
     const bool is_inside(const Point &point, const Polygon &polygon, const bool coincide = false);
 
-    const bool is_inside(const Point &point, const Rectangle &rect, const bool coincide = false);
+    const bool is_inside(const Point &point, const AABBRect &rect, const bool coincide = false);
 
     const bool is_inside(const Point &point, const Circle &circle, const bool coincide = false);
 
@@ -596,7 +607,7 @@ namespace Geo
 
     const bool is_intersected(const Line &line0, const Line &line1, Point &output, const bool infinite = true);
 
-    const bool is_intersected(const Rectangle &rect0, const Rectangle &rect1, const bool inside = true);
+    const bool is_intersected(const AABBRect &rect0, const AABBRect &rect1, const bool inside = true);
 
     const bool is_intersected(const Polyline &polyline0, const Polyline &polyline1);
 
@@ -610,16 +621,16 @@ namespace Geo
 
     const bool is_intersected(const Circle &circle0, const Circle &circle1, const bool inside = true);
 
-    const bool is_intersected(const Rectangle &rect, const Point &point0, const Point &point1, const bool inside = true);
+    const bool is_intersected(const AABBRect &rect, const Point &point0, const Point &point1, const bool inside = true);
 
-    const bool is_intersected(const Rectangle &rect, const Line &line, const bool inside = true);
+    const bool is_intersected(const AABBRect &rect, const Line &line, const bool inside = true);
 
-    const bool is_intersected(const Rectangle &rect, const Polyline &polyline, const bool inside = true);
+    const bool is_intersected(const AABBRect &rect, const Polyline &polyline, const bool inside = true);
 
-    const bool is_intersected(const Rectangle &rect, const Polygon &polygon, const bool inside = true);
+    const bool is_intersected(const AABBRect &rect, const Polygon &polygon, const bool inside = true);
 
-    const bool is_intersected(const Rectangle &rect, const Circle &circle, const bool inside = true);
+    const bool is_intersected(const AABBRect &rect, const Circle &circle, const bool inside = true);
 
-    const bool is_rectangle(const Polygon &polygon);
+    const bool is_AABBRect(const Polygon &polygon);
 
 };

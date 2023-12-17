@@ -66,7 +66,7 @@ public:
 
     void append(const Geo::Circle &circle);
 
-    void append(const Geo::Rectangle &rect);
+    void append(const Geo::AABBRect &rect);
 
     void append_bezier(const size_t order);
 
@@ -96,7 +96,7 @@ public:
 
     const size_t selected_count() const;
 
-    std::vector<Geo::Geometry *> select(const Geo::Rectangle &rect);
+    std::vector<Geo::Geometry *> select(const Geo::AABBRect &rect);
 
     void reset_selected_mark(const bool value = false);
 

@@ -255,7 +255,7 @@ double Graph::ratio() const
     return _ratio;
 }
 
-Geo::Rectangle Graph::bounding_rect() const
+Geo::AABBRect Graph::bounding_rect() const
 {
     double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
     for (const ContainerGroup &group : _container_groups)
@@ -268,7 +268,7 @@ Geo::Rectangle Graph::bounding_rect() const
             y1 = std::max(y1, point.coord().y);
         }
     }
-    return Geo::Rectangle(x0, y0, x1, y1);
+    return Geo::AABBRect(x0, y0, x1, y1);
 }
 
 
@@ -366,7 +366,7 @@ void Graph::append(Container *container, const size_t index)
     if (container->shape().size() > 3)
     {
         container_group(index).append(container);
-        container->memo()["is_selected"] = false;
+        container->is_selected() = false;
     }
 }
 
@@ -376,7 +376,7 @@ void Graph::append(CircleContainer *container, const size_t index)
     if (!container->shape().empty())
     {
         container_group(index).append(container);
-        container->memo()["is_selected"] = false;
+        container->is_selected() = false;
     }
 }
 
@@ -386,7 +386,7 @@ void Graph::append(Geo::Polyline *polyline, const size_t index)
     if (polyline->size() > 1)
     {
         container_group(index).append(polyline);
-        polyline->memo()["is_selected"] = false;
+        polyline->is_selected() = false;
     }
 }
 
@@ -394,7 +394,7 @@ void Graph::append(Geo::Bezier *bezier, const size_t index)
 {
     assert(index < _container_groups.size());
     container_group(index).append(bezier);
-    bezier->memo()["is_selected"] = false;
+    bezier->is_selected() = false;
 }
 
 void Graph::append_group()
