@@ -1,6 +1,6 @@
 #include "draw/Canvas.hpp"
 #include "draw/GLSL.hpp"
-#include <QPalette>
+#include <QPainterPath>
 #include "io/GlobalSetting.hpp"
 
 
@@ -27,8 +27,11 @@ void Canvas::init()
     QSurfaceFormat format;
     format.setDepthBufferSize(24);
     format.setStencilBufferSize(8);
+    format.setSamples(4);
     format.setProfile(QSurfaceFormat::CoreProfile);
     setFormat(format);
+
+    setAutoFillBackground(false);
 
     _cache = new double[_cache_len];
     _input_line.hide();
@@ -154,27 +157,27 @@ void Canvas::initializeGL()
     _uniforms[4] = glGetUniformLocation(_shader_program, "color");
 
     glUseProgram(_shader_program);
-    glUniform3d(_uniforms[2], 1.0, 0.0, 0.0);
-    glUniform3d(_uniforms[3], 0.0, 1.0, 0.0);
+    glUniform3d(_uniforms[2], 1.0, 0.0, 0.0); // vec0
+    glUniform3d(_uniforms[3], 0.0, 1.0, 0.0); // vec1
 
     glGenVertexArrays(1, &_VAO);
-    glGenBuffers(3, _VBO);
+    glGenBuffers(4, _VBO);
 
     glBindVertexArray(_VAO);
     glVertexAttribLFormat(0, 3, GL_DOUBLE, 0);
 
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
     glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_DYNAMIC_DRAW);
 
     double data[24] = {-10, 0, 0, 10, 0, 0, 0, -10, 0, 0, 10, 0};
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]); // origin and select rect
     glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(double), data, GL_DYNAMIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
     glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
     glEnableVertexAttribArray(0);
 
-    glGenBuffers(3, _IBO);
+    glGenBuffers(4, _IBO);
 
 }
 
@@ -217,7 +220,7 @@ void Canvas::paintGL()
             }
         }
         _indexs_count[2] = index_count;
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // cache
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
         delete indexs;
     }
@@ -226,28 +229,53 @@ void Canvas::paintGL()
 
     if (_indexs_count[1] > 0)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]); // polygon
         glUniform4f(_uniforms[4], 0.9765f, 0.9765f, 0.9765f, 1.0f); // 绘制填充色
         glDrawElements(GL_TRIANGLES, _indexs_count[1], GL_UNSIGNED_INT, NULL);
     }
 
     if (_indexs_count[0] > 0)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]); // polyline
         glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // 绘制线 normal
         glDrawElements(GL_LINE_STRIP, _indexs_count[0], GL_UNSIGNED_INT, NULL);
     }
 
     if (_indexs_count[2] > 0)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
         glUniform4f(_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f); // 绘制线 selected
         glDrawElements(GL_LINE_STRIP, _indexs_count[2], GL_UNSIGNED_INT, NULL);
     }
 
+    if (_indexs_count[3] > 0)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[3]); // text
+        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glEnableVertexAttribArray(0);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[3]); // text
+        glUniform4f(_uniforms[4], 0.0f, 0.0f, 0.0f, 1.0f);
+
+        glEnable(GL_STENCIL_TEST); //开启模板测试
+        glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT); //设置模板缓冲区更新方式(若通过则按位反转模板值)
+        glClear(GL_STENCIL_BUFFER_BIT);
+        glStencilFunc(GL_ALWAYS, 1, 1); //初始模板位为0，由于一定通过测试，所以全部会被置为1，而重复绘制区域由于画了两次模板位又归0
+        glStencilMask(0x1); //开启模板缓冲区写入
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); //第一次绘制只是为了构造模板缓冲区，没有必要显示到屏幕上，所以设置不显示第一遍的多边形
+        glDrawElements(GL_TRIANGLES, _indexs_count[3], GL_UNSIGNED_INT, NULL);
+
+        glStencilFunc(GL_NOTEQUAL, 0, 1); //模板值不为0就通过
+        glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+        glStencilMask(0x1);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glDrawElements(GL_TRIANGLES, _indexs_count[3], GL_UNSIGNED_INT, NULL);
+        glDisable(GL_STENCIL_TEST); //关闭模板测试
+    }
+
     if (GlobalSetting::get_instance()->setting()["show_points"].toBool())
     {
-        glUniform4f(_uniforms[4], 0.0f, 0.0f, 1.0f, 1.0f);
+        glUniform4f(_uniforms[4], 0.0f, 0.0f, 1.0f, 1.0f); // color
         glDrawArrays(GL_POINTS, 0, _points_count);
     }
 
@@ -259,15 +287,15 @@ void Canvas::paintGL()
 
     if (!_editer->point_cache().empty())
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f);
+        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // color
         glDrawArrays(GL_LINE_STRIP, 0, _cache_count * sizeof(double));
         if (GlobalSetting::get_instance()->setting()["show_points"].toBool())
         {
-            glUniform4f(_uniforms[4], 0.0f, 0.0f, 1.0f, 1.0f);
+            glUniform4f(_uniforms[4], 0.0f, 0.0f, 1.0f, 1.0f); // color
             glDrawArrays(GL_POINTS, 0, _cache_count * sizeof(double));
         }
     }
@@ -280,7 +308,7 @@ void Canvas::paintGL()
             _cache[i * 3 + 2] = 0;
         }
 
-        glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
         glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), _cache);
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
@@ -342,7 +370,7 @@ void Canvas::paintGL()
         _cache_count = 0;
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]); // origin and select rect
     glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
     glEnableVertexAttribArray(0);
 
@@ -366,16 +394,23 @@ void Canvas::paintGL()
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        glUniform4f(_uniforms[4], 0.0f, 0.47f, 0.843f, 0.1f);
+        glUniform4f(_uniforms[4], 0.0f, 0.47f, 0.843f, 0.1f); // color
         glDrawArrays(GL_POLYGON, 4, 4);
 
-        glUniform4f(_uniforms[4], 0.0f, 0.0f, 1.0f, 0.549f);
+        glUniform4f(_uniforms[4], 0.0f, 0.0f, 1.0f, 0.549f); // color
         glDrawArrays(GL_LINE_LOOP, 4, 4);
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
     glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
     glEnableVertexAttribArray(0);
+
+    for (QPointF &point : _catched_points)
+    {
+        Geo::Coord coord(canvas_coord_to_real_coord(point.x(), point.y()));
+        point.setX(coord.x);
+        point.setY(coord.y);
+    }
 }
 
 void Canvas::mousePressEvent(QMouseEvent *event)
@@ -415,6 +450,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _cache[_cache_count++] = real_x1;
                     _cache[_cache_count++] = real_y1;
                     _cache[_cache_count++] = 0;
+                    // _text_painter->beginNativePainting();
                     makeCurrent();
                     glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
                     if (_cache_count == _cache_len)
@@ -431,6 +467,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - 3) * sizeof(double), 3 * sizeof(double), &_cache[_cache_count - 3]);
                     }
                     doneCurrent();
+                    // _text_painter->endNativePainting();
                 }
                 else
                 {
@@ -442,10 +479,12 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _cache[0] = _cache[3] = real_x1;
                     _cache[1] = _cache[4] = real_y1;
                     _cache[2] = _cache[5] = 0;
+                    // _text_painter->beginNativePainting();
                     makeCurrent();
                     glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
                     glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * sizeof(double), _cache);
                     doneCurrent();
+                    // _text_painter->endNativePainting();
                 }
                 break;
             case 2:
@@ -863,6 +902,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             doneCurrent();
             delete data;
+            refresh_text_vbo();
             if (event->modifiers() != Qt::ControlModifier && GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
             {
                 _editer->auto_aligning(_clicked_obj, real_x1, real_y1, _reflines,
@@ -1013,6 +1053,8 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                     _input_line.moveCursor(QTextCursor::End);
                     _input_line.show();
                 }
+            
+                refresh_text_vbo();
             }
         }
         break;
@@ -1761,6 +1803,8 @@ void Canvas::refresh_vbo()
     delete data;
     delete polyline_indexs;
     delete polygon_indexs;
+
+    refresh_text_vbo();
 }
 
 void Canvas::refresh_vbo(const bool unitary)
@@ -2302,4 +2346,223 @@ void Canvas::refresh_brush_ibo()
     doneCurrent();
 
     delete polygon_indexs;
+}
+
+void Canvas::refresh_text_vbo()
+{
+    QPainterPath path;
+    const QFont font("SimSun", 16);
+    const QFontMetrics font_metrics(font);
+    QRectF text_rect;
+
+    const Container *container = nullptr;
+    const CircleContainer *circlecontainer = nullptr;
+    Geo::Coord coord;
+    double depth;
+    Geo::Polygon points;
+    size_t offset;
+    int string_index;
+    QStringList strings;
+
+    size_t data_len = 4104, data_count = 0;
+    double *data = new double[data_len];
+    size_t index_len = 1368, index_count = 0;
+    unsigned int *indexs = new unsigned int[index_len];
+    for (const ContainerGroup &group : _editer->graph()->container_groups())
+    {
+        if (!group.visible())
+        {
+            continue;
+        }
+
+        for (const Geo::Geometry *geo : group)
+        {
+            switch (geo->memo()["Type"].to_int())
+            {
+            case 0:
+                container = dynamic_cast<const Container *>(geo);
+                if (container->text().isEmpty())
+                {
+                    continue;
+                }
+                coord = container->bounding_rect().center().coord();
+                strings = container->text().split('\n');
+                string_index = 0;
+                for (const QString &string : strings)
+                {
+                    text_rect = font_metrics.boundingRect(string);
+                    path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                        * (strings.length() / 2.0 - string_index++), font, string);
+                }
+                depth = container->memo()["point_depth"].to_double();
+                break;
+            case 1:
+                circlecontainer = dynamic_cast<const CircleContainer *>(geo);
+                if (circlecontainer->text().isEmpty())
+                {
+                    continue;
+                }
+                coord = circlecontainer->bounding_rect().center().coord();
+                strings = circlecontainer->text().split('\n');
+                string_index = 0;
+                for (const QString &string : strings)
+                {
+                    text_rect = font_metrics.boundingRect(string);
+                    path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                        * (strings.length() / 2.0 - string_index++), font, string);
+                }
+                depth = circlecontainer->memo()["point_depth"].to_double();
+                break;
+            case 3:
+                for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                {
+                    switch (item->memo()["Type"].to_int())
+                    {
+                    case 0:
+                        container = dynamic_cast<const Container *>(item);
+                        if (container->text().isEmpty())
+                        {
+                            continue;
+                        }
+                        coord = container->bounding_rect().center().coord();
+                        text_rect = font_metrics.boundingRect(container->text());
+                        strings = container->text().split('\n');
+                        string_index = 0;
+                        for (const QString &string : strings)
+                        {
+                            text_rect = font_metrics.boundingRect(string);
+                            path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                                * (strings.length() / 2.0 - string_index++), font, string);
+                        }
+                        depth = container->memo()["point_depth"].to_double();
+                        break;
+                    case 1:
+                        circlecontainer = dynamic_cast<const CircleContainer *>(item);
+                        if (circlecontainer->text().isEmpty())
+                        {
+                            continue;
+                        }
+                        coord = circlecontainer->bounding_rect().center().coord();
+                        text_rect = font_metrics.boundingRect(circlecontainer->text());
+                        strings = circlecontainer->text().split('\n');
+                        string_index = 0;
+                        for (const QString &string : strings)
+                        {
+                            text_rect = font_metrics.boundingRect(string);
+                            path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                                * (strings.length() / 2.0 - string_index++), font, string);
+                        }
+                        depth = circlecontainer->memo()["point_depth"].to_double();
+                        break;
+                    default:
+                        break;
+                    }
+                    for (const QPolygonF &polygon : path.toSubpathPolygons())
+                    {
+                        offset = data_count / 3;
+                        for (const QPointF &point : polygon)
+                        {
+                            points.append(Geo::Point(point.x(), point.y()));
+                            data[data_count++] = point.x();
+                            data[data_count++] = point.y();
+                            data[data_count++] = depth;
+                            if (data_count == data_len)
+                            {
+                                data_len *= 2;
+                                double *temp = new double[data_len];
+                                std::memmove(temp, data, data_count * sizeof(double));
+                                delete data;
+                                data = temp;
+                            }
+                        }
+
+                        for (size_t i : Geo::ear_cut_to_indexs(points))
+                        {
+                            indexs[index_count++] = offset + i;
+                            if (index_count == index_len)
+                            {
+                                index_len *= 2;
+                                unsigned int *temp = new unsigned int[index_len];
+                                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                                delete indexs;
+                                indexs = temp;
+                            }
+                        }
+
+                        points.clear();
+                        indexs[index_count++] = UINT_MAX;
+                        if (index_count == index_len)
+                        {
+                            index_len *= 2;
+                            unsigned int *temp = new unsigned int[index_len];
+                            std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                            delete indexs;
+                            indexs = temp;
+                        }
+                    }
+                    path.clear();
+                }
+                break;
+            default:
+                break;
+            }
+            for (const QPolygonF &polygon : path.toSubpathPolygons())
+            {
+                offset = data_count / 3;
+                for (const QPointF &point : polygon)
+                {
+                    points.append(Geo::Point(point.x(), point.y()));
+                    data[data_count++] = point.x();
+                    data[data_count++] = point.y();
+                    data[data_count++] = depth;
+                    if (data_count == data_len)
+                    {
+                        data_len *= 2;
+                        double *temp = new double[data_len];
+                        std::memmove(temp, data, data_count * sizeof(double));
+                        delete data;
+                        data = temp;
+                    }
+                }
+
+                for (size_t i : Geo::ear_cut_to_indexs(points))
+                {
+                    indexs[index_count++] = offset + i;
+                    if (index_count == index_len)
+                    {
+                        index_len *= 2;
+                        unsigned int *temp = new unsigned int[index_len];
+                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                        delete indexs;
+                        indexs = temp;
+                    }
+                }
+
+                points.clear();
+                indexs[index_count++] = UINT_MAX;
+                if (index_count == index_len)
+                {
+                    index_len *= 2;
+                    unsigned int *temp = new unsigned int[index_len];
+                    std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                    delete indexs;
+                    indexs = temp;
+                }
+            }
+            path.clear();
+        }
+    }
+
+    _indexs_count[3] = index_count;
+
+    makeCurrent();
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[3]); // text
+	glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[3]); // text
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
+    doneCurrent();
+
+    delete data;
+    delete indexs;
 }
