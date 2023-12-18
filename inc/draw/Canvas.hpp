@@ -148,7 +148,7 @@ public:
     Geo::Coord canvas_coord_to_real_coord(const double x, const double y) const;
 
 
-
+public slots:
     void refresh_vbo();
 
     void refresh_vbo(const bool unitary);

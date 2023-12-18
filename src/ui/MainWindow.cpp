@@ -63,6 +63,8 @@ void MainWindow::init()
     QObject::connect(ui->actionadvanced, &QAction::triggered, this, [this]() { _setting->show(); });
     QObject::connect(ui->show_origin, &QAction::triggered, this, [this]() { ui->show_origin->isChecked() ? _painter.show_origin() : _painter.hide_origin(); });
 
+    QObject::connect(_setting, &Setting::accepted, &_painter, &Canvas::refresh_text_vbo);
+
     for (size_t i = 0; i < 3; ++i)
     {
         _info_labels[i] = new QLabel(this);

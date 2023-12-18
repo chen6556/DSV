@@ -902,7 +902,10 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             doneCurrent();
             delete data;
-            refresh_text_vbo();
+            if (GlobalSetting::get_instance()->setting()["show_text"].toBool())
+            {
+                refresh_text_vbo();
+            }
             if (event->modifiers() != Qt::ControlModifier && GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
             {
                 _editer->auto_aligning(_clicked_obj, real_x1, real_y1, _reflines,
@@ -1053,8 +1056,11 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                     _input_line.moveCursor(QTextCursor::End);
                     _input_line.show();
                 }
-            
-                refresh_text_vbo();
+
+                if (GlobalSetting::get_instance()->setting()["show_text"].toBool())
+                {
+                    refresh_text_vbo();
+                }
             }
         }
         break;
@@ -1804,7 +1810,10 @@ void Canvas::refresh_vbo()
     delete polyline_indexs;
     delete polygon_indexs;
 
-    refresh_text_vbo();
+    if (GlobalSetting::get_instance()->setting()["show_text"].toBool())
+    {
+        refresh_text_vbo();
+    }
 }
 
 void Canvas::refresh_vbo(const bool unitary)
@@ -2350,8 +2359,14 @@ void Canvas::refresh_brush_ibo()
 
 void Canvas::refresh_text_vbo()
 {
+    if (!GlobalSetting::get_instance()->setting()["show_text"].toBool())
+    {
+        _indexs_count[3] = 0;
+        return;
+    }
+
     QPainterPath path;
-    const QFont font("SimSun", 16);
+    const QFont font("SimSun", GlobalSetting::get_instance()->setting()["text_size"].toInt());
     const QFontMetrics font_metrics(font);
     QRectF text_rect;
 
