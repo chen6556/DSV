@@ -1,8 +1,10 @@
 #pragma once
 
+#include "draw/Container.hpp"
 #include "draw/Graph.hpp"
 #include "base/Geometry.hpp"
 #include <fstream>
+#include <vector>
 
 namespace RS274DParser
 {
@@ -28,6 +30,8 @@ private:
     Graph *_graph = nullptr;
     std::vector<Geo::Point> _points;
     Geo::Coord _last_coord;
+    CircleContainer *_last_circle_container;
+    Container *_last_container;
 
     bool _is_pen_down = false;
     bool _is_knife_down = false;
@@ -59,6 +63,9 @@ public:
     void load_graph(Graph *g);
     void reset();
 
+    void store_text(const std::string& text);
+
+    void print_symbol(const std::string& str);
 private:
     inline double unit_scale(int);
 };
