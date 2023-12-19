@@ -291,12 +291,19 @@ void Canvas::paintGL()
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // color
-        glDrawArrays(GL_LINE_STRIP, 0, _cache_count * sizeof(double));
-        if (GlobalSetting::get_instance()->setting()["show_points"].toBool())
+        if (_int_flags[0] != 3)
+        {
+            glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // color
+        }
+        else
+        {
+            glUniform4f(_uniforms[4], 1.0f, 0.549f, 0.0f, 1.0f); // color
+        }
+        glDrawArrays(GL_LINE_STRIP, 0, _cache_count / 3);
+        if (_int_flags[0] == 3 || GlobalSetting::get_instance()->setting()["show_points"].toBool())
         {
             glUniform4f(_uniforms[4], 0.0f, 0.0f, 1.0f, 1.0f); // color
-            glDrawArrays(GL_POINTS, 0, _cache_count * sizeof(double));
+            glDrawArrays(GL_POINTS, 0, _cache_count / 3);
         }
     }
     else if (!_rectangle_cache.empty())
@@ -363,10 +370,10 @@ void Canvas::paintGL()
 
         _cache_count /= 3;
         glUniform4f(_uniforms[4], 0.9765f, 0.9765f, 0.9765f, 1.0f); // 绘制填充色
-        glDrawArrays(GL_TRIANGLE_FAN, 0, _cache_count);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, _cache_count / 3);
 
         glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // 绘制线
-        glDrawArrays(GL_LINE_LOOP, 0, _cache_count);
+        glDrawArrays(GL_LINE_LOOP, 0, _cache_count / 3);
         _cache_count = 0;
     }
 
@@ -450,7 +457,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _cache[_cache_count++] = real_x1;
                     _cache[_cache_count++] = real_y1;
                     _cache[_cache_count++] = 0;
-                    // _text_painter->beginNativePainting();
                     makeCurrent();
                     glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
                     if (_cache_count == _cache_len)
@@ -467,24 +473,20 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - 3) * sizeof(double), 3 * sizeof(double), &_cache[_cache_count - 3]);
                     }
                     doneCurrent();
-                    // _text_painter->endNativePainting();
                 }
                 else
                 {
                     _editer->point_cache().emplace_back(Geo::Point(real_x1, real_y1));
                     _editer->point_cache().emplace_back(Geo::Point(real_x1, real_y1));
                     _bool_flags[2] = true;
-
                     _cache_count = 6;
                     _cache[0] = _cache[3] = real_x1;
                     _cache[1] = _cache[4] = real_y1;
                     _cache[2] = _cache[5] = 0;
-                    // _text_painter->beginNativePainting();
                     makeCurrent();
                     glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
                     glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * sizeof(double), _cache);
                     doneCurrent();
-                    // _text_painter->endNativePainting();
                 }
                 break;
             case 2:
@@ -785,6 +787,12 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             {
                 _editer->point_cache().back() = Geo::Point(real_x1, real_y1);
             }
+            _cache[_cache_count - 3] = _editer->point_cache().back().coord().x;
+            _cache[_cache_count - 2] = _editer->point_cache().back().coord().y;
+            makeCurrent();
+            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
+            glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - 3) * sizeof(double), 2 * sizeof(double), &_cache[_cache_count - 3]);
+            doneCurrent();
             break;
         default:
             if (_info_labels[1] != nullptr)
@@ -882,6 +890,14 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     break;
                 case 20:
                     for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(obj))
+                    {
+                        data[data_count++] = point.coord().x;
+                        data[data_count++] = point.coord().y;
+                        data[data_count++] = depth;
+                    }
+                    break;
+                case 21:
+                    for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(obj)->shape())
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
@@ -1025,6 +1041,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                     _editer->append_bezier(_bezier_order);
                     update();
                 }
+                _cache_count = 0;
                 break;
             default:
                 break;
@@ -1496,15 +1513,6 @@ void Canvas::refresh_vbo()
                 }
                 polyline_indexs[polyline_index_count++] = UINT_MAX;
                 container->memo()["point_count"] = container->shape().size();
-                // if (!container->text().isEmpty())
-                // {
-                //     painter.setPen(QPen(text_color, 2));
-                //     text_rect = font_metrics.boundingRect(container->text());
-                //     text_rect.setWidth(text_rect.width() + suffix_text_width);
-                //     text_rect.setHeight(4 * text_heigh_ratio + 14 * (container->text().count('\n') + 1) * text_heigh_ratio);
-                //     text_rect.translate(points.boundingRect().center() - text_rect.center());
-                //     painter.drawText(text_rect, container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
-                // }
                 break;
             case 1:
                 circlecontainer = dynamic_cast<CircleContainer *>(geo);
@@ -1546,16 +1554,6 @@ void Canvas::refresh_vbo()
                 }
                 polyline_indexs[polyline_index_count++] = UINT_MAX;
                 circlecontainer->memo()["point_count"] = data_count / 3 - circlecontainer->memo()["point_index"].to_ull();
-                // if (!circlecontainer->text().isEmpty())
-                // {
-                //     painter.setPen(QPen(text_color, 2));
-                //     text_rect = font_metrics.boundingRect(circlecontainer->text());
-                //     text_rect.setWidth(text_rect.width() + suffix_text_width);
-                //     text_rect.setHeight(4 * text_heigh_ratio + 14 * (circlecontainer->text().count('\n') + 1) * text_heigh_ratio);
-                //     text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
-                //         circlecontainer->center().coord().y - text_rect.center().y());
-                //     painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
-                // }
                 break;
             case 3:
                 geo->memo()["point_count"] = polyline_index_count;
@@ -1675,23 +1673,31 @@ void Canvas::refresh_vbo()
                         polyline->memo()["point_count"] = polyline->size();
                         break;
                     case 21:
-                        // if (!is_visible(dynamic_cast<const Geo::Bezier *>(item)->shape()))
-                        // {
-                        //     continue;
-                        // }
-                        // for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
-                        // {
-                        //     points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                        //         point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-                        // }
-                        // painter.drawPolyline(points);
-                        // if (show_points)
-                        // {
-                        //     painter.setRenderHint(QPainter::Antialiasing);
-                        //     painter.setPen(QPen(QColor(0, 140, 255), 6));
-                        //     painter.drawPoint(points.front());
-                        //     painter.drawPoint(points.back());
-                        // }
+                        for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
+                        {
+                            polyline_indexs[polyline_index_count++] = data_count / 3;
+                            data[data_count++] = point.coord().x;
+                            data[data_count++] = point.coord().y;
+                            data[data_count++] = depth;
+                            if (data_count == data_len)
+                            {
+                                data_len *= 2;
+                                double *temp = new double[data_len];
+                                std::memmove(temp, data, data_count * sizeof(double));
+                                delete data;
+                                data = temp;
+                            }
+                            if (polyline_index_count == polyline_index_len)
+                            {
+                                polyline_index_len *= 2;
+                                unsigned int *temp = new unsigned int[polyline_index_len];
+                                std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                                delete polyline_indexs;
+                                polyline_indexs = temp;
+                            }
+                        }
+                        polyline_indexs[polyline_index_count++] = UINT_MAX;
+                        item->memo()["point_count"] = dynamic_cast<const Geo::Bezier *>(item)->shape().size();
                         break;
                     default:
                         break;
@@ -1742,33 +1748,31 @@ void Canvas::refresh_vbo()
                 polyline->memo()["point_count"] = polyline->size();
                 break;
             case 21:
-                // if (geo->memo()["is_selected"].to_bool())
-                // {
-                //     painter.setPen(QPen(QColor(255, 140, 0), 2, Qt::DashLine));
-                //     for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(geo))
-                //     {
-                //         points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                //             point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-                //     }
-                //     painter.drawPolyline(points);
-                //     painter.setPen(QPen(Qt::blue, 6));
-                //     painter.drawPoints(points);
-                //     painter.setPen(pen_selected);
-                //     points.clear();
-                // }
-                // for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(geo)->shape())
-                // {
-                //     points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                //         point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-                // }
-                // painter.drawPolyline(points);
-                // if (show_points)
-                // {
-                //     painter.setRenderHint(QPainter::Antialiasing);
-                //     painter.setPen(QPen(QColor(0, 140, 255), 6));
-                //     painter.drawPoint(points.front());
-                //     painter.drawPoint(points.back());
-                // }
+                for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(geo)->shape())
+                {
+                    polyline_indexs[polyline_index_count++] = data_count / 3;
+                    data[data_count++] = point.coord().x;
+                    data[data_count++] = point.coord().y;
+                    data[data_count++] = depth;
+                    if (data_count == data_len)
+                    {
+                        data_len *= 2;
+                        double *temp = new double[data_len];
+                        std::memmove(temp, data, data_count * sizeof(double));
+                        delete data;
+                        data = temp;
+                    }
+                    if (polyline_index_count == polyline_index_len)
+                    {
+                        polyline_index_len *= 2;
+                        unsigned int *temp = new unsigned int[polyline_index_len];
+                        std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                        delete polyline_indexs;
+                        polyline_indexs = temp;
+                    }
+                }
+                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                geo->memo()["point_count"] = dynamic_cast<const Geo::Bezier *>(geo)->shape().size();
                 break;
             default:
                 break;
@@ -1931,23 +1935,20 @@ void Canvas::refresh_vbo(const bool unitary)
                         }
                         break;
                     case 21:
-                        // if (!is_visible(dynamic_cast<const Geo::Bezier *>(item)->shape()))
-                        // {
-                        //     continue;
-                        // }
-                        // for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
-                        // {
-                        //     points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                        //         point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-                        // }
-                        // painter.drawPolyline(points);
-                        // if (show_points)
-                        // {
-                        //     painter.setRenderHint(QPainter::Antialiasing);
-                        //     painter.setPen(QPen(QColor(0, 140, 255), 6));
-                        //     painter.drawPoint(points.front());
-                        //     painter.drawPoint(points.back());
-                        // }
+                        for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(geo)->shape())
+                        {
+                            data[data_count++] = point.coord().x;
+                            data[data_count++] = point.coord().y;
+                            data[data_count++] = depth;
+                            if (data_count == data_len)
+                            {
+                                data_len *= 2;
+                                double *temp = new double[data_len];
+                                std::memmove(temp, data, data_count * sizeof(double));
+                                delete data;
+                                data = temp;
+                            }
+                        }
                         break;
                     default:
                         break;
@@ -1974,33 +1975,20 @@ void Canvas::refresh_vbo(const bool unitary)
                 }
                 break;
             case 21:
-                // if (geo->memo()["is_selected"].to_bool())
-                // {
-                //     painter.setPen(QPen(QColor(255, 140, 0), 2, Qt::DashLine));
-                //     for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(geo))
-                //     {
-                //         points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                //             point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-                //     }
-                //     painter.drawPolyline(points);
-                //     painter.setPen(QPen(Qt::blue, 6));
-                //     painter.drawPoints(points);
-                //     painter.setPen(pen_selected);
-                //     points.clear();
-                // }
-                // for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(geo)->shape())
-                // {
-                //     points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                //         point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-                // }
-                // painter.drawPolyline(points);
-                // if (show_points)
-                // {
-                //     painter.setRenderHint(QPainter::Antialiasing);
-                //     painter.setPen(QPen(QColor(0, 140, 255), 6));
-                //     painter.drawPoint(points.front());
-                //     painter.drawPoint(points.back());
-                // }
+                for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(geo)->shape())
+                {
+                    data[data_count++] = point.coord().x;
+                    data[data_count++] = point.coord().y;
+                    data[data_count++] = depth;
+                    if (data_count == data_len)
+                    {
+                        data_len *= 2;
+                        double *temp = new double[data_len];
+                        std::memmove(temp, data, data_count * sizeof(double));
+                        delete data;
+                        data = temp;
+                    }
+                }
                 break;
             default:
                 break;
@@ -2077,23 +2065,18 @@ void Canvas::refresh_selected_ibo()
                         }
                         break;
                     case 21:
-                        // if (!is_visible(dynamic_cast<const Geo::Bezier *>(item)->shape()))
-                        // {
-                        //     continue;
-                        // }
-                        // for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
-                        // {
-                        //     points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                        //         point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-                        // }
-                        // painter.drawPolyline(points);
-                        // if (show_points)
-                        // {
-                        //     painter.setRenderHint(QPainter::Antialiasing);
-                        //     painter.setPen(QPen(QColor(0, 140, 255), 6));
-                        //     painter.drawPoint(points.front());
-                        //     painter.drawPoint(points.back());
-                        // }
+                        for (size_t index = item->memo()["point_index"].to_ull(), i = 0, count = item->memo()["point_count"].to_ull(); i < count; ++i)
+                        {
+                            indexs[index_count++] = index + i;
+                            if (index_count == index_len)
+                            {
+                                index_len *= 2;
+                                unsigned int *temp = new unsigned int[index_len];
+                                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                                delete indexs;
+                                indexs = temp;
+                            }
+                        }
                         break;
                     default:
                         break;
@@ -2110,33 +2093,18 @@ void Canvas::refresh_selected_ibo()
                 }
                 break;
             case 21:
-                // if (geo->memo()["is_selected"].to_bool())
-                // {
-                //     painter.setPen(QPen(QColor(255, 140, 0), 2, Qt::DashLine));
-                //     for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(geo))
-                //     {
-                //         points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                //             point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-                //     }
-                //     painter.drawPolyline(points);
-                //     painter.setPen(QPen(Qt::blue, 6));
-                //     painter.drawPoints(points);
-                //     painter.setPen(pen_selected);
-                //     points.clear();
-                // }
-                // for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(geo)->shape())
-                // {
-                //     points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                //         point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-                // }
-                // painter.drawPolyline(points);
-                // if (show_points)
-                // {
-                //     painter.setRenderHint(QPainter::Antialiasing);
-                //     painter.setPen(QPen(QColor(0, 140, 255), 6));
-                //     painter.drawPoint(points.front());
-                //     painter.drawPoint(points.back());
-                // }
+                for (size_t index = geo->memo()["point_index"].to_ull(), i = 0, count = geo->memo()["point_count"].to_ull(); i < count; ++i)
+                {
+                    indexs[index_count++] = index + i;
+                    if (index_count == index_len)
+                    {
+                        index_len *= 2;
+                        unsigned int *temp = new unsigned int[index_len];
+                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                        delete indexs;
+                        indexs = temp;
+                    }
+                }
                 break;
             default:
                 break;
@@ -2232,6 +2200,14 @@ void Canvas::refresh_selected_vbo()
                         data[data_count++] = depth;
                     }
                     break;
+                case 21:
+                    for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
+                    {
+                        data[data_count++] = point.coord().x;
+                        data[data_count++] = point.coord().y;
+                        data[data_count++] = depth;
+                    }
+                    break;
                 default:
                     break;
                 }
@@ -2241,6 +2217,14 @@ void Canvas::refresh_selected_vbo()
             break;
         case 20:
             for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(obj))
+            {
+                data[data_count++] = point.coord().x;
+                data[data_count++] = point.coord().y;
+                data[data_count++] = depth;
+            }
+            break;
+        case 21:
+            for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(obj)->shape())
             {
                 data[data_count++] = point.coord().x;
                 data[data_count++] = point.coord().y;
