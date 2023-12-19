@@ -35,7 +35,7 @@ public:
     
     Memo();
     Memo(const Memo &memo);
-    Memo(const Memo &&memo);
+    Memo(const Memo &&memo) noexcept;
     Memo(const bool &value);
     Memo(const int &value);
     Memo(const unsigned long long &value);

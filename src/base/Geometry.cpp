@@ -97,9 +97,9 @@ Coord::Coord(const double x_, const double y_)
 Coord::Coord(const Coord &coord)
     : x(coord.x), y(coord.y) {}
 
-Coord::Coord(const Coord &&coord)
-    : x(std::move(coord.x)),
-    y(std::move(coord.y)) {}
+Coord::Coord(const Coord &&coord) noexcept
+    : x(coord.x),
+    y(coord.y) {}
 
 Coord &Coord::operator=(const Coord &coord)
 {
@@ -111,12 +111,12 @@ Coord &Coord::operator=(const Coord &coord)
     return *this;
 }
 
-Coord &Coord::operator=(const Coord &&coord)
+Coord &Coord::operator=(const Coord &&coord) noexcept
 {
     if (this != &coord)
     {
-        x = std::move(coord.x);
-        y = std::move(coord.y);
+        x = coord.x;
+        y = coord.y;
     }
     return *this;
 }
@@ -150,9 +150,9 @@ Point::Point(const Point &point)
     ,_pos(point._pos)
 {}
 
-Point::Point(const Point &&point)
+Point::Point(const Point &&point) noexcept
     :Geometry(point)
-    ,_pos(std::move(point._pos))
+    ,_pos(point._pos)
 {}
 
 Point &Point::operator=(const Point &point)
@@ -166,12 +166,12 @@ Point &Point::operator=(const Point &point)
     return *this;
 }
 
-Point &Point::operator=(const Point &&point)
+Point &Point::operator=(const Point &&point) noexcept
 {
     if (this != &point)
     {
         Geometry::operator=(point);
-        _pos = std::move(point._pos);
+        _pos = point._pos;
         _type = Type::POINT;
     }
     return *this;
@@ -345,9 +345,9 @@ Polyline::Polyline(const Polyline &polyline)
     _type = Type::POLYLINE;
 }
 
-Polyline::Polyline(const Polyline &&polyline)
+Polyline::Polyline(const Polyline &&polyline) noexcept
     :Geometry(polyline)
-    ,_points(std::move(polyline._points))
+    ,_points(polyline._points)
 {
     _type = Type::POLYLINE;
 }
@@ -431,12 +431,12 @@ Polyline &Polyline::operator=(const Polyline &polyline)
     return *this;
 }
 
-Polyline &Polyline::operator=(const Polyline &&polyline)
+Polyline &Polyline::operator=(const Polyline &&polyline) noexcept
 {
     if (this != &polyline)
     {
         Geometry::operator=(polyline);
-        _points = std::move(polyline._points);
+        _points = polyline._points;
         _type = Type::POLYLINE;
     }
     return *this;
@@ -871,9 +871,9 @@ AABBRect::AABBRect(const AABBRect &rect)
     _type = Type::AABBRECT;
 }
 
-AABBRect::AABBRect(const AABBRect &&rect)
+AABBRect::AABBRect(const AABBRect &&rect) noexcept
     :Geometry(rect)
-    ,_points(std::move(rect._points))
+    ,_points(rect._points)
 {
     _type = Type::AABBRECT;
 }
@@ -913,12 +913,12 @@ AABBRect &AABBRect::operator=(const AABBRect &rect)
     return *this;
 }
 
-AABBRect &AABBRect::operator=(const AABBRect &&rect)
+AABBRect &AABBRect::operator=(const AABBRect &&rect) noexcept
 {
     if (this != &rect)
     {
         Geometry::operator=(rect);
-        _points = std::move(rect._points);
+        _points = rect._points;
         _type = Type::AABBRECT;
     }
     return *this;
@@ -1130,8 +1130,8 @@ Polygon::Polygon(const Polygon &polygon)
     _type = Type::POLYGON;
 }
 
-Polygon::Polygon(const Polygon &&polygon)
-    :Polyline(std::move(polygon))
+Polygon::Polygon(const Polygon &&polygon) noexcept
+    :Polyline(polygon)
 {
     _type = Type::POLYGON;
 }
@@ -1185,11 +1185,11 @@ Polygon &Polygon::operator=(const Polygon &polygon)
     return *this;
 }
 
-Polygon &Polygon::operator=(const Polygon &&polygon)
+Polygon &Polygon::operator=(const Polygon &&polygon) noexcept
 {
     if (this != &polygon)
     {
-        Polyline::operator=(std::move(polygon));
+        Polyline::operator=(polygon);
         _type = Type::POLYGON;
     }
     return *this;
@@ -1366,10 +1366,10 @@ Circle::Circle(const Circle &circle)
     _type = Type::CIRCLE;
 }
 
-Circle::Circle(const Circle &&circle)
+Circle::Circle(const Circle &&circle) noexcept
     :Geometry(circle)
-    ,_center(std::move(circle._center))
-    ,_radius(std::move(circle._radius))
+    ,_center(circle._center)
+    ,_radius(circle._radius)
 {
     _type = Type::CIRCLE;
 }
@@ -1386,13 +1386,13 @@ Circle &Circle::operator=(const Circle &circle)
     return *this;
 }
 
-Circle &Circle::operator=(const Circle &&circle)
+Circle &Circle::operator=(const Circle &&circle) noexcept
 {
     if (this != &circle)
     {
         Geometry::operator=(circle);
-        _center = std::move(circle._center);
-        _radius = std::move(circle._radius);
+        _center = circle._center;
+        _radius = circle._radius;
         _type = Type::CIRCLE;
     }
     return *this;
@@ -1541,10 +1541,10 @@ Line::Line(const Line &line)
     _type = Type::LINE;
 }
 
-Line::Line(const Line &&line)
+Line::Line(const Line &&line) noexcept
     :Geometry(line)
-    ,_start_point(std::move(line._start_point))
-    ,_end_point(std::move(line._end_point))
+    ,_start_point(line._start_point)
+    ,_end_point(line._end_point)
 {
     _type = Type::LINE;
 }
@@ -1561,13 +1561,13 @@ Line &Line::operator=(const Line &line)
     return *this;
 }
 
-Line &Line::operator=(const Line &&line)
+Line &Line::operator=(const Line &&line) noexcept
 {
     if (this != &line)
     {
         Geometry::operator=(line);
-        _start_point = std::move(line._start_point);
-        _end_point = std::move(line._end_point);
+        _start_point = line._start_point;
+        _end_point = line._end_point;
         _type = Type::LINE;
     }
     return *this;
@@ -1712,8 +1712,8 @@ Bezier::Bezier(const Bezier &bezier)
     _shape.shape_fixed() = true;
 }
 
-Bezier::Bezier(const Bezier &&bezier)
-    : Polyline(std::move(bezier)), _order(std::move(bezier._order)), _shape(std::move(bezier._shape))
+Bezier::Bezier(const Bezier &&bezier) noexcept
+    : Polyline(bezier), _order(bezier._order), _shape(bezier._shape)
 {
     _type = Type::BEZIER;
     _shape.shape_fixed() = true;
@@ -1840,12 +1840,12 @@ Bezier &Bezier::operator=(const Bezier &bezier)
     return *this;
 }
 
-Bezier &Bezier::operator=(const Bezier &&bezier)
+Bezier &Bezier::operator=(const Bezier &&bezier) noexcept
 {
     if (this != &bezier)
     {
-        Polyline::operator=(std::move(bezier));
-        _shape = std::move(bezier._shape);
+        Polyline::operator=(bezier);
+        _shape = bezier._shape;
         _type = Type::BEZIER;
     }
     return *this;
@@ -2412,123 +2412,103 @@ const bool Geo::is_intersected(const Circle &circle0, const Circle& circle1, con
     }
 }
 
-const bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const Point &point1, const bool inside)
+const bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const Point &point1)
 {
-    if (!Geo::is_intersected(rect, AABBRect(point0, point1)))
+    if (is_inside(point0, rect) || is_inside(point1, rect))
+    {
+        return true;
+    }
+
+    const double x_max = std::max(point0.coord().x, point1.coord().x);
+    const double x_min = std::min(point0.coord().x, point1.coord().x);
+    const double y_max = std::max(point0.coord().y, point1.coord().y);
+    const double y_min = std::min(point0.coord().y, point1.coord().y);
+
+    if (x_max < rect.left() || x_min > rect.right() || y_max < rect.bottom() || y_min > rect.top())
     {
         return false;
     }
-    if (inside)
+    else
     {
-        if (Geo::is_inside(point0, rect, true) || Geo::is_inside(point1, rect, true))
+        if ((x_min > rect.left() && x_max < rect.right()) || (y_min > rect.bottom() && y_max < rect.top()))
         {
             return true;
         }
-    }
-    Geo::Point point;
-    for (size_t i = 1; i < 5; ++i)
-    {
-        if (Geo::is_intersected(point0, point1, rect[i-1], rect[i], point))
+        else
         {
-            return true;
+            const double dx = point1.coord().x - point0.coord().x;
+            const double dy = point1.coord().y - point0.coord().y;
+            const bool b0 = (rect[0].coord().x - point0.coord().x) * dy >= (rect[0].coord().y - point0.coord().y) * dx;
+            const bool b1 = (rect[1].coord().x - point0.coord().x) * dy >= (rect[1].coord().y - point0.coord().y) * dx;
+            const bool b2 = (rect[2].coord().x - point0.coord().x) * dy >= (rect[2].coord().y - point0.coord().y) * dx;
+            const bool b3 = (rect[3].coord().x - point0.coord().x) * dy >= (rect[3].coord().y - point0.coord().y) * dx;
+            return !(b0 == b1 && b1 == b2 && b2 == b3);
         }
     }
-    return false;
 }
 
-const bool Geo::is_intersected(const AABBRect &rect, const Line &line, const bool inside)
+const bool Geo::is_intersected(const AABBRect &rect, const Line &line)
 {
     return Geo::is_intersected(rect, line.front(), line.back());
 }
 
-const bool Geo::is_intersected(const AABBRect &rect, const Polyline &polyline, const bool inside)
+const bool Geo::is_intersected(const AABBRect &rect, const Polyline &polyline)
 {
     if (polyline.empty() || !Geo::is_intersected(rect, polyline.bounding_rect()))
     {
         return false;
     }
     
-    if (inside)
-    {
-        for (const Geo::Point &point : polyline)
-        {
-            if (Geo::is_inside(point, rect, true))
-            {
-                return true;
-            }
-        }
-    }
-    Point point;
     for (size_t i = 1, count = polyline.size(); i < count; ++i)
     {
-        for (size_t j = 1; j < 5; ++j)
+        if (is_intersected(rect, polyline[i - 1], polyline[i]))
         {
-            if (Geo::is_intersected(polyline[i-1], polyline[i], rect[j-1], rect[j], point))
-            {
-                return true;
-            }
+            return true;
         }
     }
     return false;
 }
 
-const bool Geo::is_intersected(const AABBRect &rect, const Polygon &polygon, const bool inside)
+const bool Geo::is_intersected(const AABBRect &rect, const Polygon &polygon)
 {
     if (polygon.empty() || !Geo::is_intersected(rect, polygon.bounding_rect()))
     {
         return false;
     }
     
-    if (inside)
-    {
-        for (const Geo::Point &point : polygon)
-        {
-            if (Geo::is_inside(point, rect, true))
-            {
-                return true;
-            }
-        }
-        for (const Geo::Point &point : rect)
-        {
-            if (Geo::is_inside(point, polygon, true))
-            {
-                return true;
-            }
-        }
-    }
-    Geo::Point point;
     for (size_t i = 1, count = polygon.size(); i < count; ++i)
     {
-        for (size_t j = 1; j < 5; ++j)
+        if (is_intersected(rect, polygon[i - 1], polygon[i]))
         {
-            if (Geo::is_intersected(polygon[i-1], polygon[i], rect[j-1], rect[j], point))
-            {
-                return true;
-            }
+            return true;
+        }
+    }
+    for (size_t i = 0; i < 4; ++i)
+    {
+        if (is_inside(rect[i], polygon))
+        {
+            return true;
         }
     }
     return false;
 }
 
-const bool Geo::is_intersected(const AABBRect &rect, const Circle &circle, const bool inside)
+const bool Geo::is_intersected(const AABBRect &rect, const Circle &circle)
 {
     if (circle.empty() || !Geo::is_intersected(rect, circle.bounding_rect()))
     {
         return false;
     }
 
-    if (inside)
+    if (Geo::is_inside(circle.center(), rect, true))
     {
-        if (Geo::is_inside(circle.center(), rect, true))
+        return true;
+    }
+    for (const Geo::Point &point : rect)
+    {
+        if (Geo::is_inside(point, circle, true))
         {
             return true;
-        }
-        for (const Geo::Point &point : rect)
-        {
-            if (Geo::is_inside(point, circle, true))
-            {
-                return true;
-            }
         }
     }
     for (size_t i = 1; i < 5; ++i)

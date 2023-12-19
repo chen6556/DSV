@@ -284,6 +284,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             _editer.load_backup();
             _painter.update();
         }
+        break;
     default:
         break;
     }

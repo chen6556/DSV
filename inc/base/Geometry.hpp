@@ -83,11 +83,11 @@ namespace Geo
 
         Coord(const Coord &coord);
 
-        Coord(const Coord &&coord);
+        Coord(const Coord &&coord) noexcept;
 
         Coord &operator=(const Coord &coord);
 
-        Coord &operator=(const Coord &&coord);
+        Coord &operator=(const Coord &&coord) noexcept;
 
         const bool operator==(const Coord &coord) const;
 
@@ -108,11 +108,11 @@ namespace Geo
 
         Point(const Point &point);
 
-        Point(const Point &&point);
+        Point(const Point &&point) noexcept;
 
         Point &operator=(const Point &point);
 
-        Point &operator=(const Point &&point);
+        Point &operator=(const Point &&point) noexcept;
 
         Coord &coord();
 
@@ -177,7 +177,7 @@ namespace Geo
 
         Polyline(const Polyline &polyline);
 
-        Polyline(const Polyline &&polyline);
+        Polyline(const Polyline &&polyline) noexcept;
 
         Polyline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end);
 
@@ -199,7 +199,7 @@ namespace Geo
 
         Polyline &operator=(const Polyline &polyline);
 
-        Polyline &operator=(const Polyline &&polyline);
+        Polyline &operator=(const Polyline &&polyline) noexcept;
 
         Polyline operator+(const Point &point) const;
 
@@ -292,7 +292,7 @@ namespace Geo
 
         AABBRect(const AABBRect &rect);
 
-        AABBRect(const AABBRect &&rect);
+        AABBRect(const AABBRect &&rect) noexcept;
 
         const double left() const;
 
@@ -304,7 +304,7 @@ namespace Geo
 
         AABBRect &operator=(const AABBRect &reac);
 
-        AABBRect &operator=(const AABBRect &&reac);
+        AABBRect &operator=(const AABBRect &&reac) noexcept;
 
         const bool empty() const override;
 
@@ -374,7 +374,7 @@ namespace Geo
 
         Polygon(const Polygon &polygon);
 
-        Polygon(const Polygon &&polygon);
+        Polygon(const Polygon &&polygon) noexcept;
 
         Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end);
 
@@ -386,7 +386,7 @@ namespace Geo
 
         Polygon &operator=(const Polygon &polygon);
 
-        Polygon &operator=(const Polygon &&polygon);
+        Polygon &operator=(const Polygon &&polygon) noexcept;
 
         Polygon *clone() const override;
 
@@ -432,11 +432,11 @@ namespace Geo
 
         Circle(const Circle &circle);
 
-        Circle(const Circle &&Circle);
+        Circle(const Circle &&Circle) noexcept;
 
         Circle &operator=(const Circle &circle);
 
-        Circle &operator=(const Circle &&circle);
+        Circle &operator=(const Circle &&circle) noexcept;
 
         Point &center();
 
@@ -494,11 +494,11 @@ namespace Geo
 
         Line(const Line &line);
 
-        Line(const Line &&line);
+        Line(const Line &&line) noexcept;
 
         Line &operator=(const Line &line);
 
-        Line &operator=(const Line &&line);
+        Line &operator=(const Line &&line) noexcept;
 
         Line operator+(const Point &point);
 
@@ -550,7 +550,7 @@ namespace Geo
 
         Bezier(const Bezier &bezier);
 
-        Bezier(const Bezier &&bezier);
+        Bezier(const Bezier &&bezier) noexcept;
 
         Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const size_t n);
 
@@ -572,7 +572,7 @@ namespace Geo
 
         Bezier &operator=(const Bezier &bezier);
 
-        Bezier &operator=(const Bezier &&bezier);
+        Bezier &operator=(const Bezier &&bezier) noexcept;
 
         void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
 
@@ -635,15 +635,15 @@ namespace Geo
 
     const bool is_intersected(const Circle &circle0, const Circle &circle1, const bool inside = true);
 
-    const bool is_intersected(const AABBRect &rect, const Point &point0, const Point &point1, const bool inside = true);
+    const bool is_intersected(const AABBRect &rect, const Point &point0, const Point &point1);
 
-    const bool is_intersected(const AABBRect &rect, const Line &line, const bool inside = true);
+    const bool is_intersected(const AABBRect &rect, const Line &line);
 
-    const bool is_intersected(const AABBRect &rect, const Polyline &polyline, const bool inside = true);
+    const bool is_intersected(const AABBRect &rect, const Polyline &polyline);
 
-    const bool is_intersected(const AABBRect &rect, const Polygon &polygon, const bool inside = true);
+    const bool is_intersected(const AABBRect &rect, const Polygon &polygon);
 
-    const bool is_intersected(const AABBRect &rect, const Circle &circle, const bool inside = true);
+    const bool is_intersected(const AABBRect &rect, const Circle &circle);
 
     const bool is_Rectangle(const Polygon &polygon);
 

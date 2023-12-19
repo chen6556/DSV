@@ -20,8 +20,8 @@ Container::Container(const Container &container)
     _type = Geo::Type::CONTAINER;
 }
 
-Container::Container(const Container &&container)
-    : Geo::Polygon(std::move(container)), _txt(std::move(container._txt))
+Container::Container(const Container &&container) noexcept
+    : Geo::Polygon(container), _txt(container._txt)
 {
     _type = Geo::Type::CONTAINER;
 }
@@ -37,12 +37,12 @@ Container &Container::operator=(const Container &container)
     return *this;
 }
 
-Container &Container::operator=(const Container &&container)
+Container &Container::operator=(const Container &&container) noexcept
 {
     if (this != &container)
     {
         Geo::Polygon::operator=(container);
-        _txt = std::move(container._txt);
+        _txt = container._txt;
         _type = Geo::Type::CONTAINER;
     }
     return *this;
@@ -114,8 +114,8 @@ CircleContainer::CircleContainer(const CircleContainer &container)
     _type = Geo::Type::CIRCLECONTAINER;
 }
 
-CircleContainer::CircleContainer(const CircleContainer &&container)
-    : Geo::Circle(std::move(container)), _txt(std::move(container._txt))
+CircleContainer::CircleContainer(const CircleContainer &&container) noexcept
+    : Geo::Circle(container), _txt(container._txt)
 {
     _type = Geo::Type::CIRCLECONTAINER;
 }
@@ -131,12 +131,12 @@ CircleContainer &CircleContainer::operator=(const CircleContainer &container)
     return *this;
 }
 
-CircleContainer &CircleContainer::operator=(const CircleContainer &&container)
+CircleContainer &CircleContainer::operator=(const CircleContainer &&container) noexcept
 {
     if (this != &container)
     {
-        Geo::Circle::operator=(std::move(container));
-        _txt = std::move(container._txt);
+        Geo::Circle::operator=(container);
+        _txt = container._txt;
         _type = Geo::Type::CIRCLECONTAINER;
     }
     return *this;
@@ -208,8 +208,8 @@ ContainerGroup::ContainerGroup(const ContainerGroup &containers)
     }
 }
 
-ContainerGroup::ContainerGroup(const ContainerGroup &&containers)
-    : Geo::Geometry(containers), _ratio(std::move(containers._ratio)), _visible(containers._visible)
+ContainerGroup::ContainerGroup(const ContainerGroup &&containers) noexcept
+    : Geo::Geometry(containers), _ratio(containers._ratio), _visible(containers._visible)
 {
     _type = Geo::Type::CONTAINERGROUP;
     for (const Geo::Geometry *geo : containers)
@@ -351,7 +351,7 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
     return *this;
 }
 
-ContainerGroup &ContainerGroup::operator=(const ContainerGroup &&group)
+ContainerGroup &ContainerGroup::operator=(const ContainerGroup &&group) noexcept
 {
     if (this != &group)
     {
@@ -385,7 +385,7 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &&group)
                 break;
             }
         }
-        _ratio = std::move(group._ratio);
+        _ratio = group._ratio;
         _visible = group._visible;
         _type = Geo::Type::CONTAINERGROUP;
     }
@@ -766,8 +766,8 @@ Combination::Combination(const Combination &combination)
     _type = Geo::Type::COMBINATION;
 }
 
-Combination::Combination(const Combination &&combination)
-    : ContainerGroup(combination), _border(std::move(combination._border))
+Combination::Combination(const Combination &&combination) noexcept
+    : ContainerGroup(combination), _border(combination._border)
 {
     _type = Geo::Type::COMBINATION;
 }

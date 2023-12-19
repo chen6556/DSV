@@ -13,13 +13,13 @@ Memo::Memo(const Memo& memo)
     _node_type = memo._node_type;
 }
 
-Memo::Memo(const Memo&& memo)
+Memo::Memo(const Memo &&memo) noexcept
 {
-    _memos = std::move(memo._memos);
-    _value = std::move(memo._value);
-    _svalue = std::move(memo._svalue);
-    _type = std::move(memo._type);
-    _node_type = std::move(memo._node_type);
+    _memos = memo._memos;
+    _value = memo._value;
+    _svalue = memo._svalue;
+    _type = memo._type;
+    _node_type = memo._node_type;
 }
 
 Memo::Memo(const bool& value)

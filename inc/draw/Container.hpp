@@ -18,11 +18,11 @@ public:
 
     Container(const Container &container);
 
-    Container(const Container &&container);
+    Container(const Container &&container) noexcept;
 
     Container &operator=(const Container &container);
 
-    Container &operator=(const Container &&container);
+    Container &operator=(const Container &&container) noexcept;
 
     Geo::Polygon &shape();
 
@@ -57,11 +57,11 @@ public:
 
     CircleContainer(const CircleContainer &container);
 
-    CircleContainer(const CircleContainer &&container);
+    CircleContainer(const CircleContainer &&container) noexcept;
 
     CircleContainer &operator=(const CircleContainer &container);
 
-    CircleContainer &operator=(const CircleContainer &&container);
+    CircleContainer &operator=(const CircleContainer &&container) noexcept;
 
     Geo::Circle &shape();
 
@@ -92,7 +92,7 @@ public:
 
     ContainerGroup(const ContainerGroup &containers);
 
-    ContainerGroup(const ContainerGroup &&containers);
+    ContainerGroup(const ContainerGroup &&containers) noexcept;
 
     ContainerGroup(const std::initializer_list<Geo::Geometry *> &containers);
 
@@ -112,7 +112,7 @@ public:
 
     ContainerGroup &operator=(const ContainerGroup &group);
 
-    ContainerGroup &operator=(const ContainerGroup &&group);
+    ContainerGroup &operator=(const ContainerGroup &&group) noexcept;
 
     std::vector<Geo::Geometry *>::iterator begin();
 
@@ -221,7 +221,7 @@ public:
 
     Combination(const Combination &combination);
 
-    Combination(const Combination &&combination);
+    Combination(const Combination &&combination) noexcept;
 
     void append(Combination *combination);
 

@@ -11,8 +11,8 @@ Graph::Graph(const Graph &graph)
     }
 }
 
-Graph::Graph(const Graph &&graph)
-    : Geo::Geometry(graph), _ratio(std::move(graph._ratio))
+Graph::Graph(const Graph &&graph) noexcept
+    : Geo::Geometry(graph), _ratio(graph._ratio)
 {
     _type = Geo::Type::GRAPH;
     for (const ContainerGroup &group : graph._container_groups)
@@ -54,7 +54,7 @@ Graph &Graph::operator=(const Graph &graph)
     return *this;
 }
 
-Graph &Graph::operator=(const Graph &&graph)
+Graph &Graph::operator=(const Graph &&graph) noexcept
 {
     if (this != &graph)
     {
@@ -64,7 +64,7 @@ Graph &Graph::operator=(const Graph &&graph)
         {
             _container_groups.emplace_back(group);
         }
-        _ratio = std::move(graph._ratio);
+        _ratio = graph._ratio;
         _type = Geo::Type::GRAPH;
     }
     return *this;
@@ -413,7 +413,7 @@ void Graph::append_group(const ContainerGroup &group)
 
 void Graph::append_group(const ContainerGroup &&group)
 {
-    _container_groups.push_back(std::move(group));
+    _container_groups.push_back(group);
 }
 
 void Graph::insert_group(const size_t index)
@@ -446,7 +446,7 @@ void Graph::insert_group(const size_t index, const ContainerGroup &&group)
     {
         ++it;
     }
-    _container_groups.insert(it, std::move(group));
+    _container_groups.insert(it, group);
 }
 
 void Graph::remove_group(const size_t index)
