@@ -183,8 +183,8 @@ void Canvas::initializeGL()
 
 void Canvas::resizeGL(int w, int h)
 {
-    glUniform1i(_uniforms[0], w / 2);
-    glUniform1i(_uniforms[1], h / 2);
+    glUniform1i(_uniforms[0], w / 2); // w
+    glUniform1i(_uniforms[1], h / 2); // h
     glViewport(0, 0, w, h);
 }
 
@@ -220,7 +220,7 @@ void Canvas::paintGL()
             }
         }
         _indexs_count[2] = index_count;
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // cache
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
         delete indexs;
     }
@@ -230,21 +230,21 @@ void Canvas::paintGL()
     if (_indexs_count[1] > 0)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]); // polygon
-        glUniform4f(_uniforms[4], 0.9765f, 0.9765f, 0.9765f, 1.0f); // 绘制填充色
+        glUniform4f(_uniforms[4], 0.9765f, 0.9765f, 0.9765f, 1.0f); // color 绘制填充色
         glDrawElements(GL_TRIANGLES, _indexs_count[1], GL_UNSIGNED_INT, NULL);
     }
 
     if (_indexs_count[0] > 0)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]); // polyline
-        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // 绘制线 normal
+        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // color 绘制线 normal
         glDrawElements(GL_LINE_STRIP, _indexs_count[0], GL_UNSIGNED_INT, NULL);
     }
 
     if (_indexs_count[2] > 0)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
-        glUniform4f(_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f); // 绘制线 selected
+        glUniform4f(_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
         glDrawElements(GL_LINE_STRIP, _indexs_count[2], GL_UNSIGNED_INT, NULL);
     }
 
@@ -255,7 +255,7 @@ void Canvas::paintGL()
         glEnableVertexAttribArray(0);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[3]); // text
-        glUniform4f(_uniforms[4], 0.0f, 0.0f, 0.0f, 1.0f);
+        glUniform4f(_uniforms[4], 0.0f, 0.0f, 0.0f, 1.0f); // color
 
         glEnable(GL_STENCIL_TEST); //开启模板测试
         glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT); //设置模板缓冲区更新方式(若通过则按位反转模板值)
@@ -320,10 +320,10 @@ void Canvas::paintGL()
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        glUniform4f(_uniforms[4], 0.9765f, 0.9765f, 0.9765f, 1.0f); // 绘制填充色
+        glUniform4f(_uniforms[4], 0.9765f, 0.9765f, 0.9765f, 1.0f); // color 绘制填充色
         glDrawArrays(GL_POLYGON, 0, 4);
 
-        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // 绘制线
+        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // color 绘制线
         glDrawArrays(GL_LINE_LOOP, 0, 4);
     }
     else if (!_circle_cache.empty())
@@ -347,7 +347,7 @@ void Canvas::paintGL()
                 _cache[_cache_count++] = 0;
             }
 
-            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
+            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
             glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
             glEnableVertexAttribArray(0);
             glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_DYNAMIC_DRAW);
@@ -362,17 +362,17 @@ void Canvas::paintGL()
                 _cache[_cache_count++] = 0;
             }
             
-            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
+            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
             glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
             glEnableVertexAttribArray(0);
             glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
         }
 
         _cache_count /= 3;
-        glUniform4f(_uniforms[4], 0.9765f, 0.9765f, 0.9765f, 1.0f); // 绘制填充色
+        glUniform4f(_uniforms[4], 0.9765f, 0.9765f, 0.9765f, 1.0f); // color 绘制填充色
         glDrawArrays(GL_TRIANGLE_FAN, 0, _cache_count / 3);
 
-        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // 绘制线
+        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // color 绘制线
         glDrawArrays(GL_LINE_LOOP, 0, _cache_count / 3);
         _cache_count = 0;
     }
@@ -383,7 +383,7 @@ void Canvas::paintGL()
 
     if (_bool_flags[7])
     {
-        glUniform4f(_uniforms[4], 0.0f, 0.0f, 0.0f, 1.0f); // 画原点
+        glUniform4f(_uniforms[4], 0.0f, 0.0f, 0.0f, 1.0f); // color 画原点
         glDrawArrays(GL_LINES, 0, 4);
     }
 
@@ -458,7 +458,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _cache[_cache_count++] = real_y1;
                     _cache[_cache_count++] = 0;
                     makeCurrent();
-                    glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
+                    glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
                     if (_cache_count == _cache_len)
                     {
                         _cache_len *= 2;
@@ -484,7 +484,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _cache[1] = _cache[4] = real_y1;
                     _cache[2] = _cache[5] = 0;
                     makeCurrent();
-                    glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
+                    glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
                     glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * sizeof(double), _cache);
                     doneCurrent();
                 }
@@ -524,7 +524,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 _editer->reset_selected_mark();
                 _indexs_count[2] = 0;
                 makeCurrent();
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, NULL, GL_DYNAMIC_DRAW);
                 doneCurrent();
                 _select_rect = Geo::Rectangle(real_x1, real_y1, real_x1 + 1, real_y1 + 1);
@@ -602,7 +602,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 }
                 _indexs_count[2] = index_count;
                 makeCurrent();
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
                 doneCurrent();
                 delete indexs;
@@ -709,8 +709,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         _view_ctm[6] -= (real_x1 - real_x0), _view_ctm[7] -= (real_y1 - real_y0);
         _visible_area.translate(real_x0 - real_x1, real_y0 - real_y1);
         makeCurrent();
-        glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
-        glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
+        glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
+        glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
         doneCurrent();
         update();
     }
@@ -749,7 +749,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             _cache[_cache_count - 3] = _editer->point_cache().back().coord().x;
             _cache[_cache_count - 2] = _editer->point_cache().back().coord().y;
             makeCurrent();
-            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
+            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
             glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - 3) * sizeof(double), 2 * sizeof(double), &_cache[_cache_count - 3]);
             doneCurrent();
             if (_info_labels[1] != nullptr)
@@ -790,7 +790,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             _cache[_cache_count - 3] = _editer->point_cache().back().coord().x;
             _cache[_cache_count - 2] = _editer->point_cache().back().coord().y;
             makeCurrent();
-            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]);
+            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
             glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - 3) * sizeof(double), 2 * sizeof(double), &_cache[_cache_count - 3]);
             doneCurrent();
             break;
@@ -816,7 +816,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             double *data = new double[data_len];
             double depth;
             makeCurrent();
-            glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
+            glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
             for (Geo::Geometry *obj : _editer->selected())
             {
                 _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier);
@@ -998,10 +998,10 @@ void Canvas::wheelEvent(QWheelEvent *event)
         update();
     }
     makeCurrent();
-    glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
-    glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
+    glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
+    glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
     double data[12] = {-10 / _ratio, 0, 0, 10 / _ratio, 0, 0, 0, -10 / _ratio, 0, 0, 10 / _ratio, 0};
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]); // origin and select rect
     glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), data);
     doneCurrent();
     _editer->auto_aligning(_clicked_obj, _reflines);
@@ -1092,11 +1092,11 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         _visible_area = Geo::Rectangle(0, 0, this->geometry().width(), this->geometry().height());
         _ratio = 1;
         makeCurrent();
-        glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]);
-        glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
+        glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
+        glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
         {
             double data[12] = {-10, 0, 0, 10, 0, 0, 0, -10, 0, 0, 10, 0};
-            glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]);
+            glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]); // origin and select rect
             glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), data);
         }
         doneCurrent();
@@ -1798,13 +1798,13 @@ void Canvas::refresh_vbo()
     _indexs_count[1] = polygon_index_count;
 
     makeCurrent();
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
 	glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]); // polyline
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polyline_index_count, polyline_indexs, GL_DYNAMIC_DRAW);
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]); // polygon
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_DYNAMIC_DRAW);
     doneCurrent();
 
@@ -1827,7 +1827,7 @@ void Canvas::refresh_vbo(const bool unitary)
     double depth;
 
     makeCurrent();
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
 
     for (const ContainerGroup &group : _editer->graph()->container_groups())
     {
@@ -2122,7 +2122,7 @@ void Canvas::refresh_selected_ibo()
         }
     }
 
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
 
     doneCurrent();
@@ -2136,7 +2136,7 @@ void Canvas::refresh_selected_vbo()
     double *data = new double[data_len];
     double depth;
     makeCurrent();
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]);
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
     for (Geo::Geometry *obj : _editer->selected())
     {
         data_count = data_len;
@@ -2334,7 +2334,7 @@ void Canvas::refresh_brush_ibo()
     _indexs_count[1] = polygon_index_count;
 
     makeCurrent();
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]); // polygon
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_DYNAMIC_DRAW);
     doneCurrent();
 
