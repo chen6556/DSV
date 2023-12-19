@@ -1209,6 +1209,10 @@ bool Canvas::is_visible(const Geo::Point &point) const
 
 bool Canvas::is_visible(const Geo::Polyline &polyline) const
 {
+    if (!Geo::is_intersected(_visible_area, polyline.bounding_rect()))
+    {
+        return false;
+    }
     if (is_visible(polyline.front()))
     {
         return true;
@@ -1227,20 +1231,15 @@ bool Canvas::is_visible(const Geo::Polyline &polyline) const
 
 bool Canvas::is_visible(const Geo::Polygon &polygon) const
 {
+    if (!Geo::is_intersected(_visible_area, polygon.bounding_rect()))
+    {
+        return false;
+    }
     const Geo::Point center(_visible_area.center());
     const double len = std::min(_visible_area.width(), _visible_area.height());
     for (size_t i = 1, count = polygon.size(); i < count; ++i)
     {
         if (is_visible(polygon[i - 1]) || Geo::distance(center, polygon[i - 1], polygon[i]) < len)
-        {
-            return true;
-        }
-    }
-
-    const Geo::AABBRect rect(polygon.bounding_rect());
-    for (const Geo::Point &point : _visible_area)
-    {
-        if (is_visible(point))
         {
             return true;
         }
