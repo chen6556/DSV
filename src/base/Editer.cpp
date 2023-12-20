@@ -766,8 +766,9 @@ bool Editer::combinate()
     std::vector<size_t> indexs;
     for (Geo::Geometry *geo : _graph->container_group(_current_group))
     {
-        if (geo->is_selected() && (geo->type() == Geo::Type::CONTAINER ||
-            geo->type() == Geo::Type::CIRCLECONTAINER || geo->type() == Geo::Type::COMBINATION
+        if (geo->is_selected() && (geo->type() == Geo::Type::CONTAINER
+            || geo->type() == Geo::Type::TEXT || geo->type() == Geo::Type::CIRCLECONTAINER 
+            || geo->type() == Geo::Type::COMBINATION
             || geo->type() == Geo::Type::POLYLINE ||  geo->type() == Geo::Type::BEZIER))
         {
             indexs.emplace_back(index);

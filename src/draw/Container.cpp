@@ -1,6 +1,114 @@
 #include "draw/Container.hpp"
+#include <QFontMetrics>
 
 
+
+// Text
+
+Text::Text(const double x, const double y, const QString &text)
+    : _text(text)
+{
+    _type = Geo::Type::TEXT;
+    const QFontMetrics font_metrics(QFont("SimSun", 12, QFont::Bold, true));
+    int width = 0;
+    for (const QString &s : text.split('\n'))
+    {
+        width = std::max(width, font_metrics.boundingRect(s).width());
+    }
+    if (width == 0)
+    {
+        width = font_metrics.boundingRect(text).width();
+    }
+    width = std::max(20, width);
+    int height = std::max(font_metrics.height() * (text.count('\n') + 1) + font_metrics.leading() * text.count('\n'), 20ll);
+    set_left(x - 1 - width / 2);
+    set_right(x + 1 + width / 2);
+    set_top(y + 1 + height / 2);
+    set_bottom(y - 1 - height / 2);
+}
+
+Text::Text(const Text &text)
+    : Geo::AABBRect(text), _text(text._text)
+{
+    _type = Geo::Type::TEXT;
+}
+
+Text::Text(const Text &&text) noexcept
+    : Geo::AABBRect(text), _text(text._text)
+{
+    _type = Geo::Type::TEXT;
+}
+
+Text &Text::operator=(const Text &text)
+{
+    if (&text != this)
+    {
+        Geo::AABBRect::operator=(text);
+        _text = text._text;
+        _type = Geo::Type::TEXT;
+    }
+    return *this;
+}
+
+Text &Text::operator=(const Text &&text) noexcept
+{
+    if (&text != this)
+    {
+        Geo::AABBRect::operator=(text);
+        _text = text._text;
+        _type = Geo::Type::TEXT;
+    }
+    return *this;
+}
+
+void Text::set_text(const QString &str)
+{
+    _text = str;
+    const Geo::Coord coord(center().coord());
+    const QFontMetrics font_metrics(QFont("SimSun", 12, QFont::Bold, true));
+    int width = 0;
+    for (const QString &s : str.split('\n'))
+    {
+        width = std::max(width, font_metrics.boundingRect(s).width());
+    }
+    if (width == 0)
+    {
+        width = font_metrics.boundingRect(str).width();
+    }
+    width = std::max(20, width);
+    int height = std::max(font_metrics.height() * (str.count('\n') + 1) + font_metrics.leading() * str.count('\n'), 20ll);
+    set_left(coord.x - 1 - width / 2);
+    set_right(coord.x + 1 + width / 2);
+    set_top(coord.y + 1 + height / 2);
+    set_bottom(coord.y - 1 - height / 2);
+}
+
+const QString &Text::text() const
+{
+    return _text;
+}
+
+Geo::AABBRect &Text::shape()
+{
+    return *dynamic_cast<Geo::AABBRect *>(this);
+}
+
+const Geo::AABBRect &Text::shape() const
+{
+    return *dynamic_cast<const Geo::AABBRect *>(this);
+}
+
+void Text::clear()
+{
+    _text.clear();
+    const Geo::Coord coord(center().coord());
+    set_left(coord.x - 10);
+    set_left(coord.x + 10);
+    set_top(coord.y + 10);
+    set_bottom(coord.y + 10);
+}
+
+// Container
 
 Container::Container(const Geo::Polygon &shape)
     : Geo::Polygon(shape)
@@ -624,6 +732,11 @@ void ContainerGroup::append(ContainerGroup &group, const bool merge)
     }
 }
 
+void ContainerGroup::append(Text *text)
+{
+    _containers.push_back(text);
+}
+
 void ContainerGroup::insert(const size_t index, Container *container)
 {
     _containers.insert(_containers.begin() + index, container);
@@ -642,6 +755,11 @@ void ContainerGroup::insert(const size_t index, Geo::Polyline *container)
 void ContainerGroup::insert(const size_t index, Geo::Bezier *bezier)
 {
     _containers.insert(_containers.begin() + index, bezier);
+}
+
+void ContainerGroup::insert(const size_t index, Text *text)
+{
+    _containers.insert(_containers.begin() + index, text);
 }
 
 std::vector<Geo::Geometry *>::iterator ContainerGroup::remove(const size_t index)
@@ -778,12 +896,16 @@ void Combination::append(Combination *combination)
     {
         append(combination->pop_back());
     }
+    combination->memo()["remove"] = true;
 }
 
 void Combination::append(Geo::Geometry *geo)
 {
     switch (geo->type())
     {
+    case Geo::Type::TEXT:
+        ContainerGroup::append(dynamic_cast<Text *>(geo));
+        break;
     case Geo::Type::CONTAINER:
         ContainerGroup::append(dynamic_cast<Container *>(geo));
         break;

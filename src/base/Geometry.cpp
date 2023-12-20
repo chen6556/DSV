@@ -809,6 +809,12 @@ Polygon Polyline::mini_bounding_rect() const
 
 // AABBRect
 
+AABBRect::AABBRect()
+{
+    _type = Geo::Type::AABBRECT;
+    _points.assign({Point(0, 0), Point(1, 0), Point(1, 1), Point(0, 1), Point(0, 0)});
+}
+
 AABBRect::AABBRect(const double x0, const double y0, const double x1, const double y1)
 {
     if (x0 < x1)
@@ -880,26 +886,48 @@ AABBRect::AABBRect(const AABBRect &&rect) noexcept
 
 const double AABBRect::left() const
 {
-    assert(!_points.empty());
     return _points.front().coord().x;
 }
 
 const double AABBRect::top() const
 {
-    assert(!_points.empty());
     return _points.front().coord().y;
 }
 
 const double AABBRect::right() const
 {
-    assert(!_points.empty());
     return _points[2].coord().x;
 }
 
 const double AABBRect::bottom() const
 {
-    assert(!_points.empty());
     return _points[2].coord().y;
+}
+
+void AABBRect::set_left(const double value)
+{
+    _points.front().coord().x = value;
+    _points[3].coord().x = value;
+    _points.back().coord().x = value;
+}
+
+void AABBRect::set_top(const double value)
+{
+    _points.front().coord().y = value;
+    _points[1].coord().y = value;
+    _points.back().coord().y = value;
+}
+
+void AABBRect::set_right(const double value)
+{
+    _points[1].coord().x = value;
+    _points[2].coord().x = value;
+}
+
+void AABBRect::set_bottom(const double value)
+{
+    _points[2].coord().y = value;
+    _points[3].coord().y = value;
 }
 
 AABBRect &AABBRect::operator=(const AABBRect &rect)
