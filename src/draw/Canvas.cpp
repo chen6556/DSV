@@ -102,7 +102,7 @@ void Canvas::paint_graph()
     QPainter painter(this);
     painter.setBrush(QColor(250, 250, 250));
     const bool scale_text = GlobalSetting::get_instance()->setting()["scale_text"].toBool();
-    const double suffix_text_width = 4 * (scale_text ? _ratio : 1), text_heigh_ratio = (scale_text ? _ratio : 1);
+    const double suffix_text_width = 4 * (scale_text ? _ratio : 1), text_heigh_ratio = (scale_text ? _ratio * 1.1 : 1.1);
     painter.setFont(QFont("SimSun", scale_text ? 12 * _ratio : 12, QFont::Bold, true));
 
     const bool show_points = GlobalSetting::get_instance()->setting()["show_points"].toBool();
@@ -159,7 +159,7 @@ void Canvas::paint_graph()
                     painter.setPen(QPen(text_color, 2));
                     text_rect = font_metrics.boundingRect(container->text());
                     text_rect.setWidth(text_rect.width() + suffix_text_width);
-                    text_rect.setHeight(4 * text_heigh_ratio + 14 * (container->text().count('\n') + 1) * text_heigh_ratio);
+                    text_rect.setHeight(4 * text_heigh_ratio + 16 * (container->text().count('\n') + 1) * text_heigh_ratio);
                     text_rect.translate(points.boundingRect().center() - text_rect.center());
                     painter.drawText(text_rect, container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                 }
@@ -197,7 +197,7 @@ void Canvas::paint_graph()
                     painter.setPen(QPen(text_color, 2));
                     text_rect = font_metrics.boundingRect(circlecontainer->text());
                     text_rect.setWidth(text_rect.width() + suffix_text_width);
-                    text_rect.setHeight(4 * text_heigh_ratio + 14 * (circlecontainer->text().count('\n') + 1) * text_heigh_ratio);
+                    text_rect.setHeight(4 * text_heigh_ratio + 16 * (circlecontainer->text().count('\n') + 1) * text_heigh_ratio);
                     text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
                         circlecontainer->center().coord().y - text_rect.center().y());
                     painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
@@ -235,7 +235,7 @@ void Canvas::paint_graph()
                             painter.setPen(QPen(text_color, 2));
                             text_rect = font_metrics.boundingRect(container->text());
                             text_rect.setWidth(text_rect.width() + suffix_text_width);
-                            text_rect.setHeight(4 * text_heigh_ratio + 14 * (container->text().count('\n') + 1) * text_heigh_ratio);
+                            text_rect.setHeight(4 * text_heigh_ratio + 16 * (container->text().count('\n') + 1) * text_heigh_ratio);
                             text_rect.translate(points.boundingRect().center() - text_rect.center());
                             painter.drawText(text_rect, container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                         }
@@ -273,7 +273,7 @@ void Canvas::paint_graph()
                             painter.setPen(QPen(text_color, 2));
                             text_rect = font_metrics.boundingRect(circlecontainer->text());
                             text_rect.setWidth(text_rect.width() + suffix_text_width);
-                            text_rect.setHeight(4 * text_heigh_ratio + 14 * (circlecontainer->text().count('\n') + 1) * text_heigh_ratio);
+                            text_rect.setHeight(4 * text_heigh_ratio + 16 * (circlecontainer->text().count('\n') + 1) * text_heigh_ratio);
                             text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
                                 circlecontainer->center().coord().y - text_rect.center().y());
                             painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
@@ -1240,6 +1240,13 @@ bool Canvas::is_visible(const Geo::Polygon &polygon) const
     for (size_t i = 1, count = polygon.size(); i < count; ++i)
     {
         if (is_visible(polygon[i - 1]) || Geo::distance(center, polygon[i - 1], polygon[i]) < len)
+        {
+            return true;
+        }
+    }
+    for (const Geo::Point &point : _visible_area)
+    {
+        if (Geo::is_inside(point, polygon))
         {
             return true;
         }
