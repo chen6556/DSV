@@ -1,6 +1,12 @@
 #include "io/RS274DParser.hpp"
+#include "base/Geometry.hpp"
+#include "draw/Container.hpp"
+#include "io/Action.hpp"
 #include "io/Parser.hpp"
+#include <qstyle.h>
 #include <sstream>
+#include <string>
+#include <QDebug>
 
 namespace RS274DParser
 {
@@ -31,7 +37,9 @@ void Importer::store_points()
 
     if (_points.front() == _points.back() && _points.size() >= 3)
     {
-        _graph->container_groups().back().append(new Container(Geo::Polygon(_points.cbegin(), _points.cend())));
+        _last_container = new Container(Geo::Polygon(_points.cbegin(), _points.cend()));
+        _last_circle_container = nullptr;
+        _graph->container_groups().back().append(_last_container);
     }
     else
     {
@@ -42,8 +50,9 @@ void Importer::store_points()
 
 void Importer::draw_circle(const int radius)
 {
-    CircleContainer *cc = new CircleContainer(Geo::Circle(Geo::Point(_last_coord), radius));
-    _graph->container_groups().back().append(cc);
+    _last_circle_container = new CircleContainer(Geo::Circle(Geo::Point(_last_coord), radius));
+    _last_container = nullptr;
+    _graph->container_groups().back().append(_last_circle_container);
 }
 
 void Importer::set_unit_mm()
@@ -109,7 +118,23 @@ void Importer::load_graph(Graph *g)
 void Importer::reset()
 {
 }
+void Importer::store_text(const std::string &text)
+{
+    // qDebug() << text;
+    if (_last_container != nullptr)
+    {
+        _last_container->set_text(_last_container->text() + '\n' + QString::fromUtf8(text));
+    }
+    if (_last_circle_container != nullptr)
+    {
+        _last_circle_container->set_text(_last_circle_container->text() + '\n' + QString::fromUtf8(text));
+    }
+}
 
+void Importer::print_symbol(const std::string &str)
+{
+    qDebug() << str;
+}
 
 static Importer importer;
 
@@ -118,7 +143,7 @@ static Importer importer;
 static Parser<char> blank = ch_p(' ') | ch_p('\t') | ch_p('\v');
 static Parser<char> separator = ch_p('*');
 
-static auto skip_cmd = (ch_p('H') >> int_p() ) >> separator;
+static auto skip_cmd = (ch_p('H') >> int_p()) >> separator;
 
 // 坐标设置
 static Action<int> x_coord_a(&importer, &Importer::set_x_coord);
@@ -145,7 +170,7 @@ static Parser<std::string> knife_up = (str_p("M15") | str_p("M19"))[knife_up_a];
 static Parser<std::string> pen_down = (str_p("D1") | str_p("D01"))[pen_down_a];
 static Parser<std::string> pen_up = (str_p("D2") | str_p("D02"))[pen_up_a];
 
-static Parser<char> pen_move = (knife_down | knife_up | pen_down | pen_up) >> separator;
+static auto pen_move = (knife_down | knife_up | pen_down | pen_up);
 
 // 插值方式(线型?) 目前只有线性
 static Parser<std::string> linear = str_p("G01");
@@ -166,6 +191,10 @@ static Parser<std::string> circle40 = str_p("M73")[circle40_a];
 
 static Parser<char> circle = (circle10 | circle20 | circle30 | circle40) >> separator;
 
+// 文字处理
+static Action<std::string> a_text(&importer, &Importer::store_text);
+static auto text = confix_p(str_p("M31") >> separator, (*anychar_p())[a_text], separator);
+
 // 步骤
 static Parser<int> steps = ch_p('N') >> int_p() >> separator;
 // 文件终止
@@ -173,8 +202,9 @@ static Parser<char> end = str_p("M0") >> separator;
 // 未知命令
 static Parser<std::vector<char>> unkown_cmds = confix_p(alphaa_p(), *anychar_p(), separator);
 
-static auto cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | blank | skip_cmd);
-static auto terminal_cmd = end | unkown_cmds;
+static auto cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | text | blank | skip_cmd | separator);
+static Action<std::string> a_unkown(&importer, &Importer::print_symbol);
+static auto terminal_cmd = end | unkown_cmds[a_unkown];
 static auto rs274 = cmd >> !terminal_cmd;
 // static auto cmd = *(coord | set_unit | pen_size | pen_move | interp | circle | steps | blank | eol_p() | unkown_cmds);
 
