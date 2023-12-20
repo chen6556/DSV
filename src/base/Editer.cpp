@@ -581,7 +581,7 @@ bool Editer::paste(const double tx, const double ty)
     return true;
 }
 
-bool Editer::connect(const double connect_distance)
+bool Editer::connect(double connect_distance)
 {
     if (_graph == nullptr || _graph->empty())
     {
@@ -601,6 +601,7 @@ bool Editer::connect(const double connect_distance)
     }
 
     store_backup();
+    connect_distance /= _view_ratio;
     bool flag;
     const size_t num = indexs.size();
     for (size_t i = 0, count = indexs.size(); i < count; ++i)
