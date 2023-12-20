@@ -152,6 +152,11 @@ const size_t Editer::groups_count() const
     return _graph->container_groups().size();
 }
 
+void Editer::set_view_ratio(const double value)
+{
+    _view_ratio = value;
+}
+
 
 
 void Editer::append_points()
@@ -841,7 +846,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
         reset_selected_mark();
     }
 
-    const double catch_distance =  2 / _graph->ratio();
+    const double catch_distance =  2.4 / _view_ratio;
     Container *c = nullptr;
     CircleContainer *cc = nullptr;
     Geo::Polyline *p = nullptr;

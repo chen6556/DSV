@@ -16,6 +16,7 @@ private:
     size_t _current_group = 0;
 
     Geo::Geometry *_catched_points = nullptr;
+    double _view_ratio = 1.0;
 
 private:
     void init();
@@ -56,6 +57,8 @@ public:
     void set_current_group(const size_t index);
 
     const size_t groups_count() const;
+
+    void set_view_ratio(const double value);
     
 
 

@@ -246,6 +246,17 @@ void Canvas::paintGL()
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
         glUniform4f(_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
         glDrawElements(GL_LINE_STRIP, _indexs_count[2], GL_UNSIGNED_INT, NULL);
+
+        if (_cache_count > 0)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
+            glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+            glEnableVertexAttribArray(0);
+            glUniform4f(_uniforms[4], 1.0f, 0.549f, 0.0f, 1.0f); // color
+            glDrawArrays(GL_LINE_STRIP, 0, _cache_count / 3);
+            glUniform4f(_uniforms[4], 0.0f, 0.0f, 1.0f, 1.0f); // color
+            glDrawArrays(GL_POINTS, 0, _cache_count / 3);
+        }
     }
 
     if (_indexs_count[3] > 0)
@@ -368,7 +379,6 @@ void Canvas::paintGL()
             glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
         }
 
-        _cache_count /= 3;
         glUniform4f(_uniforms[4], 0.9765f, 0.9765f, 0.9765f, 1.0f); // color 绘制填充色
         glDrawArrays(GL_TRIANGLE_FAN, 0, _cache_count / 3);
 
@@ -523,10 +533,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             {
                 _editer->reset_selected_mark();
                 _indexs_count[2] = 0;
-                makeCurrent();
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, NULL, GL_DYNAMIC_DRAW);
-                doneCurrent();
+                _cache_count = 0;
                 _select_rect = Geo::Rectangle(real_x1, real_y1, real_x1 + 1, real_y1 + 1);
                 _last_point.coord().x = real_x1;
                 _last_point.coord().y = real_y1;
@@ -596,6 +603,17 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                                 std::memmove(temp, indexs, index_count * sizeof(unsigned int));
                                 delete indexs;
                                 indexs = temp;
+                            }
+
+                            if (obj->memo()["Type"].to_int() == 21)
+                            {
+                                _cache_count = 0;
+                                for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(obj))
+                                {
+                                    _cache[_cache_count++] = point.coord().x;
+                                    _cache[_cache_count++] = point.coord().y;
+                                    _cache[_cache_count++] = obj->memo()["point_depth"].to_double();
+                                }
                             }
                         }
                     }
@@ -815,6 +833,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             size_t data_len = 513, data_count;
             double *data = new double[data_len];
             double depth;
+            size_t selected_count = 0;
             makeCurrent();
             glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
             for (Geo::Geometry *obj : _editer->selected())
@@ -832,6 +851,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     data = new double[data_len];
                 }
                 data_count = 0;
+                ++selected_count;
                 switch (obj->memo()["Type"].to_int())
                 {
                 case 0:
@@ -903,6 +923,16 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                         data[data_count++] = point.coord().y;
                         data[data_count++] = depth;
                     }
+                    if (selected_count == 1)
+                    {
+                        _cache_count = 0;
+                        for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(obj))
+                        {
+                            _cache[_cache_count++] = point.coord().x;
+                            _cache[_cache_count++] = point.coord().y;
+                            _cache[_cache_count++] = depth;
+                        }
+                    }
                     break;
                 default:
                     break;
@@ -911,6 +941,15 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 {
                     glBufferSubData(GL_ARRAY_BUFFER, obj->memo()["point_index"].to_ull() * 3 * sizeof(double), data_count * sizeof(double), data);
                 }
+            }
+            if (selected_count == 1 && _cache_count > 0)
+            {
+                glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
+                glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
+            }
+            else
+            {
+                _cache_count = 0;
             }
             if (event->modifiers() == Qt::ControlModifier)
             {
@@ -1004,6 +1043,7 @@ void Canvas::wheelEvent(QWheelEvent *event)
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]); // origin and select rect
     glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), data);
     doneCurrent();
+    _editer->set_view_ratio(_ratio);
     _editer->auto_aligning(_clicked_obj, _reflines);
 }
 
@@ -2010,7 +2050,6 @@ void Canvas::refresh_selected_ibo()
     size_t index_len = 512, index_count = 0;
     unsigned int *indexs = new unsigned int[index_len];
 
-    makeCurrent();
     for (const ContainerGroup &group : _editer->graph()->container_groups())
     {
         if (!group.visible())
@@ -2122,6 +2161,8 @@ void Canvas::refresh_selected_ibo()
         }
     }
 
+    makeCurrent();
+
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
 
@@ -2135,6 +2176,7 @@ void Canvas::refresh_selected_vbo()
     size_t data_len = 513, data_count;
     double *data = new double[data_len];
     double depth;
+
     makeCurrent();
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
     for (Geo::Geometry *obj : _editer->selected())
