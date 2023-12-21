@@ -7,7 +7,7 @@
 // Text
 
 Text::Text(const double x, const double y, const int size, const QString &text)
-    : _text(text)
+    : _text(text), _text_size(size)
 {
     _type = Geo::Type::TEXT;
     QFont font("SimSun");
@@ -31,13 +31,13 @@ Text::Text(const double x, const double y, const int size, const QString &text)
 }
 
 Text::Text(const Text &text)
-    : Geo::AABBRect(text), _text(text._text)
+    : Geo::AABBRect(text), _text(text._text), _text_size(text._text_size)
 {
     _type = Geo::Type::TEXT;
 }
 
 Text::Text(const Text &&text) noexcept
-    : Geo::AABBRect(text), _text(text._text)
+    : Geo::AABBRect(text), _text(text._text), _text_size(text._text_size)
 {
     _type = Geo::Type::TEXT;
 }
@@ -48,6 +48,7 @@ Text &Text::operator=(const Text &text)
     {
         Geo::AABBRect::operator=(text);
         _text = text._text;
+        _text_size = text._text_size;
         _type = Geo::Type::TEXT;
     }
     return *this;
@@ -59,6 +60,7 @@ Text &Text::operator=(const Text &&text) noexcept
     {
         Geo::AABBRect::operator=(text);
         _text = text._text;
+        _text_size = text._text_size;
         _type = Geo::Type::TEXT;
     }
     return *this;
@@ -67,6 +69,11 @@ Text &Text::operator=(const Text &&text) noexcept
 void Text::set_text(const QString &str, const int size)
 {
     _text = str;
+    if (_text_size == size)
+    {
+        return;
+    }
+    _text_size = size;
     const Geo::Coord coord(center().coord());
     QFont font("SimSun");
     font.setPixelSize(size);
@@ -90,6 +97,10 @@ void Text::set_text(const QString &str, const int size)
 
 void Text::update_size(const int size)
 {
+    if (_text_size == size)
+    {
+        return;
+    }
     const Geo::Coord coord(center().coord());
     QFont font("SimSun");
     font.setPixelSize(size);
@@ -109,6 +120,11 @@ void Text::update_size(const int size)
     set_right(coord.x + 1 + width / 2);
     set_top(coord.y + 1 + height / 2);
     set_bottom(coord.y - 1 - height / 2);
+}
+
+int Text::text_size() const
+{
+    return _text_size;
 }
 
 const QString &Text::text() const

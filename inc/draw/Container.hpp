@@ -8,6 +8,7 @@ class Text : public Geo::AABBRect
 {
 private:
     QString _text;
+    int _text_size;
 
 public:
     Text(const double x, const double y, const int size, const QString &text = "Text");
@@ -23,6 +24,8 @@ public:
     void set_text(const QString &str, const int size);
 
     void update_size(const int size);
+
+    int text_size() const;
 
     const QString &text() const;
 
