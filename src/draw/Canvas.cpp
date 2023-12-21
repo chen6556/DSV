@@ -1008,7 +1008,7 @@ void Canvas::show_overview()
 
     // 置于控件中间
     double x_offset = (view_area.width() - bounding_area.width() * _ratio) / 2 - bounding_area.left() * _ratio;
-    double y_offset = (view_area.height() - bounding_area.height() * _ratio) / 2 - bounding_area.top() * _ratio;
+    double y_offset = (view_area.height() - bounding_area.height() * _ratio) / 2 - bounding_area.bottom() * _ratio;
 
     _canvas_ctm[0] = _canvas_ctm[4] = _ratio;
     _canvas_ctm[1] = _canvas_ctm[2] = _canvas_ctm[3] = _canvas_ctm[5] = 0;
