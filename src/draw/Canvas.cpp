@@ -23,6 +23,7 @@ Canvas::Canvas(QLabel **labels, QWidget *parent)
 void Canvas::init()
 {
     _input_line.hide();
+    _select_rect.clear();
 }
 
 void Canvas::bind_editer(Editer *editer)
@@ -100,10 +101,12 @@ void Canvas::paint_graph()
         return;
     }
     QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
     painter.setBrush(QColor(250, 250, 250));
-    const bool scale_text = GlobalSetting::get_instance()->setting()["scale_text"].toBool();
-    const double suffix_text_width = 4 * (scale_text ? _ratio : 1), text_heigh_ratio = (scale_text ? _ratio * 1.1 : 1.1);
-    painter.setFont(QFont("SimSun", scale_text ? 12 * _ratio : 12, QFont::Bold, true));
+    const bool show_text = GlobalSetting::get_instance()->setting()["show_text"].toBool();
+    QFont font("SimSun");
+    font.setPixelSize(GlobalSetting::get_instance()->setting()["text_size"].toInt());
+    painter.setFont(font);
 
     const bool show_points = GlobalSetting::get_instance()->setting()["show_points"].toBool();
 
@@ -121,6 +124,7 @@ void Canvas::paint_graph()
     Geo::Coord center;
     Geo::Circle circle;
     double radius;
+    long long width, height;
     for (const ContainerGroup &group : _editer->graph()->container_groups())
     {
         if (!group.visible())
@@ -154,12 +158,22 @@ void Canvas::paint_graph()
                     painter.setPen(QPen(QColor(0, 140, 255), 6));
                     painter.drawPoints(points);
                 }
-                if (!container->text().isEmpty())
+                if (show_text && !container->text().isEmpty())
                 {
                     painter.setPen(QPen(text_color, 2));
-                    text_rect = font_metrics.boundingRect(container->text());
-                    text_rect.setWidth(text_rect.width() + suffix_text_width);
-                    text_rect.setHeight(4 * text_heigh_ratio + 16 * (container->text().count('\n') + 1) * text_heigh_ratio);
+                    width = height = 0;
+                    for (const QString &s : container->text().split('\n'))
+                    {
+                        width = std::max(width, font.pixelSize() * s.length());
+                    }
+                    if (width == 0)
+                    {
+                        width = font.pixelSize() * container->text().length();
+                    }
+                    width = std::max(20ll, width);
+                    height = std::max(font_metrics.lineSpacing() * (container->text().count('\n') + 1), 20ll);
+                    text_rect.setWidth(width);
+                    text_rect.setHeight(height);
                     text_rect.translate(points.boundingRect().center() - text_rect.center());
                     painter.drawText(text_rect, container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                 }
@@ -192,12 +206,22 @@ void Canvas::paint_graph()
                     painter.drawPoint(center.x, center.y - radius);
                     painter.drawPoint(center.x - radius, center.y);
                 }
-                if (!circlecontainer->text().isEmpty())
+                if (show_text && !circlecontainer->text().isEmpty())
                 {
                     painter.setPen(QPen(text_color, 2));
-                    text_rect = font_metrics.boundingRect(circlecontainer->text());
-                    text_rect.setWidth(text_rect.width() + suffix_text_width);
-                    text_rect.setHeight(4 * text_heigh_ratio + 16 * (circlecontainer->text().count('\n') + 1) * text_heigh_ratio);
+                    width = height = 0;
+                    for (const QString &s : circlecontainer->text().split('\n'))
+                    {
+                        width = std::max(width, font.pointSize() * s.length());
+                    }
+                    if (width == 0)
+                    {
+                        width = font.pointSize() * circlecontainer->text().length();
+                    }
+                    width = std::max(20ll, width);
+                    height = std::max(font_metrics.lineSpacing() * (circlecontainer->text().count('\n') + 1), 20ll);
+                    text_rect.setWidth(width);
+                    text_rect.setHeight(height);
                     text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
                         circlecontainer->center().coord().y - text_rect.center().y());
                     painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
@@ -230,12 +254,22 @@ void Canvas::paint_graph()
                             painter.setPen(QPen(QColor(0, 140, 255), 6));
                             painter.drawPoints(points);
                         }
-                        if (!container->text().isEmpty())
+                        if (show_text && !container->text().isEmpty())
                         {
                             painter.setPen(QPen(text_color, 2));
-                            text_rect = font_metrics.boundingRect(container->text());
-                            text_rect.setWidth(text_rect.width() + suffix_text_width);
-                            text_rect.setHeight(4 * text_heigh_ratio + 16 * (container->text().count('\n') + 1) * text_heigh_ratio);
+                            width = height = 0;
+                            for (const QString &s : container->text().split('\n'))
+                            {
+                                width = std::max(width, font.pixelSize() * s.length());
+                            }
+                            if (width == 0)
+                            {
+                                width = font.pixelSize() * container->text().length();
+                            }
+                            width = std::max(20ll, width);
+                            height = std::max(font_metrics.lineSpacing() * (container->text().count('\n') + 1), 20ll);
+                            text_rect.setWidth(width);
+                            text_rect.setHeight(height);
                             text_rect.translate(points.boundingRect().center() - text_rect.center());
                             painter.drawText(text_rect, container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                         }
@@ -268,12 +302,22 @@ void Canvas::paint_graph()
                             painter.drawPoint(center.x, center.y - radius);
                             painter.drawPoint(center.x - radius, center.y);
                         }
-                        if (!circlecontainer->text().isEmpty())
+                        if (show_text && !circlecontainer->text().isEmpty())
                         {
                             painter.setPen(QPen(text_color, 2));
-                            text_rect = font_metrics.boundingRect(circlecontainer->text());
-                            text_rect.setWidth(text_rect.width() + suffix_text_width);
-                            text_rect.setHeight(4 * text_heigh_ratio + 16 * (circlecontainer->text().count('\n') + 1) * text_heigh_ratio);
+                            width = height = 0;
+                            for (const QString &s : circlecontainer->text().split('\n'))
+                            {
+                                width = std::max(width, font.pixelSize() * s.length());
+                            }
+                            if (width == 0)
+                            {
+                                width = font.pixelSize() * circlecontainer->text().length();
+                            }
+                            width = std::max(20ll, width);
+                            height = std::max(font_metrics.lineSpacing() * (circlecontainer->text().count('\n') + 1), 20ll);
+                            text_rect.setWidth(width);
+                            text_rect.setHeight(height);
                             text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
                                 circlecontainer->center().coord().y - text_rect.center().y());
                             painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));

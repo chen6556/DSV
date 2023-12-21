@@ -1,5 +1,6 @@
 #include "draw/Container.hpp"
 #include <QFontMetrics>
+#include <QStringList>
 
 
 
@@ -9,18 +10,20 @@ Text::Text(const double x, const double y, const QString &text)
     : _text(text)
 {
     _type = Geo::Type::TEXT;
-    const QFontMetrics font_metrics(QFont("SimSun", 12, QFont::Bold, true));
-    int width = 0;
+    QFont font("SimSun");
+    font.setPixelSize(12);
+    const QFontMetrics font_metrics(font);
+    long long width = 0;
     for (const QString &s : text.split('\n'))
     {
-        width = std::max(width, font_metrics.boundingRect(s).width());
+        width = std::max(width, font.pixelSize() * s.length());
     }
     if (width == 0)
     {
-        width = font_metrics.boundingRect(text).width();
+        width = font.pixelSize() * text.length();
     }
-    width = std::max(20, width);
-    int height = std::max(font_metrics.height() * (text.count('\n') + 1) + font_metrics.leading() * text.count('\n'), 20ll);
+    width = std::max(20ll, width);
+    long long height = std::max(font_metrics.lineSpacing() * (text.count('\n') + 1), 20ll);
     set_left(x - 1 - width / 2);
     set_right(x + 1 + width / 2);
     set_top(y + 1 + height / 2);
@@ -65,18 +68,20 @@ void Text::set_text(const QString &str)
 {
     _text = str;
     const Geo::Coord coord(center().coord());
-    const QFontMetrics font_metrics(QFont("SimSun", 12, QFont::Bold, true));
-    int width = 0;
+    QFont font("SimSun");
+    font.setPixelSize(12);
+    const QFontMetrics font_metrics(font);
+    long long width = 0;
     for (const QString &s : str.split('\n'))
     {
-        width = std::max(width, font_metrics.boundingRect(s).width());
+        width = std::max(width, font.pixelSize() * s.length());
     }
     if (width == 0)
     {
-        width = font_metrics.boundingRect(str).width();
+        width = font.pixelSize() * str.length();
     }
-    width = std::max(20, width);
-    int height = std::max(font_metrics.height() * (str.count('\n') + 1) + font_metrics.leading() * str.count('\n'), 20ll);
+    width = std::max(20ll, width);
+    long long height = std::max(font_metrics.lineSpacing() * (str.count('\n') + 1), 20ll);
     set_left(coord.x - 1 - width / 2);
     set_right(coord.x + 1 + width / 2);
     set_top(coord.y + 1 + height / 2);

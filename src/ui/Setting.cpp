@@ -20,8 +20,9 @@ void Setting::init()
 
     ui->catch_distance->setValue(setting["catch_distance"].toDouble());
     ui->backup_times->setValue(setting["backup_times"].toInt());
+    ui->text_size->setValue(setting["text_size"].toInt());
 
-    ui->scale_text->setChecked(setting["scale_text"].toBool());
+    ui->show_text->setChecked(setting["show_text"].toBool());
     ui->catch_only->setChecked(setting["active_layer_catch_only"].toBool());
     ui->multiple_select->setChecked(setting["multiple_select"].toBool());
     ui->cursor_catch->setChecked(setting["cursor_catch"].toBool());
@@ -34,8 +35,9 @@ void Setting::accept()
 
     setting["catch_distance"] = ui->catch_distance->value();
     setting["backup_times"] = ui->backup_times->value();
+    setting["text_size"] = ui->text_size->value();
 
-    setting["scale_text"] = ui->scale_text->isChecked();
+    setting["show_text"] = ui->show_text->isChecked();
     setting["active_layer_catch_only"] = ui->catch_only->isChecked();
     setting["multiple_select"] = ui->multiple_select->isChecked();
     setting["cursor_catch"] = ui->cursor_catch->isChecked();
