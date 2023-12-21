@@ -1,5 +1,6 @@
 #include "io/PDFParser.hpp"
 #include "io/Parser.hpp"
+#include "io/GlobalSetting.hpp"
 #include <sstream>
 #include <QStringList>
 
@@ -298,7 +299,7 @@ void Importer::Tm()
     {
         _values.erase(_values.begin(), _values.begin() + _values.size() - 6);
     }
-	_texts.emplace_back(Text(_text, _points.back()));
+	_texts.emplace_back(Txt(_text, _points.back()));
 
 	const double a = _trans_mat[0] * _values[0] + _trans_mat[1] * _values[1];
     const double b = _trans_mat[0] * _values[2] + _trans_mat[1] * _values[3];
@@ -311,8 +312,9 @@ void Importer::Tm()
 
 void Importer::end()
 {
+    const int text_size = GlobalSetting::get_instance()->setting()["text_size"].toInt();
     std::vector<ushort> values;
-    for (Text &text : _texts)
+    for (Txt &text : _texts)
     {
         for (unsigned int i = 0, count = text.txt.length(); i < count; i+= 4)
         {
@@ -333,6 +335,7 @@ void Importer::end()
                 {
                     dynamic_cast<Container *>(geo)->set_text(dynamic_cast<Container *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
                 }
+                text.marked = true;
                 break;
             }
             else if (geo->type() == Geo::Type::CIRCLECONTAINER && Geo::is_inside(text.pos, dynamic_cast<CircleContainer *>(geo)->shape(), true))
@@ -345,8 +348,13 @@ void Importer::end()
                 {
                     dynamic_cast<CircleContainer *>(geo)->set_text(dynamic_cast<CircleContainer *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
                 }
+                text.marked = true;
                 break;
             }
+        }
+        if (!text.marked)
+        {
+            _graph->container_group().append(new Text(text.pos.coord().x, text.pos.coord().y, text_size, QString::fromStdString(text.txt)));
         }
     }
     _texts.clear();

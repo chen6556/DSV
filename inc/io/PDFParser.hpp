@@ -359,15 +359,16 @@ private:
 
     std::map<std::string, std::string> _encoding_map;
     std::string _text;
-    struct Text
+    struct Txt
     {
         std::string txt;
         Geo::Point pos;
+        bool marked = false;
 
-        Text(const std::string &text, const Geo::Point &position)
+        Txt(const std::string &text, const Geo::Point &position)
             : txt(text), pos(position) {};
     };
-    std::list<Text> _texts;
+    std::list<Txt> _texts;
 
     double _stroking_color[4] = { 0.0, 0.0, 0.0, 0.0 };
     ColorSpace _stroking_color_space = ColorSpace::RGB;
