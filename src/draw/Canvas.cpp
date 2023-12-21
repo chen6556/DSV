@@ -147,18 +147,18 @@ void Canvas::paint_graph()
                     continue;
                 }
                 const_cast<Text *>(text)->update_size(text_size);
-                for (const Geo::Point &point : text->shape())
-                {
-                    points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                        point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-                }
-                points.pop_back();
+                text_rect.setWidth(text->width());
+                text_rect.setHeight(text->height());
+                text_rect.translate(text->center().coord().x * _canvas_ctm[0] + text->center().coord().y
+                            * _canvas_ctm[3] + _canvas_ctm[6] - text_rect.center().x(),
+                            text->center().coord().x * _canvas_ctm[1] + text->center().coord().y * _canvas_ctm[4]
+                            + _canvas_ctm[7] - text_rect.center().y());
                 if (text->is_selected())
                 {
-                    painter.drawPolygon(points);
+                    painter.drawRect(text_rect);
                 }
-                painter.setPen(QPen(text_color, 2));
-                painter.drawText(points.boundingRect(), text->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                painter.setPen(QPen(text_color, 1));
+                painter.drawText(text_rect, text->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                 break;
             case Geo::Type::CONTAINER:
                 container = dynamic_cast<const Container *>(geo);
@@ -263,18 +263,18 @@ void Canvas::paint_graph()
                             continue;
                         }
                         const_cast<Text *>(text)->update_size(text_size);
-                        for (const Geo::Point &point : text->shape())
-                        {
-                            points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                                point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-                        }
-                        points.pop_back();
+                        text_rect.setWidth(text->width());
+                        text_rect.setHeight(text->height());
+                        text_rect.translate(text->center().coord().x * _canvas_ctm[0] + text->center().coord().y
+                            * _canvas_ctm[3] + _canvas_ctm[6] - text_rect.center().x(),
+                            text->center().coord().x * _canvas_ctm[1] + text->center().coord().y * _canvas_ctm[4]
+                            + _canvas_ctm[7] - text_rect.center().y());
                         if (text->is_selected())
                         {
-                            painter.drawPolygon(points);
+                            painter.drawRect(text_rect);
                         }
-                        painter.setPen(QPen(text_color, 2));
-                        painter.drawText(points.boundingRect(), text->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                        painter.setPen(QPen(text_color, 1));
+                        painter.drawText(text_rect, text->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                         break;
                     case Geo::Type::CONTAINER:
                         container = dynamic_cast<const Container *>(item);

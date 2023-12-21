@@ -328,6 +328,10 @@ namespace Geo
 
         const double height() const;
 
+        void set_width(const double value);
+
+        void set_height(const double value);
+
         void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
 
         void transform(const double mat[6]) override;

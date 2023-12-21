@@ -1013,6 +1013,20 @@ const double AABBRect::height() const
     }
 }
 
+void AABBRect::set_width(const double value)
+{
+    const double d = (value - width()) / 2;
+    _points[0].coord().x = _points[3].coord().x = _points[4].coord().x = _points[0].coord().x - d;
+    _points[1].coord().x = _points[2].coord().x = _points[1].coord().x + d;
+}
+
+void AABBRect::set_height(const double value)
+{
+    const double d = (value - height()) / 2;
+    _points[0].coord().y = _points[1].coord().y = _points[4].coord().y = _points[0].coord().y + d;
+    _points[2].coord().x = _points[3].coord().x = _points[2].coord().x + d;
+}
+
 void AABBRect::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
     std::for_each(_points.begin(), _points.end(), [&](Point &point){point.transform(a,b,c,d,e,f);});

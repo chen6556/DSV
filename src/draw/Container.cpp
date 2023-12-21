@@ -26,8 +26,8 @@ Text::Text(const double x, const double y, const int size, const QString &text)
     long long height = std::max(font_metrics.lineSpacing() * (text.count('\n') + 1), 20ll);
     set_left(x - 1 - width / 2);
     set_right(x + 1 + width / 2);
-    set_top(y + 1 + height / 2);
-    set_bottom(y - 1 - height / 2);
+    set_top(y + height / 2);
+    set_bottom(y - height / 2);
 }
 
 Text::Text(const Text &text)
@@ -91,8 +91,8 @@ void Text::set_text(const QString &str, const int size)
     long long height = std::max(font_metrics.lineSpacing() * (str.count('\n') + 1), 20ll);
     set_left(coord.x - 1 - width / 2);
     set_right(coord.x + 1 + width / 2);
-    set_top(coord.y + 1 + height / 2);
-    set_bottom(coord.y - 1 - height / 2);
+    set_top(coord.y + height / 2);
+    set_bottom(coord.y - height / 2);
 }
 
 void Text::update_size(const int size)
@@ -118,8 +118,8 @@ void Text::update_size(const int size)
     long long height = std::max(font_metrics.lineSpacing() * (_text.count('\n') + 1), 20ll);
     set_left(coord.x - 1 - width / 2);
     set_right(coord.x + 1 + width / 2);
-    set_top(coord.y + 1 + height / 2);
-    set_bottom(coord.y - 1 - height / 2);
+    set_top(coord.y + height / 2);
+    set_bottom(coord.y- height / 2);
 }
 
 int Text::text_size() const
