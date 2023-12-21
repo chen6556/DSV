@@ -104,8 +104,9 @@ void Canvas::paint_graph()
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setBrush(QColor(250, 250, 250));
     const bool show_text = GlobalSetting::get_instance()->setting()["show_text"].toBool();
+    const int text_size = GlobalSetting::get_instance()->setting()["text_size"].toInt();
     QFont font("SimSun");
-    font.setPixelSize(GlobalSetting::get_instance()->setting()["text_size"].toInt());
+    font.setPixelSize(text_size);
     painter.setFont(font);
 
     const bool show_points = GlobalSetting::get_instance()->setting()["show_points"].toBool();
@@ -141,18 +142,23 @@ void Canvas::paint_graph()
             {
             case Geo::Type::TEXT:
                 text = dynamic_cast<const Text *>(geo);
+                if (!Geo::is_intersected(_visible_area, text->shape()))
+                {
+                    continue;
+                }
+                const_cast<Text *>(text)->update_size(text_size);
+                for (const Geo::Point &point : text->shape())
+                {
+                    points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                        point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
+                }
+                points.pop_back();
                 if (text->is_selected())
                 {
-                    for (const Geo::Point &point : text->shape())
-                    {
-                        points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                            point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-                    }
-                    points.pop_back();
                     painter.drawPolygon(points);
-                    painter.setPen(pen_not_selected);
                 }
-                painter.drawText(points.boundingRect(), container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                painter.setPen(QPen(text_color, 2));
+                painter.drawText(points.boundingRect(), text->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                 break;
             case Geo::Type::CONTAINER:
                 container = dynamic_cast<const Container *>(geo);
@@ -252,18 +258,23 @@ void Canvas::paint_graph()
                     {
                     case Geo::Type::TEXT:
                         text = dynamic_cast<const Text *>(item);
+                        if (!Geo::is_intersected(_visible_area, text->shape()))
+                        {
+                            continue;
+                        }
+                        const_cast<Text *>(text)->update_size(text_size);
+                        for (const Geo::Point &point : text->shape())
+                        {
+                            points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                                point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
+                        }
+                        points.pop_back();
                         if (text->is_selected())
                         {
-                            for (const Geo::Point &point : text->shape())
-                            {
-                                points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
-                                    point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
-                            }
-                            points.pop_back();
                             painter.drawPolygon(points);
-                            painter.setPen(pen_not_selected);
                         }
-                        painter.drawText(points.boundingRect(), container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                        painter.setPen(QPen(text_color, 2));
+                        painter.drawText(points.boundingRect(), text->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                         break;
                     case Geo::Type::CONTAINER:
                         container = dynamic_cast<const Container *>(item);
@@ -568,6 +579,12 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 }
                 _bool_flags[2] = !_bool_flags[2]; // painting
                 break;
+            case Tool::TEXT:
+                _editer->append_text(real_x1, real_y1);
+                _tool_flags[0] = Tool::NONE;
+                _bool_flags[1] = _bool_flags[2] = false;
+                emit tool_changed(_tool_flags[0]);
+                break;
             default:
                 break;
             }
@@ -588,13 +605,20 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 _bool_flags[5] = false; // is obj selected
                 if (_input_line.isVisible() && _last_clicked_obj != nullptr)
                 {
-                    if (dynamic_cast<Container *>(_last_clicked_obj) != nullptr)
+                    switch (_last_clicked_obj->type())
                     {
-                        dynamic_cast<Container *>(_last_clicked_obj)->set_text(_input_line.toPlainText());   
-                    }
-                    else
-                    {
+                    case Geo::Type::TEXT:
+                        dynamic_cast<Text *>(_last_clicked_obj)->set_text(_input_line.toPlainText(), 
+                            GlobalSetting::get_instance()->setting()["text_size"].toInt());
+                        break;
+                    case Geo::Type::CONTAINER:
+                        dynamic_cast<Container *>(_last_clicked_obj)->set_text(_input_line.toPlainText());
+                        break;
+                    case Geo::Type::CIRCLECONTAINER:
                         dynamic_cast<CircleContainer *>(_last_clicked_obj)->set_text(_input_line.toPlainText());
+                        break;
+                    default:
+                        break;
                     }
                 }
             }

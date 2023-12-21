@@ -333,6 +333,9 @@ void MainWindow::refresh_tool_label(const Canvas::Tool tool)
     case Canvas::Tool::CURVE:
         ui->current_tool->setText("Bezier Curve");
         break;
+    case Canvas::Tool::TEXT:
+        ui->current_tool->setText("Text");
+        break;
     default:
         break;
     }

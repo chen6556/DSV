@@ -10,7 +10,7 @@ private:
     QString _text;
 
 public:
-    Text(const double x, const double y, const QString &text = QString());
+    Text(const double x, const double y, const int size, const QString &text = "Text");
 
     Text(const Text &text);
 
@@ -20,7 +20,9 @@ public:
 
     Text &operator=(const Text &&text) noexcept;
 
-    void set_text(const QString &str);
+    void set_text(const QString &str, const int size);
+
+    void update_size(const int size);
 
     const QString &text() const;
 

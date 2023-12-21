@@ -6,12 +6,12 @@
 
 // Text
 
-Text::Text(const double x, const double y, const QString &text)
+Text::Text(const double x, const double y, const int size, const QString &text)
     : _text(text)
 {
     _type = Geo::Type::TEXT;
     QFont font("SimSun");
-    font.setPixelSize(12);
+    font.setPixelSize(size);
     const QFontMetrics font_metrics(font);
     long long width = 0;
     for (const QString &s : text.split('\n'))
@@ -64,12 +64,12 @@ Text &Text::operator=(const Text &&text) noexcept
     return *this;
 }
 
-void Text::set_text(const QString &str)
+void Text::set_text(const QString &str, const int size)
 {
     _text = str;
     const Geo::Coord coord(center().coord());
     QFont font("SimSun");
-    font.setPixelSize(12);
+    font.setPixelSize(size);
     const QFontMetrics font_metrics(font);
     long long width = 0;
     for (const QString &s : str.split('\n'))
@@ -82,6 +82,29 @@ void Text::set_text(const QString &str)
     }
     width = std::max(20ll, width);
     long long height = std::max(font_metrics.lineSpacing() * (str.count('\n') + 1), 20ll);
+    set_left(coord.x - 1 - width / 2);
+    set_right(coord.x + 1 + width / 2);
+    set_top(coord.y + 1 + height / 2);
+    set_bottom(coord.y - 1 - height / 2);
+}
+
+void Text::update_size(const int size)
+{
+    const Geo::Coord coord(center().coord());
+    QFont font("SimSun");
+    font.setPixelSize(size);
+    const QFontMetrics font_metrics(font);
+    long long width = 0;
+    for (const QString &s : _text.split('\n'))
+    {
+        width = std::max(width, font.pixelSize() * s.length());
+    }
+    if (width == 0)
+    {
+        width = font.pixelSize() * _text.length();
+    }
+    width = std::max(20ll, width);
+    long long height = std::max(font_metrics.lineSpacing() * (_text.count('\n') + 1), 20ll);
     set_left(coord.x - 1 - width / 2);
     set_right(coord.x + 1 + width / 2);
     set_top(coord.y + 1 + height / 2);

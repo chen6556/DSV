@@ -239,6 +239,18 @@ void Editer::append_bezier(const size_t order)
     _point_cache.clear();
 }
 
+void Editer::append_text(const double x, const double y)
+{
+    if (_graph == nullptr)
+    {
+        _graph = new Graph;
+        _graph->append_group();
+    }
+    store_backup();
+    _graph->append(new Text(x, y, GlobalSetting::get_instance()->setting()["text_size"].toInt()), _current_group);
+    _graph->memo()["modified"] = true;
+}
+
 void Editer::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1, const bool change_shape)
 {
     const double catch_distance = GlobalSetting::get_instance()->setting()["catch_distance"].toDouble();
@@ -327,6 +339,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             }
         }
         break;
+    case Geo::Type::TEXT:
     case Geo::Type::COMBINATION:
         points->translate(x1 - x0, y1 - y0);
         break;
@@ -509,7 +522,7 @@ bool Editer::cut_selected()
             switch ((*it)->type())
             {
             case Geo::Type::TEXT:
-                _paste_table.push_back(dynamic_cast<const Text *>(container)->clone());
+                _paste_table.push_back(dynamic_cast<const Text *>(*it)->clone());
                 break;
             case Geo::Type::CONTAINER:
                 _paste_table.push_back(dynamic_cast<const Container *>(*it)->clone());
