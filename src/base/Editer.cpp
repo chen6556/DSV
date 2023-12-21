@@ -925,7 +925,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         p = nullptr;
                         break;
                     case Geo::Type::BEZIER:
-                        b = dynamic_cast<Geo::Bezier *>(*it);
+                        b = dynamic_cast<Geo::Bezier *>(item);
                         for (size_t i = 1, count = b->shape().size(); i < count; ++i)
                         {
                             if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance)
