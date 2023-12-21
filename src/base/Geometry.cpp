@@ -776,7 +776,7 @@ AABBRect Polyline::bounding_rect() const
         x1 = std::max(x1, point.coord().x);
         y1 = std::max(y1, point.coord().y);
     }
-    return AABBRect(x0, y0, x1, y1);
+    return AABBRect(x0, y1, x1, y0);
 }
 
 Polygon Polyline::mini_bounding_rect() const
@@ -812,7 +812,7 @@ Polygon Polyline::mini_bounding_rect() const
 AABBRect::AABBRect()
 {
     _type = Geo::Type::AABBRECT;
-    _points.assign({Point(0, 0), Point(1, 0), Point(1, 1), Point(0, 1), Point(0, 0)});
+    _points.assign({Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0)});
 }
 
 AABBRect::AABBRect(const double x0, const double y0, const double x1, const double y1)
@@ -1508,7 +1508,7 @@ AABBRect Circle::bounding_rect() const
     }
     else
     {
-        return AABBRect(_center.coord().x - _radius, _center.coord().y - _radius, _center.coord().x + _radius, _center.coord().y + _radius);
+        return AABBRect(_center.coord().x - _radius, _center.coord().y + _radius, _center.coord().x + _radius, _center.coord().y - _radius);
     }
 }
 
@@ -1520,7 +1520,7 @@ Polygon Circle::mini_bounding_rect() const
     }
     else
     {
-        return AABBRect(_center.coord().x - _radius, _center.coord().y - _radius, _center.coord().x + _radius, _center.coord().y + _radius);
+        return AABBRect(_center.coord().x - _radius, _center.coord().y + _radius, _center.coord().x + _radius, _center.coord().y - _radius);
     }
 }
 
@@ -1683,9 +1683,9 @@ AABBRect Line::bounding_rect() const
     else
     {
         return AABBRect(std::min(_start_point.coord().x, _end_point.coord().x),
-                         std::min(_start_point.coord().y, _end_point.coord().y),
-                         std::max(_start_point.coord().x, _end_point.coord().x),
-                         std::max(_start_point.coord().y, _end_point.coord().y));
+                        std::max(_start_point.coord().y, _end_point.coord().y),
+                        std::max(_start_point.coord().x, _end_point.coord().x),
+                        std::min(_start_point.coord().y, _end_point.coord().y));
     }
 }
 
@@ -1698,9 +1698,9 @@ Polygon Line::mini_bounding_rect() const
     else
     {
         return AABBRect(std::min(_start_point.coord().x, _end_point.coord().x),
-                         std::min(_start_point.coord().y, _end_point.coord().y),
-                         std::max(_start_point.coord().x, _end_point.coord().x),
-                         std::max(_start_point.coord().y, _end_point.coord().y));
+                        std::max(_start_point.coord().y, _end_point.coord().y),
+                        std::max(_start_point.coord().x, _end_point.coord().x),
+                        std::min(_start_point.coord().y, _end_point.coord().y));
     }
 }
 

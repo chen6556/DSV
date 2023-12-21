@@ -54,6 +54,7 @@ void MainWindow::init()
     QObject::connect(ui->line_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::POLYLINE); });
     QObject::connect(ui->rect_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::RECT); });
     QObject::connect(ui->curve_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::CURVE); _painter.set_bezier_order(ui->curve_sbx->value());});
+    QObject::connect(ui->text_btn, &QPushButton::clicked, this,  [this]() { _painter.use_tool(Canvas::Tool::TEXT); });
     QObject::connect(ui->connect_btn, &QPushButton::clicked, this, [this]() { _editer.connect(GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()); });
     QObject::connect(ui->combinate_btn, &QPushButton::clicked, this, [this](){ _editer.combinate(); });
     QObject::connect(ui->split_btn, &QPushButton::clicked, this, [this](){ _editer.split(); });

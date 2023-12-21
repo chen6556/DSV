@@ -113,6 +113,11 @@ void Text::clear()
     set_bottom(coord.y + 10);
 }
 
+Text *Text::clone() const
+{
+    return new Text(*this);
+}
+
 // Container
 
 Container::Container(const Geo::Polygon &shape)
@@ -300,6 +305,9 @@ ContainerGroup::ContainerGroup(const ContainerGroup &containers)
     {
         switch (geo->type())
         {
+        case Geo::Type::TEXT:
+            _containers.push_back(dynamic_cast<const Text *>(geo)->clone());
+            break;
         case Geo::Type::CONTAINER:
             _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
             break;
@@ -329,6 +337,9 @@ ContainerGroup::ContainerGroup(const ContainerGroup &&containers) noexcept
     {
         switch (geo->type())
         {
+        case Geo::Type::TEXT:
+            _containers.push_back(dynamic_cast<const Text *>(geo)->clone());
+            break;
         case Geo::Type::CONTAINER:
             _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
             break;
@@ -392,6 +403,9 @@ ContainerGroup *ContainerGroup::clone() const
     {
         switch (geo->type())
         {
+        case Geo::Type::TEXT:
+            containers.push_back(dynamic_cast<const Text *>(geo)->clone());
+            break;
         case Geo::Type::CONTAINER:
             containers.push_back(dynamic_cast<const Container *>(geo)->clone());
             break;
@@ -438,6 +452,9 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
         {
             switch (geo->type())
             {
+            case Geo::Type::TEXT:
+                _containers.push_back(dynamic_cast<const Text *>(geo)->clone());
+                break;
             case Geo::Type::CONTAINER:
                 _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
                 break;
@@ -479,6 +496,9 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &&group) noexcept
         {
             switch (geo->type())
             {
+            case Geo::Type::TEXT:
+                _containers.push_back(dynamic_cast<const Text *>(geo)->clone());
+                break;
             case Geo::Type::CONTAINER:
                 _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
                 break;
@@ -640,6 +660,12 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
     {
         switch (continer->type())
         {
+        case Geo::Type::TEXT:
+            x0 = std::min(x0, dynamic_cast<const Text *>(continer)->left());
+            y0 = std::min(y0, dynamic_cast<const Text *>(continer)->bottom());
+            x1 = std::max(x1, dynamic_cast<const Text *>(continer)->right());
+            y1 = std::max(y1, dynamic_cast<const Text *>(continer)->top());
+            break;
         case Geo::Type::CONTAINER:
             for (const Geo::Point &point : dynamic_cast<const Container *>(continer)->shape())
             {
@@ -688,7 +714,7 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
             break;
         }
     }
-    return Geo::AABBRect(x0, y0, x1, y1);
+    return Geo::AABBRect(x0, y1, x1, y0);
 }
 
 const size_t ContainerGroup::size() const
@@ -940,6 +966,20 @@ void Combination::transfer(Combination &combination)
 {
     ContainerGroup::transfer(combination);
     combination._border = _border;
+}
+
+Combination &Combination::operator=(const Combination &combination)
+{
+    ContainerGroup::operator=(combination);
+    _type = Geo::Type::COMBINATION;
+    return *this;
+}
+
+Combination &Combination::operator=(const Combination &&combination) noexcept
+{
+    ContainerGroup::operator=(std::move(combination));
+    _type = Geo::Type::COMBINATION;
+    return *this;
 }
 
 void Combination::clear()

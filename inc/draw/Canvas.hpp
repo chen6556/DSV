@@ -13,7 +13,7 @@ class Canvas : public QWidget
     Q_OBJECT
 
 public:
-    enum Tool {NONE, CIRCLE, POLYLINE, RECT, CURVE};
+    enum Tool {NONE, CIRCLE, POLYLINE, RECT, CURVE, TEXT};
 
 private:
     Geo::Circle _circle_cache;

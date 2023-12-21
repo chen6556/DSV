@@ -114,6 +114,7 @@ void Canvas::paint_graph()
     QRectF text_rect;
     QPolygonF points;
 
+    const Text *text;
     const Container *container;
     const CircleContainer *circlecontainer;
     const Geo::Polyline *polyline;
@@ -138,6 +139,21 @@ void Canvas::paint_graph()
             painter.setPen(geo->is_selected() ? pen_selected : pen_not_selected);
             switch (geo->type())
             {
+            case Geo::Type::TEXT:
+                text = dynamic_cast<const Text *>(geo);
+                if (text->is_selected())
+                {
+                    for (const Geo::Point &point : text->shape())
+                    {
+                        points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                            point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
+                    }
+                    points.pop_back();
+                    painter.drawPolygon(points);
+                    painter.setPen(pen_not_selected);
+                }
+                painter.drawText(points.boundingRect(), container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                break;
             case Geo::Type::CONTAINER:
                 container = dynamic_cast<const Container *>(geo);
                 if (!is_visible(container->shape()))
@@ -234,6 +250,21 @@ void Canvas::paint_graph()
                     points.clear();
                     switch (item->type())
                     {
+                    case Geo::Type::TEXT:
+                        text = dynamic_cast<const Text *>(item);
+                        if (text->is_selected())
+                        {
+                            for (const Geo::Point &point : text->shape())
+                            {
+                                points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
+                                    point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
+                            }
+                            points.pop_back();
+                            painter.drawPolygon(points);
+                            painter.setPen(pen_not_selected);
+                        }
+                        painter.drawText(points.boundingRect(), container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                        break;
                     case Geo::Type::CONTAINER:
                         container = dynamic_cast<const Container *>(item);
                         if (!is_visible(container->shape()))
@@ -890,7 +921,9 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         }
         else
         {
-            if (is_obj_selected() && (_last_clicked_obj->type() == Geo::Type::CONTAINER || _last_clicked_obj->type() == Geo::Type::CIRCLECONTAINER))
+            if (is_obj_selected() && (_last_clicked_obj->type() == Geo::Type::TEXT
+                || _last_clicked_obj->type() == Geo::Type::CONTAINER
+                || _last_clicked_obj->type() == Geo::Type::CIRCLECONTAINER))
             {
                 Geo::AABBRect rect(_last_clicked_obj->bounding_rect());
                 rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
@@ -898,18 +931,22 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                 _input_line.move(rect.center().coord().x - _input_line.rect().center().x(),
                                  rect.center().coord().y - _input_line.rect().center().y());
                 _input_line.setFocus();
-                if (dynamic_cast<Container *>(_last_clicked_obj) != nullptr)
+                switch (_last_clicked_obj->type())
                 {
+                case Geo::Type::TEXT:
+                    _input_line.setText(dynamic_cast<Text *>(_last_clicked_obj)->text());
+                    break;
+                case Geo::Type::CONTAINER:
                     _input_line.setText(dynamic_cast<Container *>(_last_clicked_obj)->text());
-                    _input_line.moveCursor(QTextCursor::End);
-                    _input_line.show();
-                }
-                else
-                {
+                    break;
+                case Geo::Type::CIRCLECONTAINER:
                     _input_line.setText(dynamic_cast<CircleContainer *>(_last_clicked_obj)->text());
-                    _input_line.moveCursor(QTextCursor::End);
-                    _input_line.show();
+                    break;
+                default:
+                    break;
                 }
+                _input_line.moveCursor(QTextCursor::End);
+                _input_line.show();
             }
         }
         break;
@@ -985,26 +1022,15 @@ void Canvas::resizeEvent(QResizeEvent *event)
 
 void Canvas::use_tool(const Tool tool)
 {
-    switch (tool)
-    {
-    case Tool::NONE:
-    case Tool::CIRCLE:
-    case Tool::POLYLINE:
-    case Tool::RECT:
-    case Tool::CURVE:
-        _tool_flags[1] = _tool_flags[0];
-        _tool_flags[0] = tool;
-        _bool_flags[1] = (tool != Tool::NONE); // paintable
-        _bool_flags[2] = false; // painting
-        _editer->point_cache().clear();
-        _circle_cache.clear();
-        _AABBRect_cache.clear();
-        emit tool_changed(_tool_flags[0]);
-        update();
-        break;
-    default:
-        break;
-    }
+    _tool_flags[1] = _tool_flags[0];
+    _tool_flags[0] = tool;
+    _bool_flags[1] = (tool != Tool::NONE); // paintable
+    _bool_flags[2] = false; // painting
+    _editer->point_cache().clear();
+    _circle_cache.clear();
+    _AABBRect_cache.clear();
+    emit tool_changed(_tool_flags[0]);
+    update();
 }
 
 void Canvas::show_origin()

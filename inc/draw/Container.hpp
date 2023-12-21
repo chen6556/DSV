@@ -29,6 +29,8 @@ public:
     const Geo::AABBRect &shape() const;
 
     void clear() override;
+
+    Text *clone() const override;
 };
 
 class Container : public Geo::Polygon
@@ -261,6 +263,10 @@ public:
     Combination *clone() const;
 
     void transfer(Combination &combination);
+
+    Combination &operator=(const Combination &combination);
+
+    Combination &operator=(const Combination &&combination) noexcept;
 
     void clear() override;
 
