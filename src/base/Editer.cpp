@@ -1093,7 +1093,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        if (Geo::is_intersected(rect, *dynamic_cast<const Geo::AABBRect *>(container)))
+                        if (Geo::is_intersected(rect, *dynamic_cast<const Geo::AABBRect *>(item)))
                         {
                             end = true;
                         }
