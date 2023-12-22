@@ -176,7 +176,6 @@ void Canvas::paint_graph()
                 painter.drawPolygon(points);
                 if (show_points)
                 {
-                    painter.setRenderHint(QPainter::Antialiasing);
                     painter.setPen(QPen(QColor(0, 140, 255), 6));
                     painter.drawPoints(points);
                 }
@@ -214,19 +213,10 @@ void Canvas::paint_graph()
                 radius = circle.radius();
                 painter.drawEllipse(center.x - radius, center.y - radius, radius * 2, radius * 2);
                 _catched_points.emplace_back(QPointF(center.x, center.y));
-                _catched_points.emplace_back(QPointF(center.x, center.y + radius));
-                _catched_points.emplace_back(QPointF(center.x + radius, center.y));
-                _catched_points.emplace_back(QPointF(center.x, center.y - radius));
-                _catched_points.emplace_back(QPointF(center.x - radius, center.y));
                 if (show_points)
                 {
-                    painter.setRenderHint(QPainter::Antialiasing);
                     painter.setPen(QPen(QColor(0, 140, 255), 6));
                     painter.drawPoint(center.x, center.y);
-                    painter.drawPoint(center.x, center.y + radius);
-                    painter.drawPoint(center.x + radius, center.y);
-                    painter.drawPoint(center.x, center.y - radius);
-                    painter.drawPoint(center.x - radius, center.y);
                 }
                 if (show_text && !circlecontainer->text().isEmpty())
                 {
@@ -288,7 +278,6 @@ void Canvas::paint_graph()
                         painter.drawPolygon(points);
                         if (show_points)
                         {
-                            painter.setRenderHint(QPainter::Antialiasing);
                             painter.setPen(QPen(QColor(0, 140, 255), 6));
                             painter.drawPoints(points);
                         }
@@ -326,19 +315,10 @@ void Canvas::paint_graph()
                         radius = circle.radius();
                         painter.drawEllipse(center.x - radius, center.y - radius, radius * 2, radius * 2);
                         _catched_points.emplace_back(QPointF(center.x, center.y));
-                        _catched_points.emplace_back(QPointF(center.x, center.y + radius));
-                        _catched_points.emplace_back(QPointF(center.x + radius, center.y));
-                        _catched_points.emplace_back(QPointF(center.x, center.y - radius));
-                        _catched_points.emplace_back(QPointF(center.x - radius, center.y));
                         if (show_points)
                         {
-                            painter.setRenderHint(QPainter::Antialiasing);
                             painter.setPen(QPen(QColor(0, 140, 255), 6));
                             painter.drawPoint(center.x, center.y);
-                            painter.drawPoint(center.x, center.y + radius);
-                            painter.drawPoint(center.x + radius, center.y);
-                            painter.drawPoint(center.x, center.y - radius);
-                            painter.drawPoint(center.x - radius, center.y);
                         }
                         if (show_text && !circlecontainer->text().isEmpty())
                         {
@@ -376,7 +356,6 @@ void Canvas::paint_graph()
                         painter.drawPolyline(points);
                         if (show_points)
                         {
-                            painter.setRenderHint(QPainter::Antialiasing);
                             painter.setPen(QPen(QColor(0, 140, 255), 6));
                             painter.drawPoints(points);
                         }
@@ -394,7 +373,6 @@ void Canvas::paint_graph()
                         painter.drawPolyline(points);
                         if (show_points)
                         {
-                            painter.setRenderHint(QPainter::Antialiasing);
                             painter.setPen(QPen(QColor(0, 140, 255), 6));
                             painter.drawPoint(points.front());
                             painter.drawPoint(points.back());
@@ -420,7 +398,6 @@ void Canvas::paint_graph()
                 painter.drawPolyline(points);
                 if (show_points)
                 {
-                    painter.setRenderHint(QPainter::Antialiasing);
                     painter.setPen(QPen(QColor(0, 140, 255), 6));
                     painter.drawPoints(points);
                 }
@@ -452,7 +429,6 @@ void Canvas::paint_graph()
                 painter.drawPolyline(points);
                 if (show_points)
                 {
-                    painter.setRenderHint(QPainter::Antialiasing);
                     painter.setPen(QPen(QColor(0, 140, 255), 6));
                     painter.drawPoint(points.front());
                     painter.drawPoint(points.back());
