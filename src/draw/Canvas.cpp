@@ -599,7 +599,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             if (_clicked_obj == nullptr)
             {
                 _editer->reset_selected_mark();
-                _select_rect = Geo::AABBRect(real_x1, real_y1, real_x1 + 1, real_y1 + 1);
+                _select_rect = Geo::AABBRect(real_x1, real_y1, real_x1, real_y1);
                 _last_point.coord().x = real_x1;
                 _last_point.coord().y = real_y1;
                 _bool_flags[5] = false; // is obj selected
