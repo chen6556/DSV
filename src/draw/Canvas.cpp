@@ -870,7 +870,7 @@ void Canvas::wheelEvent(QWheelEvent *event)
         _visible_area.scale(real_x, real_y, 1.25);
         update();
     }
-    _editer->set_ratio(_ratio);
+    _editer->set_view_ratio(_ratio);
     _editer->auto_aligning(_clicked_obj, _reflines);
 }
 
@@ -950,7 +950,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         break;
     case Qt::MiddleButton:
         _last_point = center();
-        _editer->set_ratio(1.0);
+        _editer->set_view_ratio(1.0);
         show_overview();
         update();
         break;

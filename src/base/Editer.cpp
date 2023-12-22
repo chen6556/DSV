@@ -152,9 +152,9 @@ const size_t Editer::groups_count() const
     return _graph->container_groups().size();
 }
 
-void Editer::set_ratio(const double value)
+void Editer::set_view_ratio(const double value)
 {
-    _ratio = value;
+    _view_ratio = value;
 }
 
 
@@ -177,7 +177,7 @@ void Editer::append_points()
         return;
     }
 
-    if (_point_cache.size() > 3 && Geo::distance(_point_cache.front(), _point_cache.back()) <= 8 / _ratio) // Container
+    if (_point_cache.size() > 3 && Geo::distance(_point_cache.front(), _point_cache.back()) <= 8 / _view_ratio) // Container
     {
         _point_cache.pop_back();
         _point_cache.pop_back();
@@ -873,7 +873,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
         reset_selected_mark();
     }
 
-    const double catch_distance = 2 / _ratio;
+    const double catch_distance = 2 / _view_ratio;
     Text *t = nullptr;
     Container *c = nullptr;
     CircleContainer *cc = nullptr;
@@ -1370,7 +1370,7 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
     Geo::Coord center(rect.center().coord());
     double left = rect.left(), top = rect.top(), right = rect.right(), bottom = rect.bottom();
     const double heigh = top - bottom, width = right - left;
-    const double align_distance = 2 / _ratio;
+    const double align_distance = 2 / _view_ratio;
 
     const size_t count = reflines.size();
     const Geo::AABBRect dst_rect(dst->bounding_rect());
@@ -1474,7 +1474,7 @@ bool Editer::auto_aligning(Geo::Coord &coord, const Geo::Geometry *dst, std::lis
     const Geo::Coord dst_center(dst_rect.center().coord());
     const double dst_left = dst_rect.left(), dst_top = dst_rect.top(), dst_right = dst_rect.right(), dst_bottom = dst_rect.bottom();
     const double dst_heigh = dst_top - dst_bottom, dst_width = dst_right - dst_left;
-    const double align_distance = 2 / _ratio;
+    const double align_distance = 2 / _view_ratio;
 
     if (std::abs(dst_center.x - coord.x) < align_distance)
     {

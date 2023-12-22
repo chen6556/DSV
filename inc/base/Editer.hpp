@@ -14,7 +14,7 @@ private:
     std::list<Graph *> _backup;
     std::list<Geo::Geometry *> _paste_table;
     size_t _current_group = 0;
-    double _ratio = 1.0;
+    double _view_ratio = 1.0;
 
     Geo::Geometry *_catched_points = nullptr;
 
@@ -58,7 +58,7 @@ public:
 
     const size_t groups_count() const;
 
-    void set_ratio(const double value);
+    void set_view_ratio(const double value);
     
 
 
