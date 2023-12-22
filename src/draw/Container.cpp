@@ -69,10 +69,6 @@ Text &Text::operator=(const Text &&text) noexcept
 void Text::set_text(const QString &str, const int size)
 {
     _text = str;
-    if (_text_size == size)
-    {
-        return;
-    }
     _text_size = size;
     const Geo::Coord coord(center().coord());
     QFont font("SimSun");

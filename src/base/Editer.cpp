@@ -888,7 +888,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
         {
         case Geo::Type::TEXT:
             t = dynamic_cast<Text *>(*it);
-            if (Geo::is_inside(point, *dynamic_cast<const Geo::AABBRect *>(t)))
+            if (Geo::distance(point, dynamic_cast<const Geo::AABBRect *>(t)->center()) <= catch_distance * 5)
             {
                 t->is_selected() = true;
                 _graph->container_group(_current_group).pop(it);
@@ -927,7 +927,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        if (Geo::is_inside(point, *dynamic_cast<const Geo::AABBRect *>(item)))
+                        if (Geo::distance(point, dynamic_cast<const Geo::AABBRect *>(item)->center()) <= catch_distance * 5)
                         {
                             cb->is_selected() = true;
                             _graph->container_group(_current_group).pop(it);
@@ -1052,7 +1052,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
         switch (container->type())
         {
         case Geo::Type::TEXT:
-            if (Geo::is_intersected(rect, *dynamic_cast<const Geo::AABBRect *>(container)))
+            if (Geo::is_inside(dynamic_cast<const Geo::AABBRect *>(container)->center(), rect))
             {
                 container->is_selected() = true;
                 result.push_back(container);
@@ -1093,7 +1093,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        if (Geo::is_intersected(rect, *dynamic_cast<const Geo::AABBRect *>(item)))
+                        if (Geo::is_inside(dynamic_cast<const Geo::AABBRect *>(item)->center(), rect))
                         {
                             end = true;
                         }
