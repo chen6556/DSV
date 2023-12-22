@@ -55,14 +55,16 @@ void MainWindow::init()
     QObject::connect(ui->rect_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::RECT); });
     QObject::connect(ui->curve_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::CURVE); _painter.set_bezier_order(ui->curve_sbx->value());});
     QObject::connect(ui->text_btn, &QPushButton::clicked, this,  [this]() { _painter.use_tool(Canvas::Tool::TEXT); });
-    QObject::connect(ui->connect_btn, &QPushButton::clicked, this, [this]() { _editer.connect(GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()); });
-    QObject::connect(ui->combinate_btn, &QPushButton::clicked, this, [this](){ _editer.combinate(); });
+    QObject::connect(ui->connect_btn, &QPushButton::clicked, this, [this]() { _editer.connect(GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()); _painter.refresh_vbo(); _painter.refresh_selected_ibo(); });
+    QObject::connect(ui->combinate_btn, &QPushButton::clicked, this, [this](){ _editer.combinate(); _painter.refresh_vbo(); _painter.refresh_selected_ibo(); });
     QObject::connect(ui->split_btn, &QPushButton::clicked, this, [this](){ _editer.split(); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
     QObject::connect(ui->auto_aligning, &QAction::triggered, this, [this]() {GlobalSetting::get_instance()->setting()["auto_aligning"] = ui->auto_aligning->isChecked();});
     QObject::connect(ui->actionadvanced, &QAction::triggered, this, [this]() { _setting->show(); });
     QObject::connect(ui->show_origin, &QAction::triggered, this, [this]() { ui->show_origin->isChecked() ? _painter.show_origin() : _painter.hide_origin(); });
+
+    QObject::connect(_setting, &Setting::accepted, &_painter, &Canvas::refresh_text_vbo);
 
     for (size_t i = 0; i < 3; ++i)
     {
@@ -74,7 +76,7 @@ void MainWindow::init()
 
     _layers_manager = new LayersManager(this);
     _layers_manager->load_layers(_editer.graph());
-    connect(_layers_manager, &LayersManager::accepted, this, [this](){_layers_cbx->setModel(_layers_manager->model());});
+    connect(_layers_manager, &LayersManager::accepted, this, [this](){_layers_cbx->setModel(_layers_manager->model()); _painter.refresh_vbo(); _editer.reset_selected_mark();});
 
     _layers_btn = new QToolButton(this);
     _layers_btn->setText("Layers");
@@ -221,6 +223,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     case Qt::Key_Escape:
         _painter.cancel_painting();
         _editer.reset_selected_mark();
+        _painter.refresh_selected_ibo();
         break;
     case Qt::Key_Space:
         _painter.use_last_tool();
@@ -230,6 +233,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     case Qt::Key_Backspace:
         if (_editer.remove_selected())
         {
+            _painter.refresh_vbo();
             _painter.update();
         }
         break;
@@ -237,6 +241,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         if (event->modifiers() == Qt::ControlModifier)
         {
             _editer.reset_selected_mark(true);
+            _painter.refresh_selected_ibo();
             _painter.update();
         }
         break;
@@ -283,6 +288,8 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         if (event->modifiers() == Qt::ControlModifier && !_painter.is_painting())
         {
             _editer.load_backup();
+            _painter.refresh_vbo();
+            _painter.refresh_selected_ibo();
             _painter.update();
         }
         break;
@@ -397,18 +404,21 @@ void MainWindow::show_layers_manager()
 void MainWindow::rotate()
 {
     _editer.rotate(ui->rotate_angle->value(), _editer.selected_count() == 0, ui->to_all_layers->isChecked());
+    _painter.refresh_vbo(_editer.selected_count() == 0);
     _painter.update();
 }
 
 void MainWindow::flip_x()
 {
     _editer.flip(true, _editer.selected_count() == 0, ui->to_all_layers->isChecked());
+    _painter.refresh_vbo(_editer.selected_count() == 0);
     _painter.update();
 }
 
 void MainWindow::flip_y()
 {
     _editer.flip(false, _editer.selected_count() == 0, ui->to_all_layers->isChecked());
+    _painter.refresh_vbo(_editer.selected_count() == 0);
     _painter.update();
 }
 
@@ -494,6 +504,7 @@ void MainWindow::open_file(const QString &path)
         _editer.auto_layering();
     }
     _editer.reset_modified();
+    _painter.refresh_vbo();
     _info_labels[2]->setText(path);
     _layers_manager->load_layers(g);
     _layers_cbx->setModel(_layers_manager->model());

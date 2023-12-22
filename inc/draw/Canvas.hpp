@@ -1,14 +1,15 @@
 #pragma once
 
-#include <QWidget>
+#include <QOpenGLWidget>
 #include <QPaintEvent>
 #include <QPainter>
 #include <QLabel>
 #include <QTextEdit>
+#include <QOpenGLFunctions_4_5_Core>
 #include "base/Editer.hpp"
 
 
-class Canvas : public QWidget
+class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
 {
     Q_OBJECT
 
@@ -23,6 +24,15 @@ private:
     Editer *_editer = nullptr;
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
+
+    unsigned int _shader_program, _VAO;
+    unsigned int _VBO[4]; //0:points 1:origin and select rect 2:cache 3:text
+    unsigned int _IBO[4]; //0:polyline 1:polygon 2:selected 3:text
+    int _uniforms[5]; // w, h, vec0, vec1, color
+    size_t _points_count;
+    size_t _indexs_count[4] = {0, 0, 0, 0}; //0:polyline 1:polygon 2:selected 3:text
+    double *_cache = nullptr;
+    size_t _cache_len = 513, _cache_count = 0;
 
     double _canvas_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
     double _view_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
@@ -39,19 +49,15 @@ private:
     Geo::Point _last_point;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
 
-    const static Qt::GlobalColor shape_color = Qt::green, selected_shape_color = Qt::red, text_color = Qt::black;
-
 private:
     void init();
 
-    void paint_cache();
-
-    void paint_graph();
-
-    void paint_select_rect();
-
 protected:
-    void paintEvent(QPaintEvent *event);
+    void initializeGL();
+
+    void resizeGL(int w, int h);
+
+    void paintGL();
 
     void mousePressEvent(QMouseEvent *event);
 
@@ -71,6 +77,8 @@ signals:
 
 public:
     Canvas(QLabel **labels = nullptr, QWidget *parent = nullptr);
+
+    ~Canvas();
 
     void bind_editer(Editer *editer);
 
@@ -149,4 +157,19 @@ public:
     Geo::Coord canvas_coord_to_real_coord(const Geo::Coord &input) const;
 
     Geo::Coord canvas_coord_to_real_coord(const double x, const double y) const;
+
+
+public slots:
+    void refresh_vbo();
+
+    void refresh_vbo(const bool unitary);
+
+    void refresh_selected_ibo();
+
+    void refresh_selected_vbo();
+
+    void refresh_brush_ibo();
+
+    void refresh_text_vbo();
+
 };

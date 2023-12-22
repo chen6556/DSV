@@ -1,6 +1,8 @@
 #include "base/Geometry.hpp"
 #include<cassert>
 #include <algorithm>
+#include <array>
+#include "base/EarCut/EarCut.hpp"
 
 
 using namespace Geo;
@@ -2246,6 +2248,13 @@ const bool Geo::is_inside(const Point &point, const Circle &circle, const bool c
     }
 }
 
+const bool Geo::is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2)
+{
+    return (point2.coord().x - point.coord().x) * (point0.coord().y - point.coord().y) >= (point0.coord().x - point.coord().x) * (point2.coord().y - point.coord().y)
+        && (point0.coord().x - point.coord().x) * (point1.coord().y - point.coord().y) >= (point1.coord().x - point.coord().x) * (point0.coord().y - point.coord().y)
+        && (point1.coord().x - point.coord().x) * (point2.coord().y - point.coord().y) >= (point2.coord().x - point.coord().x) * (point1.coord().y - point.coord().y);
+}
+
 
 const bool Geo::is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite)
 {
@@ -2595,3 +2604,55 @@ const bool Geo::is_Rectangle(const Polygon &polygon)
     }
 }
 
+
+Polygon Geo::circle_to_polygon(const double x, const double y, const double r)
+{
+    double c = 2 * r * Geo::PI;
+    const double degree = std::asin(1 / r) * 2;
+    Vector vec(0, r);
+    const Point center(x, y);
+    std::vector<Point> points;
+    while (c-- > 0)
+    {
+        points.emplace_back(center + vec);
+        vec.rotate(0, 0, degree);
+    }
+    return Polygon(points.cbegin(), points.cend());
+}
+
+Polygon Geo::circle_to_polygon(const Circle &circle)
+{
+    return Geo::circle_to_polygon(circle.center().coord().x, circle.center().coord().y, circle.radius());
+}
+
+
+std::vector<size_t> Geo::ear_cut_to_indexs(const Polygon &polygon)
+{
+    std::vector<std::vector<std::array<double, 2>>> points;
+    points.emplace_back(std::vector<std::array<double, 2>>());
+    for (const Point &point : polygon)
+    {
+        points.front().emplace_back(std::array<double, 2>({point.coord().x, point.coord().y}));
+    }
+    return mapbox::earcut<size_t>(points);
+}
+
+std::vector<Coord> Geo::ear_cut_to_coords(const Polygon &polygon)
+{
+    std::vector<Coord> result;
+    for (size_t i : ear_cut_to_indexs(polygon))
+    {
+        result.emplace_back(polygon[i].coord());
+    }
+    return result;
+}
+
+std::vector<Point> Geo::ear_cut_to_points(const Polygon &polygon)
+{
+    std::vector<Point> result;
+    for (size_t i : ear_cut_to_indexs(polygon))
+    {
+        result.emplace_back(polygon[i]);
+    }
+    return result;
+}

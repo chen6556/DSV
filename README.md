@@ -13,6 +13,8 @@ DSV(DIY Sketch Viewer) 是一款自制绘图程序，提供基础的线段、曲
 | 粘贴 | Ctrl+V |
 | 撤销 | Ctrl+Z |
 
+EarCut三角剖分算法使用了 https://github.com/mapbox/earcut.hpp 的实现。
+
 DSV (DIY Sketch Viewer) is a DIY drawing program that provides basic polyline, curve, circle, rectangle drawing functions, and also supports shape combination and layer functions. DSV drawing files are saved in JSON format, while DSV can read HPGL and PDF files.
 
 | Command | Shortcut |
@@ -26,3 +28,5 @@ DSV (DIY Sketch Viewer) is a DIY drawing program that provides basic polyline, c
 | Copy | Ctrl+C |
 | Paste | Ctrl+V |
 | Undo | Ctrl+Z |
+
+EarCut is based on https://github.com/mapbox/earcut.hpp .
