@@ -1,6 +1,159 @@
 #include "draw/Container.hpp"
+#include <QFontMetrics>
+#include <QStringList>
 
 
+
+// Text
+
+Text::Text(const double x, const double y, const int size, const QString &text)
+    : _text(text), _text_size(size)
+{
+    _type = Geo::Type::TEXT;
+    QFont font("SimSun");
+    font.setPixelSize(size);
+    const QFontMetrics font_metrics(font);
+    long long width = 0;
+    for (const QString &s : text.split('\n'))
+    {
+        width = std::max(width, font.pixelSize() * s.length());
+    }
+    if (width == 0)
+    {
+        width = font.pixelSize() * text.length();
+    }
+    width = std::max(20ll, width);
+    long long height = std::max(font_metrics.lineSpacing() * (text.count('\n') + 1), 20ll);
+    set_left(x - 1 - width / 2);
+    set_right(x + 1 + width / 2);
+    set_top(y + height / 2);
+    set_bottom(y - height / 2);
+}
+
+Text::Text(const Text &text)
+    : Geo::AABBRect(text), _text(text._text), _text_size(text._text_size)
+{
+    _type = Geo::Type::TEXT;
+}
+
+Text::Text(const Text &&text) noexcept
+    : Geo::AABBRect(text), _text(text._text), _text_size(text._text_size)
+{
+    _type = Geo::Type::TEXT;
+}
+
+Text &Text::operator=(const Text &text)
+{
+    if (&text != this)
+    {
+        Geo::AABBRect::operator=(text);
+        _text = text._text;
+        _text_size = text._text_size;
+        _type = Geo::Type::TEXT;
+    }
+    return *this;
+}
+
+Text &Text::operator=(const Text &&text) noexcept
+{
+    if (&text != this)
+    {
+        Geo::AABBRect::operator=(text);
+        _text = text._text;
+        _text_size = text._text_size;
+        _type = Geo::Type::TEXT;
+    }
+    return *this;
+}
+
+void Text::set_text(const QString &str, const int size)
+{
+    _text = str;
+    _text_size = size;
+    const Geo::Coord coord(center().coord());
+    QFont font("SimSun");
+    font.setPixelSize(size);
+    const QFontMetrics font_metrics(font);
+    long long width = 0;
+    for (const QString &s : str.split('\n'))
+    {
+        width = std::max(width, font.pixelSize() * s.length());
+    }
+    if (width == 0)
+    {
+        width = font.pixelSize() * str.length();
+    }
+    width = std::max(20ll, width);
+    long long height = std::max(font_metrics.lineSpacing() * (str.count('\n') + 1), 20ll);
+    set_left(coord.x - 1 - width / 2);
+    set_right(coord.x + 1 + width / 2);
+    set_top(coord.y + height / 2);
+    set_bottom(coord.y - height / 2);
+}
+
+void Text::update_size(const int size)
+{
+    if (_text_size == size)
+    {
+        return;
+    }
+    const Geo::Coord coord(center().coord());
+    QFont font("SimSun");
+    font.setPixelSize(size);
+    const QFontMetrics font_metrics(font);
+    long long width = 0;
+    for (const QString &s : _text.split('\n'))
+    {
+        width = std::max(width, font.pixelSize() * s.length());
+    }
+    if (width == 0)
+    {
+        width = font.pixelSize() * _text.length();
+    }
+    width = std::max(20ll, width);
+    long long height = std::max(font_metrics.lineSpacing() * (_text.count('\n') + 1), 20ll);
+    set_left(coord.x - 1 - width / 2);
+    set_right(coord.x + 1 + width / 2);
+    set_top(coord.y + height / 2);
+    set_bottom(coord.y- height / 2);
+}
+
+int Text::text_size() const
+{
+    return _text_size;
+}
+
+const QString &Text::text() const
+{
+    return _text;
+}
+
+Geo::AABBRect &Text::shape()
+{
+    return *dynamic_cast<Geo::AABBRect *>(this);
+}
+
+const Geo::AABBRect &Text::shape() const
+{
+    return *dynamic_cast<const Geo::AABBRect *>(this);
+}
+
+void Text::clear()
+{
+    _text.clear();
+    const Geo::Coord coord(center().coord());
+    set_left(coord.x - 10);
+    set_left(coord.x + 10);
+    set_top(coord.y + 10);
+    set_bottom(coord.y + 10);
+}
+
+Text *Text::clone() const
+{
+    return new Text(*this);
+}
+
+// Container
 
 Container::Container(const Geo::Polygon &shape)
     : Geo::Polygon(shape)
@@ -187,6 +340,9 @@ ContainerGroup::ContainerGroup(const ContainerGroup &containers)
     {
         switch (geo->type())
         {
+        case Geo::Type::TEXT:
+            _containers.push_back(dynamic_cast<const Text *>(geo)->clone());
+            break;
         case Geo::Type::CONTAINER:
             _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
             break;
@@ -216,6 +372,9 @@ ContainerGroup::ContainerGroup(const ContainerGroup &&containers) noexcept
     {
         switch (geo->type())
         {
+        case Geo::Type::TEXT:
+            _containers.push_back(dynamic_cast<const Text *>(geo)->clone());
+            break;
         case Geo::Type::CONTAINER:
             _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
             break;
@@ -279,6 +438,9 @@ ContainerGroup *ContainerGroup::clone() const
     {
         switch (geo->type())
         {
+        case Geo::Type::TEXT:
+            containers.push_back(dynamic_cast<const Text *>(geo)->clone());
+            break;
         case Geo::Type::CONTAINER:
             containers.push_back(dynamic_cast<const Container *>(geo)->clone());
             break;
@@ -325,6 +487,9 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
         {
             switch (geo->type())
             {
+            case Geo::Type::TEXT:
+                _containers.push_back(dynamic_cast<const Text *>(geo)->clone());
+                break;
             case Geo::Type::CONTAINER:
                 _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
                 break;
@@ -366,6 +531,9 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &&group) noexcept
         {
             switch (geo->type())
             {
+            case Geo::Type::TEXT:
+                _containers.push_back(dynamic_cast<const Text *>(geo)->clone());
+                break;
             case Geo::Type::CONTAINER:
                 _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
                 break;
@@ -527,6 +695,12 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
     {
         switch (continer->type())
         {
+        case Geo::Type::TEXT:
+            x0 = std::min(x0, dynamic_cast<const Text *>(continer)->left());
+            y0 = std::min(y0, dynamic_cast<const Text *>(continer)->bottom());
+            x1 = std::max(x1, dynamic_cast<const Text *>(continer)->right());
+            y1 = std::max(y1, dynamic_cast<const Text *>(continer)->top());
+            break;
         case Geo::Type::CONTAINER:
             for (const Geo::Point &point : dynamic_cast<const Container *>(continer)->shape())
             {
@@ -575,7 +749,7 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
             break;
         }
     }
-    return Geo::AABBRect(x0, y0, x1, y1);
+    return Geo::AABBRect(x0, y1, x1, y0);
 }
 
 const size_t ContainerGroup::size() const
@@ -624,6 +798,11 @@ void ContainerGroup::append(ContainerGroup &group, const bool merge)
     }
 }
 
+void ContainerGroup::append(Text *text)
+{
+    _containers.push_back(text);
+}
+
 void ContainerGroup::insert(const size_t index, Container *container)
 {
     _containers.insert(_containers.begin() + index, container);
@@ -642,6 +821,11 @@ void ContainerGroup::insert(const size_t index, Geo::Polyline *container)
 void ContainerGroup::insert(const size_t index, Geo::Bezier *bezier)
 {
     _containers.insert(_containers.begin() + index, bezier);
+}
+
+void ContainerGroup::insert(const size_t index, Text *text)
+{
+    _containers.insert(_containers.begin() + index, text);
 }
 
 std::vector<Geo::Geometry *>::iterator ContainerGroup::remove(const size_t index)
@@ -778,12 +962,16 @@ void Combination::append(Combination *combination)
     {
         append(combination->pop_back());
     }
+    combination->memo()["remove"] = true;
 }
 
 void Combination::append(Geo::Geometry *geo)
 {
     switch (geo->type())
     {
+    case Geo::Type::TEXT:
+        ContainerGroup::append(dynamic_cast<Text *>(geo));
+        break;
     case Geo::Type::CONTAINER:
         ContainerGroup::append(dynamic_cast<Container *>(geo));
         break;
@@ -813,6 +1001,20 @@ void Combination::transfer(Combination &combination)
 {
     ContainerGroup::transfer(combination);
     combination._border = _border;
+}
+
+Combination &Combination::operator=(const Combination &combination)
+{
+    ContainerGroup::operator=(combination);
+    _type = Geo::Type::COMBINATION;
+    return *this;
+}
+
+Combination &Combination::operator=(const Combination &&combination) noexcept
+{
+    ContainerGroup::operator=(std::move(combination));
+    _type = Geo::Type::COMBINATION;
+    return *this;
 }
 
 void Combination::clear()

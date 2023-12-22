@@ -3,6 +3,7 @@
 #include "draw/Container.hpp"
 #include "io/Action.hpp"
 #include "io/Parser.hpp"
+#include "io/GlobalSetting.hpp"
 #include <qstyle.h>
 #include <sstream>
 #include <string>
@@ -118,16 +119,21 @@ void Importer::load_graph(Graph *g)
 void Importer::reset()
 {
 }
+
 void Importer::store_text(const std::string &text)
 {
-    // qDebug() << text;
     if (_last_container != nullptr)
     {
         _last_container->set_text(_last_container->text() + '\n' + QString::fromUtf8(text));
     }
-    if (_last_circle_container != nullptr)
+    else if (_last_circle_container != nullptr)
     {
         _last_circle_container->set_text(_last_circle_container->text() + '\n' + QString::fromUtf8(text));
+    }
+    else
+    {
+        _graph->container_groups().back().append(new Text(_last_coord.x, _last_coord.y,
+            GlobalSetting::get_instance()->setting()["text_size"].toInt(), QString::fromUtf8(text)));
     }
 }
 

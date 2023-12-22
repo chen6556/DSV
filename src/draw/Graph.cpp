@@ -364,6 +364,13 @@ const ContainerGroup &Graph::back() const
 
 
 
+void Graph::append(Text *text, const size_t index)
+{
+    assert(index < _container_groups.size());
+    container_group(index).append(text);
+    text->is_selected() = false;
+}
+
 void Graph::append(Container *container, const size_t index)
 {
     assert(index < _container_groups.size());

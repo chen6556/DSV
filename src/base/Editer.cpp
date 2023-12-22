@@ -239,6 +239,18 @@ void Editer::append_bezier(const size_t order)
     _point_cache.clear();
 }
 
+void Editer::append_text(const double x, const double y)
+{
+    if (_graph == nullptr)
+    {
+        _graph = new Graph;
+        _graph->append_group();
+    }
+    store_backup();
+    _graph->append(new Text(x, y, GlobalSetting::get_instance()->setting()["text_size"].toInt()), _current_group);
+    _graph->memo()["modified"] = true;
+}
+
 void Editer::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1, const bool change_shape)
 {
     const double catch_distance = GlobalSetting::get_instance()->setting()["catch_distance"].toDouble();
@@ -327,6 +339,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             }
         }
         break;
+    case Geo::Type::TEXT:
     case Geo::Type::COMBINATION:
         points->translate(x1 - x0, y1 - y0);
         break;
@@ -461,6 +474,9 @@ bool Editer::copy_selected()
         {
             switch (container->type())
             {
+            case Geo::Type::TEXT:
+                _paste_table.push_back(dynamic_cast<const Text *>(container)->clone());
+                break;
             case Geo::Type::CONTAINER:
                 _paste_table.push_back(dynamic_cast<const Container *>(container)->clone());
                 break;
@@ -505,6 +521,9 @@ bool Editer::cut_selected()
         {
             switch ((*it)->type())
             {
+            case Geo::Type::TEXT:
+                _paste_table.push_back(dynamic_cast<const Text *>(*it)->clone());
+                break;
             case Geo::Type::CONTAINER:
                 _paste_table.push_back(dynamic_cast<const Container *>(*it)->clone());
                 break;
@@ -548,6 +567,9 @@ bool Editer::paste(const double tx, const double ty)
     {
         switch (geo->type())
         {
+        case Geo::Type::TEXT:
+            _graph->container_group(_current_group).append(dynamic_cast<Text *>(geo)->clone());
+            break;
         case Geo::Type::CONTAINER:
             _graph->container_group(_current_group).append(dynamic_cast<Container *>(geo)->clone());
             break;
@@ -766,8 +788,9 @@ bool Editer::combinate()
     std::vector<size_t> indexs;
     for (Geo::Geometry *geo : _graph->container_group(_current_group))
     {
-        if (geo->is_selected() && (geo->type() == Geo::Type::CONTAINER ||
-            geo->type() == Geo::Type::CIRCLECONTAINER || geo->type() == Geo::Type::COMBINATION
+        if (geo->is_selected() && (geo->type() == Geo::Type::CONTAINER
+            || geo->type() == Geo::Type::TEXT || geo->type() == Geo::Type::CIRCLECONTAINER 
+            || geo->type() == Geo::Type::COMBINATION
             || geo->type() == Geo::Type::POLYLINE ||  geo->type() == Geo::Type::BEZIER))
         {
             indexs.emplace_back(index);
@@ -851,6 +874,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
     }
 
     const double catch_distance = 2 / _ratio;
+    Text *t = nullptr;
     Container *c = nullptr;
     CircleContainer *cc = nullptr;
     Geo::Polyline *p = nullptr;
@@ -862,6 +886,16 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
     {
         switch ((*it)->type())
         {
+        case Geo::Type::TEXT:
+            t = dynamic_cast<Text *>(*it);
+            if (Geo::distance(point, dynamic_cast<const Geo::AABBRect *>(t)->center()) <= catch_distance * 5)
+            {
+                t->is_selected() = true;
+                _graph->container_group(_current_group).pop(it);
+                _graph->container_group(_current_group).append(t);
+                return t;
+            }
+            break;
         case Geo::Type::CONTAINER:
             c = dynamic_cast<Container *>(*it);
             if (Geo::is_inside(point, c->shape(), true))
@@ -892,6 +926,15 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                 {
                     switch (item->type())
                     {
+                    case Geo::Type::TEXT:
+                        if (Geo::distance(point, dynamic_cast<const Geo::AABBRect *>(item)->center()) <= catch_distance * 5)
+                        {
+                            cb->is_selected() = true;
+                            _graph->container_group(_current_group).pop(it);
+                            _graph->container_group(_current_group).append(cb);
+                            return cb;
+                        }
+                        break;
                     case Geo::Type::CONTAINER:
                         if (Geo::is_inside(point, dynamic_cast<Container *>(item)->shape(), true))
                         {
@@ -993,8 +1036,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
 
 Geo::Geometry *Editer::select(const double x, const double y, const bool reset_others)
 {
-    Geo::Geometry *p = select(Geo::Point(x, y), reset_others);
-    return p;
+    return select(Geo::Point(x, y), reset_others);
 }
 
 std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
@@ -1009,6 +1051,17 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
     {
         switch (container->type())
         {
+        case Geo::Type::TEXT:
+            if (Geo::is_inside(dynamic_cast<const Geo::AABBRect *>(container)->center(), rect))
+            {
+                container->is_selected() = true;
+                result.push_back(container);
+            }
+            else
+            {
+                container->is_selected() = false;
+            }
+            break;
         case Geo::Type::CONTAINER:
             if (Geo::is_intersected(rect, dynamic_cast<Container *>(container)->shape()))
             {
@@ -1039,6 +1092,12 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
                 {
                     switch (item->type())
                     {
+                    case Geo::Type::TEXT:
+                        if (Geo::is_inside(dynamic_cast<const Geo::AABBRect *>(item)->center(), rect))
+                        {
+                            end = true;
+                        }
+                        break;
                     case Geo::Type::CONTAINER:
                         if (Geo::is_intersected(rect, dynamic_cast<Container *>(item)->shape(), true))
                         {

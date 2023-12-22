@@ -18,15 +18,16 @@ private:
 
     bool _relative_coord = false;
 
-    struct Text
+    struct Txt
     {
         std::string txt;
         Geo::Point pos;
+        bool marked = false;
 
-        Text(const std::string &text, const Geo::Point &position)
+        Txt(const std::string &text, const Geo::Point &position)
             : txt(text), pos(position) {};
     };
-    std::list<Text> _texts;
+    std::list<Txt> _texts;
 
 private:
     void store_points();

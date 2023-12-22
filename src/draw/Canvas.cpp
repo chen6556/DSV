@@ -23,6 +23,7 @@ Canvas::Canvas(QLabel **labels, QWidget *parent)
 void Canvas::init()
 {
     _input_line.hide();
+    _select_rect.clear();
 }
 
 void Canvas::bind_editer(Editer *editer)
@@ -100,10 +101,13 @@ void Canvas::paint_graph()
         return;
     }
     QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
     painter.setBrush(QColor(250, 250, 250));
-    const bool scale_text = GlobalSetting::get_instance()->setting()["scale_text"].toBool();
-    const double suffix_text_width = 4 * (scale_text ? _ratio : 1), text_heigh_ratio = (scale_text ? _ratio * 1.1 : 1.1);
-    painter.setFont(QFont("SimSun", scale_text ? 12 * _ratio : 12, QFont::Bold, true));
+    const bool show_text = GlobalSetting::get_instance()->setting()["show_text"].toBool();
+    const int text_size = GlobalSetting::get_instance()->setting()["text_size"].toInt();
+    QFont font("SimSun");
+    font.setPixelSize(text_size);
+    painter.setFont(font);
 
     const bool show_points = GlobalSetting::get_instance()->setting()["show_points"].toBool();
 
@@ -111,6 +115,7 @@ void Canvas::paint_graph()
     QRectF text_rect;
     QPolygonF points;
 
+    const Text *text;
     const Container *container;
     const CircleContainer *circlecontainer;
     const Geo::Polyline *polyline;
@@ -121,6 +126,7 @@ void Canvas::paint_graph()
     Geo::Coord center;
     Geo::Circle circle;
     double radius;
+    long long width, height;
     for (const ContainerGroup &group : _editer->graph()->container_groups())
     {
         if (!group.visible())
@@ -134,6 +140,26 @@ void Canvas::paint_graph()
             painter.setPen(geo->is_selected() ? pen_selected : pen_not_selected);
             switch (geo->type())
             {
+            case Geo::Type::TEXT:
+                text = dynamic_cast<const Text *>(geo);
+                if (!Geo::is_intersected(_visible_area, text->shape()))
+                {
+                    continue;
+                }
+                const_cast<Text *>(text)->update_size(text_size);
+                text_rect.setWidth(text->width());
+                text_rect.setHeight(text->height());
+                text_rect.translate(text->center().coord().x * _canvas_ctm[0] + text->center().coord().y
+                            * _canvas_ctm[3] + _canvas_ctm[6] - text_rect.center().x(),
+                            text->center().coord().x * _canvas_ctm[1] + text->center().coord().y * _canvas_ctm[4]
+                            + _canvas_ctm[7] - text_rect.center().y());
+                if (text->is_selected())
+                {
+                    painter.drawRect(text_rect);
+                }
+                painter.setPen(QPen(text_color, 1));
+                painter.drawText(text_rect, text->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                break;
             case Geo::Type::CONTAINER:
                 container = dynamic_cast<const Container *>(geo);
                 if (!is_visible(container->shape()))
@@ -154,12 +180,22 @@ void Canvas::paint_graph()
                     painter.setPen(QPen(QColor(0, 140, 255), 6));
                     painter.drawPoints(points);
                 }
-                if (!container->text().isEmpty())
+                if (show_text && !container->text().isEmpty())
                 {
                     painter.setPen(QPen(text_color, 2));
-                    text_rect = font_metrics.boundingRect(container->text());
-                    text_rect.setWidth(text_rect.width() + suffix_text_width);
-                    text_rect.setHeight(4 * text_heigh_ratio + 16 * (container->text().count('\n') + 1) * text_heigh_ratio);
+                    width = height = 0;
+                    for (const QString &s : container->text().split('\n'))
+                    {
+                        width = std::max(width, font.pixelSize() * s.length());
+                    }
+                    if (width == 0)
+                    {
+                        width = font.pixelSize() * container->text().length();
+                    }
+                    width = std::max(20ll, width);
+                    height = std::max(font_metrics.lineSpacing() * (container->text().count('\n') + 1), 20ll);
+                    text_rect.setWidth(width);
+                    text_rect.setHeight(height);
                     text_rect.translate(points.boundingRect().center() - text_rect.center());
                     painter.drawText(text_rect, container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                 }
@@ -192,12 +228,22 @@ void Canvas::paint_graph()
                     painter.drawPoint(center.x, center.y - radius);
                     painter.drawPoint(center.x - radius, center.y);
                 }
-                if (!circlecontainer->text().isEmpty())
+                if (show_text && !circlecontainer->text().isEmpty())
                 {
                     painter.setPen(QPen(text_color, 2));
-                    text_rect = font_metrics.boundingRect(circlecontainer->text());
-                    text_rect.setWidth(text_rect.width() + suffix_text_width);
-                    text_rect.setHeight(4 * text_heigh_ratio + 16 * (circlecontainer->text().count('\n') + 1) * text_heigh_ratio);
+                    width = height = 0;
+                    for (const QString &s : circlecontainer->text().split('\n'))
+                    {
+                        width = std::max(width, font.pointSize() * s.length());
+                    }
+                    if (width == 0)
+                    {
+                        width = font.pointSize() * circlecontainer->text().length();
+                    }
+                    width = std::max(20ll, width);
+                    height = std::max(font_metrics.lineSpacing() * (circlecontainer->text().count('\n') + 1), 20ll);
+                    text_rect.setWidth(width);
+                    text_rect.setHeight(height);
                     text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
                         circlecontainer->center().coord().y - text_rect.center().y());
                     painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
@@ -210,6 +256,22 @@ void Canvas::paint_graph()
                     points.clear();
                     switch (item->type())
                     {
+                    case Geo::Type::TEXT:
+                        text = dynamic_cast<const Text *>(item);
+                        if (!Geo::is_intersected(_visible_area, text->shape()))
+                        {
+                            continue;
+                        }
+                        const_cast<Text *>(text)->update_size(text_size);
+                        text_rect.setWidth(text->width());
+                        text_rect.setHeight(text->height());
+                        text_rect.translate(text->center().coord().x * _canvas_ctm[0] + text->center().coord().y
+                            * _canvas_ctm[3] + _canvas_ctm[6] - text_rect.center().x(),
+                            text->center().coord().x * _canvas_ctm[1] + text->center().coord().y * _canvas_ctm[4]
+                            + _canvas_ctm[7] - text_rect.center().y());
+                        painter.setPen(QPen(text_color, 1));
+                        painter.drawText(text_rect, text->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                        break;
                     case Geo::Type::CONTAINER:
                         container = dynamic_cast<const Container *>(item);
                         if (!is_visible(container->shape()))
@@ -230,12 +292,22 @@ void Canvas::paint_graph()
                             painter.setPen(QPen(QColor(0, 140, 255), 6));
                             painter.drawPoints(points);
                         }
-                        if (!container->text().isEmpty())
+                        if (show_text && !container->text().isEmpty())
                         {
                             painter.setPen(QPen(text_color, 2));
-                            text_rect = font_metrics.boundingRect(container->text());
-                            text_rect.setWidth(text_rect.width() + suffix_text_width);
-                            text_rect.setHeight(4 * text_heigh_ratio + 16 * (container->text().count('\n') + 1) * text_heigh_ratio);
+                            width = height = 0;
+                            for (const QString &s : container->text().split('\n'))
+                            {
+                                width = std::max(width, font.pixelSize() * s.length());
+                            }
+                            if (width == 0)
+                            {
+                                width = font.pixelSize() * container->text().length();
+                            }
+                            width = std::max(20ll, width);
+                            height = std::max(font_metrics.lineSpacing() * (container->text().count('\n') + 1), 20ll);
+                            text_rect.setWidth(width);
+                            text_rect.setHeight(height);
                             text_rect.translate(points.boundingRect().center() - text_rect.center());
                             painter.drawText(text_rect, container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                         }
@@ -268,12 +340,22 @@ void Canvas::paint_graph()
                             painter.drawPoint(center.x, center.y - radius);
                             painter.drawPoint(center.x - radius, center.y);
                         }
-                        if (!circlecontainer->text().isEmpty())
+                        if (show_text && !circlecontainer->text().isEmpty())
                         {
                             painter.setPen(QPen(text_color, 2));
-                            text_rect = font_metrics.boundingRect(circlecontainer->text());
-                            text_rect.setWidth(text_rect.width() + suffix_text_width);
-                            text_rect.setHeight(4 * text_heigh_ratio + 16 * (circlecontainer->text().count('\n') + 1) * text_heigh_ratio);
+                            width = height = 0;
+                            for (const QString &s : circlecontainer->text().split('\n'))
+                            {
+                                width = std::max(width, font.pixelSize() * s.length());
+                            }
+                            if (width == 0)
+                            {
+                                width = font.pixelSize() * circlecontainer->text().length();
+                            }
+                            width = std::max(20ll, width);
+                            height = std::max(font_metrics.lineSpacing() * (circlecontainer->text().count('\n') + 1), 20ll);
+                            text_rect.setWidth(width);
+                            text_rect.setHeight(height);
                             text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
                                 circlecontainer->center().coord().y - text_rect.center().y());
                             painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
@@ -493,6 +575,12 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 }
                 _bool_flags[2] = !_bool_flags[2]; // painting
                 break;
+            case Tool::TEXT:
+                _editer->append_text(real_x1, real_y1);
+                _tool_flags[0] = Tool::NONE;
+                _bool_flags[1] = _bool_flags[2] = false;
+                emit tool_changed(_tool_flags[0]);
+                break;
             default:
                 break;
             }
@@ -507,19 +595,26 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             if (_clicked_obj == nullptr)
             {
                 _editer->reset_selected_mark();
-                _select_rect = Geo::AABBRect(real_x1, real_y1, real_x1 + 1, real_y1 + 1);
+                _select_rect = Geo::AABBRect(real_x1, real_y1, real_x1, real_y1);
                 _last_point.coord().x = real_x1;
                 _last_point.coord().y = real_y1;
                 _bool_flags[5] = false; // is obj selected
                 if (_input_line.isVisible() && _last_clicked_obj != nullptr)
                 {
-                    if (dynamic_cast<Container *>(_last_clicked_obj) != nullptr)
+                    switch (_last_clicked_obj->type())
                     {
-                        dynamic_cast<Container *>(_last_clicked_obj)->set_text(_input_line.toPlainText());   
-                    }
-                    else
-                    {
+                    case Geo::Type::TEXT:
+                        dynamic_cast<Text *>(_last_clicked_obj)->set_text(_input_line.toPlainText(), 
+                            GlobalSetting::get_instance()->setting()["text_size"].toInt());
+                        break;
+                    case Geo::Type::CONTAINER:
+                        dynamic_cast<Container *>(_last_clicked_obj)->set_text(_input_line.toPlainText());
+                        break;
+                    case Geo::Type::CIRCLECONTAINER:
                         dynamic_cast<CircleContainer *>(_last_clicked_obj)->set_text(_input_line.toPlainText());
+                        break;
+                    default:
+                        break;
                     }
                 }
             }
@@ -846,7 +941,9 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         }
         else
         {
-            if (is_obj_selected() && (_last_clicked_obj->type() == Geo::Type::CONTAINER || _last_clicked_obj->type() == Geo::Type::CIRCLECONTAINER))
+            if (is_obj_selected() && (_last_clicked_obj->type() == Geo::Type::TEXT
+                || _last_clicked_obj->type() == Geo::Type::CONTAINER
+                || _last_clicked_obj->type() == Geo::Type::CIRCLECONTAINER))
             {
                 Geo::AABBRect rect(_last_clicked_obj->bounding_rect());
                 rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
@@ -854,18 +951,22 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                 _input_line.move(rect.center().coord().x - _input_line.rect().center().x(),
                                  rect.center().coord().y - _input_line.rect().center().y());
                 _input_line.setFocus();
-                if (dynamic_cast<Container *>(_last_clicked_obj) != nullptr)
+                switch (_last_clicked_obj->type())
                 {
+                case Geo::Type::TEXT:
+                    _input_line.setText(dynamic_cast<Text *>(_last_clicked_obj)->text());
+                    break;
+                case Geo::Type::CONTAINER:
                     _input_line.setText(dynamic_cast<Container *>(_last_clicked_obj)->text());
-                    _input_line.moveCursor(QTextCursor::End);
-                    _input_line.show();
-                }
-                else
-                {
+                    break;
+                case Geo::Type::CIRCLECONTAINER:
                     _input_line.setText(dynamic_cast<CircleContainer *>(_last_clicked_obj)->text());
-                    _input_line.moveCursor(QTextCursor::End);
-                    _input_line.show();
+                    break;
+                default:
+                    break;
                 }
+                _input_line.moveCursor(QTextCursor::End);
+                _input_line.show();
             }
         }
         break;
@@ -941,26 +1042,15 @@ void Canvas::resizeEvent(QResizeEvent *event)
 
 void Canvas::use_tool(const Tool tool)
 {
-    switch (tool)
-    {
-    case Tool::NONE:
-    case Tool::CIRCLE:
-    case Tool::POLYLINE:
-    case Tool::RECT:
-    case Tool::CURVE:
-        _tool_flags[1] = _tool_flags[0];
-        _tool_flags[0] = tool;
-        _bool_flags[1] = (tool != Tool::NONE); // paintable
-        _bool_flags[2] = false; // painting
-        _editer->point_cache().clear();
-        _circle_cache.clear();
-        _AABBRect_cache.clear();
-        emit tool_changed(_tool_flags[0]);
-        update();
-        break;
-    default:
-        break;
-    }
+    _tool_flags[1] = _tool_flags[0];
+    _tool_flags[0] = tool;
+    _bool_flags[1] = (tool != Tool::NONE); // paintable
+    _bool_flags[2] = false; // painting
+    _editer->point_cache().clear();
+    _circle_cache.clear();
+    _AABBRect_cache.clear();
+    emit tool_changed(_tool_flags[0]);
+    update();
 }
 
 void Canvas::show_origin()

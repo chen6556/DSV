@@ -99,6 +99,8 @@ public:
 
     
 
+    void append(Text *text, const size_t index = 0);
+
     void append(Container *container, const size_t index = 0);
 
     void append(CircleContainer *container, const size_t index = 0);

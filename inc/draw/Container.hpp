@@ -4,7 +4,41 @@
 #include <QString>
 
 
-class Container : public Geo::Polygon // id:0
+class Text : public Geo::AABBRect
+{
+private:
+    QString _text;
+    int _text_size;
+
+public:
+    Text(const double x, const double y, const int size, const QString &text = "Text");
+
+    Text(const Text &text);
+
+    Text(const Text &&text) noexcept;
+
+    Text &operator=(const Text &text);
+
+    Text &operator=(const Text &&text) noexcept;
+
+    void set_text(const QString &str, const int size);
+
+    void update_size(const int size);
+
+    int text_size() const;
+
+    const QString &text() const;
+
+    Geo::AABBRect &shape();
+
+    const Geo::AABBRect &shape() const;
+
+    void clear() override;
+
+    Text *clone() const override;
+};
+
+class Container : public Geo::Polygon
 {
 private:
     QString _txt;
@@ -41,7 +75,7 @@ public:
     Container *clone() const override;
 };
 
-class CircleContainer : public Geo::Circle // id:1
+class CircleContainer : public Geo::Circle
 {
 private:
     QString _txt;
@@ -172,6 +206,8 @@ public:
 
     void append(ContainerGroup &group, const bool merge = true);
 
+    void append(Text *text);
+
     void insert(const size_t index, Container *container);
 
     void insert(const size_t index, CircleContainer *container);
@@ -179,6 +215,8 @@ public:
     void insert(const size_t index, Geo::Polyline *container);
 
     void insert(const size_t index, Geo::Bezier *bezier);
+
+    void insert(const size_t index, Text *text);
 
     std::vector<Geo::Geometry *>::iterator remove(const size_t index);
 
@@ -211,7 +249,7 @@ public:
     void remove_back();
 };
 
-class Combination : public ContainerGroup // id:3
+class Combination : public ContainerGroup
 {
 private:
     Geo::AABBRect _border;
@@ -230,6 +268,10 @@ public:
     Combination *clone() const;
 
     void transfer(Combination &combination);
+
+    Combination &operator=(const Combination &combination);
+
+    Combination &operator=(const Combination &&combination) noexcept;
 
     void clear() override;
 

@@ -160,6 +160,18 @@ QToolButton{background:rgb(142,142,142);}</string>
         </layout>
        </item>
        <item>
+        <widget class="QPushButton" name="text_btn">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
+         <property name="text">
+          <string>Text</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="connect_btn">
          <property name="font">
           <font>

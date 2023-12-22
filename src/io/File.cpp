@@ -1,4 +1,5 @@
 #include "io/File.hpp"
+#include "io/GlobalSetting.hpp"
 #include <QFile>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -15,11 +16,20 @@ void File::read(const QString &path, Graph *graph)
     file.close();
     std::vector<Geo::Point> points;
     graph->clear();
+    const int text_size = GlobalSetting::get_instance()->setting()["text_size"].toInt();
 
     for (int i = 0, count = groups["ContainerGroupCount"].toInt(); i < count; ++i)
     {
         QJsonObject obj = groups[std::to_string(i).c_str()].toObject();
         graph->append_group();
+
+        QJsonArray texts = obj["Texts"].toArray();
+        for (QJsonValueConstRef text : texts)
+        {
+            QJsonArray coordinates = text.toObject()["shape"].toArray();
+            graph->back().append(new Text(coordinates[0].toDouble(), coordinates[1].toDouble(),
+                text_size, text.toObject()["text"].toString()));
+        }
     
         QJsonArray containers = obj["ContainerGroup"].toArray();
         for (QJsonValueConstRef container : containers)
@@ -81,12 +91,11 @@ void File::write_json(const QString &path, Graph *graph)
     CircleContainer *circlecontainer = nullptr;
     Geo::Polyline *polyline = nullptr;
     Geo::Bezier *bezier = nullptr;
-    int container_id, circlecontainer_id, index = 0;
+    int index = 0;
 
     for (const ContainerGroup &group : graph->container_groups())
     {
-        container_id = circlecontainer_id = 0;
-        QJsonArray container_objs, circlecontainer_objs, link_objs, polyline_objs, bezier_objs;
+        QJsonArray container_objs, circlecontainer_objs, link_objs, polyline_objs, bezier_objs, text_objs;
         QJsonObject container_group;
 
         for (Geo::Geometry *geo : group)
@@ -95,6 +104,13 @@ void File::write_json(const QString &path, Graph *graph)
             QJsonArray array;
             switch (geo->type())
             {
+            case Geo::Type::TEXT:
+                array.append(dynamic_cast<Text *>(geo)->center().coord().x);
+                array.append(dynamic_cast<Text *>(geo)->center().coord().y);
+                obj2.insert("shape", array);
+                obj2.insert("text", dynamic_cast<Text *>(geo)->text());
+                text_objs.append(obj2);
+                break;
             case Geo::Type::CONTAINER:
                 container = dynamic_cast<Container *>(geo);
                 for (const Geo::Point &point : container->shape())
@@ -104,9 +120,7 @@ void File::write_json(const QString &path, Graph *graph)
                 }
                 obj2.insert("shape", array);
                 obj2.insert("text", container->text());
-                obj2.insert("id", ++container_id * 10);
                 container_objs.append(obj2);
-                container->memo()["id"] = container_id * 10;
                 container = nullptr;
                 break;
             case Geo::Type::CIRCLECONTAINER:
@@ -116,9 +130,7 @@ void File::write_json(const QString &path, Graph *graph)
                 array.append(circlecontainer->radius());
                 obj2.insert("shape", array);
                 obj2.insert("text", circlecontainer->text());
-                obj2.insert("id", ++circlecontainer_id * 10 + 1);
                 circlecontainer_objs.append(obj2);
-                circlecontainer->memo()["id"] = circlecontainer_id * 10 + 1;
                 circlecontainer = nullptr;
                 break;
             case Geo::Type::COMBINATION:
@@ -128,6 +140,13 @@ void File::write_json(const QString &path, Graph *graph)
                     QJsonArray array;
                     switch (item->type())
                     {
+                    case Geo::Type::TEXT:
+                        array.append(dynamic_cast<Text *>(geo)->center().coord().x);
+                        array.append(dynamic_cast<Text *>(geo)->center().coord().y);
+                        obj2.insert("shape", array);
+                        obj2.insert("text", dynamic_cast<Text *>(geo)->text());
+                        text_objs.append(obj2);
+                        break;
                     case Geo::Type::CONTAINER:
                         container = dynamic_cast<Container *>(item);
                         for (const Geo::Point &point : container->shape())
@@ -137,9 +156,7 @@ void File::write_json(const QString &path, Graph *graph)
                         }
                         obj2.insert("shape", array);
                         obj2.insert("text", container->text());
-                        obj2.insert("id", ++container_id * 10);
                         container_objs.append(obj2);
-                        container->memo()["id"] = container_id * 10;
                         container = nullptr;
                         break;
                     case Geo::Type::CIRCLECONTAINER:
@@ -149,9 +166,7 @@ void File::write_json(const QString &path, Graph *graph)
                         array.append(circlecontainer->radius());
                         obj2.insert("shape", array);
                         obj2.insert("text", circlecontainer->text());
-                        obj2.insert("id", ++circlecontainer_id * 10 + 1);
                         circlecontainer_objs.append(obj2);
-                        circlecontainer->memo()["id"] = circlecontainer_id * 10 + 1;
                         circlecontainer = nullptr;
                         break;
                     case Geo::Type::POLYLINE:
@@ -226,6 +241,7 @@ void File::write_json(const QString &path, Graph *graph)
             }
         }
         
+        container_group.insert("Text", text_objs);
         container_group.insert("ContainerGroup", container_objs);
         container_group.insert("CircleContainerGroup", circlecontainer_objs);
         container_group.insert("LinkGroup", link_objs);
@@ -247,6 +263,7 @@ void File::write_json(const QString &path, Graph *graph)
 
 void File::write_plt(const std::string &path, Graph *graph)
 {
+    Text *text = nullptr;
     Container *container = nullptr;
     CircleContainer *circlecontainer = nullptr;
     Geo::Polyline *polyline = nullptr;
@@ -260,6 +277,12 @@ void File::write_plt(const std::string &path, Graph *graph)
         {
             switch (geo->type())
             {
+            case Geo::Type::TEXT:
+                text = dynamic_cast<Text *>(geo);
+                output << "PU" << text->center().coord().x << ',' << text->center().coord().y << ";PD";
+                output << ";LB" << text->text().toStdString() << ';' << std::endl;
+                text = nullptr;
+                break;
             case Geo::Type::CONTAINER:
                 container = dynamic_cast<Container *>(geo);
                 output << "PU" << container->shape().front().coord().x << ',' << container->shape().front().coord().y << ";PD";
@@ -297,6 +320,12 @@ void File::write_plt(const std::string &path, Graph *graph)
                 {
                     switch (item->type())
                     {
+                    case Geo::Type::TEXT:
+                        text = dynamic_cast<Text *>(geo);
+                        output << "PU" << text->center().coord().x << ',' << text->center().coord().y << ";PD";
+                        output << ";LB" << text->text().toStdString() << ';' << std::endl;
+                        text = nullptr;
+                        break;
                     case Geo::Type::CONTAINER:
                         container = dynamic_cast<Container *>(item);
                         output << "PU" << container->shape().front().coord().x << ',' << container->shape().front().coord().y << ";PD";

@@ -70,6 +70,8 @@ public:
 
     void append_bezier(const size_t order);
 
+    void append_text(const double x, const double y);
+
     void translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1, const bool change_shape = true);
 
     bool remove_selected();

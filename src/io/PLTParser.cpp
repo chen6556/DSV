@@ -1,5 +1,6 @@
 #include "io/PLTParser.hpp"
 #include "io/Parser.hpp"
+#include "io/GlobalSetting.hpp"
 #include <sstream>
 
 
@@ -174,13 +175,14 @@ void Importer::ar()
 
 void Importer::store_text(const std::string &text)
 {
-    _texts.emplace_back(Text(text, _points.back()));
+    _texts.emplace_back(Txt(text, _points.back()));
     _points.clear();
 }
 
 void Importer::end()
 {
-    for (Text &text : _texts)
+    const int text_size = GlobalSetting::get_instance()->setting()["text_size"].toInt();
+    for (Txt &text : _texts)
     {
         for (Geo::Geometry *geo : _graph->container_group())
         {
@@ -194,6 +196,7 @@ void Importer::end()
                 {
                     dynamic_cast<Container *>(geo)->set_text(dynamic_cast<Container *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
                 }
+                text.marked = true;
                 break;
             }
             else if (geo->type() == Geo::Type::CIRCLECONTAINER && Geo::is_inside(text.pos, dynamic_cast<CircleContainer *>(geo)->shape(), true))
@@ -206,8 +209,13 @@ void Importer::end()
                 {
                     dynamic_cast<CircleContainer *>(geo)->set_text(dynamic_cast<CircleContainer *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
                 }
+                text.marked = true;
                 break;
             }
+        }
+        if (!text.marked)
+        {
+            _graph->container_group().append(new Text(text.pos.coord().x, text.pos.coord().y, text_size, QString::fromStdString(text.txt)));
         }
     }
     _texts.clear();

@@ -776,7 +776,7 @@ AABBRect Polyline::bounding_rect() const
         x1 = std::max(x1, point.coord().x);
         y1 = std::max(y1, point.coord().y);
     }
-    return AABBRect(x0, y0, x1, y1);
+    return AABBRect(x0, y1, x1, y0);
 }
 
 Polygon Polyline::mini_bounding_rect() const
@@ -808,6 +808,12 @@ Polygon Polyline::mini_bounding_rect() const
 }
 
 // AABBRect
+
+AABBRect::AABBRect()
+{
+    _type = Geo::Type::AABBRECT;
+    _points.assign({Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0)});
+}
 
 AABBRect::AABBRect(const double x0, const double y0, const double x1, const double y1)
 {
@@ -880,26 +886,48 @@ AABBRect::AABBRect(const AABBRect &&rect) noexcept
 
 const double AABBRect::left() const
 {
-    assert(!_points.empty());
     return _points.front().coord().x;
 }
 
 const double AABBRect::top() const
 {
-    assert(!_points.empty());
     return _points.front().coord().y;
 }
 
 const double AABBRect::right() const
 {
-    assert(!_points.empty());
     return _points[2].coord().x;
 }
 
 const double AABBRect::bottom() const
 {
-    assert(!_points.empty());
     return _points[2].coord().y;
+}
+
+void AABBRect::set_left(const double value)
+{
+    _points.front().coord().x = value;
+    _points[3].coord().x = value;
+    _points.back().coord().x = value;
+}
+
+void AABBRect::set_top(const double value)
+{
+    _points.front().coord().y = value;
+    _points[1].coord().y = value;
+    _points.back().coord().y = value;
+}
+
+void AABBRect::set_right(const double value)
+{
+    _points[1].coord().x = value;
+    _points[2].coord().x = value;
+}
+
+void AABBRect::set_bottom(const double value)
+{
+    _points[2].coord().y = value;
+    _points[3].coord().y = value;
 }
 
 AABBRect &AABBRect::operator=(const AABBRect &rect)
@@ -983,6 +1011,20 @@ const double AABBRect::height() const
     {
         return -1;
     }
+}
+
+void AABBRect::set_width(const double value)
+{
+    const double d = (value - width()) / 2;
+    _points[0].coord().x = _points[3].coord().x = _points[4].coord().x = _points[0].coord().x - d;
+    _points[1].coord().x = _points[2].coord().x = _points[1].coord().x + d;
+}
+
+void AABBRect::set_height(const double value)
+{
+    const double d = (value - height()) / 2;
+    _points[0].coord().y = _points[1].coord().y = _points[4].coord().y = _points[0].coord().y + d;
+    _points[2].coord().x = _points[3].coord().x = _points[2].coord().x + d;
 }
 
 void AABBRect::transform(const double a, const double b, const double c, const double d, const double e, const double f)
@@ -1480,7 +1522,7 @@ AABBRect Circle::bounding_rect() const
     }
     else
     {
-        return AABBRect(_center.coord().x - _radius, _center.coord().y - _radius, _center.coord().x + _radius, _center.coord().y + _radius);
+        return AABBRect(_center.coord().x - _radius, _center.coord().y + _radius, _center.coord().x + _radius, _center.coord().y - _radius);
     }
 }
 
@@ -1492,7 +1534,7 @@ Polygon Circle::mini_bounding_rect() const
     }
     else
     {
-        return AABBRect(_center.coord().x - _radius, _center.coord().y - _radius, _center.coord().x + _radius, _center.coord().y + _radius);
+        return AABBRect(_center.coord().x - _radius, _center.coord().y + _radius, _center.coord().x + _radius, _center.coord().y - _radius);
     }
 }
 
@@ -1655,9 +1697,9 @@ AABBRect Line::bounding_rect() const
     else
     {
         return AABBRect(std::min(_start_point.coord().x, _end_point.coord().x),
-                         std::min(_start_point.coord().y, _end_point.coord().y),
-                         std::max(_start_point.coord().x, _end_point.coord().x),
-                         std::max(_start_point.coord().y, _end_point.coord().y));
+                        std::max(_start_point.coord().y, _end_point.coord().y),
+                        std::max(_start_point.coord().x, _end_point.coord().x),
+                        std::min(_start_point.coord().y, _end_point.coord().y));
     }
 }
 
@@ -1670,9 +1712,9 @@ Polygon Line::mini_bounding_rect() const
     else
     {
         return AABBRect(std::min(_start_point.coord().x, _end_point.coord().x),
-                         std::min(_start_point.coord().y, _end_point.coord().y),
-                         std::max(_start_point.coord().x, _end_point.coord().x),
-                         std::max(_start_point.coord().y, _end_point.coord().y));
+                        std::max(_start_point.coord().y, _end_point.coord().y),
+                        std::max(_start_point.coord().x, _end_point.coord().x),
+                        std::min(_start_point.coord().y, _end_point.coord().y));
     }
 }
 

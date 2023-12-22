@@ -10,7 +10,7 @@ namespace Geo
     const static double EPSILON = 1e-10;
 
     enum Type {GEOMETRY, POINT, POLYLINE, AABBRECT, POLYGON, CIRCLE, LINE, BEZIER,
-        CONTAINER, CIRCLECONTAINER, CONTAINERGROUP, COMBINATION, GRAPH};
+        TEXT, CONTAINER, CIRCLECONTAINER, CONTAINERGROUP, COMBINATION, GRAPH};
 
     class AABBRect;
 
@@ -94,7 +94,7 @@ namespace Geo
         const bool operator!=(const Coord &coord) const;
     };
 
-    class Point : public Geometry // Type:10
+    class Point : public Geometry
     {
     private:
         Coord _pos;
@@ -167,7 +167,7 @@ namespace Geo
 
     typedef Point Vector;
 
-    class Polyline : public Geometry // Type:20
+    class Polyline : public Geometry
     {
     private:
         std::vector<Point> _points;
@@ -278,13 +278,13 @@ namespace Geo
         Polygon mini_bounding_rect() const override;
     };
 
-    class AABBRect : public Geometry // Type:30
+    class AABBRect : public Geometry
     {
     private:
         std::vector<Point> _points;
 
     public:
-        AABBRect() { _type = Geo::Type::AABBRECT; };
+        AABBRect();
 
         AABBRect(const double x0, const double y0, const double x1, const double y1);
 
@@ -301,6 +301,14 @@ namespace Geo
         const double right() const;
 
         const double bottom() const;
+
+        void set_left(const double value);
+
+        void set_top(const double value);
+
+        void set_right(const double value);
+
+        void set_bottom(const double value);
 
         AABBRect &operator=(const AABBRect &reac);
 
@@ -319,6 +327,10 @@ namespace Geo
         const double width() const;
 
         const double height() const;
+
+        void set_width(const double value);
+
+        void set_height(const double value);
 
         void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
 
@@ -367,7 +379,7 @@ namespace Geo
         const Point &operator[](const size_t index) const;
     };
 
-    class Polygon : public Polyline // Type:40
+    class Polygon : public Polyline
     {
     public:
         Polygon() { _type = Type::POLYGON; };
@@ -417,7 +429,7 @@ namespace Geo
         const double area() const;
     };
 
-    class Circle : public Geometry // Type:50
+    class Circle : public Geometry
     {
     private:
         Point _center;
@@ -479,7 +491,7 @@ namespace Geo
         void operator-=(const Point &point);
     };
 
-    class Line : public Geometry // Type:60
+    class Line : public Geometry
     {
     private:
         Point _start_point;
@@ -539,7 +551,7 @@ namespace Geo
         const Point &back() const;
     };
 
-    class Bezier : public Polyline // Type:21
+    class Bezier : public Polyline
     {
     private:
         size_t _order = 2;
