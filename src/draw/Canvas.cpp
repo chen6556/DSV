@@ -269,10 +269,6 @@ void Canvas::paint_graph()
                             * _canvas_ctm[3] + _canvas_ctm[6] - text_rect.center().x(),
                             text->center().coord().x * _canvas_ctm[1] + text->center().coord().y * _canvas_ctm[4]
                             + _canvas_ctm[7] - text_rect.center().y());
-                        if (text->is_selected())
-                        {
-                            painter.drawRect(text_rect);
-                        }
                         painter.setPen(QPen(text_color, 1));
                         painter.drawText(text_rect, text->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                         break;
