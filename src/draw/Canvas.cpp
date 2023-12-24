@@ -261,6 +261,7 @@ void Canvas::paint_graph()
                             + _canvas_ctm[7] - text_rect.center().y());
                         painter.setPen(QPen(text_color, 1));
                         painter.drawText(text_rect, text->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                        painter.setPen(geo->is_selected() ? pen_selected : pen_not_selected);
                         break;
                     case Geo::Type::CONTAINER:
                         container = dynamic_cast<const Container *>(item);
