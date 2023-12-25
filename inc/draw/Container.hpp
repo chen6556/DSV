@@ -122,6 +122,9 @@ private:
     bool _visible = true;
 
 public:
+    QString name;
+
+public:
     ContainerGroup() { _type = Geo::Type::CONTAINERGROUP; };
 
     ContainerGroup(const ContainerGroup &containers);

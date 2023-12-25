@@ -10,6 +10,9 @@ private:
     double _ratio = 1;
 
 public:
+    bool modified = false;
+
+public:
     Graph(){ _type = Geo::Type::GRAPH; };
 
     Graph(const Graph &graph);

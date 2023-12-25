@@ -123,7 +123,7 @@ void Canvas::paintGL()
         unsigned int *indexs = new unsigned int[index_len];
         for (const Geo::Geometry *obj : _editer->selected())
         {
-            for (size_t i = 0, index = obj->memo()["point_index"].to_ull(), count = obj->memo()["point_count"].to_ull(); i < count; ++i)
+            for (size_t i = 0, index = obj->point_index, count = obj->point_count; i < count; ++i)
             {
                 indexs[index_count++] = index++;
                 if (index_count == index_len)
@@ -496,20 +496,20 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 if (std::find(selected_objs.begin(), selected_objs.end(), _clicked_obj) == selected_objs.end())
                 {
                     _editer->reset_selected_mark();
-                    _clicked_obj->is_selected() = true;
+                    _clicked_obj->is_selected = true;
                 }
 
                 size_t index_len = 512, index_count = 0;
                 unsigned int *indexs = new unsigned int[index_len];
                 for (const Geo::Geometry *obj : selected_objs)
                 {
-                    if (obj->is_selected())
+                    if (obj->is_selected)
                     {
                         if (obj->type() == Geo::Type::COMBINATION)
                         {
                             for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
                             {
-                                for (size_t i = 0, index = item->memo()["point_index"].to_ull(), count = item->memo()["point_count"].to_ull(); i < count; ++i)
+                                for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                                 {
                                     indexs[index_count++] = index++;
                                     if (index_count == index_len)
@@ -534,7 +534,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         }
                         else
                         {
-                            for (size_t i = 0, index = obj->memo()["point_index"].to_ull(), count = obj->memo()["point_count"].to_ull(); i < count; ++i)
+                            for (size_t i = 0, index = obj->point_index, count = obj->point_count; i < count; ++i)
                             {
                                 indexs[index_count++] = index++;
                                 if (index_count == index_len)
@@ -563,7 +563,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                                 {
                                     _cache[_cache_count++] = point.coord().x;
                                     _cache[_cache_count++] = point.coord().y;
-                                    _cache[_cache_count++] = obj->memo()["point_depth"].to_double();
+                                    _cache[_cache_count++] = obj->depth;
                                 }
                             }
                         }
@@ -792,8 +792,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             {
                 _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier);
                 data_count = data_len;
-                depth = obj->memo()["point_depth"].to_double();
-                while (obj->memo()["point_count"].to_ull() * 3 > data_len)
+                depth = obj->depth;
+                while (obj->point_count * 3 > data_len)
                 {
                     data_len *= 2;
                 }
@@ -826,7 +826,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
                     {
                         data_count = 0;
-                        depth = item->memo()["point_depth"].to_double();
+                        depth = item->depth;
                         switch (item->type())
                         {
                         case Geo::Type::CONTAINER:
@@ -864,7 +864,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                         default:
                             break;
                         }
-                        glBufferSubData(GL_ARRAY_BUFFER, item->memo()["point_index"].to_ull() * 3 * sizeof(double), data_count * sizeof(double), data);
+                        glBufferSubData(GL_ARRAY_BUFFER, item->point_index * 3 * sizeof(double), data_count * sizeof(double), data);
                     }
                     data_count = 0;
                     break;
@@ -899,7 +899,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 }
                 if (data_count > 0)
                 {
-                    glBufferSubData(GL_ARRAY_BUFFER, obj->memo()["point_index"].to_ull() * 3 * sizeof(double), data_count * sizeof(double), data);
+                    glBufferSubData(GL_ARRAY_BUFFER, obj->point_index * 3 * sizeof(double), data_count * sizeof(double), data);
                 }
             }
             if (selected_count == 1 && _cache_count > 0)
@@ -1539,13 +1539,10 @@ void Canvas::refresh_vbo()
 
         for (Geo::Geometry *geo : group)
         {
-            geo->memo()["point_index"] = data_count / 3;
-            geo->memo()["point_depth"] = depth;
+            geo->point_index = data_count / 3;
+            geo->depth = depth;
             switch (geo->type())
             {
-            case Geo::Type::TEXT:
-                geo->memo()["point_count"] = 0;
-                break;
             case Geo::Type::CONTAINER:
                 container = dynamic_cast<Container *>(geo);
                 for (size_t i : Geo::ear_cut_to_indexs(container->shape()))
@@ -1584,7 +1581,7 @@ void Canvas::refresh_vbo()
                     }
                 }
                 polyline_indexs[polyline_index_count++] = UINT_MAX;
-                container->memo()["point_count"] = container->shape().size();
+                container->point_count = container->shape().size();
                 break;
             case Geo::Type::CIRCLECONTAINER:
                 circlecontainer = dynamic_cast<CircleContainer *>(geo);
@@ -1625,19 +1622,16 @@ void Canvas::refresh_vbo()
                     }
                 }
                 polyline_indexs[polyline_index_count++] = UINT_MAX;
-                circlecontainer->memo()["point_count"] = data_count / 3 - circlecontainer->memo()["point_index"].to_ull();
+                circlecontainer->point_count = data_count / 3 - circlecontainer->point_index;
                 break;
             case Geo::Type::COMBINATION:
-                geo->memo()["point_count"] = polyline_index_count;
+                geo->point_count = polyline_index_count;
                 for (Geo::Geometry *item : *dynamic_cast<Combination *>(geo))
                 {
-                    item->memo()["point_index"] = data_count / 3;
-                    item->memo()["point_depth"] = depth;
+                    item->point_index = data_count / 3;
+                    item->depth = depth;
                     switch (item->type())
                     {
-                    case Geo::Type::TEXT:
-                        item->memo()["point_count"] = 0;
-                        break;
                     case Geo::Type::CONTAINER:
                         container = dynamic_cast<Container *>(item);
                         for (size_t i : Geo::ear_cut_to_indexs(container->shape()))
@@ -1676,7 +1670,7 @@ void Canvas::refresh_vbo()
                             }
                         }
                         polyline_indexs[polyline_index_count++] = UINT_MAX;
-                        container->memo()["point_count"] = container->shape().size();
+                        container->point_count = container->shape().size();
                         break;
                     case Geo::Type::CIRCLECONTAINER:
                         circlecontainer = dynamic_cast<CircleContainer *>(item);
@@ -1717,7 +1711,7 @@ void Canvas::refresh_vbo()
                             }
                         }
                         polyline_indexs[polyline_index_count++] = UINT_MAX;
-                        circlecontainer->memo()["point_count"] = data_count / 3 - circlecontainer->memo()["point_index"].to_ull();
+                        circlecontainer->point_count = data_count / 3 - circlecontainer->point_index;
                         break;
                     case Geo::Type::POLYLINE:
                         polyline = dynamic_cast<Geo::Polyline *>(item);
@@ -1745,7 +1739,7 @@ void Canvas::refresh_vbo()
                             }
                         }
                         polyline_indexs[polyline_index_count++] = UINT_MAX;
-                        polyline->memo()["point_count"] = polyline->size();
+                        polyline->point_count = polyline->size();
                         break;
                     case Geo::Type::BEZIER:
                         for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
@@ -1772,7 +1766,7 @@ void Canvas::refresh_vbo()
                             }
                         }
                         polyline_indexs[polyline_index_count++] = UINT_MAX;
-                        item->memo()["point_count"] = dynamic_cast<const Geo::Bezier *>(item)->shape().size();
+                        item->point_count = dynamic_cast<const Geo::Bezier *>(item)->shape().size();
                         break;
                     default:
                         break;
@@ -1792,7 +1786,7 @@ void Canvas::refresh_vbo()
                         polyline_indexs = temp;
                     }
                 }
-                geo->memo()["point_count"] = polyline_index_count - geo->memo()["point_count"].to_ull();
+                geo->point_count = polyline_index_count - geo->point_count;
                 break;
             case Geo::Type::POLYLINE:
                 polyline = dynamic_cast<Geo::Polyline *>(geo);
@@ -1820,7 +1814,7 @@ void Canvas::refresh_vbo()
                     }
                 }
                 polyline_indexs[polyline_index_count++] = UINT_MAX;
-                polyline->memo()["point_count"] = polyline->size();
+                polyline->point_count = polyline->size();
                 break;
             case Geo::Type::BEZIER:
                 for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(geo)->shape())
@@ -1847,7 +1841,7 @@ void Canvas::refresh_vbo()
                     }
                 }
                 polyline_indexs[polyline_index_count++] = UINT_MAX;
-                geo->memo()["point_count"] = dynamic_cast<const Geo::Bezier *>(geo)->shape().size();
+                geo->point_count = dynamic_cast<const Geo::Bezier *>(geo)->shape().size();
                 break;
             default:
                 break;
@@ -1913,13 +1907,13 @@ void Canvas::refresh_vbo(const bool unitary)
 
         for (const Geo::Geometry *geo : group)
         {
-            if (!unitary && !geo->is_selected())
+            if (!unitary && !geo->is_selected)
             {
                 continue;
             }
 
             data_count = 0;
-            depth = geo->memo()["point_depth"].to_double();
+            depth = geo->depth;
             switch (geo->type())
             {
             case Geo::Type::CONTAINER:
@@ -1958,7 +1952,7 @@ void Canvas::refresh_vbo(const bool unitary)
                 for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
                 {
                     data_count = 0;
-                    depth = item->memo()["point_depth"].to_double();
+                    depth = item->depth;
                     switch (item->type())
                     {
                     case Geo::Type::CONTAINER:
@@ -2028,7 +2022,7 @@ void Canvas::refresh_vbo(const bool unitary)
                     default:
                         break;
                     }
-                    glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->memo()["point_index"].to_ull() * 3,
+                    glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->point_index * 3,
                         sizeof(double) * data_count, data);
                 }
                 data_count = 0;
@@ -2070,7 +2064,7 @@ void Canvas::refresh_vbo(const bool unitary)
             }
             if (data_count > 0)
             {
-                glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * geo->memo()["point_index"].to_ull() * 3,
+                glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * geo->point_index * 3,
                     sizeof(double) * data_count, data);
             }
         }
@@ -2094,7 +2088,7 @@ void Canvas::refresh_selected_ibo()
 
         for (const Geo::Geometry *geo : group)
         {
-            if (!geo->is_selected())
+            if (!geo->is_selected)
             {
                 continue;
             }
@@ -2104,7 +2098,7 @@ void Canvas::refresh_selected_ibo()
             case Geo::Type::CONTAINER:
             case Geo::Type::CIRCLECONTAINER:
             case Geo::Type::POLYLINE:
-                for (size_t index = geo->memo()["point_index"].to_ull(), i = 0, count = geo->memo()["point_count"].to_ull(); i < count; ++i)
+                for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
                 {
                     indexs[index_count++] = index + i;
                     if (index_count == index_len)
@@ -2125,7 +2119,7 @@ void Canvas::refresh_selected_ibo()
                     case Geo::Type::CONTAINER:
                     case Geo::Type::CIRCLECONTAINER:
                     case Geo::Type::POLYLINE:
-                        for (size_t index = item->memo()["point_index"].to_ull(), i = 0, count = item->memo()["point_count"].to_ull(); i < count; ++i)
+                        for (size_t index = item->point_index, i = 0, count = item->point_count; i < count; ++i)
                         {
                             indexs[index_count++] = index + i;
                             if (index_count == index_len)
@@ -2139,7 +2133,7 @@ void Canvas::refresh_selected_ibo()
                         }
                         break;
                     case Geo::Type::BEZIER:
-                        for (size_t index = item->memo()["point_index"].to_ull(), i = 0, count = item->memo()["point_count"].to_ull(); i < count; ++i)
+                        for (size_t index = item->point_index, i = 0, count = item->point_count; i < count; ++i)
                         {
                             indexs[index_count++] = index + i;
                             if (index_count == index_len)
@@ -2167,7 +2161,7 @@ void Canvas::refresh_selected_ibo()
                 }
                 break;
             case Geo::Type::BEZIER:
-                for (size_t index = geo->memo()["point_index"].to_ull(), i = 0, count = geo->memo()["point_count"].to_ull(); i < count; ++i)
+                for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
                 {
                     indexs[index_count++] = index + i;
                     if (index_count == index_len)
@@ -2217,8 +2211,8 @@ void Canvas::refresh_selected_vbo()
     for (Geo::Geometry *obj : _editer->selected())
     {
         data_count = data_len;
-        depth = obj->memo()["point_depth"].to_double();
-        while (obj->memo()["point_count"].to_ull() * 3 > data_len)
+        depth = obj->depth;
+        while (obj->point_count * 3 > data_len)
         {
             data_len *= 2;
         }
@@ -2250,7 +2244,7 @@ void Canvas::refresh_selected_vbo()
             for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
             {
                 data_count = 0;
-                depth = item->memo()["point_depth"].to_double();
+                depth = item->depth;
                 switch (item->type())
                 {
                 case Geo::Type::CONTAINER:
@@ -2288,7 +2282,7 @@ void Canvas::refresh_selected_vbo()
                 default:
                     break;
                 }
-                glBufferSubData(GL_ARRAY_BUFFER, item->memo()["point_index"].to_ull() * 3 * sizeof(double), data_count * sizeof(double), data);
+                glBufferSubData(GL_ARRAY_BUFFER, item->point_index * 3 * sizeof(double), data_count * sizeof(double), data);
             }
             data_count = 0;
             break;
@@ -2313,7 +2307,7 @@ void Canvas::refresh_selected_vbo()
         }
         if (data_count > 0)
         {
-            glBufferSubData(GL_ARRAY_BUFFER, obj->memo()["point_index"].to_ull() * 3 * sizeof(double), data_count * sizeof(double), data);
+            glBufferSubData(GL_ARRAY_BUFFER, obj->point_index * 3 * sizeof(double), data_count * sizeof(double), data);
         }
     }
     doneCurrent();
@@ -2339,7 +2333,7 @@ void Canvas::refresh_brush_ibo()
             case Geo::Type::CONTAINER:
                 for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Container *>(geo)->shape()))
                 {
-                    polygon_indexs[polygon_index_count++] = geo->memo()["point_index"].to_ull() + i;
+                    polygon_indexs[polygon_index_count++] = geo->point_index + i;
                     if (polygon_index_count == polygon_index_len)
                     {
                         polygon_index_len *= 2;
@@ -2353,7 +2347,7 @@ void Canvas::refresh_brush_ibo()
             case Geo::Type::CIRCLECONTAINER:
                 for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(geo))))
                 {
-                    polygon_indexs[polygon_index_count++] = geo->memo()["point_index"].to_ull() / 3 + i;
+                    polygon_indexs[polygon_index_count++] = geo->point_index / 3 + i;
                     if (polygon_index_count == polygon_index_len)
                     {
                         polygon_index_len *= 2;
@@ -2372,7 +2366,7 @@ void Canvas::refresh_brush_ibo()
                     case Geo::Type::CONTAINER:
                         for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Container *>(item)->shape()))
                         {
-                            polygon_indexs[polygon_index_count++] = item->memo()["point_index"].to_ull() + i;
+                            polygon_indexs[polygon_index_count++] = item->point_index + i;
                             if (polygon_index_count == polygon_index_len)
                             {
                                 polygon_index_len *= 2;
@@ -2386,7 +2380,7 @@ void Canvas::refresh_brush_ibo()
                     case Geo::Type::CIRCLECONTAINER:
                         for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item))))
                         {
-                            polygon_indexs[polygon_index_count++] = item->memo()["point_index"].to_ull() + i;
+                            polygon_indexs[polygon_index_count++] = item->point_index + i;
                             if (polygon_index_count == polygon_index_len)
                             {
                                 polygon_index_len *= 2;
@@ -2471,7 +2465,7 @@ void Canvas::refresh_text_vbo()
                     path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
-                depth = text->memo()["point_depth"].to_double();
+                depth = text->depth;
                 break;
             case Geo::Type::CONTAINER:
                 container = dynamic_cast<const Container *>(geo);
@@ -2488,7 +2482,7 @@ void Canvas::refresh_text_vbo()
                     path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
-                depth = container->memo()["point_depth"].to_double();
+                depth = container->depth;
                 break;
             case Geo::Type::CIRCLECONTAINER:
                 circlecontainer = dynamic_cast<const CircleContainer *>(geo);
@@ -2505,7 +2499,7 @@ void Canvas::refresh_text_vbo()
                     path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
-                depth = circlecontainer->memo()["point_depth"].to_double();
+                depth = circlecontainer->depth;
                 break;
             case Geo::Type::COMBINATION:
                 for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
@@ -2527,7 +2521,7 @@ void Canvas::refresh_text_vbo()
                             path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
-                        depth = text->memo()["point_depth"].to_double();
+                        depth = text->depth;
                         break;
                     case Geo::Type::CONTAINER:
                         container = dynamic_cast<const Container *>(item);
@@ -2545,7 +2539,7 @@ void Canvas::refresh_text_vbo()
                             path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
-                        depth = container->memo()["point_depth"].to_double();
+                        depth = container->depth;
                         break;
                     case Geo::Type::CIRCLECONTAINER:
                         circlecontainer = dynamic_cast<const CircleContainer *>(item);
@@ -2563,7 +2557,7 @@ void Canvas::refresh_text_vbo()
                             path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
-                        depth = circlecontainer->memo()["point_depth"].to_double();
+                        depth = circlecontainer->depth;
                         break;
                     default:
                         break;
