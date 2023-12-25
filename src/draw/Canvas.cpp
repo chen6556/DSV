@@ -17,6 +17,13 @@ Canvas::Canvas(QLabel **labels, QWidget *parent)
     init();
 }
 
+Canvas::~Canvas()
+{
+    delete _menu;
+    delete _up;
+    delete _down;
+}
+
 
 
 
@@ -24,6 +31,12 @@ void Canvas::init()
 {
     _input_line.hide();
     _select_rect.clear();
+
+    _menu = new QMenu(this);
+    _up = new QAction("Up");
+    _down = new QAction("Down");
+    _menu->addAction(_up);
+    _menu->addAction(_down);
 }
 
 void Canvas::bind_editer(Editer *editer)
@@ -629,6 +642,22 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         }
         break;
     case Qt::RightButton:
+        if (!is_paintable())
+        {
+            _clicked_obj = _editer->select(real_x1, real_y1, true);
+            if (_clicked_obj != nullptr)
+            {
+                const QAction *a = _menu->exec(QCursor::pos());
+                if (a == _up)
+                {
+                    _editer->up(_clicked_obj);
+                }
+                else if (a == _down)
+                {
+                    _editer->down(_clicked_obj);
+                }
+            }
+        }
         break;
     case Qt::MiddleButton:
         _bool_flags[0] = true; // view moveable

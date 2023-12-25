@@ -128,7 +128,7 @@ void LayersManager::layer_up()
     _layers.remove(count - index);
     _layers_model->setStringList(_layers);
     _graph->modified = true;
-}  
+}
 
 void LayersManager::layer_down()
 {

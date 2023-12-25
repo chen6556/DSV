@@ -6,6 +6,8 @@
 #include <QLabel>
 #include <QTextEdit>
 #include "base/Editer.hpp"
+#include <QMenu>
+#include <QAction>
 
 
 class Canvas : public QWidget
@@ -39,6 +41,10 @@ private:
     Geo::Point _last_point;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
 
+    QMenu *_menu = nullptr;
+    QAction *_up = nullptr;
+    QAction *_down = nullptr;
+
     const static Qt::GlobalColor shape_color = Qt::green, selected_shape_color = Qt::red, text_color = Qt::black;
 
 private:
@@ -71,6 +77,8 @@ signals:
 
 public:
     Canvas(QLabel **labels = nullptr, QWidget *parent = nullptr);
+
+    ~Canvas();
 
     void bind_editer(Editer *editer);
 

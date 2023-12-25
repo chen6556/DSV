@@ -773,9 +773,9 @@ void ContainerGroup::append(CircleContainer *container)
     _containers.push_back(container);
 }
 
-void ContainerGroup::append(Geo::Polyline *container)
+void ContainerGroup::append(Geo::Polyline *polyline)
 {
-    _containers.push_back(container);
+    _containers.push_back(polyline);
 }
 
 void ContainerGroup::append(Geo::Bezier *bezier)
@@ -819,9 +819,14 @@ void ContainerGroup::insert(const size_t index, CircleContainer *container)
     _containers.insert(_containers.begin() + index, container);
 }
 
-void ContainerGroup::insert(const size_t index, Geo::Polyline *container)
+void ContainerGroup::insert(const size_t index, Combination *combination)
 {
-    _containers.insert(_containers.begin() + index, container);
+    _containers.insert(_containers.begin() + index, combination);
+}
+
+void ContainerGroup::insert(const size_t index, Geo::Polyline *polyline)
+{
+    _containers.insert(_containers.begin() + index, polyline);
 }
 
 void ContainerGroup::insert(const size_t index, Geo::Bezier *bezier)
