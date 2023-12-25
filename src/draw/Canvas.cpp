@@ -483,6 +483,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         break;
                     }
                     refresh_text_vbo();
+                    _input_line.clear();
+                    _input_line.hide();
                 }
             }
             else
@@ -594,9 +596,12 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _editer->auto_aligning(_clicked_obj, real_x1, real_y1, _reflines,
                         GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool());
                 }
+                if (_input_line.isVisible() && _last_clicked_obj != _clicked_obj)
+                {
+                    _input_line.hide();
+                    _input_line.clear();
+                }
             }
-            _input_line.clear();
-            _input_line.hide();
             update();
         }
         break;
@@ -913,7 +918,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             delete data;
             if (GlobalSetting::get_instance()->setting()["show_text"].toBool())
             {
-                refresh_text_vbo();
+                refresh_text_vbo(false);
             }
             if (event->modifiers() != Qt::ControlModifier && GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
             {
@@ -1073,11 +1078,6 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                 }
                 _input_line.moveCursor(QTextCursor::End);
                 _input_line.show();
-
-                if (GlobalSetting::get_instance()->setting()["show_text"].toBool())
-                {
-                    refresh_text_vbo();
-                }
             }
         }
         break;
@@ -1402,7 +1402,6 @@ void Canvas::cut()
     _stored_mouse_pos = _mouse_pos_1;
     _editer->cut_selected();
     refresh_vbo();
-    refresh_text_vbo();
 }
 
 void Canvas::paste()
@@ -1411,7 +1410,6 @@ void Canvas::paste()
     {
         refresh_vbo();
         refresh_selected_ibo();
-        refresh_text_vbo();
         update();
     }
 }
@@ -2066,6 +2064,11 @@ void Canvas::refresh_vbo(const bool unitary)
 
     doneCurrent();
     delete data;
+
+    if (GlobalSetting::get_instance()->setting()["show_text"].toBool())
+    {
+        refresh_text_vbo(unitary);
+    }
 }
 
 void Canvas::refresh_selected_ibo()
@@ -2092,68 +2095,6 @@ void Canvas::refresh_selected_ibo()
             case Geo::Type::CONTAINER:
             case Geo::Type::CIRCLECONTAINER:
             case Geo::Type::POLYLINE:
-                for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
-                {
-                    indexs[index_count++] = index + i;
-                    if (index_count == index_len)
-                    {
-                        index_len *= 2;
-                        unsigned int *temp = new unsigned int[index_len];
-                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                        delete indexs;
-                        indexs = temp;
-                    }
-                }
-                break;
-            case Geo::Type::COMBINATION:
-                for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
-                {
-                    switch (item->type())
-                    {
-                    case Geo::Type::CONTAINER:
-                    case Geo::Type::CIRCLECONTAINER:
-                    case Geo::Type::POLYLINE:
-                        for (size_t index = item->point_index, i = 0, count = item->point_count; i < count; ++i)
-                        {
-                            indexs[index_count++] = index + i;
-                            if (index_count == index_len)
-                            {
-                                index_len *= 2;
-                                unsigned int *temp = new unsigned int[index_len];
-                                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                                delete indexs;
-                                indexs = temp;
-                            }
-                        }
-                        break;
-                    case Geo::Type::BEZIER:
-                        for (size_t index = item->point_index, i = 0, count = item->point_count; i < count; ++i)
-                        {
-                            indexs[index_count++] = index + i;
-                            if (index_count == index_len)
-                            {
-                                index_len *= 2;
-                                unsigned int *temp = new unsigned int[index_len];
-                                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                                delete indexs;
-                                indexs = temp;
-                            }
-                        }
-                        break;
-                    default:
-                        break;
-                    }
-                    indexs[index_count++] = UINT_MAX;
-                    if (index_count == index_len)
-                    {
-                        index_len *= 2;
-                        unsigned int *temp = new unsigned int[index_len];
-                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                        delete indexs;
-                        indexs = temp;
-                    }
-                }
-                break;
             case Geo::Type::BEZIER:
                 for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
                 {
@@ -2167,19 +2108,48 @@ void Canvas::refresh_selected_ibo()
                         indexs = temp;
                     }
                 }
+                indexs[index_count++] = UINT_MAX;
+                if (index_count == index_len)
+                {
+                    index_len *= 2;
+                    unsigned int *temp = new unsigned int[index_len];
+                    std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                    delete indexs;
+                    indexs = temp;
+                }
+                break;
+            case Geo::Type::COMBINATION:
+                for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                {
+                    if (item->type() == Geo::Type::TEXT)
+                    {
+                        continue;
+                    }
+                    for (size_t index = item->point_index, i = 0, count = item->point_count; i < count; ++i)
+                    {
+                        indexs[index_count++] = index + i;
+                        if (index_count == index_len)
+                        {
+                            index_len *= 2;
+                            unsigned int *temp = new unsigned int[index_len];
+                            std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                            delete indexs;
+                            indexs = temp;
+                        }
+                    }
+                    indexs[index_count++] = UINT_MAX;
+                    if (index_count == index_len)
+                    {
+                        index_len *= 2;
+                        unsigned int *temp = new unsigned int[index_len];
+                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                        delete indexs;
+                        indexs = temp;
+                    }
+                }
                 break;
             default:
                 continue;
-            }
-
-            indexs[index_count++] = UINT_MAX;
-            if (index_count == index_len)
-            {
-                index_len *= 2;
-                unsigned int *temp = new unsigned int[index_len];
-                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                delete indexs;
-                indexs = temp;
             }
         }
     }
@@ -2419,9 +2389,9 @@ void Canvas::refresh_text_vbo()
     const QFontMetrics font_metrics(font);
     QRectF text_rect;
 
-    const Text *text = nullptr;
-    const Container *container = nullptr;
-    const CircleContainer *circlecontainer = nullptr;
+    Text *text = nullptr;
+    Container *container = nullptr;
+    CircleContainer *circlecontainer = nullptr;
     Geo::Coord coord;
     double depth;
     Geo::Polygon points;
@@ -2440,12 +2410,12 @@ void Canvas::refresh_text_vbo()
             continue;
         }
 
-        for (const Geo::Geometry *geo : group)
+        for (Geo::Geometry *geo : group)
         {
             switch (geo->type())
             {
             case Geo::Type::TEXT:
-                text = dynamic_cast<const Text *>(geo);
+                text = dynamic_cast<Text *>(geo);
                 if (text->text().isEmpty())
                 {
                     continue;
@@ -2460,9 +2430,10 @@ void Canvas::refresh_text_vbo()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
                 depth = text->depth;
+                text->text_index = data_count;
                 break;
             case Geo::Type::CONTAINER:
-                container = dynamic_cast<const Container *>(geo);
+                container = dynamic_cast<Container *>(geo);
                 if (container->text().isEmpty())
                 {
                     continue;
@@ -2477,9 +2448,10 @@ void Canvas::refresh_text_vbo()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
                 depth = container->depth;
+                container->text_index = data_count;
                 break;
             case Geo::Type::CIRCLECONTAINER:
-                circlecontainer = dynamic_cast<const CircleContainer *>(geo);
+                circlecontainer = dynamic_cast<CircleContainer *>(geo);
                 if (circlecontainer->text().isEmpty())
                 {
                     continue;
@@ -2494,14 +2466,15 @@ void Canvas::refresh_text_vbo()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
                 depth = circlecontainer->depth;
+                circlecontainer->text_index = data_count;
                 break;
             case Geo::Type::COMBINATION:
-                for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                for (Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
                 {
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        text = dynamic_cast<const Text *>(item);
+                        text = dynamic_cast<Text *>(item);
                         if (text->text().isEmpty())
                         {
                             continue;
@@ -2516,9 +2489,10 @@ void Canvas::refresh_text_vbo()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
                         depth = text->depth;
+                        text->text_index = data_count;
                         break;
                     case Geo::Type::CONTAINER:
-                        container = dynamic_cast<const Container *>(item);
+                        container = dynamic_cast<Container *>(item);
                         if (container->text().isEmpty())
                         {
                             continue;
@@ -2534,9 +2508,10 @@ void Canvas::refresh_text_vbo()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
                         depth = container->depth;
+                        container->text_index = data_count;
                         break;
                     case Geo::Type::CIRCLECONTAINER:
-                        circlecontainer = dynamic_cast<const CircleContainer *>(item);
+                        circlecontainer = dynamic_cast<CircleContainer *>(item);
                         if (circlecontainer->text().isEmpty())
                         {
                             continue;
@@ -2552,6 +2527,7 @@ void Canvas::refresh_text_vbo()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
                         depth = circlecontainer->depth;
+                        circlecontainer->text_index = data_count;
                         break;
                     default:
                         break;
@@ -2598,6 +2574,20 @@ void Canvas::refresh_text_vbo()
                             delete indexs;
                             indexs = temp;
                         }
+                    }
+                    switch (item->type())
+                    {
+                    case Geo::Type::TEXT:
+                        text->text_count = data_count - text->text_index;
+                        break;
+                    case Geo::Type::CONTAINER:
+                        container->text_count = data_count - container->text_index;
+                        break;
+                    case Geo::Type::CIRCLECONTAINER:
+                        circlecontainer->text_count = data_count - circlecontainer->text_index;
+                        break; 
+                    default:
+                        break;
                     }
                     path.clear();
                 }
@@ -2648,6 +2638,20 @@ void Canvas::refresh_text_vbo()
                     indexs = temp;
                 }
             }
+            switch (geo->type())
+            {
+            case Geo::Type::TEXT:
+                text->text_count = data_count - text->text_index;
+                break;
+            case Geo::Type::CONTAINER:
+                container->text_count = data_count - container->text_index;
+                break;
+            case Geo::Type::CIRCLECONTAINER:
+                circlecontainer->text_count = data_count - circlecontainer->text_index;
+                break;
+            default:
+                break;
+            }
             path.clear();
         }
     }
@@ -2664,4 +2668,233 @@ void Canvas::refresh_text_vbo()
 
     delete data;
     delete indexs;
+}
+
+void Canvas::refresh_text_vbo(const bool unitary)
+{
+    if (!GlobalSetting::get_instance()->setting()["show_text"].toBool())
+    {
+        return;
+    }
+
+    QPainterPath path;
+    const QFont font("SimSun", GlobalSetting::get_instance()->setting()["text_size"].toInt());
+    const QFontMetrics font_metrics(font);
+    QRectF text_rect;
+
+    Text *text = nullptr;
+    Container *container = nullptr;
+    CircleContainer *circlecontainer = nullptr;
+    Geo::Coord coord;
+    double depth;
+    int string_index;
+    QStringList strings;
+
+    size_t data_len = 4104, data_count = 0;
+    double *data = new double[data_len];
+    makeCurrent();
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[3]); // text
+    for (const ContainerGroup &group : _editer->graph()->container_groups())
+    {
+        if (!group.visible())
+        {
+            continue;
+        }
+
+        for (Geo::Geometry *geo : group)
+        {
+            if (!unitary && !geo->is_selected)
+            {
+                continue;
+            }
+
+            switch (geo->type())
+            {
+            case Geo::Type::TEXT:
+                text = dynamic_cast<Text *>(geo);
+                if (text->text().isEmpty())
+                {
+                    continue;
+                }
+                coord = text->center().coord();
+                strings = text->text().split('\n');
+                string_index = 0;
+                for (const QString &string : strings)
+                {
+                    text_rect = font_metrics.boundingRect(string);
+                    path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                        * (strings.length() / 2.0 - string_index++), font, string);
+                }
+                depth = text->depth;
+                break;
+            case Geo::Type::CONTAINER:
+                container = dynamic_cast<Container *>(geo);
+                if (container->text().isEmpty())
+                {
+                    continue;
+                }
+                coord = container->bounding_rect().center().coord();
+                strings = container->text().split('\n');
+                string_index = 0;
+                for (const QString &string : strings)
+                {
+                    text_rect = font_metrics.boundingRect(string);
+                    path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                        * (strings.length() / 2.0 - string_index++), font, string);
+                }
+                depth = container->depth;
+                break;
+            case Geo::Type::CIRCLECONTAINER:
+                circlecontainer = dynamic_cast<CircleContainer *>(geo);
+                if (circlecontainer->text().isEmpty())
+                {
+                    continue;
+                }
+                coord = circlecontainer->bounding_rect().center().coord();
+                strings = circlecontainer->text().split('\n');
+                string_index = 0;
+                for (const QString &string : strings)
+                {
+                    text_rect = font_metrics.boundingRect(string);
+                    path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                        * (strings.length() / 2.0 - string_index++), font, string);
+                }
+                depth = circlecontainer->depth;
+                break;
+            case Geo::Type::COMBINATION:
+                for (Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                {
+                    switch (item->type())
+                    {
+                    case Geo::Type::TEXT:
+                        text = dynamic_cast<Text *>(item);
+                        if (text->text().isEmpty())
+                        {
+                            continue;
+                        }
+                        coord = text->center().coord();
+                        strings = text->text().split('\n');
+                        string_index = 0;
+                        for (const QString &string : strings)
+                        {
+                            text_rect = font_metrics.boundingRect(string);
+                            path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                                * (strings.length() / 2.0 - string_index++), font, string);
+                        }
+                        depth = text->depth;
+                        break;
+                    case Geo::Type::CONTAINER:
+                        container = dynamic_cast<Container *>(item);
+                        if (container->text().isEmpty())
+                        {
+                            continue;
+                        }
+                        coord = container->bounding_rect().center().coord();
+                        text_rect = font_metrics.boundingRect(container->text());
+                        strings = container->text().split('\n');
+                        string_index = 0;
+                        for (const QString &string : strings)
+                        {
+                            text_rect = font_metrics.boundingRect(string);
+                            path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                                * (strings.length() / 2.0 - string_index++), font, string);
+                        }
+                        depth = container->depth;
+                        break;
+                    case Geo::Type::CIRCLECONTAINER:
+                        circlecontainer = dynamic_cast<CircleContainer *>(item);
+                        if (circlecontainer->text().isEmpty())
+                        {
+                            continue;
+                        }
+                        coord = circlecontainer->bounding_rect().center().coord();
+                        text_rect = font_metrics.boundingRect(circlecontainer->text());
+                        strings = circlecontainer->text().split('\n');
+                        string_index = 0;
+                        for (const QString &string : strings)
+                        {
+                            text_rect = font_metrics.boundingRect(string);
+                            path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                                * (strings.length() / 2.0 - string_index++), font, string);
+                        }
+                        depth = circlecontainer->depth;
+                        break;
+                    default:
+                        break;
+                    }
+                    data_count = 0;
+                    for (const QPolygonF &polygon : path.toSubpathPolygons())
+                    {
+                        for (const QPointF &point : polygon)
+                        {
+                            data[data_count++] = point.x();
+                            data[data_count++] = point.y();
+                            data[data_count++] = depth;
+                            if (data_count == data_len)
+                            {
+                                data_len *= 2;
+                                double *temp = new double[data_len];
+                                std::memmove(temp, data, data_count * sizeof(double));
+                                delete data;
+                                data = temp;
+                            }
+                        }
+                    }
+                    switch (item->type())
+                    {
+                    case Geo::Type::TEXT:
+                        glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * text->text_index, sizeof(double) * data_count, data);
+                        break;
+                    case Geo::Type::CONTAINER:
+                        glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * container->text_index, sizeof(double) * data_count, data);
+                        break;
+                    case Geo::Type::CIRCLECONTAINER:
+                        glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * circlecontainer->text_index, sizeof(double) * data_count, data);
+                        break; 
+                    default:
+                        break;
+                    }
+                    path.clear();
+                }
+                break;
+            default:
+                break;
+            }
+            data_count = 0;
+            for (const QPolygonF &polygon : path.toSubpathPolygons())
+            {
+                for (const QPointF &point : polygon)
+                {
+                    data[data_count++] = point.x();
+                    data[data_count++] = point.y();
+                    data[data_count++] = depth;
+                    if (data_count == data_len)
+                    {
+                        data_len *= 2;
+                        double *temp = new double[data_len];
+                        std::memmove(temp, data, data_count * sizeof(double));
+                        delete data;
+                        data = temp;
+                    }
+                }
+            }
+            switch (geo->type())
+            {
+            case Geo::Type::TEXT:
+                glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * text->text_index, sizeof(double) * data_count, data);
+                break;
+            case Geo::Type::CONTAINER:
+                glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * container->text_index, sizeof(double) * data_count, data);
+                break;
+            case Geo::Type::CIRCLECONTAINER:
+                glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * circlecontainer->text_index, sizeof(double) * data_count, data);
+                break;
+            default:
+                break;
+            }
+            path.clear();
+        }
+    }
+    doneCurrent();
+    delete data;
 }

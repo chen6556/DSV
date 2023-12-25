@@ -172,4 +172,6 @@ public slots:
 
     void refresh_text_vbo();
 
+    void refresh_text_vbo(const bool unitary);
+
 };

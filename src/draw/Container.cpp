@@ -31,13 +31,15 @@ Text::Text(const double x, const double y, const int size, const QString &text)
 }
 
 Text::Text(const Text &text)
-    : Geo::AABBRect(text), _text(text._text), _text_size(text._text_size)
+    : Geo::AABBRect(text), _text(text._text), _text_size(text._text_size),
+    text_index(text.text_index), text_count(text.text_count)
 {
     _type = Geo::Type::TEXT;
 }
 
 Text::Text(const Text &&text) noexcept
-    : Geo::AABBRect(text), _text(text._text), _text_size(text._text_size)
+    : Geo::AABBRect(text), _text(text._text), _text_size(text._text_size),
+    text_index(text.text_index), text_count(text.text_count)
 {
     _type = Geo::Type::TEXT;
 }
@@ -49,6 +51,8 @@ Text &Text::operator=(const Text &text)
         Geo::AABBRect::operator=(text);
         _text = text._text;
         _text_size = text._text_size;
+        text_index = text.text_index;
+        text_count = text.text_count;
         _type = Geo::Type::TEXT;
     }
     return *this;
@@ -61,6 +65,8 @@ Text &Text::operator=(const Text &&text) noexcept
         Geo::AABBRect::operator=(text);
         _text = text._text;
         _text_size = text._text_size;
+        text_index = text.text_index;
+        text_count = text.text_count;
         _type = Geo::Type::TEXT;
     }
     return *this;
@@ -168,13 +174,17 @@ Container::Container(const QString &txt, const Geo::Polygon &shape)
 }
 
 Container::Container(const Container &container)
-    : Geo::Polygon(container), _txt(container._txt)
+    : Geo::Polygon(container), _txt(container._txt),
+    text_index(container.text_index),
+    text_count(container.text_count)
 {
     _type = Geo::Type::CONTAINER;
 }
 
 Container::Container(const Container &&container) noexcept
-    : Geo::Polygon(container), _txt(container._txt)
+    : Geo::Polygon(container), _txt(container._txt),
+    text_index(container.text_index),
+    text_count(container.text_count)
 {
     _type = Geo::Type::CONTAINER;
 }
@@ -185,6 +195,8 @@ Container &Container::operator=(const Container &container)
     {
         Geo::Polygon::operator=(container);
         _txt = container._txt;
+        text_index = container.text_index;
+        text_count = container.text_count;
         _type = Geo::Type::CONTAINER;
     }
     return *this;
@@ -196,6 +208,8 @@ Container &Container::operator=(const Container &&container) noexcept
     {
         Geo::Polygon::operator=(container);
         _txt = container._txt;
+        text_index = container.text_index;
+        text_count = container.text_count;
         _type = Geo::Type::CONTAINER;
     }
     return *this;
@@ -262,13 +276,15 @@ CircleContainer::CircleContainer(const QString &txt, const double x, const doubl
 }
 
 CircleContainer::CircleContainer(const CircleContainer &container)
-    : Geo::Circle(container), _txt(container._txt)
+    : Geo::Circle(container), _txt(container._txt),
+    text_index(container.text_index), text_count(container.text_count)
 {
     _type = Geo::Type::CIRCLECONTAINER;
 }
 
 CircleContainer::CircleContainer(const CircleContainer &&container) noexcept
-    : Geo::Circle(container), _txt(container._txt)
+    : Geo::Circle(container), _txt(container._txt),
+    text_index(container.text_index), text_count(container.text_count)
 {
     _type = Geo::Type::CIRCLECONTAINER;
 }
@@ -279,6 +295,8 @@ CircleContainer &CircleContainer::operator=(const CircleContainer &container)
     {
         Geo::Circle::operator=(container);
         _txt = container._txt;
+        text_index = container.text_index;
+        text_count = container.text_count;
         _type = Geo::Type::CIRCLECONTAINER;
     }
     return *this;
@@ -290,6 +308,8 @@ CircleContainer &CircleContainer::operator=(const CircleContainer &&container) n
     {
         Geo::Circle::operator=(container);
         _txt = container._txt;
+        text_index = container.text_index;
+        text_count = container.text_count;
         _type = Geo::Type::CIRCLECONTAINER;
     }
     return *this;

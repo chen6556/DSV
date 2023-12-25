@@ -64,7 +64,7 @@ void MainWindow::init()
     QObject::connect(ui->actionadvanced, &QAction::triggered, this, [this]() { _setting->show(); });
     QObject::connect(ui->show_origin, &QAction::triggered, this, [this]() { ui->show_origin->isChecked() ? _painter.show_origin() : _painter.hide_origin(); });
 
-    QObject::connect(_setting, &Setting::accepted, &_painter, &Canvas::refresh_text_vbo);
+    QObject::connect(_setting, &Setting::accepted, &_painter, static_cast<void(Canvas::*)(void)>(&Canvas::refresh_text_vbo));
 
     for (size_t i = 0; i < 3; ++i)
     {
@@ -403,22 +403,25 @@ void MainWindow::show_layers_manager()
 
 void MainWindow::rotate()
 {
-    _editer.rotate(ui->rotate_angle->value(), _editer.selected_count() == 0, ui->to_all_layers->isChecked());
-    _painter.refresh_vbo(_editer.selected_count() == 0);
+    const bool unitary = _editer.selected_count() == 0;
+    _editer.rotate(ui->rotate_angle->value(), unitary, ui->to_all_layers->isChecked());
+    _painter.refresh_vbo(unitary);
     _painter.update();
 }
 
 void MainWindow::flip_x()
 {
-    _editer.flip(true, _editer.selected_count() == 0, ui->to_all_layers->isChecked());
-    _painter.refresh_vbo(_editer.selected_count() == 0);
+    const bool unitary = _editer.selected_count() == 0;
+    _editer.flip(true, unitary, ui->to_all_layers->isChecked());
+    _painter.refresh_vbo(unitary);
     _painter.update();
 }
 
 void MainWindow::flip_y()
 {
-    _editer.flip(false, _editer.selected_count() == 0, ui->to_all_layers->isChecked());
-    _painter.refresh_vbo(_editer.selected_count() == 0);
+    const bool unitary = _editer.selected_count() == 0;
+    _editer.flip(false, unitary, ui->to_all_layers->isChecked());
+    _painter.refresh_vbo(unitary);
     _painter.update();
 }
 
