@@ -47,9 +47,10 @@ void Canvas::bind_editer(Editer *editer)
 void Canvas::paint_cache()
 {
     QPainter painter(this);
+    painter.setRenderHint(QPainter::Antialiasing);
     if (_tool_flags[0] == Tool::CURVE)
     {
-        painter.setPen(QPen(QColor(255, 140, 0), 2, Qt::DashLine));
+        painter.setPen(QPen(QColor(255, 140, 0), 2));
     }
     else
     {
@@ -123,6 +124,7 @@ void Canvas::paint_graph()
     painter.setFont(font);
 
     const bool show_points = GlobalSetting::get_instance()->setting()["show_points"].toBool();
+    const bool show_control_points = _editer->selected_count() == 1;
 
     QFontMetrics font_metrics(painter.font());
     QRectF text_rect;
@@ -417,9 +419,9 @@ void Canvas::paint_graph()
                 {
                     continue;
                 }
-                if (geo->is_selected)
+                if (show_control_points && geo->is_selected)
                 {
-                    painter.setPen(QPen(QColor(255, 140, 0), 2, Qt::DashLine));
+                    painter.setPen(QPen(QColor(255, 140, 0), 2));
                     for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(geo))
                     {
                         points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
