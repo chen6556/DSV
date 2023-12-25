@@ -551,18 +551,6 @@ bool Editer::cut_selected()
         }
     }
 
-    for (std::vector<Geo::Geometry *>::iterator it = _graph->container_group(_current_group).begin(); it != _graph->container_group(_current_group).end();)
-    {
-        if ((*it)->memo().has("remove") && (*it)->memo()["remove"].to_bool())
-        {
-            it = _graph->container_group(_current_group).remove(it);
-        }
-        else
-        {
-            ++it;
-        }
-    }
-
     return true;
 }
 
@@ -816,9 +804,19 @@ bool Editer::combinate()
 
     store_backup();
     std::reverse(indexs.begin(), indexs.end());
+    Combination *temp = nullptr;
     for (const size_t i : indexs)
     {
-        combination->append(_graph->container_group(_current_group).pop(i));
+        if (_graph->container_group(_current_group)[i]->type() == Geo::Type::COMBINATION)
+        {
+            temp = dynamic_cast<Combination *>(_graph->container_group(_current_group).pop(i));
+            combination->append(temp);
+            delete temp;
+        }
+        else
+        {
+            combination->append(_graph->container_group(_current_group).pop(i));
+        }
     }
     std::reverse(combination->begin(), combination->end());
     combination->is_selected() = true;
@@ -889,11 +887,11 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
         {
         case Geo::Type::TEXT:
             t = dynamic_cast<Text *>(*it);
-            if (Geo::distance(point, dynamic_cast<const Geo::AABBRect *>(t)->center()) <= catch_distance * 5)
+            if (Geo::distance(point, dynamic_cast<const Geo::AABBRect *>(t)->center()) <= catch_distance * 10)
             {
                 t->is_selected() = true;
-                _graph->container_group(_current_group).pop(it);
-                _graph->container_group(_current_group).append(t);
+                // _graph->container_group(_current_group).pop(it);
+                // _graph->container_group(_current_group).append(t);
                 return t;
             }
             break;
@@ -928,7 +926,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        if (Geo::distance(point, dynamic_cast<const Geo::AABBRect *>(item)->center()) <= catch_distance * 5)
+                        if (Geo::distance(point, dynamic_cast<const Geo::AABBRect *>(item)->center()) <= catch_distance * 10)
                         {
                             cb->is_selected() = true;
                             _graph->container_group(_current_group).pop(it);

@@ -40,7 +40,6 @@ void File::read(const QString &path, Graph *graph)
                 points.push_back(Geo::Point(coordinates[i - 1].toDouble(), coordinates[i].toDouble()));
             }
             graph->back().append(new Container(container.toObject()["text"].toString(), Geo::Polygon(points.cbegin(), points.cend())));
-            graph->back().back()->memo()["id"] = container.toObject()["id"].toInt();
             points.clear();
         }
 
@@ -53,7 +52,6 @@ void File::read(const QString &path, Graph *graph)
                 continue;
             }
             graph->back().append(new CircleContainer(container.toObject()["text"].toString(), coordinates[0].toDouble(), coordinates[1].toDouble(), coordinates[2].toDouble()));
-            graph->back().back()->memo()["id"] = container.toObject()["id"].toInt();
         }
 
         QJsonArray polylines = obj["PolylineGroup"].toArray();

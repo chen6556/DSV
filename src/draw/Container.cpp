@@ -962,7 +962,6 @@ void Combination::append(Combination *combination)
     {
         append(combination->pop_back());
     }
-    combination->memo()["remove"] = true;
 }
 
 void Combination::append(Geo::Geometry *geo)

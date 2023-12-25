@@ -449,6 +449,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 _tool_flags[0] = Tool::NONE;
                 _bool_flags[1] = _bool_flags[2] = false;
                 emit tool_changed(_tool_flags[0]);
+                refresh_vbo();
                 break;
             default:
                 break;
@@ -487,6 +488,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     default:
                         break;
                     }
+                    refresh_text_vbo();
                 }
             }
             else
@@ -1406,6 +1408,7 @@ void Canvas::cut()
     _stored_mouse_pos = _mouse_pos_1;
     _editer->cut_selected();
     refresh_vbo();
+    refresh_text_vbo();
 }
 
 void Canvas::paste()
@@ -1414,6 +1417,7 @@ void Canvas::paste()
     {
         refresh_vbo();
         refresh_selected_ibo();
+        refresh_text_vbo();
         update();
     }
 }
@@ -1539,6 +1543,9 @@ void Canvas::refresh_vbo()
             geo->memo()["point_depth"] = depth;
             switch (geo->type())
             {
+            case Geo::Type::TEXT:
+                geo->memo()["point_count"] = 0;
+                break;
             case Geo::Type::CONTAINER:
                 container = dynamic_cast<Container *>(geo);
                 for (size_t i : Geo::ear_cut_to_indexs(container->shape()))
@@ -1628,6 +1635,9 @@ void Canvas::refresh_vbo()
                     item->memo()["point_depth"] = depth;
                     switch (item->type())
                     {
+                    case Geo::Type::TEXT:
+                        item->memo()["point_count"] = 0;
+                        break;
                     case Geo::Type::CONTAINER:
                         container = dynamic_cast<Container *>(item);
                         for (size_t i : Geo::ear_cut_to_indexs(container->shape()))
@@ -2171,7 +2181,7 @@ void Canvas::refresh_selected_ibo()
                 }
                 break;
             default:
-                break;
+                continue;
             }
 
             indexs[index_count++] = UINT_MAX;
@@ -2421,6 +2431,7 @@ void Canvas::refresh_text_vbo()
     const QFontMetrics font_metrics(font);
     QRectF text_rect;
 
+    const Text *text = nullptr;
     const Container *container = nullptr;
     const CircleContainer *circlecontainer = nullptr;
     Geo::Coord coord;
@@ -2445,6 +2456,23 @@ void Canvas::refresh_text_vbo()
         {
             switch (geo->type())
             {
+            case Geo::Type::TEXT:
+                text = dynamic_cast<const Text *>(geo);
+                if (text->text().isEmpty())
+                {
+                    continue;
+                }
+                coord = text->center().coord();
+                strings = text->text().split('\n');
+                string_index = 0;
+                for (const QString &string : strings)
+                {
+                    text_rect = font_metrics.boundingRect(string);
+                    path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                        * (strings.length() / 2.0 - string_index++), font, string);
+                }
+                depth = text->memo()["point_depth"].to_double();
+                break;
             case Geo::Type::CONTAINER:
                 container = dynamic_cast<const Container *>(geo);
                 if (container->text().isEmpty())
@@ -2484,6 +2512,23 @@ void Canvas::refresh_text_vbo()
                 {
                     switch (item->type())
                     {
+                    case Geo::Type::TEXT:
+                        text = dynamic_cast<const Text *>(item);
+                        if (text->text().isEmpty())
+                        {
+                            continue;
+                        }
+                        coord = text->center().coord();
+                        strings = text->text().split('\n');
+                        string_index = 0;
+                        for (const QString &string : strings)
+                        {
+                            text_rect = font_metrics.boundingRect(string);
+                            path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                                * (strings.length() / 2.0 - string_index++), font, string);
+                        }
+                        depth = text->memo()["point_depth"].to_double();
+                        break;
                     case Geo::Type::CONTAINER:
                         container = dynamic_cast<const Container *>(item);
                         if (container->text().isEmpty())
