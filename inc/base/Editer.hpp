@@ -106,6 +106,10 @@ public:
 
     void load_backup();
 
+    void up(Geo::Geometry *item);
+
+    void down(Geo::Geometry *item);
+
 
 
     void remove_group(const size_t index);

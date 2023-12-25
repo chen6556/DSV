@@ -7,6 +7,8 @@
 #include <QTextEdit>
 #include <QOpenGLFunctions_4_5_Core>
 #include "base/Editer.hpp"
+#include <QMenu>
+#include <QAction>
 
 
 class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
@@ -48,6 +50,10 @@ private:
     QPointF _mouse_pos_0, _mouse_pos_1, _stored_mouse_pos;
     Geo::Point _last_point;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
+
+    QMenu *_menu = nullptr;
+    QAction *_up = nullptr;
+    QAction *_down = nullptr;
 
 private:
     void init();

@@ -227,7 +227,9 @@ public:
 
     void insert(const size_t index, CircleContainer *container);
 
-    void insert(const size_t index, Geo::Polyline *container);
+    void insert(const size_t index, Combination *combination);
+
+    void insert(const size_t index, Geo::Polyline *polyline);
 
     void insert(const size_t index, Geo::Bezier *bezier);
 

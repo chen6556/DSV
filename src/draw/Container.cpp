@@ -839,9 +839,14 @@ void ContainerGroup::insert(const size_t index, CircleContainer *container)
     _containers.insert(_containers.begin() + index, container);
 }
 
-void ContainerGroup::insert(const size_t index, Geo::Polyline *container)
+void ContainerGroup::insert(const size_t index, Combination *combination)
 {
-    _containers.insert(_containers.begin() + index, container);
+    _containers.insert(_containers.begin() + index, combination);
+}
+
+void ContainerGroup::insert(const size_t index, Geo::Polyline *polyline)
+{
+    _containers.insert(_containers.begin() + index, polyline);
 }
 
 void ContainerGroup::insert(const size_t index, Geo::Bezier *bezier)

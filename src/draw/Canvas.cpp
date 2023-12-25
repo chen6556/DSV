@@ -17,6 +17,9 @@ Canvas::Canvas(QLabel **labels, QWidget *parent)
 Canvas::~Canvas()
 {
     delete _cache;
+    delete _menu;
+    delete _up;
+    delete _down;
 }
 
 
@@ -36,6 +39,12 @@ void Canvas::init()
     _cache = new double[_cache_len];
     _input_line.hide();
     _select_rect.clear();
+
+    _menu = new QMenu(this);
+    _up = new QAction("Up");
+    _down = new QAction("Down");
+    _menu->addAction(_up);
+    _menu->addAction(_down);
 }
 
 void Canvas::bind_editer(Editer *editer)
@@ -646,6 +655,84 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         }
         break;
     case Qt::RightButton:
+        if (!is_paintable())
+        {
+            _clicked_obj = _editer->select(real_x1, real_y1, true);
+            if (_clicked_obj != nullptr)
+            {
+                size_t index_len = 512, index_count = 0;
+                unsigned int *indexs = new unsigned int[index_len];
+                if (_clicked_obj->type() == Geo::Type::COMBINATION)
+                {
+                    for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(_clicked_obj))
+                    {
+                        for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
+                        {
+                            indexs[index_count++] = index++;
+                            if (index_count == index_len)
+                            {
+                                index_len *= 2;
+                                unsigned int *temp = new unsigned int[index_len];
+                                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                                delete indexs;
+                                indexs = temp;
+                            }
+                        }
+                        indexs[index_count++] = UINT_MAX;
+                        if (index_count == index_len)
+                        {
+                            index_len *= 2;
+                            unsigned int *temp = new unsigned int[index_len];
+                            std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                            delete indexs;
+                            indexs = temp;
+                        }
+                    }
+                }
+                else
+                {
+                    for (size_t i = 0, index = _clicked_obj->point_index, count = _clicked_obj->point_count; i < count; ++i)
+                    {
+                        indexs[index_count++] = index++;
+                        if (index_count == index_len)
+                        {
+                            index_len *= 2;
+                            unsigned int *temp = new unsigned int[index_len];
+                            std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                            delete indexs;
+                            indexs = temp;
+                        }
+                    }
+                    indexs[index_count++] = UINT_MAX;
+                    if (index_count == index_len)
+                    {
+                        index_len *= 2;
+                        unsigned int *temp = new unsigned int[index_len];
+                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                        delete indexs;
+                        indexs = temp;
+                    }
+                }
+                _indexs_count[2] = index_count;
+                makeCurrent();
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
+                doneCurrent();
+                delete indexs;
+
+                const QAction *a = _menu->exec(QCursor::pos());
+                if (a == _up)
+                {
+                    _editer->up(_clicked_obj);
+                    refresh_vbo();
+                }
+                else if (a == _down)
+                {
+                    _editer->down(_clicked_obj);
+                    refresh_vbo();
+                }
+            }
+        }
         break;
     case Qt::MiddleButton:
         _bool_flags[0] = true; // view moveable

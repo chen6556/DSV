@@ -1222,6 +1222,77 @@ void Editer::load_backup()
     }
 }
 
+void Editer::up(Geo::Geometry *item)
+{
+    for (size_t i = 0, count = _graph->container_group(_current_group).size() - 1; i < count; ++i)
+    {
+        if (_graph->container_group(_current_group)[i] == item)
+        {
+            _graph->container_group(_current_group).pop(i);
+            switch (item->type())
+            {
+            case Geo::Type::TEXT:
+                _graph->container_group(_current_group).insert(++i, dynamic_cast<Text *>(item));
+                break;
+            case Geo::Type::CONTAINER:
+                _graph->container_group(_current_group).insert(++i, dynamic_cast<Container *>(item));
+                break;
+            case Geo::Type::CIRCLECONTAINER:
+                _graph->container_group(_current_group).insert(++i, dynamic_cast<CircleContainer *>(item));
+                break;
+            case Geo::Type::COMBINATION:
+                _graph->container_group(_current_group).insert(++i, dynamic_cast<Combination *>(item));
+                break;
+            case Geo::Type::POLYLINE:
+                _graph->container_group(_current_group).insert(++i, dynamic_cast<Geo::Polyline *>(item));
+                break;
+            case Geo::Type::BEZIER:
+                _graph->container_group(_current_group).insert(++i, dynamic_cast<Geo::Bezier *>(item));
+                break;
+            default:
+                break;
+            }
+
+            break;
+        }
+    }
+}
+
+void Editer::down(Geo::Geometry *item)
+{
+    for (size_t i = 1, count = _graph->container_group(_current_group).size(); i < count; ++i)
+    {
+        if (_graph->container_group(_current_group)[i] == item)
+        {
+            _graph->container_group(_current_group).pop(i);
+            switch (item->type())
+            {
+            case Geo::Type::TEXT:
+                _graph->container_group(_current_group).insert(--i, dynamic_cast<Text *>(item));
+                break;
+            case Geo::Type::CONTAINER:
+                _graph->container_group(_current_group).insert(--i, dynamic_cast<Container *>(item));
+                break;
+            case Geo::Type::CIRCLECONTAINER:
+                _graph->container_group(_current_group).insert(--i, dynamic_cast<CircleContainer *>(item));
+                break;
+            case Geo::Type::COMBINATION:
+                _graph->container_group(_current_group).insert(--i, dynamic_cast<Combination *>(item));
+                break;
+            case Geo::Type::POLYLINE:
+                _graph->container_group(_current_group).insert(--i, dynamic_cast<Geo::Polyline *>(item));
+                break;
+            case Geo::Type::BEZIER:
+                _graph->container_group(_current_group).insert(--i, dynamic_cast<Geo::Bezier *>(item));
+                break;
+            default:
+                break;
+            }
+
+            break;
+        }
+    }
+}
 
 
 
