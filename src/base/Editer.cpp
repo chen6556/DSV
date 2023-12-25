@@ -35,7 +35,7 @@ void Editer::init()
         {
             for (Geo::Geometry *geo : group)
             {
-                geo->is_selected() = false;
+                geo->is_selected = false;
             }
         }
         if (_graph->container_groups().empty())
@@ -108,12 +108,12 @@ const Graph *Editer::graph() const
 
 const bool Editer::modified() const
 {
-    return _graph->memo()["modified"].to_bool();
+    return _graph->modified;
 }
 
 void Editer::reset_modified(const bool value)
 {
-    _graph->memo()["modified"] = value;
+    _graph->modified = value;
 }
 
 const QString &Editer::path() const
@@ -191,7 +191,7 @@ void Editer::append_points()
     }
     _point_cache.clear();
 
-    _graph->memo()["modified"] = true;
+    _graph->modified = true;
 }
 
 void Editer::append(const Geo::Circle &circle)
@@ -207,7 +207,7 @@ void Editer::append(const Geo::Circle &circle)
     }
     store_backup();
     _graph->append(new CircleContainer(circle), _current_group);
-    _graph->memo()["modified"] = true;
+    _graph->modified = true;
 }
 
 void Editer::append(const Geo::AABBRect &rect)
@@ -223,7 +223,7 @@ void Editer::append(const Geo::AABBRect &rect)
     }
     store_backup();
     _graph->append(new Container(rect), _current_group);
-    _graph->memo()["modified"] = true;
+    _graph->modified = true;
 }
 
 void Editer::append_bezier(const size_t order)
@@ -235,7 +235,7 @@ void Editer::append_bezier(const size_t order)
         _point_cache.pop_back();
     }
     _graph->append(new Geo::Bezier(_point_cache.begin(), _point_cache.end(), order), _current_group);
-    _graph->memo()["modified"] = true;
+    _graph->modified = true;
     _point_cache.clear();
 }
 
@@ -248,7 +248,7 @@ void Editer::append_text(const double x, const double y)
     }
     store_backup();
     _graph->append(new Text(x, y, GlobalSetting::get_instance()->setting()["text_size"].toInt()), _current_group);
-    _graph->memo()["modified"] = true;
+    _graph->modified = true;
 }
 
 void Editer::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1, const bool change_shape)
@@ -260,7 +260,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         {
             Container *temp = dynamic_cast<Container *>(points);
             size_t count = 0;
-            if (change_shape && !points->shape_fixed())
+            if (change_shape && !points->shape_fixed)
             {
                 for (Geo::Point &point : temp->shape())
                 {
@@ -316,7 +316,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                             point.translate(x1 - x0, y1 - y0);
                         }
                         temp->back().coord() = temp->front().coord();
-                        _graph->memo()["modified"] = true;
+                        _graph->modified = true;
                         return;
                     }
                 }
@@ -327,7 +327,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     case Geo::Type::CIRCLECONTAINER:
         {
             CircleContainer *temp = dynamic_cast<CircleContainer *>(points);
-            if (change_shape && !points->shape_fixed() &&
+            if (change_shape && !points->shape_fixed &&
                 (std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x0, y0))) <= catch_distance ||
                 std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x1, y1))) <= catch_distance))
             {
@@ -346,7 +346,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     case Geo::Type::POLYLINE:
         {
             Geo::Polyline *temp = dynamic_cast<Geo::Polyline *>(points);
-            if (change_shape && !points->shape_fixed())
+            if (change_shape && !points->shape_fixed)
             {
                 for (Geo::Point &point : *temp)
                 {
@@ -354,7 +354,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                         Geo::distance(x1, y1, point.coord().x, point.coord().y) <= catch_distance)
                     {
                         point.translate(x1 - x0, y1 - y0);
-                        _graph->memo()["modified"] = true;
+                        _graph->modified = true;
                         return;
                     }
                 }
@@ -365,7 +365,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     case Geo::Type::BEZIER:
         {
             Geo::Bezier *temp = dynamic_cast<Geo::Bezier *>(points);
-            if (temp->is_selected())
+            if (temp->is_selected)
             {
                 for (size_t i = 0, count = temp->size(); i < count; ++i)
                 {
@@ -420,7 +420,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                             }
                         }
                         temp->update_shape();
-                        _graph->memo()["modified"] = true;
+                        _graph->modified = true;
                         return;
                     }
                 }
@@ -431,7 +431,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     default:
         break;
     }
-    _graph->memo()["modified"] = true;
+    _graph->modified = true;
 }
 
 bool Editer::remove_selected()
@@ -444,7 +444,7 @@ bool Editer::remove_selected()
 
     for (std::vector<Geo::Geometry *>::iterator it = _graph->container_group(_current_group).begin(); it != _graph->container_group(_current_group).end();)
     { // Polyline Container CircleContainer
-        if ((*it)->is_selected())
+        if ((*it)->is_selected)
         {
             it = _graph->container_group(_current_group).remove(it);
         }
@@ -470,7 +470,7 @@ bool Editer::copy_selected()
 
     for (const Geo::Geometry *container : _graph->container_group(_current_group))
     {
-        if (container->is_selected())
+        if (container->is_selected)
         {
             switch (container->type())
             {
@@ -517,7 +517,7 @@ bool Editer::cut_selected()
 
     for (std::vector<Geo::Geometry *>::iterator it = _graph->container_group(_current_group).begin(); it != _graph->container_group(_current_group).end();)
     {
-        if ((*it)->is_selected())
+        if ((*it)->is_selected)
         {
             switch ((*it)->type())
             {
@@ -606,7 +606,7 @@ bool Editer::connect(const double connect_distance)
     ContainerGroup &group = _graph->container_group(_current_group);
     for (size_t i = 0, count = group.size(); i < count; ++i)
     {
-        if (group[i]->is_selected() &&
+        if (group[i]->is_selected &&
             (group[i]->type() == Geo::Type::POLYLINE || group[i]->type() == Geo::Type::BEZIER))
         {
             polylines[i] = dynamic_cast<Geo::Polyline *>(group[i]);
@@ -640,7 +640,7 @@ bool Editer::connect(const double connect_distance)
                 else
                 {
                     Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
-                    polyline->is_selected() = true;
+                    polyline->is_selected = true;
                     if (polylines[indexs[j]]->type() == Geo::Type::POLYLINE)
                     {
                         polyline->insert(0, *polylines[indexs[j]]);
@@ -672,7 +672,7 @@ bool Editer::connect(const double connect_distance)
                 else
                 {
                     Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
-                    polyline->is_selected() = true;
+                    polyline->is_selected = true;
                     if (polylines[indexs[j]]->type() == Geo::Type::POLYLINE)
                     {
                         polyline->insert(0, *polylines[indexs[j]]);
@@ -703,7 +703,7 @@ bool Editer::connect(const double connect_distance)
                 else
                 {
                     Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
-                    polyline->is_selected() = true;
+                    polyline->is_selected = true;
                     if (polylines[indexs[j]]->type() == Geo::Type::POLYLINE)
                     {
                         polyline->append(*polylines[indexs[j]]);
@@ -736,7 +736,7 @@ bool Editer::connect(const double connect_distance)
                 else
                 {
                     Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
-                    polyline->is_selected() = true;
+                    polyline->is_selected = true;
                     if (polylines[indexs[j]]->type() == Geo::Type::POLYLINE)
                     {
                         polyline->append(*polylines[indexs[j]]);
@@ -788,7 +788,7 @@ bool Editer::combinate()
     std::vector<size_t> indexs;
     for (Geo::Geometry *geo : _graph->container_group(_current_group))
     {
-        if (geo->is_selected() && (geo->type() == Geo::Type::CONTAINER
+        if (geo->is_selected && (geo->type() == Geo::Type::CONTAINER
             || geo->type() == Geo::Type::TEXT || geo->type() == Geo::Type::CIRCLECONTAINER 
             || geo->type() == Geo::Type::COMBINATION
             || geo->type() == Geo::Type::POLYLINE ||  geo->type() == Geo::Type::BEZIER))
@@ -803,24 +803,24 @@ bool Editer::combinate()
     }
 
     store_backup();
+    Combination *temp;
     std::reverse(indexs.begin(), indexs.end());
     for (const size_t i : indexs)
     {
-        combination->append(_graph->container_group(_current_group).pop(i));
-    }
-    for (std::vector<Geo::Geometry *>::iterator it = _graph->container_group(_current_group).begin(); it != _graph->container_group(_current_group).end();)
-    {
-        if ((*it)->memo().has("remove"))
+        if (_graph->container_group(_current_group)[i]->type() == Geo::Type::COMBINATION)
         {
-            it = _graph->container_group(_current_group).remove(it);
+            temp = dynamic_cast<Combination *>(_graph->container_group(_current_group).pop(i));
+            combination->append(temp);
+            delete temp;
         }
         else
         {
-            ++it;
+            combination->append(_graph->container_group(_current_group).pop(i));
         }
     }
+
     std::reverse(combination->begin(), combination->end());
-    combination->is_selected() = true;
+    combination->is_selected = true;
     combination->update_border();
     _graph->container_group(_current_group).append(combination);
     return true;
@@ -837,7 +837,7 @@ bool Editer::split()
     std::vector<size_t> indexs;
     for (Geo::Geometry *geo : _graph->container_group(_current_group))
     {
-        if (geo->is_selected() && geo->type() == Geo::Type::COMBINATION)
+        if (geo->is_selected && geo->type() == Geo::Type::COMBINATION)
         {
             indexs.emplace_back(index);
         }
@@ -890,7 +890,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             t = dynamic_cast<Text *>(*it);
             if (Geo::distance(point, dynamic_cast<const Geo::AABBRect *>(t)->center()) <= catch_distance * 5)
             {
-                t->is_selected() = true;
+                t->is_selected = true;
                 _graph->container_group(_current_group).pop(it);
                 _graph->container_group(_current_group).append(t);
                 return t;
@@ -900,7 +900,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             c = dynamic_cast<Container *>(*it);
             if (Geo::is_inside(point, c->shape(), true))
             {
-                c->is_selected() = true;
+                c->is_selected = true;
                 _graph->container_group(_current_group).pop(it);
                 _graph->container_group(_current_group).append(c);
                 return c;
@@ -911,7 +911,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             cc = dynamic_cast<CircleContainer *>(*it);
             if (Geo::is_inside(point, cc->shape(), true))
             {
-                cc->is_selected() = true;
+                cc->is_selected = true;
                 _graph->container_group(_current_group).pop(it);
                 _graph->container_group(_current_group).append(cc);
                 return cc;
@@ -929,7 +929,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     case Geo::Type::TEXT:
                         if (Geo::distance(point, dynamic_cast<const Geo::AABBRect *>(item)->center()) <= catch_distance * 5)
                         {
-                            cb->is_selected() = true;
+                            cb->is_selected = true;
                             _graph->container_group(_current_group).pop(it);
                             _graph->container_group(_current_group).append(cb);
                             return cb;
@@ -938,7 +938,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     case Geo::Type::CONTAINER:
                         if (Geo::is_inside(point, dynamic_cast<Container *>(item)->shape(), true))
                         {
-                            cb->is_selected() = true;
+                            cb->is_selected = true;
                             _graph->container_group(_current_group).pop(it);
                             _graph->container_group(_current_group).append(cb);
                             return cb;
@@ -947,7 +947,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     case Geo::Type::CIRCLECONTAINER:
                         if (Geo::is_inside(point, dynamic_cast<CircleContainer *>(item)->shape(), true))
                         {
-                            cb->is_selected() = true;
+                            cb->is_selected = true;
                             _graph->container_group(_current_group).pop(it);
                             _graph->container_group(_current_group).append(cb);
                             return cb;
@@ -959,7 +959,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         {
                             if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= catch_distance)
                             {
-                                cb->is_selected() = true;
+                                cb->is_selected = true;
                                 _graph->container_group(_current_group).pop(it);
                                 _graph->container_group(_current_group).append(cb);
                                 return cb;
@@ -973,7 +973,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         {
                             if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance)
                             {
-                                cb->is_selected() = true;
+                                cb->is_selected = true;
                                 _graph->container_group(_current_group).pop(it);
                                 _graph->container_group(_current_group).append(cb);
                                 return cb;
@@ -994,7 +994,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             {
                 if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= catch_distance)
                 {
-                    p->is_selected() = true;
+                    p->is_selected = true;
                     _graph->container_group(_current_group).pop(it);
                     _graph->container_group(_current_group).append(p);
                     return p;
@@ -1004,7 +1004,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             break;
         case Geo::Type::BEZIER:
             b = dynamic_cast<Geo::Bezier *>(*it);
-            if (b->is_selected())
+            if (b->is_selected)
             {
                 for (const Geo::Point &inner_point : *b)
                 {
@@ -1018,7 +1018,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             {
                 if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance)
                 {
-                    b->is_selected() = true;
+                    b->is_selected = true;
                     _graph->container_group(_current_group).pop(it);
                     _graph->container_group(_current_group).append(b);
                     return b;
@@ -1054,34 +1054,34 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
         case Geo::Type::TEXT:
             if (Geo::is_inside(dynamic_cast<const Geo::AABBRect *>(container)->center(), rect))
             {
-                container->is_selected() = true;
+                container->is_selected = true;
                 result.push_back(container);
             }
             else
             {
-                container->is_selected() = false;
+                container->is_selected = false;
             }
             break;
         case Geo::Type::CONTAINER:
             if (Geo::is_intersected(rect, dynamic_cast<Container *>(container)->shape()))
             {
-                container->is_selected() = true;
+                container->is_selected = true;
                 result.push_back(container);
             }
             else
             {
-                container->is_selected() = false;
+                container->is_selected = false;
             }
             break;
         case Geo::Type::CIRCLECONTAINER:
             if (Geo::is_intersected(rect, dynamic_cast<CircleContainer *>(container)->shape()))
             {
-                container->is_selected() = true;
+                container->is_selected = true;
                 result.push_back(container);
             }
             else
             {
-                container->is_selected() = false;
+                container->is_selected = false;
             }
             break;
         case Geo::Type::COMBINATION:
@@ -1130,35 +1130,35 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
                 }
                 if (end)
                 {
-                    container->is_selected() = true;
+                    container->is_selected = true;
                     result.push_back(container);
                 }
                 else
                 {
-                    container->is_selected() = false;
+                    container->is_selected = false;
                 }
             }
             break;
         case Geo::Type::POLYLINE:
             if (Geo::is_intersected(rect, *dynamic_cast<Geo::Polyline *>(container)))
             {
-                container->is_selected() = true;
+                container->is_selected = true;
                 result.push_back(container);
             }
             else
             {
-                container->is_selected() = false;
+                container->is_selected = false;
             }
             break;
         case Geo::Type::BEZIER:
             if (Geo::is_intersected(rect, dynamic_cast<Geo::Bezier *>(container)->shape()))
             {
-                container->is_selected() = true;
+                container->is_selected = true;
                 result.push_back(container);
             }
             else
             {
-                container->is_selected() = false;
+                container->is_selected = false;
             }
             break;
         default:
@@ -1179,7 +1179,7 @@ std::list<Geo::Geometry *> Editer::selected() const
 
     for (Geo::Geometry *container : _graph->container_group(_current_group))
     {
-        if (container->is_selected())
+        if (container->is_selected)
         {
             result.push_back(container);
         }
@@ -1197,7 +1197,7 @@ const size_t Editer::selected_count() const
     }
     count += std::count_if(_graph->container_group(_current_group).cbegin(), _graph->container_group(_current_group).cend(),
                            [](const Geo::Geometry *c)
-                           { return c->is_selected(); });
+                           { return c->is_selected; });
     return count;
 }
 
@@ -1209,7 +1209,7 @@ void Editer::reset_selected_mark(const bool value)
     }
     for (Geo::Geometry *container : _graph->container_group(_current_group))
     {
-        container->is_selected() = value;
+        container->is_selected = value;
     }
 }
 
@@ -1277,7 +1277,7 @@ void Editer::rotate(const double angle, const bool unitary, const bool all_layer
     {
         for (Geo::Geometry *geo : _graph->container_group(_current_group))
         {
-            if (geo->is_selected())
+            if (geo->is_selected)
             {
                 coord = geo->bounding_rect().center().coord();
                 geo->rotate(coord.x, coord.y, rad);
@@ -1338,7 +1338,7 @@ void Editer::flip(const bool direction, const bool unitary, const bool all_layer
     {
         for (Geo::Geometry *geo : _graph->container_group(_current_group))
         {
-            if (geo->is_selected())
+            if (geo->is_selected)
             {
                 coord = geo->bounding_rect().center().coord();
                 if (direction)
@@ -1707,7 +1707,7 @@ bool Editer::auto_aligning(Geo::Coord &coord, std::list<QLineF> &reflines, const
     {
         for (Geo::Geometry *geo : _graph->container_group(_current_group))
         {
-            if (!(geo->type() == Geo::Type::CONTAINER || geo->type() == Geo::Type::CIRCLECONTAINER) || geo->is_selected())
+            if (!(geo->type() == Geo::Type::CONTAINER || geo->type() == Geo::Type::CIRCLECONTAINER) || geo->is_selected)
             {
                 continue;
             }
@@ -1737,7 +1737,7 @@ bool Editer::auto_aligning(Geo::Coord &coord, std::list<QLineF> &reflines, const
         {
             for (Geo::Geometry *geo : group)
             {
-                if (!(geo->type() == Geo::Type::CONTAINER || geo->type() == Geo::Type::CIRCLECONTAINER) || geo->is_selected())
+                if (!(geo->type() == Geo::Type::CONTAINER || geo->type() == Geo::Type::CIRCLECONTAINER) || geo->is_selected)
                 {
                     continue;
                 }

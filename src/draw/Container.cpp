@@ -333,7 +333,8 @@ CircleContainer *CircleContainer::clone() const
 // ContainerGroup
 
 ContainerGroup::ContainerGroup(const ContainerGroup &containers)
-    : Geo::Geometry(containers), _ratio(containers._ratio), _visible(containers._visible)
+    : Geo::Geometry(containers), _ratio(containers._ratio), _visible(containers._visible),
+    name(containers.name)
 {
     _type = Geo::Type::CONTAINERGROUP;
     for (const Geo::Geometry *geo : containers)
@@ -365,7 +366,8 @@ ContainerGroup::ContainerGroup(const ContainerGroup &containers)
 }
 
 ContainerGroup::ContainerGroup(const ContainerGroup &&containers) noexcept
-    : Geo::Geometry(containers), _ratio(containers._ratio), _visible(containers._visible)
+    : Geo::Geometry(containers), _ratio(containers._ratio), _visible(containers._visible),
+    name(containers.name)
 {
     _type = Geo::Type::CONTAINERGROUP;
     for (const Geo::Geometry *geo : containers)
@@ -461,14 +463,16 @@ ContainerGroup *ContainerGroup::clone() const
         }
     }
 
-    return new ContainerGroup(containers.cbegin(), containers.cend());
+    ContainerGroup *g = new ContainerGroup(containers.cbegin(), containers.cend());
+    g->name = name;
+    return g;
 }
 
 void ContainerGroup::transfer(ContainerGroup &group)
 {
     group.clear();
     group._containers.assign(_containers.begin(), _containers.end());
-    group._memo = _memo;
+    group.name = name;
     _containers.clear();
 }
 
@@ -477,6 +481,7 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
     if (this != &group)
     {
         Geo::Geometry::operator=(group);
+        name = group.name;
         for (size_t i = 0, count = _containers.size(); i < count; ++i)
         {
             delete _containers[i];
@@ -521,6 +526,7 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &&group) noexcept
     if (this != &group)
     {
         Geo::Geometry::operator=(group);
+        name = group.name;
         for (size_t i = 0, count = _containers.size(); i < count; ++i)
         {
             delete _containers[i];
@@ -962,7 +968,6 @@ void Combination::append(Combination *combination)
     {
         append(combination->pop_back());
     }
-    combination->memo()["remove"] = true;
 }
 
 void Combination::append(Geo::Geometry *geo)

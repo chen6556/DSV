@@ -2,7 +2,7 @@
 
 
 Graph::Graph(const Graph &graph)
-    : Geo::Geometry(graph), _ratio(graph._ratio)
+    : Geo::Geometry(graph), _ratio(graph._ratio), modified(graph.modified)
 {
     _type = Geo::Type::GRAPH;
     for (const ContainerGroup &group : graph._container_groups)
@@ -12,7 +12,7 @@ Graph::Graph(const Graph &graph)
 }
 
 Graph::Graph(const Graph &&graph) noexcept
-    : Geo::Geometry(graph), _ratio(graph._ratio)
+    : Geo::Geometry(graph), _ratio(graph._ratio), modified(graph.modified)
 {
     _type = Geo::Type::GRAPH;
     for (const ContainerGroup &group : graph._container_groups)
@@ -23,13 +23,15 @@ Graph::Graph(const Graph &&graph) noexcept
 
 Graph *Graph::clone() const
 {
-    return new Graph(*this);
+    Graph *g = new Graph(*this);
+    g->modified = modified;
+    return g;
 }
 
 void Graph::transfer(Graph &graph)
 {
     graph.clear();
-    graph._memo = _memo;
+    graph.modified = modified;
     for (ContainerGroup &group : _container_groups)
     {
         graph.append_group();
@@ -43,6 +45,7 @@ Graph &Graph::operator=(const Graph &graph)
     if (this != &graph)
     {
         Geo::Geometry::operator=(graph);
+        modified = graph.modified;
         _container_groups.clear();
         for (const ContainerGroup &group : graph._container_groups)
         {
@@ -59,6 +62,7 @@ Graph &Graph::operator=(const Graph &&graph) noexcept
     if (this != &graph)
     {
         Geo::Geometry::operator=(graph);
+        modified = graph.modified;
         _container_groups.clear();
         for (const ContainerGroup &group : graph._container_groups)
         {
@@ -368,7 +372,6 @@ void Graph::append(Text *text, const size_t index)
 {
     assert(index < _container_groups.size());
     container_group(index).append(text);
-    text->is_selected() = false;
 }
 
 void Graph::append(Container *container, const size_t index)
@@ -377,7 +380,6 @@ void Graph::append(Container *container, const size_t index)
     if (container->shape().size() > 3)
     {
         container_group(index).append(container);
-        container->is_selected() = false;
     }
 }
 
@@ -387,7 +389,6 @@ void Graph::append(CircleContainer *container, const size_t index)
     if (!container->shape().empty())
     {
         container_group(index).append(container);
-        container->is_selected() = false;
     }
 }
 
@@ -397,7 +398,6 @@ void Graph::append(Geo::Polyline *polyline, const size_t index)
     if (polyline->size() > 1)
     {
         container_group(index).append(polyline);
-        polyline->is_selected() = false;
     }
 }
 
@@ -405,7 +405,6 @@ void Graph::append(Geo::Bezier *bezier, const size_t index)
 {
     assert(index < _container_groups.size());
     container_group(index).append(bezier);
-    bezier->is_selected() = false;
 }
 
 void Graph::append_group()

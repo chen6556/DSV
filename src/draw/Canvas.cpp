@@ -137,7 +137,7 @@ void Canvas::paint_graph()
         for (const Geo::Geometry *geo : group)
         {
             points.clear();
-            painter.setPen(geo->is_selected() ? pen_selected : pen_not_selected);
+            painter.setPen(geo->is_selected ? pen_selected : pen_not_selected);
             switch (geo->type())
             {
             case Geo::Type::TEXT:
@@ -236,7 +236,7 @@ void Canvas::paint_graph()
                 }
                 break;
             case Geo::Type::COMBINATION:
-                painter.setPen(geo->is_selected() ? pen_selected : pen_not_selected);
+                painter.setPen(geo->is_selected ? pen_selected : pen_not_selected);
                 for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
                 {
                     points.clear();
@@ -257,7 +257,7 @@ void Canvas::paint_graph()
                             + _canvas_ctm[7] - text_rect.center().y());
                         painter.setPen(QPen(text_color, 1));
                         painter.drawText(text_rect, text->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
-                        painter.setPen(geo->is_selected() ? pen_selected : pen_not_selected);
+                        painter.setPen(geo->is_selected ? pen_selected : pen_not_selected);
                         break;
                     case Geo::Type::CONTAINER:
                         container = dynamic_cast<const Container *>(item);
@@ -404,7 +404,7 @@ void Canvas::paint_graph()
                 {
                     continue;
                 }
-                if (geo->is_selected())
+                if (geo->is_selected)
                 {
                     painter.setPen(QPen(QColor(255, 140, 0), 2, Qt::DashLine));
                     for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(geo))
@@ -596,7 +596,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 if (std::find(selected_objs.begin(), selected_objs.end(), _clicked_obj) == selected_objs.end())
                 {
                     _editer->reset_selected_mark();
-                    _clicked_obj->is_selected() = true;
+                    _clicked_obj->is_selected = true;
                 }
                 _bool_flags[4] = true; // is obj moveable
                 _bool_flags[5] = true; // is obj selected

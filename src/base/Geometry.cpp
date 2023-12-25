@@ -1,54 +1,24 @@
 #include "base/Geometry.hpp"
-#include<cassert>
+#include <cassert>
 #include <algorithm>
+#include <cmath>
 
 
 using namespace Geo;
 
 Geometry::Geometry(const Geometry &geo)
-    :_memo(geo._memo), _shape_fixed(geo._shape_fixed), _type(geo._type), _selected(geo._selected)
+    : _type(geo._type), shape_fixed(geo.shape_fixed), is_selected(geo.is_selected)
 {}
 
 Geometry &Geometry::operator=(const Geometry &geo)
 {
     if (this != &geo)
     {
-        _memo = geo._memo;
-        _shape_fixed = geo._shape_fixed;
         _type = geo._type;
-        _selected = geo._selected;
+        shape_fixed = geo.shape_fixed;
+        is_selected = geo.is_selected;
     }
     return *this;
-}
-
-Memo &Geometry::memo()
-{
-    return _memo;
-}
-
-const Memo &Geometry::memo() const
-{
-    return _memo;
-}
-
-bool &Geometry::shape_fixed()
-{
-    return _shape_fixed;
-}
-
-const bool Geometry::shape_fixed() const
-{
-    return _shape_fixed;
-}
-
-bool &Geometry::is_selected()
-{
-    return _selected;
-}
-
-const bool Geometry::is_selected() const
-{
-    return _selected;
 }
 
 const Type Geometry::type() const
@@ -1213,7 +1183,6 @@ Polygon::Polygon(const Polyline &polyline)
 Polygon::Polygon(const AABBRect& rect)
     :Polyline(rect.cbegin(), rect.cend())
 {
-    _memo = rect.memo();
     _type = Type::POLYGON; 
 }
 
@@ -1744,28 +1713,28 @@ Bezier::Bezier(const size_t n)
     : _order(n)
 {
     _type = Type::BEZIER;
-    _shape.shape_fixed() = true;
+    _shape.shape_fixed = true;
 }
 
 Bezier::Bezier(const Bezier &bezier)
     : Polyline(bezier), _order(bezier._order), _shape(bezier._shape)
 {
     _type = Type::BEZIER;
-    _shape.shape_fixed() = true;
+    _shape.shape_fixed = true;
 }
 
 Bezier::Bezier(const Bezier &&bezier) noexcept
     : Polyline(bezier), _order(bezier._order), _shape(bezier._shape)
 {
     _type = Type::BEZIER;
-    _shape.shape_fixed() = true;
+    _shape.shape_fixed = true;
 }
 
 Bezier::Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const size_t n)
     : Polyline(begin, end), _order(n)
 {
     _type = Type::BEZIER;
-    _shape.shape_fixed() = true;
+    _shape.shape_fixed = true;
     update_shape();
 }
 
@@ -1773,7 +1742,7 @@ Bezier::Bezier(const std::initializer_list<Point> &points, const size_t n)
     : Polyline(points), _order(n)
 {
     _type = Type::BEZIER;
-    _shape.shape_fixed() = true;
+    _shape.shape_fixed = true;
     update_shape();
 }
 

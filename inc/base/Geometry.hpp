@@ -1,6 +1,4 @@
 #pragma once
-
-#include "Memo.hpp"
 #include <vector>
 
 
@@ -19,10 +17,11 @@ namespace Geo
     class Geometry
     {
     protected:
-        Memo _memo;
-        bool _shape_fixed = false;
-        bool _selected = false;
         Type _type = Type::GEOMETRY;
+
+    public:
+        bool shape_fixed = false;
+        bool is_selected = false;
 
     public:
         Geometry() {};
@@ -32,18 +31,6 @@ namespace Geo
         virtual ~Geometry() {};
 
         Geometry &operator=(const Geometry &geo);
-
-        Memo &memo();
-
-        const Memo &memo() const;
-
-        bool &shape_fixed();
-
-        const bool shape_fixed() const;
-
-        bool &is_selected();
-
-        const bool is_selected() const;
 
         const Type type() const;
 

@@ -40,7 +40,6 @@ void File::read(const QString &path, Graph *graph)
                 points.push_back(Geo::Point(coordinates[i - 1].toDouble(), coordinates[i].toDouble()));
             }
             graph->back().append(new Container(container.toObject()["text"].toString(), Geo::Polygon(points.cbegin(), points.cend())));
-            graph->back().back()->memo()["id"] = container.toObject()["id"].toInt();
             points.clear();
         }
 
@@ -53,7 +52,6 @@ void File::read(const QString &path, Graph *graph)
                 continue;
             }
             graph->back().append(new CircleContainer(container.toObject()["text"].toString(), coordinates[0].toDouble(), coordinates[1].toDouble(), coordinates[2].toDouble()));
-            graph->back().back()->memo()["id"] = container.toObject()["id"].toInt();
         }
 
         QJsonArray polylines = obj["PolylineGroup"].toArray();
@@ -79,8 +77,8 @@ void File::read(const QString &path, Graph *graph)
             graph->back().append(new Geo::Bezier(points.begin(), points.end(), bezier.toObject()["order"].toInt()));
             points.clear();
         }
-    
-        graph->back().memo()["layer_name"] = obj["LayerName"].toString().toStdString();
+
+        graph->back().name = obj["LayerName"].toString();
     }
 }
 
@@ -247,7 +245,7 @@ void File::write_json(const QString &path, Graph *graph)
         container_group.insert("LinkGroup", link_objs);
         container_group.insert("PolylineGroup", polyline_objs);
         container_group.insert("BezierGroup", bezier_objs);
-        container_group.insert("LayerName", group.memo()["layer_name"].to_string().c_str());
+        container_group.insert("LayerName", group.name);
 
         obj.insert(std::to_string(index++).c_str(), container_group);
     }
