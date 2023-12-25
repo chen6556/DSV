@@ -123,9 +123,25 @@ void Canvas::paintGL()
         unsigned int *indexs = new unsigned int[index_len];
         for (const Geo::Geometry *obj : _editer->selected())
         {
-            for (size_t i = 0, index = obj->point_index, count = obj->point_count; i < count; ++i)
+            switch (obj->type())
             {
-                indexs[index_count++] = index++;
+            case Geo::Type::CONTAINER:
+            case Geo::Type::CIRCLECONTAINER:
+            case Geo::Type::POLYLINE:
+            case Geo::Type::BEZIER:
+                for (size_t index = obj->point_index, i = 0, count = obj->point_count; i < count; ++i)
+                {
+                    indexs[index_count++] = index++;
+                    if (index_count == index_len)
+                    {
+                        index_len *= 2;
+                        unsigned int *temp = new unsigned int[index_len];
+                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                        delete indexs;
+                        indexs = temp;
+                    }
+                }
+                indexs[index_count++] = UINT_MAX;
                 if (index_count == index_len)
                 {
                     index_len *= 2;
@@ -134,15 +150,39 @@ void Canvas::paintGL()
                     delete indexs;
                     indexs = temp;
                 }
-            }
-            indexs[index_count++] = UINT_MAX;
-            if (index_count == index_len)
-            {
-                index_len *= 2;
-                unsigned int *temp = new unsigned int[index_len];
-                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                delete indexs;
-                indexs = temp;
+                break;
+            case Geo::Type::COMBINATION:
+                for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
+                {
+                    if (item->type() == Geo::Type::TEXT)
+                    {
+                        continue;
+                    }
+                    for (size_t index = item->point_index, i = 0, count = item->point_count; i < count; ++i)
+                    {
+                        indexs[index_count++] = index++;
+                        if (index_count == index_len)
+                        {
+                            index_len *= 2;
+                            unsigned int *temp = new unsigned int[index_len];
+                            std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                            delete indexs;
+                            indexs = temp;
+                        }
+                    }
+                    indexs[index_count++] = UINT_MAX;
+                    if (index_count == index_len)
+                    {
+                        index_len *= 2;
+                        unsigned int *temp = new unsigned int[index_len];
+                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                        delete indexs;
+                        indexs = temp;
+                    }
+                }
+                break;
+            default:
+                continue;
             }
         }
         _indexs_count[2] = index_count;
@@ -2098,7 +2138,7 @@ void Canvas::refresh_selected_ibo()
             case Geo::Type::BEZIER:
                 for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
                 {
-                    indexs[index_count++] = index + i;
+                    indexs[index_count++] = index++;
                     if (index_count == index_len)
                     {
                         index_len *= 2;
@@ -2127,7 +2167,7 @@ void Canvas::refresh_selected_ibo()
                     }
                     for (size_t index = item->point_index, i = 0, count = item->point_count; i < count; ++i)
                     {
-                        indexs[index_count++] = index + i;
+                        indexs[index_count++] = index++;
                         if (index_count == index_len)
                         {
                             index_len *= 2;
