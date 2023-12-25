@@ -59,7 +59,7 @@ void LayersManager::load_layers(Graph *graph)
     {
         if (group.name.isEmpty())
         {
-            group.name = QString::fromStdString(std::to_string(index++));
+            group.name = QString::number(index++);
         }
         _layers.append((group.visible() ? QString("O ") : QString("X ")) + group.name);
     }
@@ -163,8 +163,8 @@ void LayersManager::layer_down()
 void LayersManager::add_layer()
 {
     _graph->append_group();
-    _graph->container_groups().back().name = QString::fromStdString(std::to_string(_layers.size()));
-    _layers.push_front(QString("O ") + std::to_string(_layers.size()).c_str());
+    _graph->container_groups().back().name = QString::number(_layers.size());
+    _layers.push_front(QString("O ") + QString::number(_layers.size()));
     _layers_model->setStringList(_layers);
     _graph->modified = true;
 }
@@ -174,8 +174,8 @@ void LayersManager::insert_layer()
     const int count = _layers.length();
     const int index = count - 1 - ui->layers_view->currentIndex().row();
     _graph->insert_group(index);
-    _graph->container_group(index).name = QString::fromStdString(std::to_string(_layers.size()));
-    _layers.insert(count - 1 - index, QString("O ") + std::to_string(_layers.size()).c_str());
+    _graph->container_group(index).name = QString::number(_layers.size());
+    _layers.insert(count - 1 - index, QString("O ") + QString::number(_layers.size()));
     _layers_model->setStringList(_layers);
     _graph->modified = true;
 }
