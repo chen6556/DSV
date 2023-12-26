@@ -146,7 +146,7 @@ void Canvas::paintGL()
                         index_len *= 2;
                         unsigned int *temp = new unsigned int[index_len];
                         std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                        delete indexs;
+                        delete []indexs;
                         indexs = temp;
                     }
                 }
@@ -156,7 +156,7 @@ void Canvas::paintGL()
                     index_len *= 2;
                     unsigned int *temp = new unsigned int[index_len];
                     std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                    delete indexs;
+                    delete []indexs;
                     indexs = temp;
                 }
                 break;
@@ -175,7 +175,7 @@ void Canvas::paintGL()
                             index_len *= 2;
                             unsigned int *temp = new unsigned int[index_len];
                             std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                            delete indexs;
+                            delete []indexs;
                             indexs = temp;
                         }
                     }
@@ -185,7 +185,7 @@ void Canvas::paintGL()
                         index_len *= 2;
                         unsigned int *temp = new unsigned int[index_len];
                         std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                        delete indexs;
+                        delete []indexs;
                         indexs = temp;
                     }
                 }
@@ -197,7 +197,7 @@ void Canvas::paintGL()
         _indexs_count[2] = index_count;
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
-        delete indexs;
+        delete []indexs;
     }
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -317,7 +317,7 @@ void Canvas::paintGL()
         if (_cache_count < _cache_len)
         {
             _cache_len *= 2;
-            delete _cache;
+            delete []_cache;
             _cache = new double[_cache_len];
             _cache_count = 0;
             for (const Geo::Point &point : points)
@@ -443,7 +443,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         _cache_len *= 2;
                         double *temp = new double[_cache_len];
                         std::memmove(temp, _cache, _cache_count * sizeof(double));
-                        delete _cache;
+                        delete []_cache;
                         _cache = temp;
                         glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_DYNAMIC_DRAW);
                     }
@@ -562,7 +562,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                                         index_len *= 2;
                                         unsigned int *temp = new unsigned int[index_len];
                                         std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                                        delete indexs;
+                                        delete []indexs;
                                         indexs = temp;
                                     }
                                 }
@@ -572,7 +572,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                                     index_len *= 2;
                                     unsigned int *temp = new unsigned int[index_len];
                                     std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                                    delete indexs;
+                                    delete []indexs;
                                     indexs = temp;
                                 }
                             }
@@ -587,7 +587,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                                     index_len *= 2;
                                     unsigned int *temp = new unsigned int[index_len];
                                     std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                                    delete indexs;
+                                    delete []indexs;
                                     indexs = temp;
                                 }
                             }
@@ -597,7 +597,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                                 index_len *= 2;
                                 unsigned int *temp = new unsigned int[index_len];
                                 std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                                delete indexs;
+                                delete []indexs;
                                 indexs = temp;
                             }
 
@@ -619,7 +619,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
                 doneCurrent();
-                delete indexs;
+                delete []indexs;
 
                 _bool_flags[4] = true;
                 _bool_flags[5] = true;
@@ -674,7 +674,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                                 index_len *= 2;
                                 unsigned int *temp = new unsigned int[index_len];
                                 std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                                delete indexs;
+                                delete []indexs;
                                 indexs = temp;
                             }
                         }
@@ -684,7 +684,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                             index_len *= 2;
                             unsigned int *temp = new unsigned int[index_len];
                             std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                            delete indexs;
+                            delete []indexs;
                             indexs = temp;
                         }
                     }
@@ -718,7 +718,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
                 doneCurrent();
-                delete indexs;
+                delete []indexs;
 
                 const QAction *a = _menu->exec(QCursor::pos());
                 if (a == _up)
@@ -925,7 +925,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 }
                 if (data_count < data_len)
                 {
-                    delete data;
+                    delete []data;
                     data = new double[data_len];
                 }
                 data_count = 0;
@@ -1042,7 +1042,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 refresh_brush_ibo();
             }
             doneCurrent();
-            delete data;
+            delete []data;
             if (GlobalSetting::get_instance()->setting()["show_text"].toBool())
             {
                 refresh_text_vbo(false);
@@ -1672,7 +1672,7 @@ void Canvas::refresh_vbo()
                         polygon_index_len *= 2;
                         unsigned int *temp = new unsigned int[polygon_index_len];
                         std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
-                        delete polygon_indexs;
+                        delete []polygon_indexs;
                         polygon_indexs = temp;
                     }
                 }
@@ -1687,7 +1687,7 @@ void Canvas::refresh_vbo()
                         data_len *= 2;
                         double *temp = new double[data_len];
                         std::memmove(temp, data, data_count * sizeof(double));
-                        delete data;
+                        delete []data;
                         data = temp;
                     }
                     if (polyline_index_count == polyline_index_len)
@@ -1695,7 +1695,7 @@ void Canvas::refresh_vbo()
                         polyline_index_len *= 2;
                         unsigned int *temp = new unsigned int[polyline_index_len];
                         std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
-                        delete polyline_indexs;
+                        delete []polyline_indexs;
                         polyline_indexs = temp;
                     }
                 }
@@ -1713,7 +1713,7 @@ void Canvas::refresh_vbo()
                         polygon_index_len *= 2;
                         unsigned int *temp = new unsigned int[polygon_index_len];
                         std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
-                        delete polygon_indexs;
+                        delete []polygon_indexs;
                         polygon_indexs = temp;
                     }
                 }
@@ -1728,7 +1728,7 @@ void Canvas::refresh_vbo()
                         data_len *= 2;
                         double *temp = new double[data_len];
                         std::memmove(temp, data, data_count * sizeof(double));
-                        delete data;
+                        delete []data;
                         data = temp;
                     }
                     if (polyline_index_count == polyline_index_len)
@@ -1736,7 +1736,7 @@ void Canvas::refresh_vbo()
                         polyline_index_len *= 2;
                         unsigned int *temp = new unsigned int[polyline_index_len];
                         std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
-                        delete polyline_indexs;
+                        delete []polyline_indexs;
                         polyline_indexs = temp;
                     }
                 }
@@ -1761,7 +1761,7 @@ void Canvas::refresh_vbo()
                                 polygon_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polygon_index_len];
                                 std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
-                                delete polygon_indexs;
+                                delete []polygon_indexs;
                                 polygon_indexs = temp;
                             }
                         }
@@ -1776,7 +1776,7 @@ void Canvas::refresh_vbo()
                                 data_len *= 2;
                                 double *temp = new double[data_len];
                                 std::memmove(temp, data, data_count * sizeof(double));
-                                delete data;
+                                delete []data;
                                 data = temp;
                             }
                             if (polyline_index_count == polyline_index_len)
@@ -1784,7 +1784,7 @@ void Canvas::refresh_vbo()
                                 polyline_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polyline_index_len];
                                 std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
-                                delete polyline_indexs;
+                                delete []polyline_indexs;
                                 polyline_indexs = temp;
                             }
                         }
@@ -1802,7 +1802,7 @@ void Canvas::refresh_vbo()
                                 polygon_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polygon_index_len];
                                 std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
-                                delete polygon_indexs;
+                                delete []polygon_indexs;
                                 polygon_indexs = temp;
                             }
                         }
@@ -1817,7 +1817,7 @@ void Canvas::refresh_vbo()
                                 data_len *= 2;
                                 double *temp = new double[data_len];
                                 std::memmove(temp, data, data_count * sizeof(double));
-                                delete data;
+                                delete []data;
                                 data = temp;
                             }
                             if (polyline_index_count == polyline_index_len)
@@ -1825,7 +1825,7 @@ void Canvas::refresh_vbo()
                                 polyline_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polyline_index_len];
                                 std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
-                                delete polyline_indexs;
+                                delete []polyline_indexs;
                                 polyline_indexs = temp;
                             }
                         }
@@ -1845,7 +1845,7 @@ void Canvas::refresh_vbo()
                                 data_len *= 2;
                                 double *temp = new double[data_len];
                                 std::memmove(temp, data, data_count * sizeof(double));
-                                delete data;
+                                delete []data;
                                 data = temp;
                             }
                             if (polyline_index_count == polyline_index_len)
@@ -1853,7 +1853,7 @@ void Canvas::refresh_vbo()
                                 polyline_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polyline_index_len];
                                 std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
-                                delete polyline_indexs;
+                                delete []polyline_indexs;
                                 polyline_indexs = temp;
                             }
                         }
@@ -1872,7 +1872,7 @@ void Canvas::refresh_vbo()
                                 data_len *= 2;
                                 double *temp = new double[data_len];
                                 std::memmove(temp, data, data_count * sizeof(double));
-                                delete data;
+                                delete []data;
                                 data = temp;
                             }
                             if (polyline_index_count == polyline_index_len)
@@ -1880,7 +1880,7 @@ void Canvas::refresh_vbo()
                                 polyline_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polyline_index_len];
                                 std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
-                                delete polyline_indexs;
+                                delete []polyline_indexs;
                                 polyline_indexs = temp;
                             }
                         }
@@ -1901,7 +1901,7 @@ void Canvas::refresh_vbo()
                         polyline_index_len *= 2;
                         unsigned int *temp = new unsigned int[polyline_index_len];
                         std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
-                        delete polyline_indexs;
+                        delete []polyline_indexs;
                         polyline_indexs = temp;
                     }
                 }
@@ -1920,7 +1920,7 @@ void Canvas::refresh_vbo()
                         data_len *= 2;
                         double *temp = new double[data_len];
                         std::memmove(temp, data, data_count * sizeof(double));
-                        delete data;
+                        delete []data;
                         data = temp;
                     }
                     if (polyline_index_count == polyline_index_len)
@@ -1928,7 +1928,7 @@ void Canvas::refresh_vbo()
                         polyline_index_len *= 2;
                         unsigned int *temp = new unsigned int[polyline_index_len];
                         std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
-                        delete polyline_indexs;
+                        delete []polyline_indexs;
                         polyline_indexs = temp;
                     }
                 }
@@ -1947,7 +1947,7 @@ void Canvas::refresh_vbo()
                         data_len *= 2;
                         double *temp = new double[data_len];
                         std::memmove(temp, data, data_count * sizeof(double));
-                        delete data;
+                        delete []data;
                         data = temp;
                     }
                     if (polyline_index_count == polyline_index_len)
@@ -1955,7 +1955,7 @@ void Canvas::refresh_vbo()
                         polyline_index_len *= 2;
                         unsigned int *temp = new unsigned int[polyline_index_len];
                         std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
-                        delete polyline_indexs;
+                        delete []polyline_indexs;
                         polyline_indexs = temp;
                     }
                 }
@@ -1975,7 +1975,7 @@ void Canvas::refresh_vbo()
                 polyline_index_len *= 2;
                 unsigned int *temp = new unsigned int[polyline_index_len];
                 std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
-                delete polyline_indexs;
+                delete []polyline_indexs;
                 polyline_indexs = temp;
             }
         }
@@ -1998,9 +1998,9 @@ void Canvas::refresh_vbo()
 
     _indexs_count[2] = 0;
 
-    delete data;
-    delete polyline_indexs;
-    delete polygon_indexs;
+    delete []data;
+    delete []polyline_indexs;
+    delete []polygon_indexs;
 
     if (GlobalSetting::get_instance()->setting()["show_text"].toBool())
     {
@@ -2046,7 +2046,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         data_len *= 2;
                         double *temp = new double[data_len];
                         std::memmove(temp, data, data_count * sizeof(double));
-                        delete data;
+                        delete []data;
                         data = temp;
                     }
                 }
@@ -2062,7 +2062,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         data_len *= 2;
                         double *temp = new double[data_len];
                         std::memmove(temp, data, data_count * sizeof(double));
-                        delete data;
+                        delete []data;
                         data = temp;
                     }
                 }
@@ -2085,7 +2085,7 @@ void Canvas::refresh_vbo(const bool unitary)
                                 data_len *= 2;
                                 double *temp = new double[data_len];
                                 std::memmove(temp, data, data_count * sizeof(double));
-                                delete data;
+                                delete []data;
                                 data = temp;
                             }
                         }
@@ -2101,7 +2101,7 @@ void Canvas::refresh_vbo(const bool unitary)
                                 data_len *= 2;
                                 double *temp = new double[data_len];
                                 std::memmove(temp, data, data_count * sizeof(double));
-                                delete data;
+                                delete []data;
                                 data = temp;
                             }
                         }
@@ -2117,7 +2117,7 @@ void Canvas::refresh_vbo(const bool unitary)
                                 data_len *= 2;
                                 double *temp = new double[data_len];
                                 std::memmove(temp, data, data_count * sizeof(double));
-                                delete data;
+                                delete []data;
                                 data = temp;
                             }
                         }
@@ -2133,7 +2133,7 @@ void Canvas::refresh_vbo(const bool unitary)
                                 data_len *= 2;
                                 double *temp = new double[data_len];
                                 std::memmove(temp, data, data_count * sizeof(double));
-                                delete data;
+                                delete []data;
                                 data = temp;
                             }
                         }
@@ -2157,7 +2157,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         data_len *= 2;
                         double *temp = new double[data_len];
                         std::memmove(temp, data, data_count * sizeof(double));
-                        delete data;
+                        delete []data;
                         data = temp;
                     }
                 }
@@ -2173,7 +2173,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         data_len *= 2;
                         double *temp = new double[data_len];
                         std::memmove(temp, data, data_count * sizeof(double));
-                        delete data;
+                        delete []data;
                         data = temp;
                     }
                 }
@@ -2190,7 +2190,7 @@ void Canvas::refresh_vbo(const bool unitary)
     }
 
     doneCurrent();
-    delete data;
+    delete []data;
 
     if (GlobalSetting::get_instance()->setting()["show_text"].toBool())
     {
@@ -2231,7 +2231,7 @@ void Canvas::refresh_selected_ibo()
                         index_len *= 2;
                         unsigned int *temp = new unsigned int[index_len];
                         std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                        delete indexs;
+                        delete []indexs;
                         indexs = temp;
                     }
                 }
@@ -2241,7 +2241,7 @@ void Canvas::refresh_selected_ibo()
                     index_len *= 2;
                     unsigned int *temp = new unsigned int[index_len];
                     std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                    delete indexs;
+                    delete []indexs;
                     indexs = temp;
                 }
                 break;
@@ -2260,7 +2260,7 @@ void Canvas::refresh_selected_ibo()
                             index_len *= 2;
                             unsigned int *temp = new unsigned int[index_len];
                             std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                            delete indexs;
+                            delete []indexs;
                             indexs = temp;
                         }
                     }
@@ -2270,7 +2270,7 @@ void Canvas::refresh_selected_ibo()
                         index_len *= 2;
                         unsigned int *temp = new unsigned int[index_len];
                         std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                        delete indexs;
+                        delete []indexs;
                         indexs = temp;
                     }
                 }
@@ -2288,7 +2288,7 @@ void Canvas::refresh_selected_ibo()
 
     doneCurrent();
     _indexs_count[2] = index_count;
-    delete indexs;
+    delete []indexs;
 }
 
 void Canvas::refresh_selected_vbo()
@@ -2309,7 +2309,7 @@ void Canvas::refresh_selected_vbo()
         }
         if (data_count < data_len)
         {
-            delete data;
+            delete []data;
             data = new double[data_len];
         }
         data_count = 0;
@@ -2402,7 +2402,7 @@ void Canvas::refresh_selected_vbo()
         }
     }
     doneCurrent();
-    delete data;
+    delete []data;
 }
 
 void Canvas::refresh_brush_ibo()
@@ -2430,7 +2430,7 @@ void Canvas::refresh_brush_ibo()
                         polygon_index_len *= 2;
                         unsigned int *temp = new unsigned int[polygon_index_len];
                         std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
-                        delete polygon_indexs;
+                        delete []polygon_indexs;
                         polygon_indexs = temp;
                     }
                 }
@@ -2444,7 +2444,7 @@ void Canvas::refresh_brush_ibo()
                         polygon_index_len *= 2;
                         unsigned int *temp = new unsigned int[polygon_index_len];
                         std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
-                        delete polygon_indexs;
+                        delete []polygon_indexs;
                         polygon_indexs = temp;
                     }
                 }
@@ -2463,7 +2463,7 @@ void Canvas::refresh_brush_ibo()
                                 polygon_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polygon_index_len];
                                 std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
-                                delete polygon_indexs;
+                                delete []polygon_indexs;
                                 polygon_indexs = temp;
                             }
                         }
@@ -2477,7 +2477,7 @@ void Canvas::refresh_brush_ibo()
                                 polygon_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polygon_index_len];
                                 std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
-                                delete polygon_indexs;
+                                delete []polygon_indexs;
                                 polygon_indexs = temp;
                             }
                         }
@@ -2500,7 +2500,7 @@ void Canvas::refresh_brush_ibo()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_DYNAMIC_DRAW);
     doneCurrent();
 
-    delete polygon_indexs;
+    delete []polygon_indexs;
 }
 
 void Canvas::refresh_text_vbo()
@@ -2673,7 +2673,7 @@ void Canvas::refresh_text_vbo()
                                 data_len *= 2;
                                 double *temp = new double[data_len];
                                 std::memmove(temp, data, data_count * sizeof(double));
-                                delete data;
+                                delete []data;
                                 data = temp;
                             }
                         }
@@ -2686,7 +2686,7 @@ void Canvas::refresh_text_vbo()
                                 index_len *= 2;
                                 unsigned int *temp = new unsigned int[index_len];
                                 std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                                delete indexs;
+                                delete []indexs;
                                 indexs = temp;
                             }
                         }
@@ -2698,7 +2698,7 @@ void Canvas::refresh_text_vbo()
                             index_len *= 2;
                             unsigned int *temp = new unsigned int[index_len];
                             std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                            delete indexs;
+                            delete []indexs;
                             indexs = temp;
                         }
                     }
@@ -2736,7 +2736,7 @@ void Canvas::refresh_text_vbo()
                         data_len *= 2;
                         double *temp = new double[data_len];
                         std::memmove(temp, data, data_count * sizeof(double));
-                        delete data;
+                        delete []data;
                         data = temp;
                     }
                 }
@@ -2749,7 +2749,7 @@ void Canvas::refresh_text_vbo()
                         index_len *= 2;
                         unsigned int *temp = new unsigned int[index_len];
                         std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                        delete indexs;
+                        delete []indexs;
                         indexs = temp;
                     }
                 }
@@ -2761,7 +2761,7 @@ void Canvas::refresh_text_vbo()
                     index_len *= 2;
                     unsigned int *temp = new unsigned int[index_len];
                     std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                    delete indexs;
+                    delete []indexs;
                     indexs = temp;
                 }
             }
@@ -2793,8 +2793,8 @@ void Canvas::refresh_text_vbo()
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
     doneCurrent();
 
-    delete data;
-    delete indexs;
+    delete []data;
+    delete []indexs;
 }
 
 void Canvas::refresh_text_vbo(const bool unitary)
@@ -2962,7 +2962,7 @@ void Canvas::refresh_text_vbo(const bool unitary)
                                 data_len *= 2;
                                 double *temp = new double[data_len];
                                 std::memmove(temp, data, data_count * sizeof(double));
-                                delete data;
+                                delete []data;
                                 data = temp;
                             }
                         }
@@ -3000,7 +3000,7 @@ void Canvas::refresh_text_vbo(const bool unitary)
                         data_len *= 2;
                         double *temp = new double[data_len];
                         std::memmove(temp, data, data_count * sizeof(double));
-                        delete data;
+                        delete []data;
                         data = temp;
                     }
                 }
@@ -3023,5 +3023,5 @@ void Canvas::refresh_text_vbo(const bool unitary)
         }
     }
     doneCurrent();
-    delete data;
+    delete []data;
 }
