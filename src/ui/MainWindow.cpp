@@ -439,7 +439,7 @@ void MainWindow::open_file(const QString &path)
     }
     else if (path.endsWith(".plt") || path.endsWith(".PLT"))
     {
-        std::ifstream file(path.toStdString(), std::ios_base::in);
+        std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
         PLTParser::parse(file, g);
         file.close();
         
@@ -479,7 +479,7 @@ void MainWindow::open_file(const QString &path)
     else if(path.endsWith(".cut"))
     {
 
-        std::ifstream file(path.toStdString(), std::ios_base::in);
+        std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
         RS274DParser::parse(file,g);
         file.close();
 

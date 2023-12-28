@@ -435,7 +435,7 @@ void File::write_plt(const std::string &path, Graph *graph)
 void File::write(const QString &path, Graph *graph, const FileType type)
 {
     const double k = graph->ratio();
-    const Geo::Point point = graph->bounding_rect()[0];
+    const Geo::Point point = graph->bounding_rect()[3];
     graph->translate(10-point.coord().x, 10-point.coord().y);
     graph->scale(10, 10, 1.0 / k);
     switch (type)
@@ -444,7 +444,7 @@ void File::write(const QString &path, Graph *graph, const FileType type)
         write_json(path, graph);
         break;
     case FileType::PLT:
-        write_plt(path.toStdString(), graph);
+        write_plt(path.toLocal8Bit().toStdString(), graph);
         break;
     default:
         break;
