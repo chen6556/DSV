@@ -538,6 +538,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             }
             else
             {
+                _pressed_obj = _clicked_obj;
                 if (std::find(selected_objs.begin(), selected_objs.end(), _clicked_obj) == selected_objs.end())
                 {
                     _editer->reset_selected_mark();
@@ -642,7 +643,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 }
                 if (!catched_point && GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
                 {
-                    _editer->auto_aligning(_clicked_obj, real_x1, real_y1, _reflines,
+                    _editer->auto_aligning(_pressed_obj, real_x1, real_y1, _reflines,
                         GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool());
                 }
                 if (_input_line.isVisible() && _last_clicked_obj != _clicked_obj)
@@ -767,6 +768,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
             }
             _bool_flags[6] = false; // is moving obj
             _last_clicked_obj = _clicked_obj;
+            _pressed_obj = nullptr;
             update();
         }
         break;
@@ -1049,7 +1051,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             if (event->modifiers() != Qt::ControlModifier && GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
             {
-                _editer->auto_aligning(_clicked_obj, real_x1, real_y1, _reflines,
+                _editer->auto_aligning(_pressed_obj, real_x1, real_y1, _reflines,
                     GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool());
             }
             if (_info_labels[1])
@@ -1130,7 +1132,7 @@ void Canvas::wheelEvent(QWheelEvent *event)
     glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), data);
     doneCurrent();
     _editer->set_view_ratio(_ratio);
-    _editer->auto_aligning(_clicked_obj, _reflines);
+    _editer->auto_aligning(_pressed_obj, _reflines);
 }
 
 void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
