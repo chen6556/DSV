@@ -40,6 +40,7 @@ private:
     QPointF _mouse_pos_0, _mouse_pos_1, _stored_mouse_pos;
     Geo::Point _last_point;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
+    Geo::Geometry *_pressed_obj = nullptr; 
 
     QMenu *_menu = nullptr;
     QAction *_up = nullptr;
