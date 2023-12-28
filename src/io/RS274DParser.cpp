@@ -142,84 +142,84 @@ void Importer::print_symbol(const std::string &str)
     qDebug() << str;
 }
 
-static Importer importer;
+Importer importer;
 
 
 // 分隔符设置 '*'
-static Parser<char> blank = ch_p(' ') | ch_p('\t') | ch_p('\v');
-static Parser<char> separator = ch_p('*');
+Parser<bool> blank = ch_p(' ') | ch_p('\t') | ch_p('\v');
+Parser<char> separator = ch_p('*');
 
-static auto skip_cmd = (ch_p('H') >> int_p()) >> separator;
+Parser<bool> skip_cmd = (ch_p('H') >> int_p()) >> separator;
 
 // 坐标设置
-static Action<int> x_coord_a(&importer, &Importer::set_x_coord);
-static Action<int> y_coord_a(&importer, &Importer::set_y_coord);
-static auto coord = ch_p('X') >> int_p()[x_coord_a] >>
+Action<int> x_coord_a(&importer, &Importer::set_x_coord);
+Action<int> y_coord_a(&importer, &Importer::set_y_coord);
+Parser<bool> coord = ch_p('X') >> int_p()[x_coord_a] >>
                     ch_p('Y') >> int_p()[y_coord_a] >> separator;
 // 单位设置 mil实际为100mil，换算为2.54mm
-static Action<void> set_mm_unit_a(&importer, &Importer::set_unit_mm);
-static Action<void> set_mil_unit_a(&importer, &Importer::set_unit_hectomil);
+Action<void> set_mm_unit_a(&importer, &Importer::set_unit_mm);
+Action<void> set_mil_unit_a(&importer, &Importer::set_unit_hectomil);
 
-static Parser<std::string> set_mm_unit = str_p("G71")[set_mm_unit_a];
-static Parser<std::string> set_mil_unit = str_p("G72")[set_mil_unit_a];
+Parser<std::string> set_mm_unit = str_p("G71")[set_mm_unit_a];
+Parser<std::string> set_mil_unit = str_p("G72")[set_mil_unit_a];
 
-static Parser<char> set_unit = (set_mm_unit | set_mil_unit) >> separator;
+Parser<bool> set_unit = (set_mm_unit | set_mil_unit) >> separator;
 
 // 下刀提刀，下笔提笔
-static Action<void> knife_down_a(&importer, &Importer::knife_down);
-static Action<void> knife_up_a(&importer, &Importer::knife_up);
-static Action<void> pen_down_a(&importer, &Importer::pen_down);
-static Action<void> pen_up_a(&importer, &Importer::pen_up);
+Action<void> knife_down_a(&importer, &Importer::knife_down);
+Action<void> knife_up_a(&importer, &Importer::knife_up);
+Action<void> pen_down_a(&importer, &Importer::pen_down);
+Action<void> pen_up_a(&importer, &Importer::pen_up);
 
-static Parser<std::string> knife_down = str_p("M14")[knife_down_a];
-static Parser<std::string> knife_up = (str_p("M15") | str_p("M19"))[knife_up_a];
-static Parser<std::string> pen_down = (str_p("D1") | str_p("D01"))[pen_down_a];
-static Parser<std::string> pen_up = (str_p("D2") | str_p("D02"))[pen_up_a];
+Parser<std::string> knife_down = str_p("M14")[knife_down_a];
+Parser<bool> knife_up = (str_p("M15") | str_p("M19"))[knife_up_a];
+Parser<bool> pen_down = (str_p("D1") | str_p("D01"))[pen_down_a];
+Parser<bool> pen_up = (str_p("D2") | str_p("D02"))[pen_up_a];
 
-static auto pen_move = (knife_down | knife_up | pen_down | pen_up);
+Parser<bool> pen_move = (knife_down | knife_up | pen_down | pen_up);
 
 // 插值方式(线型?) 目前只有线性
-static Parser<std::string> linear = str_p("G01");
+Parser<std::string> linear = str_p("G01");
 
-static Parser<char> interp = (linear) >> separator;
+Parser<bool> interp = (linear) >> separator;
 
 // 圆
-static Action<void> circle20_a(&importer, &Importer::draw_cricle_20);
-static Action<void> circle10_a(&importer, &Importer::draw_cricle_10);
-static Action<void> circle30_a(&importer, &Importer::draw_cricle_30);
-static Action<void> circle40_a(&importer, &Importer::draw_cricle_40);
+Action<void> circle20_a(&importer, &Importer::draw_cricle_20);
+Action<void> circle10_a(&importer, &Importer::draw_cricle_10);
+Action<void> circle30_a(&importer, &Importer::draw_cricle_30);
+Action<void> circle40_a(&importer, &Importer::draw_cricle_40);
 
-// static Parser<std::string> circle00 = str_p("M0")[circle00_a];
-static Parser<std::string> circle20 = str_p("M43")[circle20_a];
-static Parser<std::string> circle10 = str_p("M44")[circle10_a];
-static Parser<std::string> circle30 = (str_p("M45") | str_p("M72"))[circle30_a];
-static Parser<std::string> circle40 = str_p("M73")[circle40_a];
+// Parser<std::string> circle00 = str_p("M0")[circle00_a];
+Parser<std::string> circle20 = str_p("M43")[circle20_a];
+Parser<std::string> circle10 = str_p("M44")[circle10_a];
+Parser<bool> circle30 = (str_p("M45") | str_p("M72"))[circle30_a];
+Parser<std::string> circle40 = str_p("M73")[circle40_a];
 
-static Parser<char> circle = (circle10 | circle20 | circle30 | circle40) >> separator;
+Parser<bool> circle = (circle10 | circle20 | circle30 | circle40) >> separator;
 
 // 文字处理
-static Action<std::string> a_text(&importer, &Importer::store_text);
-static auto text = confix_p(str_p("M31") >> separator, (*anychar_p())[a_text], separator);
+Action<std::string> a_text(&importer, &Importer::store_text);
+Parser<bool> text = confix_p(str_p("M31") >> separator, (*anychar_p())[a_text], separator);
 
 // 步骤
-static Parser<int> steps = ch_p('N') >> int_p() >> separator;
+Parser<bool> steps = ch_p('N') >> int_p() >> separator;
 // 文件终止
-static Parser<char> end = str_p("M0") >> separator;
+Parser<bool> end = str_p("M0") >> separator;
 // 未知命令
-static Parser<std::vector<char>> unkown_cmds = confix_p(alphaa_p(), *anychar_p(), separator);
+Action<std::string> a_unkown(&importer, &Importer::print_symbol);
+Parser<bool> unkown_cmds = confix_p(alphaa_p(), (*anychar_p())[a_unkown], separator);
 
-static auto cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | text | blank | skip_cmd | separator);
-static Action<std::string> a_unkown(&importer, &Importer::print_symbol);
-static auto terminal_cmd = end | unkown_cmds[a_unkown];
-static auto rs274 = cmd >> !terminal_cmd;
-// static auto cmd = *(coord | set_unit | pen_size | pen_move | interp | circle | steps | blank | eol_p() | unkown_cmds);
+Parser<bool> cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | text | blank | skip_cmd | separator);
+Parser<bool> terminal_cmd = end | unkown_cmds;
+Parser<bool> rs274 = cmd >> !terminal_cmd;
+// Parser<bool> cmd = *(coord | set_unit | pen_size | pen_move | interp | circle | steps | blank | eol_p() | unkown_cmds);
 
 
 bool parse(std::string_view &stream, Graph *graph)
 {
     importer.reset();
     importer.load_graph(graph);
-    return rs274(stream).has_value();
+    return rs274(stream);
 }
 
 bool parse(std::ifstream &stream, Graph *graph)
@@ -230,6 +230,6 @@ bool parse(std::ifstream &stream, Graph *graph)
     sstream << stream.rdbuf();
     std::string str(sstream.str());
     std::string_view temp(str);
-    return rs274(temp).has_value();
+    return rs274(temp);
 }
 } // namespace RS274DParser

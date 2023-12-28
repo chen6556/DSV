@@ -222,42 +222,42 @@ void Importer::end()
 }
 
 
-static Importer importer;
+Importer importer;
 
-static Action<double> x_coord_a(&importer, &Importer::x_coord);
-static Action<double> y_coord_a(&importer, &Importer::y_coord);
-static Action<double> parameter_a(&importer, &Importer::parameter);
-static Action<void> pu_a(&importer, &Importer::pu);
-static Action<void> pa_a(&importer, &Importer::pa);
-static Action<void> pr_a(&importer, &Importer::pr);
-static Action<int> sp_a(&importer, &Importer::sp);
-static Action<void> ci_a(&importer, &Importer::ci);
-static Action<void> aa_a(&importer, &Importer::aa);
-static Action<void> ar_a(&importer, &Importer::ar);
-static Action<void> in_a(&importer, &Importer::reset);
-static Action<std::string> lb_a(&importer, &Importer::store_text);
-static Action<void> end_a(&importer, &Importer::end);
+Action<double> x_coord_a(&importer, &Importer::x_coord);
+Action<double> y_coord_a(&importer, &Importer::y_coord);
+Action<double> parameter_a(&importer, &Importer::parameter);
+Action<void> pu_a(&importer, &Importer::pu);
+Action<void> pa_a(&importer, &Importer::pa);
+Action<void> pr_a(&importer, &Importer::pr);
+Action<int> sp_a(&importer, &Importer::sp);
+Action<void> ci_a(&importer, &Importer::ci);
+Action<void> aa_a(&importer, &Importer::aa);
+Action<void> ar_a(&importer, &Importer::ar);
+Action<void> in_a(&importer, &Importer::reset);
+Action<std::string> lb_a(&importer, &Importer::store_text);
+Action<void> end_a(&importer, &Importer::end);
 
-static Parser<char> separator = ch_p(',') | ch_p(' ');
-static Parser<std::vector<char>> end = +(ch_p(';') | ch_p('\n') | eol_p());
-static Parser<double> parameter = float_p()[parameter_a];
-static Parser<std::vector<double>> coord = float_p()[x_coord_a] >> separator >> float_p()[y_coord_a];
-static auto in = str_p("IN")[in_a] >> end;
-static auto pu = str_p("PU")[pu_a] >> !list(coord, separator) >> end;
-static auto pd = str_p("PD") >> !list(coord, separator) >> end;
-static auto pa = str_p("PA")[pa_a] >> !list(coord, separator) >> end;
-static auto pr = str_p("PR")[pr_a] >> !list(coord, separator) >> end;
-static auto sp = str_p("SP") >> int_p()[sp_a] >> end;
-static auto ci = (str_p("CI") >> parameter >> !parameter)[ci_a] >> end;
-static auto aa = (str_p("AA") >> coord >> separator >> parameter >> !parameter)[aa_a] >> end;
-static auto ar = (str_p("AR") >> coord >> separator >> parameter >> !parameter)[ar_a] >> end;
+Parser<bool> separator = ch_p(',') | ch_p(' ');
+Parser<bool> end = +(ch_p(';') | ch_p('\n') | eol_p());
+Parser<double> parameter = float_p()[parameter_a];
+Parser<bool> coord = float_p()[x_coord_a] >> separator >> float_p()[y_coord_a];
+Parser<bool> in = str_p("IN")[in_a] >> end;
+Parser<bool> pu = str_p("PU")[pu_a] >> !list(coord, separator) >> end;
+Parser<bool> pd = str_p("PD") >> !list(coord, separator) >> end;
+Parser<bool> pa = str_p("PA")[pa_a] >> !list(coord, separator) >> end;
+Parser<bool> pr = str_p("PR")[pr_a] >> !list(coord, separator) >> end;
+Parser<bool> sp = str_p("SP") >> int_p()[sp_a] >> end;
+Parser<bool> ci = (str_p("CI") >> parameter >> !parameter)[ci_a] >> end;
+Parser<bool> aa = (str_p("AA") >> coord >> separator >> parameter >> !parameter)[aa_a] >> end;
+Parser<bool> ar = (str_p("AR") >> coord >> separator >> parameter >> !parameter)[ar_a] >> end;
 
-static Parser<std::vector<char>> unkown_cmds = confix_p(alphaa_p() | ch_p(28), *anychar_p(), end);
-static Parser<std::vector<char>> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], end);
-static auto all_cmds = in | pu | pd | pa | pr | sp | ci | aa | ar | lb | unkown_cmds;
+Parser<bool> unkown_cmds = confix_p(alphaa_p() | ch_p(28), *anychar_p(), end);
+Parser<bool> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], end);
+Parser<bool> all_cmds = in | pu | pd | pa | pr | sp | ci | aa | ar | lb | unkown_cmds;
 
-static Parser<std::vector<char>> dci = confix_p(ch_p(27), *anychar_p(), end);
-static auto plt = (*(all_cmds | dci))[end_a];
+Parser<bool> dci = confix_p(ch_p(27), *anychar_p(), end);
+Parser<bool> plt = (*(all_cmds | dci))[end_a];
 
 
 
@@ -265,7 +265,7 @@ bool PLTParser::parse(std::string_view &stream, Graph *graph)
 {
     importer.reset();
     importer.load_graph(graph);
-    return plt(stream).has_value();
+    return plt(stream);
 }
 
 bool PLTParser::parse(std::ifstream &stream, Graph *graph)
@@ -276,7 +276,7 @@ bool PLTParser::parse(std::ifstream &stream, Graph *graph)
     sstream << stream.rdbuf();
     std::string str(sstream.str());
     std::string_view temp(str);
-    return plt(temp).has_value();
+    return plt(temp);
 }
 
 }

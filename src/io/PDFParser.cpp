@@ -681,71 +681,71 @@ void Importer::reset()
 }    
 
 
-static Importer importer;
+Importer importer;
 
 
-static Action<double> parameter_a(&importer, &Importer::store_value);
-static Action<int> object_a(&importer, &Importer::store_object);
-static Action<void> cm_a(&importer, &Importer::change_trans_mat);
-static Action<void> CS_a(&importer, &Importer::CS);
-static Action<void> cs_a(&importer, &Importer::cs);
-static Action<void> SCN_a(&importer, &Importer::SCN);
-static Action<void> G_a(&importer, &Importer::G);
-static Action<void> g_a(&importer, &Importer::g);
-static Action<void> RG_a(&importer, &Importer::RG);
-static Action<void> rg_a(&importer, &Importer::rg);
-static Action<void> K_a(&importer, &Importer::K);
-static Action<void> k_a(&importer, &Importer::k);
-static Action<void> Q_a(&importer, &Importer::pop_trans_mat);
-static Action<void> q_a(&importer, &Importer::store_trans_mat);
-static Action<void> m_a(&importer, &Importer::start);
-static Action<void> l_a(&importer, &Importer::line);
-static Action<void> c_a(&importer, &Importer::curve);
-static Action<void> S_a(&importer, &Importer::store);
-static Action<void> s_a(&importer, &Importer::close_and_store_shape);
-static Action<void> re_a(&importer, &Importer::rect);
-static Action<void> h_a(&importer, &Importer::close_shape);
-static Action<void> W8_a(&importer, &Importer::close_and_store_shape);
-static Action<std::string> text_a(&importer, &Importer::store_text);
-static Action<std::string> encoding_a(&importer, &Importer::store_encoding);
-static Action<void> end_a(&importer, &Importer::end);
-static Action<void> BT_a(&importer, &Importer::BT);
-static Action<void> ET_a(&importer, &Importer::ET);
-static Action<void> Tm_a(&importer, &Importer::Tm);
-static Action<std::string> key_a(&importer, &Importer::store_key);
+Action<double> parameter_a(&importer, &Importer::store_value);
+Action<int> object_a(&importer, &Importer::store_object);
+Action<void> cm_a(&importer, &Importer::change_trans_mat);
+Action<void> CS_a(&importer, &Importer::CS);
+Action<void> cs_a(&importer, &Importer::cs);
+Action<void> SCN_a(&importer, &Importer::SCN);
+Action<void> G_a(&importer, &Importer::G);
+Action<void> g_a(&importer, &Importer::g);
+Action<void> RG_a(&importer, &Importer::RG);
+Action<void> rg_a(&importer, &Importer::rg);
+Action<void> K_a(&importer, &Importer::K);
+Action<void> k_a(&importer, &Importer::k);
+Action<void> Q_a(&importer, &Importer::pop_trans_mat);
+Action<void> q_a(&importer, &Importer::store_trans_mat);
+Action<void> m_a(&importer, &Importer::start);
+Action<void> l_a(&importer, &Importer::line);
+Action<void> c_a(&importer, &Importer::curve);
+Action<void> S_a(&importer, &Importer::store);
+Action<void> s_a(&importer, &Importer::close_and_store_shape);
+Action<void> re_a(&importer, &Importer::rect);
+Action<void> h_a(&importer, &Importer::close_shape);
+Action<void> W8_a(&importer, &Importer::close_and_store_shape);
+Action<std::string> text_a(&importer, &Importer::store_text);
+Action<std::string> encoding_a(&importer, &Importer::store_encoding);
+Action<void> end_a(&importer, &Importer::end);
+Action<void> BT_a(&importer, &Importer::BT);
+Action<void> ET_a(&importer, &Importer::ET);
+Action<void> Tm_a(&importer, &Importer::Tm);
+Action<std::string> key_a(&importer, &Importer::store_key);
 
-static Parser<char> end = eol_p() | ch_p(' ');
-static Parser<char> space = ch_p(' ');
-static Parser<char> CS = str_p("CS")[CS_a] >> end;
-static Parser<char> cs = str_p("cs")[cs_a] >> end;
-static Parser<char> SCN = str_p("SCN")[SCN_a] >> end;
-static Parser<char> G = ch_p('G')[G_a] >> end;
-static Parser<char> g = ch_p('g')[g_a] >> end;
-static Parser<char> RG = str_p("RG")[RG_a] >> end;
-static Parser<char> rg = str_p("rg")[rg_a] >> end;
-static Parser<char> K = ch_p('K')[K_a] >> end;
-static Parser<char> k = ch_p('k')[k_a] >> end;
-static Parser<char> cm = str_p("cm")[cm_a] >> end;
-static Parser<char> Q = ch_p('Q')[Q_a] >> end;
-static Parser<char> q = ch_p('q')[q_a] >> end;
-static Parser<char> m = ch_p('m')[m_a] >> end;
-static Parser<char> l = ch_p('l')[l_a] >> end;
-static Parser<char> c = ch_p('c')[c_a] >> end;
-static Parser<char> v = ch_p('v') >> end;
-static Parser<char> S = ch_p('S')[S_a] >> end;
-static Parser<char> s = ch_p('s')[s_a] >> end;
-static Parser<char> re = str_p("re")[re_a] >> end;
-static Parser<char> h = ch_p('h')[h_a] >> end;
-static Parser<char> W8 = str_p("W*")[W8_a] >> end;
-static Parser<char> B = ch_p('B') >> end;
-static Parser<char> f = ch_p('f') >> end;
+Parser<bool> end = eol_p() | ch_p(' ');
+Parser<char> space = ch_p(' ');
+Parser<bool> CS = str_p("CS")[CS_a] >> end;
+Parser<bool> cs = str_p("cs")[cs_a] >> end;
+Parser<bool> SCN = str_p("SCN")[SCN_a] >> end;
+Parser<bool> G = ch_p('G')[G_a] >> end;
+Parser<bool> g = ch_p('g')[g_a] >> end;
+Parser<bool> RG = str_p("RG")[RG_a] >> end;
+Parser<bool> rg = str_p("rg")[rg_a] >> end;
+Parser<bool> K = ch_p('K')[K_a] >> end;
+Parser<bool> k = ch_p('k')[k_a] >> end;
+Parser<bool> cm = str_p("cm")[cm_a] >> end;
+Parser<bool> Q = ch_p('Q')[Q_a] >> end;
+Parser<bool> q = ch_p('q')[q_a] >> end;
+Parser<bool> m = ch_p('m')[m_a] >> end;
+Parser<bool> l = ch_p('l')[l_a] >> end;
+Parser<bool> c = ch_p('c')[c_a] >> end;
+Parser<bool> v = ch_p('v') >> end;
+Parser<bool> S = ch_p('S')[S_a] >> end;
+Parser<bool> s = ch_p('s')[s_a] >> end;
+Parser<bool> re = str_p("re")[re_a] >> end;
+Parser<bool> h = ch_p('h')[h_a] >> end;
+Parser<bool> W8 = str_p("W*")[W8_a] >> end;
+Parser<bool> B = ch_p('B') >> end;
+Parser<bool> f = ch_p('f') >> end;
 
-static Parser<char> BT = str_p("BT")[BT_a] >> end;
-static Parser<char> ET = str_p("ET")[ET_a] >> end;
-static Parser<char> Tm = str_p("Tm")[Tm_a] >> end;
-static Parser<char> TL = str_p("TL") >> end;
+Parser<bool> BT = str_p("BT")[BT_a] >> end;
+Parser<bool> ET = str_p("ET")[ET_a] >> end;
+Parser<bool> Tm = str_p("Tm")[Tm_a] >> end;
+Parser<bool> TL = str_p("TL") >> end;
 
-static auto order = cm | q | Q | m | l | v | CS | cs | c | G | RG | rg | K | k | re | h |
+Parser<bool> order = cm | q | Q | m | l | v | CS | cs | c | G | RG | rg | K | k | re | h |
             BT | ET | Tm | SCN | W8 | TL |
             ((ch_p('w') | ch_p('J') | ch_p('j') | ch_p('M') | ch_p('d') | str_p("ri") | ch_p('i') |
             str_p("gs") | ch_p('y') | str_p("f*") | ch_p('F') | str_p("B*") | str_p("b*") | ch_p('b') |
@@ -756,29 +756,29 @@ static auto order = cm | q | Q | m | l | v | CS | cs | c | G | RG | rg | K | k |
             str_p("BMC") | str_p("BDC") | str_p("EMC") | str_p("BX") | str_p("EX")) >> end) |
             S | s | B | f | g ;
 
-static Parser<double> parameter = float_p()[parameter_a];
-static Parser<std::vector<char>> key = confix_p(ch_p('/'), (*alnum_p())[key_a], end);
-static Parser<std::vector<char>> text = confix_p(ch_p('<'), (*alnum_p())[text_a], ch_p('>'));
-static Parser<std::vector<char>> annotation = pair(ch_p('['), eol_p());
-static auto command = *(parameter | key | text | space) >> order;
-static auto array = pair(ch_p('['), ch_p(']')) >> !eol_p();
-static auto dict = pair(str_p("<<"), str_p(">>")) >> !eol_p();
-static Parser<std::vector<char>> code = confix_p(ch_p('<'), (+alnum_p())[encoding_a], ch_p('>'));
-static auto font_info = str_p("/CIDInit /ProcSet findresource begin") >> (+anychar_p() - (str_p("beginbfchar") >> eol_p()))
+Parser<double> parameter = float_p()[parameter_a];
+Parser<bool> key = confix_p(ch_p('/'), (*alnum_p())[key_a], end);
+Parser<bool> text = confix_p(ch_p('<'), (*alnum_p())[text_a], ch_p('>'));
+Parser<std::vector<char>> annotation = pair(ch_p('['), eol_p());
+Parser<bool> command = *(parameter | key | text | space) >> order;
+Parser<bool> array = pair(ch_p('['), ch_p(']')) >> !eol_p();
+Parser<bool> dict = pair(str_p("<<"), str_p(">>")) >> !eol_p();
+Parser<bool> code = confix_p(ch_p('<'), (+alnum_p())[encoding_a], ch_p('>'));
+Parser<bool> font_info = str_p("/CIDInit /ProcSet findresource begin") >> (+anychar_p() - (str_p("beginbfchar") >> eol_p()))
     	                >> str_p("beginbfchar") >> end >> +(code >> end) >> !eol_p() >> str_p("endbfchar")
                         >> end >> (+anychar_p() - (str_p("end") >> eol_p())) >> +(str_p("end") >> eol_p());
-static Parser<std::vector<char>> xml = pair(str_p("<?xpacket"), str_p("<?xpacket end=\"w\"?>")) >> eol_p();
-static Parser<std::vector<char>> others = (+anychar_p() - str_p("endstream"));
+Parser<bool> xml = pair(str_p("<?xpacket"), str_p("<?xpacket end=\"w\"?>")) >> eol_p();
+Parser<bool> others = (+anychar_p() - str_p("endstream"));
 
-static Parser<char> stream_start = str_p("stream") >> eol_p();
-static Parser<char>	stream_end = str_p("endstream") >> eol_p();
-static auto stream = stream_start >> +(command | dict | float_p() | space | eol_p() | font_info | xml | others) >> stream_end;
-static auto object = (int_p()[object_a] >> space >> int_p() >> space >> str_p("obj") >> eol_p() >>
+Parser<bool> stream_start = str_p("stream") >> eol_p();
+Parser<bool>	stream_end = str_p("endstream") >> eol_p();
+Parser<bool> stream = stream_start >> +(command | dict | float_p() | space | eol_p() | font_info | xml | others) >> stream_end;
+Parser<bool> object = (int_p()[object_a] >> space >> int_p() >> space >> str_p("obj") >> eol_p() >>
 					*(int_p() | dict | stream | array) >> str_p("endobj") >> eol_p());
 
-static auto head = str_p("%PDF-") >> float_p() >> (+anychar_p() - ch_p('%')) >> ch_p('%') >> (*anychar_p() - eol_p()) >> eol_p();
-static Parser<std::vector<char>> tail = (str_p("xref") >> *anychar_p())[end_a];
-static auto pdf = head >> *(annotation | object | eol_p()) >> tail;
+Parser<bool> head = str_p("%PDF-") >> float_p() >> (+anychar_p() - ch_p('%')) >> ch_p('%') >> (*anychar_p() - eol_p()) >> eol_p();
+Parser<bool> tail = (str_p("xref") >> *anychar_p())[end_a];
+Parser<bool> pdf = head >> *(annotation | object | eol_p()) >> tail;
 
 
 
@@ -788,7 +788,7 @@ bool PDFParser::parse(std::string_view &stream, Graph *graph)
     importer.load_graph(graph);
     importer.get_color_map_index(stream);
     importer.get_color_map(stream);
-    return pdf(stream).has_value();
+    return pdf(stream);
 }
 
 bool PDFParser::parse(std::ifstream &stream, Graph *graph)
@@ -801,7 +801,7 @@ bool PDFParser::parse(std::ifstream &stream, Graph *graph)
     std::string_view temp(str);
     importer.get_color_map_index(temp);
     importer.get_color_map(temp);
-    return pdf(temp).has_value();
+    return pdf(temp);
 }
 
 }
