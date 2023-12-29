@@ -4,7 +4,6 @@
 #include "io/Action.hpp"
 #include "io/Parser.hpp"
 #include "io/GlobalSetting.hpp"
-#include <qstyle.h>
 #include <sstream>
 #include <string>
 #include <QDebug>

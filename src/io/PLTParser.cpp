@@ -1,6 +1,7 @@
 #include "io/PLTParser.hpp"
 #include "io/Parser.hpp"
 #include "io/GlobalSetting.hpp"
+#include "io/TextEncoding.hpp"
 #include <sstream>
 
 
@@ -190,11 +191,11 @@ void Importer::end()
             {
                 if (dynamic_cast<Container *>(geo)->text().isEmpty())
                 {
-                    dynamic_cast<Container *>(geo)->set_text(QString::fromStdString(text.txt));
+                    dynamic_cast<Container *>(geo)->set_text(QString::fromUtf8(text.txt));
                 }
                 else
                 {
-                    dynamic_cast<Container *>(geo)->set_text(dynamic_cast<Container *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
+                    dynamic_cast<Container *>(geo)->set_text(dynamic_cast<Container *>(geo)->text() + '\n' + QString::fromUtf8(text.txt));
                 }
                 text.marked = true;
                 break;
@@ -203,11 +204,11 @@ void Importer::end()
             {
                 if (dynamic_cast<CircleContainer *>(geo)->text().isEmpty())
                 {
-                    dynamic_cast<CircleContainer *>(geo)->set_text(QString::fromStdString(text.txt));
+                    dynamic_cast<CircleContainer *>(geo)->set_text(QString::fromUtf8(text.txt));
                 }
                 else
                 {
-                    dynamic_cast<CircleContainer *>(geo)->set_text(dynamic_cast<CircleContainer *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
+                    dynamic_cast<CircleContainer *>(geo)->set_text(dynamic_cast<CircleContainer *>(geo)->text() + '\n' + QString::fromUtf8(text.txt));
                 }
                 text.marked = true;
                 break;
@@ -215,7 +216,7 @@ void Importer::end()
         }
         if (!text.marked)
         {
-            _graph->container_group().append(new Text(text.pos.coord().x, text.pos.coord().y, text_size, QString::fromStdString(text.txt)));
+            _graph->container_group().append(new Text(text.pos.coord().x, text.pos.coord().y, text_size, QString::fromUtf8(text.txt)));
         }
     }
     _texts.clear();
