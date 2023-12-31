@@ -7,6 +7,8 @@ enable_testing()
 if (MSVC)
     add_compile_options("/utf-8")
     add_compile_options("/arch:AVX2")
+    add_compile_options("/GL")
+    add_link_options("/LTCG")
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
