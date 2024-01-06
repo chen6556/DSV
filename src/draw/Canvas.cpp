@@ -7,7 +7,7 @@ Canvas::Canvas(QLabel **labels, QWidget *parent)
     : QWidget(parent), _info_labels(labels), _input_line(this)
 {
     QPalette palette;
-    palette.setColor(QPalette::Window, QColor(255, 255, 255));
+    palette.setColor(QPalette::Window, QColor(30,40,48));
     setAutoFillBackground(true);
     setPalette(palette);
     setCursor(Qt::CursorShape::CrossCursor);
@@ -37,6 +37,10 @@ void Canvas::init()
     _down = new QAction("Down");
     _menu->addAction(_up);
     _menu->addAction(_down);
+    _menu->setStyleSheet("color: rgb(230, 230, 230);"
+        "background-color: rgb(50, 50, 51);"
+        "selection-color: rgb(230, 230, 230);"
+        "selection-background-color: rgb(0, 85, 127);");
 }
 
 void Canvas::bind_editer(Editer *editer)

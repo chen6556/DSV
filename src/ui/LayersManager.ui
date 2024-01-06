@@ -13,6 +13,12 @@
   <property name="windowTitle">
    <string>Layers</string>
   </property>
+  <property name="styleSheet">
+   <string notr="true">background-color: rgb(50, 50, 51);
+selection-color: rgb(230, 230, 230);
+selection-background-color: rgb(0, 85, 127);
+color: rgb(230, 230, 230);</string>
+  </property>
   <property name="locale">
    <locale language="English" country="UnitedStates"/>
   </property>
@@ -56,6 +62,21 @@
      </item>
      <item>
       <widget class="QPushButton" name="pushButton">
+       <property name="styleSheet">
+        <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
+       </property>
        <property name="text">
         <string>OK</string>
        </property>
