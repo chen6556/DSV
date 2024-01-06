@@ -46,7 +46,9 @@ private:
     QAction *_up = nullptr;
     QAction *_down = nullptr;
 
-    const static Qt::GlobalColor shape_color = Qt::green, selected_shape_color = Qt::red, text_color = Qt::black;
+    const QColor point_color = QColor(8, 146, 208);
+    const Qt::GlobalColor shape_color = Qt::white, selected_shape_color = Qt::red, text_color = Qt::white;
+    const int point_size = 5, line_size = 1, text_size = 2;
 
 private:
     void init();

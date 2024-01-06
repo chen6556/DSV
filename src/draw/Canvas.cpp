@@ -54,13 +54,13 @@ void Canvas::paint_cache()
     painter.setRenderHint(QPainter::Antialiasing);
     if (_tool_flags[0] == Tool::CURVE)
     {
-        painter.setPen(QPen(QColor(255, 140, 0), 2));
+        painter.setPen(QPen(QColor(255, 140, 0), line_size));
     }
     else
     {
-        painter.setPen(QPen(shape_color, 3));
+        painter.setPen(QPen(shape_color, line_size));
     }
-    painter.setBrush(QColor(250, 250, 250));
+    painter.setBrush(QColor(212, 215, 217, 20));
 
     if (!_circle_cache.empty())
     {
@@ -93,14 +93,14 @@ void Canvas::paint_cache()
         painter.drawPolyline(points);
         if (_tool_flags[0] == Tool::CURVE)
         {
-            painter.setPen(QPen(Qt::blue, 6));
+            painter.setPen(QPen(point_color, point_size));
             painter.drawPoints(points);
         }
     }
 
     if (!_reflines.empty())
     {
-        painter.setPen(QPen(QColor(0, 140, 255), 3));
+        painter.setPen(QPen(QColor(0, 140, 255), 1));
         for (const QLineF &line : _reflines)
         {
             painter.drawLine(line.x1() * _canvas_ctm[0] + line.y1() * _canvas_ctm[3] + _canvas_ctm[6],
@@ -120,7 +120,7 @@ void Canvas::paint_graph()
     }
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
-    painter.setBrush(QColor(250, 250, 250));
+    painter.setBrush(QColor(212, 215, 217, 20));
     const bool show_text = GlobalSetting::get_instance()->setting()["show_text"].toBool();
     const int text_size = GlobalSetting::get_instance()->setting()["text_size"].toInt();
     QFont font("SimSun");
@@ -139,7 +139,7 @@ void Canvas::paint_graph()
     const CircleContainer *circlecontainer;
     const Geo::Polyline *polyline;
 
-    const QPen pen_selected(selected_shape_color, 3), pen_not_selected(shape_color, 3);
+    const QPen pen_selected(selected_shape_color, line_size), pen_not_selected(shape_color, line_size);
 
     Geo::Point temp_point;
     Geo::Coord center;
@@ -191,12 +191,12 @@ void Canvas::paint_graph()
                 painter.drawPolygon(points);
                 if (show_points)
                 {
-                    painter.setPen(QPen(QColor(0, 140, 255), 6));
+                    painter.setPen(QPen(point_color, point_size));
                     painter.drawPoints(points);
                 }
                 if (show_text && !container->text().isEmpty())
                 {
-                    painter.setPen(QPen(text_color, 2));
+                    painter.setPen(QPen(text_color, text_size));
                     width = height = 0;
                     for (const QString &s : container->text().split('\n'))
                     {
@@ -230,12 +230,12 @@ void Canvas::paint_graph()
                 _catched_points.emplace_back(QPointF(center.x, center.y));
                 if (show_points)
                 {
-                    painter.setPen(QPen(QColor(0, 140, 255), 6));
+                    painter.setPen(QPen(point_color, point_size));
                     painter.drawPoint(center.x, center.y);
                 }
                 if (show_text && !circlecontainer->text().isEmpty())
                 {
-                    painter.setPen(QPen(text_color, 2));
+                    painter.setPen(QPen(text_color, text_size));
                     width = height = 0;
                     for (const QString &s : circlecontainer->text().split('\n'))
                     {
@@ -274,7 +274,7 @@ void Canvas::paint_graph()
                             * _canvas_ctm[3] + _canvas_ctm[6] - text_rect.center().x(),
                             text->center().coord().x * _canvas_ctm[1] + text->center().coord().y * _canvas_ctm[4]
                             + _canvas_ctm[7] - text_rect.center().y());
-                        painter.setPen(QPen(text_color, 1));
+                        painter.setPen(QPen(text_color, text_size));
                         painter.drawText(text_rect, text->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                         painter.setPen(geo->is_selected ? pen_selected : pen_not_selected);
                         break;
@@ -294,12 +294,13 @@ void Canvas::paint_graph()
                         painter.drawPolygon(points);
                         if (show_points)
                         {
-                            painter.setPen(QPen(QColor(0, 140, 255), 6));
+                            painter.setPen(QPen(point_color, point_size));
                             painter.drawPoints(points);
+                            painter.setPen(geo->is_selected ? pen_selected : pen_not_selected);
                         }
                         if (show_text && !container->text().isEmpty())
                         {
-                            painter.setPen(QPen(text_color, 2));
+                            painter.setPen(QPen(text_color, text_size));
                             width = height = 0;
                             for (const QString &s : container->text().split('\n'))
                             {
@@ -315,6 +316,7 @@ void Canvas::paint_graph()
                             text_rect.setHeight(height);
                             text_rect.translate(points.boundingRect().center() - text_rect.center());
                             painter.drawText(text_rect, container->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                            painter.setPen(geo->is_selected ? pen_selected : pen_not_selected);
                         }
                         break;
                     case Geo::Type::CIRCLECONTAINER:
@@ -333,12 +335,13 @@ void Canvas::paint_graph()
                         _catched_points.emplace_back(QPointF(center.x, center.y));
                         if (show_points)
                         {
-                            painter.setPen(QPen(QColor(0, 140, 255), 6));
+                            painter.setPen(QPen(point_color, point_size));
                             painter.drawPoint(center.x, center.y);
+                            painter.setPen(geo->is_selected ? pen_selected : pen_not_selected);
                         }
                         if (show_text && !circlecontainer->text().isEmpty())
                         {
-                            painter.setPen(QPen(text_color, 2));
+                            painter.setPen(QPen(text_color, text_size));
                             width = height = 0;
                             for (const QString &s : circlecontainer->text().split('\n'))
                             {
@@ -355,6 +358,7 @@ void Canvas::paint_graph()
                             text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
                                 circlecontainer->center().coord().y - text_rect.center().y());
                             painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
+                            painter.setPen(geo->is_selected ? pen_selected : pen_not_selected);
                         }
                         break;
                     case Geo::Type::POLYLINE:
@@ -372,8 +376,9 @@ void Canvas::paint_graph()
                         painter.drawPolyline(points);
                         if (show_points)
                         {
-                            painter.setPen(QPen(QColor(0, 140, 255), 6));
+                            painter.setPen(QPen(point_color, text_size));
                             painter.drawPoints(points);
+                            painter.setPen(geo->is_selected ? pen_selected : pen_not_selected);
                         }
                         break;
                     case Geo::Type::BEZIER:
@@ -389,9 +394,10 @@ void Canvas::paint_graph()
                         painter.drawPolyline(points);
                         if (show_points)
                         {
-                            painter.setPen(QPen(QColor(0, 140, 255), 6));
+                            painter.setPen(QPen(point_color, point_size));
                             painter.drawPoint(points.front());
                             painter.drawPoint(points.back());
+                            painter.setPen(geo->is_selected ? pen_selected : pen_not_selected);
                         }
                         break;
                     default:
@@ -414,7 +420,7 @@ void Canvas::paint_graph()
                 painter.drawPolyline(points);
                 if (show_points)
                 {
-                    painter.setPen(QPen(QColor(0, 140, 255), 6));
+                    painter.setPen(QPen(point_color, point_size));
                     painter.drawPoints(points);
                 }
                 break;
@@ -425,14 +431,14 @@ void Canvas::paint_graph()
                 }
                 if (show_control_points && geo->is_selected)
                 {
-                    painter.setPen(QPen(QColor(255, 140, 0), 2));
+                    painter.setPen(QPen(QColor(255, 140, 0), 1));
                     for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(geo))
                     {
                         points.append(QPointF(point.coord().x * _canvas_ctm[0] + point.coord().y * _canvas_ctm[3] + _canvas_ctm[6],
                             point.coord().x * _canvas_ctm[1] + point.coord().y * _canvas_ctm[4] + _canvas_ctm[7]));
                     }
                     painter.drawPolyline(points);
-                    painter.setPen(QPen(Qt::blue, 6));
+                    painter.setPen(QPen(point_color, 5));
                     painter.drawPoints(points);
                     painter.setPen(pen_selected);
                     points.clear();
@@ -445,7 +451,7 @@ void Canvas::paint_graph()
                 painter.drawPolyline(points);
                 if (show_points)
                 {
-                    painter.setPen(QPen(QColor(0, 140, 255), 6));
+                    painter.setPen(QPen(point_color, point_size));
                     painter.drawPoint(points.front());
                     painter.drawPoint(points.back());
                 }
@@ -470,7 +476,7 @@ void Canvas::paint_select_rect()
 
     if (origin_visible())
     {
-        painter.setPen(QPen(Qt::black, 1, Qt::DotLine));
+        painter.setPen(QPen(Qt::white, 1, Qt::DotLine));
         painter.drawLine(_canvas_ctm[6] - 20, _canvas_ctm[7], _canvas_ctm[6] + 20, _canvas_ctm[7]);
         painter.drawLine(_canvas_ctm[6], _canvas_ctm[7] - 20, _canvas_ctm[6], _canvas_ctm[7] + 20);
         painter.drawEllipse(QPoint(_canvas_ctm[6], _canvas_ctm[7]), 10, 10);
@@ -481,7 +487,7 @@ void Canvas::paint_select_rect()
         return;
     }
     
-    painter.setPen(QPen(QColor(0, 0, 255, 140), 1));
+    painter.setPen(QPen(QColor(0, 255, 0, 140), 1));
     painter.setBrush(QColor(0, 120, 215, 10));
 
     Geo::AABBRect rect(_select_rect);
