@@ -172,7 +172,7 @@ void Canvas::paint_graph()
                             * _canvas_ctm[3] + _canvas_ctm[6] - text_rect.center().x(),
                             text->center().coord().x * _canvas_ctm[1] + text->center().coord().y * _canvas_ctm[4]
                             + _canvas_ctm[7] - text_rect.center().y());
-                painter.setPen(QPen(text_color, 1));
+                painter.setPen(QPen(text_color, text_size));
                 painter.drawText(text_rect, text->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                 break;
             case Geo::Type::CONTAINER:
@@ -239,18 +239,17 @@ void Canvas::paint_graph()
                     width = height = 0;
                     for (const QString &s : circlecontainer->text().split('\n'))
                     {
-                        width = std::max(width, font.pointSize() * s.length());
+                        width = std::max(width, font.pixelSize() * s.length());
                     }
                     if (width == 0)
                     {
-                        width = font.pointSize() * circlecontainer->text().length();
+                        width = font.pixelSize() * circlecontainer->text().length();
                     }
                     width = std::max(20ll, width);
                     height = std::max(font_metrics.lineSpacing() * (circlecontainer->text().count('\n') + 1), 20ll);
                     text_rect.setWidth(width);
                     text_rect.setHeight(height);
-                    text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
-                        circlecontainer->center().coord().y - text_rect.center().y());
+                    text_rect.translate(center.x - text_rect.center().x(), center.y - text_rect.center().y());
                     painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                 }
                 break;
@@ -355,8 +354,7 @@ void Canvas::paint_graph()
                             height = std::max(font_metrics.lineSpacing() * (circlecontainer->text().count('\n') + 1), 20ll);
                             text_rect.setWidth(width);
                             text_rect.setHeight(height);
-                            text_rect.translate(circlecontainer->center().coord().x - text_rect.center().x(), 
-                                circlecontainer->center().coord().y - text_rect.center().y());
+                            text_rect.translate(center.x - text_rect.center().x(), center.y - text_rect.center().y());
                             painter.drawText(text_rect, circlecontainer->text(), QTextOption(Qt::AlignmentFlag::AlignCenter));
                             painter.setPen(geo->is_selected ? pen_selected : pen_not_selected);
                         }
@@ -376,7 +374,7 @@ void Canvas::paint_graph()
                         painter.drawPolyline(points);
                         if (show_points)
                         {
-                            painter.setPen(QPen(point_color, text_size));
+                            painter.setPen(QPen(point_color, point_size));
                             painter.drawPoints(points);
                             painter.setPen(geo->is_selected ? pen_selected : pen_not_selected);
                         }
