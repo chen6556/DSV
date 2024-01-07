@@ -45,6 +45,10 @@ void Canvas::init()
     _down = new QAction("Down");
     _menu->addAction(_up);
     _menu->addAction(_down);
+    _menu->setStyleSheet("color: rgb(230, 230, 230);"
+        "background-color: rgb(50, 50, 51);"
+        "selection-color: rgb(230, 230, 230);"
+        "selection-background-color: rgb(0, 85, 127);");
 }
 
 void Canvas::bind_editer(Editer *editer)
@@ -58,13 +62,13 @@ void Canvas::bind_editer(Editer *editer)
 void Canvas::initializeGL()
 {
     initializeOpenGLFunctions();
-    glClearColor(0.999f, 0.999f, 0.999f, 1.0f);
+    glClearColor(0.117647f, 0.156862f, 0.188235f, 1.0f);
 
     unsigned int vertex_shader;
     unsigned int fragment_shader;
 
-    glPointSize(6.0f);
-    glLineWidth(3.0f);
+    glPointSize(9.6f);
+    glLineWidth(1.4f);
     glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LEQUAL);
@@ -202,17 +206,10 @@ void Canvas::paintGL()
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    if (_indexs_count[1] > 0) // polygon
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]); // polygon
-        glUniform4f(_uniforms[4], 0.9765f, 0.9765f, 0.9765f, 1.0f); // color 绘制填充色
-        glDrawElements(GL_TRIANGLES, _indexs_count[1], GL_UNSIGNED_INT, NULL);
-    }
-
     if (_indexs_count[0] > 0) // polyline
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]); // polyline
-        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // color 绘制线 normal
+        glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
         glDrawElements(GL_LINE_STRIP, _indexs_count[0], GL_UNSIGNED_INT, NULL);
     }
 
@@ -229,7 +226,7 @@ void Canvas::paintGL()
             glEnableVertexAttribArray(0);
             glUniform4f(_uniforms[4], 1.0f, 0.549f, 0.0f, 1.0f); // color
             glDrawArrays(GL_LINE_STRIP, 0, _cache_count / 3);
-            glUniform4f(_uniforms[4], 0.0f, 0.0f, 1.0f, 1.0f); // color
+            glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
             glDrawArrays(GL_POINTS, 0, _cache_count / 3);
         }
     }
@@ -241,7 +238,7 @@ void Canvas::paintGL()
         glEnableVertexAttribArray(0);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[3]); // text
-        glUniform4f(_uniforms[4], 0.0f, 0.0f, 0.0f, 1.0f); // color
+        glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color
 
         glEnable(GL_STENCIL_TEST); //开启模板测试
         glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT); //设置模板缓冲区更新方式(若通过则按位反转模板值)
@@ -259,9 +256,18 @@ void Canvas::paintGL()
         glDisable(GL_STENCIL_TEST); //关闭模板测试
     }
 
+    glDepthMask(GL_FALSE);
+    if (_indexs_count[1] > 0) // polygon
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]); // polygon
+        glUniform4f(_uniforms[4], 0.831372f, 0.843137f, 0.850980f, 0.078431f); // color 绘制填充色
+        glDrawElements(GL_TRIANGLES, _indexs_count[1], GL_UNSIGNED_INT, NULL);
+    }
+    glDepthMask(GL_TRUE);
+
     if (GlobalSetting::get_instance()->setting()["show_points"].toBool())
     {
-        glUniform4f(_uniforms[4], 0.0f, 0.0f, 1.0f, 1.0f); // color
+        glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
         glDrawArrays(GL_POINTS, 0, _points_count);
     }
 
@@ -273,7 +279,7 @@ void Canvas::paintGL()
 
         if (_tool_flags[0] != Tool::CURVE)
         {
-            glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // color
+            glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color
         }
         else
         {
@@ -282,7 +288,7 @@ void Canvas::paintGL()
         glDrawArrays(GL_LINE_STRIP, 0, _cache_count / 3);
         if (_tool_flags[0] == Tool::CURVE || GlobalSetting::get_instance()->setting()["show_points"].toBool())
         {
-            glUniform4f(_uniforms[4], 0.0f, 0.0f, 1.0f, 1.0f); // color
+            glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
             glDrawArrays(GL_POINTS, 0, _cache_count / 3);
         }
     }
@@ -300,10 +306,10 @@ void Canvas::paintGL()
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        glUniform4f(_uniforms[4], 0.9765f, 0.9765f, 0.9765f, 1.0f); // color 绘制填充色
+        glUniform4f(_uniforms[4], 0.831372f, 0.843137f, 0.850980f, 0.078431f); // color 绘制填充色
         glDrawArrays(GL_POLYGON, 0, 4);
 
-        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // color 绘制线
+        glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线
         glDrawArrays(GL_LINE_LOOP, 0, 4);
     }
     else if (!_circle_cache.empty())
@@ -348,10 +354,10 @@ void Canvas::paintGL()
             glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
         }
 
-        glUniform4f(_uniforms[4], 0.9765f, 0.9765f, 0.9765f, 1.0f); // color 绘制填充色
+        glUniform4f(_uniforms[4], 0.831372f, 0.843137f, 0.850980f, 0.078431f); // color 绘制填充色
         glDrawArrays(GL_TRIANGLE_FAN, 0, _cache_count / 3);
 
-        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 1.0f); // color 绘制线
+        glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线
         glDrawArrays(GL_LINE_LOOP, 0, _cache_count / 3);
         _cache_count = 0;
     }
@@ -362,7 +368,7 @@ void Canvas::paintGL()
 
     if (_bool_flags[7]) // origin
     {
-        glUniform4f(_uniforms[4], 0.0f, 0.0f, 0.0f, 1.0f); // color 画原点
+        glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 画原点
         glDrawArrays(GL_LINES, 0, 4);
     }
 
@@ -383,7 +389,7 @@ void Canvas::paintGL()
         glUniform4f(_uniforms[4], 0.0f, 0.47f, 0.843f, 0.1f); // color
         glDrawArrays(GL_POLYGON, 4, 4);
 
-        glUniform4f(_uniforms[4], 0.0f, 0.0f, 1.0f, 0.549f); // color
+        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 0.549f); // color
         glDrawArrays(GL_LINE_LOOP, 4, 4);
     }
 
