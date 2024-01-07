@@ -208,6 +208,10 @@ void Canvas::paintGL()
 
     if (_indexs_count[0] > 0) // polyline
     {
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
+        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glEnableVertexAttribArray(0);
+
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]); // polyline
         glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
         glDrawElements(GL_LINE_STRIP, _indexs_count[0], GL_UNSIGNED_INT, NULL);
@@ -224,6 +228,7 @@ void Canvas::paintGL()
             glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
             glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
             glEnableVertexAttribArray(0);
+
             glUniform4f(_uniforms[4], 1.0f, 0.549f, 0.0f, 1.0f); // color
             glDrawArrays(GL_LINE_STRIP, 0, _cache_count / 3);
             glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
@@ -257,6 +262,9 @@ void Canvas::paintGL()
     }
 
     glDepthMask(GL_FALSE);
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
+    glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+    glEnableVertexAttribArray(0);
     if (_indexs_count[1] > 0) // polygon
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]); // polygon
@@ -392,10 +400,6 @@ void Canvas::paintGL()
         glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 0.549f); // color
         glDrawArrays(GL_LINE_LOOP, 4, 4);
     }
-
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
-    glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
-    glEnableVertexAttribArray(0);
 
     for (QPointF &point : _catched_points)
     {
@@ -625,6 +629,11 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 makeCurrent();
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
+                if (_cache_count > 0)
+                {
+                    glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
+                    glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
+                }
                 doneCurrent();
                 delete []indexs;
 
