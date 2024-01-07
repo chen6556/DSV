@@ -8,8 +8,8 @@
 using namespace Geo;
 
 Geometry::Geometry(const Geometry &geo)
-    : _type(geo._type), shape_fixed(geo.shape_fixed),  is_selected(geo.is_selected),
-    point_index(geo.point_index), point_count(geo.point_count), depth(geo.depth)
+    : _type(geo._type), shape_fixed(geo.shape_fixed), is_selected(geo.is_selected),
+    point_index(geo.point_index), point_count(geo.point_count)
 {}
 
 Geometry &Geometry::operator=(const Geometry &geo)
@@ -21,7 +21,6 @@ Geometry &Geometry::operator=(const Geometry &geo)
         is_selected = geo.is_selected;
         point_index = geo.point_index;
         point_count = geo.point_count;
-        depth = geo.depth;
     }
     return *this;
 }

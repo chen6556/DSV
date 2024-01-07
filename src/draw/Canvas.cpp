@@ -70,8 +70,6 @@ void Canvas::initializeGL()
     glPointSize(9.6f);
     glLineWidth(1.4f);
     glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LEQUAL);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -204,7 +202,7 @@ void Canvas::paintGL()
         delete []indexs;
     }
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     if (_indexs_count[0] > 0) // polyline
     {
@@ -261,7 +259,6 @@ void Canvas::paintGL()
         glDisable(GL_STENCIL_TEST); //关闭模板测试
     }
 
-    glDepthMask(GL_FALSE);
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
     glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
     glEnableVertexAttribArray(0);
@@ -271,7 +268,6 @@ void Canvas::paintGL()
         glUniform4f(_uniforms[4], 0.831372f, 0.843137f, 0.850980f, 0.078431f); // color 绘制填充色
         glDrawElements(GL_TRIANGLES, _indexs_count[1], GL_UNSIGNED_INT, NULL);
     }
-    glDepthMask(GL_TRUE);
 
     if (GlobalSetting::get_instance()->setting()["show_points"].toBool())
     {
@@ -619,7 +615,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                                 {
                                     _cache[_cache_count++] = point.coord().x;
                                     _cache[_cache_count++] = point.coord().y;
-                                    _cache[_cache_count++] = obj->depth;
+                                    _cache[_cache_count++] = 0.5;
                                 }
                             }
                         }
@@ -927,7 +923,6 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             size_t data_len = 513, data_count;
             double *data = new double[data_len];
-            double depth;
             size_t selected_count = 0;
             bool update_vbo = false;
             makeCurrent();
@@ -936,7 +931,6 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             {
                 _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier);
                 data_count = data_len;
-                depth = obj->depth;
                 while (obj->point_count * 3 > data_len)
                 {
                     data_len *= 2;
@@ -955,7 +949,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
-                        data[data_count++] = depth;
+                        data[data_count++] = 0.5;
                     }
                     break;
                 case Geo::Type::CIRCLECONTAINER:
@@ -963,7 +957,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
-                        data[data_count++] = depth;
+                        data[data_count++] = 0.5;
                         if (event->modifiers() == Qt::ControlModifier && data_len == data_count)
                         {
                             data_len *= 2;
@@ -978,7 +972,6 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
                     {
                         data_count = 0;
-                        depth = item->depth;
                         switch (item->type())
                         {
                         case Geo::Type::CONTAINER:
@@ -986,7 +979,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                             {
                                 data[data_count++] = point.coord().x;
                                 data[data_count++] = point.coord().y;
-                                data[data_count++] = depth;
+                                data[data_count++] = 0.5;
                             }
                             break;
                         case Geo::Type::CIRCLECONTAINER:
@@ -994,7 +987,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                             {
                                 data[data_count++] = point.coord().x;
                                 data[data_count++] = point.coord().y;
-                                data[data_count++] = depth;
+                                data[data_count++] = 0.5;
                             }
                             break;
                         case Geo::Type::POLYLINE:
@@ -1002,7 +995,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                             {
                                 data[data_count++] = point.coord().x;
                                 data[data_count++] = point.coord().y;
-                                data[data_count++] = depth;
+                                data[data_count++] = 0.5;
                             }
                             break;
                         case Geo::Type::BEZIER:
@@ -1010,7 +1003,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                             {
                                 data[data_count++] = point.coord().x;
                                 data[data_count++] = point.coord().y;
-                                data[data_count++] = depth;
+                                data[data_count++] = 0.5;
                             }
                             break;
                         default:
@@ -1025,7 +1018,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
-                        data[data_count++] = depth;
+                        data[data_count++] = 0.5;
                     }
                     break;
                 case Geo::Type::BEZIER:
@@ -1033,7 +1026,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
-                        data[data_count++] = depth;
+                        data[data_count++] = 0.5;
                         if (event->modifiers() == Qt::ControlModifier && data_len == data_count)
                         {
                             data_len *= 2;
@@ -1049,7 +1042,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                         {
                             _cache[_cache_count++] = point.coord().x;
                             _cache[_cache_count++] = point.coord().y;
-                            _cache[_cache_count++] = depth;
+                            _cache[_cache_count++] = 0.5;
                         }
                     }
                     break;
@@ -1683,7 +1676,6 @@ void Canvas::refresh_vbo()
     double *data = new double[data_len];
     unsigned int *polyline_indexs = new unsigned int[polyline_index_len];
     unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
-    double depth = 1.0;
     Geo::Polygon points;
     Container *container = nullptr;
     Geo::Polyline *polyline = nullptr;
@@ -1699,7 +1691,6 @@ void Canvas::refresh_vbo()
         for (Geo::Geometry *geo : group)
         {
             geo->point_index = data_count / 3;
-            geo->depth = depth;
             switch (geo->type())
             {
             case Geo::Type::CONTAINER:
@@ -1721,7 +1712,7 @@ void Canvas::refresh_vbo()
                     polyline_indexs[polyline_index_count++] = data_count / 3;
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
-                    data[data_count++] = depth;
+                    data[data_count++] = 0.5;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -1762,7 +1753,7 @@ void Canvas::refresh_vbo()
                     polyline_indexs[polyline_index_count++] = data_count / 3;
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
-                    data[data_count++] = depth;
+                    data[data_count++] = 0.5;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -1788,7 +1779,6 @@ void Canvas::refresh_vbo()
                 for (Geo::Geometry *item : *dynamic_cast<Combination *>(geo))
                 {
                     item->point_index = data_count / 3;
-                    item->depth = depth;
                     switch (item->type())
                     {
                     case Geo::Type::CONTAINER:
@@ -1810,7 +1800,7 @@ void Canvas::refresh_vbo()
                             polyline_indexs[polyline_index_count++] = data_count / 3;
                             data[data_count++] = point.coord().x;
                             data[data_count++] = point.coord().y;
-                            data[data_count++] = depth;
+                            data[data_count++] = 0.5;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -1851,7 +1841,7 @@ void Canvas::refresh_vbo()
                             polyline_indexs[polyline_index_count++] = data_count / 3;
                             data[data_count++] = point.coord().x;
                             data[data_count++] = point.coord().y;
-                            data[data_count++] = depth;
+                            data[data_count++] = 0.5;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -1879,7 +1869,7 @@ void Canvas::refresh_vbo()
                             polyline_indexs[polyline_index_count++] = data_count / 3;
                             data[data_count++] = point.coord().x;
                             data[data_count++] = point.coord().y;
-                            data[data_count++] = depth;
+                            data[data_count++] = 0.5;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -1906,7 +1896,7 @@ void Canvas::refresh_vbo()
                             polyline_indexs[polyline_index_count++] = data_count / 3;
                             data[data_count++] = point.coord().x;
                             data[data_count++] = point.coord().y;
-                            data[data_count++] = depth;
+                            data[data_count++] = 0.5;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -1931,11 +1921,6 @@ void Canvas::refresh_vbo()
                         break;
                     }
 
-                    depth -= 1e-6;
-                    if (depth <= 0)
-                    {
-                        depth = 1.0;
-                    }
                     if (polyline_index_count == polyline_index_len)
                     {
                         polyline_index_len *= 2;
@@ -1954,7 +1939,7 @@ void Canvas::refresh_vbo()
                     polyline_indexs[polyline_index_count++] = data_count / 3;
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
-                    data[data_count++] = depth;
+                    data[data_count++] = 0.5;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -1981,7 +1966,7 @@ void Canvas::refresh_vbo()
                     polyline_indexs[polyline_index_count++] = data_count / 3;
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
-                    data[data_count++] = depth;
+                    data[data_count++] = 0.5;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -2005,11 +1990,7 @@ void Canvas::refresh_vbo()
             default:
                 break;
             }
-            depth -= 1e-6;
-            if (depth <= 0)
-            {
-                depth = 1.0;
-            }
+
             if (polyline_index_count == polyline_index_len)
             {
                 polyline_index_len *= 2;
@@ -2052,7 +2033,6 @@ void Canvas::refresh_vbo(const bool unitary)
 {
     size_t data_len = 1026, data_count = 0;
     double *data = new double[data_len];
-    double depth;
 
     makeCurrent();
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
@@ -2072,7 +2052,6 @@ void Canvas::refresh_vbo(const bool unitary)
             }
 
             data_count = 0;
-            depth = geo->depth;
             switch (geo->type())
             {
             case Geo::Type::CONTAINER:
@@ -2080,7 +2059,7 @@ void Canvas::refresh_vbo(const bool unitary)
                 {
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
-                    data[data_count++] = depth;
+                    data[data_count++] = 0.5;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -2096,7 +2075,7 @@ void Canvas::refresh_vbo(const bool unitary)
                 {
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
-                    data[data_count++] = depth;
+                    data[data_count++] = 0.5;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -2111,7 +2090,6 @@ void Canvas::refresh_vbo(const bool unitary)
                 for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
                 {
                     data_count = 0;
-                    depth = item->depth;
                     switch (item->type())
                     {
                     case Geo::Type::CONTAINER:
@@ -2119,7 +2097,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         {
                             data[data_count++] = point.coord().x;
                             data[data_count++] = point.coord().y;
-                            data[data_count++] = depth;
+                            data[data_count++] = 0.5;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -2135,7 +2113,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         {
                             data[data_count++] = point.coord().x;
                             data[data_count++] = point.coord().y;
-                            data[data_count++] = depth;
+                            data[data_count++] = 0.5;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -2151,7 +2129,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         {
                             data[data_count++] = point.coord().x;
                             data[data_count++] = point.coord().y;
-                            data[data_count++] = depth;
+                            data[data_count++] = 0.5;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -2167,7 +2145,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         {
                             data[data_count++] = point.coord().x;
                             data[data_count++] = point.coord().y;
-                            data[data_count++] = depth;
+                            data[data_count++] = 0.5;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -2191,7 +2169,7 @@ void Canvas::refresh_vbo(const bool unitary)
                 {
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
-                    data[data_count++] = depth;
+                    data[data_count++] = 0.5;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -2207,7 +2185,7 @@ void Canvas::refresh_vbo(const bool unitary)
                 {
                     data[data_count++] = point.coord().x;
                     data[data_count++] = point.coord().y;
-                    data[data_count++] = depth;
+                    data[data_count++] = 0.5;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -2335,14 +2313,12 @@ void Canvas::refresh_selected_vbo()
 {
     size_t data_len = 513, data_count;
     double *data = new double[data_len];
-    double depth;
 
     makeCurrent();
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
     for (Geo::Geometry *obj : _editer->selected())
     {
         data_count = data_len;
-        depth = obj->depth;
         while (obj->point_count * 3 > data_len)
         {
             data_len *= 2;
@@ -2360,7 +2336,7 @@ void Canvas::refresh_selected_vbo()
             {
                 data[data_count++] = point.coord().x;
                 data[data_count++] = point.coord().y;
-                data[data_count++] = depth;
+                data[data_count++] = 0.5;
             }
             break;
         case Geo::Type::CIRCLECONTAINER:
@@ -2368,14 +2344,13 @@ void Canvas::refresh_selected_vbo()
             {
                 data[data_count++] = point.coord().x;
                 data[data_count++] = point.coord().y;
-                data[data_count++] = depth;
+                data[data_count++] = 0.5;
             }
             break;
         case Geo::Type::COMBINATION:
             for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
             {
                 data_count = 0;
-                depth = item->depth;
                 switch (item->type())
                 {
                 case Geo::Type::CONTAINER:
@@ -2383,7 +2358,7 @@ void Canvas::refresh_selected_vbo()
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
-                        data[data_count++] = depth;
+                        data[data_count++] = 0.5;
                     }
                     break;
                 case Geo::Type::CIRCLECONTAINER:
@@ -2391,7 +2366,7 @@ void Canvas::refresh_selected_vbo()
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
-                        data[data_count++] = depth;
+                        data[data_count++] = 0.5;
                     }
                     break;
                 case Geo::Type::POLYLINE:
@@ -2399,7 +2374,7 @@ void Canvas::refresh_selected_vbo()
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
-                        data[data_count++] = depth;
+                        data[data_count++] = 0.5;
                     }
                     break;
                 case Geo::Type::BEZIER:
@@ -2407,7 +2382,7 @@ void Canvas::refresh_selected_vbo()
                     {
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
-                        data[data_count++] = depth;
+                        data[data_count++] = 0.5;
                     }
                     break;
                 default:
@@ -2422,7 +2397,7 @@ void Canvas::refresh_selected_vbo()
             {
                 data[data_count++] = point.coord().x;
                 data[data_count++] = point.coord().y;
-                data[data_count++] = depth;
+                data[data_count++] = 0.5;
             }
             break;
         case Geo::Type::BEZIER:
@@ -2430,7 +2405,7 @@ void Canvas::refresh_selected_vbo()
             {
                 data[data_count++] = point.coord().x;
                 data[data_count++] = point.coord().y;
-                data[data_count++] = depth;
+                data[data_count++] = 0.5;
             }
             break;
         default:
@@ -2560,7 +2535,6 @@ void Canvas::refresh_text_vbo()
     Container *container = nullptr;
     CircleContainer *circlecontainer = nullptr;
     Geo::Coord coord;
-    double depth;
     Geo::Polygon points;
     size_t offset;
     int string_index;
@@ -2596,7 +2570,6 @@ void Canvas::refresh_text_vbo()
                     path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
-                depth = text->depth;
                 text->text_index = data_count;
                 break;
             case Geo::Type::CONTAINER:
@@ -2614,7 +2587,6 @@ void Canvas::refresh_text_vbo()
                     path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
-                depth = container->depth;
                 container->text_index = data_count;
                 break;
             case Geo::Type::CIRCLECONTAINER:
@@ -2632,7 +2604,6 @@ void Canvas::refresh_text_vbo()
                     path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
-                depth = circlecontainer->depth;
                 circlecontainer->text_index = data_count;
                 break;
             case Geo::Type::COMBINATION:
@@ -2655,7 +2626,6 @@ void Canvas::refresh_text_vbo()
                             path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
-                        depth = text->depth;
                         text->text_index = data_count;
                         break;
                     case Geo::Type::CONTAINER:
@@ -2674,7 +2644,6 @@ void Canvas::refresh_text_vbo()
                             path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
-                        depth = container->depth;
                         container->text_index = data_count;
                         break;
                     case Geo::Type::CIRCLECONTAINER:
@@ -2693,7 +2662,6 @@ void Canvas::refresh_text_vbo()
                             path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
-                        depth = circlecontainer->depth;
                         circlecontainer->text_index = data_count;
                         break;
                     default:
@@ -2707,7 +2675,7 @@ void Canvas::refresh_text_vbo()
                             points.append(Geo::Point(point.x(), point.y()));
                             data[data_count++] = point.x();
                             data[data_count++] = point.y();
-                            data[data_count++] = depth;
+                            data[data_count++] = 0.5;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -2770,7 +2738,7 @@ void Canvas::refresh_text_vbo()
                     points.append(Geo::Point(point.x(), point.y()));
                     data[data_count++] = point.x();
                     data[data_count++] = point.y();
-                    data[data_count++] = depth;
+                    data[data_count++] = 0.5;
                     if (data_count == data_len)
                     {
                         data_len *= 2;
@@ -2853,7 +2821,6 @@ void Canvas::refresh_text_vbo(const bool unitary)
     Container *container = nullptr;
     CircleContainer *circlecontainer = nullptr;
     Geo::Coord coord;
-    double depth;
     int string_index;
     QStringList strings;
 
@@ -2892,7 +2859,6 @@ void Canvas::refresh_text_vbo(const bool unitary)
                     path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
-                depth = text->depth;
                 break;
             case Geo::Type::CONTAINER:
                 container = dynamic_cast<Container *>(geo);
@@ -2909,7 +2875,6 @@ void Canvas::refresh_text_vbo(const bool unitary)
                     path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
-                depth = container->depth;
                 break;
             case Geo::Type::CIRCLECONTAINER:
                 circlecontainer = dynamic_cast<CircleContainer *>(geo);
@@ -2926,7 +2891,6 @@ void Canvas::refresh_text_vbo(const bool unitary)
                     path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
-                depth = circlecontainer->depth;
                 break;
             case Geo::Type::COMBINATION:
                 for (Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
@@ -2948,7 +2912,6 @@ void Canvas::refresh_text_vbo(const bool unitary)
                             path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
-                        depth = text->depth;
                         break;
                     case Geo::Type::CONTAINER:
                         container = dynamic_cast<Container *>(item);
@@ -2966,7 +2929,6 @@ void Canvas::refresh_text_vbo(const bool unitary)
                             path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
-                        depth = container->depth;
                         break;
                     case Geo::Type::CIRCLECONTAINER:
                         circlecontainer = dynamic_cast<CircleContainer *>(item);
@@ -2984,7 +2946,6 @@ void Canvas::refresh_text_vbo(const bool unitary)
                             path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
-                        depth = circlecontainer->depth;
                         break;
                     default:
                         break;
@@ -2996,7 +2957,7 @@ void Canvas::refresh_text_vbo(const bool unitary)
                         {
                             data[data_count++] = point.x();
                             data[data_count++] = point.y();
-                            data[data_count++] = depth;
+                            data[data_count++] = 0.5;
                             if (data_count == data_len)
                             {
                                 data_len *= 2;
@@ -3034,7 +2995,7 @@ void Canvas::refresh_text_vbo(const bool unitary)
                 {
                     data[data_count++] = point.x();
                     data[data_count++] = point.y();
-                    data[data_count++] = depth;
+                    data[data_count++] = 0.5;
                     if (data_count == data_len)
                     {
                         data_len *= 2;

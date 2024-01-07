@@ -24,7 +24,6 @@ namespace Geo
         bool is_selected = false;
         unsigned long long point_index = 0;
         unsigned long long point_count = 0;
-        double depth = 1.0;
 
     public:
         Geometry() {};
