@@ -17,15 +17,11 @@ public:
 
     Graph(const Graph &graph);
 
-    Graph(const Graph &&graph) noexcept;
-
     Graph *clone() const;
 
     void transfer(Graph &graph);
 
     Graph &operator=(const Graph &graph);
-
-    Graph &operator=(const Graph &&graph) noexcept;
 
     ContainerGroup &container_group(const size_t index = 0);
 

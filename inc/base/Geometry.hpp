@@ -72,11 +72,7 @@ namespace Geo
 
         Coord(const Coord &coord);
 
-        Coord(const Coord &&coord) noexcept;
-
         Coord &operator=(const Coord &coord);
-
-        Coord &operator=(const Coord &&coord) noexcept;
 
         const bool operator==(const Coord &coord) const;
 
@@ -97,11 +93,7 @@ namespace Geo
 
         Point(const Point &point);
 
-        Point(const Point &&point) noexcept;
-
         Point &operator=(const Point &point);
-
-        Point &operator=(const Point &&point) noexcept;
 
         Coord &coord();
 
@@ -166,8 +158,6 @@ namespace Geo
 
         Polyline(const Polyline &polyline);
 
-        Polyline(const Polyline &&polyline) noexcept;
-
         Polyline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end);
 
         Polyline(const std::initializer_list<Point> &points);
@@ -187,8 +177,6 @@ namespace Geo
         const Point &operator[](const size_t index) const;
 
         Polyline &operator=(const Polyline &polyline);
-
-        Polyline &operator=(const Polyline &&polyline) noexcept;
 
         Polyline operator+(const Point &point) const;
 
@@ -281,8 +269,6 @@ namespace Geo
 
         AABBRect(const AABBRect &rect);
 
-        AABBRect(const AABBRect &&rect) noexcept;
-
         const double left() const;
 
         const double top() const;
@@ -300,8 +286,6 @@ namespace Geo
         void set_bottom(const double value);
 
         AABBRect &operator=(const AABBRect &reac);
-
-        AABBRect &operator=(const AABBRect &&reac) noexcept;
 
         const bool empty() const override;
 
@@ -375,8 +359,6 @@ namespace Geo
 
         Polygon(const Polygon &polygon);
 
-        Polygon(const Polygon &&polygon) noexcept;
-
         Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end);
 
         Polygon(const std::initializer_list<Point> &points);
@@ -386,8 +368,6 @@ namespace Geo
         Polygon(const AABBRect &rect);
 
         Polygon &operator=(const Polygon &polygon);
-
-        Polygon &operator=(const Polygon &&polygon) noexcept;
 
         Polygon *clone() const override;
 
@@ -433,11 +413,7 @@ namespace Geo
 
         Circle(const Circle &circle);
 
-        Circle(const Circle &&Circle) noexcept;
-
         Circle &operator=(const Circle &circle);
-
-        Circle &operator=(const Circle &&circle) noexcept;
 
         Point &center();
 
@@ -495,11 +471,7 @@ namespace Geo
 
         Line(const Line &line);
 
-        Line(const Line &&line) noexcept;
-
         Line &operator=(const Line &line);
-
-        Line &operator=(const Line &&line) noexcept;
 
         Line operator+(const Point &point);
 
@@ -551,8 +523,6 @@ namespace Geo
 
         Bezier(const Bezier &bezier);
 
-        Bezier(const Bezier &&bezier) noexcept;
-
         Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const size_t n);
 
         Bezier(const std::initializer_list<Point> &points, const size_t n);
@@ -572,8 +542,6 @@ namespace Geo
         Bezier *clone() const override;
 
         Bezier &operator=(const Bezier &bezier);
-
-        Bezier &operator=(const Bezier &&bezier) noexcept;
 
         void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
 
