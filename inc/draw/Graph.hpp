@@ -17,7 +17,7 @@ public:
 
     Graph(const Graph &graph);
 
-    Graph(const Graph &&graph) noexcept;
+    Graph(Graph &&graph) noexcept;
 
     Graph *clone() const;
 
@@ -25,7 +25,7 @@ public:
 
     Graph &operator=(const Graph &graph);
 
-    Graph &operator=(const Graph &&graph) noexcept;
+    Graph &operator=(Graph &&graph) noexcept;
 
     ContainerGroup &container_group(const size_t index = 0);
 

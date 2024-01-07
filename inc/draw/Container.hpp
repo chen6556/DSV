@@ -15,11 +15,7 @@ public:
 
     Text(const Text &text);
 
-    Text(const Text &&text) noexcept;
-
     Text &operator=(const Text &text);
-
-    Text &operator=(const Text &&text) noexcept;
 
     void set_text(const QString &str, const int size);
 
@@ -52,11 +48,7 @@ public:
 
     Container(const Container &container);
 
-    Container(const Container &&container) noexcept;
-
     Container &operator=(const Container &container);
-
-    Container &operator=(const Container &&container) noexcept;
 
     Geo::Polygon &shape();
 
@@ -91,11 +83,7 @@ public:
 
     CircleContainer(const CircleContainer &container);
 
-    CircleContainer(const CircleContainer &&container) noexcept;
-
     CircleContainer &operator=(const CircleContainer &container);
-
-    CircleContainer &operator=(const CircleContainer &&container) noexcept;
 
     Geo::Circle &shape();
 
@@ -129,7 +117,7 @@ public:
 
     ContainerGroup(const ContainerGroup &containers);
 
-    ContainerGroup(const ContainerGroup &&containers) noexcept;
+    ContainerGroup(ContainerGroup &&containers) noexcept;
 
     ContainerGroup(const std::initializer_list<Geo::Geometry *> &containers);
 
@@ -149,7 +137,7 @@ public:
 
     ContainerGroup &operator=(const ContainerGroup &group);
 
-    ContainerGroup &operator=(const ContainerGroup &&group) noexcept;
+    ContainerGroup &operator=(ContainerGroup &&group) noexcept;
 
     std::vector<Geo::Geometry *>::iterator begin();
 
@@ -264,7 +252,7 @@ public:
 
     Combination(const Combination &combination);
 
-    Combination(const Combination &&combination) noexcept;
+    Combination(Combination &&combination) noexcept;
 
     void append(Combination *combination);
 
@@ -276,7 +264,7 @@ public:
 
     Combination &operator=(const Combination &combination);
 
-    Combination &operator=(const Combination &&combination) noexcept;
+    Combination &operator=(Combination &&combination) noexcept;
 
     void clear() override;
 

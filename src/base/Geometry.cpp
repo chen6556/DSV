@@ -67,21 +67,7 @@ Coord::Coord(const double x_, const double y_)
 Coord::Coord(const Coord &coord)
     : x(coord.x), y(coord.y) {}
 
-Coord::Coord(const Coord &&coord) noexcept
-    : x(coord.x),
-    y(coord.y) {}
-
 Coord &Coord::operator=(const Coord &coord)
-{
-    if (this != &coord)
-    {
-        x = coord.x;
-        y = coord.y;
-    }
-    return *this;
-}
-
-Coord &Coord::operator=(const Coord &&coord) noexcept
 {
     if (this != &coord)
     {
@@ -120,23 +106,7 @@ Point::Point(const Point &point)
     ,_pos(point._pos)
 {}
 
-Point::Point(const Point &&point) noexcept
-    :Geometry(point)
-    ,_pos(point._pos)
-{}
-
 Point &Point::operator=(const Point &point)
-{
-    if (this != &point)
-    {
-        Geometry::operator=(point);
-        _pos = point._pos;
-        _type = Type::POINT;
-    }
-    return *this;
-}
-
-Point &Point::operator=(const Point &&point) noexcept
 {
     if (this != &point)
     {
@@ -315,13 +285,6 @@ Polyline::Polyline(const Polyline &polyline)
     _type = Type::POLYLINE;
 }
 
-Polyline::Polyline(const Polyline &&polyline) noexcept
-    :Geometry(polyline)
-    ,_points(polyline._points)
-{
-    _type = Type::POLYLINE;
-}
-
 Polyline::Polyline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
 {
     _points.push_back(*begin);
@@ -391,17 +354,6 @@ const Point &Polyline::operator[](const size_t index) const
 }
 
 Polyline &Polyline::operator=(const Polyline &polyline)
-{
-    if (this != &polyline)
-    {
-        Geometry::operator=(polyline);
-        _points = polyline._points;
-        _type = Type::POLYLINE;
-    }
-    return *this;
-}
-
-Polyline &Polyline::operator=(const Polyline &&polyline) noexcept
 {
     if (this != &polyline)
     {
@@ -847,13 +799,6 @@ AABBRect::AABBRect(const AABBRect &rect)
     _type = Type::AABBRECT;
 }
 
-AABBRect::AABBRect(const AABBRect &&rect) noexcept
-    :Geometry(rect)
-    ,_points(rect._points)
-{
-    _type = Type::AABBRECT;
-}
-
 const double AABBRect::left() const
 {
     return _points.front().coord().x;
@@ -901,17 +846,6 @@ void AABBRect::set_bottom(const double value)
 }
 
 AABBRect &AABBRect::operator=(const AABBRect &rect)
-{
-    if (this != &rect)
-    {
-        Geometry::operator=(rect);
-        _points = rect._points;
-        _type = Type::AABBRECT;
-    }
-    return *this;
-}
-
-AABBRect &AABBRect::operator=(const AABBRect &&rect) noexcept
 {
     if (this != &rect)
     {
@@ -1142,12 +1076,6 @@ Polygon::Polygon(const Polygon &polygon)
     _type = Type::POLYGON;
 }
 
-Polygon::Polygon(const Polygon &&polygon) noexcept
-    :Polyline(polygon)
-{
-    _type = Type::POLYGON;
-}
-
 Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
     :Polyline(begin, end)
 {
@@ -1187,16 +1115,6 @@ Polygon::Polygon(const AABBRect& rect)
 }
 
 Polygon &Polygon::operator=(const Polygon &polygon)
-{
-    if (this != &polygon)
-    {
-        Polyline::operator=(polygon);
-        _type = Type::POLYGON;
-    }
-    return *this;
-}
-
-Polygon &Polygon::operator=(const Polygon &&polygon) noexcept
 {
     if (this != &polygon)
     {
@@ -1377,27 +1295,7 @@ Circle::Circle(const Circle &circle)
     _type = Type::CIRCLE;
 }
 
-Circle::Circle(const Circle &&circle) noexcept
-    :Geometry(circle)
-    ,_center(circle._center)
-    ,_radius(circle._radius)
-{
-    _type = Type::CIRCLE;
-}
-
 Circle &Circle::operator=(const Circle &circle)
-{
-    if (this != &circle)
-    {
-        Geometry::operator=(circle);
-        _center = circle._center;
-        _radius = circle._radius;
-        _type = Type::CIRCLE;
-    }
-    return *this;
-}
-
-Circle &Circle::operator=(const Circle &&circle) noexcept
 {
     if (this != &circle)
     {
@@ -1552,27 +1450,7 @@ Line::Line(const Line &line)
     _type = Type::LINE;
 }
 
-Line::Line(const Line &&line) noexcept
-    :Geometry(line)
-    ,_start_point(line._start_point)
-    ,_end_point(line._end_point)
-{
-    _type = Type::LINE;
-}
-
 Line &Line::operator=(const Line &line)
-{
-    if (this != &line)
-    {
-        Geometry::operator=(line);
-        _start_point = line._start_point;
-        _end_point = line._end_point;
-        _type = Type::LINE;
-    }
-    return *this;
-}
-
-Line &Line::operator=(const Line &&line) noexcept
 {
     if (this != &line)
     {
@@ -1723,13 +1601,6 @@ Bezier::Bezier(const Bezier &bezier)
     _shape.shape_fixed = true;
 }
 
-Bezier::Bezier(const Bezier &&bezier) noexcept
-    : Polyline(bezier), _order(bezier._order), _shape(bezier._shape)
-{
-    _type = Type::BEZIER;
-    _shape.shape_fixed = true;
-}
-
 Bezier::Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const size_t n)
     : Polyline(begin, end), _order(n)
 {
@@ -1841,17 +1712,6 @@ Bezier *Bezier::clone() const
 }
 
 Bezier &Bezier::operator=(const Bezier &bezier)
-{
-    if (this != &bezier)
-    {
-        Polyline::operator=(bezier);
-        _shape = bezier._shape;
-        _type = Type::BEZIER;
-    }
-    return *this;
-}
-
-Bezier &Bezier::operator=(const Bezier &&bezier) noexcept
 {
     if (this != &bezier)
     {

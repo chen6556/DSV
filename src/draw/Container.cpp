@@ -36,25 +36,7 @@ Text::Text(const Text &text)
     _type = Geo::Type::TEXT;
 }
 
-Text::Text(const Text &&text) noexcept
-    : Geo::AABBRect(text), _text(text._text), _text_size(text._text_size)
-{
-    _type = Geo::Type::TEXT;
-}
-
 Text &Text::operator=(const Text &text)
-{
-    if (&text != this)
-    {
-        Geo::AABBRect::operator=(text);
-        _text = text._text;
-        _text_size = text._text_size;
-        _type = Geo::Type::TEXT;
-    }
-    return *this;
-}
-
-Text &Text::operator=(const Text &&text) noexcept
 {
     if (&text != this)
     {
@@ -173,24 +155,7 @@ Container::Container(const Container &container)
     _type = Geo::Type::CONTAINER;
 }
 
-Container::Container(const Container &&container) noexcept
-    : Geo::Polygon(container), _txt(container._txt)
-{
-    _type = Geo::Type::CONTAINER;
-}
-
 Container &Container::operator=(const Container &container)
-{
-    if (this != &container)
-    {
-        Geo::Polygon::operator=(container);
-        _txt = container._txt;
-        _type = Geo::Type::CONTAINER;
-    }
-    return *this;
-}
-
-Container &Container::operator=(const Container &&container) noexcept
 {
     if (this != &container)
     {
@@ -267,24 +232,7 @@ CircleContainer::CircleContainer(const CircleContainer &container)
     _type = Geo::Type::CIRCLECONTAINER;
 }
 
-CircleContainer::CircleContainer(const CircleContainer &&container) noexcept
-    : Geo::Circle(container), _txt(container._txt)
-{
-    _type = Geo::Type::CIRCLECONTAINER;
-}
-
 CircleContainer &CircleContainer::operator=(const CircleContainer &container)
-{
-    if (this != &container)
-    {
-        Geo::Circle::operator=(container);
-        _txt = container._txt;
-        _type = Geo::Type::CIRCLECONTAINER;
-    }
-    return *this;
-}
-
-CircleContainer &CircleContainer::operator=(const CircleContainer &&container) noexcept
 {
     if (this != &container)
     {
@@ -365,37 +313,13 @@ ContainerGroup::ContainerGroup(const ContainerGroup &containers)
     }
 }
 
-ContainerGroup::ContainerGroup(const ContainerGroup &&containers) noexcept
+ContainerGroup::ContainerGroup(ContainerGroup &&containers) noexcept
     : Geo::Geometry(containers), _ratio(containers._ratio), _visible(containers._visible),
     name(containers.name)
 {
     _type = Geo::Type::CONTAINERGROUP;
-    for (const Geo::Geometry *geo : containers)
-    {
-        switch (geo->type())
-        {
-        case Geo::Type::TEXT:
-            _containers.push_back(dynamic_cast<const Text *>(geo)->clone());
-            break;
-        case Geo::Type::CONTAINER:
-            _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
-            break;
-        case Geo::Type::CIRCLECONTAINER:
-            _containers.push_back(dynamic_cast<const CircleContainer *>(geo)->clone());
-            break;
-        case Geo::Type::COMBINATION:
-            _containers.push_back(dynamic_cast<const Combination *>(geo)->clone());
-            break;
-        case Geo::Type::POLYLINE:
-            _containers.push_back(dynamic_cast<const Geo::Polyline *>(geo)->clone());
-            break;
-        case Geo::Type::BEZIER:
-            _containers.push_back(dynamic_cast<const Geo::Bezier *>(geo)->clone());
-            break;
-        default:
-            break;
-        }
-    }
+    _containers.assign(containers._containers.begin(), containers._containers.end());
+    containers._containers.clear();
 }
 
 ContainerGroup::ContainerGroup(const std::initializer_list<Geo::Geometry *> &containers)
@@ -521,7 +445,7 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
     return *this;
 }
 
-ContainerGroup &ContainerGroup::operator=(const ContainerGroup &&group) noexcept
+ContainerGroup &ContainerGroup::operator=(ContainerGroup &&group) noexcept
 {
     if (this != &group)
     {
@@ -533,32 +457,8 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &&group) noexcept
         }
         _containers.clear();
         _containers.shrink_to_fit();
-        for (const Geo::Geometry *geo : group._containers)
-        {
-            switch (geo->type())
-            {
-            case Geo::Type::TEXT:
-                _containers.push_back(dynamic_cast<const Text *>(geo)->clone());
-                break;
-            case Geo::Type::CONTAINER:
-                _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
-                break;
-            case Geo::Type::CIRCLECONTAINER:
-                _containers.push_back(dynamic_cast<const CircleContainer *>(geo)->clone());
-                break;
-            case Geo::Type::COMBINATION:
-                _containers.push_back(dynamic_cast<const Combination *>(geo)->clone());
-                break;
-            case Geo::Type::POLYLINE:
-                _containers.push_back(dynamic_cast<const Geo::Polyline *>(geo)->clone());
-                break;
-            case Geo::Type::BEZIER:
-                _containers.push_back(dynamic_cast<const Geo::Bezier *>(geo)->clone());
-                break;
-            default:
-                break;
-            }
-        }
+        _containers.assign(group._containers.begin(), group._containers.end());
+        group._containers.clear();
         _ratio = group._ratio;
         _visible = group._visible;
         _type = Geo::Type::CONTAINERGROUP;
@@ -961,7 +861,7 @@ Combination::Combination(const Combination &combination)
     _type = Geo::Type::COMBINATION;
 }
 
-Combination::Combination(const Combination &&combination) noexcept
+Combination::Combination(Combination &&combination) noexcept
     : ContainerGroup(combination), _border(combination._border)
 {
     _type = Geo::Type::COMBINATION;
@@ -1020,7 +920,7 @@ Combination &Combination::operator=(const Combination &combination)
     return *this;
 }
 
-Combination &Combination::operator=(const Combination &&combination) noexcept
+Combination &Combination::operator=(Combination &&combination) noexcept
 {
     ContainerGroup::operator=(std::move(combination));
     _type = Geo::Type::COMBINATION;

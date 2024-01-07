@@ -11,14 +11,15 @@ Graph::Graph(const Graph &graph)
     }
 }
 
-Graph::Graph(const Graph &&graph) noexcept
+Graph::Graph(Graph &&graph) noexcept
     : Geo::Geometry(graph), _ratio(graph._ratio), modified(graph.modified)
 {
     _type = Geo::Type::GRAPH;
-    for (const ContainerGroup &group : graph._container_groups)
+    for (ContainerGroup &group : graph._container_groups)
     {
-        _container_groups.emplace_back(group);
+        _container_groups.emplace_back(std::move(group));
     }
+    graph.clear();
 }
 
 Graph *Graph::clone() const
@@ -57,18 +58,19 @@ Graph &Graph::operator=(const Graph &graph)
     return *this;
 }
 
-Graph &Graph::operator=(const Graph &&graph) noexcept
+Graph &Graph::operator=(Graph &&graph) noexcept
 {
     if (this != &graph)
     {
         Geo::Geometry::operator=(graph);
         modified = graph.modified;
         _container_groups.clear();
-        for (const ContainerGroup &group : graph._container_groups)
+        for (ContainerGroup &group : graph._container_groups)
         {
-            _container_groups.emplace_back(group);
+            _container_groups.emplace_back(std::move(group));
         }
         _ratio = graph._ratio;
+        graph.clear();
         _type = Geo::Type::GRAPH;
     }
     return *this;
