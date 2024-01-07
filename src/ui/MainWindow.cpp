@@ -80,6 +80,9 @@ void MainWindow::init()
 
     _layers_btn = new QToolButton(this);
     _layers_btn->setText("Layers");
+    _layers_btn->setStyleSheet("QToolButton{color:rgb(230, 230, 230);background-color:rgb(70, 70, 71);}"
+        "QToolButton:hover{background-color:rgb(0, 85, 127);}"
+        "QToolButton:pressed{background-color:rgb(0, 85, 127);}");
     ui->statusBar->addPermanentWidget(_layers_btn);
     connect(_layers_btn, &QToolButton::clicked, this, &MainWindow::show_layers_manager);
 

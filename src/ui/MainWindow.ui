@@ -22,8 +22,7 @@
    <string>DSV 0.4.1</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">QMainWindow#MainWindow{background:rgb(142,142,142);}
-QToolButton{background:rgb(142,142,142);}</string>
+   <string notr="true">QMainWindow#MainWindow{background-color: rgb(38, 38, 38)};</string>
   </property>
   <property name="locale">
    <locale language="English" country="UnitedStates"/>
@@ -35,6 +34,9 @@ QToolButton{background:rgb(142,142,142);}</string>
    </size>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="styleSheet">
+    <string notr="true">Widget#centralWidget{background:rgb(37, 37, 38);}</string>
+   </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
      <widget class="QWidget" name="widget" native="true">
@@ -51,6 +53,9 @@ QToolButton{background:rgb(142,142,142);}</string>
       </property>
       <property name="focusPolicy">
        <enum>Qt::StrongFocus</enum>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">color:rgb(230, 230, 230);</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
@@ -78,6 +83,21 @@ QToolButton{background:rgb(142,142,142);}</string>
            <pointsize>10</pointsize>
           </font>
          </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
+         </property>
          <property name="text">
           <string>←</string>
          </property>
@@ -89,6 +109,21 @@ QToolButton{background:rgb(142,142,142);}</string>
           <font>
            <pointsize>10</pointsize>
           </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
          </property>
          <property name="text">
           <string>Polyline</string>
@@ -102,6 +137,21 @@ QToolButton{background:rgb(142,142,142);}</string>
            <pointsize>10</pointsize>
           </font>
          </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
+         </property>
          <property name="text">
           <string>Rectangle</string>
          </property>
@@ -113,6 +163,21 @@ QToolButton{background:rgb(142,142,142);}</string>
           <font>
            <pointsize>10</pointsize>
           </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
          </property>
          <property name="text">
           <string>Circle</string>
@@ -127,6 +192,21 @@ QToolButton{background:rgb(142,142,142);}</string>
             <font>
              <pointsize>10</pointsize>
             </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
            </property>
            <property name="text">
             <string>Curve</string>
@@ -145,6 +225,18 @@ QToolButton{background:rgb(142,142,142);}</string>
             <font>
              <pointsize>10</pointsize>
             </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(70, 70, 71);</string>
+           </property>
+           <property name="frame">
+            <bool>false</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::NoButtons</enum>
            </property>
            <property name="minimum">
             <number>2</number>
@@ -166,6 +258,21 @@ QToolButton{background:rgb(142,142,142);}</string>
            <pointsize>10</pointsize>
           </font>
          </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
+         </property>
          <property name="text">
           <string>Text</string>
          </property>
@@ -177,6 +284,21 @@ QToolButton{background:rgb(142,142,142);}</string>
           <font>
            <pointsize>10</pointsize>
           </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
          </property>
          <property name="text">
           <string>Connect</string>
@@ -190,6 +312,21 @@ QToolButton{background:rgb(142,142,142);}</string>
            <pointsize>10</pointsize>
           </font>
          </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
+         </property>
          <property name="text">
           <string>Combinate</string>
          </property>
@@ -202,6 +339,21 @@ QToolButton{background:rgb(142,142,142);}</string>
            <pointsize>10</pointsize>
           </font>
          </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
+         </property>
          <property name="text">
           <string>Split</string>
          </property>
@@ -213,6 +365,9 @@ QToolButton{background:rgb(142,142,142);}</string>
           <font>
            <pointsize>10</pointsize>
           </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">color: rgb(230, 230, 230);</string>
          </property>
          <property name="text">
           <string>To All Layers</string>
@@ -231,6 +386,21 @@ QToolButton{background:rgb(142,142,142);}</string>
              <pointsize>10</pointsize>
             </font>
            </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
+           </property>
            <property name="text">
             <string>Rotate</string>
            </property>
@@ -242,6 +412,12 @@ QToolButton{background:rgb(142,142,142);}</string>
             <font>
              <pointsize>10</pointsize>
             </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: rgb(70, 70, 71);</string>
+           </property>
+           <property name="frame">
+            <bool>false</bool>
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
@@ -271,6 +447,21 @@ QToolButton{background:rgb(142,142,142);}</string>
              <pointsize>10</pointsize>
             </font>
            </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
+           </property>
            <property name="text">
             <string>Flip X</string>
            </property>
@@ -282,6 +473,21 @@ QToolButton{background:rgb(142,142,142);}</string>
             <font>
              <pointsize>10</pointsize>
             </font>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
            </property>
            <property name="text">
             <string>Flip Y</string>
@@ -317,7 +523,32 @@ QToolButton{background:rgb(142,142,142);}</string>
      <height>22</height>
     </rect>
    </property>
+   <property name="styleSheet">
+    <string notr="true">QMenuBar
+{
+	background-color:rgb(50, 50, 51);
+	color:rgb(230, 230, 230);
+}
+QMenuBar::item
+{
+    background-color:rgb(50, 50 , 51);
+}
+QMenuBar::item:hover
+{
+    background-color:rgb(0,  85, 127);
+}
+QMenuBar::item:pressed
+{
+    background-color:rgb(0 , 85 , 127);
+}</string>
+   </property>
    <widget class="QMenu" name="file_menu">
+    <property name="styleSheet">
+     <string notr="true">background-color: rgb(50, 50, 51);
+color: rgb(230, 230, 230);
+selection-color: rgb(230, 230, 230);
+selection-background-color: rgb(0, 85, 127);</string>
+    </property>
     <property name="title">
      <string>file</string>
     </property>
@@ -327,6 +558,12 @@ QToolButton{background:rgb(142,142,142);}</string>
     <addaction name="auto_save"/>
    </widget>
    <widget class="QMenu" name="menusetting">
+    <property name="styleSheet">
+     <string notr="true">background-color:rgb(50, 50, 51);
+color: rgb(230, 230, 230);
+selection-color: rgb(230, 230, 230);
+selection-background-color: rgb(0, 85, 127);</string>
+    </property>
     <property name="title">
      <string>setting</string>
     </property>
@@ -344,6 +581,10 @@ QToolButton{background:rgb(142,142,142);}</string>
     <font>
      <pointsize>10</pointsize>
     </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background:rgb(50, 50, 51);
+color:rgb(230, 230, 230);</string>
    </property>
    <property name="sizeGripEnabled">
     <bool>false</bool>
