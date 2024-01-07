@@ -2579,7 +2579,7 @@ const bool Geo::is_Rectangle(const Polygon &polygon)
 
 Polygon Geo::circle_to_polygon(const double x, const double y, const double r)
 {
-    double c = 2 * r * Geo::PI;
+    double c = r * Geo::PI;
     const double degree = std::asin(1 / r) * 2;
     Vector vec(0, r);
     const Point center(x, y);
