@@ -174,6 +174,7 @@ void Editer::append_points()
     store_backup();
     if (_point_cache.size() < 4)
     {
+        _point_cache.clear();
         return;
     }
 
