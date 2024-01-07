@@ -117,8 +117,6 @@ public:
 
     ContainerGroup(const ContainerGroup &containers);
 
-    ContainerGroup(ContainerGroup &&containers) noexcept;
-
     ContainerGroup(const std::initializer_list<Geo::Geometry *> &containers);
 
     ContainerGroup(std::vector<Geo::Geometry *>::const_iterator begin, std::vector<Geo::Geometry *>::const_iterator end);
@@ -136,8 +134,6 @@ public:
     void transfer(ContainerGroup &group);
 
     ContainerGroup &operator=(const ContainerGroup &group);
-
-    ContainerGroup &operator=(ContainerGroup &&group) noexcept;
 
     std::vector<Geo::Geometry *>::iterator begin();
 
@@ -252,8 +248,6 @@ public:
 
     Combination(const Combination &combination);
 
-    Combination(Combination &&combination) noexcept;
-
     void append(Combination *combination);
 
     void append(Geo::Geometry *geo);
@@ -263,8 +257,6 @@ public:
     void transfer(Combination &combination);
 
     Combination &operator=(const Combination &combination);
-
-    Combination &operator=(Combination &&combination) noexcept;
 
     void clear() override;
 

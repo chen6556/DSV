@@ -313,15 +313,6 @@ ContainerGroup::ContainerGroup(const ContainerGroup &containers)
     }
 }
 
-ContainerGroup::ContainerGroup(ContainerGroup &&containers) noexcept
-    : Geo::Geometry(containers), _ratio(containers._ratio), _visible(containers._visible),
-    name(containers.name)
-{
-    _type = Geo::Type::CONTAINERGROUP;
-    _containers.assign(containers._containers.begin(), containers._containers.end());
-    containers._containers.clear();
-}
-
 ContainerGroup::ContainerGroup(const std::initializer_list<Geo::Geometry *> &containers)
     : _containers(containers.begin(), containers.end())
 {
@@ -438,27 +429,6 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
                 break;
             }
         }
-        _ratio = group._ratio;
-        _visible = group._visible;
-        _type = Geo::Type::CONTAINERGROUP;
-    }
-    return *this;
-}
-
-ContainerGroup &ContainerGroup::operator=(ContainerGroup &&group) noexcept
-{
-    if (this != &group)
-    {
-        Geo::Geometry::operator=(group);
-        name = group.name;
-        for (size_t i = 0, count = _containers.size(); i < count; ++i)
-        {
-            delete _containers[i];
-        }
-        _containers.clear();
-        _containers.shrink_to_fit();
-        _containers.assign(group._containers.begin(), group._containers.end());
-        group._containers.clear();
         _ratio = group._ratio;
         _visible = group._visible;
         _type = Geo::Type::CONTAINERGROUP;
@@ -861,12 +831,6 @@ Combination::Combination(const Combination &combination)
     _type = Geo::Type::COMBINATION;
 }
 
-Combination::Combination(Combination &&combination) noexcept
-    : ContainerGroup(combination), _border(combination._border)
-{
-    _type = Geo::Type::COMBINATION;
-}
-
 void Combination::append(Combination *combination)
 {
     while (!combination->empty())
@@ -916,13 +880,6 @@ void Combination::transfer(Combination &combination)
 Combination &Combination::operator=(const Combination &combination)
 {
     ContainerGroup::operator=(combination);
-    _type = Geo::Type::COMBINATION;
-    return *this;
-}
-
-Combination &Combination::operator=(Combination &&combination) noexcept
-{
-    ContainerGroup::operator=(std::move(combination));
     _type = Geo::Type::COMBINATION;
     return *this;
 }
