@@ -929,6 +929,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             double *data = new double[data_len];
             double depth;
             size_t selected_count = 0;
+            bool update_vbo = false;
             makeCurrent();
             glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
             for (Geo::Geometry *obj : _editer->selected())
@@ -963,7 +964,15 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
                         data[data_count++] = depth;
+                        if (event->modifiers() == Qt::ControlModifier && data_len == data_count)
+                        {
+                            data_len *= 2;
+                            double *temp = new double[data_len];
+                            delete []data;
+                            data = temp;
+                        }
                     }
+                    update_vbo = event->modifiers() == Qt::ControlModifier;
                     break;
                 case Geo::Type::COMBINATION:
                     for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
@@ -1025,6 +1034,13 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                         data[data_count++] = point.coord().x;
                         data[data_count++] = point.coord().y;
                         data[data_count++] = depth;
+                        if (event->modifiers() == Qt::ControlModifier && data_len == data_count)
+                        {
+                            data_len *= 2;
+                            double *temp = new double[data_len];
+                            delete []data;
+                            data = temp;
+                        }
                     }
                     if (selected_count == 1)
                     {
@@ -1054,11 +1070,18 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             {
                 _cache_count = 0;
             }
+            doneCurrent();
             if (event->modifiers() == Qt::ControlModifier)
             {
-                refresh_brush_ibo();
+                if (update_vbo)
+                {
+                    refresh_vbo();
+                }
+                else
+                {
+                    refresh_brush_ibo();
+                }
             }
-            doneCurrent();
             delete []data;
             if (GlobalSetting::get_instance()->setting()["show_text"].toBool())
             {
