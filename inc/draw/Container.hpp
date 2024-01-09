@@ -11,6 +11,10 @@ private:
     int _text_size;
 
 public:
+    unsigned long long text_index = 0;
+    unsigned long long text_count = 0;
+
+public:
     Text(const double x, const double y, const int size, const QString &text = "Text");
 
     Text(const Text &text);
@@ -38,6 +42,10 @@ class Container : public Geo::Polygon
 {
 private:
     QString _txt;
+
+public:
+    unsigned long long text_index = 0;
+    unsigned long long text_count = 0;
 
 public:
     Container() { _type = Geo::Type::CONTAINER; };
@@ -71,6 +79,10 @@ class CircleContainer : public Geo::Circle
 {
 private:
     QString _txt;
+
+public:
+    unsigned long long text_index = 0;
+    unsigned long long text_count = 0;
 
 public:
     CircleContainer() { _type = Geo::Type::CIRCLECONTAINER; };

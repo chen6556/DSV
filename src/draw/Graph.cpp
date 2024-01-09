@@ -345,6 +345,7 @@ void Graph::append(Text *text, const size_t index)
 {
     assert(index < _container_groups.size());
     container_group(index).append(text);
+    text->is_selected = false;
 }
 
 void Graph::append(Container *container, const size_t index)
@@ -353,6 +354,7 @@ void Graph::append(Container *container, const size_t index)
     if (container->shape().size() > 3)
     {
         container_group(index).append(container);
+        container->is_selected = false;
     }
 }
 
@@ -362,6 +364,7 @@ void Graph::append(CircleContainer *container, const size_t index)
     if (!container->shape().empty())
     {
         container_group(index).append(container);
+        container->is_selected = false;
     }
 }
 
@@ -371,6 +374,7 @@ void Graph::append(Geo::Polyline *polyline, const size_t index)
     if (polyline->size() > 1)
     {
         container_group(index).append(polyline);
+        polyline->is_selected = false;
     }
 }
 
@@ -378,6 +382,7 @@ void Graph::append(Geo::Bezier *bezier, const size_t index)
 {
     assert(index < _container_groups.size());
     container_group(index).append(bezier);
+    bezier->is_selected = false;
 }
 
 void Graph::append_group()

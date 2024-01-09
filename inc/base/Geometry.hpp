@@ -22,6 +22,8 @@ namespace Geo
     public:
         bool shape_fixed = false;
         bool is_selected = false;
+        unsigned long long point_index = 0;
+        unsigned long long point_count = 0;
 
     public:
         Geometry() {};
@@ -584,6 +586,8 @@ namespace Geo
 
     const bool is_inside(const Point &point, const Circle &circle, const bool coincide = false);
 
+    const bool is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2);
+
     const bool is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite = false);
 
     const bool is_intersected(const Line &line0, const Line &line1, Point &output, const bool infinite = true);
@@ -613,5 +617,15 @@ namespace Geo
     const bool is_intersected(const AABBRect &rect, const Circle &circle);
 
     const bool is_Rectangle(const Polygon &polygon);
+
+    Polygon circle_to_polygon(const double x, const double y, const double r);
+
+    Polygon circle_to_polygon(const Circle &circle);
+
+    std::vector<size_t> ear_cut_to_indexs(const Polygon &polygon);
+
+    std::vector<Coord> ear_cut_to_coords(const Polygon &polygon);
+
+    std::vector<Point> ear_cut_to_points(const Polygon &polygon);
 
 };

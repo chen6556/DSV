@@ -39,7 +39,7 @@ void GlobalSetting::load_setting()
         _instance->_setting["show_origin"] = true;
         _instance->_setting["show_points"] = false;
         _instance->_setting["show_text"] = false;
-        _instance->_setting["text_size"] = 12;
+        _instance->_setting["text_size"] = 16;
     }
 }
 

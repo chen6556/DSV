@@ -563,7 +563,6 @@ bool Editer::paste(const double tx, const double ty)
     store_backup();
     reset_selected_mark();
 
-    std::vector<Geo::Geometry *> pasted_containers;
     for (Geo::Geometry *geo : _paste_table)
     {
         switch (geo->type())
@@ -590,12 +589,11 @@ bool Editer::paste(const double tx, const double ty)
             break;
         }
         _graph->container_group(_current_group).back()->translate(tx, ty);
-        pasted_containers.push_back(_graph->container_group(_current_group).back());
     }
     return true;
 }
 
-bool Editer::connect(const double connect_distance)
+bool Editer::connect(double connect_distance)
 {
     if (_graph == nullptr || _graph->empty())
     {
@@ -616,6 +614,7 @@ bool Editer::connect(const double connect_distance)
     }
 
     store_backup();
+    connect_distance /= _view_ratio;
     bool flag;
     const size_t num = indexs.size();
     for (size_t i = 0, count = indexs.size(); i < count; ++i)
@@ -804,8 +803,9 @@ bool Editer::combinate()
     }
 
     store_backup();
-    Combination *temp;
+
     std::reverse(indexs.begin(), indexs.end());
+    Combination *temp = nullptr;
     for (const size_t i : indexs)
     {
         if (_graph->container_group(_current_group)[i]->type() == Geo::Type::COMBINATION)
@@ -889,7 +889,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
         {
         case Geo::Type::TEXT:
             t = dynamic_cast<Text *>(*it);
-            if (Geo::distance(point, dynamic_cast<const Geo::AABBRect *>(t)->center()) <= catch_distance * 5)
+            if (Geo::distance(point, dynamic_cast<const Geo::AABBRect *>(t)->center()) <= catch_distance * 10)
             {
                 t->is_selected = true;
                 // _graph->container_group(_current_group).pop(it);
@@ -928,7 +928,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        if (Geo::distance(point, dynamic_cast<const Geo::AABBRect *>(item)->center()) <= catch_distance * 5)
+                        if (Geo::distance(point, dynamic_cast<const Geo::AABBRect *>(item)->center()) <= catch_distance * 10)
                         {
                             cb->is_selected = true;
                             // _graph->container_group(_current_group).pop(it);
@@ -1443,13 +1443,13 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
     Geo::Coord center(rect.center().coord());
     double left = rect.left(), top = rect.top(), right = rect.right(), bottom = rect.bottom();
     const double heigh = top - bottom, width = right - left;
-    const double align_distance = 2 / _view_ratio;
 
     const size_t count = reflines.size();
     const Geo::AABBRect dst_rect(dst->bounding_rect());
     const Geo::Coord dst_center(dst_rect.center().coord());
     const double dst_left = dst_rect.left(), dst_top = dst_rect.top(), dst_right = dst_rect.right(), dst_bottom = dst_rect.bottom();
     const double dst_heigh = dst_top - dst_bottom, dst_width = dst_right - dst_left;
+    const double align_distance = 2.0 / _view_ratio;
 
     if (std::abs(dst_center.x - center.x) < align_distance)
     {

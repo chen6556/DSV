@@ -1,0 +1,7 @@
+The DSV repository and source distributions bundle several libraries that are
+compatibly licensed.  We list these here.
+
+Name: earcut.hpp
+Files: inc/base/EarCut/EarCut.hpp
+License: ISC
+  For license text, see inc/base/EarCut/LICENSE.txt
