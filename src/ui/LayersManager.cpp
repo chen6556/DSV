@@ -37,17 +37,17 @@ void LayersManager::init()
     _menu->addAction(_add);
     _menu->addAction(_insert);
     _menu->addAction(_del);
-    connect(_show, &QAction::triggered, this, &LayersManager::show_layer);
-    connect(_up, &QAction::triggered, this, &LayersManager::layer_up);
-    connect(_down, &QAction::triggered, this, &LayersManager::layer_down);
-    connect(_add, &QAction::triggered, this, &LayersManager::add_layer);
-    connect(_insert, &QAction::triggered, this, &LayersManager::insert_layer);
-    connect(_del, &QAction::triggered, this, &LayersManager::remove_layer);
+    QObject::connect(_show, &QAction::triggered, this, &LayersManager::show_layer);
+    QObject::connect(_up, &QAction::triggered, this, &LayersManager::layer_up);
+    QObject::connect(_down, &QAction::triggered, this, &LayersManager::layer_down);
+    QObject::connect(_add, &QAction::triggered, this, &LayersManager::add_layer);
+    QObject::connect(_insert, &QAction::triggered, this, &LayersManager::insert_layer);
+    QObject::connect(_del, &QAction::triggered, this, &LayersManager::remove_layer);
     
     _layers_model = new QStringListModel(this);
     ui->layers_view->setModel(_layers_model);
-    connect(ui->layers_view, &QListView::customContextMenuRequested, this, [this](const QPoint &pos){_menu->exec(QCursor::pos());});
-    connect(_layers_model, &QStringListModel::dataChanged, this, &LayersManager::change_layer_name);
+    QObject::connect(ui->layers_view, &QListView::customContextMenuRequested, this, [this](const QPoint &pos){_menu->exec(QCursor::pos());});
+    QObject::connect(_layers_model, &QStringListModel::dataChanged, this, &LayersManager::change_layer_name);
 }
 
 

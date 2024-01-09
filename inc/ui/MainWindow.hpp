@@ -63,6 +63,12 @@ private slots:
     void show_layers_manager();
 
 
+    void connect_polylines();
+
+    void close_polyline();
+
+    void combinate();
+
     void rotate();
 
     void flip_x();

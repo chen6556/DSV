@@ -306,6 +306,33 @@ QPushButton:pressed
         </widget>
        </item>
        <item>
+        <widget class="QPushButton" name="close_btn">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
+         </property>
+         <property name="text">
+          <string>Close</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QPushButton" name="combinate_btn">
          <property name="font">
           <font>
@@ -817,6 +844,54 @@ color:rgb(230, 230, 230);</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>combinate_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>combinate()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>527</x>
+     <y>324</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>527</x>
+     <y>273</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>close_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close_polyline()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>527</x>
+     <y>293</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>527</x>
+     <y>273</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>connect_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>connect_polylines()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>527</x>
+     <y>262</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>527</x>
+     <y>273</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -827,5 +902,8 @@ color:rgb(230, 230, 230);</string>
   <slot>flip_x()</slot>
   <slot>flip_y()</slot>
   <slot>mirror()</slot>
+  <slot>connect_polylines()</slot>
+  <slot>combinate()</slot>
+  <slot>close_polyline()</slot>
  </slots>
 </ui>

@@ -776,6 +776,60 @@ bool Editer::connect(double connect_distance)
     }
 }
 
+bool Editer::close_polyline()
+{
+    if (_graph == nullptr || _graph->empty())
+    {
+        return false;
+    }
+
+    store_backup();
+    Container *container = nullptr;
+    ContainerGroup &group = _graph->container_group(_current_group);
+    for (size_t i = 0, count = group.size(); i < count; ++i)
+    {
+        if (group[i]->is_selected)
+        {
+            switch (group[i]->type())
+            {
+            case Geo::Type::POLYLINE:
+                if (dynamic_cast<Geo::Polyline *>(group[i])->size() < 3)
+                {
+                    continue;
+                }
+                container = new Container(*dynamic_cast<Geo::Polyline *>(group[i]));
+                container->is_selected = true;
+                group.remove(i);
+                group.insert(i, container);
+                break;
+            case Geo::Type::BEZIER:
+                if (dynamic_cast<Geo::Bezier *>(group[i])->shape().size() < 3)
+                {
+                    continue;
+                }
+                container = new Container(dynamic_cast<Geo::Bezier *>(group[i])->shape());
+                container->is_selected = true;
+                group.remove(i);
+                group.insert(i, container);
+                break;
+            default:
+                break;
+            }
+        }
+    }
+    
+    if (container == nullptr)
+    {
+        delete _backup.back();
+        _backup.pop_back();
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
 bool Editer::combinate()
 {
     if (_graph == nullptr || _graph->empty())

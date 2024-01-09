@@ -55,8 +55,6 @@ void MainWindow::init()
     QObject::connect(ui->rect_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::RECT); });
     QObject::connect(ui->curve_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::CURVE); _painter.set_bezier_order(ui->curve_sbx->value());});
     QObject::connect(ui->text_btn, &QPushButton::clicked, this,  [this]() { _painter.use_tool(Canvas::Tool::TEXT); });
-    QObject::connect(ui->connect_btn, &QPushButton::clicked, this, [this]() { _editer.connect(GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()); _painter.refresh_vbo(); _painter.refresh_selected_ibo(); });
-    QObject::connect(ui->combinate_btn, &QPushButton::clicked, this, [this](){ _editer.combinate(); _painter.refresh_vbo(); _painter.refresh_selected_ibo(); });
     QObject::connect(ui->split_btn, &QPushButton::clicked, this, [this](){ _editer.split(); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
@@ -76,7 +74,8 @@ void MainWindow::init()
 
     _layers_manager = new LayersManager(this);
     _layers_manager->load_layers(_editer.graph());
-    connect(_layers_manager, &LayersManager::accepted, this, [this](){_layers_cbx->setModel(_layers_manager->model()); _painter.refresh_vbo(); _editer.reset_selected_mark();});
+    QObject::connect(_layers_manager, &LayersManager::accepted, this,
+        [this](){_layers_cbx->setModel(_layers_manager->model()); _painter.refresh_vbo(); _editer.reset_selected_mark();});
 
     _layers_btn = new QToolButton(this);
     _layers_btn->setText("Layers");
@@ -84,13 +83,14 @@ void MainWindow::init()
         "QToolButton:hover{background-color:rgb(0, 85, 127);}"
         "QToolButton:pressed{background-color:rgb(0, 85, 127);}");
     ui->statusBar->addPermanentWidget(_layers_btn);
-    connect(_layers_btn, &QToolButton::clicked, this, &MainWindow::show_layers_manager);
+    QObject::connect(_layers_btn, &QToolButton::clicked, this, &MainWindow::show_layers_manager);
 
     _layers_cbx = new QComboBox(this);
     _layers_cbx->view()->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->statusBar->addPermanentWidget(_layers_cbx);
     _layers_cbx->setModel(_layers_manager->model());
-    connect(_layers_cbx, &QComboBox::currentIndexChanged, this, [this](const int index){_editer.set_current_group(_editer.groups_count() - 1 - index);});
+    QObject::connect(_layers_cbx, &QComboBox::currentIndexChanged, this,
+        [this](const int index){_editer.set_current_group(_editer.groups_count() - 1 - index);});
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -401,6 +401,31 @@ void MainWindow::show_layers_manager()
 
 
 
+
+void MainWindow::connect_polylines()
+{
+    if (_editer.connect(GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()))
+    {
+        _painter.refresh_vbo();
+        _painter.refresh_selected_ibo();
+    }
+}
+
+void MainWindow::close_polyline()
+{
+    if (_editer.close_polyline())
+    {
+        _painter.refresh_vbo();
+        _painter.refresh_selected_ibo();
+    }
+}
+
+void MainWindow::combinate()
+{
+    _editer.combinate();
+    _painter.refresh_vbo();
+    _painter.refresh_selected_ibo();
+}
 
 void MainWindow::rotate()
 {

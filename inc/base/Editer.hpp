@@ -84,6 +84,8 @@ public:
 
     bool connect(double connect_distance);
 
+    bool close_polyline();
+
     bool combinate();
 
     bool split();
