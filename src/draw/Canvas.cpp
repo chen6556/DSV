@@ -124,6 +124,10 @@ void Canvas::resizeGL(int w, int h)
     glUniform1i(_uniforms[0], w / 2); // w
     glUniform1i(_uniforms[1], h / 2); // h
     glViewport(0, 0, w, h);
+
+    const QRect rect(this->geometry());
+    _visible_area = Geo::AABBRect(0, 0, rect.width(), rect.height());
+    _visible_area.transform(_view_ctm[0], _view_ctm[3], _view_ctm[6], _view_ctm[1], _view_ctm[4], _view_ctm[7]);
 }
 
 void Canvas::paintGL()
@@ -769,7 +773,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         _bool_flags[4] = false; // is obj moveable
         if (is_paintable()) // paintable
         {
-            if (_circle_cache.empty() && _AABBRect_cache.empty() && _info_labels[1])
+            if (_circle_cache.empty() && _AABBRect_cache.empty())
             {
                 _info_labels[1]->clear();
             }
@@ -778,10 +782,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         {
             _select_rect.clear();
             _last_point.clear();
-            if (_info_labels[1])
-            {
-                _info_labels[1]->clear();
-            }
+            _info_labels[1]->clear();
             _bool_flags[6] = false; // is moving obj
             _last_clicked_obj = _clicked_obj;
             _pressed_obj = nullptr;
@@ -813,10 +814,9 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     const double canvas_y0 = real_x0 * _canvas_ctm[1] + real_y0 * _canvas_ctm[4] + _canvas_ctm[7];
     const double canvas_x1 = real_x1 * _canvas_ctm[0] + real_y1 * _canvas_ctm[3] + _canvas_ctm[6];
     const double canvas_y1 = real_x1 * _canvas_ctm[1] + real_y1 * _canvas_ctm[4] + _canvas_ctm[7];
-    if (_info_labels[0])
-    {
-        _info_labels[0]->setText(std::string("X:").append(std::to_string(static_cast<int>(real_x1))).append(" Y:").append(std::to_string(static_cast<int>(real_y1))).c_str());
-    }
+
+    _info_labels[0]->setText(std::string("X:").append(std::to_string(static_cast<int>(real_x1))).append(" Y:").append(std::to_string(static_cast<int>(real_y1))).c_str());
+
     if (is_view_moveable()) // 视图可移动
     {
         _canvas_ctm[6] += (canvas_x1 - canvas_x0), _canvas_ctm[7] += (canvas_y1 - canvas_y0);
@@ -835,10 +835,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         case Tool::CIRCLE:
             _circle_cache.radius() = Geo::distance(real_x1, real_y1,
                                                    _circle_cache.center().coord().x, _circle_cache.center().coord().y);
-            if (_info_labels[1] != nullptr)
-            {
-                _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius())).c_str());
-            }
+
+            _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius())).c_str());
             break;
         case Tool::POLYLINE:
             if (event->modifiers() == Qt::ControlModifier)
@@ -866,19 +864,13 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
             glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - 3) * sizeof(double), 2 * sizeof(double), &_cache[_cache_count - 3]);
             doneCurrent();
-            if (_info_labels[1] != nullptr)
-            {
-                _info_labels[1]->setText(std::string("Length:").append(std::to_string(Geo::distance(_editer->point_cache().back(),
-                                                                                                    _editer->point_cache()[_editer->point_cache().size() - 2])))
-                                             .c_str());
-            }
+            _info_labels[1]->setText(std::string("Length:").append(std::to_string(
+                Geo::distance(_editer->point_cache().back(), _editer->point_cache()[_editer->point_cache().size() - 2]))).c_str());
             break;
         case Tool::RECT:
             _AABBRect_cache = Geo::AABBRect(_last_point, Geo::Point(real_x1, real_y1));
-            if (_info_labels[1] != nullptr)
-            {
-                _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.coord().x))).append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.coord().y))).c_str());
-            }
+            _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.coord().x)))
+                .append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.coord().y))).c_str());
             break;
         case Tool::CURVE:
             if (_editer->point_cache().size() > _bezier_order && (_editer->point_cache().size() - 2) % _bezier_order == 0) 
@@ -909,10 +901,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             doneCurrent();
             break;
         default:
-            if (_info_labels[1] != nullptr)
-            {
-                _info_labels[1]->clear();
-            }
+            _info_labels[1]->clear();
             break;
         }
         update();
@@ -1091,18 +1080,13 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 _editer->auto_aligning(_pressed_obj, real_x1, real_y1, _reflines,
                     GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool());
             }
-            if (_info_labels[1])
-            {
-                _info_labels[1]->clear();
-            }
+            _info_labels[1]->clear();
         }
         else if (!_select_rect.empty())
         {
             _select_rect = Geo::AABBRect(_last_point.coord().x, _last_point.coord().y, real_x1, real_y1);
-            if (_info_labels[1])
-            {
-                _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.coord().x))).append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.coord().y))).c_str());
-            }
+            _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.coord().x)))
+                .append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.coord().y))).c_str());
         }
         update();
     }
@@ -1189,11 +1173,8 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                 update();
                 break;
             case Tool::POLYLINE:
-                if (_editer != nullptr)
-                {
-                    _editer->append_points();
-                    update();
-                }
+                _editer->append_points();
+                update();
                 _cache_count = 0;
                 break;
             case Tool::RECT:
@@ -1201,11 +1182,8 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                 update();
                 break;
             case Tool::CURVE:
-                if (_editer != nullptr)
-                {
-                    _editer->append_bezier(_bezier_order);
-                    update();
-                }
+                _editer->append_bezier(_bezier_order);
+                update();
                 _cache_count = 0;
                 break;
             default:
@@ -1317,14 +1295,6 @@ void Canvas::show_overview()
     update();
 }
 
-
-void Canvas::resizeEvent(QResizeEvent *event)
-{
-    const QRect rect(this->geometry());
-    _visible_area = Geo::AABBRect(0, 0, rect.width(), rect.height());
-    _visible_area.transform(_view_ctm[0], _view_ctm[3], _view_ctm[6], _view_ctm[1], _view_ctm[4], _view_ctm[7]);
-    return QOpenGLWidget::resizeEvent(event);
-}
 
 
 
@@ -1522,7 +1492,7 @@ Geo::Coord Canvas::mouse_position() const
 const bool Canvas::empty() const
 {
     return _circle_cache.empty() && _AABBRect_cache.empty() &&
-           (_editer == nullptr || _editer->graph() == nullptr || _editer->graph()->empty());
+           (_editer->graph() == nullptr || _editer->graph()->empty());
 }
 
 void Canvas::cancel_painting()

@@ -75,8 +75,6 @@ protected:
 
     void mouseDoubleClickEvent(QMouseEvent *event);
 
-    void resizeEvent(QResizeEvent *event);
-
 public:
 signals:
     void tool_changed(const Tool);
