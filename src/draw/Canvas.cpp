@@ -432,7 +432,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _editer->append(_circle_cache);
                     _circle_cache.clear();
                     _tool_flags[1] = _tool_flags[0];
-                    _tool_flags[0] = Tool::NONE;
+                    _tool_flags[0] = Tool::NOTOOL;
                     _bool_flags[1] = false; // moveable
                     emit tool_changed(_tool_flags[0]);
                     refresh_vbo();
@@ -491,7 +491,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _editer->append(_AABBRect_cache);
                     _AABBRect_cache.clear();
                     _tool_flags[1] = _tool_flags[0];
-                    _tool_flags[0] = Tool::NONE;
+                    _tool_flags[0] = Tool::NOTOOL;
                     _bool_flags[1] = false; // paintable
                     emit tool_changed(_tool_flags[0]);
                     refresh_vbo();
@@ -500,7 +500,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 break;
             case Tool::TEXT:
                 _editer->append_text(real_x1, real_y1);
-                _tool_flags[0] = Tool::NONE;
+                _tool_flags[0] = Tool::NOTOOL;
                 _bool_flags[1] = _bool_flags[2] = false;
                 emit tool_changed(_tool_flags[0]);
                 refresh_vbo();
@@ -526,7 +526,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 _last_point.coord().y = real_y1;
                 _bool_flags[5] = false; // is obj selected
                 _operation = Operation::NOOPERATION;
-                emit tool_changed(Tool::NONE);
+                emit tool_changed(Tool::NOTOOL);
                 _object_cache.clear();
                 if (_input_line.isVisible() && _last_clicked_obj != nullptr)
                 {
@@ -569,7 +569,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     }
                     _object_cache.clear();
                     _operation = Operation::NOOPERATION;
-                    emit tool_changed(Tool::NONE);
+                    emit tool_changed(Tool::NOTOOL);
                     return update();
                 default:
                     break;
@@ -1211,7 +1211,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                 break;
             }
             _tool_flags[1] = _tool_flags[0];
-            _tool_flags[0] = Tool::NONE;
+            _tool_flags[0] = Tool::NOTOOL;
             emit tool_changed(_tool_flags[0]);
             refresh_vbo();
         }
@@ -1323,7 +1323,7 @@ void Canvas::use_tool(const Tool tool)
 {
     _tool_flags[1] = _tool_flags[0];
     _tool_flags[0] = tool;
-    _bool_flags[1] = (tool != Tool::NONE); // paintable
+    _bool_flags[1] = (tool != Tool::NOTOOL); // paintable
     _bool_flags[2] = false; // painting
     _editer->point_cache().clear();
     _circle_cache.clear();
@@ -1535,7 +1535,7 @@ void Canvas::cancel_painting()
     _bool_flags[1] = false; // paintable
     _bool_flags[2] = false; // painting
     _tool_flags[1] = _tool_flags[0];
-    _tool_flags[0] = Tool::NONE;
+    _tool_flags[0] = Tool::NOTOOL;
     emit tool_changed(_tool_flags[0]);
     _editer->point_cache().clear();
     _circle_cache.clear();
@@ -1552,7 +1552,7 @@ void Canvas::use_last_tool()
         return;
     }
     _tool_flags[0] = _tool_flags[1];
-    if (_tool_flags[0] != Tool::NONE)
+    if (_tool_flags[0] != Tool::NOTOOL)
     {
         _bool_flags[1] = true; // paintable
         emit tool_changed(_tool_flags[0]);

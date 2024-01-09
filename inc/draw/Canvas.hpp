@@ -15,7 +15,7 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
     Q_OBJECT
 
 public:
-    enum Tool {NONE, CIRCLE, POLYLINE, RECT, CURVE, TEXT};
+    enum Tool {NOTOOL, CIRCLE, POLYLINE, RECT, CURVE, TEXT};
     enum Operation {NOOPERATION, MIRROR};
 
 private:
@@ -45,7 +45,7 @@ private:
     bool _bool_flags[8] = {false, false, false, false, false, false, false, true};
 
     // current_tool, last_tool
-    Tool _tool_flags[2] = {Tool::NONE, Tool::NONE};
+    Tool _tool_flags[2] = {Tool::NOTOOL, Tool::NOTOOL};
     Operation _operation = Operation::NOOPERATION;
 
     QPointF _mouse_pos_0, _mouse_pos_1, _stored_mouse_pos;

@@ -328,9 +328,6 @@ void MainWindow::refresh_tool_label(const Canvas::Tool tool)
 {
     switch (tool)
     {
-    case Canvas::Tool::NONE:
-        ui->current_tool->clear();
-        break;
     case Canvas::Tool::CIRCLE:
         ui->current_tool->setText("Circle");
         break;
@@ -347,6 +344,7 @@ void MainWindow::refresh_tool_label(const Canvas::Tool tool)
         ui->current_tool->setText("Text");
         break;
     default:
+        ui->current_tool->clear();
         break;
     }
 }
