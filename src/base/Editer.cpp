@@ -881,11 +881,6 @@ bool Editer::mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *lin
     {
         for (Geo::Geometry *obj : objects)
         {
-            if (obj == line)
-            {
-                obj->transform(mat);
-                obj->is_selected = true;
-            }
             switch (obj->type())
             {
             case Geo::Type::TEXT:
