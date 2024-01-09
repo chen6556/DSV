@@ -227,7 +227,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         _painter.cancel_painting();
         _editer.reset_selected_mark();
         _painter.refresh_selected_ibo();
-        _info_labels[1]->clear();
         break;
     case Qt::Key_Space:
         _painter.use_last_tool();

@@ -642,8 +642,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 doneCurrent();
                 delete []indexs;
 
-                _bool_flags[4] = true;
-                _bool_flags[5] = true;
+                _bool_flags[4] = true; // is obj moveable
+                _bool_flags[5] = true; // is obj selected
                 bool catched_point = false;
                 if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool())
                 {
@@ -917,13 +917,14 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             size_t data_len = 513, data_count;
             double *data = new double[data_len];
-            size_t selected_count = 0;
             bool update_vbo = false;
             makeCurrent();
             glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
-            for (Geo::Geometry *obj : _editer->selected())
+            std::list<Geo::Geometry *> objs = _editer->selected();
+            const bool only_one_selected = objs.size() == 1; 
+            for (Geo::Geometry *obj : objs)
             {
-                _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier);
+                _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier && only_one_selected);
                 data_count = data_len;
                 while (obj->point_count * 3 > data_len)
                 {
@@ -935,7 +936,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     data = new double[data_len];
                 }
                 data_count = 0;
-                ++selected_count;
+
                 switch (obj->type())
                 {
                 case Geo::Type::CONTAINER:
@@ -960,7 +961,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                             data = temp;
                         }
                     }
-                    update_vbo = (event->modifiers() == Qt::ControlModifier && selected_count == 1);
+                    update_vbo = (event->modifiers() == Qt::ControlModifier && only_one_selected);
                     break;
                 case Geo::Type::COMBINATION:
                     for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
@@ -1029,7 +1030,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                             data = temp;
                         }
                     }
-                    if (selected_count == 1)
+                    if (only_one_selected)
                     {
                         _cache_count = 0;
                         for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(obj))
@@ -1039,7 +1040,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                             _cache[_cache_count++] = 0.5;
                         }
                     }
-                    update_vbo = (event->modifiers() == Qt::ControlModifier && selected_count == 1);
+                    update_vbo = (event->modifiers() == Qt::ControlModifier && only_one_selected);
                     break;
                 default:
                     break;
@@ -1049,7 +1050,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     glBufferSubData(GL_ARRAY_BUFFER, obj->point_index * 3 * sizeof(double), data_count * sizeof(double), data);
                 }
             }
-            if (selected_count == 1 && _cache_count > 0)
+            if (only_one_selected && _cache_count > 0)
             {
                 glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
                 glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
@@ -1059,7 +1060,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 _cache_count = 0;
             }
             doneCurrent();
-            if (event->modifiers() == Qt::ControlModifier)
+            if (only_one_selected && event->modifiers() == Qt::ControlModifier)
             {
                 if (update_vbo)
                 {
@@ -1506,6 +1507,7 @@ void Canvas::cancel_painting()
     _circle_cache.clear();
     _AABBRect_cache.clear();
     _cache_count = 0;
+    _info_labels[1]->clear();
     update();
 }
 
