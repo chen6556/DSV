@@ -1065,6 +1065,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 if (update_vbo)
                 {
                     refresh_vbo();
+                    refresh_selected_ibo();
                 }
                 else
                 {
