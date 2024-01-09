@@ -185,7 +185,9 @@ void Point::transform(const double a, const double b, const double c, const doub
 
 void Point::transform(const double mat[6])
 {
-    transform(mat[0], mat[1], mat[2], mat[3], mat[4], mat[5]);
+    const double x = _pos.x, y = _pos.y;
+    _pos.x = mat[0] * x + mat[1] * y + mat[2];
+    _pos.y = mat[3] * x + mat[4] * y + mat[5];
 }
 
 void Point::translate(const double tx, const double ty)
@@ -587,7 +589,7 @@ void Polyline::transform(const double a, const double b, const double c, const d
 
 void Polyline::transform(const double mat[6])
 {
-    transform(mat[0], mat[1], mat[2], mat[3], mat[4], mat[5]);
+    std::for_each(_points.begin(), _points.end(), [&](Point &point){point.transform(mat);});
 }
 
 void Polyline::translate(const double tx, const double ty)
@@ -942,7 +944,7 @@ void AABBRect::transform(const double a, const double b, const double c, const d
 
 void AABBRect::transform(const double mat[6])
 {
-    transform(mat[0], mat[1], mat[2], mat[3], mat[4], mat[5]);
+    std::for_each(_points.begin(), _points.end(), [&](Point &point){point.transform(mat);});
 }
     
 void AABBRect::translate(const double tx, const double ty)
