@@ -59,6 +59,7 @@ void Editer::store_backup()
         delete _backup.front();
         _backup.pop_front();
     }
+    _graph->modified = true;
 }
 
 void Editer::load_graph(Graph *graph, const QString &path)
@@ -191,8 +192,6 @@ void Editer::append_points()
         _graph->append(new Geo::Polyline(_point_cache.cbegin(), _point_cache.cend()), _current_group);
     }
     _point_cache.clear();
-
-    _graph->modified = true;
 }
 
 void Editer::append(const Geo::Circle &circle)
@@ -208,7 +207,6 @@ void Editer::append(const Geo::Circle &circle)
     }
     store_backup();
     _graph->append(new CircleContainer(circle), _current_group);
-    _graph->modified = true;
 }
 
 void Editer::append(const Geo::AABBRect &rect)
@@ -224,7 +222,6 @@ void Editer::append(const Geo::AABBRect &rect)
     }
     store_backup();
     _graph->append(new Container(rect), _current_group);
-    _graph->modified = true;
 }
 
 void Editer::append_bezier(const size_t order)
@@ -236,7 +233,6 @@ void Editer::append_bezier(const size_t order)
         _point_cache.pop_back();
     }
     _graph->append(new Geo::Bezier(_point_cache.begin(), _point_cache.end(), order), _current_group);
-    _graph->modified = true;
     _point_cache.clear();
 }
 
@@ -249,7 +245,6 @@ void Editer::append_text(const double x, const double y)
     }
     store_backup();
     _graph->append(new Text(x, y, GlobalSetting::get_instance()->setting()["text_size"].toInt()), _current_group);
-    _graph->modified = true;
 }
 
 void Editer::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1, const bool change_shape)
@@ -930,6 +925,8 @@ bool Editer::mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *lin
     const double d = a * a + b * b;
     const double mat[6] = {(b * b - a * a) / d, -2 * a * b / d, -2 * a * c / d,
         -2 *a * b / d, (a * a - b * b) / d, -2 * b * c / d};
+
+    store_backup();
 
     if (copy)
     {
