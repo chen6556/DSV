@@ -16,6 +16,7 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
 
 public:
     enum Tool {NONE, CIRCLE, POLYLINE, RECT, CURVE, TEXT};
+    enum Operation {NOOPERATION, MIRROR};
 
 private:
     Geo::Circle _circle_cache;
@@ -45,11 +46,13 @@ private:
 
     // current_tool, last_tool
     Tool _tool_flags[2] = {Tool::NONE, Tool::NONE};
+    Operation _operation = Operation::NOOPERATION;
 
     QPointF _mouse_pos_0, _mouse_pos_1, _stored_mouse_pos;
     Geo::Point _last_point;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
     Geo::Geometry *_pressed_obj = nullptr;
+    std::list<Geo::Geometry *> _object_cache;
 
     QMenu *_menu = nullptr;
     QAction *_up = nullptr;
@@ -87,6 +90,8 @@ public:
     void bind_editer(Editer *editer);
 
     void use_tool(const Tool tool);
+
+    void set_operation(const Operation operation);
 
     void show_origin();
 

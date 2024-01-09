@@ -428,6 +428,11 @@ void MainWindow::flip_y()
     _painter.update();
 }
 
+void MainWindow::mirror()
+{
+    ui->current_tool->setText("Mirror");
+    _painter.set_operation(Canvas::Operation::MIRROR);
+}
 
 
 

@@ -69,6 +69,8 @@ private slots:
 
     void flip_y();
 
+    void mirror();
+
 private:
     void open_file(const QString &path);
 

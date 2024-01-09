@@ -525,6 +525,9 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 _last_point.coord().x = real_x1;
                 _last_point.coord().y = real_y1;
                 _bool_flags[5] = false; // is obj selected
+                _operation = Operation::NOOPERATION;
+                emit tool_changed(Tool::NONE);
+                _object_cache.clear();
                 if (_input_line.isVisible() && _last_clicked_obj != nullptr)
                 {
                     switch (_last_clicked_obj->type())
@@ -554,6 +557,22 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 {
                     _editer->reset_selected_mark();
                     _clicked_obj->is_selected = true;
+                }
+
+                switch (_operation)
+                {
+                case Operation::MIRROR:
+                    if (_editer->mirror(_object_cache, _clicked_obj, event->modifiers() == Qt::ControlModifier))
+                    {
+                        refresh_vbo();
+                        refresh_selected_ibo();
+                    }
+                    _object_cache.clear();
+                    _operation = Operation::NOOPERATION;
+                    emit tool_changed(Tool::NONE);
+                    return update();
+                default:
+                    break;
                 }
 
                 size_t index_len = 512, index_count = 0;
@@ -1311,6 +1330,20 @@ void Canvas::use_tool(const Tool tool)
     _AABBRect_cache.clear();
     emit tool_changed(_tool_flags[0]);
     update();
+}
+
+void Canvas::set_operation(const Operation operation)
+{
+    _operation = operation;
+    switch (operation)
+    {
+    case Operation::MIRROR:
+        _object_cache = _editer->selected();
+        break;
+    default:
+        _object_cache.clear();
+        break;
+    }
 }
 
 void Canvas::show_origin()

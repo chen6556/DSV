@@ -861,6 +861,69 @@ bool Editer::split()
     return true;
 }
 
+bool Editer::mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy)
+{
+    if (objects.empty() || line->type() != Geo::Type::POLYLINE)
+    {
+        return false;
+    }
+
+    const Geo::Coord &point0 = dynamic_cast<const Geo::Polyline *>(line)->front().coord();
+    const Geo::Coord &point1 = dynamic_cast<const Geo::Polyline *>(line)->back().coord();
+    const double a = point0.y - point1.y;
+    const double b = point1.x - point0.x;
+    const double c = point0.x * point1.y - point1.x * point0.y;
+    const double d = a * a + b * b;
+    const double mat[6] = {(b * b - a * a) / d, -2 * a * b / d, -2 * a * c / d,
+        -2 *a * b / d, (a * a - b * b) / d, -2 * b * c / d};
+
+    if (copy)
+    {
+        for (Geo::Geometry *obj : objects)
+        {
+            if (obj == line)
+            {
+                obj->transform(mat);
+                obj->is_selected = true;
+            }
+            switch (obj->type())
+            {
+            case Geo::Type::TEXT:
+                _graph->container_group(_current_group).append(dynamic_cast<Text *>(obj->clone()));
+                break;
+            case Geo::Type::CONTAINER:
+                _graph->container_group(_current_group).append(dynamic_cast<Container *>(obj->clone()));
+                break;
+            case Geo::Type::CIRCLECONTAINER:
+                _graph->container_group(_current_group).append(dynamic_cast<CircleContainer *>(obj->clone()));
+                break;
+            case Geo::Type::COMBINATION:
+                _graph->container_group(_current_group).append(dynamic_cast<Combination *>(obj->clone()));
+                break;
+            case Geo::Type::POLYLINE:
+                _graph->container_group(_current_group).append(dynamic_cast<Geo::Polyline *>(obj->clone()));
+                break;
+            case Geo::Type::BEZIER:
+                _graph->container_group(_current_group).append(dynamic_cast<Geo::Bezier *>(obj->clone()));
+                break;
+            default:
+                break;
+            }
+            _graph->container_group(_current_group).back()->transform(mat);
+            _graph->container_group(_current_group).back()->is_selected = true;
+        }
+    }
+    else
+    {
+        for (Geo::Geometry *obj : objects)
+        {
+            obj->transform(mat);
+            obj->is_selected = true;
+        }
+    }
+    return true;
+}
+
 
 
 Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)

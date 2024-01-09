@@ -88,6 +88,8 @@ public:
 
     bool split();
 
+    bool mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy);
+
 
 
     Geo::Geometry *select(const Geo::Point &point, const bool reset_others = true);
