@@ -626,10 +626,14 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 makeCurrent();
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
-                if (_cache_count > 0)
+                if (selected_objs.size() == 1 && _cache_count > 0)
                 {
                     glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
                     glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
+                }
+                else
+                {
+                    _cache_count = 0;
                 }
                 doneCurrent();
                 delete []indexs;
