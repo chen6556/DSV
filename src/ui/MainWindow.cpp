@@ -463,6 +463,24 @@ void MainWindow::mirror()
 
 
 
+void MainWindow::to_array_page()
+{
+    ui->tool_widget->setCurrentIndex(1);
+}
+
+void MainWindow::line_array()
+{
+
+}
+
+void MainWindow::ring_array()
+{
+
+}
+
+
+
+
 void MainWindow::open_file(const QString &path)
 {
     if (!QFileInfo(path).isFile())

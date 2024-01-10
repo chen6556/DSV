@@ -79,6 +79,15 @@ private slots:
 
     void mirror();
 
+
+    void to_array_page();
+
+    void line_array();
+
+    void ring_array();
+
+
+
 private:
     void open_file(const QString &path);
 
