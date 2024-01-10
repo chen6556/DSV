@@ -99,10 +99,13 @@ void Canvas::initializeGL()
     glUniform3d(_uniforms[3], 0.0, 1.0, 0.0); // vec1
 
     glGenVertexArrays(1, &_VAO);
-    glGenBuffers(4, _VBO);
+    glGenBuffers(5, _VBO);
 
     glBindVertexArray(_VAO);
     glVertexAttribLFormat(0, 3, GL_DOUBLE, 0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[4]); // reflines
+    glBufferData(GL_ARRAY_BUFFER, 30 * sizeof(double), _reflien_points, GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
     glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_DYNAMIC_DRAW);
@@ -262,6 +265,29 @@ void Canvas::paintGL()
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glDrawElements(GL_TRIANGLES, _indexs_count[3], GL_UNSIGNED_INT, NULL);
         glDisable(GL_STENCIL_TEST); //关闭模板测试
+    }
+
+    if (!_reflines.empty()) // reflines
+    {
+        int i = 0;
+        for (const QLineF &line : _reflines)
+        {
+            _reflien_points[i++] = line.p1().x();
+            _reflien_points[i++] = line.p1().y();
+            _reflien_points[i++] = 0.51;
+            _reflien_points[i++] = line.p2().x();
+            _reflien_points[i++] = line.p2().y();
+            _reflien_points[i++] = 0.51;
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[4]); // reflines
+        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glEnableVertexAttribArray(0);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, i * sizeof(double), _reflien_points);
+
+        glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
+        glLineWidth(2.0f);
+        glDrawArrays(GL_LINES, 0, i / 3);
+        glLineWidth(1.4f);
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
@@ -707,11 +733,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         catched_point = true;
                     }
                 }
-                if (!catched_point && GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
-                {
-                    _editer->auto_aligning(_pressed_obj, real_x1, real_y1, _reflines,
-                        GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool());
-                }
                 if (_input_line.isVisible() && _last_clicked_obj != _clicked_obj)
                 {
                     _input_line.hide();
@@ -835,7 +856,6 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         }
         else
         {
-            refresh_catached_points();
             _select_rect.clear();
             _last_point.clear();
             _info_labels[1]->clear();
@@ -844,6 +864,8 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
             _pressed_obj = nullptr;
             update();
         }
+        refresh_catached_points();
+        _reflines.clear();
         break;
     case Qt::RightButton:
         break;
@@ -977,7 +999,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             makeCurrent();
             glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
             std::list<Geo::Geometry *> objs = _editer->selected();
-            const bool only_one_selected = objs.size() == 1; 
+            const bool only_one_selected = objs.size() == 1;
             for (Geo::Geometry *obj : objs)
             {
                 _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier && only_one_selected);
@@ -1135,8 +1157,11 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             if (event->modifiers() != Qt::ControlModifier && GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
             {
-                _editer->auto_aligning(_pressed_obj, real_x1, real_y1, _reflines,
-                    GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool());
+                _reflines.clear();
+                if (_editer->auto_aligning(_pressed_obj, real_x1, real_y1, _reflines, true))
+                {
+                    refresh_selected_vbo();
+                }
             }
             _info_labels[1]->clear();
         }
@@ -1151,17 +1176,6 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
 
     if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool() && _clicked_obj == nullptr)
     {
-        // const bool value = GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool();
-        // Geo::Coord pos(real_x1, real_y1);
-        // if (_editer->auto_aligning(pos, _reflines, value))
-        // {
-        //     const double k = mat[0] * mat[4] - mat[3] * mat[1];
-        //     const double x = (mat[4] * (pos.x - mat[6]) - mat[3] * (pos.y - mat[7])) / k;
-        //     const double y = (mat[0] * (pos.y - mat[7]) - mat[1] * (pos.x - mat[6])) / k;
-        //     _mouse_pos_1.setX(x);
-        //     _mouse_pos_1.setY(y);
-        //     QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
-        // }
         const double catch_distance = GlobalSetting::get_instance()->setting()["catch_distance"].toDouble();
         double min_distance = DBL_MAX, temp;
         Geo::Coord coord;
@@ -1230,6 +1244,8 @@ void Canvas::wheelEvent(QWheelEvent *event)
     glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), data);
     doneCurrent();
     _editer->set_view_ratio(_ratio);
+
+    _reflines.clear();
     _editer->auto_aligning(_pressed_obj, _reflines);
 }
 
