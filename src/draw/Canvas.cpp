@@ -105,7 +105,7 @@ void Canvas::initializeGL()
     glVertexAttribLFormat(0, 3, GL_DOUBLE, 0);
 
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[4]); // reflines
-    glBufferData(GL_ARRAY_BUFFER, 30 * sizeof(double), _reflien_points, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 30 * sizeof(double), _refline_points, GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
     glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_DYNAMIC_DRAW);
@@ -272,17 +272,17 @@ void Canvas::paintGL()
         int i = 0;
         for (const QLineF &line : _reflines)
         {
-            _reflien_points[i++] = line.p1().x();
-            _reflien_points[i++] = line.p1().y();
-            _reflien_points[i++] = 0.51;
-            _reflien_points[i++] = line.p2().x();
-            _reflien_points[i++] = line.p2().y();
-            _reflien_points[i++] = 0.51;
+            _refline_points[i++] = line.p1().x();
+            _refline_points[i++] = line.p1().y();
+            _refline_points[i++] = 0.51;
+            _refline_points[i++] = line.p2().x();
+            _refline_points[i++] = line.p2().y();
+            _refline_points[i++] = 0.51;
         }
         glBindBuffer(GL_ARRAY_BUFFER, _VBO[4]); // reflines
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, i * sizeof(double), _reflien_points);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, i * sizeof(double), _refline_points);
 
         glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
         glLineWidth(2.0f);

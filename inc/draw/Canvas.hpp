@@ -35,7 +35,7 @@ private:
     size_t _indexs_count[4] = {0, 0, 0, 0}; //0:polyline 1:polygon 2:selected 3:text
     double *_cache = nullptr;
     size_t _cache_len = 513, _cache_count = 0;
-    double _reflien_points[30];
+    double _refline_points[30];
 
     double _canvas_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
     double _view_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
