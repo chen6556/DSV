@@ -401,13 +401,6 @@ void Canvas::paintGL()
         glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 0.549f); // color
         glDrawArrays(GL_LINE_LOOP, 4, 4);
     }
-
-    for (QPointF &point : _catched_points)
-    {
-        Geo::Coord coord(canvas_coord_to_real_coord(point.x(), point.y()));
-        point.setX(coord.x);
-        point.setY(coord.y);
-    }
 }
 
 void Canvas::mousePressEvent(QMouseEvent *event)
@@ -694,17 +687,24 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool())
                 {
                     const double catch_distance = GlobalSetting::get_instance()->setting()["catch_distance"].toDouble();
-                    for (const QPointF &point : _catched_points)
+                    double min_distance = DBL_MAX, temp;
+                    Geo::Coord coord;
+                    for (const Geo::Coord &point : _catched_points)
                     {
-                        if (Geo::distance(point.x(), point.y(), real_x1, real_y1) < catch_distance)
+                        temp = Geo::distance(point.x, point.y, real_x1, real_y1);
+                        if (temp < catch_distance / _ratio && temp < min_distance)
                         {
-                            catched_point = true;
-                            Geo::Coord coord(real_coord_to_view_coord(point.x(), point.y()));
-                            _mouse_pos_1.setX(coord.x);
-                            _mouse_pos_1.setY(coord.y);
-                            QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
-                            break;
+                            min_distance = temp;
+                            coord = point;
                         }
+                    }
+                    if (min_distance < DBL_MAX)
+                    {
+                        coord = real_coord_to_view_coord(coord.x, coord.y);
+                        _mouse_pos_1.setX(coord.x);
+                        _mouse_pos_1.setY(coord.y);
+                        QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
+                        catched_point = true;
                     }
                 }
                 if (!catched_point && GlobalSetting::get_instance()->setting()["auto_aligning"].toBool())
@@ -835,6 +835,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         }
         else
         {
+            refresh_catached_points();
             _select_rect.clear();
             _last_point.clear();
             _info_labels[1]->clear();
@@ -1150,15 +1151,34 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
 
     if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool() && _clicked_obj == nullptr)
     {
-        const bool value = GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool();
-        Geo::Coord pos(real_x1, real_y1);
-        if (_editer->auto_aligning(pos, _reflines, value))
+        // const bool value = GlobalSetting::get_instance()->setting()["active_layer_catch_only"].toBool();
+        // Geo::Coord pos(real_x1, real_y1);
+        // if (_editer->auto_aligning(pos, _reflines, value))
+        // {
+        //     const double k = mat[0] * mat[4] - mat[3] * mat[1];
+        //     const double x = (mat[4] * (pos.x - mat[6]) - mat[3] * (pos.y - mat[7])) / k;
+        //     const double y = (mat[0] * (pos.y - mat[7]) - mat[1] * (pos.x - mat[6])) / k;
+        //     _mouse_pos_1.setX(x);
+        //     _mouse_pos_1.setY(y);
+        //     QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
+        // }
+        const double catch_distance = GlobalSetting::get_instance()->setting()["catch_distance"].toDouble();
+        double min_distance = DBL_MAX, temp;
+        Geo::Coord coord;
+        for (const Geo::Coord &point : _catched_points)
         {
-            const double k = mat[0] * mat[4] - mat[3] * mat[1];
-            const double x = (mat[4] * (pos.x - mat[6]) - mat[3] * (pos.y - mat[7])) / k;
-            const double y = (mat[0] * (pos.y - mat[7]) - mat[1] * (pos.x - mat[6])) / k;
-            _mouse_pos_1.setX(x);
-            _mouse_pos_1.setY(y);
+            temp = Geo::distance(point.x, point.y, real_x1, real_y1);
+            if (temp < catch_distance / _ratio && temp < min_distance)
+            {
+                coord = point;
+                min_distance = temp;
+            }
+        }
+        if (min_distance < DBL_MAX)
+        {
+            coord = real_coord_to_view_coord(coord.x, coord.y);
+            _mouse_pos_1.setX(coord.x);
+            _mouse_pos_1.setY(coord.y);
             QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
         }
     }
@@ -2075,6 +2095,7 @@ void Canvas::refresh_vbo()
     delete []polyline_indexs;
     delete []polygon_indexs;
 
+    refresh_catached_points();
     if (GlobalSetting::get_instance()->setting()["show_text"].toBool())
     {
         refresh_text_vbo();
@@ -2262,6 +2283,7 @@ void Canvas::refresh_vbo(const bool unitary)
     doneCurrent();
     delete []data;
 
+    refresh_catached_points();
     if (GlobalSetting::get_instance()->setting()["show_text"].toBool())
     {
         refresh_text_vbo(unitary);
@@ -2470,6 +2492,8 @@ void Canvas::refresh_selected_vbo()
     }
     doneCurrent();
     delete []data;
+
+    refresh_catached_points();
 }
 
 void Canvas::refresh_brush_ibo()
@@ -3077,4 +3101,89 @@ void Canvas::refresh_text_vbo(const bool unitary)
     }
     doneCurrent();
     delete []data;
+}
+
+
+void Canvas::refresh_catached_points(const bool current_group_only)
+{
+    const CircleContainer *c = nullptr;
+    _catched_points.clear();
+    if (current_group_only)
+    {
+        for (const Geo::Geometry *geo : _editer->graph()->container_group(_editer->current_group()))
+        {
+            switch (geo->type())
+            {
+            case Geo::Type::TEXT:
+                _catched_points.emplace_back(dynamic_cast<const Text*>(geo)->center().coord());
+                break;
+            case Geo::Type::CONTAINER:
+                _catched_points.emplace_back(dynamic_cast<const Container *>(geo)->shape().bounding_rect().center().coord());
+                for (const Geo::Point &point : dynamic_cast<const Container *>(geo)->shape())
+                {
+                    _catched_points.emplace_back(point.coord());
+                }
+                break;
+            case Geo::Type::CIRCLECONTAINER:
+                c = dynamic_cast<const CircleContainer *>(geo);
+                _catched_points.emplace_back(c->center().coord());
+                _catched_points.emplace_back(c->center().coord().x + c->radius(), c->center().coord().y);
+                _catched_points.emplace_back(c->center().coord().x, c->center().coord().y - c->radius());
+                _catched_points.emplace_back(c->center().coord().x - c->radius(), c->center().coord().y);
+                _catched_points.emplace_back(c->center().coord().x, c->center().coord().y + c->radius());
+                break;
+            case Geo::Type::POLYLINE:
+                for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(geo))
+                {
+                    _catched_points.emplace_back(point.coord());
+                }
+                break;
+            default:
+                break;
+            }
+        }
+    }
+    else
+    {
+        for (const ContainerGroup &group : _editer->graph()->container_groups())
+        {
+            if (!group.visible())
+            {
+                continue;
+            }
+
+            for (const Geo::Geometry *geo : group)
+            {
+                switch (geo->type())
+                {
+                case Geo::Type::TEXT:
+                    _catched_points.emplace_back(dynamic_cast<const Text*>(geo)->center().coord());
+                    break;
+                case Geo::Type::CONTAINER:
+                    _catched_points.emplace_back(dynamic_cast<const Container *>(geo)->shape().bounding_rect().center().coord());
+                    for (const Geo::Point &point : dynamic_cast<const Container *>(geo)->shape())
+                    {
+                        _catched_points.emplace_back(point.coord());
+                    }
+                    break;
+                case Geo::Type::CIRCLECONTAINER:
+                    c = dynamic_cast<const CircleContainer *>(geo);
+                    _catched_points.emplace_back(c->center().coord());
+                    _catched_points.emplace_back(c->center().coord().x + c->radius(), c->center().coord().y);
+                    _catched_points.emplace_back(c->center().coord().x, c->center().coord().y - c->radius());
+                    _catched_points.emplace_back(c->center().coord().x - c->radius(), c->center().coord().y);
+                    _catched_points.emplace_back(c->center().coord().x, c->center().coord().y + c->radius());
+                    break;
+                case Geo::Type::POLYLINE:
+                    for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(geo))
+                    {
+                        _catched_points.emplace_back(point.coord());
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+    } 
 }

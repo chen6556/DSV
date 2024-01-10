@@ -22,7 +22,7 @@ private:
     Geo::Circle _circle_cache;
     Geo::AABBRect _AABBRect_cache, _select_rect, _visible_area;
     std::list<QLineF> _reflines;
-    QPolygonF _catched_points;
+    std::vector<Geo::Coord> _catched_points;
     Editer *_editer = nullptr;
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
@@ -168,7 +168,7 @@ public:
     Geo::Coord canvas_coord_to_real_coord(const double x, const double y) const;
 
 
-public slots:
+
     void refresh_vbo();
 
     void refresh_vbo(const bool unitary);
@@ -182,5 +182,8 @@ public slots:
     void refresh_text_vbo();
 
     void refresh_text_vbo(const bool unitary);
+
+
+    void refresh_catached_points(const bool current_group_only = true);
 
 };
