@@ -525,9 +525,29 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 _last_point.coord().x = real_x1;
                 _last_point.coord().y = real_y1;
                 _bool_flags[5] = false; // is obj selected
-                _operation = Operation::NOOPERATION;
-                emit tool_changed(Tool::NOTOOL);
-                _object_cache.clear();
+
+                switch (_operation)
+                {
+                case Operation::MIRROR:
+                    _operation = Operation::NOOPERATION;
+                    emit tool_changed(Tool::NOTOOL);
+                    _object_cache.clear();
+                    break;
+                case Operation::RINGARRAY:
+                    _operation = Operation::NOOPERATION;
+                    if (_editer->ring_array(_object_cache, real_x1, real_y1,
+                            GlobalSetting::get_instance()->ui()->array_item->value()))
+                    {
+                        refresh_vbo();
+                        refresh_selected_ibo();
+                    }
+                    emit tool_changed(Tool::NOTOOL);
+                    _object_cache.clear();
+                    return update();
+                default:
+                    break;
+                }
+                
                 if (_input_line.isVisible() && _last_clicked_obj != nullptr)
                 {
                     switch (_last_clicked_obj->type())
@@ -566,6 +586,31 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     {
                         refresh_vbo();
                         refresh_selected_ibo();
+                    }
+                    _object_cache.clear();
+                    _operation = Operation::NOOPERATION;
+                    emit tool_changed(Tool::NOTOOL);
+                    return update();
+                case Operation::RINGARRAY:
+                    if (event->modifiers() == Qt::ControlModifier)
+                    {
+                        if (_editer->ring_array(_object_cache,
+                                _clicked_obj->bounding_rect().center().coord().x,
+                                _clicked_obj->bounding_rect().center().coord().y, 
+                                GlobalSetting::get_instance()->ui()->array_item->value()))
+                        {
+                            refresh_vbo();
+                            refresh_selected_ibo();
+                        }
+                    }
+                    else
+                    {
+                        if (_editer->ring_array(_object_cache, real_x1, real_y1,
+                                GlobalSetting::get_instance()->ui()->array_item->value()))
+                        {
+                            refresh_vbo();
+                            refresh_selected_ibo();
+                        }
                     }
                     _object_cache.clear();
                     _operation = Operation::NOOPERATION;
@@ -697,6 +742,9 @@ void Canvas::mousePressEvent(QMouseEvent *event)
     case Qt::RightButton:
         if (!is_paintable())
         {
+            _operation = Operation::NOOPERATION;
+            _object_cache.clear();
+            emit tool_changed(Tool::NOTOOL);
             _clicked_obj = _editer->select(real_x1, real_y1, true);
             if (_clicked_obj != nullptr)
             {
@@ -772,6 +820,12 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     refresh_vbo();
                 }
             }
+        }
+        else
+        {
+            cancel_painting();
+            _editer->reset_selected_mark();
+            refresh_selected_ibo();
         }
         break;
     case Qt::MiddleButton:
@@ -1338,6 +1392,9 @@ void Canvas::set_operation(const Operation operation)
     switch (operation)
     {
     case Operation::MIRROR:
+        _object_cache = _editer->selected();
+        break;
+    case Operation::RINGARRAY:
         _object_cache = _editer->selected();
         break;
     default:

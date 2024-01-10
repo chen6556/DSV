@@ -42,6 +42,8 @@ void MainWindow::init()
     setWindowIcon(QIcon("./DSV2.ico"));
     setAcceptDrops(true);
 
+    GlobalSetting::get_instance()->load_ui(ui);
+
     _painter.resize(800, 600);
     ui->horizontalLayout->addWidget(&_painter);
     _editer.load_graph(new Graph());
@@ -227,6 +229,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         _painter.cancel_painting();
         _editer.reset_selected_mark();
         _painter.refresh_selected_ibo();
+        _painter.set_operation(Canvas::Operation::NOOPERATION);
         break;
     case Qt::Key_Space:
         _painter.use_last_tool();
@@ -345,6 +348,7 @@ void MainWindow::refresh_tool_label(const Canvas::Tool tool)
         break;
     default:
         ui->current_tool->clear();
+        ui->array_tool->clear();
         break;
     }
 }
@@ -481,7 +485,8 @@ void MainWindow::line_array()
 
 void MainWindow::ring_array()
 {
-
+    ui->array_tool->setText("Ring Array");
+    _painter.set_operation(Canvas::Operation::RINGARRAY);
 }
 
 

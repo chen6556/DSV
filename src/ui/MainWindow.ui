@@ -784,6 +784,21 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
              <number>3</number>
             </property>
             <item>
+             <widget class="QLabel" name="array_tool">
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QPushButton" name="back_btn_0">
               <property name="font">
                <font>
@@ -1106,7 +1121,7 @@ QPushButton:pressed
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_7">
               <item>
-               <widget class="QSpinBox" name="spinBox_2">
+               <widget class="QSpinBox" name="array_item">
                 <property name="maximumSize">
                  <size>
                   <width>40</width>
@@ -1163,49 +1178,6 @@ QPushButton:pressed
                </widget>
               </item>
              </layout>
-            </item>
-            <item>
-             <widget class="QLabel" name="label_5">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>20</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">background-color: rgb(70, 70, 71);</string>
-              </property>
-              <property name="text">
-               <string> Radius:</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QDoubleSpinBox" name="array_radius">
-              <property name="styleSheet">
-               <string notr="true">background-color: rgb(70, 70, 71);</string>
-              </property>
-              <property name="frame">
-               <bool>false</bool>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
-              <property name="buttonSymbols">
-               <enum>QAbstractSpinBox::NoButtons</enum>
-              </property>
-              <property name="maximum">
-               <double>10000.000000000000000</double>
-              </property>
-              <property name="value">
-               <double>100.000000000000000</double>
-              </property>
-             </widget>
             </item>
             <item>
              <widget class="QPushButton" name="ring_array_btn">

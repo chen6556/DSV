@@ -15,6 +15,16 @@ QJsonObject &GlobalSetting::setting()
     return _setting;
 }
 
+Ui::MainWindow *GlobalSetting::ui()
+{
+    return _ui;
+}
+
+void GlobalSetting::load_ui(Ui::MainWindow *ui)
+{
+    _ui = ui;
+}
+
 void GlobalSetting::load_setting()
 {
     QFile file("./config.json");

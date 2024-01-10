@@ -96,7 +96,7 @@ public:
 
     bool line_array(int x, int y, double x_space, double y_space);
 
-    bool ring_array(const double x, const double y, const double r, const int n);
+    bool ring_array(std::list<Geo::Geometry *> objects, const double x, const double y, const int n);
 
 
 
