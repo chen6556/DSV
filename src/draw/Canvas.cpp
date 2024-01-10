@@ -512,6 +512,24 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         }
         else
         {
+
+            switch (_operation)
+            {
+            case Operation::RINGARRAY:
+                _operation = Operation::NOOPERATION;
+                if (_editer->ring_array(_object_cache, real_x1, real_y1,
+                        GlobalSetting::get_instance()->ui()->array_item->value()))
+                {
+                    refresh_vbo();
+                    refresh_selected_ibo();
+                }
+                emit tool_changed(Tool::NOTOOL);
+                _object_cache.clear();
+                return update();
+            default:
+                break;
+            }
+
             const bool reset = !(GlobalSetting::get_instance()->setting()["multiple_select"].toBool()
                 || event->modifiers() == Qt::ControlModifier);
             _clicked_obj = _editer->select(real_x1, real_y1, reset);
@@ -533,17 +551,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     emit tool_changed(Tool::NOTOOL);
                     _object_cache.clear();
                     break;
-                case Operation::RINGARRAY:
-                    _operation = Operation::NOOPERATION;
-                    if (_editer->ring_array(_object_cache, real_x1, real_y1,
-                            GlobalSetting::get_instance()->ui()->array_item->value()))
-                    {
-                        refresh_vbo();
-                        refresh_selected_ibo();
-                    }
-                    emit tool_changed(Tool::NOTOOL);
-                    _object_cache.clear();
-                    return update();
                 default:
                     break;
                 }
@@ -586,31 +593,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     {
                         refresh_vbo();
                         refresh_selected_ibo();
-                    }
-                    _object_cache.clear();
-                    _operation = Operation::NOOPERATION;
-                    emit tool_changed(Tool::NOTOOL);
-                    return update();
-                case Operation::RINGARRAY:
-                    if (event->modifiers() == Qt::ControlModifier)
-                    {
-                        if (_editer->ring_array(_object_cache,
-                                _clicked_obj->bounding_rect().center().coord().x,
-                                _clicked_obj->bounding_rect().center().coord().y, 
-                                GlobalSetting::get_instance()->ui()->array_item->value()))
-                        {
-                            refresh_vbo();
-                            refresh_selected_ibo();
-                        }
-                    }
-                    else
-                    {
-                        if (_editer->ring_array(_object_cache, real_x1, real_y1,
-                                GlobalSetting::get_instance()->ui()->array_item->value()))
-                        {
-                            refresh_vbo();
-                            refresh_selected_ibo();
-                        }
                     }
                     _object_cache.clear();
                     _operation = Operation::NOOPERATION;
