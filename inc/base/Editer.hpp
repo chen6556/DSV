@@ -94,6 +94,12 @@ public:
 
 
 
+    bool line_array(int x, int y, double x_space, double y_space);
+
+    bool ring_array(const double x, const double y, const double r, const int n);
+
+
+
     Geo::Geometry *select(const Geo::Point &point, const bool reset_others = true);
 
     Geo::Geometry *select(const double x, const double y, const bool reset_others = true);

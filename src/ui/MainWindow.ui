@@ -834,7 +834,7 @@ QPushButton:pressed
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_5">
               <item>
-               <widget class="QSpinBox" name="spinBox">
+               <widget class="QSpinBox" name="array_x_item">
                 <property name="maximumSize">
                  <size>
                   <width>40</width>
@@ -898,7 +898,7 @@ QPushButton:pressed
             <item>
              <layout class="QHBoxLayout" name="horizontalLayout_6">
               <item>
-               <widget class="QSpinBox" name="spinBox_1">
+               <widget class="QSpinBox" name="array_y_item">
                 <property name="maximumSize">
                  <size>
                   <width>40</width>

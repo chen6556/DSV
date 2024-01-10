@@ -470,7 +470,13 @@ void MainWindow::to_array_page()
 
 void MainWindow::line_array()
 {
-
+    if (_editer.line_array(ui->array_x_item->value(), ui->array_y_item->value(),
+            ui->array_x_space->value(), ui->array_y_space->value()))
+    {
+        _painter.refresh_vbo();
+        _painter.refresh_selected_ibo();
+        _painter.update();
+    }
 }
 
 void MainWindow::ring_array()

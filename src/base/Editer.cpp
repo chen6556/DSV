@@ -972,6 +972,97 @@ bool Editer::mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *lin
 
 
 
+bool Editer::line_array(int x, int y, double x_space, double y_space)
+{
+    if (x == 0 || y == 0)
+    {
+        return false;
+    }
+    
+    std::list<Geo::Geometry *> objects;
+    double left = FLT_MAX, right = -FLT_MAX, top = -FLT_MAX, bottom = FLT_MAX;
+    Geo::AABBRect rect;
+    for (Geo::Geometry *container : _graph->container_group(_current_group))
+    {
+        if (container->is_selected)
+        {
+            objects.push_back(container);
+            rect = container->bounding_rect();
+            left = std::min(rect.left(), left);
+            right = std::max(rect.right(), right);
+            top = std::max(rect.top(), top);
+            bottom = std::min(rect.bottom(), bottom);
+        }
+    }
+
+    if (objects.empty())
+    {
+        return false;
+    }
+
+    x_space += (right - left);
+    if (x < 0)
+    {
+        x_space = -x_space;
+        x = -x;
+    }
+    y_space += (top - bottom);
+    if (y < 0)
+    {
+        y_space = -y_space;
+        y = -y;
+    }
+
+    for (int i = 0; i < x; ++i)
+    {
+        for (int j = 0; j < y; ++j)
+        {
+            if (i == 0 && j == 0)
+            {
+                continue;
+            }
+            for (Geo::Geometry *obj : objects)
+            {
+                switch (obj->type())
+                {
+                case Geo::Type::TEXT:
+                    _graph->container_group(_current_group).append(dynamic_cast<Text *>(obj->clone()));
+                    break;
+                case Geo::Type::CONTAINER:
+                    _graph->container_group(_current_group).append(dynamic_cast<Container *>(obj->clone()));
+                    break;
+                case Geo::Type::CIRCLECONTAINER:
+                    _graph->container_group(_current_group).append(dynamic_cast<CircleContainer *>(obj->clone()));
+                    break;
+                case Geo::Type::COMBINATION:
+                    _graph->container_group(_current_group).append(dynamic_cast<Combination *>(obj->clone()));
+                    break;
+                case Geo::Type::POLYLINE:
+                    _graph->container_group(_current_group).append(dynamic_cast<Geo::Polyline *>(obj->clone()));
+                    break;
+                case Geo::Type::BEZIER:
+                    _graph->container_group(_current_group).append(dynamic_cast<Geo::Bezier *>(obj->clone()));
+                    break;
+                default:
+                    break;
+                }
+                
+                _graph->container_group(_current_group).back()->translate(
+                    x_space * i, y_space * j);
+                _graph->container_group(_current_group).back()->is_selected = true;
+            }
+        }
+    }
+    return true;
+}
+
+bool Editer::ring_array(const double x, const double y, const double r, const int n)
+{
+    return false;
+}
+
+
+
 Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
 {
     if (_graph == nullptr || _graph->empty())
