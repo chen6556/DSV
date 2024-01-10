@@ -48,7 +48,7 @@
      <number>0</number>
     </property>
     <item>
-     <widget class="QStackedWidget" name="stackedWidget">
+     <widget class="QStackedWidget" name="tool_widget">
       <property name="maximumSize">
        <size>
         <width>120</width>
@@ -900,6 +900,134 @@ color:rgb(230, 230, 230);</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>back_btn_0</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>to_main_page()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>464</x>
+     <y>45</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>close_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close_polyline()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>477</x>
+     <y>293</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>combinate_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>combinate()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>477</x>
+     <y>324</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>connect_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>connect_polylines()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>477</x>
+     <y>262</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>flipx_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>flip_x()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>449</x>
+     <y>447</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>flipy_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>flip_y()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>505</x>
+     <y>447</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mirror_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>mirror()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>477</x>
+     <y>479</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rotate_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>rotate()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>453</x>
+     <y>414</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -913,5 +1041,6 @@ color:rgb(230, 230, 230);</string>
   <slot>connect_polylines()</slot>
   <slot>combinate()</slot>
   <slot>close_polyline()</slot>
+  <slot>to_main_page()</slot>
  </slots>
 </ui>

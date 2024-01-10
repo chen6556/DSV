@@ -398,6 +398,10 @@ void MainWindow::show_layers_manager()
     _layers_manager->show();
 }
 
+void MainWindow::to_main_page()
+{
+    ui->tool_widget->setCurrentIndex(0);
+}
 
 
 

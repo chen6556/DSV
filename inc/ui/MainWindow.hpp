@@ -62,6 +62,8 @@ private slots:
 
     void show_layers_manager();
 
+    void to_main_page();
+
 
     void connect_polylines();
 
