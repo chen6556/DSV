@@ -241,6 +241,18 @@ void Canvas::paintGL()
         glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
         glDrawArrays(GL_POINTS, 0, _cache_count / 3);
     }
+    else if (_measure_flags[0])
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
+        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glEnableVertexAttribArray(0);
+
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * sizeof(double), _cache);
+        glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
+        glLineWidth(2.0f);
+        glDrawArrays(GL_LINES, 0, 2);
+        glLineWidth(1.4f);
+    }
 
     if (_indexs_count[3] > 0) // text
     {
@@ -580,22 +592,23 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     if (!_measure_flags[0] || _measure_flags[1])
                     {
                         Geo::Coord coord(real_x1, real_y1);
-                        catch_cursor(real_x1, real_y1, coord, 4.0 / _ratio);
+                        catch_point(real_x1, real_y1, coord, 12.0 / _ratio);
                         _measure_flags[0] = true;
                         _measure_flags[1] = false;
-                        _measure_coords[0] = coord.x;
-                        _measure_coords[1] = coord.y;
+                        _cache[2] = _cache[5] = 0.51;
+                        _cache[0] = _cache[3] = coord.x;
+                        _cache[1] = _cache[4] = coord.y;
                     }
                     else
                     {
                         Geo::Coord coord(real_x1, real_y1);
-                        catch_cursor(real_x1, real_y1, coord, 4.0 / _ratio);
+                        catch_point(real_x1, real_y1, coord, 12.0 / _ratio);
                         _measure_flags[1] = true;
-                        _measure_coords[2] = coord.x;
-                        _measure_coords[3] = coord.y;
+                        _cache[3] = coord.x;
+                        _cache[4] = coord.y;
                         _info_labels[1]->setText("Length:" +
-                            QString::number(Geo::distance(_measure_coords[0], _measure_coords[1],
-                                _measure_coords[2], _measure_coords[3])));
+                            QString::number(Geo::distance(_cache[0], _cache[1],
+                                _cache[3], _cache[4])));
                     }
                     return update();
                 default:
@@ -655,26 +668,27 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     if (!_measure_flags[0] || _measure_flags[1])
                     {
                         Geo::Coord coord(real_x1, real_y1);
-                        if (catch_cursor(real_x1, real_y1, coord, 4.0 / _ratio))
+                        if (catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
                         {
                             _measure_flags[0] = true;
                             _measure_flags[1] = false;
-                            _measure_coords[0] = coord.x;
-                            _measure_coords[1] = coord.y;
+                            _cache[2] = _cache[5] = 0.51;
+                            _cache[0] = _cache[3] = coord.x;
+                            _cache[1] = _cache[4] = coord.y;
                             return update();
                         }
                     }
                     else
                     {
                         Geo::Coord coord(real_x1, real_y1);
-                        if (catch_cursor(real_x1, real_y1, coord, 4.0 / _ratio))
+                        if (catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
                         {
                             _measure_flags[1] = true;
-                            _measure_coords[2] = coord.x;
-                            _measure_coords[3] = coord.y;
+                            _cache[3] = coord.x;
+                            _cache[4] = coord.y;
                             _info_labels[1]->setText("Length:" +
-                                QString::number(Geo::distance(_measure_coords[0], _measure_coords[1],
-                                    _measure_coords[2], _measure_coords[3])));
+                                QString::number(Geo::distance(_cache[0], _cache[1],
+                                    _cache[3], _cache[4])));
                             return update();
                         }
                     }
@@ -1259,8 +1273,10 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         }
         else if (_measure_flags[0] && !_measure_flags[1])
         {
-            _info_labels[1]->setText("Length:" + QString::number(Geo::distance(
-                _measure_coords[0], _measure_coords[1], real_x1, real_y1)));
+            _cache[3] = real_x1;
+            _cache[4] = real_y1;
+            _info_labels[1]->setText("Length:" + QString::number(
+                Geo::distance(_cache[0], _cache[1], real_x1, real_y1)));
         }
         update();
     }
@@ -1481,7 +1497,7 @@ void Canvas::use_tool(const Tool tool)
 
     _measure_flags[0] = _measure_flags[1] = false;
     _info_labels[1]->clear();
-    
+
     emit tool_changed(_tool_flags[0]);
     update();
 }
@@ -1693,12 +1709,16 @@ void Canvas::cancel_painting()
     _bool_flags[2] = false; // painting
     _tool_flags[1] = _tool_flags[0];
     _tool_flags[0] = Tool::NOTOOL;
-    emit tool_changed(_tool_flags[0]);
+
     _editer->point_cache().clear();
     _circle_cache.clear();
     _AABBRect_cache.clear();
     _cache_count = 0;
+
+    _measure_flags[0] = _measure_flags[1] = false;
     _info_labels[1]->clear();
+
+    emit tool_changed(_tool_flags[0]);
     update();
 }
 
@@ -1711,7 +1731,9 @@ void Canvas::use_last_tool()
     _tool_flags[0] = _tool_flags[1];
     if (_tool_flags[0] != Tool::NOTOOL)
     {
-        _bool_flags[1] = true; // paintable
+        _measure_flags[0] = _measure_flags[1] = false;
+        _info_labels[1]->clear();
+        _bool_flags[1] = _tool_flags[0] != Tool::MEASURE; // paintable
         emit tool_changed(_tool_flags[0]);
     }
 }
@@ -1852,6 +1874,31 @@ bool Canvas::catch_cursor(const double x, const double y, Geo::Coord &coord, con
     if (min_distance < DBL_MAX)
     {
         coord = real_coord_to_view_coord(pos.x, pos.y);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Canvas::catch_point(const double x, const double y, Geo::Coord &coord, const double distance)
+{
+    double min_distance = DBL_MAX, temp;
+    Geo::Coord pos;
+    for (const Geo::Coord &point : _catched_points)
+    {
+        temp = Geo::distance(point.x, point.y, x, y);
+        if (temp < distance / _ratio && temp < min_distance)
+        {
+            min_distance = temp;
+            pos = point;
+        }
+    }
+    if (min_distance < DBL_MAX)
+    {
+        coord.x = pos.x;
+        coord.y = pos.y;
         return true;
     }
     else

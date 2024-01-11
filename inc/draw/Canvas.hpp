@@ -47,7 +47,6 @@ private:
 
     // First point and second point
     bool _measure_flags[2] = {false, false};
-    double _measure_coords[4] = {0};
 
     // current_tool, last_tool
     Tool _tool_flags[2] = {Tool::NOTOOL, Tool::NOTOOL};
@@ -173,6 +172,8 @@ public:
     Geo::Coord canvas_coord_to_real_coord(const double x, const double y) const;
 
     bool catch_cursor(const double x, const double y, Geo::Coord &coord, const double distance);
+
+    bool catch_point(const double x, const double y, Geo::Coord &coord, const double distance);
 
 
 
