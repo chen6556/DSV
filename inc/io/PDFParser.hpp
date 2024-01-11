@@ -382,7 +382,9 @@ private:
 
     int _cur_object = 0;
 	std::vector<int> _objects;
-        
+
+    double _user_unit = 1.0;
+
 public:
 
     void start();
@@ -429,6 +431,8 @@ public:
 
     void close_and_store_shape();
 
+
+    void analyse_dict(const std::string &value);
 
     void store_text(const std::string &value);
 

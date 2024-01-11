@@ -264,6 +264,20 @@ void Importer::close_and_store_shape()
 }
 
 
+void Importer::analyse_dict(const std::string &value)
+{
+    size_t pos = value.find("/UserUnit ");
+    if (pos == std::string::npos)
+    {
+        return;
+    }
+    
+    pos += 10;
+    size_t end = pos;
+    while (value[++end] != ' ');
+    _user_unit = std::atof(value.substr(pos, end - pos).data());
+}
+
 void Importer::store_text(const std::string &value)
 {
     _text = value;
@@ -360,6 +374,8 @@ void Importer::end()
     _texts.clear();
     _text.clear();
     _encoding_map.clear();
+
+    _graph->scale(0, 0, _user_unit * 25.4 / 72);
 }
 
 
@@ -665,6 +681,7 @@ void Importer::reset()
 
     _cur_object = 0;
     _objects.clear();
+    _user_unit = 1.0;
 
     _encoding_map.clear();
     _text.clear();
@@ -713,6 +730,7 @@ Action<void> BT_a(&importer, &Importer::BT);
 Action<void> ET_a(&importer, &Importer::ET);
 Action<void> Tm_a(&importer, &Importer::Tm);
 Action<std::string> key_a(&importer, &Importer::store_key);
+Action<std::string> dict_a(&importer, &Importer::analyse_dict);
 
 Parser<bool> end = eol_p() | ch_p(' ');
 Parser<char> space = ch_p(' ');
@@ -762,7 +780,7 @@ Parser<bool> text = confix_p(ch_p('<'), (*alnum_p())[text_a], ch_p('>'));
 Parser<std::vector<char>> annotation = pair(ch_p('['), eol_p());
 Parser<bool> command = *(parameter | key | text | space) >> order;
 Parser<bool> array = pair(ch_p('['), ch_p(']')) >> !eol_p();
-Parser<bool> dict = pair(str_p("<<"), str_p(">>")) >> !eol_p();
+Parser<bool> dict = pair(str_p("<<"), str_p(">>"))[dict_a] >> !eol_p();
 Parser<bool> code = confix_p(ch_p('<'), (+alnum_p())[encoding_a], ch_p('>'));
 Parser<bool> font_info = str_p("/CIDInit /ProcSet findresource begin") >> (+anychar_p() - (str_p("beginbfchar") >> eol_p()))
     	                >> str_p("beginbfchar") >> end >> +(code >> end) >> !eol_p() >> str_p("endbfchar")
@@ -774,7 +792,7 @@ Parser<bool> stream_start = str_p("stream") >> eol_p();
 Parser<bool>	stream_end = str_p("endstream") >> eol_p();
 Parser<bool> stream = stream_start >> +(command | dict | float_p() | space | eol_p() | font_info | xml | others) >> stream_end;
 Parser<bool> object = (int_p()[object_a] >> space >> int_p() >> space >> str_p("obj") >> eol_p() >>
-					*(int_p() | dict | stream | array) >> str_p("endobj") >> eol_p());
+					*(int_p() | (str_p("null") >> eol_p()) | dict | stream | array) >> str_p("endobj") >> eol_p());
 
 Parser<bool> head = str_p("%PDF-") >> float_p() >> (+anychar_p() - ch_p('%')) >> ch_p('%') >> (*anychar_p() - eol_p()) >> eol_p();
 Parser<bool> tail = (str_p("xref") >> *anychar_p())[end_a];

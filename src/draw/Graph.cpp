@@ -2,7 +2,7 @@
 
 
 Graph::Graph(const Graph &graph)
-    : Geo::Geometry(graph), _ratio(graph._ratio), modified(graph.modified)
+    : Geo::Geometry(graph), modified(graph.modified)
 {
     _type = Geo::Type::GRAPH;
     for (const ContainerGroup &group : graph._container_groups)
@@ -41,7 +41,6 @@ Graph &Graph::operator=(const Graph &graph)
         {
             _container_groups.emplace_back(group);
         }
-        _ratio = graph._ratio;
         _type = Geo::Type::GRAPH;
     }
     return *this;
@@ -219,7 +218,6 @@ void Graph::scale(const double x, const double y, const double k)
     {
         group.scale(x, y, k);
     }
-    _ratio *= k;
 }
 
 void Graph::rescale(const double x, const double y)
@@ -228,12 +226,6 @@ void Graph::rescale(const double x, const double y)
     {
         group.rescale(x, y);
     }
-    _ratio = 1;
-}
-
-double Graph::ratio() const
-{
-    return _ratio;
 }
 
 Geo::AABBRect Graph::bounding_rect() const
