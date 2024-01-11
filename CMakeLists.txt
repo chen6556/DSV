@@ -33,6 +33,7 @@ qt_add_executable(DSV
     inc/ui/LayersManager.hpp
     inc/ui/MainWindow.hpp
     inc/draw/Canvas.hpp
+    inc/ui/CMDWidget.hpp
 
     ${_DRAW_SOURCES}
     ${_BASE_SOURCES}

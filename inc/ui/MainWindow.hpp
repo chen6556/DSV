@@ -3,12 +3,13 @@
 #include <QMainWindow>
 #include <QComboBox>
 #include <QToolButton>
-#include "ui/LayersManager.hpp"
-#include "draw/Canvas.hpp"
-#include "base/Editer.hpp"
-#include "ui/Setting.hpp"
 #include <QTimer>
 #include <QString>
+#include "draw/Canvas.hpp"
+#include "base/Editer.hpp"
+#include "ui/LayersManager.hpp"
+#include "ui/Setting.hpp"
+#include "ui/CMDWidget.hpp"
 
 
 QT_BEGIN_NAMESPACE
@@ -27,6 +28,7 @@ private:
     std::vector<Qt::Key> _keys;
     QTimer _clock;
     QLabel *_info_labels[3] = {nullptr, nullptr, nullptr};
+    CMDWidget *_cmd_widget = nullptr;
 
     QComboBox *_layers_cbx = nullptr;
     LayersManager *_layers_manager = nullptr;
@@ -44,6 +46,8 @@ protected:
     void dragEnterEvent(QDragEnterEvent *event);
 
     void dropEvent(QDropEvent *event);
+
+    void resizeEvent(QResizeEvent *event);
 
 private slots:
     void open_file();

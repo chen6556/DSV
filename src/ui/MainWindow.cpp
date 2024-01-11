@@ -48,6 +48,9 @@ void MainWindow::init()
     _editer.load_graph(new Graph());
     _painter.bind_editer(&_editer);
 
+    _cmd_widget = new CMDWidget(this);
+    _cmd_widget->show();
+
     _clock.start(5000);
     QObject::connect(&_painter, &Canvas::tool_changed, this, &MainWindow::refresh_tool_label);
     QObject::connect(ui->view_btn, &QPushButton::clicked, &_painter, &Canvas::cancel_painting);
@@ -105,6 +108,125 @@ void MainWindow::closeEvent(QCloseEvent *event)
 }
 
 
+
+
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    if (_painter.is_typing())
+    {
+        return;
+    }
+    switch (event->key())
+    {
+    case Qt::Key_Escape:
+        _painter.cancel_painting();
+        _editer.reset_selected_mark();
+        _painter.refresh_selected_ibo();
+        _painter.set_operation(Canvas::Operation::NOOPERATION);
+        break;
+    case Qt::Key_Space:
+        _painter.use_last_tool();
+        break;
+    case Qt::Key_D:
+    case Qt::Key_Delete:
+    case Qt::Key_Backspace:
+        if (_editer.remove_selected())
+        {
+            _painter.refresh_vbo();
+            _painter.update();
+        }
+        break;
+    case Qt::Key_A:
+        if (event->modifiers() == Qt::ControlModifier)
+        {
+            _editer.reset_selected_mark(true);
+            _painter.refresh_selected_ibo();
+            _painter.update();
+        }
+        break;
+    case Qt::Key_B:
+        _painter.use_tool(Canvas::Tool::CURVE);
+        break;
+    case Qt::Key_S:
+        if (event->modifiers() == Qt::ControlModifier)
+        {
+            save_file();
+        }
+        break;
+    case Qt::Key_C:
+        if (event->modifiers() == Qt::ControlModifier)
+        {
+            _painter.copy();
+        }
+        else
+        {
+            _painter.use_tool(Canvas::Tool::CIRCLE);
+        }
+        break;
+    case Qt::Key_X:
+        if (event->modifiers() == Qt::ControlModifier)
+        {
+            _painter.cut();
+            _painter.update();
+        }
+        break;
+    case Qt::Key_V:
+        if (event->modifiers() == Qt::ControlModifier)
+        {
+            _painter.paste();
+            _painter.update();
+        }
+        break;
+    case Qt::Key_L:
+        _painter.use_tool(Canvas::Tool::POLYLINE);
+        break;
+    case Qt::Key_R:
+        _painter.use_tool(Canvas::Tool::RECT);
+        break;
+    case Qt::Key_Z:
+        if (event->modifiers() == Qt::ControlModifier && !_painter.is_painting())
+        {
+            _editer.load_backup();
+            _painter.refresh_vbo();
+            _painter.refresh_selected_ibo();
+            _painter.update();
+        }
+        break;
+    default:
+        break;
+    }
+    QMainWindow::keyPressEvent(event);
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if(event->mimeData()->hasUrls())
+    {
+        event->acceptProposedAction();
+    }
+    else
+    {
+        event->ignore();
+    }
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    const QString suffixs = "json JSON pdf PDF plt PLT";
+    QFileInfo file_info(event->mimeData()->urls().front().toLocalFile());
+    if( file_info.isFile() && suffixs.contains(file_info.suffix()))
+    {
+        open_file(file_info.absoluteFilePath());
+    }
+}
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    QMainWindow::resizeEvent(event);
+    _cmd_widget->move(_cmd_widget->mapToParent(QPoint((width() - _cmd_widget->width()) / 2,
+        height() - 33 - _cmd_widget->height()) - _cmd_widget->pos()));
+}
 
 
 void MainWindow::open_file()
@@ -215,116 +337,6 @@ void MainWindow::saveas_file()
         _editer.reset_modified();
     }
     delete dialog;
-}
-
-void MainWindow::keyPressEvent(QKeyEvent *event)
-{
-    if (_painter.is_typing())
-    {
-        return;
-    }
-    switch (event->key())
-    {
-    case Qt::Key_Escape:
-        _painter.cancel_painting();
-        _editer.reset_selected_mark();
-        _painter.refresh_selected_ibo();
-        _painter.set_operation(Canvas::Operation::NOOPERATION);
-        break;
-    case Qt::Key_Space:
-        _painter.use_last_tool();
-        break;
-    case Qt::Key_D:
-    case Qt::Key_Delete:
-    case Qt::Key_Backspace:
-        if (_editer.remove_selected())
-        {
-            _painter.refresh_vbo();
-            _painter.update();
-        }
-        break;
-    case Qt::Key_A:
-        if (event->modifiers() == Qt::ControlModifier)
-        {
-            _editer.reset_selected_mark(true);
-            _painter.refresh_selected_ibo();
-            _painter.update();
-        }
-        break;
-    case Qt::Key_B:
-        _painter.use_tool(Canvas::Tool::CURVE);
-        break;
-    case Qt::Key_S:
-        if (event->modifiers() == Qt::ControlModifier)
-        {
-            save_file();
-        }
-        break;
-    case Qt::Key_C:
-        if (event->modifiers() == Qt::ControlModifier)
-        {
-            _painter.copy();
-        }
-        else
-        {
-            _painter.use_tool(Canvas::Tool::CIRCLE);
-        }
-        break;
-    case Qt::Key_X:
-        if (event->modifiers() == Qt::ControlModifier)
-        {
-            _painter.cut();
-            _painter.update();
-        }
-        break;
-    case Qt::Key_V:
-        if (event->modifiers() == Qt::ControlModifier)
-        {
-            _painter.paste();
-            _painter.update();
-        }
-        break;
-    case Qt::Key_L:
-        _painter.use_tool(Canvas::Tool::POLYLINE);
-        break;
-    case Qt::Key_R:
-        _painter.use_tool(Canvas::Tool::RECT);
-        break;
-    case Qt::Key_Z:
-        if (event->modifiers() == Qt::ControlModifier && !_painter.is_painting())
-        {
-            _editer.load_backup();
-            _painter.refresh_vbo();
-            _painter.refresh_selected_ibo();
-            _painter.update();
-        }
-        break;
-    default:
-        break;
-    }
-    QMainWindow::keyPressEvent(event);
-}
-
-void MainWindow::dragEnterEvent(QDragEnterEvent *event)
-{
-    if(event->mimeData()->hasUrls())
-    {
-        event->acceptProposedAction();
-    }
-    else
-    {
-        event->ignore();
-    }
-}
-
-void MainWindow::dropEvent(QDropEvent *event)
-{
-    const QString suffixs = "json JSON pdf PDF plt PLT";
-    QFileInfo file_info(event->mimeData()->urls().front().toLocalFile());
-    if( file_info.isFile() && suffixs.contains(file_info.suffix()))
-    {
-        open_file(file_info.absoluteFilePath());
-    }
 }
 
 void MainWindow::refresh_tool_label(const Canvas::Tool tool)
