@@ -15,7 +15,7 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
     Q_OBJECT
 
 public:
-    enum Tool {NOTOOL, CIRCLE, POLYLINE, RECT, CURVE, TEXT};
+    enum Tool {NOTOOL, MEASURE, CIRCLE, POLYLINE, RECT, CURVE, TEXT};
     enum Operation {NOOPERATION, MIRROR, RINGARRAY};
 
 private:
@@ -172,7 +172,7 @@ public:
 
     Geo::Coord canvas_coord_to_real_coord(const double x, const double y) const;
 
-    bool catch_cursor(const double x, const double y, const double distance);
+    bool catch_cursor(const double x, const double y, Geo::Coord &coord, const double distance);
 
 
 

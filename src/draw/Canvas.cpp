@@ -573,7 +573,35 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 default:
                     break;
                 }
-                
+
+                switch (_tool_flags[0])
+                {
+                case Tool::MEASURE:
+                    if (!_measure_flags[0] || _measure_flags[1])
+                    {
+                        Geo::Coord coord(real_x1, real_y1);
+                        catch_cursor(real_x1, real_y1, coord, 4.0 / _ratio);
+                        _measure_flags[0] = true;
+                        _measure_flags[1] = false;
+                        _measure_coords[0] = coord.x;
+                        _measure_coords[1] = coord.y;
+                    }
+                    else
+                    {
+                        Geo::Coord coord(real_x1, real_y1);
+                        catch_cursor(real_x1, real_y1, coord, 4.0 / _ratio);
+                        _measure_flags[1] = true;
+                        _measure_coords[2] = coord.x;
+                        _measure_coords[3] = coord.y;
+                        _info_labels[1]->setText("Length:" +
+                            QString::number(Geo::distance(_measure_coords[0], _measure_coords[1],
+                                _measure_coords[2], _measure_coords[3])));
+                    }
+                    return update();
+                default:
+                    break;
+                }
+
                 if (_input_line.isVisible() && _last_clicked_obj != nullptr)
                 {
                     switch (_last_clicked_obj->type())
@@ -617,6 +645,40 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _operation = Operation::NOOPERATION;
                     emit tool_changed(Tool::NOTOOL);
                     return update();
+                default:
+                    break;
+                }
+
+                switch (_tool_flags[0])
+                {
+                case Tool::MEASURE:
+                    if (!_measure_flags[0] || _measure_flags[1])
+                    {
+                        Geo::Coord coord(real_x1, real_y1);
+                        if (catch_cursor(real_x1, real_y1, coord, 4.0 / _ratio))
+                        {
+                            _measure_flags[0] = true;
+                            _measure_flags[1] = false;
+                            _measure_coords[0] = coord.x;
+                            _measure_coords[1] = coord.y;
+                            return update();
+                        }
+                    }
+                    else
+                    {
+                        Geo::Coord coord(real_x1, real_y1);
+                        if (catch_cursor(real_x1, real_y1, coord, 4.0 / _ratio))
+                        {
+                            _measure_flags[1] = true;
+                            _measure_coords[2] = coord.x;
+                            _measure_coords[3] = coord.y;
+                            _info_labels[1]->setText("Length:" +
+                                QString::number(Geo::distance(_measure_coords[0], _measure_coords[1],
+                                    _measure_coords[2], _measure_coords[3])));
+                            return update();
+                        }
+                    }
+                    break;
                 default:
                     break;
                 }
@@ -709,9 +771,50 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
                 _bool_flags[4] = true; // is obj moveable
                 _bool_flags[5] = true; // is obj selected
-                if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool())
+
+                switch (_tool_flags[0])
                 {
-                    catch_cursor(real_x1, real_y1, GlobalSetting::get_instance()->setting()["catch_distance"].toDouble());
+                case Tool::MEASURE:
+                    _measure_flags[0] = _measure_flags[1] = false;
+                    switch (_clicked_obj->type())
+                    {
+                    case Geo::Type::TEXT:
+                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const Text*>(_clicked_obj)->center().coord().x) +
+                            "Y:" + QString::number(dynamic_cast<const Text*>(_clicked_obj)->center().coord().y));
+                        break;
+                    case Geo::Type::CONTAINER:
+                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const Container*>(_clicked_obj)->center().coord().x) +
+                            " Y:" + QString::number(dynamic_cast<const Container*>(_clicked_obj)->center().coord().y) +
+                            " Length:" + QString::number(_clicked_obj->length()) +
+                            " Area:" + QString::number(dynamic_cast<const Container*>(_clicked_obj)->area()));
+                        break;
+                    case Geo::Type::CIRCLECONTAINER:
+                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const CircleContainer*>(_clicked_obj)->center().coord().x) +
+                            " Y:" + QString::number(dynamic_cast<const CircleContainer*>(_clicked_obj)->center().coord().y) +
+                            " Radius:" + QString::number(dynamic_cast<const CircleContainer*>(_clicked_obj)->radius()));
+                        break;
+                    case Geo::Type::POLYLINE:
+                        _info_labels[1]->setText("Length:" + QString::number(dynamic_cast<const Geo::Polyline*>(_clicked_obj)->length()));
+                        break;
+                    case Geo::Type::BEZIER:
+                        _info_labels[1]->setText("Order:" + QString::number(dynamic_cast<const Geo::Bezier*>(_clicked_obj)->order()) +
+                            " Length:" + QString::number(dynamic_cast<const Geo::Bezier*>(_clicked_obj)->length()));
+                        break;
+                    default:
+                        break;
+                    }
+                    return update();
+                default:
+                    break;
+                }
+
+                Geo::Coord coord;
+                if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool() &&
+                    catch_cursor(real_x1, real_y1, coord, GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()))
+                {
+                    _mouse_pos_1.setX(coord.x);
+                    _mouse_pos_1.setY(coord.y);
+                    QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
                 }
                 if (_input_line.isVisible() && _last_clicked_obj != _clicked_obj)
                 {
@@ -727,7 +830,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         {
             _operation = Operation::NOOPERATION;
             _object_cache.clear();
-            emit tool_changed(Tool::NOTOOL);
             _clicked_obj = _editer->select(real_x1, real_y1, true);
             if (_clicked_obj != nullptr)
             {
@@ -803,6 +905,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     refresh_vbo();
                 }
             }
+            use_tool(Tool::NOTOOL);
         }
         else
         {
@@ -838,7 +941,10 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         {
             _select_rect.clear();
             _last_point.clear();
-            _info_labels[1]->clear();
+            if (_tool_flags[0] != Tool::MEASURE)
+            {
+                _info_labels[1]->clear();
+            }
             _bool_flags[6] = false; // is moving obj
             _last_clicked_obj = _clicked_obj;
             _pressed_obj = nullptr;
@@ -1151,12 +1257,21 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.coord().x)))
                 .append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.coord().y))).c_str());
         }
+        else if (_measure_flags[0] && !_measure_flags[1])
+        {
+            _info_labels[1]->setText("Length:" + QString::number(Geo::distance(
+                _measure_coords[0], _measure_coords[1], real_x1, real_y1)));
+        }
         update();
     }
 
-    if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool() && _clicked_obj == nullptr)
+    Geo::Coord coord;
+    if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool() && _clicked_obj == nullptr &&
+        catch_cursor(real_x1, real_y1, coord, GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()))
     {
-        catch_cursor(real_x1, real_y1, GlobalSetting::get_instance()->setting()["catch_distance"].toDouble());
+        _mouse_pos_1.setX(coord.x);
+        _mouse_pos_1.setY(coord.y);
+        QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
     }
 }
 
@@ -1357,11 +1472,16 @@ void Canvas::use_tool(const Tool tool)
 {
     _tool_flags[1] = _tool_flags[0];
     _tool_flags[0] = tool;
-    _bool_flags[1] = (tool != Tool::NOTOOL); // paintable
+    _bool_flags[1] = (tool != Tool::NOTOOL && tool != Tool::MEASURE); // paintable
     _bool_flags[2] = false; // painting
+
     _editer->point_cache().clear();
     _circle_cache.clear();
     _AABBRect_cache.clear();
+
+    _measure_flags[0] = _measure_flags[1] = false;
+    _info_labels[1]->clear();
+    
     emit tool_changed(_tool_flags[0]);
     update();
 }
@@ -1716,25 +1836,22 @@ Geo::Coord Canvas::canvas_coord_to_real_coord(const double x, const double y) co
     return {(x - _canvas_ctm[6] - _canvas_ctm[3] * t) / _canvas_ctm[0], t};
 }
 
-bool Canvas::catch_cursor(const double x, const double y, const double distance)
+bool Canvas::catch_cursor(const double x, const double y, Geo::Coord &coord, const double distance)
 {
     double min_distance = DBL_MAX, temp;
-    Geo::Coord coord;
+    Geo::Coord pos;
     for (const Geo::Coord &point : _catched_points)
     {
         temp = Geo::distance(point.x, point.y, x, y);
         if (temp < distance / _ratio && temp < min_distance)
         {
             min_distance = temp;
-            coord = point;
+            pos = point;
         }
     }
     if (min_distance < DBL_MAX)
     {
-        coord = real_coord_to_view_coord(coord.x, coord.y);
-        _mouse_pos_1.setX(coord.x);
-        _mouse_pos_1.setY(coord.y);
-        QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
+        coord = real_coord_to_view_coord(pos.x, pos.y);
         return true;
     }
     else

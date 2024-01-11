@@ -52,6 +52,7 @@ void MainWindow::init()
     _clock.start(5000);
     QObject::connect(&_painter, &Canvas::tool_changed, this, &MainWindow::refresh_tool_label);
     QObject::connect(ui->view_btn, &QPushButton::clicked, &_painter, &Canvas::cancel_painting);
+    QObject::connect(ui->measure_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::MEASURE); });
     QObject::connect(ui->circle_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::CIRCLE); });
     QObject::connect(ui->line_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::POLYLINE); });
     QObject::connect(ui->rect_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::RECT); });
@@ -331,6 +332,9 @@ void MainWindow::refresh_tool_label(const Canvas::Tool tool)
 {
     switch (tool)
     {
+    case Canvas::Tool::MEASURE:
+        ui->current_tool->setText("Measure");
+        break;
     case Canvas::Tool::CIRCLE:
         ui->current_tool->setText("Circle");
         break;
