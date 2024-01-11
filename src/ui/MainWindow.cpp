@@ -44,7 +44,6 @@ void MainWindow::init()
 
     GlobalSetting::get_instance()->load_ui(ui);
 
-    _painter.resize(800, 600);
     ui->horizontalLayout->addWidget(&_painter);
     _editer.load_graph(new Graph());
     _painter.bind_editer(&_editer);
@@ -333,7 +332,7 @@ void MainWindow::refresh_tool_label(const Canvas::Tool tool)
     switch (tool)
     {
     case Canvas::Tool::MEASURE:
-        ui->current_tool->setText("Measure");
+        ui->current_tool->setText("Length");
         break;
     case Canvas::Tool::CIRCLE:
         ui->current_tool->setText("Circle");

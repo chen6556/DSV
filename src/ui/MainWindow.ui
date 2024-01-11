@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>960</width>
-    <height>600</height>
+    <width>1008</width>
+    <height>630</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -149,7 +149,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
              <x>0</x>
              <y>0</y>
              <width>120</width>
-             <height>539</height>
+             <height>569</height>
             </rect>
            </property>
            <property name="maximumSize">
@@ -230,7 +230,14 @@ QPushButton:pressed
 }</string>
               </property>
               <property name="text">
-               <string>Measure</string>
+               <string>Length</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="Line" name="line">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
@@ -410,6 +417,13 @@ QPushButton:pressed
              </widget>
             </item>
             <item>
+             <widget class="Line" name="line_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QPushButton" name="connect_btn">
               <property name="font">
                <font>
@@ -514,6 +528,13 @@ QPushButton:pressed
               </property>
               <property name="text">
                <string>Split</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="Line" name="line_3">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
@@ -806,10 +827,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>0</x>
+             <x>-8</x>
              <y>0</y>
-             <width>120</width>
-             <height>539</height>
+             <width>106</width>
+             <height>372</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1262,7 +1283,7 @@ QPushButton:pressed
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>960</width>
+     <width>1008</width>
      <height>22</height>
     </rect>
    </property>
