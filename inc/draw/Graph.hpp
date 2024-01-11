@@ -16,7 +16,7 @@ public:
 
     Graph(const Graph &graph);
 
-    Graph *clone() const;
+    Graph *clone() const override;
 
     void transfer(Graph &graph);
 

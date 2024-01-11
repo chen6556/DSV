@@ -709,29 +709,9 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
                 _bool_flags[4] = true; // is obj moveable
                 _bool_flags[5] = true; // is obj selected
-                bool catched_point = false;
                 if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool())
                 {
-                    const double catch_distance = GlobalSetting::get_instance()->setting()["catch_distance"].toDouble();
-                    double min_distance = DBL_MAX, temp;
-                    Geo::Coord coord;
-                    for (const Geo::Coord &point : _catched_points)
-                    {
-                        temp = Geo::distance(point.x, point.y, real_x1, real_y1);
-                        if (temp < catch_distance / _ratio && temp < min_distance)
-                        {
-                            min_distance = temp;
-                            coord = point;
-                        }
-                    }
-                    if (min_distance < DBL_MAX)
-                    {
-                        coord = real_coord_to_view_coord(coord.x, coord.y);
-                        _mouse_pos_1.setX(coord.x);
-                        _mouse_pos_1.setY(coord.y);
-                        QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
-                        catched_point = true;
-                    }
+                    catch_cursor(real_x1, real_y1, GlobalSetting::get_instance()->setting()["catch_distance"].toDouble());
                 }
                 if (_input_line.isVisible() && _last_clicked_obj != _clicked_obj)
                 {
@@ -1176,25 +1156,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
 
     if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool() && _clicked_obj == nullptr)
     {
-        const double catch_distance = GlobalSetting::get_instance()->setting()["catch_distance"].toDouble();
-        double min_distance = DBL_MAX, temp;
-        Geo::Coord coord;
-        for (const Geo::Coord &point : _catched_points)
-        {
-            temp = Geo::distance(point.x, point.y, real_x1, real_y1);
-            if (temp < catch_distance / _ratio && temp < min_distance)
-            {
-                coord = point;
-                min_distance = temp;
-            }
-        }
-        if (min_distance < DBL_MAX)
-        {
-            coord = real_coord_to_view_coord(coord.x, coord.y);
-            _mouse_pos_1.setX(coord.x);
-            _mouse_pos_1.setY(coord.y);
-            QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
-        }
+        catch_cursor(real_x1, real_y1, GlobalSetting::get_instance()->setting()["catch_distance"].toDouble());
     }
 }
 
@@ -1456,7 +1418,7 @@ const bool Canvas::is_typing() const
     return _input_line.isVisible();
 }
 
-const bool Canvas::is_catching_cursor() const
+const bool Canvas::is_measureing() const
 {
     return _bool_flags[3];
 }
@@ -1752,6 +1714,33 @@ Geo::Coord Canvas::canvas_coord_to_real_coord(const double x, const double y) co
     const double t = (y - _canvas_ctm[7] - _canvas_ctm[1] / _canvas_ctm[0] * (x - _canvas_ctm[6])) /
         (_canvas_ctm[4] - _canvas_ctm[1] / _canvas_ctm[0] * _canvas_ctm[3]);
     return {(x - _canvas_ctm[6] - _canvas_ctm[3] * t) / _canvas_ctm[0], t};
+}
+
+bool Canvas::catch_cursor(const double x, const double y, const double distance)
+{
+    double min_distance = DBL_MAX, temp;
+    Geo::Coord coord;
+    for (const Geo::Coord &point : _catched_points)
+    {
+        temp = Geo::distance(point.x, point.y, x, y);
+        if (temp < distance / _ratio && temp < min_distance)
+        {
+            min_distance = temp;
+            coord = point;
+        }
+    }
+    if (min_distance < DBL_MAX)
+    {
+        coord = real_coord_to_view_coord(coord.x, coord.y);
+        _mouse_pos_1.setX(coord.x);
+        _mouse_pos_1.setY(coord.y);
+        QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 

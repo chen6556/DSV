@@ -141,7 +141,7 @@ public:
 
     void hide();
 
-    ContainerGroup *clone() const;
+    ContainerGroup *clone() const override;
 
     void transfer(ContainerGroup &group);
 
@@ -235,7 +235,7 @@ public:
 
     Geo::Geometry *pop_back();
 
-    const bool empty() const;
+    const bool empty() const override;
 
     Geo::Geometry *front();
 
@@ -264,7 +264,7 @@ public:
 
     void append(Geo::Geometry *geo);
 
-    Combination *clone() const;
+    Combination *clone() const override;
 
     void transfer(Combination &combination);
 

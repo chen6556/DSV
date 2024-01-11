@@ -42,8 +42,12 @@ private:
     double _ratio = 1; // 缩放系数
     size_t _bezier_order = 3; // 贝塞尔曲线阶数
 
-    // 可移动视图, 可绘图, 正在绘图, 光标追踪, 可移动单个object, 选中一个obj, 正在移动obj, 显示坐标原点
+    // 可移动视图, 可绘图, 正在绘图, 测量, 可移动单个object, 选中一个obj, 正在移动obj, 显示坐标原点
     bool _bool_flags[8] = {false, false, false, false, false, false, false, true};
+
+    // First point and second point
+    bool _measure_flags[2] = {false, false};
+    double _measure_coords[4] = {0};
 
     // current_tool, last_tool
     Tool _tool_flags[2] = {Tool::NOTOOL, Tool::NOTOOL};
@@ -110,7 +114,7 @@ public:
 
     const bool is_typing() const;
 
-    const bool is_catching_cursor() const;
+    const bool is_measureing() const;
 
     const bool is_obj_moveable() const;
 
@@ -167,6 +171,8 @@ public:
     Geo::Coord canvas_coord_to_real_coord(const Geo::Coord &input) const;
 
     Geo::Coord canvas_coord_to_real_coord(const double x, const double y) const;
+
+    bool catch_cursor(const double x, const double y, const double distance);
 
 
 
