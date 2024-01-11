@@ -82,7 +82,7 @@ void File::read(const QString &path, Graph *graph)
     }
 }
 
-void File::write_json(const QString &path, Graph *graph)
+void File::write_json(const QString &path, const Graph *graph)
 {
     QJsonObject obj;
     Container *container = nullptr;
@@ -259,7 +259,7 @@ void File::write_json(const QString &path, Graph *graph)
     file.close();
 }
 
-void File::write_plt(const std::string &path, Graph *graph)
+void File::write_plt(const std::string &path, const Graph *graph)
 {
     Text *text = nullptr;
     Container *container = nullptr;
@@ -432,12 +432,8 @@ void File::write_plt(const std::string &path, Graph *graph)
     output.close();
 }
 
-void File::write(const QString &path, Graph *graph, const FileType type)
+void File::write(const QString &path, const Graph *graph, const FileType type)
 {
-    const double k = graph->ratio();
-    const Geo::Point point = graph->bounding_rect()[3];
-    graph->translate(10-point.coord().x, 10-point.coord().y);
-    graph->scale(10, 10, 1.0 / k);
     switch (type)
     {
     case FileType::JSON:
@@ -449,6 +445,4 @@ void File::write(const QString &path, Graph *graph, const FileType type)
     default:
         break;
     }
-    graph->scale(10, 10, k);
-    graph->translate(point.coord().x - 10,  point.coord().y - 10);
 }

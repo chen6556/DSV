@@ -7,7 +7,6 @@ class Graph : public Geo::Geometry
 {
 private:
     std::list<ContainerGroup> _container_groups;
-    double _ratio = 1;
 
 public:
     bool modified = false;
@@ -56,8 +55,6 @@ public:
     void scale(const double x, const double y, const double k) override;
 
     void rescale(const double x, const double y);
-
-    double ratio() const;
 
     Geo::AABBRect bounding_rect() const override;
 
