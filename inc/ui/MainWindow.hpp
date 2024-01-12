@@ -60,6 +60,8 @@ private slots:
 
     void refresh_tool_label(const Canvas::Tool tool);
 
+    void refresh_cmd(const CMDWidget::CMD cmd);
+
     void load_settings();
 
     void save_settings();

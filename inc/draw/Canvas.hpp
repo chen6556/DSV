@@ -137,7 +137,7 @@ public:
 
     Geo::AABBRect bounding_rect() const;
 
-    Geo::Coord mouse_position() const;
+    Geo::Coord mouse_position(const bool to_real_coord = true) const;
 
     const bool empty() const;
 
@@ -152,6 +152,8 @@ public:
     void cut();
 
     void paste();
+
+    void paste(const double x, const double y);
 
 
     bool is_visible(const Geo::Point &point) const;

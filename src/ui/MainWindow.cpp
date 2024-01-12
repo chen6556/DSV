@@ -35,6 +35,7 @@ MainWindow::~MainWindow()
     delete _layers_cbx;
     delete _layers_btn;
     delete _layers_manager;
+    delete _cmd_widget;
 }
 
 void MainWindow::init()
@@ -48,8 +49,9 @@ void MainWindow::init()
     _editer.load_graph(new Graph());
     _painter.bind_editer(&_editer);
 
-    _cmd_widget = new CMDWidget(this);
+    _cmd_widget = new CMDWidget(&_editer, &_painter, this);
     _cmd_widget->show();
+    QObject::connect(_cmd_widget, &CMDWidget::cmd_changed, this, &MainWindow::refresh_cmd);
 
     _clock.start(5000);
     QObject::connect(&_painter, &Canvas::tool_changed, this, &MainWindow::refresh_tool_label);
@@ -134,7 +136,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             _painter.use_last_tool();
         }
         break;
-    case Qt::Key_D:
     case Qt::Key_Delete:
     case Qt::Key_Backspace:
         if (_editer.remove_selected())
@@ -188,6 +189,12 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         break;
     default:
         break;
+    }
+
+    if (event->modifiers() != Qt::ControlModifier &&
+        0x41 <= event->key() && event->key() <= 0x5A)
+    {
+        _cmd_widget->activate(event->key());
     }
 
     QMainWindow::keyPressEvent(event);
@@ -358,6 +365,27 @@ void MainWindow::refresh_tool_label(const Canvas::Tool tool)
     default:
         ui->current_tool->clear();
         ui->array_tool->clear();
+        break;
+    }
+}
+
+void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
+{
+    switch (cmd)
+    {
+    case CMDWidget::CMD::OPEN_CMD:
+        return open_file();
+    case CMDWidget::CMD::SAVE_CMD:
+        return save_file();
+    case CMDWidget::CMD::EXIT_CMD:
+        this->close();
+        break;
+    case CMDWidget::CMD::MIRROR_CMD:
+        ui->current_tool->setText("Mirror");
+        return _painter.set_operation(Canvas::Operation::MIRROR);
+    case CMDWidget::CMD::ARRAY_CMD:
+        return ui->tool_widget->setCurrentIndex(1);
+    default:
         break;
     }
 }

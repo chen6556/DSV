@@ -1692,9 +1692,17 @@ Geo::AABBRect Canvas::bounding_rect() const
     return Geo::AABBRect(x0, y0, x1, y1);
 }
 
-Geo::Coord Canvas::mouse_position() const
+Geo::Coord Canvas::mouse_position(const bool to_real_coord) const
 {
-    return Geo::Coord(_mouse_pos_1.x(), _mouse_pos_1.y());
+    if (to_real_coord)
+    {
+        return Geo::Coord(_mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6],
+            _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
+    }
+    else
+    {
+        return Geo::Coord(_mouse_pos_1.x(), _mouse_pos_1.y());
+    }
 }
 
 const bool Canvas::empty() const
@@ -1759,6 +1767,16 @@ void Canvas::cut()
 void Canvas::paste()
 {
     if (_editer->paste((_mouse_pos_1.x() - _stored_mouse_pos.x()) / _ratio, (_mouse_pos_1.y() - _stored_mouse_pos.y()) / _ratio))
+    {
+        refresh_vbo();
+        refresh_selected_ibo();
+        update();
+    }
+}
+
+void Canvas::paste(const double x, const double y)
+{
+    if (_editer->paste((x - _stored_mouse_pos.x()) / _ratio, (y - _stored_mouse_pos.y()) / _ratio))
     {
         refresh_vbo();
         refresh_selected_ibo();

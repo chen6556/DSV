@@ -1,12 +1,13 @@
 #include "ui/CMDWidget.hpp"
 #include "./ui_CMDWidget.h"
-
+#include "io/GlobalSetting.hpp"
 #include <QRegularExpressionValidator>
 
 
 
-CMDWidget::CMDWidget(QWidget *parent)
-    : QWidget(parent), _parent(parent), ui(new Ui::CMDWidget)
+CMDWidget::CMDWidget(Editer *editer, Canvas *canvas, QWidget *parent)
+    : QWidget(parent), _parent(parent), ui(new Ui::CMDWidget),
+    _editer(editer), _canvas(canvas)
 {
     ui->setupUi(this);
 
@@ -21,26 +22,44 @@ CMDWidget::~CMDWidget()
 
 void CMDWidget::init()
 {
-    ui->cmd->setValidator(new QRegularExpressionValidator(QRegularExpression("([A-Za-z]+)|([0-9]+(.[0-9]+)?)$")));
+    ui->cmd->setValidator(new QRegularExpressionValidator(QRegularExpression("([A-Za-z]+)|(-?[0-9]+(.[0-9]+)?)$")));
     ui->cmd->installEventFilter(this);
 
-    _cmd_list << "CIRCLE" << "POLYLINE" << "RECTANGLE" << "BEZIER" << "TEXT"
-        << "CONNECT" << "COMBINATE" << "SPLIT"
-        << "ROTATE" << "FLIPX" << "FLIPY"
+    _cmd_list << QString() << "OPEN" << "SAVE" << "EXIT"
+        << "CIRCLE" << "POLYLINE" << "RECTANGLE" << "BEZIER" << "TEXT"
+        << "CONNECT" << "CLOSE" << "COMBINATE" << "SPLIT"
+        << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "ARRAY" << "LINEARRAY" << "RINGARRAY"
         << "DELETE" << "COPY" << "CUT" << "PASTE" << "UNDO" << "ALL";
 
-    _cmd_dict = {{"CIRCLE",CMD::CIRCLE_CMD}, {"POLYLINE",CMD::POLYLINE_CMD}, {"RECTANGLE",CMD::RECTANGLE_CMD}, 
+    _cmd_dict = {{"OPEN",CMD::OPEN_CMD}, {"SAVE",CMD::SAVE_CMD}, {"EXIT",CMD::EXIT_CMD},
+        {"CIRCLE",CMD::CIRCLE_CMD}, {"POLYLINE",CMD::POLYLINE_CMD}, {"RECTANGLE",CMD::RECTANGLE_CMD}, 
         {"BEZIER",CMD::BEZIER_CMD}, {"TEXT",CMD::TEXT_CMD}, {"CONNECT",CMD::CONNECT_CMD},
-        {"CONBINATE",CMD::COMBINATE_CMD}, {"SPLIT",CMD::SPLIT_CMD}, {"ROTATE",CMD::ROTATE_CMD},
-        {"FLIPX",CMD::FLIPX_CMD}, {"FLIPY",CMD::FLIPY_CMD}, {"DELETE",CMD::DELETE_CMD},
-        {"COPY",CMD::COPY_CMD}, {"CUT",CMD::CUT_CMD}, {"PASTE",CMD::PASTE_CMD}, {"UNDO",CMD::UNDO_CMD},
-        {"ALL",CMD::SELECTALL_CMD}};
+        {"COMBINATE",CMD::COMBINATE_CMD}, {"CLOSE",CMD::CLOSE_CMD}, {"SPLIT",CMD::SPLIT_CMD},
+        {"ROTATE",CMD::ROTATE_CMD}, {"FLIPX",CMD::FLIPX_CMD}, {"FLIPY",CMD::FLIPY_CMD}, {"MIRROR",CMD::MIRROR_CMD},
+        {"ARRAY",CMD::ARRAY_CMD}, {"LINEARRAY",CMD::LINEARRAY_CMD}, {"RINGARRAY",CMD::RINGARRAY_CMD},
+        {"DELETE",CMD::DELETE_CMD}, {"COPY",CMD::COPY_CMD}, {"CUT",CMD::CUT_CMD}, {"PASTE",CMD::PASTE_CMD},
+        {"UNDO",CMD::UNDO_CMD}, {"ALL",CMD::SELECTALL_CMD}};
 
     _completer = new QCompleter(_cmd_list, this);
     _completer->setCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
     _completer->setFilterMode(Qt::MatchFlag::MatchContains);
     _completer->setCompletionMode(QCompleter::CompletionMode::InlineCompletion);
     ui->cmd->setCompleter(_completer);
+
+    QObject::connect(_canvas, &Canvas::tool_changed, this, &CMDWidget::refresh_tool);
+}
+
+
+void CMDWidget::refresh_tool(const Canvas::Tool tool)
+{
+    switch (tool)
+    {
+    case Canvas::Tool::NOTOOL:
+        clear();
+        break;
+    default:
+        break;
+    }
 }
 
 
@@ -78,11 +97,7 @@ bool CMDWidget::eventFilter(QObject *target, QEvent *event)
     if (event->type() == QEvent::Type::KeyPress &&
         dynamic_cast<QKeyEvent *>(event)->key() == Qt::Key_Space)
     {
-        if (ui->cmd->text().isEmpty())
-        {
-            _current_cmd = _last_cmd;
-        }
-        else
+        if (!ui->cmd->text().isEmpty())
         {
             bool is_num = false;
             double value = ui->cmd->text().toDouble(&is_num);
@@ -93,8 +108,10 @@ bool CMDWidget::eventFilter(QObject *target, QEvent *event)
             else
             {
                 ui->cmd->setText(_completer->currentCompletion());
+                get_cmd();
             }
         }
+        work();
     }
 
     return QWidget::eventFilter(target, event);
@@ -104,6 +121,11 @@ bool CMDWidget::eventFilter(QObject *target, QEvent *event)
 void CMDWidget::clear()
 {
     ui->cmd->clear();
+    ui->cmd_label->clear();
+    ui->parameter_label->clear();
+    _current_cmd = CMD::ERROR_CMD;
+    _completer->setCurrentRow(0);
+    _parameters.clear();
 }
 
 CMDWidget::CMD CMDWidget::cmd() const
@@ -134,58 +156,138 @@ const std::vector<double> &CMDWidget::parameters() const
     return _parameters;
 }
 
+void CMDWidget::activate(const char key)
+{
+    ui->cmd->setText(QString(key));
+    ui->cmd->setFocus();
+}
+
 
 bool CMDWidget::work()
 {
-    if (_current_cmd == CMD::ERROR_CMD)
+    ui->cmd->clear();
+    _completer->setCurrentRow(0);
+    switch (_current_cmd)
     {
-        get_cmd();
-    }
-    else
-    {
-        switch (_current_cmd)
+    case CMD::OPEN_CMD:
+    case CMD::SAVE_CMD:
+    case CMD::EXIT_CMD:
+        emit cmd_changed(_current_cmd);
+        break;
+
+    case CMD::POLYLINE_CMD:
+        ui->cmd_label->setText("Polyline");
+        break;
+    case CMD::RECTANGLE_CMD:
+        ui->cmd_label->setText("Rectangle");
+        break;
+    case CMD::CIRCLE_CMD:
+        ui->cmd_label->setText("Circle");
+        break;
+    case CMD::BEZIER_CMD:
+        ui->cmd_label->setText("Curve");
+        break;
+    case CMD::TEXT_CMD:
+        ui->cmd_label->setText("Text");
+        break;
+
+    case CMD::CONNECT_CMD:
+        if (_editer->connect(GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()))
         {
-        case CMD::POLYLINE_CMD:
-            break;
-        case CMD::RECTANGLE_CMD:
-            break;
-        case CMD::CIRCLE_CMD:
-            break;
-        case CMD::BEZIER_CMD:
-            break;
-        case CMD::TEXT_CMD:
-            break;
-
-        case CMD::CONNECT_CMD:
-            break;
-        case CMD::COMBINATE_CMD:
-            break;
-        case CMD::SPLIT_CMD:
-            break;
-        case CMD::ROTATE_CMD:
-            break;
-        case CMD::FLIPX_CMD:
-            break;
-        case CMD::FLIPY_CMD:
-            break;
-
-        case CMD::SELECTALL_CMD:
-            break;
-        case CMD::DELETE_CMD:
-            break;
-        case CMD::COPY_CMD:
-            break;
-        case CMD::CUT_CMD:
-            break;
-        case CMD::PASTE_CMD:
-            break;
-        case CMD::UNDO_CMD:
-            break;
-
-        default:
-            break;
+            _canvas->refresh_vbo();
+            _canvas->refresh_selected_ibo();
+            _canvas->update();
         }
+        break;
+    case CMD::CLOSE_CMD:
+        if (_editer->close_polyline())
+        {
+            _canvas->refresh_vbo();
+            _canvas->refresh_selected_ibo();
+            _canvas->update();
+        }
+        break;
+    case CMD::COMBINATE_CMD:
+        if (_editer->combinate())
+        {
+            _canvas->refresh_vbo();
+            _canvas->refresh_selected_ibo();
+            _canvas->update();
+        }
+        break;
+    case CMD::SPLIT_CMD:
+        _editer->split();
+        break;
+    case CMD::ROTATE_CMD:
+        ui->cmd_label->setText("Rotate");
+        break;
+    case CMD::FLIPX_CMD:
+        {
+            const bool unitary = _editer->selected_count() == 0;
+            _editer->flip(true, unitary, GlobalSetting::get_instance()->ui()->to_all_layers->isChecked());
+            _canvas->refresh_vbo(unitary);
+            _canvas->update();
+        }
+        break;
+    case CMD::FLIPY_CMD:
+        {
+            const bool unitary = _editer->selected_count() == 0;
+            _editer->flip(false, unitary, GlobalSetting::get_instance()->ui()->to_all_layers->isChecked());
+            _canvas->refresh_vbo(unitary);
+            _canvas->update();
+        }
+        break;
+    case CMD::MIRROR_CMD:
+    case CMD::ARRAY_CMD:
+        emit cmd_changed(_current_cmd);
+        break;
+    case CMD::LINEARRAY_CMD:
+        break;
+    case CMD::RINGARRAY_CMD:
+        break;
+
+    case CMD::SELECTALL_CMD:
+        _editer->reset_selected_mark(true);
+        _canvas->refresh_selected_ibo();
+        _canvas->update();
+        _current_cmd = CMD::ERROR_CMD;
+        break;
+    case CMD::DELETE_CMD:
+        if (_editer->remove_selected())
+        {
+            _canvas->refresh_vbo();
+            _canvas->update();
+        }
+        _current_cmd = CMD::ERROR_CMD;
+        break;
+    case CMD::COPY_CMD:
+        _canvas->copy();
+        _current_cmd = CMD::ERROR_CMD;
+        break;
+    case CMD::CUT_CMD:
+        _canvas->cut();
+        _canvas->update();
+        _current_cmd = CMD::ERROR_CMD;
+        break;
+    case CMD::PASTE_CMD:
+        ui->cmd_label->setText("Paste");
+        paste();
+        break;
+    case CMD::UNDO_CMD:
+        if (!_canvas->is_painting())
+        {
+            _editer->load_backup();
+            _canvas->refresh_vbo();
+            _canvas->refresh_selected_ibo();
+            _canvas->update();
+        }
+        break;
+
+    default:
+        clear();
+        return false;
     }
+    return true;
 }
 
 bool CMDWidget::get_cmd()
@@ -197,10 +299,52 @@ bool CMDWidget::get_cmd()
     }
     else
     {
-        _last_cmd = _current_cmd;
         _current_cmd = result->second;
         return true;
     }
 }
 
+bool CMDWidget::get_parameter()
+{
+    if (ui->cmd->text().isEmpty())
+    {
+        return false;
+    }
+    else
+    {
+        bool is_num = false;
+        const double value = ui->cmd->text().toDouble();
+        if (is_num)
+        {
+            _parameters.emplace_back(value);
+        }
+        return is_num;
+    }
+}
+
+
+void CMDWidget::paste()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        _parameters.emplace_back(0);
+        break;
+    case 1:
+        _canvas->paste();
+        _canvas->update();
+        clear();
+        break;
+    case 2:
+        ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
+        break;
+    case 3:
+        _canvas->paste(_parameters[1], _parameters[2]);
+        _canvas->update();
+        clear();
+        break;
+    default:
+        break;
+    }
+}
 
