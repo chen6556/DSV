@@ -1,6 +1,8 @@
 #include "ui/CMDWidget.hpp"
 #include "./ui_CMDWidget.h"
 
+#include <QRegularExpressionValidator>
+
 
 
 CMDWidget::CMDWidget(QWidget *parent)
@@ -18,7 +20,7 @@ CMDWidget::~CMDWidget()
 
 void CMDWidget::init()
 {
-    
+    ui->cmd->setValidator(new QRegularExpressionValidator(QRegularExpression("([A-Za-z]+)|([0-9]+(.[0-9]+)?)$")));
 }
 
 

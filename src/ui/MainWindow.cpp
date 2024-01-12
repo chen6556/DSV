@@ -84,6 +84,7 @@ void MainWindow::init()
 
     _layers_btn = new QToolButton(this);
     _layers_btn->setText("Layers");
+    _layers_btn->setFocusPolicy(Qt::FocusPolicy::NoFocus);
     _layers_btn->setStyleSheet("QToolButton{color:rgb(230, 230, 230);background-color:rgb(70, 70, 71);}"
         "QToolButton:hover{background-color:rgb(0, 85, 127);}"
         "QToolButton:pressed{background-color:rgb(0, 85, 127);}");
@@ -91,6 +92,7 @@ void MainWindow::init()
     QObject::connect(_layers_btn, &QToolButton::clicked, this, &MainWindow::show_layers_manager);
 
     _layers_cbx = new QComboBox(this);
+    _layers_cbx->setFocusPolicy(Qt::FocusPolicy::NoFocus);
     _layers_cbx->view()->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->statusBar->addPermanentWidget(_layers_cbx);
     _layers_cbx->setModel(_layers_manager->model());
