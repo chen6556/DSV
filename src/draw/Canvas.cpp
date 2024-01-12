@@ -1491,6 +1491,7 @@ void Canvas::use_tool(const Tool tool)
     _editer->point_cache().clear();
     _circle_cache.clear();
     _AABBRect_cache.clear();
+    _cache_count = 0;
 
     _measure_flags[0] = _measure_flags[1] = false;
     _info_labels[1]->clear();

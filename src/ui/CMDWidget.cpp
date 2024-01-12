@@ -309,6 +309,8 @@ bool CMDWidget::get_cmd()
     }
     else
     {
+        _canvas->set_operation(Canvas::Operation::NOOPERATION);
+        _canvas->use_tool(Canvas::Tool::NOTOOL);
         _current_cmd = result->second;
         return true;
     }
