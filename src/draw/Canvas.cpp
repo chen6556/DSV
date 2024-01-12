@@ -1737,11 +1737,15 @@ void Canvas::use_last_tool()
         return;
     }
     _tool_flags[0] = _tool_flags[1];
-    if (_tool_flags[0] != Tool::NOTOOL)
+    _measure_flags[0] = _measure_flags[1] = false;
+    _info_labels[1]->clear();
+    _bool_flags[1] = _tool_flags[0] != Tool::MEASURE; // paintable
+    if (_tool_flags[0] == Tool::NOTOOL)
     {
-        _measure_flags[0] = _measure_flags[1] = false;
-        _info_labels[1]->clear();
-        _bool_flags[1] = _tool_flags[0] != Tool::MEASURE; // paintable
+        cancel_painting();
+    }
+    else
+    {
         emit tool_changed(_tool_flags[0]);
     }
 }
