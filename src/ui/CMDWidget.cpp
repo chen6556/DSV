@@ -26,12 +26,13 @@ void CMDWidget::init()
     ui->cmd->installEventFilter(this);
 
     _cmd_list << QString() << "OPEN" << "SAVE" << "EXIT"
-        << "CIRCLE" << "POLYLINE" << "RECTANGLE" << "BEZIER" << "TEXT"
+        << "LENGTH" << "CIRCLE" << "POLYLINE" << "RECTANGLE" << "BEZIER" << "TEXT"
         << "CONNECT" << "CLOSE" << "COMBINATE" << "SPLIT"
         << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "ARRAY" << "LINEARRAY" << "RINGARRAY"
         << "DELETE" << "COPY" << "CUT" << "PASTE" << "UNDO" << "ALL";
 
     _cmd_dict = {{"OPEN",CMD::OPEN_CMD}, {"SAVE",CMD::SAVE_CMD}, {"EXIT",CMD::EXIT_CMD},
+        {"LENGTH",CMD::LENGTH_CMD},
         {"CIRCLE",CMD::CIRCLE_CMD}, {"POLYLINE",CMD::POLYLINE_CMD}, {"RECTANGLE",CMD::RECTANGLE_CMD}, 
         {"BEZIER",CMD::BEZIER_CMD}, {"TEXT",CMD::TEXT_CMD}, {"CONNECT",CMD::CONNECT_CMD},
         {"COMBINATE",CMD::COMBINATE_CMD}, {"CLOSE",CMD::CLOSE_CMD}, {"SPLIT",CMD::SPLIT_CMD},
@@ -143,7 +144,7 @@ CMDWidget::CMD CMDWidget::cmd() const
 
 bool CMDWidget::empty() const
 {
-    return ui->cmd->text().isEmpty();
+    return ui->cmd->text().isEmpty() && _current_cmd == CMD::ERROR_CMD;
 }
 
 std::vector<double> &CMDWidget::parameters()
@@ -173,8 +174,12 @@ bool CMDWidget::work()
     case CMD::SAVE_CMD:
     case CMD::EXIT_CMD:
         emit cmd_changed(_current_cmd);
+        _current_cmd = CMD::ERROR_CMD;
         break;
 
+    case CMD::LENGTH_CMD:
+        _canvas->use_tool(Canvas::Tool::MEASURE);
+        break;
     case CMD::POLYLINE_CMD:
         ui->cmd_label->setText("Polyline");
         break;
