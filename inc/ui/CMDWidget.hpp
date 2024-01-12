@@ -92,4 +92,6 @@ public:
 
     void circle();
 
+    void rotate();
+
 };

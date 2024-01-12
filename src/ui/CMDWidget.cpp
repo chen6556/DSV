@@ -230,6 +230,7 @@ bool CMDWidget::work()
         break;
     case CMD::ROTATE_CMD:
         ui->cmd_label->setText("Rotate");
+        rotate();
         break;
     case CMD::FLIPX_CMD:
         {
@@ -487,6 +488,30 @@ void CMDWidget::circle()
         break;
     case 4:
         _canvas->circle_cmd(_parameters[1], _parameters[2], _parameters[3]);
+        break;
+    default:
+        break;
+    }
+}
+
+void CMDWidget::rotate()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        _parameters.emplace_back(0);
+        break;
+    case 1:
+        clear();
+        break;
+    case 2:
+        {
+            const bool unitary = _editer->selected_count() == 0;
+            _editer->rotate(_parameters[1], unitary, GlobalSetting::get_instance()->ui()->to_all_layers->isChecked());
+            _canvas->refresh_vbo(unitary);
+            _parameters.pop_back();
+            _canvas->update();
+        }
         break;
     default:
         break;
