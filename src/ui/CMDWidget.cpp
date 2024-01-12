@@ -194,7 +194,7 @@ bool CMDWidget::work()
         break;
     case CMD::BEZIER_CMD:
         ui->cmd_label->setText("Curve");
-        polyline();
+        curve();
         break;
     case CMD::TEXT_CMD:
         ui->cmd_label->setText("Text");
@@ -365,6 +365,40 @@ void CMDWidget::polyline()
     case 0:
         _canvas->use_tool(Canvas::Tool::POLYLINE);
         _parameters.emplace_back(0);
+        break;
+    case 1:
+        _parameters.clear();
+        _editer->point_cache().back() = _editer->point_cache()[_editer->point_cache().size() - 2];
+        _editer->point_cache().emplace_back(_editer->point_cache().back());
+        _canvas->polyline_cmd();
+        break;
+    case 2:
+        ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
+        break;
+    case 3:
+        ui->parameter_label->clear();
+        _canvas->polyline_cmd(_parameters[1], _parameters[2]);
+        _parameters.pop_back();
+        _parameters.pop_back();
+        break;
+    default:
+        break;
+    }
+}
+
+void CMDWidget::curve()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        _canvas->use_tool(Canvas::Tool::CURVE);
+        _parameters.emplace_back(0);
+        break;
+    case 1:
+        _parameters.clear();
+        _editer->point_cache().back() = _editer->point_cache()[_editer->point_cache().size() - 2];
+        _editer->point_cache().emplace_back(_editer->point_cache().back());
+        _canvas->polyline_cmd();
         break;
     case 2:
         ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");

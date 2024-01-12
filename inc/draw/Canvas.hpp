@@ -157,6 +157,8 @@ public:
 
     void polyline_cmd(const double x, const double y);
 
+    void polyline_cmd();
+
     void circle_cmd(const double x, const double y);
 
     void circle_cmd(const double x, const double y, const double r);

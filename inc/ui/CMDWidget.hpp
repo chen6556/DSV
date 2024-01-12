@@ -84,6 +84,8 @@ public:
 
     void polyline();
 
+    void curve();
+
     void text();
 
     void rectangle();

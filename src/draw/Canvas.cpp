@@ -1356,20 +1356,16 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
             {
             case Tool::CIRCLE:
                 _circle_cache.clear();
-                update();
                 break;
             case Tool::POLYLINE:
                 _editer->append_points();
-                update();
                 _cache_count = 0;
                 break;
             case Tool::RECT:
                 _AABBRect_cache.clear();
-                update();
                 break;
             case Tool::CURVE:
                 _editer->append_bezier(_bezier_order);
-                update();
                 _cache_count = 0;
                 break;
             default:
@@ -1379,6 +1375,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
             _tool_flags[0] = Tool::NOTOOL;
             emit tool_changed(_tool_flags[0]);
             refresh_vbo();
+            update();
         }
         else
         {
@@ -1792,11 +1789,14 @@ void Canvas::polyline_cmd(const double x, const double y)
 {
     if (is_painting())
     {
+        _editer->point_cache().back().coord().x = x;
+        _editer->point_cache().back().coord().y = y;
         _cache[_cache_count - 3] = x;
         _cache[_cache_count - 2] = y;
-        _editer->point_cache().emplace_back(x, y);
-        _cache[_cache_count++] = x;
-        _cache[_cache_count++] = y;
+        _editer->point_cache().emplace_back(_mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6],
+            _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
+        _cache[_cache_count++] = _editer->point_cache().back().coord().x;
+        _cache[_cache_count++] = _editer->point_cache().back().coord().y;
         _cache[_cache_count++] = 0;
         makeCurrent();
         glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
@@ -1811,7 +1811,7 @@ void Canvas::polyline_cmd(const double x, const double y)
         }
         else
         {
-            glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - 3) * sizeof(double), 3 * sizeof(double), &_cache[_cache_count - 3]);
+            glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - 6) * sizeof(double), 6 * sizeof(double), &_cache[_cache_count - 6]);
         }
         doneCurrent();
     }
@@ -1832,6 +1832,26 @@ void Canvas::polyline_cmd(const double x, const double y)
         glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * sizeof(double), _cache);
         doneCurrent();
     }
+    update();
+}
+
+void Canvas::polyline_cmd()
+{
+    _bool_flags[1] = false; // paintable
+    _bool_flags[2] = false; // painting
+    if (_tool_flags[0] == Tool::POLYLINE)
+    {
+        _editer->append_points();
+    }
+    else
+    {
+        _editer->append_bezier(_bezier_order);
+    }
+    _cache_count = 0;
+    _tool_flags[1] = _tool_flags[0];
+    _tool_flags[0] = Tool::NOTOOL;
+    emit tool_changed(_tool_flags[0]);
+    refresh_vbo();
     update();
 }
 
