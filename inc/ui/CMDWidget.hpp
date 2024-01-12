@@ -82,4 +82,12 @@ public:
 
     void paste();
 
+    void polyline();
+
+    void text();
+
+    void rectangle();
+
+    void circle();
+
 };

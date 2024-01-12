@@ -1788,6 +1788,104 @@ void Canvas::paste(const double x, const double y)
     }
 }
 
+void Canvas::polyline_cmd(const double x, const double y)
+{
+    if (is_painting())
+    {
+        _cache[_cache_count - 3] = x;
+        _cache[_cache_count - 2] = y;
+        _editer->point_cache().emplace_back(x, y);
+        _cache[_cache_count++] = x;
+        _cache[_cache_count++] = y;
+        _cache[_cache_count++] = 0;
+        makeCurrent();
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
+        if (_cache_count == _cache_len)
+        {
+            _cache_len *= 2;
+            double *temp = new double[_cache_len];
+            std::memmove(temp, _cache, _cache_count * sizeof(double));
+            delete []_cache;
+            _cache = temp;
+            glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_DYNAMIC_DRAW);
+        }
+        else
+        {
+            glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - 3) * sizeof(double), 3 * sizeof(double), &_cache[_cache_count - 3]);
+        }
+        doneCurrent();
+    }
+    else
+    {
+        _editer->point_cache().emplace_back(x, y);
+        _editer->point_cache().emplace_back(_mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6],
+            _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
+        _bool_flags[2] = true; // painting
+        _cache_count = 6;
+        _cache[0] = x;
+        _cache[1] = y;
+        _cache[3] = _editer->point_cache().back().coord().x;
+        _cache[4] = _editer->point_cache().back().coord().y;
+        _cache[2] = _cache[5] = 0;
+        makeCurrent();
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * sizeof(double), _cache);
+        doneCurrent();
+    }
+    update();
+}
+
+void Canvas::circle_cmd(const double x, const double y)
+{
+    const double r = Geo::distance(x, y,
+        _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6],
+        _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
+    if (r > 0)
+    {
+        _circle_cache = Geo::Circle(x, y, r);
+    }
+    else
+    {
+        _circle_cache = Geo::Circle(x, y, 10);
+    }
+    _bool_flags[2] = !_bool_flags[2]; // painting
+    update();
+}
+
+void Canvas::circle_cmd(const double x, const double y, const double r)
+{
+    if (r == 0)
+    {
+        _editer->append(Geo::Circle(x, y, 10));
+    }
+    else if (r < 0)
+    {
+        _editer->append(Geo::Circle(x, y, -r));
+    }
+    else
+    {
+        _editer->append(Geo::Circle(x, y, r));
+    }
+    _circle_cache.clear();
+    _tool_flags[1] = _tool_flags[0];
+    _tool_flags[0] = Tool::NOTOOL;
+    _bool_flags[1] = false; // moveable
+    emit tool_changed(_tool_flags[0]);
+    refresh_vbo();
+    _bool_flags[2] = !_bool_flags[2]; // painting
+    update();
+}
+
+void Canvas::text_cmd(const double x, const double y)
+{
+    _editer->append_text(x, y);
+    _tool_flags[0] = Tool::NOTOOL;
+    _bool_flags[1] = _bool_flags[2] = false;
+    emit tool_changed(_tool_flags[0]);
+    refresh_vbo();
+    update();
+}
+
 
 
 bool Canvas::is_visible(const Geo::Point &point) const

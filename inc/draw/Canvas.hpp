@@ -155,6 +155,14 @@ public:
 
     void paste(const double x, const double y);
 
+    void polyline_cmd(const double x, const double y);
+
+    void circle_cmd(const double x, const double y);
+
+    void circle_cmd(const double x, const double y, const double r);
+
+    void text_cmd(const double x, const double y);
+
 
     bool is_visible(const Geo::Point &point) const;
 

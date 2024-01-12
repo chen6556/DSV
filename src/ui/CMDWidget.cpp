@@ -182,18 +182,23 @@ bool CMDWidget::work()
         break;
     case CMD::POLYLINE_CMD:
         ui->cmd_label->setText("Polyline");
+        polyline();
         break;
     case CMD::RECTANGLE_CMD:
         ui->cmd_label->setText("Rectangle");
+        rectangle();
         break;
     case CMD::CIRCLE_CMD:
         ui->cmd_label->setText("Circle");
+        circle();
         break;
     case CMD::BEZIER_CMD:
         ui->cmd_label->setText("Curve");
+        polyline();
         break;
     case CMD::TEXT_CMD:
         ui->cmd_label->setText("Text");
+        text();
         break;
 
     case CMD::CONNECT_CMD:
@@ -347,6 +352,105 @@ void CMDWidget::paste()
         _canvas->paste(_parameters[1], _parameters[2]);
         _canvas->update();
         clear();
+        break;
+    default:
+        break;
+    }
+}
+
+void CMDWidget::polyline()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        _canvas->use_tool(Canvas::Tool::POLYLINE);
+        _parameters.emplace_back(0);
+        break;
+    case 2:
+        ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
+        break;
+    case 3:
+        ui->parameter_label->clear();
+        _canvas->polyline_cmd(_parameters[1], _parameters[2]);
+        _parameters.pop_back();
+        _parameters.pop_back();
+        break;
+    default:
+        break;
+    }
+}
+
+void CMDWidget::text()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        _canvas->use_tool(Canvas::Tool::TEXT);
+        break;
+    case 1:
+        ui->parameter_label->setText("X:" + QString::number(_parameters[0]) + " Y:");
+        break;
+    case 2:
+        _canvas->text_cmd(_parameters[0], _parameters[1]);
+        clear();
+        break;
+    default:
+        break;
+    }
+}
+
+void CMDWidget::rectangle()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        _canvas->use_tool(Canvas::Tool::RECT);
+        _parameters.emplace_back(0);
+        break;
+    case 1:
+        _canvas->paste();
+        _canvas->update();
+        clear();
+        break;
+    case 2:
+        ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
+        break;
+    case 3:
+        _canvas->paste(_parameters[1], _parameters[2]);
+        _canvas->update();
+        clear();
+        break;
+    default:
+        break;
+    }
+}
+
+void CMDWidget::circle()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        _canvas->use_tool(Canvas::Tool::CIRCLE);
+        _parameters.emplace_back(0);
+        break;
+    case 1:
+        {
+            const Geo::Coord coord(_canvas->mouse_position());
+            _parameters.emplace_back(coord.x);
+            _parameters.emplace_back(coord.y);
+            _canvas->circle_cmd(_parameters[1], _parameters[2]);
+        }
+        break;
+    case 2:
+        ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
+        break;
+    case 3:
+        ui->parameter_label->setText("X:" + QString::number(_parameters[1])
+            + " Y:" + QString::number(_parameters[2]));
+        _canvas->circle_cmd(_parameters[1], _parameters[2]);
+        break;
+    case 4:
+        _canvas->circle_cmd(_parameters[1], _parameters[2], _parameters[3]);
         break;
     default:
         break;
