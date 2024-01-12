@@ -126,9 +126,13 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         _editer.reset_selected_mark();
         _painter.refresh_selected_ibo();
         _painter.set_operation(Canvas::Operation::NOOPERATION);
+        _cmd_widget->clear();
         break;
     case Qt::Key_Space:
-        _painter.use_last_tool();
+        if (_cmd_widget->empty())
+        {
+            _painter.use_last_tool();
+        }
         break;
     case Qt::Key_D:
     case Qt::Key_Delete:
@@ -147,9 +151,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             _painter.update();
         }
         break;
-    case Qt::Key_B:
-        _painter.use_tool(Canvas::Tool::CURVE);
-        break;
     case Qt::Key_S:
         if (event->modifiers() == Qt::ControlModifier)
         {
@@ -160,10 +161,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         if (event->modifiers() == Qt::ControlModifier)
         {
             _painter.copy();
-        }
-        else
-        {
-            _painter.use_tool(Canvas::Tool::CIRCLE);
         }
         break;
     case Qt::Key_X:
@@ -180,12 +177,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             _painter.update();
         }
         break;
-    case Qt::Key_L:
-        _painter.use_tool(Canvas::Tool::POLYLINE);
-        break;
-    case Qt::Key_R:
-        _painter.use_tool(Canvas::Tool::RECT);
-        break;
     case Qt::Key_Z:
         if (event->modifiers() == Qt::ControlModifier && !_painter.is_painting())
         {
@@ -198,6 +189,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     default:
         break;
     }
+
     QMainWindow::keyPressEvent(event);
 }
 
