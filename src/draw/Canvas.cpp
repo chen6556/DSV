@@ -1856,6 +1856,52 @@ void Canvas::polyline_cmd()
     update();
 }
 
+void Canvas::rect_cmd(const double x, const double y)
+{
+    if (is_painting())
+    {
+        _editer->append(Geo::AABBRect(_last_point.coord().x, _last_point.coord().y,
+            _last_point.coord().x + x, _last_point.coord().y + y));
+        _AABBRect_cache.clear();
+        _tool_flags[1] = _tool_flags[0];
+        _tool_flags[0] = Tool::NOTOOL;
+        _bool_flags[1] = false; // paintable
+        emit tool_changed(_tool_flags[0]);
+        refresh_vbo();
+    }
+    else
+    {
+        _last_point.coord().x = x;
+        _last_point.coord().y = y;
+        _AABBRect_cache = Geo::AABBRect(x, y,
+            _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6],
+            _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
+    }
+    _bool_flags[2] = !_bool_flags[2]; // painting
+}
+
+void Canvas::rect_cmd()
+{
+    if (is_painting())
+    {
+        _editer->append(_AABBRect_cache);
+        _AABBRect_cache.clear();
+        _tool_flags[1] = _tool_flags[0];
+        _tool_flags[0] = Tool::NOTOOL;
+        _bool_flags[1] = false; // paintable
+        emit tool_changed(_tool_flags[0]);
+        refresh_vbo();
+    }
+    else
+    {
+        _last_point.coord().x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
+        _last_point.coord().y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
+        _AABBRect_cache = Geo::AABBRect(_last_point.coord().x, _last_point.coord().y,
+            _last_point.coord().x + 2, _last_point.coord().y + 2);
+    }
+    _bool_flags[2] = !_bool_flags[2]; // painting
+}
+
 void Canvas::circle_cmd(const double x, const double y)
 {
     const double r = Geo::distance(x, y,

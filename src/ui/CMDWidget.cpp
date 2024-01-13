@@ -445,15 +445,29 @@ void CMDWidget::rectangle()
         _parameters.emplace_back(0);
         break;
     case 1:
-        _canvas->paste();
-        _canvas->update();
-        clear();
+        _canvas->rect_cmd();
+        _parameters.emplace_back(0);
+        _parameters.emplace_back(0);
+        _parameters.emplace_back(0);
         break;
     case 2:
         ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
         break;
     case 3:
-        _canvas->paste(_parameters[1], _parameters[2]);
+        ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:" + QString::number(_parameters[2]));
+        _parameters.emplace_back(0);
+        _canvas->rect_cmd(_parameters[1], _parameters[2]);
+        _canvas->update();
+        break;
+    case 4:
+        _canvas->rect_cmd();
+        clear();
+        break;
+    case 5:
+        ui->parameter_label->setText("W:" + QString::number(_parameters[4]) + " H:");
+        break;
+    case 6:
+        _canvas->rect_cmd(_parameters[4], _parameters[5]);
         _canvas->update();
         clear();
         break;
