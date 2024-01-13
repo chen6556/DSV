@@ -368,9 +368,11 @@ void CMDWidget::polyline()
     case 0:
         _canvas->use_tool(Canvas::Tool::POLYLINE);
         _parameters.emplace_back(0);
+        ui->parameter_label->setText("X: Y:");
         break;
     case 1:
         _parameters.clear();
+        ui->parameter_label->clear();
         _editer->point_cache().back() = _editer->point_cache()[_editer->point_cache().size() - 2];
         _editer->point_cache().emplace_back(_editer->point_cache().back());
         _canvas->polyline_cmd();
@@ -379,7 +381,7 @@ void CMDWidget::polyline()
         ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
         break;
     case 3:
-        ui->parameter_label->clear();
+        ui->parameter_label->setText("X: Y:");
         _canvas->polyline_cmd(_parameters[1], _parameters[2]);
         _parameters.pop_back();
         _parameters.pop_back();
@@ -396,9 +398,11 @@ void CMDWidget::curve()
     case 0:
         _canvas->use_tool(Canvas::Tool::CURVE);
         _parameters.emplace_back(0);
+        ui->parameter_label->setText("X: Y:");
         break;
     case 1:
         _parameters.clear();
+        ui->parameter_label->clear();
         _editer->point_cache().back() = _editer->point_cache()[_editer->point_cache().size() - 2];
         _editer->point_cache().emplace_back(_editer->point_cache().back());
         _canvas->polyline_cmd();
@@ -407,7 +411,7 @@ void CMDWidget::curve()
         ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
         break;
     case 3:
-        ui->parameter_label->clear();
+        ui->parameter_label->setText("X: Y:");
         _canvas->polyline_cmd(_parameters[1], _parameters[2]);
         _parameters.pop_back();
         _parameters.pop_back();
@@ -423,6 +427,7 @@ void CMDWidget::text()
     {
     case 0:
         _canvas->use_tool(Canvas::Tool::TEXT);
+        ui->parameter_label->setText("X: Y:");
         break;
     case 1:
         ui->parameter_label->setText("X:" + QString::number(_parameters[0]) + " Y:");
@@ -443,18 +448,21 @@ void CMDWidget::rectangle()
     case 0:
         _canvas->use_tool(Canvas::Tool::RECT);
         _parameters.emplace_back(0);
+        ui->parameter_label->setText("X: Y:");
         break;
     case 1:
         _canvas->rect_cmd();
         _parameters.emplace_back(0);
         _parameters.emplace_back(0);
         _parameters.emplace_back(0);
+        ui->parameter_label->setText("W: H:");
         break;
     case 2:
         ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
         break;
     case 3:
-        ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:" + QString::number(_parameters[2]));
+        ui->parameter_label->setText("X:" + QString::number(_parameters[1])
+            + " Y:" + QString::number(_parameters[2]) + " W: H:");
         _parameters.emplace_back(0);
         _canvas->rect_cmd(_parameters[1], _parameters[2]);
         _canvas->update();
@@ -483,6 +491,7 @@ void CMDWidget::circle()
     case 0:
         _canvas->use_tool(Canvas::Tool::CIRCLE);
         _parameters.emplace_back(0);
+        ui->parameter_label->setText("X: Y:");
         break;
     case 1:
         {
@@ -490,6 +499,8 @@ void CMDWidget::circle()
             _parameters.emplace_back(coord.x);
             _parameters.emplace_back(coord.y);
             _canvas->circle_cmd(_parameters[1], _parameters[2]);
+            ui->parameter_label->setText("X:" + QString::number(_parameters[1])
+                + " Y:" + QString::number(_parameters[2]) + " R:");
         }
         break;
     case 2:
@@ -497,7 +508,7 @@ void CMDWidget::circle()
         break;
     case 3:
         ui->parameter_label->setText("X:" + QString::number(_parameters[1])
-            + " Y:" + QString::number(_parameters[2]));
+            + " Y:" + QString::number(_parameters[2]) + " R:");
         _canvas->circle_cmd(_parameters[1], _parameters[2]);
         break;
     case 4:
@@ -514,6 +525,7 @@ void CMDWidget::rotate()
     {
     case 0:
         _parameters.emplace_back(0);
+        ui->parameter_label->setText("Degree:");
         break;
     case 1:
         clear();
