@@ -96,7 +96,7 @@ void Canvas::initializeGL()
 
     glUseProgram(_shader_program);
     glUniform3d(_uniforms[2], 1.0, 0.0, 0.0); // vec0
-    glUniform3d(_uniforms[3], 0.0, 1.0, 0.0); // vec1
+    glUniform3d(_uniforms[3], 0.0, -1.0, 0.0); // vec1
 
     glGenVertexArrays(1, &_VAO);
     glGenBuffers(5, _VBO);
@@ -128,9 +128,13 @@ void Canvas::resizeGL(int w, int h)
     glUniform1i(_uniforms[1], h / 2); // h
     glViewport(0, 0, w, h);
 
-    const QRect rect(this->geometry());
-    _visible_area = Geo::AABBRect(0, 0, rect.width(), rect.height());
-    _visible_area.transform(_view_ctm[0], _view_ctm[3], _view_ctm[6], _view_ctm[1], _view_ctm[4], _view_ctm[7]);
+    _canvas_ctm[7] += (h - _canvas_height);
+    glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
+    _view_ctm[7] += (h - _canvas_height) / _ratio;
+    _canvas_width = w, _canvas_height = h;
+
+    _visible_area = Geo::AABBRect(0, 0, w, h);
+    _visible_area.transform(_view_ctm[0], _view_ctm[3], _view_ctm[6], _view_ctm[1], _view_ctm[4], _view_ctm[7]);    
 }
 
 void Canvas::paintGL()
@@ -1437,38 +1441,56 @@ void Canvas::show_overview()
     Graph *graph = _editer->graph();
     if (graph->empty())
     {
+        _ratio = 1.0;
+
+        _canvas_ctm[0] = 1;
+        _canvas_ctm[4] = -1;
+        _canvas_ctm[1] = _canvas_ctm[2] = _canvas_ctm[3] = _canvas_ctm[5] = 0;
+        _canvas_ctm[8] = 1;
+        _canvas_ctm[6] = 0;
+        _canvas_ctm[7] = _canvas_height;
+
+        _view_ctm[0] = 1;
+        _view_ctm[4] = -1;
+        _view_ctm[1] = _view_ctm[2] = _view_ctm[3] = _view_ctm[5] = 0;
+        _view_ctm[8] = 1;
+        _view_ctm[6] = 0;
+        _view_ctm[7] = _canvas_height;
+
+        // 可视区域为显示控件区域的反变换
+        _visible_area = Geo::AABBRect(0, 0, _canvas_width, _canvas_height);
         update();
         return;
     }
     // 获取graph的边界
     Geo::AABBRect bounding_area = graph->bounding_rect();
-    // 整个绘图控件区域作为显示区域
-    QRect view_area = this->geometry();
     // 选择合适的缩放倍率
-    double height_ratio = view_area.height() / bounding_area.height();
-    double width_ratio = view_area.width() / bounding_area.width();
+    double height_ratio = _canvas_height / bounding_area.height();
+    double width_ratio = _canvas_width / bounding_area.width();
     _ratio = std::min(height_ratio, width_ratio);
     // 缩放减少2%，使其与边界留出一些空间
     _ratio = _ratio * 0.98;
 
     // 置于控件中间
-    double x_offset = (view_area.width() - bounding_area.width() * _ratio) / 2 - bounding_area.left() * _ratio;
-    double y_offset = (view_area.height() - bounding_area.height() * _ratio) / 2 - bounding_area.bottom() * _ratio;
+    double x_offset = (_canvas_width - bounding_area.width() * _ratio) / 2 - bounding_area.left() * _ratio;
+    double y_offset = (bounding_area.height() * _ratio - _canvas_height) / 2 + bounding_area.bottom() * _ratio + _canvas_height;
 
-    _canvas_ctm[0] = _canvas_ctm[4] = _ratio;
+    _canvas_ctm[0] = _ratio;
+    _canvas_ctm[4] = -_ratio;
     _canvas_ctm[1] = _canvas_ctm[2] = _canvas_ctm[3] = _canvas_ctm[5] = 0;
     _canvas_ctm[8] = 1;
     _canvas_ctm[6] = x_offset;
     _canvas_ctm[7] = y_offset;
 
-    _view_ctm[0] = _view_ctm[4] = 1 / _ratio;
+    _view_ctm[0] = 1 / _ratio;
+    _view_ctm[4] = -1 / _ratio;
     _view_ctm[1] = _view_ctm[2] = _view_ctm[3] = _view_ctm[5] = 0;
     _view_ctm[8] = 1;
     _view_ctm[6] = -x_offset / _ratio;
-    _view_ctm[7] = -y_offset / _ratio;
+    _view_ctm[7] = y_offset / _ratio;
 
     // 可视区域为显示控件区域的反变换
-    double x0=0, y0=0, x1=view_area.width(), y1=view_area.height();
+    double x0 = 0, y0 = 0, x1 = _canvas_width, y1 = _canvas_height;
     _visible_area = Geo::AABBRect(
         x0 * _view_ctm[0] + y0 * _view_ctm[3] + _view_ctm[6],
         x0 * _view_ctm[1] + y0 * _view_ctm[4] + _view_ctm[7],

@@ -37,9 +37,10 @@ private:
     size_t _cache_len = 513, _cache_count = 0;
     double _refline_points[30];
 
-    double _canvas_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
-    double _view_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
+    double _canvas_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
+    double _view_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
     double _ratio = 1; // 缩放系数
+    int _canvas_width = 0, _canvas_height = 0;
     size_t _bezier_order = 3; // 贝塞尔曲线阶数
 
     // 可移动视图, 可绘图, 正在绘图, 测量, 可移动单个object, 选中一个obj, 正在移动obj, 显示坐标原点
