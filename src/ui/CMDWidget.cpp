@@ -253,8 +253,9 @@ bool CMDWidget::work()
         emit cmd_changed(_current_cmd);
         break;
     case CMD::LINEARRAY_CMD:
-        break;
     case CMD::RINGARRAY_CMD:
+        emit cmd_changed(CMD::ARRAY_CMD);
+        _current_cmd = CMD::ERROR_CMD;
         break;
 
     case CMD::SELECTALL_CMD:
