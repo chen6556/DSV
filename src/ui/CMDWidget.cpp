@@ -163,6 +163,20 @@ void CMDWidget::activate(const char key)
     ui->cmd->setFocus();
 }
 
+void CMDWidget::show()
+{
+    ui->cmd->setDisabled(false);
+    ui->cmd->clear();
+    return QWidget::show();
+}
+
+void CMDWidget::hide()
+{
+    ui->cmd->setDisabled(true);
+    ui->cmd->clear();
+    return QWidget::hide();
+}
+
 
 bool CMDWidget::work()
 {

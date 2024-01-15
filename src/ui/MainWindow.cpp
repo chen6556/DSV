@@ -68,6 +68,7 @@ void MainWindow::init()
     QObject::connect(ui->auto_aligning, &QAction::triggered, this, [this]() {GlobalSetting::get_instance()->setting()["auto_aligning"] = ui->auto_aligning->isChecked();});
     QObject::connect(ui->actionadvanced, &QAction::triggered, this, [this]() { _setting->show(); });
     QObject::connect(ui->show_origin, &QAction::triggered, this, [this]() { ui->show_origin->isChecked() ? _painter.show_origin() : _painter.hide_origin(); });
+    QObject::connect(ui->show_cmd_line, &QAction::triggered, this, [this]() { ui->show_cmd_line->isChecked() ? _cmd_widget->show() : _cmd_widget->hide(); });
 
     QObject::connect(_setting, &Setting::accepted, &_painter, static_cast<void(Canvas::*)(void)>(&Canvas::refresh_text_vbo));
 
@@ -400,7 +401,16 @@ void MainWindow::load_settings()
     ui->auto_layering->setChecked(setting["auto_layering"].toBool());
     ui->auto_aligning->setChecked(setting["auto_aligning"].toBool());
     ui->remember_file_type->setChecked(setting["remember_file_type"].toBool());
+    ui->show_cmd_line->setChecked(setting["show_cmd_line"].toBool());
     ui->show_origin->setChecked(setting["show_origin"].toBool());
+    if (ui->show_cmd_line->isChecked())
+    {
+        _cmd_widget->show();
+    }
+    else
+    {
+        _cmd_widget->hide();
+    }
     if (ui->show_origin->isChecked())
     {
         _painter.show_origin();
@@ -424,6 +434,7 @@ void MainWindow::save_settings()
     setting["auto_layering"] = ui->auto_layering->isChecked();
     setting["auto_aligning"] = ui->auto_aligning->isChecked();
     setting["remember_file_type"] = ui->remember_file_type->isChecked();
+    setting["show_cmd_line"] = ui->show_cmd_line->isChecked();
     setting["show_origin"] = ui->show_origin->isChecked();
     if (ui->remember_file_type->isChecked())
     {

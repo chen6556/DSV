@@ -884,10 +884,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>0</x>
+             <x>-8</x>
              <y>0</y>
-             <width>120</width>
-             <height>569</height>
+             <width>106</width>
+             <height>372</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1412,6 +1412,7 @@ selection-background-color: rgb(0, 85, 127);</string>
     <property name="title">
      <string>setting</string>
     </property>
+    <addaction name="show_cmd_line"/>
     <addaction name="show_origin"/>
     <addaction name="auto_layering"/>
     <addaction name="remember_file_type"/>
@@ -1502,6 +1503,14 @@ color:rgb(230, 230, 230);</string>
    </property>
    <property name="text">
     <string>show origin</string>
+   </property>
+  </action>
+  <action name="show_cmd_line">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>show cmd line</string>
    </property>
   </action>
  </widget>

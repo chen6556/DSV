@@ -72,6 +72,10 @@ public:
 
     void activate(const char key);
 
+    void show();
+
+    void hide();
+
 
     bool work();
 
