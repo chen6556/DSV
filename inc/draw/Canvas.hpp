@@ -53,7 +53,8 @@ private:
     Tool _tool_flags[2] = {Tool::NOTOOL, Tool::NOTOOL};
     Operation _operation = Operation::NOOPERATION;
 
-    QPointF _mouse_pos_0, _mouse_pos_1, _stored_mouse_pos;
+    QPointF _mouse_pos_0, _mouse_pos_1;
+    Geo::Coord _stored_coord;
     Geo::Point _last_point;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
     Geo::Geometry *_pressed_obj = nullptr;

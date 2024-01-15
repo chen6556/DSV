@@ -1777,20 +1777,24 @@ void Canvas::set_info_labels(QLabel **labels)
 
 void Canvas::copy()
 {
-    _stored_mouse_pos = _mouse_pos_1;
+    _stored_coord.x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
+    _stored_coord.y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
     _editer->copy_selected();
 }
 
 void Canvas::cut()
 {
-    _stored_mouse_pos = _mouse_pos_1;
+    _stored_coord.x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
+    _stored_coord.y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
     _editer->cut_selected();
     refresh_vbo();
 }
 
 void Canvas::paste()
 {
-    if (_editer->paste((_mouse_pos_1.x() - _stored_mouse_pos.x()) / _ratio, (_mouse_pos_1.y() - _stored_mouse_pos.y()) / _ratio))
+    const double x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
+    const double y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
+    if (_editer->paste(x - _stored_coord.x, y - _stored_coord.y))
     {
         refresh_vbo();
         refresh_selected_ibo();
@@ -1800,7 +1804,7 @@ void Canvas::paste()
 
 void Canvas::paste(const double x, const double y)
 {
-    if (_editer->paste((x - _stored_mouse_pos.x()) / _ratio, (y - _stored_mouse_pos.y()) / _ratio))
+    if (_editer->paste(x - _stored_coord.x, y - _stored_coord.y))
     {
         refresh_vbo();
         refresh_selected_ibo();
