@@ -352,9 +352,6 @@ QPushButton:pressed
                   <pointsize>10</pointsize>
                  </font>
                 </property>
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
                 <property name="styleSheet">
                  <string notr="true">background-color: rgb(70, 70, 71);</string>
                 </property>
@@ -606,9 +603,6 @@ QPushButton:pressed
                  <font>
                   <pointsize>10</pointsize>
                  </font>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">background-color: rgb(70, 70, 71);</string>
@@ -884,10 +878,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>-8</x>
+             <x>0</x>
              <y>0</y>
-             <width>106</width>
-             <height>372</height>
+             <width>120</width>
+             <height>569</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -975,9 +969,6 @@ QPushButton:pressed
                   <pointsize>10</pointsize>
                  </font>
                 </property>
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
                 <property name="styleSheet">
                  <string notr="true">background-color: rgb(70, 70, 71);</string>
                 </property>
@@ -1041,9 +1032,6 @@ QPushButton:pressed
                  <font>
                   <pointsize>10</pointsize>
                  </font>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">background-color: rgb(70, 70, 71);</string>
@@ -1122,9 +1110,6 @@ QPushButton:pressed
                 <pointsize>10</pointsize>
                </font>
               </property>
-              <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
-              </property>
               <property name="styleSheet">
                <string notr="true">background-color: rgb(70, 70, 71);</string>
               </property>
@@ -1172,9 +1157,6 @@ QPushButton:pressed
                <font>
                 <pointsize>10</pointsize>
                </font>
-              </property>
-              <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
               </property>
               <property name="styleSheet">
                <string notr="true">background-color: rgb(70, 70, 71);</string>
@@ -1261,9 +1243,6 @@ QPushButton:pressed
                  <font>
                   <pointsize>10</pointsize>
                  </font>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">background-color: rgb(70, 70, 71);</string>
