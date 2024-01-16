@@ -750,7 +750,7 @@ inline Parser<char> alphab_p()
     return Parser<char>(std::function<std::optional<char>(std::string_view &)>(
         [=](std::string_view &stream) -> std::optional<char>
         {
-            if (!stream.empty() && 'a' <= stream.front() && stream.front() <= 'b')
+            if (!stream.empty() && 'a' <= stream.front() && stream.front() <= 'z')
             {
                 const char ch = stream.front();
                 stream.remove_prefix(1);
