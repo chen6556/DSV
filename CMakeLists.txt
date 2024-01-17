@@ -26,14 +26,13 @@ find_package(qpdf)
 
 add_subdirectory(src)
 include_directories(inc)
+file(GLOB _UI_HEADS inc/ui/*hpp)
 
 qt_add_executable(DSV
     MANUAL_FINALIZATION
     src/main.cpp
-    inc/ui/LayersManager.hpp
-    inc/ui/MainWindow.hpp
+    ${_UI_HEADS}
     inc/draw/Canvas.hpp
-    inc/ui/CMDWidget.hpp
 
     ${_DRAW_SOURCES}
     ${_BASE_SOURCES}

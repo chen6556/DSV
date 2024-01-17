@@ -3130,9 +3130,9 @@ void Canvas::refresh_text_vbo()
                         offset = data_count / 3;
                         for (const QPointF &point : polygon)
                         {
-                            points.append(Geo::Point(point.x(), point.y()));
+                            points.append(Geo::Point(point.x(), coord.y * 2 - point.y()));
                             data[data_count++] = point.x();
-                            data[data_count++] = point.y();
+                            data[data_count++] = coord.y * 2 - point.y();
                             data[data_count++] = 0.5;
                             if (data_count == data_len)
                             {
@@ -3193,9 +3193,9 @@ void Canvas::refresh_text_vbo()
                 offset = data_count / 3;
                 for (const QPointF &point : polygon)
                 {
-                    points.append(Geo::Point(point.x(), point.y()));
+                    points.append(Geo::Point(point.x(),  coord.y * 2 - point.y()));
                     data[data_count++] = point.x();
-                    data[data_count++] = point.y();
+                    data[data_count++] = coord.y * 2 - point.y();
                     data[data_count++] = 0.5;
                     if (data_count == data_len)
                     {
@@ -3414,7 +3414,7 @@ void Canvas::refresh_text_vbo(const bool unitary)
                         for (const QPointF &point : polygon)
                         {
                             data[data_count++] = point.x();
-                            data[data_count++] = point.y();
+                            data[data_count++] = coord.y * 2 - point.y();
                             data[data_count++] = 0.5;
                             if (data_count == data_len)
                             {
@@ -3452,7 +3452,7 @@ void Canvas::refresh_text_vbo(const bool unitary)
                 for (const QPointF &point : polygon)
                 {
                     data[data_count++] = point.x();
-                    data[data_count++] = point.y();
+                    data[data_count++] = coord.y * 2 - point.y();
                     data[data_count++] = 0.5;
                     if (data_count == data_len)
                     {
