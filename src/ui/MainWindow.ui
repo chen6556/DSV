@@ -878,10 +878,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>0</x>
+             <x>-8</x>
              <y>0</y>
-             <width>120</width>
-             <height>569</height>
+             <width>106</width>
+             <height>372</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1377,6 +1377,7 @@ selection-background-color: rgb(0, 85, 127);</string>
      <string>file</string>
     </property>
     <addaction name="open_file"/>
+    <addaction name="close_file"/>
     <addaction name="save_file"/>
     <addaction name="saveas_file"/>
     <addaction name="auto_save"/>
@@ -1490,6 +1491,11 @@ color:rgb(230, 230, 230);</string>
    </property>
    <property name="text">
     <string>show cmd line</string>
+   </property>
+  </action>
+  <action name="close_file">
+   <property name="text">
+    <string>close</string>
    </property>
   </action>
  </widget>
@@ -1735,6 +1741,22 @@ color:rgb(230, 230, 230);</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>close_file</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close_file()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>503</x>
+     <y>314</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>314</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -1752,5 +1774,6 @@ color:rgb(230, 230, 230);</string>
   <slot>to_array_page()</slot>
   <slot>line_array()</slot>
   <slot>ring_array()</slot>
+  <slot>close_file()</slot>
  </slots>
 </ui>
