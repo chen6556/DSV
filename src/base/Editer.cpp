@@ -595,7 +595,7 @@ bool Editer::connect(double connect_distance)
         return false;
     }
 
-    std::map<size_t, Geo::Polyline*> polylines;
+    std::vector<Geo::Polyline*> polylines;
     std::vector<size_t> indexs;
     ContainerGroup &group = _graph->container_group(_current_group);
     for (size_t i = 0, count = group.size(); i < count; ++i)
@@ -603,7 +603,7 @@ bool Editer::connect(double connect_distance)
         if (group[i]->is_selected &&
             (group[i]->type() == Geo::Type::POLYLINE || group[i]->type() == Geo::Type::BEZIER))
         {
-            polylines[i] = dynamic_cast<Geo::Polyline *>(group[i]);
+            polylines.push_back(dynamic_cast<Geo::Polyline *>(group[i]));
             indexs.push_back(i);
         }
     }
@@ -617,140 +617,144 @@ bool Editer::connect(double connect_distance)
         flag = false;
         for (size_t j = i + 1; j < count; ++j)
         {
-            if (Geo::distance(polylines[indexs[i]]->front(), polylines[indexs[j]]->front()) < connect_distance)
+            if (Geo::distance(polylines[i]->front(), polylines[j]->front()) < connect_distance)
             {
-                std::reverse(polylines[indexs[j]]->begin(), polylines[indexs[j]]->end());
-                if (polylines[indexs[i]]->type() == Geo::Type::POLYLINE)
-                {
-                    if (polylines[indexs[j]]->type() == Geo::Type::POLYLINE)
-                    {
-                        polylines[indexs[i]]->insert(0, *polylines[indexs[j]]);
-                    }
-                    else
-                    {
-                        dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
-                        polylines[indexs[i]]->insert(0, dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
-                    }
-                }
-                else
-                {
-                    Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
-                    polyline->is_selected = true;
-                    if (polylines[indexs[j]]->type() == Geo::Type::POLYLINE)
-                    {
-                        polyline->insert(0, *polylines[indexs[j]]);
-                    }
-                    else
-                    {
-                        dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
-                        polyline->insert(0, dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
-                    }
-                    group.remove(indexs[i]);
-                    group.insert(indexs[i], polyline);
-                    polylines[indexs[i]] = polyline;
-                }
-                flag = true;
-            }
-            else if (Geo::distance(polylines[indexs[i]]->front(), polylines[indexs[j]]->back()) < connect_distance)
-            {
-                if (polylines[indexs[i]]->type() == Geo::Type::POLYLINE)
-                {
-                    if (polylines[indexs[j]]->type() == Geo::Type::POLYLINE)
-                    {
-                        polylines[indexs[i]]->insert(0, *polylines[indexs[j]]);
-                    }
-                    else
-                    {
-                        polylines[indexs[i]]->insert(0, dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
-                    }
-                }
-                else
-                {
-                    Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
-                    polyline->is_selected = true;
-                    if (polylines[indexs[j]]->type() == Geo::Type::POLYLINE)
-                    {
-                        polyline->insert(0, *polylines[indexs[j]]);
-                    }
-                    else
-                    {
-                        polyline->insert(0, dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
-                    }
-                    group.remove(indexs[i]);
-                    group.insert(indexs[i], polyline);
-                    polylines[indexs[i]] = polyline;
-                }
-                flag = true;
-            }
-            else if (Geo::distance(polylines[indexs[i]]->back(), polylines[indexs[j]]->front()) < connect_distance)
-            {
-                if (polylines[indexs[i]]->type() == Geo::Type::POLYLINE)
+                std::reverse(polylines[j]->begin(), polylines[j]->end());
+                if (polylines[i]->type() == Geo::Type::POLYLINE)
                 {
                     if (polylines[j]->type() == Geo::Type::POLYLINE)
                     {
-                        polylines[indexs[i]]->append(*polylines[indexs[j]]);
+                        polylines[i]->insert(0, *polylines[j]);
                     }
                     else
                     {
-                        polylines[indexs[i]]->append(dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                        dynamic_cast<Geo::Bezier *>(polylines[j])->update_shape();
+                        polylines[i]->insert(0, dynamic_cast<Geo::Bezier *>(polylines[j])->shape());
                     }
                 }
                 else
                 {
-                    Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
+                    Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[i])->shape());
                     polyline->is_selected = true;
-                    if (polylines[indexs[j]]->type() == Geo::Type::POLYLINE)
+                    if (polylines[j]->type() == Geo::Type::POLYLINE)
                     {
-                        polyline->append(*polylines[indexs[j]]);
+                        polyline->insert(0, *polylines[j]);
                     }
                     else
                     {
-                        polyline->append(dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                        dynamic_cast<Geo::Bezier *>(polylines[j])->update_shape();
+                        polyline->insert(0, dynamic_cast<Geo::Bezier *>(polylines[j])->shape());
                     }
                     group.remove(indexs[i]);
                     group.insert(indexs[i], polyline);
-                    polylines[indexs[i]] = polyline;
+                    polylines[i] = polyline;
                 }
                 flag = true;
             }
-            else if (Geo::distance(polylines[indexs[i]]->back(), polylines[indexs[j]]->back()) < connect_distance)
+            else if (Geo::distance(polylines[i]->front(), polylines[j]->back()) < connect_distance)
             {
-                std::reverse(polylines[indexs[j]]->begin(), polylines[indexs[j]]->end());
-                if (polylines[indexs[i]]->type() == Geo::Type::POLYLINE)
+                if (polylines[i]->type() == Geo::Type::POLYLINE)
                 {
-                    if (polylines[indexs[j]]->type() == Geo::Type::POLYLINE)
+                    if (polylines[j]->type() == Geo::Type::POLYLINE)
                     {
-                        polylines[indexs[i]]->append(*polylines[indexs[j]]);
+                        polylines[i]->insert(0, *polylines[j]);
                     }
                     else
                     {
-                        dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
-                        polylines[indexs[i]]->append(dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                        polylines[i]->insert(0, dynamic_cast<Geo::Bezier *>(polylines[j])->shape());
                     }
                 }
                 else
                 {
-                    Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[indexs[i]])->shape());
+                    Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[i])->shape());
                     polyline->is_selected = true;
-                    if (polylines[indexs[j]]->type() == Geo::Type::POLYLINE)
+                    if (polylines[j]->type() == Geo::Type::POLYLINE)
                     {
-                        polyline->append(*polylines[indexs[j]]);
+                        polyline->insert(0, *polylines[j]);
                     }
                     else
                     {
-                        dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->update_shape();
-                        polyline->append(dynamic_cast<Geo::Bezier *>(polylines[indexs[j]])->shape());
+                        polyline->insert(0, dynamic_cast<Geo::Bezier *>(polylines[j])->shape());
                     }
                     group.remove(indexs[i]);
                     group.insert(indexs[i], polyline);
-                    polylines[indexs[i]] = polyline;
+                    polylines[i] = polyline;
+                }
+                flag = true;
+            }
+            else if (Geo::distance(polylines[i]->back(), polylines[j]->front()) < connect_distance)
+            {
+                if (polylines[i]->type() == Geo::Type::POLYLINE)
+                {
+                    if (polylines[j]->type() == Geo::Type::POLYLINE)
+                    {
+                        polylines[i]->append(*polylines[j]);
+                    }
+                    else
+                    {
+                        polylines[i]->append(dynamic_cast<Geo::Bezier *>(polylines[j])->shape());
+                    }
+                }
+                else
+                {
+                    Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[i])->shape());
+                    polyline->is_selected = true;
+                    if (polylines[j]->type() == Geo::Type::POLYLINE)
+                    {
+                        polyline->append(*polylines[j]);
+                    }
+                    else
+                    {
+                        polyline->append(dynamic_cast<Geo::Bezier *>(polylines[j])->shape());
+                    }
+                    group.remove(indexs[i]);
+                    group.insert(indexs[i], polyline);
+                    polylines[i] = polyline;
+                }
+                flag = true;
+            }
+            else if (Geo::distance(polylines[i]->back(), polylines[j]->back()) < connect_distance)
+            {
+                std::reverse(polylines[j]->begin(), polylines[j]->end());
+                if (polylines[i]->type() == Geo::Type::POLYLINE)
+                {
+                    if (polylines[j]->type() == Geo::Type::POLYLINE)
+                    {
+                        polylines[i]->append(*polylines[j]);
+                    }
+                    else
+                    {
+                        dynamic_cast<Geo::Bezier *>(polylines[j])->update_shape();
+                        polylines[i]->append(dynamic_cast<Geo::Bezier *>(polylines[j])->shape());
+                    }
+                }
+                else
+                {
+                    Geo::Polyline *polyline = new Geo::Polyline(dynamic_cast<Geo::Bezier *>(polylines[i])->shape());
+                    polyline->is_selected = true;
+                    if (polylines[j]->type() == Geo::Type::POLYLINE)
+                    {
+                        polyline->append(*polylines[j]);
+                    }
+                    else
+                    {
+                        dynamic_cast<Geo::Bezier *>(polylines[j])->update_shape();
+                        polyline->append(dynamic_cast<Geo::Bezier *>(polylines[j])->shape());
+                    }
+                    group.remove(indexs[i]);
+                    group.insert(indexs[i], polyline);
+                    polylines[i] = polyline;
                 }
                 flag = true;
             }
             if (flag)
             {
-                polylines.erase(indexs[j]);
+                polylines.erase(polylines.begin() + j);
                 group.remove(indexs[j]);
+                for (size_t k = j + 1; k < count; ++k)
+                {
+                    --indexs[k];
+                }
                 indexs.erase(indexs.begin() + j);
                 --i;
                 --count;
