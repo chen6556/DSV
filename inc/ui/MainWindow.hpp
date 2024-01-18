@@ -48,6 +48,8 @@ protected:
 private slots:
     void open_file();
 
+    void close_file();
+
     void save_file();
 
     void auto_save();

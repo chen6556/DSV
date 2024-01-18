@@ -118,6 +118,22 @@ void MainWindow::open_file()
     delete dialog;
 }
 
+void MainWindow::close_file()
+{
+    if (_editer.modified() && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
+    {
+        save_file();
+    }
+
+    _editer.delete_graph();
+    _editer.load_graph(new Graph());
+    _editer.reset_modified();
+    _info_labels[2]->clear();
+    _layers_manager->load_layers(_editer.graph());
+    _layers_cbx->setModel(_layers_manager->model());
+    _painter.update();
+}
+
 void MainWindow::save_file()
 {
     if (_editer.graph() == nullptr || _painter.empty())
@@ -373,8 +389,7 @@ void MainWindow::load_settings()
 void MainWindow::save_settings()
 {
     QJsonObject &setting = GlobalSetting::get_instance()->setting();
-    
-    setting["file_path"] = _editer.path();
+
     setting["auto_save"] = ui->auto_save->isChecked();
     setting["auto_layering"] = ui->auto_layering->isChecked();
     setting["auto_aligning"] = ui->auto_aligning->isChecked();
@@ -429,6 +444,8 @@ void MainWindow::open_file(const QString &path)
     {
         save_file();
     }
+
+    GlobalSetting::get_instance()->setting()["file_path"] = path;
 
     _editer.delete_graph();
     Graph *g = new Graph;

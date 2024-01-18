@@ -553,6 +553,7 @@ selection-background-color: rgb(0, 85, 127);</string>
      <string>file</string>
     </property>
     <addaction name="open_file"/>
+    <addaction name="close_file"/>
     <addaction name="save_file"/>
     <addaction name="saveas_file"/>
     <addaction name="auto_save"/>
@@ -657,6 +658,11 @@ color:rgb(230, 230, 230);</string>
    </property>
    <property name="text">
     <string>show origin</string>
+   </property>
+  </action>
+  <action name="close_file">
+   <property name="text">
+    <string>close</string>
    </property>
   </action>
  </widget>
@@ -774,6 +780,22 @@ color:rgb(230, 230, 230);</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>close_file</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close_file()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>527</x>
+     <y>273</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -783,5 +805,6 @@ color:rgb(230, 230, 230);</string>
   <slot>rotate()</slot>
   <slot>flip_x()</slot>
   <slot>flip_y()</slot>
+  <slot>close_file()</slot>
  </slots>
 </ui>
