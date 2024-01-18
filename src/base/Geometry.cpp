@@ -940,13 +940,35 @@ void AABBRect::set_height(const double value)
 void AABBRect::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
     std::for_each(_points.begin(), _points.end(), [&](Point &point){point.transform(a,b,c,d,e,f);});
+    if (_points[0].coord().x > _points[1].coord().x)
+    {
+        std::swap(_points[0].coord(), _points[1].coord());
+        std::swap(_points[2].coord(), _points[3].coord());
+    }
+    if (_points[0].coord().y < _points[2].coord().y)
+    {
+        std::swap(_points[0].coord(), _points[3].coord());
+        std::swap(_points[1].coord(), _points[2].coord());
+    }
+    _points[4].coord() = _points[0].coord();
 }
 
 void AABBRect::transform(const double mat[6])
 {
     std::for_each(_points.begin(), _points.end(), [&](Point &point){point.transform(mat);});
+    if (_points[0].coord().x > _points[1].coord().x)
+    {
+        std::swap(_points[0].coord(), _points[1].coord());
+        std::swap(_points[2].coord(), _points[3].coord());
+    }
+    if (_points[0].coord().y < _points[2].coord().y)
+    {
+        std::swap(_points[0].coord(), _points[3].coord());
+        std::swap(_points[1].coord(), _points[2].coord());
+    }
+    _points[4].coord() = _points[0].coord();
 }
-    
+
 void AABBRect::translate(const double tx, const double ty)
 {
     std::for_each(_points.begin(), _points.end(), [&](Point &point){point.translate(tx, ty);});
