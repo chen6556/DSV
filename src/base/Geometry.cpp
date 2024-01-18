@@ -744,7 +744,7 @@ AABBRect::AABBRect(const double x0, const double y0, const double x1, const doub
     if (x0 < x1)
     {
         if (y0 > y1)
-        {   
+        {
             _points.assign({Point(x0, y0), Point(x1, y0), Point(x1, y1), Point(x0, y1), Point(x0, y0)});
         }
         else
@@ -755,7 +755,7 @@ AABBRect::AABBRect(const double x0, const double y0, const double x1, const doub
     else
     {
         if (y0 > y1)
-        {   
+        {
             _points.assign({Point(x1, y0), Point(x0, y0), Point(x0, y1), Point(x1, y1), Point(x1, y0)});
         }
         else
@@ -772,7 +772,7 @@ AABBRect::AABBRect(const Point &point0, const Point &point1)
     if (x0 < x1)
     {
         if (y0 > y1)
-        {   
+        {
             _points.assign({Point(x0, y0), Point(x1, y0), Point(x1, y1), Point(x0, y1), Point(x0, y0)});
         }
         else
@@ -783,7 +783,7 @@ AABBRect::AABBRect(const Point &point0, const Point &point1)
     else
     {
         if (y0 > y1)
-        {   
+        {
             _points.assign({Point(x1, y0), Point(x0, y0), Point(x0, y1), Point(x1, y1), Point(x1, y0)});
         }
         else
@@ -936,11 +936,33 @@ void AABBRect::set_height(const double value)
 void AABBRect::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
     std::for_each(_points.begin(), _points.end(), [&](Point &point){point.transform(a,b,c,d,e,f);});
+    if (_points[0].coord().x > _points[1].coord().x)
+    {
+        std::swap(_points[0].coord(), _points[1].coord());
+        std::swap(_points[2].coord(), _points[3].coord());
+    }
+    if (_points[0].coord().y < _points[2].coord().y)
+    {
+        std::swap(_points[0].coord(), _points[3].coord());
+        std::swap(_points[1].coord(), _points[2].coord());
+    }
+    _points[4].coord() = _points[0].coord();
 }
 
 void AABBRect::transform(const double mat[6])
 {
     std::for_each(_points.begin(), _points.end(), [&](Point &point){point.transform(mat);});
+    if (_points[0].coord().x > _points[1].coord().x)
+    {
+        std::swap(_points[0].coord(), _points[1].coord());
+        std::swap(_points[2].coord(), _points[3].coord());
+    }
+    if (_points[0].coord().y < _points[2].coord().y)
+    {
+        std::swap(_points[0].coord(), _points[3].coord());
+        std::swap(_points[1].coord(), _points[2].coord());
+    }
+    _points[4].coord() = _points[0].coord();
 }
     
 void AABBRect::translate(const double tx, const double ty)
@@ -1113,7 +1135,7 @@ Polygon::Polygon(const Polyline &polyline)
 Polygon::Polygon(const AABBRect& rect)
     :Polyline(rect.cbegin(), rect.cend())
 {
-    _type = Type::POLYGON; 
+    _type = Type::POLYGON;
 }
 
 Polygon &Polygon::operator=(const Polygon &polygon)

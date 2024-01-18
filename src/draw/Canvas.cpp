@@ -82,7 +82,7 @@ void Canvas::paint_cache()
         points.pop_back();
         painter.drawPolygon(points);
     }
-    if (_editer != nullptr && !_editer->point_cache().empty())
+    if (!_editer->point_cache().empty())
     {
         points.clear();
         for (const Geo::Point &point : _editer->point_cache())
@@ -484,13 +484,13 @@ void Canvas::paint_select_rect()
     {
         return;
     }
-    
+
     painter.setPen(QPen(QColor(0, 255, 0, 140), 1));
     painter.setBrush(QColor(0, 120, 215, 10));
 
     Geo::AABBRect rect(_select_rect);
     rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
-    
+
     painter.drawPolygon(QRect(rect[3].coord().x, rect[3].coord().y, rect.width(), rect.height()));
 }
 
@@ -558,7 +558,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 {
                     _last_point.coord().x = real_x1;
                     _last_point.coord().y = real_y1;
-                    _AABBRect_cache = Geo::AABBRect(real_x1, real_y1, real_x1 + 2, real_y1 + 2);
+                    _AABBRect_cache = Geo::AABBRect(real_x1, real_y1, real_x1 + 2, real_y1 - 2);
                 }
                 else
                 {
@@ -909,6 +909,7 @@ void Canvas::wheelEvent(QWheelEvent *event)
         update();
     }
     _editer->set_view_ratio(_ratio);
+    _reflines.clear();
     _editer->auto_aligning(_pressed_obj, _reflines);
 }
 
@@ -1002,38 +1003,56 @@ void Canvas::show_overview()
     Graph *graph = _editer->graph();
     if (graph->empty())
     {
+        _ratio = 1.0;
+
+        _canvas_ctm[0] = 1;
+        _canvas_ctm[4] = -1;
+        _canvas_ctm[1] = _canvas_ctm[2] = _canvas_ctm[3] = _canvas_ctm[5] = 0;
+        _canvas_ctm[8] = 1;
+        _canvas_ctm[6] = 0;
+        _canvas_ctm[7] = _canvas_height;
+
+        _view_ctm[0] = 1;
+        _view_ctm[4] = -1;
+        _view_ctm[1] = _view_ctm[2] = _view_ctm[3] = _view_ctm[5] = 0;
+        _view_ctm[8] = 1;
+        _view_ctm[6] = 0;
+        _view_ctm[7] = _canvas_height;
+
+        // 可视区域为显示控件区域的反变换
+        _visible_area = Geo::AABBRect(0, _canvas_height, _canvas_width, 0);
         update();
         return;
     }
     // 获取graph的边界
     Geo::AABBRect bounding_area = graph->bounding_rect();
-    // 整个绘图控件区域作为显示区域
-    QRect view_area = this->geometry();
     // 选择合适的缩放倍率
-    double height_ratio = view_area.height() / bounding_area.height();
-    double width_ratio = view_area.width() / bounding_area.width();
+    double height_ratio = _canvas_height / bounding_area.height();
+    double width_ratio = _canvas_width / bounding_area.width();
     _ratio = std::min(height_ratio, width_ratio);
     // 缩放减少2%，使其与边界留出一些空间
     _ratio = _ratio * 0.98;
 
     // 置于控件中间
-    double x_offset = (view_area.width() - bounding_area.width() * _ratio) / 2 - bounding_area.left() * _ratio;
-    double y_offset = (view_area.height() - bounding_area.height() * _ratio) / 2 - bounding_area.bottom() * _ratio;
+    double x_offset = (_canvas_width - bounding_area.width() * _ratio) / 2 - bounding_area.left() * _ratio;
+    double y_offset = (bounding_area.height() * _ratio - _canvas_height) / 2 + bounding_area.bottom() * _ratio + _canvas_height;
 
-    _canvas_ctm[0] = _canvas_ctm[4] = _ratio;
+    _canvas_ctm[0] = _ratio;
+    _canvas_ctm[4] = -_ratio;
     _canvas_ctm[1] = _canvas_ctm[2] = _canvas_ctm[3] = _canvas_ctm[5] = 0;
     _canvas_ctm[8] = 1;
     _canvas_ctm[6] = x_offset;
     _canvas_ctm[7] = y_offset;
 
-    _view_ctm[0] = _view_ctm[4] = 1 / _ratio;
+    _view_ctm[0] = 1 / _ratio;
+    _view_ctm[4] = -1 / _ratio;
     _view_ctm[1] = _view_ctm[2] = _view_ctm[3] = _view_ctm[5] = 0;
     _view_ctm[8] = 1;
     _view_ctm[6] = -x_offset / _ratio;
-    _view_ctm[7] = -y_offset / _ratio;
+    _view_ctm[7] = y_offset / _ratio;
 
     // 可视区域为显示控件区域的反变换
-    double x0=0, y0=0, x1=view_area.width(), y1=view_area.height();
+    double x0 = 0, y0 = 0, x1 = _canvas_width, y1 = _canvas_height;
     _visible_area = Geo::AABBRect(
         x0 * _view_ctm[0] + y0 * _view_ctm[3] + _view_ctm[6],
         x0 * _view_ctm[1] + y0 * _view_ctm[4] + _view_ctm[7],
@@ -1046,8 +1065,11 @@ void Canvas::show_overview()
 
 void Canvas::resizeEvent(QResizeEvent *event)
 {
-    const QRect rect(this->geometry());
-    _visible_area = Geo::AABBRect(0, 0, rect.width(), rect.height());
+    _canvas_ctm[7] += (event->size().height() - _canvas_height);
+    _view_ctm[7] += (event->size().height() - _canvas_height) / _ratio;
+    _canvas_height = event->size().height();
+    _canvas_width = event->size().width();
+    _visible_area = Geo::AABBRect(0, _canvas_height, _canvas_width, 0);
     _visible_area.transform(_view_ctm[0], _view_ctm[3], _view_ctm[6], _view_ctm[1], _view_ctm[4], _view_ctm[7]);
     return QWidget::resizeEvent(event);
 }
@@ -1285,19 +1307,23 @@ void Canvas::set_info_labels(QLabel **labels)
 
 void Canvas::copy()
 {
-    _stored_mouse_pos = _mouse_pos_1;
+    _stored_coord.x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
+    _stored_coord.y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
     _editer->copy_selected();
 }
 
 void Canvas::cut()
 {
-    _stored_mouse_pos = _mouse_pos_1;
+    _stored_coord.x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
+    _stored_coord.y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
     _editer->cut_selected();
 }
 
 void Canvas::paste()
 {
-    if (_editer->paste((_mouse_pos_1.x() - _stored_mouse_pos.x()) / _ratio, (_mouse_pos_1.y() - _stored_mouse_pos.y()) / _ratio))
+    const double x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
+    const double y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
+    if (_editer->paste(x - _stored_coord.x, y - _stored_coord.y))
     {
         update();
     }

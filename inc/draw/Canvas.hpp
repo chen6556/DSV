@@ -26,8 +26,9 @@ private:
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
 
-    double _canvas_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
-    double _view_ctm[9] = {1,0,0, 0,1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
+    int _canvas_width = 0, _canvas_height = 0;
+    double _canvas_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
+    double _view_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
     double _ratio = 1; // 缩放系数
     size_t _bezier_order = 3; // 贝塞尔曲线阶数
 
@@ -37,7 +38,8 @@ private:
     // current_tool, last_tool
     Tool _tool_flags[2] = {Tool::NONE, Tool::NONE};
 
-    QPointF _mouse_pos_0, _mouse_pos_1, _stored_mouse_pos;
+    QPointF _mouse_pos_0, _mouse_pos_1;
+    Geo::Coord _stored_coord;
     Geo::Point _last_point;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
     Geo::Geometry *_pressed_obj = nullptr; 
