@@ -82,7 +82,7 @@ public:
 
     bool paste(const double tx, const double ty);
 
-    bool connect(double connect_distance);
+    bool connect(const double connect_distance);
 
     bool close_polyline();
 
