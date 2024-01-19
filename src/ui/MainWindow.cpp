@@ -16,7 +16,8 @@
  
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), _setting(new Setting(this))
+    : QMainWindow(parent), ui(new Ui::MainWindow), _setting(new Setting(this)),
+    _panel(new DataPanel(this))
 {
     ui->setupUi(this);
     init();
@@ -36,6 +37,8 @@ MainWindow::~MainWindow()
     delete _layers_btn;
     delete _layers_manager;
     delete _cmd_widget;
+    delete _setting;
+    delete _panel;
 }
 
 void MainWindow::init()
@@ -66,7 +69,7 @@ void MainWindow::init()
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
     QObject::connect(ui->auto_aligning, &QAction::triggered, this, [this]() {GlobalSetting::get_instance()->setting()["auto_aligning"] = ui->auto_aligning->isChecked();});
-    QObject::connect(ui->actionadvanced, &QAction::triggered, this, [this]() { _setting->show(); });
+    QObject::connect(ui->actionadvanced, &QAction::triggered, _setting, &QDialog::exec);
     QObject::connect(ui->show_origin, &QAction::triggered, this, [this]() { ui->show_origin->isChecked() ? _painter.show_origin() : _painter.hide_origin(); });
     QObject::connect(ui->show_cmd_line, &QAction::triggered, this, [this]() { ui->show_cmd_line->isChecked() ? _cmd_widget->show() : _cmd_widget->hide(); });
 
@@ -463,7 +466,7 @@ void MainWindow::save_settings()
 void MainWindow::show_layers_manager()
 {
     _layers_manager->load_layers(_editer.graph());
-    _layers_manager->show();
+    _layers_manager->exec();
 }
 
 void MainWindow::to_main_page()
@@ -553,6 +556,13 @@ void MainWindow::ring_array()
     _painter.set_operation(Canvas::Operation::RINGARRAY);
 }
 
+
+
+void MainWindow::show_data_panel()
+{
+    _panel->load_draw_data(_editer.graph(), _painter.points_count());
+    _panel->exec();
+}
 
 
 

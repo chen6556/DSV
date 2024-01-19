@@ -10,6 +10,7 @@
 #include "ui/LayersManager.hpp"
 #include "ui/Setting.hpp"
 #include "ui/CMDWidget.hpp"
+#include "ui/DataPanel.hpp"
 
 
 QT_BEGIN_NAMESPACE
@@ -29,6 +30,7 @@ private:
     QTimer _clock;
     QLabel *_info_labels[3] = {nullptr, nullptr, nullptr};
     CMDWidget *_cmd_widget = nullptr;
+    DataPanel *_panel = nullptr;
 
     QComboBox *_layers_cbx = nullptr;
     LayersManager *_layers_manager = nullptr;
@@ -95,6 +97,7 @@ private slots:
     void ring_array();
 
 
+    void show_data_panel();
 
 private:
     void open_file(const QString &path);

@@ -3572,3 +3572,15 @@ void Canvas::refresh_catached_points(const bool current_group_only)
         }
     } 
 }
+
+
+
+size_t Canvas::points_count() const
+{
+    return _points_count;
+}
+
+
+
+
+

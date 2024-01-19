@@ -1381,6 +1381,7 @@ selection-background-color: rgb(0, 85, 127);</string>
     <addaction name="save_file"/>
     <addaction name="saveas_file"/>
     <addaction name="auto_save"/>
+    <addaction name="performace_panel"/>
    </widget>
    <widget class="QMenu" name="menusetting">
     <property name="styleSheet">
@@ -1496,6 +1497,11 @@ color:rgb(230, 230, 230);</string>
   <action name="close_file">
    <property name="text">
     <string>close</string>
+   </property>
+  </action>
+  <action name="performace_panel">
+   <property name="text">
+    <string>data</string>
    </property>
   </action>
  </widget>
@@ -1748,8 +1754,24 @@ color:rgb(230, 230, 230);</string>
    <slot>close_file()</slot>
    <hints>
     <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
      <x>503</x>
      <y>314</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>performace_panel</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>show_data_panel()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
     </hint>
     <hint type="destinationlabel">
      <x>503</x>
@@ -1775,5 +1797,6 @@ color:rgb(230, 230, 230);</string>
   <slot>line_array()</slot>
   <slot>ring_array()</slot>
   <slot>close_file()</slot>
+  <slot>show_data_panel()</slot>
  </slots>
 </ui>

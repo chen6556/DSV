@@ -31,7 +31,7 @@ private:
     unsigned int _VBO[5]; //0:points 1:origin and select rect 2:cache 3:text 4:reflines
     unsigned int _IBO[4]; //0:polyline 1:polygon 2:selected 3:text
     int _uniforms[5]; // w, h, vec0, vec1, color
-    size_t _points_count;
+    size_t _points_count = 0;
     size_t _indexs_count[4] = {0, 0, 0, 0}; //0:polyline 1:polygon 2:selected 3:text
     double *_cache = nullptr;
     size_t _cache_len = 513, _cache_count = 0;
@@ -212,4 +212,7 @@ public:
 
     void refresh_catached_points(const bool current_group_only = true);
 
+
+
+    size_t points_count() const;
 };
