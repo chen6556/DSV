@@ -3024,11 +3024,11 @@ void Canvas::refresh_text_vbo()
                 }
                 coord = text->center().coord();
                 strings = text->text().split('\n');
-                string_index = 0;
+                string_index = 1;
                 for (const QString &string : strings)
                 {
                     text_rect = font_metrics.boundingRect(string);
-                    path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                    path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
                 text->text_index = data_count;
@@ -3041,11 +3041,11 @@ void Canvas::refresh_text_vbo()
                 }
                 coord = container->bounding_rect().center().coord();
                 strings = container->text().split('\n');
-                string_index = 0;
+                string_index = 1;
                 for (const QString &string : strings)
                 {
                     text_rect = font_metrics.boundingRect(string);
-                    path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                    path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
                 container->text_index = data_count;
@@ -3058,11 +3058,11 @@ void Canvas::refresh_text_vbo()
                 }
                 coord = circlecontainer->bounding_rect().center().coord();
                 strings = circlecontainer->text().split('\n');
-                string_index = 0;
+                string_index = 1;
                 for (const QString &string : strings)
                 {
                     text_rect = font_metrics.boundingRect(string);
-                    path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                    path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
                 circlecontainer->text_index = data_count;
@@ -3080,11 +3080,11 @@ void Canvas::refresh_text_vbo()
                         }
                         coord = text->center().coord();
                         strings = text->text().split('\n');
-                        string_index = 0;
+                        string_index = 1;
                         for (const QString &string : strings)
                         {
                             text_rect = font_metrics.boundingRect(string);
-                            path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                            path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
                         text->text_index = data_count;
@@ -3098,11 +3098,11 @@ void Canvas::refresh_text_vbo()
                         coord = container->bounding_rect().center().coord();
                         text_rect = font_metrics.boundingRect(container->text());
                         strings = container->text().split('\n');
-                        string_index = 0;
+                        string_index = 1;
                         for (const QString &string : strings)
                         {
                             text_rect = font_metrics.boundingRect(string);
-                            path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                            path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
                         container->text_index = data_count;
@@ -3116,11 +3116,11 @@ void Canvas::refresh_text_vbo()
                         coord = circlecontainer->bounding_rect().center().coord();
                         text_rect = font_metrics.boundingRect(circlecontainer->text());
                         strings = circlecontainer->text().split('\n');
-                        string_index = 0;
+                        string_index = 1;
                         for (const QString &string : strings)
                         {
                             text_rect = font_metrics.boundingRect(string);
-                            path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                            path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
                         circlecontainer->text_index = data_count;
@@ -3313,11 +3313,11 @@ void Canvas::refresh_text_vbo(const bool unitary)
                 }
                 coord = text->center().coord();
                 strings = text->text().split('\n');
-                string_index = 0;
+                string_index = 1;
                 for (const QString &string : strings)
                 {
                     text_rect = font_metrics.boundingRect(string);
-                    path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                    path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
                 break;
@@ -3329,11 +3329,11 @@ void Canvas::refresh_text_vbo(const bool unitary)
                 }
                 coord = container->bounding_rect().center().coord();
                 strings = container->text().split('\n');
-                string_index = 0;
+                string_index = 1;
                 for (const QString &string : strings)
                 {
                     text_rect = font_metrics.boundingRect(string);
-                    path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                    path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
                 break;
@@ -3345,11 +3345,11 @@ void Canvas::refresh_text_vbo(const bool unitary)
                 }
                 coord = circlecontainer->bounding_rect().center().coord();
                 strings = circlecontainer->text().split('\n');
-                string_index = 0;
+                string_index = 1;
                 for (const QString &string : strings)
                 {
                     text_rect = font_metrics.boundingRect(string);
-                    path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                    path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
                 break;
@@ -3366,11 +3366,11 @@ void Canvas::refresh_text_vbo(const bool unitary)
                         }
                         coord = text->center().coord();
                         strings = text->text().split('\n');
-                        string_index = 0;
+                        string_index = 1;
                         for (const QString &string : strings)
                         {
                             text_rect = font_metrics.boundingRect(string);
-                            path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                            path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
                         break;
@@ -3383,11 +3383,11 @@ void Canvas::refresh_text_vbo(const bool unitary)
                         coord = container->bounding_rect().center().coord();
                         text_rect = font_metrics.boundingRect(container->text());
                         strings = container->text().split('\n');
-                        string_index = 0;
+                        string_index = 1;
                         for (const QString &string : strings)
                         {
                             text_rect = font_metrics.boundingRect(string);
-                            path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                            path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
                         break;
@@ -3400,11 +3400,11 @@ void Canvas::refresh_text_vbo(const bool unitary)
                         coord = circlecontainer->bounding_rect().center().coord();
                         text_rect = font_metrics.boundingRect(circlecontainer->text());
                         strings = circlecontainer->text().split('\n');
-                        string_index = 0;
+                        string_index = 1;
                         for (const QString &string : strings)
                         {
                             text_rect = font_metrics.boundingRect(string);
-                            path.addText(coord.x - text_rect.width() / 2, coord.y + text_rect.height()
+                            path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
                         break;
