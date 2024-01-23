@@ -7,282 +7,217 @@
 #include <fstream>
 
 
-void File::read(const QString &path, Graph *graph)
+void File::write_dsv(const std::string &path, const Graph *graph)
 {
-    QFile file(path);
-    file.open(QIODevice::ReadOnly);
-    QJsonParseError jerr;
-    QJsonObject groups = QJsonDocument::fromJson(file.readAll(), &jerr).object();
-    file.close();
-    std::vector<Geo::Point> points;
-    graph->clear();
-    const int text_size = GlobalSetting::get_instance()->setting()["text_size"].toInt();
+    const Container *container = nullptr;
+    const CircleContainer *circlecontainer = nullptr;
+    const Text *text = nullptr;
+    const Geo::Polyline *polyline = nullptr;
+    const Geo::Bezier *bezier = nullptr;
 
-    for (int i = 0, count = groups["ContainerGroupCount"].toInt(); i < count; ++i)
-    {
-        QJsonObject obj = groups[std::to_string(i).c_str()].toObject();
-        graph->append_group();
-
-        QJsonArray texts = obj["Texts"].toArray();
-        for (QJsonValueConstRef text : texts)
-        {
-            QJsonArray coordinates = text.toObject()["shape"].toArray();
-            graph->back().append(new Text(coordinates[0].toDouble(), coordinates[1].toDouble(),
-                text_size, text.toObject()["text"].toString()));
-        }
-    
-        QJsonArray containers = obj["ContainerGroup"].toArray();
-        for (QJsonValueConstRef container : containers)
-        {
-            QJsonArray coordinates = container.toObject()["shape"].toArray();
-            for (size_t i = 1, count = coordinates.size(); i < count; i += 2)
-            {
-                points.push_back(Geo::Point(coordinates[i - 1].toDouble(), coordinates[i].toDouble()));
-            }
-            graph->back().append(new Container(container.toObject()["text"].toString(), Geo::Polygon(points.cbegin(), points.cend())));
-            points.clear();
-        }
-
-        QJsonArray circlecontainers = obj["CircleContainerGroup"].toArray();
-        for (QJsonValueConstRef container : circlecontainers)
-        {
-            QJsonArray coordinates = container.toObject()["shape"].toArray();
-            if (coordinates.size() < 3)
-            {
-                continue;
-            }
-            graph->back().append(new CircleContainer(container.toObject()["text"].toString(), coordinates[0].toDouble(), coordinates[1].toDouble(), coordinates[2].toDouble()));
-        }
-
-        QJsonArray polylines = obj["PolylineGroup"].toArray();
-        for (QJsonValueConstRef polyline : polylines)
-        {
-            QJsonArray coordinates = polyline.toObject()["shape"].toArray();
-            for (size_t i = 1, count = coordinates.size(); i < count; i += 2)
-            {
-                points.push_back(Geo::Point(coordinates[i - 1].toDouble(), coordinates[i].toDouble()));
-            }
-            graph->back().append(new Geo::Polyline(points.cbegin(), points.cend()));
-            points.clear();
-        }
-    
-        QJsonArray beziers = obj["BezierGroup"].toArray();
-        for (QJsonValueConstRef bezier : beziers)
-        {
-            QJsonArray coordinates = bezier.toObject()["shape"].toArray();
-            for (size_t i = 1, count = coordinates.size(); i < count; i += 2)
-            {
-                points.push_back(Geo::Point(coordinates[i - 1].toDouble(), coordinates[i].toDouble()));
-            }
-            graph->back().append(new Geo::Bezier(points.begin(), points.end(), bezier.toObject()["order"].toInt()));
-            points.clear();
-        }
-
-        graph->back().name = obj["LayerName"].toString();
-    }
-}
-
-void File::write_json(const QString &path, const Graph *graph)
-{
-    QJsonObject obj;
-    Container *container = nullptr;
-    CircleContainer *circlecontainer = nullptr;
-    Geo::Polyline *polyline = nullptr;
-    Geo::Bezier *bezier = nullptr;
-    int index = 0;
-
+    std::ofstream output(path);
     for (const ContainerGroup &group : graph->container_groups())
     {
-        QJsonArray container_objs, circlecontainer_objs, link_objs, polyline_objs, bezier_objs, text_objs;
-        QJsonObject container_group;
-
-        for (Geo::Geometry *geo : group)
+        if (group.name.isEmpty())
         {
-            QJsonObject obj2;
-            QJsonArray array;
+            output << "GROUP" << std::endl;
+        }
+        else
+        {
+            output << "GROUP<" << group.name.toStdString() << '>' << std::endl;
+        }
+
+        for (const Geo::Geometry *geo : group)
+        {
             switch (geo->type())
             {
             case Geo::Type::TEXT:
-                array.append(dynamic_cast<Text *>(geo)->center().coord().x);
-                array.append(dynamic_cast<Text *>(geo)->center().coord().y);
-                obj2.insert("shape", array);
-                obj2.insert("text", dynamic_cast<Text *>(geo)->text());
-                text_objs.append(obj2);
+                text = dynamic_cast<const Text *>(geo);
+                output << "TEXT<" << text->text().toStdString() << '>' << std::endl;
+                output << text->center().coord().x << ',' << text->center().coord().y << std::endl;
+                text = nullptr;
                 break;
             case Geo::Type::CONTAINER:
-                container = dynamic_cast<Container *>(geo);
+                container = dynamic_cast<const Container *>(geo);
+                if (container->text().isEmpty())
+                {
+                    output << "POLYGON" << std::endl;
+                }
+                else
+                {
+                    output << "POLYGON<" << container->text().toStdString() << '>' << std::endl;
+                }
                 for (const Geo::Point &point : container->shape())
                 {
-                    array.append(point.coord().x);
-                    array.append(point.coord().y);
+                    output << point.coord().x << ',' << point.coord().y << ',';
                 }
-                obj2.insert("shape", array);
-                obj2.insert("text", container->text());
-                container_objs.append(obj2);
+                output.seekp(-1, std::ios::cur);
+                output << std::endl;
                 container = nullptr;
                 break;
             case Geo::Type::CIRCLECONTAINER:
-                circlecontainer = dynamic_cast<CircleContainer *>(geo);
-                array.append(circlecontainer->center().coord().x);
-                array.append(circlecontainer->center().coord().y);
-                array.append(circlecontainer->radius());
-                obj2.insert("shape", array);
-                obj2.insert("text", circlecontainer->text());
-                circlecontainer_objs.append(obj2);
+                circlecontainer = dynamic_cast<const CircleContainer *>(geo);
+                if (circlecontainer->text().isEmpty())
+                {
+                    output << "CIRCLE" << std::endl;
+                }
+                else
+                {
+                    output << "CIRCLE<" << circlecontainer->text().toStdString() << '>' << std::endl;
+                }
+                output << circlecontainer->center().coord().x << ',';
+                output << circlecontainer->center().coord().y << ',';
+                output << circlecontainer->radius();
+                output << std::endl;
                 circlecontainer = nullptr;
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *dynamic_cast<Combination *>(geo))
+                output << "COMBINATION" << std::endl;
+                for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
                 {
-                    QJsonObject obj2;
-                    QJsonArray array;
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        array.append(dynamic_cast<Text *>(geo)->center().coord().x);
-                        array.append(dynamic_cast<Text *>(geo)->center().coord().y);
-                        obj2.insert("shape", array);
-                        obj2.insert("text", dynamic_cast<Text *>(geo)->text());
-                        text_objs.append(obj2);
+                        text = dynamic_cast<const Text *>(item);
+                        output << "TEXT<" << text->text().toStdString() << '>' << std::endl;
+                        output << text->center().coord().x << ',' << text->center().coord().y;
+                        text = nullptr;
                         break;
                     case Geo::Type::CONTAINER:
-                        container = dynamic_cast<Container *>(item);
+                        container = dynamic_cast<const Container *>(item);
+                        if (container->text().isEmpty())
+                        {
+                            output << "POLYGON" << std::endl;
+                        }
+                        else
+                        {
+                            output << "POLYGON<" << container->text().toStdString() << '>' << std::endl;
+                        }
                         for (const Geo::Point &point : container->shape())
                         {
-                            array.append(point.coord().x);
-                            array.append(point.coord().y);
+                            output << point.coord().x << ',' << point.coord().y << ',';
                         }
-                        obj2.insert("shape", array);
-                        obj2.insert("text", container->text());
-                        container_objs.append(obj2);
+                        output.seekp(-1, std::ios::cur);
+                        output << std::endl;
                         container = nullptr;
                         break;
                     case Geo::Type::CIRCLECONTAINER:
-                        circlecontainer = dynamic_cast<CircleContainer *>(item);
-                        array.append(circlecontainer->center().coord().x);
-                        array.append(circlecontainer->center().coord().y);
-                        array.append(circlecontainer->radius());
-                        obj2.insert("shape", array);
-                        obj2.insert("text", circlecontainer->text());
-                        circlecontainer_objs.append(obj2);
+                        circlecontainer = dynamic_cast<const CircleContainer *>(item);
+                        if (circlecontainer->text().isEmpty())
+                        {
+                            output << "CIRCLE" << std::endl;
+                        }
+                        else
+                        {
+                            output << "CIRCLE<" << circlecontainer->text().toStdString() << '>' << std::endl;
+                        }
+                        output << circlecontainer->center().coord().x << ',';
+                        output << circlecontainer->center().coord().y << ',';
+                        output << circlecontainer->radius();
+                        output << std::endl;
                         circlecontainer = nullptr;
                         break;
                     case Geo::Type::POLYLINE:
-                        polyline = dynamic_cast<Geo::Polyline *>(item);
+                        polyline = dynamic_cast<const Geo::Polyline *>(item);
                         if (polyline->empty())
                         {
-                            break;
+                            continue;
                         }
+                        output << "POLYLINE" << std::endl;
                         for (const Geo::Point &point : *polyline)
                         {
-                            array.append(point.coord().x);
-                            array.append(point.coord().y);
+                            output << point.coord().x << ',' << point.coord().y << ',';
                         }
-                        obj2.insert("shape", array);
-                        polyline_objs.append(obj2);
+                        output.seekp(-1, std::ios_base::cur);
+                        output << std::endl;
                         polyline = nullptr;
                         break;
                     case Geo::Type::BEZIER:
-                        bezier = dynamic_cast<Geo::Bezier *>(item);
+                        bezier = dynamic_cast<const Geo::Bezier *>(item);
                         if (bezier->empty())
                         {
-                            break;
+                            continue;
                         }
+                        output << "BEZIER" << std::endl;
+                        output << bezier->order();
                         for (const Geo::Point &point : *bezier)
                         {
-                            array.append(point.coord().x);
-                            array.append(point.coord().y);
+                            output << ',' << point.coord().x << ',' << point.coord().y;
                         }
-                        obj2.insert("shape", array);
-                        obj2.insert("order", static_cast<int>(bezier->order()));
-                        bezier_objs.append(obj2);
+                        output << std::endl;
                         bezier = nullptr;
                         break;
                     default:
                         break;
                     }
+                    output << "END" << std::endl;
                 }
                 break;
             case Geo::POLYLINE:
-                polyline = dynamic_cast<Geo::Polyline *>(geo);
+                polyline = dynamic_cast<const Geo::Polyline *>(geo);
                 if (polyline->empty())
                 {
-                    break;
+                    continue;
                 }
+                output << "POLYLINE" << std::endl;
                 for (const Geo::Point &point : *polyline)
                 {
-                    array.append(point.coord().x);
-                    array.append(point.coord().y);
+                    output << point.coord().x << ',' << point.coord().y << ',';
                 }
-                obj2.insert("shape", array);
-                polyline_objs.append(obj2);
+                output.seekp(-1, std::ios_base::cur);
+                output << std::endl;
                 polyline = nullptr;
                 break;
             case Geo::Type::BEZIER:
-                bezier = dynamic_cast<Geo::Bezier *>(geo);
+                bezier = dynamic_cast<const Geo::Bezier *>(geo);
                 if (bezier->empty())
                 {
-                    break;
+                    continue;
                 }
+                output << "BEZIER" << std::endl;
+                output << bezier->order();
                 for (const Geo::Point &point : *bezier)
                 {
-                    array.append(point.coord().x);
-                    array.append(point.coord().y);
+                    output << ',' << point.coord().x << ',' << point.coord().y;
                 }
-                obj2.insert("shape", array);
-                obj2.insert("order", static_cast<int>(bezier->order()));
-                bezier_objs.append(obj2);
+                output << std::endl;
                 bezier = nullptr;
                 break;
             default:
                 break;
             }
+            output << "END" << std::endl;
         }
-        
-        container_group.insert("Text", text_objs);
-        container_group.insert("ContainerGroup", container_objs);
-        container_group.insert("CircleContainerGroup", circlecontainer_objs);
-        container_group.insert("LinkGroup", link_objs);
-        container_group.insert("PolylineGroup", polyline_objs);
-        container_group.insert("BezierGroup", bezier_objs);
-        container_group.insert("LayerName", group.name);
 
-        obj.insert(std::to_string(index++).c_str(), container_group);
+        output << "END" << std::endl;
     }
-    obj.insert("ContainerGroupCount", index);
-
-    QJsonDocument doc;
-    doc.setObject(obj);
-    QFile file(path);
-    file.open(QIODevice::WriteOnly);
-    file.write(doc.toJson());
-    file.close();
+    output.close();
 }
 
 void File::write_plt(const std::string &path, const Graph *graph)
 {
-    Text *text = nullptr;
-    Container *container = nullptr;
-    CircleContainer *circlecontainer = nullptr;
-    Geo::Polyline *polyline = nullptr;
-    Geo::Bezier *bezier = nullptr;
+    const Text *text = nullptr;
+    const Container *container = nullptr;
+    const CircleContainer *circlecontainer = nullptr;
+    const Geo::Polyline *polyline = nullptr;
+    const Geo::Bezier *bezier = nullptr;
 
     std::ofstream output(path);
     output << "IN;PA;SP1;" << std::endl;
     for (const ContainerGroup &group : graph->container_groups())
     {
-        for (Geo::Geometry *geo : group)
+        for (const Geo::Geometry *geo : group)
         {
             switch (geo->type())
             {
             case Geo::Type::TEXT:
-                text = dynamic_cast<Text *>(geo);
+                text = dynamic_cast<const Text *>(geo);
                 output << "PU" << text->center().coord().x << ',' << text->center().coord().y << ";PD";
                 output << ";LB" << text->text().toStdString() << ';' << std::endl;
                 text = nullptr;
                 break;
             case Geo::Type::CONTAINER:
-                container = dynamic_cast<Container *>(geo);
+                container = dynamic_cast<const Container *>(geo);
                 output << "PU" << container->shape().front().coord().x << ',' << container->shape().front().coord().y << ";PD";
                 for (const Geo::Point &point : container->shape())
                 {
@@ -298,7 +233,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 container = nullptr;
                 break;
             case Geo::Type::CIRCLECONTAINER:
-                circlecontainer = dynamic_cast<CircleContainer *>(geo);
+                circlecontainer = dynamic_cast<const CircleContainer *>(geo);
                 output << "PA" << circlecontainer->center().coord().x << ',' << circlecontainer->center().coord().y << ';';
                 output << "CI" << circlecontainer->radius() << ';';
                 if (circlecontainer->text().isEmpty())
@@ -314,18 +249,18 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 break;
             case Geo::Type::COMBINATION:
                 output << "Block;" << std::endl;
-                for (Geo::Geometry *item : *dynamic_cast<Combination *>(geo))
+                for (Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
                 {
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        text = dynamic_cast<Text *>(geo);
+                        text = dynamic_cast<const Text *>(geo);
                         output << "PU" << text->center().coord().x << ',' << text->center().coord().y << ";PD";
                         output << ";LB" << text->text().toStdString() << ';' << std::endl;
                         text = nullptr;
                         break;
                     case Geo::Type::CONTAINER:
-                        container = dynamic_cast<Container *>(item);
+                        container = dynamic_cast<const Container *>(item);
                         output << "PU" << container->shape().front().coord().x << ',' << container->shape().front().coord().y << ";PD";
                         for (const Geo::Point &point : container->shape())
                         {
@@ -341,7 +276,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         container = nullptr;
                         break;
                     case Geo::Type::CIRCLECONTAINER:
-                        circlecontainer = dynamic_cast<CircleContainer *>(item);
+                        circlecontainer = dynamic_cast<const CircleContainer *>(item);
                         output << "PU" << circlecontainer->center().coord().x << ',' << circlecontainer->center().coord().y << ';';
                         output << "CI" << circlecontainer->radius() << ';';
                         if (circlecontainer->text().isEmpty())
@@ -356,7 +291,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         circlecontainer = nullptr;
                         break;
                     case Geo::Type::POLYLINE:
-                        polyline = dynamic_cast<Geo::Polyline *>(item);
+                        polyline = dynamic_cast<const Geo::Polyline *>(item);
                         if (polyline->empty())
                         {
                             break;
@@ -371,12 +306,12 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         polyline = nullptr;
                         break;
                     case Geo::Type::BEZIER:
-                        bezier = dynamic_cast<Geo::Bezier *>(item);
+                        bezier = dynamic_cast<const Geo::Bezier *>(item);
                         if (bezier->empty())
                         {
                             break;
                         }
-                        bezier->update_shape();
+                        const_cast<Geo::Bezier *>(bezier)->update_shape();
                         output << "PU" << bezier->front().coord().x << ',' << bezier->front().coord().y << ";PD";
                         for (const Geo::Point &point : bezier->shape())
                         {
@@ -393,7 +328,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 output << "BlockEnd;" << std::endl;
                 break;
             case Geo::Type::POLYLINE:
-                polyline = dynamic_cast<Geo::Polyline *>(geo);
+                polyline = dynamic_cast<const Geo::Polyline *>(geo);
                 if (polyline->empty())
                 {
                     break;
@@ -408,12 +343,12 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 polyline = nullptr;
                 break;
             case Geo::Type::BEZIER:
-                bezier = dynamic_cast<Geo::Bezier *>(geo);
+                bezier = dynamic_cast<const Geo::Bezier *>(geo);
                 if (bezier->empty())
                 {
                     break;
                 }
-                bezier->update_shape();
+                const_cast<Geo::Bezier *>(bezier)->update_shape();
                 output << "PU" << bezier->front().coord().x << ',' << bezier->front().coord().y << ";PD";
                 for (const Geo::Point &point : bezier->shape())
                 {
@@ -436,8 +371,8 @@ void File::write(const QString &path, const Graph *graph, const FileType type)
 {
     switch (type)
     {
-    case FileType::JSON:
-        write_json(path, graph);
+    case FileType::DSV:
+        write_dsv(path.toLocal8Bit().toStdString(), graph);
         break;
     case FileType::PLT:
         write_plt(path.toLocal8Bit().toStdString(), graph);

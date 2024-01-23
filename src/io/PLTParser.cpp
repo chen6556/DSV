@@ -1,7 +1,6 @@
 #include "io/PLTParser.hpp"
 #include "io/Parser/ParserGen2.hpp"
 #include "io/GlobalSetting.hpp"
-#include "io/TextEncoding.hpp"
 #include <sstream>
 
 
