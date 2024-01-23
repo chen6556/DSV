@@ -1,8 +1,7 @@
 #include "io/RS274DParser.hpp"
 #include "base/Geometry.hpp"
 #include "draw/Container.hpp"
-#include "io/Action.hpp"
-#include "io/Parser.hpp"
+#include "io/Parser/ParserGen2.hpp"
 #include "io/GlobalSetting.hpp"
 #include <sstream>
 #include <string>
@@ -145,7 +144,7 @@ Importer importer;
 
 
 // 分隔符设置 '*'
-Parser<bool> blank = ch_p(' ') | ch_p('\t') | ch_p('\v');
+Parser<char> blank = ch_p(' ') | ch_p('\t') | ch_p('\v');
 Parser<char> separator = ch_p('*');
 
 Parser<bool> skip_cmd = ((ch_p('H') >> int_p()) | ch_p('Q')) >> !separator;
@@ -160,9 +159,9 @@ Action<void> set_mm_unit_a(&importer, &Importer::set_unit_mm);
 Action<void> set_mil_unit_a(&importer, &Importer::set_unit_hectomil);
 
 Parser<std::string> set_mm_unit = str_p("G71")[set_mm_unit_a];
-Parser<bool> set_mil_unit = (str_p("G72") | str_p("G70"))[set_mil_unit_a];
+Parser<std::string> set_mil_unit = (str_p("G72") | str_p("G70"))[set_mil_unit_a];
 
-Parser<bool> set_unit = (set_mm_unit | set_mil_unit) >> separator;
+Parser<std::string> set_unit = (set_mm_unit | set_mil_unit) >> separator;
 
 // 下刀提刀，下笔提笔
 Action<void> knife_down_a(&importer, &Importer::knife_down);
@@ -171,16 +170,16 @@ Action<void> pen_down_a(&importer, &Importer::pen_down);
 Action<void> pen_up_a(&importer, &Importer::pen_up);
 
 Parser<std::string> knife_down = str_p("M14")[knife_down_a];
-Parser<bool> knife_up = (str_p("M15") | str_p("M19"))[knife_up_a];
-Parser<bool> pen_down = (str_p("D1") | str_p("D01"))[pen_down_a];
-Parser<bool> pen_up = (str_p("D2") | str_p("D02"))[pen_up_a];
+Parser<std::string> knife_up = (str_p("M15") | str_p("M19"))[knife_up_a];
+Parser<std::string> pen_down = (str_p("D1") | str_p("D01"))[pen_down_a];
+Parser<std::string> pen_up = (str_p("D2") | str_p("D02"))[pen_up_a];
 
-Parser<bool> pen_move = (knife_down | knife_up | pen_down | pen_up);
+Parser<std::string> pen_move = (knife_down | knife_up | pen_down | pen_up);
 
 // 插值方式(线型?) 目前只有线性
 Parser<std::string> linear = str_p("G01");
 
-Parser<bool> interp = (linear) >> separator;
+Parser<std::string> interp = (linear) >> separator;
 
 // 圆
 Action<void> circle20_a(&importer, &Importer::draw_cricle_20);
@@ -191,35 +190,35 @@ Action<void> circle40_a(&importer, &Importer::draw_cricle_40);
 // Parser<std::string> circle00 = str_p("M0")[circle00_a];
 Parser<std::string> circle20 = str_p("M43")[circle20_a];
 Parser<std::string> circle10 = str_p("M44")[circle10_a];
-Parser<bool> circle30 = (str_p("M45") | str_p("M72"))[circle30_a];
+Parser<std::string> circle30 = (str_p("M45") | str_p("M72"))[circle30_a];
 Parser<std::string> circle40 = str_p("M73")[circle40_a];
 
-Parser<bool> circle = (circle10 | circle20 | circle30 | circle40) >> separator;
+Parser<std::string> circle = (circle10 | circle20 | circle30 | circle40) >> separator;
 
 // 文字处理
 Action<std::string> a_text(&importer, &Importer::store_text);
-Parser<bool> text = confix_p(str_p("M31*"), (*anychar_p())[a_text], separator);
-Parser<bool> skip_text = confix_p(str_p("M20*"), *anychar_p(), separator);
+Parser<std::string> text = confix_p(str_p("M31*"), (*anychar_p())[a_text], separator);
+Parser<std::string> skip_text = confix_p(str_p("M20*"), *anychar_p(), separator);
 
 // 步骤
 Parser<bool> steps = ch_p('N') >> int_p() >> separator;
 // 文件终止
-Parser<bool> end = str_p("M0") >> separator;
+Parser<std::string> end = str_p("M0") >> separator;
 // 未知命令
 Action<std::string> a_unkown(&importer, &Importer::print_symbol);
 
-Parser<bool> unkown_cmds = confix_p(alphaa_p(), (*anychar_p())[a_unkown], separator) - end;
+Parser<std::string> unkown_cmds = confix_p(alphaa_p(), (*anychar_p())[a_unkown], separator) - end;
 
 Parser<bool> cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | text | skip_text | blank | skip_cmd | separator | unkown_cmds);
 
-Parser<bool> table_start = str_p("N,0001") >> eol_p();
-Parser<bool> rest_of_line = *(anychar_p() - eol_p());
-Parser<bool> unknown_gap_line = rest_of_line >> eol_p();
-Parser<bool> unknown_gap = *(unknown_gap_line - table_start);
-Parser<bool> table_line = rest_of_line >> eol_p();
+Parser<std::string> table_start = str_p("N,0001") >> eol_p();
+Parser<std::string> rest_of_line = *(anychar_p() - eol_p());
+Parser<std::string> unknown_gap_line = rest_of_line >> eol_p();
+Parser<std::string> unknown_gap = *(unknown_gap_line - table_start);
+Parser<std::string> table_line = rest_of_line >> eol_p();
 Parser<bool> position_line = str_p("P,") >> int_p() >> ch_p(',') >> int_p() >> rest_of_line >> eol_p();
 Parser<bool> text_line = str_p("D,") >> int_p() >> ch_p(',') >> rest_of_line >> eol_p();
-Parser<bool> table_end = str_p("L0*") >> !eol_p();
+Parser<std::string> table_end = str_p("L0*") >> !eol_p();
 Parser<bool> table = confix_p(table_start, *(text_line | position_line | table_line), table_end);
 
 Parser<bool> rs274 = cmd >> !end >> *(anychar_p() - table_start) >> !table;

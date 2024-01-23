@@ -1,0 +1,7 @@
+The DSV repository and source distributions bundle several libraries that are
+compatibly licensed.  We list these here.
+
+Name: ParserCombinator
+Files: inc/io/Parser/*
+License: MIT
+  For license text, see inc/io/Parser/LICENSE

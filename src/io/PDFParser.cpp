@@ -1,5 +1,5 @@
 #include "io/PDFParser.hpp"
-#include "io/Parser.hpp"
+#include "io/Parser/ParserGen2.hpp"
 #include "io/GlobalSetting.hpp"
 #include <sstream>
 #include <QStringList>
@@ -732,38 +732,38 @@ Action<void> Tm_a(&importer, &Importer::Tm);
 Action<std::string> key_a(&importer, &Importer::store_key);
 Action<std::string> dict_a(&importer, &Importer::analyse_dict);
 
-Parser<bool> end = eol_p() | ch_p(' ');
+Parser<char> end = eol_p() | ch_p(' ');
 Parser<char> space = ch_p(' ');
-Parser<bool> CS = str_p("CS")[CS_a] >> end;
-Parser<bool> cs = str_p("cs")[cs_a] >> end;
-Parser<bool> SCN = str_p("SCN")[SCN_a] >> end;
-Parser<bool> G = ch_p('G')[G_a] >> end;
-Parser<bool> g = ch_p('g')[g_a] >> end;
-Parser<bool> RG = str_p("RG")[RG_a] >> end;
-Parser<bool> rg = str_p("rg")[rg_a] >> end;
-Parser<bool> K = ch_p('K')[K_a] >> end;
-Parser<bool> k = ch_p('k')[k_a] >> end;
-Parser<bool> cm = str_p("cm")[cm_a] >> end;
-Parser<bool> Q = ch_p('Q')[Q_a] >> end;
-Parser<bool> q = ch_p('q')[q_a] >> end;
-Parser<bool> m = ch_p('m')[m_a] >> end;
-Parser<bool> l = ch_p('l')[l_a] >> end;
-Parser<bool> c = ch_p('c')[c_a] >> end;
-Parser<bool> v = ch_p('v') >> end;
-Parser<bool> S = ch_p('S')[S_a] >> end;
-Parser<bool> s = ch_p('s')[s_a] >> end;
-Parser<bool> re = str_p("re")[re_a] >> end;
-Parser<bool> h = ch_p('h')[h_a] >> end;
-Parser<bool> W8 = str_p("W*")[W8_a] >> end;
-Parser<bool> B = ch_p('B') >> end;
-Parser<bool> f = ch_p('f') >> end;
+Parser<std::string> CS = str_p("CS")[CS_a] >> end;
+Parser<std::string> cs = str_p("cs")[cs_a] >> end;
+Parser<std::string> SCN = str_p("SCN")[SCN_a] >> end;
+Parser<std::string> G = ch_p('G')[G_a] >> end;
+Parser<std::string> g = ch_p('g')[g_a] >> end;
+Parser<std::string> RG = str_p("RG")[RG_a] >> end;
+Parser<std::string> rg = str_p("rg")[rg_a] >> end;
+Parser<std::string> K = ch_p('K')[K_a] >> end;
+Parser<std::string> k = ch_p('k')[k_a] >> end;
+Parser<std::string> cm = str_p("cm")[cm_a] >> end;
+Parser<std::string> Q = ch_p('Q')[Q_a] >> end;
+Parser<std::string> q = ch_p('q')[q_a] >> end;
+Parser<std::string> m = ch_p('m')[m_a] >> end;
+Parser<std::string> l = ch_p('l')[l_a] >> end;
+Parser<std::string> c = ch_p('c')[c_a] >> end;
+Parser<std::string> v = ch_p('v') >> end;
+Parser<std::string> S = ch_p('S')[S_a] >> end;
+Parser<std::string> s = ch_p('s')[s_a] >> end;
+Parser<std::string> re = str_p("re")[re_a] >> end;
+Parser<std::string> h = ch_p('h')[h_a] >> end;
+Parser<std::string> W8 = str_p("W*")[W8_a] >> end;
+Parser<std::string> B = ch_p('B') >> end;
+Parser<std::string> f = ch_p('f') >> end;
 
-Parser<bool> BT = str_p("BT")[BT_a] >> end;
-Parser<bool> ET = str_p("ET")[ET_a] >> end;
-Parser<bool> Tm = str_p("Tm")[Tm_a] >> end;
-Parser<bool> TL = str_p("TL") >> end;
+Parser<std::string> BT = str_p("BT")[BT_a] >> end;
+Parser<std::string> ET = str_p("ET")[ET_a] >> end;
+Parser<std::string> Tm = str_p("Tm")[Tm_a] >> end;
+Parser<std::string> TL = str_p("TL") >> end;
 
-Parser<bool> order = cm | q | Q | m | l | v | CS | cs | c | G | RG | rg | K | k | re | h |
+Parser<std::string> order = cm | q | Q | m | l | v | CS | cs | c | G | RG | rg | K | k | re | h |
             BT | ET | Tm | SCN | W8 | TL |
             ((ch_p('w') | ch_p('J') | ch_p('j') | ch_p('M') | ch_p('d') | str_p("ri") | ch_p('i') |
             str_p("gs") | ch_p('y') | str_p("f*") | ch_p('F') | str_p("B*") | str_p("b*") | ch_p('b') |
@@ -775,27 +775,27 @@ Parser<bool> order = cm | q | Q | m | l | v | CS | cs | c | G | RG | rg | K | k 
             S | s | B | f | g ;
 
 Parser<double> parameter = float_p()[parameter_a];
-Parser<bool> key = confix_p(ch_p('/'), (*alnum_p())[key_a], end);
-Parser<bool> text = confix_p(ch_p('<'), (*alnum_p())[text_a], ch_p('>'));
-Parser<std::vector<char>> annotation = pair(ch_p('['), eol_p());
+Parser<std::string> key = confix_p(ch_p('/'), (*alnum_p())[key_a], end);
+Parser<std::string> text = confix_p(ch_p('<'), (*alnum_p())[text_a], ch_p('>'));
+Parser<std::string> annotation = pair(ch_p('['), eol_p());
 Parser<bool> command = *(parameter | key | text | space) >> order;
-Parser<bool> array = pair(ch_p('['), ch_p(']')) >> !eol_p();
-Parser<bool> dict = pair(str_p("<<"), str_p(">>"))[dict_a] >> !eol_p();
-Parser<bool> code = confix_p(ch_p('<'), (+alnum_p())[encoding_a], ch_p('>'));
-Parser<bool> font_info = str_p("/CIDInit /ProcSet findresource begin") >> (+anychar_p() - (str_p("beginbfchar") >> eol_p()))
+Parser<std::string> array = pair(ch_p('['), ch_p(']')) >> !eol_p();
+Parser<std::string> dict = pair(str_p("<<"), str_p(">>"))[dict_a] >> !eol_p();
+Parser<std::string> code = confix_p(ch_p('<'), (+alnum_p())[encoding_a], ch_p('>'));
+Parser<std::string> font_info = str_p("/CIDInit /ProcSet findresource begin") >> (+anychar_p() - (str_p("beginbfchar") >> eol_p()))
     	                >> str_p("beginbfchar") >> end >> +(code >> end) >> !eol_p() >> str_p("endbfchar")
                         >> end >> (+anychar_p() - (str_p("end") >> eol_p())) >> +(str_p("end") >> eol_p());
-Parser<bool> xml = pair(str_p("<?xpacket"), str_p("<?xpacket end=\"w\"?>")) >> eol_p();
-Parser<bool> others = (+anychar_p() - str_p("endstream"));
+Parser<std::string> xml = pair(str_p("<?xpacket"), str_p("<?xpacket end=\"w\"?>")) >> eol_p();
+Parser<std::string> others = (+anychar_p() - str_p("endstream"));
 
-Parser<bool> stream_start = str_p("stream") >> eol_p();
-Parser<bool>	stream_end = str_p("endstream") >> eol_p();
+Parser<std::string> stream_start = str_p("stream") >> eol_p();
+Parser<std::string>	stream_end = str_p("endstream") >> eol_p();
 Parser<bool> stream = stream_start >> +(command | dict | float_p() | space | eol_p() | font_info | xml | others) >> stream_end;
 Parser<bool> object = (int_p()[object_a] >> space >> int_p() >> space >> str_p("obj") >> eol_p() >>
 					*(int_p() | (str_p("null") >> eol_p()) | dict | stream | array) >> str_p("endobj") >> eol_p());
 
 Parser<bool> head = str_p("%PDF-") >> float_p() >> (+anychar_p() - ch_p('%')) >> ch_p('%') >> (*anychar_p() - eol_p()) >> eol_p();
-Parser<bool> tail = (str_p("xref") >> *anychar_p())[end_a];
+Parser<std::string> tail = (str_p("xref") >> *anychar_p())[end_a];
 Parser<bool> pdf = head >> *(annotation | object | eol_p()) >> tail;
 
 

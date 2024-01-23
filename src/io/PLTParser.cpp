@@ -1,7 +1,6 @@
 #include "io/PLTParser.hpp"
-#include "io/Parser.hpp"
+#include "io/Parser/ParserGen2.hpp"
 #include "io/GlobalSetting.hpp"
-#include "io/TextEncoding.hpp"
 #include <sstream>
 
 
@@ -239,11 +238,11 @@ Action<void> in_a(&importer, &Importer::reset);
 Action<std::string> lb_a(&importer, &Importer::store_text);
 Action<void> end_a(&importer, &Importer::end);
 
-Parser<bool> separator = ch_p(',') | ch_p(' ');
-Parser<bool> end = +(ch_p(';') | ch_p('\n') | eol_p());
+Parser<char> separator = ch_p(',') | ch_p(' ');
+Parser<std::string> end = +(ch_p(';') | ch_p('\n') | eol_p());
 Parser<double> parameter = float_p()[parameter_a];
 Parser<bool> coord = float_p()[x_coord_a] >> separator >> float_p()[y_coord_a];
-Parser<bool> in = str_p("IN")[in_a] >> end;
+Parser<std::string> in = str_p("IN")[in_a] >> end;
 Parser<bool> pu = str_p("PU")[pu_a] >> !list(coord, separator) >> end;
 Parser<bool> pd = str_p("PD") >> !list(coord, separator) >> end;
 Parser<bool> pa = str_p("PA")[pa_a] >> !list(coord, separator) >> end;
@@ -253,11 +252,11 @@ Parser<bool> ci = (str_p("CI") >> parameter >> !parameter)[ci_a] >> end;
 Parser<bool> aa = (str_p("AA") >> coord >> separator >> parameter >> !parameter)[aa_a] >> end;
 Parser<bool> ar = (str_p("AR") >> coord >> separator >> parameter >> !parameter)[ar_a] >> end;
 
-Parser<bool> unkown_cmds = confix_p(alphaa_p() | ch_p(28), *anychar_p(), end);
-Parser<bool> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], end);
+Parser<std::string> unkown_cmds = confix_p(alphaa_p() | ch_p(28), *anychar_p(), end);
+Parser<std::string> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], end);
 Parser<bool> all_cmds = in | pu | pd | pa | pr | sp | ci | aa | ar | lb | unkown_cmds;
 
-Parser<bool> dci = confix_p(ch_p(27), *anychar_p(), end);
+Parser<std::string> dci = confix_p(ch_p(27), *anychar_p(), end);
 Parser<bool> plt = (*(all_cmds | dci))[end_a];
 
 
