@@ -689,6 +689,11 @@ void ContainerGroup::append(Text *text)
     _containers.push_back(text);
 }
 
+void ContainerGroup::append(Geo::Geometry *object)
+{
+    _containers.push_back(object);
+}
+
 void ContainerGroup::insert(const size_t index, Container *container)
 {
     _containers.insert(_containers.begin() + index, container);
@@ -717,6 +722,11 @@ void ContainerGroup::insert(const size_t index, Geo::Bezier *bezier)
 void ContainerGroup::insert(const size_t index, Text *text)
 {
     _containers.insert(_containers.begin() + index, text);
+}
+
+void ContainerGroup::insert(const size_t index, Geo::Geometry *object)
+{
+    _containers.insert(_containers.begin() + index, object);
 }
 
 std::vector<Geo::Geometry *>::iterator ContainerGroup::remove(const size_t index)
@@ -845,34 +855,19 @@ void Combination::append(Combination *combination)
 {
     while (!combination->empty())
     {
-        append(combination->pop_back());
+        ContainerGroup::append(combination->pop_back());
     }
 }
 
 void Combination::append(Geo::Geometry *geo)
 {
-    switch (geo->type())
+    if (geo->type() == Geo::Type::COMBINATION)
     {
-    case Geo::Type::TEXT:
-        ContainerGroup::append(dynamic_cast<Text *>(geo));
-        break;
-    case Geo::Type::CONTAINER:
-        ContainerGroup::append(dynamic_cast<Container *>(geo));
-        break;
-    case Geo::Type::CIRCLECONTAINER:
-        ContainerGroup::append(dynamic_cast<CircleContainer *>(geo));
-        break;
-    case Geo::Type::COMBINATION:
         append(dynamic_cast<Combination *>(geo));
-        break;
-    case Geo::Type::POLYLINE:
-        ContainerGroup::append(dynamic_cast<Geo::Polyline *>(geo));
-        break;
-    case Geo::Type::BEZIER:
-        ContainerGroup::append(dynamic_cast<Geo::Bezier *>(geo));
-        break;
-    default:
-        break;
+    }
+    else
+    {
+        ContainerGroup::append(geo);
     }
 }
 

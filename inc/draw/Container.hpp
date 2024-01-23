@@ -207,6 +207,8 @@ public:
 
     void append(Text *text);
 
+    void append(Geo::Geometry *object);
+
     void insert(const size_t index, Container *container);
 
     void insert(const size_t index, CircleContainer *container);
@@ -218,6 +220,8 @@ public:
     void insert(const size_t index, Geo::Bezier *bezier);
 
     void insert(const size_t index, Text *text);
+
+    void insert(const size_t index, Geo::Geometry *object);
 
     std::vector<Geo::Geometry *>::iterator remove(const size_t index);
 
