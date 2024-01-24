@@ -14,14 +14,13 @@
 #include <qpdf/QPDF.hh>
 #include <qpdf/QPDFWriter.hh>
 #include "io/GlobalSetting.hpp"
- 
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), _setting(new Setting(this))
 {
     ui->setupUi(this);
     init();
-    load_settings();
 }
 
 MainWindow::~MainWindow()
@@ -42,6 +41,7 @@ void MainWindow::init()
 {
     setWindowIcon(QIcon("./DSV2.ico"));
     setAcceptDrops(true);
+    load_settings();
 
     _painter.resize(800, 600);
     ui->horizontalLayout->addWidget(&_painter);

@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1056</width>
-    <height>548</height>
+    <width>1008</width>
+    <height>630</height>
    </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>768</width>
+    <height>480</height>
+   </size>
   </property>
   <property name="font">
    <font>
@@ -58,6 +64,12 @@
        <string notr="true">color:rgb(230, 230, 230);</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>3</number>
+       </property>
        <item>
         <widget class="QLabel" name="current_tool">
          <property name="maximumSize">
@@ -78,6 +90,12 @@
        </item>
        <item>
         <widget class="QPushButton" name="view_btn">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>25</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>10</pointsize>
@@ -105,6 +123,12 @@ QPushButton:pressed
        </item>
        <item>
         <widget class="QPushButton" name="line_btn">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>25</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>10</pointsize>
@@ -132,6 +156,12 @@ QPushButton:pressed
        </item>
        <item>
         <widget class="QPushButton" name="rect_btn">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>25</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>10</pointsize>
@@ -159,6 +189,12 @@ QPushButton:pressed
        </item>
        <item>
         <widget class="QPushButton" name="circle_btn">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>25</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>10</pointsize>
@@ -188,6 +224,18 @@ QPushButton:pressed
         <layout class="QHBoxLayout" name="horizontalLayout_4">
          <item>
           <widget class="QPushButton" name="curve_btn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>75</width>
+             <height>16777215</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>10</pointsize>
@@ -221,6 +269,18 @@ QPushButton:pressed
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>34</width>
+             <height>16777215</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>10</pointsize>
@@ -253,6 +313,12 @@ QPushButton:pressed
        </item>
        <item>
         <widget class="QPushButton" name="text_btn">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>25</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>10</pointsize>
@@ -280,6 +346,12 @@ QPushButton:pressed
        </item>
        <item>
         <widget class="QPushButton" name="connect_btn">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>25</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>10</pointsize>
@@ -307,6 +379,12 @@ QPushButton:pressed
        </item>
        <item>
         <widget class="QPushButton" name="combinate_btn">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>25</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>10</pointsize>
@@ -334,6 +412,12 @@ QPushButton:pressed
        </item>
        <item>
         <widget class="QPushButton" name="split_btn">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>25</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>10</pointsize>
@@ -361,6 +445,12 @@ QPushButton:pressed
        </item>
        <item>
         <widget class="QCheckBox" name="to_all_layers">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>21</height>
+          </size>
+         </property>
          <property name="font">
           <font>
            <pointsize>10</pointsize>
@@ -381,6 +471,18 @@ QPushButton:pressed
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
           <widget class="QPushButton" name="rotate_btn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>67</width>
+             <height>16777215</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>10</pointsize>
@@ -408,6 +510,18 @@ QPushButton:pressed
          </item>
          <item>
           <widget class="QSpinBox" name="rotate_angle">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>42</width>
+             <height>16777215</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>10</pointsize>
@@ -442,6 +556,12 @@ QPushButton:pressed
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
           <widget class="QPushButton" name="flipx_btn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>10</pointsize>
@@ -469,6 +589,12 @@ QPushButton:pressed
          </item>
          <item>
           <widget class="QPushButton" name="flipy_btn">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>25</height>
+            </size>
+           </property>
            <property name="font">
             <font>
              <pointsize>10</pointsize>
@@ -519,7 +645,7 @@ QPushButton:pressed
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1056</width>
+     <width>1008</width>
      <height>22</height>
     </rect>
    </property>
