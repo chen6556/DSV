@@ -16,7 +16,6 @@ private:
     std::vector<double> _parameters;
     std::string _text;
     double _temp = 0;
-    size_t _group_index = 0;
     bool _is_combination = false;
 
 public:
@@ -44,10 +43,6 @@ public:
     void store_text(const std::string &text);
 
     void store_group();
-
-    void next_group();
-
-    void end();
 
 
     void load_graph(Graph *g);
