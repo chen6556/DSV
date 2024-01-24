@@ -327,7 +327,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 
 void MainWindow::dropEvent(QDropEvent *event)
 {
-    const QString suffixs = "json JSON pdf PDF plt PLT";
+    const QString suffixs = "dsv DSV pdf PDF plt PLT cut CUT";
     QFileInfo file_info(event->mimeData()->urls().front().toLocalFile());
     if( file_info.isFile() && suffixs.contains(file_info.suffix()))
     {
@@ -500,7 +500,7 @@ void MainWindow::open_file(const QString &path)
             _file_type = "PDF: (*.pdf *.PDF)";
         }
     }
-    else if(path.endsWith(".cut"))
+    else if(path.endsWith(".cut") || path.endsWith(".CUT"))
     {
 
         std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
