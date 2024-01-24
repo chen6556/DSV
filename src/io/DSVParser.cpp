@@ -155,6 +155,8 @@ void Importer::end()
 {
     _group_index = 0;
     _is_combination = false;
+    _parameters.clear();
+    _text.clear();
 }
 
 
@@ -167,6 +169,8 @@ void Importer::reset()
 {
     _group_index = 0;
     _is_combination = false;
+    _parameters.clear();
+    _text.clear();
 }
 
 
