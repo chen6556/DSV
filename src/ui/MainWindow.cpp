@@ -4,6 +4,7 @@
 #include "io/PLTParser.hpp"
 #include "io/PDFParser.hpp"
 #include "io/RS274DParser.hpp"
+#include "io/DSVParser.hpp"
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QJsonObject>
@@ -113,7 +114,7 @@ void MainWindow::open_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;JSON: (*.json *.JSON);;PLT: (*.plt *.PLT);;PDF: (*.pdf *.PDF);;RS274D: (*.cut *.CUT)", &_file_type);
+    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;PLT: (*.plt *.PLT);;PDF: (*.pdf *.PDF);;RS274D: (*.cut *.CUT)", &_file_type);
     open_file(path);
     delete dialog;
 }
@@ -141,18 +142,18 @@ void MainWindow::save_file()
         return;
     }
 
-    if (_info_labels[2]->text().isEmpty() || !(_info_labels[2]->text().toLower().endsWith(".json") 
+    if (_info_labels[2]->text().isEmpty() || !(_info_labels[2]->text().toLower().endsWith(".dsv") 
         || _info_labels[2]->text().toLower().endsWith(".plt")))
     {
         QFileDialog *dialog = new QFileDialog();
         dialog->setModal(true);
-        QString path = dialog->getSaveFileName(dialog, nullptr, _editer.path(), "JSON: (*.json);;PLT: (*.plt)");
+        QString path = dialog->getSaveFileName(dialog, nullptr, _editer.path(), "DSV: (*.dsv);;PLT: (*.plt)");
         if (!path.isEmpty())
         {
             bool flag = false;
-            if (path.toLower().endsWith(".json"))
+            if (path.toLower().endsWith(".dsv"))
             {
-                File::write(path, _editer.graph(), File::JSON);
+                File::write(path, _editer.graph(), File::DSV);
                 flag = true;
             }
             else if (path.toLower().endsWith(".plt"))
@@ -171,9 +172,9 @@ void MainWindow::save_file()
     }
     else
     {
-        if (_info_labels[2]->text().toLower().endsWith(".json"))
+        if (_info_labels[2]->text().toLower().endsWith(".dsv"))
         {
-            File::write(_info_labels[2]->text(), _editer.graph(), File::JSON);
+            File::write(_info_labels[2]->text(), _editer.graph(), File::DSV);
             _editer.reset_modified();
         }
         else if (_info_labels[2]->text().toLower().endsWith(".plt"))
@@ -187,15 +188,15 @@ void MainWindow::save_file()
 void MainWindow::auto_save()
 {
     if (!ui->auto_save->isChecked() || _editer.path().isEmpty() ||
-        !(_editer.path().toLower().endsWith(".json") || _editer.path().toLower().endsWith(".plt")))
+        !(_editer.path().toLower().endsWith(".dsv") || _editer.path().toLower().endsWith(".plt")))
     {
         return;
     }
     if (_editer.modified())
     {
-        if (_editer.path().toLower().endsWith(".json"))
+        if (_editer.path().toLower().endsWith(".dsv"))
         {
-            File::write(_editer.path(), _editer.graph(), File::JSON);
+            File::write(_editer.path(), _editer.graph(), File::DSV);
         }
         else if (_editer.path().toLower().endsWith(".plt"))
         {
@@ -213,12 +214,12 @@ void MainWindow::saveas_file()
     }
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
-    QString path = dialog->getSaveFileName(dialog, nullptr, _editer.path().isEmpty() ? "D:/output.json" : _editer.path(), "JSON: (*.json);;PLT: (*.plt)");
+    QString path = dialog->getSaveFileName(dialog, nullptr, _editer.path().isEmpty() ? "D:/output.dsv" : _editer.path(), "DSV: (*.dsv);;PLT: (*.plt)");
     if (!path.isEmpty())
     {
-        if (path.toLower().endsWith(".json"))
+        if (path.toLower().endsWith(".dsv"))
         {
-            File::write(path, _editer.graph(), File::JSON);
+            File::write(path, _editer.graph(), File::DSV);
         }
         else if (path.toLower().endsWith(".plt"))
         {
@@ -449,13 +450,15 @@ void MainWindow::open_file(const QString &path)
 
     _editer.delete_graph();
     Graph *g = new Graph;
-    if (path.endsWith(".json") || path.endsWith(".JSON"))
+    if (path.endsWith(".dsv") || path.endsWith(".DSV"))
     {
-        File::read(path, g);
+        std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
+        DSVParser::parse(file, g);
+        file.close();
         
         if (ui->remember_file_type->isChecked())
         {
-            _file_type = "JSON: (*.json *.JSON)";
+            _file_type = "DSV: (*.dsv *.DSV)";
         }
     }
     else if (path.endsWith(".plt") || path.endsWith(".PLT"))
