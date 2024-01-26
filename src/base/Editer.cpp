@@ -67,6 +67,7 @@ void Editer::load_graph(Graph *graph, const QString &path)
     if (graph != nullptr)
     {
         _graph = graph;
+        _current_group = 0;
         init();
         _file_path = path;   
     }
@@ -77,6 +78,7 @@ void Editer::load_graph(Graph *graph)
     if (graph != nullptr)
     {
         _graph = graph;
+        _current_group = 0;
         init();
         _file_path.clear();  
     }
@@ -88,12 +90,13 @@ void Editer::delete_graph()
     {
         delete _graph;
         _graph = nullptr;
+        _current_group = 0;
         _file_path.clear();
         while (!_backup.empty())
         {
             delete _backup.back();
             _backup.pop_back();
-        }   
+        }
     }
 }
 
