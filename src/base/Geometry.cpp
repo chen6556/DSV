@@ -584,27 +584,27 @@ std::vector<Point>::const_iterator Polyline::find(const Point &point) const
 
 void Polyline::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
-    std::for_each(_points.begin(), _points.end(), [&](Point &point){point.transform(a,b,c,d,e,f);});
+    std::for_each(_points.begin(), _points.end(), [=](Point &point){point.transform(a,b,c,d,e,f);});
 }
 
 void Polyline::transform(const double mat[6])
 {
-    std::for_each(_points.begin(), _points.end(), [&](Point &point){point.transform(mat);});
+    std::for_each(_points.begin(), _points.end(), [=](Point &point){point.transform(mat);});
 }
 
 void Polyline::translate(const double tx, const double ty)
 {
-    std::for_each(_points.begin(), _points.end(), [&](Point &point){point.translate(tx, ty);});
+    std::for_each(_points.begin(), _points.end(), [=](Point &point){point.translate(tx, ty);});
 }
 
 void Polyline::rotate(const double x, const double y, const double rad)
 {
-    std::for_each(_points.begin(), _points.end(), [&](Point &point){point.rotate(x, y, rad);});
+    std::for_each(_points.begin(), _points.end(), [=](Point &point){point.rotate(x, y, rad);});
 }
 
 void Polyline::scale(const double x, const double y, const double k)
 {
-    std::for_each(_points.begin(), _points.end(), [&](Point &point){point.scale(x, y, k);});
+    std::for_each(_points.begin(), _points.end(), [=](Point &point){point.scale(x, y, k);});
 }
 
 Polygon Polyline::convex_hull() const
@@ -613,7 +613,7 @@ Polygon Polyline::convex_hull() const
     std::sort(points.begin(), points.end(), [](const Point &a, const Point &b)
         {return a.coord().y < b.coord().y;});
     const Point origin(points.front());
-    std::for_each(points.begin(), points.end(), [&](Point &p){p -= origin;});
+    std::for_each(points.begin(), points.end(), [=](Point &p){p -= origin;});
     std::sort(points.begin() + 1, points.end(), [](const Point &a, const Point &b)
         {
             if (a.coord().x / a.length() != b.coord().x / b.length())
@@ -625,7 +625,7 @@ Polygon Polyline::convex_hull() const
                 return a.length() < b.length();
             }
         });
-    std::for_each(points.begin(), points.end(), [&](Point &p){p += origin;});
+    std::for_each(points.begin(), points.end(), [=](Point &p){p += origin;});
 
     std::vector<Point> hull(points.begin(), points.begin() + 2);
     size_t count = hull.size(), index = 0;
@@ -939,7 +939,7 @@ void AABBRect::set_height(const double value)
 
 void AABBRect::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
-    std::for_each(_points.begin(), _points.end(), [&](Point &point){point.transform(a,b,c,d,e,f);});
+    std::for_each(_points.begin(), _points.end(), [=](Point &point){point.transform(a,b,c,d,e,f);});
     if (_points[0].coord().x > _points[1].coord().x)
     {
         std::swap(_points[0].coord(), _points[1].coord());
@@ -955,7 +955,7 @@ void AABBRect::transform(const double a, const double b, const double c, const d
 
 void AABBRect::transform(const double mat[6])
 {
-    std::for_each(_points.begin(), _points.end(), [&](Point &point){point.transform(mat);});
+    std::for_each(_points.begin(), _points.end(), [=](Point &point){point.transform(mat);});
     if (_points[0].coord().x > _points[1].coord().x)
     {
         std::swap(_points[0].coord(), _points[1].coord());
@@ -971,17 +971,17 @@ void AABBRect::transform(const double mat[6])
 
 void AABBRect::translate(const double tx, const double ty)
 {
-    std::for_each(_points.begin(), _points.end(), [&](Point &point){point.translate(tx, ty);});
+    std::for_each(_points.begin(), _points.end(), [=](Point &point){point.translate(tx, ty);});
 }
 
 void AABBRect::rotate(const double x, const double y, const double rad)
 {
-    std::for_each(_points.begin(), _points.end(), [&](Point &point){point.rotate(x, y, rad);});
+    std::for_each(_points.begin(), _points.end(), [=](Point &point){point.rotate(x, y, rad);});
 }
 
 void AABBRect::scale(const double x, const double y, const double k)
 {
-    std::for_each(_points.begin(), _points.end(), [&](Point &point){point.scale(x, y, k);});
+    std::for_each(_points.begin(), _points.end(), [=](Point &point){point.scale(x, y, k);});
 }
 
 Polygon AABBRect::convex_hull() const

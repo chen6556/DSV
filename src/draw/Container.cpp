@@ -530,32 +530,32 @@ void ContainerGroup::clear()
 
 void ContainerGroup::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
-    std::for_each(_containers.begin(), _containers.end(), [&](Geo::Geometry *container)
+    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container)
                   { container->transform(a, b, c, d, e, f); });
 }
 
 void ContainerGroup::transform(const double mat[6])
 {
-    std::for_each(_containers.begin(), _containers.end(), [&](Geo::Geometry *container)
+    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container)
                   { container->transform(mat); });
 }
 
 void ContainerGroup::translate(const double tx, const double ty)
 {
-    std::for_each(_containers.begin(), _containers.end(), [&](Geo::Geometry *container)
+    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container)
                   { container->translate(tx, ty); });
 }
 
 void ContainerGroup::rotate(const double x, const double y, const double rad)
 {
-    std::for_each(_containers.begin(), _containers.end(), [&](Geo::Geometry *container)
+    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container)
                   { container->rotate(x, y, rad); });
 }
 
 void ContainerGroup::scale(const double x, const double y, const double k)
 {
     _ratio *= k;
-    std::for_each(_containers.begin(), _containers.end(), [&](Geo::Geometry *container)
+    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container)
                   { container->scale(x, y, k); });
 }
 
@@ -563,7 +563,7 @@ void ContainerGroup::rescale(const double x, const double y)
 {
     if (_ratio != 1)
     {
-        std::for_each(_containers.begin(), _containers.end(), [&](Geo::Geometry *c)
+        std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *c)
                       { c->scale(x, y, 1.0 / _ratio); });
         _ratio = 1;
     }
