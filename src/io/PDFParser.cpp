@@ -97,6 +97,7 @@ void Importer::G()
     _stroking_color[0] = _values.back();
 	_stroking_color[1] = _stroking_color[2] = _stroking_color[3] = 0;
 
+    _stroking_color_space = ColorSpace::Gray;
 	_values.clear();
 }
 
@@ -105,6 +106,7 @@ void Importer::g()
     _nonstroking_color[0] = _values.back();
 	_nonstroking_color[1] = _nonstroking_color[2] = _nonstroking_color[3] = 0;
 
+    _nonstroking_color_space = ColorSpace::Gray;
 	_values.clear();
 }
 
@@ -120,6 +122,7 @@ void Importer::RG()
     _stroking_color[2] = _values[2];
     _stroking_color[3] = 0;
 
+    _stroking_color_space = ColorSpace::RGB;
     _values.clear();
 }
 
@@ -135,6 +138,7 @@ void Importer::rg()
     _nonstroking_color[2] = _values[2];
     _nonstroking_color[3] = 0;
 
+    _nonstroking_color_space = ColorSpace::RGB;
     _values.clear();
 }
 
@@ -150,6 +154,7 @@ void Importer::K()
     _stroking_color[2] = _values[2];
     _stroking_color[3] = _values[3];
 
+    _stroking_color_space = ColorSpace::CMYK;
     _values.clear();
 }
 
@@ -165,6 +170,7 @@ void Importer::k()
     _nonstroking_color[2] = _values[2];
     _nonstroking_color[3] = _values[3];
 
+    _nonstroking_color_space = ColorSpace::CMYK;
     _values.clear();
 }
 
