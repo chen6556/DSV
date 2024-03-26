@@ -107,6 +107,8 @@ namespace Geo
 
         Point normalized() const;
 
+        Point vertical() const;
+
         const double length() const override;
 
         const bool empty() const override;
@@ -130,6 +132,8 @@ namespace Geo
         Polygon mini_bounding_rect() const override;
 
         Point operator*(const double k) const;
+
+        double operator*(const Point &point) const;
 
         Point operator+(const Point &point) const;
 
@@ -201,6 +205,8 @@ namespace Geo
         virtual void remove(const size_t index);
 
         virtual Point pop(const size_t index);
+
+        void flip();
 
         Point &front();
 
@@ -370,6 +376,8 @@ namespace Geo
         Polygon &operator=(const Polygon &polygon);
 
         Polygon *clone() const override;
+
+        void reorder_points(const bool cw = true);
 
         void append(const Point &point) override;
 
@@ -628,4 +636,11 @@ namespace Geo
 
     std::vector<Point> ear_cut_to_points(const Polygon &polygon);
 
+    bool offset(const Polyline &input, Polyline &result, const double distance);
+
+    bool offset(const Polygon &input, Polygon &result, const double distance);
+
+    bool offset(const Circle &input, Circle &result, const double distance);
+
+    bool offset(const AABBRect &input, AABBRect &result, const double distance);
 };

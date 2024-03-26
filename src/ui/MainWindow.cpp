@@ -533,6 +533,15 @@ void MainWindow::mirror()
     _painter.set_operation(Canvas::Operation::MIRROR);
 }
 
+void MainWindow::offset()
+{
+    if (_editer.offset(_editer.selected(), ui->offset_sbx->value()))
+    {
+        _painter.refresh_vbo();
+        _painter.update();
+    }
+}
+
 
 
 void MainWindow::to_array_page()

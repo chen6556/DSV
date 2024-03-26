@@ -146,10 +146,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents_2">
            <property name="geometry">
             <rect>
-             <x>0</x>
+             <x>-6</x>
              <y>0</y>
              <width>120</width>
-             <height>569</height>
+             <height>598</height>
             </rect>
            </property>
            <property name="maximumSize">
@@ -599,6 +599,12 @@ QPushButton:pressed
              <layout class="QHBoxLayout" name="horizontalLayout_2">
               <item>
                <widget class="QSpinBox" name="rotate_angle">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="font">
                  <font>
                   <pointsize>10</pointsize>
@@ -784,6 +790,73 @@ QPushButton:pressed
              </widget>
             </item>
             <item>
+             <layout class="QHBoxLayout" name="horizontalLayout_8">
+              <item>
+               <widget class="QDoubleSpinBox" name="offset_sbx">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: rgb(70, 70, 71);</string>
+                </property>
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
+                <property name="minimum">
+                 <double>-100000000000000005366162204393472.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>1000000000000000000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="offset_btn">
+                <property name="font">
+                 <font>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
+                </property>
+                <property name="text">
+                 <string>Offset</string>
+                </property>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
              <spacer name="verticalSpacer">
               <property name="orientation">
                <enum>Qt::Vertical</enum>
@@ -878,7 +951,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>-8</x>
+             <x>-12</x>
              <y>0</y>
              <width>106</width>
              <height>372</height>
@@ -958,6 +1031,12 @@ QPushButton:pressed
              <layout class="QHBoxLayout" name="horizontalLayout_5">
               <item>
                <widget class="QSpinBox" name="array_x_item">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>40</width>
@@ -1022,6 +1101,12 @@ QPushButton:pressed
              <layout class="QHBoxLayout" name="horizontalLayout_6">
               <item>
                <widget class="QSpinBox" name="array_y_item">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>40</width>
@@ -1105,6 +1190,12 @@ QPushButton:pressed
             </item>
             <item>
              <widget class="QDoubleSpinBox" name="array_x_space">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
@@ -1153,6 +1244,12 @@ QPushButton:pressed
             </item>
             <item>
              <widget class="QDoubleSpinBox" name="array_y_space">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
@@ -1233,6 +1330,12 @@ QPushButton:pressed
              <layout class="QHBoxLayout" name="horizontalLayout_7">
               <item>
                <widget class="QSpinBox" name="array_item">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>40</width>
@@ -1779,6 +1882,22 @@ color:rgb(230, 230, 230);</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>offset_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>offset()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>473</x>
+     <y>600</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -1798,5 +1917,6 @@ color:rgb(230, 230, 230);</string>
   <slot>ring_array()</slot>
   <slot>close_file()</slot>
   <slot>show_data_panel()</slot>
+  <slot>offset()</slot>
  </slots>
 </ui>

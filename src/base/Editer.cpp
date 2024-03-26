@@ -888,6 +888,59 @@ bool Editer::mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *lin
     return true;
 }
 
+bool Editer::offset(std::list<Geo::Geometry *> objects, const double distance)
+{
+    store_backup();
+    const size_t count = _graph->container_group(_current_group).size();
+    Container *container = nullptr;
+    CircleContainer *circlecontainer = nullptr;
+    Geo::Polygon shape0;
+    Geo::Polyline shape1;
+    for (Geo::Geometry *object : objects)
+    {
+        switch (object->type())
+        {
+        case Geo::Type::CONTAINER:
+            container = dynamic_cast<Container *>(object);
+            if (Geo::offset(container->shape(), shape0, distance))
+            {
+                _graph->append(new Container(container->text(), shape0), _current_group);
+            }
+            break;
+        case Geo::Type::CIRCLECONTAINER:
+            circlecontainer = dynamic_cast<CircleContainer *>(object);
+            if (distance >= 0 || -distance < circlecontainer->radius())
+            {
+                _graph->append(new CircleContainer(circlecontainer->text(),
+                    circlecontainer->center().coord().x, circlecontainer->center().coord().y,
+                    circlecontainer->radius() + distance), _current_group);
+            }
+            break;
+        case Geo::Type::POLYLINE:
+            if (Geo::offset(*dynamic_cast<const Geo::Polyline *>(object), shape1, distance))
+            {
+                _graph->append(shape1.clone(), _current_group);
+            }
+            break;
+        default:
+            break;
+        }
+        object->is_selected = false;
+    }
+
+    if (count == _graph->container_group(_current_group).size())
+    {
+        delete _backup.back();
+        _backup.pop_back();
+        _graph->modified = true;
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
 
 
 bool Editer::line_array(int x, int y, double x_space, double y_space)

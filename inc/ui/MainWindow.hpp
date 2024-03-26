@@ -89,6 +89,8 @@ private slots:
 
     void mirror();
 
+    void offset();
+
 
     void to_array_page();
 

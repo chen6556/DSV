@@ -92,6 +92,8 @@ public:
 
     bool mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy);
 
+    bool offset(std::list<Geo::Geometry *> objects, const double distance);
+
 
 
     bool line_array(int x, int y, double x_space, double y_space);
