@@ -1208,7 +1208,15 @@ void Polygon::append(const Point &point)
     }
     else
     {
-        Polyline::insert(size() - 1, point);
+        if (front() == back())
+        {
+            Polyline::insert(size() - 1, point);
+        }
+        else
+        {
+            Polyline::append(point);
+            Polyline::append(front());
+        }
     }
 }
 
@@ -1224,7 +1232,15 @@ void Polygon::append(const Polyline &polyline)
     }
     else
     {
-        Polyline::insert(size() - 1, polyline);
+        if (front() == back())
+        {
+            Polyline::insert(size() - 1, polyline);
+        }
+        else
+        {
+            Polyline::append(polyline);
+            Polyline::append(front());
+        }
     }
 }
 
@@ -1240,53 +1256,70 @@ void Polygon::append(std::vector<Point>::const_iterator begin, std::vector<Point
     }
     else
     {
-        Polyline::insert(size() - 1, begin, end);
+        if (front() == back())
+        {
+            Polyline::insert(size() - 1, begin, end);
+        }
+        else
+        {
+            Polyline::append(begin, end);
+            Polyline::append(front());
+        }
     }
 }
 
 void Polygon::insert(const size_t index, const Point &point)
 {
-    assert(index < size() - 1);
     Polyline::insert(index, point);
     if (index == 0)
     {
-        Polyline::remove(size() - 1);
-        Polyline::append(front());   
+        back() = front();
     }
 }
 
 void Polygon::insert(const size_t index, const Polyline &polyline)
 {
-    assert(index < size() - 1);
     Polyline::insert(index, polyline);
     if (index == 0)
     {
-        Polyline::remove(size() - 1);
-        Polyline::append(front());   
+        back() = front();
     }
 }
 
 void Polygon::insert(const size_t index, std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
 {
-    assert(index < size() - 1);
     Polyline::insert(index, begin, end);
     if (index == 0)
     {
-        Polyline::remove(size() - 1);
-        Polyline::append(front());   
+        back() = front();
     }
 }
 
 void Polygon::remove(const size_t index)
 {
-    assert(index < size() - 1);
     Polyline::remove(index);
+    if (index == 0)
+    {
+        back() = front();
+    }
+    else if (index == size())
+    {
+        front() == back();
+    }
 }
 
 Point Polygon::pop(const size_t index)
 {
-    assert(index < size() - 1);
-    return Polyline::pop(index);
+    Geo::Point point = Polyline::pop(index);
+    if (index == 0)
+    {
+        back() = front();
+    }
+    else if (index == size())
+    {
+        front() = back();
+    }
+    return point;
 }
 
 Polygon Polygon::operator+(const Point &point) const
@@ -2606,6 +2639,49 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
             points.emplace_back(temp[i] + (a + b).normalize() * (distance / std::sqrt((1 + a * b) / 2)));
         }
         result.append(points.cbegin(), points.cend());
+
+        std::vector<bool> error_edges;
+        for (size_t i = 1, count = result.size(); i < count; ++i)
+        {
+            error_edges.push_back((temp[i] - temp[i - 1]) * (result[i] - result[i - 1]) < 0);
+        }
+        for (size_t i = 0, edge_count = error_edges.size(), count = result.size(), of = 0, j = 0; i < edge_count; ++i)
+        {
+            if (error_edges[i])
+            {
+                j = i - of++;
+                if (error_edges[(i + 1) % edge_count])
+                {
+                    b = (temp[(i + 1) % (edge_count + 1)] - temp[i]).vertical().normalize() * distance;
+                    Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j],
+                        temp[i] + b, temp[(i + 1) % (edge_count + 1)] + b, a, true);
+                    result[j] = a;
+                    Geo::is_intersected(result[(j + 2) % count], result[(j + 3) % count],
+                        temp[i] + b, temp[(i + 1) % (edge_count + 1)] + b, a, true);
+                    result[(j + 2) % count] = a;
+                    result.remove((j + 1) % count--);
+                    ++i;
+                }
+                else
+                {
+                    Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j],
+                        result[(j + 1) % count], result[(j + 2) % count], a, true);
+                    result.remove((j + 1) % count);
+                    result[j] = a;
+                    --count;
+                }
+            }
+        }
+
+        for (size_t i = 0, count = result.size(); i < count; ++i)
+        {
+            if (std::isnan(result[i].coord().x) || std::isnan(result[i].coord().y))
+            {
+                result.remove(i--);
+                --count;
+            }
+        }
+        result.back() = result.front();
         return true;
     }
     else if (distance < 0)
@@ -2622,6 +2698,48 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
             points.emplace_back(temp[i] + (a + b).normalize() * (distance / std::sqrt((1 + a * b) / 2)));
         }
         result.append(points.cbegin(), points.cend());
+
+        std::vector<bool> error_edges;
+        for (size_t i = 1, count = result.size(); i < count; ++i)
+        {
+            error_edges.push_back((temp[i] - temp[i - 1]) * (result[i] - result[i - 1]) < 0);
+        }
+        for (size_t i = 0, edge_count = error_edges.size(), count = result.size(), of = 0, j = 0; i < edge_count; ++i)
+        {
+            if (error_edges[i])
+            {
+                j = i - of++;
+                if (error_edges[(i + 1) % edge_count])
+                {
+                    b = (temp[(i + 1) % (edge_count + 1)] - temp[i]).vertical().normalize() * distance;
+                    Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j],
+                        temp[i] + b, temp[(i + 1) % (edge_count + 1)] + b, a, true);
+                    result[j] = a;
+                    Geo::is_intersected(result[(j + 2) % count], result[(j + 3) % count],
+                        temp[i] + b, temp[(i + 1) % (edge_count + 1)] + b, a, true);
+                    result[(j + 2) % count] = a;
+                    result.remove((j + 1) % count--);
+                    ++i;
+                }
+                else
+                {
+                    Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j],
+                        result[(j + 1) % count], result[(j + 2) % count], a, true);
+                    result.remove((j + 1) % count--);
+                    result[j] = a;
+                }
+            }
+        }
+
+        for (size_t i = 0, count = result.size(); i < count; ++i)
+        {
+            if (std::isnan(result[i].coord().x) || std::isnan(result[i].coord().y))
+            {
+                result.remove(i--);
+                --count;
+            }
+        }
+        result.back() = result.front();
         return true;
     }
     else
