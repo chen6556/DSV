@@ -1180,9 +1180,9 @@ void Polygon::reorder_points(const bool cw)
     }
     
     double result = 0;
-    for (size_t i = 1, count = size(); i < count; ++i)
+    for (size_t i = 0, count = size() - 1; i < count; ++i)
     {
-        result += (operator[](i).coord().x * (operator[](i+1 != count ? i+1 : 0).coord().y - operator[](i-1).coord().y));
+        result += (operator[](i).coord().x * operator[](i + 1).coord().y - operator[](i + 1).coord().x * operator[](i).coord().y);
     }
     if (cw)
     {
@@ -1365,9 +1365,9 @@ const double Polygon::area() const
         return 0;
     }
     double result = 0;
-    for (size_t i = 1, count = size(); i < count; ++i)
+    for (size_t i = 0, count = size() - 1; i < count; ++i)
     {
-        result += (operator[](i).coord().x * (operator[](i+1 != count ? i+1 : 0).coord().y - operator[](i-1).coord().y));
+        result += (operator[](i).coord().x * operator[](i + 1).coord().y - operator[](i + 1).coord().x * operator[](i).coord().y);
     }
     return std::abs(result) / 2.0;
 }
@@ -2187,6 +2187,25 @@ const bool Geo::is_inside(const Point &point, const Point &point0, const Point &
 }
 
 
+const bool Geo::is_parallel(const Point &point0, const Point &point1, const Point &point2, const Point &point3)
+{
+    if (point0.coord().x == point1.coord().x && point2.coord().x == point3.coord().x)
+    {
+        return true;
+    }
+    else
+    {
+        return ((point0.coord().y - point1.coord().y) / (point0.coord().x - point1.coord().x)) ==
+            ((point2.coord().y - point3.coord().y) / (point2.coord().x - point3.coord().x));
+    }
+}
+
+const bool Geo::is_parallel(const Line &line0, const Line &line1)
+{
+    return Geo::is_parallel(line0.front(), line0.back(), line1.front(), line1.back());
+}
+
+
 const bool Geo::is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite)
 {
     const double a0 = point1.coord().y - point0.coord().y, 
@@ -2664,11 +2683,33 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
                 }
                 else
                 {
-                    Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j],
-                        result[(j + 1) % count], result[(j + 2) % count], a, true);
-                    result.remove((j + 1) % count);
-                    result[j] = a;
-                    --count;
+                    if (Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j],
+                        result[(j + 1) % count], result[(j + 2) % count], a, true))
+                    {
+                        result.remove((j + 1) % count--);
+                        result[j] = a;
+                    }
+                    else
+                    {
+                        b = (temp[i] - temp[i > 0 ? i - 1 : edge_count]).vertical().normalize() * distance;
+                        Geo::is_intersected(result[(j + 2) % count], result[(j + 3) % count],
+                            temp[i] + b, temp[i > 0 ? i - 1 : edge_count] + b, a, true);
+                        b = (temp[(i + 2) % (edge_count + 1)] - temp[(i + 1) % (edge_count + 1)]).vertical().normalize() * distance;
+                        Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j > 1 ? j - 2 : count - 2],
+                            temp[(i + 1) % (edge_count + 1)] + b, temp[(i + 2) % (edge_count + 1)] + b, b, true);
+
+                        if ((temp[(i + 2) % (edge_count + 1)] - temp[i > 0 ? i - 1 : edge_count]) * (a - b) < 0)
+                        {
+                            result[(j + 2) % count] = a;
+                        }
+                        else
+                        {
+                            result[j > 0 ? j - 1 : count - 1] = b;
+                        }
+
+                        result.remove((j + 1) % count--);
+                        result.remove(j % count--);
+                    }
                 }
             }
         }
@@ -2723,10 +2764,33 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
                 }
                 else
                 {
-                    Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j],
-                        result[(j + 1) % count], result[(j + 2) % count], a, true);
-                    result.remove((j + 1) % count--);
-                    result[j] = a;
+                    if (Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j],
+                        result[(j + 1) % count], result[(j + 2) % count], a, true))
+                    {
+                        result.remove((j + 1) % count--);
+                        result[j] = a;
+                    }
+                    else
+                    {
+                        b = (temp[i] - temp[i > 0 ? i - 1 : edge_count]).vertical().normalize() * distance;
+                        Geo::is_intersected(result[(j + 2) % count], result[(j + 3) % count],
+                            temp[i] + b, temp[i > 0 ? i - 1 : edge_count] + b, a, true);
+                        b = (temp[(i + 2) % (edge_count + 1)] - temp[(i + 1) % (edge_count + 1)]).vertical().normalize() * distance;
+                        Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j > 1 ? j - 2 : count - 2],
+                            temp[(i + 1) % (edge_count + 1)] + b, temp[(i + 2) % (edge_count + 1)] + b, b, true);
+
+                        if ((temp[(i + 2) % (edge_count + 1)] - temp[i > 0 ? i - 1 : edge_count]) * (a - b) < 0)
+                        {
+                            result[(j + 2) % count] = a;
+                        }
+                        else
+                        {
+                            result[j > 0 ? j - 1 : count - 1] = b;
+                        }
+
+                        result.remove((j + 1) % count--);
+                        result.remove(j % count--);
+                    }
                 }
             }
         }
