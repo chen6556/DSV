@@ -404,6 +404,18 @@ namespace Geo
         void operator-=(const Point &point);
 
         const double area() const;
+
+        size_t next_point_index(const size_t index) const;
+
+        const Point &next_point(const size_t index) const;
+
+        Point &next_point(const size_t index);
+
+        size_t last_point_index(const size_t index) const;
+
+        const Point &last_point(const size_t index) const;
+
+        Point &last_point(const size_t index);
     };
 
     class Circle : public Geometry

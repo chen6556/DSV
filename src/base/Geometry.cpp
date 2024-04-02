@@ -1372,6 +1372,78 @@ const double Polygon::area() const
     return std::abs(result) / 2.0;
 }
 
+size_t Polygon::next_point_index(const size_t index) const
+{
+    if (index < size() - 1)
+    {
+        return index + 1;
+    }
+    else
+    {
+        return 1;
+    }
+}
+
+const Point &Polygon::next_point(const size_t index) const
+{
+    if (index < size() - 1)
+    {
+        return operator[](index + 1);
+    }
+    else
+    {
+        return operator[](1);
+    }
+}
+
+Point &Polygon::next_point(const size_t index)
+{
+    if (index < size() - 1)
+    {
+        return operator[](index + 1);
+    }
+    else
+    {
+        return operator[](1);
+    }
+}
+
+size_t Polygon::last_point_index(const size_t index) const
+{
+    if (index > 0)
+    {
+        return index - 1;
+    }
+    else
+    {
+        return size() - 2;
+    }
+}
+
+const Point &Polygon::last_point(const size_t index) const
+{
+    if (index > 0)
+    {
+        return operator[](index - 1);
+    }
+    else
+    {
+        return operator[](size() - 2);
+    }
+}
+
+Point &Polygon::last_point(const size_t index)
+{
+    if (index > 0)
+    {
+        return operator[](index - 1);
+    }
+    else
+    {
+        return operator[](size() - 2);
+    }
+}
+
 
 // Circle
 
@@ -2678,44 +2750,58 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
                 j = i - of++;
                 if (error_edges[(i + 1) % edge_count])
                 {
-                    b = (temp[(i + 1) % point_count] - temp[i]).vertical().normalize() * distance;
-                    Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j],
-                        temp[i] + b, temp[(i + 1) % point_count] + b, a, true);
+                    b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
+                    Geo::is_intersected(result.last_point(j), result[j],
+                        temp[i] + b, temp.next_point(i) + b, a, true);
                     result[j] = a;
-                    Geo::is_intersected(result[(j + 2) % count], result[(j + 3) % count],
-                        temp[i] + b, temp[(i + 1) % point_count] + b, a, true);
-                    result[(j + 2) % count] = a;
-                    result.remove((j + 1) % count--);
+                    Geo::is_intersected(result.next_point(result.next_point_index(j)),
+                        result.next_point(result.next_point_index(result.next_point_index(j))),
+                        temp[i] + b, temp.next_point(i) + b, a, true);
+                    result.next_point(result.next_point_index(j)) = a;
+                    result.remove(result.next_point_index(j));
+                    --count;
                     ++i;
                 }
                 else
                 {
-                    if (Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j],
-                        result[(j + 1) % count], result[(j + 2) % count], a, true))
+                    if (Geo::is_intersected(result.last_point(j), result[j],
+                        result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
                     {
-                        result.remove((j + 1) % count--);
                         result[j] = a;
+                        result.remove(result.next_point_index(j));
+                        --count;
                     }
                     else
                     {
-                        b = (temp[i] - temp[i > 0 ? i - 1 : edge_count]).vertical().normalize() * distance;
-                        Geo::is_intersected(result[(j + 2) % count], result[(j + 3) % count],
-                            temp[i] + b, temp[i > 0 ? i - 1 : edge_count] + b, a, true);
-                        b = (temp[(i + 2) % point_count] - temp[(i + 1) % point_count]).vertical().normalize() * distance;
-                        Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j > 1 ? j - 2 : count - 2],
-                            temp[(i + 1) % point_count] + b, temp[(i + 2) % point_count] + b, b, true);
+                        b = (temp[i] - temp.last_point(i)).vertical().normalize() * distance;
+                        Geo::is_intersected(result.next_point(result.next_point_index(j)),
+                            result.next_point(result.next_point_index(result.next_point_index(j))),
+                            temp[i] + b, temp.last_point(i) + b, a, true);
+                        b = (temp.next_point(temp.next_point_index(i)) - temp.next_point(i)).vertical().normalize() * distance;
+                        Geo::is_intersected(result.last_point(j), result.last_point(result.last_point_index(j)),
+                            temp.next_point(i) + b, temp.next_point(temp.next_point_index(i)) + b, b, true);
 
-                        if ((temp[(i + 2) % point_count] - temp[i > 0 ? i - 1 : edge_count]) * (a - b) < 0)
+                        if ((temp.next_point(temp.next_point_index(i)) - temp.last_point(i)) * (a - b) < 0)
                         {
-                            result[(j + 2) % count] = a;
+                            result.next_point(result.next_point_index(j)) = a;
                         }
                         else
                         {
-                            result[j > 0 ? j - 1 : count - 1] = b;
+                            result.last_point(j) = b;
                         }
 
-                        result.remove((j + 1) % count--);
-                        result.remove(j % count--);
+                        size_t temp_index = result.next_point_index(j);
+                        result.remove(temp_index);
+                        --count;
+                        if (temp_index > j)
+                        {
+                            result.remove(j % count--);
+                        }
+                        else
+                        {
+                            result.remove((j - 1) % count--);
+                        }
+                        ++of;
                     }
                 }
             }
@@ -2754,44 +2840,58 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
                 j = i - of++;
                 if (error_edges[(i + 1) % edge_count])
                 {
-                    b = (temp[(i + 1) % point_count] - temp[i]).vertical().normalize() * distance;
-                    Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j],
-                        temp[i] + b, temp[(i + 1) % point_count] + b, a, true);
+                    b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
+                    Geo::is_intersected(result.last_point(j), result[j],
+                        temp[i] + b, temp.next_point(i) + b, a, true);
                     result[j] = a;
-                    Geo::is_intersected(result[(j + 2) % count], result[(j + 3) % count],
-                        temp[i] + b, temp[(i + 1) % point_count] + b, a, true);
-                    result[(j + 2) % count] = a;
-                    result.remove((j + 1) % count--);
+                    Geo::is_intersected(result.next_point(result.next_point_index(j)),
+                        result.next_point(result.next_point_index(result.next_point_index(j))),
+                        temp[i] + b, temp.next_point(i) + b, a, true);
+                    result.next_point(result.next_point_index(j)) = a;
+                    result.remove(result.next_point_index(j));
+                    --count;
                     ++i;
                 }
                 else
                 {
-                    if (Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j],
-                        result[(j + 1) % count], result[(j + 2) % count], a, true))
+                    if (Geo::is_intersected(result.last_point(j), result[j],
+                        result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
                     {
-                        result.remove((j + 1) % count--);
                         result[j] = a;
+                        result.remove(result.next_point_index(j));
+                        --count;
                     }
                     else
                     {
-                        b = (temp[i] - temp[i > 0 ? i - 1 : edge_count]).vertical().normalize() * distance;
-                        Geo::is_intersected(result[(j + 2) % count], result[(j + 3) % count],
-                            temp[i] + b, temp[i > 0 ? i - 1 : edge_count] + b, a, true);
-                        b = (temp[(i + 2) % point_count] - temp[(i + 1) % point_count]).vertical().normalize() * distance;
-                        Geo::is_intersected(result[j > 0 ? j - 1 : count - 1], result[j > 1 ? j - 2 : count - 2],
-                            temp[(i + 1) % point_count] + b, temp[(i + 2) % point_count] + b, b, true);
+                        b = (temp[i] - temp.last_point(i)).vertical().normalize() * distance;
+                        Geo::is_intersected(result.next_point(result.next_point_index(j)),
+                            result.next_point(result.next_point_index(result.next_point_index(j))),
+                            temp[i] + b, temp.last_point(i) + b, a, true);
+                        b = (temp.next_point(temp.next_point_index(i)) - temp.next_point(i)).vertical().normalize() * distance;
+                        Geo::is_intersected(result.last_point(j), result.last_point(result.last_point_index(j)),
+                            temp.next_point(i) + b, temp.next_point(temp.next_point_index(i)) + b, b, true);
 
-                        if ((temp[(i + 2) % point_count] - temp[i > 0 ? i - 1 : edge_count]) * (a - b) < 0)
+                        if ((temp.next_point(temp.next_point_index(i)) - temp.last_point(i)) * (a - b) < 0)
                         {
-                            result[(j + 2) % count] = a;
+                            result.next_point(result.next_point_index(j)) = a;
                         }
                         else
                         {
-                            result[j > 0 ? j - 1 : count - 1] = b;
+                            result.last_point(j) = b;
                         }
 
-                        result.remove((j + 1) % count--);
-                        result.remove(j % count--);
+                        size_t temp_index = result.next_point_index(j);
+                        result.remove(temp_index);
+                        --count;
+                        if (temp_index > j)
+                        {
+                            result.remove(j % count--);
+                        }
+                        else
+                        {
+                            result.remove((j - 1) % count--);
+                        }
+                        ++of;
                     }
                 }
             }
