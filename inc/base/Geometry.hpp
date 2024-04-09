@@ -204,6 +204,8 @@ namespace Geo
 
         virtual void remove(const size_t index);
 
+        virtual void remove(const size_t index, const size_t count);
+
         virtual Point pop(const size_t index);
 
         void flip();
@@ -392,6 +394,8 @@ namespace Geo
         void insert(const size_t index, std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end) override;
 
         void remove(const size_t index) override;
+
+        void remove(const size_t index, const size_t count) override;
 
         Point pop(const size_t index) override;
 

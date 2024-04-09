@@ -490,6 +490,12 @@ void Polyline::remove(const size_t index)
     _points.erase(_points.begin() + index);
 }
 
+void Polyline::remove(const size_t index, const size_t count)
+{
+    assert(index < _points.size());
+    _points.erase(_points.begin() + index, _points.begin() + index + count);
+}
+
 Point Polyline::pop(const size_t index)
 {
     assert(index < _points.size());
@@ -1308,6 +1314,22 @@ void Polygon::remove(const size_t index)
     }
 }
 
+void Polygon::remove(const size_t index, const size_t count)
+{
+    Polyline::remove(index, count);
+    if (size() > 2)
+    {
+        if (index == 0)
+        {
+            back() = front();
+        }
+        else if (index + count >= size())
+        {
+            front() = back();
+        }
+    }
+}
+
 Point Polygon::pop(const size_t index)
 {
     Geo::Point point = Polyline::pop(index);
@@ -2008,7 +2030,11 @@ const double Geo::distance(const Point &point, const Line &line, const bool infi
     }
     else
     {
-        const double x = (b * b * point.coord().x - a * b * point.coord().y - a * c) / (a * a + b * b);
+        const double k = ((point.coord().x - line.front().coord().x) * (line.back().coord().x - line.front().coord().x) +
+            (point.coord().y - line.front().coord().y) * (line.back().coord().y - line.front().coord().y)) /
+            (std::pow(line.back().coord().x - line.front().coord().x, 2) + std::pow(line.back().coord().y - line.front().coord().y, 2)); 
+        const double x = line.front().coord().x + k * (line.back().coord().x - line.front().coord().x);
+
         if ((x >= line.front().coord().x && x <= line.back().coord().x) || (x <= line.front().coord().x && x >= line.back().coord().x))
         {
             return std::abs(a * point.coord().x + b * point.coord().y + c) / std::sqrt(a * a + b * b);
@@ -2070,10 +2096,12 @@ const double Geo::distance(const Point &point, const Point &start, const Point &
     }
     else
     {
-        const double x = (b * b * point.coord().x - a * b * point.coord().y - a * c) / (a * a + b * b),
-                    y = (a * a * point.coord().y - a * b * point.coord().x - b * c) / (a * a + b * b);
-        if (((x >= start.coord().x && x <= end.coord().x) || (x <= start.coord().x && x >= end.coord().x))
-            && ((y >= start.coord().y && y <= end.coord().y) || (y <= start.coord().y && y >= end.coord().y)))
+        const double k = ((point.coord().x - start.coord().x) * (end.coord().x - start.coord().x) +
+            (point.coord().y - start.coord().y) * (end.coord().y - start.coord().y)) /
+            (std::pow(end.coord().x - start.coord().x, 2) + std::pow(end.coord().y - start.coord().y, 2)); 
+        const double x = start.coord().x + k * (end.coord().x - start.coord().x);
+
+        if ((x >= start.coord().x && x <= end.coord().x) || (x <= start.coord().x && x >= end.coord().x))
         {
             return std::abs(a * point.coord().x + b * point.coord().y + c) / std::sqrt(a * a + b * b);
         }
@@ -2816,7 +2844,6 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
             }
         }
         result.back() = result.front();
-        return true;
     }
     else
     {
@@ -2906,8 +2933,9 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
             }
         }
         result.back() = result.front();
-        return true;
     }
+
+    return true;
 }
 
 bool Geo::offset(const Circle &input, Circle &result, const double distance)
