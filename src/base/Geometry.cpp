@@ -253,6 +253,11 @@ double Point::operator*(const Point &point) const
     return _pos.x * point.coord().x + _pos.y * point.coord().y;
 }
 
+double Point::cross(const Point &point) const
+{
+    return _pos.x * point.coord().y - _pos.y * point.coord().x;
+}
+
 Point Point::operator+(const Point &point) const
 {
     return Point(_pos.x + point._pos.x, _pos.y + point._pos.y);
@@ -1204,6 +1209,21 @@ void Polygon::reorder_points(const bool cw)
             flip();
         }
     }
+}
+
+bool Polygon::is_cw() const
+{
+    if (size() < 4)
+    {
+        return false;
+    }
+    
+    double result = 0;
+    for (size_t i = 0, count = size() - 1; i < count; ++i)
+    {
+        result += (operator[](i).coord().x * operator[](i + 1).coord().y - operator[](i + 1).coord().x * operator[](i).coord().y);
+    }
+    return result < 0;
 }
 
 void Polygon::append(const Point &point)
@@ -2623,6 +2643,13 @@ const bool Geo::is_intersected(const AABBRect &rect, const Circle &circle)
 }
 
 
+const bool Geo::is_on_left(const Point &point, const Point &start, const Point &end)
+{
+    return (end.coord().x - start.coord().x) * (point.coord().y - start.coord().y) -
+        (end.coord().y - start.coord().y) * (point.coord().x - end.coord().x) > 0;
+}
+
+
 const bool Geo::is_Rectangle(const Polygon &polygon)
 {
     Geo::Polygon points(polygon);
@@ -2685,6 +2712,63 @@ std::vector<size_t> Geo::ear_cut_to_indexs(const Polygon &polygon)
         points.front().emplace_back(std::array<double, 2>({point.coord().x, point.coord().y}));
     }
     return mapbox::earcut<size_t>(points);
+}
+
+std::vector<size_t> Geo::ear_cut_to_indexs_test(const Polygon &polygon)
+{
+    std::vector<size_t> indexs, ear_indexs;
+    if (polygon.is_cw())
+    {
+        for (size_t i = 0, count = polygon.size() - 1; i < count; ++i)
+        {
+            indexs.push_back(count - i);
+        }
+    }
+    else
+    {
+        for (size_t i = 0, count = polygon.size() - 1; i < count; ++i)
+        {
+            indexs.push_back(i);
+        }
+    }
+
+    bool is_ear;
+    while (indexs.size() > 3)
+    {
+        for (size_t pre, cur, nxt, i = 0, count = indexs.size(); i < count; ++i)
+        {
+            pre = i > 0 ? indexs[i - 1] : indexs[count - 1];
+            cur = indexs[i];
+            nxt = i < count - 1 ? indexs[i + 1] : indexs[0];
+            if ((polygon[cur] - polygon[pre]).cross(polygon[nxt] - polygon[cur]) > 0)
+            {
+                is_ear = true;
+                for (size_t index : indexs)
+                {
+                    if (index == pre || index == cur || index == nxt)
+                    {
+                        continue;
+                    }
+                    if (is_inside(polygon[index], polygon[pre], polygon[cur], polygon[nxt]))
+                    {
+                        is_ear = false;
+                        break;
+                    }
+                }
+                if (is_ear)
+                {
+                    ear_indexs.push_back(pre);
+                    ear_indexs.push_back(cur);
+                    ear_indexs.push_back(nxt);
+                    indexs.erase(indexs.begin() + i--);
+                    --count;
+                }
+            }
+        }
+    }
+
+    ear_indexs.insert(ear_indexs.end(), indexs.begin(), indexs.end());
+    return ear_indexs;
 }
 
 std::vector<Coord> Geo::ear_cut_to_coords(const Polygon &polygon)

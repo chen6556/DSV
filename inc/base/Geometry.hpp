@@ -135,6 +135,8 @@ namespace Geo
 
         double operator*(const Point &point) const;
 
+        double cross(const Point &point) const;
+
         Point operator+(const Point &point) const;
 
         Point operator-(const Point &point) const;
@@ -380,6 +382,8 @@ namespace Geo
         Polygon *clone() const override;
 
         void reorder_points(const bool cw = true);
+
+        bool is_cw() const;
 
         void append(const Point &point) override;
 
@@ -644,6 +648,8 @@ namespace Geo
 
     const bool is_intersected(const AABBRect &rect, const Circle &circle);
 
+    const bool is_on_left(const Point &point, const Point &start, const Point &end);
+
     const bool is_Rectangle(const Polygon &polygon);
 
     Polygon circle_to_polygon(const double x, const double y, const double r);
@@ -651,6 +657,8 @@ namespace Geo
     Polygon circle_to_polygon(const Circle &circle);
 
     std::vector<size_t> ear_cut_to_indexs(const Polygon &polygon);
+
+    std::vector<size_t> ear_cut_to_indexs_test(const Polygon &polygon);
 
     std::vector<Coord> ear_cut_to_coords(const Polygon &polygon);
 
