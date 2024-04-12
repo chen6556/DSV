@@ -3053,6 +3053,66 @@ std::vector<Point> Geo::ear_cut_to_points(const Polygon &polygon)
     return result;
 }
 
+std::vector<Triangle> Geo::ear_cut_to_triangles(const Polygon &polygon)
+{
+    std::vector<size_t> indexs;
+    if (polygon.is_cw())
+    {
+        for (size_t i = 0, count = polygon.size() - 1; i < count; ++i)
+        {
+            indexs.push_back(count - i);
+        }
+    }
+    else
+    {
+        for (size_t i = 0, count = polygon.size() - 1; i < count; ++i)
+        {
+            indexs.push_back(i);
+        }
+    }
+
+    std::vector<Triangle> triangles;
+    bool is_ear;
+    while (indexs.size() > 3)
+    {
+        for (size_t pre, cur, nxt, i = 0, count = indexs.size(); i < count; ++i)
+        {
+            pre = i > 0 ? indexs[i - 1] : indexs[count - 1];
+            cur = indexs[i];
+            nxt = i < count - 1 ? indexs[i + 1] : indexs[0];
+            if ((polygon[cur] - polygon[pre]).cross(polygon[nxt] - polygon[cur]) > 0)
+            {
+                is_ear = true;
+                for (size_t index : indexs)
+                {
+                    if (index == pre || index == cur || index == nxt)
+                    {
+                        continue;
+                    }
+                    if (is_inside(polygon[index], polygon[pre], polygon[cur], polygon[nxt]))
+                    {
+                        is_ear = false;
+                        break;
+                    }
+                }
+                if (is_ear)
+                {
+                    triangles.emplace_back(polygon[pre], polygon[cur], polygon[nxt]);
+                    indexs.erase(indexs.begin() + i--);
+                    --count;
+                }
+            }
+        }
+    }
+
+    if (indexs.size() == 3)
+    {
+        triangles.emplace_back(polygon[indexs[0]], polygon[indexs[1]], polygon[indexs[2]]);
+    }
+    
+    return triangles;
+}
+
 
 bool Geo::offset(const Polyline &input, Polyline &result, const double distance)
 {

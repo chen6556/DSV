@@ -727,6 +727,8 @@ namespace Geo
 
     std::vector<Point> ear_cut_to_points(const Polygon &polygon);
 
+    std::vector<Triangle> ear_cut_to_triangles(const Polygon &polygon);
+
     bool offset(const Polyline &input, Polyline &result, const double distance);
 
     bool offset(const Polygon &input, Polygon &result, const double distance);
