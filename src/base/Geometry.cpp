@@ -3016,6 +3016,22 @@ const bool Geo::is_Rectangle(const Polygon &polygon)
 }
 
 
+double Geo::cross(const double x0, const double y0, const double x1, const double y1)
+{
+    return x0 * y1 - x1 * y0;
+}
+
+double Geo::cross(const Vector &vec0, const Vector &vec1)
+{
+    return vec0.coord().x * vec1.coord().y - vec1.coord().x * vec0.coord().y;
+}
+
+double Geo::cross(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
+{
+    return Geo::cross(end0 - start0, end1 - start1);
+}
+
+
 Polygon Geo::circle_to_polygon(const double x, const double y, const double r)
 {
     double c = r * Geo::PI;

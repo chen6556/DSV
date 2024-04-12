@@ -727,6 +727,12 @@ namespace Geo
 
     const bool is_Rectangle(const Polygon &polygon);
 
+    double cross(const double x0, const double y0, const double x1, const double y1);
+
+    double cross(const Vector &vec0, const Vector &vec1);
+
+    double cross(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
+
     Polygon circle_to_polygon(const double x, const double y, const double r);
 
     Polygon circle_to_polygon(const Circle &circle);
