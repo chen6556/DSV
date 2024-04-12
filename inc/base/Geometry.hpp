@@ -679,9 +679,9 @@ namespace Geo
 
     const bool is_inside(const Point &point, const Circle &circle, const bool coincide = false);
 
-    const bool is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2);
+    const bool is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2, const bool coincide = false);
 
-    const bool is_inside(const Point &point, const Triangle &triangle);
+    const bool is_inside(const Point &point, const Triangle &triangle, const bool coincide = false);
 
     const bool is_inside(const Point &start, const Point &end, const Triangle &triangle);
 

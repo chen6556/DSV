@@ -2573,21 +2573,35 @@ const bool Geo::is_inside(const Point &point, const Circle &circle, const bool c
     }
 }
 
-const bool Geo::is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2)
+const bool Geo::is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2, const bool coincide)
 {
-    const bool a = (point2.coord().x - point.coord().x) * (point0.coord().y - point.coord().y) 
-        >= (point0.coord().x - point.coord().x) * (point2.coord().y - point.coord().y);
-    const bool b = (point0.coord().x - point.coord().x) * (point1.coord().y - point.coord().y)
-        >= (point1.coord().x - point.coord().x) * (point0.coord().y - point.coord().y);
-    const bool c = (point1.coord().x - point.coord().x) * (point2.coord().y - point.coord().y)
-        >= (point2.coord().x - point.coord().x) * (point1.coord().y - point.coord().y);
+    if (coincide)
+    {
+        const bool a = (point2.coord().x - point.coord().x) * (point0.coord().y - point.coord().y) 
+            >= (point0.coord().x - point.coord().x) * (point2.coord().y - point.coord().y);
+        const bool b = (point0.coord().x - point.coord().x) * (point1.coord().y - point.coord().y)
+            >= (point1.coord().x - point.coord().x) * (point0.coord().y - point.coord().y);
+        const bool c = (point1.coord().x - point.coord().x) * (point2.coord().y - point.coord().y)
+            >= (point2.coord().x - point.coord().x) * (point1.coord().y - point.coord().y);
 
-    return a == b && b == c;
+        return a == b && b == c;
+    }
+    else
+    {
+        const bool a = (point2.coord().x - point.coord().x) * (point0.coord().y - point.coord().y) 
+            > (point0.coord().x - point.coord().x) * (point2.coord().y - point.coord().y);
+        const bool b = (point0.coord().x - point.coord().x) * (point1.coord().y - point.coord().y)
+            > (point1.coord().x - point.coord().x) * (point0.coord().y - point.coord().y);
+        const bool c = (point1.coord().x - point.coord().x) * (point2.coord().y - point.coord().y)
+            > (point2.coord().x - point.coord().x) * (point1.coord().y - point.coord().y);
+
+        return a == b && b == c;
+    }
 }
 
-const bool Geo::is_inside(const Point &point, const Triangle &triangle)
+const bool Geo::is_inside(const Point &point, const Triangle &triangle, const bool coincide)
 {
-    return Geo::is_inside(point, triangle[0], triangle[1], triangle[2]);
+    return Geo::is_inside(point, triangle[0], triangle[1], triangle[2], coincide);
 }
 
 const bool Geo::is_inside(const Point &start, const Point &end, const Triangle &triangle)
