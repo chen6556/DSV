@@ -485,6 +485,10 @@ namespace Geo
         AABBRect bounding_rect() const override;
 
         Polygon mini_bounding_rect() const override;
+
+        Point inner_circle_center() const;
+
+        double inner_circle_radius() const;
     };
 
     class Circle : public Geometry
@@ -679,6 +683,10 @@ namespace Geo
 
     const bool is_inside(const Point &point, const Triangle &triangle);
 
+    const bool is_inside(const Point &start, const Point &end, const Triangle &triangle);
+
+    const bool is_inside(const Triangle &triangle0, const Triangle &triangle1);
+
     const bool is_parallel(const Point &point0, const Point &point1, const Point &point2, const Point &point3);
 
     const bool is_parallel(const Line &line0, const Line &line1);
@@ -710,6 +718,10 @@ namespace Geo
     const bool is_intersected(const AABBRect &rect, const Polygon &polygon);
 
     const bool is_intersected(const AABBRect &rect, const Circle &circle);
+
+    const bool is_intersected(const Point &start, const Point &end, const Triangle &triangle, Point &output0, Point &output1);
+
+    const bool is_intersected(const Line &line, const Triangle &triangle, Point &output0, Point &output1);
 
     const bool is_on_left(const Point &point, const Point &start, const Point &end);
 

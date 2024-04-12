@@ -1743,6 +1743,23 @@ Polygon Triangle::mini_bounding_rect() const
     return rect;
 }
 
+Point Triangle::inner_circle_center() const
+{
+    const double a = Geo::distance(_vecs[1], _vecs[2]);
+    const double b = Geo::distance(_vecs[0], _vecs[2]);
+    const double c = Geo::distance(_vecs[0], _vecs[1]);
+    return (_vecs[0] * a + _vecs[1] * b + _vecs[2] * c) / (a + b + c);
+}
+
+double Triangle::inner_circle_radius() const
+{
+    const double a = Geo::distance(_vecs[1], _vecs[2]);
+    const double b = Geo::distance(_vecs[0], _vecs[2]);
+    const double c = Geo::distance(_vecs[0], _vecs[1]);
+    const double p = (a + b + c) / 2;
+    return std::sqrt((p - a) * (p - b) * (p - c) / p);
+}
+
 
 // Circle
 
@@ -2558,14 +2575,30 @@ const bool Geo::is_inside(const Point &point, const Circle &circle, const bool c
 
 const bool Geo::is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2)
 {
-    return (point2.coord().x - point.coord().x) * (point0.coord().y - point.coord().y) >= (point0.coord().x - point.coord().x) * (point2.coord().y - point.coord().y)
-        && (point0.coord().x - point.coord().x) * (point1.coord().y - point.coord().y) >= (point1.coord().x - point.coord().x) * (point0.coord().y - point.coord().y)
-        && (point1.coord().x - point.coord().x) * (point2.coord().y - point.coord().y) >= (point2.coord().x - point.coord().x) * (point1.coord().y - point.coord().y);
+    const bool a = (point2.coord().x - point.coord().x) * (point0.coord().y - point.coord().y) 
+        >= (point0.coord().x - point.coord().x) * (point2.coord().y - point.coord().y);
+    const bool b = (point0.coord().x - point.coord().x) * (point1.coord().y - point.coord().y)
+        >= (point1.coord().x - point.coord().x) * (point0.coord().y - point.coord().y);
+    const bool c = (point1.coord().x - point.coord().x) * (point2.coord().y - point.coord().y)
+        >= (point2.coord().x - point.coord().x) * (point1.coord().y - point.coord().y);
+
+    return a == b && b == c;
 }
 
 const bool Geo::is_inside(const Point &point, const Triangle &triangle)
 {
     return Geo::is_inside(point, triangle[0], triangle[1], triangle[2]);
+}
+
+const bool Geo::is_inside(const Point &start, const Point &end, const Triangle &triangle)
+{
+    return Geo::is_inside(start, triangle) && Geo::is_inside(end, triangle);
+}
+
+const bool Geo::is_inside(const Triangle &triangle0, const Triangle &triangle1)
+{
+    return Geo::is_inside(triangle0[0], triangle1) && Geo::is_inside(triangle0[1], triangle1)
+        && Geo::is_inside(triangle0[2], triangle1);
 }
 
 
@@ -2903,6 +2936,29 @@ const bool Geo::is_intersected(const AABBRect &rect, const Circle &circle)
     }
     return false;
 }
+
+const bool Geo::is_intersected(const Point &start, const Point &end, const Triangle &triangle, Point &output0, Point &output1)
+{
+    if (Geo::is_inside(start, end, triangle) || !Geo::is_intersected(triangle.bounding_rect(), start, end))
+    {
+        return false;
+    }
+
+    const bool a = Geo::is_intersected(start, end, triangle[0], triangle[1], output0) ||
+        Geo::is_intersected(start, end, triangle[1], triangle[2], output0) ||
+        Geo::is_intersected(start, end, triangle[0], triangle[2], output0);
+    const bool b = Geo::is_intersected(start, end, triangle[0], triangle[2], output1) ||
+        Geo::is_intersected(start, end, triangle[1], triangle[2], output1) ||
+        Geo::is_intersected(start, end, triangle[0], triangle[1], output1);
+    return a || b;
+}
+
+const bool Geo::is_intersected(const Line &line, const Triangle &triangle, Point &output0, Point &output1)
+{
+    return Geo::is_intersected(line.front(), line.back(), triangle, output0, output1);
+}
+
+
 
 
 const bool Geo::is_on_left(const Point &point, const Point &start, const Point &end)
