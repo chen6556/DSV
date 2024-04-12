@@ -152,11 +152,11 @@ namespace Geo
         void operator/=(const double k);
     };
 
-    typedef Point Vector;
+    using Vector = Point;
 
     class Polyline : public Geometry
     {
-    private:
+    protected:
         std::vector<Point> _points;
 
     public:

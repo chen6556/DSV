@@ -1134,9 +1134,9 @@ Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::c
     :Polyline(begin, end)
 {
     assert(size() >= 3);
-    if (back() != front())
+    if (_points.back() != _points.front())
     {
-        Polyline::append(front());
+        _points.emplace_back(_points.front());
     }
     _type = Type::POLYGON; 
 }
@@ -1145,9 +1145,9 @@ Polygon::Polygon(const std::initializer_list<Point>& points)
     :Polyline(points)
 {
     assert(size() > 2);
-    if (back() != front())
+    if (_points.back() != _points.front())
     {
-        Polyline::append(front());
+        _points.emplace_back(_points.front());
     }
     _type = Type::POLYGON;
 }
@@ -1155,9 +1155,9 @@ Polygon::Polygon(const std::initializer_list<Point>& points)
 Polygon::Polygon(const Polyline &polyline)
     :Polyline(polyline)
 {
-    if (polyline.back() != polyline.front())
+    if (_points.back() != _points.front())
     {
-        Polyline::append(polyline.front());
+        _points.emplace_back(_points.front());
     }
     _type = Type::POLYGON;
 }
@@ -1193,20 +1193,20 @@ void Polygon::reorder_points(const bool cw)
     double result = 0;
     for (size_t i = 0, count = size() - 1; i < count; ++i)
     {
-        result += (operator[](i).coord().x * operator[](i + 1).coord().y - operator[](i + 1).coord().x * operator[](i).coord().y);
+        result += (_points[i].coord().x * _points[i + 1].coord().y - _points[i + 1].coord().x * _points[i].coord().y);
     }
     if (cw)
     {
         if (result > 0)
         {
-            flip();
+            std::reverse(_points.begin(), _points.end());
         }
     }
     else
     {
         if (result < 0)
         {
-            flip();
+            std::reverse(_points.begin(), _points.end());
         }
     }
 }
@@ -1221,7 +1221,7 @@ bool Polygon::is_cw() const
     double result = 0;
     for (size_t i = 0, count = size() - 1; i < count; ++i)
     {
-        result += (operator[](i).coord().x * operator[](i + 1).coord().y - operator[](i + 1).coord().x * operator[](i).coord().y);
+        result += (_points[i].coord().x * _points[i + 1].coord().y - _points[i + 1].coord().x * _points[i].coord().y);
     }
     return result < 0;
 }
@@ -1234,14 +1234,14 @@ void Polygon::append(const Point &point)
     }
     else
     {
-        if (front() == back())
+        if (_points.front() == _points.back())
         {
             Polyline::insert(size() - 1, point);
         }
         else
         {
-            Polyline::append(point);
-            Polyline::append(front());
+            _points.emplace_back(point);
+            _points.emplace_back(_points.front());
         }
     }
 }
@@ -1251,21 +1251,21 @@ void Polygon::append(const Polyline &polyline)
     if (empty())
     {
         Polyline::append(polyline);
-        if (polyline.front() != polyline.back())
+        if (_points.front() != _points.back())
         {
-            Polyline::append(polyline.front());
+            _points.emplace_back(_points.front());
         }
     }
     else
     {
-        if (front() == back())
+        if (_points.front() == _points.back())
         {
             Polyline::insert(size() - 1, polyline);
         }
         else
         {
             Polyline::append(polyline);
-            Polyline::append(front());
+            _points.emplace_back(_points.front());
         }
     }
 }
@@ -1275,21 +1275,21 @@ void Polygon::append(std::vector<Point>::const_iterator begin, std::vector<Point
     if (empty())
     {
         Polyline::append(begin, end);
-        if (front() != back())
+        if (_points.front() != _points.back())
         {
-            Polyline::append(front());
+            _points.emplace_back(_points.front());
         }
     }
     else
     {
-        if (front() == back())
+        if (_points.front() == _points.back())
         {
             Polyline::insert(size() - 1, begin, end);
         }
         else
         {
-            Polyline::append(begin, end);
-            Polyline::append(front());
+            _points.insert(_points.end(), begin, end);
+            _points.emplace_back(_points.front());
         }
     }
 }
@@ -1299,7 +1299,7 @@ void Polygon::insert(const size_t index, const Point &point)
     Polyline::insert(index, point);
     if (index == 0)
     {
-        back() = front();
+        _points.back() = _points.front();
     }
 }
 
@@ -1308,7 +1308,7 @@ void Polygon::insert(const size_t index, const Polyline &polyline)
     Polyline::insert(index, polyline);
     if (index == 0)
     {
-        back() = front();
+        _points.back() = _points.front();
     }
 }
 
@@ -1317,7 +1317,7 @@ void Polygon::insert(const size_t index, std::vector<Point>::const_iterator begi
     Polyline::insert(index, begin, end);
     if (index == 0)
     {
-        back() = front();
+        _points.back() = _points.front();
     }
 }
 
@@ -1326,11 +1326,11 @@ void Polygon::remove(const size_t index)
     Polyline::remove(index);
     if (index == 0)
     {
-        back() = front();
+        _points.back() = _points.front();
     }
     else if (index == size())
     {
-        front() == back();
+        _points.front() == _points.back();
     }
 }
 
@@ -1355,11 +1355,11 @@ Point Polygon::pop(const size_t index)
     Geo::Point point = Polyline::pop(index);
     if (index == 0)
     {
-        back() = front();
+        _points.back() = _points.front();
     }
     else if (index == size())
     {
-        front() = back();
+        _points.front() = _points.back();
     }
     return point;
 }
@@ -1386,7 +1386,7 @@ Polygon Polygon::operator-(const Point &point) const
 
 void Polygon::operator+=(const Point &point)
 {
-    for (Point &p : *this)
+    for (Point &p : _points)
     {
         p += point;
     }
@@ -1394,7 +1394,7 @@ void Polygon::operator+=(const Point &point)
 
 void Polygon::operator-=(const Point &point)
 {
-    for (Point &p : *this)
+    for (Point &p : _points)
     {
         p -= point;
     }
@@ -1409,7 +1409,7 @@ const double Polygon::area() const
     double result = 0;
     for (size_t i = 0, count = size() - 1; i < count; ++i)
     {
-        result += (operator[](i).coord().x * operator[](i + 1).coord().y - operator[](i + 1).coord().x * operator[](i).coord().y);
+        result += (_points[i].coord().x * _points[i + 1].coord().y - _points[i + 1].coord().x * _points[i].coord().y);
     }
     return std::abs(result) / 2.0;
 }
@@ -1430,11 +1430,11 @@ const Point &Polygon::next_point(const size_t index) const
 {
     if (index < size() - 1)
     {
-        return operator[](index + 1);
+        return _points[index + 1];
     }
     else
     {
-        return operator[](1);
+        return _points[1];
     }
 }
 
@@ -1442,11 +1442,11 @@ Point &Polygon::next_point(const size_t index)
 {
     if (index < size() - 1)
     {
-        return operator[](index + 1);
+        return _points[index + 1];
     }
     else
     {
-        return operator[](1);
+        return _points[1];
     }
 }
 
@@ -1466,11 +1466,11 @@ const Point &Polygon::last_point(const size_t index) const
 {
     if (index > 0)
     {
-        return operator[](index - 1);
+        return _points[index - 1];
     }
     else
     {
-        return operator[](size() - 2);
+        return _points[_points.size() - 2];
     }
 }
 
@@ -1478,11 +1478,11 @@ Point &Polygon::last_point(const size_t index)
 {
     if (index > 0)
     {
-        return operator[](index - 1);
+        return _points[index - 1];
     }
     else
     {
-        return operator[](size() - 2);
+        return _points[_points.size() - 2];
     }
 }
 
@@ -1572,6 +1572,8 @@ double Triangle::angle(const size_t index) const
         return std::acos((len0 * len0 + len2 * len2 - len1 * len1) / (2 * len0 * len2));
     case 2:
         return std::acos((len0 * len0 + len1 * len1 - len2 * len2) / (2 * len0 * len1));
+    default:
+        return 0; 
     }
 }
 
@@ -2135,28 +2137,28 @@ void Bezier::update_shape(const double step)
 
     double t = 0;
     Point point;
-    for (size_t i = 0, end = this->size() - _order; i < end; i += _order)
+    for (size_t i = 0, end = _points.size() - _order; i < end; i += _order)
     {
-        _shape.append(this->operator[](i));
+        _shape.append(_points[i]);
         t = 0;
         while (t <= 1)
         {
             point.clear();
             for (size_t j = 0; j <= _order; ++j)
             {
-                point += (this->operator[](j + i) * (nums[j] * std::pow(1 - t, _order - j) * std::pow(t, j))); 
+                point += (_points[j + i] * (nums[j] * std::pow(1 - t, _order - j) * std::pow(t, j))); 
             }
             _shape.append(point);
             t += step;
         }
     }
-    _shape.append(this->back());
+    _shape.append(_points.back());
 }
 
 void Bezier::append_shape(const double step)
 {
     assert(0 < step && step < 1);
-    if ((this->size() - 1) % _order > 0)
+    if ((_points.size() - 1) % _order > 0)
     {
         return;
     }
@@ -2173,18 +2175,18 @@ void Bezier::append_shape(const double step)
 
     double t = 0;
     Point point;
-    const size_t i = this->size() - _order - 1;
+    const size_t i = _points.size() - _order - 1;
     while (t <= 1)
     {
         point.clear();
         for (size_t j = 0; j <= _order; ++j)
         {
-            point += (this->operator[](j + i) * (nums[j] * std::pow(1 - t, _order - j) * std::pow(t, j))); 
+            point += (_points[j + i] * (nums[j] * std::pow(1 - t, _order - j) * std::pow(t, j))); 
         }
         _shape.append(point);
         t += step;
     }
-    _shape.append(this->back());
+    _shape.append(_points.back());
 }
 
 const double Bezier::length() const
