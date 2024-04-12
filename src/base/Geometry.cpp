@@ -1572,6 +1572,8 @@ double Triangle::angle(const size_t index) const
         return std::acos((len0 * len0 + len2 * len2 - len1 * len1) / (2 * len0 * len2));
     case 2:
         return std::acos((len0 * len0 + len1 * len1 - len2 * len2) / (2 * len0 * len1));
+    default:
+        return 0;
     }
 }
 
