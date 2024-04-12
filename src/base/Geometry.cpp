@@ -1228,7 +1228,7 @@ bool Polygon::is_cw() const
 
 void Polygon::append(const Point &point)
 {
-    if (empty())
+    if (size() < 2)
     {
         Polyline::append(point);
     }
@@ -1484,6 +1484,263 @@ Point &Polygon::last_point(const size_t index)
     {
         return operator[](size() - 2);
     }
+}
+
+
+// Triangle
+
+Triangle::Triangle(const Point &point0, const Point &point1, const Point &point2)
+{
+    _type = Type::TRIANGLE;
+    _vecs[0] = point0;
+    _vecs[1] = point1;
+    _vecs[2] = point2;
+}
+
+Triangle::Triangle(const double x0, const double y0, const double x1, const double y1, const double x2, const double y2)
+{
+    _type = Type::TRIANGLE;
+    _vecs[0].coord().x = x0;
+    _vecs[0].coord().y = y0;
+    _vecs[1].coord().x = x1;
+    _vecs[1].coord().y = y1;
+    _vecs[2].coord().x = x2;
+    _vecs[2].coord().y = y2;
+}
+
+Triangle::Triangle(const Triangle &triangle)
+{
+    _type = Type::TRIANGLE;
+    _vecs[0] = triangle._vecs[0];
+    _vecs[1] = triangle._vecs[1];
+    _vecs[2] = triangle._vecs[2];
+}
+
+const bool Triangle::empty() const
+{
+    return _vecs[0] == _vecs[1] || _vecs[1] == _vecs[2] || _vecs[0] == _vecs[2];
+}
+
+const double Triangle::length() const
+{
+    return Geo::distance(_vecs[0], _vecs[1]) + Geo::distance(_vecs[1], _vecs[2]) + Geo::distance(_vecs[0], _vecs[2]);
+}
+
+void Triangle::clear()
+{
+    for (size_t i = 0; i < 3; ++i)
+    {
+        _vecs[i].clear();
+    }
+}
+
+Triangle *Triangle::clone() const
+{
+    return new Triangle(*this);
+}
+
+double Triangle::area() const
+{
+    if (empty())
+    {
+        return 0;
+    }
+    const double a = Geo::distance(_vecs[0], _vecs[1]);
+    const double b = Geo::distance(_vecs[1], _vecs[2]);
+    const double c = Geo::distance(_vecs[0], _vecs[2]);
+    const double p = (a + b + c) / 2;
+    return std::sqrt(p * (p - a) * (p - b) * (p- c));
+}
+
+double Triangle::angle(const size_t index) const
+{
+    assert(0 <= index && index <= 2);
+    if (empty())
+    {
+        return 0;
+    }
+
+    const double len0 = Geo::distance(_vecs[1], _vecs[2]);
+    const double len1 = Geo::distance(_vecs[0], _vecs[2]);
+    const double len2 = Geo::distance(_vecs[0], _vecs[1]);
+
+    switch (index)
+    {
+    case 0:
+        return std::acos((len1 * len1 + len2 * len2 - len0 * len0) / (2 * len1 * len2));
+    case 1:
+        return std::acos((len0 * len0 + len2 * len2 - len1 * len1) / (2 * len0 * len2));
+    case 2:
+        return std::acos((len0 * len0 + len1 * len1 - len2 * len2) / (2 * len0 * len1));
+    }
+}
+
+void Triangle::reorder_points(const bool cw)
+{
+    if (cw)
+    {
+        if (!is_cw())
+        {
+            std::swap(_vecs[1], _vecs[2]);
+        }
+    }
+    else
+    {
+        if (is_cw())
+        {
+            std::swap(_vecs[1], _vecs[2]);
+        }
+    }
+}
+
+bool Triangle::is_cw() const
+{
+    return Geo::is_on_left(_vecs[2], _vecs[1], _vecs[0]);
+}
+
+Point &Triangle::operator[](const size_t index)
+{
+    assert(0 <= index && index <= 2);
+    return _vecs[index];
+}
+
+const Point &Triangle::operator[](const size_t index) const
+{
+    assert(0 <= index && index <= 2);
+    return _vecs[index];
+}
+
+Triangle &Triangle::operator=(const Triangle &triangle)
+{
+    if (this != &triangle)
+    {
+        _type = Type::TRIANGLE;
+        _vecs[0] = triangle._vecs[0];
+        _vecs[1] = triangle._vecs[1];
+        _vecs[2] = triangle._vecs[2];
+    }
+    return *this;
+}
+
+Triangle Triangle::operator+(const Point &point) const
+{
+    Triangle triangle(*this);
+    triangle._vecs[0] += point;
+    triangle._vecs[1] += point;
+    triangle._vecs[2] += point;
+    return triangle;
+}
+
+Triangle Triangle::operator-(const Point &point) const
+{
+    Triangle triangle(*this);
+    triangle._vecs[0] -= point;
+    triangle._vecs[1] -= point;
+    triangle._vecs[2] -= point;
+    return triangle;
+}
+
+void Triangle::operator+=(const Point &point)
+{
+    _vecs[0] += point;
+    _vecs[1] += point;
+    _vecs[2] += point;
+}
+
+void Triangle::operator-=(const Point &point)
+{
+    _vecs[0] -= point;
+    _vecs[1] -= point;
+    _vecs[2] -= point;
+}
+
+void Triangle::transform(const double a, const double b, const double c, const double d, const double e, const double f)
+{
+    _vecs[0].transform(a, b, c, d, e, f);
+    _vecs[1].transform(a, b, c, d, e, f);
+    _vecs[2].transform(a, b, c, d, e, f);
+}
+
+void Triangle::transform(const double mat[6])
+{
+    _vecs[0].transform(mat);
+    _vecs[1].transform(mat);
+    _vecs[2].transform(mat);
+}
+
+void Triangle::translate(const double tx, const double ty)
+{
+    _vecs[0].translate(tx, ty);
+    _vecs[1].translate(tx, ty);
+    _vecs[2].translate(tx, ty);
+}
+
+void Triangle::rotate(const double x, const double y, const double rad) // 弧度制
+{
+    _vecs[0].rotate(x, y, rad);
+    _vecs[1].rotate(x, y, rad);
+    _vecs[2].rotate(x, y, rad);
+}
+
+void Triangle::scale(const double x, const double y, const double k)
+{
+    _vecs[0].scale(x, y, k);
+    _vecs[1].scale(x, y, k);
+    _vecs[2].scale(x, y, k);
+}
+
+Polygon Triangle::convex_hull() const
+{
+    if (empty())
+    {
+        return Polygon();
+    }
+    else
+    {
+        return Polygon({_vecs[0], _vecs[1], _vecs[2], _vecs[0]});
+    }
+}
+
+AABBRect Triangle::bounding_rect() const
+{
+    if (empty())
+    {
+        return AABBRect();
+    }
+
+    const double left = std::min(_vecs[0].coord().x, std::min(_vecs[1].coord().x, _vecs[2].coord().x));
+    const double right = std::max(_vecs[0].coord().x, std::max(_vecs[1].coord().x, _vecs[2].coord().x));
+    const double top = std::max(_vecs[0].coord().y, std::max(_vecs[1].coord().y, _vecs[2].coord().y));
+    const double bottom = std::min(_vecs[0].coord().y, std::min(_vecs[1].coord().y, _vecs[2].coord().y));
+    return AABBRect(left, top, right, bottom);
+}
+
+Polygon Triangle::mini_bounding_rect() const
+{
+    if (empty())
+    {
+        return Polygon();
+    }
+
+    double cs, area = DBL_MAX;
+    AABBRect rect, temp;
+    Coord coord;
+    for (size_t i = 0; i < 3; ++i)
+    {
+        Triangle triangle(*this);
+        coord = triangle[i].coord();
+        cs = (coord.x * triangle[i < 2 ? i + 1 : 0].coord().y - triangle[i < 2 ? i + 1 : 0].coord().x *coord.y) /
+            (triangle[i < 2 ? i + 1 : 0].length() * triangle[i].length());
+        triangle.rotate(coord.x, coord.y, std::acos(cs));
+        temp = triangle.bounding_rect();
+        if (temp.area() < area)
+        {
+            rect = temp;
+            area = temp.area();
+            rect.rotate(coord.x, coord.y, -std::acos(cs));
+        }
+    }
+    return rect;
 }
 
 
@@ -2304,6 +2561,11 @@ const bool Geo::is_inside(const Point &point, const Point &point0, const Point &
     return (point2.coord().x - point.coord().x) * (point0.coord().y - point.coord().y) >= (point0.coord().x - point.coord().x) * (point2.coord().y - point.coord().y)
         && (point0.coord().x - point.coord().x) * (point1.coord().y - point.coord().y) >= (point1.coord().x - point.coord().x) * (point0.coord().y - point.coord().y)
         && (point1.coord().x - point.coord().x) * (point2.coord().y - point.coord().y) >= (point2.coord().x - point.coord().x) * (point1.coord().y - point.coord().y);
+}
+
+const bool Geo::is_inside(const Point &point, const Triangle &triangle)
+{
+    return Geo::is_inside(point, triangle[0], triangle[1], triangle[2]);
 }
 
 
