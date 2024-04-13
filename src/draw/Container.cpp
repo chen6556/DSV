@@ -183,6 +183,11 @@ const Geo::Polygon &Container::shape() const
     return *dynamic_cast<const Geo::Polygon *>(this);
 }
 
+void Container::reshape(const Geo::Polygon &polygon)
+{
+    _points.assign(polygon.begin(), polygon.end());
+}
+
 const QString &Container::text() const
 {
     return _txt;

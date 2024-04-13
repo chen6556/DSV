@@ -757,5 +757,5 @@ namespace Geo
 
     bool offset(const AABBRect &input, AABBRect &result, const double distance);
 
-    Polygon polygon_union(const Polygon &polygon0, const Polygon &polygon1);
+    bool polygon_union(const Polygon &polygon0, const Polygon &polygon1, Polygon &output);
 };

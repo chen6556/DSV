@@ -94,6 +94,8 @@ public:
 
     bool offset(std::list<Geo::Geometry *> objects, const double distance);
 
+    bool polygon_union();
+
 
 
     bool line_array(int x, int y, double x_space, double y_space);

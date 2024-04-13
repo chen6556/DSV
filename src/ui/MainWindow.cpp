@@ -498,9 +498,11 @@ void MainWindow::close_polyline()
 
 void MainWindow::combinate()
 {
-    _editer.combinate();
-    _painter.refresh_vbo();
-    _painter.refresh_selected_ibo();
+    if (_editer.combinate())
+    {
+        _painter.refresh_vbo();
+        _painter.refresh_selected_ibo();
+    }
 }
 
 void MainWindow::rotate()
@@ -564,6 +566,22 @@ void MainWindow::ring_array()
 {
     ui->array_tool->setText("Ring Array");
     _painter.set_operation(Canvas::Operation::RINGARRAY);
+}
+
+
+
+void MainWindow::to_boolean_page()
+{
+    ui->tool_widget->setCurrentIndex(2);
+}
+
+void MainWindow::polygon_union()
+{
+    if (_editer.polygon_union())
+    {
+        _painter.refresh_vbo();
+        _painter.refresh_selected_ibo();
+    }
 }
 
 

@@ -2,6 +2,7 @@
 #include <cassert>
 #include <algorithm>
 #include <array>
+#include <functional>
 #include "base/EarCut/EarCut.hpp"
 
 
@@ -3423,16 +3424,12 @@ bool Geo::offset(const AABBRect &input, AABBRect &result, const double distance)
 }
 
 
-Polygon Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1)
+bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, Polygon &output)
 {
     std::vector<MarkedPoint> points0, points1;
     for (const Point &point : polygon0)
     {
         points0.emplace_back(point.x, point.y);
-    }
-    if (points0.front() != points0.back())
-    {
-        points0.emplace_back(points0.front());
     }
     if (polygon0.is_cw())
     {
@@ -3442,30 +3439,27 @@ Polygon Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1)
     {
         points1.emplace_back(point.x, point.y);
     }
-    if (points1.front() != points1.back())
-    {
-        points1.emplace_back(points1.front());
-    }
     if (polygon1.is_cw())
     {
         std::reverse(points1.begin(), points1.end());
     }
 
-    Point output;
-    AABBRect rect(polygon1.bounding_rect());
+    Point point;
+    const AABBRect rect(polygon1.bounding_rect());
     for (size_t id = 1, i = 1, count0 = points0.size(); i < count0; ++i)
     {
-        if (!is_intersected(rect, points0[i - 1], points0[i]))
+        if (!is_intersected(rect, points0[i - 1], points0[i]) ||
+            (is_inside(points0[i - 1], rect) && is_inside(points0[i], rect)))
         {
             continue;
         }
 
         for (size_t j = 1, count1 = points1.size(); j < count1; ++j)
         {
-            if (is_intersected(points0[i - 1], points0[i], points1[j - 1], points1[j], output))
+            if (is_intersected(points0[i - 1], points0[i], points1[j - 1], points1[j], point))
             {
-                points0.insert(points0.begin() + i++, MarkedPoint(output.x, output.y));
-                points1.insert(points1.begin() + j++, MarkedPoint(output.x, output.y));
+                points0.insert(points0.begin() + i++, MarkedPoint(point.x, point.y));
+                points1.insert(points1.begin() + j++, MarkedPoint(point.x, point.y));
                 ++count0;
                 ++count1;
                 if (cross(points0[i - 2], points0[i], points1[j - 2], points1[j]) > 0)
@@ -3481,6 +3475,24 @@ Polygon Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1)
                 points0[i - 1].id = points1[j - 1].id = id++;
                 ++j;
             }
+        }
+    }
+
+    if (points0.size() == polygon0.size())
+    {
+        if (std::all_of(polygon0.begin(), polygon0.end(), [&](const Point &point) { return Geo::is_inside(point, polygon1, true); }))
+        {
+            output = polygon1;
+            return true;
+        }
+        else if (std::all_of(polygon1.begin(), polygon1.end(), [&](const Point &point) { return Geo::is_inside(point, polygon0, true); }))
+        {
+            output = polygon0;
+            return true;
+        }
+        else
+        {
+            return false;
         }
     }
 
@@ -3538,7 +3550,9 @@ Polygon Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1)
         }
     }
 
-    return Polygon(result.begin(), result.end());
+    output.clear();
+    output.append(result.begin(), result.end());
+    return true;
 }
 
 

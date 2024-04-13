@@ -62,6 +62,8 @@ public:
 
     const Geo::Polygon &shape() const;
 
+    void reshape(const Geo::Polygon &polygon);
+
     const QString &text() const;
 
     void set_text(const QString &txt);

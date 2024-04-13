@@ -942,6 +942,51 @@ bool Editer::offset(std::list<Geo::Geometry *> objects, const double distance)
     }
 }
 
+bool Editer::polygon_union()
+{
+    if (_graph == nullptr || _graph->empty())
+    {
+        return false;
+    }
+
+    size_t index = 0;
+    Container *container0 = nullptr, *container1 = nullptr;
+    for (Geo::Geometry *geo : _graph->container_group(_current_group))
+    {
+        ++index;
+        if (geo->is_selected && (geo->type() == Geo::Type::CONTAINER))
+        {
+            if (container0 == nullptr)
+            {
+                container0 = dynamic_cast<Container *>(geo);
+                continue;
+            }
+            if (container1 == nullptr)
+            {
+                container1 = dynamic_cast<Container *>(geo);
+                break;
+            }
+        }
+    }
+
+    if (container0 == nullptr || container1 == nullptr)
+    {
+        return false;
+    }
+    store_backup();
+
+    Geo::Polygon shape;
+    if (Geo::polygon_union(container0->shape(), container1->shape(), shape))
+    {
+        container0->reshape(shape);
+        _graph->container_group(_current_group).remove(--index);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
 
 
 bool Editer::line_array(int x, int y, double x_space, double y_space)
