@@ -61,6 +61,29 @@ namespace Geo
         virtual Polygon mini_bounding_rect() const;
     };
 
+    struct MarkedPoint
+    {
+        int value = 0;
+        double x = 0;
+        double y = 0;
+        size_t id = 0;
+
+        MarkedPoint() {}
+
+        MarkedPoint(const double x_, const double y_, const int value_ = 0)
+            : x(x_), y(y_), value(value_) {}
+
+        bool operator==(const MarkedPoint &point) const
+        {
+            return x == point.x && y == point.y;
+        }
+
+        bool operator!=(const MarkedPoint &point) const
+        {
+            return x != point.x || y != point.y;
+        }
+    };
+
     class Point : public Geometry
     {
     public:
@@ -73,6 +96,8 @@ namespace Geo
         Point(const double x_, const double y_);
 
         Point(const Point &point);
+
+        Point(const MarkedPoint &point);
 
         Point &operator=(const Point &point);
 
@@ -718,7 +743,7 @@ namespace Geo
 
     std::vector<size_t> ear_cut_to_indexs_test(const Polygon &polygon);
 
-    // std::vector<Coord> ear_cut_to_coords(const Polygon &polygon);
+    std::vector<MarkedPoint> ear_cut_to_coords(const Polygon &polygon);
 
     std::vector<Point> ear_cut_to_points(const Polygon &polygon);
 
@@ -731,4 +756,6 @@ namespace Geo
     bool offset(const Circle &input, Circle &result, const double distance);
 
     bool offset(const AABBRect &input, AABBRect &result, const double distance);
+
+    Polygon polygon_union(const Polygon &polygon0, const Polygon &polygon1);
 };

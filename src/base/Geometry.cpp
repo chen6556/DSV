@@ -76,6 +76,12 @@ Point::Point(const Point &point)
     :Geometry(point), x(point.x), y(point.y)
 {}
 
+Point::Point(const MarkedPoint &point)
+    : x(point.x), y(point.y)
+{
+    _type = Type::POINT;
+}
+
 Point &Point::operator=(const Point &point)
 {
     if (this != &point)
@@ -3075,15 +3081,15 @@ std::vector<size_t> Geo::ear_cut_to_indexs_test(const Polygon &polygon)
     return ear_indexs;
 }
 
-// std::vector<Coord> Geo::ear_cut_to_coords(const Polygon &polygon)
-// {
-//     std::vector<Coord> result;
-//     for (size_t i : ear_cut_to_indexs(polygon))
-//     {
-//         result.emplace_back(polygon[i].coord());
-//     }
-//     return result;
-// }
+std::vector<MarkedPoint> Geo::ear_cut_to_coords(const Polygon &polygon)
+{
+    std::vector<MarkedPoint> result;
+    for (size_t i : ear_cut_to_indexs(polygon))
+    {
+        result.emplace_back(polygon[i].x, polygon[i].y);
+    }
+    return result;
+}
 
 std::vector<Point> Geo::ear_cut_to_points(const Polygon &polygon)
 {
@@ -3415,3 +3421,124 @@ bool Geo::offset(const AABBRect &input, AABBRect &result, const double distance)
         return false;
     }
 }
+
+
+Polygon Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1)
+{
+    std::vector<MarkedPoint> points0, points1;
+    for (const Point &point : polygon0)
+    {
+        points0.emplace_back(point.x, point.y);
+    }
+    if (points0.front() != points0.back())
+    {
+        points0.emplace_back(points0.front());
+    }
+    if (polygon0.is_cw())
+    {
+        std::reverse(points0.begin(), points0.end());
+    }
+    for (const Point &point : polygon1)
+    {
+        points1.emplace_back(point.x, point.y);
+    }
+    if (points1.front() != points1.back())
+    {
+        points1.emplace_back(points1.front());
+    }
+    if (polygon1.is_cw())
+    {
+        std::reverse(points1.begin(), points1.end());
+    }
+
+    Point output;
+    AABBRect rect(polygon1.bounding_rect());
+    for (size_t id = 1, i = 1, count0 = points0.size(); i < count0; ++i)
+    {
+        if (!is_intersected(rect, points0[i - 1], points0[i]))
+        {
+            continue;
+        }
+
+        for (size_t j = 1, count1 = points1.size(); j < count1; ++j)
+        {
+            if (is_intersected(points0[i - 1], points0[i], points1[j - 1], points1[j], output))
+            {
+                points0.insert(points0.begin() + i++, MarkedPoint(output.x, output.y));
+                points1.insert(points1.begin() + j++, MarkedPoint(output.x, output.y));
+                ++count0;
+                ++count1;
+                if (cross(points0[i - 2], points0[i], points1[j - 2], points1[j]) > 0)
+                {
+                    points0[i - 1].value = 1;
+                    points1[j - 1].value = -1;
+                }
+                else
+                {
+                    points0[i - 1].value = -1;
+                    points1[j - 1].value = 1;
+                }
+                points0[i - 1].id = points1[j - 1].id = id++;
+                ++j;
+            }
+        }
+    }
+
+    std::vector<Point> result;
+    size_t index0 = 0, index1 = 0;
+    const size_t count0 = points0.size(), count1 = points1.size(), count2 = points0.size() + points1.size() - 1;
+    while (index0 < count0 && points0[index0].value == 0)
+    {
+        ++index0;
+    }
+    while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
+    {
+        while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
+        {
+            if (points0[index0].value > -1)
+            {
+                result.emplace_back(points0[index0++]);
+            }
+            else
+            {
+                index1 = 0;
+                while (index1 < count1 && points1[index1].id != points0[index0].id)
+                {
+                    ++index1;
+                }
+                result.emplace_back(points1[index1++]);
+                ++index0;
+                index0 %= count0;
+                index1 %= count1;
+                break;
+            }
+            index0 %= count0;
+        }
+
+        while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
+        {
+            if (points1[index1].value > -1)
+            {
+                result.emplace_back(points1[index1++]);
+            }
+            else
+            {
+                index0 = 0;
+                while (index0 < count0 && points0[index0].id != points1[index1].id)
+                {
+                    ++index0;
+                }
+                result.emplace_back(points0[index0++]);
+                ++index1;
+                index0 %= count0;
+                index1 %= count1;
+                break;
+            }
+            index1 %= count1;
+        }
+    }
+
+    return Polygon(result.begin(), result.end());
+}
+
+
