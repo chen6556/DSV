@@ -788,6 +788,7 @@ bool Editer::combinate()
     }
     if (indexs.size() < 2)
     {
+        delete combination;
         return false;
     }
 
