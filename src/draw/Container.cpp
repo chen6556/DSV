@@ -55,7 +55,7 @@ void Text::set_text(const QString &str, const int size)
 {
     _text = str;
     _text_size = size;
-    const Geo::Coord coord(center().coord());
+    const Geo::Point coord(center());
     QFont font("SimSun");
     font.setPixelSize(size);
     const QFontMetrics font_metrics(font);
@@ -82,7 +82,7 @@ void Text::update_size(const int size)
     {
         return;
     }
-    const Geo::Coord coord(center().coord());
+    const Geo::Point coord(center());
     QFont font("SimSun");
     font.setPixelSize(size);
     const QFontMetrics font_metrics(font);
@@ -126,7 +126,7 @@ const Geo::AABBRect &Text::shape() const
 void Text::clear()
 {
     _text.clear();
-    const Geo::Coord coord(center().coord());
+    const Geo::Point coord(center());
     set_left(coord.x - 10);
     set_left(coord.x + 10);
     set_top(coord.y + 10);
@@ -576,7 +576,7 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
         return Geo::AABBRect();
     }
     double r, x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
-    Geo::Coord coord;
+    Geo::Point coord;
     for (const Geo::Geometry *continer : _containers)
     {
         switch (continer->type())
@@ -590,15 +590,15 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
         case Geo::Type::CONTAINER:
             for (const Geo::Point &point : dynamic_cast<const Container *>(continer)->shape())
             {
-                x0 = std::min(x0, point.coord().x);
-                y0 = std::min(y0, point.coord().y);
-                x1 = std::max(x1, point.coord().x);
-                y1 = std::max(y1, point.coord().y);
+                x0 = std::min(x0, point.x);
+                y0 = std::min(y0, point.y);
+                x1 = std::max(x1, point.x);
+                y1 = std::max(y1, point.y);
             }
             break;
         case Geo::Type::CIRCLECONTAINER:
             r = dynamic_cast<const CircleContainer *>(continer)->radius();
-            coord = dynamic_cast<const CircleContainer *>(continer)->center().coord();
+            coord = dynamic_cast<const CircleContainer *>(continer)->center();
             x0 = std::min(x0, coord.x - r);
             y0 = std::min(y0, coord.y - r);
             x1 = std::max(x1, coord.x + r);
@@ -616,19 +616,19 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
         case Geo::POLYLINE:
             for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(continer))
             {
-                x0 = std::min(x0, point.coord().x);
-                y0 = std::min(y0, point.coord().y);
-                x1 = std::max(x1, point.coord().x);
-                y1 = std::max(y1, point.coord().y);
+                x0 = std::min(x0, point.x);
+                y0 = std::min(y0, point.y);
+                x1 = std::max(x1, point.x);
+                y1 = std::max(y1, point.y);
             }
             break;
         case Geo::Type::BEZIER:
             for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(continer)->shape())
             {
-                x0 = std::min(x0, point.coord().x);
-                y0 = std::min(y0, point.coord().y);
-                x1 = std::max(x1, point.coord().x);
-                y1 = std::max(y1, point.coord().y);
+                x0 = std::min(x0, point.x);
+                y0 = std::min(y0, point.y);
+                x1 = std::max(x1, point.x);
+                y1 = std::max(y1, point.y);
             }
             break;
         default:

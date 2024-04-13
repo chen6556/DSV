@@ -512,7 +512,7 @@ void CMDWidget::circle()
         break;
     case 1:
         {
-            const Geo::Coord coord(_canvas->mouse_position());
+            const Geo::Point coord(_canvas->mouse_position());
             _parameters.emplace_back(coord.x);
             _parameters.emplace_back(coord.y);
             _canvas->circle_cmd(_parameters[1], _parameters[2]);

@@ -63,51 +63,17 @@ AABBRect Geometry::bounding_rect() const { return AABBRect(); }
 
 Polygon Geometry::mini_bounding_rect() const { return Polygon(); }
 
-// Coord
-
-Coord::Coord(const double x_, const double y_)
-    : x(x_), y(y_) {}
-
-Coord::Coord(const Coord &coord)
-    : x(coord.x), y(coord.y) {}
-
-Coord &Coord::operator=(const Coord &coord)
-{
-    if (this != &coord)
-    {
-        x = coord.x;
-        y = coord.y;
-    }
-    return *this;
-}
-
-const bool Coord::operator==(const Coord &coord) const
-{
-    return x == coord.x && y == coord.y;
-}
-
-const bool Coord::operator!=(const Coord &coord) const
-{
-    return x != coord.x || y != coord.y;
-}
 
 // Point
 
-Point::Point(const double x, const double y)
-    : _pos(x, y)
-{
-    _type = Type::POINT;
-}
-
-Point::Point(const Coord &coord)
-    :_pos(coord)
+Point::Point(const double x_, const double y_)
+    : x(x_), y(y_)
 {
     _type = Type::POINT;
 }
 
 Point::Point(const Point &point)
-    :Geometry(point)
-    ,_pos(point._pos)
+    :Geometry(point), x(point.x), y(point.y)
 {}
 
 Point &Point::operator=(const Point &point)
@@ -115,65 +81,56 @@ Point &Point::operator=(const Point &point)
     if (this != &point)
     {
         Geometry::operator=(point);
-        _pos = point._pos;
+        x = point.x;
+        y = point.y;
         _type = Type::POINT;
     }
     return *this;
 }
 
-Coord &Point::coord()
-{
-    return _pos;
-}
-
-const Coord &Point::coord() const
-{
-    return _pos;
-}
-
 const bool Point::operator==(const Point &point) const
 {
-    return _pos == point._pos;
+    return x == point.x && y == point.y;
 }
 
 const bool Point::operator!=(const Point &point) const
 {
-    return _pos != point._pos;
+    return x != point.x || y != point.y;
 }
 
 const Point &Point::normalize()
 {
     const double len = length();
-    _pos.x /= len;
-    _pos.y /= len;
+    x /= len;
+    y /= len;
     return *this;
 }
 
 Point Point::normalized() const
 {
     const double len = length();
-    return Point(_pos.x / len, _pos.y / len);
+    return Point(x / len, y / len);
 }
 
 Point Point::vertical() const
 {
-    return Point(-_pos.y, _pos.x);
+    return Point(-y, x);
 }
 
 const double Point::length() const
 {
-    return std::sqrt(_pos.x * _pos.x + _pos.y * _pos.y);
+    return std::sqrt(x * x + y * y);
 }
 
 const bool Point::empty() const
 {
-    return _pos.x == 0 && _pos.y == 0;
+    return x == 0 && y == 0;
 }
 
 void Point::clear()
 {
-    _pos.x = 0;
-    _pos.y = 0;
+    x = 0;
+    y = 0;
 }
 
 Point *Point::clone() const
@@ -183,40 +140,40 @@ Point *Point::clone() const
 
 void Point::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
-    const double x = _pos.x, y = _pos.y;
-    _pos.x = a * x + b * y + c;
-    _pos.y = d * x + e * y + f;
+    const double x_ = x, y_ = y;
+    x = a * x_ + b * y_ + c;
+    y = d * x_ + e * y_ + f;
 }
 
 void Point::transform(const double mat[6])
 {
-    const double x = _pos.x, y = _pos.y;
-    _pos.x = mat[0] * x + mat[1] * y + mat[2];
-    _pos.y = mat[3] * x + mat[4] * y + mat[5];
+    const double x_ = x, y_ = y;
+    x = mat[0] * x_ + mat[1] * y_ + mat[2];
+    y = mat[3] * x_ + mat[4] * y_ + mat[5];
 }
 
 void Point::translate(const double tx, const double ty)
 {
-    _pos.x += tx;
-    _pos.y += ty;
+    x += tx;
+    y += ty;
 }
 
-void Point::rotate(const double x, const double y, const double rad)
+void Point::rotate(const double x_, const double y_, const double rad)
 {
-    _pos.x -= x;
-    _pos.y -= y;
-    const double x_ = _pos.x, y_ = _pos.y;
-    _pos.x = x_ * std::cos(rad) - y_ * std::sin(rad);
-    _pos.y = x_ * std::sin(rad) + y_ * std::cos(rad);
-    _pos.x += x;
-    _pos.y += y;
+    x -= x_;
+    y -= y_;
+    const double x1 = x, y1 = y;
+    x = x1 * std::cos(rad) - y1 * std::sin(rad);
+    y = x1 * std::sin(rad) + y1 * std::cos(rad);
+    x += x_;
+    y += y_;
 }
 
-void Point::scale(const double x, const double y, const double k)
+void Point::scale(const double x_, const double y_, const double k)
 {
-    const double x_ = _pos.x, y_ = _pos.y;
-    _pos.x = k * x_ + x * (1 - k);
-    _pos.y = k * y_ + y * (1 - k);
+    const double x1 = x, y1 = y;
+    x = k * x1 + x_ * (1 - k);
+    y = k * y1 + y_ * (1 - k);
 }
 
 AABBRect Point::bounding_rect() const
@@ -227,7 +184,7 @@ AABBRect Point::bounding_rect() const
     }
     else
     {
-        return AABBRect(std::min(0.0, _pos.x), std::min(0.0, _pos.y), std::max(0.0, _pos.x), std::max(0.0, _pos.y));
+        return AABBRect(std::min(0.0, x), std::min(0.0, y), std::max(0.0, x), std::max(0.0, y));
     }
 }
 
@@ -239,62 +196,62 @@ Polygon Point::mini_bounding_rect() const
     }
     else
     {
-        return AABBRect(std::min(0.0, _pos.x), std::min(0.0, _pos.y), std::max(0.0, _pos.x), std::max(0.0, _pos.y));
+        return AABBRect(std::min(0.0, x), std::min(0.0, y), std::max(0.0, x), std::max(0.0, y));
     }
 }
 
 Point Point::operator*(const double k) const
 {
-    return Point(_pos.x * k, _pos.y * k);
+    return Point(x * k, y * k);
 }
 
 double Point::operator*(const Point &point) const
 {
-    return _pos.x * point.coord().x + _pos.y * point.coord().y;
+    return x * point.x + y * point.y;
 }
 
 double Point::cross(const Point &point) const
 {
-    return _pos.x * point.coord().y - _pos.y * point.coord().x;
+    return x * point.y - y * point.x;
 }
 
 Point Point::operator+(const Point &point) const
 {
-    return Point(_pos.x + point._pos.x, _pos.y + point._pos.y);
+    return Point(x + point.x, y + point.y);
 }
 
 Point Point::operator-(const Point &point) const
 {
-    return Point(_pos.x - point._pos.x, _pos.y - point._pos.y);
+    return Point(x - point.x, y - point.y);
 }
 
 Point Point::operator/(const double k) const
 {
-    return Point(_pos.x / k, _pos.y / k);
+    return Point(x / k, y / k);
 }
 
 void Point::operator*=(const double k)
 {
-    _pos.x *= k;
-    _pos.y *= k;
+    x *= k;
+    y *= k;
 }
 
 void Point::operator+=(const Point &point)
 {
-    _pos.x += point._pos.x;
-    _pos.y += point._pos.y;
+    x += point.x;
+    y += point.y;
 }
 
 void Point::operator-=(const Point &point)
 {
-    _pos.x -= point._pos.x;
-    _pos.y -= point._pos.y;
+    x -= point.x;
+    y -= point.y;
 }
 
 void Point::operator/=(const double k)
 {
-    _pos.x /= k;
-    _pos.y /= k;
+    x /= k;
+    y /= k;
 }
 
 // Polyline
@@ -637,14 +594,14 @@ Polygon Polyline::convex_hull() const
 {
     std::vector<Point> points(_points);
     std::sort(points.begin(), points.end(), [](const Point &a, const Point &b)
-        {return a.coord().y < b.coord().y;});
+        {return a.y < b.y;});
     const Point origin(points.front());
     std::for_each(points.begin(), points.end(), [=](Point &p){p -= origin;});
     std::sort(points.begin() + 1, points.end(), [](const Point &a, const Point &b)
         {
-            if (a.coord().x / a.length() != b.coord().x / b.length())
+            if (a.x / a.length() != b.x / b.length())
             {
-                return a.coord().x / a.length() > b.coord().x / b.length();
+                return a.x / a.length() > b.x / b.length();
             }
             else
             {
@@ -661,7 +618,7 @@ Polygon Polyline::convex_hull() const
     {        
         vec0 = hull.back() - hull[count - 2];
         vec1 = vec0 + points[i] - hull.back();
-        while (count >= 2 && vec0.coord().x * vec1.coord().y - vec1.coord().x * vec0.coord().y < 0)
+        while (count >= 2 && vec0.x * vec1.y - vec1.x * vec0.y < 0)
         {
             hull.pop_back();
             --count;
@@ -693,7 +650,7 @@ Polygon Polyline::convex_hull() const
 
         vec0 = hull.back() - hull[count - 2];
         vec1 = vec0 + points[i] - hull.back();
-        while (count >= 2 && vec0.coord().x * vec1.coord().y - vec1.coord().x * vec0.coord().y < 0)
+        while (count >= 2 && vec0.x * vec1.y - vec1.x * vec0.y < 0)
         {
             hull.pop_back();
             --count;
@@ -706,7 +663,7 @@ Polygon Polyline::convex_hull() const
 
     vec0 = hull.back() - hull[count - 2];
     vec1 = vec0 + points.front() - hull.back();
-    if (count >= 2 && vec0.coord().x * vec1.coord().y - vec0.coord().y * vec1.coord().x < 0)
+    if (count >= 2 && vec0.x * vec1.y - vec0.y * vec1.x < 0)
     {
         hull.pop_back();
     }
@@ -725,10 +682,10 @@ AABBRect Polyline::bounding_rect() const
     double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
     for (const Point &point : _points)
     {
-        x0 = std::min(x0, point.coord().x);
-        y0 = std::min(y0, point.coord().y);
-        x1 = std::max(x1, point.coord().x);
-        y1 = std::max(y1, point.coord().y);
+        x0 = std::min(x0, point.x);
+        y0 = std::min(y0, point.y);
+        x1 = std::max(x1, point.x);
+        y1 = std::max(y1, point.y);
     }
     return AABBRect(x0, y1, x1, y0);
 }
@@ -743,19 +700,18 @@ Polygon Polyline::mini_bounding_rect() const
     double cs, area = DBL_MAX;
     AABBRect rect, temp;
     const Polygon hull(convex_hull());
-    Coord coord;
     for (size_t i = 1, count = hull.size(); i < count; ++i)
     {
         Polygon polygon(hull);
-        coord = polygon[i - 1].coord();
-        cs = (coord.x * polygon[i].coord().y - polygon[i].coord().x *coord.y) / (polygon[i].length() * polygon[i - 1].length());
-        polygon.rotate(coord.x, coord.y, std::acos(cs));
+        cs = (polygon[i - 1].x * polygon[i].y - polygon[i].x * polygon[i - 1].y)
+            / (polygon[i].length() * polygon[i - 1].length());
+        polygon.rotate(polygon[i - 1].x, polygon[i - 1].y, std::acos(cs));
         temp = polygon.bounding_rect();
         if (temp.area() < area)
         {
             rect = temp;
             area = temp.area();
-            rect.rotate(coord.x, coord.y, -std::acos(cs));
+            rect.rotate(polygon[i - 1].x, polygon[i - 1].y, -std::acos(cs));
         }
     }
     return rect;
@@ -798,7 +754,7 @@ AABBRect::AABBRect(const double x0, const double y0, const double x1, const doub
 
 AABBRect::AABBRect(const Point &point0, const Point &point1)
 {
-    const double x0 = point0.coord().x, y0 = point0.coord().y, x1 = point1.coord().x, y1 = point1.coord().y;
+    const double x0 = point0.x, y0 = point0.y, x1 = point1.x, y1 = point1.y;
     if (x0 < x1)
     {
         if (y0 > y1)
@@ -833,48 +789,48 @@ AABBRect::AABBRect(const AABBRect &rect)
 
 const double AABBRect::left() const
 {
-    return _points.front().coord().x;
+    return _points.front().x;
 }
 
 const double AABBRect::top() const
 {
-    return _points.front().coord().y;
+    return _points.front().y;
 }
 
 const double AABBRect::right() const
 {
-    return _points[2].coord().x;
+    return _points[2].x;
 }
 
 const double AABBRect::bottom() const
 {
-    return _points[2].coord().y;
+    return _points[2].y;
 }
 
 void AABBRect::set_left(const double value)
 {
-    _points.front().coord().x = value;
-    _points[3].coord().x = value;
-    _points.back().coord().x = value;
+    _points.front().x = value;
+    _points[3].x = value;
+    _points.back().x = value;
 }
 
 void AABBRect::set_top(const double value)
 {
-    _points.front().coord().y = value;
-    _points[1].coord().y = value;
-    _points.back().coord().y = value;
+    _points.front().y = value;
+    _points[1].y = value;
+    _points.back().y = value;
 }
 
 void AABBRect::set_right(const double value)
 {
-    _points[1].coord().x = value;
-    _points[2].coord().x = value;
+    _points[1].x = value;
+    _points[2].x = value;
 }
 
 void AABBRect::set_bottom(const double value)
 {
-    _points[2].coord().y = value;
-    _points[3].coord().y = value;
+    _points[2].y = value;
+    _points[3].y = value;
 }
 
 AABBRect &AABBRect::operator=(const AABBRect &rect)
@@ -952,47 +908,47 @@ const double AABBRect::height() const
 void AABBRect::set_width(const double value)
 {
     const double d = (value - width()) / 2;
-    _points[0].coord().x = _points[3].coord().x = _points[4].coord().x = _points[0].coord().x - d;
-    _points[1].coord().x = _points[2].coord().x = _points[1].coord().x + d;
+    _points[0].x = _points[3].x = _points[4].x = _points[0].x - d;
+    _points[1].x = _points[2].x = _points[1].x + d;
 }
 
 void AABBRect::set_height(const double value)
 {
     const double d = (value - height()) / 2;
-    _points[0].coord().y = _points[1].coord().y = _points[4].coord().y = _points[0].coord().y + d;
-    _points[2].coord().x = _points[3].coord().x = _points[2].coord().x + d;
+    _points[0].y = _points[1].y = _points[4].y = _points[0].y + d;
+    _points[2].x = _points[3].x = _points[2].x + d;
 }
 
 void AABBRect::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
     std::for_each(_points.begin(), _points.end(), [=](Point &point){point.transform(a,b,c,d,e,f);});
-    if (_points[0].coord().x > _points[1].coord().x)
+    if (_points[0].x > _points[1].x)
     {
-        std::swap(_points[0].coord(), _points[1].coord());
-        std::swap(_points[2].coord(), _points[3].coord());
+        std::swap(_points[0], _points[1]);
+        std::swap(_points[2], _points[3]);
     }
-    if (_points[0].coord().y < _points[2].coord().y)
+    if (_points[0].y < _points[2].y)
     {
-        std::swap(_points[0].coord(), _points[3].coord());
-        std::swap(_points[1].coord(), _points[2].coord());
+        std::swap(_points[0], _points[3]);
+        std::swap(_points[1], _points[2]);
     }
-    _points[4].coord() = _points[0].coord();
+    _points[4] = _points[0];
 }
 
 void AABBRect::transform(const double mat[6])
 {
     std::for_each(_points.begin(), _points.end(), [=](Point &point){point.transform(mat);});
-    if (_points[0].coord().x > _points[1].coord().x)
+    if (_points[0].x > _points[1].x)
     {
-        std::swap(_points[0].coord(), _points[1].coord());
-        std::swap(_points[2].coord(), _points[3].coord());
+        std::swap(_points[0], _points[1]);
+        std::swap(_points[2], _points[3]);
     }
-    if (_points[0].coord().y < _points[2].coord().y)
+    if (_points[0].y < _points[2].y)
     {
-        std::swap(_points[0].coord(), _points[3].coord());
-        std::swap(_points[1].coord(), _points[2].coord());
+        std::swap(_points[0], _points[3]);
+        std::swap(_points[1], _points[2]);
     }
-    _points[4].coord() = _points[0].coord();
+    _points[4] = _points[0];
 }
 
 void AABBRect::translate(const double tx, const double ty)
@@ -1024,10 +980,10 @@ AABBRect AABBRect::bounding_rect() const
     double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
     for (const Point &point : _points)
     {
-        x0 = std::min(x0, point.coord().x);
-        y0 = std::min(y0, point.coord().y);
-        x1 = std::max(x1, point.coord().x);
-        y1 = std::max(y1, point.coord().y);
+        x0 = std::min(x0, point.x);
+        y0 = std::min(y0, point.y);
+        x1 = std::max(x1, point.x);
+        y1 = std::max(y1, point.y);
     }
     return AABBRect(x0, y0, x1, y1);
 }
@@ -1084,14 +1040,14 @@ std::vector<Point>::const_iterator AABBRect::find(const Point &point) const
 
 AABBRect AABBRect::operator+(const Point &point) const
 {
-    return AABBRect(_points[0].coord().x + point.coord().x, _points[0].coord().y + point.coord().y,
-                    _points[2].coord().x + point.coord().x, _points[2].coord().y + point.coord().y);
+    return AABBRect(_points[0].x + point.x, _points[0].y + point.y,
+                    _points[2].x + point.x, _points[2].y + point.y);
 }
 
 AABBRect AABBRect::operator-(const Point &point) const
 {
-    return AABBRect(_points[0].coord().x - point.coord().x, _points[0].coord().y - point.coord().y,
-                    _points[2].coord().x - point.coord().x, _points[2].coord().y - point.coord().y);
+    return AABBRect(_points[0].x - point.x, _points[0].y - point.y,
+                    _points[2].x - point.x, _points[2].y - point.y);
 }
 
 void AABBRect::operator+=(const Point &point)
@@ -1193,7 +1149,7 @@ void Polygon::reorder_points(const bool cw)
     double result = 0;
     for (size_t i = 0, count = size() - 1; i < count; ++i)
     {
-        result += (_points[i].coord().x * _points[i + 1].coord().y - _points[i + 1].coord().x * _points[i].coord().y);
+        result += (_points[i].x * _points[i + 1].y - _points[i + 1].x * _points[i].y);
     }
     if (cw)
     {
@@ -1221,7 +1177,7 @@ bool Polygon::is_cw() const
     double result = 0;
     for (size_t i = 0, count = size() - 1; i < count; ++i)
     {
-        result += (_points[i].coord().x * _points[i + 1].coord().y - _points[i + 1].coord().x * _points[i].coord().y);
+        result += (_points[i].x * _points[i + 1].y - _points[i + 1].x * _points[i].y);
     }
     return result < 0;
 }
@@ -1409,7 +1365,7 @@ const double Polygon::area() const
     double result = 0;
     for (size_t i = 0, count = size() - 1; i < count; ++i)
     {
-        result += (_points[i].coord().x * _points[i + 1].coord().y - _points[i + 1].coord().x * _points[i].coord().y);
+        result += (_points[i].x * _points[i + 1].y - _points[i + 1].x * _points[i].y);
     }
     return std::abs(result) / 2.0;
 }
@@ -1500,12 +1456,12 @@ Triangle::Triangle(const Point &point0, const Point &point1, const Point &point2
 Triangle::Triangle(const double x0, const double y0, const double x1, const double y1, const double x2, const double y2)
 {
     _type = Type::TRIANGLE;
-    _vecs[0].coord().x = x0;
-    _vecs[0].coord().y = y0;
-    _vecs[1].coord().x = x1;
-    _vecs[1].coord().y = y1;
-    _vecs[2].coord().x = x2;
-    _vecs[2].coord().y = y2;
+    _vecs[0].x = x0;
+    _vecs[0].y = y0;
+    _vecs[1].x = x1;
+    _vecs[1].y = y1;
+    _vecs[2].x = x2;
+    _vecs[2].y = y2;
 }
 
 Triangle::Triangle(const Triangle &triangle)
@@ -1710,10 +1666,10 @@ AABBRect Triangle::bounding_rect() const
         return AABBRect();
     }
 
-    const double left = std::min(_vecs[0].coord().x, std::min(_vecs[1].coord().x, _vecs[2].coord().x));
-    const double right = std::max(_vecs[0].coord().x, std::max(_vecs[1].coord().x, _vecs[2].coord().x));
-    const double top = std::max(_vecs[0].coord().y, std::max(_vecs[1].coord().y, _vecs[2].coord().y));
-    const double bottom = std::min(_vecs[0].coord().y, std::min(_vecs[1].coord().y, _vecs[2].coord().y));
+    const double left = std::min(_vecs[0].x, std::min(_vecs[1].x, _vecs[2].x));
+    const double right = std::max(_vecs[0].x, std::max(_vecs[1].x, _vecs[2].x));
+    const double top = std::max(_vecs[0].y, std::max(_vecs[1].y, _vecs[2].y));
+    const double bottom = std::min(_vecs[0].y, std::min(_vecs[1].y, _vecs[2].y));
     return AABBRect(left, top, right, bottom);
 }
 
@@ -1726,20 +1682,18 @@ Polygon Triangle::mini_bounding_rect() const
 
     double cs, area = DBL_MAX;
     AABBRect rect, temp;
-    Coord coord;
     for (size_t i = 0; i < 3; ++i)
     {
         Triangle triangle(*this);
-        coord = triangle[i].coord();
-        cs = (coord.x * triangle[i < 2 ? i + 1 : 0].coord().y - triangle[i < 2 ? i + 1 : 0].coord().x *coord.y) /
-            (triangle[i < 2 ? i + 1 : 0].length() * triangle[i].length());
-        triangle.rotate(coord.x, coord.y, std::acos(cs));
+        cs = (triangle[i].x * triangle[i < 2 ? i + 1 : 0].y - triangle[i < 2 ? i + 1 : 0].x * triangle[i].y)
+            / (triangle[i < 2 ? i + 1 : 0].length() * triangle[i].length());
+        triangle.rotate(triangle[i].x, triangle[i].y, std::acos(cs));
         temp = triangle.bounding_rect();
         if (temp.area() < area)
         {
             rect = temp;
             area = temp.area();
-            rect.rotate(coord.x, coord.y, -std::acos(cs));
+            rect.rotate(triangle[i].x, triangle[i].y, -std::acos(cs));
         }
     }
     return rect;
@@ -1883,7 +1837,7 @@ AABBRect Circle::bounding_rect() const
     }
     else
     {
-        return AABBRect(_center.coord().x - _radius, _center.coord().y + _radius, _center.coord().x + _radius, _center.coord().y - _radius);
+        return AABBRect(_center.x - _radius, _center.y + _radius, _center.x + _radius, _center.y - _radius);
     }
 }
 
@@ -1895,7 +1849,7 @@ Polygon Circle::mini_bounding_rect() const
     }
     else
     {
-        return AABBRect(_center.coord().x - _radius, _center.coord().y + _radius, _center.coord().x + _radius, _center.coord().y - _radius);
+        return AABBRect(_center.x - _radius, _center.y + _radius, _center.x + _radius, _center.y - _radius);
     }
 }
 
@@ -2037,10 +1991,10 @@ AABBRect Line::bounding_rect() const
     }
     else
     {
-        return AABBRect(std::min(_start_point.coord().x, _end_point.coord().x),
-                        std::max(_start_point.coord().y, _end_point.coord().y),
-                        std::max(_start_point.coord().x, _end_point.coord().x),
-                        std::min(_start_point.coord().y, _end_point.coord().y));
+        return AABBRect(std::min(_start_point.x, _end_point.x),
+                        std::max(_start_point.y, _end_point.y),
+                        std::max(_start_point.x, _end_point.x),
+                        std::min(_start_point.y, _end_point.y));
     }
 }
 
@@ -2052,10 +2006,10 @@ Polygon Line::mini_bounding_rect() const
     }
     else
     {
-        return AABBRect(std::min(_start_point.coord().x, _end_point.coord().x),
-                        std::max(_start_point.coord().y, _end_point.coord().y),
-                        std::max(_start_point.coord().x, _end_point.coord().x),
-                        std::min(_start_point.coord().y, _end_point.coord().y));
+        return AABBRect(std::min(_start_point.x, _end_point.x),
+                        std::max(_start_point.y, _end_point.y),
+                        std::max(_start_point.x, _end_point.x),
+                        std::min(_start_point.y, _end_point.y));
     }
 }
 
@@ -2272,24 +2226,24 @@ const double Geo::distance(const double x0, const double y0, const double x1, co
 
 const double Geo::distance(const Point &point0, const Point &point1)
 {
-    return std::sqrt((point0.coord().x - point1.coord().x) * (point0.coord().x - point1.coord().x)
-                        + (point0.coord().y - point1.coord().y) * (point0.coord().y - point1.coord().y));
+    return std::sqrt((point0.x - point1.x) * (point0.x - point1.x)
+                        + (point0.y - point1.y) * (point0.y - point1.y));
 }
 
 const double Geo::distance(const Point &point, const Line &line, const bool infinite)
 {
-    if (line.front().coord().x == line.back().coord().x)
+    if (line.front().x == line.back().x)
     {
         if (infinite)
         {
-            return std::abs(point.coord().x - line.front().coord().x);
+            return std::abs(point.x - line.front().x);
         }
         else
         {
-            if ((point.coord().y >= line.front().coord().y && point.coord().y <= line.back().coord().y) ||
-                (point.coord().y <= line.front().coord().y && point.coord().y >= line.back().coord().y))
+            if ((point.y >= line.front().y && point.y <= line.back().y) ||
+                (point.y <= line.front().y && point.y >= line.back().y))
             {
-                return std::abs(point.coord().x - line.front().coord().x);
+                return std::abs(point.x - line.front().x);
             }
             else
             {
@@ -2297,18 +2251,18 @@ const double Geo::distance(const Point &point, const Line &line, const bool infi
             }
         }
     }
-    else if (line.front().coord().y == line.back().coord().y)
+    else if (line.front().y == line.back().y)
     {
         if (infinite)
         {
-            return std::abs(point.coord().y - line.front().coord().y);
+            return std::abs(point.y - line.front().y);
         }
         else
         {
-            if ((point.coord().x >= line.front().coord().x && point.coord().x <= line.back().coord().x) ||
-                (point.coord().x <= line.front().coord().x && point.coord().x >= line.back().coord().x))
+            if ((point.x >= line.front().x && point.x <= line.back().x) ||
+                (point.x <= line.front().x && point.x >= line.back().x))
             {
-                return std::abs(point.coord().y - line.front().coord().y);
+                return std::abs(point.y - line.front().y);
             }
             else
             {
@@ -2317,23 +2271,23 @@ const double Geo::distance(const Point &point, const Line &line, const bool infi
         }
     }
     
-    const double a = line.back().coord().y - line.front().coord().y, 
-                b = line.front().coord().x - line.back().coord().x,
-                c = line.back().coord().x * line.front().coord().y - line.front().coord().x * line.back().coord().y;
+    const double a = line.back().y - line.front().y, 
+                b = line.front().x - line.back().x,
+                c = line.back().x * line.front().y - line.front().x * line.back().y;
     if (infinite)
     {
-        return std::abs(a * point.coord().x + b * point.coord().y + c) / std::sqrt(a * a + b * b);
+        return std::abs(a * point.x + b * point.y + c) / std::sqrt(a * a + b * b);
     }
     else
     {
-        const double k = ((point.coord().x - line.front().coord().x) * (line.back().coord().x - line.front().coord().x) +
-            (point.coord().y - line.front().coord().y) * (line.back().coord().y - line.front().coord().y)) /
-            (std::pow(line.back().coord().x - line.front().coord().x, 2) + std::pow(line.back().coord().y - line.front().coord().y, 2)); 
-        const double x = line.front().coord().x + k * (line.back().coord().x - line.front().coord().x);
+        const double k = ((point.x - line.front().x) * (line.back().x - line.front().x) +
+            (point.y - line.front().y) * (line.back().y - line.front().y)) /
+            (std::pow(line.back().x - line.front().x, 2) + std::pow(line.back().y - line.front().y, 2)); 
+        const double x = line.front().x + k * (line.back().x - line.front().x);
 
-        if ((x >= line.front().coord().x && x <= line.back().coord().x) || (x <= line.front().coord().x && x >= line.back().coord().x))
+        if ((x >= line.front().x && x <= line.back().x) || (x <= line.front().x && x >= line.back().x))
         {
-            return std::abs(a * point.coord().x + b * point.coord().y + c) / std::sqrt(a * a + b * b);
+            return std::abs(a * point.x + b * point.y + c) / std::sqrt(a * a + b * b);
         }
         else
         {
@@ -2344,18 +2298,18 @@ const double Geo::distance(const Point &point, const Line &line, const bool infi
 
 const double Geo::distance(const Point &point, const Point &start, const Point &end, const bool infinite)
 {
-    if (start.coord().x == end.coord().x)
+    if (start.x == end.x)
     {
         if (infinite)
         {
-            return std::abs(point.coord().x - start.coord().x);
+            return std::abs(point.x - start.x);
         }
         else
         {
-            if ((point.coord().y >= start.coord().y && point.coord().y <= end.coord().y) ||
-                (point.coord().y <= start.coord().y && point.coord().y >= end.coord().y))
+            if ((point.y >= start.y && point.y <= end.y) ||
+                (point.y <= start.y && point.y >= end.y))
             {
-                return std::abs(point.coord().x - start.coord().x);
+                return std::abs(point.x - start.x);
             }
             else
             {
@@ -2363,18 +2317,18 @@ const double Geo::distance(const Point &point, const Point &start, const Point &
             }
         }
     }
-    else if (start.coord().y == end.coord().y)
+    else if (start.y == end.y)
     {
         if (infinite)
         {
-            return std::abs(point.coord().y - start.coord().y);
+            return std::abs(point.y - start.y);
         }
         else
         {
-            if ((point.coord().x >= start.coord().x && point.coord().x <= end.coord().x) ||
-                (point.coord().x <= start.coord().x && point.coord().x >= end.coord().x))
+            if ((point.x >= start.x && point.x <= end.x) ||
+                (point.x <= start.x && point.x >= end.x))
             {
-                return std::abs(point.coord().y - start.coord().y);
+                return std::abs(point.y - start.y);
             }
             else
             {
@@ -2383,23 +2337,23 @@ const double Geo::distance(const Point &point, const Point &start, const Point &
         }
     }
     
-    const double a = end.coord().y - start.coord().y, 
-                b = start.coord().x - end.coord().x,
-                c = end.coord().x * start.coord().y - start.coord().x * end.coord().y;
+    const double a = end.y - start.y, 
+                b = start.x - end.x,
+                c = end.x * start.y - start.x * end.y;
     if (infinite)
     {
-        return std::abs(a * point.coord().x + b * point.coord().y + c) / std::sqrt(a * a + b * b);
+        return std::abs(a * point.x + b * point.y + c) / std::sqrt(a * a + b * b);
     }
     else
     {
-        const double k = ((point.coord().x - start.coord().x) * (end.coord().x - start.coord().x) +
-            (point.coord().y - start.coord().y) * (end.coord().y - start.coord().y)) /
-            (std::pow(end.coord().x - start.coord().x, 2) + std::pow(end.coord().y - start.coord().y, 2)); 
-        const double x = start.coord().x + k * (end.coord().x - start.coord().x);
+        const double k = ((point.x - start.x) * (end.x - start.x) +
+            (point.y - start.y) * (end.y - start.y)) /
+            (std::pow(end.x - start.x, 2) + std::pow(end.y - start.y, 2)); 
+        const double x = start.x + k * (end.x - start.x);
 
-        if ((x >= start.coord().x && x <= end.coord().x) || (x <= start.coord().x && x >= end.coord().x))
+        if ((x >= start.x && x <= end.x) || (x <= start.x && x >= end.x))
         {
-            return std::abs(a * point.coord().x + b * point.coord().y + c) / std::sqrt(a * a + b * b);
+            return std::abs(a * point.x + b * point.y + c) / std::sqrt(a * a + b * b);
         }
         else
         {
@@ -2459,9 +2413,9 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
         double x = (-FLT_MAX);
         for (const Geo::Point &p : polygon)
         {
-            x = std::max(x, p.coord().x);
+            x = std::max(x, p.x);
         }
-        Geo::Point temp, end(x + 80, point.coord().y);
+        Geo::Point temp, end(x + 80, point.y);
         if (coincide)
         {
             for (size_t i = 1, len = polygon.size(); i < len; ++i)
@@ -2472,10 +2426,10 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
                 }
                 if (Geo::is_intersected(point, end, polygon[i-1], polygon[i], temp))
                 {
-                    if (polygon[i - 1].coord().y == polygon[i].coord().y)
+                    if (polygon[i - 1].y == polygon[i].y)
                     {
-                        if ((polygon[i == 1 ? len-2 : i-2].coord().y < polygon[i].coord().y && polygon[i == len-1 ? 1 : i+1].coord().y > polygon[i].coord().y)
-                            || (polygon[i == 1 ? len-2 : i-2].coord().y > polygon[i].coord().y && polygon[i == len-1 ? 1 : i+1].coord().y < polygon[i].coord().y))
+                        if ((polygon[i == 1 ? len-2 : i-2].y < polygon[i].y && polygon[i == len-1 ? 1 : i+1].y > polygon[i].y)
+                            || (polygon[i == 1 ? len-2 : i-2].y > polygon[i].y && polygon[i == len-1 ? 1 : i+1].y < polygon[i].y))
                         {
                             ++count;
                         }
@@ -2484,8 +2438,8 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
                     {
                         if (Geo::distance(temp, polygon[i-1]) < Geo::EPSILON)
                         {
-                            if ((polygon[i == 1 ? len-2 : i-2].coord().y < polygon[i-1].coord().y && polygon[i].coord().y < polygon[i-1].coord().y) ||
-                                (polygon[i == 1 ? len-2 : i-2].coord().y > polygon[i-1].coord().y && polygon[i].coord().y > polygon[i-1].coord().y))
+                            if ((polygon[i == 1 ? len-2 : i-2].y < polygon[i-1].y && polygon[i].y < polygon[i-1].y) ||
+                                (polygon[i == 1 ? len-2 : i-2].y > polygon[i-1].y && polygon[i].y > polygon[i-1].y))
                             {
                                 ++count;
                             }
@@ -2508,10 +2462,10 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
                 }
                 if (Geo::is_intersected(point, end, polygon[i-1], polygon[i], temp))
                 {
-                    if (polygon[i - 1].coord().y == polygon[i].coord().y)
+                    if (polygon[i - 1].y == polygon[i].y)
                     {
-                        if ((polygon[i == 1 ? len-2 : i-2].coord().y < polygon[i].coord().y && polygon[i == len-1 ? 1 : i+1].coord().y > polygon[i].coord().y)
-                            || (polygon[i == 1 ? len-2 : i-2].coord().y > polygon[i].coord().y && polygon[i == len-1 ? 1 : i+1].coord().y < polygon[i].coord().y))
+                        if ((polygon[i == 1 ? len-2 : i-2].y < polygon[i].y && polygon[i == len-1 ? 1 : i+1].y > polygon[i].y)
+                            || (polygon[i == 1 ? len-2 : i-2].y > polygon[i].y && polygon[i == len-1 ? 1 : i+1].y < polygon[i].y))
                         {
                             ++count;
                         }
@@ -2520,8 +2474,8 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
                     {
                         if (Geo::distance(temp, polygon[i-1]) < Geo::EPSILON)
                         {
-                            if ((polygon[i == 1 ? len-2 : i-2].coord().y < polygon[i-1].coord().y && polygon[i].coord().y < polygon[i-1].coord().y) ||
-                                (polygon[i == 1 ? len-2 : i-2].coord().y > polygon[i-1].coord().y && polygon[i].coord().y > polygon[i-1].coord().y))
+                            if ((polygon[i == 1 ? len-2 : i-2].y < polygon[i-1].y && polygon[i].y < polygon[i-1].y) ||
+                                (polygon[i == 1 ? len-2 : i-2].y > polygon[i-1].y && polygon[i].y > polygon[i-1].y))
                             {
                                 ++count;
                             }
@@ -2548,7 +2502,7 @@ const bool Geo::is_inside(const Point &point, const AABBRect &rect, const bool c
     {
         return false;
     }
-    const double x = point.coord().x, y = point.coord().y;
+    const double x = point.x, y = point.y;
     if (coincide)
     {
         return rect.left() <= x && x <= rect.right() && rect.bottom() <= y && y <= rect.top();
@@ -2579,23 +2533,23 @@ const bool Geo::is_inside(const Point &point, const Point &point0, const Point &
 {
     if (coincide)
     {
-        const bool a = (point2.coord().x - point.coord().x) * (point0.coord().y - point.coord().y) 
-            >= (point0.coord().x - point.coord().x) * (point2.coord().y - point.coord().y);
-        const bool b = (point0.coord().x - point.coord().x) * (point1.coord().y - point.coord().y)
-            >= (point1.coord().x - point.coord().x) * (point0.coord().y - point.coord().y);
-        const bool c = (point1.coord().x - point.coord().x) * (point2.coord().y - point.coord().y)
-            >= (point2.coord().x - point.coord().x) * (point1.coord().y - point.coord().y);
+        const bool a = (point2.x - point.x) * (point0.y - point.y) 
+            >= (point0.x - point.x) * (point2.y - point.y);
+        const bool b = (point0.x - point.x) * (point1.y - point.y)
+            >= (point1.x - point.x) * (point0.y - point.y);
+        const bool c = (point1.x - point.x) * (point2.y - point.y)
+            >= (point2.x - point.x) * (point1.y - point.y);
 
         return a == b && b == c;
     }
     else
     {
-        const bool a = (point2.coord().x - point.coord().x) * (point0.coord().y - point.coord().y) 
-            > (point0.coord().x - point.coord().x) * (point2.coord().y - point.coord().y);
-        const bool b = (point0.coord().x - point.coord().x) * (point1.coord().y - point.coord().y)
-            > (point1.coord().x - point.coord().x) * (point0.coord().y - point.coord().y);
-        const bool c = (point1.coord().x - point.coord().x) * (point2.coord().y - point.coord().y)
-            > (point2.coord().x - point.coord().x) * (point1.coord().y - point.coord().y);
+        const bool a = (point2.x - point.x) * (point0.y - point.y) 
+            > (point0.x - point.x) * (point2.y - point.y);
+        const bool b = (point0.x - point.x) * (point1.y - point.y)
+            > (point1.x - point.x) * (point0.y - point.y);
+        const bool c = (point1.x - point.x) * (point2.y - point.y)
+            > (point2.x - point.x) * (point1.y - point.y);
 
         return a == b && b == c;
     }
@@ -2620,14 +2574,14 @@ const bool Geo::is_inside(const Triangle &triangle0, const Triangle &triangle1)
 
 const bool Geo::is_parallel(const Point &point0, const Point &point1, const Point &point2, const Point &point3)
 {
-    if (point0.coord().x == point1.coord().x && point2.coord().x == point3.coord().x)
+    if (point0.x == point1.x && point2.x == point3.x)
     {
         return true;
     }
     else
     {
-        return ((point0.coord().y - point1.coord().y) / (point0.coord().x - point1.coord().x)) ==
-            ((point2.coord().y - point3.coord().y) / (point2.coord().x - point3.coord().x));
+        return ((point0.y - point1.y) / (point0.x - point1.x)) ==
+            ((point2.y - point3.y) / (point2.x - point3.x));
     }
 }
 
@@ -2639,12 +2593,12 @@ const bool Geo::is_parallel(const Line &line0, const Line &line1)
 
 const bool Geo::is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite)
 {
-    const double a0 = point1.coord().y - point0.coord().y, 
-                b0 = point0.coord().x - point1.coord().x,
-                c0 = point1.coord().x * point0.coord().y - point0.coord().x * point1.coord().y;
-    const double a1 = point3.coord().y - point2.coord().y, 
-                b1 = point2.coord().x - point3.coord().x,
-                c1 = point3.coord().x * point2.coord().y - point2.coord().x * point3.coord().y;
+    const double a0 = point1.y - point0.y, 
+                b0 = point0.x - point1.x,
+                c0 = point1.x * point0.y - point0.x * point1.y;
+    const double a1 = point3.y - point2.y, 
+                b1 = point2.x - point3.x,
+                c1 = point3.x * point2.y - point2.x * point3.y;
     if (std::abs(a0 * b1 - a1 * b0) < Geo::EPSILON)
     {
         if (std::abs(c0 - c1) >= Geo::EPSILON)
@@ -2661,21 +2615,21 @@ const bool Geo::is_intersected(const Point &point0, const Point &point1, const P
                 || Geo::is_inside(point2, point0, point1) || Geo::is_inside(point3, point0, point1);
         }
     }
-    output.coord().x = (c1 * b0 - c0 * b1) / (a0 * b1 - a1 * b0), output.coord().y = (c0 * a1 - c1 * a0) / (a0 * b1 - a1 * b0);
+    output.x = (c1 * b0 - c0 * b1) / (a0 * b1 - a1 * b0), output.y = (c0 * a1 - c1 * a0) / (a0 * b1 - a1 * b0);
     if (infinite)
     {
         return true;
     }
     else
     {
-        return ((output.coord().x >= point0.coord().x - Geo::EPSILON && output.coord().x <= point1.coord().x + Geo::EPSILON) 
-                || (output.coord().x <= point0.coord().x + Geo::EPSILON && output.coord().x >= point1.coord().x - Geo::EPSILON))
-            && ((output.coord().x >= point2.coord().x - Geo::EPSILON && output.coord().x <= point3.coord().x + Geo::EPSILON) 
-                || (output.coord().x <= point2.coord().x + Geo::EPSILON && output.coord().x >= point3.coord().x - Geo::EPSILON))
-            && ((output.coord().y >= point0.coord().y - Geo::EPSILON && output.coord().y <= point1.coord().y + Geo::EPSILON) 
-                || (output.coord().y <= point0.coord().y + Geo::EPSILON && output.coord().y >= point1.coord().y - Geo::EPSILON))
-            && ((output.coord().y >= point2.coord().y - Geo::EPSILON && output.coord().y <= point3.coord().y + Geo::EPSILON) 
-                || (output.coord().y <= point2.coord().y + Geo::EPSILON && output.coord().y >= point3.coord().y - Geo::EPSILON));
+        return ((output.x >= point0.x - Geo::EPSILON && output.x <= point1.x + Geo::EPSILON) 
+                || (output.x <= point0.x + Geo::EPSILON && output.x >= point1.x - Geo::EPSILON))
+            && ((output.x >= point2.x - Geo::EPSILON && output.x <= point3.x + Geo::EPSILON) 
+                || (output.x <= point2.x + Geo::EPSILON && output.x >= point3.x - Geo::EPSILON))
+            && ((output.y >= point0.y - Geo::EPSILON && output.y <= point1.y + Geo::EPSILON) 
+                || (output.y <= point0.y + Geo::EPSILON && output.y >= point1.y - Geo::EPSILON))
+            && ((output.y >= point2.y - Geo::EPSILON && output.y <= point3.y + Geo::EPSILON) 
+                || (output.y <= point2.y + Geo::EPSILON && output.y >= point3.y - Geo::EPSILON));
     }
 }
 
@@ -2851,10 +2805,10 @@ const bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const 
         return true;
     }
 
-    const double x_max = std::max(point0.coord().x, point1.coord().x);
-    const double x_min = std::min(point0.coord().x, point1.coord().x);
-    const double y_max = std::max(point0.coord().y, point1.coord().y);
-    const double y_min = std::min(point0.coord().y, point1.coord().y);
+    const double x_max = std::max(point0.x, point1.x);
+    const double x_min = std::min(point0.x, point1.x);
+    const double y_max = std::max(point0.y, point1.y);
+    const double y_min = std::min(point0.y, point1.y);
 
     if (x_max < rect.left() || x_min > rect.right() || y_max < rect.bottom() || y_min > rect.top())
     {
@@ -2868,12 +2822,12 @@ const bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const 
         }
         else
         {
-            const double dx = point1.coord().x - point0.coord().x;
-            const double dy = point1.coord().y - point0.coord().y;
-            const bool b0 = (rect[0].coord().x - point0.coord().x) * dy >= (rect[0].coord().y - point0.coord().y) * dx;
-            const bool b1 = (rect[1].coord().x - point0.coord().x) * dy >= (rect[1].coord().y - point0.coord().y) * dx;
-            const bool b2 = (rect[2].coord().x - point0.coord().x) * dy >= (rect[2].coord().y - point0.coord().y) * dx;
-            const bool b3 = (rect[3].coord().x - point0.coord().x) * dy >= (rect[3].coord().y - point0.coord().y) * dx;
+            const double dx = point1.x - point0.x;
+            const double dy = point1.y - point0.y;
+            const bool b0 = (rect[0].x - point0.x) * dy >= (rect[0].y - point0.y) * dx;
+            const bool b1 = (rect[1].x - point0.x) * dy >= (rect[1].y - point0.y) * dx;
+            const bool b2 = (rect[2].x - point0.x) * dy >= (rect[2].y - point0.y) * dx;
+            const bool b3 = (rect[3].x - point0.x) * dy >= (rect[3].y - point0.y) * dx;
             return !(b0 == b1 && b1 == b2 && b2 == b3);
         }
     }
@@ -2979,8 +2933,8 @@ const bool Geo::is_intersected(const Line &line, const Triangle &triangle, Point
 
 const bool Geo::is_on_left(const Point &point, const Point &start, const Point &end)
 {
-    return (end.coord().x - start.coord().x) * (point.coord().y - start.coord().y) -
-        (end.coord().y - start.coord().y) * (point.coord().x - end.coord().x) > 0;
+    return (end.x - start.x) * (point.y - start.y) -
+        (end.y - start.y) * (point.x - end.x) > 0;
 }
 
 
@@ -3006,7 +2960,7 @@ const bool Geo::is_Rectangle(const Polygon &polygon)
     if (Geo::distance(points[0], points[1]) == Geo::distance(points[2], points[3]) &&
         Geo::distance(points[1], points[2]) == Geo::distance(points[0], points[3]))
     {
-        const Geo::Coord vec0 = (points[0] - points[1]).coord(), vec1 = (points[2] - points[1]).coord();
+        const Geo::Point vec0 = points[0] - points[1], vec1 = points[2] - points[1];
         return std::abs(vec0.x * vec1.x + vec0.y * vec1.y) == 0;
     }
     else
@@ -3023,7 +2977,7 @@ double Geo::cross(const double x0, const double y0, const double x1, const doubl
 
 double Geo::cross(const Vector &vec0, const Vector &vec1)
 {
-    return vec0.coord().x * vec1.coord().y - vec1.coord().x * vec0.coord().y;
+    return vec0.x * vec1.y - vec1.x * vec0.y;
 }
 
 double Geo::cross(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
@@ -3049,7 +3003,7 @@ Polygon Geo::circle_to_polygon(const double x, const double y, const double r)
 
 Polygon Geo::circle_to_polygon(const Circle &circle)
 {
-    return Geo::circle_to_polygon(circle.center().coord().x, circle.center().coord().y, circle.radius());
+    return Geo::circle_to_polygon(circle.center().x, circle.center().y, circle.radius());
 }
 
 
@@ -3059,7 +3013,7 @@ std::vector<size_t> Geo::ear_cut_to_indexs(const Polygon &polygon)
     points.emplace_back(std::vector<std::array<double, 2>>());
     for (const Point &point : polygon)
     {
-        points.front().emplace_back(std::array<double, 2>({point.coord().x, point.coord().y}));
+        points.front().emplace_back(std::array<double, 2>({point.x, point.y}));
     }
     return mapbox::earcut<size_t>(points);
 }
@@ -3121,15 +3075,15 @@ std::vector<size_t> Geo::ear_cut_to_indexs_test(const Polygon &polygon)
     return ear_indexs;
 }
 
-std::vector<Coord> Geo::ear_cut_to_coords(const Polygon &polygon)
-{
-    std::vector<Coord> result;
-    for (size_t i : ear_cut_to_indexs(polygon))
-    {
-        result.emplace_back(polygon[i].coord());
-    }
-    return result;
-}
+// std::vector<Coord> Geo::ear_cut_to_coords(const Polygon &polygon)
+// {
+//     std::vector<Coord> result;
+//     for (size_t i : ear_cut_to_indexs(polygon))
+//     {
+//         result.emplace_back(polygon[i].coord());
+//     }
+//     return result;
+// }
 
 std::vector<Point> Geo::ear_cut_to_points(const Polygon &polygon)
 {
@@ -3211,9 +3165,9 @@ bool Geo::offset(const Polyline &input, Polyline &result, const double distance)
         double area = 0;
         for (size_t i = 1, count = temp.size(); i < count; ++i)
         {
-            area += (temp[i].coord().x * (temp[i+1 != count ? i+1 : 0].coord().y - temp[i-1].coord().y));
+            area += (temp[i].x * (temp[i+1 != count ? i+1 : 0].y - temp[i-1].y));
         }
-        area += (temp.front().coord().x * (temp[1].coord().y - temp.back().coord().y));
+        area += (temp.front().x * (temp[1].y - temp.back().y));
         if (area > 0)
         {
             temp.flip();
@@ -3331,7 +3285,7 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
 
         for (size_t i = 0, count = result.size(); i < count; ++i)
         {
-            if (std::isnan(result[i].coord().x) || std::isnan(result[i].coord().y))
+            if (std::isnan(result[i].x) || std::isnan(result[i].y))
             {
                 result.remove(i--);
                 --count;
@@ -3420,7 +3374,7 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
 
         for (size_t i = 0, count = result.size(); i < count; ++i)
         {
-            if (std::isnan(result[i].coord().x) || std::isnan(result[i].coord().y))
+            if (std::isnan(result[i].x) || std::isnan(result[i].y))
             {
                 result.remove(i--);
                 --count;

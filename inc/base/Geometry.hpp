@@ -61,43 +61,20 @@ namespace Geo
         virtual Polygon mini_bounding_rect() const;
     };
 
-    struct Coord
-    {
-        double x = 0;
-        double y = 0;
-
-        Coord(){};
-
-        Coord(const double x_, const double y_);
-
-        Coord(const Coord &coord);
-
-        Coord &operator=(const Coord &coord);
-
-        const bool operator==(const Coord &coord) const;
-
-        const bool operator!=(const Coord &coord) const;
-    };
-
     class Point : public Geometry
     {
-    private:
-        Coord _pos;
+    public:
+        double x = 0;
+        double y = 0;
 
     public:
         Point() { _type = Type::POINT; };
 
-        Point(const double x, const double y);
-
-        Point(const Coord &coord);
+        Point(const double x_, const double y_);
 
         Point(const Point &point);
 
         Point &operator=(const Point &point);
-
-        Coord &coord();
-
-        const Coord &coord() const;
 
         const bool operator==(const Point &point) const;
 
@@ -123,9 +100,9 @@ namespace Geo
 
         void translate(const double tx, const double ty) override;
 
-        void rotate(const double x, const double y, const double rad) override;
+        void rotate(const double x_, const double y_, const double rad) override;
 
-        void scale(const double x, const double y, const double k) override;
+        void scale(const double x_, const double y_, const double k) override;
 
         AABBRect bounding_rect() const override;
 
@@ -741,7 +718,7 @@ namespace Geo
 
     std::vector<size_t> ear_cut_to_indexs_test(const Polygon &polygon);
 
-    std::vector<Coord> ear_cut_to_coords(const Polygon &polygon);
+    // std::vector<Coord> ear_cut_to_coords(const Polygon &polygon);
 
     std::vector<Point> ear_cut_to_points(const Polygon &polygon);
 

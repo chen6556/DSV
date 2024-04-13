@@ -22,7 +22,7 @@ private:
     Geo::Circle _circle_cache;
     Geo::AABBRect _AABBRect_cache, _select_rect, _visible_area;
     std::list<QLineF> _reflines;
-    std::vector<Geo::Coord> _catched_points;
+    std::vector<Geo::Point> _catched_points;
     Editer *_editer = nullptr;
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
@@ -54,7 +54,7 @@ private:
     Operation _operation = Operation::NOOPERATION;
 
     QPointF _mouse_pos_0, _mouse_pos_1;
-    Geo::Coord _stored_coord;
+    Geo::Point _stored_coord;
     Geo::Point _last_point;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
     Geo::Geometry *_pressed_obj = nullptr;
@@ -139,7 +139,7 @@ public:
 
     Geo::AABBRect bounding_rect() const;
 
-    Geo::Coord mouse_position(const bool to_real_coord = true) const;
+    Geo::Point mouse_position(const bool to_real_coord = true) const;
 
     const bool empty() const;
 
@@ -181,17 +181,17 @@ public:
     bool is_visible(const Geo::Circle &circle) const;
 
 
-    Geo::Coord real_coord_to_view_coord(const Geo::Coord &input) const;
+    Geo::Point real_coord_to_view_coord(const Geo::Point &input) const;
 
-    Geo::Coord real_coord_to_view_coord(const double x, const double y) const;
+    Geo::Point real_coord_to_view_coord(const double x, const double y) const;
 
-    Geo::Coord canvas_coord_to_real_coord(const Geo::Coord &input) const;
+    Geo::Point canvas_coord_to_real_coord(const Geo::Point &input) const;
 
-    Geo::Coord canvas_coord_to_real_coord(const double x, const double y) const;
+    Geo::Point canvas_coord_to_real_coord(const double x, const double y) const;
 
-    bool catch_cursor(const double x, const double y, Geo::Coord &coord, const double distance);
+    bool catch_cursor(const double x, const double y, Geo::Point &coord, const double distance);
 
-    bool catch_point(const double x, const double y, Geo::Coord &coord, const double distance);
+    bool catch_point(const double x, const double y, Geo::Point &coord, const double distance);
 
 
 

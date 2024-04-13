@@ -119,19 +119,19 @@ void Importer::y_coord(const double value)
 {
     if (_relative_coord)
     {
-        _points.back().coord().y = _last_coord.y + value;
+        _points.back().y = _last_coord.y + value;
     }
     else
     {
-        _points.back().coord().y = value;
+        _points.back().y = value;
     }
-    if (_points.back().coord() == _last_coord)
+    if (_points.back() == _last_coord)
     {
         _points.pop_back();
     }
     else
     {
-        _last_coord = _points.back().coord();
+        _last_coord = _points.back();
     }
 }
 
@@ -148,7 +148,7 @@ void Importer::ci()
         _parameters.pop_back();
     }
     _graph->container_groups().back().append(new CircleContainer(QString(), 
-        _points.front().coord().x, _points.front().coord().y, _parameters.back()));
+        _points.front().x, _points.front().y, _parameters.back()));
     _points.clear();
     _parameters.clear();
 }
@@ -215,7 +215,7 @@ void Importer::end()
         }
         if (!text.marked)
         {
-            _graph->container_group().append(new Text(text.pos.coord().x, text.pos.coord().y, text_size, QString::fromUtf8(text.txt)));
+            _graph->container_group().append(new Text(text.pos.x, text.pos.y, text_size, QString::fromUtf8(text.txt)));
         }
     }
     _texts.clear();

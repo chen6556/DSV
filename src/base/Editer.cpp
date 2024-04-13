@@ -264,45 +264,45 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                 for (Geo::Point &point : temp->shape())
                 {
                     ++count;
-                    if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= catch_distance ||
-                        Geo::distance(x1, y1, point.coord().x, point.coord().y) <= catch_distance)
+                    if (Geo::distance(x0, y0, point.x, point.y) <= catch_distance ||
+                        Geo::distance(x1, y1, point.x, point.y) <= catch_distance)
                     {
                         if (temp->size() == 5)
                         {
-                            if (temp->shape()[0].coord().y == temp->shape()[1].coord().y && temp->shape()[2].coord().y == temp->shape()[3].coord().y && temp->shape()[0].coord().x == temp->shape()[3].coord().x && temp->shape()[2].coord().x == temp->shape()[1].coord().x)
+                            if (temp->shape()[0].y == temp->shape()[1].y && temp->shape()[2].y == temp->shape()[3].y && temp->shape()[0].x == temp->shape()[3].x && temp->shape()[2].x == temp->shape()[1].x)
                             {
                                 point.translate(x1 - x0, y1 - y0);
                                 if (count % 2 != 0)
                                 {
-                                    temp->shape()[count == 1 ? 3 : 1].coord().x = point.coord().x;
-                                    temp->shape()[count].coord().y = point.coord().y;
+                                    temp->shape()[count == 1 ? 3 : 1].x = point.x;
+                                    temp->shape()[count].y = point.y;
                                 }
                                 else
                                 {
-                                    temp->shape()[count - 2].coord().y = point.coord().y;
-                                    temp->shape()[count].coord().x = point.coord().x;
+                                    temp->shape()[count - 2].y = point.y;
+                                    temp->shape()[count].x = point.x;
                                     if (count == 4)
                                     {
-                                        temp->front().coord().x = temp->back().coord().x;
+                                        temp->front().x = temp->back().x;
                                     }
                                 }
                             }
-                            else if (temp->shape()[0].coord().x == temp->shape()[1].coord().x && temp->shape()[2].coord().x == temp->shape()[3].coord().x && temp->shape()[0].coord().y == temp->shape()[3].coord().y && temp->shape()[2].coord().y == temp->shape()[1].coord().y)
+                            else if (temp->shape()[0].x == temp->shape()[1].x && temp->shape()[2].x == temp->shape()[3].x && temp->shape()[0].y == temp->shape()[3].y && temp->shape()[2].y == temp->shape()[1].y)
                             {
                                 point.translate(x1 - x0, y1 - y0);
                                 if (count % 2 == 0)
                                 {
-                                    temp->shape()[count - 2].coord().x = point.coord().x;
-                                    temp->shape()[count].coord().y = point.coord().y;
+                                    temp->shape()[count - 2].x = point.x;
+                                    temp->shape()[count].y = point.y;
                                     if (count == 4)
                                     {
-                                        temp->front().coord().y = temp->back().coord().y;
+                                        temp->front().y = temp->back().y;
                                     }
                                 }
                                 else
                                 {
-                                    temp->shape()[count == 1 ? 3 : 1].coord().y = point.coord().y;
-                                    temp->shape()[count].coord().x = point.coord().x;
+                                    temp->shape()[count == 1 ? 3 : 1].y = point.y;
+                                    temp->shape()[count].x = point.x;
                                 }
                             }
                             else
@@ -314,7 +314,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                         {
                             point.translate(x1 - x0, y1 - y0);
                         }
-                        temp->back().coord() = temp->front().coord();
+                        temp->back() = temp->front();
                         _graph->modified = true;
                         return;
                     }
@@ -349,8 +349,8 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             {
                 for (Geo::Point &point : *temp)
                 {
-                    if (Geo::distance(x0, y0, point.coord().x, point.coord().y) <= catch_distance ||
-                        Geo::distance(x1, y1, point.coord().x, point.coord().y) <= catch_distance)
+                    if (Geo::distance(x0, y0, point.x, point.y) <= catch_distance ||
+                        Geo::distance(x1, y1, point.x, point.y) <= catch_distance)
                     {
                         point.translate(x1 - x0, y1 - y0);
                         _graph->modified = true;
@@ -368,8 +368,8 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             {
                 for (size_t i = 0, count = temp->size(); i < count; ++i)
                 {
-                    if (Geo::distance(x0, y0, (*temp)[i].coord().x, (*temp)[i].coord().y) <= catch_distance ||
-                        Geo::distance(x1, y1, (*temp)[i].coord().x, (*temp)[i].coord().y) <= catch_distance)
+                    if (Geo::distance(x0, y0, (*temp)[i].x, (*temp)[i].y) <= catch_distance ||
+                        Geo::distance(x1, y1, (*temp)[i].x, (*temp)[i].y) <= catch_distance)
                     {
                         (*temp)[i].translate(x1 - x0, y1 - y0);
                         if (i > 2 && i % temp->order() == 1)
@@ -857,8 +857,8 @@ bool Editer::mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *lin
         return false;
     }
 
-    const Geo::Coord &point0 = dynamic_cast<const Geo::Polyline *>(line)->front().coord();
-    const Geo::Coord &point1 = dynamic_cast<const Geo::Polyline *>(line)->back().coord();
+    const Geo::Point &point0 = dynamic_cast<const Geo::Polyline *>(line)->front();
+    const Geo::Point &point1 = dynamic_cast<const Geo::Polyline *>(line)->back();
     const double a = point0.y - point1.y;
     const double b = point1.x - point0.x;
     const double c = point0.x * point1.y - point1.x * point0.y;
@@ -912,7 +912,7 @@ bool Editer::offset(std::list<Geo::Geometry *> objects, const double distance)
             if (distance >= 0 || -distance < circlecontainer->radius())
             {
                 _graph->append(new CircleContainer(circlecontainer->text(),
-                    circlecontainer->center().coord().x, circlecontainer->center().coord().y,
+                    circlecontainer->center().x, circlecontainer->center().y,
                     circlecontainer->radius() + distance), _current_group);
             }
             break;
@@ -1436,12 +1436,12 @@ void Editer::rotate(const double angle, const bool unitary, const bool all_layer
 {
     store_backup();
     const double rad = angle * Geo::PI / 180;
-    Geo::Coord coord;
+    Geo::Point coord;
     if (unitary)
     {
         if (all_layers)
         {
-            coord = _graph->bounding_rect().center().coord();
+            coord = _graph->bounding_rect().center();
             for (ContainerGroup &group : _graph->container_groups())
             {
                 for (Geo::Geometry *geo : group)
@@ -1452,7 +1452,7 @@ void Editer::rotate(const double angle, const bool unitary, const bool all_layer
         }
         else
         {
-            coord = _graph->container_group(_current_group).bounding_rect().center().coord();
+            coord = _graph->container_group(_current_group).bounding_rect().center();
             for (Geo::Geometry *geo : _graph->container_group(_current_group))
             {
                 geo->rotate(coord.x, coord.y, rad);
@@ -1465,7 +1465,7 @@ void Editer::rotate(const double angle, const bool unitary, const bool all_layer
         {
             if (geo->is_selected)
             {
-                coord = geo->bounding_rect().center().coord();
+                coord = geo->bounding_rect().center();
                 geo->rotate(coord.x, coord.y, rad);
             }
         }
@@ -1475,12 +1475,12 @@ void Editer::rotate(const double angle, const bool unitary, const bool all_layer
 void Editer::flip(const bool direction, const bool unitary, const bool all_layers)
 {
     store_backup();
-    Geo::Coord coord;
+    Geo::Point coord;
     if (unitary)
     {
         if (all_layers)
         {
-            coord = _graph->bounding_rect().center().coord();
+            coord = _graph->bounding_rect().center();
             for (ContainerGroup &group : _graph->container_groups())
             {
                 for (Geo::Geometry *geo : group)
@@ -1502,7 +1502,7 @@ void Editer::flip(const bool direction, const bool unitary, const bool all_layer
         }
         else
         {
-            coord = _graph->container_group(_current_group).bounding_rect().center().coord();
+            coord = _graph->container_group(_current_group).bounding_rect().center();
             for (Geo::Geometry *geo : _graph->container_group(_current_group))
             {
                 if (direction)
@@ -1526,7 +1526,7 @@ void Editer::flip(const bool direction, const bool unitary, const bool all_layer
         {
             if (geo->is_selected)
             {
-                coord = geo->bounding_rect().center().coord();
+                coord = geo->bounding_rect().center();
                 if (direction)
                 {
                     geo->translate(-coord.x, 0);
@@ -1553,13 +1553,13 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
     }
 
     const Geo::AABBRect rect(src->bounding_rect());
-    Geo::Coord center(rect.center().coord());
+    Geo::Point center(rect.center());
     double left = rect.left(), top = rect.top(), right = rect.right(), bottom = rect.bottom();
     const double height = top - bottom, width = right - left;
 
     const size_t count = reflines.size();
     const Geo::AABBRect dst_rect(dst->bounding_rect());
-    const Geo::Coord dst_center(dst_rect.center().coord());
+    const Geo::Point dst_center(dst_rect.center());
     const double dst_left = dst_rect.left(), dst_top = dst_rect.top(), dst_right = dst_rect.right(), dst_bottom = dst_rect.bottom();
     const double dst_height = dst_top - dst_bottom, dst_width = dst_right - dst_left;
     const double align_distance = 2.0 / _view_ratio;
@@ -1717,7 +1717,7 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
     return count != reflines.size();
 }
 
-bool Editer::auto_aligning(Geo::Coord &coord, const Geo::Geometry *dst, std::list<QLineF> &reflines)
+bool Editer::auto_aligning(Geo::Point &coord, const Geo::Geometry *dst, std::list<QLineF> &reflines)
 {
     if (dst == nullptr || !(dst->type() == Geo::Type::CONTAINER || dst->type() == Geo::Type::CIRCLECONTAINER))
     {
@@ -1726,7 +1726,7 @@ bool Editer::auto_aligning(Geo::Coord &coord, const Geo::Geometry *dst, std::lis
 
     const size_t count = reflines.size();
     const Geo::AABBRect dst_rect(dst->bounding_rect());
-    const Geo::Coord dst_center(dst_rect.center().coord());
+    const Geo::Point dst_center(dst_rect.center());
     const double dst_left = dst_rect.left(), dst_top = dst_rect.top(), dst_right = dst_rect.right(), dst_bottom = dst_rect.bottom();
     const double dst_height = dst_top - dst_bottom, dst_width = dst_right - dst_left;
     const double align_distance = 2.0 / _view_ratio;
@@ -1772,7 +1772,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
         return false;
     }
 
-    const Geo::Coord center(points->bounding_rect().center().coord());
+    const Geo::Point center(points->bounding_rect().center());
     Geo::Geometry *dst = nullptr;
     double temp, distance = DBL_MAX;
 
@@ -1948,7 +1948,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, const double x, const double y
     return flag;
 }
 
-bool Editer::auto_aligning(Geo::Coord &coord, std::list<QLineF> &reflines, const bool current_group_only)
+bool Editer::auto_aligning(Geo::Point &coord, std::list<QLineF> &reflines, const bool current_group_only)
 {
     if (_graph == nullptr || _graph->empty())
     {

@@ -14,7 +14,7 @@ private:
     Graph *_graph = nullptr;
     std::vector<Geo::Point> _points;
     std::vector<double> _parameters;
-    Geo::Coord _last_coord;
+    Geo::Point _last_coord;
 
     bool _relative_coord = false;
 
