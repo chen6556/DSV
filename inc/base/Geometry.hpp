@@ -64,6 +64,7 @@ namespace Geo
     struct MarkedPoint
     {
         bool original = true;
+        bool active = true;
         int value = 0;
         double x = 0;
         double y = 0;
@@ -694,6 +695,8 @@ namespace Geo
     const bool is_parallel(const Point &point0, const Point &point1, const Point &point2, const Point &point3);
 
     const bool is_parallel(const Line &line0, const Line &line1);
+
+    const bool is_coincide(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
 
     const bool is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite = false);
 
