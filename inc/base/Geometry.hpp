@@ -63,15 +63,15 @@ namespace Geo
 
     struct MarkedPoint
     {
+        bool original = true;
         int value = 0;
         double x = 0;
         double y = 0;
-        size_t id = 0;
 
         MarkedPoint() {}
 
-        MarkedPoint(const double x_, const double y_, const int value_ = 0)
-            : x(x_), y(y_), value(value_) {}
+        MarkedPoint(const double x_, const double y_, const bool original_ = true, const int value_ = 0)
+            : x(x_), y(y_), value(value_), original(original_) {}
 
         bool operator==(const MarkedPoint &point) const
         {
