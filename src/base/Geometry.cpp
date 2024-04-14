@@ -1449,6 +1449,18 @@ Point &Polygon::last_point(const size_t index)
     }
 }
 
+size_t Polygon::index(const double x, const double y) const
+{
+    for (size_t i = 0, count = _points.size() - 1; i < count; ++i)
+    {
+        if (_points[i].x == x && _points[i].y == y)
+        {
+            return i;
+        }
+    }
+    return SIZE_MAX;
+}
+
 
 // Triangle
 

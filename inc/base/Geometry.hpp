@@ -426,6 +426,8 @@ namespace Geo
         const Point &last_point(const size_t index) const;
 
         Point &last_point(const size_t index);
+
+        size_t index(const double x, const double y) const;
     };
 
     class Triangle : public Geometry
