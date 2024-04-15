@@ -54,10 +54,13 @@ namespace Geo
 
         virtual void scale(const double x, const double y, const double k);
 
+        // 凸包
         virtual Polygon convex_hull() const;
 
+        // 外接AABB矩形
         virtual AABBRect bounding_rect() const;
 
+        // 最小外接矩形
         virtual Polygon mini_bounding_rect() const;
     };
 
@@ -110,12 +113,16 @@ namespace Geo
 
         Point normalized() const;
 
+        // 获取左侧的垂直向量
         Point vertical() const;
 
+        // 向量模长
         const double length() const override;
 
+        // 判断是否为零向量
         const bool empty() const override;
 
+        // 变为零向量
         void clear() override;
 
         Point *clone() const override;
@@ -136,8 +143,10 @@ namespace Geo
 
         Point operator*(const double k) const;
 
+        // 向量点积
         double operator*(const Point &point) const;
 
+        // 向量叉积
         double cross(const Point &point) const;
 
         Point operator+(const Point &point) const;
@@ -386,6 +395,7 @@ namespace Geo
 
         void reorder_points(const bool cw = true);
 
+        // 判断点顺序是否为顺时针
         bool is_cw() const;
 
         void append(const Point &point) override;
@@ -455,10 +465,12 @@ namespace Geo
 
         double area() const;
 
+        // 顶角度数(弧度制)
         double angle(const size_t index) const;
 
         void reorder_points(const bool cw = true);
 
+        // 判断点顺序是否为顺时针
         bool is_cw() const;
 
         Point &operator[](const size_t index);
@@ -491,8 +503,10 @@ namespace Geo
 
         Polygon mini_bounding_rect() const override;
 
+        // 内接圆圆心
         Point inner_circle_center() const;
 
+        // 内接圆半径
         double inner_circle_radius() const;
     };
 
@@ -625,6 +639,7 @@ namespace Geo
 
         Bezier(const std::initializer_list<Point> &points, const size_t n);
 
+        // 贝塞尔曲线阶数
         const size_t &order() const;
 
         const Polyline &shape() const;
