@@ -2644,6 +2644,35 @@ const bool Geo::is_coincide(const Point &start0, const Point &end0, const Point 
 }
 
 
+const bool Geo::is_part(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
+{
+    if (is_coincide(start0, end0, start1, end1))
+    {
+        if (start0.x == end0.x)
+        {
+            const double top0 = std::max(start0.y, end0.y), bottom0 = std::min(start0.y, end0.y);
+            const double top1 = std::max(start1.y, end1.y), bottom1 = std::min(start1.y, end1.y);
+            return bottom1 <= bottom0 && bottom0 <= top1 && bottom1 <= top0 && top0 <= top1;
+        }
+        else
+        {
+            const double left0 = std::min(start0.x, end0.x), right0 = std::max(start0.x, end0.x);
+            const double left1 = std::min(start1.x, end1.x), right1 = std::max(start1.x, end1.x);
+            return left1 <= left0 && left0 <= right0 && left1 <= right0 && right0 <= right1;
+        }
+    }
+    else
+    {
+        return false;
+    }
+}
+
+const bool Geo::is_part(const Line &line0, const Line &line1)
+{
+    return is_part(line0.front(), line0.back(), line1.front(), line1.back());
+}
+
+
 const bool Geo::is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite)
 {
     const double a0 = point1.y - point0.y, 
@@ -3707,12 +3736,14 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, Polygo
             }
             else
             {
+                flags[0] = false;
                 for (size_t k = i; k > j; --k)
                 {
+                    flags[0] = (flags[0] || points0[k].original);
                     points0.erase(points0.begin() + k);
                 }
                 points0[j].value = value;
-                points0[j].original = false;
+                points0[j].original = (flags[0] || points0[j].original);
             }
         }
         else
@@ -3748,12 +3779,14 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, Polygo
             }
             else
             {
+                flags[0] = false;
                 for (size_t k = i; k > j; --k)
                 {
+                    flags[0] = (flags[0] || points0[k].original);
                     points0.erase(points0.begin() + k);
                 }
                 points0[j].value = value;
-                points0[j].original = false;
+                points0[j].original = (flags[0] || points0[j].original);
             }
         }
         i = j > 0 ? j : 1;
@@ -3807,12 +3840,14 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, Polygo
             }
             else
             {
+                flags[0] = false;
                 for (size_t k = i; k > j; --k)
                 {
+                    flags[0] = (flags[0] || points1[k].original);
                     points1.erase(points1.begin() + k);
                 }
                 points1[j].value = value;
-                points1[j].original = false;
+                points1[j].original = (flags[0] || points1[j].original);
             }
         }
         else
@@ -3848,12 +3883,14 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, Polygo
             }
             else
             {
+                flags[0] = false;
                 for (size_t k = i; k > j; --k)
                 {
+                    flags[0] = (flags[0] || points1[k].original);
                     points1.erase(points1.begin() + k);
                 }
                 points1[j].value = value;
-                points1[j].original = false;
+                points1[j].original = (flags[0] || points1[j].original);
             }
         }
         i = j > 0 ? j : 1;
