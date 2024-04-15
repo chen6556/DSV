@@ -34,7 +34,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
             case Geo::Type::TEXT:
                 text = dynamic_cast<const Text *>(geo);
                 output << "TEXT<" << text->text().toStdString() << '>' << std::endl;
-                output << text->center().coord().x << ',' << text->center().coord().y << std::endl;
+                output << text->center().x << ',' << text->center().y << std::endl;
                 text = nullptr;
                 break;
             case Geo::Type::CONTAINER:
@@ -49,7 +49,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 }
                 for (const Geo::Point &point : container->shape())
                 {
-                    output << point.coord().x << ',' << point.coord().y << ',';
+                    output << point.x << ',' << point.y << ',';
                 }
                 output.seekp(-1, std::ios::cur);
                 output << std::endl;
@@ -65,8 +65,8 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 {
                     output << "CIRCLE<" << circlecontainer->text().toStdString() << '>' << std::endl;
                 }
-                output << circlecontainer->center().coord().x << ',';
-                output << circlecontainer->center().coord().y << ',';
+                output << circlecontainer->center().x << ',';
+                output << circlecontainer->center().y << ',';
                 output << circlecontainer->radius();
                 output << std::endl;
                 circlecontainer = nullptr;
@@ -80,7 +80,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                     case Geo::Type::TEXT:
                         text = dynamic_cast<const Text *>(item);
                         output << "TEXT<" << text->text().toStdString() << '>' << std::endl;
-                        output << text->center().coord().x << ',' << text->center().coord().y;
+                        output << text->center().x << ',' << text->center().y;
                         text = nullptr;
                         break;
                     case Geo::Type::CONTAINER:
@@ -95,7 +95,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         }
                         for (const Geo::Point &point : container->shape())
                         {
-                            output << point.coord().x << ',' << point.coord().y << ',';
+                            output << point.x << ',' << point.y << ',';
                         }
                         output.seekp(-1, std::ios::cur);
                         output << std::endl;
@@ -111,8 +111,8 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         {
                             output << "CIRCLE<" << circlecontainer->text().toStdString() << '>' << std::endl;
                         }
-                        output << circlecontainer->center().coord().x << ',';
-                        output << circlecontainer->center().coord().y << ',';
+                        output << circlecontainer->center().x << ',';
+                        output << circlecontainer->center().y << ',';
                         output << circlecontainer->radius();
                         output << std::endl;
                         circlecontainer = nullptr;
@@ -126,7 +126,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         output << "POLYLINE" << std::endl;
                         for (const Geo::Point &point : *polyline)
                         {
-                            output << point.coord().x << ',' << point.coord().y << ',';
+                            output << point.x << ',' << point.y << ',';
                         }
                         output.seekp(-1, std::ios_base::cur);
                         output << std::endl;
@@ -142,7 +142,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         output << bezier->order();
                         for (const Geo::Point &point : *bezier)
                         {
-                            output << ',' << point.coord().x << ',' << point.coord().y;
+                            output << ',' << point.x << ',' << point.y;
                         }
                         output << std::endl;
                         bezier = nullptr;
@@ -162,7 +162,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 output << "POLYLINE" << std::endl;
                 for (const Geo::Point &point : *polyline)
                 {
-                    output << point.coord().x << ',' << point.coord().y << ',';
+                    output << point.x << ',' << point.y << ',';
                 }
                 output.seekp(-1, std::ios_base::cur);
                 output << std::endl;
@@ -178,7 +178,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 output << bezier->order();
                 for (const Geo::Point &point : *bezier)
                 {
-                    output << ',' << point.coord().x << ',' << point.coord().y;
+                    output << ',' << point.x << ',' << point.y;
                 }
                 output << std::endl;
                 bezier = nullptr;
@@ -212,21 +212,21 @@ void File::write_plt(const std::string &path, const Graph *graph)
             {
             case Geo::Type::TEXT:
                 text = dynamic_cast<const Text *>(geo);
-                output << "PU" << text->center().coord().x << ',' << text->center().coord().y << ";PD";
+                output << "PU" << text->center().x << ',' << text->center().y << ";PD";
                 output << ";LB" << text->text().toStdString() << ';' << std::endl;
                 text = nullptr;
                 break;
             case Geo::Type::CONTAINER:
                 container = dynamic_cast<const Container *>(geo);
-                output << "PU" << container->shape().front().coord().x << ',' << container->shape().front().coord().y << ";PD";
+                output << "PU" << container->shape().front().x << ',' << container->shape().front().y << ";PD";
                 for (const Geo::Point &point : container->shape())
                 {
-                    output << point.coord().x << ',' << point.coord().y << ',';
+                    output << point.x << ',' << point.y << ',';
                 }
                 output.seekp(-1, std::ios::cur);
                 if (!container->text().isEmpty())
                 {
-                    output << ";PU" << container->center().coord().x << ',' << container->center().coord().y
+                    output << ";PU" << container->center().x << ',' << container->center().y
                         << ";LB" << container->text().toStdString();
                 }
                 output << ';' << std::endl;
@@ -234,7 +234,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 break;
             case Geo::Type::CIRCLECONTAINER:
                 circlecontainer = dynamic_cast<const CircleContainer *>(geo);
-                output << "PA" << circlecontainer->center().coord().x << ',' << circlecontainer->center().coord().y << ';';
+                output << "PA" << circlecontainer->center().x << ',' << circlecontainer->center().y << ';';
                 output << "CI" << circlecontainer->radius() << ';';
                 if (circlecontainer->text().isEmpty())
                 {
@@ -242,7 +242,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 }
                 else
                 {
-                    output << "PU" << circlecontainer->center().coord().x << ',' << circlecontainer->center().coord().y
+                    output << "PU" << circlecontainer->center().x << ',' << circlecontainer->center().y
                         << ";LB" << circlecontainer->text().toStdString() << ';' << std::endl;
                 }
                 circlecontainer = nullptr;
@@ -255,21 +255,21 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     {
                     case Geo::Type::TEXT:
                         text = dynamic_cast<const Text *>(geo);
-                        output << "PU" << text->center().coord().x << ',' << text->center().coord().y << ";PD";
+                        output << "PU" << text->center().x << ',' << text->center().y << ";PD";
                         output << ";LB" << text->text().toStdString() << ';' << std::endl;
                         text = nullptr;
                         break;
                     case Geo::Type::CONTAINER:
                         container = dynamic_cast<const Container *>(item);
-                        output << "PU" << container->shape().front().coord().x << ',' << container->shape().front().coord().y << ";PD";
+                        output << "PU" << container->shape().front().x << ',' << container->shape().front().y << ";PD";
                         for (const Geo::Point &point : container->shape())
                         {
-                            output << point.coord().x << ',' << point.coord().y << ',';
+                            output << point.x << ',' << point.y << ',';
                         }
                         output.seekp(-1, std::ios::cur);
                         if (!container->text().isEmpty())
                         {
-                            output << ";PU" << container->center().coord().x << ',' << container->center().coord().y
+                            output << ";PU" << container->center().x << ',' << container->center().y
                                 << ";LB" << container->text().toStdString();
                         }
                         output << ';' << std::endl;
@@ -277,7 +277,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         break;
                     case Geo::Type::CIRCLECONTAINER:
                         circlecontainer = dynamic_cast<const CircleContainer *>(item);
-                        output << "PU" << circlecontainer->center().coord().x << ',' << circlecontainer->center().coord().y << ';';
+                        output << "PU" << circlecontainer->center().x << ',' << circlecontainer->center().y << ';';
                         output << "CI" << circlecontainer->radius() << ';';
                         if (circlecontainer->text().isEmpty())
                         {
@@ -285,7 +285,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         }
                         else
                         {
-                            output << "PU" << circlecontainer->center().coord().x << ',' << circlecontainer->center().coord().y
+                            output << "PU" << circlecontainer->center().x << ',' << circlecontainer->center().y
                                 << ";LB" << circlecontainer->text().toStdString() << ';' << std::endl;
                         }
                         circlecontainer = nullptr;
@@ -296,10 +296,10 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         {
                             break;
                         }
-                        output << "PU" << polyline->front().coord().x << ',' << polyline->front().coord().y << ";PD";
+                        output << "PU" << polyline->front().x << ',' << polyline->front().y << ";PD";
                         for (const Geo::Point &point : *polyline)
                         {
-                            output << point.coord().x << ',' << point.coord().y << ',';
+                            output << point.x << ',' << point.y << ',';
                         }
                         output.seekp(-1, std::ios::cur);
                         output << ';' << std::endl;
@@ -312,10 +312,10 @@ void File::write_plt(const std::string &path, const Graph *graph)
                             break;
                         }
                         const_cast<Geo::Bezier *>(bezier)->update_shape();
-                        output << "PU" << bezier->front().coord().x << ',' << bezier->front().coord().y << ";PD";
+                        output << "PU" << bezier->front().x << ',' << bezier->front().y << ";PD";
                         for (const Geo::Point &point : bezier->shape())
                         {
-                            output << point.coord().x << ',' << point.coord().y << ',';
+                            output << point.x << ',' << point.y << ',';
                         }
                         output.seekp(-1, std::ios::cur);
                         output << ';' << std::endl;
@@ -333,10 +333,10 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 {
                     break;
                 }
-                output << "PU" << polyline->front().coord().x << ',' << polyline->front().coord().y << ";PD";
+                output << "PU" << polyline->front().x << ',' << polyline->front().y << ";PD";
                 for (const Geo::Point &point : *polyline)
                 {
-                    output << point.coord().x << ',' << point.coord().y << ',';
+                    output << point.x << ',' << point.y << ',';
                 }
                 output.seekp(-1, std::ios::cur);
                 output << ';' << std::endl;
@@ -349,10 +349,10 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     break;
                 }
                 const_cast<Geo::Bezier *>(bezier)->update_shape();
-                output << "PU" << bezier->front().coord().x << ',' << bezier->front().coord().y << ";PD";
+                output << "PU" << bezier->front().x << ',' << bezier->front().y << ";PD";
                 for (const Geo::Point &point : bezier->shape())
                 {
-                    output << point.coord().x << ',' << point.coord().y << ',';
+                    output << point.x << ',' << point.y << ',';
                 }
                 output.seekp(-1, std::ios::cur);
                 output << ';' << std::endl;

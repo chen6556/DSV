@@ -353,7 +353,7 @@ private:
 
     enum Tool {None, Line, Curve};
     Tool _last_tool = Tool::None, _cur_tool = Tool::None;
-    Geo::Coord _start_point;
+    Geo::Point _start_point;
 
     std::array<double, 6> _trans_mat = {1, 0, 0, 0, 1, 0};
     std::stack<std::array<double, 6>> _trans_mats;

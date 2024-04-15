@@ -29,7 +29,7 @@ class Importer
 private:
     Graph *_graph = nullptr;
     std::vector<Geo::Point> _points;
-    Geo::Coord _last_coord;
+    Geo::Point _last_coord;
     CircleContainer *_last_circle_container;
     Container *_last_container;
 

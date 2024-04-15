@@ -247,8 +247,8 @@ void Importer::rect()
     _points.emplace_back(Geo::Point(_values[_values.size() - 4], _values[_values.size() - 3]));
 
     _values.clear();
-    _values.push_back(_points.back().coord().x);
-    _values.push_back(_points.back().coord().y);
+    _values.push_back(_points.back().x);
+    _values.push_back(_points.back().y);
     _start_point.x = _values.front();
     _start_point.y = _values.back();
 }
@@ -374,7 +374,7 @@ void Importer::end()
         }
         if (!text.marked)
         {
-            _graph->container_group().append(new Text(text.pos.coord().x, text.pos.coord().y, text_size, QString::fromStdString(text.txt)));
+            _graph->container_group().append(new Text(text.pos.x, text.pos.y, text_size, QString::fromStdString(text.txt)));
         }
     }
     _texts.clear();

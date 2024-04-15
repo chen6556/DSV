@@ -134,13 +134,13 @@ public:
 
     bool auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines);
 
-    bool auto_aligning(Geo::Coord &coord, const Geo::Geometry *dst, std::list<QLineF> &reflines);
+    bool auto_aligning(Geo::Point &coord, const Geo::Geometry *dst, std::list<QLineF> &reflines);
 
     bool auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, const bool current_group_only = true);
 
     bool auto_aligning(Geo::Geometry *points, const double x, const double y, std::list<QLineF> &reflines, const bool current_group_only = true);
 
-    bool auto_aligning(Geo::Coord &coord, std::list<QLineF> &reflines, const bool current_group_only = true);
+    bool auto_aligning(Geo::Point &coord, std::list<QLineF> &reflines, const bool current_group_only = true);
 
 
 

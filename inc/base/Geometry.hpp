@@ -61,43 +61,20 @@ namespace Geo
         virtual Polygon mini_bounding_rect() const;
     };
 
-    struct Coord
-    {
-        double x = 0;
-        double y = 0;
-
-        Coord(){};
-
-        Coord(const double x_, const double y_);
-
-        Coord(const Coord &coord);
-
-        Coord &operator=(const Coord &coord);
-
-        const bool operator==(const Coord &coord) const;
-
-        const bool operator!=(const Coord &coord) const;
-    };
-
     class Point : public Geometry
     {
-    private:
-        Coord _pos;
+    public:
+        double x = 0;
+        double y = 0;
 
     public:
         Point() { _type = Type::POINT; };
 
-        Point(const double x, const double y);
-
-        Point(const Coord &coord);
+        Point(const double x_, const double y_);
 
         Point(const Point &point);
 
         Point &operator=(const Point &point);
-
-        Coord &coord();
-
-        const Coord &coord() const;
 
         const bool operator==(const Point &point) const;
 
@@ -123,9 +100,9 @@ namespace Geo
 
         void translate(const double tx, const double ty) override;
 
-        void rotate(const double x, const double y, const double rad) override;
+        void rotate(const double x_, const double y_, const double rad) override;
 
-        void scale(const double x, const double y, const double k) override;
+        void scale(const double x_, const double y_, const double k) override;
 
         AABBRect bounding_rect() const override;
 
@@ -152,11 +129,11 @@ namespace Geo
         void operator/=(const double k);
     };
 
-    typedef Point Vector;
+    using Vector = Point;
 
     class Polyline : public Geometry
     {
-    private:
+    protected:
         std::vector<Point> _points;
 
     public:
@@ -679,9 +656,9 @@ namespace Geo
 
     const bool is_inside(const Point &point, const Circle &circle, const bool coincide = false);
 
-    const bool is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2);
+    const bool is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2, const bool coincide = false);
 
-    const bool is_inside(const Point &point, const Triangle &triangle);
+    const bool is_inside(const Point &point, const Triangle &triangle, const bool coincide = false);
 
     const bool is_inside(const Point &start, const Point &end, const Triangle &triangle);
 
@@ -727,6 +704,12 @@ namespace Geo
 
     const bool is_Rectangle(const Polygon &polygon);
 
+    double cross(const double x0, const double y0, const double x1, const double y1);
+
+    double cross(const Vector &vec0, const Vector &vec1);
+
+    double cross(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
+
     Polygon circle_to_polygon(const double x, const double y, const double r);
 
     Polygon circle_to_polygon(const Circle &circle);
@@ -735,7 +718,7 @@ namespace Geo
 
     std::vector<size_t> ear_cut_to_indexs_test(const Polygon &polygon);
 
-    std::vector<Coord> ear_cut_to_coords(const Polygon &polygon);
+    // std::vector<Coord> ear_cut_to_coords(const Polygon &polygon);
 
     std::vector<Point> ear_cut_to_points(const Polygon &polygon);
 

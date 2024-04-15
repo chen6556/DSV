@@ -58,12 +58,12 @@ void Importer::store_circle()
     if (_is_combination)
     {
         dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new CircleContainer(
-            QString::fromStdString(_text), _points.back().coord().x, _points.back().coord().y, _parameters.back()));
+            QString::fromStdString(_text), _points.back().x, _points.back().y, _parameters.back()));
     }
     else
     {
         _graph->container_groups().back().append(new CircleContainer(QString::fromStdString(_text), 
-            _points.back().coord().x, _points.back().coord().y, _parameters.back()));
+            _points.back().x, _points.back().y, _parameters.back()));
     }
     _text.clear();
     _points.clear();
@@ -109,12 +109,12 @@ void Importer::store_text()
     if (_is_combination)
     {
         dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
-            new Text(_points.back().coord().x, _points.back().coord().y, 12, QString::fromStdString(_text)));
+            new Text(_points.back().x, _points.back().y, 12, QString::fromStdString(_text)));
     }
     else
     {
-        _graph->container_groups().back().append(new Text(_points.back().coord().x, 
-            _points.back().coord().y, 12, QString::fromStdString(_text)));
+        _graph->container_groups().back().append(new Text(_points.back().x, 
+            _points.back().y, 12, QString::fromStdString(_text)));
     }
     _points.clear();
 }
