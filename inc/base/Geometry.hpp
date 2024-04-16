@@ -738,10 +738,10 @@ namespace Geo
     // 判断一个有限长线段是否是另一个有限长线段的一部分
     const bool is_part(const Line &line0, const Line &line1);
 
-    // 判断两线段是否相交尝试并获取交点,共线相交时仅在一个端点相交时获取交点
+    // 判断两线段是否相交并尝试获取交点,共线相交时仅在一个端点相交时获取交点
     const bool is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite = false);
 
-    // 判断两线段是否相交尝试并获取交点,共线相交时仅在一个端点相交时获取交点
+    // 判断两线段是否相交并尝试获取交点,共线相交时仅在一个端点相交时获取交点
     const bool is_intersected(const Line &line0, const Line &line1, Point &output, const bool infinite = true);
 
     // 判断两个AABB矩形是否相交,inside决定完全在AABB矩形内部是否算相交
