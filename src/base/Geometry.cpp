@@ -3517,7 +3517,7 @@ bool Geo::offset(const AABBRect &input, AABBRect &result, const double distance)
 }
 
 
-bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, Polygon &output)
+bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output)
 {
     std::vector<MarkedPoint> points0, points1;
     for (const Point &point : polygon0)
@@ -3606,12 +3606,12 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, Polygo
     {
         if (std::all_of(polygon0.begin(), polygon0.end(), [&](const Point &point) { return Geo::is_inside(point, polygon1, true); }))
         {
-            output = polygon1; // 无交点,且polygon0的点都在polygon1内,则交集必然为polygon1
+            output.emplace_back(polygon1); // 无交点,且polygon0的点都在polygon1内,则交集必然为polygon1
             return true;
         }
         else if (std::all_of(polygon1.begin(), polygon1.end(), [&](const Point &point) { return Geo::is_inside(point, polygon0, true); }))
         {
-            output = polygon0; // 无交点,且polygon1的点都在polygon0内,则交集必然为polygon0
+            output.emplace_back(polygon0); // 无交点,且polygon1的点都在polygon0内,则交集必然为polygon0
             return true;
         }
         else
@@ -3992,70 +3992,124 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, Polygo
 
     std::vector<Point> result;
     size_t index0 = 0, index1 = 0;
-    const size_t count0 = points0.size(), count1 = points1.size(), count2 = points0.size() + points1.size() - 1;
-    while (index0 < count0 && points0[index0].original)
+    const size_t count0 = points0.size(), count1 = points1.size();
+    size_t actived_count0 = count0, actived_count1 = count1, count2 = count0 + count1;
+    for (MarkedPoint &p : points0)
     {
-        ++index0;
+        p.active = true;
     }
-    while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
+    for (MarkedPoint &p : points1)
     {
-        while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
+        p.active = true;
+    }
+
+    while (actived_count0 > 0 && actived_count1 > 0)
+    {
+        output.emplace_back();
+
+        index0 = index1 = 0;
+        while (index0 < count0 && (!points0[index0].active ||
+            points0[index0].original || points0[index0].value < 1))
         {
-            if (points0[index0].value > -1)
-            {
-                result.emplace_back(points0[index0++]);
-            }
-            else
-            {
-                index1 = 0;
-                while (index1 < count1 && points1[index1] != points0[index0])
-                {
-                    ++index1;
-                }
-                index1 %= count1;
-                result.emplace_back(points1[index1++]);
-                ++index0;
-                index0 %= count0;
-                index1 %= count1;
-                break;
-            }
-            index0 %= count0;
+            ++index0;
         }
 
         while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
         {
-            if (points1[index1].value > -1)
+            while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
             {
-                result.emplace_back(points1[index1++]);
-            }
-            else
-            {
-                index0 = 0;
-                while (index0 < count0 && points0[index0] != points1[index1])
+                if (!points0[index0].active)
                 {
                     ++index0;
+                    index0 %= count0;
+                    continue;
+                }
+                if (points0[index0].value > -1)
+                {
+                    result.emplace_back(points0[index0++]);
+                }
+                else
+                {
+                    index1 = 0;
+                    while (index1 < count1 && points1[index1] != points0[index0])
+                    {
+                        ++index1;
+                    }
+                    index1 %= count1;
+                    result.emplace_back(points1[index1++]);
+                    ++index0;
+                    index0 %= count0;
+                    index1 %= count1;
+                    break;
                 }
                 index0 %= count0;
-                result.emplace_back(points0[index0++]);
-                ++index1;
-                index0 %= count0;
-                index1 %= count1;
-                break;
             }
-            index1 %= count1;
-        }
-    }
 
-    for (size_t i = result.size() - 1; i > 1; --i)
-    {
-        if (Geo::is_inside(result[i - 1], result[i - 2], result[i]))
+            while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
+            {
+                if (!points1[index1].active)
+                {
+                    ++index1;
+                    index1 %= count1;
+                    continue;
+                }
+                if (points1[index1].value > -1)
+                {
+                    result.emplace_back(points1[index1++]);
+                }
+                else
+                {
+                    index0 = 0;
+                    while (index0 < count0 && points0[index0] != points1[index1])
+                    {
+                        ++index0;
+                    }
+                    index0 %= count0;
+                    result.emplace_back(points0[index0++]);
+                    ++index1;
+                    index0 %= count0;
+                    index1 %= count1;
+                    break;
+                }
+                index1 %= count1;
+            }
+        }
+
+        for (size_t i = result.size() - 1; i > 1; --i)
         {
-            result.erase(result.begin() + i - 1);
+            if (Geo::is_inside(result[i - 1], result[i - 2], result[i]))
+            {
+                result.erase(result.begin() + i - 1);
+            }
         }
+
+        output.back().append(result.begin(), result.end());
+        for (const Point &p : result)
+        {
+            it = std::find(points0.begin(), points0.end(), MarkedPoint(p.x, p.y));
+            if (it != points0.end())
+            {
+                it->active = false;
+            }
+            it = std::find(points1.begin(), points1.end(), MarkedPoint(p.x, p.y));
+            if (it != points1.end())
+            {
+                it->active = false;
+            }
+        }
+
+        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return p.active && !p.original; }) == 0 ||
+            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return p.active && !p.original; }) == 0)
+        {
+            break;
+        }
+
+        actived_count0 = std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return p.active; });
+        actived_count1 = std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return p.active; });
+        count2 = actived_count0 + actived_count1;
+        result.clear();
     }
 
-    output.clear();
-    output.append(result.begin(), result.end());
     return true;
 }
 

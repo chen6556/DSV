@@ -975,11 +975,15 @@ bool Editer::polygon_union()
     }
     store_backup();
 
-    Geo::Polygon shape;
-    if (Geo::polygon_union(container0->shape(), container1->shape(), shape))
+    std::vector<Geo::Polygon> shapes;
+    if (Geo::polygon_union(container0->shape(), container1->shape(), shapes))
     {
-        container0->shape() = shape;
+        container0->shape() = shapes.front();
         _graph->container_group(_current_group).remove(--index);
+        for (size_t i = 1, count = shapes.size(); i < count; ++i)
+        {
+            _graph->container_group(_current_group).append(new Container(shapes[i]));
+        }
         return true;
     }
     else
