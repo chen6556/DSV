@@ -19,6 +19,8 @@ public:
 
     Text(const Text &text);
 
+    const Geo::Type type() const override;
+
     Text &operator=(const Text &text);
 
     void set_text(const QString &str, const int size);
@@ -48,7 +50,7 @@ public:
     unsigned long long text_count = 0;
 
 public:
-    Container() { _type = Geo::Type::CONTAINER; };
+    Container() {};
 
     Container(const Geo::Polygon &shape);
 
@@ -56,13 +58,13 @@ public:
 
     Container(const Container &container);
 
+    const Geo::Type type() const override;
+
     Container &operator=(const Container &container);
 
     Geo::Polygon &shape();
 
     const Geo::Polygon &shape() const;
-
-    void reshape(const Geo::Polygon &polygon);
 
     const QString &text() const;
 
@@ -87,7 +89,7 @@ public:
     unsigned long long text_count = 0;
 
 public:
-    CircleContainer() { _type = Geo::Type::CIRCLECONTAINER; };
+    CircleContainer() {};
 
     CircleContainer(const Geo::Circle &shape);
 
@@ -96,6 +98,8 @@ public:
     CircleContainer(const QString &txt, const double x, const double y, const double r);
 
     CircleContainer(const CircleContainer &container);
+
+    const Geo::Type type() const override;
 
     CircleContainer &operator=(const CircleContainer &container);
 
@@ -127,7 +131,7 @@ public:
     QString name;
 
 public:
-    ContainerGroup() { _type = Geo::Type::CONTAINERGROUP; };
+    ContainerGroup() {};
 
     ContainerGroup(const ContainerGroup &containers);
 
@@ -136,6 +140,8 @@ public:
     ContainerGroup(std::vector<Geo::Geometry *>::const_iterator begin, std::vector<Geo::Geometry *>::const_iterator end);
 
     ~ContainerGroup();
+
+    const Geo::Type type() const override;
 
     const bool &visible() const;
 
@@ -262,9 +268,11 @@ private:
     Geo::AABBRect _border;
 
 public:
-    Combination() { _type = Geo::Type::COMBINATION; };
+    Combination() {};
 
     Combination(const Combination &combination);
+
+    const Geo::Type type() const override;
 
     void append(Combination *combination);
 

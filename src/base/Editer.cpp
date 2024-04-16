@@ -978,7 +978,7 @@ bool Editer::polygon_union()
     Geo::Polygon shape;
     if (Geo::polygon_union(container0->shape(), container1->shape(), shape))
     {
-        container0->reshape(shape);
+        container0->shape() = shape;
         _graph->container_group(_current_group).remove(--index);
         return true;
     }

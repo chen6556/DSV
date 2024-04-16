@@ -16,9 +16,6 @@ namespace Geo
 
     class Geometry
     {
-    protected:
-        Type _type = Type::GEOMETRY;
-
     public:
         bool shape_fixed = false;
         bool is_selected = false;
@@ -34,7 +31,7 @@ namespace Geo
 
         Geometry &operator=(const Geometry &geo);
 
-        const Type type() const;
+        virtual const Type type() const;
 
         virtual const double length() const;
 
@@ -95,7 +92,7 @@ namespace Geo
         double y = 0;
 
     public:
-        Point() { _type = Type::POINT; };
+        Point() {};
 
         Point(const double x_, const double y_);
 
@@ -104,6 +101,8 @@ namespace Geo
         Point(const MarkedPoint &point);
 
         Point &operator=(const Point &point);
+
+        const Type type() const override;
 
         const bool operator==(const Point &point) const;
 
@@ -172,13 +171,15 @@ namespace Geo
         std::vector<Point> _points;
 
     public:
-        Polyline() { _type = Type::POLYLINE; };
+        Polyline() {};
 
         Polyline(const Polyline &polyline);
 
         Polyline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end);
 
         Polyline(const std::initializer_list<Point> &points);
+
+        const Type type() const override;
 
         const size_t size() const;
 
@@ -291,6 +292,8 @@ namespace Geo
 
         AABBRect(const AABBRect &rect);
 
+        const Type type() const override;
+
         const double left() const;
 
         const double top() const;
@@ -377,7 +380,7 @@ namespace Geo
     class Polygon : public Polyline
     {
     public:
-        Polygon() { _type = Type::POLYGON; };
+        Polygon() {};
 
         Polygon(const Polygon &polygon);
 
@@ -390,6 +393,8 @@ namespace Geo
         Polygon(const AABBRect &rect);
 
         Polygon &operator=(const Polygon &polygon);
+
+        const Type type() const override;
 
         Polygon *clone() const override;
 
@@ -447,13 +452,15 @@ namespace Geo
         Point _vecs[3] = {Point()};
     
     public:
-        Triangle() { _type = Type::TRIANGLE; };
+        Triangle() {};
 
         Triangle(const Point &point0, const Point &point1, const Point &point2);
 
         Triangle(const double x0, const double y0, const double x1, const double y1, const double x2, const double y2);
 
         Triangle(const Triangle &triangle);
+
+        const Type type() const override;
 
         const bool empty() const override;
 
@@ -517,7 +524,7 @@ namespace Geo
         double _radius = 0;
 
     public:
-        Circle() { _type = Type::CIRCLE; };
+        Circle() {};
 
         Circle(const double x, const double y, const double r);
 
@@ -526,6 +533,8 @@ namespace Geo
         Circle(const Circle &circle);
 
         Circle &operator=(const Circle &circle);
+
+        const Type type() const override;
 
         Point &center();
 
@@ -575,13 +584,15 @@ namespace Geo
         Point _end_point;
 
     public:
-        Line() { _type = Type::LINE; };
+        Line() {};
 
         Line(const double x0, const double y0, const double x1, const double y1);
 
         Line(const Point &start, const Point &end);
 
         Line(const Line &line);
+
+        const Type type() const override;
 
         Line &operator=(const Line &line);
 
@@ -638,6 +649,8 @@ namespace Geo
         Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const size_t n);
 
         Bezier(const std::initializer_list<Point> &points, const size_t n);
+
+        const Type type() const override;
 
         // 贝塞尔曲线阶数
         const size_t &order() const;

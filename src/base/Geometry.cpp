@@ -9,7 +9,7 @@
 using namespace Geo;
 
 Geometry::Geometry(const Geometry &geo)
-    : _type(geo._type), shape_fixed(geo.shape_fixed), is_selected(geo.is_selected),
+    : shape_fixed(geo.shape_fixed), is_selected(geo.is_selected),
     point_index(geo.point_index), point_count(geo.point_count)
 {}
 
@@ -17,7 +17,6 @@ Geometry &Geometry::operator=(const Geometry &geo)
 {
     if (this != &geo)
     {
-        _type = geo._type;
         shape_fixed = geo.shape_fixed;
         is_selected = geo.is_selected;
         point_index = geo.point_index;
@@ -28,7 +27,7 @@ Geometry &Geometry::operator=(const Geometry &geo)
 
 const Type Geometry::type() const
 {
-    return _type;
+    return Type::GEOMETRY;
 }
 
 const double Geometry::length() const
@@ -69,9 +68,7 @@ Polygon Geometry::mini_bounding_rect() const { return Polygon(); }
 
 Point::Point(const double x_, const double y_)
     : x(x_), y(y_)
-{
-    _type = Type::POINT;
-}
+{}
 
 Point::Point(const Point &point)
     :Geometry(point), x(point.x), y(point.y)
@@ -79,9 +76,7 @@ Point::Point(const Point &point)
 
 Point::Point(const MarkedPoint &point)
     : x(point.x), y(point.y)
-{
-    _type = Type::POINT;
-}
+{}
 
 Point &Point::operator=(const Point &point)
 {
@@ -90,9 +85,13 @@ Point &Point::operator=(const Point &point)
         Geometry::operator=(point);
         x = point.x;
         y = point.y;
-        _type = Type::POINT;
     }
     return *this;
+}
+
+const Type Point::type() const
+{
+    return Type::POINT;
 }
 
 const bool Point::operator==(const Point &point) const
@@ -266,9 +265,7 @@ void Point::operator/=(const double k)
 Polyline::Polyline(const Polyline &polyline)
     :Geometry(polyline)
     ,_points(polyline._points)
-{
-    _type = Type::POLYLINE;
-}
+{}
 
 Polyline::Polyline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
 {
@@ -280,7 +277,6 @@ Polyline::Polyline(std::vector<Point>::const_iterator begin, std::vector<Point>:
             _points.push_back(*begin);
         }
     }
-    _type = Type::POLYLINE;
 }
 
 Polyline::Polyline(const std::initializer_list<Point>& points)
@@ -293,7 +289,11 @@ Polyline::Polyline(const std::initializer_list<Point>& points)
             _points.push_back(point);
         }
     }
-    _type = Type::POLYLINE;
+}
+
+const Type Polyline::type() const
+{
+    return Type::POLYLINE;
 }
 
 const size_t Polyline::size() const
@@ -344,7 +344,6 @@ Polyline &Polyline::operator=(const Polyline &polyline)
     {
         Geometry::operator=(polyline);
         _points = polyline._points;
-        _type = Type::POLYLINE;
     }
     return *this;
 }
@@ -728,7 +727,6 @@ Polygon Polyline::mini_bounding_rect() const
 
 AABBRect::AABBRect()
 {
-    _type = Geo::Type::AABBRECT;
     _points.assign({Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0)});
 }
 
@@ -756,7 +754,6 @@ AABBRect::AABBRect(const double x0, const double y0, const double x1, const doub
             _points.assign({Point(x1, y1), Point(x0, y1), Point(x0, y0), Point(x1, y0), Point(x1, y1)});
         }
     }
-    _type = Type::AABBRECT;
 }
 
 AABBRect::AABBRect(const Point &point0, const Point &point1)
@@ -784,14 +781,16 @@ AABBRect::AABBRect(const Point &point0, const Point &point1)
             _points.assign({Point(x1, y1), Point(x0, y1), Point(x0, y0), Point(x1, y0), Point(x1, y1)});
         }
     }
-    _type = Type::AABBRECT;
 }
 
 AABBRect::AABBRect(const AABBRect &rect)
     :Geometry(rect)
     ,_points(rect._points)
+{}
+
+const Type AABBRect::type() const
 {
-    _type = Type::AABBRECT;
+    return Type::AABBRECT;
 }
 
 const double AABBRect::left() const
@@ -846,7 +845,6 @@ AABBRect &AABBRect::operator=(const AABBRect &rect)
     {
         Geometry::operator=(rect);
         _points = rect._points;
-        _type = Type::AABBRECT;
     }
     return *this;
 }
@@ -1089,9 +1087,7 @@ const Point &AABBRect::operator[](const size_t index) const
 
 Polygon::Polygon(const Polygon &polygon)
     :Polyline(polygon)
-{
-    _type = Type::POLYGON;
-}
+{}
 
 Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
     :Polyline(begin, end)
@@ -1101,7 +1097,6 @@ Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::c
     {
         _points.emplace_back(_points.front());
     }
-    _type = Type::POLYGON; 
 }
 
 Polygon::Polygon(const std::initializer_list<Point>& points)
@@ -1112,7 +1107,6 @@ Polygon::Polygon(const std::initializer_list<Point>& points)
     {
         _points.emplace_back(_points.front());
     }
-    _type = Type::POLYGON;
 }
 
 Polygon::Polygon(const Polyline &polyline)
@@ -1122,23 +1116,24 @@ Polygon::Polygon(const Polyline &polyline)
     {
         _points.emplace_back(_points.front());
     }
-    _type = Type::POLYGON;
 }
 
 Polygon::Polygon(const AABBRect& rect)
     :Polyline(rect.cbegin(), rect.cend())
-{
-    _type = Type::POLYGON; 
-}
+{}
 
 Polygon &Polygon::operator=(const Polygon &polygon)
 {
     if (this != &polygon)
     {
         Polyline::operator=(polygon);
-        _type = Type::POLYGON;
     }
     return *this;
+}
+
+const Type Polygon::type() const
+{
+    return Type::POLYGON;
 }
 
 Polygon *Polygon::clone() const
@@ -1466,7 +1461,6 @@ size_t Polygon::index(const double x, const double y) const
 
 Triangle::Triangle(const Point &point0, const Point &point1, const Point &point2)
 {
-    _type = Type::TRIANGLE;
     _vecs[0] = point0;
     _vecs[1] = point1;
     _vecs[2] = point2;
@@ -1474,7 +1468,6 @@ Triangle::Triangle(const Point &point0, const Point &point1, const Point &point2
 
 Triangle::Triangle(const double x0, const double y0, const double x1, const double y1, const double x2, const double y2)
 {
-    _type = Type::TRIANGLE;
     _vecs[0].x = x0;
     _vecs[0].y = y0;
     _vecs[1].x = x1;
@@ -1485,10 +1478,14 @@ Triangle::Triangle(const double x0, const double y0, const double x1, const doub
 
 Triangle::Triangle(const Triangle &triangle)
 {
-    _type = Type::TRIANGLE;
     _vecs[0] = triangle._vecs[0];
     _vecs[1] = triangle._vecs[1];
     _vecs[2] = triangle._vecs[2];
+}
+
+const Type Triangle::type() const
+{
+    return Type::TRIANGLE;
 }
 
 const bool Triangle::empty() const
@@ -1591,7 +1588,6 @@ Triangle &Triangle::operator=(const Triangle &triangle)
 {
     if (this != &triangle)
     {
-        _type = Type::TRIANGLE;
         _vecs[0] = triangle._vecs[0];
         _vecs[1] = triangle._vecs[1];
         _vecs[2] = triangle._vecs[2];
@@ -1743,7 +1739,6 @@ Circle::Circle(const double x, const double y, const double r)
     ,_radius(r)
 {
     assert(r > 0);
-    _type = Type::CIRCLE;
 }
 
 Circle::Circle(const Point &point, const double r)
@@ -1751,16 +1746,13 @@ Circle::Circle(const Point &point, const double r)
     ,_radius(r)
 {
     assert(r > 0);
-    _type = Type::CIRCLE;
 }
 
 Circle::Circle(const Circle &circle)
     :Geometry(circle)
     ,_center(circle._center)
     ,_radius(circle._radius)
-{
-    _type = Type::CIRCLE;
-}
+{}
 
 Circle &Circle::operator=(const Circle &circle)
 {
@@ -1769,9 +1761,13 @@ Circle &Circle::operator=(const Circle &circle)
         Geometry::operator=(circle);
         _center = circle._center;
         _radius = circle._radius;
-        _type = Type::CIRCLE;
     }
     return *this;
+}
+
+const Type Circle::type() const
+{
+    return Type::CIRCLE;
 }
 
 Point &Circle::center()
@@ -1898,24 +1894,18 @@ void Circle::operator-=(const Point &point)
 Line::Line(const double x0, const double y0, const double x1, const double y1)
     :_start_point(x0, y0)
     ,_end_point(x1, y1)
-{
-    _type = Type::LINE;
-}
+{}
 
 Line::Line(const Point &start, const Point &end)
     :_start_point(start)
     ,_end_point(end)
-{
-    _type = Type::LINE;
-}
+{}
 
 Line::Line(const Line &line)
     :Geometry(line)
     ,_start_point(line._start_point)
     ,_end_point(line._end_point)
-{
-    _type = Type::LINE;
-}
+{}
 
 Line &Line::operator=(const Line &line)
 {
@@ -1924,9 +1914,13 @@ Line &Line::operator=(const Line &line)
         Geometry::operator=(line);
         _start_point = line._start_point;
         _end_point = line._end_point;
-        _type = Type::LINE;
     }
     return *this;
+}
+
+const Type Line::type() const
+{
+    return Type::LINE;
 }
 
 Line Line::operator+(const Point &point)
@@ -2057,21 +2051,18 @@ const Point &Line::back() const
 Bezier::Bezier(const size_t n)
     : _order(n)
 {
-    _type = Type::BEZIER;
     _shape.shape_fixed = true;
 }
 
 Bezier::Bezier(const Bezier &bezier)
     : Polyline(bezier), _order(bezier._order), _shape(bezier._shape)
 {
-    _type = Type::BEZIER;
     _shape.shape_fixed = true;
 }
 
 Bezier::Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const size_t n)
     : Polyline(begin, end), _order(n)
 {
-    _type = Type::BEZIER;
     _shape.shape_fixed = true;
     update_shape();
 }
@@ -2079,9 +2070,13 @@ Bezier::Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::con
 Bezier::Bezier(const std::initializer_list<Point> &points, const size_t n)
     : Polyline(points), _order(n)
 {
-    _type = Type::BEZIER;
     _shape.shape_fixed = true;
     update_shape();
+}
+
+const Type Bezier::type() const
+{
+    return Type::BEZIER;
 }
 
 const size_t &Bezier::order() const
@@ -2184,7 +2179,6 @@ Bezier &Bezier::operator=(const Bezier &bezier)
     {
         Polyline::operator=(bezier);
         _shape = bezier._shape;
-        _type = Type::BEZIER;
     }
     return *this;
 }
