@@ -2728,8 +2728,8 @@ const bool Geo::is_intersected(const Point &point0, const Point &point1, const P
         const double top = std::min(std::max(point0.y, point1.y), std::max(point2.y, point3.y));
         const double bottom = std::max(std::min(point0.y, point1.y), std::min(point2.y, point3.y));
 
-        return left - 3e-14 <= output.x && output.x <= right + 3e-14
-            && bottom - 3e-14 <= output.y && output.y <= top + 3e-14;
+        return left - 5e-14 <= output.x && output.x <= right + 5e-14
+            && bottom - 5e-14 <= output.y && output.y <= top + 5e-14;
     }
 }
 
