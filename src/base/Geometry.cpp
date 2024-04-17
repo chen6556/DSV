@@ -3992,8 +3992,8 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
 
     std::vector<Point> result;
     size_t index0 = 0, index1 = 0;
-    const size_t count0 = points0.size(), count1 = points1.size();
-    size_t actived_count0 = count0, actived_count1 = count1, count2 = count0 + count1;
+    size_t count0 = points0.size(), count1 = points1.size();
+    size_t count2 = count0 + count1;
     for (MarkedPoint &p : points0)
     {
         p.active = true;
@@ -4003,13 +4003,12 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
         p.active = true;
     }
 
-    while (actived_count0 > 0 && actived_count1 > 0)
+    while (count0 > 0 && count1 > 0)
     {
         output.emplace_back();
 
         index0 = index1 = 0;
-        while (index0 < count0 && (!points0[index0].active ||
-            points0[index0].original || points0[index0].value < 1))
+        while (index0 < count0 && (points0[index0].original || points0[index0].value < 1))
         {
             ++index0;
         }
@@ -4018,14 +4017,12 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
         {
             while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
             {
-                if (!points0[index0].active)
-                {
-                    ++index0;
-                    index0 %= count0;
-                    continue;
-                }
                 if (points0[index0].value > -1)
                 {
+                    if (points0[index0].original)
+                    {
+                        points0[index0].active = false;
+                    }
                     result.emplace_back(points0[index0++]);
                 }
                 else
@@ -4047,14 +4044,12 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
 
             while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
             {
-                if (!points1[index1].active)
-                {
-                    ++index1;
-                    index1 %= count1;
-                    continue;
-                }
                 if (points1[index1].value > -1)
                 {
+                    if (points1[index1].original)
+                    {
+                        points1[index1].active = false;
+                    }
                     result.emplace_back(points1[index1++]);
                 }
                 else
@@ -4082,31 +4077,42 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
                 result.erase(result.begin() + i - 1);
             }
         }
-
         output.back().append(result.begin(), result.end());
-        for (const Point &p : result)
+
+        it = points0.begin();
+        while (it != points0.end())
         {
-            it = std::find(points0.begin(), points0.end(), MarkedPoint(p.x, p.y));
-            if (it != points0.end())
+            if (!it->active || std::find(result.begin(), result.end(), *it) != result.end())
             {
-                it->active = false;
+                it = points0.erase(it);
             }
-            it = std::find(points1.begin(), points1.end(), MarkedPoint(p.x, p.y));
-            if (it != points1.end())
+            else
             {
-                it->active = false;
+                ++it;
+            }
+        }
+        it = points1.begin();
+        while (it != points1.end())
+        {
+            if (!it->active || std::find(result.begin(), result.end(), *it) != result.end())
+            {
+                it = points1.erase(it);
+            }
+            else
+            {
+                ++it;
             }
         }
 
-        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return p.active && !p.original; }) == 0 ||
-            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return p.active && !p.original; }) == 0)
+        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return !p.original; }) == 0 ||
+            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return !p.original; }) == 0)
         {
             break;
         }
 
-        actived_count0 = std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return p.active; });
-        actived_count1 = std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return p.active; });
-        count2 = actived_count0 + actived_count1;
+        count0 = points0.size();
+        count1 = points1.size();
+        count2 = count0 + count1;
         result.clear();
     }
 
