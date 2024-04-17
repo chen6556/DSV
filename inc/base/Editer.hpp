@@ -96,6 +96,8 @@ public:
 
     bool polygon_union();
 
+    bool polygon_intersection();
+
 
 
     bool line_array(int x, int y, double x_space, double y_space);

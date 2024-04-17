@@ -584,6 +584,15 @@ void MainWindow::polygon_union()
     }
 }
 
+void MainWindow::polygon_intersection()
+{
+    if (_editer.polygon_intersection())
+    {
+        _painter.refresh_vbo();
+        _painter.refresh_selected_ibo();
+    }
+}
+
 
 
 void MainWindow::show_data_panel()

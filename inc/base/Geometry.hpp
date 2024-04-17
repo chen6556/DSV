@@ -837,4 +837,6 @@ namespace Geo
     bool offset(const AABBRect &input, AABBRect &result, const double distance);
 
     bool polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output);
+
+    bool polygon_intersection(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output);
 };

@@ -1530,6 +1530,36 @@ QPushButton:pressed
          </widget>
         </item>
         <item>
+         <widget class="QPushButton" name="intersection_btn">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="styleSheet">
+           <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
+          </property>
+          <property name="text">
+           <string>Intersection</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <spacer name="verticalSpacer_3">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -2053,6 +2083,22 @@ color:rgb(230, 230, 230);</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>intersection_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>polygon_intersection()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>498</x>
+     <y>114</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -2075,5 +2121,6 @@ color:rgb(230, 230, 230);</string>
   <slot>offset()</slot>
   <slot>to_boolean_page()</slot>
   <slot>polygon_union()</slot>
+  <slot>polygon_intersection()</slot>
  </slots>
 </ui>

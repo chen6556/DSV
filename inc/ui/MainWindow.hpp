@@ -103,6 +103,8 @@ private slots:
 
     void polygon_union();
 
+    void polygon_intersection();
+
 
     void show_data_panel();
 
