@@ -745,6 +745,9 @@ namespace Geo
     // 判断两线段是否有重合,仅有一个端点重合不算两线段重合
     const bool is_coincide(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
 
+    // 判断有限长线段是否与多边形某一边重合
+    const bool is_coincide(const Point &start, const Point &end, const Polygon &polygon);
+
     // 判断一个有限长线段是否是另一个有限长线段的一部分
     const bool is_part(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
 
