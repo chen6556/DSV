@@ -229,6 +229,10 @@ void Editer::append(const Geo::AABBRect &rect)
 
 void Editer::append_bezier(const size_t order)
 {
+    if (_point_cache.size() < order + 2)
+    {
+        return _point_cache.clear();
+    }
     store_backup();
     _point_cache.pop_back();
     while ((_point_cache.size() - 1) % order > 0)
