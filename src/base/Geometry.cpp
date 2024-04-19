@@ -2606,6 +2606,11 @@ const bool Geo::is_parallel(const Line &line0, const Line &line1)
 
 const bool Geo::is_coincide(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
 {
+    if ((start0 == start1 && end0 == end1) || (start0 == end1 && end0 == start0))
+    {
+        return true;
+    }
+
     if (start0.x == end0.x)
     {
         if (start1.x == end1.x && start0.x == start1.x)
@@ -4030,8 +4035,8 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
         i = j > 0 ? j : 1;
     }
 
-    if (std::count_if(points0.begin(), points0.end(), [](const MarkedPoint &p) { return p.value < 0; }) == 0
-        || std::count_if(points1.begin(), points1.end(), [](const MarkedPoint &p) { return p.value < 0; }) == 0)
+    if (std::count_if(points0.begin(), points0.end(), [](const MarkedPoint &p) { return p.value != 0; }) % 2 == 1 || 
+        std::count_if(points1.begin(), points1.end(), [](const MarkedPoint &p) { return p.value != 0; }) % 2 == 1)
     {
         return false; // 交点都是出点,即两多边形只有一个点相交
     }
@@ -4486,8 +4491,8 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
             output.pop_back();
         }
 
-        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return p.value > 0; }) == 0 ||
-            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return p.value > 0; }) == 0)
+        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return p.value != 0; }) % 2 == 1 ||
+            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return p.value != 0; }) % 2 == 1)
         {
             break;
         }
@@ -4875,8 +4880,8 @@ bool Geo::polygon_intersection(const Polygon &polygon0, const Polygon &polygon1,
         i = j > 0 ? j : 1;
     }
 
-    if (std::count_if(points0.begin(), points0.end(), [](const MarkedPoint &p) { return p.value < 0; }) == 0
-        || std::count_if(points1.begin(), points1.end(), [](const MarkedPoint &p) { return p.value < 0; }) == 0)
+    if (std::count_if(points0.begin(), points0.end(), [](const MarkedPoint &p) { return p.value != 0; }) % 2 == 1 ||
+        std::count_if(points1.begin(), points1.end(), [](const MarkedPoint &p) { return p.value != 0; }) % 2 == 1)
     {
         return false; // 交点都是出点,即两多边形只有一个点相交
     }
@@ -5331,8 +5336,8 @@ bool Geo::polygon_intersection(const Polygon &polygon0, const Polygon &polygon1,
             output.pop_back();
         }
 
-        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return p.value > 0; }) == 0 ||
-            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return p.value > 0; }) == 0)
+        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return p.value != 0; }) % 2 == 1 ||
+            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return p.value != 0; }) % 2 == 1)
         {
             break;
         }
