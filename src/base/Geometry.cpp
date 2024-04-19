@@ -2606,6 +2606,45 @@ const bool Geo::is_parallel(const Line &line0, const Line &line1)
 
 const bool Geo::is_coincide(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
 {
+    if (start0.x == end0.x)
+    {
+        if (start1.x == end1.x && start0.x == start1.x)
+        {
+            const bool result0 = (start1.y < start0.y && start0.y < end1.y) 
+                || (end1.y < start0.y && start0.y < start1.y);
+            const bool result1 = (start1.y < end0.y && end0.y < end1.y)
+                || (end1.y < end0.y && end0.y < start1.y);
+            const bool result2 = (start0.y < start1.y && start1.y < end0.y)
+                || (end0.y < start1.y && start1.y < start0.y);
+            const bool result3 = (start0.y < end1.y && end1.y < end0.y)
+                || (end0.y < end1.y && end1.y < start0.y);
+            return result0 || result1 || result2 || result3;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else if (start0.y == end0.y)
+    {
+        if (start1.y == end1.y && start0.y == start1.y)
+        {
+            const bool result0 = (start1.x < start0.x && start0.x < end1.x)
+                || (end1.x < start0.x && start0.x < start1.x);
+            const bool result1 = (start1.x < end0.x && end0.x < end1.x)
+                || (end1.x < end0.x && end0.x < start1.x);
+            const bool result2 = (start0.x < start1.x && start1.x < end0.x)
+                || (end0.x < start1.x && start1.x < start0.x);
+            const bool result3 = (start0.x < end1.x && end1.x < end0.x)
+                || (end0.x < end1.x && end1.x < start0.x);
+            return result0 || result1 || result2 || result3;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     const double a0 = end0.y - start0.y, 
                 b0 = start0.x - end0.x,
                 c0 = end0.x * start0.y - start0.x * end0.y;
@@ -2688,6 +2727,18 @@ const bool Geo::is_part(const Line &line0, const Line &line1)
 
 const bool Geo::is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite)
 {
+    if (!infinite)
+    {
+        const double left0 = std::min(point0.x, point1.x), left1 = std::min(point2.x, point3.x);
+        const double right0 = std::max(point0.x, point1.x), right1 = std::max(point2.x, point3.x);
+        const double top0 = std::max(point0.y, point1.y), top1 = std::max(point2.y, point3.y);
+        const double bottom0 = std::min(point0.y, point1.y), bottom1 = std::min(point2.y, point3.y);
+        if (left0 > right1 || right0 < left1 || top0 < bottom1 || bottom0 > top1)
+        {
+            return false;
+        }
+    }
+
     const double a0 = point1.y - point0.y, 
                 b0 = point0.x - point1.x,
                 c0 = point1.x * point0.y - point0.x * point1.y;
@@ -2753,6 +2804,24 @@ const bool Geo::is_intersected(const Point &point0, const Point &point1, const P
         else if (Geo::is_inside(point3, point0, point1))
         {
             output = point3;
+        }
+
+        if (point0.x == point1.x)
+        {
+            output.x = point0.x;
+        }
+        else if (point2.x == point3.x)
+        {
+            output.x = point2.x;
+        }
+
+        if (point0.y == point1.y)
+        {
+            output.y = point0.y;
+        }
+        else if (point2.y == point3.y)
+        {
+            output.y = point2.y;
         }
 
         const double left = std::max(std::min(point0.x, point1.x), std::min(point2.x, point3.x));
@@ -3969,7 +4038,7 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
 
     // 处理重边上的交点
     std::vector<Geo::MarkedPoint>::iterator it0, it1;
-    for (size_t i = 1, count0 = polygon2.size(), count1 = polygon3.size(); i < count0; ++i)
+    /*for (size_t i = 1, count0 = polygon2.size(), count1 = polygon3.size(); i < count0; ++i)
     {
         for (size_t j = 1; j < count1; ++j)
         {
@@ -4044,102 +4113,232 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
                 break;
             }
         }
+    }*/
+
+    for (size_t i = 0, j = 1, count0 = points0.size(), count1 = polygon3.size(); j < count0; i = j)
+    {
+        while (i < count0 && points0[i].value == 0)
+        {
+            ++i;
+        }
+        j = i + 1;
+        while (j < count0 && points0[j].value == 0)
+        {
+            ++j;
+        }
+        if (j >= count0)
+        {
+            break;
+        }
+        if (!Geo::is_coincide(points0[i], points0[j], polygon2))
+        {
+            continue;
+        }
+
+        it0 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+                { return !p.original && Geo::distance(p, points0[i]) < Geo::EPSILON; });
+        it1 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+            { return !p.original && Geo::distance(p, points0[j]) < Geo::EPSILON; });
+        if (it0 == points1.end() || it1 == points1.end() || it0->value * it1->value <= 0)
+        {
+            continue;
+        }
+
+        for (size_t k = 1; k < count1; ++k)
+        {
+            if (!Geo::is_part(*it0, *it1, polygon3[k - 1], polygon3[k]))
+            {
+                continue;
+            }
+
+            if (it0->value < 0 && it1->value < 0)
+            {
+                points1.erase(it0);
+                if (points0[i].value != 0)
+                {
+                    points0.erase(points0.begin() + i);
+                    --count0;
+                }
+            }
+            else if (it0->value > 0 && it1->value > 0)
+            {
+                points1.erase(it1);
+                if (points0[j].value != 0)
+                {
+                    points0.erase(points0.begin() + j);
+                    --count0;
+                }
+            }
+            break;
+        }
     }
+    for (size_t i = points0.size() - 1, j = 0;;)
+    {
+        while (i > 0 && points0[i].value == 0)
+        {
+            --i;
+        }
+        if (i == 0)
+        {
+            break;
+        }
+        while (j < i && points0[j].value == 0)
+        {
+            ++j;
+        }
+        if (j >= i || !Geo::is_coincide(points0[i], points0[j], polygon2))
+        {
+            break;
+        }
 
-    // for (size_t i = 0, j = 1, count0 = points0.size(), count1 = points1.size(); j < count0;)
-    // {
-    //     while (i < count0 && points0[i].value == 0)
-    //     {
-    //         ++i;
-    //     }
-    //     j = i + 1;
-    //     while (j < count0 && points0[j].value == 0)
-    //     {
-    //         ++j;
-    //     }
-    //     if (j >= count0)
-    //     {
-    //         break;
-    //     }
-    //     if (!Geo::is_coincide(points0[i], points0[j], polygon0))
-    //     {
-    //         i =  j;
-    //         continue;
-    //     }
+        it0 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+                { return !p.original && Geo::distance(p, points0[i]) < Geo::EPSILON; });
+        it1 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+            { return !p.original && Geo::distance(p, points0[j]) < Geo::EPSILON; });
+        if (it0 == points1.end() || it1 == points1.end() || it0->value * it1->value <= 0)
+        {
+            break;
+        }
 
-    //     std::vector<MarkedPoint>::iterator it0 = std::find(points1.begin(), points1.end(), points0[i]);
-    //     if (it0 == points1.end())
-    //     {
-    //         i = j;
-    //         continue;
-    //     }
-    //     std::vector<MarkedPoint>::iterator it1 = std::find(points1.begin(), points1.end(), points0[j]);
-    //     if (it1 == points1.end())
-    //     {
-    //         i = j;
-    //         continue;
-    //     }
-    //     if (!Geo::is_coincide(*it0, *it1, polygon1))
-    //     {
-    //         i = j;
-    //         continue;
-    //     }
+        for (size_t k = 1, count1 = polygon3.size(); k < count1; ++k)
+        {
+            if (!Geo::is_part(*it0, *it1, polygon3[k - 1], polygon3[k]))
+            {
+                continue;
+            }
 
-    //     if (std::distance(it1, points1.begin()) > std::distance(it0, points1.begin()))
-    //     {
-    //         if (points0[i].value < 0 && points0[j].value < 0)
-    //         {
-    //             points0.erase(points0.begin() + i);
-    //             --count0;
-    //             if (it0->value != 0)
-    //             {
-    //                 points1.erase(it0);
-    //                 --count1;
-    //             }
-    //         }
-    //         else if (points0[i].value > 0 && points0[j].value > 0)
-    //         {
-    //             points0.erase(points0.begin() + j);
-    //             --count0;
-    //             if (it1->value != 0)
-    //             {
-    //                 points1.erase(it1);
-    //                 --count1;
-    //             }
-    //         }
-    //         else
-    //         {
-    //             i = j;
-    //         }
-    //     }
-    //     else
-    //     {
-    //         if (points0[i].value < 0 && points0[j].value < 0)
-    //         {
-    //             points0.erase(points0.begin() + j);
-    //             --count0;
-    //             if (it0->value != 0)
-    //             {
-    //                 points1.erase(it0);
-    //                 --count1;
-    //             }
-    //         }
-    //         else if (points0[i].value > 0 && points0[j].value > 0)
-    //         {
-    //             points0.erase(points0.begin() + i);
-    //             --count0;
-    //             if (it1->value != 0)
-    //             {
-    //                 points1.erase(it1);
-    //                 --count1;
-    //             }
-    //         }
-    //         else
-    //         {
-    //             i = j;
-    //         }
-    //     }
-    // }
+            if (it0->value < 0 && it1->value < 0)
+            {
+                points1.erase(it0);
+                if (points0[i].value != 0)
+                {
+                    points0.erase(points0.begin() + i);
+                }
+            }
+            else if (it0->value > 0 && it1->value > 0)
+            {
+                points1.erase(it1);
+                if (points0[j].value != 0)
+                {
+                    points0.erase(points0.begin() + j);
+                }
+            }
+            break;
+        }
+        break;
+    }
+    for (size_t i = 0, j = 1, count0 = polygon2.size(), count1 = points1.size(); j < count1; i = j)
+    {
+        while (i < count1 && points1[i].value == 0)
+        {
+            ++i;
+        }
+        j = i + 1;
+        while (j < count1 && points1[j].value == 0)
+        {
+            ++j;
+        }
+        if (j >= count1)
+        {
+            break;
+        }
+        if (!Geo::is_coincide(points1[i], points1[j], polygon3))
+        {
+            continue;
+        }
+
+        it0 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+                { return !p.original && Geo::distance(p, points1[i]) < Geo::EPSILON; });
+        it1 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+            { return !p.original && Geo::distance(p, points1[j]) < Geo::EPSILON; });
+        if (it0 == points0.end() || it1 == points0.end() || it0->value * it1->value <= 0)
+        {
+            continue;
+        }
+
+        for (size_t k = 1; k < count0; ++k)
+        {
+            if (!Geo::is_part(*it0, *it1, polygon2[k - 1], polygon2[k]))
+            {
+                continue;
+            }
+
+            if (it0->value < 0 && it1->value < 0)
+            {
+                points0.erase(it0);
+                if (points1[i].value != 0)
+                {
+                    points1.erase(points1.begin() + i);
+                    --count1;
+                }
+            }
+            else if (it0->value > 0 && it1->value > 0)
+            {
+                points0.erase(it1);
+                if (points1[j].value != 0)
+                {
+                    points1.erase(points1.begin() + j);
+                    --count1;
+                }
+            }
+            break;
+        }
+    }
+    for (size_t i = points1.size() - 1, j = 0;;)
+    {
+        while (i > 0 && points1[i].value == 0)
+        {
+            --i;
+        }
+        if (i == 0)
+        {
+            break;
+        }
+        while (j < i && points1[j].value == 0)
+        {
+            ++j;
+        }
+        if (j >= i || !Geo::is_coincide(points1[i], points1[j], polygon3))
+        {
+            break;
+        }
+
+        it0 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+            { return !p.original && Geo::distance(p, points1[i]) < Geo::EPSILON; });
+        it1 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+            { return !p.original && Geo::distance(p, points1[j]) < Geo::EPSILON; });
+        if (it0 == points0.end() || it1 == points0.end() || it0->value * it1->value <= 0)
+        {
+            break;
+        }
+
+        for (size_t k = 1, count0 = polygon2.size(); k < count0; ++k)
+        {
+            if (!Geo::is_part(*it0, *it1, polygon2[k - 1], polygon2[k]))
+            {
+                continue;
+            }
+
+            if (it0->value < 0 && it1->value < 0)
+            {
+                points0.erase(it0);
+                if (points1[i].value != 0)
+                {
+                    points1.erase(points1.begin() + i);
+                }
+            }
+            else if (it0->value > 0 && it1->value > 0)
+            {
+                points0.erase(it1);
+                if (points1[j].value != 0)
+                {
+                    points1.erase(points1.begin() + j);
+                }
+            }
+            break;
+        }
+        break;
+    }
 
     std::vector<Point> result;
     size_t index0 = 0, index1 = 0;
@@ -4164,128 +4363,67 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
         {
             ++index0;
         }
-        
-        if (index0 < count0)
-        {
-            while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
-            {
-                while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
-                {
-                    if (points0[index0].value > -1)
-                    {
-                        if (points0[index0].original)
-                        {
-                            points0[index0].active = false;
-                        }
-                        result.emplace_back(points0[index0++]);
-                    }
-                    else
-                    {
-                        index1 = 0;
-                        while (index1 < count1 && points1[index1] != points0[index0])
-                        {
-                            ++index1;
-                        }
-                        index1 %= count1;
-                        result.emplace_back(points1[index1++]);
-                        ++index0;
-                        index0 %= count0;
-                        index1 %= count1;
-                        break;
-                    }
-                    index0 %= count0;
-                }
 
-                while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
-                {
-                    if (points1[index1].value > -1)
-                    {
-                        if (points1[index1].original)
-                        {
-                            points1[index1].active = false;
-                        }
-                        result.emplace_back(points1[index1++]);
-                    }
-                    else
-                    {
-                        index0 = 0;
-                        while (index0 < count0 && points0[index0] != points1[index1])
-                        {
-                            ++index0;
-                        }
-                        index0 %= count0;
-                        result.emplace_back(points0[index0++]);
-                        ++index1;
-                        index0 %= count0;
-                        index1 %= count1;
-                        break;
-                    }
-                    index1 %= count1;
-                }
-            }
+        if (index0 >= count0)
+        {
+            output.pop_back();
+            break;
         }
-        else
+
+        while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
         {
-            while (index1 < count1 && points1[index1].value < 1)
+            while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
             {
-                ++index1;
+                if (points0[index0].value > -1)
+                {
+                    if (points0[index0].original)
+                    {
+                        points0[index0].active = false;
+                    }
+                    result.emplace_back(points0[index0++]);
+                }
+                else
+                {
+                    index1 = 0;
+                    while (index1 < count1 && points1[index1] != points0[index0])
+                    {
+                        ++index1;
+                    }
+                    index1 %= count1;
+                    result.emplace_back(points1[index1++]);
+                    ++index0;
+                    index0 %= count0;
+                    index1 %= count1;
+                    break;
+                }
+                index0 %= count0;
             }
 
             while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
             {
-                while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
+                if (points1[index1].value > -1)
                 {
-                    if (points1[index1].value > -1)
+                    if (points1[index1].original)
                     {
-                        if (points1[index1].original)
-                        {
-                            points1[index1].active = false;
-                        }
-                        result.emplace_back(points1[index1++]);
+                        points1[index1].active = false;
                     }
-                    else
-                    {
-                        index0 = 0;
-                        while (index0 < count0 && points0[index0] != points1[index1])
-                        {
-                            ++index0;
-                        }
-                        index0 %= count0;
-                        result.emplace_back(points0[index0++]);
-                        ++index1;
-                        index0 %= count0;
-                        index1 %= count1;
-                        break;
-                    }
-                    index1 %= count1;
+                    result.emplace_back(points1[index1++]);
                 }
-
-                while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
+                else
                 {
-                    if (points0[index0].value > -1)
+                    index0 = 0;
+                    while (index0 < count0 && points0[index0] != points1[index1])
                     {
-                        if (points0[index0].original)
-                        {
-                            points0[index0].active = false;
-                        }
-                        result.emplace_back(points0[index0++]);
-                    }
-                    else
-                    {
-                        index1 = 0;
-                        while (index1 < count1 && points1[index1] != points0[index0])
-                        {
-                            ++index1;
-                        }
-                        index1 %= count1;
-                        result.emplace_back(points1[index1++]);
                         ++index0;
-                        index0 %= count0;
-                        index1 %= count1;
-                        break;
                     }
                     index0 %= count0;
+                    result.emplace_back(points0[index0++]);
+                    ++index1;
+                    index0 %= count0;
+                    index1 %= count1;
+                    break;
                 }
+                index1 %= count1;
             }
         }
 
@@ -4294,6 +4432,26 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
             if (Geo::is_inside(result[i - 1], result[i - 2], result[i]))
             {
                 result.erase(result.begin() + i - 1);
+            }
+            else if (Geo::distance(result[i - 2], result[i]) < Geo::EPSILON)
+            {
+                result.erase(result.begin() + i--);
+                result.erase(result.begin() + i);
+            }
+        }
+        if (result.size() > 4)
+        {
+            if (Geo::is_inside(result.front(), result[1], result[result.size() - 2]))
+            {
+                result.pop_back();
+                std::swap(result.front(), result.back());
+                result.pop_back();
+            }
+            else if (Geo::distance(result[1], result[result.size() - 2]) < Geo::EPSILON)
+            {
+                result.pop_back();
+                result.pop_back();
+                result.erase(result.begin());
             }
         }
         output.back().append(result.begin(), result.end());
@@ -4328,8 +4486,8 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
             output.pop_back();
         }
 
-        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return !p.original; }) == 0 ||
-            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return !p.original; }) == 0)
+        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return p.value > 0; }) == 0 ||
+            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return p.value > 0; }) == 0)
         {
             break;
         }
@@ -4725,7 +4883,7 @@ bool Geo::polygon_intersection(const Polygon &polygon0, const Polygon &polygon1,
 
     // 处理重边上的交点
     std::vector<Geo::MarkedPoint>::iterator it0, it1;
-    for (size_t i = 1, count0 = polygon2.size(), count1 = polygon3.size(); i < count0; ++i)
+    /*for (size_t i = 1, count0 = polygon2.size(), count1 = polygon3.size(); i < count0; ++i)
     {
         for (size_t j = 1; j < count1; ++j)
         {
@@ -4800,6 +4958,231 @@ bool Geo::polygon_intersection(const Polygon &polygon0, const Polygon &polygon1,
                 break;
             }
         }
+    }*/
+
+    for (size_t i = 0, j = 1, count0 = points0.size(), count1 = polygon3.size(); j < count0; i = j)
+    {
+        while (i < count0 && points0[i].value == 0)
+        {
+            ++i;
+        }
+        j = i + 1;
+        while (j < count0 && points0[j].value == 0)
+        {
+            ++j;
+        }
+        if (j >= count0)
+        {
+            break;
+        }
+        if (!Geo::is_coincide(points0[i], points0[j], polygon2))
+        {
+            continue;
+        }
+
+        it0 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+                { return !p.original && Geo::distance(p, points0[i]) < Geo::EPSILON; });
+        it1 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+            { return !p.original && Geo::distance(p, points0[j]) < Geo::EPSILON; });
+        if (it0 == points1.end() || it1 == points1.end() || it0->value * it1->value <= 0)
+        {
+            continue;
+        }
+
+        for (size_t k = 1; k < count1; ++k)
+        {
+            if (!Geo::is_part(*it0, *it1, polygon3[k - 1], polygon3[k]))
+            {
+                continue;
+            }
+
+            if (it0->value > 0 && it1->value > 0)
+            {
+                points1.erase(it0);
+                if (points0[i].value != 0)
+                {
+                    points0.erase(points0.begin() + i);
+                    --count0;
+                }
+            }
+            else if (it0->value < 0 && it1->value < 0)
+            {
+                points1.erase(it1);
+                if (points0[j].value != 0)
+                {
+                    points0.erase(points0.begin() + j);
+                    --count0;
+                }
+            }
+            break;
+        }
+    }
+    for (size_t i = points0.size() - 1, j = 0;;)
+    {
+        while (i > 0 && points0[i].value == 0)
+        {
+            --i;
+        }
+        if (i == 0)
+        {
+            break;
+        }
+        while (j < i && points0[j].value == 0)
+        {
+            ++j;
+        }
+        if (j >= i || !Geo::is_coincide(points0[i], points0[j], polygon2))
+        {
+            break;
+        }
+
+        it0 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+                { return !p.original && Geo::distance(p, points0[i]) < Geo::EPSILON; });
+        it1 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+            { return !p.original && Geo::distance(p, points0[j]) < Geo::EPSILON; });
+        if (it0 == points1.end() || it1 == points1.end() || it0->value * it1->value <= 0)
+        {
+            break;
+        }
+
+        for (size_t k = 1, count1 = polygon3.size(); k < count1; ++k)
+        {
+            if (!Geo::is_part(*it0, *it1, polygon3[k - 1], polygon3[k]))
+            {
+                continue;
+            }
+
+            if (it0->value > 0 && it1->value > 0)
+            {
+                points1.erase(it0);
+                if (points0[i].value != 0)
+                {
+                    points0.erase(points0.begin() + i);
+                }
+            }
+            else if (it0->value < 0 && it1->value < 0)
+            {
+                points1.erase(it1);
+                if (points0[j].value != 0)
+                {
+                    points0.erase(points0.begin() + j);
+                }
+            }
+            break;
+        }
+        break;
+    }
+    for (size_t i = 0, j = 1, count0 = polygon2.size(), count1 = points1.size(); j < count1; i = j)
+    {
+        while (i < count1 && points1[i].value == 0)
+        {
+            ++i;
+        }
+        j = i + 1;
+        while (j < count1 && points1[j].value == 0)
+        {
+            ++j;
+        }
+        if (j >= count1)
+        {
+            break;
+        }
+        if (!Geo::is_coincide(points1[i], points1[j], polygon3))
+        {
+            continue;
+        }
+
+        it0 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+                { return !p.original && Geo::distance(p, points1[i]) < Geo::EPSILON; });
+        it1 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+            { return !p.original && Geo::distance(p, points1[j]) < Geo::EPSILON; });
+        if (it0 == points0.end() || it1 == points0.end() || it0->value * it1->value <= 0)
+        {
+            continue;
+        }
+
+        for (size_t k = 1; k < count0; ++k)
+        {
+            if (!Geo::is_part(*it0, *it1, polygon2[k - 1], polygon2[k]))
+            {
+                continue;
+            }
+
+            if (it0->value > 0 && it1->value > 0)
+            {
+                points0.erase(it0);
+                if (points1[i].value != 0)
+                {
+                    points1.erase(points1.begin() + i);
+                    --count1;
+                }
+            }
+            else if (it0->value < 0 && it1->value < 0)
+            {
+                points0.erase(it1);
+                if (points1[j].value != 0)
+                {
+                    points1.erase(points1.begin() + j);
+                    --count1;
+                }
+            }
+            break;
+        }
+    }
+    for (size_t i = points1.size() - 1, j = 0;;)
+    {
+        while (i > 0 && points1[i].value == 0)
+        {
+            --i;
+        }
+        if (i == 0)
+        {
+            break;
+        }
+        while (j < i && points1[j].value == 0)
+        {
+            ++j;
+        }
+        if (j >= i || !Geo::is_coincide(points1[i], points1[j], polygon3))
+        {
+            break;
+        }
+
+        it0 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+            { return !p.original && Geo::distance(p, points1[i]) < Geo::EPSILON; });
+        it1 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+            { return !p.original && Geo::distance(p, points1[j]) < Geo::EPSILON; });
+        if (it0 == points0.end() || it1 == points0.end() || it0->value * it1->value <= 0)
+        {
+            break;
+        }
+
+        for (size_t k = 1, count0 = polygon2.size(); k < count0; ++k)
+        {
+            if (!Geo::is_part(*it0, *it1, polygon2[k - 1], polygon2[k]))
+            {
+                continue;
+            }
+
+            if (it0->value > 0 && it1->value > 0)
+            {
+                points0.erase(it0);
+                if (points1[i].value != 0)
+                {
+                    points1.erase(points1.begin() + i);
+                }
+            }
+            else if (it0->value < 0 && it1->value < 0)
+            {
+                points0.erase(it1);
+                if (points1[j].value != 0)
+                {
+                    points1.erase(points1.begin() + j);
+                }
+            }
+            break;
+        }
+        break;
     }
 
     std::vector<Point> result;
@@ -4826,127 +5209,66 @@ bool Geo::polygon_intersection(const Polygon &polygon0, const Polygon &polygon1,
             ++index0;
         }
 
-        if (index0 < count0)
+        if (index0 >= count0)
         {
-            while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
-            {
-                while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
-                {
-                    if (points0[index0].value < 1)
-                    {
-                        if (points0[index0].original)
-                        {
-                            points0[index0].active = false;
-                        }
-                        result.emplace_back(points0[index0++]);
-                    }
-                    else
-                    {
-                        index1 = 0;
-                        while (index1 < count1 && points1[index1] != points0[index0])
-                        {
-                            ++index1;
-                        }
-                        index1 %= count1;
-                        result.emplace_back(points1[index1++]);
-                        ++index0;
-                        index0 %= count0;
-                        index1 %= count1;
-                        break;
-                    }
-                    index0 %= count0;
-                }
-
-                while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
-                {
-                    if (points1[index1].value < 1)
-                    {
-                        if (points1[index1].original)
-                        {
-                            points1[index1].active = false;
-                        }
-                        result.emplace_back(points1[index1++]);
-                    }
-                    else
-                    {
-                        index0 = 0;
-                        while (index0 < count0 && points0[index0] != points1[index1])
-                        {
-                            ++index0;
-                        }
-                        index0 %= count0;
-                        result.emplace_back(points0[index0++]);
-                        ++index1;
-                        index0 %= count0;
-                        index1 %= count1;
-                        break;
-                    }
-                    index1 %= count1;
-                }
-            }
+            output.pop_back();
+            break;
         }
-        else
+
+        while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
         {
-            while (index1 < count0 && points1[index1].value < 1)
+            while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
             {
-                ++index1;
+                if (points0[index0].value < 1)
+                {
+                    if (points0[index0].original)
+                    {
+                        points0[index0].active = false;
+                    }
+                    result.emplace_back(points0[index0++]);
+                }
+                else
+                {
+                    index1 = 0;
+                    while (index1 < count1 && points1[index1] != points0[index0])
+                    {
+                        ++index1;
+                    }
+                    index1 %= count1;
+                    result.emplace_back(points1[index1++]);
+                    ++index0;
+                    index0 %= count0;
+                    index1 %= count1;
+                    break;
+                }
+                index0 %= count0;
             }
 
             while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
             {
-                while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
+                if (points1[index1].value < 1)
                 {
-                    if (points1[index1].value < 1)
+                    if (points1[index1].original)
                     {
-                        if (points1[index1].original)
-                        {
-                            points1[index1].active = false;
-                        }
-                        result.emplace_back(points1[index1++]);
+                        points1[index1].active = false;
                     }
-                    else
-                    {
-                        index0 = 0;
-                        while (index0 < count0 && points0[index0] != points1[index1])
-                        {
-                            ++index0;
-                        }
-                        index0 %= count0;
-                        result.emplace_back(points0[index0++]);
-                        ++index1;
-                        index0 %= count0;
-                        index1 %= count1;
-                        break;
-                    }
-                    index1 %= count1;
+                    result.emplace_back(points1[index1++]);
                 }
-
-                while (result.size() < count2 && (result.size() < 4 || result.front() != result.back()))
+                else
                 {
-                    if (points0[index0].value < 1)
+                    index0 = 0;
+                    while (index0 < count0 && points0[index0] != points1[index1])
                     {
-                        if (points0[index0].original)
-                        {
-                            points0[index0].active = false;
-                        }
-                        result.emplace_back(points0[index0++]);
-                    }
-                    else
-                    {
-                        index1 = 0;
-                        while (index1 < count1 && points1[index1] != points0[index0])
-                        {
-                            ++index1;
-                        }
-                        index1 %= count1;
-                        result.emplace_back(points1[index1++]);
                         ++index0;
-                        index0 %= count0;
-                        index1 %= count1;
-                        break;
                     }
                     index0 %= count0;
-                } 
+                    result.emplace_back(points0[index0++]);
+                    ++index1;
+                    index0 %= count0;
+                    index1 %= count1;
+                    break;
+                }
+                index1 %= count1;
             }
         }
 
@@ -4955,6 +5277,26 @@ bool Geo::polygon_intersection(const Polygon &polygon0, const Polygon &polygon1,
             if (Geo::is_inside(result[i - 1], result[i - 2], result[i]))
             {
                 result.erase(result.begin() + i - 1);
+            }
+            else if (Geo::distance(result[i - 2], result[i]) < Geo::EPSILON)
+            {
+                result.erase(result.begin() + i--);
+                result.erase(result.begin() + i);
+            }
+        }
+        if (result.size() > 4)
+        {
+            if (Geo::is_inside(result.front(), result[1], result[result.size() - 2]))
+            {
+                result.pop_back();
+                std::swap(result.front(), result.back());
+                result.pop_back();
+            }
+            else if (Geo::distance(result[1], result[result.size() - 2]) < Geo::EPSILON)
+            {
+                result.pop_back();
+                result.pop_back();
+                result.erase(result.begin());
             }
         }
         output.back().append(result.begin(), result.end());
@@ -4989,8 +5331,8 @@ bool Geo::polygon_intersection(const Polygon &polygon0, const Polygon &polygon1,
             output.pop_back();
         }
 
-        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return !p.original; }) == 0 ||
-            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return !p.original; }) == 0)
+        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return p.value > 0; }) == 0 ||
+            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return p.value > 0; }) == 0)
         {
             break;
         }
