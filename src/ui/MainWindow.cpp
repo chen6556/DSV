@@ -581,6 +581,7 @@ void MainWindow::polygon_union()
     {
         _painter.refresh_vbo();
         _painter.refresh_selected_ibo();
+        _painter.update();
     }
 }
 
@@ -590,7 +591,13 @@ void MainWindow::polygon_intersection()
     {
         _painter.refresh_vbo();
         _painter.refresh_selected_ibo();
+        _painter.update();
     }
+}
+
+void MainWindow::polygon_difference()
+{
+    _painter.set_operation(Canvas::Operation::POLYGONDIFFERENCE);
 }
 
 

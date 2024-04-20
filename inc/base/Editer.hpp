@@ -97,6 +97,8 @@ public:
     bool polygon_union();
 
     bool polygon_intersection();
+    
+    bool polygon_difference(Container *container0, const Container *container1); 
 
 
 

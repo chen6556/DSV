@@ -842,4 +842,6 @@ namespace Geo
     bool polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output);
 
     bool polygon_intersection(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output);
+
+    bool polygon_difference(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output);
 };

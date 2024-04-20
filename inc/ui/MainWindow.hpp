@@ -105,6 +105,8 @@ private slots:
 
     void polygon_intersection();
 
+    void polygon_difference();
+
 
     void show_data_panel();
 

@@ -1046,6 +1046,30 @@ bool Editer::polygon_intersection()
     }
 }
 
+bool Editer::polygon_difference(Container *container0, const Container *container1)
+{
+    if (container0 == nullptr || container1 == nullptr)
+    {
+        return false;
+    }
+
+    std::vector<Geo::Polygon> shapes;
+    if (Geo::polygon_difference(container0->shape(), container1->shape(), shapes))
+    {
+        store_backup();
+        container0->shape() = shapes.front();
+        for (size_t i = 1, count = shapes.size(); i < count; ++i)
+        {
+            _graph->container_group(_current_group).append(new Container(shapes[i]));
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 
 bool Editer::line_array(int x, int y, double x_space, double y_space)
 {
