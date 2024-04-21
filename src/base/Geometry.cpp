@@ -3444,23 +3444,35 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
                 if (error_edges[(i + 1) % edge_count])
                 {
                     b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
+                    a.x = a.y = DBL_MAX;
                     Geo::is_intersected(result.last_point(j), result[j],
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    result[j] = a;
+                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    {
+                        result[j] = a;
+                    }
+                    a.x = a.y = DBL_MAX;
                     Geo::is_intersected(result.next_point(result.next_point_index(j)),
                         result.next_point(result.next_point_index(result.next_point_index(j))),
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    result.next_point(result.next_point_index(j)) = a;
+                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    {
+                        result.next_point(result.next_point_index(j)) = a;
+                    }
                     result.remove(result.next_point_index(j));
                     --count;
                     ++i;
                 }
                 else
                 {
+                    a.x = a.y = DBL_MAX;
                     if (Geo::is_intersected(result.last_point(j), result[j],
                         result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
                     {
-                        result[j] = a;
+                        if (a.x < DBL_MAX && a.y < DBL_MAX)
+                        {
+                            result[j] = a;
+                        }
                         result.remove(result.next_point_index(j));
                         --count;
                     }
@@ -3533,23 +3545,35 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
                 if (error_edges[(i + 1) % edge_count])
                 {
                     b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
+                    a.x = a.y = DBL_MAX;
                     Geo::is_intersected(result.last_point(j), result[j],
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    result[j] = a;
+                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    {
+                        result[j] = a;
+                    }
+                    a.x = a.y = DBL_MAX;
                     Geo::is_intersected(result.next_point(result.next_point_index(j)),
                         result.next_point(result.next_point_index(result.next_point_index(j))),
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    result.next_point(result.next_point_index(j)) = a;
+                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    {
+                        result.next_point(result.next_point_index(j)) = a;
+                    }
                     result.remove(result.next_point_index(j));
                     --count;
                     ++i;
                 }
                 else
                 {
+                    a.x = a.y = DBL_MAX;
                     if (Geo::is_intersected(result.last_point(j), result[j],
                         result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
                     {
-                        result[j] = a;
+                        if (a.x < DBL_MAX && a.y < DBL_MAX)
+                        {
+                            result[j] = a;
+                        }
                         result.remove(result.next_point_index(j));
                         --count;
                     }
@@ -3640,23 +3664,35 @@ bool Geo::offset_test(const Polygon &input, Polygon &result, const double distan
                 if (error_edges[(i + 1) % edge_count])
                 {
                     b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
+                    a.x = a.y = DBL_MAX;
                     Geo::is_intersected(result.last_point(j), result[j],
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    result[j] = a;
+                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    {
+                        result[j] = a;
+                    }
+                    a.x = a.y = DBL_MAX;
                     Geo::is_intersected(result.next_point(result.next_point_index(j)),
                         result.next_point(result.next_point_index(result.next_point_index(j))),
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    result.next_point(result.next_point_index(j)) = a;
+                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    {
+                        result.next_point(result.next_point_index(j)) = a;
+                    }
                     result.remove(result.next_point_index(j));
                     --count;
                     ++i;
                 }
                 else
                 {
+                    a.x = a.y = DBL_MAX;
                     if (Geo::is_intersected(result.last_point(j), result[j],
                         result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
                     {
-                        result[j] = a;
+                        if (a.x < DBL_MAX && a.y < DBL_MAX)
+                        {
+                            result[j] = a;
+                        }
                         result.remove(result.next_point_index(j));
                         --count;
                     }
@@ -3729,23 +3765,35 @@ bool Geo::offset_test(const Polygon &input, Polygon &result, const double distan
                 if (error_edges[(i + 1) % edge_count])
                 {
                     b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
+                    a.x = a.y = DBL_MAX;
                     Geo::is_intersected(result.last_point(j), result[j],
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    result[j] = a;
+                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    {
+                        result[j] = a;
+                    }
+                    a.x = a.y = DBL_MAX;
                     Geo::is_intersected(result.next_point(result.next_point_index(j)),
                         result.next_point(result.next_point_index(result.next_point_index(j))),
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    result.next_point(result.next_point_index(j)) = a;
+                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    {
+                        result.next_point(result.next_point_index(j)) = a;
+                    }
                     result.remove(result.next_point_index(j));
                     --count;
                     ++i;
                 }
                 else
                 {
+                    a.x = a.y = DBL_MAX;
                     if (Geo::is_intersected(result.last_point(j), result[j],
                         result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
                     {
-                        result[j] = a;
+                        if (a.x < DBL_MAX && a.y < DBL_MAX)
+                        {
+                            result[j] = a;
+                        }
                         result.remove(result.next_point_index(j));
                         --count;
                     }
