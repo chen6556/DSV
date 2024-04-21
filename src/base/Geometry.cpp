@@ -1456,6 +1456,17 @@ size_t Polygon::index(const double x, const double y) const
     return SIZE_MAX;
 }
 
+size_t Polygon::index(const Point &point) const
+{
+    for (size_t i = 0, count = _points.size() - 1; i < count; ++i)
+    {
+        if (_points[i] == point)
+        {
+            return i;
+        }
+    }
+    return SIZE_MAX;
+}
 
 // Triangle
 
@@ -3587,6 +3598,239 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
             }
         }
         result.back() = result.front();
+    }
+
+    return true;
+}
+
+bool Geo::offset_test(const Polygon &input, Polygon &result, const double distance)
+{
+    if (distance == 0)
+    {
+        result = input;
+        return true;
+    }
+
+    Polygon temp(input);
+    temp.reorder_points();
+    result.clear();
+    std::vector<Point> points;
+    Point a, b;
+    std::vector<bool> error_edges;
+    if (distance > 0)
+    {
+        for (size_t i = 0, count = temp.size(); i < count; ++i)
+        {
+            a = (temp[i] - temp[i > 0 ? i - 1 : count - 2]).vertical().normalize();
+            b = (temp[i < count - 1 ? i + 1 : 1] - temp[i]).vertical().normalize();
+            points.emplace_back(temp[i] + (a + b).normalize() * (distance / std::sqrt((1 + a * b) / 2)));
+        }
+        result.append(points.cbegin(), points.cend());
+
+        for (size_t i = 1, count = result.size(); i < count; ++i)
+        {
+            error_edges.push_back((temp[i] - temp[i - 1]) * (result[i] - result[i - 1]) < 0);
+        }
+        for (size_t i = 0, edge_count = error_edges.size(), point_count = temp.size(),
+                count = result.size(), of = 0, j = 0; i < edge_count; ++i)
+        {
+            if (error_edges[i])
+            {
+                j = i - of++;
+                if (error_edges[(i + 1) % edge_count])
+                {
+                    b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
+                    Geo::is_intersected(result.last_point(j), result[j],
+                        temp[i] + b, temp.next_point(i) + b, a, true);
+                    result[j] = a;
+                    Geo::is_intersected(result.next_point(result.next_point_index(j)),
+                        result.next_point(result.next_point_index(result.next_point_index(j))),
+                        temp[i] + b, temp.next_point(i) + b, a, true);
+                    result.next_point(result.next_point_index(j)) = a;
+                    result.remove(result.next_point_index(j));
+                    --count;
+                    ++i;
+                }
+                else
+                {
+                    if (Geo::is_intersected(result.last_point(j), result[j],
+                        result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
+                    {
+                        result[j] = a;
+                        result.remove(result.next_point_index(j));
+                        --count;
+                    }
+                    else
+                    {
+                        b = (temp[i] - temp.last_point(i)).vertical().normalize() * distance;
+                        Geo::is_intersected(result.next_point(result.next_point_index(j)),
+                            result.next_point(result.next_point_index(result.next_point_index(j))),
+                            temp[i] + b, temp.last_point(i) + b, a, true);
+                        b = (temp.next_point(temp.next_point_index(i)) - temp.next_point(i)).vertical().normalize() * distance;
+                        Geo::is_intersected(result.last_point(j), result.last_point(result.last_point_index(j)),
+                            temp.next_point(i) + b, temp.next_point(temp.next_point_index(i)) + b, b, true);
+
+                        if ((temp.next_point(temp.next_point_index(i)) - temp.last_point(i)) * (a - b) < 0)
+                        {
+                            result.next_point(result.next_point_index(j)) = a;
+                        }
+                        else
+                        {
+                            result.last_point(j) = b;
+                        }
+
+                        size_t temp_index = result.next_point_index(j);
+                        result.remove(temp_index);
+                        --count;
+                        if (temp_index > j)
+                        {
+                            result.remove(j % count--);
+                        }
+                        else
+                        {
+                            result.remove((j - 1) % count--);
+                        }
+                        ++of;
+                    }
+                }
+            }
+        }
+
+        for (size_t i = 0, count = result.size(); i < count; ++i)
+        {
+            if (std::isnan(result[i].x) || std::isnan(result[i].y))
+            {
+                result.remove(i--);
+                --count;
+            }
+        }
+        result.back() = result.front();
+    }
+    else
+    {
+        for (size_t i = 0, count = temp.size(); i < count; ++i)
+        {
+            const Point a = (temp[i] - temp[i > 0 ? i - 1 : count - 2]).vertical().normalize();
+            const Point b = (temp[i < count - 1 ? i + 1 : 1] - temp[i]).vertical().normalize();
+            points.emplace_back(temp[i] + (a + b).normalize() * (distance / std::sqrt((1 + a * b) / 2)));
+        }
+        result.append(points.cbegin(), points.cend());
+
+        for (size_t i = 1, count = result.size(); i < count; ++i)
+        {
+            error_edges.push_back((temp[i] - temp[i - 1]) * (result[i] - result[i - 1]) < 0);
+        }
+        for (size_t i = 0, edge_count = error_edges.size(), point_count = temp.size(),
+                count = result.size(), of = 0, j = 0; i < edge_count; ++i)
+        {
+            if (error_edges[i])
+            {
+                j = i - of++;
+                if (error_edges[(i + 1) % edge_count])
+                {
+                    b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
+                    Geo::is_intersected(result.last_point(j), result[j],
+                        temp[i] + b, temp.next_point(i) + b, a, true);
+                    result[j] = a;
+                    Geo::is_intersected(result.next_point(result.next_point_index(j)),
+                        result.next_point(result.next_point_index(result.next_point_index(j))),
+                        temp[i] + b, temp.next_point(i) + b, a, true);
+                    result.next_point(result.next_point_index(j)) = a;
+                    result.remove(result.next_point_index(j));
+                    --count;
+                    ++i;
+                }
+                else
+                {
+                    if (Geo::is_intersected(result.last_point(j), result[j],
+                        result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
+                    {
+                        result[j] = a;
+                        result.remove(result.next_point_index(j));
+                        --count;
+                    }
+                    else
+                    {
+                        b = (temp[i] - temp.last_point(i)).vertical().normalize() * distance;
+                        Geo::is_intersected(result.next_point(result.next_point_index(j)),
+                            result.next_point(result.next_point_index(result.next_point_index(j))),
+                            temp[i] + b, temp.last_point(i) + b, a, true);
+                        b = (temp.next_point(temp.next_point_index(i)) - temp.next_point(i)).vertical().normalize() * distance;
+                        Geo::is_intersected(result.last_point(j), result.last_point(result.last_point_index(j)),
+                            temp.next_point(i) + b, temp.next_point(temp.next_point_index(i)) + b, b, true);
+
+                        if ((temp.next_point(temp.next_point_index(i)) - temp.last_point(i)) * (a - b) < 0)
+                        {
+                            result.next_point(result.next_point_index(j)) = a;
+                        }
+                        else
+                        {
+                            result.last_point(j) = b;
+                        }
+
+                        size_t temp_index = result.next_point_index(j);
+                        result.remove(temp_index);
+                        --count;
+                        if (temp_index > j)
+                        {
+                            result.remove(j % count--);
+                        }
+                        else
+                        {
+                            result.remove((j - 1) % count--);
+                        }
+                        ++of;
+                    }
+                }
+            }
+        }
+
+        for (size_t i = 0, count = result.size(); i < count; ++i)
+        {
+            if (std::isnan(result[i].x) || std::isnan(result[i].y))
+            {
+                result.remove(i--);
+                --count;
+            }
+        }
+        result.back() = result.front();
+    }
+
+    std::vector<Polygon> polygons;
+    if (Geo::merge_ear_cut_triangles(Geo::ear_cut_to_triangles(result), polygons))
+    {
+        temp = polygons.back();
+        polygons.pop_back();
+        bool flag;
+        std::vector<Polygon> polygons2;
+        while (!polygons.empty())
+        {
+            flag = true;
+            for (size_t i = 0, count = polygons.size(); i < count; ++i)
+            {
+                if (Geo::polygon_union(temp, polygons[i], polygons2))
+                {
+                    if (polygons2.size() > 1)
+                    {
+                        temp = *std::max_element(polygons2.begin(), polygons2.end(), 
+                            [](const Polygon &a, const Polygon &b) { return a.area() < b.area(); });
+                    }
+                    else
+                    {
+                        temp = polygons2.front();
+                    }
+                    polygons.erase(polygons.begin() + i);
+                    polygons2.clear();
+                    flag = false;
+                    break;
+                }
+            }
+            if (flag)
+            {
+                break;
+            }
+        }
+        result = temp;
     }
 
     return true;
@@ -6220,4 +6464,111 @@ bool Geo::polygon_difference(const Polygon &polygon0, const Polygon &polygon1, s
 
     return !output.empty();
 }
+
+
+bool Geo::merge_ear_cut_triangles(const std::vector<Triangle> &triangles, std::vector<Polygon> &polygons)
+{
+    if (triangles.empty())
+    {
+        return false;
+    }
+    
+    polygons.clear();
+    const size_t triangles_count = triangles.size();
+    size_t merged_count = 1, index = 0;
+    int index0, index1, index2;
+    std::vector<bool> merged(triangles_count, false), current_triangles(triangles_count, false);
+    Geo::Polygon points;
+    bool flag;
+
+    while (merged_count < triangles_count)
+    {
+        while (index < triangles_count && merged[index])
+        {
+            ++index;
+        }
+        if (index == triangles_count)
+        {
+            break;
+        }
+
+        points.append(triangles[index][0]);
+        points.append(triangles[index][1]);
+        points.append(triangles[index][2]);
+        merged[index] = true;
+        current_triangles.assign(triangles_count, false);
+        current_triangles[index++] = true;
+
+        flag = true;
+        for (size_t i = index; i < triangles_count; ++i)
+        {
+            if (merged[i])
+            {
+                continue;
+            }
+
+            for (size_t j = 1, count = points.size(); j < count; ++j)
+            {
+                index0 = index1 = index2 = -1;
+                if (points[j - 1] == triangles[i][0])
+                {
+                    index0 = 0;
+                }
+                else if (points[j - 1] == triangles[i][1])
+                {
+                    index0 = 1;
+                }
+                else if (points[j - 1] == triangles[i][2])
+                {
+                    index0 = 2;
+                }
+
+                if (points[j] == triangles[i][0])
+                {
+                    index1 = 0;
+                }
+                else if (points[j] == triangles[i][1])
+                {
+                    index1 = 1;
+                }
+                else if (points[j] == triangles[i][2])
+                {
+                    index1 = 2;
+                }
+
+                if (index0 == -1 || index1 == -1)
+                {
+                    continue;
+                }
+                index2 = 3 - index0 - index1;
+
+                flag = true;
+                for (size_t k = 0; k < triangles_count; ++k)
+                {
+                    if (current_triangles[k] && Geo::is_inside(triangles[i][index2], triangles[k]))
+                    {
+                        flag = false;
+                        break;
+                    }
+                }
+
+                if (flag)
+                {
+                    points.insert(j, triangles[i][index2]);
+                    ++merged_count;
+                    merged[i] = true;
+                    current_triangles[i] = true;
+                    break;
+                }
+            }
+        }
+        
+        index = 0;
+        polygons.emplace_back(points);
+        points.clear();
+    }
+
+    return !polygons.empty();
+}
+
 

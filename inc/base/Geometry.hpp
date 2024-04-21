@@ -444,6 +444,8 @@ namespace Geo
         Point &last_point(const size_t index);
 
         size_t index(const double x, const double y) const;
+
+        size_t index(const Point &point) const;
     };
 
     class Triangle : public Geometry
@@ -835,6 +837,8 @@ namespace Geo
 
     bool offset(const Polygon &input, Polygon &result, const double distance);
 
+    bool offset_test(const Polygon &input, Polygon &result, const double distance);
+
     bool offset(const Circle &input, Circle &result, const double distance);
 
     bool offset(const AABBRect &input, AABBRect &result, const double distance);
@@ -844,4 +848,7 @@ namespace Geo
     bool polygon_intersection(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output);
 
     bool polygon_difference(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output);
+
+    bool merge_ear_cut_triangles(const std::vector<Triangle> &triangles, std::vector<Polygon> &polygons); 
+
 };
