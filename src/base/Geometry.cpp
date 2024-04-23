@@ -3968,8 +3968,8 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
                 --k; // 跳过非活动交点
             }
 
-            if (is_intersected(pre_point, points0[i], points1[k], points1[j], point)
-                && !is_coincide(pre_point, points0[i], points1[k], points1[j]))
+            if (!is_parallel(pre_point, points0[i], points1[k], points1[j]) &&
+                is_intersected(pre_point, points0[i], points1[k], points1[j], point))
             {
                 points0.insert(points0.begin() + i++, MarkedPoint(point.x, point.y, false));
                 points1.insert(points1.begin() + j++, MarkedPoint(point.x, point.y, false));
@@ -4333,7 +4333,7 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
     if (std::count_if(points0.begin(), points0.end(), [](const MarkedPoint &p) { return p.value < 0; }) == 0 ||
         std::count_if(points1.begin(), points1.end(), [](const MarkedPoint &p) { return p.value < 0; }) == 0)
     {
-        output.emplace_back();
+        /*output.emplace_back();
         for (size_t i = 1, count0 = polygon2.size(), count1 = polygon3.size(); i < count0; ++i)
         {
             for (size_t j = 1; j < count1; ++j)
@@ -4380,7 +4380,7 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
                 }
             }
         }
-        output.pop_back();
+        output.pop_back();*/
         return false; // 交点都是出点,即两多边形只有一个点相交
     }
 
@@ -4899,8 +4899,8 @@ bool Geo::polygon_intersection(const Polygon &polygon0, const Polygon &polygon1,
             {
                 --k; // 跳过非活动交点
             }
-            if (is_intersected(pre_point, points0[i], points1[k], points1[j], point)
-                && !is_coincide(pre_point, points0[i], points1[k], points1[j]))
+            if (!is_parallel(pre_point, points0[i], points1[k], points1[j]) &&
+                is_intersected(pre_point, points0[i], points1[k], points1[j], point))
             {
                 points0.insert(points0.begin() + i++, MarkedPoint(point.x, point.y, false));
                 points1.insert(points1.begin() + j++, MarkedPoint(point.x, point.y, false));
@@ -5744,8 +5744,8 @@ bool Geo::polygon_difference(const Polygon &polygon0, const Polygon &polygon1, s
             {
                 --k; // 跳过非活动交点
             }
-            if (is_intersected(pre_point, points0[i], points1[k], points1[j], point)
-                && !is_coincide(pre_point, points0[i], points1[k], points1[j]))
+            if (!is_parallel(pre_point, points0[i], points1[k], points1[j]) &&
+                is_intersected(pre_point, points0[i], points1[k], points1[j], point))
             {
                 points0.insert(points0.begin() + i++, MarkedPoint(point.x, point.y, false));
                 points1.insert(points1.begin() + j++, MarkedPoint(point.x, point.y, false));
