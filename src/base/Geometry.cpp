@@ -1175,7 +1175,7 @@ bool Polygon::is_cw() const
     {
         return false;
     }
-    
+
     double result = 0;
     for (size_t i = 0, count = size() - 1; i < count; ++i)
     {
@@ -3847,6 +3847,8 @@ bool Geo::offset_test(const Polygon &input, Polygon &result, const double distan
     std::vector<Polygon> polygons;
     if (Geo::merge_ear_cut_triangles(Geo::ear_cut_to_triangles(result), polygons))
     {
+        std::sort(polygons.begin(), polygons.end(),
+            [](const Polygon &a, const Polygon &b) { return a.area() < b.area(); });
         temp = polygons.back();
         polygons.pop_back();
         bool flag;
@@ -3861,7 +3863,7 @@ bool Geo::offset_test(const Polygon &input, Polygon &result, const double distan
                     if (polygons2.size() > 1)
                     {
                         temp = *std::max_element(polygons2.begin(), polygons2.end(), 
-                            [](const Polygon &a, const Polygon &b) { return a.area() < b.area(); });
+                            [](const Polygon &a, const Polygon &b) { return a.area() > b.area(); });
                     }
                     else
                     {
