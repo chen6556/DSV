@@ -3967,6 +3967,7 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
             {
                 --k; // 跳过非活动交点
             }
+
             if (is_intersected(pre_point, points0[i], points1[k], points1[j], point)
                 && !is_coincide(pre_point, points0[i], points1[k], points1[j]))
             {
@@ -4329,9 +4330,57 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
         i = j > 0 ? j : 1;
     }
 
-    if (std::count_if(points0.begin(), points0.end(), [](const MarkedPoint &p) { return p.value != 0; }) % 2 == 1 || 
-        std::count_if(points1.begin(), points1.end(), [](const MarkedPoint &p) { return p.value != 0; }) % 2 == 1)
+    if (std::count_if(points0.begin(), points0.end(), [](const MarkedPoint &p) { return p.value < 0; }) == 0 ||
+        std::count_if(points1.begin(), points1.end(), [](const MarkedPoint &p) { return p.value < 0; }) == 0)
     {
+        output.emplace_back();
+        for (size_t i = 1, count0 = polygon2.size(), count1 = polygon3.size(); i < count0; ++i)
+        {
+            for (size_t j = 1; j < count1; ++j)
+            {
+                if (polygon2[i - 1] == polygon3[j - 1] && polygon2[i] == polygon3[j])
+                {
+                    for (size_t k = 0; k < i - 1; ++k)
+                    {
+                        output.back().append(polygon2[k]);
+                    }
+                    for (size_t k = j - 1; k > 0; --k)
+                    {
+                        output.back().append(polygon3[k]);
+                    }
+                    for (size_t k = 0; k < j; ++k)
+                    {
+                        output.back().append(polygon3[k]);
+                    }
+                    for (size_t k = i; k < count0; ++k)
+                    {
+                        output.back().append(polygon2[k]);
+                    }
+                    return true;
+                }
+                else if (polygon2[i - 1] == polygon3[j] && polygon2[i] == polygon3[j - 1])
+                {
+                    for (size_t k = 0; k < i - 1; ++k)
+                    {
+                        output.back().append(polygon2[k]);
+                    }
+                    for (size_t k = j; k < count1; ++k)
+                    {
+                        output.back().append(polygon3[k]);
+                    }
+                    for (size_t k = 1; k < j - 1; ++k)
+                    {
+                        output.back().append(polygon3[k]);
+                    }
+                    for (size_t k = i; k < count0; ++k)
+                    {
+                        output.back().append(polygon2[k]);
+                    }
+                    return true;
+                }
+            }
+        }
+        output.pop_back();
         return false; // 交点都是出点,即两多边形只有一个点相交
     }
 
@@ -4785,8 +4834,8 @@ bool Geo::polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::v
             output.pop_back();
         }
 
-        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return p.value != 0; }) % 2 == 1 ||
-            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return p.value != 0; }) % 2 == 1)
+        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return p.value < 0; }) == 0 ||
+            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return p.value < 0; }) == 0)
         {
             break;
         }
