@@ -2604,8 +2604,8 @@ const bool Geo::is_parallel(const Point &point0, const Point &point1, const Poin
     }
     else
     {
-        return ((point0.y - point1.y) / (point0.x - point1.x)) ==
-            ((point2.y - point3.y) / (point2.x - point3.x));
+        return ((point0.y - point1.y) * (point2.x - point3.x)) ==
+            ((point2.y - point3.y) * (point0.x - point1.x));
     }
 }
 
@@ -2798,48 +2798,59 @@ const bool Geo::is_intersected(const Point &point0, const Point &point1, const P
             }
         }
     }
+
     output.x = (c1 * b0 - c0 * b1) / (a0 * b1 - a1 * b0), output.y = (c0 * a1 - c1 * a0) / (a0 * b1 - a1 * b0);
+
+    if (point0 == point2 || point0 == point3)
+    {
+        output = point0;
+    }
+    else if (point1 == point2 || point1 == point3)
+    {
+        output = point1;
+    }
+
+    if (Geo::is_inside(point0, point2, point3))
+    {
+        output = point0;
+    }
+    else if (Geo::is_inside(point1, point2, point3))
+    {
+        output = point1;
+    }
+    else if (Geo::is_inside(point2, point0, point1))
+    {
+        output = point2;
+    }
+    else if (Geo::is_inside(point3, point0, point1))
+    {
+        output = point3;
+    }
+
+    if (point0.x == point1.x)
+    {
+        output.x = point0.x;
+    }
+    else if (point2.x == point3.x)
+    {
+        output.x = point2.x;
+    }
+
+    if (point0.y == point1.y)
+    {
+        output.y = point0.y;
+    }
+    else if (point2.y == point3.y)
+    {
+        output.y = point2.y;
+    }
+
     if (infinite)
     {
         return true;
     }
     else
     {
-        if (Geo::is_inside(point0, point2, point3))
-        {
-            output = point0;
-        }
-        else if (Geo::is_inside(point1, point2, point3))
-        {
-            output = point1;
-        }
-        else if (Geo::is_inside(point2, point0, point1))
-        {
-            output = point2;
-        }
-        else if (Geo::is_inside(point3, point0, point1))
-        {
-            output = point3;
-        }
-
-        if (point0.x == point1.x)
-        {
-            output.x = point0.x;
-        }
-        else if (point2.x == point3.x)
-        {
-            output.x = point2.x;
-        }
-
-        if (point0.y == point1.y)
-        {
-            output.y = point0.y;
-        }
-        else if (point2.y == point3.y)
-        {
-            output.y = point2.y;
-        }
-
         const double left = std::max(std::min(point0.x, point1.x), std::min(point2.x, point3.x));
         const double right = std::min(std::max(point0.x, point1.x), std::max(point2.x, point3.x));
         const double top = std::min(std::max(point0.y, point1.y), std::max(point2.y, point3.y));
