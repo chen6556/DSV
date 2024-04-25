@@ -2743,6 +2743,17 @@ const bool Geo::is_part(const Line &line0, const Line &line1)
 
 const bool Geo::is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite)
 {
+    if (point0 == point2 || point0 == point3)
+    {
+        output = point0;
+        return true;
+    }
+    else if (point1 == point2 || point1 == point3)
+    {
+        output = point1;
+        return true;
+    }
+
     if (!infinite)
     {
         const double left0 = std::min(point0.x, point1.x), left1 = std::min(point2.x, point3.x);
@@ -2800,15 +2811,6 @@ const bool Geo::is_intersected(const Point &point0, const Point &point1, const P
     }
 
     output.x = (c1 * b0 - c0 * b1) / (a0 * b1 - a1 * b0), output.y = (c0 * a1 - c1 * a0) / (a0 * b1 - a1 * b0);
-
-    if (point0 == point2 || point0 == point3)
-    {
-        output = point0;
-    }
-    else if (point1 == point2 || point1 == point3)
-    {
-        output = point1;
-    }
 
     if (Geo::is_inside(point0, point2, point3))
     {
