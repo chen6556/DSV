@@ -326,6 +326,34 @@ Polyline *Polyline::clone() const
     return new Polyline(*this);
 }
 
+bool Polyline::is_self_intersected() const
+{
+    if (_points.size() < 4)
+    {
+        return false;
+    }
+
+    Point point;
+    for (size_t j = 2, count = _points.size() - 2; j < count; ++j)
+    {
+        if (Geo::is_intersected(_points[0], _points[1], _points[j], _points[j + 1], point))
+        {
+            return true;
+        }
+    }
+    for (size_t i = 1, count = _points.size() - 1; i < count; ++i)
+    {
+        for (size_t j = i + 2; j < count; ++j)
+        {
+            if (Geo::is_intersected(_points[i], _points[i + 1], _points[j], _points[j + 1], point))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 Point &Polyline::operator[](const size_t index)
 {
     assert(index < _points.size());
@@ -3876,7 +3904,7 @@ bool Geo::offset_test(const Polygon &input, Polygon &result, const double distan
                     if (polygons2.size() > 1)
                     {
                         temp = *std::max_element(polygons2.begin(), polygons2.end(), 
-                            [](const Polygon &a, const Polygon &b) { return a.area() > b.area(); });
+                            [](const Polygon &a, const Polygon &b) { return a.area() < b.area(); });
                     }
                     else
                     {
@@ -3893,7 +3921,11 @@ bool Geo::offset_test(const Polygon &input, Polygon &result, const double distan
                 break;
             }
         }
-        result = temp;
+
+        if (!temp.is_self_intersected())
+        {
+            result = temp;
+        }
     }
 
     return true;

@@ -191,6 +191,8 @@ namespace Geo
 
         Polyline *clone() const override;
 
+        bool is_self_intersected() const;
+
         Point &operator[](const size_t index);
 
         const Point &operator[](const size_t index) const;
