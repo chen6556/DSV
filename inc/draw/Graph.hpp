@@ -12,9 +12,11 @@ public:
     bool modified = false;
 
 public:
-    Graph(){ _type = Geo::Type::GRAPH; };
+    Graph() {};
 
     Graph(const Graph &graph);
+
+    const Geo::Type type() const override;
 
     Graph *clone() const override;
 

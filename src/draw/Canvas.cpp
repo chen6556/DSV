@@ -589,6 +589,9 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     emit tool_changed(Tool::NOTOOL);
                     _object_cache.clear();
                     break;
+                case Operation::POLYGONDIFFERENCE:
+                    _operation = Operation::NOOPERATION;
+                    break;
                 default:
                     break;
                 }
@@ -664,6 +667,16 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _object_cache.clear();
                     _operation = Operation::NOOPERATION;
                     emit tool_changed(Tool::NOTOOL);
+                    return update();
+                case Operation::POLYGONDIFFERENCE:
+                    if (_editer->polygon_difference(dynamic_cast<Container *>(_last_clicked_obj), 
+                        dynamic_cast<const Container *>(_clicked_obj)))
+                    {
+                        refresh_vbo();
+                        refresh_selected_ibo();
+                    }
+                    _object_cache.clear();
+                    _operation = Operation::NOOPERATION;
                     return update();
                 default:
                     break;

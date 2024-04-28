@@ -94,6 +94,12 @@ public:
 
     bool offset(std::list<Geo::Geometry *> objects, const double distance);
 
+    bool polygon_union();
+
+    bool polygon_intersection();
+    
+    bool polygon_difference(Container *container0, const Container *container1); 
+
 
 
     bool line_array(int x, int y, double x_space, double y_space);

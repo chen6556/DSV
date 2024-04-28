@@ -229,6 +229,10 @@ void Editer::append(const Geo::AABBRect &rect)
 
 void Editer::append_bezier(const size_t order)
 {
+    if (_point_cache.size() < order + 2)
+    {
+        return _point_cache.clear();
+    }
     store_backup();
     _point_cache.pop_back();
     while ((_point_cache.size() - 1) % order > 0)
@@ -942,6 +946,129 @@ bool Editer::offset(std::list<Geo::Geometry *> objects, const double distance)
     }
 }
 
+bool Editer::polygon_union()
+{
+    if (_graph == nullptr || _graph->empty())
+    {
+        return false;
+    }
+
+    size_t index = 0;
+    Container *container0 = nullptr, *container1 = nullptr;
+    for (Geo::Geometry *geo : _graph->container_group(_current_group))
+    {
+        ++index;
+        if (geo->is_selected && (geo->type() == Geo::Type::CONTAINER))
+        {
+            if (container0 == nullptr)
+            {
+                container0 = dynamic_cast<Container *>(geo);
+                continue;
+            }
+            if (container1 == nullptr)
+            {
+                container1 = dynamic_cast<Container *>(geo);
+                break;
+            }
+        }
+    }
+
+    if (container0 == nullptr || container1 == nullptr)
+    {
+        return false;
+    }
+    store_backup();
+
+    std::vector<Geo::Polygon> shapes;
+    if (Geo::polygon_union(container0->shape(), container1->shape(), shapes))
+    {
+        container0->shape() = shapes.front();
+        _graph->container_group(_current_group).remove(--index);
+        for (size_t i = 1, count = shapes.size(); i < count; ++i)
+        {
+            _graph->container_group(_current_group).append(new Container(shapes[i]));
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Editer::polygon_intersection()
+{
+    if (_graph == nullptr || _graph->empty())
+    {
+        return false;
+    }
+
+    size_t index = 0;
+    Container *container0 = nullptr, *container1 = nullptr;
+    for (Geo::Geometry *geo : _graph->container_group(_current_group))
+    {
+        ++index;
+        if (geo->is_selected && (geo->type() == Geo::Type::CONTAINER))
+        {
+            if (container0 == nullptr)
+            {
+                container0 = dynamic_cast<Container *>(geo);
+                continue;
+            }
+            if (container1 == nullptr)
+            {
+                container1 = dynamic_cast<Container *>(geo);
+                break;
+            }
+        }
+    }
+
+    if (container0 == nullptr || container1 == nullptr)
+    {
+        return false;
+    }
+    store_backup();
+
+    std::vector<Geo::Polygon> shapes;
+    if (Geo::polygon_intersection(container0->shape(), container1->shape(), shapes))
+    {
+        container0->shape() = shapes.front();
+        _graph->container_group(_current_group).remove(--index);
+        for (size_t i = 1, count = shapes.size(); i < count; ++i)
+        {
+            _graph->container_group(_current_group).append(new Container(shapes[i]));
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Editer::polygon_difference(Container *container0, const Container *container1)
+{
+    if (container0 == nullptr || container1 == nullptr)
+    {
+        return false;
+    }
+
+    std::vector<Geo::Polygon> shapes;
+    if (Geo::polygon_difference(container0->shape(), container1->shape(), shapes))
+    {
+        store_backup();
+        container0->shape() = shapes.front();
+        for (size_t i = 1, count = shapes.size(); i < count; ++i)
+        {
+            _graph->container_group(_current_group).append(new Container(shapes[i]));
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
 
 
 bool Editer::line_array(int x, int y, double x_space, double y_space)

@@ -4,11 +4,15 @@
 Graph::Graph(const Graph &graph)
     : Geo::Geometry(graph), modified(graph.modified)
 {
-    _type = Geo::Type::GRAPH;
     for (const ContainerGroup &group : graph._container_groups)
     {
         _container_groups.emplace_back(group);
     }
+}
+
+const Geo::Type Graph::type() const
+{
+    return Geo::Type::GRAPH;
 }
 
 Graph *Graph::clone() const
@@ -41,7 +45,6 @@ Graph &Graph::operator=(const Graph &graph)
         {
             _container_groups.emplace_back(group);
         }
-        _type = Geo::Type::GRAPH;
     }
     return *this;
 }

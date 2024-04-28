@@ -99,6 +99,15 @@ private slots:
     void ring_array();
 
 
+    void to_boolean_page();
+
+    void polygon_union();
+
+    void polygon_intersection();
+
+    void polygon_difference();
+
+
     void show_data_panel();
 
 private:
