@@ -140,6 +140,13 @@ void Importer::print_symbol(const std::string &str)
     qDebug() << str;
 }
 
+void Importer::end()
+{
+    this->_is_pen_down = false;
+    this->_is_knife_down = false;
+    store_points();
+}
+
 Importer importer;
 
 
@@ -203,7 +210,8 @@ Parser<std::string> skip_text = confix_p(str_p("M20*"), *anychar_p(), separator)
 // 步骤
 Parser<bool> steps = ch_p('N') >> int_p() >> separator;
 // 文件终止
-Parser<std::string> end = str_p("M0") >> separator;
+Action<void> end_a(&importer, &Importer::end);
+Parser<std::string> end = str_p("M0")[end_a] >> separator;
 // 未知命令
 Action<std::string> a_unkown(&importer, &Importer::print_symbol);
 
