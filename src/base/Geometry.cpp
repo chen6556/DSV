@@ -3372,9 +3372,10 @@ std::vector<Triangle> Geo::ear_cut_to_triangles(const Polygon &polygon)
     }
 
     std::vector<Triangle> triangles;
-    bool is_ear;
+    bool is_ear, is_cut;
     while (indexs.size() > 3)
     {
+        is_cut = false;
         for (size_t pre, cur, nxt, i = 0, count = indexs.size(); i < count; ++i)
         {
             pre = i > 0 ? indexs[i - 1] : indexs[count - 1];
@@ -3400,8 +3401,15 @@ std::vector<Triangle> Geo::ear_cut_to_triangles(const Polygon &polygon)
                     triangles.emplace_back(polygon[pre], polygon[cur], polygon[nxt]);
                     indexs.erase(indexs.begin() + i--);
                     --count;
+                    is_cut = true;
                 }
             }
+        }
+
+        if (!is_cut)
+        {
+            triangles.clear();
+            break;
         }
     }
 
@@ -3485,18 +3493,18 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
                 if (error_edges[(i + 1) % edge_count])
                 {
                     b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
-                    a.x = a.y = DBL_MAX;
+                    a.x = a.y = std::numeric_limits<double>::infinity();
                     Geo::is_intersected(result.last_point(j), result[j],
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    if (!std::isinf(a.x) && !std::isinf(a.y))
                     {
                         result[j] = a;
                     }
-                    a.x = a.y = DBL_MAX;
+                    a.x = a.y = std::numeric_limits<double>::infinity();
                     Geo::is_intersected(result.next_point(result.next_point_index(j)),
                         result.next_point(result.next_point_index(result.next_point_index(j))),
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    if (!std::isinf(a.x) && !std::isinf(a.y))
                     {
                         result.next_point(result.next_point_index(j)) = a;
                     }
@@ -3506,11 +3514,11 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
                 }
                 else
                 {
-                    a.x = a.y = DBL_MAX;
+                    a.x = a.y = std::numeric_limits<double>::infinity();
                     if (Geo::is_intersected(result.last_point(j), result[j],
                         result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
                     {
-                        if (a.x < DBL_MAX && a.y < DBL_MAX)
+                        if (!std::isinf(a.x) && !std::isinf(a.y))
                         {
                             result[j] = a;
                         }
@@ -3552,16 +3560,6 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
                 }
             }
         }
-
-        for (size_t i = 0, count = result.size(); i < count; ++i)
-        {
-            if (std::isnan(result[i].x) || std::isnan(result[i].y))
-            {
-                result.remove(i--);
-                --count;
-            }
-        }
-        result.back() = result.front();
     }
     else
     {
@@ -3586,18 +3584,18 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
                 if (error_edges[(i + 1) % edge_count])
                 {
                     b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
-                    a.x = a.y = DBL_MAX;
+                    a.x = a.y = std::numeric_limits<double>::infinity();
                     Geo::is_intersected(result.last_point(j), result[j],
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    if (!std::isinf(a.x) && !std::isinf(a.y))
                     {
                         result[j] = a;
                     }
-                    a.x = a.y = DBL_MAX;
+                    a.x = a.y = std::numeric_limits<double>::infinity();
                     Geo::is_intersected(result.next_point(result.next_point_index(j)),
                         result.next_point(result.next_point_index(result.next_point_index(j))),
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    if (!std::isinf(a.x) && !std::isinf(a.y))
                     {
                         result.next_point(result.next_point_index(j)) = a;
                     }
@@ -3607,11 +3605,11 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
                 }
                 else
                 {
-                    a.x = a.y = DBL_MAX;
+                    a.x = a.y = std::numeric_limits<double>::infinity();
                     if (Geo::is_intersected(result.last_point(j), result[j],
                         result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
                     {
-                        if (a.x < DBL_MAX && a.y < DBL_MAX)
+                        if (!std::isinf(a.x) && !std::isinf(a.y))
                         {
                             result[j] = a;
                         }
@@ -3653,17 +3651,18 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
                 }
             }
         }
-
-        for (size_t i = 0, count = result.size(); i < count; ++i)
-        {
-            if (std::isnan(result[i].x) || std::isnan(result[i].y))
-            {
-                result.remove(i--);
-                --count;
-            }
-        }
-        result.back() = result.front();
     }
+
+    for (size_t i = 0, count = result.size(); i < count; ++i)
+    {
+        if (std::isnan(result[i].x) || std::isnan(result[i].y)
+            || std::isinf(result[i].x) || std::isinf(result[i].y))
+        {
+            result.remove(i--);
+            --count;
+        }
+    }
+    result.back() = result.front();
 
     return true;
 }
@@ -3705,18 +3704,18 @@ bool Geo::offset_test(const Polygon &input, Polygon &result, const double distan
                 if (error_edges[(i + 1) % edge_count])
                 {
                     b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
-                    a.x = a.y = DBL_MAX;
+                    a.x = a.y = std::numeric_limits<double>::infinity();
                     Geo::is_intersected(result.last_point(j), result[j],
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    if (!std::isinf(a.x) && !std::isinf(a.y))
                     {
                         result[j] = a;
                     }
-                    a.x = a.y = DBL_MAX;
+                    a.x = a.y = std::numeric_limits<double>::infinity();
                     Geo::is_intersected(result.next_point(result.next_point_index(j)),
                         result.next_point(result.next_point_index(result.next_point_index(j))),
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    if (!std::isinf(a.x) && !std::isinf(a.y))
                     {
                         result.next_point(result.next_point_index(j)) = a;
                     }
@@ -3726,11 +3725,11 @@ bool Geo::offset_test(const Polygon &input, Polygon &result, const double distan
                 }
                 else
                 {
-                    a.x = a.y = DBL_MAX;
+                    a.x = a.y = std::numeric_limits<double>::infinity();
                     if (Geo::is_intersected(result.last_point(j), result[j],
                         result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
                     {
-                        if (a.x < DBL_MAX && a.y < DBL_MAX)
+                        if (!std::isinf(a.x) && !std::isinf(a.y))
                         {
                             result[j] = a;
                         }
@@ -3772,16 +3771,6 @@ bool Geo::offset_test(const Polygon &input, Polygon &result, const double distan
                 }
             }
         }
-
-        for (size_t i = 0, count = result.size(); i < count; ++i)
-        {
-            if (std::isnan(result[i].x) || std::isnan(result[i].y))
-            {
-                result.remove(i--);
-                --count;
-            }
-        }
-        result.back() = result.front();
     }
     else
     {
@@ -3806,18 +3795,18 @@ bool Geo::offset_test(const Polygon &input, Polygon &result, const double distan
                 if (error_edges[(i + 1) % edge_count])
                 {
                     b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
-                    a.x = a.y = DBL_MAX;
+                    a.x = a.y = std::numeric_limits<double>::infinity();
                     Geo::is_intersected(result.last_point(j), result[j],
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    if (!std::isinf(a.x) && !std::isinf(a.y))
                     {
                         result[j] = a;
                     }
-                    a.x = a.y = DBL_MAX;
+                    a.x = a.y = std::numeric_limits<double>::infinity();
                     Geo::is_intersected(result.next_point(result.next_point_index(j)),
                         result.next_point(result.next_point_index(result.next_point_index(j))),
                         temp[i] + b, temp.next_point(i) + b, a, true);
-                    if (a.x < DBL_MAX && a.y < DBL_MAX)
+                    if (!std::isinf(a.x) && !std::isinf(a.y))
                     {
                         result.next_point(result.next_point_index(j)) = a;
                     }
@@ -3827,11 +3816,11 @@ bool Geo::offset_test(const Polygon &input, Polygon &result, const double distan
                 }
                 else
                 {
-                    a.x = a.y = DBL_MAX;
+                    a.x = a.y = std::numeric_limits<double>::infinity();
                     if (Geo::is_intersected(result.last_point(j), result[j],
                         result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
                     {
-                        if (a.x < DBL_MAX && a.y < DBL_MAX)
+                        if (!std::isinf(a.x) && !std::isinf(a.y))
                         {
                             result[j] = a;
                         }
@@ -3873,20 +3862,21 @@ bool Geo::offset_test(const Polygon &input, Polygon &result, const double distan
                 }
             }
         }
-
-        for (size_t i = 0, count = result.size(); i < count; ++i)
-        {
-            if (std::isnan(result[i].x) || std::isnan(result[i].y))
-            {
-                result.remove(i--);
-                --count;
-            }
-        }
-        result.back() = result.front();
     }
 
+    for (size_t i = 0, count = result.size(); i < count; ++i)
+    {
+        if (std::isnan(result[i].x) || std::isnan(result[i].y)
+            || std::isinf(result[i].x) || std::isinf(result[i].y))
+        {
+            result.remove(i--);
+            --count;
+        }
+    }
+    result.back() = result.front();
+
     std::vector<Polygon> polygons;
-    if (Geo::merge_ear_cut_triangles(Geo::ear_cut_to_triangles(result), polygons))
+    if (result.is_self_intersected() && Geo::merge_ear_cut_triangles(Geo::ear_cut_to_triangles(result), polygons))
     {
         std::sort(polygons.begin(), polygons.end(),
             [](const Polygon &a, const Polygon &b) { return a.area() < b.area(); });
