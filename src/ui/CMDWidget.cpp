@@ -29,6 +29,7 @@ void CMDWidget::init()
         << "LENGTH" << "CIRCLE" << "POLYLINE" << "RECTANGLE" << "BEZIER" << "TEXT"
         << "CONNECT" << "CLOSE" << "COMBINATE" << "SPLIT"
         << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "ARRAY" << "LINEARRAY" << "RINGARRAY"
+        << "BOOLEAN" << "UNION" << "INTERSECTION" << "DIFFERENCE"
         << "OFFSET" << "ABSOLUTE" << "RELATIVE"
         << "DELETE" << "COPY" << "CUT" << "PASTE" << "UNDO" << "ALL";
 
@@ -39,7 +40,8 @@ void CMDWidget::init()
         {"COMBINATE",CMD::COMBINATE_CMD}, {"CLOSE",CMD::CLOSE_CMD}, {"SPLIT",CMD::SPLIT_CMD},
         {"ROTATE",CMD::ROTATE_CMD}, {"FLIPX",CMD::FLIPX_CMD}, {"FLIPY",CMD::FLIPY_CMD}, {"MIRROR",CMD::MIRROR_CMD},
         {"ARRAY",CMD::ARRAY_CMD}, {"LINEARRAY",CMD::LINEARRAY_CMD}, {"RINGARRAY",CMD::RINGARRAY_CMD},
-        {"OFFSET",CMD::OFFSET_CMD},
+        {"OFFSET",CMD::OFFSET_CMD}, {"BOOLEAN", CMD::BOOLEAN_CMD},
+        {"UNION", CMD::UNION_CMD}, {"INTERSECTION", CMD::INTERSECTION_CMD}, {"DIFFERENCE", CMD::DIFFERENCE_CMD},
         {"DELETE",CMD::DELETE_CMD}, {"COPY",CMD::COPY_CMD}, {"CUT",CMD::CUT_CMD}, {"PASTE",CMD::PASTE_CMD},
         {"UNDO",CMD::UNDO_CMD}, {"ALL",CMD::SELECTALL_CMD}};
 
@@ -225,6 +227,7 @@ bool CMDWidget::work()
             _canvas->refresh_selected_ibo();
             _canvas->update();
         }
+        _current_cmd = CMD::ERROR_CMD;
         break;
     case CMD::CLOSE_CMD:
         if (_editer->close_polyline())
@@ -233,6 +236,7 @@ bool CMDWidget::work()
             _canvas->refresh_selected_ibo();
             _canvas->update();
         }
+        _current_cmd = CMD::ERROR_CMD;
         break;
     case CMD::COMBINATE_CMD:
         if (_editer->combinate())
@@ -241,9 +245,11 @@ bool CMDWidget::work()
             _canvas->refresh_selected_ibo();
             _canvas->update();
         }
+        _current_cmd = CMD::ERROR_CMD;
         break;
     case CMD::SPLIT_CMD:
         _editer->split();
+        _current_cmd = CMD::ERROR_CMD;
         break;
     case CMD::ROTATE_CMD:
         ui->cmd_label->setText("Rotate");
@@ -256,6 +262,7 @@ bool CMDWidget::work()
             _canvas->refresh_vbo(unitary);
             _canvas->update();
         }
+        _current_cmd = CMD::ERROR_CMD;
         break;
     case CMD::FLIPY_CMD:
         {
@@ -264,20 +271,48 @@ bool CMDWidget::work()
             _canvas->refresh_vbo(unitary);
             _canvas->update();
         }
+        _current_cmd = CMD::ERROR_CMD;
         break;
+
     case CMD::MIRROR_CMD:
     case CMD::ARRAY_CMD:
+    case CMD::BOOLEAN_CMD:
         emit cmd_changed(_current_cmd);
+        _current_cmd = CMD::ERROR_CMD;
         break;
+
     case CMD::LINEARRAY_CMD:
         ui->cmd_label->setText("Line Array");
         line_array();
-        _current_cmd = CMD::LINEARRAY_CMD;
         break;
     case CMD::RINGARRAY_CMD:
         ui->cmd_label->setText("Ring Array");
         ring_array();
-        _current_cmd = CMD::RINGARRAY_CMD;
+        break;
+
+    case CMD::UNION_CMD:
+        if (_editer->polygon_union())
+        {
+            _canvas->refresh_vbo();
+            _canvas->refresh_selected_ibo();
+            _canvas->update();
+        }
+        _current_cmd = CMD::ERROR_CMD;
+        break;
+    case CMD::INTERSECTION_CMD:
+        if (_editer->polygon_intersection())
+        {
+            _canvas->refresh_vbo();
+            _canvas->refresh_selected_ibo();
+            _canvas->update();
+        }
+        _current_cmd = CMD::ERROR_CMD;
+        break;
+    case CMD::DIFFERENCE_CMD:
+        _canvas->set_operation(Canvas::Operation::POLYGONDIFFERENCE);
+        emit cmd_changed(_current_cmd);
+        _current_cmd = CMD::ERROR_CMD;
+        ui->cmd_label->setText("Difference");
         break;
 
     case CMD::SELECTALL_CMD:
@@ -315,6 +350,7 @@ bool CMDWidget::work()
             _canvas->refresh_selected_ibo();
             _canvas->update();
         }
+        _current_cmd = CMD::ERROR_CMD;
         break;
 
     default:
@@ -667,6 +703,7 @@ void CMDWidget::ring_array()
     switch (_parameters.size())
     {
     case 0:
+        emit cmd_changed(CMD::RINGARRAY_CMD);
         ui->parameter_label->setText("Center X:");
         break;
     case 1:
@@ -686,6 +723,7 @@ void CMDWidget::ring_array()
         _parameters.clear();
         ui->parameter_label->clear();
         ui->cmd_label->clear();
+        emit _canvas->tool_changed(Canvas::Tool::NOTOOL);
         _current_cmd = CMD::ERROR_CMD;
         break;
     default:

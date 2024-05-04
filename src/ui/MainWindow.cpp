@@ -387,6 +387,7 @@ void MainWindow::refresh_tool_label(const Canvas::Tool tool)
     default:
         ui->current_tool->clear();
         ui->array_tool->clear();
+        ui->boolean_tool->clear();
         break;
     }
 }
@@ -407,6 +408,14 @@ void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
         return _painter.set_operation(Canvas::Operation::MIRROR);
     case CMDWidget::CMD::ARRAY_CMD:
         return ui->tool_widget->setCurrentIndex(1);
+    case CMDWidget::CMD::RINGARRAY_CMD:
+        ui->array_tool->setText("Ring Array");
+        break;
+    case CMDWidget::CMD::BOOLEAN_CMD:
+        return ui->tool_widget->setCurrentIndex(2);
+    case CMDWidget::CMD::DIFFERENCE_CMD:
+        ui->boolean_tool->setText("Difference");
+        break;
     default:
         break;
     }
@@ -597,6 +606,7 @@ void MainWindow::polygon_intersection()
 
 void MainWindow::polygon_difference()
 {
+    ui->boolean_tool->setText("Difference");
     _painter.set_operation(Canvas::Operation::POLYGONDIFFERENCE);
 }
 

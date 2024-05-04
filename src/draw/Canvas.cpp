@@ -591,6 +591,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     break;
                 case Operation::POLYGONDIFFERENCE:
                     _operation = Operation::NOOPERATION;
+                    emit tool_changed(Tool::NOTOOL);
+                    _object_cache.clear();
                     break;
                 default:
                     break;
@@ -676,6 +678,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         refresh_selected_ibo();
                     }
                     _object_cache.clear();
+                    emit tool_changed(Tool::NOTOOL);
                     _operation = Operation::NOOPERATION;
                     return update();
                 default:
