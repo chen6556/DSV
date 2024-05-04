@@ -34,8 +34,6 @@ void Canvas::init()
     format.setProfile(QSurfaceFormat::CoreProfile);
     setFormat(format);
 
-    setAutoFillBackground(false);
-
     _cache = new double[_cache_len];
     _input_line.hide();
     _select_rect.clear();
