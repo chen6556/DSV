@@ -237,11 +237,6 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
 void MainWindow::open_file()
 {
-    if (_editer.modified() && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
-    {
-        save_file();
-    }
-
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
