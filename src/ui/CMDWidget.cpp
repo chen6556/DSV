@@ -29,7 +29,7 @@ void CMDWidget::init()
         << "LENGTH" << "CIRCLE" << "POLYLINE" << "RECTANGLE" << "BEZIER" << "TEXT"
         << "CONNECT" << "CLOSE" << "COMBINATE" << "SPLIT"
         << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "ARRAY" << "LINEARRAY" << "RINGARRAY"
-        << "OFFSET"
+        << "OFFSET" << "ABSOLUTE" << "RELATIVE"
         << "DELETE" << "COPY" << "CUT" << "PASTE" << "UNDO" << "ALL";
 
     _cmd_dict = {{"OPEN",CMD::OPEN_CMD}, {"SAVE",CMD::SAVE_CMD}, {"EXIT",CMD::EXIT_CMD},
@@ -42,6 +42,8 @@ void CMDWidget::init()
         {"OFFSET",CMD::OFFSET_CMD},
         {"DELETE",CMD::DELETE_CMD}, {"COPY",CMD::COPY_CMD}, {"CUT",CMD::CUT_CMD}, {"PASTE",CMD::PASTE_CMD},
         {"UNDO",CMD::UNDO_CMD}, {"ALL",CMD::SELECTALL_CMD}};
+
+    _setting_dict = {{"RELATIVE", SETTING::RELATIVE_SETTING}, {"ABSOLUTE", SETTING::ABSOLUTE_SETTING}};
 
     _completer = new QCompleter(_cmd_list, this);
     _completer->setCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
@@ -102,13 +104,12 @@ bool CMDWidget::eventFilter(QObject *target, QEvent *event)
     {
         if (!ui->cmd->text().isEmpty())
         {
-            bool is_num = false;
-            double value = ui->cmd->text().toDouble(&is_num);
-            if (is_num)
+            if (get_setting())
             {
-                _parameters.emplace_back(value);
+                return QWidget::eventFilter(target, event);
             }
-            else
+
+            if (!get_parameter())
             {
                 ui->cmd->setText(_completer->currentCompletion());
                 get_cmd();
@@ -343,13 +344,53 @@ bool CMDWidget::get_parameter()
     else
     {
         bool is_num = false;
-        const double value = ui->cmd->text().toDouble();
+        const double value = ui->cmd->text().toDouble(&is_num);
         if (is_num)
         {
             _parameters.emplace_back(value);
         }
         return is_num;
     }
+}
+
+bool CMDWidget::get_setting()
+{
+    std::map<QString, CMDWidget::SETTING>::const_iterator result = _setting_dict.find(ui->cmd->text().toUpper());
+    if (result == _setting_dict.cend())
+    {
+        return false;
+    }
+
+    switch (result->second)
+    {
+    case SETTING::RELATIVE_SETTING:
+    case SETTING::ABSOLUTE_SETTING:
+        if (_parameters.size() < 2)
+        {
+            _relative = (result->second == SETTING::RELATIVE_SETTING);
+            if (_current_cmd == CMD::POLYLINE_CMD || _current_cmd == CMD::BEZIER_CMD)
+            {
+                ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
+            }
+            if (_relative)
+            {
+                if (_editer->point_cache().empty())
+                {
+                    _last_x = _last_y = 0;
+                }
+                else
+                {
+                    _last_x = _editer->point_cache()[_editer->point_cache().size() - 2].x;
+                    _last_y = _editer->point_cache()[_editer->point_cache().size() - 2].y;
+                }
+            }
+        }
+        break;
+    default:
+        break;
+    }
+    ui->cmd->clear();
+    return true;
 }
 
 
@@ -385,7 +426,8 @@ void CMDWidget::polyline()
     case 0:
         _canvas->use_tool(Canvas::Tool::POLYLINE);
         _parameters.emplace_back(0);
-        ui->parameter_label->setText("X: Y:");
+        ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
+        _last_x = _last_y = 0;
         break;
     case 1:
         _parameters.clear();
@@ -395,11 +437,20 @@ void CMDWidget::polyline()
         _canvas->polyline_cmd();
         break;
     case 2:
-        ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
+        ui->parameter_label->setText((_relative ? "Relative X:" : "Absolute X:") + QString::number(_parameters[1]) + " Y:");
         break;
     case 3:
-        ui->parameter_label->setText("X: Y:");
-        _canvas->polyline_cmd(_parameters[1], _parameters[2]);
+        ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
+        if (_relative)
+        {
+            _canvas->polyline_cmd(_parameters[1] + _last_x, _parameters[2] + _last_y);
+            _last_x += _parameters[1];
+            _last_y += _parameters[2];
+        }
+        else
+        {
+            _canvas->polyline_cmd(_parameters[1], _parameters[2]);
+        }
         _parameters.pop_back();
         _parameters.pop_back();
         break;
@@ -415,7 +466,8 @@ void CMDWidget::curve()
     case 0:
         _canvas->use_tool(Canvas::Tool::CURVE);
         _parameters.emplace_back(0);
-        ui->parameter_label->setText("X: Y:");
+        ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
+        _last_x = _last_y = 0;
         break;
     case 1:
         _parameters.clear();
@@ -425,11 +477,20 @@ void CMDWidget::curve()
         _canvas->polyline_cmd();
         break;
     case 2:
-        ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
+        ui->parameter_label->setText((_relative ? "Relative X:" : "Absolute X:") + QString::number(_parameters[1]) + " Y:");
         break;
     case 3:
-        ui->parameter_label->setText("X: Y:");
-        _canvas->polyline_cmd(_parameters[1], _parameters[2]);
+        ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
+        if (_relative)
+        {
+            _canvas->polyline_cmd(_parameters[1] + _last_x, _parameters[2] + _last_y);
+            _last_x += _parameters[1];
+            _last_y += _parameters[2];
+        }
+        else
+        {
+            _canvas->polyline_cmd(_parameters[1], _parameters[2]);
+        }
         _parameters.pop_back();
         _parameters.pop_back();
         break;

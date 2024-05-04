@@ -24,6 +24,8 @@ public:
         MIRROR_CMD, ARRAY_CMD, LINEARRAY_CMD, RINGARRAY_CMD, OFFSET_CMD,
         DELETE_CMD, COPY_CMD, CUT_CMD, PASTE_CMD, UNDO_CMD, SELECTALL_CMD};
 
+    enum SETTING {ABSOLUTE_SETTING, RELATIVE_SETTING};
+
 private:
     Ui::CMDWidget *ui = nullptr;
 
@@ -32,9 +34,12 @@ private:
     QStringList _cmd_list;
     QCompleter *_completer = nullptr;
     std::map<QString, CMD> _cmd_dict;
+    std::map<QString, SETTING> _setting_dict;
 
     CMD _current_cmd = CMD::ERROR_CMD;
     std::vector<double> _parameters;
+    bool _relative = false;
+    double _last_x, _last_y;
 
     Editer *_editer = nullptr;
     Canvas *_canvas = nullptr;
@@ -82,6 +87,8 @@ public:
     bool get_cmd();
 
     bool get_parameter();
+
+    bool get_setting();
 
 
     void paste();
