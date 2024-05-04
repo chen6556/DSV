@@ -105,4 +105,8 @@ public:
 
     void rotate();
 
+    void line_array();
+
+    void ring_array();
+
 };

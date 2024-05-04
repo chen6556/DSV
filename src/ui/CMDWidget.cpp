@@ -270,9 +270,14 @@ bool CMDWidget::work()
         emit cmd_changed(_current_cmd);
         break;
     case CMD::LINEARRAY_CMD:
+        ui->cmd_label->setText("Line Array");
+        line_array();
+        _current_cmd = CMD::LINEARRAY_CMD;
+        break;
     case CMD::RINGARRAY_CMD:
-        emit cmd_changed(CMD::ARRAY_CMD);
-        _current_cmd = CMD::ERROR_CMD;
+        ui->cmd_label->setText("Ring Array");
+        ring_array();
+        _current_cmd = CMD::RINGARRAY_CMD;
         break;
 
     case CMD::SELECTALL_CMD:
@@ -616,6 +621,72 @@ void CMDWidget::rotate()
             _parameters.pop_back();
             _canvas->update();
         }
+        break;
+    default:
+        break;
+    }
+}
+
+void CMDWidget::line_array()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        ui->parameter_label->setText("X Items:");
+        break;
+    case 1:
+        ui->parameter_label->setText("X Items:" + QString::number(_parameters[0]) + " Y Items:");
+        break;
+    case 2:
+        ui->parameter_label->setText("X Items:" + QString::number(_parameters[0]) + " Y Items:"
+            + QString::number(_parameters[1]) + " X Space:");
+        break;
+    case 3:
+        ui->parameter_label->setText("X Items:" + QString::number(_parameters[0]) + " Y Items:"
+            + QString::number(_parameters[1]) + " X Space:" +  QString::number(_parameters[2]) + " Y Space:");
+        break;
+    case 4:
+        if (_editer->line_array(_parameters[0], _parameters[1], _parameters[2], _parameters[3]))
+        {
+            _canvas->refresh_vbo();
+            _canvas->refresh_selected_ibo();
+            _canvas->update();
+        }
+        _parameters.clear();
+        ui->parameter_label->clear();
+        ui->cmd_label->clear();
+        _current_cmd = CMD::ERROR_CMD;
+        break;
+    default:
+        break;
+    }
+}
+
+void CMDWidget::ring_array()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        ui->parameter_label->setText("Center X:");
+        break;
+    case 1:
+        ui->parameter_label->setText("Center X:"+ QString::number(_parameters[0]) + " Y:");
+        break;
+    case 2:
+        ui->parameter_label->setText("Center X:" + QString::number(_parameters[0]) + " Y:"
+            + QString::number(_parameters[1]) + " Items:");
+        break;
+    case 3:
+        if (_editer->ring_array(_editer->selected(), _parameters[0], _parameters[1], _parameters[2]))
+        {
+            _canvas->refresh_vbo();
+            _canvas->refresh_selected_ibo();
+            _canvas->update();
+        }
+        _parameters.clear();
+        ui->parameter_label->clear();
+        ui->cmd_label->clear();
+        _current_cmd = CMD::ERROR_CMD;
         break;
     default:
         break;
