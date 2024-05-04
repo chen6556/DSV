@@ -25,7 +25,7 @@ void CMDWidget::init()
     ui->cmd->setValidator(new QRegularExpressionValidator(QRegularExpression("([A-Za-z]+)|(-?[0-9]+(.[0-9]+)?)$")));
     ui->cmd->installEventFilter(this);
 
-    _cmd_list << QString() << "OPEN" << "SAVE" << "EXIT"
+    _cmd_list << QString() << "OPEN" << "SAVE" << "EXIT" << "MAIN"
         << "LENGTH" << "CIRCLE" << "POLYLINE" << "RECTANGLE" << "BEZIER" << "TEXT"
         << "CONNECT" << "CLOSE" << "COMBINATE" << "SPLIT"
         << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "ARRAY" << "LINEARRAY" << "RINGARRAY"
@@ -34,14 +34,14 @@ void CMDWidget::init()
         << "DELETE" << "COPY" << "CUT" << "PASTE" << "UNDO" << "ALL";
 
     _cmd_dict = {{"OPEN",CMD::OPEN_CMD}, {"SAVE",CMD::SAVE_CMD}, {"EXIT",CMD::EXIT_CMD},
-        {"LENGTH",CMD::LENGTH_CMD},
+        {"LENGTH",CMD::LENGTH_CMD}, {"MAIN",CMD::MAIN_CMD},
         {"CIRCLE",CMD::CIRCLE_CMD}, {"POLYLINE",CMD::POLYLINE_CMD}, {"RECTANGLE",CMD::RECTANGLE_CMD}, 
         {"BEZIER",CMD::BEZIER_CMD}, {"TEXT",CMD::TEXT_CMD}, {"CONNECT",CMD::CONNECT_CMD},
         {"COMBINATE",CMD::COMBINATE_CMD}, {"CLOSE",CMD::CLOSE_CMD}, {"SPLIT",CMD::SPLIT_CMD},
         {"ROTATE",CMD::ROTATE_CMD}, {"FLIPX",CMD::FLIPX_CMD}, {"FLIPY",CMD::FLIPY_CMD}, {"MIRROR",CMD::MIRROR_CMD},
         {"ARRAY",CMD::ARRAY_CMD}, {"LINEARRAY",CMD::LINEARRAY_CMD}, {"RINGARRAY",CMD::RINGARRAY_CMD},
-        {"OFFSET",CMD::OFFSET_CMD}, {"BOOLEAN", CMD::BOOLEAN_CMD},
-        {"UNION", CMD::UNION_CMD}, {"INTERSECTION", CMD::INTERSECTION_CMD}, {"DIFFERENCE", CMD::DIFFERENCE_CMD},
+        {"OFFSET",CMD::OFFSET_CMD}, {"BOOLEAN",CMD::BOOLEAN_CMD},
+        {"UNION",CMD::UNION_CMD}, {"INTERSECTION",CMD::INTERSECTION_CMD}, {"DIFFERENCE",CMD::DIFFERENCE_CMD},
         {"DELETE",CMD::DELETE_CMD}, {"COPY",CMD::COPY_CMD}, {"CUT",CMD::CUT_CMD}, {"PASTE",CMD::PASTE_CMD},
         {"UNDO",CMD::UNDO_CMD}, {"ALL",CMD::SELECTALL_CMD}};
 
@@ -192,6 +192,7 @@ bool CMDWidget::work()
     case CMD::OPEN_CMD:
     case CMD::SAVE_CMD:
     case CMD::EXIT_CMD:
+    case CMD::MAIN_CMD:
         emit cmd_changed(_current_cmd);
         _current_cmd = CMD::ERROR_CMD;
         break;

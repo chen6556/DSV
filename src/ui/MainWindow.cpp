@@ -403,6 +403,8 @@ void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
     case CMDWidget::CMD::EXIT_CMD:
         this->close();
         break;
+    case CMDWidget::CMD::MAIN_CMD:
+        return ui->tool_widget->setCurrentIndex(0);
     case CMDWidget::CMD::MIRROR_CMD:
         ui->current_tool->setText("Mirror");
         return _painter.set_operation(Canvas::Operation::MIRROR);
