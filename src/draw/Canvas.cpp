@@ -1000,6 +1000,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
 
 void Canvas::mouseMoveEvent(QMouseEvent *event)
 {
+    setCursor(Qt::CursorShape::CrossCursor);
     const double center_x = size().width() / 2.0, center_y = size().height() / 2.0;
     std::swap(_mouse_pos_0, _mouse_pos_1);
     _mouse_pos_1 = event->localPos();
@@ -1303,7 +1304,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     }
 
     Geo::Point coord;
-    if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool() && _clicked_obj == nullptr &&
+    if (GlobalSetting::get_instance()->setting()["cursor_catch"].toBool() &&
         catch_cursor(real_x1, real_y1, coord, GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()))
     {
         _mouse_pos_1.setX(coord.x);
@@ -2104,10 +2105,12 @@ bool Canvas::catch_cursor(const double x, const double y, Geo::Point &coord, con
     if (min_distance < DBL_MAX)
     {
         coord = real_coord_to_view_coord(pos.x, pos.y);
+        setCursor(Qt::CursorShape::SizeAllCursor);
         return true;
     }
     else
     {
+        setCursor(Qt::CursorShape::CrossCursor);
         return false;
     }
 }
@@ -2129,10 +2132,12 @@ bool Canvas::catch_point(const double x, const double y, Geo::Point &coord, cons
     {
         coord.x = pos.x;
         coord.y = pos.y;
+        setCursor(Qt::CursorShape::SizeAllCursor);
         return true;
     }
     else
     {
+        setCursor(Qt::CursorShape::CrossCursor);
         return false;
     }
 }
