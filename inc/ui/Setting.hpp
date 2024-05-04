@@ -23,4 +23,5 @@ public:
     ~Setting();
 
     void show();
+    int exec();
 };

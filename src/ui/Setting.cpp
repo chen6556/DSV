@@ -50,5 +50,11 @@ void Setting::accept()
 void Setting::show()
 {
     init();
-    QDialog::show();
+    return QDialog::show();
+}
+
+int Setting::exec()
+{
+    init();
+    return QDialog::exec();
 }

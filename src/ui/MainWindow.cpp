@@ -70,7 +70,7 @@ void MainWindow::init()
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
     QObject::connect(ui->auto_aligning, &QAction::triggered, this, [this]() {GlobalSetting::get_instance()->setting()["auto_aligning"] = ui->auto_aligning->isChecked();});
-    QObject::connect(ui->actionadvanced, &QAction::triggered, _setting, &QDialog::exec);
+    QObject::connect(ui->actionadvanced, &QAction::triggered, _setting, &Setting::exec);
     QObject::connect(ui->show_origin, &QAction::triggered, this, [this]() { ui->show_origin->isChecked() ? _painter.show_origin() : _painter.hide_origin(); });
     QObject::connect(ui->show_cmd_line, &QAction::triggered, this, [this]() { ui->show_cmd_line->isChecked() ? _cmd_widget->show() : _cmd_widget->hide(); });
 
@@ -419,7 +419,7 @@ void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
 }
 
 void MainWindow::load_settings()
-{   
+{
     GlobalSetting::get_instance()->load_setting();
     const QJsonObject &setting = GlobalSetting::get_instance()->setting();
 
