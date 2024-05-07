@@ -3664,6 +3664,26 @@ bool Geo::offset(const Polygon &input, Polygon &result, const double distance)
     }
     result.back() = result.front();
 
+    for (size_t i = 0, count = result.size() - 1; i < count; ++i)
+    {
+        if (Geo::is_inside(result[i], result[i + 1], result.next_point(i + 1))
+            && Geo::is_inside(result[i + 1], result[i], result.last_point(i)))
+        {
+            result.remove(i + 1);
+            result.remove(i--);
+            --count;
+            --count;
+        }
+    }
+    for (size_t i = 0, count = result.size(); i < count; ++i)
+    {
+        if (Geo::is_inside(result[i], result.last_point(i), result.next_point(i)))
+        {
+            result.remove(i--);
+            --count;
+        }
+    }
+
     return true;
 }
 
@@ -3915,6 +3935,26 @@ bool Geo::offset_test(const Polygon &input, Polygon &result, const double distan
         if (!temp.is_self_intersected())
         {
             result = temp;
+        }
+    }
+
+    for (size_t i = 0, count = result.size() - 1; i < count; ++i)
+    {
+        if (Geo::is_inside(result[i], result[i + 1], result.next_point(i + 1))
+            && Geo::is_inside(result[i + 1], result[i], result.last_point(i)))
+        {
+            result.remove(i + 1);
+            result.remove(i--);
+            --count;
+            --count;
+        }
+    }
+    for (size_t i = 0, count = result.size(); i < count; ++i)
+    {
+        if (Geo::is_inside(result[i], result.last_point(i), result.next_point(i)))
+        {
+            result.remove(i--);
+            --count;
         }
     }
 
