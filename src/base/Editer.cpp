@@ -529,9 +529,9 @@ bool Editer::paste(const double tx, const double ty)
     return true;
 }
 
-bool Editer::connect(const double connect_distance)
+bool Editer::connect(std::list<Geo::Geometry *> objects, const double connect_distance)
 {
-    if (_graph == nullptr || _graph->empty())
+    if (_graph == nullptr || objects.empty())
     {
         return false;
     }
@@ -539,13 +539,12 @@ bool Editer::connect(const double connect_distance)
     std::vector<Geo::Polyline*> polylines;
     std::vector<size_t> indexs;
     ContainerGroup &group = _graph->container_group(_current_group);
-    for (size_t i = 0, count = group.size(); i < count; ++i)
+    for (Geo::Geometry *object : objects)
     {
-        if (group[i]->is_selected &&
-            (group[i]->type() == Geo::Type::POLYLINE || group[i]->type() == Geo::Type::BEZIER))
+        if (object->type() == Geo::Type::POLYLINE || object->type() == Geo::Type::BEZIER)
         {
-            polylines.push_back(dynamic_cast<Geo::Polyline *>(group[i]));
-            indexs.push_back(i);
+            polylines.push_back(dynamic_cast<Geo::Polyline *>(object));
+            indexs.push_back(std::distance(group.begin(), std::find(group.begin(), group.end(), object)));
         }
     }
 
@@ -715,9 +714,9 @@ bool Editer::connect(const double connect_distance)
     }
 }
 
-bool Editer::close_polyline()
+bool Editer::close_polyline(std::list<Geo::Geometry *> objects)
 {
-    if (_graph == nullptr || _graph->empty())
+    if (_graph == nullptr || objects.empty())
     {
         return false;
     }
@@ -725,38 +724,38 @@ bool Editer::close_polyline()
     store_backup();
     Container *container = nullptr;
     ContainerGroup &group = _graph->container_group(_current_group);
-    for (size_t i = 0, count = group.size(); i < count; ++i)
+    size_t index;
+    for (Geo::Geometry *object : objects)
     {
-        if (group[i]->is_selected)
+        switch (object->type())
         {
-            switch (group[i]->type())
+        case Geo::Type::POLYLINE:
+            if (dynamic_cast<Geo::Polyline *>(object)->size() < 3)
             {
-            case Geo::Type::POLYLINE:
-                if (dynamic_cast<Geo::Polyline *>(group[i])->size() < 3)
-                {
-                    continue;
-                }
-                container = new Container(*dynamic_cast<Geo::Polyline *>(group[i]));
-                container->is_selected = true;
-                group.remove(i);
-                group.insert(i, container);
-                break;
-            case Geo::Type::BEZIER:
-                if (dynamic_cast<Geo::Bezier *>(group[i])->shape().size() < 3)
-                {
-                    continue;
-                }
-                container = new Container(dynamic_cast<Geo::Bezier *>(group[i])->shape());
-                container->is_selected = true;
-                group.remove(i);
-                group.insert(i, container);
-                break;
-            default:
-                break;
+                continue;
             }
+            container = new Container(*dynamic_cast<Geo::Polyline *>(object));
+            container->is_selected = true;
+            index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
+            group.remove(index);
+            group.insert(index, container);
+            break;
+        case Geo::Type::BEZIER:
+            if (dynamic_cast<Geo::Bezier *>(object)->shape().size() < 3)
+            {
+                continue;
+            }
+            container = new Container(dynamic_cast<Geo::Bezier *>(object)->shape());
+            container->is_selected = true;
+            index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
+            group.remove(index);
+            group.insert(index, container);
+            break;
+        default:
+            break;
         }
     }
-    
+
     if (container == nullptr)
     {
         delete _backup.back();
@@ -769,48 +768,45 @@ bool Editer::close_polyline()
     }
 }
 
-bool Editer::combinate()
+bool Editer::combinate(std::list<Geo::Geometry *> objects)
 {
-    if (_graph == nullptr || _graph->empty())
+    if (_graph == nullptr || objects.size() < 2)
     {
         return false;
     }
 
-    Combination *combination = new Combination();
-    size_t index = 0;
-    std::vector<size_t> indexs;
-    for (Geo::Geometry *geo : _graph->container_group(_current_group))
+    size_t count = 0;
+    std::vector<Geo::Geometry *> filtered_objects;
+    for (Geo::Geometry *object : objects)
     {
-        if (geo->is_selected && (geo->type() == Geo::Type::CONTAINER
-            || geo->type() == Geo::Type::TEXT || geo->type() == Geo::Type::CIRCLECONTAINER 
-            || geo->type() == Geo::Type::COMBINATION
-            || geo->type() == Geo::Type::POLYLINE ||  geo->type() == Geo::Type::BEZIER))
+        if (object->type() == Geo::Type::CONTAINER || object->type() == Geo::Type::TEXT
+            || object->type() == Geo::Type::CIRCLECONTAINER || object->type() == Geo::Type::COMBINATION
+            || object->type() == Geo::Type::POLYLINE ||  object->type() == Geo::Type::BEZIER)
         {
-            indexs.emplace_back(index);
+            filtered_objects.push_back(object);
         }
-        ++index;
     }
-    if (indexs.size() < 2)
+    if (filtered_objects.size() < 2)
     {
-        delete combination;
         return false;
     }
 
     store_backup();
-
-    std::reverse(indexs.begin(), indexs.end());
+    Combination *combination = new Combination();
+    std::reverse(objects.begin(), objects.end());
     Combination *temp = nullptr;
-    for (const size_t i : indexs)
+    ContainerGroup &group = _graph->container_group(_current_group);
+    for (Geo::Geometry *object : filtered_objects)
     {
-        if (_graph->container_group(_current_group)[i]->type() == Geo::Type::COMBINATION)
+        if (object->type() == Geo::Type::COMBINATION)
         {
-            temp = dynamic_cast<Combination *>(_graph->container_group(_current_group).pop(i));
+            temp = dynamic_cast<Combination *>(group.pop(std::find(group.rbegin(), group.rend(), object)));
             combination->append(temp);
             delete temp;
         }
         else
         {
-            combination->append(_graph->container_group(_current_group).pop(i));
+            combination->append(group.pop(std::find(group.rbegin(), group.rend(), object)));
         }
     }
 
@@ -821,35 +817,33 @@ bool Editer::combinate()
     return true;
 }
 
-bool Editer::split()
+bool Editer::split(std::list<Geo::Geometry *> objects)
 {
-    if (_graph == nullptr || _graph->empty())
+    if (_graph == nullptr || objects.empty())
     {
         return false;
     }
 
-    size_t index = 0;
-    std::vector<size_t> indexs;
-    for (Geo::Geometry *geo : _graph->container_group(_current_group))
+    std::vector<Combination *> combiantions;  
+    for (Geo::Geometry *object : objects)
     {
-        if (geo->is_selected && geo->type() == Geo::Type::COMBINATION)
+        if (object->type() == Geo::Type::COMBINATION)
         {
-            indexs.emplace_back(index);
+            combiantions.push_back(dynamic_cast<Combination *>(object));
         }
-        ++index;
     }
-    if (indexs.empty())
+    if (combiantions.empty())
     {
         return false;
     }
+
     store_backup();
-    std::reverse(indexs.begin(), indexs.end());
-    
-    Combination *combination = nullptr;
-    for (const size_t i : indexs)
+    std::reverse(combiantions.begin(), combiantions.end());
+    ContainerGroup &group = _graph->container_group(_current_group);
+    for (Combination *combination : combiantions)
     {
-        combination = dynamic_cast<Combination *>(_graph->container_group(_current_group).pop(i));
-        _graph->container_group(_current_group).append(*dynamic_cast<ContainerGroup *>(combination));
+        group.pop(std::find(group.rbegin(), group.rend(), combination));
+        group.append(*dynamic_cast<ContainerGroup *>(combination));
         delete combination;
     }
     return true;
@@ -956,6 +950,7 @@ bool Editer::scale(std::list<Geo::Geometry *> objects, const double k)
     const size_t count = _graph->container_group(_current_group).size();
     double top = -DBL_MAX, bottom = DBL_MAX, left = DBL_MAX, right = -DBL_MAX;
     bool flag = false;
+    Geo::AABBRect rect;
     for (Geo::Geometry *object : objects)
     {
         switch (object->type())
@@ -965,10 +960,11 @@ bool Editer::scale(std::list<Geo::Geometry *> objects, const double k)
         case Geo::Type::POLYLINE:
         case Geo::Type::BEZIER:
         case Geo::Type::COMBINATION:
-            top = std::max(top, object->bounding_rect().top());
-            bottom = std::min(bottom, object->bounding_rect().bottom());
-            left = std::min(left, object->bounding_rect().left());
-            right = std::max(right, object->bounding_rect().right());
+            rect = object->bounding_rect();
+            top = std::max(top, rect.top());
+            bottom = std::min(bottom, rect.bottom());
+            left = std::min(left, rect.left());
+            right = std::max(right, rect.right());
             flag = true;
             break;
         default:
@@ -1001,47 +997,24 @@ bool Editer::scale(std::list<Geo::Geometry *> objects, const double k)
     return true;
 }
 
-bool Editer::polygon_union()
+bool Editer::polygon_union(Container *container0, Container *container1)
 {
-    if (_graph == nullptr || _graph->empty())
+    if (_graph == nullptr || _graph->empty() || container0 == nullptr || container1 == nullptr  || container0 == container1)
     {
         return false;
     }
 
-    size_t index = 0;
-    Container *container0 = nullptr, *container1 = nullptr;
-    for (Geo::Geometry *geo : _graph->container_group(_current_group))
-    {
-        ++index;
-        if (geo->is_selected && (geo->type() == Geo::Type::CONTAINER))
-        {
-            if (container0 == nullptr)
-            {
-                container0 = dynamic_cast<Container *>(geo);
-                continue;
-            }
-            if (container1 == nullptr)
-            {
-                container1 = dynamic_cast<Container *>(geo);
-                break;
-            }
-        }
-    }
-
-    if (container0 == nullptr || container1 == nullptr)
-    {
-        return false;
-    }
     store_backup();
 
     std::vector<Geo::Polygon> shapes;
     if (Geo::polygon_union(container0->shape(), container1->shape(), shapes))
     {
         container0->shape() = shapes.front();
-        _graph->container_group(_current_group).remove(--index);
+        ContainerGroup &group = _graph->container_group(_current_group);
+        group.remove(std::find(group.begin(), group.end(), container1));
         for (size_t i = 1, count = shapes.size(); i < count; ++i)
         {
-            _graph->container_group(_current_group).append(new Container(shapes[i]));
+            group.append(new Container(shapes[i]));
         }
         return true;
     }
@@ -1051,47 +1024,24 @@ bool Editer::polygon_union()
     }
 }
 
-bool Editer::polygon_intersection()
+bool Editer::polygon_intersection(Container *container0, Container *container1)
 {
-    if (_graph == nullptr || _graph->empty())
+    if (_graph == nullptr || _graph->empty() || container0 == nullptr || container1 == nullptr || container0 == container1)
     {
         return false;
     }
 
-    size_t index = 0;
-    Container *container0 = nullptr, *container1 = nullptr;
-    for (Geo::Geometry *geo : _graph->container_group(_current_group))
-    {
-        ++index;
-        if (geo->is_selected && (geo->type() == Geo::Type::CONTAINER))
-        {
-            if (container0 == nullptr)
-            {
-                container0 = dynamic_cast<Container *>(geo);
-                continue;
-            }
-            if (container1 == nullptr)
-            {
-                container1 = dynamic_cast<Container *>(geo);
-                break;
-            }
-        }
-    }
-
-    if (container0 == nullptr || container1 == nullptr)
-    {
-        return false;
-    }
     store_backup();
 
     std::vector<Geo::Polygon> shapes;
     if (Geo::polygon_intersection(container0->shape(), container1->shape(), shapes))
     {
         container0->shape() = shapes.front();
-        _graph->container_group(_current_group).remove(--index);
+        ContainerGroup &group = _graph->container_group(_current_group);
+        group.remove(std::find(group.rbegin(), group.rend(), container1));
         for (size_t i = 1, count = shapes.size(); i < count; ++i)
         {
-            _graph->container_group(_current_group).append(new Container(shapes[i]));
+            group.append(new Container(shapes[i]));
         }
         return true;
     }
@@ -1103,7 +1053,7 @@ bool Editer::polygon_intersection()
 
 bool Editer::polygon_difference(Container *container0, const Container *container1)
 {
-    if (container0 == nullptr || container1 == nullptr)
+    if (container0 == nullptr || container1 == nullptr || container0 == container1)
     {
         return false;
     }
@@ -1126,32 +1076,22 @@ bool Editer::polygon_difference(Container *container0, const Container *containe
 }
 
 
-bool Editer::line_array(int x, int y, double x_space, double y_space)
+bool Editer::line_array(std::list<Geo::Geometry *> objects, int x, int y, double x_space, double y_space)
 {
-    if (x == 0 || y == 0 || (x == 1 && y == 1))
+    if (objects.empty() || x == 0 || y == 0 || (x == 1 && y == 1))
     {
         return false;
-    }
-    
-    std::list<Geo::Geometry *> objects;
-    double left = FLT_MAX, right = -FLT_MAX, top = -FLT_MAX, bottom = FLT_MAX;
-    Geo::AABBRect rect;
-    for (Geo::Geometry *container : _graph->container_group(_current_group))
-    {
-        if (container->is_selected)
-        {
-            objects.push_back(container);
-            rect = container->bounding_rect();
-            left = std::min(rect.left(), left);
-            right = std::max(rect.right(), right);
-            top = std::max(rect.top(), top);
-            bottom = std::min(rect.bottom(), bottom);
-        }
     }
 
-    if (objects.empty())
+    double left = FLT_MAX, right = -FLT_MAX, top = -FLT_MAX, bottom = FLT_MAX;
+    Geo::AABBRect rect;
+    for (Geo::Geometry *object : objects)
     {
-        return false;
+        rect = object->bounding_rect();
+        left = std::min(rect.left(), left);
+        right = std::max(rect.right(), right);
+        top = std::max(rect.top(), top);
+        bottom = std::min(rect.bottom(), bottom);
     }
 
     store_backup();
@@ -1177,11 +1117,10 @@ bool Editer::line_array(int x, int y, double x_space, double y_space)
             {
                 continue;
             }
-            for (Geo::Geometry *obj : objects)
+            for (Geo::Geometry *object : objects)
             {
-                _graph->container_group(_current_group).append(obj->clone());
-                _graph->container_group(_current_group).back()->translate(
-                    x_space * i, y_space * j);
+                _graph->container_group(_current_group).append(object->clone());
+                _graph->container_group(_current_group).back()->translate(x_space * i, y_space * j);
                 _graph->container_group(_current_group).back()->is_selected = true;
             }
         }
@@ -1615,7 +1554,7 @@ void Editer::append_group(const size_t index)
 
 
 
-void Editer::rotate(const double angle, const bool unitary, const bool all_layers)
+void Editer::rotate(std::list<Geo::Geometry *> objects, const double angle, const bool unitary, const bool all_layers)
 {
     store_backup();
     const double rad = angle * Geo::PI / 180;
@@ -1644,18 +1583,15 @@ void Editer::rotate(const double angle, const bool unitary, const bool all_layer
     }
     else
     {
-        for (Geo::Geometry *geo : _graph->container_group(_current_group))
+        for (Geo::Geometry *geo : objects)
         {
-            if (geo->is_selected)
-            {
-                coord = geo->bounding_rect().center();
-                geo->rotate(coord.x, coord.y, rad);
-            }
+            coord = geo->bounding_rect().center();
+            geo->rotate(coord.x, coord.y, rad);
         }
     }
 }
 
-void Editer::flip(const bool direction, const bool unitary, const bool all_layers)
+void Editer::flip(std::list<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers)
 {
     store_backup();
     Geo::Point coord;
@@ -1705,23 +1641,20 @@ void Editer::flip(const bool direction, const bool unitary, const bool all_layer
     }
     else
     {
-        for (Geo::Geometry *geo : _graph->container_group(_current_group))
+        for (Geo::Geometry *geo : objects)
         {
-            if (geo->is_selected)
+            coord = geo->bounding_rect().center();
+            if (direction)
             {
-                coord = geo->bounding_rect().center();
-                if (direction)
-                {
-                    geo->translate(-coord.x, 0);
-                    geo->transform(-1, 0, 0, 0, 1, 0);
-                    geo->translate(coord.x, 0);
-                }
-                else
-                {
-                    geo->translate(0, -coord.y);
-                    geo->transform(1, 0, 0, 0, -1, 0);
-                    geo->translate(0, coord.y);
-                }
+                geo->translate(-coord.x, 0);
+                geo->transform(-1, 0, 0, 0, 1, 0);
+                geo->translate(coord.x, 0);
+            }
+            else
+            {
+                geo->translate(0, -coord.y);
+                geo->transform(1, 0, 0, 0, -1, 0);
+                geo->translate(0, coord.y);
             }
         }
     }

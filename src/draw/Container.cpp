@@ -688,39 +688,14 @@ void ContainerGroup::append(Geo::Geometry *object)
     _containers.push_back(object);
 }
 
-void ContainerGroup::insert(const size_t index, Container *container)
-{
-    _containers.insert(_containers.begin() + index, container);
-}
-
-void ContainerGroup::insert(const size_t index, CircleContainer *container)
-{
-    _containers.insert(_containers.begin() + index, container);
-}
-
-void ContainerGroup::insert(const size_t index, Combination *combination)
-{
-    _containers.insert(_containers.begin() + index, combination);
-}
-
-void ContainerGroup::insert(const size_t index, Geo::Polyline *polyline)
-{
-    _containers.insert(_containers.begin() + index, polyline);
-}
-
-void ContainerGroup::insert(const size_t index, Geo::Bezier *bezier)
-{
-    _containers.insert(_containers.begin() + index, bezier);
-}
-
-void ContainerGroup::insert(const size_t index, Text *text)
-{
-    _containers.insert(_containers.begin() + index, text);
-}
-
 void ContainerGroup::insert(const size_t index, Geo::Geometry *object)
 {
     _containers.insert(_containers.begin() + index, object);
+}
+
+void ContainerGroup::insert(const std::vector<Geo::Geometry *>::iterator &it, Geo::Geometry *object)
+{
+    _containers.insert(it, object);
 }
 
 std::vector<Geo::Geometry *>::iterator ContainerGroup::remove(const size_t index)

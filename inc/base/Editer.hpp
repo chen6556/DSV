@@ -82,13 +82,13 @@ public:
 
     bool paste(const double tx, const double ty);
 
-    bool connect(const double connect_distance);
+    bool connect(std::list<Geo::Geometry *> objects, const double connect_distance);
 
-    bool close_polyline();
+    bool close_polyline(std::list<Geo::Geometry *> objects);
 
-    bool combinate();
+    bool combinate(std::list<Geo::Geometry *> objects);
 
-    bool split();
+    bool split(std::list<Geo::Geometry *> objects);
 
     bool mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy);
 
@@ -96,15 +96,15 @@ public:
 
     bool scale(std::list<Geo::Geometry *> objects, const double k);
 
-    bool polygon_union();
+    bool polygon_union(Container *container0, Container *container1);
 
-    bool polygon_intersection();
-    
+    bool polygon_intersection(Container *container0, Container *container1);
+
     bool polygon_difference(Container *container0, const Container *container1); 
 
 
 
-    bool line_array(int x, int y, double x_space, double y_space);
+    bool line_array(std::list<Geo::Geometry *> objects, int x, int y, double x_space, double y_space);
 
     bool ring_array(std::list<Geo::Geometry *> objects, const double x, const double y, const int n);
 
@@ -135,10 +135,11 @@ public:
     void remove_group(const size_t index);
 
     void append_group(const size_t index = SIZE_MAX);
-	void rotate(const double angle, const bool unitary, const bool all_layers);
+
+	void rotate(std::list<Geo::Geometry *> objects, const double angle, const bool unitary, const bool all_layers);
 
     // true:X false:Y
-    void flip(const bool direction, const bool unitary, const bool all_layers);
+    void flip(std::list<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers);
 
     bool auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines);
 

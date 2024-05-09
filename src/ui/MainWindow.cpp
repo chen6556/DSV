@@ -66,7 +66,7 @@ void MainWindow::init()
     QObject::connect(ui->rect_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::RECT); });
     QObject::connect(ui->curve_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::CURVE); _painter.set_bezier_order(ui->curve_sbx->value());});
     QObject::connect(ui->text_btn, &QPushButton::clicked, this,  [this]() { _painter.use_tool(Canvas::Tool::TEXT); });
-    QObject::connect(ui->split_btn, &QPushButton::clicked, this, [this](){ _editer.split(); });
+    QObject::connect(ui->split_btn, &QPushButton::clicked, this, [this](){ _editer.split(_editer.selected()); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
     QObject::connect(ui->auto_aligning, &QAction::triggered, this, [this]() {GlobalSetting::get_instance()->setting()["auto_aligning"] = ui->auto_aligning->isChecked();});
@@ -486,7 +486,7 @@ void MainWindow::to_main_page()
 
 void MainWindow::connect_polylines()
 {
-    if (_editer.connect(GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()))
+    if (_editer.connect(_editer.selected(), GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()))
     {
         _painter.refresh_vbo();
         _painter.refresh_selected_ibo();
@@ -495,7 +495,7 @@ void MainWindow::connect_polylines()
 
 void MainWindow::close_polyline()
 {
-    if (_editer.close_polyline())
+    if (_editer.close_polyline(_editer.selected()))
     {
         _painter.refresh_vbo();
         _painter.refresh_selected_ibo();
@@ -504,7 +504,7 @@ void MainWindow::close_polyline()
 
 void MainWindow::combinate()
 {
-    if (_editer.combinate())
+    if (_editer.combinate(_editer.selected()))
     {
         _painter.refresh_vbo();
         _painter.refresh_selected_ibo();
@@ -514,7 +514,7 @@ void MainWindow::combinate()
 void MainWindow::rotate()
 {
     const bool unitary = _editer.selected_count() == 0;
-    _editer.rotate(ui->rotate_angle->value(), unitary, ui->to_all_layers->isChecked());
+    _editer.rotate(_editer.selected(), ui->rotate_angle->value(), unitary, ui->to_all_layers->isChecked());
     _painter.refresh_vbo(unitary);
     _painter.update();
 }
@@ -522,7 +522,7 @@ void MainWindow::rotate()
 void MainWindow::flip_x()
 {
     const bool unitary = _editer.selected_count() == 0;
-    _editer.flip(true, unitary, ui->to_all_layers->isChecked());
+    _editer.flip(_editer.selected(), true, unitary, ui->to_all_layers->isChecked());
     _painter.refresh_vbo(unitary);
     _painter.update();
 }
@@ -530,7 +530,7 @@ void MainWindow::flip_x()
 void MainWindow::flip_y()
 {
     const bool unitary = _editer.selected_count() == 0;
-    _editer.flip(false, unitary, ui->to_all_layers->isChecked());
+    _editer.flip(_editer.selected(), false, unitary, ui->to_all_layers->isChecked());
     _painter.refresh_vbo(unitary);
     _painter.update();
 }
@@ -569,7 +569,7 @@ void MainWindow::to_array_page()
 
 void MainWindow::line_array()
 {
-    if (_editer.line_array(ui->array_x_item->value(), ui->array_y_item->value(),
+    if (_editer.line_array(_editer.selected(), ui->array_x_item->value(), ui->array_y_item->value(),
             ui->array_x_space->value(), ui->array_y_space->value()))
     {
         _painter.refresh_vbo();
@@ -593,7 +593,24 @@ void MainWindow::to_boolean_page()
 
 void MainWindow::polygon_union()
 {
-    if (_editer.polygon_union())
+    Container *container0 = nullptr, *container1 = nullptr;
+    for (Geo::Geometry *object : _editer.selected())
+    {
+        if (object->type() == Geo::Type::CONTAINER)
+        {
+            if (container0 == nullptr)
+            {
+                container0 = dynamic_cast<Container *>(object);
+            }
+            else
+            {
+                container1 = dynamic_cast<Container *>(object);
+                break;
+            }
+        }
+    }
+
+    if (_editer.polygon_union(container0, container1))
     {
         _painter.refresh_vbo();
         _painter.refresh_selected_ibo();
@@ -603,7 +620,24 @@ void MainWindow::polygon_union()
 
 void MainWindow::polygon_intersection()
 {
-    if (_editer.polygon_intersection())
+    Container *container0 = nullptr, *container1 = nullptr;
+    for (Geo::Geometry *object : _editer.selected())
+    {
+        if (object->type() == Geo::Type::CONTAINER)
+        {
+            if (container0 == nullptr)
+            {
+                container0 = dynamic_cast<Container *>(object);
+            }
+            else
+            {
+                container1 = dynamic_cast<Container *>(object);
+                break;
+            }
+        }
+    }
+
+    if (_editer.polygon_intersection(container0, container1))
     {
         _painter.refresh_vbo();
         _painter.refresh_selected_ibo();

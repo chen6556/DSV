@@ -222,7 +222,7 @@ bool CMDWidget::work()
         break;
 
     case CMD::CONNECT_CMD:
-        if (_editer->connect(GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()))
+        if (_editer->connect(_editer->selected(), GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()))
         {
             _canvas->refresh_vbo();
             _canvas->refresh_selected_ibo();
@@ -231,7 +231,7 @@ bool CMDWidget::work()
         _current_cmd = CMD::ERROR_CMD;
         break;
     case CMD::CLOSE_CMD:
-        if (_editer->close_polyline())
+        if (_editer->close_polyline(_editer->selected()))
         {
             _canvas->refresh_vbo();
             _canvas->refresh_selected_ibo();
@@ -240,7 +240,7 @@ bool CMDWidget::work()
         _current_cmd = CMD::ERROR_CMD;
         break;
     case CMD::COMBINATE_CMD:
-        if (_editer->combinate())
+        if (_editer->combinate(_editer->selected()))
         {
             _canvas->refresh_vbo();
             _canvas->refresh_selected_ibo();
@@ -249,7 +249,7 @@ bool CMDWidget::work()
         _current_cmd = CMD::ERROR_CMD;
         break;
     case CMD::SPLIT_CMD:
-        _editer->split();
+        _editer->split(_editer->selected());
         _current_cmd = CMD::ERROR_CMD;
         break;
     case CMD::ROTATE_CMD:
@@ -259,7 +259,7 @@ bool CMDWidget::work()
     case CMD::FLIPX_CMD:
         {
             const bool unitary = _editer->selected_count() == 0;
-            _editer->flip(true, unitary, GlobalSetting::get_instance()->ui()->to_all_layers->isChecked());
+            _editer->flip(_editer->selected(), true, unitary, GlobalSetting::get_instance()->ui()->to_all_layers->isChecked());
             _canvas->refresh_vbo(unitary);
             _canvas->update();
         }
@@ -268,7 +268,7 @@ bool CMDWidget::work()
     case CMD::FLIPY_CMD:
         {
             const bool unitary = _editer->selected_count() == 0;
-            _editer->flip(false, unitary, GlobalSetting::get_instance()->ui()->to_all_layers->isChecked());
+            _editer->flip(_editer->selected(), false, unitary, GlobalSetting::get_instance()->ui()->to_all_layers->isChecked());
             _canvas->refresh_vbo(unitary);
             _canvas->update();
         }
@@ -292,20 +292,58 @@ bool CMDWidget::work()
         break;
 
     case CMD::UNION_CMD:
-        if (_editer->polygon_union())
         {
-            _canvas->refresh_vbo();
-            _canvas->refresh_selected_ibo();
-            _canvas->update();
+            Container *container0 = nullptr, *container1 = nullptr;
+            for (Geo::Geometry *object : _editer->selected())
+            {
+                if (object->type() == Geo::Type::CONTAINER)
+                {
+                    if (container0 == nullptr)
+                    {
+                        container0 = dynamic_cast<Container *>(object);
+                    }
+                    else
+                    {
+                        container1 = dynamic_cast<Container *>(object);
+                        break;
+                    }
+                }
+            }
+
+            if (_editer->polygon_union(container0, container1))
+            {
+                _canvas->refresh_vbo();
+                _canvas->refresh_selected_ibo();
+                _canvas->update();
+            }
         }
         _current_cmd = CMD::ERROR_CMD;
         break;
     case CMD::INTERSECTION_CMD:
-        if (_editer->polygon_intersection())
         {
-            _canvas->refresh_vbo();
-            _canvas->refresh_selected_ibo();
-            _canvas->update();
+            Container *container0 = nullptr, *container1 = nullptr;
+            for (Geo::Geometry *object : _editer->selected())
+            {
+                if (object->type() == Geo::Type::CONTAINER)
+                {
+                    if (container0 == nullptr)
+                    {
+                        container0 = dynamic_cast<Container *>(object);
+                    }
+                    else
+                    {
+                        container1 = dynamic_cast<Container *>(object);
+                        break;
+                    }
+                }
+            }
+
+            if (_editer->polygon_intersection(container0, container1))
+            {
+                _canvas->refresh_vbo();
+                _canvas->refresh_selected_ibo();
+                _canvas->update();
+            }
         }
         _current_cmd = CMD::ERROR_CMD;
         break;
@@ -653,7 +691,7 @@ void CMDWidget::rotate()
     case 2:
         {
             const bool unitary = _editer->selected_count() == 0;
-            _editer->rotate(_parameters[1], unitary, GlobalSetting::get_instance()->ui()->to_all_layers->isChecked());
+            _editer->rotate(_editer->selected(), _parameters[1], unitary, GlobalSetting::get_instance()->ui()->to_all_layers->isChecked());
             _canvas->refresh_vbo(unitary);
             _parameters.pop_back();
             _canvas->update();
@@ -683,7 +721,7 @@ void CMDWidget::line_array()
             + QString::number(_parameters[1]) + " X Space:" +  QString::number(_parameters[2]) + " Y Space:");
         break;
     case 4:
-        if (_editer->line_array(_parameters[0], _parameters[1], _parameters[2], _parameters[3]))
+        if (_editer->line_array(_editer->selected(), _parameters[0], _parameters[1], _parameters[2], _parameters[3]))
         {
             _canvas->refresh_vbo();
             _canvas->refresh_selected_ibo();
