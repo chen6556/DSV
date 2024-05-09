@@ -94,6 +94,8 @@ public:
 
     bool offset(std::list<Geo::Geometry *> objects, const double distance);
 
+    bool scale(std::list<Geo::Geometry *> objects, const double k);
+
     bool polygon_union();
 
     bool polygon_intersection();

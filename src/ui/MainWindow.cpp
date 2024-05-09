@@ -541,6 +541,16 @@ void MainWindow::mirror()
     _painter.set_operation(Canvas::Operation::MIRROR);
 }
 
+void MainWindow::scale()
+{
+    if (_editer.scale(_editer.selected(), ui->scale_sbx->value()))
+    {
+        _painter.refresh_vbo();
+        _painter.refresh_selected_ibo();
+        _painter.update();
+    }
+}
+
 void MainWindow::offset()
 {
     if (_editer.offset(_editer.selected(), ui->offset_sbx->value()))

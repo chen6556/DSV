@@ -946,6 +946,61 @@ bool Editer::offset(std::list<Geo::Geometry *> objects, const double distance)
     }
 }
 
+bool Editer::scale(std::list<Geo::Geometry *> objects, const double k)
+{
+    if (objects.empty() || k == 0 || k == 1)
+    {
+        return false;
+    }
+
+    const size_t count = _graph->container_group(_current_group).size();
+    double top = -DBL_MAX, bottom = DBL_MAX, left = DBL_MAX, right = -DBL_MAX;
+    bool flag = false;
+    for (Geo::Geometry *object : objects)
+    {
+        switch (object->type())
+        {
+        case Geo::Type::CONTAINER:
+        case Geo::Type::CIRCLECONTAINER:
+        case Geo::Type::POLYLINE:
+        case Geo::Type::BEZIER:
+        case Geo::Type::COMBINATION:
+            top = std::max(top, object->bounding_rect().top());
+            bottom = std::min(bottom, object->bounding_rect().bottom());
+            left = std::min(left, object->bounding_rect().left());
+            right = std::max(right, object->bounding_rect().right());
+            flag = true;
+            break;
+        default:
+            object->is_selected = false;
+            break;
+        }
+    }
+
+    if (!flag)
+    {
+        return false;
+    }
+    store_backup();
+    const double x = (left + right) / 2, y = (top + bottom) / 2;
+    for (Geo::Geometry *object : objects)
+    {
+        switch (object->type())
+        {
+        case Geo::Type::CONTAINER:
+        case Geo::Type::CIRCLECONTAINER:
+        case Geo::Type::POLYLINE:
+        case Geo::Type::COMBINATION:
+            object->scale(x, y, k);
+            break;
+        default:
+            break;
+        }
+    }
+
+    return true;
+}
+
 bool Editer::polygon_union()
 {
     if (_graph == nullptr || _graph->empty())

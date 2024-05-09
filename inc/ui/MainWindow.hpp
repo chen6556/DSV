@@ -89,6 +89,8 @@ private slots:
 
     void mirror();
 
+    void scale();
+
     void offset();
 
 
