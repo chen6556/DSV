@@ -30,7 +30,7 @@ void CMDWidget::init()
         << "CONNECT" << "CLOSE" << "COMBINATE" << "SPLIT"
         << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "ARRAY" << "LINEARRAY" << "RINGARRAY"
         << "BOOLEAN" << "UNION" << "INTERSECTION" << "DIFFERENCE"
-        << "OFFSET" << "ABSOLUTE" << "RELATIVE"
+        << "OFFSET" << "SCALE" << "ABSOLUTE" << "RELATIVE"
         << "DELETE" << "COPY" << "CUT" << "PASTE" << "UNDO" << "ALL";
 
     _cmd_dict = {{"OPEN",CMD::OPEN_CMD}, {"SAVE",CMD::SAVE_CMD}, {"EXIT",CMD::EXIT_CMD},
@@ -40,7 +40,7 @@ void CMDWidget::init()
         {"COMBINATE",CMD::COMBINATE_CMD}, {"CLOSE",CMD::CLOSE_CMD}, {"SPLIT",CMD::SPLIT_CMD},
         {"ROTATE",CMD::ROTATE_CMD}, {"FLIPX",CMD::FLIPX_CMD}, {"FLIPY",CMD::FLIPY_CMD}, {"MIRROR",CMD::MIRROR_CMD},
         {"ARRAY",CMD::ARRAY_CMD}, {"LINEARRAY",CMD::LINEARRAY_CMD}, {"RINGARRAY",CMD::RINGARRAY_CMD},
-        {"OFFSET",CMD::OFFSET_CMD}, {"BOOLEAN",CMD::BOOLEAN_CMD},
+        {"OFFSET",CMD::OFFSET_CMD}, {"SCALE", CMD::SCALE_CMD}, {"BOOLEAN",CMD::BOOLEAN_CMD},
         {"UNION",CMD::UNION_CMD}, {"INTERSECTION",CMD::INTERSECTION_CMD}, {"DIFFERENCE",CMD::DIFFERENCE_CMD},
         {"DELETE",CMD::DELETE_CMD}, {"COPY",CMD::COPY_CMD}, {"CUT",CMD::CUT_CMD}, {"PASTE",CMD::PASTE_CMD},
         {"UNDO",CMD::UNDO_CMD}, {"ALL",CMD::SELECTALL_CMD}};
@@ -273,6 +273,14 @@ bool CMDWidget::work()
             _canvas->update();
         }
         _current_cmd = CMD::ERROR_CMD;
+        break;
+    case CMD::SCALE_CMD:
+        ui->cmd_label->setText("Scale");
+        scale();
+        break;
+    case CMD::OFFSET_CMD:
+        ui->cmd_label->setText("Offset");
+        offset();
         break;
 
     case CMD::MIRROR_CMD:
@@ -696,6 +704,52 @@ void CMDWidget::rotate()
             _parameters.pop_back();
             _canvas->update();
         }
+        break;
+    default:
+        break;
+    }
+}
+
+void CMDWidget::scale()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        _parameters.emplace_back(0);
+        ui->parameter_label->setText("Rate:");
+        break;
+    case 1:
+        clear();
+        break;
+    case 2:
+        _editer->scale(_editer->selected(), _parameters.back());
+        _canvas->refresh_vbo();
+        _canvas->refresh_selected_ibo();
+        _parameters.pop_back();
+        _canvas->update();
+        break;
+    default:
+        break;
+    }
+}
+
+void CMDWidget::offset()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        _parameters.emplace_back(0);
+        ui->parameter_label->setText("Distance:");
+        break;
+    case 1:
+        clear();
+        break;
+    case 2:
+        _editer->offset(_editer->selected(), _parameters.back());
+        _canvas->refresh_vbo();
+        _canvas->refresh_selected_ibo();
+        _canvas->update();
+        clear();
         break;
     default:
         break;
