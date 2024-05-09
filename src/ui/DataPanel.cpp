@@ -76,4 +76,9 @@ void DataPanel::load_draw_data(const Graph *graph, const size_t point_count)
     ui->polygon_label->setText(QString::number(polygon_count));
     ui->circle_label->setText(QString::number(circle_count));
     ui->text_label->setText(QString::number(text_count));
+
+    const Geo::AABBRect rect(graph->bounding_rect());
+    ui->width_label->setText(QString::number(rect.width()));
+    ui->height_label->setText(QString::number(rect.height()));
+    ui->area_label->setText(QString::number(rect.area(), 'f', 4));
 }
