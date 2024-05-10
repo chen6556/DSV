@@ -22,6 +22,8 @@ public:
 
     void transfer(Graph &graph);
 
+    void merge(Graph &graph);
+
     Graph &operator=(const Graph &graph);
 
     ContainerGroup &container_group(const size_t index = 0);

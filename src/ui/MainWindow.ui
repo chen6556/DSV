@@ -1051,7 +1051,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>-12</x>
+             <x>-8</x>
              <y>0</y>
              <width>106</width>
              <height>372</height>
@@ -1736,6 +1736,7 @@ selection-background-color: rgb(0, 85, 127);</string>
     <addaction name="save_file"/>
     <addaction name="saveas_file"/>
     <addaction name="auto_save"/>
+    <addaction name="append_file"/>
     <addaction name="performace_panel"/>
    </widget>
    <widget class="QMenu" name="menusetting">
@@ -1857,6 +1858,11 @@ color:rgb(230, 230, 230);</string>
   <action name="performace_panel">
    <property name="text">
     <string>data</string>
+   </property>
+  </action>
+  <action name="append_file">
+   <property name="text">
+    <string>append</string>
    </property>
   </action>
  </widget>
@@ -2246,6 +2252,22 @@ color:rgb(230, 230, 230);</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>append_file</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>append_file()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -2271,5 +2293,6 @@ color:rgb(230, 230, 230);</string>
   <slot>polygon_intersection()</slot>
   <slot>polygon_difference()</slot>
   <slot>scale()</slot>
+  <slot>append_file()</slot>
  </slots>
 </ui>

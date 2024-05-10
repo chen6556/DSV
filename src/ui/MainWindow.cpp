@@ -357,6 +357,16 @@ void MainWindow::saveas_file()
     delete dialog;
 }
 
+void MainWindow::append_file()
+{
+    QFileDialog *dialog = new QFileDialog();
+    dialog->setModal(true);
+    dialog->setFileMode(QFileDialog::ExistingFile);
+    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;PLT: (*.plt *.PLT);;PDF: (*.pdf *.PDF);;RS274D: (*.cut *.CUT)", &_file_type);
+    append_file(path);
+    delete dialog;
+}
+
 void MainWindow::refresh_tool_label(const Canvas::Tool tool)
 {
     switch (tool)
@@ -728,7 +738,6 @@ void MainWindow::open_file(const QString &path)
     }
     else if(path.endsWith(".cut") || path.endsWith(".CUT"))
     {
-
         std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
         RS274DParser::parse(file,g);
         file.close();
@@ -750,3 +759,72 @@ void MainWindow::open_file(const QString &path)
     _layers_cbx->setModel(_layers_manager->model());
     g = nullptr;
 }
+
+void MainWindow::append_file(const QString &path)
+{
+    if (!QFileInfo(path).isFile())
+    {
+        return;
+    }
+
+    Graph *g = new Graph;
+    if (path.endsWith(".dsv") || path.endsWith(".DSV"))
+    {
+        std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
+        DSVParser::parse(file, g);
+        file.close();
+    }
+    else if (path.endsWith(".plt") || path.endsWith(".PLT"))
+    {
+        std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
+        PLTParser::parse(file, g);
+        file.close();
+    }
+    else if (path.endsWith(".pdf") || path.endsWith(".PDF"))
+    {
+        QPDF pdf;
+        pdf.processFile(path.toStdString().c_str());
+        for (int i = 0, count = pdf.getObjectCount(); i < count; ++i)
+        {
+            if (pdf.getObject(i, 0).isImage() || pdf.getObject(i, 0).isFormXObject())
+            {
+                pdf.replaceObject(i, 0, QPDFObjectHandle::newNull());
+            }
+        }
+
+        QPDFWriter outpdf(pdf);
+        outpdf.setStreamDataMode(qpdf_stream_data_e::qpdf_s_uncompress);
+        outpdf.setDecodeLevel(qpdf_stream_decode_level_e::qpdf_dl_all);
+        outpdf.setOutputMemory();
+        outpdf.setNewlineBeforeEndstream(true);
+        outpdf.write();
+        std::shared_ptr<Buffer> buffer = outpdf.getBufferSharedPointer();
+
+        std::string_view sv(reinterpret_cast<char *>(buffer->getBuffer()), buffer->getSize());
+        PDFParser::parse(sv, g);
+    }
+    else if(path.endsWith(".cut") || path.endsWith(".CUT"))
+    {
+        std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
+        RS274DParser::parse(file,g);
+        file.close();
+    }
+
+    _editer.store_backup();
+    Graph *graph = _editer.graph();
+    _editer.load_graph(g);
+    if (ui->auto_layering->isChecked())
+    {
+        _editer.auto_layering();
+    }
+    Geo::AABBRect rect0(graph->bounding_rect()), rect1(g->bounding_rect());
+    g->translate(rect0.right() + 10 - rect1.left(), rect0.bottom() - rect1.bottom());
+    graph->merge(*g);
+    _editer.load_graph(graph);
+    delete g;
+    _painter.refresh_vbo();
+    _painter.refresh_selected_ibo();
+    _layers_manager->load_layers(graph);
+    _layers_cbx->setModel(_layers_manager->model());
+}
+

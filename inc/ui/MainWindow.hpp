@@ -62,6 +62,8 @@ private slots:
 
     void saveas_file();
 
+    void append_file();
+
     void refresh_tool_label(const Canvas::Tool tool);
 
     void refresh_cmd(const CMDWidget::CMD cmd);
@@ -114,6 +116,8 @@ private slots:
 
 private:
     void open_file(const QString &path);
+
+    void append_file(const QString &path);
 
 public:
     MainWindow(QWidget *parent = nullptr);

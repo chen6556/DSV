@@ -34,6 +34,19 @@ void Graph::transfer(Graph &graph)
     clear();
 }
 
+void Graph::merge(Graph &graph)
+{
+    for (size_t i = _container_groups.size(), count = graph._container_groups.size(); i < count; ++i)
+    {
+        _container_groups.emplace_back();
+    }
+    std::list<ContainerGroup>::iterator it0 = _container_groups.begin(), it1 = graph._container_groups.begin();
+    for (size_t i = 0, count = graph._container_groups.size(); i < count; ++i)
+    {
+        (it0++)->append(*(it1++));
+    }
+}
+
 Graph &Graph::operator=(const Graph &graph)
 {
     if (this != &graph)
