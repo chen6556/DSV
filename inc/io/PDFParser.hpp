@@ -431,6 +431,8 @@ public:
 
     void close_and_store_shape();
 
+    void clear_points();
+
 
     void analyse_dict(const std::string &value);
 

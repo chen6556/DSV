@@ -14,6 +14,14 @@ void Importer::start()
     {
         _values.erase(_values.begin(), _values.begin() + _values.size() - 2);
     }
+    if (_points.size() > 1)
+    {
+        const double x = _values.front();
+        const double y = _values.back();
+        store();
+        _values.push_back(x);
+        _values.push_back(y);
+    }
     _points.clear();
     _start_point.x = _values.front();
     _start_point.y = _values.back();
@@ -239,6 +247,13 @@ void Importer::curve()
 
 void Importer::rect()
 {
+    if (_points.size() > 1)
+    {
+        std::vector<double> values(_values);
+        store();
+        _values.assign(values.begin(), values.end());
+    }
+
     _points.clear();
     _points.emplace_back(Geo::Point(_values[_values.size() - 4], _values[_values.size() - 3]));
     _points.emplace_back(Geo::Point(_values[_values.size() - 4] + _values[_values.size() - 2], _values[_values.size() - 3]));
@@ -264,8 +279,16 @@ void Importer::close_and_store_shape()
     _graph->back().back()->transform(_trans_mat[0], _trans_mat[1],
         _trans_mat[2], _trans_mat[3], _trans_mat[4], _trans_mat[5]);
 
-    _start_point.x = _start_point.y = 0;
+    _start_point.x = _points.back().x;
+    _start_point.y = _points.back().y;
     _values.clear();
+    _points.clear();
+}
+
+void Importer::clear_points()
+{
+    _start_point.x = _points.back().x;
+    _start_point.y = _points.back().y;
     _points.clear();
 }
 
@@ -319,7 +342,14 @@ void Importer::Tm()
     {
         _values.erase(_values.begin(), _values.begin() + _values.size() - 6);
     }
-	_texts.emplace_back(Txt(_text, _points.back()));
+    if (_points.empty())
+    {
+        _texts.emplace_back(Txt(_text, _start_point));
+    }
+    else
+	{
+        _texts.emplace_back(Txt(_text, _points.back()));
+    }
 
 	const double a = _trans_mat[0] * _values[0] + _trans_mat[1] * _values[1];
     const double b = _trans_mat[0] * _values[2] + _trans_mat[1] * _values[3];
@@ -728,6 +758,7 @@ Action<void> S_a(&importer, &Importer::store);
 Action<void> s_a(&importer, &Importer::close_and_store_shape);
 Action<void> re_a(&importer, &Importer::rect);
 Action<void> h_a(&importer, &Importer::close_shape);
+Action<void> W_a(&importer, &Importer::clear_points);
 Action<void> W8_a(&importer, &Importer::close_and_store_shape);
 Action<std::string> text_a(&importer, &Importer::store_text);
 Action<std::string> encoding_a(&importer, &Importer::store_encoding);
@@ -740,40 +771,41 @@ Action<std::string> dict_a(&importer, &Importer::analyse_dict);
 
 Parser<char> end = eol_p() | ch_p(' ');
 Parser<char> space = ch_p(' ');
-Parser<std::string> CS = str_p("CS")[CS_a] >> end;
-Parser<std::string> cs = str_p("cs")[cs_a] >> end;
-Parser<std::string> SCN = str_p("SCN")[SCN_a] >> end;
-Parser<std::string> G = ch_p('G')[G_a] >> end;
-Parser<std::string> g = ch_p('g')[g_a] >> end;
-Parser<std::string> RG = str_p("RG")[RG_a] >> end;
-Parser<std::string> rg = str_p("rg")[rg_a] >> end;
-Parser<std::string> K = ch_p('K')[K_a] >> end;
-Parser<std::string> k = ch_p('k')[k_a] >> end;
-Parser<std::string> cm = str_p("cm")[cm_a] >> end;
-Parser<std::string> Q = ch_p('Q')[Q_a] >> end;
-Parser<std::string> q = ch_p('q')[q_a] >> end;
-Parser<std::string> m = ch_p('m')[m_a] >> end;
-Parser<std::string> l = ch_p('l')[l_a] >> end;
-Parser<std::string> c = ch_p('c')[c_a] >> end;
+Parser<std::string> CS = (str_p("CS") >> end)[CS_a];
+Parser<std::string> cs = (str_p("cs") >> end)[cs_a];
+Parser<std::string> SCN = (str_p("SCN") >> end)[SCN_a];
+Parser<std::string> G = (ch_p('G') >> end)[G_a];
+Parser<std::string> g = (ch_p('g') >> end)[g_a];
+Parser<std::string> RG = (str_p("RG") >> end)[RG_a];
+Parser<std::string> rg = (str_p("rg") >> end)[rg_a];
+Parser<std::string> K = (ch_p('K') >> end)[K_a];
+Parser<std::string> k = (ch_p('k') >> end)[k_a];
+Parser<std::string> cm = (str_p("cm") >> end)[cm_a];
+Parser<std::string> Q = (ch_p('Q') >> end)[Q_a];
+Parser<std::string> q = (ch_p('q') >> end)[q_a];
+Parser<std::string> m = (ch_p('m') >> end)[m_a];
+Parser<std::string> l = (ch_p('l') >> end)[l_a];
+Parser<std::string> c = (ch_p('c') >> end)[c_a];
 Parser<std::string> v = ch_p('v') >> end;
-Parser<std::string> S = ch_p('S')[S_a] >> end;
-Parser<std::string> s = ch_p('s')[s_a] >> end;
-Parser<std::string> re = str_p("re")[re_a] >> end;
-Parser<std::string> h = ch_p('h')[h_a] >> end;
-Parser<std::string> W8 = str_p("W*")[W8_a] >> end;
+Parser<std::string> S = (ch_p('S') >> end)[S_a];
+Parser<std::string> s = (ch_p('s') >> end)[s_a];
+Parser<std::string> re = (str_p("re") >> end)[re_a];
+Parser<std::string> h = (ch_p('h') >> end)[h_a];
+Parser<std::string> W = (ch_p('W') >> end)[W_a];
+Parser<std::string> W8 = (str_p("W*") >> end)[W8_a];
 Parser<std::string> B = ch_p('B') >> end;
-Parser<std::string> f = ch_p('f') >> end;
+Parser<std::string> f = (ch_p('f') >> end)[s_a];
 
-Parser<std::string> BT = str_p("BT")[BT_a] >> end;
-Parser<std::string> ET = str_p("ET")[ET_a] >> end;
-Parser<std::string> Tm = str_p("Tm")[Tm_a] >> end;
+Parser<std::string> BT = (str_p("BT") >> end)[BT_a];
+Parser<std::string> ET = (str_p("ET") >> end)[ET_a];
+Parser<std::string> Tm = (str_p("Tm") >> end)[Tm_a];
 Parser<std::string> TL = str_p("TL") >> end;
 
 Parser<std::string> order = cm | q | Q | m | l | v | CS | cs | c | G | RG | rg | K | k | re | h |
-            BT | ET | Tm | SCN | W8 | TL |
+            BT | ET | Tm | SCN | W8 | W | TL |
             ((ch_p('w') | ch_p('J') | ch_p('j') | ch_p('M') | ch_p('d') | str_p("ri") | ch_p('i') |
             str_p("gs") | ch_p('y') | str_p("f*") | ch_p('F') | str_p("B*") | str_p("b*") | ch_p('b') |
-            ch_p('n') | ch_p('W') | str_p("Tc") | str_p("Tw") | str_p("Tz") | str_p("Tf") | str_p("Tr") |
+            ch_p('n') | str_p("Tc") | str_p("Tw") | str_p("Tz") | str_p("Tf") | str_p("Tr") |
             str_p("Ts") | str_p("Td") | str_p("TD") | str_p("T*") | str_p("Tj") | str_p("TJ") | ch_p('\'') |
             ch_p('\"') | str_p("d0") | str_p("d1") | str_p("SC") | str_p("scn") | str_p("sc") | str_p("sh") |
             str_p("BI") | str_p("ID") | str_p("EI") | str_p("Do") | str_p("MP") | str_p("DP") |

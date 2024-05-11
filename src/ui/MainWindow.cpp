@@ -714,9 +714,18 @@ void MainWindow::open_file(const QString &path)
         pdf.processFile(path.toStdString().c_str());
         for (int i = 0, count = pdf.getObjectCount(); i < count; ++i)
         {
-            if (pdf.getObject(i, 0).isImage() || pdf.getObject(i, 0).isFormXObject())
+            QPDFObjectHandle handle = pdf.getObject(i, 0);
+            if (handle.isImage() || handle.isFormXObject() || handle.isInlineImage())
             {
                 pdf.replaceObject(i, 0, QPDFObjectHandle::newNull());
+            }
+            else if (handle.isStream())
+            {
+                std::shared_ptr<Buffer> buffer = handle.getStreamData(qpdf_stream_decode_level_e::qpdf_dl_all);
+                if (std::find(buffer->getBuffer(), buffer->getBuffer() + buffer->getSize(), '%') != buffer->getBuffer() + buffer->getSize())
+                {
+                    pdf.replaceObject(i, 0, QPDFObjectHandle::newNull());
+                }
             }
         }
 
@@ -786,9 +795,18 @@ void MainWindow::append_file(const QString &path)
         pdf.processFile(path.toStdString().c_str());
         for (int i = 0, count = pdf.getObjectCount(); i < count; ++i)
         {
-            if (pdf.getObject(i, 0).isImage() || pdf.getObject(i, 0).isFormXObject())
+            QPDFObjectHandle handle = pdf.getObject(i, 0);
+            if (handle.isImage() || handle.isFormXObject() || handle.isInlineImage())
             {
                 pdf.replaceObject(i, 0, QPDFObjectHandle::newNull());
+            }
+            else if (handle.isStream())
+            {
+                std::shared_ptr<Buffer> buffer = handle.getStreamData(qpdf_stream_decode_level_e::qpdf_dl_all);
+                if (std::find(buffer->getBuffer(), buffer->getBuffer() + buffer->getSize(), '%') != buffer->getBuffer() + buffer->getSize())
+                {
+                    pdf.replaceObject(i, 0, QPDFObjectHandle::newNull());
+                }
             }
         }
 
