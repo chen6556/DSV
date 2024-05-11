@@ -767,6 +767,9 @@ void MainWindow::open_file(const QString &path)
     _layers_manager->load_layers(g);
     _layers_cbx->setModel(_layers_manager->model());
     g = nullptr;
+
+    _painter.show_overview();
+    _painter.update();
 }
 
 void MainWindow::append_file(const QString &path)
@@ -844,5 +847,8 @@ void MainWindow::append_file(const QString &path)
     _painter.refresh_selected_ibo();
     _layers_manager->load_layers(graph);
     _layers_cbx->setModel(_layers_manager->model());
+
+    _painter.show_overview();
+    _painter.update();
 }
 

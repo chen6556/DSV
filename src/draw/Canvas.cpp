@@ -1433,18 +1433,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
     case Qt::RightButton:
         break;
     case Qt::MiddleButton:
-        _last_point = center();
-        _editer->set_view_ratio(1.0);
         show_overview();
-        makeCurrent();
-        glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
-        glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
-        {
-            double data[12] = {-10, 0, 0, 10, 0, 0, 0, -10, 0, 0, 10, 0};
-            glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]); // origin and select rect
-            glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), data);
-        }
-        doneCurrent();
         update();
         break;
     default:
@@ -1456,6 +1445,9 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
 
 void Canvas::show_overview()
 {
+    _last_point = center();
+    _editer->set_view_ratio(1.0);
+
     Graph *graph = _editer->graph();
     if (graph->empty())
     {
@@ -1515,7 +1507,15 @@ void Canvas::show_overview()
         x1 * _view_ctm[0] + y1 * _view_ctm[3] + _view_ctm[6],
         x1 * _view_ctm[1] + y1 * _view_ctm[4] + _view_ctm[7]);
 
-    update();
+    makeCurrent();
+    glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
+    glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
+    {
+        double data[12] = {-10, 0, 0, 10, 0, 0, 0, -10, 0, 0, 10, 0};
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]); // origin and select rect
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), data);
+    }
+    doneCurrent();
 }
 
 
