@@ -240,7 +240,7 @@ void MainWindow::open_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;PLT: (*.plt *.PLT);;PDF: (*.pdf *.PDF);;RS274D: (*.cut *.CUT)", &_file_type);
+    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;PLT: (*.plt *.PLT);;PDF: (*.pdf *.PDF);;RS274D: (*.cut *.CUT *.nc *.NC)", &_file_type);
     open_file(path);
     delete dialog;
 }
@@ -362,7 +362,7 @@ void MainWindow::append_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;PLT: (*.plt *.PLT);;PDF: (*.pdf *.PDF);;RS274D: (*.cut *.CUT)", &_file_type);
+    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;PLT: (*.plt *.PLT);;PDF: (*.pdf *.PDF);;RS274D: (*.cut *.CUT *.nc *.NC)", &_file_type);
     append_file(path);
     delete dialog;
 }
@@ -686,7 +686,7 @@ void MainWindow::open_file(const QString &path)
 
     _editer.delete_graph();
     Graph *g = new Graph;
-    if (path.endsWith(".dsv") || path.endsWith(".DSV"))
+    if (path.toUpper().endsWith(".DSV"))
     {
         std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
         DSVParser::parse(file, g);
@@ -697,7 +697,7 @@ void MainWindow::open_file(const QString &path)
             _file_type = "DSV: (*.dsv *.DSV)";
         }
     }
-    else if (path.endsWith(".plt") || path.endsWith(".PLT"))
+    else if (path.toUpper().endsWith(".PLT"))
     {
         std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
         PLTParser::parse(file, g);
@@ -708,7 +708,7 @@ void MainWindow::open_file(const QString &path)
             _file_type = "PLT: (*.plt *.PLT)";
         }
     }
-    else if (path.endsWith(".pdf") || path.endsWith(".PDF"))
+    else if (path.toUpper().endsWith(".PDF"))
     {
         QPDF pdf;
         pdf.processFile(path.toStdString().c_str());
@@ -745,7 +745,7 @@ void MainWindow::open_file(const QString &path)
             _file_type = "PDF: (*.pdf *.PDF)";
         }
     }
-    else if(path.endsWith(".cut") || path.endsWith(".CUT"))
+    else if(path.toUpper().endsWith(".CUT") || path.toUpper().endsWith(".NC"))
     {
         std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
         RS274DParser::parse(file,g);
@@ -753,7 +753,7 @@ void MainWindow::open_file(const QString &path)
 
         if (ui->remember_file_type->isChecked())
         {
-            _file_type = "RS274D: (*.cut *.CUT)";
+            _file_type = "RS274D: (*.cut *.CUT *.nc *NC)";
         }
     }
     _editer.load_graph(g, path);
@@ -777,19 +777,19 @@ void MainWindow::append_file(const QString &path)
     }
 
     Graph *g = new Graph;
-    if (path.endsWith(".dsv") || path.endsWith(".DSV"))
+    if (path.toUpper().endsWith(".DSV"))
     {
         std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
         DSVParser::parse(file, g);
         file.close();
     }
-    else if (path.endsWith(".plt") || path.endsWith(".PLT"))
+    else if (path.toUpper().endsWith(".PLT"))
     {
         std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
         PLTParser::parse(file, g);
         file.close();
     }
-    else if (path.endsWith(".pdf") || path.endsWith(".PDF"))
+    else if (path.toUpper().endsWith(".PDF"))
     {
         QPDF pdf;
         pdf.processFile(path.toStdString().c_str());
@@ -821,7 +821,7 @@ void MainWindow::append_file(const QString &path)
         std::string_view sv(reinterpret_cast<char *>(buffer->getBuffer()), buffer->getSize());
         PDFParser::parse(sv, g);
     }
-    else if(path.endsWith(".cut") || path.endsWith(".CUT"))
+    else if(path.toUpper().endsWith(".CUT") || path.toUpper().endsWith(".NC"))
     {
         std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
         RS274DParser::parse(file,g);
