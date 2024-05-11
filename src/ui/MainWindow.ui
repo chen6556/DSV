@@ -763,12 +763,6 @@ QPushButton:pressed
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>50</width>
-                  <height>0</height>
-                 </size>
-                </property>
                 <property name="font">
                  <font>
                   <pointsize>10</pointsize>
