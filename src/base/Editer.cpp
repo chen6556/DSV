@@ -69,7 +69,7 @@ void Editer::load_graph(Graph *graph, const QString &path)
         _graph = graph;
         _current_group = 0;
         init();
-        _file_path = path;   
+        _file_path = path;
     }
 }
 
@@ -80,7 +80,7 @@ void Editer::load_graph(Graph *graph)
         _graph = graph;
         _current_group = 0;
         init();
-        _file_path.clear();  
+        _file_path.clear();
     }
 }
 

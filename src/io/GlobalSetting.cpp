@@ -42,7 +42,7 @@ void GlobalSetting::load_setting()
         _instance->_setting["backup_times"] = 50;
         _instance->_setting["catch_distance"] = 2;
         _instance->_setting["cursor_catch"] = false;
-        _instance->_setting["file_path"] = "D:/";
+        _instance->_setting["file_path"] = "/";
         _instance->_setting["file_type"] = "All Files: (*.*)";
         _instance->_setting["multiple_select"] = false;
         _instance->_setting["remember_file_type"] = true;
