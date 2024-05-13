@@ -245,6 +245,44 @@ void Importer::curve()
     }
 }
 
+void Importer::curve_v()
+{
+    _last_tool = _cur_tool;
+    _cur_tool = Tool::Curve;
+    
+    std::vector<Geo::Point> points;
+    points.emplace_back(_values[0], _values[1]);
+    for (int i = 0; i < 5; i += 2)
+    {
+        points.emplace_back(Geo::Point(_values[i], _values[i + 1]));
+    }
+    Geo::Bezier bezier(points.cbegin(), points.cend(), 3);
+    _values.erase(_values.begin(), _values.begin() + _values.size() - 2);
+    for (const Geo::Point &point : bezier.shape())
+    {
+        _points.emplace_back(point);
+    }
+}
+
+void Importer::curve_y()
+{
+    _last_tool = _cur_tool;
+    _cur_tool = Tool::Curve;
+    
+    std::vector<Geo::Point> points;
+    for (int i = 0; i < 5; i += 2)
+    {
+        points.emplace_back(Geo::Point(_values[i], _values[i + 1]));
+    }
+    points.emplace_back(points.back());
+    Geo::Bezier bezier(points.cbegin(), points.cend(), 3);
+    _values.erase(_values.begin(), _values.begin() + _values.size() - 2);
+    for (const Geo::Point &point : bezier.shape())
+    {
+        _points.emplace_back(point);
+    }
+}
+
 void Importer::rect()
 {
     if (_points.size() > 1)
@@ -253,6 +291,9 @@ void Importer::rect()
         store();
         _values.assign(values.begin(), values.end());
     }
+
+    _last_tool = _cur_tool;
+    _cur_tool = Tool::Rect;
 
     _points.clear();
     _points.emplace_back(Geo::Point(_values[_values.size() - 4], _values[_values.size() - 3]));
@@ -287,8 +328,16 @@ void Importer::close_and_store_shape()
 
 void Importer::clear_points()
 {
-    _start_point.x = _points.back().x;
-    _start_point.y = _points.back().y;
+    _last_tool = _cur_tool;
+    _cur_tool = Tool::None;
+    if (_last_tool == Tool::Rect && !_graph->container_groups().back().empty())
+    {
+        _graph->container_groups().back().pop_back();
+    }
+    if (!_points.empty())
+    {
+        _start_point = _points.back();
+    }
     _points.clear();
 }
 
@@ -754,12 +803,13 @@ Action<void> q_a(&importer, &Importer::store_trans_mat);
 Action<void> m_a(&importer, &Importer::start);
 Action<void> l_a(&importer, &Importer::line);
 Action<void> c_a(&importer, &Importer::curve);
+Action<void> v_a(&importer, &Importer::curve_v);
+Action<void> y_a(&importer, &Importer::curve_y);
 Action<void> S_a(&importer, &Importer::store);
 Action<void> s_a(&importer, &Importer::close_and_store_shape);
 Action<void> re_a(&importer, &Importer::rect);
 Action<void> h_a(&importer, &Importer::close_shape);
-Action<void> W_a(&importer, &Importer::clear_points);
-Action<void> W8_a(&importer, &Importer::close_and_store_shape);
+Action<void> n_a(&importer, &Importer::clear_points);
 Action<std::string> text_a(&importer, &Importer::store_text);
 Action<std::string> encoding_a(&importer, &Importer::store_encoding);
 Action<void> end_a(&importer, &Importer::end);
@@ -786,26 +836,26 @@ Parser<std::string> q = (ch_p('q') >> end)[q_a];
 Parser<std::string> m = (ch_p('m') >> end)[m_a];
 Parser<std::string> l = (ch_p('l') >> end)[l_a];
 Parser<std::string> c = (ch_p('c') >> end)[c_a];
-Parser<std::string> v = ch_p('v') >> end;
+Parser<std::string> v = (ch_p('v') >> end)[v_a];
+Parser<std::string> y = (ch_p('y') >> end)[y_a];
 Parser<std::string> S = (ch_p('S') >> end)[S_a];
 Parser<std::string> s = (ch_p('s') >> end)[s_a];
 Parser<std::string> re = (str_p("re") >> end)[re_a];
 Parser<std::string> h = (ch_p('h') >> end)[h_a];
-Parser<std::string> W = (ch_p('W') >> end)[W_a];
-Parser<std::string> W8 = (str_p("W*") >> end)[W8_a];
-Parser<std::string> B = ch_p('B') >> end;
+Parser<std::string> B = (ch_p('B') >> end)[s_a];
 Parser<std::string> f = (ch_p('f') >> end)[s_a];
+Parser<std::string> n = (ch_p('n') >> end)[n_a];
 
 Parser<std::string> BT = (str_p("BT") >> end)[BT_a];
 Parser<std::string> ET = (str_p("ET") >> end)[ET_a];
 Parser<std::string> Tm = (str_p("Tm") >> end)[Tm_a];
 Parser<std::string> TL = str_p("TL") >> end;
 
-Parser<std::string> order = cm | q | Q | m | l | v | CS | cs | c | G | RG | rg | K | k | re | h |
-            BT | ET | Tm | SCN | W8 | W | TL |
+Parser<std::string> order = cm | q | Q | m | l | v | y | CS | cs | c | G | RG | rg | K | k | re | h |
+            n | BT | ET | Tm | SCN | TL |
             ((ch_p('w') | ch_p('J') | ch_p('j') | ch_p('M') | ch_p('d') | str_p("ri") | ch_p('i') |
-            str_p("gs") | ch_p('y') | str_p("f*") | ch_p('F') | str_p("B*") | str_p("b*") | ch_p('b') |
-            ch_p('n') | str_p("Tc") | str_p("Tw") | str_p("Tz") | str_p("Tf") | str_p("Tr") |
+            str_p("gs") | str_p("f*") | ch_p('F') | str_p("B*") | str_p("b*") | ch_p('b') |
+            str_p("W*") | ch_p('W') | str_p("Tc") | str_p("Tw") | str_p("Tz") | str_p("Tf") | str_p("Tr") |
             str_p("Ts") | str_p("Td") | str_p("TD") | str_p("T*") | str_p("Tj") | str_p("TJ") | ch_p('\'') |
             ch_p('\"') | str_p("d0") | str_p("d1") | str_p("SC") | str_p("scn") | str_p("sc") | str_p("sh") |
             str_p("BI") | str_p("ID") | str_p("EI") | str_p("Do") | str_p("MP") | str_p("DP") |

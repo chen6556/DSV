@@ -351,7 +351,7 @@ private:
     std::vector<Geo::Point> _points;
     Graph *_graph = nullptr;
 
-    enum Tool {None, Line, Curve};
+    enum Tool {None, Line, Curve, Rect};
     Tool _last_tool = Tool::None, _cur_tool = Tool::None;
     Geo::Point _start_point;
 
@@ -424,6 +424,10 @@ public:
     void line();
 
     void curve();
+
+    void curve_v();
+
+    void curve_y();
 
     void rect();
 

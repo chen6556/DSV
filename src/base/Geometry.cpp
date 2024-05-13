@@ -269,24 +269,24 @@ Polyline::Polyline(const Polyline &polyline)
 
 Polyline::Polyline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
 {
-    _points.push_back(*begin);
+    _points.emplace_back(*begin);
     while (++begin != end)
     {
         if (*begin != _points.back())
         {
-            _points.push_back(*begin);
+            _points.emplace_back(*begin);
         }
     }
 }
 
 Polyline::Polyline(const std::initializer_list<Point>& points)
 {
-    _points.push_back(*points.begin());
+    _points.emplace_back(*points.begin());
     for (const Point& point : points)
     {
         if (point != _points.back())
         {
-            _points.push_back(point);
+            _points.emplace_back(point);
         }
     }
 }
