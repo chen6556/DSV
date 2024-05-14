@@ -2461,13 +2461,6 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
 {
     if (!polygon.empty() && Geo::is_inside(point, polygon.bounding_rect(), coincide))
     {
-        size_t count = 0;
-        double x = (-FLT_MAX);
-        for (const Geo::Point &p : polygon)
-        {
-            x = std::max(x, p.x);
-        }
-        Geo::Point temp, end(x + 80, point.y);
         if (coincide)
         {
             for (size_t i = 1, len = polygon.size(); i < len; ++i)
@@ -2475,32 +2468,6 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
                 if (Geo::is_inside(point, polygon[i-1], polygon[i]))
                 {
                     return true;
-                }
-                if (Geo::is_intersected(point, end, polygon[i-1], polygon[i], temp))
-                {
-                    if (polygon[i - 1].y == polygon[i].y)
-                    {
-                        if ((polygon[i == 1 ? len-2 : i-2].y < polygon[i].y && polygon[i == len-1 ? 1 : i+1].y > polygon[i].y)
-                            || (polygon[i == 1 ? len-2 : i-2].y > polygon[i].y && polygon[i == len-1 ? 1 : i+1].y < polygon[i].y))
-                        {
-                            ++count;
-                        }
-                    }
-                    else
-                    {
-                        if (Geo::distance(temp, polygon[i-1]) < Geo::EPSILON)
-                        {
-                            if ((polygon[i == 1 ? len-2 : i-2].y < polygon[i-1].y && polygon[i].y < polygon[i-1].y) ||
-                                (polygon[i == 1 ? len-2 : i-2].y > polygon[i-1].y && polygon[i].y > polygon[i-1].y))
-                            {
-                                ++count;
-                            }
-                        }
-                        else
-                        {
-                            ++count;
-                        }
-                    }
                 }
             }
         }
@@ -2512,35 +2479,147 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
                 {
                     return false;
                 }
-                if (Geo::is_intersected(point, end, polygon[i-1], polygon[i], temp))
+            }
+        }
+
+        double x = (-DBL_MAX);
+        std::vector<Geo::MarkedPoint> points;
+        for (const Geo::Point &p : polygon)
+        {
+            x = std::max(x, p.x);
+            points.emplace_back(p.x, p.y);
+        }
+        // if (polygon.area() < 0)
+        // {
+        //     std::reverse(points.begin(), points.end());
+        // }
+
+        Geo::Point temp, end(x + 80, point.y); // 找到交点并计算其几何数
+        for (size_t i = 1, count = points.size(); i < count; ++i)
+        {
+            if (!Geo::is_parallel(point, end, points[i], points[i - 1]) &&
+                Geo::is_intersected(point, end, points[i], points[i - 1], temp))
+            {
+                points.insert(points.begin() + i++, MarkedPoint(temp.x, temp.y, false));
+                ++count;
+                if (Geo::cross(temp, end, points[i], points[i - 1]) >= 0)
                 {
-                    if (polygon[i - 1].y == polygon[i].y)
-                    {
-                        if ((polygon[i == 1 ? len-2 : i-2].y < polygon[i].y && polygon[i == len-1 ? 1 : i+1].y > polygon[i].y)
-                            || (polygon[i == 1 ? len-2 : i-2].y > polygon[i].y && polygon[i == len-1 ? 1 : i+1].y < polygon[i].y))
-                        {
-                            ++count;
-                        }
-                    }
-                    else
-                    {
-                        if (Geo::distance(temp, polygon[i-1]) < Geo::EPSILON)
-                        {
-                            if ((polygon[i == 1 ? len-2 : i-2].y < polygon[i-1].y && polygon[i].y < polygon[i-1].y) ||
-                                (polygon[i == 1 ? len-2 : i-2].y > polygon[i-1].y && polygon[i].y > polygon[i-1].y))
-                            {
-                                ++count;
-                            }
-                        }
-                        else
-                        {
-                            ++count;
-                        }
-                    }
+                    points[i - 1].value = -1;
+                }
+                else
+                {
+                    points[i - 1].value = 1;
                 }
             }
         }
-        return count % 2 == 1;
+
+        if (points.size() == polygon.size()) // 无交点
+        {
+            return false;
+        }
+
+        // 去除重复交点
+        for (size_t count, j, i = points.size() - 1; i > 0; --i)
+        {
+            count = points[i].original ? 0 : 1;
+            for (j = i; j > 0; --j)
+            {
+                if (std::abs(points[i].x - points[j - 1].x) > Geo::EPSILON || 
+                    std::abs(points[i].y - points[j - 1].y) > Geo::EPSILON)
+                {
+                    break;
+                }
+                if (!points[j - 1].original)
+                {
+                    ++count;
+                }
+            }
+            if (count < 2)
+            {
+                continue;
+            }
+
+            int value = 0;
+            for (size_t k = i; k > j; --k)
+            {
+                if (!points[k].original)
+                {
+                    value += points[k].value;
+                }
+            }
+            if (!points[j].original)
+            {
+                value += points[j].value;
+            }
+            if (value == 0)
+            {
+                for (size_t k = i; k > j; --k)
+                {
+                    if (!points[k].original)
+                    {
+                        points.erase(points.begin() + k);
+                    }
+                }
+                if (!points[j].original)
+                {
+                    points.erase(points.begin() + j);
+                }
+            }
+            else
+            {
+                bool flag = false;
+                for (size_t k = i; k > j; --k)
+                {
+                    flag = (flag || points[k].original);
+                    points.erase(points.begin() + k);
+                }
+                points[j].value = value;
+                points[j].original = (flag || points[j].original);
+            }
+            i = j > 0 ? j : 1;
+        }
+
+        // 处理重边上的交点
+        for (size_t i = 0, j = 1, count = points.size(); j < count; i = j)
+        {
+            while (i < count && points[i].value == 0)
+            {
+                ++i;
+            }
+            j = i + 1;
+            while (j < count && points[j].value == 0)
+            {
+                ++j;
+            }
+            if (j >= count)
+            {
+                break;
+            }
+            if (polygon.index(points[i]) == SIZE_MAX || polygon.index(points[j]) == SIZE_MAX)
+            {
+                continue;
+            }
+
+            if (points[i].value > 0 && points[j].value > 0)
+            {
+                points.erase(points.begin() + j);
+                --count;
+            }
+            else if (points[i].value < 0 && points[j].value < 0)
+            {
+                points.erase(points.begin() + i);
+                --count;
+            }
+            else
+            {
+                points.erase(points.begin() + j--);
+                points.erase(points.begin() + i);
+                --count;
+                --count;
+            }
+        }
+
+        return std::count_if(points.begin(), points.end(), [](const Geo::MarkedPoint &p) { return p.value != 0; }) % 2 == 1;
     }
     else
     {
