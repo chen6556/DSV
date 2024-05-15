@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="/">
+    <file>icons/split_btn.svg</file>
+    <file>icons/combinate_btn.svg</file>
     <file>icons/connect_btn.svg</file>
     <file>icons/close_btn.svg</file>
     <file>DSV2.ico</file>

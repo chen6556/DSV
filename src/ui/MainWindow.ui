@@ -147,10 +147,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents_2">
            <property name="geometry">
             <rect>
-             <x>-6</x>
+             <x>0</x>
              <y>0</y>
              <width>120</width>
-             <height>760</height>
+             <height>624</height>
             </rect>
            </property>
            <property name="maximumSize">
@@ -251,140 +251,149 @@ QPushButton:pressed
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="line_btn">
-              <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
+             <layout class="QGridLayout" name="gridLayout_2">
+              <property name="spacing">
+               <number>2</number>
               </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}</string>
-              </property>
-              <property name="icon">
-               <iconset resource="../resource/Icons.qrc">
-                <normaloff>:/icons/polyline_btn.svg</normaloff>:/icons/polyline_btn.svg</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="rect_btn">
-              <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}</string>
-              </property>
-              <property name="icon">
-               <iconset resource="../resource/Icons.qrc">
-                <normaloff>:/icons/rectangle_btn.svg</normaloff>:/icons/rectangle_btn.svg</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="circle_btn">
-              <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}</string>
-              </property>
-              <property name="icon">
-               <iconset resource="../resource/Icons.qrc">
-                <normaloff>:/icons/circle_btn.svg</normaloff>:/icons/circle_btn.svg</iconset>
-              </property>
-              <property name="iconSize">
-               <size>
-                <width>24</width>
-                <height>24</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_4">
-              <item>
-               <widget class="QSpinBox" name="curve_sbx">
+              <item row="1" column="0">
+               <widget class="QPushButton" name="text_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
                 <property name="font">
                  <font>
-                  <pointsize>10</pointsize>
+                  <pointsize>12</pointsize>
                  </font>
                 </property>
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
                 <property name="styleSheet">
-                 <string notr="true">background-color: rgb(70, 70, 71);</string>
+                 <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
                 </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
-                </property>
-                <property name="minimum">
-                 <number>2</number>
-                </property>
-                <property name="maximum">
-                 <number>5</number>
-                </property>
-                <property name="value">
-                 <number>3</number>
+                <property name="text">
+                 <string>Text</string>
                 </property>
                </widget>
               </item>
-              <item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="line_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/polyline_btn.svg</normaloff>:/icons/polyline_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QPushButton" name="rect_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/rectangle_btn.svg</normaloff>:/icons/rectangle_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QPushButton" name="circle_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/circle_btn.svg</normaloff>:/icons/circle_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
                <widget class="QPushButton" name="curve_btn">
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
@@ -416,37 +425,43 @@ QPushButton:pressed
                 </property>
                </widget>
               </item>
+              <item row="2" column="0">
+               <widget class="QSpinBox" name="curve_sbx">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">background-color: rgb(70, 70, 71);</string>
+                </property>
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
+                <property name="minimum">
+                 <number>2</number>
+                </property>
+                <property name="maximum">
+                 <number>5</number>
+                </property>
+                <property name="value">
+                 <number>3</number>
+                </property>
+               </widget>
+              </item>
              </layout>
-            </item>
-            <item>
-             <widget class="QPushButton" name="text_btn">
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
-              <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}</string>
-              </property>
-              <property name="text">
-               <string>Text</string>
-              </property>
-             </widget>
             </item>
             <item>
              <widget class="Line" name="line_2">
@@ -456,17 +471,17 @@ QPushButton:pressed
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="connect_btn">
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
+             <layout class="QGridLayout" name="gridLayout">
+              <property name="spacing">
+               <number>2</number>
               </property>
-              <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
+              <item row="0" column="0">
+               <widget class="QPushButton" name="close_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
 {
 	color:rgb(230, 230, 230);
 	background-color:rgb(70, 70, 71);
@@ -479,24 +494,26 @@ QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
 }</string>
-              </property>
-              <property name="text">
-               <string>Close</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="close_btn">
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
-              <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/connect_btn.svg</normaloff>:/icons/connect_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="connect_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
 {
 	color:rgb(230, 230, 230);
 	background-color:rgb(70, 70, 71);
@@ -509,24 +526,26 @@ QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
 }</string>
-              </property>
-              <property name="text">
-               <string>Connect</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="combinate_btn">
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
-              <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/close_btn.svg</normaloff>:/icons/close_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QPushButton" name="combinate_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
 {
 	color:rgb(230, 230, 230);
 	background-color:rgb(70, 70, 71);
@@ -539,24 +558,31 @@ QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
 }</string>
-              </property>
-              <property name="text">
-               <string>Combinate</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="split_btn">
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
-              <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/combinate_btn.svg</normaloff>:/icons/combinate_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QPushButton" name="split_btn">
+                <property name="font">
+                 <font>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
 {
 	color:rgb(230, 230, 230);
 	background-color:rgb(70, 70, 71);
@@ -569,11 +595,20 @@ QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
 }</string>
-              </property>
-              <property name="text">
-               <string>Split</string>
-              </property>
-             </widget>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/split_btn.svg</normaloff>:/icons/split_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
              <widget class="Line" name="line_3">
