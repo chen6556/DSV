@@ -1,0 +1,12 @@
+<RCC>
+  <qresource prefix="/">
+    <file>icons/connect_btn.svg</file>
+    <file>icons/close_btn.svg</file>
+    <file>DSV2.ico</file>
+    <file>icons/curve_btn.svg</file>
+    <file>icons/polyline_btn.svg</file>
+    <file>icons/measure_btn.svg</file>
+    <file>icons/rectangle_btn.svg</file>
+    <file>icons/circle_btn.svg</file>
+  </qresource>
+</RCC>

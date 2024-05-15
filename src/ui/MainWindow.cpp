@@ -44,9 +44,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::init()
 {
-    setWindowIcon(QIcon("./DSV2.ico"));
-    setAcceptDrops(true);
-
     GlobalSetting::get_instance()->load_ui(ui);
 
     ui->horizontalLayout->addWidget(&_painter);

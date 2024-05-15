@@ -24,8 +24,15 @@
   <property name="focusPolicy">
    <enum>Qt::StrongFocus</enum>
   </property>
+  <property name="acceptDrops">
+   <bool>true</bool>
+  </property>
   <property name="windowTitle">
    <string>DSV 0.5.0</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="../resource/Icons.qrc">
+    <normaloff>:/DSV2.ico</normaloff>:/DSV2.ico</iconset>
   </property>
   <property name="styleSheet">
    <string notr="true">QMainWindow#MainWindow{background-color: rgb(38, 38, 38)};</string>
@@ -143,7 +150,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
              <x>-6</x>
              <y>0</y>
              <width>120</width>
-             <height>662</height>
+             <height>760</height>
             </rect>
            </property>
            <property name="maximumSize">
@@ -206,11 +213,6 @@ QPushButton:pressed
             </item>
             <item>
              <widget class="QPushButton" name="measure_btn">
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
               </property>
@@ -229,8 +231,15 @@ QPushButton:pressed
 	background-color:rgb(0, 85, 127);
 }</string>
               </property>
-              <property name="text">
-               <string>Length</string>
+              <property name="icon">
+               <iconset resource="../resource/Icons.qrc">
+                <normaloff>:/icons/measure_btn.svg</normaloff>:/icons/measure_btn.svg</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>28</width>
+                <height>20</height>
+               </size>
               </property>
              </widget>
             </item>
@@ -243,11 +252,6 @@ QPushButton:pressed
             </item>
             <item>
              <widget class="QPushButton" name="line_btn">
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
               </property>
@@ -266,18 +270,20 @@ QPushButton:pressed
 	background-color:rgb(0, 85, 127);
 }</string>
               </property>
-              <property name="text">
-               <string>Polyline</string>
+              <property name="icon">
+               <iconset resource="../resource/Icons.qrc">
+                <normaloff>:/icons/polyline_btn.svg</normaloff>:/icons/polyline_btn.svg</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>24</width>
+                <height>24</height>
+               </size>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="rect_btn">
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
               </property>
@@ -296,18 +302,20 @@ QPushButton:pressed
 	background-color:rgb(0, 85, 127);
 }</string>
               </property>
-              <property name="text">
-               <string>Rectangle</string>
+              <property name="icon">
+               <iconset resource="../resource/Icons.qrc">
+                <normaloff>:/icons/rectangle_btn.svg</normaloff>:/icons/rectangle_btn.svg</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>24</width>
+                <height>24</height>
+               </size>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="circle_btn">
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
               </property>
@@ -326,8 +334,15 @@ QPushButton:pressed
 	background-color:rgb(0, 85, 127);
 }</string>
               </property>
-              <property name="text">
-               <string>Circle</string>
+              <property name="icon">
+               <iconset resource="../resource/Icons.qrc">
+                <normaloff>:/icons/circle_btn.svg</normaloff>:/icons/circle_btn.svg</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>24</width>
+                <height>24</height>
+               </size>
               </property>
              </widget>
             </item>
@@ -371,11 +386,6 @@ QPushButton:pressed
               </item>
               <item>
                <widget class="QPushButton" name="curve_btn">
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
@@ -394,8 +404,15 @@ QPushButton:pressed
 	background-color:rgb(0, 85, 127);
 }</string>
                 </property>
-                <property name="text">
-                 <string>Curve</string>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/curve_btn.svg</normaloff>:/icons/curve_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>20</height>
+                 </size>
                 </property>
                </widget>
               </item>
@@ -464,7 +481,7 @@ QPushButton:pressed
 }</string>
               </property>
               <property name="text">
-               <string>Connect</string>
+               <string>Close</string>
               </property>
              </widget>
             </item>
@@ -494,7 +511,7 @@ QPushButton:pressed
 }</string>
               </property>
               <property name="text">
-               <string>Close</string>
+               <string>Connect</string>
               </property>
              </widget>
             </item>
@@ -1045,10 +1062,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>-8</x>
+             <x>-41</x>
              <y>0</y>
-             <width>106</width>
-             <height>372</height>
+             <width>135</width>
+             <height>407</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1693,7 +1710,7 @@ QPushButton:pressed
      <x>0</x>
      <y>0</y>
      <width>1008</width>
-     <height>22</height>
+     <height>26</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -1860,7 +1877,9 @@ color:rgb(230, 230, 230);</string>
    </property>
   </action>
  </widget>
- <resources/>
+ <resources>
+  <include location="../resource/Icons.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>open_file</sender>
