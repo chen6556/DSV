@@ -1,0 +1,28 @@
+<mxfile host="Electron" modified="2024-05-15T08:27:40.583Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/24.2.5 Chrome/120.0.6099.109 Electron/28.1.0 Safari/537.36" etag="-MoNXUyIabdn1Jmho-OP" version="24.2.5" type="device">
+  <diagram name="第 1 页" id="ewl9boTtj5eG1xmZE2dz">
+    <mxGraphModel dx="98" dy="62" grid="1" gridSize="3.937" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="48" pageHeight="48" background="#464647" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="h4AXBYLEM3Z7pXykpD9Z-1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#E6E6E6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="3.94" y="15.75" width="27.43" height="27.56" as="geometry" />
+        </mxCell>
+        <mxCell id="h4AXBYLEM3Z7pXykpD9Z-3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#E6E6E6;strokeWidth=2;" parent="1" vertex="1">
+          <mxGeometry x="15.75" y="3.94" width="27.56" height="27.31" as="geometry" />
+        </mxCell>
+        <mxCell id="U6Gxv-2Gs-mFBV8ipevQ-1" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#E6E6E6;" vertex="1" parent="1">
+          <mxGeometry x="15.75" y="4" width="27.56" height="11.75" as="geometry" />
+        </mxCell>
+        <mxCell id="U6Gxv-2Gs-mFBV8ipevQ-2" value="" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#E6E6E6;fillColor=#E6E6E6;" vertex="1" parent="1">
+          <mxGeometry x="31.37" y="14.68" width="11.94" height="16.57" as="geometry" />
+        </mxCell>
+        <mxCell id="U6Gxv-2Gs-mFBV8ipevQ-3" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#E6E6E6;strokeColor=#E6E6E6;" vertex="1" parent="1">
+          <mxGeometry x="3.8070000000000004" y="31.247" width="27.56" height="11.75" as="geometry" />
+        </mxCell>
+        <mxCell id="U6Gxv-2Gs-mFBV8ipevQ-4" value="" style="rounded=0;whiteSpace=wrap;html=1;strokeColor=#E6E6E6;fillColor=#E6E6E6;" vertex="1" parent="1">
+          <mxGeometry x="3.937000000000001" y="15.747" width="11.94" height="16.57" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

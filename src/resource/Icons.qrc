@@ -1,5 +1,8 @@
 <RCC>
   <qresource prefix="/">
+    <file>icons/difference_btn.svg</file>
+    <file>icons/intersection_btn.svg</file>
+    <file>icons/union_btn.svg</file>
     <file>icons/split_btn.svg</file>
     <file>icons/combinate_btn.svg</file>
     <file>icons/connect_btn.svg</file>

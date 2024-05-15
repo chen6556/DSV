@@ -1196,10 +1196,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>-41</x>
+             <x>-15</x>
              <y>0</y>
              <width>135</width>
-             <height>407</height>
+             <height>624</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1731,13 +1731,11 @@ QPushButton:pressed
         </item>
         <item>
          <widget class="QPushButton" name="union_btn">
-          <property name="font">
-           <font>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
           <property name="focusPolicy">
            <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="toolTip">
+           <string>Union</string>
           </property>
           <property name="styleSheet">
            <string notr="true">QPushButton
@@ -1752,22 +1750,33 @@ QPushButton:hover
 QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
 }</string>
           </property>
-          <property name="text">
-           <string>Union</string>
+          <property name="icon">
+           <iconset resource="../resource/Icons.qrc">
+            <normaloff>:/icons/union_btn.svg</normaloff>:/icons/union_btn.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="intersection_btn">
-          <property name="font">
-           <font>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
           <property name="focusPolicy">
            <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="toolTip">
+           <string>Intersection</string>
           </property>
           <property name="styleSheet">
            <string notr="true">QPushButton
@@ -1782,22 +1791,33 @@ QPushButton:hover
 QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
 }</string>
           </property>
-          <property name="text">
-           <string>Intersection</string>
+          <property name="icon">
+           <iconset resource="../resource/Icons.qrc">
+            <normaloff>:/icons/intersection_btn.svg</normaloff>:/icons/intersection_btn.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
           </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="difference_btn">
-          <property name="font">
-           <font>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
           <property name="focusPolicy">
            <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="toolTip">
+           <string>Difference</string>
           </property>
           <property name="styleSheet">
            <string notr="true">QPushButton
@@ -1812,10 +1832,23 @@ QPushButton:hover
 QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
 }</string>
           </property>
-          <property name="text">
-           <string>Difference</string>
+          <property name="icon">
+           <iconset resource="../resource/Icons.qrc">
+            <normaloff>:/icons/difference_btn.svg</normaloff>:/icons/difference_btn.svg</iconset>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
           </property>
          </widget>
         </item>
