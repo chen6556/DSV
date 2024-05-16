@@ -389,7 +389,6 @@ void MainWindow::refresh_tool_label(const Canvas::Tool tool)
     default:
         ui->current_tool->clear();
         ui->array_tool->clear();
-        ui->boolean_tool->clear();
         break;
     }
 }
@@ -418,7 +417,7 @@ void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
     case CMDWidget::CMD::BOOLEAN_CMD:
         return ui->tool_widget->setCurrentIndex(2);
     case CMDWidget::CMD::DIFFERENCE_CMD:
-        ui->boolean_tool->setText("Difference");
+        ui->current_tool->setText("Difference");
         break;
     default:
         break;
@@ -593,11 +592,6 @@ void MainWindow::ring_array()
 
 
 
-void MainWindow::to_boolean_page()
-{
-    ui->tool_widget->setCurrentIndex(2);
-}
-
 void MainWindow::polygon_union()
 {
     Container *container0 = nullptr, *container1 = nullptr;
@@ -654,7 +648,7 @@ void MainWindow::polygon_intersection()
 
 void MainWindow::polygon_difference()
 {
-    ui->boolean_tool->setText("Difference");
+    ui->current_tool->setText("Difference");
     _painter.set_operation(Canvas::Operation::POLYGONDIFFERENCE);
 }
 

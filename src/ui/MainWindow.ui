@@ -745,6 +745,351 @@ QToolTip
               <property name="spacing">
                <number>2</number>
               </property>
+              <item row="5" column="1">
+               <widget class="QPushButton" name="offset_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Offset</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/offset_btn.svg</normaloff>:/icons/offset_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QPushButton" name="scale_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Scale</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/scale_btn.svg</normaloff>:/icons/scale_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QPushButton" name="mirror_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Mirror</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/mirror_btn.svg</normaloff>:/icons/mirror_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QDoubleSpinBox" name="offset_sbx">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                 </font>
+                </property>
+                <property name="toolTip">
+                 <string>Offset Distance</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QDoubleSpinBox {background-color: rgb(70, 70, 71);}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
+                </property>
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
+                <property name="minimum">
+                 <double>-100000000000000005366162204393472.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>1000000000000000000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="rotate_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Rotate</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/rotate_btn.svg</normaloff>:/icons/rotate_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QPushButton" name="flipy_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Flip Y</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/flipy_btn.svg</normaloff>:/icons/flipy_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QPushButton" name="union_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Union</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/union_btn.svg</normaloff>:/icons/union_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QDoubleSpinBox" name="scale_sbx">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                 </font>
+                </property>
+                <property name="toolTip">
+                 <string>Scale Rate</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QDoubleSpinBox {background-color: rgb(70, 70, 71);}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
+                </property>
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
+                <property name="minimum">
+                 <double>-10.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>10.000000000000000</double>
+                </property>
+                <property name="value">
+                 <double>1.000000000000000</double>
+                </property>
+               </widget>
+              </item>
               <item row="0" column="0">
                <widget class="QSpinBox" name="rotate_angle">
                 <property name="sizePolicy">
@@ -796,180 +1141,6 @@ QToolTip
                 </property>
                </widget>
               </item>
-              <item row="3" column="1">
-               <widget class="QPushButton" name="scale_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Scale</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/scale_btn.svg</normaloff>:/icons/scale_btn.svg</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QPushButton" name="rotate_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Rotate</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/rotate_btn.svg</normaloff>:/icons/rotate_btn.svg</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="0">
-               <widget class="QDoubleSpinBox" name="scale_sbx">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>51</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="toolTip">
-                 <string>Scale Rate</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QDoubleSpinBox {background-color: rgb(70, 70, 71);}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
-                </property>
-                <property name="minimum">
-                 <double>-10.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>10.000000000000000</double>
-                </property>
-                <property name="value">
-                 <double>1.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QPushButton" name="flipy_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Flip Y</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/flipy_btn.svg</normaloff>:/icons/flipy_btn.svg</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
               <item row="1" column="1">
                <widget class="QPushButton" name="flipx_btn">
                 <property name="focusPolicy">
@@ -1011,13 +1182,13 @@ QToolTip
                 </property>
                </widget>
               </item>
-              <item row="2" column="1">
-               <widget class="QPushButton" name="mirror_btn">
+              <item row="3" column="1">
+               <widget class="QPushButton" name="intersection_btn">
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Mirror</string>
+                 <string>Intersection</string>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">QPushButton
@@ -1042,7 +1213,7 @@ QToolTip
                 </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/mirror_btn.svg</normaloff>:/icons/mirror_btn.svg</iconset>
+                  <normaloff>:/icons/intersection_btn.svg</normaloff>:/icons/intersection_btn.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -1052,13 +1223,13 @@ QToolTip
                 </property>
                </widget>
               </item>
-              <item row="4" column="1">
-               <widget class="QPushButton" name="offset_btn">
+              <item row="3" column="0">
+               <widget class="QPushButton" name="difference_btn">
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Offset</string>
+                 <string>Difference</string>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">QPushButton
@@ -1083,61 +1254,13 @@ QToolTip
                 </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/offset_btn.svg</normaloff>:/icons/offset_btn.svg</iconset>
+                  <normaloff>:/icons/difference_btn.svg</normaloff>:/icons/difference_btn.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
                   <width>24</width>
                   <height>24</height>
                  </size>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="0">
-               <widget class="QDoubleSpinBox" name="offset_sbx">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>51</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="toolTip">
-                 <string>Offset Distance</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QDoubleSpinBox {background-color: rgb(70, 70, 71);}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
-                </property>
-                <property name="minimum">
-                 <double>-100000000000000005366162204393472.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>1000000000000000000000.000000000000000</double>
                 </property>
                </widget>
               </item>
@@ -1170,36 +1293,6 @@ QPushButton:pressed
               </property>
               <property name="text">
                <string>Array</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QPushButton" name="boolean_btn">
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
-              <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}</string>
-              </property>
-              <property name="text">
-               <string>Boolean</string>
               </property>
              </widget>
             </item>
@@ -1298,10 +1391,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>-15</x>
+             <x>-41</x>
              <y>0</y>
              <width>135</width>
-             <height>624</height>
+             <height>412</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1624,13 +1717,11 @@ QPushButton:pressed
             </item>
             <item>
              <widget class="QPushButton" name="line_array_btn">
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
+              </property>
+              <property name="toolTip">
+               <string>Line Array</string>
               </property>
               <property name="styleSheet">
                <string notr="true">QPushButton
@@ -1645,10 +1736,23 @@ QPushButton:hover
 QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
 }</string>
               </property>
-              <property name="text">
-               <string>Line Array</string>
+              <property name="icon">
+               <iconset resource="../resource/Icons.qrc">
+                <normaloff>:/icons/line_array_btn.svg</normaloff>:/icons/line_array_btn.svg</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>24</width>
+                <height>24</height>
+               </size>
               </property>
              </widget>
             </item>
@@ -1745,6 +1849,9 @@ QPushButton:pressed
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
               </property>
+              <property name="toolTip">
+               <string>Ring Array</string>
+              </property>
               <property name="styleSheet">
                <string notr="true">QPushButton
 {
@@ -1758,10 +1865,23 @@ QPushButton:hover
 QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
 }</string>
               </property>
-              <property name="text">
-               <string>Ring Array</string>
+              <property name="icon">
+               <iconset resource="../resource/Icons.qrc">
+                <normaloff>:/icons/ring_array_btn.svg</normaloff>:/icons/ring_array_btn.svg</iconset>
+              </property>
+              <property name="iconSize">
+               <size>
+                <width>24</width>
+                <height>24</height>
+               </size>
               </property>
              </widget>
             </item>
@@ -1781,191 +1901,6 @@ QPushButton:pressed
            </layout>
           </widget>
          </widget>
-        </item>
-       </layout>
-      </widget>
-      <widget class="QWidget" name="BooleanPage">
-       <layout class="QVBoxLayout" name="verticalLayout_5">
-        <item>
-         <widget class="QLabel" name="boolean_tool">
-          <property name="font">
-           <font>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string/>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="back_btn_1">
-          <property name="font">
-           <font>
-            <pointsize>10</pointsize>
-           </font>
-          </property>
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}</string>
-          </property>
-          <property name="text">
-           <string>←</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="union_btn">
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
-          </property>
-          <property name="toolTip">
-           <string>Union</string>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-          </property>
-          <property name="icon">
-           <iconset resource="../resource/Icons.qrc">
-            <normaloff>:/icons/union_btn.svg</normaloff>:/icons/union_btn.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="intersection_btn">
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
-          </property>
-          <property name="toolTip">
-           <string>Intersection</string>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-          </property>
-          <property name="icon">
-           <iconset resource="../resource/Icons.qrc">
-            <normaloff>:/icons/intersection_btn.svg</normaloff>:/icons/intersection_btn.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="difference_btn">
-          <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
-          </property>
-          <property name="toolTip">
-           <string>Difference</string>
-          </property>
-          <property name="styleSheet">
-           <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-          </property>
-          <property name="icon">
-           <iconset resource="../resource/Icons.qrc">
-            <normaloff>:/icons/difference_btn.svg</normaloff>:/icons/difference_btn.svg</iconset>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="verticalSpacer_3">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>40</height>
-           </size>
-          </property>
-         </spacer>
         </item>
        </layout>
       </widget>
@@ -2439,54 +2374,6 @@ color:rgb(230, 230, 230);</string>
    </hints>
   </connection>
   <connection>
-   <sender>back_btn_1</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>to_main_page()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>498</x>
-     <y>315</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>503</x>
-     <y>314</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>boolean_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>to_boolean_page()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>501</x>
-     <y>632</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>503</x>
-     <y>349</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>union_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>polygon_union()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>498</x>
-     <y>83</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>503</x>
-     <y>349</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>intersection_btn</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
@@ -2550,6 +2437,22 @@ color:rgb(230, 230, 230);</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>union_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>polygon_union()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>528</x>
+     <y>472</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -2570,7 +2473,6 @@ color:rgb(230, 230, 230);</string>
   <slot>close_file()</slot>
   <slot>show_data_panel()</slot>
   <slot>offset()</slot>
-  <slot>to_boolean_page()</slot>
   <slot>polygon_union()</slot>
   <slot>polygon_intersection()</slot>
   <slot>polygon_difference()</slot>

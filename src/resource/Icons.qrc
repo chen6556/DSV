@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="/">
+    <file>icons/ring_array_btn.svg</file>
+    <file>icons/line_array_btn.svg</file>
     <file>icons/offset_btn.svg</file>
     <file>icons/scale_btn.svg</file>
     <file>icons/flipx_btn.svg</file>
