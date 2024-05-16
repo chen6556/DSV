@@ -54,7 +54,7 @@ color: rgb(230, 230, 230);</string>
         </font>
        </property>
        <property name="text">
-        <string>Point</string>
+        <string>Points</string>
        </property>
       </widget>
      </item>
@@ -68,7 +68,7 @@ color: rgb(230, 230, 230);</string>
      <item row="5" column="0">
       <widget class="QLabel" name="label_6">
        <property name="text">
-        <string>Text</string>
+        <string>Texts</string>
        </property>
       </widget>
      </item>
@@ -89,14 +89,14 @@ color: rgb(230, 230, 230);</string>
      <item row="2" column="0">
       <widget class="QLabel" name="label_3">
        <property name="text">
-        <string>Bezier</string>
+        <string>Beziers</string>
        </property>
       </widget>
      </item>
      <item row="1" column="0">
       <widget class="QLabel" name="label_2">
        <property name="text">
-        <string>Polyline</string>
+        <string>Polylines</string>
        </property>
       </widget>
      </item>
@@ -110,14 +110,14 @@ color: rgb(230, 230, 230);</string>
      <item row="3" column="0">
       <widget class="QLabel" name="label_4">
        <property name="text">
-        <string>Polygon</string>
+        <string>Polygons</string>
        </property>
       </widget>
      </item>
      <item row="4" column="0">
       <widget class="QLabel" name="label_5">
        <property name="text">
-        <string>Circle</string>
+        <string>Circles</string>
        </property>
       </widget>
      </item>

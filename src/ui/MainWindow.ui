@@ -150,7 +150,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
              <x>0</x>
              <y>0</y>
              <width>120</width>
-             <height>624</height>
+             <height>639</height>
             </rect>
            </property>
            <property name="maximumSize">
@@ -1391,10 +1391,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>-41</x>
+             <x>-12</x>
              <y>0</y>
-             <width>135</width>
-             <height>412</height>
+             <width>106</width>
+             <height>387</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1914,7 +1914,7 @@ QToolTip
      <x>0</x>
      <y>0</y>
      <width>1008</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -1944,7 +1944,7 @@ selection-color: rgb(230, 230, 230);
 selection-background-color: rgb(0, 85, 127);</string>
     </property>
     <property name="title">
-     <string>file</string>
+     <string>File</string>
     </property>
     <addaction name="open_file"/>
     <addaction name="close_file"/>
@@ -1962,7 +1962,7 @@ selection-color: rgb(230, 230, 230);
 selection-background-color: rgb(0, 85, 127);</string>
     </property>
     <property name="title">
-     <string>setting</string>
+     <string>Settings</string>
     </property>
     <addaction name="show_cmd_line"/>
     <addaction name="show_origin"/>
@@ -1990,17 +1990,17 @@ color:rgb(230, 230, 230);</string>
   </widget>
   <action name="open_file">
    <property name="text">
-    <string>open</string>
+    <string>Open</string>
    </property>
   </action>
   <action name="save_file">
    <property name="text">
-    <string>save</string>
+    <string>Save</string>
    </property>
   </action>
   <action name="saveas_file">
    <property name="text">
-    <string>save as</string>
+    <string>Save as</string>
    </property>
   </action>
   <action name="auto_save">
@@ -2008,7 +2008,7 @@ color:rgb(230, 230, 230);</string>
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>auto save</string>
+    <string>Auto save</string>
    </property>
   </action>
   <action name="auto_layering">
@@ -2019,7 +2019,7 @@ color:rgb(230, 230, 230);</string>
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>auto layering</string>
+    <string>Auto layering</string>
    </property>
   </action>
   <action name="remember_file_type">
@@ -2030,7 +2030,7 @@ color:rgb(230, 230, 230);</string>
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>remeber file type</string>
+    <string>Remeber file type</string>
    </property>
   </action>
   <action name="auto_aligning">
@@ -2038,12 +2038,12 @@ color:rgb(230, 230, 230);</string>
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>auto aligning</string>
+    <string>Auto align</string>
    </property>
   </action>
   <action name="actionadvanced">
    <property name="text">
-    <string>advanced</string>
+    <string>Advanced Settings</string>
    </property>
   </action>
   <action name="show_origin">
@@ -2054,7 +2054,7 @@ color:rgb(230, 230, 230);</string>
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>show origin</string>
+    <string>Show origin</string>
    </property>
   </action>
   <action name="show_cmd_line">
@@ -2062,22 +2062,22 @@ color:rgb(230, 230, 230);</string>
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>show cmd line</string>
+    <string>Show cmd line</string>
    </property>
   </action>
   <action name="close_file">
    <property name="text">
-    <string>close</string>
+    <string>Close</string>
    </property>
   </action>
   <action name="performace_panel">
    <property name="text">
-    <string>data</string>
+    <string>Data</string>
    </property>
   </action>
   <action name="append_file">
    <property name="text">
-    <string>append</string>
+    <string>Append</string>
    </property>
   </action>
  </widget>
