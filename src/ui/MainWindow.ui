@@ -741,8 +741,11 @@ QToolTip
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_2">
-              <item>
+             <layout class="QGridLayout" name="gridLayout_3">
+              <property name="spacing">
+               <number>2</number>
+              </property>
+              <item row="0" column="0">
                <widget class="QSpinBox" name="rotate_angle">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -750,13 +753,28 @@ QToolTip
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
                 <property name="font">
                  <font>
-                  <pointsize>10</pointsize>
+                  <pointsize>12</pointsize>
                  </font>
                 </property>
+                <property name="toolTip">
+                 <string>Rotate Degree</string>
+                </property>
                 <property name="styleSheet">
-                 <string notr="true">background-color: rgb(70, 70, 71);</string>
+                 <string notr="true">QSpinBox {background-color: rgb(70, 70, 71);}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
@@ -778,15 +796,13 @@ QToolTip
                 </property>
                </widget>
               </item>
-              <item>
-               <widget class="QPushButton" name="rotate_btn">
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
+              <item row="3" column="1">
+               <widget class="QPushButton" name="scale_btn">
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Scale</string>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">QPushButton
@@ -801,27 +817,34 @@ QPushButton:hover
 QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
 }</string>
                 </property>
-                <property name="text">
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/scale_btn.svg</normaloff>:/icons/scale_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="rotate_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
                  <string>Rotate</string>
                 </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_3">
-              <item>
-               <widget class="QPushButton" name="flipy_btn">
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
                 <property name="styleSheet">
                  <string notr="true">QPushButton
 {
@@ -835,78 +858,27 @@ QPushButton:hover
 QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
 }</string>
                 </property>
-                <property name="text">
-                 <string>Flip Y</string>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/rotate_btn.svg</normaloff>:/icons/rotate_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
                 </property>
                </widget>
               </item>
-              <item>
-               <widget class="QPushButton" name="flipx_btn">
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}</string>
-                </property>
-                <property name="text">
-                 <string>Flip X</string>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
-             <widget class="QPushButton" name="mirror_btn">
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
-              <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}</string>
-              </property>
-              <property name="text">
-               <string>Mirror</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_9">
-              <item>
+              <item row="3" column="0">
                <widget class="QDoubleSpinBox" name="scale_sbx">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -914,13 +886,28 @@ QPushButton:pressed
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
                 <property name="font">
                  <font>
-                  <pointsize>10</pointsize>
+                  <pointsize>12</pointsize>
                  </font>
                 </property>
+                <property name="toolTip">
+                 <string>Scale Rate</string>
+                </property>
                 <property name="styleSheet">
-                 <string notr="true">background-color: rgb(70, 70, 71);</string>
+                 <string notr="true">QDoubleSpinBox {background-color: rgb(70, 70, 71);}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
@@ -942,15 +929,13 @@ QPushButton:pressed
                 </property>
                </widget>
               </item>
-              <item>
-               <widget class="QPushButton" name="scale_btn">
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
+              <item row="1" column="0">
+               <widget class="QPushButton" name="flipy_btn">
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Flip Y</string>
                 </property>
                 <property name="styleSheet">
                  <string notr="true">QPushButton
@@ -965,18 +950,150 @@ QPushButton:hover
 QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
 }</string>
                 </property>
-                <property name="text">
-                 <string>Scale</string>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/flipy_btn.svg</normaloff>:/icons/flipy_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
                 </property>
                </widget>
               </item>
-             </layout>
-            </item>
-            <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_8">
-              <item>
+              <item row="1" column="1">
+               <widget class="QPushButton" name="flipx_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Flip X</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/flipx_btn.svg</normaloff>:/icons/flipx_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QPushButton" name="mirror_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Mirror</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/mirror_btn.svg</normaloff>:/icons/mirror_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QPushButton" name="offset_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Offset</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/offset_btn.svg</normaloff>:/icons/offset_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
                <widget class="QDoubleSpinBox" name="offset_sbx">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -984,13 +1101,28 @@ QPushButton:pressed
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
                 <property name="font">
                  <font>
-                  <pointsize>10</pointsize>
+                  <pointsize>12</pointsize>
                  </font>
                 </property>
+                <property name="toolTip">
+                 <string>Offset Distance</string>
+                </property>
                 <property name="styleSheet">
-                 <string notr="true">background-color: rgb(70, 70, 71);</string>
+                 <string notr="true">QDoubleSpinBox {background-color: rgb(70, 70, 71);}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
@@ -1006,36 +1138,6 @@ QPushButton:pressed
                 </property>
                 <property name="maximum">
                  <double>1000000000000000000000.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="offset_btn">
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}</string>
-                </property>
-                <property name="text">
-                 <string>Offset</string>
                 </property>
                </widget>
               </item>

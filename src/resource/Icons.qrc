@@ -1,5 +1,11 @@
 <RCC>
   <qresource prefix="/">
+    <file>icons/offset_btn.svg</file>
+    <file>icons/scale_btn.svg</file>
+    <file>icons/flipx_btn.svg</file>
+    <file>icons/mirror_btn.svg</file>
+    <file>icons/flipy_btn.svg</file>
+    <file>icons/rotate_btn.svg</file>
     <file>icons/difference_btn.svg</file>
     <file>icons/intersection_btn.svg</file>
     <file>icons/union_btn.svg</file>
