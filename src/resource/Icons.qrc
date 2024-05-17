@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="/">
+    <file>icons/DSV_logo.png</file>
     <file>icons/ring_array_btn.svg</file>
     <file>icons/line_array_btn.svg</file>
     <file>icons/offset_btn.svg</file>
