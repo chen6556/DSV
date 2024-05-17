@@ -544,47 +544,6 @@ QToolTip
                  <enum>Qt::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Connect</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/connect_btn.svg</normaloff>:/icons/connect_btn.svg</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QPushButton" name="connect_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
                  <string>Close</string>
                 </property>
                 <property name="styleSheet">
@@ -611,6 +570,47 @@ QToolTip
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
                   <normaloff>:/icons/close_btn.svg</normaloff>:/icons/close_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="connect_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Connect</string>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/connect_btn.svg</normaloff>:/icons/connect_btn.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -1394,7 +1394,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
              <x>-12</x>
              <y>0</y>
              <width>106</width>
-             <height>379</height>
+             <height>387</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
