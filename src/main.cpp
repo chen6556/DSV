@@ -11,6 +11,7 @@ int main(int argc, char *argv[])
 
     QSplashScreen splash(QPixmap(":/icons/DSV_logo.png"));
     splash.show();
+    a.processEvents();
 
     MainWindow w;
 
