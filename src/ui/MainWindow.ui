@@ -242,7 +242,7 @@ QToolTip
               </property>
               <property name="icon">
                <iconset resource="../resource/Icons.qrc">
-                <normaloff>:/icons/measure_btn.svg</normaloff>:/icons/measure_btn.svg</iconset>
+                <normaloff>:/icons/measure_btn.png</normaloff>:/icons/measure_btn.png</iconset>
               </property>
               <property name="iconSize">
                <size>
