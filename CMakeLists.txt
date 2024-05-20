@@ -8,6 +8,7 @@ if (MSVC)
     add_compile_options("/utf-8")
     add_compile_options("/arch:AVX2")
     add_compile_options("/GL")
+    add_compile_options("/MP")
     add_link_options("/LTCG")
 endif()
 
