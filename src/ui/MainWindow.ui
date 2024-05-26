@@ -78,6 +78,29 @@ background:rgb(37, 37, 38)</string>
        <number>0</number>
       </property>
       <widget class="QWidget" name="MainPage">
+       <property name="styleSheet">
+        <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+QSpinBox {background-color: rgb(70, 70, 71);}
+QDoubleSpinBox {background-color: rgb(70, 70, 71);}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
+       </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <property name="spacing">
          <number>0</number>
@@ -219,27 +242,6 @@ QPushButton:pressed
               <property name="toolTip">
                <string>Length</string>
               </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-              </property>
               <property name="icon">
                <iconset resource="../resource/Icons.qrc">
                 <normaloff>:/icons/measure_btn.png</normaloff>:/icons/measure_btn.png</iconset>
@@ -289,27 +291,6 @@ QToolTip
                 <property name="toolTip">
                  <string>Text</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
                 <property name="text">
                  <string>Text</string>
                 </property>
@@ -322,27 +303,6 @@ QToolTip
                 </property>
                 <property name="toolTip">
                  <string>Polyline</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
@@ -364,27 +324,6 @@ QToolTip
                 <property name="toolTip">
                  <string>Rectangle</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
                   <normaloff>:/icons/rectangle_btn.svg</normaloff>:/icons/rectangle_btn.svg</iconset>
@@ -405,27 +344,6 @@ QToolTip
                 <property name="toolTip">
                  <string>Circle</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
                   <normaloff>:/icons/circle_btn.svg</normaloff>:/icons/circle_btn.svg</iconset>
@@ -445,27 +363,6 @@ QToolTip
                 </property>
                 <property name="toolTip">
                  <string>Bezier Curve</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
@@ -494,15 +391,6 @@ QToolTip
                 </property>
                 <property name="toolTip">
                  <string>Order of Bezier Curve</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QSpinBox {background-color: rgb(70, 70, 71);}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
@@ -546,27 +434,6 @@ QToolTip
                 <property name="toolTip">
                  <string>Close</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
                   <normaloff>:/icons/close_btn.svg</normaloff>:/icons/close_btn.svg</iconset>
@@ -587,27 +454,6 @@ QToolTip
                 <property name="toolTip">
                  <string>Connect</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
                   <normaloff>:/icons/connect_btn.svg</normaloff>:/icons/connect_btn.svg</iconset>
@@ -627,27 +473,6 @@ QToolTip
                 </property>
                 <property name="toolTip">
                  <string>Combinate</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
@@ -673,27 +498,6 @@ QToolTip
                 </property>
                 <property name="toolTip">
                  <string>Split</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
@@ -753,27 +557,6 @@ QToolTip
                 <property name="toolTip">
                  <string>Offset</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
                   <normaloff>:/icons/offset_btn.svg</normaloff>:/icons/offset_btn.svg</iconset>
@@ -794,27 +577,6 @@ QToolTip
                 <property name="toolTip">
                  <string>Scale</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
                   <normaloff>:/icons/scale_btn.svg</normaloff>:/icons/scale_btn.svg</iconset>
@@ -834,27 +596,6 @@ QToolTip
                 </property>
                 <property name="toolTip">
                  <string>Mirror</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
@@ -890,15 +631,6 @@ QToolTip
                 <property name="toolTip">
                  <string>Offset Distance</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QDoubleSpinBox {background-color: rgb(70, 70, 71);}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
                 <property name="frame">
                  <bool>false</bool>
                 </property>
@@ -924,27 +656,6 @@ QToolTip
                 <property name="toolTip">
                  <string>Rotate</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
                   <normaloff>:/icons/rotate_btn.svg</normaloff>:/icons/rotate_btn.svg</iconset>
@@ -965,27 +676,6 @@ QToolTip
                 <property name="toolTip">
                  <string>Flip Y</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
                   <normaloff>:/icons/flipy_btn.svg</normaloff>:/icons/flipy_btn.svg</iconset>
@@ -1005,27 +695,6 @@ QToolTip
                 </property>
                 <property name="toolTip">
                  <string>Union</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
@@ -1060,15 +729,6 @@ QToolTip
                 </property>
                 <property name="toolTip">
                  <string>Scale Rate</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QDoubleSpinBox {background-color: rgb(70, 70, 71);}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
@@ -1112,15 +772,6 @@ QToolTip
                 <property name="toolTip">
                  <string>Rotate Degree</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QSpinBox {background-color: rgb(70, 70, 71);}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
                 <property name="frame">
                  <bool>false</bool>
                 </property>
@@ -1149,27 +800,6 @@ QToolTip
                 <property name="toolTip">
                  <string>Flip X</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
                   <normaloff>:/icons/flipx_btn.svg</normaloff>:/icons/flipx_btn.svg</iconset>
@@ -1190,27 +820,6 @@ QToolTip
                 <property name="toolTip">
                  <string>Intersection</string>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-                </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
                   <normaloff>:/icons/intersection_btn.svg</normaloff>:/icons/intersection_btn.svg</iconset>
@@ -1230,27 +839,6 @@ QToolTip
                 </property>
                 <property name="toolTip">
                  <string>Difference</string>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
@@ -1275,21 +863,6 @@ QToolTip
               </property>
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}</string>
               </property>
               <property name="text">
                <string>Array</string>
@@ -1317,7 +890,28 @@ QPushButton:pressed
       </widget>
       <widget class="QWidget" name="ArrayPage">
        <property name="styleSheet">
-        <string notr="true">color:rgb(230, 230, 230)</string>
+        <string notr="true">QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+QSpinBox {background-color: rgb(70, 70, 71);}
+QDoubleSpinBox {background-color: rgb(70, 70, 71);}
+QLabel {background-color: rgb(70, 70, 71);}
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
         <property name="spacing">
@@ -1391,10 +985,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>-12</x>
+             <x>0</x>
              <y>0</y>
-             <width>106</width>
-             <height>387</height>
+             <width>120</width>
+             <height>639</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1407,6 +1001,9 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                <font>
                 <pointsize>10</pointsize>
                </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background-color:none</string>
               </property>
               <property name="text">
                <string/>
@@ -1426,21 +1023,6 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
               </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}</string>
-              </property>
               <property name="text">
                <string>←</string>
               </property>
@@ -1458,6 +1040,9 @@ QPushButton:pressed
                <font>
                 <pointsize>10</pointsize>
                </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background-color:none</string>
               </property>
               <property name="text">
                <string>Line Array</string>
@@ -1487,9 +1072,6 @@ QPushButton:pressed
                  <font>
                   <pointsize>10</pointsize>
                  </font>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">background-color: rgb(70, 70, 71);</string>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
@@ -1524,9 +1106,6 @@ QPushButton:pressed
                   <pointsize>10</pointsize>
                  </font>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">background-color: rgb(70, 70, 71);</string>
-                </property>
                 <property name="text">
                  <string>X items:</string>
                 </property>
@@ -1557,9 +1136,6 @@ QPushButton:pressed
                  <font>
                   <pointsize>10</pointsize>
                  </font>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">background-color: rgb(70, 70, 71);</string>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
@@ -1594,9 +1170,6 @@ QPushButton:pressed
                   <pointsize>10</pointsize>
                  </font>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">background-color: rgb(70, 70, 71);</string>
-                </property>
                 <property name="text">
                  <string>Y items:</string>
                 </property>
@@ -1620,9 +1193,6 @@ QPushButton:pressed
                 <pointsize>10</pointsize>
                </font>
               </property>
-              <property name="styleSheet">
-               <string notr="true">background-color: rgb(70, 70, 71);</string>
-              </property>
               <property name="text">
                <string> X space:</string>
               </property>
@@ -1640,9 +1210,6 @@ QPushButton:pressed
                <font>
                 <pointsize>10</pointsize>
                </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">background-color: rgb(70, 70, 71);</string>
               </property>
               <property name="frame">
                <bool>false</bool>
@@ -1674,9 +1241,6 @@ QPushButton:pressed
                 <pointsize>10</pointsize>
                </font>
               </property>
-              <property name="styleSheet">
-               <string notr="true">background-color: rgb(70, 70, 71);</string>
-              </property>
               <property name="text">
                <string> Y space:</string>
               </property>
@@ -1694,9 +1258,6 @@ QPushButton:pressed
                <font>
                 <pointsize>10</pointsize>
                </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">background-color: rgb(70, 70, 71);</string>
               </property>
               <property name="frame">
                <bool>false</bool>
@@ -1723,27 +1284,6 @@ QPushButton:pressed
               <property name="toolTip">
                <string>Line Array</string>
               </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
-              </property>
               <property name="icon">
                <iconset resource="../resource/Icons.qrc">
                 <normaloff>:/icons/line_array_btn.svg</normaloff>:/icons/line_array_btn.svg</iconset>
@@ -1768,6 +1308,9 @@ QToolTip
                <font>
                 <pointsize>10</pointsize>
                </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">background-color:none</string>
               </property>
               <property name="text">
                <string>Ring Array</string>
@@ -1797,9 +1340,6 @@ QToolTip
                  <font>
                   <pointsize>10</pointsize>
                  </font>
-                </property>
-                <property name="styleSheet">
-                 <string notr="true">background-color: rgb(70, 70, 71);</string>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
@@ -1831,9 +1371,6 @@ QToolTip
                   <pointsize>10</pointsize>
                  </font>
                 </property>
-                <property name="styleSheet">
-                 <string notr="true">background-color: rgb(70, 70, 71);</string>
-                </property>
                 <property name="text">
                  <string>Items:</string>
                 </property>
@@ -1851,27 +1388,6 @@ QToolTip
               </property>
               <property name="toolTip">
                <string>Ring Array</string>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolTip
-{
-	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
-}</string>
               </property>
               <property name="icon">
                <iconset resource="../resource/Icons.qrc">
@@ -1917,6 +1433,9 @@ QToolTip
      <height>22</height>
     </rect>
    </property>
+   <property name="acceptDrops">
+    <bool>false</bool>
+   </property>
    <property name="styleSheet">
     <string notr="true">QMenuBar
 {
@@ -1937,6 +1456,9 @@ QMenuBar::item:pressed
 }</string>
    </property>
    <widget class="QMenu" name="file_menu">
+    <property name="acceptDrops">
+     <bool>false</bool>
+    </property>
     <property name="styleSheet">
      <string notr="true">background-color: rgb(50, 50, 51);
 color: rgb(230, 230, 230);
@@ -1955,6 +1477,9 @@ selection-background-color: rgb(0, 85, 127);</string>
     <addaction name="performace_panel"/>
    </widget>
    <widget class="QMenu" name="menusetting">
+    <property name="acceptDrops">
+     <bool>false</bool>
+    </property>
     <property name="styleSheet">
      <string notr="true">background-color:rgb(50, 50, 51);
 color: rgb(230, 230, 230);
