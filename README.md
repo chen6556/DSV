@@ -1,8 +1,51 @@
 # DSV
-DSV(DIY Sketch Viewer) 是一款自制绘图程序，提供基础的线段、曲线、圆、矩形绘制功能，还支持图形组合和图层功能。DSV绘图文件以DSV格式保存，同时DSV可以读取HPGL和PDF格式的文件。DSV支持命令操作和常用快捷键。
+DSV是一款基于Qt的自制画图程序，使用OpenGL绘图。支持圆形、多边形容器和多段线、曲线线条的绘制：其中容器中容纳的对象是文本，可以视为一种文本框。DSV支持图层功能和自动分层功能。绘制的图形以DSV格式保存，同时也能读取部分PLT、PDF、CUT和NC格式的图形文件。DSV也支持通用快捷键，如复制、粘贴、撤销、删除。
 
-EarCut三角剖分算法使用了 https://github.com/mapbox/earcut.hpp 的实现。
 
-DSV (DIY Sketch Viewer) is a DIY drawing program that provides basic polyline, curve, circle, rectangle drawing functions, and also supports shape combination and layer functions. DSV drawing files are saved in DSV format, while DSV can read HPGL and PDF files. DSV supports command operations and shortcut keys.
-
-EarCut is based on https://github.com/mapbox/earcut.hpp .
+下面列出详细功能介绍：
+1. 基础绘图功能
+- 测量
+- Polyline
+- Polygon
+- Circle
+- Rectangle
+- Bezier Curve
+- Text
+2. 图形组合功能
+- 两Polyline连接为一条Polyline
+- Polyline闭合为Polygon
+- 图形组合
+- 组合图形分割
+3. 图形编辑
+- 旋转
+- 水平和垂直翻转
+- 镜像
+- 多边形并集、交集、差集运算
+- 缩放
+- 偏移
+4. 阵列功能
+- 线性阵列
+- 圆周阵列
+5. 支持的文件格式
+- 可以打开RS274D的CUT和NC文件
+- 可以打开部分PDF文件
+- 可以打开和导出部分PLT文件
+- 可以打开和导出DSV文件
+- 追加打开文件
+- 文件统计数据
+6. 设置参数
+- 显示坐标原点
+- 打开文件时自动分层
+- 记忆上次打开文件类型
+- 自动对齐
+- 捕捉距离
+- 可撤销次数
+- 文字大小
+- 是否显示文字
+- 光标捕捉只针对当前图层启用
+- 是否开启光标捕捉
+- 是否显示点
+7. 图层功能
+- 调整图层顺序
+- 插入和删除图层
+- 隐藏图层
