@@ -46,7 +46,7 @@ void LayersManager::init()
     
     _layers_model = new QStringListModel(this);
     ui->layers_view->setModel(_layers_model);
-    QObject::connect(ui->layers_view, &QListView::customContextMenuRequested, this, [this](const QPoint &pos){_menu->exec(QCursor::pos());});
+    QObject::connect(ui->layers_view, &QListView::customContextMenuRequested, [this](const QPoint &pos) { _menu->exec(QCursor::pos()); });
     QObject::connect(_layers_model, &QStringListModel::dataChanged, this, &LayersManager::change_layer_name);
 }
 

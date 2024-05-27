@@ -57,19 +57,19 @@ void MainWindow::init()
     _clock.start(5000);
     QObject::connect(&_painter, &Canvas::tool_changed, this, &MainWindow::refresh_tool_label);
     QObject::connect(ui->view_btn, &QPushButton::clicked, &_painter, &Canvas::cancel_painting);
-    QObject::connect(ui->measure_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::MEASURE); });
-    QObject::connect(ui->circle_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::CIRCLE); });
-    QObject::connect(ui->line_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::POLYLINE); });
-    QObject::connect(ui->rect_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::RECT); });
-    QObject::connect(ui->curve_btn, &QPushButton::clicked, this, [this]() { _painter.use_tool(Canvas::Tool::CURVE); _painter.set_bezier_order(ui->curve_sbx->value());});
-    QObject::connect(ui->text_btn, &QPushButton::clicked, this,  [this]() { _painter.use_tool(Canvas::Tool::TEXT); });
-    QObject::connect(ui->split_btn, &QPushButton::clicked, this, [this](){ _editer.split(_editer.selected()); });
+    QObject::connect(ui->measure_btn, &QPushButton::clicked, [this]() { _painter.use_tool(Canvas::Tool::MEASURE); });
+    QObject::connect(ui->circle_btn, &QPushButton::clicked, [this]() { _painter.use_tool(Canvas::Tool::CIRCLE); });
+    QObject::connect(ui->line_btn, &QPushButton::clicked, [this]() { _painter.use_tool(Canvas::Tool::POLYLINE); });
+    QObject::connect(ui->rect_btn, &QPushButton::clicked, [this]() { _painter.use_tool(Canvas::Tool::RECT); });
+    QObject::connect(ui->curve_btn, &QPushButton::clicked, [this]() { _painter.use_tool(Canvas::Tool::CURVE); _painter.set_bezier_order(ui->curve_sbx->value()); });
+    QObject::connect(ui->text_btn, &QPushButton::clicked, [this]() { _painter.use_tool(Canvas::Tool::TEXT); });
+    QObject::connect(ui->split_btn, &QPushButton::clicked, [this]() { _editer.split(_editer.selected()); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
-    QObject::connect(ui->auto_aligning, &QAction::triggered, this, [this]() {GlobalSetting::get_instance()->setting()["auto_aligning"] = ui->auto_aligning->isChecked();});
+    QObject::connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::get_instance()->setting()["auto_aligning"] = ui->auto_aligning->isChecked(); });
     QObject::connect(ui->actionadvanced, &QAction::triggered, _setting, &Setting::exec);
-    QObject::connect(ui->show_origin, &QAction::triggered, this, [this]() { ui->show_origin->isChecked() ? _painter.show_origin() : _painter.hide_origin(); });
-    QObject::connect(ui->show_cmd_line, &QAction::triggered, this, [this]() { ui->show_cmd_line->isChecked() ? _cmd_widget->show() : _cmd_widget->hide(); });
+    QObject::connect(ui->show_origin, &QAction::triggered, [this]() { ui->show_origin->isChecked() ? _painter.show_origin() : _painter.hide_origin(); });
+    QObject::connect(ui->show_cmd_line, &QAction::triggered, [this]() { ui->show_cmd_line->isChecked() ? _cmd_widget->show() : _cmd_widget->hide(); });
 
     QObject::connect(_setting, &Setting::accepted, &_painter, static_cast<void(Canvas::*)(void)>(&Canvas::refresh_text_vbo));
 
@@ -83,8 +83,8 @@ void MainWindow::init()
 
     _layers_manager = new LayersManager(this);
     _layers_manager->load_layers(_editer.graph());
-    QObject::connect(_layers_manager, &LayersManager::accepted, this,
-        [this](){_layers_cbx->setModel(_layers_manager->model()); _painter.refresh_vbo(); _editer.reset_selected_mark();});
+    QObject::connect(_layers_manager, &LayersManager::accepted,
+        [this]() { _layers_cbx->setModel(_layers_manager->model()); _painter.refresh_vbo(); _editer.reset_selected_mark(); });
 
     _layers_btn = new QToolButton(this);
     _layers_btn->setText("Layers");
@@ -100,8 +100,8 @@ void MainWindow::init()
     _layers_cbx->view()->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->statusBar->addPermanentWidget(_layers_cbx);
     _layers_cbx->setModel(_layers_manager->model());
-    QObject::connect(_layers_cbx, &QComboBox::currentIndexChanged, this,
-        [this](const int index){_editer.set_current_group(_editer.groups_count() - 1 - index);});
+    QObject::connect(_layers_cbx, &QComboBox::currentIndexChanged,
+        [this](const int index) { _editer.set_current_group(_editer.groups_count() - 1 - index); });
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
