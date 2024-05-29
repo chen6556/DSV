@@ -359,6 +359,8 @@ private:
     std::stack<std::array<double, 6>> _trans_mats;
 
     std::map<std::string, std::string> _encoding_map;
+    std::string _src_code1, _src_code2;
+    std::vector<std::string> _dst_strings;
     std::string _text;
     struct Txt
     {
@@ -442,7 +444,13 @@ public:
 
     void store_text(const std::string &value);
 
-    void store_encoding(const std::string &value);
+    void store_char_encoding(const std::string &value);
+
+    void store_range_encoding(const std::string &value);
+
+    void store_range_dst_string(const std::string &value);
+
+    void store_range_encoding();
 
     void BT();
 

@@ -358,10 +358,10 @@ void Importer::analyse_dict(const std::string &value)
 
 void Importer::store_text(const std::string &value)
 {
-    _text = value;
+    _text.append(value);
 }
 
-void Importer::store_encoding(const std::string &value)
+void Importer::store_char_encoding(const std::string &value)
 {
     if (_text.empty())
     {
@@ -372,6 +372,49 @@ void Importer::store_encoding(const std::string &value)
         _encoding_map[_text] = value;
         _text.clear();
     }
+}
+
+void Importer::store_range_encoding(const std::string &value)
+{
+    if (_src_code1.empty())
+    {
+        _src_code1 = value;
+    }
+    else if (_src_code2.empty())
+    {
+        _src_code2 = value;
+    }
+    else
+    {
+        std::string k, v;
+        for (int i = std::stoi(_src_code1, nullptr, 16), j = std::stoi(value, nullptr, 16),
+                end = std::stoi(_src_code2, nullptr, 16); i <= end;)
+        {
+            k = QString("%1").arg(i++, 4, 16, QChar('0')).toUpper().toStdString();
+            v = QString("%1").arg(j++, 4, 16, QChar('0')).toUpper().toStdString();
+            _encoding_map[k] = v;
+        }
+        _src_code1.clear();
+        _src_code2.clear();
+    }
+}
+
+void Importer::store_range_dst_string(const std::string &value)
+{
+    _dst_strings.emplace_back(value);
+}
+
+void Importer::store_range_encoding()
+{
+    std::string k;
+    for (int j = 0, i = std::stoi(_src_code1, nullptr, 16), end = std::stoi(_src_code2, nullptr, 16); i <= end;)
+    {
+        k = QString("%1").arg(i++, 4, 16, QChar('0')).toUpper().toStdString();
+        _encoding_map[k] = _dst_strings[j++];
+    }
+    _dst_strings.clear();
+    _src_code1.clear();
+    _src_code2.clear();
 }
 
 void Importer::BT()
@@ -417,8 +460,16 @@ void Importer::end()
     {
         for (unsigned int i = 0, count = text.txt.length(); i < count; i+= 4)
         {
-            values.emplace_back(std::stoi(_encoding_map[text.txt.substr(i, 4)], nullptr, 16));
+            if (_encoding_map.find(text.txt.substr(i, 4)) != _encoding_map.end())
+            {
+                values.emplace_back(std::stoi(_encoding_map[text.txt.substr(i, 4)], nullptr, 16));
+            }
         }
+        if (values.empty())
+        {
+            continue;
+        }
+
         text.txt = QString::fromUtf16(&values.front(), values.size()).toStdString();
         values.clear();
 
@@ -811,7 +862,10 @@ Action<void> re_a(&importer, &Importer::rect);
 Action<void> h_a(&importer, &Importer::close_shape);
 Action<void> n_a(&importer, &Importer::clear_points);
 Action<std::string> text_a(&importer, &Importer::store_text);
-Action<std::string> encoding_a(&importer, &Importer::store_encoding);
+Action<std::string> char_encoding_a(&importer, &Importer::store_char_encoding);
+Action<std::string> range_encoding_0_a(&importer, &Importer::store_range_encoding);
+Action<void> range_encoding_1_a(&importer, &Importer::store_range_encoding);
+Action<std::string> dst_string_a(&importer, &Importer::store_range_dst_string);
 Action<void> end_a(&importer, &Importer::end);
 Action<void> BT_a(&importer, &Importer::BT);
 Action<void> ET_a(&importer, &Importer::ET);
@@ -869,10 +923,17 @@ Parser<std::string> annotation = pair(ch_p('['), eol_p());
 Parser<bool> command = *(parameter | key | text | space) >> order;
 Parser<std::string> array = pair(ch_p('['), ch_p(']')) >> !eol_p();
 Parser<std::string> dict = pair(str_p("<<"), str_p(">>"))[dict_a] >> !eol_p();
-Parser<std::string> code = confix_p(ch_p('<'), (+alnum_p())[encoding_a], ch_p('>'));
-Parser<std::string> font_info = str_p("/CIDInit /ProcSet findresource begin") >> (+anychar_p() - (str_p("beginbfchar") >> eol_p()))
-    	                >> str_p("beginbfchar") >> end >> +(code >> end) >> !eol_p() >> str_p("endbfchar")
-                        >> end >> (+anychar_p() - (str_p("end") >> eol_p())) >> +(str_p("end") >> eol_p());
+
+Parser<std::string> char_code = confix_p(ch_p('<'), (+alnum_p())[char_encoding_a], ch_p('>'));
+Parser<bool> char_encoding = int_p() >> space >> str_p("beginbfchar") >> eol_p() >> +(char_code >> end) >> !eol_p() >> str_p("endbfchar") >> eol_p();
+Parser<std::string> range_code = confix_p(ch_p('<'), (+alnum_p())[range_encoding_0_a], ch_p('>'));
+Parser<std::string> dst_string = confix_p(ch_p('<'), (+alnum_p())[dst_string_a], ch_p('>'));
+Parser<std::string> dst_strings = (ch_p('[') >> list(dst_string, space) >> ch_p(']'))[range_encoding_1_a];
+Parser<bool> range_encoding = int_p() >> space >> str_p("beginbfrange") >> eol_p() >> +((range_code | dst_strings) >> end) >> !eol_p() >> str_p("endbfrange") >> eol_p();
+Parser<bool> font_info = pair(str_p("/CIDInit /ProcSet findresource begin"), str_p("endcodespacerange")) >> eol_p()
+                        >> !char_encoding >> !range_encoding
+                        >> (+anychar_p() - (str_p("end") >> eol_p())) >> +(str_p("end") >> eol_p());
+
 Parser<std::string> xml = pair(str_p("<?xpacket"), str_p("<?xpacket end=\"w\"?>")) >> eol_p();
 Parser<std::string> others = (+anychar_p() - str_p("endstream"));
 
@@ -883,7 +944,7 @@ Parser<bool> object = (int_p()[object_a] >> space >> int_p() >> space >> str_p("
 					*(int_p() | (str_p("null") >> eol_p()) | dict | stream | array) >> str_p("endobj") >> eol_p());
 
 Parser<bool> head = str_p("%PDF-") >> float_p() >> (+anychar_p() - ch_p('%')) >> ch_p('%') >> (*anychar_p() - eol_p()) >> eol_p();
-Parser<std::string> tail = (str_p("xref") >> *anychar_p())[end_a];
+Parser<std::string> tail = (!str_p("xref") >> *anychar_p())[end_a];
 Parser<bool> pdf = head >> *(annotation | object | eol_p()) >> tail;
 
 
