@@ -930,11 +930,11 @@ Parser<std::string> range_code = confix_p(ch_p('<'), (+alnum_p())[range_encoding
 Parser<std::string> dst_string = confix_p(ch_p('<'), (+alnum_p())[dst_string_a], ch_p('>'));
 Parser<std::string> dst_strings = (ch_p('[') >> list(dst_string, space) >> ch_p(']'))[range_encoding_1_a];
 Parser<bool> range_encoding = int_p() >> space >> str_p("beginbfrange") >> eol_p() >> +((range_code | dst_strings) >> end) >> !eol_p() >> str_p("endbfrange") >> eol_p();
-Parser<bool> font_info = pair(str_p("/CIDInit /ProcSet findresource begin"), str_p("endcodespacerange")) >> eol_p()
+Parser<bool> font_info = confix_p(str_p("/CIDInit /ProcSet findresource begin"), str_p("endcodespacerange")) >> eol_p()
                         >> !char_encoding >> !range_encoding
                         >> (+anychar_p() - (str_p("end") >> eol_p())) >> +(str_p("end") >> eol_p());
 
-Parser<std::string> xml = pair(str_p("<?xpacket"), str_p("<?xpacket end=\"w\"?>")) >> eol_p();
+Parser<std::string> xml = confix_p(str_p("<?xpacket"), str_p("<?xpacket end=\"w\"?>")) >> eol_p();
 Parser<std::string> others = (+anychar_p() - str_p("endstream"));
 
 Parser<std::string> stream_start = str_p("stream") >> eol_p();

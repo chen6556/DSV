@@ -252,11 +252,11 @@ Parser<bool> ci = (str_p("CI") >> parameter >> !parameter)[ci_a] >> end;
 Parser<bool> aa = (str_p("AA") >> coord >> separator >> parameter >> !parameter)[aa_a] >> end;
 Parser<bool> ar = (str_p("AR") >> coord >> separator >> parameter >> !parameter)[ar_a] >> end;
 
-Parser<std::string> unkown_cmds = confix_p(alphaa_p() | ch_p(28), *anychar_p(), end);
+Parser<std::string> unkown_cmds = confix_p(alphaa_p() | ch_p(28), end);
 Parser<std::string> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], end);
 Parser<bool> all_cmds = in | pu | pd | pa | pr | sp | ci | aa | ar | lb | unkown_cmds;
 
-Parser<std::string> dci = confix_p(ch_p(27), *anychar_p(), end);
+Parser<std::string> dci = confix_p(ch_p(27), end);
 Parser<bool> plt = (*(all_cmds | dci))[end_a];
 
 

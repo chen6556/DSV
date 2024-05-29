@@ -205,7 +205,7 @@ Parser<std::string> circle = (circle10 | circle20 | circle30 | circle40) >> sepa
 // 文字处理
 Action<std::string> a_text(&importer, &Importer::store_text);
 Parser<std::string> text = confix_p(str_p("M31*"), (*anychar_p())[a_text], separator);
-Parser<std::string> skip_text = confix_p(str_p("M20*"), *anychar_p(), separator);
+Parser<std::string> skip_text = confix_p(str_p("M20*"), separator);
 
 // 步骤
 Parser<bool> steps = ch_p('N') >> int_p() >> separator;
