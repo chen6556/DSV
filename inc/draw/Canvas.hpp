@@ -89,7 +89,7 @@ signals:
     void tool_changed(const Tool);
 
 public:
-    Canvas(QLabel **labels = nullptr, QWidget *parent = nullptr);
+    Canvas(QWidget *parent = nullptr);
 
     ~Canvas();
 

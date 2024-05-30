@@ -1377,6 +1377,19 @@ QPushButton:pressed
       </widget>
      </widget>
     </item>
+    <item>
+     <widget class="Canvas" name="canvas">
+      <property name="cursor">
+       <cursorShape>CrossCursor</cursorShape>
+      </property>
+      <property name="mouseTracking">
+       <bool>true</bool>
+      </property>
+      <property name="focusPolicy">
+       <enum>Qt::ClickFocus</enum>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -1556,6 +1569,17 @@ color:rgb(230, 230, 230);</string>
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>Canvas</class>
+   <extends>QOpenGLWidget</extends>
+   <header>draw/Canvas.hpp</header>
+   <slots>
+    <signal>tool_changed(Canvas::Tool)</signal>
+    <slot>cancel_painting()</slot>
+   </slots>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../resource/Icons.qrc"/>
  </resources>
@@ -1928,6 +1952,38 @@ color:rgb(230, 230, 230);</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>canvas</sender>
+   <signal>tool_changed(Canvas::Tool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>refresh_tool_label(Canvas::Tool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>562</x>
+     <y>350</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>view_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>canvas</receiver>
+   <slot>cancel_painting()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>62</x>
+     <y>74</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>562</x>
+     <y>350</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -1953,5 +2009,6 @@ color:rgb(230, 230, 230);</string>
   <slot>polygon_difference()</slot>
   <slot>scale()</slot>
   <slot>append_file()</slot>
+  <slot>refresh_tool_label(Canvas::Tool)</slot>
  </slots>
 </ui>

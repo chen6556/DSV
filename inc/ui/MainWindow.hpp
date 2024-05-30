@@ -5,7 +5,6 @@
 #include <QToolButton>
 #include <QTimer>
 #include <QString>
-#include "draw/Canvas.hpp"
 #include "base/Editer.hpp"
 #include "ui/LayersManager.hpp"
 #include "ui/Setting.hpp"
@@ -23,7 +22,6 @@ class MainWindow : public QMainWindow
 
 private:
     Ui::MainWindow *ui = nullptr;
-    Canvas _painter;
     Editer _editer;
     Setting *_setting = nullptr;
     std::vector<Qt::Key> _keys;

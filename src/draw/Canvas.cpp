@@ -4,13 +4,9 @@
 #include "io/GlobalSetting.hpp"
 
 
-Canvas::Canvas(QLabel **labels, QWidget *parent)
-    : QOpenGLWidget(parent), _info_labels(labels), _input_line(this)
+Canvas::Canvas(QWidget *parent)
+    : QOpenGLWidget(parent), _input_line(this)
 {
-    setCursor(Qt::CursorShape::CrossCursor);
-    setMouseTracking(true);
-    setFocusPolicy(Qt::ClickFocus);
-
     init();
 }
 

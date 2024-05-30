@@ -46,32 +46,29 @@ void MainWindow::init()
 {
     GlobalSetting::get_instance()->load_ui(ui);
 
-    ui->horizontalLayout->addWidget(&_painter);
     _editer.load_graph(new Graph());
-    _painter.bind_editer(&_editer);
+    ui->canvas->bind_editer(&_editer);
 
-    _cmd_widget = new CMDWidget(&_editer, &_painter, this);
+    _cmd_widget = new CMDWidget(&_editer, ui->canvas, this);
     _cmd_widget->show();
     QObject::connect(_cmd_widget, &CMDWidget::cmd_changed, this, &MainWindow::refresh_cmd);
 
     _clock.start(5000);
-    QObject::connect(&_painter, &Canvas::tool_changed, this, &MainWindow::refresh_tool_label);
-    QObject::connect(ui->view_btn, &QPushButton::clicked, &_painter, &Canvas::cancel_painting);
-    QObject::connect(ui->measure_btn, &QPushButton::clicked, [this]() { _painter.use_tool(Canvas::Tool::MEASURE); });
-    QObject::connect(ui->circle_btn, &QPushButton::clicked, [this]() { _painter.use_tool(Canvas::Tool::CIRCLE); });
-    QObject::connect(ui->line_btn, &QPushButton::clicked, [this]() { _painter.use_tool(Canvas::Tool::POLYLINE); });
-    QObject::connect(ui->rect_btn, &QPushButton::clicked, [this]() { _painter.use_tool(Canvas::Tool::RECT); });
-    QObject::connect(ui->curve_btn, &QPushButton::clicked, [this]() { _painter.use_tool(Canvas::Tool::CURVE); _painter.set_bezier_order(ui->curve_sbx->value()); });
-    QObject::connect(ui->text_btn, &QPushButton::clicked, [this]() { _painter.use_tool(Canvas::Tool::TEXT); });
+    QObject::connect(ui->measure_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::MEASURE); });
+    QObject::connect(ui->circle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::CIRCLE); });
+    QObject::connect(ui->line_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::POLYLINE); });
+    QObject::connect(ui->rect_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::RECT); });
+    QObject::connect(ui->curve_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::CURVE); ui->canvas->set_bezier_order(ui->curve_sbx->value()); });
+    QObject::connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::TEXT); });
     QObject::connect(ui->split_btn, &QPushButton::clicked, [this]() { _editer.split(_editer.selected()); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
     QObject::connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::get_instance()->setting()["auto_aligning"] = ui->auto_aligning->isChecked(); });
     QObject::connect(ui->actionadvanced, &QAction::triggered, _setting, &Setting::exec);
-    QObject::connect(ui->show_origin, &QAction::triggered, [this]() { ui->show_origin->isChecked() ? _painter.show_origin() : _painter.hide_origin(); });
+    QObject::connect(ui->show_origin, &QAction::triggered, [this]() { ui->show_origin->isChecked() ? ui->canvas->show_origin() : ui->canvas->hide_origin(); });
     QObject::connect(ui->show_cmd_line, &QAction::triggered, [this]() { ui->show_cmd_line->isChecked() ? _cmd_widget->show() : _cmd_widget->hide(); });
 
-    QObject::connect(_setting, &Setting::accepted, &_painter, static_cast<void(Canvas::*)(void)>(&Canvas::refresh_text_vbo));
+    QObject::connect(_setting, &Setting::accepted, ui->canvas, static_cast<void(Canvas::*)(void)>(&Canvas::refresh_text_vbo));
 
     for (size_t i = 0; i < 3; ++i)
     {
@@ -79,12 +76,12 @@ void MainWindow::init()
         _info_labels[i]->setMinimumWidth(70 + 45 * i);
         ui->statusBar->addWidget(_info_labels[i]);
     }
-    _painter.set_info_labels(_info_labels);
+    ui->canvas->set_info_labels(_info_labels);
 
     _layers_manager = new LayersManager(this);
     _layers_manager->load_layers(_editer.graph());
     QObject::connect(_layers_manager, &LayersManager::accepted,
-        [this]() { _layers_cbx->setModel(_layers_manager->model()); _painter.refresh_vbo(); _editer.reset_selected_mark(); });
+        [this]() { _layers_cbx->setModel(_layers_manager->model()); ui->canvas->refresh_vbo(); _editer.reset_selected_mark(); });
 
     _layers_btn = new QToolButton(this);
     _layers_btn->setText("Layers");
@@ -119,39 +116,39 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
-    if (_painter.is_typing())
+    if (ui->canvas->is_typing())
     {
         return;
     }
     switch (event->key())
     {
     case Qt::Key_Escape:
-        _painter.cancel_painting();
+        ui->canvas->cancel_painting();
         _editer.reset_selected_mark();
-        _painter.refresh_selected_ibo();
-        _painter.set_operation(Canvas::Operation::NOOPERATION);
+        ui->canvas->refresh_selected_ibo();
+        ui->canvas->set_operation(Canvas::Operation::NOOPERATION);
         _cmd_widget->clear();
         break;
     case Qt::Key_Space:
         if (_cmd_widget->empty())
         {
-            _painter.use_last_tool();
+            ui->canvas->use_last_tool();
         }
         break;
     case Qt::Key_Delete:
     case Qt::Key_Backspace:
         if (_editer.remove_selected())
         {
-            _painter.refresh_vbo();
-            _painter.update();
+            ui->canvas->refresh_vbo();
+            ui->canvas->update();
         }
         break;
     case Qt::Key_A:
         if (event->modifiers() == Qt::ControlModifier)
         {
             _editer.reset_selected_mark(true);
-            _painter.refresh_selected_ibo();
-            _painter.update();
+            ui->canvas->refresh_selected_ibo();
+            ui->canvas->update();
         }
         break;
     case Qt::Key_S:
@@ -163,30 +160,30 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     case Qt::Key_C:
         if (event->modifiers() == Qt::ControlModifier)
         {
-            _painter.copy();
+            ui->canvas->copy();
         }
         break;
     case Qt::Key_X:
         if (event->modifiers() == Qt::ControlModifier)
         {
-            _painter.cut();
-            _painter.update();
+            ui->canvas->cut();
+            ui->canvas->update();
         }
         break;
     case Qt::Key_V:
         if (event->modifiers() == Qt::ControlModifier)
         {
-            _painter.paste();
-            _painter.update();
+            ui->canvas->paste();
+            ui->canvas->update();
         }
         break;
     case Qt::Key_Z:
-        if (event->modifiers() == Qt::ControlModifier && !_painter.is_painting())
+        if (event->modifiers() == Qt::ControlModifier && !ui->canvas->is_painting())
         {
             _editer.load_backup();
-            _painter.refresh_vbo();
-            _painter.refresh_selected_ibo();
-            _painter.update();
+            ui->canvas->refresh_vbo();
+            ui->canvas->refresh_selected_ibo();
+            ui->canvas->update();
         }
         break;
     default:
@@ -252,16 +249,16 @@ void MainWindow::close_file()
     _editer.delete_graph();
     _editer.load_graph(new Graph());
     _editer.reset_modified();
-    _painter.refresh_vbo();
+    ui->canvas->refresh_vbo();
     _info_labels[2]->clear();
     _layers_manager->load_layers(_editer.graph());
     _layers_cbx->setModel(_layers_manager->model());
-    _painter.update();
+    ui->canvas->update();
 }
 
 void MainWindow::save_file()
 {
-    if (_editer.graph() == nullptr || _painter.empty())
+    if (_editer.graph() == nullptr || ui->canvas->empty())
     {
         return;
     }
@@ -332,7 +329,7 @@ void MainWindow::auto_save()
 
 void MainWindow::saveas_file()
 {
-    if (_editer.graph() == nullptr || _painter.empty())
+    if (_editer.graph() == nullptr || ui->canvas->empty())
     {
         return;
     }
@@ -408,7 +405,7 @@ void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
         return ui->tool_widget->setCurrentIndex(0);
     case CMDWidget::CMD::MIRROR_CMD:
         ui->current_tool->setText("Mirror");
-        return _painter.set_operation(Canvas::Operation::MIRROR);
+        return ui->canvas->set_operation(Canvas::Operation::MIRROR);
     case CMDWidget::CMD::ARRAY_CMD:
         return ui->tool_widget->setCurrentIndex(1);
     case CMDWidget::CMD::RINGARRAY_CMD:
@@ -446,11 +443,11 @@ void MainWindow::load_settings()
     }
     if (ui->show_origin->isChecked())
     {
-        _painter.show_origin();
+        ui->canvas->show_origin();
     }
     else
     {
-        _painter.hide_origin();
+        ui->canvas->hide_origin();
     }
     if (ui->remember_file_type->isChecked())
     {
@@ -494,8 +491,8 @@ void MainWindow::connect_polylines()
 {
     if (_editer.connect(_editer.selected(), GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()))
     {
-        _painter.refresh_vbo();
-        _painter.refresh_selected_ibo();
+        ui->canvas->refresh_vbo();
+        ui->canvas->refresh_selected_ibo();
     }
 }
 
@@ -503,8 +500,8 @@ void MainWindow::close_polyline()
 {
     if (_editer.close_polyline(_editer.selected()))
     {
-        _painter.refresh_vbo();
-        _painter.refresh_selected_ibo();
+        ui->canvas->refresh_vbo();
+        ui->canvas->refresh_selected_ibo();
     }
 }
 
@@ -512,8 +509,8 @@ void MainWindow::combinate()
 {
     if (_editer.combinate(_editer.selected()))
     {
-        _painter.refresh_vbo();
-        _painter.refresh_selected_ibo();
+        ui->canvas->refresh_vbo();
+        ui->canvas->refresh_selected_ibo();
     }
 }
 
@@ -521,39 +518,39 @@ void MainWindow::rotate()
 {
     const bool unitary = _editer.selected_count() == 0;
     _editer.rotate(_editer.selected(), ui->rotate_angle->value(), unitary, ui->to_all_layers->isChecked());
-    _painter.refresh_vbo(unitary);
-    _painter.update();
+    ui->canvas->refresh_vbo(unitary);
+    ui->canvas->update();
 }
 
 void MainWindow::flip_x()
 {
     const bool unitary = _editer.selected_count() == 0;
     _editer.flip(_editer.selected(), true, unitary, ui->to_all_layers->isChecked());
-    _painter.refresh_vbo(unitary);
-    _painter.update();
+    ui->canvas->refresh_vbo(unitary);
+    ui->canvas->update();
 }
 
 void MainWindow::flip_y()
 {
     const bool unitary = _editer.selected_count() == 0;
     _editer.flip(_editer.selected(), false, unitary, ui->to_all_layers->isChecked());
-    _painter.refresh_vbo(unitary);
-    _painter.update();
+    ui->canvas->refresh_vbo(unitary);
+    ui->canvas->update();
 }
 
 void MainWindow::mirror()
 {
     ui->current_tool->setText("Mirror");
-    _painter.set_operation(Canvas::Operation::MIRROR);
+    ui->canvas->set_operation(Canvas::Operation::MIRROR);
 }
 
 void MainWindow::scale()
 {
     if (_editer.scale(_editer.selected(), ui->scale_sbx->value()))
     {
-        _painter.refresh_vbo();
-        _painter.refresh_selected_ibo();
-        _painter.update();
+        ui->canvas->refresh_vbo();
+        ui->canvas->refresh_selected_ibo();
+        ui->canvas->update();
     }
 }
 
@@ -561,8 +558,8 @@ void MainWindow::offset()
 {
     if (_editer.offset(_editer.selected(), ui->offset_sbx->value()))
     {
-        _painter.refresh_vbo();
-        _painter.update();
+        ui->canvas->refresh_vbo();
+        ui->canvas->update();
     }
 }
 
@@ -578,16 +575,16 @@ void MainWindow::line_array()
     if (_editer.line_array(_editer.selected(), ui->array_x_item->value(), ui->array_y_item->value(),
             ui->array_x_space->value(), ui->array_y_space->value()))
     {
-        _painter.refresh_vbo();
-        _painter.refresh_selected_ibo();
-        _painter.update();
+        ui->canvas->refresh_vbo();
+        ui->canvas->refresh_selected_ibo();
+        ui->canvas->update();
     }
 }
 
 void MainWindow::ring_array()
 {
     ui->array_tool->setText("Ring Array");
-    _painter.set_operation(Canvas::Operation::RINGARRAY);
+    ui->canvas->set_operation(Canvas::Operation::RINGARRAY);
 }
 
 
@@ -613,9 +610,9 @@ void MainWindow::polygon_union()
 
     if (_editer.polygon_union(container0, container1))
     {
-        _painter.refresh_vbo();
-        _painter.refresh_selected_ibo();
-        _painter.update();
+        ui->canvas->refresh_vbo();
+        ui->canvas->refresh_selected_ibo();
+        ui->canvas->update();
     }
 }
 
@@ -640,23 +637,23 @@ void MainWindow::polygon_intersection()
 
     if (_editer.polygon_intersection(container0, container1))
     {
-        _painter.refresh_vbo();
-        _painter.refresh_selected_ibo();
-        _painter.update();
+        ui->canvas->refresh_vbo();
+        ui->canvas->refresh_selected_ibo();
+        ui->canvas->update();
     }
 }
 
 void MainWindow::polygon_difference()
 {
     ui->current_tool->setText("Difference");
-    _painter.set_operation(Canvas::Operation::POLYGONDIFFERENCE);
+    ui->canvas->set_operation(Canvas::Operation::POLYGONDIFFERENCE);
 }
 
 
 
 void MainWindow::show_data_panel()
 {
-    _panel->load_draw_data(_editer.graph(), _painter.points_count());
+    _panel->load_draw_data(_editer.graph(), ui->canvas->points_count());
     _panel->exec();
 }
 
@@ -753,14 +750,14 @@ void MainWindow::open_file(const QString &path)
         _editer.auto_layering();
     }
     _editer.reset_modified();
-    _painter.refresh_vbo();
+    ui->canvas->refresh_vbo();
     _info_labels[2]->setText(path);
     _layers_manager->load_layers(g);
     _layers_cbx->setModel(_layers_manager->model());
     g = nullptr;
 
-    _painter.show_overview();
-    _painter.update();
+    ui->canvas->show_overview();
+    ui->canvas->update();
 }
 
 void MainWindow::append_file(const QString &path)
@@ -834,12 +831,12 @@ void MainWindow::append_file(const QString &path)
     graph->merge(*g);
     _editer.load_graph(graph);
     delete g;
-    _painter.refresh_vbo();
-    _painter.refresh_selected_ibo();
+    ui->canvas->refresh_vbo();
+    ui->canvas->refresh_selected_ibo();
     _layers_manager->load_layers(graph);
     _layers_cbx->setModel(_layers_manager->model());
 
-    _painter.show_overview();
-    _painter.update();
+    ui->canvas->show_overview();
+    ui->canvas->update();
 }
 
