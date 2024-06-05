@@ -175,7 +175,19 @@ void Importer::ar()
 
 void Importer::store_text(const std::string &text)
 {
-    _texts.emplace_back(Txt(text, _points.back()));
+    std::string str(text);
+    size_t pos;
+    for (char c = 1; c < 32; ++c)
+    {
+        pos = str.find(c);
+        if (pos != std::string::npos)
+        {
+            --c;
+            str.erase(pos, 1);
+        }
+    }
+
+    _texts.emplace_back(str, _last_coord);
     _points.clear();
 }
 
