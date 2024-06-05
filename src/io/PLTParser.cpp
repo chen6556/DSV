@@ -181,6 +181,7 @@ void Importer::store_text(const std::string &text)
 
 void Importer::end()
 {
+    store_points();
     const int text_size = GlobalSetting::get_instance()->setting()["text_size"].toInt();
     for (Txt &text : _texts)
     {
