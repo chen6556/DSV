@@ -18,6 +18,7 @@ void Importer::reset()
     _points.clear();
     _parameters.clear();
     _last_coord.x = _last_coord.y = 0;
+    _x_ratio = _y_ratio = 0.025;
     _relative_coord = false;
     _texts.clear();
 }
@@ -93,6 +94,26 @@ void Importer::store_arc()
 }
 
 
+void Importer::ip()
+{
+    store_points();
+    if (_parameters.size() > 4)
+    {
+        _parameters.erase(_parameters.begin() + 4, _parameters.end());
+    }
+    _parameters.insert(_parameters.begin(), _parameters.size());
+}
+
+void Importer::sc()
+{
+    if (_parameters.size() >= 9 && _parameters.front() == 4)
+    {
+        _x_ratio *= (_parameters[3] - _parameters[1]) / (_parameters[6] - _parameters[5]);
+        _y_ratio *= (_parameters[4] - _parameters[2]) / (_parameters[8] - _parameters[7]);
+    }
+    _parameters.clear();
+}
+
 void Importer::pu()
 {
     store_points();
@@ -107,11 +128,11 @@ void Importer::x_coord(const double value)
 {
     if (_relative_coord)
     {
-        _points.emplace_back(Geo::Point(_last_coord.x + value, 0));
+        _points.emplace_back(Geo::Point(_last_coord.x + value * _x_ratio, 0));
     }
     else
     {
-        _points.emplace_back(Geo::Point(value, 0));
+        _points.emplace_back(Geo::Point(value * _x_ratio, 0));
     }
 }
 
@@ -119,11 +140,11 @@ void Importer::y_coord(const double value)
 {
     if (_relative_coord)
     {
-        _points.back().y = _last_coord.y + value;
+        _points.back().y = _last_coord.y + value * _y_ratio;
     }
     else
     {
-        _points.back().y = value;
+        _points.back().y = value * _y_ratio;
     }
     if (_points.back() == _last_coord)
     {
@@ -195,9 +216,12 @@ void Importer::end()
 {
     store_points();
     const int text_size = GlobalSetting::get_instance()->setting()["text_size"].toInt();
+    std::vector<Geo::Geometry *> group(_graph->container_group().begin(), _graph->container_group().end());
+    std::sort(group.begin(), group.end(), [](const Geo::Geometry *a, const Geo::Geometry *b)
+        { return a->bounding_rect().area() < b->bounding_rect().area(); });
     for (Txt &text : _texts)
     {
-        for (Geo::Geometry *geo : _graph->container_group())
+        for (Geo::Geometry *geo : group)
         {
             if (geo->type() == Geo::Type::CONTAINER && Geo::is_inside(text.pos, dynamic_cast<Container *>(geo)->shape(), true))
             {
@@ -248,6 +272,8 @@ Action<void> ci_a(&importer, &Importer::ci);
 Action<void> aa_a(&importer, &Importer::aa);
 Action<void> ar_a(&importer, &Importer::ar);
 Action<void> in_a(&importer, &Importer::reset);
+Action<void> ip_a(&importer, &Importer::ip);
+Action<void> sc_a(&importer, &Importer::sc);
 Action<std::string> lb_a(&importer, &Importer::store_text);
 Action<void> end_a(&importer, &Importer::end);
 
@@ -256,18 +282,21 @@ Parser<std::string> end = +(ch_p(';') | ch_p('\n') | eol_p());
 Parser<double> parameter = float_p()[parameter_a];
 Parser<bool> coord = float_p()[x_coord_a] >> separator >> float_p()[y_coord_a];
 Parser<std::string> in = str_p("IN")[in_a] >> end;
+Parser<bool> ip = (str_p("IP") >> list(parameter, separator))[ip_a] >> end;
+Parser<bool> sc = (str_p("SC") >> list(parameter, separator))[sc_a] >> end;
 Parser<bool> pu = str_p("PU")[pu_a] >> !list(coord, separator) >> end;
 Parser<bool> pd = str_p("PD") >> !list(coord, separator) >> end;
 Parser<bool> pa = str_p("PA")[pa_a] >> !list(coord, separator) >> end;
 Parser<bool> pr = str_p("PR")[pr_a] >> !list(coord, separator) >> end;
 Parser<bool> sp = str_p("SP") >> int_p()[sp_a] >> end;
-Parser<bool> ci = (str_p("CI") >> parameter >> !parameter)[ci_a] >> end;
-Parser<bool> aa = (str_p("AA") >> coord >> separator >> parameter >> !parameter)[aa_a] >> end;
-Parser<bool> ar = (str_p("AR") >> coord >> separator >> parameter >> !parameter)[ar_a] >> end;
+Parser<bool> ci = (str_p("CI") >> parameter >> !(separator >> parameter))[ci_a] >> end;
+Parser<bool> aa = (str_p("AA") >> coord >> separator >> parameter >> !(separator >> parameter))[aa_a] >> end;
+Parser<bool> ar = (str_p("AR") >> coord >> separator >> parameter >> !(separator >> parameter))[ar_a] >> end;
 
 Parser<std::string> unkown_cmds = confix_p(alphaa_p() | ch_p(28), end);
-Parser<std::string> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], end);
-Parser<bool> all_cmds = in | pu | pd | pa | pr | sp | ci | aa | ar | lb | unkown_cmds;
+Parser<std::string> text_end = ch_p('\x3') | ch_p('\x4') | end;
+Parser<std::string> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], text_end) >> !separator >> !end;
+Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | ci | aa | ar | in | ip | sc | unkown_cmds;
 
 Parser<std::string> dci = confix_p(ch_p(27), end);
 Parser<bool> plt = (*(all_cmds | dci))[end_a];

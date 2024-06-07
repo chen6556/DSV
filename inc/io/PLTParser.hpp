@@ -17,6 +17,7 @@ private:
     Geo::Point _last_coord;
 
     bool _relative_coord = false;
+    double _x_ratio = 0.025, _y_ratio = 0.025;
 
     struct Txt
     {
@@ -41,6 +42,10 @@ public:
     void y_coord(const double value);
 
     void parameter(const double value);
+
+    void ip();
+
+    void sc();
 
     void pu();
 
