@@ -9,13 +9,21 @@ class GlobalSetting
 private:
     QJsonObject _setting;
     Ui::MainWindow *_ui = nullptr;
-    static std::unique_ptr<GlobalSetting> _instance;
+    static GlobalSetting *_instance;
     
 private:
-    GlobalSetting(){}
+    GlobalSetting() {}
+
+    GlobalSetting(const GlobalSetting &) = delete;
+
+    GlobalSetting &operator=(const GlobalSetting &) = delete;
+
+    ~GlobalSetting() {};
 
 public:
-    static std::unique_ptr<GlobalSetting> &get_instance();
+    static GlobalSetting *get_instance();
+
+    static void release();
 
     QJsonObject &setting();
 

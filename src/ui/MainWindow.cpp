@@ -40,6 +40,8 @@ MainWindow::~MainWindow()
     delete _cmd_widget;
     delete _setting;
     delete _panel;
+
+    GlobalSetting::release();
 }
 
 void MainWindow::init()

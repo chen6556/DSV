@@ -3,11 +3,16 @@
 #include <QIODevice>
 #include <QJsonDocument>
 
-std::unique_ptr<GlobalSetting> GlobalSetting::_instance = std::make_unique<GlobalSetting>(GlobalSetting());
+GlobalSetting *GlobalSetting::_instance = new GlobalSetting();
 
-std::unique_ptr<GlobalSetting> &GlobalSetting::get_instance()
+GlobalSetting *GlobalSetting::get_instance()
 {
     return _instance;
+}
+
+void GlobalSetting::release()
+{
+    delete _instance;
 }
 
 QJsonObject &GlobalSetting::setting()
