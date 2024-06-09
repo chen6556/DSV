@@ -3413,6 +3413,82 @@ double Geo::angle(const Line &line0, const Line &line1)
     }
 }
 
+double Geo::rad_to_PI(double value)
+{
+    if (std::abs(value) > 2 * Geo::PI)
+    {
+        value -= (std::round(value / (Geo::PI * 2)) * 2 * Geo::PI);
+    }
+    if (value < -Geo::PI)
+    {
+        return value + 2 * Geo::PI;
+    }
+    else if (value > Geo::PI)
+    {
+        return value - 2 * Geo::PI;
+    }
+    else
+    {
+        return value;
+    }
+}
+
+double Geo::rad_to_2PI(double value)
+{
+    if (std::abs(value) > 2 * Geo::PI)
+    {
+        value -= (std::round(value / (Geo::PI * 2)) * 2 * Geo::PI);
+    }
+    if (value < 0)
+    {
+        value += (2 * Geo::PI);
+    }
+    return value;
+}
+
+double Geo::rad_to_degree(double value)
+{
+    return value * 180 / Geo::PI;
+}
+
+double Geo::degree_to_180(double value)
+{
+    if (std::abs(value) > 360)
+    {
+        value -= (std::round(value / 360) * 360);
+    }
+    if (value < -180)
+    {
+        return value + 360;
+    }
+    else if (value > 180)
+    {
+        return value - 360;
+    }
+    else
+    {
+        return value;
+    }
+}
+
+double Geo::degree_to_360(double value)
+{
+    if (std::abs(value) > 360)
+    {
+        value -= (std::round(value / 360) * 360);
+    }
+    if (value < 0)
+    {
+        value += 360;
+    }
+    return value;
+}
+
+double Geo::degree_to_rad(double value)
+{
+    return value * Geo::PI / 180;
+}
+
 
 bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Polyline &arc)
 {

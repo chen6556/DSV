@@ -827,17 +827,35 @@ namespace Geo
     // 计算线段或直线外一点的垂足
     bool foot_point(const Line &line, const Point &point, Point &foot, const bool infinite = false);
 
-    // 计算直线的旋转角度(弧度制,-180°-180°)
+    // 计算直线的旋转角度(弧度制,-PI-PI)
     double angle(const Point &start, const Point &end);
 
-    // 计算角度(弧度制,-180°-180°)
+    // 计算角度(弧度制,-PI-PI)
     double angle(const Point &point0, const Point &point1, const Point &point2);
 
-    // 计算两直线角夹角(弧度制,-180°-180°)
+    // 计算两直线角夹角(弧度制,-PI-PI)
     double angle(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
 
-    // 计算两直线角夹角(弧度制,-180°-180°)
+    // 计算两直线角夹角(弧度制,-PI-PI)
     double angle(const Line &line0, const Line &line1);
+
+    // 弧度转为-PI-PI
+    double rad_to_PI(double value);
+
+    // 弧度转为0-2PI
+    double rad_to_2PI(double value);
+
+    // 弧度转为角度
+    double rad_to_degree(double value);
+
+    // 角度转为-180°-180°
+    double degree_to_180(double value);
+
+    // 角度转为0°-360°
+    double degree_to_360(double value);
+
+    // 角度转为弧度
+    double degree_to_rad(double value);
 
     // 倒圆角
     bool angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Polyline &arc);
