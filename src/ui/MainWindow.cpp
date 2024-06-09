@@ -653,6 +653,14 @@ void MainWindow::polygon_difference()
 
 
 
+void MainWindow::fillet()
+{
+    ui->current_tool->setText("FILLET");
+    ui->canvas->set_operation(Canvas::Operation::FILLET);
+}
+
+
+
 void MainWindow::show_data_panel()
 {
     _panel->load_draw_data(_editer.graph(), ui->canvas->points_count());

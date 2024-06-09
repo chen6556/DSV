@@ -102,6 +102,9 @@ public:
 
     bool polygon_difference(Container *container0, const Container *container1); 
 
+    bool fillet(Container *container, const Geo::Point &point, const double radius);
+
+    bool fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius);
 
 
     bool line_array(std::list<Geo::Geometry *> objects, int x, int y, double x_space, double y_space);

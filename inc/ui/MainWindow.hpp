@@ -108,6 +108,9 @@ private slots:
     void polygon_difference();
 
 
+    void fillet();
+
+
     void show_data_panel();
 
 private:

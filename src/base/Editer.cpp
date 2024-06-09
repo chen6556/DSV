@@ -1075,6 +1075,58 @@ bool Editer::polygon_difference(Container *container0, const Container *containe
     }
 }
 
+bool Editer::fillet(Container *container, const Geo::Point &point, const double radius)
+{
+    Geo::Polygon &polygon = container->shape();
+    std::vector<Geo::Point>::const_iterator it = std::find(polygon.begin(), polygon.end(), point);
+    if (it == polygon.end())
+    {
+        return false;
+    }
+    const size_t index1 = std::distance(polygon.cbegin(), it);
+    const size_t index0 = index1 > 0 ? index1 - 1 : polygon.size() - 2;
+    const size_t index2 = index1 + 1;
+
+    Geo::Polyline arc;
+    if (Geo::angle_to_arc(polygon[index0], polygon[index1], polygon[index2], radius, arc))
+    {
+        store_backup();
+        polygon.remove(index1);
+        polygon.insert(index1, arc);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Editer::fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius)
+{
+    if (point == polyline->front() || point == polyline->back())
+    {
+        return false;
+    }
+    std::vector<Geo::Point>::const_iterator it = std::find(polyline->begin(), polyline->end(), point);
+    if (it == polyline->end())
+    {
+        return false;
+    }
+    const size_t index = std::distance(polyline->cbegin(), it);
+    Geo::Polyline arc;
+    if (Geo::angle_to_arc((*polyline)[index - 1], (*polyline)[index], (*polyline)[index + 1], radius, arc))
+    {
+        store_backup();
+        polyline->remove(index);
+        polyline->insert(index, arc);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 
 bool Editer::line_array(std::list<Geo::Geometry *> objects, int x, int y, double x_space, double y_space)
 {

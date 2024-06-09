@@ -108,7 +108,7 @@ namespace Geo
 
         const bool operator!=(const Point &point) const;
 
-        const Point &normalize();
+        Point &normalize();
 
         Point normalized() const;
 
@@ -820,6 +820,27 @@ namespace Geo
 
     // 计算两向量叉积
     double cross(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
+
+    // 计算线段或直线外一点的垂足
+    bool foot_point(const Point &start, const Point &end, const Point &point, Point &foot, const bool infinite = false);
+
+    // 计算线段或直线外一点的垂足
+    bool foot_point(const Line &line, const Point &point, Point &foot, const bool infinite = false);
+
+    // 计算直线的旋转角度(弧度制,-180°-180°)
+    double angle(const Point &start, const Point &end);
+
+    // 计算角度(弧度制,-180°-180°)
+    double angle(const Point &point0, const Point &point1, const Point &point2);
+
+    // 计算两直线角夹角(弧度制,-180°-180°)
+    double angle(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
+
+    // 计算两直线角夹角(弧度制,-180°-180°)
+    double angle(const Line &line0, const Line &line1);
+
+    // 倒圆角
+    bool angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Polyline &arc);
 
     Polygon circle_to_polygon(const double x, const double y, const double r);
 

@@ -104,7 +104,7 @@ const bool Point::operator!=(const Point &point) const
     return x != point.x || y != point.y;
 }
 
-const Point &Point::normalize()
+Point &Point::normalize()
 {
     const double len = length();
     x /= len;
@@ -3320,6 +3320,136 @@ double Geo::cross(const Vector &vec0, const Vector &vec1)
 double Geo::cross(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
 {
     return Geo::cross(end0 - start0, end1 - start1);
+}
+
+
+bool Geo::foot_point(const Point &start, const Point &end, const Point &point, Point &foot, const bool infinite)
+{
+    if (start.x == end.x)
+    {
+        foot.x = start.x;
+        foot.y = point.y;
+        if (infinite)
+        {
+            return true;
+        }
+        else
+        {
+            return foot.y >= std::min(start.y, end.y) && foot.y <= std::max(start.y, end.y);
+        }
+    }
+    else
+    {
+        const double k = (end.y - start.y) / (end.x - start.x);
+        const double b = start.y -  k * start.x;
+        foot.x = (point.x - k * b + k * point.y) / (1 + k * k);
+        foot.y = (k * point.x + k * k * point.y + b) / (1 + k * k);
+        if (infinite)
+        {
+            return true;
+        }
+        else
+        {
+            return foot.x >= std::min(start.x, end.x) && foot.x <= std::max(start.x, end.x);
+        }
+    }
+}
+
+bool Geo::foot_point(const Line &line, const Point &point, Point &foot, const bool infinite)
+{
+    return Geo::foot_point(line.front(), line.back(), point, foot, infinite);
+}
+
+
+double Geo::angle(const Point &start, const Point &end)
+{
+    const Geo::Point vec = start - end;
+    if (vec.y > 0)
+    {
+        return std::acos(vec.x / vec.length());
+    }
+    else
+    {
+        return -std::acos(vec.x / vec.length());
+    }
+}
+
+double Geo::angle(const Point &point0, const Point &point1, const Point &point2)
+{
+    const Geo::Point vec0 = point0 - point1, vec1 = point2 - point1;
+    if (vec0.cross(vec1) > 0)
+    {
+        return std::acos(vec0 * vec1 / (vec0.length() * vec1.length()));
+    }
+    else
+    {
+        return -std::acos(vec0 * vec1 / (vec0.length() * vec1.length()));
+    }
+}
+
+double Geo::angle(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
+{
+    const Geo::Point vec0 = end0 - start0, vec1 = end1 - start1;
+    if (vec0.cross(vec1) > 0)
+    {
+        return std::acos(vec0 * vec1 / (vec0.length() * vec1.length()));
+    }
+    else
+    {
+        return -std::acos(vec0 * vec1 / (vec0.length() * vec1.length()));
+    }
+}
+
+double Geo::angle(const Line &line0, const Line &line1)
+{
+    const Geo::Point vec0 = line0.back() - line0.front(), vec1 = line1.back() - line1.front();
+    if (vec0.cross(vec1) > 0)
+    {
+        return std::acos(vec0 * vec1 / (vec0.length() * vec1.length()));
+    }
+    else
+    {
+        return -std::acos(vec0 * vec1 / (vec0.length() * vec1.length()));
+    }
+}
+
+
+bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Polyline &arc)
+{
+    if (radius <= 0)
+    {
+        return false;
+    }
+
+    arc.clear();
+    const double len = radius / std::tan(std::abs(Geo::angle(point0, point1, point2)) / 2);
+    if ((point1 - point0).length() >= len && (point2 - point1).length() >= len)
+    {
+        double c = std::atan(len / radius) * radius;
+        const Geo::Vector vec0 = (point0 - point1).normalize() * len;
+        const Geo::Vector vec1 = (point2 - point1).normalize() * len;
+        const Geo::Point center = point1 + (vec0 + vec1);
+        Geo::Point foot0, foot1;
+        Geo::foot_point(point0, point1, center, foot0, true);
+        Geo::foot_point(point2, point1, center, foot1, true);
+        Geo::Vector vec = (foot0 - center).normalize() * radius;
+        double degree = std::asin(0.8 / radius) * 2;
+        if (Geo::angle(foot0, center, foot1) < 0)
+        {
+            degree = -degree;
+        }
+        while (c > 0)
+        {
+            arc.append(center + vec);
+            vec.rotate(0, 0, degree);
+            c -= 0.8;
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 

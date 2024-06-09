@@ -675,6 +675,52 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     emit tool_changed(Tool::NOTOOL);
                     _operation = Operation::NOOPERATION;
                     return update();
+                case Operation::FILLET:
+                    {
+                        double dis = DBL_MAX;
+                        Geo::Point point;
+                        switch (_clicked_obj->type())
+                        {
+                        case Geo::Type::CONTAINER:
+                            for (const Geo::Point &p : dynamic_cast<Container *>(_clicked_obj)->shape())
+                            {
+                                if (Geo::distance(p.x, p.y, real_x1, real_y1) < dis)
+                                {
+                                    dis = Geo::distance(p.x, p.y, real_x1, real_y1);
+                                    point = p;
+                                }
+                            }
+                            if (_editer->fillet(dynamic_cast<Container *>(_clicked_obj),
+                                point, GlobalSetting::get_instance()->ui()->fillet_sbx->value()))
+                            {
+                                refresh_vbo();
+                                refresh_selected_ibo();
+                            }
+                            break;
+                        case Geo::Type::POLYLINE:
+                            for (const Geo::Point &p : *dynamic_cast<Geo::Polyline *>(_clicked_obj))
+                            {
+                                if (Geo::distance(p.x, p.y, real_x1, real_y1) < dis)
+                                {
+                                    dis = Geo::distance(p.x, p.y, real_x1, real_y1);
+                                    point = p;
+                                }
+                            }
+                            if (_editer->fillet(dynamic_cast<Geo::Polyline *>(_clicked_obj),
+                                point, GlobalSetting::get_instance()->ui()->fillet_sbx->value()))
+                            {
+                                refresh_vbo();
+                                refresh_selected_ibo();
+                            }
+                            break;
+                        default:
+                            break;
+                        }
+                        _operation = Operation::NOOPERATION;
+                        emit tool_changed(Tool::NOTOOL);
+                        return update();
+                    }
+                    break;
                 default:
                     break;
                 }

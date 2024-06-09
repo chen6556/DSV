@@ -572,17 +572,56 @@ QPushButton:pressed
                 </property>
                </widget>
               </item>
-              <item row="4" column="1">
-               <widget class="QPushButton" name="scale_btn">
+              <item row="4" column="0">
+               <widget class="QDoubleSpinBox" name="scale_sbx">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                 </font>
+                </property>
+                <property name="toolTip">
+                 <string>Scale Rate</string>
+                </property>
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
+                <property name="minimum">
+                 <double>-100000000.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>100000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QPushButton" name="flipx_btn">
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Scale</string>
+                 <string>Flip X</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/scale_btn.svg</normaloff>:/icons/scale_btn.svg</iconset>
+                  <normaloff>:/icons/flipx_btn.svg</normaloff>:/icons/flipx_btn.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -612,56 +651,37 @@ QPushButton:pressed
                 </property>
                </widget>
               </item>
-              <item row="5" column="0">
-               <widget class="QDoubleSpinBox" name="offset_sbx">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>51</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="toolTip">
-                 <string>Offset Distance</string>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
-                </property>
-                <property name="minimum">
-                 <double>-100000000000000005366162204393472.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>1000000000000000000000.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QPushButton" name="rotate_btn">
+              <item row="3" column="0">
+               <widget class="QPushButton" name="difference_btn">
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Rotate</string>
+                 <string>Difference</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/rotate_btn.svg</normaloff>:/icons/rotate_btn.svg</iconset>
+                  <normaloff>:/icons/difference_btn.svg</normaloff>:/icons/difference_btn.svg</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
+               <widget class="QPushButton" name="intersection_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Intersection</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../resource/Icons.qrc">
+                  <normaloff>:/icons/intersection_btn.svg</normaloff>:/icons/intersection_btn.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -711,8 +731,8 @@ QPushButton:pressed
                 </property>
                </widget>
               </item>
-              <item row="4" column="0">
-               <widget class="QDoubleSpinBox" name="scale_sbx">
+              <item row="5" column="0">
+               <widget class="QDoubleSpinBox" name="offset_sbx">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
@@ -731,7 +751,7 @@ QPushButton:pressed
                  </font>
                 </property>
                 <property name="toolTip">
-                 <string>Scale Rate</string>
+                 <string>Offset Distance</string>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
@@ -743,13 +763,10 @@ QPushButton:pressed
                  <enum>QAbstractSpinBox::NoButtons</enum>
                 </property>
                 <property name="minimum">
-                 <double>-10.000000000000000</double>
+                 <double>-100000000.000000000000000</double>
                 </property>
                 <property name="maximum">
-                 <double>10.000000000000000</double>
-                </property>
-                <property name="value">
-                 <double>1.000000000000000</double>
+                 <double>100000000.000000000000000</double>
                 </property>
                </widget>
               </item>
@@ -795,17 +812,17 @@ QPushButton:pressed
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
-               <widget class="QPushButton" name="flipx_btn">
+              <item row="0" column="1">
+               <widget class="QPushButton" name="rotate_btn">
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Flip X</string>
+                 <string>Rotate</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/flipx_btn.svg</normaloff>:/icons/flipx_btn.svg</iconset>
+                  <normaloff>:/icons/rotate_btn.svg</normaloff>:/icons/rotate_btn.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -815,17 +832,17 @@ QPushButton:pressed
                 </property>
                </widget>
               </item>
-              <item row="3" column="1">
-               <widget class="QPushButton" name="intersection_btn">
+              <item row="4" column="1">
+               <widget class="QPushButton" name="scale_btn">
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Intersection</string>
+                 <string>Scale</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/intersection_btn.svg</normaloff>:/icons/intersection_btn.svg</iconset>
+                  <normaloff>:/icons/scale_btn.svg</normaloff>:/icons/scale_btn.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -835,23 +852,53 @@ QPushButton:pressed
                 </property>
                </widget>
               </item>
-              <item row="3" column="0">
-               <widget class="QPushButton" name="difference_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
+              <item row="6" column="1">
+               <widget class="QPushButton" name="fillet_btn">
                 <property name="toolTip">
-                 <string>Difference</string>
+                 <string>Fillet</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/difference_btn.svg</normaloff>:/icons/difference_btn.svg</iconset>
+                  <normaloff>:/icons/fillet_btn.svg</normaloff>:/icons/fillet_btn.svg</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
                   <width>24</width>
                   <height>24</height>
                  </size>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="0">
+               <widget class="QDoubleSpinBox" name="fillet_sbx">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                 </font>
+                </property>
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
+                <property name="maximum">
+                 <double>100000000.000000000000000</double>
                 </property>
                </widget>
               </item>
@@ -943,7 +990,7 @@ QPushButton:pressed
              <x>-12</x>
              <y>0</y>
              <width>106</width>
-             <height>387</height>
+             <height>379</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1984,6 +2031,22 @@ color:rgb(230, 230, 230);</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>fillet_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>fillet()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>36</x>
+     <y>579</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -2010,5 +2073,6 @@ color:rgb(230, 230, 230);</string>
   <slot>scale()</slot>
   <slot>append_file()</slot>
   <slot>refresh_tool_label(Canvas::Tool)</slot>
+  <slot>fillet()</slot>
  </slots>
 </ui>
