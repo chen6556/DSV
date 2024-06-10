@@ -888,6 +888,9 @@ QPushButton:pressed
                   <pointsize>12</pointsize>
                  </font>
                 </property>
+                <property name="toolTip">
+                 <string>Fillet Radius</string>
+                </property>
                 <property name="frame">
                  <bool>false</bool>
                 </property>
@@ -990,7 +993,7 @@ QPushButton:pressed
              <x>-12</x>
              <y>0</y>
              <width>106</width>
-             <height>379</height>
+             <height>387</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
