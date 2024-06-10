@@ -716,12 +716,14 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         default:
                             break;
                         }
-                        _operation = Operation::NOOPERATION;
-                        emit tool_changed(Tool::NOTOOL);
+                        // _operation = Operation::NOOPERATION;
+                        // emit tool_changed(Tool::NOTOOL);
                         return update();
                     }
                     break;
                 default:
+                    _operation = Operation::NOOPERATION;
+                    emit tool_changed(Tool::NOTOOL);
                     break;
                 }
 
