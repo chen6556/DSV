@@ -95,8 +95,8 @@ void Canvas::initializeGL()
     glUniform3d(_uniforms[2], 1.0, 0.0, 0.0); // vec0
     glUniform3d(_uniforms[3], 0.0, -1.0, 0.0); // vec1
 
-    glGenVertexArrays(1, &_VAO);
-    glGenBuffers(5, _VBO);
+    glCreateVertexArrays(1, &_VAO);
+    glCreateBuffers(5, _VBO);
 
     glBindVertexArray(_VAO);
     glVertexAttribLFormat(0, 3, GL_DOUBLE, 0);
@@ -115,7 +115,7 @@ void Canvas::initializeGL()
     glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
     glEnableVertexAttribArray(0);
 
-    glGenBuffers(4, _IBO);
+    glCreateBuffers(4, _IBO);
 
 }
 
