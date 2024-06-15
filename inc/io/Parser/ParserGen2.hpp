@@ -730,13 +730,13 @@ inline Parser<std::string> confix_p(const Parser<L> &left, const Parser<R> &righ
 }
 
 template <typename A, typename B>
-inline auto list(const Parser<A> &value, const Parser<B> &exp)
+inline auto list_p(const Parser<A> &value, const Parser<B> &exp)
 {
     return value >> *(exp >> value);
 }
 
 template <typename L, typename R>
-Parser<std::string> pair(const Parser<L> &left, const Parser<R> &right)
+Parser<std::string> pair_p(const Parser<L> &left, const Parser<R> &right)
 {
     return Parser<std::string>(std::function<std::optional<std::string>(std::string_view &)>(
         [=](std::string_view &stream) -> std::optional<std::string>
@@ -814,7 +814,7 @@ Parser<std::string> pair(const Parser<L> &left, const Parser<R> &right)
 }
 
 template <typename A, typename B, typename C>
-Parser<bool> pair(const Parser<A> &left, const Parser<B> &exp, const Parser<C> &right)
+Parser<bool> pair_p(const Parser<A> &left, const Parser<B> &exp, const Parser<C> &right)
 {
     return Parser<bool>(std::function<bool(std::string_view &)>(
         [=](std::string_view &stream) -> bool
@@ -907,7 +907,7 @@ Parser<bool> pair(const Parser<A> &left, const Parser<B> &exp, const Parser<C> &
 }
 
 template <typename T>
-Parser<bool> repeat(const size_t times, const Parser<T> &parser)
+Parser<bool> repeat_p(const size_t times, const Parser<T> &parser)
 {
     return Parser<bool>(std::function<bool(std::string_view &)>(
         [=](std::string_view &stream) -> bool
@@ -942,7 +942,7 @@ Parser<bool> repeat(const size_t times, const Parser<T> &parser)
         }));
 }
 
-inline Parser<std::string> repeat(const size_t times, const Parser<char> &parser)
+inline Parser<std::string> repeat_p(const size_t times, const Parser<char> &parser)
 {
     return Parser<std::string>(std::function<std::optional<std::string>(std::string_view &)>(
         [=](std::string_view &stream) -> std::optional<std::string>
@@ -974,7 +974,7 @@ inline Parser<std::string> repeat(const size_t times, const Parser<char> &parser
         }));
 }
 
-inline Parser<std::string> repeat(const size_t times, const Parser<std::string> &parser)
+inline Parser<std::string> repeat_p(const size_t times, const Parser<std::string> &parser)
 {
     return Parser<std::string>(std::function<std::optional<std::string>(std::string_view &)>(
         [=](std::string_view &stream) -> std::optional<std::string>
@@ -2660,27 +2660,27 @@ inline Parser<std::string> confix_p(const std::reference_wrapper<Parser<L>> &lef
 // ref list
 
 template <typename A, typename B>
-inline auto list(const Parser<A> &value, const std::reference_wrapper<Parser<B>> &exp)
+inline auto list_p(const Parser<A> &value, const std::reference_wrapper<Parser<B>> &exp)
 {
     return value >> *(exp >> value);
 }
 
 template <typename A, typename B>
-inline auto list(const std::reference_wrapper<Parser<A>> &value, const Parser<B> &exp)
+inline auto list_p(const std::reference_wrapper<Parser<A>> &value, const Parser<B> &exp)
 {
     return value >> *(exp >> value);
 }
 
 template <typename A, typename B>
-inline auto list(const std::reference_wrapper<Parser<A>> &value, const std::reference_wrapper<Parser<B>> &exp)
+inline auto list_p(const std::reference_wrapper<Parser<A>> &value, const std::reference_wrapper<Parser<B>> &exp)
 {
     return value >> *(exp >> value);
 }
 
-// ref pair
+// ref pair_p
 
 template <typename L, typename R>
-Parser<std::string> pair(const Parser<L> &left, const std::reference_wrapper<Parser<R>> &right)
+Parser<std::string> pair_p(const Parser<L> &left, const std::reference_wrapper<Parser<R>> &right)
 {
     return Parser<std::string>(std::function<std::optional<std::string>(std::string_view &)>(
         [=](std::string_view &stream) -> std::optional<std::string>
@@ -2758,7 +2758,7 @@ Parser<std::string> pair(const Parser<L> &left, const std::reference_wrapper<Par
 }
 
 template <typename L, typename R>
-Parser<std::string> pair(const std::reference_wrapper<Parser<L>> &left, const Parser<R> &right)
+Parser<std::string> pair_p(const std::reference_wrapper<Parser<L>> &left, const Parser<R> &right)
 {
     return Parser<std::string>(std::function<std::optional<std::string>(std::string_view &)>(
         [=](std::string_view &stream) -> std::optional<std::string>
@@ -2836,7 +2836,7 @@ Parser<std::string> pair(const std::reference_wrapper<Parser<L>> &left, const Pa
 }
 
 template <typename L, typename R>
-Parser<std::string> pair(const std::reference_wrapper<Parser<L>> &left, const std::reference_wrapper<Parser<R>> &right)
+Parser<std::string> pair_p(const std::reference_wrapper<Parser<L>> &left, const std::reference_wrapper<Parser<R>> &right)
 {
     return Parser<std::string>(std::function<std::optional<std::string>(std::string_view &)>(
         [=](std::string_view &stream) -> std::optional<std::string>
@@ -2914,7 +2914,7 @@ Parser<std::string> pair(const std::reference_wrapper<Parser<L>> &left, const st
 }
 
 template <typename A, typename B, typename C>
-Parser<bool> pair(const Parser<A> &left, const Parser<B> &exp, const std::reference_wrapper<Parser<C>> &right)
+Parser<bool> pair_p(const Parser<A> &left, const Parser<B> &exp, const std::reference_wrapper<Parser<C>> &right)
 {
     return Parser<bool>(std::function<bool(std::string_view &)>(
         [=](std::string_view &stream) -> bool
@@ -3007,7 +3007,7 @@ Parser<bool> pair(const Parser<A> &left, const Parser<B> &exp, const std::refere
 }
 
 template <typename A, typename B, typename C>
-Parser<bool> pair(const Parser<A> &left, const std::reference_wrapper<Parser<B>> &exp, const Parser<C> &right)
+Parser<bool> pair_p(const Parser<A> &left, const std::reference_wrapper<Parser<B>> &exp, const Parser<C> &right)
 {
     return Parser<bool>(std::function<bool(std::string_view &)>(
         [=](std::string_view &stream) -> bool
@@ -3100,7 +3100,7 @@ Parser<bool> pair(const Parser<A> &left, const std::reference_wrapper<Parser<B>>
 }
 
 template <typename A, typename B, typename C>
-Parser<bool> pair(const std::reference_wrapper<Parser<A>> &left, const Parser<B> &exp, const Parser<C> &right)
+Parser<bool> pair_p(const std::reference_wrapper<Parser<A>> &left, const Parser<B> &exp, const Parser<C> &right)
 {
     return Parser<bool>(std::function<bool(std::string_view &)>(
         [=](std::string_view &stream) -> bool
@@ -3193,7 +3193,7 @@ Parser<bool> pair(const std::reference_wrapper<Parser<A>> &left, const Parser<B>
 }
 
 template <typename A, typename B, typename C>
-Parser<bool> pair(const Parser<A> &left, const std::reference_wrapper<Parser<B>> &exp, const std::reference_wrapper<Parser<C>> &right)
+Parser<bool> pair_p(const Parser<A> &left, const std::reference_wrapper<Parser<B>> &exp, const std::reference_wrapper<Parser<C>> &right)
 {
     return Parser<bool>(std::function<bool(std::string_view &)>(
         [=](std::string_view &stream) -> bool
@@ -3286,7 +3286,7 @@ Parser<bool> pair(const Parser<A> &left, const std::reference_wrapper<Parser<B>>
 }
 
 template <typename A, typename B, typename C>
-Parser<bool> pair(const std::reference_wrapper<Parser<A>> &left, const Parser<B> &exp, const std::reference_wrapper<Parser<C>> &right)
+Parser<bool> pair_p(const std::reference_wrapper<Parser<A>> &left, const Parser<B> &exp, const std::reference_wrapper<Parser<C>> &right)
 {
     return Parser<bool>(std::function<bool(std::string_view &)>(
         [=](std::string_view &stream) -> bool
@@ -3379,7 +3379,7 @@ Parser<bool> pair(const std::reference_wrapper<Parser<A>> &left, const Parser<B>
 }
 
 template <typename A, typename B, typename C>
-Parser<bool> pair(const std::reference_wrapper<Parser<A>> &left, const std::reference_wrapper<Parser<B>> &exp, const Parser<C> &right)
+Parser<bool> pair_p(const std::reference_wrapper<Parser<A>> &left, const std::reference_wrapper<Parser<B>> &exp, const Parser<C> &right)
 {
     return Parser<bool>(std::function<bool(std::string_view &)>(
         [=](std::string_view &stream) -> bool
@@ -3472,7 +3472,7 @@ Parser<bool> pair(const std::reference_wrapper<Parser<A>> &left, const std::refe
 }
 
 template <typename A, typename B, typename C>
-Parser<bool> pair(const std::reference_wrapper<Parser<A>> &left, const std::reference_wrapper<Parser<B>> &exp, const std::reference_wrapper<Parser<C>> &right)
+Parser<bool> pair_p(const std::reference_wrapper<Parser<A>> &left, const std::reference_wrapper<Parser<B>> &exp, const std::reference_wrapper<Parser<C>> &right)
 {
     return Parser<bool>(std::function<bool(std::string_view &)>(
         [=](std::string_view &stream) -> bool
@@ -3564,10 +3564,10 @@ Parser<bool> pair(const std::reference_wrapper<Parser<A>> &left, const std::refe
         }));
 }
 
-// ref repeat
+// ref repeat_p
 
 template <typename T>
-Parser<bool> repeat(const size_t times, const std::reference_wrapper<Parser<T>> &parser)
+Parser<bool> repeat_p(const size_t times, const std::reference_wrapper<Parser<T>> &parser)
 {
     return Parser<bool>(std::function<bool(std::string_view &)>(
         [=](std::string_view &stream) -> bool
@@ -3602,7 +3602,7 @@ Parser<bool> repeat(const size_t times, const std::reference_wrapper<Parser<T>> 
         }));
 }
 
-inline Parser<std::string> repeat(const size_t times, const std::reference_wrapper<Parser<char>> &parser)
+inline Parser<std::string> repeat_p(const size_t times, const std::reference_wrapper<Parser<char>> &parser)
 {
     return Parser<std::string>(std::function<std::optional<std::string>(std::string_view &)>(
         [=](std::string_view &stream) -> std::optional<std::string>
@@ -3634,7 +3634,7 @@ inline Parser<std::string> repeat(const size_t times, const std::reference_wrapp
         }));
 }
 
-inline Parser<std::string> repeat(const size_t times, const std::reference_wrapper<Parser<std::string>> &parser)
+inline Parser<std::string> repeat_p(const size_t times, const std::reference_wrapper<Parser<std::string>> &parser)
 {
     return Parser<std::string>(std::function<std::optional<std::string>(std::string_view &)>(
         [=](std::string_view &stream) -> std::optional<std::string>
