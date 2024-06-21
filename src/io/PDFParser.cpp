@@ -919,16 +919,16 @@ Parser<std::string> order = cm | q | Q | m | l | v | y | CS | cs | c | G | RG | 
 Parser<double> parameter = float_p()[parameter_a];
 Parser<std::string> key = confix_p(ch_p('/'), (*alnum_p())[key_a], end);
 Parser<std::string> text = confix_p(ch_p('<'), (*alnum_p())[text_a], ch_p('>'));
-Parser<std::string> annotation = pair(ch_p('['), eol_p());
+Parser<std::string> annotation = pair_p(ch_p('['), eol_p());
 Parser<bool> command = *(parameter | key | text | space) >> order;
-Parser<std::string> array = pair(ch_p('['), ch_p(']')) >> !eol_p();
-Parser<std::string> dict = pair(str_p("<<"), str_p(">>"))[dict_a] >> !eol_p();
+Parser<std::string> array = pair_p(ch_p('['), ch_p(']')) >> !eol_p();
+Parser<std::string> dict = pair_p(str_p("<<"), str_p(">>"))[dict_a] >> !eol_p();
 
 Parser<std::string> char_code = confix_p(ch_p('<'), (+alnum_p())[char_encoding_a], ch_p('>'));
 Parser<bool> char_encoding = int_p() >> space >> str_p("beginbfchar") >> eol_p() >> +(char_code >> end) >> !eol_p() >> str_p("endbfchar") >> eol_p();
 Parser<std::string> range_code = confix_p(ch_p('<'), (+alnum_p())[range_encoding_0_a], ch_p('>'));
 Parser<std::string> dst_string = confix_p(ch_p('<'), (+alnum_p())[dst_string_a], ch_p('>'));
-Parser<std::string> dst_strings = (ch_p('[') >> list(dst_string, space) >> ch_p(']'))[range_encoding_1_a];
+Parser<std::string> dst_strings = (ch_p('[') >> list_p(dst_string, space) >> ch_p(']'))[range_encoding_1_a];
 Parser<bool> range_encoding = int_p() >> space >> str_p("beginbfrange") >> eol_p() >> +((range_code | dst_strings) >> end) >> !eol_p() >> str_p("endbfrange") >> eol_p();
 Parser<bool> font_info = confix_p(str_p("/CIDInit /ProcSet findresource begin"), str_p("endcodespacerange")) >> eol_p()
                         >> !char_encoding >> !range_encoding
