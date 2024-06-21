@@ -331,10 +331,10 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         {
             CircleContainer *temp = dynamic_cast<CircleContainer *>(points);
             if (change_shape && !points->shape_fixed &&
-                (std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x0, y0))) <= catch_distance ||
-                std::abs(temp->radius() - Geo::distance(temp->center(), Geo::Point(x1, y1))) <= catch_distance))
+                (std::abs(temp->radius - Geo::distance(*temp, Geo::Point(x0, y0))) <= catch_distance ||
+                std::abs(temp->radius - Geo::distance(*temp, Geo::Point(x1, y1))) <= catch_distance))
             {
-                temp->radius() = Geo::distance(temp->center(), Geo::Point(x1, y1));
+                temp->radius = Geo::distance(*temp, Geo::Point(x1, y1));
             }
             else
             {
@@ -908,11 +908,11 @@ bool Editer::offset(std::list<Geo::Geometry *> objects, const double distance)
             break;
         case Geo::Type::CIRCLECONTAINER:
             circlecontainer = dynamic_cast<CircleContainer *>(object);
-            if (distance >= 0 || -distance < circlecontainer->radius())
+            if (distance >= 0 || -distance < circlecontainer->radius)
             {
                 _graph->append(new CircleContainer(circlecontainer->text(),
-                    circlecontainer->center().x, circlecontainer->center().y,
-                    circlecontainer->radius() + distance), _current_group);
+                    circlecontainer->x, circlecontainer->y,
+                    circlecontainer->radius + distance), _current_group);
             }
             break;
         case Geo::Type::POLYLINE:
@@ -1959,7 +1959,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
                 temp = Geo::distance(center, dynamic_cast<Container *>(geo)->shape());
                 break;
             case Geo::Type::CIRCLECONTAINER:
-                temp = Geo::distance(center, dynamic_cast<CircleContainer *>(geo)->center());
+                temp = Geo::distance(center, *dynamic_cast<CircleContainer *>(geo));
                 break;
             default:
                 break;
@@ -1989,7 +1989,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
                     temp = Geo::distance(center, dynamic_cast<Container *>(geo)->shape());
                     break;
                 case Geo::Type::CIRCLECONTAINER:
-                    temp = Geo::distance(center, dynamic_cast<CircleContainer *>(geo)->center());
+                    temp = Geo::distance(center, *dynamic_cast<CircleContainer *>(geo));
                     break;
                 default:
                     break;
@@ -2050,7 +2050,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, const double x, const double y
                 temp = Geo::distance(anchor, dynamic_cast<Container *>(geo)->shape());
                 break;
             case Geo::Type::CIRCLECONTAINER:
-                temp = Geo::distance(anchor, dynamic_cast<CircleContainer *>(geo)->center());
+                temp = Geo::distance(anchor, *dynamic_cast<CircleContainer *>(geo));
                 break;
             default:
                 break;
@@ -2080,7 +2080,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, const double x, const double y
                     temp = Geo::distance(anchor, dynamic_cast<Container *>(geo)->shape());
                     break;
                 case Geo::Type::CIRCLECONTAINER:
-                    temp = Geo::distance(anchor, dynamic_cast<CircleContainer *>(geo)->center());
+                    temp = Geo::distance(anchor, *dynamic_cast<CircleContainer *>(geo));
                     break;
                 default:
                     break;
@@ -2142,7 +2142,7 @@ bool Editer::auto_aligning(Geo::Point &coord, std::list<QLineF> &reflines, const
                 temp = Geo::distance(anchor, dynamic_cast<Container *>(geo)->shape());
                 break;
             case Geo::Type::CIRCLECONTAINER:
-                temp = Geo::distance(anchor, dynamic_cast<CircleContainer *>(geo)->center());
+                temp = Geo::distance(anchor, *dynamic_cast<CircleContainer *>(geo));
                 break;
             default:
                 break;
@@ -2172,7 +2172,7 @@ bool Editer::auto_aligning(Geo::Point &coord, std::list<QLineF> &reflines, const
                     temp = Geo::distance(anchor, dynamic_cast<Container *>(geo)->shape());
                     break;
                 case Geo::Type::CIRCLECONTAINER:
-                    temp = Geo::distance(anchor, dynamic_cast<CircleContainer *>(geo)->center());
+                    temp = Geo::distance(anchor, *dynamic_cast<CircleContainer *>(geo));
                     break;
                 default:
                     break;
@@ -2281,7 +2281,7 @@ void Editer::auto_layering()
                         }
                         break;
                     case Geo::Type::CIRCLECONTAINER:
-                        if (Geo::is_inside(dynamic_cast<CircleContainer *>(geo)->center(), container->shape()))
+                        if (Geo::is_inside(*dynamic_cast<CircleContainer *>(geo), container->shape()))
                         {
                             flag = false;
                         }
@@ -2308,7 +2308,7 @@ void Editer::auto_layering()
                     switch (geo->type())
                     {
                     case Geo::Type::CONTAINER:
-                        if (Geo::is_inside(circle_container->center(), dynamic_cast<Container *>(geo)->shape()))
+                        if (Geo::is_inside(*circle_container, dynamic_cast<Container *>(geo)->shape()))
                         {
                             flag = false;
                         }

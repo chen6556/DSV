@@ -427,10 +427,6 @@ namespace Geo
 
         Polygon operator-(const Point &point) const;
 
-        void operator+=(const Point &point);
-
-        void operator-=(const Point &point);
-
         const double area() const;
 
         size_t next_point_index(const size_t index) const;
@@ -521,11 +517,10 @@ namespace Geo
         double inner_circle_radius() const;
     };
 
-    class Circle : public Geometry
+    class Circle : public Point
     {
-    private:
-        Point _center;
-        double _radius = 0;
+    public:
+        double radius = 0;
 
     public:
         Circle() {};
@@ -539,14 +534,6 @@ namespace Geo
         Circle &operator=(const Circle &circle);
 
         const Type type() const override;
-
-        Point &center();
-
-        const Point &center() const;
-
-        double &radius();
-
-        const double radius() const;
 
         const double area() const;
 
@@ -562,10 +549,6 @@ namespace Geo
 
         void transform(const double mat[6]) override;
 
-        void translate(const double tx, const double ty) override;
-
-        void rotate(const double x, const double y, const double rad) override; // 弧度制
-
         void scale(const double x, const double y, const double k) override;
 
         AABBRect bounding_rect() const override;
@@ -575,10 +558,6 @@ namespace Geo
         Circle operator+(const Point &point) const;
 
         Circle operator-(const Point &point) const;
-
-        void operator+=(const Point &point);
-
-        void operator-=(const Point &point);
     };
 
     class Line : public Geometry
