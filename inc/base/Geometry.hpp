@@ -636,7 +636,7 @@ namespace Geo
         const Type type() const override;
 
         // 贝塞尔曲线阶数
-        const size_t &order() const;
+        size_t order() const;
 
         const Polyline &shape() const;
 

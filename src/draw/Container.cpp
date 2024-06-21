@@ -275,7 +275,7 @@ void CircleContainer::clear_text()
 
 const bool CircleContainer::empty() const
 {
-    return radius() <= 0 && _txt.isEmpty();
+    return radius <= 0 && _txt.isEmpty();
 }
 
 CircleContainer *CircleContainer::clone() const
@@ -591,8 +591,8 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
             }
             break;
         case Geo::Type::CIRCLECONTAINER:
-            r = dynamic_cast<const CircleContainer *>(continer)->radius();
-            coord = dynamic_cast<const CircleContainer *>(continer)->center();
+            r = dynamic_cast<const CircleContainer *>(continer)->radius;
+            coord = *dynamic_cast<const CircleContainer *>(continer);
             x0 = std::min(x0, coord.x - r);
             y0 = std::min(y0, coord.y - r);
             x1 = std::max(x1, coord.x + r);

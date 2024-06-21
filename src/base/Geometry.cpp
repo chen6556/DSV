@@ -2052,7 +2052,7 @@ const Type Bezier::type() const
     return Type::BEZIER;
 }
 
-const size_t &Bezier::order() const
+size_t Bezier::order() const
 {
     return _order;
 }

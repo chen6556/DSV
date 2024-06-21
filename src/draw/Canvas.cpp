@@ -868,9 +868,9 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                             " Area:" + QString::number(dynamic_cast<const Container*>(_clicked_obj)->area()));
                         break;
                     case Geo::Type::CIRCLECONTAINER:
-                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const CircleContainer*>(_clicked_obj)->center().x) +
-                            " Y:" + QString::number(dynamic_cast<const CircleContainer*>(_clicked_obj)->center().y) +
-                            " Radius:" + QString::number(dynamic_cast<const CircleContainer*>(_clicked_obj)->radius()));
+                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const CircleContainer*>(_clicked_obj)->x) +
+                            " Y:" + QString::number(dynamic_cast<const CircleContainer*>(_clicked_obj)->y) +
+                            " Radius:" + QString::number(dynamic_cast<const CircleContainer*>(_clicked_obj)->radius));
                         break;
                     case Geo::Type::POLYLINE:
                         _info_labels[1]->setText("Length:" + QString::number(dynamic_cast<const Geo::Polyline*>(_clicked_obj)->length()));
@@ -1077,10 +1077,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         switch (_tool_flags[0])
         {
         case Tool::CIRCLE:
-            _circle_cache.radius() = Geo::distance(real_x1, real_y1,
-                                                   _circle_cache.center().x, _circle_cache.center().y);
-
-            _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius())).c_str());
+            _circle_cache.radius = Geo::distance(real_x1, real_y1, _circle_cache.x, _circle_cache.y);
+            _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius)).c_str());
             break;
         case Tool::POLYLINE:
             if (event->modifiers() == Qt::ControlModifier)
@@ -1707,10 +1705,10 @@ Geo::Point Canvas::center() const
     }
     if (!_circle_cache.empty())
     {
-        x0 = std::min(x0, _circle_cache.center().x - _circle_cache.radius());
-        y0 = std::min(y0, _circle_cache.center().y - _circle_cache.radius());
-        x1 = std::max(x1, _circle_cache.center().x + _circle_cache.radius());
-        y1 = std::max(y1, _circle_cache.center().y + _circle_cache.radius());
+        x0 = std::min(x0, _circle_cache.x - _circle_cache.radius);
+        y0 = std::min(y0, _circle_cache.y - _circle_cache.radius);
+        x1 = std::max(x1, _circle_cache.x + _circle_cache.radius);
+        y1 = std::max(y1, _circle_cache.y + _circle_cache.radius);
     }
 
     if (_editer->graph() == nullptr || _editer->graph()->empty())
@@ -1749,10 +1747,10 @@ Geo::AABBRect Canvas::bounding_rect() const
     }
     if (!_circle_cache.empty())
     {
-        x0 = std::min(x0, _circle_cache.center().x - _circle_cache.radius());
-        y0 = std::min(y0, _circle_cache.center().y - _circle_cache.radius());
-        x1 = std::max(x1, _circle_cache.center().x + _circle_cache.radius());
-        y1 = std::max(y1, _circle_cache.center().y + _circle_cache.radius());
+        x0 = std::min(x0, _circle_cache.x - _circle_cache.radius);
+        y0 = std::min(y0, _circle_cache.y - _circle_cache.radius);
+        x1 = std::max(x1, _circle_cache.x + _circle_cache.radius);
+        y1 = std::max(y1, _circle_cache.y + _circle_cache.radius);
     }
 
     if (_editer->graph() == nullptr || _editer->graph()->empty())
@@ -2098,10 +2096,10 @@ bool Canvas::is_visible(const Geo::Polygon &polygon) const
 
 bool Canvas::is_visible(const Geo::Circle &circle) const
 {
-    return circle.center().x > _visible_area.left() - circle.radius() &&
-        circle.center().x < _visible_area.right() + circle.radius() &&
-        circle.center().y > _visible_area.bottom() - circle.radius() &&
-        circle.center().y < _visible_area.top() + circle.radius();
+    return circle.x > _visible_area.left() - circle.radius &&
+        circle.x < _visible_area.right() + circle.radius &&
+        circle.y > _visible_area.bottom() - circle.radius &&
+        circle.y < _visible_area.top() + circle.radius;
 }
 
 
@@ -3574,11 +3572,11 @@ void Canvas::refresh_catached_points(const bool current_group_only)
                 break;
             case Geo::Type::CIRCLECONTAINER:
                 c = dynamic_cast<const CircleContainer *>(geo);
-                _catched_points.emplace_back(c->center());
-                _catched_points.emplace_back(c->center().x + c->radius(), c->center().y);
-                _catched_points.emplace_back(c->center().x, c->center().y - c->radius());
-                _catched_points.emplace_back(c->center().x - c->radius(), c->center().y);
-                _catched_points.emplace_back(c->center().x, c->center().y + c->radius());
+                _catched_points.emplace_back(c->x, c->y);
+                _catched_points.emplace_back(c->x + c->radius, c->y);
+                _catched_points.emplace_back(c->x, c->y - c->radius);
+                _catched_points.emplace_back(c->x - c->radius, c->y);
+                _catched_points.emplace_back(c->x, c->y + c->radius);
                 break;
             case Geo::Type::POLYLINE:
                 for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(geo))
@@ -3616,11 +3614,11 @@ void Canvas::refresh_catached_points(const bool current_group_only)
                     break;
                 case Geo::Type::CIRCLECONTAINER:
                     c = dynamic_cast<const CircleContainer *>(geo);
-                    _catched_points.emplace_back(c->center());
-                    _catched_points.emplace_back(c->center().x + c->radius(), c->center().y);
-                    _catched_points.emplace_back(c->center().x, c->center().y - c->radius());
-                    _catched_points.emplace_back(c->center().x - c->radius(), c->center().y);
-                    _catched_points.emplace_back(c->center().x, c->center().y + c->radius());
+                    _catched_points.emplace_back(c->x, c->y);
+                    _catched_points.emplace_back(c->x + c->radius, c->y);
+                    _catched_points.emplace_back(c->x, c->y - c->radius);
+                    _catched_points.emplace_back(c->x - c->radius, c->y);
+                    _catched_points.emplace_back(c->x, c->y + c->radius);
                     break;
                 case Geo::Type::POLYLINE:
                     for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(geo))

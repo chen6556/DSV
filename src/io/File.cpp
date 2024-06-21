@@ -65,9 +65,9 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 {
                     output << "CIRCLE<" << circlecontainer->text().toStdString() << '>' << std::endl;
                 }
-                output << circlecontainer->center().x << ',';
-                output << circlecontainer->center().y << ',';
-                output << circlecontainer->radius();
+                output << circlecontainer->x << ',';
+                output << circlecontainer->y << ',';
+                output << circlecontainer->radius;
                 output << std::endl;
                 circlecontainer = nullptr;
                 break;
@@ -111,9 +111,9 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         {
                             output << "CIRCLE<" << circlecontainer->text().toStdString() << '>' << std::endl;
                         }
-                        output << circlecontainer->center().x << ',';
-                        output << circlecontainer->center().y << ',';
-                        output << circlecontainer->radius();
+                        output << circlecontainer->x << ',';
+                        output << circlecontainer->y << ',';
+                        output << circlecontainer->radius;
                         output << std::endl;
                         circlecontainer = nullptr;
                         break;
@@ -234,15 +234,15 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 break;
             case Geo::Type::CIRCLECONTAINER:
                 circlecontainer = dynamic_cast<const CircleContainer *>(geo);
-                output << "PA" << circlecontainer->center().x << ',' << circlecontainer->center().y << ';';
-                output << "CI" << circlecontainer->radius() << ';';
+                output << "PA" << circlecontainer->x << ',' << circlecontainer->y << ';';
+                output << "CI" << circlecontainer->radius << ';';
                 if (circlecontainer->text().isEmpty())
                 {
                     output << std::endl;
                 }
                 else
                 {
-                    output << "PU" << circlecontainer->center().x << ',' << circlecontainer->center().y
+                    output << "PU" << circlecontainer->x << ',' << circlecontainer->y
                         << ";LB" << circlecontainer->text().toStdString() << ';' << std::endl;
                 }
                 circlecontainer = nullptr;
@@ -277,15 +277,15 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         break;
                     case Geo::Type::CIRCLECONTAINER:
                         circlecontainer = dynamic_cast<const CircleContainer *>(item);
-                        output << "PU" << circlecontainer->center().x << ',' << circlecontainer->center().y << ';';
-                        output << "CI" << circlecontainer->radius() << ';';
+                        output << "PU" << circlecontainer->x << ',' << circlecontainer->y << ';';
+                        output << "CI" << circlecontainer->radius << ';';
                         if (circlecontainer->text().isEmpty())
                         {
                             output << std::endl;
                         }
                         else
                         {
-                            output << "PU" << circlecontainer->center().x << ',' << circlecontainer->center().y
+                            output << "PU" << circlecontainer->x << ',' << circlecontainer->y
                                 << ";LB" << circlecontainer->text().toStdString() << ';' << std::endl;
                         }
                         circlecontainer = nullptr;

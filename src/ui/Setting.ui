@@ -89,7 +89,7 @@ color: rgb(230, 230, 230);</string>
            <enum>QAbstractSpinBox::NoButtons</enum>
           </property>
           <property name="minimum">
-           <number>10</number>
+           <number>0</number>
           </property>
           <property name="maximum">
            <number>100</number>
