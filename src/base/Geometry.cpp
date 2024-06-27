@@ -2205,18 +2205,18 @@ Polygon Bezier::mini_bounding_rect() const
 
 // functions
 
-const double Geo::distance(const double x0, const double y0, const double x1, const double y1)
+double Geo::distance(const double x0, const double y0, const double x1, const double y1)
 {
     return std::sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
 }
 
-const double Geo::distance(const Point &point0, const Point &point1)
+double Geo::distance(const Point &point0, const Point &point1)
 {
     return std::sqrt((point0.x - point1.x) * (point0.x - point1.x)
                         + (point0.y - point1.y) * (point0.y - point1.y));
 }
 
-const double Geo::distance(const Point &point, const Line &line, const bool infinite)
+double Geo::distance(const Point &point, const Line &line, const bool infinite)
 {
     if (line.front().x == line.back().x)
     {
@@ -2282,7 +2282,7 @@ const double Geo::distance(const Point &point, const Line &line, const bool infi
     }
 }
 
-const double Geo::distance(const Point &point, const Point &start, const Point &end, const bool infinite)
+double Geo::distance(const Point &point, const Point &start, const Point &end, const bool infinite)
 {
     if (start.x == end.x)
     {
@@ -2348,7 +2348,7 @@ const double Geo::distance(const Point &point, const Point &start, const Point &
     }
 }
 
-const double Geo::distance(const Point &point, const Polyline &polyline)
+double Geo::distance(const Point &point, const Polyline &polyline)
 {
     double dis = DBL_MAX;
     for (size_t i = 1, count = polyline.size(); i < count; ++i)
@@ -2358,7 +2358,7 @@ const double Geo::distance(const Point &point, const Polyline &polyline)
     return dis;
 }
 
-const double Geo::distance(const Point &point, const Polygon &polygon)
+double Geo::distance(const Point &point, const Polygon &polygon)
 {
     double dis = DBL_MAX;
     for (size_t i = 1, count = polygon.size(); i < count; ++i)
@@ -2369,17 +2369,17 @@ const double Geo::distance(const Point &point, const Polygon &polygon)
 }
 
 
-const bool Geo::is_inside(const Point &point, const Line &line, const bool infinite)
+bool Geo::is_inside(const Point &point, const Line &line, const bool infinite)
 {
     return Geo::distance(point, line.front(), line.back(), infinite) < Geo::EPSILON;
 }
 
-const bool Geo::is_inside(const Point &point, const Point &start, const Point &end, const bool infinite)
+bool Geo::is_inside(const Point &point, const Point &start, const Point &end, const bool infinite)
 {
     return Geo::distance(point, start, end, infinite) < Geo::EPSILON;
 }
 
-const bool Geo::is_inside(const Point &point, const Polyline &polyline)
+bool Geo::is_inside(const Point &point, const Polyline &polyline)
 {
     for (size_t i = 1, count = polyline.size(); i < count; ++i)
     {
@@ -2391,7 +2391,7 @@ const bool Geo::is_inside(const Point &point, const Polyline &polyline)
     return false;
 }
 
-const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coincide)
+bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coincide)
 {
     if (!polygon.empty() && Geo::is_inside(point, polygon.bounding_rect(), coincide))
     {
@@ -2561,7 +2561,7 @@ const bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool
     }
 }
 
-const bool Geo::is_inside(const Point &point, const AABBRect &rect, const bool coincide)
+bool Geo::is_inside(const Point &point, const AABBRect &rect, const bool coincide)
 {
     if (rect.empty())
     {
@@ -2578,7 +2578,7 @@ const bool Geo::is_inside(const Point &point, const AABBRect &rect, const bool c
     }
 }
 
-const bool Geo::is_inside(const Point &point, const Circle &circle, const bool coincide)
+bool Geo::is_inside(const Point &point, const Circle &circle, const bool coincide)
 {
     if (circle.empty())
     {
@@ -2594,7 +2594,7 @@ const bool Geo::is_inside(const Point &point, const Circle &circle, const bool c
     }
 }
 
-const bool Geo::is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2, const bool coincide)
+bool Geo::is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2, const bool coincide)
 {
     if (coincide)
     {
@@ -2620,24 +2620,24 @@ const bool Geo::is_inside(const Point &point, const Point &point0, const Point &
     }
 }
 
-const bool Geo::is_inside(const Point &point, const Triangle &triangle, const bool coincide)
+bool Geo::is_inside(const Point &point, const Triangle &triangle, const bool coincide)
 {
     return Geo::is_inside(point, triangle[0], triangle[1], triangle[2], coincide);
 }
 
-const bool Geo::is_inside(const Point &start, const Point &end, const Triangle &triangle)
+bool Geo::is_inside(const Point &start, const Point &end, const Triangle &triangle)
 {
     return Geo::is_inside(start, triangle) && Geo::is_inside(end, triangle);
 }
 
-const bool Geo::is_inside(const Triangle &triangle0, const Triangle &triangle1)
+bool Geo::is_inside(const Triangle &triangle0, const Triangle &triangle1)
 {
     return Geo::is_inside(triangle0[0], triangle1) && Geo::is_inside(triangle0[1], triangle1)
         && Geo::is_inside(triangle0[2], triangle1);
 }
 
 
-const bool Geo::is_parallel(const Point &point0, const Point &point1, const Point &point2, const Point &point3)
+bool Geo::is_parallel(const Point &point0, const Point &point1, const Point &point2, const Point &point3)
 {
     if (point0.x == point1.x && point2.x == point3.x)
     {
@@ -2650,13 +2650,13 @@ const bool Geo::is_parallel(const Point &point0, const Point &point1, const Poin
     }
 }
 
-const bool Geo::is_parallel(const Line &line0, const Line &line1)
+bool Geo::is_parallel(const Line &line0, const Line &line1)
 {
     return Geo::is_parallel(line0.front(), line0.back(), line1.front(), line1.back());
 }
 
 
-const bool Geo::is_coincide(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
+bool Geo::is_coincide(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
 {
     if ((start0 == start1 && end0 == end1) || (start0 == end1 && end0 == start0))
     {
@@ -2720,7 +2720,7 @@ const bool Geo::is_coincide(const Point &start0, const Point &end0, const Point 
     }
 }
 
-const bool Geo::is_coincide(const Point &start, const Point &end, const Polygon &polygon)
+bool Geo::is_coincide(const Point &start, const Point &end, const Polygon &polygon)
 {
     const size_t index0 = polygon.index(start.x, start.y), index1 = polygon.index(end.x, end.y);
     if (std::max(index0, index1) - std::min(index0, index1) == 1)
@@ -2753,7 +2753,7 @@ const bool Geo::is_coincide(const Point &start, const Point &end, const Polygon 
 
 
 
-const bool Geo::is_part(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
+bool Geo::is_part(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
 {
     if (Geo::is_coincide(start0, end0, start1, end1))
     {
@@ -2776,13 +2776,13 @@ const bool Geo::is_part(const Point &start0, const Point &end0, const Point &sta
     }
 }
 
-const bool Geo::is_part(const Line &line0, const Line &line1)
+bool Geo::is_part(const Line &line0, const Line &line1)
 {
     return Geo::is_part(line0.front(), line0.back(), line1.front(), line1.back());
 }
 
 
-const bool Geo::is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite)
+bool Geo::is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite)
 {
     if (point0 == point2 || point0 == point3)
     {
@@ -2904,12 +2904,12 @@ const bool Geo::is_intersected(const Point &point0, const Point &point1, const P
     }
 }
 
-const bool Geo::is_intersected(const Line &line0, const Line &line1, Point &output, const bool infinite)
+bool Geo::is_intersected(const Line &line0, const Line &line1, Point &output, const bool infinite)
 {
     return Geo::is_intersected(line0.front(), line0.back(), line1.front(), line1.back(), output, infinite);
 }
 
-const bool Geo::is_intersected(const AABBRect &rect0, const AABBRect &rect1, const bool inside)
+bool Geo::is_intersected(const AABBRect &rect0, const AABBRect &rect1, const bool inside)
 {
     if (rect0.empty() || rect1.empty())
     {
@@ -2932,7 +2932,7 @@ const bool Geo::is_intersected(const AABBRect &rect0, const AABBRect &rect1, con
     }
 }
 
-const bool Geo::is_intersected(const Polyline &polyline0, const Polyline &polyline1)
+bool Geo::is_intersected(const Polyline &polyline0, const Polyline &polyline1)
 {
     if (polyline0.empty() || polyline1.empty() || !Geo::is_intersected(polyline0.bounding_rect(), polyline1.bounding_rect()))
     {
@@ -2952,7 +2952,7 @@ const bool Geo::is_intersected(const Polyline &polyline0, const Polyline &polyli
     return false;
 }
 
-const bool Geo::is_intersected(const Polyline &polyline, const Polygon &polygon, const bool inside)
+bool Geo::is_intersected(const Polyline &polyline, const Polygon &polygon, const bool inside)
 {
     if (polyline.empty() || polygon.empty() || !Geo::is_intersected(polygon.bounding_rect(), polyline.bounding_rect()))
     {
@@ -2984,7 +2984,7 @@ const bool Geo::is_intersected(const Polyline &polyline, const Polygon &polygon,
     }
 }
 
-const bool Geo::is_intersected(const Polyline &polyline, const Circle &circle)
+bool Geo::is_intersected(const Polyline &polyline, const Circle &circle)
 {
     for (size_t i = 0, count = polyline.size(); i < count; ++i)
     {
@@ -2996,7 +2996,7 @@ const bool Geo::is_intersected(const Polyline &polyline, const Circle &circle)
     return false;
 }
 
-const bool Geo::is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside)
+bool Geo::is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside)
 {
     if (polygon0.empty() || polygon1.empty() || !Geo::is_intersected(polygon0.bounding_rect(), polygon1.bounding_rect()))
     {
@@ -3033,7 +3033,7 @@ const bool Geo::is_intersected(const Polygon &polygon0, const Polygon &polygon1,
     return false;
 }
 
-const bool Geo::is_intersected(const Polygon &polygon, const Circle &circle, const bool inside)
+bool Geo::is_intersected(const Polygon &polygon, const Circle &circle, const bool inside)
 {
     for (size_t i = 1, count = polygon.size(); i < count; ++i)
     {
@@ -3056,7 +3056,7 @@ const bool Geo::is_intersected(const Polygon &polygon, const Circle &circle, con
     return false;
 }
 
-const bool Geo::is_intersected(const Circle &circle0, const Circle& circle1, const bool inside)
+bool Geo::is_intersected(const Circle &circle0, const Circle& circle1, const bool inside)
 {
     if (inside)
     {
@@ -3069,7 +3069,7 @@ const bool Geo::is_intersected(const Circle &circle0, const Circle& circle1, con
     }
 }
 
-const bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const Point &point1)
+bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const Point &point1)
 {
     if (Geo::is_inside(point0, rect) || Geo::is_inside(point1, rect))
     {
@@ -3104,12 +3104,12 @@ const bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const 
     }
 }
 
-const bool Geo::is_intersected(const AABBRect &rect, const Line &line)
+bool Geo::is_intersected(const AABBRect &rect, const Line &line)
 {
     return Geo::is_intersected(rect, line.front(), line.back());
 }
 
-const bool Geo::is_intersected(const AABBRect &rect, const Polyline &polyline)
+bool Geo::is_intersected(const AABBRect &rect, const Polyline &polyline)
 {
     if (polyline.empty() || !Geo::is_intersected(rect, polyline.bounding_rect()))
     {
@@ -3126,7 +3126,7 @@ const bool Geo::is_intersected(const AABBRect &rect, const Polyline &polyline)
     return false;
 }
 
-const bool Geo::is_intersected(const AABBRect &rect, const Polygon &polygon)
+bool Geo::is_intersected(const AABBRect &rect, const Polygon &polygon)
 {
     if (polygon.empty() || !Geo::is_intersected(rect, polygon.bounding_rect()))
     {
@@ -3150,7 +3150,7 @@ const bool Geo::is_intersected(const AABBRect &rect, const Polygon &polygon)
     return false;
 }
 
-const bool Geo::is_intersected(const AABBRect &rect, const Circle &circle)
+bool Geo::is_intersected(const AABBRect &rect, const Circle &circle)
 {
     if (circle.empty() || !Geo::is_intersected(rect, circle.bounding_rect()))
     {
@@ -3178,7 +3178,7 @@ const bool Geo::is_intersected(const AABBRect &rect, const Circle &circle)
     return false;
 }
 
-const bool Geo::is_intersected(const Point &start, const Point &end, const Triangle &triangle, Point &output0, Point &output1)
+bool Geo::is_intersected(const Point &start, const Point &end, const Triangle &triangle, Point &output0, Point &output1)
 {
     if (Geo::is_inside(start, end, triangle) || !Geo::is_intersected(triangle.bounding_rect(), start, end))
     {
@@ -3194,7 +3194,7 @@ const bool Geo::is_intersected(const Point &start, const Point &end, const Trian
     return a || b;
 }
 
-const bool Geo::is_intersected(const Line &line, const Triangle &triangle, Point &output0, Point &output1)
+bool Geo::is_intersected(const Line &line, const Triangle &triangle, Point &output0, Point &output1)
 {
     return Geo::is_intersected(line.front(), line.back(), triangle, output0, output1);
 }
@@ -3202,14 +3202,14 @@ const bool Geo::is_intersected(const Line &line, const Triangle &triangle, Point
 
 
 
-const bool Geo::is_on_left(const Point &point, const Point &start, const Point &end)
+bool Geo::is_on_left(const Point &point, const Point &start, const Point &end)
 {
     return (end.x - start.x) * (point.y - start.y) -
         (end.y - start.y) * (point.x - end.x) > 0;
 }
 
 
-const bool Geo::is_Rectangle(const Polygon &polygon)
+bool Geo::is_Rectangle(const Polygon &polygon)
 {
     Geo::Polygon points(polygon);
     if (polygon.size() > 5)

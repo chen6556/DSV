@@ -1806,6 +1806,9 @@ void Canvas::cancel_painting()
     _measure_flags[0] = _measure_flags[1] = false;
     _info_labels[1]->clear();
 
+    _operation = Operation::NOOPERATION;
+    _object_cache.clear();
+
     emit tool_changed(_tool_flags[0]);
     update();
 }

@@ -672,124 +672,124 @@ namespace Geo
     // functions
 
     // 两点间距离
-    const double distance(const double x0, const double y0, const double x1, const double y1);
+    double distance(const double x0, const double y0, const double x1, const double y1);
 
     // 两点间距离
-    const double distance(const Point &point0, const Point &point1);
+    double distance(const Point &point0, const Point &point1);
 
     // 点到直线距离,如果为有限长线段且垂足不在线段上,则计算点到线段端点距离
-    const double distance(const Point &point, const Line &line, const bool infinite = false);
+    double distance(const Point &point, const Line &line, const bool infinite = false);
 
     // 点到直线距离,如果为有限长线段且垂足不在线段上,则计算点到线段端点距离
-    const double distance(const Point &point, const Point &start, const Point &end, const bool infinite = false);
+    double distance(const Point &point, const Point &start, const Point &end, const bool infinite = false);
 
     // 点到多段线距离,计算点到每一段有限长线段的距离,取最近距离
-    const double distance(const Point &point, const Polyline &polyline);
+    double distance(const Point &point, const Polyline &polyline);
 
     // 点到多边形距离,计算点到每一段有限长线段的距离,取最近距离
-    const double distance(const Point &point, const Polygon &polygon);
+    double distance(const Point &point, const Polygon &polygon);
 
     // 判断点是否在有限长线段或直线上
-    const bool is_inside(const Point &point, const Line &line, const bool infinite = false);
+    bool is_inside(const Point &point, const Line &line, const bool infinite = false);
 
     // 判断点是否在有限长线段或直线上
-    const bool is_inside(const Point &point, const Point &start, const Point &end, const bool infinite = false);
+    bool is_inside(const Point &point, const Point &start, const Point &end, const bool infinite = false);
 
     // 判断点是否在多段线上
-    const bool is_inside(const Point &point, const Polyline &polyline);
+    bool is_inside(const Point &point, const Polyline &polyline);
 
     // 判断点是否在多边形内,coincide决定是否包含点在多边形上的情况
-    const bool is_inside(const Point &point, const Polygon &polygon, const bool coincide = false);
+    bool is_inside(const Point &point, const Polygon &polygon, const bool coincide = false);
 
     // 判断点是否在AABB矩形内,coincide决定是否包含点在AABB矩形上的情况
-    const bool is_inside(const Point &point, const AABBRect &rect, const bool coincide = false);
+    bool is_inside(const Point &point, const AABBRect &rect, const bool coincide = false);
 
     // 判断点是否在圆内,coincide决定是否包含点在圆上的情况
-    const bool is_inside(const Point &point, const Circle &circle, const bool coincide = false);
+    bool is_inside(const Point &point, const Circle &circle, const bool coincide = false);
 
     // 判断点是否在三角形内,coincide决定是否包含点在三角形上的情况
-    const bool is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2, const bool coincide = false);
+    bool is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2, const bool coincide = false);
 
     // 判断点是否在三角形内,coincide决定是否包含点在三角形上的情况
-    const bool is_inside(const Point &point, const Triangle &triangle, const bool coincide = false);
+    bool is_inside(const Point &point, const Triangle &triangle, const bool coincide = false);
 
     // 判断有限长线段是否完全在三角形内,线段与三角形相交或有端点在三角形上均不算在三角形内部
-    const bool is_inside(const Point &start, const Point &end, const Triangle &triangle);
+    bool is_inside(const Point &start, const Point &end, const Triangle &triangle);
 
     // 判断一个三角形是否完全在另一个三角形内部,与三角形相交或有顶点在三角形上均不算在三角形内部
-    const bool is_inside(const Triangle &triangle0, const Triangle &triangle1);
+    bool is_inside(const Triangle &triangle0, const Triangle &triangle1);
 
     // 判断两直线是否平行
-    const bool is_parallel(const Point &point0, const Point &point1, const Point &point2, const Point &point3);
+    bool is_parallel(const Point &point0, const Point &point1, const Point &point2, const Point &point3);
 
     // 判断两直线是否平行
-    const bool is_parallel(const Line &line0, const Line &line1);
+    bool is_parallel(const Line &line0, const Line &line1);
 
     // 判断两线段是否有重合,仅有一个端点重合不算两线段重合
-    const bool is_coincide(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
+    bool is_coincide(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
 
     // 判断有限长线段是否与多边形某一边重合
-    const bool is_coincide(const Point &start, const Point &end, const Polygon &polygon);
+    bool is_coincide(const Point &start, const Point &end, const Polygon &polygon);
 
     // 判断一个有限长线段是否是另一个有限长线段的一部分
-    const bool is_part(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
+    bool is_part(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
 
     // 判断一个有限长线段是否是另一个有限长线段的一部分
-    const bool is_part(const Line &line0, const Line &line1);
+    bool is_part(const Line &line0, const Line &line1);
 
     // 判断两线段是否相交并尝试获取交点,共线相交时仅在一个端点相交时获取交点
-    const bool is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite = false);
+    bool is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite = false);
 
     // 判断两线段是否相交并尝试获取交点,共线相交时仅在一个端点相交时获取交点
-    const bool is_intersected(const Line &line0, const Line &line1, Point &output, const bool infinite = true);
+    bool is_intersected(const Line &line0, const Line &line1, Point &output, const bool infinite = true);
 
     // 判断两个AABB矩形是否相交,inside决定完全在AABB矩形内部是否算相交
-    const bool is_intersected(const AABBRect &rect0, const AABBRect &rect1, const bool inside = true);
+    bool is_intersected(const AABBRect &rect0, const AABBRect &rect1, const bool inside = true);
 
     // 判断两多段线是否相交
-    const bool is_intersected(const Polyline &polyline0, const Polyline &polyline1);
+    bool is_intersected(const Polyline &polyline0, const Polyline &polyline1);
 
     // 判断多段线是否与多边形相交,inside决定多段线完全在多边形内部是否算相交
-    const bool is_intersected(const Polyline &polyline, const Polygon &polygon, const bool inside = true);
+    bool is_intersected(const Polyline &polyline, const Polygon &polygon, const bool inside = true);
 
     // 判断多段线是否与圆相交
-    const bool is_intersected(const Polyline &polyline, const Circle &circle);
+    bool is_intersected(const Polyline &polyline, const Circle &circle);
 
     // 判断两多边形是否相交,inside决定完全在多边形内部是否算相交
-    const bool is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside = true);
+    bool is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside = true);
 
     // 判断多边形与圆是否相交,inside决定多边形完全在圆内或圆完全在多边形内是否算相交
-    const bool is_intersected(const Polygon &polygon, const Circle &circle, const bool inside = true);
+    bool is_intersected(const Polygon &polygon, const Circle &circle, const bool inside = true);
 
     // 判断两圆是否相交,inside决定完全在圆内是否算相交
-    const bool is_intersected(const Circle &circle0, const Circle &circle1, const bool inside = true);
+    bool is_intersected(const Circle &circle0, const Circle &circle1, const bool inside = true);
 
     // 判断AABB矩形是否与有限长线段相交,线段完全在AABB矩形内也算相交
-    const bool is_intersected(const AABBRect &rect, const Point &point0, const Point &point1);
+    bool is_intersected(const AABBRect &rect, const Point &point0, const Point &point1);
 
     // 判断AABB矩形是否与有限长线段相交,线段完全在AABB矩形内也算相交
-    const bool is_intersected(const AABBRect &rect, const Line &line);
+    bool is_intersected(const AABBRect &rect, const Line &line);
 
     // 判断AABB矩形是否与多段线相交,多段线完全在AABB矩形内也算相交
-    const bool is_intersected(const AABBRect &rect, const Polyline &polyline);
+    bool is_intersected(const AABBRect &rect, const Polyline &polyline);
 
     // 判断AABB矩形是否与多边形相交,多边形完全在AABB矩形内或AABB矩形完全在多边形内也算相交
-    const bool is_intersected(const AABBRect &rect, const Polygon &polygon);
+    bool is_intersected(const AABBRect &rect, const Polygon &polygon);
 
     // 判断AABB矩形是否与圆相交,圆完全在AABB矩形内或AABB矩形完全在圆内也算相交
-    const bool is_intersected(const AABBRect &rect, const Circle &circle);
+    bool is_intersected(const AABBRect &rect, const Circle &circle);
 
     // 判断有限长线段是否与三角形相交,线段完全在三角形内不算相交
-    const bool is_intersected(const Point &start, const Point &end, const Triangle &triangle, Point &output0, Point &output1);
+    bool is_intersected(const Point &start, const Point &end, const Triangle &triangle, Point &output0, Point &output1);
 
     // 判断有限长线段是否与三角形相交,线段完全在三角形内不算相交
-    const bool is_intersected(const Line &line, const Triangle &triangle, Point &output0, Point &output1);
+    bool is_intersected(const Line &line, const Triangle &triangle, Point &output0, Point &output1);
 
     // 判断点是否在直线的左侧
-    const bool is_on_left(const Point &point, const Point &start, const Point &end);
+    bool is_on_left(const Point &point, const Point &start, const Point &end);
 
     // 判断多边形是否是矩形
-    const bool is_Rectangle(const Polygon &polygon);
+    bool is_Rectangle(const Polygon &polygon);
 
     // 计算两向量叉积
     double cross(const double x0, const double y0, const double x1, const double y1);

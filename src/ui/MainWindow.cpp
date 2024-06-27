@@ -128,7 +128,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         ui->canvas->cancel_painting();
         _editer.reset_selected_mark();
         ui->canvas->refresh_selected_ibo();
-        ui->canvas->set_operation(Canvas::Operation::NOOPERATION);
         _cmd_widget->clear();
         break;
     case Qt::Key_Space:
