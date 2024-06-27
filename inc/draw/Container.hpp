@@ -1,7 +1,8 @@
 #pragma once
 
-#include "base/Geometry.hpp"
 #include <QString>
+
+#include "base/Geometry.hpp"
 
 
 class Text : public Geo::AABBRect

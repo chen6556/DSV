@@ -1,4 +1,5 @@
 #include "base/Editer.hpp"
+#include "base/Algorithm.hpp"
 #include "io/GlobalSetting.hpp"
 
 

@@ -1,10 +1,3 @@
-#include "ui/MainWindow.hpp"
-#include "./ui_MainWindow.h"
-#include "io/File.hpp"
-#include "io/PLTParser.hpp"
-#include "io/PDFParser.hpp"
-#include "io/RS274DParser.hpp"
-#include "io/DSVParser.hpp"
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QJsonObject>
@@ -13,6 +6,14 @@
 #include <QMimeData>
 #include <qpdf/QPDF.hh>
 #include <qpdf/QPDFWriter.hh>
+
+#include "ui/MainWindow.hpp"
+#include "./ui_MainWindow.h"
+#include "io/File.hpp"
+#include "io/PLTParser.hpp"
+#include "io/PDFParser.hpp"
+#include "io/RS274DParser.hpp"
+#include "io/DSVParser.hpp"
 #include "io/GlobalSetting.hpp"
 
 

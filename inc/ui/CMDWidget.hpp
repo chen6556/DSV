@@ -5,7 +5,7 @@
 #include <QCompleter>
 
 #include "base/Editer.hpp"
-#include "Draw/Canvas.hpp"
+#include "draw/Canvas.hpp"
 
 
 QT_BEGIN_NAMESPACE

@@ -1,7 +1,8 @@
+#include <sstream>
+#include <QString>
+
 #include "io/DSVParser.hpp"
 #include "io/Parser/ParserGen2.hpp"
-#include <QString>
-#include <sstream>
 
 
 namespace DSVParser

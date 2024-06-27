@@ -1,7 +1,9 @@
 #pragma once
 
 #include <QDialog>
+
 #include "draw/Graph.hpp"
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class DataPanel;}

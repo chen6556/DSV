@@ -1,7 +1,7 @@
-#include "draw/Container.hpp"
 #include <QFontMetrics>
 #include <QStringList>
 
+#include "draw/Container.hpp"
 
 
 // Text

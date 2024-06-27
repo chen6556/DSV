@@ -1,11 +1,13 @@
-#include "io/RS274DParser.hpp"
-#include "base/Geometry.hpp"
-#include "draw/Container.hpp"
-#include "io/Parser/ParserGen2.hpp"
-#include "io/GlobalSetting.hpp"
 #include <sstream>
 #include <string>
 #include <QDebug>
+
+#include "base/Geometry.hpp"
+#include "draw/Container.hpp"
+#include "io/RS274DParser.hpp"
+#include "io/Parser/ParserGen2.hpp"
+#include "io/GlobalSetting.hpp"
+
 
 namespace RS274DParser
 {

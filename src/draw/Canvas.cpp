@@ -1,6 +1,8 @@
+#include <QPainterPath>
+
+#include "base/Algorithm.hpp"
 #include "draw/Canvas.hpp"
 #include "draw/GLSL.hpp"
-#include <QPainterPath>
 #include "io/GlobalSetting.hpp"
 
 

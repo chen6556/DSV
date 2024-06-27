@@ -4,10 +4,11 @@
 #include <QPaintEvent>
 #include <QLabel>
 #include <QTextEdit>
-#include <QOpenGLFunctions_4_5_Core>
-#include "base/Editer.hpp"
 #include <QMenu>
 #include <QAction>
+#include <QOpenGLFunctions_4_5_Core>
+
+#include "base/Editer.hpp"
 
 
 class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core

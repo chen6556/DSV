@@ -1,5 +1,6 @@
 #pragma once
 
+
 namespace GLSL
 {
 const char *base_vss = "#version 450 core\n"

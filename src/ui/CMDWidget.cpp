@@ -1,8 +1,8 @@
+#include <QRegularExpressionValidator>
+
 #include "ui/CMDWidget.hpp"
 #include "./ui_CMDWidget.h"
 #include "io/GlobalSetting.hpp"
-#include <QRegularExpressionValidator>
-
 
 
 CMDWidget::CMDWidget(Editer *editer, Canvas *canvas, QWidget *parent)

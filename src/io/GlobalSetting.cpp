@@ -1,7 +1,9 @@
-#include "io/GlobalSetting.hpp"
 #include <QFile>
 #include <QIODevice>
 #include <QJsonDocument>
+
+#include "io/GlobalSetting.hpp"
+
 
 GlobalSetting *GlobalSetting::_instance = new GlobalSetting();
 

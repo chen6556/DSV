@@ -1,11 +1,12 @@
 #pragma once
 
-#include "draw/Graph.hpp"
-#include "base/Geometry.hpp"
 #include <fstream>
 #include <stack>
 #include <array>
 #include <map>
+
+#include "base/Geometry.hpp"
+#include "draw/Graph.hpp"
 
 
 namespace PDFParser

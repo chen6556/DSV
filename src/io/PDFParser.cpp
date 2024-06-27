@@ -1,8 +1,10 @@
+#include <sstream>
+#include <QStringList>
+
+#include "base/Algorithm.hpp"
 #include "io/PDFParser.hpp"
 #include "io/Parser/ParserGen2.hpp"
 #include "io/GlobalSetting.hpp"
-#include <sstream>
-#include <QStringList>
 
 
 namespace PDFParser

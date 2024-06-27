@@ -1,7 +1,9 @@
+#include <sstream>
+
+#include "base/Algorithm.hpp"
 #include "io/PLTParser.hpp"
 #include "io/Parser/ParserGen2.hpp"
 #include "io/GlobalSetting.hpp"
-#include <sstream>
 
 
 namespace PLTParser

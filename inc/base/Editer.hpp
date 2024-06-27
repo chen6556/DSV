@@ -1,8 +1,9 @@
 #pragma once
 
-#include "draw/Graph.hpp"
 #include <QLineF>
 #include <QPolygonF>
+
+#include "draw/Graph.hpp"
 
 
 class Editer
