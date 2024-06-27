@@ -1,27 +1,27 @@
 <RCC>
   <qresource prefix="/">
-    <file>icons/fillet_btn.svg</file>
+    <file>icons/fillet_btn.png</file>
     <file>icons/DSV_logo.png</file>
-    <file>icons/ring_array_btn.svg</file>
-    <file>icons/line_array_btn.svg</file>
-    <file>icons/offset_btn.svg</file>
-    <file>icons/scale_btn.svg</file>
-    <file>icons/flipx_btn.svg</file>
-    <file>icons/mirror_btn.svg</file>
-    <file>icons/flipy_btn.svg</file>
-    <file>icons/rotate_btn.svg</file>
-    <file>icons/difference_btn.svg</file>
-    <file>icons/intersection_btn.svg</file>
-    <file>icons/union_btn.svg</file>
-    <file>icons/split_btn.svg</file>
-    <file>icons/combinate_btn.svg</file>
-    <file>icons/connect_btn.svg</file>
-    <file>icons/close_btn.svg</file>
+    <file>icons/ring_array_btn.png</file>
+    <file>icons/line_array_btn.png</file>
+    <file>icons/offset_btn.png</file>
+    <file>icons/scale_btn.png</file>
+    <file>icons/flipx_btn.png</file>
+    <file>icons/mirror_btn.png</file>
+    <file>icons/flipy_btn.png</file>
+    <file>icons/rotate_btn.png</file>
+    <file>icons/difference_btn.png</file>
+    <file>icons/intersection_btn.png</file>
+    <file>icons/union_btn.png</file>
+    <file>icons/split_btn.png</file>
+    <file>icons/combinate_btn.png</file>
+    <file>icons/connect_btn.png</file>
+    <file>icons/close_btn.png</file>
     <file>DSV2.ico</file>
-    <file>icons/curve_btn.svg</file>
-    <file>icons/polyline_btn.svg</file>
-    <file>icons/rectangle_btn.svg</file>
+    <file>icons/curve_btn.png</file>
+    <file>icons/polyline_btn.png</file>
+    <file>icons/rectangle_btn.png</file>
     <file>icons/measure_btn.png</file>
-    <file>icons/circle_btn.svg</file>
+    <file>icons/circle_btn.png</file>
   </qresource>
 </RCC>

@@ -309,7 +309,7 @@ QPushButton:pressed
                 </property>
                 <property name="icon">
                  <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/polyline_btn.svg</normaloff>:/icons/polyline_btn.svg</iconset>
+                  <normaloff>:/icons/polyline_btn.png</normaloff>:/icons/polyline_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -328,8 +328,8 @@ QPushButton:pressed
                  <string>Rectangle</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/rectangle_btn.svg</normaloff>:/icons/rectangle_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/rectangle_btn.png</normaloff>:/icons/rectangle_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -348,8 +348,8 @@ QPushButton:pressed
                  <string>Circle</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/circle_btn.svg</normaloff>:/icons/circle_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/circle_btn.png</normaloff>:/icons/circle_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -368,8 +368,8 @@ QPushButton:pressed
                  <string>Bezier Curve</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/curve_btn.svg</normaloff>:/icons/curve_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/curve_btn.png</normaloff>:/icons/curve_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -438,8 +438,8 @@ QPushButton:pressed
                  <string>Close</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/close_btn.svg</normaloff>:/icons/close_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/close_btn.png</normaloff>:/icons/close_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -458,8 +458,8 @@ QPushButton:pressed
                  <string>Connect</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/connect_btn.svg</normaloff>:/icons/connect_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/connect_btn.png</normaloff>:/icons/connect_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -478,8 +478,8 @@ QPushButton:pressed
                  <string>Combinate</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/combinate_btn.svg</normaloff>:/icons/combinate_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/combinate_btn.png</normaloff>:/icons/combinate_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -503,8 +503,8 @@ QPushButton:pressed
                  <string>Split</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/split_btn.svg</normaloff>:/icons/split_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/split_btn.png</normaloff>:/icons/split_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -561,8 +561,8 @@ QPushButton:pressed
                  <string>Offset</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/offset_btn.svg</normaloff>:/icons/offset_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/offset_btn.png</normaloff>:/icons/offset_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -623,8 +623,8 @@ QPushButton:pressed
                  <string>Flip X</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/flipx_btn.svg</normaloff>:/icons/flipx_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/flipx_btn.png</normaloff>:/icons/flipx_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -643,8 +643,8 @@ QPushButton:pressed
                  <string>Mirror</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/mirror_btn.svg</normaloff>:/icons/mirror_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/mirror_btn.png</normaloff>:/icons/mirror_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -663,8 +663,8 @@ QPushButton:pressed
                  <string>Difference</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/difference_btn.svg</normaloff>:/icons/difference_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/difference_btn.png</normaloff>:/icons/difference_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -683,8 +683,8 @@ QPushButton:pressed
                  <string>Intersection</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/intersection_btn.svg</normaloff>:/icons/intersection_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/intersection_btn.png</normaloff>:/icons/intersection_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -703,8 +703,8 @@ QPushButton:pressed
                  <string>Flip Y</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/flipy_btn.svg</normaloff>:/icons/flipy_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/flipy_btn.png</normaloff>:/icons/flipy_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -723,8 +723,8 @@ QPushButton:pressed
                  <string>Union</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/union_btn.svg</normaloff>:/icons/union_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/union_btn.png</normaloff>:/icons/union_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -824,8 +824,8 @@ QPushButton:pressed
                  <string>Rotate</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/rotate_btn.svg</normaloff>:/icons/rotate_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/rotate_btn.png</normaloff>:/icons/rotate_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -844,8 +844,8 @@ QPushButton:pressed
                  <string>Scale</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/scale_btn.svg</normaloff>:/icons/scale_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/scale_btn.png</normaloff>:/icons/scale_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -861,8 +861,8 @@ QPushButton:pressed
                  <string>Fillet</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/fillet_btn.svg</normaloff>:/icons/fillet_btn.svg</iconset>
+                 <iconset>
+                  <normaloff>:/icons/fillet_btn.png</normaloff>:/icons/fillet_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -996,7 +996,7 @@ QPushButton:pressed
              <x>-12</x>
              <y>0</y>
              <width>106</width>
-             <height>379</height>
+             <height>371</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1293,8 +1293,8 @@ QPushButton:pressed
                <string>Line Array</string>
               </property>
               <property name="icon">
-               <iconset resource="../resource/Icons.qrc">
-                <normaloff>:/icons/line_array_btn.svg</normaloff>:/icons/line_array_btn.svg</iconset>
+               <iconset>
+                <normaloff>:/icons/line_array_btn.png</normaloff>:/icons/line_array_btn.png</iconset>
               </property>
               <property name="iconSize">
                <size>
@@ -1398,8 +1398,8 @@ QPushButton:pressed
                <string>Ring Array</string>
               </property>
               <property name="icon">
-               <iconset resource="../resource/Icons.qrc">
-                <normaloff>:/icons/ring_array_btn.svg</normaloff>:/icons/ring_array_btn.svg</iconset>
+               <iconset>
+                <normaloff>:/icons/ring_array_btn.png</normaloff>:/icons/ring_array_btn.png</iconset>
               </property>
               <property name="iconSize">
                <size>
