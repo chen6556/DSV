@@ -13,13 +13,13 @@ double Geo::distance(const double x0, const double y0, const double x1, const do
     return std::sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
 }
 
-double Geo::distance(const Point &point0, const Point &point1)
+double Geo::distance(const Geo::Point &point0, const Geo::Point &point1)
 {
     return std::sqrt((point0.x - point1.x) * (point0.x - point1.x)
                         + (point0.y - point1.y) * (point0.y - point1.y));
 }
 
-double Geo::distance(const Point &point, const Line &line, const bool infinite)
+double Geo::distance(const Geo::Point &point, const Geo::Line &line, const bool infinite)
 {
     if (line.front().x == line.back().x)
     {
@@ -85,7 +85,7 @@ double Geo::distance(const Point &point, const Line &line, const bool infinite)
     }
 }
 
-double Geo::distance(const Point &point, const Point &start, const Point &end, const bool infinite)
+double Geo::distance(const Geo::Point &point, const Geo::Point &start, const Geo::Point &end, const bool infinite)
 {
     if (start.x == end.x)
     {
@@ -151,7 +151,7 @@ double Geo::distance(const Point &point, const Point &start, const Point &end, c
     }
 }
 
-double Geo::distance(const Point &point, const Polyline &polyline)
+double Geo::distance(const Geo::Point &point, const Geo::Polyline &polyline)
 {
     double dis = DBL_MAX;
     for (size_t i = 1, count = polyline.size(); i < count; ++i)
@@ -161,7 +161,7 @@ double Geo::distance(const Point &point, const Polyline &polyline)
     return dis;
 }
 
-double Geo::distance(const Point &point, const Polygon &polygon)
+double Geo::distance(const Geo::Point &point, const Geo::Polygon &polygon)
 {
     double dis = DBL_MAX;
     for (size_t i = 1, count = polygon.size(); i < count; ++i)
@@ -172,17 +172,17 @@ double Geo::distance(const Point &point, const Polygon &polygon)
 }
 
 
-bool Geo::is_inside(const Point &point, const Line &line, const bool infinite)
+bool Geo::is_inside(const Geo::Point &point, const Geo::Line &line, const bool infinite)
 {
     return Geo::distance(point, line.front(), line.back(), infinite) < Geo::EPSILON;
 }
 
-bool Geo::is_inside(const Point &point, const Point &start, const Point &end, const bool infinite)
+bool Geo::is_inside(const Geo::Point &point, const Geo::Point &start, const Geo::Point &end, const bool infinite)
 {
     return Geo::distance(point, start, end, infinite) < Geo::EPSILON;
 }
 
-bool Geo::is_inside(const Point &point, const Polyline &polyline)
+bool Geo::is_inside(const Geo::Point &point, const Geo::Polyline &polyline)
 {
     for (size_t i = 1, count = polyline.size(); i < count; ++i)
     {
@@ -194,7 +194,7 @@ bool Geo::is_inside(const Point &point, const Polyline &polyline)
     return false;
 }
 
-bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coincide)
+bool Geo::is_inside(const Geo::Point &point, const Geo::Polygon &polygon, const bool coincide)
 {
     if (!polygon.empty() && Geo::is_inside(point, polygon.bounding_rect(), coincide))
     {
@@ -237,7 +237,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
             if (!Geo::is_parallel(point, end, points[i], points[i - 1]) &&
                 Geo::is_intersected(point, end, points[i], points[i - 1], temp))
             {
-                points.insert(points.begin() + i++, MarkedPoint(temp.x, temp.y, false));
+                points.insert(points.begin() + i++, Geo::MarkedPoint(temp.x, temp.y, false));
                 ++count;
                 if (Geo::cross(temp, end, points[i], points[i - 1]) >= 0)
                 {
@@ -364,7 +364,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
     }
 }
 
-bool Geo::is_inside(const Point &point, const AABBRect &rect, const bool coincide)
+bool Geo::is_inside(const Geo::Point &point, const Geo::AABBRect &rect, const bool coincide)
 {
     if (rect.empty())
     {
@@ -381,7 +381,7 @@ bool Geo::is_inside(const Point &point, const AABBRect &rect, const bool coincid
     }
 }
 
-bool Geo::is_inside(const Point &point, const Circle &circle, const bool coincide)
+bool Geo::is_inside(const Geo::Point &point, const Geo::Circle &circle, const bool coincide)
 {
     if (circle.empty())
     {
@@ -397,7 +397,7 @@ bool Geo::is_inside(const Point &point, const Circle &circle, const bool coincid
     }
 }
 
-bool Geo::is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2, const bool coincide)
+bool Geo::is_inside(const Geo::Point &point, const Geo::Point &point0, const Geo::Point &point1, const Geo::Point &point2, const bool coincide)
 {
     if (coincide)
     {
@@ -423,24 +423,24 @@ bool Geo::is_inside(const Point &point, const Point &point0, const Point &point1
     }
 }
 
-bool Geo::is_inside(const Point &point, const Triangle &triangle, const bool coincide)
+bool Geo::is_inside(const Geo::Point &point, const Geo::Triangle &triangle, const bool coincide)
 {
     return Geo::is_inside(point, triangle[0], triangle[1], triangle[2], coincide);
 }
 
-bool Geo::is_inside(const Point &start, const Point &end, const Triangle &triangle)
+bool Geo::is_inside(const Geo::Point &start, const Geo::Point &end, const Geo::Triangle &triangle)
 {
     return Geo::is_inside(start, triangle) && Geo::is_inside(end, triangle);
 }
 
-bool Geo::is_inside(const Triangle &triangle0, const Triangle &triangle1)
+bool Geo::is_inside(const Geo::Triangle &triangle0, const Geo::Triangle &triangle1)
 {
     return Geo::is_inside(triangle0[0], triangle1) && Geo::is_inside(triangle0[1], triangle1)
         && Geo::is_inside(triangle0[2], triangle1);
 }
 
 
-bool Geo::is_parallel(const Point &point0, const Point &point1, const Point &point2, const Point &point3)
+bool Geo::is_parallel(const Geo::Point &point0, const Geo::Point &point1, const Geo::Point &point2, const Geo::Point &point3)
 {
     if (point0.x == point1.x && point2.x == point3.x)
     {
@@ -448,18 +448,17 @@ bool Geo::is_parallel(const Point &point0, const Point &point1, const Point &poi
     }
     else
     {
-        return ((point0.y - point1.y) * (point2.x - point3.x)) ==
-            ((point2.y - point3.y) * (point0.x - point1.x));
+        return ((point0.y - point1.y) * (point2.x - point3.x)) == ((point2.y - point3.y) * (point0.x - point1.x));
     }
 }
 
-bool Geo::is_parallel(const Line &line0, const Line &line1)
+bool Geo::is_parallel(const Geo::Line &line0, const Geo::Line &line1)
 {
     return Geo::is_parallel(line0.front(), line0.back(), line1.front(), line1.back());
 }
 
 
-bool Geo::is_coincide(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
+bool Geo::is_coincide(const Geo::Point &start0, const Geo::Point &end0, const Geo::Point &start1, const Geo::Point &end1)
 {
     if ((start0 == start1 && end0 == end1) || (start0 == end1 && end0 == start0))
     {
@@ -523,7 +522,7 @@ bool Geo::is_coincide(const Point &start0, const Point &end0, const Point &start
     }
 }
 
-bool Geo::is_coincide(const Point &start, const Point &end, const Polygon &polygon)
+bool Geo::is_coincide(const Geo::Point &start, const Geo::Point &end, const Geo::Polygon &polygon)
 {
     const size_t index0 = polygon.index(start.x, start.y), index1 = polygon.index(end.x, end.y);
     if (std::max(index0, index1) - std::min(index0, index1) == 1)
@@ -556,7 +555,7 @@ bool Geo::is_coincide(const Point &start, const Point &end, const Polygon &polyg
 
 
 
-bool Geo::is_part(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
+bool Geo::is_part(const Geo::Point &start0, const Geo::Point &end0, const Geo::Point &start1, const Geo::Point &end1)
 {
     if (Geo::is_coincide(start0, end0, start1, end1))
     {
@@ -579,13 +578,13 @@ bool Geo::is_part(const Point &start0, const Point &end0, const Point &start1, c
     }
 }
 
-bool Geo::is_part(const Line &line0, const Line &line1)
+bool Geo::is_part(const Geo::Line &line0, const Geo::Line &line1)
 {
     return Geo::is_part(line0.front(), line0.back(), line1.front(), line1.back());
 }
 
 
-bool Geo::is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite)
+bool Geo::is_intersected(const Geo::Point &point0, const Geo::Point &point1, const Geo::Point &point2, const Geo::Point &point3, Geo::Point &output, const bool infinite)
 {
     if (point0 == point2 || point0 == point3)
     {
@@ -707,12 +706,12 @@ bool Geo::is_intersected(const Point &point0, const Point &point1, const Point &
     }
 }
 
-bool Geo::is_intersected(const Line &line0, const Line &line1, Point &output, const bool infinite)
+bool Geo::is_intersected(const Geo::Line &line0, const Geo::Line &line1, Geo::Point &output, const bool infinite)
 {
     return Geo::is_intersected(line0.front(), line0.back(), line1.front(), line1.back(), output, infinite);
 }
 
-bool Geo::is_intersected(const AABBRect &rect0, const AABBRect &rect1, const bool inside)
+bool Geo::is_intersected(const Geo::AABBRect &rect0, const Geo::AABBRect &rect1, const bool inside)
 {
     if (rect0.empty() || rect1.empty())
     {
@@ -735,13 +734,13 @@ bool Geo::is_intersected(const AABBRect &rect0, const AABBRect &rect1, const boo
     }
 }
 
-bool Geo::is_intersected(const Polyline &polyline0, const Polyline &polyline1)
+bool Geo::is_intersected(const Geo::Polyline &polyline0, const Geo::Polyline &polyline1)
 {
     if (polyline0.empty() || polyline1.empty() || !Geo::is_intersected(polyline0.bounding_rect(), polyline1.bounding_rect()))
     {
         return false;
     }
-    Point point;
+    Geo::Point point;
     for (size_t i = 1, count0 = polyline0.size(); i < count0; ++i)
     {
         for (size_t j = 1, count1 = polyline1.size(); j < count1; ++j)
@@ -755,14 +754,14 @@ bool Geo::is_intersected(const Polyline &polyline0, const Polyline &polyline1)
     return false;
 }
 
-bool Geo::is_intersected(const Polyline &polyline, const Polygon &polygon, const bool inside)
+bool Geo::is_intersected(const Geo::Polyline &polyline, const Geo::Polygon &polygon, const bool inside)
 {
     if (polyline.empty() || polygon.empty() || !Geo::is_intersected(polygon.bounding_rect(), polyline.bounding_rect()))
     {
         return false;
     }
 
-    Point point;
+    Geo::Point point;
     for (size_t i = 1, count0 = polyline.size(); i < count0; ++i)
     {
         for (size_t j = 1, count1 = polygon.size(); j < count1; ++j)
@@ -787,7 +786,7 @@ bool Geo::is_intersected(const Polyline &polyline, const Polygon &polygon, const
     }
 }
 
-bool Geo::is_intersected(const Polyline &polyline, const Circle &circle)
+bool Geo::is_intersected(const Geo::Polyline &polyline, const Geo::Circle &circle)
 {
     for (size_t i = 0, count = polyline.size(); i < count; ++i)
     {
@@ -799,13 +798,13 @@ bool Geo::is_intersected(const Polyline &polyline, const Circle &circle)
     return false;
 }
 
-bool Geo::is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside)
+bool Geo::is_intersected(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, const bool inside)
 {
     if (polygon0.empty() || polygon1.empty() || !Geo::is_intersected(polygon0.bounding_rect(), polygon1.bounding_rect()))
     {
         return false;
     }
-    Point point;
+    Geo::Point point;
     for (size_t i = 1, count0 = polygon0.size(); i < count0; ++i)
     {
         for (size_t j = 1, count1 = polygon1.size(); j < count1; ++j)
@@ -818,14 +817,14 @@ bool Geo::is_intersected(const Polygon &polygon0, const Polygon &polygon1, const
     }
     if (inside)
     {
-        for (const Point &point : polygon0)
+        for (const Geo::Point &point : polygon0)
         {
             if (Geo::is_inside(point, polygon1, true))
             {
                 return true;
             }
         }
-        for (const Point &point : polygon1)
+        for (const Geo::Point &point : polygon1)
         {
             if (Geo::is_inside(point, polygon0, true))
             {
@@ -836,7 +835,7 @@ bool Geo::is_intersected(const Polygon &polygon0, const Polygon &polygon1, const
     return false;
 }
 
-bool Geo::is_intersected(const Polygon &polygon, const Circle &circle, const bool inside)
+bool Geo::is_intersected(const Geo::Polygon &polygon, const Geo::Circle &circle, const bool inside)
 {
     for (size_t i = 1, count = polygon.size(); i < count; ++i)
     {
@@ -859,7 +858,7 @@ bool Geo::is_intersected(const Polygon &polygon, const Circle &circle, const boo
     return false;
 }
 
-bool Geo::is_intersected(const Circle &circle0, const Circle& circle1, const bool inside)
+bool Geo::is_intersected(const Geo::Circle &circle0, const Geo::Circle& circle1, const bool inside)
 {
     if (inside)
     {
@@ -872,7 +871,7 @@ bool Geo::is_intersected(const Circle &circle0, const Circle& circle1, const boo
     }
 }
 
-bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const Point &point1)
+bool Geo::is_intersected(const Geo::AABBRect &rect, const Geo::Point &point0, const Geo::Point &point1)
 {
     if (Geo::is_inside(point0, rect) || Geo::is_inside(point1, rect))
     {
@@ -907,12 +906,12 @@ bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const Point 
     }
 }
 
-bool Geo::is_intersected(const AABBRect &rect, const Line &line)
+bool Geo::is_intersected(const Geo::AABBRect &rect, const Geo::Line &line)
 {
     return Geo::is_intersected(rect, line.front(), line.back());
 }
 
-bool Geo::is_intersected(const AABBRect &rect, const Polyline &polyline)
+bool Geo::is_intersected(const Geo::AABBRect &rect, const Geo::Polyline &polyline)
 {
     if (polyline.empty() || !Geo::is_intersected(rect, polyline.bounding_rect()))
     {
@@ -929,7 +928,7 @@ bool Geo::is_intersected(const AABBRect &rect, const Polyline &polyline)
     return false;
 }
 
-bool Geo::is_intersected(const AABBRect &rect, const Polygon &polygon)
+bool Geo::is_intersected(const Geo::AABBRect &rect, const Geo::Polygon &polygon)
 {
     if (polygon.empty() || !Geo::is_intersected(rect, polygon.bounding_rect()))
     {
@@ -953,7 +952,7 @@ bool Geo::is_intersected(const AABBRect &rect, const Polygon &polygon)
     return false;
 }
 
-bool Geo::is_intersected(const AABBRect &rect, const Circle &circle)
+bool Geo::is_intersected(const Geo::AABBRect &rect, const Geo::Circle &circle)
 {
     if (circle.empty() || !Geo::is_intersected(rect, circle.bounding_rect()))
     {
@@ -981,7 +980,7 @@ bool Geo::is_intersected(const AABBRect &rect, const Circle &circle)
     return false;
 }
 
-bool Geo::is_intersected(const Point &start, const Point &end, const Triangle &triangle, Point &output0, Point &output1)
+bool Geo::is_intersected(const Geo::Point &start, const Geo::Point &end, const Geo::Triangle &triangle, Geo::Point &output0, Geo::Point &output1)
 {
     if (Geo::is_inside(start, end, triangle) || !Geo::is_intersected(triangle.bounding_rect(), start, end))
     {
@@ -997,22 +996,20 @@ bool Geo::is_intersected(const Point &start, const Point &end, const Triangle &t
     return a || b;
 }
 
-bool Geo::is_intersected(const Line &line, const Triangle &triangle, Point &output0, Point &output1)
+bool Geo::is_intersected(const Geo::Line &line, const Geo::Triangle &triangle, Geo::Point &output0, Geo::Point &output1)
 {
     return Geo::is_intersected(line.front(), line.back(), triangle, output0, output1);
 }
 
 
-
-
-bool Geo::is_on_left(const Point &point, const Point &start, const Point &end)
+bool Geo::is_on_left(const Geo::Point &point, const Geo::Point &start, const Geo::Point &end)
 {
     return (end.x - start.x) * (point.y - start.y) -
         (end.y - start.y) * (point.x - end.x) > 0;
 }
 
 
-bool Geo::is_Rectangle(const Polygon &polygon)
+bool Geo::is_Rectangle(const Geo::Polygon &polygon)
 {
     Geo::Polygon points(polygon);
     if (polygon.size() > 5)
@@ -1049,18 +1046,18 @@ double Geo::cross(const double x0, const double y0, const double x1, const doubl
     return x0 * y1 - x1 * y0;
 }
 
-double Geo::cross(const Vector &vec0, const Vector &vec1)
+double Geo::cross(const Geo::Vector &vec0, const Geo::Vector &vec1)
 {
     return vec0.x * vec1.y - vec1.x * vec0.y;
 }
 
-double Geo::cross(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
+double Geo::cross(const Geo::Point &start0, const Geo::Point &end0, const Geo::Point &start1, const Geo::Point &end1)
 {
     return Geo::cross(end0 - start0, end1 - start1);
 }
 
 
-bool Geo::foot_point(const Point &start, const Point &end, const Point &point, Point &foot, const bool infinite)
+bool Geo::foot_point(const Geo::Point &start, const Geo::Point &end, const Geo::Point &point, Geo::Point &foot, const bool infinite)
 {
     if (start.x == end.x)
     {
@@ -1092,13 +1089,13 @@ bool Geo::foot_point(const Point &start, const Point &end, const Point &point, P
     }
 }
 
-bool Geo::foot_point(const Line &line, const Point &point, Point &foot, const bool infinite)
+bool Geo::foot_point(const Geo::Line &line, const Geo::Point &point, Geo::Point &foot, const bool infinite)
 {
     return Geo::foot_point(line.front(), line.back(), point, foot, infinite);
 }
 
 
-double Geo::angle(const Point &start, const Point &end)
+double Geo::angle(const Geo::Point &start, const Geo::Point &end)
 {
     const Geo::Point vec = start - end;
     if (vec.y > 0)
@@ -1111,7 +1108,7 @@ double Geo::angle(const Point &start, const Point &end)
     }
 }
 
-double Geo::angle(const Point &point0, const Point &point1, const Point &point2)
+double Geo::angle(const Geo::Point &point0, const Geo::Point &point1, const Geo::Point &point2)
 {
     const Geo::Point vec0 = point0 - point1, vec1 = point2 - point1;
     if (vec0.cross(vec1) > 0)
@@ -1124,7 +1121,7 @@ double Geo::angle(const Point &point0, const Point &point1, const Point &point2)
     }
 }
 
-double Geo::angle(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
+double Geo::angle(const Geo::Point &start0, const Geo::Point &end0, const Geo::Point &start1, const Geo::Point &end1)
 {
     const Geo::Point vec0 = end0 - start0, vec1 = end1 - start1;
     if (vec0.cross(vec1) > 0)
@@ -1137,7 +1134,7 @@ double Geo::angle(const Point &start0, const Point &end0, const Point &start1, c
     }
 }
 
-double Geo::angle(const Line &line0, const Line &line1)
+double Geo::angle(const Geo::Line &line0, const Geo::Line &line1)
 {
     const Geo::Point vec0 = line0.back() - line0.front(), vec1 = line1.back() - line1.front();
     if (vec0.cross(vec1) > 0)
@@ -1227,7 +1224,7 @@ double Geo::degree_to_rad(double value)
 }
 
 
-bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Polyline &arc)
+bool Geo::angle_to_arc(const Geo::Point &point0, const Geo::Point &point1, const Geo::Point &point2, const double radius, Geo::Polyline &arc)
 {
     if (radius <= 0)
     {
@@ -1281,7 +1278,7 @@ Geo::Polygon Geo::circle_to_polygon(const double x, const double y, const double
     return Geo::Polygon(points.cbegin(), points.cend());
 }
 
-Geo::Polygon Geo::circle_to_polygon(const Circle &circle)
+Geo::Polygon Geo::circle_to_polygon(const Geo::Circle &circle)
 {
     return Geo::circle_to_polygon(circle.x, circle.y, circle.radius);
 }
@@ -1291,7 +1288,7 @@ std::vector<size_t> Geo::ear_cut_to_indexs(const Geo::Polygon &polygon)
 {
     std::vector<std::vector<std::array<double, 2>>> points;
     points.emplace_back(std::vector<std::array<double, 2>>());
-    for (const Point &point : polygon)
+    for (const Geo::Point &point : polygon)
     {
         points.front().emplace_back(std::array<double, 2>({point.x, point.y}));
     }
@@ -1333,7 +1330,7 @@ std::vector<size_t> Geo::ear_cut_to_indexs_test(const Geo::Polygon &polygon)
                     {
                         continue;
                     }
-                    if (is_inside(polygon[index], polygon[pre], polygon[cur], polygon[nxt]))
+                    if (Geo::is_inside(polygon[index], polygon[pre], polygon[cur], polygon[nxt]))
                     {
                         is_ear = false;
                         break;
@@ -1412,7 +1409,7 @@ std::vector<Geo::Triangle> Geo::ear_cut_to_triangles(const Geo::Polygon &polygon
                     {
                         continue;
                     }
-                    if (is_inside(polygon[index], polygon[pre], polygon[cur], polygon[nxt]))
+                    if (Geo::is_inside(polygon[index], polygon[pre], polygon[cur], polygon[nxt]))
                     {
                         is_ear = false;
                         break;
@@ -1448,7 +1445,7 @@ bool Geo::offset(const Geo::Polyline &input, Geo::Polyline &result, const double
 {
     if (distance != 0)
     {
-        Polyline temp(input);
+        Geo::Polyline temp(input);
         result.clear();
         double area = 0;
         for (size_t i = 1, count = temp.size(); i < count; ++i)
@@ -1460,7 +1457,7 @@ bool Geo::offset(const Geo::Polyline &input, Geo::Polyline &result, const double
         {
             temp.flip();
         }
-        Point a, b;
+        Geo::Point a, b;
         result.append(temp.front() + (temp[1] - temp[0]).vertical().normalize() * distance);
         for (size_t i = 1, end = temp.size() - 1; i < end; ++i)
         {
@@ -1486,11 +1483,11 @@ bool Geo::offset(const Geo::Polygon &input, Geo::Polygon &result, const double d
         return true;
     }
 
-    Polygon temp(input);
+    Geo::Polygon temp(input);
     temp.reorder_points();
     result.clear();
-    std::vector<Point> points;
-    Point a, b;
+    std::vector<Geo::Point> points;
+    Geo::Point a, b;
     std::vector<bool> error_edges;
     if (distance > 0)
     {
@@ -1717,11 +1714,11 @@ bool Geo::offset_test(const Geo::Polygon &input, Geo::Polygon &result, const dou
         return true;
     }
 
-    Polygon temp(input);
+    Geo::Polygon temp(input);
     temp.reorder_points();
     result.clear();
-    std::vector<Point> points;
-    Point a, b;
+    std::vector<Geo::Point> points;
+    Geo::Point a, b;
     std::vector<bool> error_edges;
     if (distance > 0)
     {
@@ -1917,15 +1914,15 @@ bool Geo::offset_test(const Geo::Polygon &input, Geo::Polygon &result, const dou
     }
     result.back() = result.front();
 
-    std::vector<Polygon> polygons;
+    std::vector<Geo::Polygon> polygons;
     if (result.is_self_intersected() && Geo::merge_ear_cut_triangles(Geo::ear_cut_to_triangles(result), polygons))
     {
         std::sort(polygons.begin(), polygons.end(),
-            [](const Polygon &a, const Polygon &b) { return a.area() < b.area(); });
+            [](const Geo::Polygon &a, const Geo::Polygon &b) { return a.area() < b.area(); });
         temp = polygons.back();
         polygons.pop_back();
         bool flag;
-        std::vector<Polygon> polygons2;
+        std::vector<Geo::Polygon> polygons2;
         while (!polygons.empty())
         {
             flag = true;
@@ -1936,7 +1933,7 @@ bool Geo::offset_test(const Geo::Polygon &input, Geo::Polygon &result, const dou
                     if (polygons2.size() > 1)
                     {
                         temp = *std::max_element(polygons2.begin(), polygons2.end(), 
-                            [](const Polygon &a, const Polygon &b) { return a.area() < b.area(); });
+                            [](const Geo::Polygon &a, const Geo::Polygon &b) { return a.area() < b.area(); });
                     }
                     else
                     {
@@ -2020,18 +2017,18 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
     Geo::Polygon polygon2(polygon0), polygon3(polygon1);
     polygon2.reorder_points(false);
     polygon3.reorder_points(false);
-    std::vector<MarkedPoint> points0, points1;
-    for (const Point &point : polygon2)
+    std::vector<Geo::MarkedPoint> points0, points1;
+    for (const Geo::Point &point : polygon2)
     {
         points0.emplace_back(point.x, point.y);
     }
-    for (const Point &point : polygon3)
+    for (const Geo::Point &point : polygon3)
     {
         points1.emplace_back(point.x, point.y);
     }
 
-    Point point, pre_point; // 找到交点并计算其几何数
-    const AABBRect rect(polygon1.bounding_rect());
+    Geo::Point point, pre_point; // 找到交点并计算其几何数
+    const Geo::AABBRect rect(polygon1.bounding_rect());
     for (size_t i = 1, count0 = points0.size(); i < count0; ++i)
     {
         if (!Geo::is_intersected(rect, points0[i - 1], points0[i])) // 粗筛
@@ -2069,8 +2066,8 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
             if (!Geo::is_parallel(pre_point, points0[i], points1[k], points1[j]) &&
                 Geo::is_intersected(pre_point, points0[i], points1[k], points1[j], point))
             {
-                points0.insert(points0.begin() + i++, MarkedPoint(point.x, point.y, false));
-                points1.insert(points1.begin() + j++, MarkedPoint(point.x, point.y, false));
+                points0.insert(points0.begin() + i++, Geo::MarkedPoint(point.x, point.y, false));
+                points1.insert(points1.begin() + j++, Geo::MarkedPoint(point.x, point.y, false));
                 ++count0;
                 ++count1;
                 if (Geo::cross(pre_point, points0[i], points1[k], points1[j]) >= 0)
@@ -2087,7 +2084,7 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
         }
 
         // 将本次循环添加的交点休眠,令下次循环polygon1处于无活动交点状态以排除干扰
-        for (MarkedPoint &p : points1)
+        for (Geo::MarkedPoint &p : points1)
         {
             if (!p.original)
             {
@@ -2098,12 +2095,12 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
 
     if (points0.size() == polygon0.size()) // 无交点
     {
-        if (std::all_of(polygon0.begin(), polygon0.end(), [&](const Point &point) { return Geo::is_inside(point, polygon1, true); }))
+        if (std::all_of(polygon0.begin(), polygon0.end(), [&](const Geo::Point &point) { return Geo::is_inside(point, polygon1, true); }))
         {
             output.emplace_back(polygon1); // 无交点,且polygon0的点都在polygon1内,则并集必然为polygon1
             return true;
         }
-        else if (std::all_of(polygon1.begin(), polygon1.end(), [&](const Point &point) { return Geo::is_inside(point, polygon0, true); }))
+        else if (std::all_of(polygon1.begin(), polygon1.end(), [&](const Geo::Point &point) { return Geo::is_inside(point, polygon0, true); }))
         {
             output.emplace_back(polygon0); // 无交点,且polygon1的点都在polygon0内,则并集必然为polygon0
             return true;
@@ -2115,7 +2112,7 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
     }
 
     // 调整交点顺序,同一条边上的交点按照顺序排列
-    std::vector<MarkedPoint> points;
+    std::vector<Geo::MarkedPoint> points;
     for (size_t i = 1, j = 0, count = points0.size() - 1; i < count; ++i)
     {
         if (points0[i].original)
@@ -2137,7 +2134,7 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
         }
 
         points.assign(points0.begin() + i, j < count ? points0.begin() + j : points0.end());
-        std::sort(points.begin(), points.end(), [&](const MarkedPoint &p0, const MarkedPoint &p1)
+        std::sort(points.begin(), points.end(), [&](const Geo::MarkedPoint &p0, const Geo::MarkedPoint &p1)
             { return Geo::distance(p0, points0[i - 1]) < Geo::distance(p1, points0[i - 1]); });
         for (size_t k = i, n = 0; k < j; ++k)
         {
@@ -2185,7 +2182,7 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
         }
 
         points.assign(points1.begin() + i, j < count ? points1.begin() + j : points1.end());
-        std::sort(points.begin(), points.end(), [&](const MarkedPoint &p0, const MarkedPoint &p1)
+        std::sort(points.begin(), points.end(), [&](const Geo::MarkedPoint &p0, const Geo::MarkedPoint &p1)
             { return Geo::distance(p0, points1[i - 1]) < Geo::distance(p1, points1[i - 1]); });
         for (size_t k = i, n = 0; k < j; ++k)
         {
@@ -2428,8 +2425,8 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
         i = j > 0 ? j : 1;
     }
 
-    if (std::count_if(points0.begin(), points0.end(), [](const MarkedPoint &p) { return p.value < 0; }) == 0 ||
-        std::count_if(points1.begin(), points1.end(), [](const MarkedPoint &p) { return p.value < 0; }) == 0)
+    if (std::count_if(points0.begin(), points0.end(), [](const Geo::MarkedPoint &p) { return p.value < 0; }) == 0 ||
+        std::count_if(points1.begin(), points1.end(), [](const Geo::MarkedPoint &p) { return p.value < 0; }) == 0)
     {
         return false; // 交点都是出点,即两多边形只有一个点相交
     }
@@ -2456,9 +2453,9 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
             continue;
         }
 
-        it0 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+        it0 = std::find_if(points1.begin(), points1.end(), [&](const Geo::MarkedPoint &p)
                 { return !p.original && Geo::distance(p, points0[i]) < Geo::EPSILON; });
-        it1 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+        it1 = std::find_if(points1.begin(), points1.end(), [&](const Geo::MarkedPoint &p)
             { return !p.original && Geo::distance(p, points0[j]) < Geo::EPSILON; });
         if (it0 == points1.end() || it1 == points1.end() || it0->value * it1->value <= 0)
         {
@@ -2512,9 +2509,9 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
             break;
         }
 
-        it0 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+        it0 = std::find_if(points1.begin(), points1.end(), [&](const Geo::MarkedPoint &p)
                 { return !p.original && Geo::distance(p, points0[i]) < Geo::EPSILON; });
-        it1 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+        it1 = std::find_if(points1.begin(), points1.end(), [&](const Geo::MarkedPoint &p)
             { return !p.original && Geo::distance(p, points0[j]) < Geo::EPSILON; });
         if (it0 == points1.end() || it1 == points1.end() || it0->value * it1->value <= 0)
         {
@@ -2568,9 +2565,9 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
             continue;
         }
 
-        it0 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+        it0 = std::find_if(points0.begin(), points0.end(), [&](const Geo::MarkedPoint &p)
                 { return !p.original && Geo::distance(p, points1[i]) < Geo::EPSILON; });
-        it1 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+        it1 = std::find_if(points0.begin(), points0.end(), [&](const Geo::MarkedPoint &p)
             { return !p.original && Geo::distance(p, points1[j]) < Geo::EPSILON; });
         if (it0 == points0.end() || it1 == points0.end() || it0->value * it1->value <= 0)
         {
@@ -2624,9 +2621,9 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
             break;
         }
 
-        it0 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+        it0 = std::find_if(points0.begin(), points0.end(), [&](const Geo::MarkedPoint &p)
             { return !p.original && Geo::distance(p, points1[i]) < Geo::EPSILON; });
-        it1 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+        it1 = std::find_if(points0.begin(), points0.end(), [&](const Geo::MarkedPoint &p)
             { return !p.original && Geo::distance(p, points1[j]) < Geo::EPSILON; });
         if (it0 == points0.end() || it1 == points0.end() || it0->value * it1->value <= 0)
         {
@@ -2661,15 +2658,15 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
         break;
     }
 
-    std::vector<Point> result;
+    std::vector<Geo::Point> result;
     size_t index0 = 0, index1 = 0;
     size_t count0 = points0.size(), count1 = points1.size();
     size_t count2 = count0 + count1;
-    for (MarkedPoint &p : points0)
+    for (Geo::MarkedPoint &p : points0)
     {
         p.active = true;
     }
-    for (MarkedPoint &p : points1)
+    for (Geo::MarkedPoint &p : points1)
     {
         p.active = true;
     }
@@ -2807,8 +2804,8 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
             output.pop_back();
         }
 
-        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return p.value < 0; }) == 0 ||
-            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return p.value < 0; }) == 0)
+        if (std::count_if(points0.cbegin(), points0.cend(), [](const Geo::MarkedPoint &p){ return p.value < 0; }) == 0 ||
+            std::count_if(points1.cbegin(), points1.cend(), [](const Geo::MarkedPoint &p){ return p.value < 0; }) == 0)
         {
             break;
         }
@@ -2827,18 +2824,18 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
     Geo::Polygon polygon2(polygon0), polygon3(polygon1);
     polygon2.reorder_points(false);
     polygon3.reorder_points(false);
-    std::vector<MarkedPoint> points0, points1;
-    for (const Point &point : polygon2)
+    std::vector<Geo::MarkedPoint> points0, points1;
+    for (const Geo::Point &point : polygon2)
     {
         points0.emplace_back(point.x, point.y);
     }
-    for (const Point &point : polygon3)
+    for (const Geo::Point &point : polygon3)
     {
         points1.emplace_back(point.x, point.y);
     }
 
-    Point point, pre_point; // 找到交点并计算其几何数
-    const AABBRect rect(polygon1.bounding_rect());
+    Geo::Point point, pre_point; // 找到交点并计算其几何数
+    const Geo::AABBRect rect(polygon1.bounding_rect());
     for (size_t i = 1, count0 = points0.size(); i < count0; ++i)
     {
         if (!Geo::is_intersected(rect, points0[i - 1], points0[i])) // 粗筛
@@ -2875,8 +2872,8 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
             if (!Geo::is_parallel(pre_point, points0[i], points1[k], points1[j]) &&
                 Geo::is_intersected(pre_point, points0[i], points1[k], points1[j], point))
             {
-                points0.insert(points0.begin() + i++, MarkedPoint(point.x, point.y, false));
-                points1.insert(points1.begin() + j++, MarkedPoint(point.x, point.y, false));
+                points0.insert(points0.begin() + i++, Geo::MarkedPoint(point.x, point.y, false));
+                points1.insert(points1.begin() + j++, Geo::MarkedPoint(point.x, point.y, false));
                 ++count0;
                 ++count1;
                 if (Geo::cross(pre_point, points0[i], points1[k], points1[j]) >= 0)
@@ -2893,7 +2890,7 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
         }
 
         // 将本次循环添加的交点休眠,令下次循环polygon1处于无活动交点状态以排除干扰
-        for (MarkedPoint &p : points1)
+        for (Geo::MarkedPoint &p : points1)
         {
             if (!p.original)
             {
@@ -2904,12 +2901,12 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
 
     if (points0.size() == polygon0.size()) // 无交点
     {
-        if (std::all_of(polygon0.begin(), polygon0.end(), [&](const Point &point) { return Geo::is_inside(point, polygon1, true); }))
+        if (std::all_of(polygon0.begin(), polygon0.end(), [&](const Geo::Point &point) { return Geo::is_inside(point, polygon1, true); }))
         {
             output.emplace_back(polygon0); // 无交点,且polygon0的点都在polygon1内,则交集必然为polygon0
             return true;
         }
-        else if (std::all_of(polygon1.begin(), polygon1.end(), [&](const Point &point) { return Geo::is_inside(point, polygon0, true); }))
+        else if (std::all_of(polygon1.begin(), polygon1.end(), [&](const Geo::Point &point) { return Geo::is_inside(point, polygon0, true); }))
         {
             output.emplace_back(polygon1); // 无交点,且polygon1的点都在polygon0内,则交集必然为polygon1
             return true;
@@ -2921,7 +2918,7 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
     }
 
     // 调整交点顺序,同一条边上的交点按照顺序排列
-    std::vector<MarkedPoint> points;
+    std::vector<Geo::MarkedPoint> points;
     for (size_t i = 1, j = 0, count = points0.size() - 1; i < count; ++i)
     {
         if (points0[i].original)
@@ -2943,7 +2940,7 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
         }
 
         points.assign(points0.begin() + i, j < count ? points0.begin() + j : points0.end());
-        std::sort(points.begin(), points.end(), [&](const MarkedPoint &p0, const MarkedPoint &p1)
+        std::sort(points.begin(), points.end(), [&](const Geo::MarkedPoint &p0, const Geo::MarkedPoint &p1)
             { return Geo::distance(p0, points0[i - 1]) < Geo::distance(p1, points0[i - 1]); });
         for (size_t k = i, n = 0; k < j; ++k)
         {
@@ -2972,7 +2969,7 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
         }
 
         points.assign(points1.begin() + i, j < count ? points1.begin() + j : points1.end());
-        std::sort(points.begin(), points.end(), [&](const MarkedPoint &p0, const MarkedPoint &p1)
+        std::sort(points.begin(), points.end(), [&](const Geo::MarkedPoint &p0, const Geo::MarkedPoint &p1)
             { return Geo::distance(p0, points1[i - 1]) < Geo::distance(p1, points1[i - 1]); });
         for (size_t k = i, n = 0; k < j; ++k)
         {
@@ -3196,8 +3193,8 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
         i = j > 0 ? j : 1;
     }
 
-    if (std::count_if(points0.begin(), points0.end(), [](const MarkedPoint &p) { return p.value < 0; }) == 0 ||
-        std::count_if(points1.begin(), points1.end(), [](const MarkedPoint &p) { return p.value < 0; }) == 0)
+    if (std::count_if(points0.begin(), points0.end(), [](const Geo::MarkedPoint &p) { return p.value < 0; }) == 0 ||
+        std::count_if(points1.begin(), points1.end(), [](const Geo::MarkedPoint &p) { return p.value < 0; }) == 0)
     {
         return false; // 交点都是出点,即两多边形只有一个点相交
     }
@@ -3224,9 +3221,9 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
             continue;
         }
 
-        it0 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+        it0 = std::find_if(points1.begin(), points1.end(), [&](const Geo::MarkedPoint &p)
                 { return !p.original && Geo::distance(p, points0[i]) < Geo::EPSILON; });
-        it1 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+        it1 = std::find_if(points1.begin(), points1.end(), [&](const Geo::MarkedPoint &p)
             { return !p.original && Geo::distance(p, points0[j]) < Geo::EPSILON; });
         if (it0 == points1.end() || it1 == points1.end() || it0->value * it1->value <= 0)
         {
@@ -3280,9 +3277,9 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
             break;
         }
 
-        it0 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+        it0 = std::find_if(points1.begin(), points1.end(), [&](const Geo::MarkedPoint &p)
                 { return !p.original && Geo::distance(p, points0[i]) < Geo::EPSILON; });
-        it1 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+        it1 = std::find_if(points1.begin(), points1.end(), [&](const Geo::MarkedPoint &p)
             { return !p.original && Geo::distance(p, points0[j]) < Geo::EPSILON; });
         if (it0 == points1.end() || it1 == points1.end() || it0->value * it1->value <= 0)
         {
@@ -3336,9 +3333,9 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
             continue;
         }
 
-        it0 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+        it0 = std::find_if(points0.begin(), points0.end(), [&](const Geo::MarkedPoint &p)
                 { return !p.original && Geo::distance(p, points1[i]) < Geo::EPSILON; });
-        it1 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+        it1 = std::find_if(points0.begin(), points0.end(), [&](const Geo::MarkedPoint &p)
             { return !p.original && Geo::distance(p, points1[j]) < Geo::EPSILON; });
         if (it0 == points0.end() || it1 == points0.end() || it0->value * it1->value <= 0)
         {
@@ -3392,9 +3389,9 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
             break;
         }
 
-        it0 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+        it0 = std::find_if(points0.begin(), points0.end(), [&](const Geo::MarkedPoint &p)
             { return !p.original && Geo::distance(p, points1[i]) < Geo::EPSILON; });
-        it1 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+        it1 = std::find_if(points0.begin(), points0.end(), [&](const Geo::MarkedPoint &p)
             { return !p.original && Geo::distance(p, points1[j]) < Geo::EPSILON; });
         if (it0 == points0.end() || it1 == points0.end() || it0->value * it1->value <= 0)
         {
@@ -3429,15 +3426,15 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
         break;
     }
 
-    std::vector<Point> result;
+    std::vector<Geo::Point> result;
     size_t index0 = 0, index1 = 0;
     size_t count0 = points0.size(), count1 = points1.size();
     size_t count2 = count0 + count1;
-    for (MarkedPoint &p : points0)
+    for (Geo::MarkedPoint &p : points0)
     {
         p.active = true;
     }
-    for (MarkedPoint &p : points1)
+    for (Geo::MarkedPoint &p : points1)
     {
         p.active = true;
     }
@@ -3575,8 +3572,8 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
             output.pop_back();
         }
 
-        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return p.value < 0; }) == 0 ||
-            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return p.value < 0; }) == 0)
+        if (std::count_if(points0.cbegin(), points0.cend(), [](const Geo::MarkedPoint &p){ return p.value < 0; }) == 0 ||
+            std::count_if(points1.cbegin(), points1.cend(), [](const Geo::MarkedPoint &p){ return p.value < 0; }) == 0)
         {
             break;
         }
@@ -3746,7 +3743,7 @@ bool Geo::polygon_difference(const Geo::Polygon &polygon0, const Geo::Polygon &p
         }
 
         points.assign(points1.begin() + i, j < count ? points1.begin() + j : points1.end());
-        std::sort(points.begin(), points.end(), [&](const MarkedPoint &p0, const MarkedPoint &p1)
+        std::sort(points.begin(), points.end(), [&](const Geo::MarkedPoint &p0, const Geo::MarkedPoint &p1)
             { return Geo::distance(p0, points1[i - 1]) < Geo::distance(p1, points1[i - 1]); });
         for (size_t k = i, n = 0; k < j; ++k)
         {
@@ -4017,9 +4014,9 @@ bool Geo::polygon_difference(const Geo::Polygon &polygon0, const Geo::Polygon &p
             continue;
         }
 
-        it0 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+        it0 = std::find_if(points1.begin(), points1.end(), [&](const Geo::MarkedPoint &p)
                 { return !p.original && Geo::distance(p, points0[i]) < Geo::EPSILON; });
-        it1 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+        it1 = std::find_if(points1.begin(), points1.end(), [&](const Geo::MarkedPoint &p)
             { return !p.original && Geo::distance(p, points0[j]) < Geo::EPSILON; });
         if (it0 == points1.end() || it1 == points1.end() || it0->value * it1->value <= 0)
         {
@@ -4073,9 +4070,9 @@ bool Geo::polygon_difference(const Geo::Polygon &polygon0, const Geo::Polygon &p
             break;
         }
 
-        it0 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+        it0 = std::find_if(points1.begin(), points1.end(), [&](const Geo::MarkedPoint &p)
                 { return !p.original && Geo::distance(p, points0[i]) < Geo::EPSILON; });
-        it1 = std::find_if(points1.begin(), points1.end(), [&](const MarkedPoint &p)
+        it1 = std::find_if(points1.begin(), points1.end(), [&](const Geo::MarkedPoint &p)
             { return !p.original && Geo::distance(p, points0[j]) < Geo::EPSILON; });
         if (it0 == points1.end() || it1 == points1.end() || it0->value * it1->value <= 0)
         {
@@ -4129,9 +4126,9 @@ bool Geo::polygon_difference(const Geo::Polygon &polygon0, const Geo::Polygon &p
             continue;
         }
 
-        it0 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+        it0 = std::find_if(points0.begin(), points0.end(), [&](const Geo::MarkedPoint &p)
                 { return !p.original && Geo::distance(p, points1[i]) < Geo::EPSILON; });
-        it1 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+        it1 = std::find_if(points0.begin(), points0.end(), [&](const Geo::MarkedPoint &p)
             { return !p.original && Geo::distance(p, points1[j]) < Geo::EPSILON; });
         if (it0 == points0.end() || it1 == points0.end() || it0->value * it1->value <= 0)
         {
@@ -4185,9 +4182,9 @@ bool Geo::polygon_difference(const Geo::Polygon &polygon0, const Geo::Polygon &p
             break;
         }
 
-        it0 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+        it0 = std::find_if(points0.begin(), points0.end(), [&](const Geo::MarkedPoint &p)
             { return !p.original && Geo::distance(p, points1[i]) < Geo::EPSILON; });
-        it1 = std::find_if(points0.begin(), points0.end(), [&](const MarkedPoint &p)
+        it1 = std::find_if(points0.begin(), points0.end(), [&](const Geo::MarkedPoint &p)
             { return !p.original && Geo::distance(p, points1[j]) < Geo::EPSILON; });
         if (it0 == points0.end() || it1 == points0.end() || it0->value * it1->value <= 0)
         {
@@ -4368,8 +4365,8 @@ bool Geo::polygon_difference(const Geo::Polygon &polygon0, const Geo::Polygon &p
             output.pop_back();
         }
 
-        if (std::count_if(points0.cbegin(), points0.cend(), [](const MarkedPoint &p){ return p.value < 0; }) == 0 ||
-            std::count_if(points1.cbegin(), points1.cend(), [](const MarkedPoint &p){ return p.value < 0; }) == 0)
+        if (std::count_if(points0.cbegin(), points0.cend(), [](const Geo::MarkedPoint &p){ return p.value < 0; }) == 0 ||
+            std::count_if(points1.cbegin(), points1.cend(), [](const Geo::MarkedPoint &p){ return p.value < 0; }) == 0)
         {
             break;
         }
@@ -4487,4 +4484,10 @@ bool Geo::merge_ear_cut_triangles(const std::vector<Geo::Triangle> &triangles, s
     }
 
     return !polygons.empty();
+}
+
+
+bool Geo::find_collision_pairs(std::vector<Geo::Geometry *> &objects, std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs)
+{
+    return !pairs.empty();
 }

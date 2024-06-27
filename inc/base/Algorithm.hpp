@@ -205,5 +205,5 @@ namespace Geo
 
     bool merge_ear_cut_triangles(const std::vector<Triangle> &triangles, std::vector<Polygon> &polygons);
 
-
+    bool find_collision_pairs(std::vector<Geometry *> &objects, std::vector<std::pair<Geometry *, Geometry *>> &pairs);
 }
