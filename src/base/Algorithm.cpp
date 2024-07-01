@@ -1,6 +1,7 @@
 #include <cassert>
 #include <algorithm>
 #include <array>
+#include <stack>
 #include <functional>
 
 #include "base/EarCut/EarCut.hpp"
@@ -999,6 +1000,135 @@ bool Geo::is_intersected(const Geo::Point &start, const Geo::Point &end, const G
 bool Geo::is_intersected(const Geo::Line &line, const Geo::Triangle &triangle, Geo::Point &output0, Geo::Point &output1)
 {
     return Geo::is_intersected(line.front(), line.back(), triangle, output0, output1);
+}
+
+bool Geo::is_intersected(const Geo::Geometry *object0, const Geo::Geometry *object1)
+{
+    if (!Geo::is_intersected(object0->bounding_rect(), object1->bounding_rect()))
+    {
+        return false;
+    }
+
+    switch (object0->type())
+    {
+    case Geo::Type::CONTAINER:
+    case Geo::Type::POLYGON:
+        switch (object1->type())
+        {
+        case Geo::Type::CONTAINER:
+        case Geo::Type::POLYGON:
+            return Geo::is_intersected(*static_cast<const Geo::Polygon *>(object0),
+                *static_cast<const Geo::Polygon *>(object1));
+        case Geo::Type::AABBRECT:
+            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object1),
+                *static_cast<const Geo::Polygon *>(object0));
+        case Geo::Type::POLYLINE:
+            return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object1),
+                *static_cast<const Geo::Polygon *>(object0));
+        case Geo::Type::BEZIER:
+            return Geo::is_intersected(static_cast<const Geo::Bezier *>(object1)->shape(),
+                *static_cast<const Geo::Polygon *>(object0));
+        case Geo::Type::CIRCLECONTAINER:
+        case Geo::Type::CIRCLE:
+            return Geo::is_intersected(*static_cast<const Geo::Polygon *>(object0),
+                *static_cast<const Geo::Circle *>(object1));
+        default:
+            return false;
+        }
+    case Geo::Type::AABBRECT:
+        switch (object1->type())
+        {
+        case Geo::Type::CONTAINER:
+        case Geo::Type::POLYGON:
+            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
+                *static_cast<const Geo::Polygon *>(object1));
+        case Geo::Type::AABBRECT:
+            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
+                *static_cast<const Geo::AABBRect *>(object1));
+        case Geo::Type::POLYLINE:
+            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
+                *static_cast<const Geo::Polyline *>(object1));
+        case Geo::Type::BEZIER:
+            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
+                static_cast<const Geo::Bezier *>(object1)->shape());
+        case Geo::Type::CIRCLECONTAINER:
+        case Geo::Type::CIRCLE:
+            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
+                *static_cast<const Geo::Circle *>(object1));
+        default:
+            return false;
+        }
+    case Geo::Type::POLYLINE:
+        switch (object1->type())
+        {
+        case Geo::Type::CONTAINER:
+        case Geo::Type::POLYGON:
+            return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object0),
+                *static_cast<const Geo::Polygon *>(object1));
+        case Geo::Type::AABBRECT:
+            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object1),
+                *static_cast<const Geo::Polyline *>(object0));
+        case Geo::Type::POLYLINE:
+            return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object0),
+                *static_cast<const Geo::Polyline *>(object1));
+        case Geo::Type::BEZIER:
+            return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object0),
+                static_cast<const Geo::Bezier *>(object1)->shape());
+        case Geo::Type::CIRCLECONTAINER:
+        case Geo::Type::CIRCLE:
+            return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object0),
+                *static_cast<const Geo::Circle *>(object1));
+        default:
+            return false;
+        }
+    case Geo::Type::CIRCLECONTAINER:
+    case Geo::Type::CIRCLE:
+        switch (object1->type())
+        {
+        case Geo::Type::CONTAINER:
+        case Geo::Type::POLYGON:
+            return Geo::is_intersected(*static_cast<const Geo::Polygon *>(object1),
+                *static_cast<const Geo::Circle *>(object0));
+        case Geo::Type::AABBRECT:
+            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object1),
+                *static_cast<const Geo::Circle *>(object0));
+        case Geo::Type::POLYLINE:
+            return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object1),
+                *static_cast<const Geo::Circle *>(object0));
+        case Geo::Type::BEZIER:
+            return Geo::is_intersected(static_cast<const Geo::Bezier *>(object1)->shape(),
+                *static_cast<const Geo::Circle *>(object0));
+        case Geo::Type::CIRCLECONTAINER:
+        case Geo::Type::CIRCLE:
+            return Geo::is_intersected(*static_cast<const Geo::Circle *>(object0),
+                *static_cast<const Geo::Circle *>(object1));
+        default:
+            return false;
+        }
+    default:
+        return false;
+    }
+}
+
+bool Geo::is_intersected(const Geo::AABBRect &rect, const Geo::Geometry *object)
+{
+    switch (object->type())
+    {
+    case Geo::Type::CONTAINER:
+    case Geo::Type::POLYGON:
+        return Geo::is_intersected(rect, *static_cast<const Geo::Polygon *>(object));
+    case Geo::Type::AABBRECT:
+        return Geo::is_intersected(rect, *static_cast<const Geo::AABBRect *>(object));
+    case Geo::Type::POLYLINE:
+        return Geo::is_intersected(rect, *static_cast<const Geo::Polyline *>(object));
+    case Geo::Type::BEZIER:
+        return Geo::is_intersected(rect, static_cast<const Geo::Bezier *>(object)->shape());
+    case Geo::CIRCLECONTAINER:
+    case Geo::CIRCLE:
+        return Geo::is_intersected(rect, *static_cast<const Geo::Circle *>(object));
+    default:
+        return false;
+    }
 }
 
 
@@ -4487,7 +4617,346 @@ bool Geo::merge_ear_cut_triangles(const std::vector<Geo::Triangle> &triangles, s
 }
 
 
-bool Geo::find_collision_pairs(std::vector<Geo::Geometry *> &objects, std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs)
+Geo::BVHNode::BVHNode()
 {
+
+}
+
+Geo::BVHNode::BVHNode(const Geo::Geometry *obj)
+    : object(obj)
+{
+    update_rect();
+}
+
+Geo::BVHNode::BVHNode(Geo::BVHNode *left, Geo::BVHNode *right, Geo::BVHNode *parent)
+    : left_node(left), right_node(right), parent_node(parent)
+{
+    if (left != nullptr)
+    {
+        left->parent_node = this;
+    }
+    if (right != nullptr)
+    {
+        right->parent_node = this;
+    }
+    update_rect();
+}
+
+void Geo::BVHNode::update_rect()
+{
+    if (this->object != nullptr)
+    {
+        this->rect = this->object->bounding_rect();
+        return;
+    }
+    rect.clear();
+    if (this->left_node != nullptr)
+    {
+        this->rect += this->left_node->rect;
+    }
+    if (this->right_node != nullptr)
+    {
+        this->rect += this->right_node->rect;
+    }
+}
+
+void Geo::BVHNode::set_left(Geo::BVHNode *node)
+{
+    this->rect.clear();
+    this->left_node = node;
+    if (node != nullptr)
+    {
+        node->parent_node = this;
+        this->rect += node->rect;
+    }
+    if (this->right_node != nullptr)
+    {
+        this->rect += this->right_node->rect;
+    }
+}
+
+void Geo::BVHNode::set_right(Geo::BVHNode *node)
+{
+    this->rect.clear();
+    this->right_node = node;
+    if (node != nullptr)
+    {
+        node->parent_node = this;
+        this->rect += node->rect;
+    }
+    if (this->left_node != nullptr)
+    {
+        this->rect += this->left_node->rect;
+    }
+}
+
+
+
+Geo::BVHTree::BVHTree()
+{
+
+}
+
+Geo::BVHTree::BVHTree(const std::vector<const Geo::Geometry *> &objects)
+    : _objects(objects)
+{
+    build_tree(objects);
+}
+
+Geo::BVHTree::BVHTree(const std::vector<Geo::Geometry *> &objects)
+    : _objects(objects.cbegin(), objects.cend())
+{
+    build_tree(_objects);
+}
+
+Geo::BVHTree::BVHTree(std::vector<const Geo::Geometry *>::const_iterator begin, std::vector<const Geo::Geometry *>::const_iterator end)
+    : BVHTree(std::vector<const Geo::Geometry *>(begin, end))
+{
+
+}
+
+Geo::BVHTree::BVHTree(std::vector<Geo::Geometry *>::const_iterator begin, std::vector<Geo::Geometry *>::const_iterator end)
+    : BVHTree(std::vector<const Geo::Geometry *>(begin, end))
+{
+
+}
+
+Geo::BVHTree::~BVHTree()
+{
+    clear();
+}
+
+size_t Geo::BVHTree::count_height(const Geo::BVHNode *node)
+{
+    if (node == nullptr)
+    {
+        return 0;
+    }
+    else
+    {
+        return std::max(count_height(node->left_node), count_height(node->right_node)) + 1;
+    }
+}
+
+void Geo::BVHTree::right_rotate(Geo::BVHNode *node)
+{
+    Geo::BVHNode *parent = node->parent_node, *left = node->left_node;
+    node->set_left(left->right_node);
+    left->set_right(node);
+    if (node == _root)
+    {
+        _root = left;
+    }
+    else if (parent->left_node == node)
+    {
+        parent->set_left(left);
+    }
+    else
+    {
+        parent->set_right(left);
+    }
+    parent = nullptr, left = nullptr;
+}
+
+void Geo::BVHTree::left_rotate(BVHNode *node)
+{
+    BVHNode *parent = node->parent_node, *right = node->right_node;
+    node->set_right(right->left_node);
+    right->set_left(node);
+    if (node == _root)
+    {
+        _root = right;
+    }
+    else if (parent->left_node == node)
+    {
+        parent->set_left(right);
+    }
+    else
+    {
+        parent->set_right(right);
+    }        
+}
+
+void Geo::BVHTree::blance(Geo::BVHNode *node)
+{
+    if (node == nullptr)
+    {
+        return;
+    }
+    // 右子树高于左子树 R
+    if (count_height(node->right_node) > count_height(node->left_node) && 
+        count_height(node->right_node) - count_height(node->left_node) > 1)
+    {
+        // RL
+        if (node->right_node != nullptr
+            && count_height(node->right_node->left_node) > count_height(node->right_node->right_node)
+            && count_height(node->right_node->left_node) - count_height(node->right_node->right_node) > 1)
+        {
+            right_rotate(node->right_node);
+        }
+        // RR
+        left_rotate(node);
+    } // 左子树高于右子树 L
+    else if (count_height(node->left_node) > count_height(node->right_node) &&
+            count_height(node->left_node) - count_height(node->right_node) > 1)
+    {
+        // LR
+        if (node->left_node != nullptr
+            && count_height(node->left_node->right_node) > count_height(node->left_node->left_node)
+            && count_height(node->left_node->right_node) - count_height(node->left_node->left_node) > 1)
+        {
+            left_rotate(node->left_node);
+        }
+        // LL
+        right_rotate(node);
+    }
+}
+
+void Geo::BVHTree::build_tree(const std::vector<const Geo::Geometry *> &objects)
+{
+    std::vector<Geo::BVHNode *> nodes;
+    for (const Geo::Geometry *object : objects)
+    {
+        nodes.push_back(new Geo::BVHNode(object));
+    }
+
+    Geo::BVHNode *node0, *node1;
+    std::vector<Geo::BVHNode *>::iterator it = std::min_element(nodes.begin(), nodes.end(),
+        [](const Geo::BVHNode *a, const Geo::BVHNode *b) { return a->rect.area() < b->rect.area(); } );
+    node0 = *it;
+    nodes.erase(it);
+
+    Geo::AABBRect rect0, rect1;
+    size_t index;
+    while (nodes.size() > 1)
+    {
+        std::sort(nodes.begin(), nodes.end(), [=](const Geo::BVHNode *a, const Geo::BVHNode *b)
+            { return Geo::distance(a->rect.center(), node0->rect.center()) > Geo::distance(b->rect.center(), node0->rect.center()); } );
+
+        rect0 = node0->rect + nodes.front()->rect;
+        index = 0;
+        for (size_t i = nodes.size() - 1; i > 0; --i)
+        {
+            rect1 = node0->rect + nodes[i]->rect;
+            if (rect1.area() < rect0.area())
+            {
+                rect0 = rect1;
+                index = i;
+            }
+        }
+
+        node1 = new Geo::BVHNode(node0, nodes[index]);
+        nodes.erase(nodes.begin() + index);
+        nodes.push_back(node1);
+
+        it = std::min_element(nodes.begin(), nodes.end(), [](const Geo::BVHNode *a, const Geo::BVHNode *b)
+            { return a->rect.area() < b->rect.area(); } );
+        node0 = *it;
+        nodes.erase(it);
+    }
+
+    _root = nodes.front();
+}
+
+void Geo::BVHTree::clear()
+{
+    if (_root == nullptr)
+    {
+        return;
+    }
+    std::stack<Geo::BVHNode *> stack({_root});
+    while (!stack.empty())
+    {
+        _root = stack.top();
+        stack.pop();
+        if (_root->left_node != nullptr)
+        {
+            stack.push(_root->left_node);
+        }
+        if (_root->right_node != nullptr)
+        {
+            stack.push(_root->right_node);
+        }
+        delete _root;
+    }
+    _root = nullptr;
+    _objects.clear();
+}
+
+bool Geo::BVHTree::find_collision_pairs(const Geo::Geometry *object, std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs) const
+{
+    if (_root == nullptr || !Geo::is_intersected(_root->rect, object))
+    {
+        return false;
+    }
+
+    pairs.clear();
+    std::stack<Geo::BVHNode *> stack({_root});
+    Geo::BVHNode *node;
+    while (!stack.empty())
+    {
+        node = stack.top();
+        stack.pop();
+        if (node->object == nullptr)
+        {
+            if (node->right_node != nullptr && Geo::is_intersected(node->right_node->rect, object))
+            {
+                stack.push(node->right_node);
+            }
+            if (node->left_node != nullptr && Geo::is_intersected(node->left_node->rect, object))
+            {
+                stack.push(node->left_node);
+            }
+        }
+        else if (object != node->object && Geo::is_intersected(object, node->object))
+        {
+            pairs.emplace_back(const_cast<Geo::Geometry *>(object), const_cast<Geo::Geometry *>(node->object));
+        }
+    }
+
     return !pairs.empty();
 }
+
+bool Geo::BVHTree::find_collision_pairs(std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs) const
+{
+    if (_root == nullptr)
+    {
+        return false;
+    }
+
+    pairs.clear();
+    std::stack<Geo::BVHNode *> stack;
+    Geo::BVHNode *node;
+    std::vector<const Geo::Geometry *> passed_objects;
+
+    for (const Geo::Geometry *object : _objects)
+    {
+        stack.push(_root);
+        while (!stack.empty())
+        {
+            node = stack.top();
+            stack.pop();
+            if (node->object == nullptr)
+            {
+                if (node->right_node != nullptr && Geo::is_intersected(node->right_node->rect, object))
+                {
+                    stack.push(node->right_node);
+                }
+                if (node->left_node != nullptr && Geo::is_intersected(node->left_node->rect, object))
+                {
+                    stack.push(node->left_node);
+                }
+            }
+            else if (object != node->object
+                && std::find(passed_objects.cbegin(), passed_objects.cend(), node->object) == passed_objects.cend()
+                && Geo::is_intersected(object, node->object))
+            {
+                pairs.emplace_back(const_cast<Geo::Geometry *>(object), const_cast<Geo::Geometry *>(node->object));
+            }
+        }
+        passed_objects.push_back(object);
+    }
+
+    return !pairs.empty();
+}
+

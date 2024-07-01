@@ -1080,6 +1080,23 @@ AABBRect AABBRect::operator-(const Point &point) const
                     _points[2].x - point.x, _points[2].y - point.y);
 }
 
+AABBRect AABBRect::operator+(const AABBRect &rect) const
+{
+    if (_points.empty())
+    {
+        return rect;
+    }
+    else if (rect._points.empty())
+    {
+        return *this;
+    }
+    else
+    {
+        return AABBRect(std::min(_points[0].x, rect._points[0].x), std::max(_points[0].y, rect._points[0].y),
+            std::max(_points[2].x, rect._points[2].x), std::min(_points[2].y, rect._points[2].y));
+    }
+}
+
 void AABBRect::operator+=(const Point &point)
 {
     for (Point &p : _points)
@@ -1093,6 +1110,36 @@ void AABBRect::operator-=(const Point &point)
     for (Point &p : _points)
     {
         p -= point;
+    }
+}
+
+void AABBRect::operator+=(const AABBRect &rect)
+{
+    if (_points.empty())
+    {
+        _points = rect._points;
+        return;
+    }
+    else if (rect._points.empty())
+    {
+        return;
+    }
+
+    if (rect._points[0].x < _points[0].x)
+    {
+        _points[0].x = _points[3].x = _points[4].x = rect._points[0].x;
+    }
+    if (rect._points[0].y > _points[0].y)
+    {
+        _points[0].y = _points[1].y = _points[4].y = rect._points[0].y;
+    }
+    if (rect._points[2].x > _points[2].x)
+    {
+        _points[1].x = _points[2].x = rect._points[2].x;
+    }
+    if (rect._points[2].y < _points[2].y)
+    {
+        _points[2].y = _points[3].y = rect._points[2].y;
     }
 }
 

@@ -119,6 +119,12 @@ namespace Geo
     // 判断有限长线段是否与三角形相交,线段完全在三角形内不算相交
     bool is_intersected(const Line &line, const Triangle &triangle, Point &output0, Point &output1);
 
+    // 判断两Geometry Object是否相交
+    bool is_intersected(const Geometry *object0, const Geometry *object1);
+
+    // 判断AABB矩形与Geometry Object是否相交
+    bool is_intersected(const AABBRect &rect, const Geometry *object);
+
     // 判断点是否在直线的左侧
     bool is_on_left(const Point &point, const Point &start, const Point &end);
 
@@ -205,5 +211,67 @@ namespace Geo
 
     bool merge_ear_cut_triangles(const std::vector<Triangle> &triangles, std::vector<Polygon> &polygons);
 
-    bool find_collision_pairs(std::vector<Geometry *> &objects, std::vector<std::pair<Geometry *, Geometry *>> &pairs);
+
+    class BVHNode
+    {
+    public:
+        BVHNode *parent_node = nullptr;
+        BVHNode *left_node = nullptr;
+        BVHNode *right_node = nullptr;
+        const Geometry *object = nullptr;
+        AABBRect rect;
+
+    public:
+        BVHNode();
+
+        BVHNode(const Geometry *obj);
+
+        BVHNode(const BVHNode &node);
+
+        BVHNode(BVHNode *left, BVHNode *right, BVHNode *parent = nullptr);
+
+        void update_rect();
+
+        void set_left(BVHNode *node);
+
+        void set_right(BVHNode *node);
+    };
+
+    class BVHTree
+    {
+    private:
+        BVHNode *_root = nullptr;
+        std::vector<const Geometry *> _objects;
+
+    private:
+        static size_t count_height(const BVHNode* node);
+
+        void right_rotate(BVHNode *node);
+
+        void left_rotate(BVHNode *node);
+
+        void blance(BVHNode *node);
+
+    public:
+        BVHTree();
+
+        BVHTree(const std::vector<const Geo::Geometry *> &objects);
+
+        BVHTree(const std::vector<Geo::Geometry *> &objects);
+
+        BVHTree(std::vector<const Geo::Geometry *>::const_iterator begin, std::vector<const Geo::Geometry *>::const_iterator end);
+
+        BVHTree(std::vector<Geo::Geometry *>::const_iterator begin, std::vector<Geo::Geometry *>::const_iterator end);
+
+        ~BVHTree();
+
+        void build_tree(const std::vector<const Geo::Geometry *> &objects);
+
+        void clear();
+
+        bool find_collision_pairs(const Geometry *object, std::vector<std::pair<Geometry *, Geometry *>> &pairs) const;
+
+        bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs) const;
+    };
+
 }
