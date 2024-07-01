@@ -1,6 +1,7 @@
 #include <cassert>
 #include <algorithm>
-#include <functional>
+#include <cmath>
+#include <cstdint>
 
 #include "base/Algorithm.hpp"
 
@@ -1313,7 +1314,7 @@ void Polygon::remove(const size_t index)
     }
     else if (index == size())
     {
-        _points.front() == _points.back();
+        _points.front() = _points.back();
     }
 }
 

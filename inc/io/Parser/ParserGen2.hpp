@@ -496,7 +496,7 @@ Parser<bool> operator-(const Parser<L> &left, const Parser<R> &right)
             {
                 if (stream.empty())
                 {
-                    false;
+                    return false;
                 }
 
                 std::string_view stream_copy(stream);
@@ -563,7 +563,7 @@ Parser<char> operator-(const Parser<char> &left, const Parser<R> &right)
             {
                 if (stream.empty())
                 {
-                    std::nullopt;
+                    return std::nullopt;
                 }
 
                 std::string_view stream_copy(stream);
@@ -616,7 +616,7 @@ Parser<std::string> operator-(const Parser<std::string> &left, const Parser<R> &
             {
                 if (stream.empty())
                 {
-                    std::nullopt;
+                    return std::nullopt;
                 }
 
                 std::string_view stream_copy(stream);
@@ -1922,7 +1922,7 @@ Parser<bool> operator-(const Parser<L> &left, const std::reference_wrapper<Parse
             {
                 if (stream.empty())
                 {
-                    false;
+                    return false;
                 }
 
                 std::string_view stream_copy(stream);
@@ -1989,7 +1989,7 @@ Parser<bool> operator-(const std::reference_wrapper<Parser<L>> &left, const Pars
             {
                 if (stream.empty())
                 {
-                    false;
+                    return false;
                 }
 
                 std::string_view stream_copy(stream);
@@ -2056,7 +2056,7 @@ Parser<bool> operator-(const std::reference_wrapper<Parser<L>> &left, const std:
             {
                 if (stream.empty())
                 {
-                    false;
+                    return false;
                 }
 
                 std::string_view stream_copy(stream);
@@ -2123,7 +2123,7 @@ Parser<char> operator-(const Parser<char> &left, const std::reference_wrapper<Pa
             {
                 if (stream.empty())
                 {
-                    std::nullopt;
+                    return std::nullopt;
                 }
 
                 std::string_view stream_copy(stream);
@@ -2176,7 +2176,7 @@ Parser<char> operator-(const std::reference_wrapper<Parser<char>> &left, const P
             {
                 if (stream.empty())
                 {
-                    std::nullopt;
+                    return std::nullopt;
                 }
 
                 std::string_view stream_copy(stream);
@@ -2229,7 +2229,7 @@ Parser<char> operator-(const std::reference_wrapper<Parser<char>> &left, const s
             {
                 if (stream.empty())
                 {
-                    std::nullopt;
+                    return std::nullopt;
                 }
 
                 std::string_view stream_copy(stream);
@@ -2282,7 +2282,7 @@ Parser<std::string> operator-(const Parser<std::string> &left, const std::refere
             {
                 if (stream.empty())
                 {
-                    std::nullopt;
+                    return std::nullopt;
                 }
 
                 std::string_view stream_copy(stream);
@@ -2330,12 +2330,12 @@ Parser<std::string> operator-(const Parser<std::string> &left, const std::refere
 template <typename R>
 Parser<std::string> operator-(const std::reference_wrapper<Parser<std::string>> &left, const Parser<R> &right)
 {
-    return Parser<char>(std::function<std::optional<std::string>(std::string_view &stream)>
+    return Parser<std::string>(std::function<std::optional<std::string>(std::string_view &stream)>
             ([=](std::string_view &stream)-> std::optional<std::string>
             {
                 if (stream.empty())
                 {
-                    std::nullopt;
+                    return std::nullopt;
                 }
 
                 std::string_view stream_copy(stream);
@@ -2388,7 +2388,7 @@ Parser<std::string> operator-(const std::reference_wrapper<Parser<std::string>> 
             {
                 if (stream.empty())
                 {
-                    std::nullopt;
+                    return std::nullopt;
                 }
 
                 std::string_view stream_copy(stream);
