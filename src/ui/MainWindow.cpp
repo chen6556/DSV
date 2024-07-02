@@ -191,20 +191,13 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         }
         break;
     case Qt::Key_T:
+        for (std::pair<Geo::Geometry *, Geo::Geometry *> &pair : _editer.find_collision_pairs())
         {
-            Geo::BVHTree tree(_editer.graph()->container_group().cbegin(), _editer.graph()->container_group().cend());
-            std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> pairs;
-            if (tree.find_collision_pairs(pairs))
-            {
-                for (std::pair<Geo::Geometry *, Geo::Geometry *> &pair : pairs)
-                {
-                    pair.first->is_selected = true;
-                    pair.second->is_selected = true;
-                }
-                ui->canvas->refresh_selected_ibo();
-                ui->canvas->update();
-            }
+            pair.first->is_selected = true;
+            pair.second->is_selected = true;
         }
+        ui->canvas->refresh_selected_ibo();
+        ui->canvas->update();
         return;
     default:
         break;

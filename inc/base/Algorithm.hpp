@@ -1,6 +1,7 @@
 #pragma once
 
 #include "base/Geometry.hpp"
+#include "draw/Container.hpp"
 
 
 namespace Geo
@@ -242,13 +243,13 @@ namespace Geo
         BVHNode *parent_node = nullptr;
         BVHNode *left_node = nullptr;
         BVHNode *right_node = nullptr;
-        const Geometry *object = nullptr;
+        Geometry *object = nullptr;
         AABBRect rect;
 
     public:
         BVHNode();
 
-        BVHNode(const Geometry *obj);
+        BVHNode(Geometry *obj);
 
         BVHNode(const BVHNode &node);
 
@@ -265,7 +266,7 @@ namespace Geo
     {
     private:
         BVHNode *_root = nullptr;
-        std::vector<const Geometry *> _objects;
+        std::vector<Geometry *> _objects;
 
     private:
         static size_t count_height(const BVHNode* node);
@@ -281,27 +282,31 @@ namespace Geo
     public:
         BVHTree();
 
-        BVHTree(const std::vector<const Geo::Geometry *> &objects);
-
         BVHTree(const std::vector<Geo::Geometry *> &objects);
-
-        BVHTree(std::vector<const Geo::Geometry *>::const_iterator begin, std::vector<const Geo::Geometry *>::const_iterator end);
 
         BVHTree(std::vector<Geo::Geometry *>::const_iterator begin, std::vector<Geo::Geometry *>::const_iterator end);
 
+        BVHTree(const ContainerGroup &objects);
+
         ~BVHTree();
 
-        void build_tree(const std::vector<const Geo::Geometry *> &objects);
+        void build_tree(const std::vector<Geo::Geometry *> &objects);
+
+        void build_tree(const ContainerGroup &objects);
 
         void clear();
 
-        void append(const Geometry *object);
+        void append(Geometry *object);
 
         void remove(const Geometry *object);
 
         bool find_collision_pairs(const Geometry *object, std::vector<Geometry *> &pairs) const;
 
         bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs) const;
+
+        bool select(const AABBRect &rect, std::vector<Geometry *> &result);
+
+        void update_rect();
     };
 
 }

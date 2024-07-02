@@ -4,6 +4,7 @@
 #include <QPolygonF>
 
 #include "draw/Graph.hpp"
+#include "base/Algorithm.hpp"
 
 
 class Editer
@@ -18,6 +19,7 @@ private:
     double _view_ratio = 1.0;
 
     Geo::Geometry *_catched_points = nullptr;
+    Geo::BVHTree _tree;
 
 private:
     void init();
@@ -125,6 +127,8 @@ public:
     std::vector<Geo::Geometry *> select(const Geo::AABBRect &rect);
 
     void reset_selected_mark(const bool value = false);
+
+    std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> find_collision_pairs();
 
     void store_backup();
 

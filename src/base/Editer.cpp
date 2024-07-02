@@ -49,6 +49,9 @@ void Editer::init()
             delete _backup.back();
             _backup.pop_back();
         }
+
+        _tree.clear();
+        _tree.build_tree(_graph->container_group());
     }
 }
 
@@ -196,6 +199,10 @@ void Editer::append_points()
         _graph->append(new Geo::Polyline(_point_cache.cbegin(), _point_cache.cend()), _current_group);
     }
     _point_cache.clear();
+    if (_current_group == 0)
+    {
+        _tree.append(_graph->container_group().back());
+    }
 }
 
 void Editer::append(const Geo::Circle &circle)
@@ -211,6 +218,10 @@ void Editer::append(const Geo::Circle &circle)
     }
     store_backup();
     _graph->append(new CircleContainer(circle), _current_group);
+    if (_current_group == 0)
+    {
+        _tree.append(_graph->container_group().back());
+    }
 }
 
 void Editer::append(const Geo::AABBRect &rect)
@@ -226,6 +237,10 @@ void Editer::append(const Geo::AABBRect &rect)
     }
     store_backup();
     _graph->append(new Container(rect), _current_group);
+    if (_current_group == 0)
+    {
+        _tree.append(_graph->container_group().back());
+    }
 }
 
 void Editer::append_bezier(const size_t order)
@@ -242,6 +257,10 @@ void Editer::append_bezier(const size_t order)
     }
     _graph->append(new Geo::Bezier(_point_cache.begin(), _point_cache.end(), order), _current_group);
     _point_cache.clear();
+    if (_current_group == 0)
+    {
+        _tree.append(_graph->container_group().back());
+    }
 }
 
 void Editer::append_text(const double x, const double y)
@@ -436,6 +455,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         break;
     }
     _graph->modified = true;
+    _tree.update_rect();
 }
 
 bool Editer::remove_selected()
@@ -450,6 +470,7 @@ bool Editer::remove_selected()
     {
         if ((*it)->is_selected)
         {
+            _tree.remove(*it);
             it = _graph->container_group(_current_group).remove(it);
         }
         else
@@ -1382,88 +1403,22 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
         return result;
     }
 
-    for (Geo::Geometry *container : _graph->container_group(_current_group))
+    if (_current_group == 0)
     {
-        switch (container->type())
+        for (Geo::Geometry *container : _graph->container_group(_current_group))
         {
-        case Geo::Type::TEXT:
-            if (Geo::is_inside(dynamic_cast<const Geo::AABBRect *>(container)->center(), rect))
+            container->is_selected = false;
+        }
+        _tree.select(rect, result);
+    }
+    else
+    {
+        for (Geo::Geometry *container : _graph->container_group(_current_group))
+        {
+            switch (container->type())
             {
-                container->is_selected = true;
-                result.push_back(container);
-            }
-            else
-            {
-                container->is_selected = false;
-            }
-            break;
-        case Geo::Type::CONTAINER:
-            if (Geo::is_intersected(rect, dynamic_cast<Container *>(container)->shape()))
-            {
-                container->is_selected = true;
-                result.push_back(container);
-            }
-            else
-            {
-                container->is_selected = false;
-            }
-            break;
-        case Geo::Type::CIRCLECONTAINER:
-            if (Geo::is_intersected(rect, dynamic_cast<CircleContainer *>(container)->shape()))
-            {
-                container->is_selected = true;
-                result.push_back(container);
-            }
-            else
-            {
-                container->is_selected = false;
-            }
-            break;
-        case Geo::Type::COMBINATION:
-            if (Geo::is_intersected(rect, dynamic_cast<Combination *>(container)->border(), true))
-            {
-                bool end = false;
-                for (Geo::Geometry *item : *dynamic_cast<Combination *>(container))
-                {
-                    switch (item->type())
-                    {
-                    case Geo::Type::TEXT:
-                        if (Geo::is_inside(dynamic_cast<const Geo::AABBRect *>(item)->center(), rect))
-                        {
-                            end = true;
-                        }
-                        break;
-                    case Geo::Type::CONTAINER:
-                        if (Geo::is_intersected(rect, dynamic_cast<Container *>(item)->shape(), true))
-                        {
-                            end = true;
-                        }
-                        break;
-                    case Geo::Type::CIRCLECONTAINER:
-                        if (Geo::is_intersected(rect, dynamic_cast<CircleContainer *>(item)->shape(), true))
-                        {
-                            end = true;
-                        }
-                        break;
-                    case Geo::Type::POLYLINE:
-                        if (Geo::is_intersected(rect, *dynamic_cast<Geo::Polyline *>(item)))
-                        {
-                            end = true;
-                        }
-                        break;
-                    case Geo::Type::BEZIER:
-                        if (Geo::is_intersected(rect, dynamic_cast<Geo::Bezier *>(item)->shape()))
-                        {
-                            end = true;
-                        }
-                        break;
-                    }
-                    if (end)
-                    {
-                        break;
-                    }
-                }
-                if (end)
+            case Geo::Type::TEXT:
+                if (Geo::is_inside(dynamic_cast<const Geo::AABBRect *>(container)->center(), rect))
                 {
                     container->is_selected = true;
                     result.push_back(container);
@@ -1472,32 +1427,109 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
                 {
                     container->is_selected = false;
                 }
+                break;
+            case Geo::Type::CONTAINER:
+                if (Geo::is_intersected(rect, dynamic_cast<Container *>(container)->shape()))
+                {
+                    container->is_selected = true;
+                    result.push_back(container);
+                }
+                else
+                {
+                    container->is_selected = false;
+                }
+                break;
+            case Geo::Type::CIRCLECONTAINER:
+                if (Geo::is_intersected(rect, dynamic_cast<CircleContainer *>(container)->shape()))
+                {
+                    container->is_selected = true;
+                    result.push_back(container);
+                }
+                else
+                {
+                    container->is_selected = false;
+                }
+                break;
+            case Geo::Type::COMBINATION:
+                if (Geo::is_intersected(rect, dynamic_cast<Combination *>(container)->border(), true))
+                {
+                    bool end = false;
+                    for (Geo::Geometry *item : *dynamic_cast<Combination *>(container))
+                    {
+                        switch (item->type())
+                        {
+                        case Geo::Type::TEXT:
+                            if (Geo::is_inside(dynamic_cast<const Geo::AABBRect *>(item)->center(), rect))
+                            {
+                                end = true;
+                            }
+                            break;
+                        case Geo::Type::CONTAINER:
+                            if (Geo::is_intersected(rect, dynamic_cast<Container *>(item)->shape(), true))
+                            {
+                                end = true;
+                            }
+                            break;
+                        case Geo::Type::CIRCLECONTAINER:
+                            if (Geo::is_intersected(rect, dynamic_cast<CircleContainer *>(item)->shape(), true))
+                            {
+                                end = true;
+                            }
+                            break;
+                        case Geo::Type::POLYLINE:
+                            if (Geo::is_intersected(rect, *dynamic_cast<Geo::Polyline *>(item)))
+                            {
+                                end = true;
+                            }
+                            break;
+                        case Geo::Type::BEZIER:
+                            if (Geo::is_intersected(rect, dynamic_cast<Geo::Bezier *>(item)->shape()))
+                            {
+                                end = true;
+                            }
+                            break;
+                        }
+                        if (end)
+                        {
+                            break;
+                        }
+                    }
+                    if (end)
+                    {
+                        container->is_selected = true;
+                        result.push_back(container);
+                    }
+                    else
+                    {
+                        container->is_selected = false;
+                    }
+                }
+                break;
+            case Geo::Type::POLYLINE:
+                if (Geo::is_intersected(rect, *dynamic_cast<Geo::Polyline *>(container)))
+                {
+                    container->is_selected = true;
+                    result.push_back(container);
+                }
+                else
+                {
+                    container->is_selected = false;
+                }
+                break;
+            case Geo::Type::BEZIER:
+                if (Geo::is_intersected(rect, dynamic_cast<Geo::Bezier *>(container)->shape()))
+                {
+                    container->is_selected = true;
+                    result.push_back(container);
+                }
+                else
+                {
+                    container->is_selected = false;
+                }
+                break;
+            default:
+                break;
             }
-            break;
-        case Geo::Type::POLYLINE:
-            if (Geo::is_intersected(rect, *dynamic_cast<Geo::Polyline *>(container)))
-            {
-                container->is_selected = true;
-                result.push_back(container);
-            }
-            else
-            {
-                container->is_selected = false;
-            }
-            break;
-        case Geo::Type::BEZIER:
-            if (Geo::is_intersected(rect, dynamic_cast<Geo::Bezier *>(container)->shape()))
-            {
-                container->is_selected = true;
-                result.push_back(container);
-            }
-            else
-            {
-                container->is_selected = false;
-            }
-            break;
-        default:
-            break;
         }
     }
 
@@ -1546,6 +1578,13 @@ void Editer::reset_selected_mark(const bool value)
     {
         container->is_selected = value;
     }
+}
+
+std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> Editer::find_collision_pairs()
+{
+    std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> pairs;
+    _tree.find_collision_pairs(pairs);
+    return pairs;
 }
 
 void Editer::load_backup()
