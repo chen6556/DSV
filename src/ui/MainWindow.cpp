@@ -16,6 +16,8 @@
 #include "io/DSVParser.hpp"
 #include "io/GlobalSetting.hpp"
 
+#include "base/Algorithm.hpp"
+
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), _setting(new Setting(this)),
@@ -188,6 +190,22 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             ui->canvas->update();
         }
         break;
+    case Qt::Key_T:
+        {
+            Geo::BVHTree tree(_editer.graph()->container_group().cbegin(), _editer.graph()->container_group().cend());
+            std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> pairs;
+            if (tree.find_collision_pairs(pairs))
+            {
+                for (std::pair<Geo::Geometry *, Geo::Geometry *> &pair : pairs)
+                {
+                    pair.first->is_selected = true;
+                    pair.second->is_selected = true;
+                }
+                ui->canvas->refresh_selected_ibo();
+                ui->canvas->update();
+            }
+        }
+        return;
     default:
         break;
     }
