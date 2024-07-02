@@ -269,7 +269,7 @@ namespace Geo
 
         void clear();
 
-        bool find_collision_pairs(const Geometry *object, std::vector<std::pair<Geometry *, Geometry *>> &pairs) const;
+        bool find_collision_pairs(const Geometry *object, std::vector<Geometry *> &pairs) const;
 
         bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs) const;
     };

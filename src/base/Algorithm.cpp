@@ -4701,12 +4701,14 @@ Geo::BVHTree::BVHTree(const std::vector<const Geo::Geometry *> &objects)
     : _objects(objects)
 {
     build_tree(objects);
+    blance(_root);
 }
 
 Geo::BVHTree::BVHTree(const std::vector<Geo::Geometry *> &objects)
     : _objects(objects.cbegin(), objects.cend())
 {
     build_tree(_objects);
+    blance(_root);
 }
 
 Geo::BVHTree::BVHTree(std::vector<const Geo::Geometry *>::const_iterator begin, std::vector<const Geo::Geometry *>::const_iterator end)
@@ -4814,30 +4816,94 @@ void Geo::BVHTree::blance(Geo::BVHNode *node)
 
 void Geo::BVHTree::build_tree(const std::vector<const Geo::Geometry *> &objects)
 {
+    if (objects.empty())
+    {
+        return;
+    }
+
     std::vector<Geo::BVHNode *> nodes;
     for (const Geo::Geometry *object : objects)
     {
         nodes.push_back(new Geo::BVHNode(object));
     }
+    std::sort(nodes.begin(), nodes.end(), [](const Geo::BVHNode *a, const Geo::BVHNode *b)
+        { return a->rect.center().x < b->rect.center().x; });
+    std::vector<std::vector<Geo::BVHNode *>> node_groups;
+    const double right = nodes.back()->rect.right() + 100;
+    double x = nodes.front()->rect.center().x + 100;
+    while (x < right)
+    {
+        if (node_groups.empty() || !node_groups.back().empty())
+        {
+            node_groups.emplace_back();
+        }
+        for (size_t j = 0, count = nodes.size(); j < count; ++j)
+        {
+            if (nodes[j] != nullptr && nodes[j]->rect.center().x <= x)
+            {
+                node_groups.back().push_back(nodes[j]);
+                nodes[j] = nullptr;
+            }
+        }
+        x += 100;
+    }
+    nodes.clear();
+    if (node_groups.back().empty())
+    {
+        node_groups.pop_back();
+    }
 
-    Geo::BVHNode *node0, *node1;
-    std::vector<Geo::BVHNode *>::iterator it = std::min_element(nodes.begin(), nodes.end(),
-        [](const Geo::BVHNode *a, const Geo::BVHNode *b) { return a->rect.area() < b->rect.area(); } );
-    node0 = *it;
-    nodes.erase(it);
-
+    Geo::BVHNode *node;
+    std::vector<Geo::BVHNode *>::iterator it;
     Geo::AABBRect rect0, rect1;
     size_t index;
+    while (!node_groups.empty())
+    {
+        while (node_groups.back().size() > 1)
+        {
+            it = std::min_element(node_groups.back().begin(), node_groups.back().end(), [](const Geo::BVHNode *a, const Geo::BVHNode *b)
+                { return a->rect.area() < b->rect.area(); } );
+            node = *it;
+            node_groups.back().erase(it);
+
+            std::sort(node_groups.back().begin(), node_groups.back().end(), [=](const Geo::BVHNode *a, const Geo::BVHNode *b)
+                { return Geo::distance(a->rect.center(), node->rect.center()) > Geo::distance(b->rect.center(), node->rect.center()); } );
+
+            rect0 = node->rect + node_groups.back().front()->rect;
+            index = 0;
+            for (size_t i = node_groups.back().size() - 1; i > 0; --i)
+            {
+                rect1 = node->rect + node_groups.back()[i]->rect;
+                if (rect1.area() < rect0.area())
+                {
+                    rect0 = rect1;
+                    index = i;
+                }
+            }
+
+            node_groups.back().push_back(new Geo::BVHNode(node, node_groups.back()[index]));
+            node_groups.back().erase(node_groups.back().begin() + index);
+        }
+        nodes.push_back(node_groups.back().front());
+        node_groups.pop_back();
+    }
+
+    std::reverse(nodes.begin(), nodes.end());
     while (nodes.size() > 1)
     {
-        std::sort(nodes.begin(), nodes.end(), [=](const Geo::BVHNode *a, const Geo::BVHNode *b)
-            { return Geo::distance(a->rect.center(), node0->rect.center()) > Geo::distance(b->rect.center(), node0->rect.center()); } );
+        it = std::min_element(nodes.begin(), nodes.end(), [](const Geo::BVHNode *a, const Geo::BVHNode *b)
+            { return a->rect.area() < b->rect.area(); } );
+        node = *it;
+        nodes.erase(it);
 
-        rect0 = node0->rect + nodes.front()->rect;
+        std::sort(nodes.begin(), nodes.end(), [=](const Geo::BVHNode *a, const Geo::BVHNode *b)
+            { return Geo::distance(a->rect.center(), node->rect.center()) > Geo::distance(b->rect.center(), node->rect.center()); } );
+
+        rect0 = node->rect + nodes.front()->rect;
         index = 0;
         for (size_t i = nodes.size() - 1; i > 0; --i)
         {
-            rect1 = node0->rect + nodes[i]->rect;
+            rect1 = node->rect + nodes[i]->rect;
             if (rect1.area() < rect0.area())
             {
                 rect0 = rect1;
@@ -4845,14 +4911,8 @@ void Geo::BVHTree::build_tree(const std::vector<const Geo::Geometry *> &objects)
             }
         }
 
-        node1 = new Geo::BVHNode(node0, nodes[index]);
+        nodes.push_back(new Geo::BVHNode(node, nodes[index]));
         nodes.erase(nodes.begin() + index);
-        nodes.push_back(node1);
-
-        it = std::min_element(nodes.begin(), nodes.end(), [](const Geo::BVHNode *a, const Geo::BVHNode *b)
-            { return a->rect.area() < b->rect.area(); } );
-        node0 = *it;
-        nodes.erase(it);
     }
 
     _root = nodes.front();
@@ -4883,7 +4943,7 @@ void Geo::BVHTree::clear()
     _objects.clear();
 }
 
-bool Geo::BVHTree::find_collision_pairs(const Geo::Geometry *object, std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs) const
+bool Geo::BVHTree::find_collision_pairs(const Geo::Geometry *object, std::vector<Geo::Geometry *> &pairs) const
 {
     if (_root == nullptr || !Geo::is_intersected(_root->rect, object))
     {
@@ -4910,7 +4970,7 @@ bool Geo::BVHTree::find_collision_pairs(const Geo::Geometry *object, std::vector
         }
         else if (object != node->object && Geo::is_intersected(object, node->object))
         {
-            pairs.emplace_back(const_cast<Geo::Geometry *>(object), const_cast<Geo::Geometry *>(node->object));
+            pairs.push_back(const_cast<Geo::Geometry *>(node->object));
         }
     }
 
@@ -4936,6 +4996,7 @@ bool Geo::BVHTree::find_collision_pairs(std::vector<std::pair<Geo::Geometry *, G
         {
             node = stack.top();
             stack.pop();
+            
             if (node->object == nullptr)
             {
                 if (node->right_node != nullptr && Geo::is_intersected(node->right_node->rect, object))
