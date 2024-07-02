@@ -4872,7 +4872,7 @@ Geo::BVHNode::BVHNode(Geo::BVHNode *left, Geo::BVHNode *right, Geo::BVHNode *par
     update_rect();
 }
 
-void Geo::BVHNode::update_rect()
+void Geo::BVHNode::update_rect(const bool update_parent)
 {
     if (this->object != nullptr)
     {
@@ -4887,6 +4887,10 @@ void Geo::BVHNode::update_rect()
     if (this->right_node != nullptr)
     {
         this->rect += this->right_node->rect;
+    }
+    if (update_parent && this->parent_node != nullptr)
+    {
+        return this->parent_node->update_rect(true);
     }
 }
 
@@ -4931,14 +4935,14 @@ Geo::BVHTree::BVHTree(const std::vector<const Geo::Geometry *> &objects)
     : _objects(objects)
 {
     build_tree(objects);
-    blance(_root);
+    balance(_root);
 }
 
 Geo::BVHTree::BVHTree(const std::vector<Geo::Geometry *> &objects)
     : _objects(objects.cbegin(), objects.cend())
 {
     build_tree(_objects);
-    blance(_root);
+    balance(_root);
 }
 
 Geo::BVHTree::BVHTree(std::vector<const Geo::Geometry *>::const_iterator begin, std::vector<const Geo::Geometry *>::const_iterator end)
@@ -4970,6 +4974,39 @@ size_t Geo::BVHTree::count_height(const Geo::BVHNode *node)
     }
 }
 
+Geo::BVHNode *Geo::BVHTree::min_unbalanced_tree(Geo::BVHNode *node)
+{
+    if (node == nullptr || node->parent_node == nullptr)
+    {
+        return nullptr;
+    }
+
+    BVHNode *temp = node->parent_node;
+    if (std::max(count_height(temp->left_node), count_height(temp->right_node)) -
+        std::min(count_height(temp->left_node), count_height(temp->right_node)) > 1)
+    {
+        return node->parent_node;
+    }
+    else
+    {
+        temp = temp->parent_node;
+    }
+
+    if (temp == nullptr)
+    {
+        return nullptr;
+    }
+    else if (std::max(count_height(temp->left_node), count_height(temp->right_node)) -
+        std::min(count_height(temp->left_node), count_height(temp->right_node)) > 1)
+    {
+        return temp;
+    }
+    else
+    {
+        return nullptr;
+    }
+}
+
 void Geo::BVHTree::right_rotate(Geo::BVHNode *node)
 {
     Geo::BVHNode *parent = node->parent_node, *left = node->left_node;
@@ -4982,12 +5019,19 @@ void Geo::BVHTree::right_rotate(Geo::BVHNode *node)
     else if (parent->left_node == node)
     {
         parent->set_left(left);
+        if (parent->parent_node != nullptr)
+        {
+            parent->parent_node->update_rect(true);
+        }
     }
     else
     {
         parent->set_right(left);
+        if (parent->parent_node != nullptr)
+        {
+            parent->parent_node->update_rect(true);
+        }
     }
-    parent = nullptr, left = nullptr;
 }
 
 void Geo::BVHTree::left_rotate(BVHNode *node)
@@ -5002,14 +5046,22 @@ void Geo::BVHTree::left_rotate(BVHNode *node)
     else if (parent->left_node == node)
     {
         parent->set_left(right);
+        if (parent->parent_node != nullptr)
+        {
+            parent->parent_node->update_rect(true);
+        }
     }
     else
     {
         parent->set_right(right);
-    }        
+        if (parent->parent_node != nullptr)
+        {
+            parent->parent_node->update_rect(true);
+        }
+    }
 }
 
-void Geo::BVHTree::blance(Geo::BVHNode *node)
+void Geo::BVHTree::balance(Geo::BVHNode *node)
 {
     if (node == nullptr)
     {
@@ -5146,6 +5198,114 @@ void Geo::BVHTree::clear()
     }
     _root = nullptr;
     _objects.clear();
+}
+
+void Geo::BVHTree::append(const Geo::Geometry *object)
+{
+    BVHNode *node = _root;
+    while (node != nullptr)
+    {
+        if (node->right_node != nullptr && Geo::is_intersected(node->right_node->rect, object))
+        {
+            node = node->right_node;
+        }
+        else if (node->left_node != nullptr && Geo::is_intersected(node->left_node->rect, object))
+        {
+            node = node->left_node;
+        }
+        else
+        {
+            break;
+        }
+    }
+    if (node == nullptr)
+    {
+        _root = new BVHNode(object);
+    }
+    else if (node->right_node == nullptr)
+    {
+        node->set_right(new BVHNode(object));
+    }
+    else
+    {
+        node->set_left(new BVHNode(object));
+    }
+    node->update_rect(true);
+    balance(min_unbalanced_tree(node));
+}
+
+void Geo::BVHTree::remove(const Geo::Geometry *object)
+{
+    BVHNode *node;
+    std::vector<Geo::BVHNode *> stack({_root});
+    while (!stack.empty())
+    {
+        node = stack.back();
+        stack.pop_back();
+        if (node->right_node != nullptr && Geo::is_intersected(node->right_node->rect, object))
+        {
+            stack.push_back(node->right_node);
+        }
+        else if (node->left_node != nullptr && Geo::is_intersected(node->left_node->rect, object))
+        {
+            stack.push_back(node->left_node);
+        }
+        else if (node->object == object)
+        {
+            break;
+        }
+    }
+    if (node == nullptr)
+    {
+        return;
+    }
+
+    if (node->right_node == nullptr)
+    {
+        if (node->parent_node->left_node == node)
+        {
+            node->parent_node->set_left(node->left_node);
+        }
+        else
+        {
+            node->parent_node->set_right(node->left_node);
+        }
+        balance(min_unbalanced_tree(node));
+        delete node;
+    }
+    else if (node->left_node == nullptr)
+    {
+        if (node->parent_node->left_node == node)
+        {
+            node->parent_node->set_left(node->right_node);                
+        }
+        else
+        {
+            node->parent_node->set_right(node->right_node);
+        }
+        balance(min_unbalanced_tree(node));
+        delete node;
+    }
+    else
+    {
+        BVHNode *temp = node->left_node;
+        while (temp->right_node != nullptr)
+        {
+            temp = temp->right_node;
+        }
+        node->object = temp->object;
+        node->update_rect(true);
+        if (temp->parent_node == node)
+        {
+            node->set_left(temp->left_node);
+        }
+        else
+        {
+            temp->parent_node->set_right(temp->left_node);
+        }
+        delete temp;
+        balance(min_unbalanced_tree(node));
+    }
 }
 
 bool Geo::BVHTree::find_collision_pairs(const Geo::Geometry *object, std::vector<Geo::Geometry *> &pairs) const

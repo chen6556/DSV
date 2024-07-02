@@ -254,7 +254,7 @@ namespace Geo
 
         BVHNode(BVHNode *left, BVHNode *right, BVHNode *parent = nullptr);
 
-        void update_rect();
+        void update_rect(const bool update_parent = false);
 
         void set_left(BVHNode *node);
 
@@ -270,11 +270,13 @@ namespace Geo
     private:
         static size_t count_height(const BVHNode* node);
 
+        static BVHNode *min_unbalanced_tree(BVHNode *node);
+
         void right_rotate(BVHNode *node);
 
         void left_rotate(BVHNode *node);
 
-        void blance(BVHNode *node);
+        void balance(BVHNode *node);
 
     public:
         BVHTree();
@@ -292,6 +294,10 @@ namespace Geo
         void build_tree(const std::vector<const Geo::Geometry *> &objects);
 
         void clear();
+
+        void append(const Geometry *object);
+
+        void remove(const Geometry *object);
 
         bool find_collision_pairs(const Geometry *object, std::vector<Geometry *> &pairs) const;
 
