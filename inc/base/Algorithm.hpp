@@ -125,6 +125,30 @@ namespace Geo
     // 判断AABB矩形与Geometry Object是否相交
     bool is_intersected(const AABBRect &rect, const Geometry *object);
 
+    namespace NoAABBTest
+    {
+        // 判断两多段线是否相交
+        bool is_intersected(const Polyline &polyline0, const Polyline &polyline1);
+
+        // 判断多段线是否与多边形相交,inside决定多段线完全在多边形内部是否算相交
+        bool is_intersected(const Polyline &polyline, const Polygon &polygon, const bool inside = true);
+
+        // 判断两多边形是否相交,inside决定完全在多边形内部是否算相交
+        bool is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside = true);
+
+        // 判断AABB矩形是否与多段线相交,多段线完全在AABB矩形内也算相交
+        bool is_intersected(const AABBRect &rect, const Polyline &polyline);
+
+        // 判断AABB矩形是否与多边形相交,多边形完全在AABB矩形内或AABB矩形完全在多边形内也算相交
+        bool is_intersected(const AABBRect &rect, const Polygon &polygon);
+
+        // 判断两Geometry Object是否相交
+        bool is_intersected(const Geometry *object0, const Geometry *object1);
+
+        // 判断AABB矩形与Geometry Object是否相交
+        bool is_intersected(const AABBRect &rect, const Geometry *object);
+    }
+
     // 判断点是否在直线的左侧
     bool is_on_left(const Point &point, const Point &start, const Point &end);
 
