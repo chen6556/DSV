@@ -1196,6 +1196,10 @@ bool Editer::line_array(std::list<Geo::Geometry *> objects, int x, int y, double
                 _graph->container_group(_current_group).append(object->clone());
                 _graph->container_group(_current_group).back()->translate(x_space * i, y_space * j);
                 _graph->container_group(_current_group).back()->is_selected = true;
+                if (_current_group == 0)
+                {
+                    _tree.append(_graph->container_group(_current_group).back());
+                }
             }
         }
     }
@@ -1224,6 +1228,10 @@ bool Editer::ring_array(std::list<Geo::Geometry *> objects, const double x, cons
             _graph->container_group(_current_group).back()->rotate(
                 x, y, 2 * Geo::PI * i / n);
             _graph->container_group(_current_group).back()->is_selected = true;
+            if (_current_group == 0)
+            {
+                _tree.append(_graph->container_group(_current_group).back());
+            }
         }
     }
 

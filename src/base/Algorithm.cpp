@@ -5355,6 +5355,21 @@ void Geo::BVHTree::clear()
 
 void Geo::BVHTree::append(Geo::Geometry *object)
 {
+    switch (object->type())
+    {
+    case Geo::Type::TEXT:
+    case Geo::Type::COMBINATION:
+    case Geo::Type::CONTAINERGROUP:
+    case Geo::Type::GEOMETRY:
+    case Geo::Type::GRAPH:
+    case Geo::Type::LINE:
+    case Geo::Type::POINT:
+    case Geo::Type::TRIANGLE:
+        return;
+    default:
+        break;
+    }
+
     BVHNode *node = _root, *node2 = _root;
     while (node != nullptr)
     {
@@ -5459,6 +5474,20 @@ void Geo::BVHTree::remove(const Geo::Geometry *object)
     if (_root == nullptr)
     {
         return;
+    }
+    switch (object->type())
+    {
+    case Geo::Type::TEXT:
+    case Geo::Type::COMBINATION:
+    case Geo::Type::CONTAINERGROUP:
+    case Geo::Type::GEOMETRY:
+    case Geo::Type::GRAPH:
+    case Geo::Type::LINE:
+    case Geo::Type::POINT:
+    case Geo::Type::TRIANGLE:
+        return;
+    default:
+        break;
     }
 
     BVHNode *node;
