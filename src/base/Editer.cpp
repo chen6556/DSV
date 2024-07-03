@@ -277,6 +277,7 @@ void Editer::append_text(const double x, const double y)
 void Editer::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1, const bool change_shape)
 {
     const double catch_distance = GlobalSetting::get_instance()->setting()["catch_distance"].toDouble();
+    std::vector<Geo::Geometry *> objects;
     switch (points->type())
     {
     case Geo::Type::CONTAINER:
@@ -345,6 +346,13 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                 }
             }
             temp->translate(x1 - x0, y1 - y0);
+            if (_tree.find_collision_pairs(temp, objects))
+            {
+                for (Geo::Geometry *object : objects)
+                {
+                    object->translate(x1 - x0, y1 - y0);
+                }
+            }
         }
         break;
     case Geo::Type::CIRCLECONTAINER:
@@ -359,6 +367,13 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             else
             {
                 temp->translate(x1 - x0, y1 - y0);
+                if (_tree.find_collision_pairs(temp, objects))
+                {
+                    for (Geo::Geometry *object : objects)
+                    {
+                        object->translate(x1 - x0, y1 - y0);
+                    }
+                }
             }
         }
         break;

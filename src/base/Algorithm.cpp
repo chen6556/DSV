@@ -804,7 +804,7 @@ bool Geo::is_intersected(const Geo::Polyline &polyline, const Geo::Circle &circl
 {
     for (size_t i = 0, count = polyline.size(); i < count; ++i)
     {
-        if (Geo::distance(circle, polyline[i - 1], polyline[1]) < circle.radius)
+        if (Geo::distance(circle, polyline[i - 1], polyline[i]) < circle.radius)
         {
             return true;
         }
@@ -853,7 +853,7 @@ bool Geo::is_intersected(const Geo::Polygon &polygon, const Geo::Circle &circle,
 {
     for (size_t i = 1, count = polygon.size(); i < count; ++i)
     {
-        if (Geo::distance(circle, polygon[i - 1], polygon[1]) < circle.radius)
+        if (Geo::distance(circle, polygon[i - 1], polygon[i]) < circle.radius)
         {
             return true;
         }
@@ -5497,17 +5497,17 @@ void Geo::BVHTree::remove(const Geo::Geometry *object)
     {
         node = stack.back();
         stack.pop_back();
-        if (node->right_node != nullptr && Geo::is_intersected(node->right_node->rect, rect))
+        if (node->object == object)
+        {
+            break;
+        }
+        if (node->right_node != nullptr)
         {
             stack.push_back(node->right_node);
         }
-        else if (node->left_node != nullptr && Geo::is_intersected(node->left_node->rect, rect))
+        if (node->left_node != nullptr)
         {
             stack.push_back(node->left_node);
-        }
-        else if (node->object == object)
-        {
-            break;
         }
     }
     if (node->object != object)
@@ -5518,6 +5518,11 @@ void Geo::BVHTree::remove(const Geo::Geometry *object)
     if (node == _root)
     {
         _objects.erase(std::find(_objects.begin(), _objects.end(), object));
+        std::vector<Geo::Geometry *>::iterator it = std::find(_objects.begin(), _objects.end(), object);
+        if (it != _objects.end())
+        {
+            _objects.erase(it);
+        }
         _root->object = nullptr;
         return;
     }
@@ -5718,7 +5723,6 @@ void Geo::BVHTree::update_rect()
         }
         else
         {
-            node->update_rect();
             nodes2.push_back(node);
         }
     }

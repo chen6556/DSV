@@ -1304,6 +1304,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 _cache_count = 0;
             }
             doneCurrent();
+            refresh_vbo();
+            refresh_selected_ibo();
             if (only_one_selected && event->modifiers() == Qt::ControlModifier)
             {
                 if (update_vbo)
