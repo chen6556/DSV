@@ -805,7 +805,7 @@ bool Geo::is_intersected(const Polyline &polyline, const Circle &circle)
 {
     for (size_t i = 0, count = polyline.size(); i < count; ++i)
     {
-        if (Geo::distance(circle, polyline[i - 1], polyline[1]) < circle.radius)
+        if (Geo::distance(circle, polyline[i - 1], polyline[i]) < circle.radius)
         {
             return true;
         }
@@ -854,7 +854,7 @@ bool Geo::is_intersected(const Polygon &polygon, const Circle &circle, const boo
 {
     for (size_t i = 1, count = polygon.size(); i < count; ++i)
     {
-        if (Geo::distance(circle, polygon[i - 1], polygon[1]) < circle.radius)
+        if (Geo::distance(circle, polygon[i - 1], polygon[i]) < circle.radius)
         {
             return true;
         }
