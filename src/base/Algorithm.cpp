@@ -172,14 +172,28 @@ double Geo::distance(const Point &point, const Polygon &polygon)
 }
 
 
-bool Geo::is_inside(const Point &point, const Line &line, const bool infinite)
+bool Geo::is_inside(const Geo::Point &point, const Geo::Line &line, const bool infinite)
 {
-    return Geo::distance(point, line.front(), line.back(), infinite) < Geo::EPSILON;
+    if (std::abs(Geo::cross(line.back() - line.front(), point - line.front())) < Geo::EPSILON)
+    {
+        return infinite || Geo::distance(point, line.front()) + Geo::distance(point, line.back()) < line.length() + Geo::EPSILON;
+    }
+    else
+    {
+        return false;
+    }
 }
 
-bool Geo::is_inside(const Point &point, const Point &start, const Point &end, const bool infinite)
+bool Geo::is_inside(const Geo::Point &point, const Geo::Point &start, const Geo::Point &end, const bool infinite)
 {
-    return Geo::distance(point, start, end, infinite) < Geo::EPSILON;
+    if (std::abs(Geo::cross(end - start, point - start)) < Geo::EPSILON)
+    {
+        return infinite || Geo::distance(point, start) + Geo::distance(point, end) < Geo::distance(start, end) + Geo::EPSILON;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 bool Geo::is_inside(const Point &point, const Polyline &polyline)
