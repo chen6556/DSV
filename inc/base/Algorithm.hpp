@@ -260,6 +260,10 @@ namespace Geo
         void set_left(BVHNode *node);
 
         void set_right(BVHNode *node);
+
+        void remove_left();
+
+        void remove_right();
     };
 
     class BVHTree
