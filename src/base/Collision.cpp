@@ -16,6 +16,12 @@ Collision::GridNode::GridNode(const Geo::AABBRect &rect)
   
 }
 
+Collision::GridNode::GridNode(const double left, const double top, const double right, const double bottom)
+    : _rect(left, top, right, bottom)
+{
+
+}
+
 void Collision::GridNode::set_rect(const Geo::AABBRect &rect)
 {
     _rect = rect;
@@ -45,6 +51,10 @@ bool Collision::GridNode::append(Geo::Geometry *object)
         default:
             return false;
         }
+    }
+    else
+    {
+        return false;
     }
 }
 
@@ -80,6 +90,11 @@ bool Collision::GridNode::remove(Geo::Geometry *object)
 bool Collision::GridNode::has(Geo::Geometry *object) const
 {
     return std::find(_objects.begin(), _objects.end(), object) != _objects.end(); 
+}
+
+void Collision::GridNode::clear()
+{
+    _objects.clear();
 }
 
 bool Collision::GridNode::select(const Geo::Point &pos, std::vector<Geo::Geometry *> &objects) const
@@ -245,11 +260,59 @@ Collision::GridMap::GridMap(const std::initializer_list<Geo::Geometry *> &object
     build(_objects);
 }
 
+void Collision::GridMap::build(const ContainerGroup &group)
+{
+    _left = _bottom = DBL_MAX;
+    _right = _top = -DBL_MAX;
+    _rects.clear();
+    _objects.clear();
+    _grids.clear();
+    for (Geo::Geometry *object : group)
+    {
+        _objects.push_back(object);
+        _rects.emplace_back(object->bounding_rect());
+        _left = std::min(_rects.back().left(), _left);
+        _top = std::max(_rects.back().top(), _top);
+        _right = std::max(_rects.back().right(), _right);
+        _bottom = std::min(_rects.back().bottom(), _bottom);
+    }
+
+    if (_objects.size() > 40 || (_right - _left) > 800)
+    {
+        double x_step = (_right - _left) / 8, y_step = (_top - _bottom) / 4;
+        for (size_t i = 0; i < 8; ++i)
+        {
+            for (size_t j = 0; j < 4; ++j)
+            {
+                _grids.emplace_back(_left + x_step * i, _top - y_step * j,
+                    _left + x_step * i + x_step, _top - y_step * j - y_step);
+
+                for (size_t k = 0, count = _rects.size(); k < count; ++k)
+                {
+                    if (Geo::is_intersected(_grids.back().rect(), _rects[k]))
+                    {
+                        _grids.back().append(_objects[k]);
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        _grids.emplace_back(_left, _top, _right, _bottom);
+        for (Geo::Geometry *object : _objects)
+        {
+            _grids.back().append(object);
+        }
+    }
+}
+
 void Collision::GridMap::build(const std::vector<Geo::Geometry *> &objects)
 {
     _left = _bottom = DBL_MAX;
     _right = _top = -DBL_MAX;
     _rects.clear();
+    _grids.clear();
     for (Geo::Geometry *object : objects)
     {
         _rects.emplace_back(object->bounding_rect());
@@ -263,21 +326,32 @@ void Collision::GridMap::build(const std::vector<Geo::Geometry *> &objects)
         _objects.assign(objects.begin(), objects.end());
     }
 
-    double x_step = (_right - _left) / 8, y_step = (_top - _bottom) / 4;
-    for (size_t i = 0; i < 8; ++i)
+    if (_objects.size() > 40 || (_right - _left) > 800)
     {
-        for (size_t j = 0; j < 4; ++j)
+        double x_step = (_right - _left) / 8, y_step = (_top - _bottom) / 4;
+        for (size_t i = 0; i < 8; ++i)
         {
-            _grids.emplace_back(Geo::AABBRect(_left + x_step * i, _top - y_step * j,
-                _right + x_step * j + x_step, _bottom - x_step * j - x_step));
-
-            for (size_t k = 0, count = _rects.size(); k < count; ++k)
+            for (size_t j = 0; j < 4; ++j)
             {
-                if (Geo::is_intersected(_grids.back().rect(), _rects[k]))
+                _grids.emplace_back(_left + x_step * i, _top - y_step * j,
+                    _left + x_step * i + x_step, _top - y_step * j - y_step);
+
+                for (size_t k = 0, count = _rects.size(); k < count; ++k)
                 {
-                    _grids.back().append(objects[k]);
+                    if (Geo::is_intersected(_grids.back().rect(), _rects[k]))
+                    {
+                        _grids.back().append(objects[k]);
+                    }
                 }
             }
+        }
+    }
+    else
+    {
+        _grids.emplace_back(_left, _top, _right, _bottom);
+        for (Geo::Geometry *object : _objects)
+        {
+            _grids.back().append(object);
         }
     }
 }
@@ -286,17 +360,47 @@ void Collision::GridMap::build(const std::vector<Geo::Geometry *> &objects, cons
 {
     _left = _bottom = DBL_MAX;
     _right = _top = -DBL_MAX;
-    for (Geo::Geometry *object : objects)
+    _grids.clear();
+    for (const Geo::AABBRect &rect : rects)
     {
-        _left = std::min(rects.back().left(), _left);
-        _top = std::max(rects.back().top(), _top);
-        _right = std::max(rects.back().right(), _right);
-        _bottom = std::min(rects.back().bottom(), _bottom);
+        _left = std::min(rect.left(), _left);
+        _top = std::max(rect.top(), _top);
+        _right = std::max(rect.right(), _right);
+        _bottom = std::min(rect.bottom(), _bottom);
     }
     if (&objects != &_objects)
     {
         _objects.assign(objects.begin(), objects.end());
         _rects.assign(rects.begin(), rects.end());
+    }
+
+    if (objects.size() > 40 || (_right - _left) > 800)
+    {
+        double x_step = (_right - _left) / 8, y_step = (_top - _bottom) / 4;
+        for (size_t i = 0; i < 8; ++i)
+        {
+            for (size_t j = 0; j < 4; ++j)
+            {
+                _grids.emplace_back(_left + x_step * i, _top - y_step * j,
+                    _left + x_step * i + x_step, _top - y_step * j - y_step);
+
+                for (size_t k = 0, count = rects.size(); k < count; ++k)
+                {
+                    if (Geo::is_intersected(_grids.back().rect(), rects[k]))
+                    {
+                        _grids.back().append(objects[k]);
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        _grids.emplace_back(_left, _top, _right, _bottom);
+        for (Geo::Geometry *object : objects)
+        {
+            _grids.back().append(object);
+        }
     }
 }
 
@@ -337,7 +441,39 @@ void Collision::GridMap::append(Geo::Geometry *object)
     else
     {
         _grids.clear();
-        build(_objects, _rects);
+        _left = std::min(_left, _rects.back().left());
+        _top = std::max(_top, _rects.back().top());
+        _right = std::max(_right, _rects.back().right());
+        _bottom = std::min(_bottom, _rects.back().bottom());
+
+        if (_objects.size() > 40 || (_right - _left) > 800)
+        {
+            double x_step = (_right - _left) / 8, y_step = (_top - _bottom) / 4;
+            for (size_t i = 0; i < 8; ++i)
+            {
+                for (size_t j = 0; j < 4; ++j)
+                {
+                    _grids.emplace_back(_left + x_step * i, _top - y_step * j,
+                        _left + x_step * i + x_step, _top - y_step * j - y_step);
+
+                    for (size_t k = 0, count = _rects.size(); k < count; ++k)
+                    {
+                        if (Geo::is_intersected(_grids.back().rect(), _rects[k]))
+                        {
+                            _grids.back().append(_objects[k]);
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            _grids.emplace_back(_left, _top, _right, _bottom);
+            for (Geo::Geometry *object : _objects)
+            {
+                _grids.back().append(object);
+            }
+        }
     }
 }
 
@@ -420,6 +556,13 @@ void Collision::GridMap::update(Geo::Geometry *object)
 bool Collision::GridMap::has(Geo::Geometry *object) const
 {
     return std::find(_objects.begin(), _objects.end(), object) != _objects.end();
+}
+
+void Collision::GridMap::clear()
+{
+    _objects.clear();
+    _rects.clear();
+    _grids.clear();
 }
 
 bool Collision::GridMap::select(const Point &pos, std::vector<Geometry *> &objects) const

@@ -2,7 +2,7 @@
 #include <vector>
 #include <utility>
 #include "base/Geometry.hpp"
-
+#include "draw/Container.hpp"
 
 
 namespace Geo
@@ -20,6 +20,8 @@ namespace Geo
 
             GridNode(const AABBRect &rect);
 
+            GridNode(const double left, const double top, const double right, const double bottom);
+
             void set_rect(const AABBRect &rect);
 
             const AABBRect &rect() const;
@@ -29,6 +31,8 @@ namespace Geo
             bool remove(Geometry *object);
 
             bool has(Geometry *object) const;
+
+            void clear();
 
             bool select(const Point &pos, std::vector<Geometry *> &objects) const;
 
@@ -56,6 +60,8 @@ namespace Geo
 
             GridMap(const std::initializer_list<Geo::Geometry *> &objects);
 
+            void build(const ContainerGroup &group);
+
             void build(const std::vector<Geo::Geometry *> &objects);
 
             void build(const std::vector<Geo::Geometry *> &objects, const std::vector<Geo::AABBRect> &rects);
@@ -67,6 +73,8 @@ namespace Geo
             void update(Geo::Geometry *object);
 
             bool has(Geometry *object) const;
+
+            void clear();
 
             bool select(const Point &pos, std::vector<Geometry *> &objects) const;
 

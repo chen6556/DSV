@@ -4,7 +4,7 @@
 #include <QPolygonF>
 
 #include "draw/Graph.hpp"
-#include "base/Algorithm.hpp"
+#include "base/Collision.hpp"
 
 
 class Editer
@@ -19,7 +19,7 @@ private:
     double _view_ratio = 1.0;
 
     Geo::Geometry *_catched_points = nullptr;
-    Geo::BVHTree _tree;
+    Geo::Collision::GridMap _gridmap;
 
 private:
     void init();

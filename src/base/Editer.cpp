@@ -50,8 +50,8 @@ void Editer::init()
             _backup.pop_back();
         }
 
-        _tree.clear();
-        _tree.build_tree(_graph->container_group());
+        _gridmap.clear();
+        _gridmap.build(_graph->container_group());
     }
 }
 
@@ -201,7 +201,7 @@ void Editer::append_points()
     _point_cache.clear();
     if (_current_group == 0)
     {
-        _tree.append(_graph->container_group().back());
+        _gridmap.append(_graph->container_group().back());
     }
 }
 
@@ -220,7 +220,7 @@ void Editer::append(const Geo::Circle &circle)
     _graph->append(new CircleContainer(circle), _current_group);
     if (_current_group == 0)
     {
-        _tree.append(_graph->container_group().back());
+        _gridmap.append(_graph->container_group().back());
     }
 }
 
@@ -239,7 +239,7 @@ void Editer::append(const Geo::AABBRect &rect)
     _graph->append(new Container(rect), _current_group);
     if (_current_group == 0)
     {
-        _tree.append(_graph->container_group().back());
+        _gridmap.append(_graph->container_group().back());
     }
 }
 
@@ -259,7 +259,7 @@ void Editer::append_bezier(const size_t order)
     _point_cache.clear();
     if (_current_group == 0)
     {
-        _tree.append(_graph->container_group().back());
+        _gridmap.append(_graph->container_group().back());
     }
 }
 
@@ -346,13 +346,14 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                 }
             }
             temp->translate(x1 - x0, y1 - y0);
-            if (_tree.find_collision_pairs(temp, objects))
-            {
-                for (Geo::Geometry *object : objects)
-                {
-                    object->translate(x1 - x0, y1 - y0);
-                }
-            }
+            // if (_gridmap.find_collision_objects(temp, objects))
+            // {
+            //     for (Geo::Geometry *object : objects)
+            //     {
+            //         object->translate(x1 - x0, y1 - y0);
+            //         _gridmap.update(object);
+            //     }
+            // }
         }
         break;
     case Geo::Type::CIRCLECONTAINER:
@@ -367,13 +368,14 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             else
             {
                 temp->translate(x1 - x0, y1 - y0);
-                if (_tree.find_collision_pairs(temp, objects))
-                {
-                    for (Geo::Geometry *object : objects)
-                    {
-                        object->translate(x1 - x0, y1 - y0);
-                    }
-                }
+                // if (_gridmap.find_collision_objects(temp, objects))
+                // {
+                //     for (Geo::Geometry *object : objects)
+                //     {
+                //         object->translate(x1 - x0, y1 - y0);
+                //         _gridmap.update(object);
+                //     }
+                // }
             }
         }
         break;
@@ -470,7 +472,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         break;
     }
     _graph->modified = true;
-    _tree.update_rect();
+    _gridmap.update(points);
 }
 
 bool Editer::remove_selected()
@@ -485,7 +487,7 @@ bool Editer::remove_selected()
     {
         if ((*it)->is_selected)
         {
-            _tree.remove(*it);
+            _gridmap.remove(*it);
             it = _graph->container_group(_current_group).remove(it);
         }
         else
@@ -1213,7 +1215,7 @@ bool Editer::line_array(std::list<Geo::Geometry *> objects, int x, int y, double
                 _graph->container_group(_current_group).back()->is_selected = true;
                 if (_current_group == 0)
                 {
-                    _tree.append(_graph->container_group(_current_group).back());
+                    _gridmap.append(_graph->container_group(_current_group).back());
                 }
             }
         }
@@ -1245,7 +1247,7 @@ bool Editer::ring_array(std::list<Geo::Geometry *> objects, const double x, cons
             _graph->container_group(_current_group).back()->is_selected = true;
             if (_current_group == 0)
             {
-                _tree.append(_graph->container_group(_current_group).back());
+                _gridmap.append(_graph->container_group(_current_group).back());
             }
         }
     }
@@ -1432,7 +1434,13 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
         {
             container->is_selected = false;
         }
-        _tree.select(rect, result);
+        if (_gridmap.select(rect, result))
+        {
+            for (Geo::Geometry *container : result)
+            {
+                container->is_selected = true;
+            }
+        }
     }
     else
     {
@@ -1606,7 +1614,7 @@ void Editer::reset_selected_mark(const bool value)
 std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> Editer::find_collision_pairs()
 {
     std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> pairs;
-    _tree.find_collision_pairs(pairs);
+    _gridmap.find_collision_pairs(pairs);
     return pairs;
 }
 
