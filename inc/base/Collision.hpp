@@ -72,6 +72,8 @@ namespace Geo
 
             void update(Geo::Geometry *object);
 
+            void update();
+
             bool has(Geometry *object) const;
 
             void clear();

@@ -351,7 +351,6 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             //     for (Geo::Geometry *object : objects)
             //     {
             //         object->translate(x1 - x0, y1 - y0);
-            //         _gridmap.update(object);
             //     }
             // }
         }
@@ -373,7 +372,6 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                 //     for (Geo::Geometry *object : objects)
                 //     {
                 //         object->translate(x1 - x0, y1 - y0);
-                //         _gridmap.update(object);
                 //     }
                 // }
             }
@@ -472,7 +470,6 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         break;
     }
     _graph->modified = true;
-    _gridmap.update(points);
 }
 
 bool Editer::remove_selected()
@@ -1654,6 +1651,15 @@ void Editer::down(Geo::Geometry *item)
     }
 }
 
+void Editer::update_gridmap(Geo::Geometry *object)
+{
+    _gridmap.update(object);
+}
+
+void Editer::update_gridmap()
+{
+    _gridmap.update();
+}
 
 
 

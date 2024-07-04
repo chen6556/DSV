@@ -138,6 +138,10 @@ public:
 
     void down(Geo::Geometry *item);
 
+    void update_gridmap(Geo::Geometry *object);
+
+    void update_gridmap();
+
 
 
     void remove_group(const size_t index);

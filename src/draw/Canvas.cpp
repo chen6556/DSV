@@ -1318,6 +1318,14 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     refresh_brush_ibo();
                 }
             }
+            if (only_one_selected)
+            {
+                _editer->update_gridmap(objs.front());
+            }
+            else
+            {
+                _editer->update_gridmap();
+            }
             delete []data;
             if (GlobalSetting::get_instance()->setting()["show_text"].toBool())
             {

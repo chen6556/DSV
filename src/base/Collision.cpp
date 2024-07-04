@@ -553,6 +553,12 @@ void Collision::GridMap::update(Geo::Geometry *object)
     }
 }
 
+void Collision::GridMap::update()
+{
+    _grids.clear();
+    build(_objects, _rects);
+}
+
 bool Collision::GridMap::has(Geo::Geometry *object) const
 {
     return std::find(_objects.begin(), _objects.end(), object) != _objects.end();
