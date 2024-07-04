@@ -1017,131 +1017,13 @@ bool Geo::is_intersected(const Geo::Line &line, const Geo::Triangle &triangle, G
 
 bool Geo::is_intersected(const Geo::Geometry *object0, const Geo::Geometry *object1)
 {
-    if (!Geo::is_intersected(object0->bounding_rect(), object1->bounding_rect()))
-    {
-        return false;
-    }
-
-    switch (object0->type())
-    {
-    case Geo::Type::CONTAINER:
-    case Geo::Type::POLYGON:
-        switch (object1->type())
-        {
-        case Geo::Type::CONTAINER:
-        case Geo::Type::POLYGON:
-            return Geo::is_intersected(*static_cast<const Geo::Polygon *>(object0),
-                *static_cast<const Geo::Polygon *>(object1));
-        case Geo::Type::AABBRECT:
-            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object1),
-                *static_cast<const Geo::Polygon *>(object0));
-        case Geo::Type::POLYLINE:
-            return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object1),
-                *static_cast<const Geo::Polygon *>(object0));
-        case Geo::Type::BEZIER:
-            return Geo::is_intersected(static_cast<const Geo::Bezier *>(object1)->shape(),
-                *static_cast<const Geo::Polygon *>(object0));
-        case Geo::Type::CIRCLECONTAINER:
-        case Geo::Type::CIRCLE:
-            return Geo::is_intersected(*static_cast<const Geo::Polygon *>(object0),
-                *static_cast<const Geo::Circle *>(object1));
-        default:
-            return false;
-        }
-    case Geo::Type::AABBRECT:
-        switch (object1->type())
-        {
-        case Geo::Type::CONTAINER:
-        case Geo::Type::POLYGON:
-            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
-                *static_cast<const Geo::Polygon *>(object1));
-        case Geo::Type::AABBRECT:
-            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
-                *static_cast<const Geo::AABBRect *>(object1));
-        case Geo::Type::POLYLINE:
-            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
-                *static_cast<const Geo::Polyline *>(object1));
-        case Geo::Type::BEZIER:
-            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
-                static_cast<const Geo::Bezier *>(object1)->shape());
-        case Geo::Type::CIRCLECONTAINER:
-        case Geo::Type::CIRCLE:
-            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
-                *static_cast<const Geo::Circle *>(object1));
-        default:
-            return false;
-        }
-    case Geo::Type::POLYLINE:
-        switch (object1->type())
-        {
-        case Geo::Type::CONTAINER:
-        case Geo::Type::POLYGON:
-            return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object0),
-                *static_cast<const Geo::Polygon *>(object1));
-        case Geo::Type::AABBRECT:
-            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object1),
-                *static_cast<const Geo::Polyline *>(object0));
-        case Geo::Type::POLYLINE:
-            return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object0),
-                *static_cast<const Geo::Polyline *>(object1));
-        case Geo::Type::BEZIER:
-            return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object0),
-                static_cast<const Geo::Bezier *>(object1)->shape());
-        case Geo::Type::CIRCLECONTAINER:
-        case Geo::Type::CIRCLE:
-            return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object0),
-                *static_cast<const Geo::Circle *>(object1));
-        default:
-            return false;
-        }
-    case Geo::Type::CIRCLECONTAINER:
-    case Geo::Type::CIRCLE:
-        switch (object1->type())
-        {
-        case Geo::Type::CONTAINER:
-        case Geo::Type::POLYGON:
-            return Geo::is_intersected(*static_cast<const Geo::Polygon *>(object1),
-                *static_cast<const Geo::Circle *>(object0));
-        case Geo::Type::AABBRECT:
-            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object1),
-                *static_cast<const Geo::Circle *>(object0));
-        case Geo::Type::POLYLINE:
-            return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object1),
-                *static_cast<const Geo::Circle *>(object0));
-        case Geo::Type::BEZIER:
-            return Geo::is_intersected(static_cast<const Geo::Bezier *>(object1)->shape(),
-                *static_cast<const Geo::Circle *>(object0));
-        case Geo::Type::CIRCLECONTAINER:
-        case Geo::Type::CIRCLE:
-            return Geo::is_intersected(*static_cast<const Geo::Circle *>(object0),
-                *static_cast<const Geo::Circle *>(object1));
-        default:
-            return false;
-        }
-    default:
-        return false;
-    }
+    return Geo::is_intersected(object0->bounding_rect(), object1->bounding_rect())
+        && Geo::NoAABBTest::is_intersected(object0, object1);
 }
 
 bool Geo::is_intersected(const Geo::AABBRect &rect, const Geo::Geometry *object)
 {
-    switch (object->type())
-    {
-    case Geo::Type::CONTAINER:
-    case Geo::Type::POLYGON:
-        return Geo::is_intersected(rect, *static_cast<const Geo::Polygon *>(object));
-    case Geo::Type::AABBRECT:
-        return Geo::is_intersected(rect, *static_cast<const Geo::AABBRect *>(object));
-    case Geo::Type::POLYLINE:
-        return Geo::is_intersected(rect, *static_cast<const Geo::Polyline *>(object));
-    case Geo::Type::BEZIER:
-        return Geo::is_intersected(rect, static_cast<const Geo::Bezier *>(object)->shape());
-    case Geo::CIRCLECONTAINER:
-    case Geo::CIRCLE:
-        return Geo::is_intersected(rect, *static_cast<const Geo::Circle *>(object));
-    default:
-        return false;
-    }
+    return Geo::is_intersected(rect, object->bounding_rect()) && Geo::NoAABBTest::is_intersected(rect, object);
 }
 
 bool Geo::NoAABBTest::is_intersected(const Geo::Polyline &polyline0, const Geo::Polyline &polyline1)

@@ -235,35 +235,4 @@ namespace Geo
     bool polygon_difference(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output);
 
     bool merge_ear_cut_triangles(const std::vector<Triangle> &triangles, std::vector<Polygon> &polygons);
-
-
-    class BVHNode
-    {
-    public:
-        BVHNode *parent_node = nullptr;
-        BVHNode *left_node = nullptr;
-        BVHNode *right_node = nullptr;
-        Geometry *object = nullptr;
-        AABBRect rect;
-
-    public:
-        BVHNode();
-
-        BVHNode(Geometry *obj);
-
-        BVHNode(const BVHNode &node);
-
-        BVHNode(BVHNode *left, BVHNode *right, BVHNode *parent = nullptr);
-
-        void update_rect(const bool update_parent = false);
-
-        void set_left(BVHNode *node);
-
-        void set_right(BVHNode *node);
-
-        void remove_left();
-
-        void remove_right();
-    };
-
 }
