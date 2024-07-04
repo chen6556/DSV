@@ -19,7 +19,7 @@ private:
     double _view_ratio = 1.0;
 
     Geo::Geometry *_catched_points = nullptr;
-    Geo::Collision::QuadTree _gridmap;
+    Geo::Collision::CollisionDetector<Geo::Collision::GridMap> _collision_detector;
 
 private:
     void init();
@@ -140,9 +140,9 @@ public:
 
     void down(Geo::Geometry *item);
 
-    void update_gridmap(Geo::Geometry *object);
+    void update_collision_detector(Geo::Geometry *object);
 
-    void update_gridmap();
+    void update_collision_detector();
 
 
 

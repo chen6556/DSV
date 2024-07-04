@@ -50,8 +50,8 @@ void Editer::init()
             _backup.pop_back();
         }
 
-        _gridmap.clear();
-        _gridmap.build(_graph->container_group());
+        _collision_detector.clear();
+        _collision_detector.build(_graph->container_group());
     }
 }
 
@@ -201,7 +201,7 @@ void Editer::append_points()
     _point_cache.clear();
     if (_current_group == 0)
     {
-        _gridmap.append(_graph->container_group().back());
+        _collision_detector.append(_graph->container_group().back());
     }
 }
 
@@ -220,7 +220,7 @@ void Editer::append(const Geo::Circle &circle)
     _graph->append(new CircleContainer(circle), _current_group);
     if (_current_group == 0)
     {
-        _gridmap.append(_graph->container_group().back());
+        _collision_detector.append(_graph->container_group().back());
     }
 }
 
@@ -239,7 +239,7 @@ void Editer::append(const Geo::AABBRect &rect)
     _graph->append(new Container(rect), _current_group);
     if (_current_group == 0)
     {
-        _gridmap.append(_graph->container_group().back());
+        _collision_detector.append(_graph->container_group().back());
     }
 }
 
@@ -259,7 +259,7 @@ void Editer::append_bezier(const size_t order)
     _point_cache.clear();
     if (_current_group == 0)
     {
-        _gridmap.append(_graph->container_group().back());
+        _collision_detector.append(_graph->container_group().back());
     }
 }
 
@@ -283,7 +283,7 @@ void Editer::collision_translate(Geo::Geometry *object, const double tx, const d
         object = crushed_objects.back();
         crushed_objects.pop_back();
         index = crushed_objects.size();
-        if (_gridmap.find_collision_objects(object, crushed_objects))
+        if (_collision_detector.find_collision_objects(object, crushed_objects))
         {
             for (size_t i = index, count = crushed_objects.size(); i < count; ++i)
             {
@@ -490,7 +490,7 @@ bool Editer::remove_selected()
     {
         if ((*it)->is_selected)
         {
-            _gridmap.remove(*it);
+            _collision_detector.remove(*it);
             it = _graph->container_group(_current_group).remove(it);
         }
         else
@@ -1218,7 +1218,7 @@ bool Editer::line_array(std::list<Geo::Geometry *> objects, int x, int y, double
                 _graph->container_group(_current_group).back()->is_selected = true;
                 if (_current_group == 0)
                 {
-                    _gridmap.append(_graph->container_group(_current_group).back());
+                    _collision_detector.append(_graph->container_group(_current_group).back());
                 }
             }
         }
@@ -1250,7 +1250,7 @@ bool Editer::ring_array(std::list<Geo::Geometry *> objects, const double x, cons
             _graph->container_group(_current_group).back()->is_selected = true;
             if (_current_group == 0)
             {
-                _gridmap.append(_graph->container_group(_current_group).back());
+                _collision_detector.append(_graph->container_group(_current_group).back());
             }
         }
     }
@@ -1437,7 +1437,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
         {
             container->is_selected = false;
         }
-        if (_gridmap.select(rect, result))
+        if (_collision_detector.select(rect, result))
         {
             for (Geo::Geometry *container : result)
             {
@@ -1617,7 +1617,7 @@ void Editer::reset_selected_mark(const bool value)
 std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> Editer::find_collision_pairs()
 {
     std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> pairs;
-    _gridmap.find_collision_pairs(pairs);
+    _collision_detector.find_collision_pairs(pairs);
     return pairs;
 }
 
@@ -1657,14 +1657,14 @@ void Editer::down(Geo::Geometry *item)
     }
 }
 
-void Editer::update_gridmap(Geo::Geometry *object)
+void Editer::update_collision_detector(Geo::Geometry *object)
 {
-    _gridmap.update(object);
+    _collision_detector.update(object);
 }
 
-void Editer::update_gridmap()
+void Editer::update_collision_detector()
 {
-    _gridmap.update();
+    _collision_detector.update();
 }
 
 

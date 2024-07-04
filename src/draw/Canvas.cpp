@@ -1320,11 +1320,11 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             if (only_one_selected)
             {
-                _editer->update_gridmap(objs.front());
+                _editer->update_collision_detector(objs.front());
             }
             else
             {
-                _editer->update_gridmap();
+                _editer->update_collision_detector();
             }
             delete []data;
             if (GlobalSetting::get_instance()->setting()["show_text"].toBool())

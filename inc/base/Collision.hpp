@@ -171,5 +171,89 @@ namespace Geo
 
             bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs) const;
         };
+
+        template <typename T = GridMap>
+        class CollisionDetector
+        {
+        private:
+            T _detector;
+
+        public:
+            CollisionDetector() {}
+
+            CollisionDetector(const ContainerGroup &group)
+                : _detector(group) {}
+
+            CollisionDetector(const std::vector<Geo::Geometry *> &objects)
+                : _detector(objects) {}
+
+            CollisionDetector(const std::initializer_list<Geo::Geometry *> &objects)
+                : _detector(objects) {}
+
+            void build(const ContainerGroup &group)
+            {
+                return _detector.build(group);
+            }
+
+            void build(const std::vector<Geo::Geometry *> &objects)
+            {
+                return _detector.build(objects);
+            }
+
+            void build(const std::vector<Geo::Geometry *> &objects, const std::vector<Geo::AABBRect> &rects)
+            {
+                return _detector.build(objects, rects);
+            }
+
+            void append(Geo::Geometry *object)
+            {
+                return _detector.append(object);
+            }
+
+            void remove(Geo::Geometry *object)
+            {
+                return _detector.remove(object);
+            }
+
+            void update(Geo::Geometry *object)
+            {
+                return _detector.update(object);
+            }
+
+            void update()
+            {
+                return _detector.update();
+            }
+
+            bool has(Geometry *object) const
+            {
+                return _detector.has(object);
+            }
+
+            void clear()
+            {
+                return _detector.clear();
+            }
+
+            bool select(const Point &pos, std::vector<Geometry *> &objects) const
+            {
+                return _detector.select(pos, objects);
+            }
+
+            bool select(const AABBRect &rect, std::vector<Geometry *> &objects) const
+            {
+                return _detector.select(rect, objects);
+            }
+
+            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geometry *> &objects) const
+            {
+                return _detector.find_collision_objects(object, objects);
+            }
+
+            bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs) const
+            {
+                return _detector.find_collision_pairs(pairs);
+            }
+        };
     }
 }
