@@ -274,6 +274,25 @@ void Editer::append_text(const double x, const double y)
     _graph->append(new Text(x, y, GlobalSetting::get_instance()->setting()["text_size"].toInt()), _current_group);
 }
 
+void Editer::collision_translate(Geo::Geometry *object, const double tx, const double ty)
+{
+    std::vector<Geo::Geometry *> crushed_objects({object});
+    size_t index = 0;
+    while (!crushed_objects.empty())
+    {
+        object = crushed_objects.back();
+        crushed_objects.pop_back();
+        index = crushed_objects.size();
+        if (_gridmap.find_collision_objects(object, crushed_objects))
+        {
+            for (size_t i = index, count = crushed_objects.size(); i < count; ++i)
+            {
+                crushed_objects[i]->translate(tx, ty);
+            }
+        }
+    }
+}
+
 void Editer::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1, const bool change_shape)
 {
     const double catch_distance = GlobalSetting::get_instance()->setting()["catch_distance"].toDouble();
@@ -346,13 +365,6 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                 }
             }
             temp->translate(x1 - x0, y1 - y0);
-            // if (_gridmap.find_collision_objects(temp, objects))
-            // {
-            //     for (Geo::Geometry *object : objects)
-            //     {
-            //         object->translate(x1 - x0, y1 - y0);
-            //     }
-            // }
         }
         break;
     case Geo::Type::CIRCLECONTAINER:
@@ -367,13 +379,6 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             else
             {
                 temp->translate(x1 - x0, y1 - y0);
-                // if (_gridmap.find_collision_objects(temp, objects))
-                // {
-                //     for (Geo::Geometry *object : objects)
-                //     {
-                //         object->translate(x1 - x0, y1 - y0);
-                //     }
-                // }
             }
         }
         break;
@@ -469,6 +474,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     default:
         break;
     }
+    collision_translate(points, x1 - x0, y1 - y0);
     _graph->modified = true;
 }
 
