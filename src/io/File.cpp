@@ -202,6 +202,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
     const CircleContainer *circlecontainer = nullptr;
     const Geo::Polyline *polyline = nullptr;
     const Geo::Bezier *bezier = nullptr;
+    const double x_ratio = 40, y_ratio = 40;
 
     std::ofstream output(path);
     output << "IN;PA;SP1;" << std::endl;
@@ -213,7 +214,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
             {
             case Geo::Type::TEXT:
                 text = dynamic_cast<const Text *>(geo);
-                output << "PU" << text->center().x << ',' << text->center().y << ";PD";
+                output << "PU" << text->center().x * x_ratio << ',' << text->center().y * y_ratio << ";PD";
                 output << ";LB" << text->text().toStdString() << ';' << std::endl;
                 text = nullptr;
                 break;
@@ -222,12 +223,12 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 output << "PU" << container->shape().front().x << ',' << container->shape().front().y << ";PD";
                 for (const Geo::Point &point : container->shape())
                 {
-                    output << point.x << ',' << point.y << ',';
+                    output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                 }
                 output.seekp(-1, std::ios::cur);
                 if (!container->text().isEmpty())
                 {
-                    output << ";PU" << container->center().x << ',' << container->center().y
+                    output << ";PU" << container->center().x * x_ratio<< ',' << container->center().y * y_ratio
                         << ";LB" << container->text().toStdString();
                 }
                 output << ';' << std::endl;
@@ -235,7 +236,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 break;
             case Geo::Type::CIRCLECONTAINER:
                 circlecontainer = dynamic_cast<const CircleContainer *>(geo);
-                output << "PA" << circlecontainer->x << ',' << circlecontainer->y << ';';
+                output << "PA" << circlecontainer->x * x_ratio << ',' << circlecontainer->y * y_ratio << ';';
                 output << "CI" << circlecontainer->radius << ';';
                 if (circlecontainer->text().isEmpty())
                 {
@@ -243,7 +244,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 }
                 else
                 {
-                    output << "PU" << circlecontainer->x << ',' << circlecontainer->y
+                    output << "PU" << circlecontainer->x * x_ratio << ',' << circlecontainer->y * y_ratio
                         << ";LB" << circlecontainer->text().toStdString() << ';' << std::endl;
                 }
                 circlecontainer = nullptr;
@@ -256,21 +257,21 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     {
                     case Geo::Type::TEXT:
                         text = dynamic_cast<const Text *>(geo);
-                        output << "PU" << text->center().x << ',' << text->center().y << ";PD";
+                        output << "PU" << text->center().x * x_ratio << ',' << text->center().y * y_ratio << ";PD";
                         output << ";LB" << text->text().toStdString() << ';' << std::endl;
                         text = nullptr;
                         break;
                     case Geo::Type::CONTAINER:
                         container = dynamic_cast<const Container *>(item);
-                        output << "PU" << container->shape().front().x << ',' << container->shape().front().y << ";PD";
+                        output << "PU" << container->shape().front().x * x_ratio << ',' << container->shape().front().y * y_ratio << ";PD";
                         for (const Geo::Point &point : container->shape())
                         {
-                            output << point.x << ',' << point.y << ',';
+                            output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                         }
                         output.seekp(-1, std::ios::cur);
                         if (!container->text().isEmpty())
                         {
-                            output << ";PU" << container->center().x << ',' << container->center().y
+                            output << ";PU" << container->center().x * x_ratio << ',' << container->center().y * y_ratio
                                 << ";LB" << container->text().toStdString();
                         }
                         output << ';' << std::endl;
@@ -278,7 +279,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         break;
                     case Geo::Type::CIRCLECONTAINER:
                         circlecontainer = dynamic_cast<const CircleContainer *>(item);
-                        output << "PU" << circlecontainer->x << ',' << circlecontainer->y << ';';
+                        output << "PU" << circlecontainer->x * x_ratio << ',' << circlecontainer->y * y_ratio << ';';
                         output << "CI" << circlecontainer->radius << ';';
                         if (circlecontainer->text().isEmpty())
                         {
@@ -286,7 +287,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         }
                         else
                         {
-                            output << "PU" << circlecontainer->x << ',' << circlecontainer->y
+                            output << "PU" << circlecontainer->x * x_ratio << ',' << circlecontainer->y * y_ratio
                                 << ";LB" << circlecontainer->text().toStdString() << ';' << std::endl;
                         }
                         circlecontainer = nullptr;
@@ -297,10 +298,10 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         {
                             break;
                         }
-                        output << "PU" << polyline->front().x << ',' << polyline->front().y << ";PD";
+                        output << "PU" << polyline->front().x * x_ratio << ',' << polyline->front().y * y_ratio << ";PD";
                         for (const Geo::Point &point : *polyline)
                         {
-                            output << point.x << ',' << point.y << ',';
+                            output << point.x * y_ratio << ',' << point.y * y_ratio << ',';
                         }
                         output.seekp(-1, std::ios::cur);
                         output << ';' << std::endl;
@@ -313,10 +314,10 @@ void File::write_plt(const std::string &path, const Graph *graph)
                             break;
                         }
                         const_cast<Geo::Bezier *>(bezier)->update_shape();
-                        output << "PU" << bezier->front().x << ',' << bezier->front().y << ";PD";
+                        output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";PD";
                         for (const Geo::Point &point : bezier->shape())
                         {
-                            output << point.x << ',' << point.y << ',';
+                            output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                         }
                         output.seekp(-1, std::ios::cur);
                         output << ';' << std::endl;
@@ -334,10 +335,10 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 {
                     break;
                 }
-                output << "PU" << polyline->front().x << ',' << polyline->front().y << ";PD";
+                output << "PU" << polyline->front().x * x_ratio << ',' << polyline->front().y * y_ratio << ";PD";
                 for (const Geo::Point &point : *polyline)
                 {
-                    output << point.x << ',' << point.y << ',';
+                    output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                 }
                 output.seekp(-1, std::ios::cur);
                 output << ';' << std::endl;
@@ -350,10 +351,10 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     break;
                 }
                 const_cast<Geo::Bezier *>(bezier)->update_shape();
-                output << "PU" << bezier->front().x << ',' << bezier->front().y << ";PD";
+                output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";PD";
                 for (const Geo::Point &point : bezier->shape())
                 {
-                    output << point.x << ',' << point.y << ',';
+                    output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                 }
                 output.seekp(-1, std::ios::cur);
                 output << ';' << std::endl;
