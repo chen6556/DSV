@@ -19,7 +19,7 @@ private:
     double _view_ratio = 1.0;
 
     Geo::Geometry *_catched_points = nullptr;
-    Geo::Collision::GridMap _gridmap;
+    Geo::Collision::QuadTree _gridmap;
 
 private:
     void init();

@@ -474,7 +474,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     default:
         break;
     }
-    collision_translate(points, x1 - x0, y1 - y0);
+    // collision_translate(points, x1 - x0, y1 - y0);
     _graph->modified = true;
 }
 
