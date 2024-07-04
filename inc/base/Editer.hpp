@@ -24,8 +24,6 @@ private:
 private:
     void init();
 
-    void collision_translate(Geo::Geometry *object, const double tx, const double ty);
-
 public:
     Editer(){};
 

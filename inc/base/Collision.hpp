@@ -254,6 +254,35 @@ namespace Geo
             {
                 return _detector.find_collision_pairs(pairs);
             }
+
+            void collision_translate(Geo::Geometry *object, const double tx, const double ty)
+            {
+                std::vector<Geo::Geometry *> crushed_objects({object});
+                std::vector<Geo::Geometry *> moved_objects;
+                size_t index = 0;
+                while (!crushed_objects.empty())
+                {
+                    object = crushed_objects.back();
+                    crushed_objects.pop_back();
+                    index = crushed_objects.size();
+                    if (_detector.find_collision_objects(object, crushed_objects))
+                    {
+                        for (size_t i = index, count = crushed_objects.size(); i < count; ++i)
+                        {
+                            if (std::find(moved_objects.begin(), moved_objects.end(), crushed_objects[i]) == moved_objects.end())
+                            {
+                                crushed_objects[i]->translate(tx, ty);
+                            }
+                            else
+                            {
+                                crushed_objects.erase(crushed_objects.begin() + i--);
+                                --count;
+                            }
+                        }
+                    }
+                    moved_objects.push_back(object);
+                }
+            }
         };
     }
 }
