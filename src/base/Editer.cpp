@@ -524,6 +524,7 @@ bool Editer::cut_selected()
         if ((*it)->is_selected)
         {
             _paste_table.push_back((*it)->clone());
+            _collision_detector.remove(*it);
             it = _graph->container_group(_current_group).remove(it);
         }
         else
@@ -548,6 +549,10 @@ bool Editer::paste(const double tx, const double ty)
     {
         _graph->container_group(_current_group).append(geo->clone());
         _graph->container_group(_current_group).back()->translate(tx, ty);
+        if (_current_group == 0)
+        {
+            _collision_detector.append(_graph->container_group(_current_group).back());
+        }
     }
     return true;
 }
@@ -897,6 +902,10 @@ bool Editer::mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *lin
             _graph->container_group(_current_group).append(obj->clone());
             _graph->container_group(_current_group).back()->transform(mat);
             _graph->container_group(_current_group).back()->is_selected = true;
+            if (_current_group == 0)
+            {
+                _collision_detector.append(_graph->container_group(_current_group).back());
+            }
         }
     }
     else
@@ -905,6 +914,10 @@ bool Editer::mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *lin
         {
             obj->transform(mat);
             obj->is_selected = true;
+            if (_current_group == 0)
+            {
+                _collision_detector.update(obj);
+            }
         }
     }
     return true;
@@ -1011,6 +1024,7 @@ bool Editer::scale(std::list<Geo::Geometry *> objects, const double k)
         case Geo::Type::POLYLINE:
         case Geo::Type::COMBINATION:
             object->scale(x, y, k);
+            _collision_detector.update(object);
             break;
         default:
             break;
@@ -1687,6 +1701,7 @@ void Editer::rotate(std::list<Geo::Geometry *> objects, const double angle, cons
                     geo->rotate(coord.x, coord.y, rad);
                 }
             }
+            _collision_detector.update();
         }
         else
         {
@@ -1694,6 +1709,10 @@ void Editer::rotate(std::list<Geo::Geometry *> objects, const double angle, cons
             for (Geo::Geometry *geo : _graph->container_group(_current_group))
             {
                 geo->rotate(coord.x, coord.y, rad);
+            }
+            if (_current_group == 0)
+            {
+                _collision_detector.update();
             }
         }
     }
@@ -1703,6 +1722,7 @@ void Editer::rotate(std::list<Geo::Geometry *> objects, const double angle, cons
         {
             coord = geo->bounding_rect().center();
             geo->rotate(coord.x, coord.y, rad);
+            _collision_detector.update(geo);
         }
     }
 }
@@ -1734,6 +1754,7 @@ void Editer::flip(std::list<Geo::Geometry *> objects, const bool direction, cons
                     }
                 }
             }
+            _collision_detector.update();
         }
         else
         {
@@ -1752,6 +1773,10 @@ void Editer::flip(std::list<Geo::Geometry *> objects, const bool direction, cons
                     geo->transform(1, 0, 0, 0, -1, 0);
                     geo->translate(0, coord.y);
                 }
+            }
+            if (_current_group == 0)
+            {
+                _collision_detector.update();
             }
         } 
     }
@@ -1772,6 +1797,7 @@ void Editer::flip(std::list<Geo::Geometry *> objects, const bool direction, cons
                 geo->transform(1, 0, 0, 0, -1, 0);
                 geo->translate(0, coord.y);
             }
+            _collision_detector.update(geo);
         }
     }
 }
