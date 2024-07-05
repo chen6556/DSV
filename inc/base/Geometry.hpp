@@ -149,6 +149,8 @@ namespace Geo
         // 向量叉积
         double cross(const Point &point) const;
 
+        Point projection(const Point &start, const Point &end) const;
+
         Point operator+(const Point &point) const;
 
         Point operator-(const Point &point) const;
@@ -449,6 +451,10 @@ namespace Geo
         size_t index(const double x, const double y) const;
 
         size_t index(const Point &point) const;
+
+        Point center_of_gravity() const;
+
+        Point average_point() const;
     };
 
     class Triangle : public Geometry

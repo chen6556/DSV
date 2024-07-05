@@ -165,6 +165,8 @@ namespace Geo
     // 计算两向量叉积
     double cross(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
 
+    Point triple_product(const Point &point0, const Point &point1, const Point &point2);
+
     // 计算线段或直线外一点的垂足
     bool foot_point(const Point &start, const Point &end, const Point &point, Point &foot, const bool infinite = false);
 

@@ -5,6 +5,7 @@
 
 #include "base/EarCut/EarCut.hpp"
 #include "base/Algorithm.hpp"
+#include "base/Collision.hpp"
 
 
 
@@ -1143,10 +1144,10 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
         {
         case Geo::Type::CONTAINER:
         case Geo::Type::POLYGON:
-            return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::Polygon *>(object0),
+            return Geo::Collision::gjk(*static_cast<const Geo::Polygon *>(object0),
                 *static_cast<const Geo::Polygon *>(object1));
         case Geo::Type::AABBRECT:
-            return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::AABBRect *>(object1),
+            return Geo::Collision::gjk(*static_cast<const Geo::AABBRect *>(object1),
                 *static_cast<const Geo::Polygon *>(object0));
         case Geo::Type::POLYLINE:
             return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::Polyline *>(object1),
@@ -1166,7 +1167,7 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
         {
         case Geo::Type::CONTAINER:
         case Geo::Type::POLYGON:
-            return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
+            return Geo::Collision::gjk(*static_cast<const Geo::AABBRect *>(object0),
                 *static_cast<const Geo::Polygon *>(object1));
         case Geo::Type::AABBRECT:
             return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
@@ -1242,7 +1243,7 @@ bool Geo::NoAABBTest::is_intersected(const Geo::AABBRect &rect, const Geo::Geome
     {
     case Geo::Type::CONTAINER:
     case Geo::Type::POLYGON:
-        return Geo::NoAABBTest::is_intersected(rect, *static_cast<const Geo::Polygon *>(object));
+        return Geo::Collision::gjk(rect, *static_cast<const Geo::Polygon *>(object));
     case Geo::Type::AABBRECT:
         return Geo::is_intersected(rect, *static_cast<const Geo::AABBRect *>(object));
     case Geo::Type::POLYLINE:
@@ -1310,6 +1311,16 @@ double Geo::cross(const Geo::Vector &vec0, const Geo::Vector &vec1)
 double Geo::cross(const Geo::Point &start0, const Geo::Point &end0, const Geo::Point &start1, const Geo::Point &end1)
 {
     return Geo::cross(end0 - start0, end1 - start1);
+}
+
+
+Geo::Point Geo::triple_product(const Geo::Point &point0, const Geo::Point &point1, const Geo::Point &point2)
+{
+    Geo::Point result;
+    const double ac = point0 * point2, bc = point1 * point2;
+    result.x = point1.x * ac - point0.x * bc;
+    result.y = point1.y * ac - point0.y * bc;
+    return result;
 }
 
 

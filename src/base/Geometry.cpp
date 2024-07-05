@@ -220,6 +220,25 @@ double Point::cross(const Point &point) const
     return x * point.y - y * point.x;
 }
 
+Point Point::projection(const Point &start, const Point &end) const
+{
+    if (start.y == end.y)
+    {
+        return Point(this->x, start.y);
+    }
+    else if (start.x == end.x)
+    {
+        return Point(start.x, this->y);
+    }
+    else
+    {
+        const double k = (end.y - start.y) / (end.x - start.x);
+        const double b = start.y -  k * start.x;
+        return Point((this->x - k * b + k * this->y) / (1 + k * k),
+            (k * this->x + k * k * this->y + b) / (1 + k * k));
+    }
+}
+
 Point Point::operator+(const Point &point) const
 {
     return Point(x + point.x, y + point.y);
@@ -1524,6 +1543,34 @@ size_t Polygon::index(const Point &point) const
     return SIZE_MAX;
 }
 
+Point Polygon::center_of_gravity() const
+{
+    Point result;
+    double s, a = 0;
+    for (size_t i = 1, count = _points.size(); i < count; ++i)
+    {
+        s = _points[i - 1].x * _points[i].y - _points[i - 1].y * _points[i].x;
+        result.x += ((_points[i - 1].x + _points[i].x) * s / 3);
+        result.y += ((_points[i - 1].y + _points[i].y) * s / 3);
+        a += s;
+    }
+    result.x /= a;
+    result.y /= a;
+    return result;
+}
+
+Point Polygon::average_point() const
+{
+    Point point;
+    for (size_t i = 0, count = _points.size() - 1; i < count; ++i)
+    {
+        point += _points[i];
+    }
+    point.x /= (_points.size() - 1);
+    point.y /= (_points.size() - 1);
+    return point;
+}
+
 // Triangle
 
 Triangle::Triangle(const Point &point0, const Point &point1, const Point &point2)
@@ -1585,11 +1632,8 @@ double Triangle::area() const
     {
         return 0;
     }
-    const double a = Geo::distance(_vecs[0], _vecs[1]);
-    const double b = Geo::distance(_vecs[1], _vecs[2]);
-    const double c = Geo::distance(_vecs[0], _vecs[2]);
-    const double p = (a + b + c) / 2;
-    return std::sqrt(p * (p - a) * (p - b) * (p- c));
+    return std::abs((_vecs[1].x - _vecs[0].x) * (_vecs[2].y - _vecs[0].y) - 
+        (_vecs[1].y - _vecs[0].y) * (_vecs[2].x - _vecs[0].x)) / 2;
 }
 
 double Triangle::angle(const size_t index) const

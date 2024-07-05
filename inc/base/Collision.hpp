@@ -284,5 +284,13 @@ namespace Geo
                 }
             }
         };
+    
+        void gjk_furthest_point(const Geo::Polygon &polygon, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
+
+        void gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
+
+        bool gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1);
+
+        bool gjk(const Geo::AABBRect &rect, const Geo::Polygon &polygon);
     }
 }
