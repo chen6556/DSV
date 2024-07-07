@@ -877,12 +877,14 @@ bool Geo::is_intersected(const Geo::Circle &circle0, const Geo::Circle& circle1,
 {
     if (inside)
     {
-        return Geo::distance(circle0, circle1) <= circle0.radius + circle1.radius;
+        return std::pow(circle0.x - circle1.x, 2) + std::pow(circle0.y - circle1.y, 2) <=
+            std::pow(circle0.radius + circle1.radius, 2);
     }
     else
     {
-        const double distance = Geo::distance(circle0, circle1);
-        return distance <= circle0.radius + circle1.radius && distance >= std::abs(circle0.radius - circle1.radius);
+        const double distance = std::pow(circle0.x - circle1.x, 2) + std::pow(circle0.y - circle1.y, 2);
+        return distance <= std::pow(circle0.radius + circle1.radius, 2) &&
+            distance >= std::pow(circle0.radius - circle1.radius, 2);
     }
 }
 

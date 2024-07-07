@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <utility>
+#include <QLineF>
 #include "base/Geometry.hpp"
 #include "draw/Container.hpp"
 
@@ -172,6 +173,18 @@ namespace Geo
             bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs) const;
         };
 
+
+        void gjk_furthest_point(const Geo::Polygon &polygon, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
+
+        void gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
+
+        bool gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1);
+
+        bool gjk(const Geo::AABBRect &rect, const Geo::Polygon &polygon);
+
+        double epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Vector &vec);
+
+
         template <typename T = GridMap>
         class CollisionDetector
         {
@@ -255,11 +268,13 @@ namespace Geo
                 return _detector.find_collision_pairs(pairs);
             }
 
-            void collision_translate(Geo::Geometry *object, const double tx, const double ty)
+            void collision_translate(Geo::Geometry *object, const double tx, const double ty, std::list<QLineF> *lines = nullptr)
             {
                 std::vector<Geo::Geometry *> crushed_objects({object});
                 std::vector<Geo::Geometry *> moved_objects;
                 size_t index = 0;
+                Geo::Vector vec;
+                double distance;
                 while (!crushed_objects.empty())
                 {
                     object = crushed_objects.back();
@@ -271,7 +286,19 @@ namespace Geo
                         {
                             if (std::find(moved_objects.begin(), moved_objects.end(), crushed_objects[i]) == moved_objects.end())
                             {
-                                crushed_objects[i]->translate(tx, ty);
+                                if ((object->type() == Geo::Type::CONTAINER || object->type() == Geo::Type::POLYGON) &&
+                                    (crushed_objects[i]->type() == Geo::Type::CONTAINER || crushed_objects[i]->type() == Geo::Type::POLYGON))
+                                {
+                                    Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), vec);
+                                    lines->clear();
+                                    lines->emplace_back(QLineF(0, 0, vec.x, vec.y));
+                                    crushed_objects[i]->translate(vec.x, vec.y);
+                                    vec.clear();
+                                }
+                                else
+                                {
+                                    crushed_objects[i]->translate(tx, ty);
+                                }
                             }
                             else
                             {
@@ -284,13 +311,5 @@ namespace Geo
                 }
             }
         };
-    
-        void gjk_furthest_point(const Geo::Polygon &polygon, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
-
-        void gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
-
-        bool gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1);
-
-        bool gjk(const Geo::AABBRect &rect, const Geo::Polygon &polygon);
     }
 }
