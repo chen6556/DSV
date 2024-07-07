@@ -1,7 +1,6 @@
 #pragma once
 #include <vector>
 #include <utility>
-#include <QLineF>
 #include "base/Geometry.hpp"
 #include "draw/Container.hpp"
 
@@ -268,7 +267,7 @@ namespace Geo
                 return _detector.find_collision_pairs(pairs);
             }
 
-            void collision_translate(Geo::Geometry *object, const double tx, const double ty, std::list<QLineF> *lines = nullptr)
+            void collision_translate(Geo::Geometry *object, const double tx, const double ty)
             {
                 std::vector<Geo::Geometry *> crushed_objects({object});
                 std::vector<Geo::Geometry *> moved_objects;
@@ -290,8 +289,6 @@ namespace Geo
                                     (crushed_objects[i]->type() == Geo::Type::CONTAINER || crushed_objects[i]->type() == Geo::Type::POLYGON))
                                 {
                                     Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), vec);
-                                    lines->clear();
-                                    lines->emplace_back(QLineF(0, 0, vec.x, vec.y));
                                     crushed_objects[i]->translate(vec.x, vec.y);
                                     vec.clear();
                                 }

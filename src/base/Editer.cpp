@@ -165,11 +165,6 @@ void Editer::set_view_ratio(const double value)
     _view_ratio = value;
 }
 
-void Editer::bind_temp(std::list<QLineF> *list)
-{
-    _temp = list;
-}
-
 
 
 void Editer::append_points()
@@ -460,7 +455,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     default:
         break;
     }
-    _collision_detector.collision_translate(points, x1 - x0, y1 - y0, _temp);
+    _collision_detector.collision_translate(points, x1 - x0, y1 - y0);
     _graph->modified = true;
 }
 

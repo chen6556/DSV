@@ -1275,10 +1275,14 @@ bool Collision::gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1)
             return false;
         }
 
-        if ((last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1]
-            && last_triangle[2] == triangle[2]) || Geo::is_inside(end, triangle, true))
+        if (Geo::is_inside(end, triangle, true))
         {
             return true;
+        }
+        else if (last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1]
+            && last_triangle[2] == triangle[2])
+        {
+            return false;
         }
 
         end.clear();
@@ -1335,10 +1339,14 @@ bool Collision::gjk(const Geo::AABBRect &rect, const Geo::Polygon &polygon)
             return false;
         }
 
-        if ((last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1]
-            && last_triangle[2] == triangle[2]) || Geo::is_inside(end, triangle, true))
+        if (Geo::is_inside(end, triangle, true))
         {
             return true;
+        }
+        else if (last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1]
+            && last_triangle[2] == triangle[2])
+        {
+            return false;
         }
 
         distance[0] = Geo::distance(end, triangle[0], triangle[1], true);
@@ -1394,10 +1402,14 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
             return -1;
         }
 
-        if ((last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1]
-            && last_triangle[2] == triangle[2]) || Geo::is_inside(end, triangle, true))
+        if (Geo::is_inside(end, triangle, true))
         {
             break;
+        }
+        else if (last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1]
+            && last_triangle[2] == triangle[2])
+        {
+            return -1;
         }
 
         distance[0] = Geo::distance(end, triangle[0], triangle[1], true);

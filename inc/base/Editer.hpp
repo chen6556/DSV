@@ -20,7 +20,6 @@ private:
 
     Geo::Geometry *_catched_points = nullptr;
     Geo::Collision::CollisionDetector<Geo::Collision::GridMap> _collision_detector;
-    std::list<QLineF> *_temp = nullptr;
 
 private:
     void init();
@@ -63,8 +62,6 @@ public:
     const size_t groups_count() const;
 
     void set_view_ratio(const double value);
-
-    void bind_temp(std::list<QLineF> *list);
     
 
 
