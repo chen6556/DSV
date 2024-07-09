@@ -1,6 +1,8 @@
 #pragma once
+#include <list>
 #include <vector>
 #include <utility>
+#include <QLineF>
 #include "base/Geometry.hpp"
 #include "draw/Container.hpp"
 
@@ -173,15 +175,17 @@ namespace Geo
         };
 
 
-        void gjk_furthest_point(const Geo::Polygon &polygon, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
+        size_t gjk_furthest_point(const Geo::Polygon &polygon, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
 
-        void gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
+        size_t gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
 
         bool gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1);
 
         bool gjk(const Geo::AABBRect &rect, const Geo::Polygon &polygon);
 
         double epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Vector &vec);
+
+        double epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Point &start, Geo::Point &end);
 
 
         template <typename T = GridMap>
@@ -267,12 +271,12 @@ namespace Geo
                 return _detector.find_collision_pairs(pairs);
             }
 
-            void collision_translate(Geo::Geometry *object, const double tx, const double ty)
+            void collision_translate(Geo::Geometry *object, const double tx, const double ty, std::list<QLineF> *lines)
             {
                 std::vector<Geo::Geometry *> crushed_objects({object});
                 std::vector<Geo::Geometry *> moved_objects;
                 size_t index = 0;
-                Geo::Vector vec;
+                Geo::Point start, end, vec;
                 double distance;
                 while (!crushed_objects.empty())
                 {
@@ -288,9 +292,17 @@ namespace Geo
                                 if ((object->type() == Geo::Type::CONTAINER || object->type() == Geo::Type::POLYGON) &&
                                     (crushed_objects[i]->type() == Geo::Type::CONTAINER || crushed_objects[i]->type() == Geo::Type::POLYGON))
                                 {
-                                    Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), vec);
-                                    crushed_objects[i]->translate(vec.x, vec.y);
+                                    Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), start, end);
+                                    vec = start - end;
+                                    // crushed_objects[i]->translate(vec.x, vec.y);
+                                    if (!lines->empty())
+                                    {
+                                        lines->clear();
+                                    }
+                                    lines->emplace_back(start.x, start.y, end.x, end.y);
                                     vec.clear();
+                                    start.clear();
+                                    end.clear();
                                 }
                                 else
                                 {

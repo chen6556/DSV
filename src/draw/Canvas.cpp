@@ -50,6 +50,7 @@ void Canvas::init()
 void Canvas::bind_editer(Editer *editer)
 {
     _editer = editer;
+    _editer->load_reflines(&_reflines);
 }
 
 
