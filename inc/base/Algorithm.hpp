@@ -31,7 +31,7 @@ namespace Geo
     double distance(const Point &point, const Polygon &polygon);
 
     // 两有限长线段间的最短距离
-    double distance(const Point &start0, const Point &end0, const Point &start1, const Point &end1, Point &start, Point &end);
+    double distance(const Point &start0, const Point &end0, const Point &start1, const Point &end1, Point &point0, Point &point1);
 
     // 判断点是否在有限长线段或直线上
     bool is_inside(const Point &point, const Line &line, const bool infinite = false);

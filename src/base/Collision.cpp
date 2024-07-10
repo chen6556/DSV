@@ -1210,9 +1210,8 @@ bool Collision::QuadTree::find_collision_pairs(std::vector<std::pair<Geo::Geomet
 }
 
 
-size_t Collision::gjk_furthest_point(const Geo::Polygon &polygon, const Geo::Point &start, const Geo::Point &end, Geo::Point &result)
+void Collision::gjk_furthest_point(const Geo::Polygon &polygon, const Geo::Point &start, const Geo::Point &end, Geo::Point &result)
 {
-    size_t index = 0;
     result = polygon.front();
     Geo::Point point;
     Geo::foot_point(start, end, polygon.front(), point, true);
@@ -1226,15 +1225,12 @@ size_t Collision::gjk_furthest_point(const Geo::Polygon &polygon, const Geo::Poi
         {
             max_value = value;
             result = polygon[i];
-            index = i;
         }
     }
-    return index;
 }
 
-size_t Collision::gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &start, const Geo::Point &end, Geo::Point &result)
+void Collision::gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &start, const Geo::Point &end, Geo::Point &result)
 {
-    size_t index = 0;
     result = rect[0];
     Geo::Point point;
     Geo::foot_point(start, end, rect[0], point, true);
@@ -1248,10 +1244,8 @@ size_t Collision::gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point
         {
             max_value = value;
             result = rect[i];
-            index = i;
         }
     }
-    return index;
 }
 
 bool Collision::gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1)
@@ -1492,21 +1486,24 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
     Geo::Triangle triangle, last_triangle;
     double distance[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
 
-    std::vector<std::tuple<size_t, size_t>> indexs;
+    std::vector<std::tuple<Geo::Point, Geo::Point>> point_pairs;
 
-    indexs.emplace_back(Collision::gjk_furthest_point(polygon0, start, end, point0),
-        Collision::gjk_furthest_point(polygon1, end, start, point1));
+    Collision::gjk_furthest_point(polygon0, start, end, point0);
+    Collision::gjk_furthest_point(polygon1, end, start, point1);
+    point_pairs.emplace_back(point0, point1);
     triangle[0] = point0 - point1;
-    indexs.emplace_back(Collision::gjk_furthest_point(polygon0, end, start, point0),
-        Collision::gjk_furthest_point(polygon1, start, end, point1));
+    Collision::gjk_furthest_point(polygon0, end, start, point0);
+    Collision::gjk_furthest_point(polygon1, start, end, point1);
+    point_pairs.emplace_back(point0, point1);
     triangle[1] = point0 - point1;
     end.clear();
     Geo::foot_point(triangle[0], triangle[1], end, start, true);
 
     while (true)
     {
-        indexs.emplace_back(Collision::gjk_furthest_point(polygon0, start, end, point0),
-            Collision::gjk_furthest_point(polygon1, end, start, point1));
+        Collision::gjk_furthest_point(polygon0, start, end, point0);
+        Collision::gjk_furthest_point(polygon1, end, start, point1);
+        point_pairs.emplace_back(point0, point1);
         triangle[2] = point0 - point1;
 
         if (triangle[2] * (point0 - point1) < 0)
@@ -1533,7 +1530,7 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
             if (distance[0] > distance[2])
             {
                 triangle[1] = triangle[2];
-                indexs[1] = indexs[2];
+                point_pairs[1] = point_pairs[2];
             }
         }
         else
@@ -1541,16 +1538,16 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
             if (distance[1] <= distance[2])
             {
                 triangle[0] = triangle[2];
-                indexs[0] = indexs[2];
+                point_pairs[0] = point_pairs[2];
             }
             else
             {
                 triangle[1] = triangle[2];
-                indexs[1] = indexs[2];
+                point_pairs[1] = point_pairs[2];
             }
         }
         Geo::foot_point(triangle[0], triangle[1], end, start, true);
-        indexs.pop_back();
+        point_pairs.pop_back();
     }
 
     std::vector<Geo::Point> points;
@@ -1558,7 +1555,7 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
     points.emplace_back(triangle[1]);
     points.emplace_back(triangle[2]);
 
-    size_t index, index0, index1;
+    size_t index;
     while (true)
     {
         distance[0] = Geo::distance_square(end, points.front(), points.back(), true);
@@ -1574,28 +1571,25 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
         }
 
         Geo::foot_point(points[index - 1], points[index % points.size()], end, start0, true);
-        index0 = Collision::gjk_furthest_point(polygon0, end, start0, point0);
-        index1 = Collision::gjk_furthest_point(polygon1, start0, end, point1);
+        Collision::gjk_furthest_point(polygon0, end, start0, point0);
+        Collision::gjk_furthest_point(polygon1, start0, end, point1);
         point2 = point0 - point1;
         if (start0 * point2 <= 0 || points[index - 1] == point2 || points[index % points.size()] == point2)
         {
-            Geo::Point p1 = polygon0[std::get<0>(indexs[index - 1])];
-            Geo::Point p2 = polygon0[std::get<0>(indexs[index % points.size()])];
-            Geo::Point p3 = polygon1[std::get<1>(indexs[index - 1])];
-            Geo::Point p4 = polygon1[std::get<1>(indexs[index % points.size()])];
-            return Geo::distance(p1, p2, p3, p4, start0, end0);
+            return Geo::distance(std::get<0>(point_pairs[index - 1]), std::get<0>(point_pairs[index % points.size()]),
+                std::get<1>(point_pairs[index - 1]), std::get<1>(point_pairs[index % points.size()]), start0, end0);
         }
         else
         {
             if (index < points.size())
             {
                 points.insert(points.begin() + index, point2);
-                indexs.insert(indexs.begin() + index, std::make_tuple(index0, index1));
+                point_pairs.insert(point_pairs.begin() + index, std::make_tuple(point0, point1));
             }
             else
             {
                 points.emplace_back(point2);
-                indexs.emplace_back(index0, index1);
+                point_pairs.emplace_back(point0, point1);
             }
         }
     }

@@ -244,67 +244,157 @@ double Geo::distance(const Geo::Point &point, const Geo::Polygon &polygon)
     return dis;
 }
 
-double Geo::distance(const Geo::Point &start0, const Geo::Point &end0, const Geo::Point &start1, const Geo::Point &end1, Geo::Point &start, Geo::Point &end)
+double Geo::distance(const Geo::Point &start0, const Geo::Point &end0, const Geo::Point &start1, const Geo::Point &end1, Geo::Point &point0, Geo::Point &point1)
 {
     if (Geo::is_parallel(start0, end0, start1, end1))
     {
-        start = start0;
-        if (Geo::foot_point(start1, end1, start, end))
+        if (Geo::foot_point(start1, end1, start0, point1) && Geo::foot_point(start1, end1, end0, point1))
         {
-            return Geo::distance(start0, start1, end1, true);
+            point0 = (start0 + end0) / 2;
+            Geo::foot_point(start1, end1, point0, point1, true);
         }
-        start = end0;
-        if (Geo::foot_point(start1, end1, start, end))
+        else if (Geo::foot_point(start0, end0, start1, point0) && Geo::foot_point(start0, end0, end1, point0))
         {
-            return Geo::distance(start0, start1, end1, true);
+            point1 = (start1 + end1) / 2;
+            Geo::foot_point(start0, end0, point1, point0, true);
         }
-        end = start1;
-        if (Geo::foot_point(start0, end0, end, start))
+        else
         {
-            return Geo::distance(start0, start1, end1, true);
+            if (Geo::foot_point(start1, end1, start0, point0))
+            {
+                if ((end0 - start0) * (end1 - start1) >= 0)
+                {
+                    point1 = (point0 + end1) / 2;
+                }
+                else
+                {
+                    point1 = (point0 + start1) / 2;
+                }
+                Geo::foot_point(start0, end0, point1, point0, true);
+            }
+            else if (Geo::foot_point(start1, end1, end0, point0))
+            {
+                if ((end0 - start0) * (end1 - start1) >= 0)
+                {
+                    point1 = (point0 + start1) / 2;
+                }
+                else
+                {
+                    point1 = (point0 + end1) / 2;
+                }
+                Geo::foot_point(start0, end0, point1, point0, true);
+            }
+            else
+            {
+                double distance[5] = {Geo::distance_square(start0, start1), Geo::distance_square(start0, end1),
+                    Geo::distance_square(end0, start1), Geo::distance(end0, end1), DBL_MAX};
+                int index = 0;
+                for (int i = 0; i < 4; ++i)
+                {
+                    if (distance[i] < distance[4])
+                    {
+                        index = i;
+                        distance[4] = distance[i];
+                    }
+                }
+                switch (index)
+                {
+                case 0:
+                    point0 = start0;
+                    point1 = start1;
+                    break;
+                case 1:
+                    point0 = start0;
+                    point1 = end1;
+                    break;
+                case 2:
+                    point0 = end0;
+                    point1 = start1;
+                    break;
+                case 3:
+                    point0 = end0;
+                    point1 = end1;
+                    break;
+                }
+            }
         }
-        end = end1;
-        if (Geo::foot_point(start0, end0, end, start))
-        {
-            return Geo::distance(start0, start1, end1, true);
-        }
+        return Geo::distance(start0, start1, end1);
     }
-
-    double distance[5] = {Geo::distance(start0, start1, end1), Geo::distance(end0, start1, end1),
-        Geo::distance(start1, start0, end0), Geo::distance(end1, start0, end0), DBL_MAX};
-    int index = 0;
-    for (int i = 0; i < 4; ++i)
+    else
     {
-        if (distance[i] < distance[4])
+        double distance[5] = {Geo::distance(start0, start1, end1), Geo::distance(end0, start1, end1),
+            Geo::distance(start1, start0, end0), Geo::distance(end1, start0, end0), DBL_MAX};
+        int index = 0;
+        for (int i = 0; i < 4; ++i)
         {
-            index = i;
-            distance[4] = distance[i];
+            if (distance[i] < distance[4])
+            {
+                index = i;
+                distance[4] = distance[i];
+            }
         }
-    }
 
-    switch (index)
-    {
-    case 0:
-        start = start0;
-        Geo::foot_point(start1, end1, start0, end, true);
-        break;
-    case 1:
-        start = end0;
-        Geo::foot_point(start1, end1, end0, end, true);
-        break;
-    case 2:
-        end = start1;
-        Geo::foot_point(start0, end0, start1, start, true);
-        break;
-    case 3:
-        end = end1;
-        Geo::foot_point(start0, end0, end1, start, true);
-        break;
-    default:
-        break;
+        switch (index)
+        {
+        case 0:
+            point0 = start0;
+            if (!Geo::foot_point(start1, end1, start0, point1))
+            {
+                if (Geo::distance_square(start0, start1) <= Geo::distance_square(start0, end1))
+                {
+                    point1 = start1;
+                }
+                else
+                {
+                    point1 = end1;
+                }
+            }
+            break;
+        case 1:
+            point0 = end0;
+            if (!Geo::foot_point(start1, end1, end0, point1))
+            {
+                if (Geo::distance_square(end0, start1) <= Geo::distance_square(end0, end1))
+                {
+                    point1 = start1;
+                }
+                else
+                {
+                    point1 = end1;
+                }
+            }
+            break;
+        case 2:
+            point1 = start1;
+            if (!Geo::foot_point(start0, end0, start1, point0))
+            {
+                if (Geo::distance_square(start1, start0) <= Geo::distance_square(start1, end0))
+                {
+                    point0 = start0;
+                }
+                else
+                {
+                    point0 = end0;
+                }
+            }
+            break;
+        case 3:
+            point1 = end1;
+            if (Geo::foot_point(start0, end0, end1, point0))
+            {
+                if (Geo::distance_square(end1, start0) <= Geo::distance_square(end1, end0))
+                {
+                    point0 = start0;
+                }
+                else
+                {
+                    point0 = end0;
+                }
+            }
+            break;
+        }
+        return distance[4];
     }
-
-    return distance[4];
 }
 
 

@@ -175,9 +175,9 @@ namespace Geo
         };
 
 
-        size_t gjk_furthest_point(const Geo::Polygon &polygon, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
+        void gjk_furthest_point(const Geo::Polygon &polygon, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
 
-        size_t gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
+        void gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
 
         bool gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1);
 
@@ -292,17 +292,17 @@ namespace Geo
                                 if ((object->type() == Geo::Type::CONTAINER || object->type() == Geo::Type::POLYGON) &&
                                     (crushed_objects[i]->type() == Geo::Type::CONTAINER || crushed_objects[i]->type() == Geo::Type::POLYGON))
                                 {
-                                    Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), start, end);
-                                    vec = start - end;
-                                    // crushed_objects[i]->translate(vec.x, vec.y);
-                                    if (!lines->empty())
-                                    {
-                                        lines->clear();
-                                    }
-                                    lines->emplace_back(start.x, start.y, end.x, end.y);
+                                    Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), vec);
+                                    // vec = start - end;
+                                    crushed_objects[i]->translate(vec.x, vec.y);
+                                    // if (!lines->empty())
+                                    // {
+                                    //     lines->clear();
+                                    // }
+                                    // lines->emplace_back(start.x, start.y, end.x, end.y);
                                     vec.clear();
-                                    start.clear();
-                                    end.clear();
+                                    // start.clear();
+                                    // end.clear();
                                 }
                                 else
                                 {
