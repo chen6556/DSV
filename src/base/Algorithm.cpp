@@ -641,23 +641,19 @@ bool Geo::is_inside(const Geo::Point &point, const Geo::Point &point0, const Geo
 {
     if (coincide)
     {
-        const bool a = (point2.x - point.x) * (point0.y - point.y) 
-            >= (point0.x - point.x) * (point2.y - point.y);
-        const bool b = (point0.x - point.x) * (point1.y - point.y)
-            >= (point1.x - point.x) * (point0.y - point.y);
-        const bool c = (point1.x - point.x) * (point2.y - point.y)
-            >= (point2.x - point.x) * (point1.y - point.y);
+        const double values[3] = {(point2.x - point.x) * (point0.y - point.y) - (point0.x - point.x) * (point2.y - point.y),
+            (point0.x - point.x) * (point1.y - point.y) - (point1.x - point.x) * (point0.y - point.y),
+            (point1.x - point.x) * (point2.y - point.y) - (point2.x - point.x) * (point1.y - point.y)};
 
-        return a == b && b == c;
+        return (values[0] > 0 && values[1] > 0 && values[2] > 0) || (values[0] < 0 && values[1] < 0 && values[2] < 0) ||
+            std::count(values, values + 3, 0) >= 2 || (values[0] == 0 && values[1] * values[2] > 0) ||
+            (values[1] == 0 && values[0] * values[2] > 0) || (values[2] == 0 && values[0] * values[1] > 0);
     }
     else
     {
-        const bool a = (point2.x - point.x) * (point0.y - point.y) 
-            > (point0.x - point.x) * (point2.y - point.y);
-        const bool b = (point0.x - point.x) * (point1.y - point.y)
-            > (point1.x - point.x) * (point0.y - point.y);
-        const bool c = (point1.x - point.x) * (point2.y - point.y)
-            > (point2.x - point.x) * (point1.y - point.y);
+        const bool a = (point2.x - point.x) * (point0.y - point.y) > (point0.x - point.x) * (point2.y - point.y);
+        const bool b = (point0.x - point.x) * (point1.y - point.y) > (point1.x - point.x) * (point0.y - point.y);
+        const bool c = (point1.x - point.x) * (point2.y - point.y) > (point2.x - point.x) * (point1.y - point.y);
 
         return a == b && b == c;
     }

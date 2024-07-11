@@ -1333,7 +1333,6 @@ bool Collision::gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1)
             return false;
         }
 
-        end.clear();
         distance[0] = Geo::distance_square(end, triangle[0], triangle[1], true);
         distance[1] = Geo::distance_square(end, triangle[1], triangle[2], true);
         distance[2] = Geo::distance_square(end, triangle[0], triangle[2], true);
@@ -1535,10 +1534,6 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
         point2 = point0 - point1;
         if (vec * point2 <= 0 || points[index - 1] == point2 || points[index % points.size()] == point2)
         {
-            if (vec.empty() && Geo::distance_square(polygon0.average_point(), polygon1.average_point()) < 1500)
-            {
-                return vec.length();
-            }
             return vec.length();
         }
         else

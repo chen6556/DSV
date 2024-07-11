@@ -1,4 +1,5 @@
 #pragma once
+#include <set>
 #include <list>
 #include <vector>
 #include <utility>
@@ -196,6 +197,32 @@ namespace Geo
         private:
             T _detector;
 
+            static bool pair_in_pairs(const std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs, const Geo::Geometry *object0, const Geo::Geometry *object1, const bool ordered = false)
+            {
+                if (ordered)
+                {
+                    for (const std::pair<Geo::Geometry *, Geo::Geometry *> &pair : pairs)
+                    {
+                        if (pair.first == object0 && pair.second == object1)
+                        {
+                            return true;
+                        }
+                    }
+                }
+                else
+                {
+                    for (const std::pair<Geo::Geometry *, Geo::Geometry *> &pair : pairs)
+                    {
+                        if ((pair.first == object0 && pair.second == object1) || 
+                            (pair.first == object1 && pair.second == object0))
+                        {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
         public:
             CollisionDetector() {}
 
@@ -276,10 +303,9 @@ namespace Geo
             void collision_translate(Geo::Geometry *object, const double tx, const double ty, std::list<QLineF> *lines)
             {
                 std::vector<Geo::Geometry *> crushed_objects({object});
-                std::vector<Geo::Geometry *> moved_objects;
+                std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> moved_object_pairs;
                 size_t index = 0;
-                Geo::Point start, end, vec;
-                double distance;
+                Geo::Point vec;
                 while (!crushed_objects.empty())
                 {
                     object = crushed_objects.back();
@@ -289,22 +315,20 @@ namespace Geo
                     {
                         for (size_t i = index, count = crushed_objects.size(); i < count; ++i)
                         {
-                            if (std::find(moved_objects.begin(), moved_objects.end(), crushed_objects[i]) == moved_objects.end())
+                            if (pair_in_pairs(moved_object_pairs, object, crushed_objects[i]))
                             {
+                                crushed_objects.erase(crushed_objects.begin() + i--);
+                                --count;
+                            }
+                            else
+                            {
+                                moved_object_pairs.emplace_back(object, crushed_objects[i]);
                                 if (object->type() == Geo::Type::CONTAINER && crushed_objects[i]->type() == Geo::Type::CONTAINER)
                                 {
                                     if (Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), vec) > 0)
                                     {
-                                        // vec = start - end;
                                         crushed_objects[i]->translate(vec.x, vec.y);
-                                        // if (!lines->empty())
-                                        // {
-                                        //     lines->clear();
-                                        // }
-                                        // lines->emplace_back(start.x, start.y, end.x, end.y);
                                         vec.clear();
-                                        // start.clear();
-                                        // end.clear();
                                         _detector.update(crushed_objects[i]);
                                     }
                                 }
@@ -314,14 +338,8 @@ namespace Geo
                                     _detector.update(crushed_objects[i]);
                                 }
                             }
-                            else
-                            {
-                                crushed_objects.erase(crushed_objects.begin() + i--);
-                                --count;
-                            }
                         }
                     }
-                    moved_objects.push_back(object);
                 }
             }
         };
