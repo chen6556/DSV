@@ -1,4 +1,5 @@
 #include <set>
+#include <random>
 #include "base/Collision.hpp"
 #include "base/Algorithm.hpp"
 
@@ -580,7 +581,7 @@ bool Collision::GridMap::find_collision_objects(const Geo::Geometry *object, std
     const Geo::AABBRect rect(object->bounding_rect());
     for (const GridNode &grid : _grids)
     {
-        if (Geo::is_intersected(rect, grid.rect()))
+        if (Collision::gjk(rect, grid.rect()))
         {
             grid.find_collision_objects(object, objects);
         }
@@ -1248,6 +1249,37 @@ void Collision::gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &
     }
 }
 
+void Collision::support(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Point &start, Geo::Point &end, std::vector<Geo::Point> &points, Geo::Point &result)
+{
+    Geo::Point point0, point1, vec0, vec1;
+    std::mt19937 generator;
+    std::uniform_int_distribution<int> distribution(-10, 10);
+    const Geo::Point origin;
+    for (size_t i = 0; i < 10; ++i)
+    {
+        if (Geo::is_point_on(origin, points.cbegin(), points.cend()))
+        {
+            vec0.x = distribution(generator);
+            vec0.y = distribution(generator);
+            vec1.x = distribution(generator);
+            vec1.y = distribution(generator);
+            Collision::gjk_furthest_point(polygon0, vec0, vec1, point0);
+            Collision::gjk_furthest_point(polygon1, vec1, vec0, point1);
+            points[0] = point0 - point1;
+            Collision::gjk_furthest_point(polygon0, vec1, vec0, point0);
+            Collision::gjk_furthest_point(polygon1, vec0, vec1, point1);
+            points[1] = point0 - point1;
+        }
+        else
+        {
+            break;
+        }
+    }
+    Collision::gjk_furthest_point(polygon0, start, end, point0);
+    Collision::gjk_furthest_point(polygon1, end, start, point1);
+    result = point0 - point1;
+}
+
 bool Collision::gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1)
 {
     Geo::Point start = polygon0.average_point(), end = polygon1.average_point();
@@ -1255,6 +1287,14 @@ bool Collision::gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1)
     Geo::Triangle triangle, last_triangle;
     double distance[3];
 
+    if (start.x == end.x)
+    {
+        start.x += 1;
+    }
+    if (start.y == end.y)
+    {
+        start.y += 1;
+    }
     Collision::gjk_furthest_point(polygon0, start, end, point0);
     Collision::gjk_furthest_point(polygon1, end, start, point1);
     triangle[0] = point0 - point1;
@@ -1266,6 +1306,14 @@ bool Collision::gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1)
 
     while (true)
     {
+        if (start.x == 0)
+        {
+            start.x = 1;
+        }
+        if (start.y == 0)
+        {
+            start.y = 1;
+        }
         Collision::gjk_furthest_point(polygon0, start, end, point0);
         Collision::gjk_furthest_point(polygon1, end, start, point1);
         triangle[2] = point0 - point1;
@@ -1286,9 +1334,9 @@ bool Collision::gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1)
         }
 
         end.clear();
-        distance[0] = Geo::distance(end, triangle[0], triangle[1], true);
-        distance[1] = Geo::distance(end, triangle[1], triangle[2], true);
-        distance[2] = Geo::distance(end, triangle[0], triangle[2], true);
+        distance[0] = Geo::distance_square(end, triangle[0], triangle[1], true);
+        distance[1] = Geo::distance_square(end, triangle[1], triangle[2], true);
+        distance[2] = Geo::distance_square(end, triangle[0], triangle[2], true);
         last_triangle = triangle;
         if (distance[0] <= distance[1])
         {
@@ -1319,6 +1367,10 @@ bool Collision::gjk(const Geo::AABBRect &rect, const Geo::Polygon &polygon)
     Geo::Triangle triangle, last_triangle;
     double distance[3];
 
+    if (start.y == end.y)
+    {
+        start.y += 1;
+    }
     Collision::gjk_furthest_point(rect, start, end, point0);
     Collision::gjk_furthest_point(polygon, end, start, point1);
     triangle[0] = point0 - point1;
@@ -1330,6 +1382,10 @@ bool Collision::gjk(const Geo::AABBRect &rect, const Geo::Polygon &polygon)
 
     while (true)
     {
+        if (start.y == 0)
+        {
+            start.y = 1;
+        }
         Collision::gjk_furthest_point(rect, start, end, point0);
         Collision::gjk_furthest_point(polygon, end, start, point1);
         triangle[2] = point0 - point1;
@@ -1349,9 +1405,9 @@ bool Collision::gjk(const Geo::AABBRect &rect, const Geo::Polygon &polygon)
             return false;
         }
 
-        distance[0] = Geo::distance(end, triangle[0], triangle[1], true);
-        distance[1] = Geo::distance(end, triangle[1], triangle[2], true);
-        distance[2] = Geo::distance(end, triangle[0], triangle[2], true);
+        distance[0] = Geo::distance_square(end, triangle[0], triangle[1], true);
+        distance[1] = Geo::distance_square(end, triangle[1], triangle[2], true);
+        distance[2] = Geo::distance_square(end, triangle[0], triangle[2], true);
         last_triangle = triangle;
         if (distance[0] <= distance[1])
         {
@@ -1382,6 +1438,14 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
     Geo::Triangle triangle, last_triangle;
     double distance[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
 
+    if (start.x == end.x)
+    {
+        start.x += 1;
+    }
+    if (start.y == end.y)
+    {
+        start.y += 1;
+    }
     Collision::gjk_furthest_point(polygon0, start, end, point0);
     Collision::gjk_furthest_point(polygon1, end, start, point1);
     triangle[0] = point0 - point1;
@@ -1393,6 +1457,14 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
 
     while (true)
     {
+        if (start.x == 0)
+        {
+            start.x = 1;
+        }
+        if (start.y == 0)
+        {
+            start.y = 1;
+        }
         Collision::gjk_furthest_point(polygon0, start, end, point0);
         Collision::gjk_furthest_point(polygon1, end, start, point1);
         triangle[2] = point0 - point1;
@@ -1445,11 +1517,11 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
     size_t index;
     while (true)
     {
-        distance[0] = Geo::distance_square(end, points.front(), points.back(), true);
+        distance[0] = Geo::distance_square(end, points.front(), points.back());
         index = points.size();
         for (size_t i = 1, count = points.size(); i < count; ++i)
         {
-            distance[1] = Geo::distance_square(end, points[i - 1], points[i], true);
+            distance[1] = Geo::distance_square(end, points[i - 1], points[i]);
             if (distance[1] < distance[0])
             {
                 distance[0] = distance[1];
@@ -1463,20 +1535,45 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
         point2 = point0 - point1;
         if (vec * point2 <= 0 || points[index - 1] == point2 || points[index % points.size()] == point2)
         {
+            if (vec.empty() && Geo::distance_square(polygon0.average_point(), polygon1.average_point()) < 1500)
+            {
+                return vec.length();
+            }
             return vec.length();
         }
         else
         {
-            if (index < points.size())
+            if (std::find(points.begin(), points.end(), point2) == points.end())
             {
-                points.insert(points.begin() + index, point2);
+                if (index < points.size())
+                {
+                    points.insert(points.begin() + index, point2);
+                }
+                else
+                {
+                    points.emplace_back(point2);
+                }
             }
             else
             {
-                points.emplace_back(point2);
+                break;
             }
         }
     }
+
+    distance[0] = Geo::distance_square(end, points.front(), points.back(), true);
+    index = points.size();
+    for (size_t i = 1, count = points.size(); i < count; ++i)
+    {
+        distance[1] = Geo::distance_square(end, points[i - 1], points[i], true);
+        if (distance[1] < distance[0])
+        {
+            distance[0] = distance[1];
+            index = i;
+        }
+    }
+    Geo::foot_point(points[index - 1], points[index % points.size()], end, vec, true);
+    return vec.length();
 }
 
 double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Point &start0, Geo::Point &end0)
@@ -1488,6 +1585,10 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
 
     std::vector<std::tuple<Geo::Point, Geo::Point>> point_pairs;
 
+    if (start.y == end.y)
+    {
+        start.y += 1;
+    }
     Collision::gjk_furthest_point(polygon0, start, end, point0);
     Collision::gjk_furthest_point(polygon1, end, start, point1);
     point_pairs.emplace_back(point0, point1);
@@ -1501,6 +1602,10 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
 
     while (true)
     {
+        if (start.y == 0)
+        {
+            start.y = 1;
+        }
         Collision::gjk_furthest_point(polygon0, start, end, point0);
         Collision::gjk_furthest_point(polygon1, end, start, point1);
         point_pairs.emplace_back(point0, point1);
@@ -1571,6 +1676,10 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
         }
 
         Geo::foot_point(points[index - 1], points[index % points.size()], end, start0, true);
+        if (start0.empty())
+        {
+            start0.x = 1;
+        }
         Collision::gjk_furthest_point(polygon0, end, start0, point0);
         Collision::gjk_furthest_point(polygon1, start0, end, point1);
         point2 = point0 - point1;

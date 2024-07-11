@@ -182,6 +182,12 @@ namespace Geo
     // 计算线段或直线外一点的垂足
     bool foot_point(const Line &line, const Point &point, Point &foot, const bool infinite = false);
 
+    // 判断点在三角形上
+    bool is_point_on(const Point &point, const Triangle &triangle);
+
+    // 判断点在线上
+    bool is_point_on(const Geo::Point &point, std::vector<Geo::Point>::const_iterator begin, std::vector<Geo::Point>::const_iterator end);
+
     // 计算直线的旋转角度(弧度制,-PI-PI)
     double angle(const Point &start, const Point &end);
 

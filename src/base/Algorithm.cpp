@@ -957,12 +957,12 @@ bool Geo::is_intersected(const Geo::AABBRect &rect0, const Geo::AABBRect &rect1,
     {
         return false;
     }
-    
+
     if (rect0.right() < rect1.left() || rect0.left() > rect1.right() || rect0.bottom() > rect1.top() || rect0.top() < rect1.bottom())
     {
         return false;
     }
-    
+
     if (inside)
     {
         return true;
@@ -1586,6 +1586,29 @@ bool Geo::foot_point(const Geo::Point &start, const Geo::Point &end, const Geo::
 bool Geo::foot_point(const Geo::Line &line, const Geo::Point &point, Geo::Point &foot, const bool infinite)
 {
     return Geo::foot_point(line.front(), line.back(), point, foot, infinite);
+}
+
+
+bool Geo::is_point_on(const Geo::Point &point, const Geo::Triangle &triangle)
+{
+    return ((Geo::cross(triangle[1] - triangle[0], point - triangle[0]) == 0 &&
+        Geo::distance(point, triangle[0]) + Geo::distance(point, triangle[1]) < Geo::distance(triangle[0], triangle[1]) + Geo::EPSILON)
+        || (Geo::cross(triangle[2] - triangle[1], point - triangle[1]) == 0 &&
+        Geo::distance(point, triangle[1]) + Geo::distance(point, triangle[2]) < Geo::distance(triangle[1], triangle[2]) + Geo::EPSILON)
+        || (Geo::cross(triangle[2] - triangle[0], point - triangle[0]) == 0) &&
+        Geo::distance(point, triangle[0]) + Geo::distance(point, triangle[2]) < Geo::distance(triangle[0], triangle[2]) + Geo::EPSILON);
+}
+
+bool Geo::is_point_on(const Geo::Point &point, std::vector<Geo::Point>::const_iterator begin, std::vector<Geo::Point>::const_iterator end)
+{
+    for (std::vector<Geo::Point>::const_iterator it0 = begin, it1 = begin + 1; it1 != end; ++it1, ++it0)
+    {
+        if (Geo::is_inside(point, *it0, *it1))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 
