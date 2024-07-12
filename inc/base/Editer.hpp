@@ -19,7 +19,7 @@ private:
     double _view_ratio = 1.0;
 
     Geo::Geometry *_catched_points = nullptr;
-    Geo::Collision::CollisionDetector<Geo::Collision::GridMap> _collision_detector;
+    Geo::Collision::CollisionDetector<Geo::Collision::DirectMode> _collision_detector;
     std::list<QLineF> *_reflines = nullptr;
 
 private:

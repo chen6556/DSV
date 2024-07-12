@@ -12,6 +12,47 @@ namespace Geo
 {
     namespace Collision
     {
+        class DirectMode
+        {
+        private:
+            std::vector<Geo::Geometry *> _objects;
+
+        public:
+            DirectMode();
+
+            DirectMode(const ContainerGroup &group);
+
+            DirectMode(const std::vector<Geo::Geometry *> &objects);
+
+            DirectMode(const std::initializer_list<Geo::Geometry *> &objects);
+
+            void build(const ContainerGroup &group);
+
+            void build(const std::vector<Geo::Geometry *> &objects);
+
+            void build(const std::vector<Geo::Geometry *> &objects, const std::vector<Geo::AABBRect> &rects);
+
+            void append(Geo::Geometry *object);
+
+            void remove(Geo::Geometry *object);
+
+            void update(Geo::Geometry *object);
+
+            void update();
+
+            bool has(Geo::Geometry *object) const;
+
+            void clear();
+
+            bool select(const Geo::Point &pos, std::vector<Geo::Geometry *> &objects) const;
+
+            bool select(const Geo::AABBRect &rect, std::vector<Geo::Geometry *> &objects) const;
+
+            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geo::Geometry *> &objects) const;
+
+            bool find_collision_pairs(std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs) const;
+        };
+
         class GridNode
         {
         protected:
@@ -329,9 +370,16 @@ namespace Geo
                                 moved_object_pairs.emplace_back(object, crushed_objects[i]);
                                 if (object->type() == Geo::Type::CONTAINER && crushed_objects[i]->type() == Geo::Type::CONTAINER)
                                 {
-                                    if (Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), tx, ty, vec) > 0)
+                                    if (Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), vec) > 0)
                                     {
-                                        crushed_objects[i]->translate(vec.x, vec.y);
+                                        if (vec.x * tx + vec.y * ty > 0)
+                                        {
+                                            crushed_objects[i]->translate(vec.x, vec.y);
+                                        }
+                                        else
+                                        {
+                                            crushed_objects[i]->translate(-vec.x, -vec.y);
+                                        }
                                         vec.clear();
                                         _detector.update(crushed_objects[i]);
                                     }
@@ -345,6 +393,7 @@ namespace Geo
                         }
                     }
                 }
+                return;
             }
         };
     }
