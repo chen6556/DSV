@@ -1628,6 +1628,8 @@ void Editer::load_backup()
         delete _graph;
         _graph = _backup.back();
         _backup.pop_back();
+        _collision_detector.clear();
+        _collision_detector.build(_graph->container_group());
     }
 }
 

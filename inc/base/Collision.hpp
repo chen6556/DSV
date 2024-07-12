@@ -176,6 +176,8 @@ namespace Geo
         };
 
 
+        Geo::Point edge_direciton(const Geo::Point &start, const Geo::Point &end, const bool to_origin); 
+
         void gjk_furthest_point(const Geo::Polygon &polygon, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
 
         void gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
@@ -187,6 +189,8 @@ namespace Geo
         bool gjk(const Geo::AABBRect &rect, const Geo::Polygon &polygon);
 
         double epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Vector &vec);
+
+        double epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, const double tx, const double ty, Geo::Vector &vec);
 
         double epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Point &start, Geo::Point &end);
 
@@ -325,7 +329,7 @@ namespace Geo
                                 moved_object_pairs.emplace_back(object, crushed_objects[i]);
                                 if (object->type() == Geo::Type::CONTAINER && crushed_objects[i]->type() == Geo::Type::CONTAINER)
                                 {
-                                    if (Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), vec) > 0)
+                                    if (Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), tx, ty, vec) > 0)
                                     {
                                         crushed_objects[i]->translate(vec.x, vec.y);
                                         vec.clear();
