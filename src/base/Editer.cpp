@@ -88,11 +88,6 @@ void Editer::load_graph(Graph *graph)
     }
 }
 
-void Editer::load_reflines(std::list<QLineF> *lines)
-{
-    _reflines = lines;
-}
-
 void Editer::delete_graph()
 {
     if (_graph != nullptr)
@@ -460,7 +455,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     default:
         break;
     }
-    _collision_detector.collision_translate(points, x1 - x0, y1 - y0, _reflines);
+    _collision_detector.collision_translate(points, x1 - x0, y1 - y0);
     _graph->modified = true;
 }
 

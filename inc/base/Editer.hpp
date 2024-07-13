@@ -20,7 +20,6 @@ private:
 
     Geo::Geometry *_catched_points = nullptr;
     Geo::Collision::CollisionDetector<Geo::Collision::GridMap> _collision_detector;
-    std::list<QLineF> *_reflines = nullptr;
 
 private:
     void init();
@@ -37,8 +36,6 @@ public:
     void load_graph(Graph *graph, const QString &path);
 
     void load_graph(Graph *graph);
-
-    void load_reflines(std::list<QLineF> *lines);
 
     void delete_graph();
 

@@ -1118,6 +1118,13 @@ bool Collision::QuadTreeNode::find_collision_objects(const Geo::Geometry *object
         _nodes[1]->find_collision_objects(object, objects, norepeat);
         _nodes[2]->find_collision_objects(object, objects, norepeat);
         _nodes[3]->find_collision_objects(object, objects, norepeat);
+
+        if (norepeat)
+        {
+            std::set<Geo::Geometry *> temp(objects.begin(), objects.end());
+            objects.assign(temp.begin(), temp.end());
+        }
+
         return objects.size() > size;
     }
 }
@@ -1580,9 +1587,9 @@ bool Collision::gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1)
             return false;
         }
 
-        distance[0] = Geo::distance_square(end, triangle[0], triangle[1], true);
-        distance[1] = Geo::distance_square(end, triangle[1], triangle[2], true);
-        distance[2] = Geo::distance_square(end, triangle[0], triangle[2], true);
+        distance[0] = Geo::distance_square(end, triangle[0], triangle[1]);
+        distance[1] = Geo::distance_square(end, triangle[1], triangle[2]);
+        distance[2] = Geo::distance_square(end, triangle[0], triangle[2]);
         last_triangle = triangle;
         if (distance[0] <= distance[1])
         {
@@ -1831,11 +1838,6 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
         }
     }
 
-    if (vec.empty())
-    {
-        return 0;
-    }
-
     return vec.length();
 }
 
@@ -1928,12 +1930,10 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
     }
 
     size_t index;
-    std::vector<size_t> indexs;
     while (true)
     {
         distance[0] = Geo::distance_square(end, points.front(), points.back());
         index = points.size();
-        indexs.clear();
         for (size_t i = 1, count = points.size(); i < count; ++i)
         {
             distance[1] = Geo::distance_square(end, points[i - 1], points[i]);
@@ -1941,11 +1941,6 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
             {
                 distance[0] = distance[1];
                 index = i;
-                indexs.clear();
-            }
-            else if (distance[1] == distance[0])
-            {
-                indexs.push_back(i);
             }
         }
 
@@ -1979,6 +1974,7 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
 
     distance[0] = Geo::distance_square(end, points.front(), points.back());
     index = points.size();
+    std::vector<size_t> indexs;
     for (size_t i = 1, count = points.size(); i < count; ++i)
     {
         distance[1] = Geo::distance_square(end, points[i - 1], points[i]);
@@ -2026,7 +2022,6 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
             {
                 distance[0] = distance[1];
                 vec = point2;
-                index = i;
             }
         }
     }

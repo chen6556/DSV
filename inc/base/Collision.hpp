@@ -371,17 +371,17 @@ namespace Geo
                 return _detector.select(rect, objects);
             }
 
-            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geometry *> &objects) const
+            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geometry *> &objects, const bool norepeat = true) const
             {
-                return _detector.find_collision_objects(object, objects);
+                return _detector.find_collision_objects(object, objects, norepeat);
             }
 
-            bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs) const
+            bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs, const bool norepeat = true) const
             {
-                return _detector.find_collision_pairs(pairs);
+                return _detector.find_collision_pairs(pairs, norepeat);
             }
 
-            void collision_translate(Geo::Geometry *object, const double tx, const double ty, std::list<QLineF> *lines)
+            void collision_translate(Geo::Geometry *object, const double tx, const double ty)
             {
                 std::vector<Geo::Geometry *> crushed_objects({object});
                 std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> moved_object_pairs;
