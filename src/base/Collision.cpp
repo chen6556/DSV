@@ -1,6 +1,5 @@
 #include <set>
 #include <random>
-#include <QDebug>
 #include "base/Collision.hpp"
 #include "base/Algorithm.hpp"
 
@@ -192,7 +191,7 @@ bool Collision::DirectMode::select(const Geo::AABBRect &rect, std::vector<Geo::G
     return objects.size() > size;
 }
 
-bool Collision::DirectMode::find_collision_objects(const Geo::Geometry *object, std::vector<Geo::Geometry *> &objects) const
+bool Collision::DirectMode::find_collision_objects(const Geo::Geometry *object, std::vector<Geo::Geometry *> &objects, const bool norepeat) const
 {
     const size_t size = objects.size();
     for (Geo::Geometry *obj : _objects)
@@ -205,7 +204,7 @@ bool Collision::DirectMode::find_collision_objects(const Geo::Geometry *object, 
     return objects.size() > size;
 }
 
-bool Collision::DirectMode::find_collision_pairs(std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs) const
+bool Collision::DirectMode::find_collision_pairs(std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs, const bool norepeat) const
 {
     const size_t size = pairs.size();
     for (size_t i = 0, count = _objects.size(); i < count; ++i)
@@ -786,7 +785,7 @@ bool Collision::GridMap::select(const Geo::AABBRect &rect, std::vector<Geo::Geom
     return objects.size() > size;
 }
 
-bool Collision::GridMap::find_collision_objects(const Geo::Geometry *object, std::vector<Geo::Geometry *> &objects) const
+bool Collision::GridMap::find_collision_objects(const Geo::Geometry *object, std::vector<Geo::Geometry *> &objects, const bool norepeat) const
 {
     if (object == nullptr)
     {
@@ -802,12 +801,16 @@ bool Collision::GridMap::find_collision_objects(const Geo::Geometry *object, std
             grid.find_collision_objects(object, objects);
         }
     }
-    std::set<Geo::Geometry *> temp(objects.begin(), objects.end());
-    objects.assign(temp.begin(), temp.end());
+    
+    if (norepeat)
+    {
+        std::set<Geo::Geometry *> temp(objects.begin(), objects.end());
+        objects.assign(temp.begin(), temp.end());
+    }
     return objects.size() > size;
 }
 
-bool Collision::GridMap::find_collision_pairs(std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs) const
+bool Collision::GridMap::find_collision_pairs(std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs, const bool norepeat) const
 {
     const size_t size = pairs.size();
     for (const GridNode &grid : _grids)
@@ -815,15 +818,18 @@ bool Collision::GridMap::find_collision_pairs(std::vector<std::pair<Geo::Geometr
         grid.find_collision_pairs(pairs);
     }
 
-    for (size_t i = 0, count = pairs.size(); i < count; ++i)
+    if (norepeat)
     {
-        for (size_t j = count - 1; j > i; --j)
+        for (size_t i = 0, count = pairs.size(); i < count; ++i)
         {
-            if ((pairs[i].first == pairs[j].first && pairs[i].second == pairs[j].second)
-                || (pairs[i].first == pairs[j].second && pairs[i].second == pairs[j].first))
+            for (size_t j = count - 1; j > i; --j)
             {
-                pairs.erase(pairs.begin() + j);
-                --count;
+                if ((pairs[i].first == pairs[j].first && pairs[i].second == pairs[j].second)
+                    || (pairs[i].first == pairs[j].second && pairs[i].second == pairs[j].first))
+                {
+                    pairs.erase(pairs.begin() + j);
+                    --count;
+                }
             }
         }
     }
@@ -1099,7 +1105,7 @@ bool Collision::QuadTreeNode::select(const Geo::AABBRect &rect, std::vector<Geo:
     }
 }
 
-bool Collision::QuadTreeNode::find_collision_objects(const Geo::Geometry *object, std::vector<Geo::Geometry *> &objects) const
+bool Collision::QuadTreeNode::find_collision_objects(const Geo::Geometry *object, std::vector<Geo::Geometry *> &objects, const bool norepeat) const
 {
     if (_nodes[0] == nullptr)
     {
@@ -1108,15 +1114,15 @@ bool Collision::QuadTreeNode::find_collision_objects(const Geo::Geometry *object
     else
     {
         const size_t size = objects.size();
-        _nodes[0]->find_collision_objects(object, objects);
-        _nodes[1]->find_collision_objects(object, objects);
-        _nodes[2]->find_collision_objects(object, objects);
-        _nodes[3]->find_collision_objects(object, objects);
+        _nodes[0]->find_collision_objects(object, objects, norepeat);
+        _nodes[1]->find_collision_objects(object, objects, norepeat);
+        _nodes[2]->find_collision_objects(object, objects, norepeat);
+        _nodes[3]->find_collision_objects(object, objects, norepeat);
         return objects.size() > size;
     }
 }
 
-bool Collision::QuadTreeNode::find_collision_pairs(std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs) const
+bool Collision::QuadTreeNode::find_collision_pairs(std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs, const bool norepeat) const
 {
     if (_nodes[0] == nullptr)
     {
@@ -1125,20 +1131,23 @@ bool Collision::QuadTreeNode::find_collision_pairs(std::vector<std::pair<Geo::Ge
     else
     {
         const size_t size = pairs.size();
-        _nodes[0]->find_collision_pairs(pairs);
-        _nodes[1]->find_collision_pairs(pairs);
-        _nodes[2]->find_collision_pairs(pairs);
-        _nodes[3]->find_collision_pairs(pairs);
+        _nodes[0]->find_collision_pairs(pairs, norepeat);
+        _nodes[1]->find_collision_pairs(pairs, norepeat);
+        _nodes[2]->find_collision_pairs(pairs, norepeat);
+        _nodes[3]->find_collision_pairs(pairs, norepeat);
 
-        for (size_t i = 0, count = pairs.size(); i < count; ++i)
+        if (norepeat)
         {
-            for (size_t j = count - 1; j > i; --j)
+            for (size_t i = 0, count = pairs.size(); i < count; ++i)
             {
-                if ((pairs[i].first == pairs[j].first && pairs[i].second == pairs[j].second)
-                    || (pairs[i].first == pairs[j].second && pairs[i].second == pairs[j].first))
+                for (size_t j = count - 1; j > i; --j)
                 {
-                    pairs.erase(pairs.begin() + j);
-                    --count;
+                    if ((pairs[i].first == pairs[j].first && pairs[i].second == pairs[j].second)
+                        || (pairs[i].first == pairs[j].second && pairs[i].second == pairs[j].first))
+                    {
+                        pairs.erase(pairs.begin() + j);
+                        --count;
+                    }
                 }
             }
         }
@@ -1416,14 +1425,14 @@ bool Collision::QuadTree::select(const Geo::AABBRect &rect, std::vector<Geo::Geo
     return _root != nullptr && _root->select(rect, objects);
 }
 
-bool Collision::QuadTree::find_collision_objects(const Geo::Geometry *object, std::vector<Geo::Geometry *> &objects) const
+bool Collision::QuadTree::find_collision_objects(const Geo::Geometry *object, std::vector<Geo::Geometry *> &objects, const bool norepeat) const
 {
-    return _root != nullptr && _root->find_collision_objects(object, objects);
+    return _root != nullptr && _root->find_collision_objects(object, objects, norepeat);
 }
 
-bool Collision::QuadTree::find_collision_pairs(std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs) const
+bool Collision::QuadTree::find_collision_pairs(std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs, const bool norepeat) const
 {
-    return _root != nullptr && _root->find_collision_pairs(pairs);
+    return _root != nullptr && _root->find_collision_pairs(pairs, norepeat);
 }
 
 
@@ -1821,8 +1830,7 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
             vec = points[index % points.size()];
         }
     }
-    
-    qDebug() << vec.x << vec.y;
+
     if (vec.empty())
     {
         return 0;
@@ -2022,21 +2030,6 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
             }
         }
     }
-
-    if (vec.empty())
-    {
-        if (tx != 0 && std::count_if(points.cbegin(), points.cend(), 
-            [](const Geo::Point &point) { return point.x == 0; }) == 2)
-        {
-            return vec.x = tx;
-        }
-        else if (ty != 0 && std::count_if(points.cbegin(), points.cend(), 
-            [](const Geo::Point &point) { return point.y == 0; }) == 2)
-        {
-            return vec.y = ty;
-        }
-    }
-
     return vec.length();
 }
 

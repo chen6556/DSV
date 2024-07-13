@@ -48,9 +48,9 @@ namespace Geo
 
             bool select(const Geo::AABBRect &rect, std::vector<Geo::Geometry *> &objects) const;
 
-            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geo::Geometry *> &objects) const;
+            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geo::Geometry *> &objects, const bool norepeat = true) const;
 
-            bool find_collision_pairs(std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs) const;
+            bool find_collision_pairs(std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs, const bool norepeat = true) const;
         };
 
         class GridNode
@@ -126,9 +126,9 @@ namespace Geo
 
             bool select(const AABBRect &rect, std::vector<Geometry *> &objects) const;
 
-            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geometry *> &objects) const;
+            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geometry *> &objects, const bool norepeat = true) const;
 
-            bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs) const;
+            bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs, const bool norepeat = true) const;
         };
 
         class QuadTreeNode : public GridNode
@@ -165,9 +165,9 @@ namespace Geo
 
             bool select(const Geo::AABBRect &rect, std::vector<Geometry *> &objects) const;
 
-            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geometry *> &objects) const;
+            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geometry *> &objects, const bool norepeat = true) const;
 
-            bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs) const;
+            bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs, const bool norepeat = true) const;
         };
 
         class QuadTree
@@ -211,9 +211,9 @@ namespace Geo
 
             bool select(const AABBRect &rect, std::vector<Geometry *> &objects) const;
 
-            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geometry *> &objects) const;
+            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geometry *> &objects, const bool norepeat = true) const;
 
-            bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs) const;
+            bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs, const bool norepeat = true) const;
         };
 
 
@@ -263,6 +263,42 @@ namespace Geo
                         {
                             return true;
                         }
+                    }
+                }
+                return false;
+            }
+
+            static bool in_pair_first(const Geo::Geometry *object, const std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs)
+            {
+                for (const std::pair<Geo::Geometry *, Geo::Geometry *> &pair : pairs)
+                {
+                    if (pair.first == object)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            static bool in_pair_second(const Geo::Geometry *object, const std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs)
+            {
+                for (const std::pair<Geo::Geometry *, Geo::Geometry *> &pair : pairs)
+                {
+                    if (pair.second == object)
+                    {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            static bool in_pairs(const Geo::Geometry *object, const std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs)
+            {
+                for (const std::pair<Geo::Geometry *, Geo::Geometry *> &pair : pairs)
+                {
+                    if (pair.first == object || pair.second == object)
+                    {
+                        return true;
                     }
                 }
                 return false;
@@ -356,11 +392,11 @@ namespace Geo
                     object = crushed_objects.back();
                     crushed_objects.pop_back();
                     index = crushed_objects.size();
-                    if (_detector.find_collision_objects(object, crushed_objects))
+                    if (_detector.find_collision_objects(object, crushed_objects, false))
                     {
                         for (size_t i = index, count = crushed_objects.size(); i < count; ++i)
                         {
-                            if (pair_in_pairs(moved_object_pairs, object, crushed_objects[i]))
+                            if (pair_in_pairs(moved_object_pairs, object, crushed_objects[i], true))
                             {
                                 crushed_objects.erase(crushed_objects.begin() + i--);
                                 --count;
@@ -368,32 +404,25 @@ namespace Geo
                             else
                             {
                                 moved_object_pairs.emplace_back(object, crushed_objects[i]);
-                                if (object->type() == Geo::Type::CONTAINER && crushed_objects[i]->type() == Geo::Type::CONTAINER)
+                                if (object->type() == Geo::Type::CONTAINER && crushed_objects[i]->type() == Geo::Type::CONTAINER &&
+                                    Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), tx, ty, vec) > 0)
                                 {
-                                    if (Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), vec) > 0)
+                                    if (vec.x * tx + vec.y * ty >= 0)
                                     {
-                                        if (vec.x * tx + vec.y * ty > 0)
-                                        {
-                                            crushed_objects[i]->translate(vec.x, vec.y);
-                                        }
-                                        else
-                                        {
-                                            crushed_objects[i]->translate(-vec.x, -vec.y);
-                                        }
-                                        vec.clear();
+                                        crushed_objects[i]->translate(vec.x, vec.y);
                                         _detector.update(crushed_objects[i]);
                                     }
-                                }
-                                else
-                                {
-                                    crushed_objects[i]->translate(tx, ty);
-                                    _detector.update(crushed_objects[i]);
+                                    else
+                                    {
+                                        crushed_objects.erase(crushed_objects.begin() + i--);
+                                        --count;
+                                    }
+                                    vec.clear();
                                 }
                             }
                         }
                     }
                 }
-                return;
             }
         };
     }
