@@ -223,11 +223,21 @@ namespace Geo
 
         void gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
 
+        void gjk_furthest_point(const Geo::Circle &circle, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
+
         void support(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Point &start, Geo::Point &end, std::vector<Geo::Point> &points, Geo::Point &result);
+
+        bool is_inside(const Geo::Point &point, const Geo::Polygon &polygon);
 
         bool gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1);
 
         bool gjk(const Geo::AABBRect &rect, const Geo::Polygon &polygon);
+
+        bool gjk(const Geo::Circle &circle0, const Geo::Circle &circle1);
+
+        bool gjk(const Geo::Circle &circle, const Geo::Polygon &polygon);
+
+        bool gjk(const Geo::Polygon &polygon, const Geo::Circle &circle);
 
         double epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Vector &vec);
 
@@ -235,6 +245,11 @@ namespace Geo
 
         double epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Point &start, Geo::Point &end);
 
+        double epa(const Geo::Circle &circle0, const Geo::Circle &circle1, const double tx, const double ty, Geo::Vector &vec);
+
+        double epa(const Geo::Circle &circle, const Geo::Polygon &polygon, const double tx, const double ty, Geo::Vector &vec);
+
+        double epa(const Geo::Polygon &polygon, const Geo::Circle &circle, const double tx, const double ty, Geo::Vector &vec);
 
         template <typename T = GridMap>
         class CollisionDetector
@@ -407,7 +422,52 @@ namespace Geo
                                 if (object->type() == Geo::Type::CONTAINER && crushed_objects[i]->type() == Geo::Type::CONTAINER &&
                                     Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), tx, ty, vec) > 0)
                                 {
-                                    if (vec.x * tx + vec.y * ty >= 0)
+                                    if (vec.x * tx + vec.y * ty > 0)
+                                    {
+                                        crushed_objects[i]->translate(vec.x, vec.y);
+                                        _detector.update(crushed_objects[i]);
+                                    }
+                                    else
+                                    {
+                                        crushed_objects.erase(crushed_objects.begin() + i--);
+                                        --count;
+                                    }
+                                    vec.clear();
+                                }
+                                else if (object->type() == Geo::Type::CONTAINER && crushed_objects[i]->type() == Geo::Type::CIRCLECONTAINER &&
+                                    Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Circle *>(crushed_objects[i]), tx, ty, vec) > 0)
+                                {
+                                    if (vec.x * tx + vec.y * ty > 0)
+                                    {
+                                        crushed_objects[i]->translate(vec.x, vec.y);
+                                        _detector.update(crushed_objects[i]);
+                                    }
+                                    else
+                                    {
+                                        crushed_objects.erase(crushed_objects.begin() + i--);
+                                        --count;
+                                    }
+                                    vec.clear();
+                                }
+                                else if (object->type() == Geo::Type::CIRCLECONTAINER && crushed_objects[i]->type() == Geo::Type::CONTAINER &&
+                                    Collision::epa(*static_cast<Geo::Circle *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), tx, ty, vec) > 0)
+                                {
+                                    if (vec.x * tx + vec.y * ty > 0)
+                                    {
+                                        crushed_objects[i]->translate(vec.x, vec.y);
+                                        _detector.update(crushed_objects[i]);
+                                    }
+                                    else
+                                    {
+                                        crushed_objects.erase(crushed_objects.begin() + i--);
+                                        --count;
+                                    }
+                                    vec.clear();
+                                }
+                                else if (object->type() == Geo::Type::CIRCLECONTAINER && crushed_objects[i]->type() == Geo::Type::CIRCLECONTAINER &&
+                                    Collision::epa(*static_cast<Geo::Circle *>(object), *static_cast<Geo::Circle *>(crushed_objects[i]), tx, ty, vec) > 0)
+                                {
+                                    if (vec.x * tx + vec.y * ty > 0)
                                     {
                                         crushed_objects[i]->translate(vec.x, vec.y);
                                         _detector.update(crushed_objects[i]);

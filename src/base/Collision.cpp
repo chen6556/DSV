@@ -1503,6 +1503,24 @@ void Collision::gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &
     }
 }
 
+void Collision::gjk_furthest_point(const Geo::Circle &circle, const Geo::Point &start, const Geo::Point &end, Geo::Point &result)
+{
+    result = circle;
+    result += ((end - start).normalize() * circle.radius);
+}
+
+bool Collision::is_inside(const Geo::Point &point, const Geo::Polygon &polygon)
+{
+    for (size_t i = 2, count = polygon.size(); i < count; ++i)
+    {
+        if (Geo::is_inside(point, polygon.front(), polygon[i - 1], polygon[i]))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 void Collision::support(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Point &start, Geo::Point &end, std::vector<Geo::Point> &points, Geo::Point &result)
 {
     Geo::Point point0, point1, vec0, vec1;
@@ -1682,6 +1700,38 @@ bool Collision::gjk(const Geo::AABBRect &rect, const Geo::Polygon &polygon)
         }
         Geo::foot_point(triangle[0], triangle[1], end, start, true);
     }
+}
+
+bool Collision::gjk(const Geo::Circle &circle0, const Geo::Circle &circle1)
+{
+    return std::pow(circle0.x - circle1.x, 2) +  std::pow(circle0.y - circle1.y, 2)
+        <= std::pow(circle0.radius + circle1.radius, 2);
+}
+
+bool Collision::gjk(const Geo::Circle &circle, const Geo::Polygon &polygon)
+{
+    const double length = circle.radius * circle.radius;
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        if (Geo::distance_square(circle, polygon[i - 1], polygon[i]) <= length)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Collision::gjk(const Geo::Polygon &polygon, const Geo::Circle &circle)
+{
+    const double length = circle.radius * circle.radius;
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        if (Geo::distance_square(circle, polygon[i - 1], polygon[i]) <= length)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Vector &vec)
@@ -2161,3 +2211,159 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
     }
 }
 
+double Collision::epa(const Geo::Circle &circle0, const Geo::Circle &circle1, const double tx, const double ty, Geo::Vector &vec)
+{
+    vec.clear();
+    const double length = Geo::distance(circle0, circle1);
+    if (length < circle0.radius + circle1.radius)
+    {
+        vec = (circle1 - circle0).normalize() * (circle0.radius + circle1.radius - length) / 2;
+        return (circle0.radius + circle1.radius - length) / 2;
+    }
+    else if (length == circle0.radius + circle1.radius)
+    {
+        return 0;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+double Collision::epa(const Geo::Circle &circle, const Geo::Polygon &polygon, const double tx, const double ty, Geo::Vector &vec)
+{
+    double length = DBL_MAX, distance = 0;
+    size_t index = 1;
+    vec.clear();
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        distance = Geo::distance_square(circle, polygon[i - 1], polygon[i]);
+        if (distance < length)
+        {
+            length = distance;
+            index = i;
+        }
+    }
+    if (length > circle.radius * circle.radius)
+    {
+        return -1;
+    }
+    else if (length == circle.radius * circle.radius)
+    {
+        return 0;
+    }
+
+    Geo::Point point;
+    if (Collision::is_inside(circle, polygon))
+    {
+        if (Geo::foot_point(polygon[index - 1], polygon[index], circle, vec, false))
+        {
+            Collision::gjk_furthest_point(circle, vec, circle, point);
+            vec = point - vec;
+        }
+        else
+        {
+            if (Geo::distance_square(circle, polygon[index - 1]) <= Geo::distance_square(circle, polygon[index]))
+            {
+                Collision::gjk_furthest_point(circle, polygon[index - 1], circle, point);
+                vec = point - polygon[index - 1];
+            }
+            else
+            {
+                Collision::gjk_furthest_point(circle, polygon[index], circle, point);
+                vec = point - polygon[index];
+            }
+        }
+    }
+    else
+    {
+        if (Geo::foot_point(polygon[index - 1], polygon[index], circle, vec, false))
+        {
+            Collision::gjk_furthest_point(circle, circle, vec, point);
+            vec = point - vec;
+        }
+        else
+        {
+            if (Geo::distance_square(circle, polygon[index - 1]) <= Geo::distance_square(circle, polygon[index]))
+            {
+                Collision::gjk_furthest_point(circle, circle, polygon[index - 1], point);
+                vec = point - polygon[index - 1];
+            }
+            else
+            {
+                Collision::gjk_furthest_point(circle, circle, polygon[index], point);
+                vec = point - polygon[index];
+            }
+        }
+    }
+    return vec.length();
+}
+
+double Collision::epa(const Geo::Polygon &polygon, const Geo::Circle &circle, const double tx, const double ty, Geo::Vector &vec)
+{
+    double length = DBL_MAX, distance = 0;
+    size_t index = 1;
+    vec.clear();
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        distance = Geo::distance_square(circle, polygon[i - 1], polygon[i]);
+        if (distance < length)
+        {
+            length = distance;
+            index = i;
+        }
+    }
+    if (length > circle.radius * circle.radius)
+    {
+        return -1;
+    }
+    else if (length == circle.radius * circle.radius)
+    {
+        return 0;
+    }
+
+    Geo::Point point;
+    if (Collision::is_inside(circle, polygon))
+    {
+        if (Geo::foot_point(polygon[index - 1], polygon[index], circle, vec, false))
+        {
+            Collision::gjk_furthest_point(circle, vec, circle, point);
+            vec -= point;
+        }
+        else
+        {
+            if (Geo::distance_square(circle, polygon[index - 1]) <= Geo::distance_square(circle, polygon[index]))
+            {
+                Collision::gjk_furthest_point(circle, polygon[index - 1], circle, point);
+                vec = polygon[index - 1] - point;
+            }
+            else
+            {
+                Collision::gjk_furthest_point(circle, polygon[index], circle, point);
+                vec = polygon[index] - point;
+            }
+        }
+    }
+    else
+    {
+        if (Geo::foot_point(polygon[index - 1], polygon[index], circle, vec, false))
+        {
+            Collision::gjk_furthest_point(circle, circle, vec, point);
+            vec -= point;
+        }
+        else
+        {
+            if (Geo::distance_square(circle, polygon[index - 1]) <= Geo::distance_square(circle, polygon[index]))
+            {
+                Collision::gjk_furthest_point(circle, circle, polygon[index - 1], point);
+                vec = polygon[index - 1] - point;
+            }
+            else
+            {
+                Collision::gjk_furthest_point(circle, circle, polygon[index], point);
+                vec = polygon[index] - point;
+            }
+        }
+    }
+    return vec.length();
+}
