@@ -1,9 +1,7 @@
 #pragma once
-#include <set>
-#include <list>
+#include <deque>
 #include <vector>
 #include <utility>
-#include <QLineF>
 #include "base/Geometry.hpp"
 #include "draw/Container.hpp"
 
@@ -398,89 +396,68 @@ namespace Geo
 
             void collision_translate(Geo::Geometry *object, const double tx, const double ty)
             {
-                std::vector<Geo::Geometry *> crushed_objects({object});
+                std::deque<Geo::Geometry *> crushed_objects({object});
                 std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> moved_object_pairs;
-                size_t index = 0;
+                std::vector<Geo::Geometry *> current_objects;
                 Geo::Point vec;
                 while (!crushed_objects.empty())
                 {
                     object = crushed_objects.back();
                     crushed_objects.pop_back();
-                    index = crushed_objects.size();
-                    if (_detector.find_collision_objects(object, crushed_objects, false))
+                    if (_detector.find_collision_objects(object, current_objects))
                     {
-                        for (size_t i = index, count = crushed_objects.size(); i < count; ++i)
+                        for (Geo::Geometry *current_object : current_objects)
                         {
-                            if (pair_in_pairs(moved_object_pairs, object, crushed_objects[i], true))
+                            if (!pair_in_pairs(moved_object_pairs, object, current_object, true))
                             {
-                                crushed_objects.erase(crushed_objects.begin() + i--);
-                                --count;
-                            }
-                            else
-                            {
-                                moved_object_pairs.emplace_back(object, crushed_objects[i]);
-                                if (object->type() == Geo::Type::CONTAINER && crushed_objects[i]->type() == Geo::Type::CONTAINER &&
-                                    Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), tx, ty, vec) > 0)
+                                moved_object_pairs.emplace_back(object, current_object);
+                                if (object->type() == Geo::Type::CONTAINER && current_object->type() == Geo::Type::CONTAINER &&
+                                    Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(current_object), tx, ty, vec) > 0)
                                 {
                                     if (vec.x * tx + vec.y * ty > 0)
                                     {
-                                        crushed_objects[i]->translate(vec.x, vec.y);
-                                        _detector.update(crushed_objects[i]);
-                                    }
-                                    else
-                                    {
-                                        crushed_objects.erase(crushed_objects.begin() + i--);
-                                        --count;
+                                        current_object->translate(vec.x, vec.y);
+                                        _detector.update(current_object);
+                                        crushed_objects.push_back(current_object);
                                     }
                                     vec.clear();
                                 }
-                                else if (object->type() == Geo::Type::CONTAINER && crushed_objects[i]->type() == Geo::Type::CIRCLECONTAINER &&
-                                    Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Circle *>(crushed_objects[i]), tx, ty, vec) > 0)
+                                else if (object->type() == Geo::Type::CONTAINER && current_object->type() == Geo::Type::CIRCLECONTAINER &&
+                                    Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Circle *>(current_object), tx, ty, vec) > 0)
                                 {
                                     if (vec.x * tx + vec.y * ty > 0)
                                     {
-                                        crushed_objects[i]->translate(vec.x, vec.y);
-                                        _detector.update(crushed_objects[i]);
-                                    }
-                                    else
-                                    {
-                                        crushed_objects.erase(crushed_objects.begin() + i--);
-                                        --count;
+                                        current_object->translate(vec.x, vec.y);
+                                        _detector.update(current_object);
+                                        crushed_objects.push_back(current_object);
                                     }
                                     vec.clear();
                                 }
-                                else if (object->type() == Geo::Type::CIRCLECONTAINER && crushed_objects[i]->type() == Geo::Type::CONTAINER &&
-                                    Collision::epa(*static_cast<Geo::Circle *>(object), *static_cast<Geo::Polygon *>(crushed_objects[i]), tx, ty, vec) > 0)
+                                else if (object->type() == Geo::Type::CIRCLECONTAINER && current_object->type() == Geo::Type::CONTAINER &&
+                                    Collision::epa(*static_cast<Geo::Circle *>(object), *static_cast<Geo::Polygon *>(current_object), tx, ty, vec) > 0)
                                 {
                                     if (vec.x * tx + vec.y * ty > 0)
                                     {
-                                        crushed_objects[i]->translate(vec.x, vec.y);
-                                        _detector.update(crushed_objects[i]);
-                                    }
-                                    else
-                                    {
-                                        crushed_objects.erase(crushed_objects.begin() + i--);
-                                        --count;
+                                        current_object->translate(vec.x, vec.y);
+                                        _detector.update(current_object);
+                                        crushed_objects.push_back(current_object);
                                     }
                                     vec.clear();
                                 }
-                                else if (object->type() == Geo::Type::CIRCLECONTAINER && crushed_objects[i]->type() == Geo::Type::CIRCLECONTAINER &&
-                                    Collision::epa(*static_cast<Geo::Circle *>(object), *static_cast<Geo::Circle *>(crushed_objects[i]), tx, ty, vec) > 0)
+                                else if (object->type() == Geo::Type::CIRCLECONTAINER && current_object->type() == Geo::Type::CIRCLECONTAINER &&
+                                    Collision::epa(*static_cast<Geo::Circle *>(object), *static_cast<Geo::Circle *>(current_object), tx, ty, vec) > 0)
                                 {
                                     if (vec.x * tx + vec.y * ty > 0)
                                     {
-                                        crushed_objects[i]->translate(vec.x, vec.y);
-                                        _detector.update(crushed_objects[i]);
-                                    }
-                                    else
-                                    {
-                                        crushed_objects.erase(crushed_objects.begin() + i--);
-                                        --count;
+                                        current_object->translate(vec.x, vec.y);
+                                        _detector.update(current_object);
+                                        crushed_objects.push_back(current_object);
                                     }
                                     vec.clear();
                                 }
                             }
                         }
+                        current_objects.clear();
                     }
                 }
             }
