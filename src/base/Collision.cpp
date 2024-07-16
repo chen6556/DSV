@@ -1888,7 +1888,7 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
         }
     }
 
-    return vec.length();
+    return vec.Geo::Point::length();
 }
 
 double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, const double tx, const double ty, Geo::Vector &vec)
@@ -2075,7 +2075,7 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
             }
         }
     }
-    return vec.length();
+    return vec.Geo::Point::length();
 }
 
 double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Point &start0, Geo::Point &end0)
@@ -2217,8 +2217,8 @@ double Collision::epa(const Geo::Circle &circle0, const Geo::Circle &circle1, co
     const double length = Geo::distance(circle0, circle1);
     if (length < circle0.radius + circle1.radius)
     {
-        vec = (circle1 - circle0).normalize() * (circle0.radius + circle1.radius - length) / 2;
-        return (circle0.radius + circle1.radius - length) / 2;
+        vec = (circle1 - circle0).normalize() * (circle0.radius + circle1.radius - length);
+        return circle0.radius + circle1.radius - length;
     }
     else if (length == circle0.radius + circle1.radius)
     {
@@ -2296,7 +2296,7 @@ double Collision::epa(const Geo::Circle &circle, const Geo::Polygon &polygon, co
             }
         }
     }
-    return vec.length();
+    return vec.Geo::Point::length();
 }
 
 double Collision::epa(const Geo::Polygon &polygon, const Geo::Circle &circle, const double tx, const double ty, Geo::Vector &vec)
@@ -2365,5 +2365,5 @@ double Collision::epa(const Geo::Polygon &polygon, const Geo::Circle &circle, co
             }
         }
     }
-    return vec.length();
+    return vec.Geo::Point::length();
 }

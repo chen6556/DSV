@@ -105,7 +105,7 @@ const bool Point::operator!=(const Point &point) const
 
 Point &Point::normalize()
 {
-    const double len = length();
+    const double len = std::sqrt(x * x + y * y);
     x /= len;
     y /= len;
     return *this;
@@ -113,7 +113,7 @@ Point &Point::normalize()
 
 Point Point::normalized() const
 {
-    const double len = length();
+    const double len = std::sqrt(x * x + y * y);
     return Point(x / len, y / len);
 }
 
@@ -183,7 +183,7 @@ void Point::scale(const double x_, const double y_, const double k)
 
 AABBRect Point::bounding_rect() const
 {
-    if (length() == 0)
+    if (std::sqrt(x * x + y * y) == 0)
     {
         return AABBRect();
     }
@@ -195,7 +195,7 @@ AABBRect Point::bounding_rect() const
 
 Polygon Point::mini_bounding_rect() const
 {
-    if (length() == 0)
+    if (std::sqrt(x * x + y * y) == 0)
     {
         return Polygon();
     }
