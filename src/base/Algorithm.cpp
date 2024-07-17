@@ -153,8 +153,8 @@ double Geo::distance(const Point &point, const Point &start, const Point &end, c
 
 double Geo::distance(const Point &point, const Polyline &polyline)
 {
-    double dis = DBL_MAX;
-    for (size_t i = 1, count = polyline.size(); i < count; ++i)
+    double dis = Geo::distance(point, polyline.front(), polyline[1]);
+    for (size_t i = 2, count = polyline.size(); i < count; ++i)
     {
         dis = std::min(dis, Geo::distance(point, polyline[i - 1], polyline[i]));
     }
@@ -163,10 +163,174 @@ double Geo::distance(const Point &point, const Polyline &polyline)
 
 double Geo::distance(const Point &point, const Polygon &polygon)
 {
-    double dis = DBL_MAX;
-    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    double dis = Geo::distance(point, polygon.front(), polygon[1]);
+    for (size_t i = 2, count = polygon.size(); i < count; ++i)
     {
         dis = std::min(dis, Geo::distance(point, polygon[i - 1], polygon[i]));
+    }
+    return dis;
+}
+
+
+double Geo::distance_square(const double x0, const double y0, const double x1, const double y1)
+{
+    return (x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1);
+}
+
+double Geo::distance_square(const Point &point0, const Point &point1)
+{
+    return (point0.x - point1.x) * (point0.x - point1.x)
+        + (point0.y - point1.y) * (point0.y - point1.y);
+}
+
+double Geo::distance_square(const Point &point, const Line &line, const bool infinite)
+{
+    if (line.front().x == line.back().x)
+    {
+        if (infinite)
+        {
+            return std::pow(point.x - line.front().x, 2);
+        }
+        else
+        {
+            if ((point.y >= line.front().y && point.y <= line.back().y) ||
+                (point.y <= line.front().y && point.y >= line.back().y))
+            {
+                return std::pow(point.x - line.front().x, 2);
+            }
+            else
+            {
+                return std::min(Geo::distance_square(point, line.front()), Geo::distance_square(point, line.back()));
+            }
+        }
+    }
+    else if (line.front().y == line.back().y)
+    {
+        if (infinite)
+        {
+            return std::pow(point.y - line.front().y, 2);
+        }
+        else
+        {
+            if ((point.x >= line.front().x && point.x <= line.back().x) ||
+                (point.x <= line.front().x && point.x >= line.back().x))
+            {
+                return std::pow(point.y - line.front().y, 2);
+            }
+            else
+            {
+                return std::min(Geo::distance_square(point, line.front()), Geo::distance_square(point, line.back()));
+            }
+        }
+    }
+    
+    const double a = line.back().y - line.front().y, 
+                b = line.front().x - line.back().x,
+                c = line.back().x * line.front().y - line.front().x * line.back().y;
+    if (infinite)
+    {
+        return std::pow(a * point.x + b * point.y + c, 2) / (a * a + b * b);
+    }
+    else
+    {
+        const double k = ((point.x - line.front().x) * (line.back().x - line.front().x) +
+            (point.y - line.front().y) * (line.back().y - line.front().y)) /
+            (std::pow(line.back().x - line.front().x, 2) + std::pow(line.back().y - line.front().y, 2)); 
+        const double x = line.front().x + k * (line.back().x - line.front().x);
+
+        if ((x >= line.front().x && x <= line.back().x) || (x <= line.front().x && x >= line.back().x))
+        {
+            return std::pow(a * point.x + b * point.y + c, 2) / (a * a + b * b);
+        }
+        else
+        {
+            return std::min(Geo::distance_square(point, line.front()), Geo::distance_square(point, line.back()));
+        }
+    }
+}
+
+double Geo::distance_square(const Point &point, const Point &start, const Point &end, const bool infinite)
+{
+    if (start.x == end.x)
+    {
+        if (infinite)
+        {
+            return std::pow(point.x - start.x, 2);
+        }
+        else
+        {
+            if ((point.y >= start.y && point.y <= end.y) ||
+                (point.y <= start.y && point.y >= end.y))
+            {
+                return std::pow(point.x - start.x, 2);
+            }
+            else
+            {
+                return std::min(Geo::distance_square(point, start), Geo::distance_square(point, end));
+            }
+        }
+    }
+    else if (start.y == end.y)
+    {
+        if (infinite)
+        {
+            return std::pow(point.y - start.y, 2);
+        }
+        else
+        {
+            if ((point.x >= start.x && point.x <= end.x) ||
+                (point.x <= start.x && point.x >= end.x))
+            {
+                return std::pow(point.y - start.y, 2);
+            }
+            else
+            {
+                return std::min(Geo::distance_square(point, start), Geo::distance_square(point, end));
+            }
+        }
+    }
+    
+    const double a = end.y - start.y, 
+                b = start.x - end.x,
+                c = end.x * start.y - start.x * end.y;
+    if (infinite)
+    {
+        return std::pow(a * point.x + b * point.y + c, 2) / (a * a + b * b);
+    }
+    else
+    {
+        const double k = ((point.x - start.x) * (end.x - start.x) +
+            (point.y - start.y) * (end.y - start.y)) /
+            (std::pow(end.x - start.x, 2) + std::pow(end.y - start.y, 2)); 
+        const double x = start.x + k * (end.x - start.x);
+
+        if ((x >= start.x && x <= end.x) || (x <= start.x && x >= end.x))
+        {
+            return std::pow(a * point.x + b * point.y + c, 2) / (a * a + b * b);
+        }
+        else
+        {
+            return std::min(Geo::distance_square(point, start), Geo::distance_square(point, end));
+        }
+    }
+}
+
+double Geo::distance_square(const Point &point, const Polyline &polyline)
+{
+    double dis = Geo::distance_square(point, polyline.front(), polyline[1]);
+    for (size_t i = 2, count = polyline.size(); i < count; ++i)
+    {
+        dis = std::min(dis, Geo::distance_square(point, polyline[i - 1], polyline[i]));
+    }
+    return dis;
+}
+
+double Geo::distance_square(const Point &point, const Polygon &polygon)
+{
+    double dis = Geo::distance_square(point, polygon.front(), polygon[1]);
+    for (size_t i = 2, count = polygon.size(); i < count; ++i)
+    {
+        dis = std::min(dis, Geo::distance_square(point, polygon[i - 1], polygon[i]));
     }
     return dis;
 }
@@ -403,11 +567,11 @@ bool Geo::is_inside(const Point &point, const Circle &circle, const bool coincid
     }
     if (coincide)
     {
-        return Geo::distance(point, circle) <= circle.radius;
+        return Geo::distance_square(point, circle) <= circle.radius * circle.radius;
     }
     else
     {
-        return Geo::distance(point, circle) < circle.radius;
+        return Geo::distance_square(point, circle) < circle.radius * circle.radius;
     }
 }
 
@@ -803,9 +967,10 @@ bool Geo::is_intersected(const Polyline &polyline, const Polygon &polygon, const
 
 bool Geo::is_intersected(const Polyline &polyline, const Circle &circle)
 {
+    const double length = circle.radius * circle.radius;
     for (size_t i = 0, count = polyline.size(); i < count; ++i)
     {
-        if (Geo::distance(circle, polyline[i - 1], polyline[i]) < circle.radius)
+        if (Geo::distance_square(circle, polyline[i - 1], polyline[i]) < length)
         {
             return true;
         }
@@ -852,9 +1017,10 @@ bool Geo::is_intersected(const Polygon &polygon0, const Polygon &polygon1, const
 
 bool Geo::is_intersected(const Polygon &polygon, const Circle &circle, const bool inside)
 {
+    const double length = circle.radius * circle.radius;
     for (size_t i = 1, count = polygon.size(); i < count; ++i)
     {
-        if (Geo::distance(circle, polygon[i - 1], polygon[i]) < circle.radius)
+        if (Geo::distance_square(circle, polygon[i - 1], polygon[i]) < length)
         {
             return true;
         }
@@ -985,9 +1151,10 @@ bool Geo::is_intersected(const AABBRect &rect, const Circle &circle)
             return true;
         }
     }
+    const double length = circle.radius * circle.radius;
     for (size_t i = 1; i < 5; ++i)
     {
-        if (Geo::distance(circle, rect[i-1], rect[i]) <= circle.radius)
+        if (Geo::distance_square(circle, rect[i-1], rect[i]) <= length)
         {
             return true;
         }
@@ -1045,8 +1212,8 @@ bool Geo::is_Rectangle(const Polygon &polygon)
         return false;
     }
 
-    if (Geo::distance(points[0], points[1]) == Geo::distance(points[2], points[3]) &&
-        Geo::distance(points[1], points[2]) == Geo::distance(points[0], points[3]))
+    if (Geo::distance_square(points[0], points[1]) == Geo::distance_square(points[2], points[3]) &&
+        Geo::distance_square(points[1], points[2]) == Geo::distance_square(points[0], points[3]))
     {
         const Geo::Point vec0 = points[0] - points[1], vec1 = points[2] - points[1];
         return std::abs(vec0.x * vec1.x + vec0.y * vec1.y) == 0;
@@ -2152,7 +2319,7 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
 
         points.assign(points0.begin() + i, j < count ? points0.begin() + j : points0.end());
         std::sort(points.begin(), points.end(), [&](const MarkedPoint &p0, const MarkedPoint &p1)
-            { return Geo::distance(p0, points0[i - 1]) < Geo::distance(p1, points0[i - 1]); });
+            { return Geo::distance_square(p0, points0[i - 1]) < Geo::distance_square(p1, points0[i - 1]); });
         for (size_t k = i, n = 0; k < j; ++k)
         {
             points0[k] = points[n++];
@@ -2200,7 +2367,7 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
 
         points.assign(points1.begin() + i, j < count ? points1.begin() + j : points1.end());
         std::sort(points.begin(), points.end(), [&](const MarkedPoint &p0, const MarkedPoint &p1)
-            { return Geo::distance(p0, points1[i - 1]) < Geo::distance(p1, points1[i - 1]); });
+            { return Geo::distance_square(p0, points1[i - 1]) < Geo::distance_square(p1, points1[i - 1]); });
         for (size_t k = i, n = 0; k < j; ++k)
         {
             points1[k] = points[n++];
@@ -2958,7 +3125,7 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
 
         points.assign(points0.begin() + i, j < count ? points0.begin() + j : points0.end());
         std::sort(points.begin(), points.end(), [&](const MarkedPoint &p0, const MarkedPoint &p1)
-            { return Geo::distance(p0, points0[i - 1]) < Geo::distance(p1, points0[i - 1]); });
+            { return Geo::distance_square(p0, points0[i - 1]) < Geo::distance_square(p1, points0[i - 1]); });
         for (size_t k = i, n = 0; k < j; ++k)
         {
             points0[k] = points[n++];
@@ -2987,7 +3154,7 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
 
         points.assign(points1.begin() + i, j < count ? points1.begin() + j : points1.end());
         std::sort(points.begin(), points.end(), [&](const MarkedPoint &p0, const MarkedPoint &p1)
-            { return Geo::distance(p0, points1[i - 1]) < Geo::distance(p1, points1[i - 1]); });
+            { return Geo::distance_square(p0, points1[i - 1]) < Geo::distance_square(p1, points1[i - 1]); });
         for (size_t k = i, n = 0; k < j; ++k)
         {
             points1[k] = points[n++];

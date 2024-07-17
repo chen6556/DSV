@@ -2063,10 +2063,10 @@ bool Canvas::is_visible(const Geo::Polyline &polyline) const
         return true;
     }
     const Geo::Point center(_visible_area.center());
-    const double len = std::min(_visible_area.width(), _visible_area.height());
+    const double len = std::pow(std::min(_visible_area.width(), _visible_area.height()), 2);
     for (size_t i = 1, count = polyline.size(); i < count; ++i)
     {
-        if (is_visible(polyline[i]) || Geo::distance(center, polyline[i - 1], polyline[i]) < len)
+        if (is_visible(polyline[i]) || Geo::distance_square(center, polyline[i - 1], polyline[i]) < len)
         {
             return true;
         }
@@ -2081,10 +2081,10 @@ bool Canvas::is_visible(const Geo::Polygon &polygon) const
         return false;
     }
     const Geo::Point center(_visible_area.center());
-    const double len = std::min(_visible_area.width(), _visible_area.height());
+    const double len = std::pow(std::min(_visible_area.width(), _visible_area.height()), 2);
     for (size_t i = 1, count = polygon.size(); i < count; ++i)
     {
-        if (is_visible(polygon[i - 1]) || Geo::distance(center, polygon[i - 1], polygon[i]) < len)
+        if (is_visible(polygon[i - 1]) || Geo::distance_square(center, polygon[i - 1], polygon[i]) < len)
         {
             return true;
         }

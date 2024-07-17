@@ -269,8 +269,8 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                 for (Geo::Point &point : temp->shape())
                 {
                     ++count;
-                    if (Geo::distance(x0, y0, point.x, point.y) <= catch_distance ||
-                        Geo::distance(x1, y1, point.x, point.y) <= catch_distance)
+                    if (Geo::distance_square(x0, y0, point.x, point.y) <= catch_distance * catch_distance ||
+                        Geo::distance_square(x1, y1, point.x, point.y) <= catch_distance * catch_distance)
                     {
                         if (temp->size() == 5)
                         {
@@ -354,8 +354,8 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             {
                 for (Geo::Point &point : *temp)
                 {
-                    if (Geo::distance(x0, y0, point.x, point.y) <= catch_distance ||
-                        Geo::distance(x1, y1, point.x, point.y) <= catch_distance)
+                    if (Geo::distance_square(x0, y0, point.x, point.y) <= catch_distance * catch_distance ||
+                        Geo::distance_square(x1, y1, point.x, point.y) <= catch_distance * catch_distance)
                     {
                         point.translate(x1 - x0, y1 - y0);
                         _graph->modified = true;
@@ -373,8 +373,8 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             {
                 for (size_t i = 0, count = temp->size(); i < count; ++i)
                 {
-                    if (Geo::distance(x0, y0, (*temp)[i].x, (*temp)[i].y) <= catch_distance ||
-                        Geo::distance(x1, y1, (*temp)[i].x, (*temp)[i].y) <= catch_distance)
+                    if (Geo::distance_square(x0, y0, (*temp)[i].x, (*temp)[i].y) <= catch_distance * catch_distance ||
+                        Geo::distance_square(x1, y1, (*temp)[i].x, (*temp)[i].y) <= catch_distance * catch_distance)
                     {
                         (*temp)[i].translate(x1 - x0, y1 - y0);
                         if (i > 2 && i % temp->order() == 1)
@@ -557,7 +557,7 @@ bool Editer::connect(std::list<Geo::Geometry *> objects, const double connect_di
         flag = false;
         for (size_t j = i + 1; j < count; ++j)
         {
-            if (Geo::distance(polylines[i]->front(), polylines[j]->front()) < connect_distance)
+            if (Geo::distance_square(polylines[i]->front(), polylines[j]->front()) < connect_distance * connect_distance)
             {
                 std::reverse(polylines[j]->begin(), polylines[j]->end());
                 if (polylines[i]->type() == Geo::Type::POLYLINE)
@@ -591,7 +591,7 @@ bool Editer::connect(std::list<Geo::Geometry *> objects, const double connect_di
                 }
                 flag = true;
             }
-            else if (Geo::distance(polylines[i]->front(), polylines[j]->back()) < connect_distance)
+            else if (Geo::distance_square(polylines[i]->front(), polylines[j]->back()) < connect_distance * connect_distance)
             {
                 if (polylines[i]->type() == Geo::Type::POLYLINE)
                 {
@@ -622,7 +622,7 @@ bool Editer::connect(std::list<Geo::Geometry *> objects, const double connect_di
                 }
                 flag = true;
             }
-            else if (Geo::distance(polylines[i]->back(), polylines[j]->front()) < connect_distance)
+            else if (Geo::distance_square(polylines[i]->back(), polylines[j]->front()) < connect_distance * connect_distance)
             {
                 if (polylines[i]->type() == Geo::Type::POLYLINE)
                 {
@@ -653,7 +653,7 @@ bool Editer::connect(std::list<Geo::Geometry *> objects, const double connect_di
                 }
                 flag = true;
             }
-            else if (Geo::distance(polylines[i]->back(), polylines[j]->back()) < connect_distance)
+            else if (Geo::distance_square(polylines[i]->back(), polylines[j]->back()) < connect_distance * connect_distance)
             {
                 std::reverse(polylines[j]->begin(), polylines[j]->end());
                 if (polylines[i]->type() == Geo::Type::POLYLINE)
@@ -1276,7 +1276,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        if (Geo::distance(point, dynamic_cast<const Geo::AABBRect *>(item)->center()) <= catch_distance * 10)
+                        if (Geo::distance_square(point, dynamic_cast<const Geo::AABBRect *>(item)->center()) <= catch_distance * catch_distance * 100)
                         {
                             cb->is_selected = true;
                             return cb;
@@ -1300,7 +1300,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         p = dynamic_cast<Geo::Polyline *>(item);
                         for (size_t i = 1, count = p->size(); i < count; ++i)
                         {
-                            if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= catch_distance)
+                            if (Geo::distance_square(point, (*p)[i - 1], (*p)[i]) <= catch_distance * catch_distance)
                             {
                                 cb->is_selected = true;
                                 return cb;
@@ -1312,7 +1312,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         b = dynamic_cast<Geo::Bezier *>(item);
                         for (size_t i = 1, count = b->shape().size(); i < count; ++i)
                         {
-                            if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance)
+                            if (Geo::distance_square(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance * catch_distance)
                             {
                                 cb->is_selected = true;
                                 return cb;
@@ -1331,7 +1331,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             p = dynamic_cast<Geo::Polyline *>(*it);
             for (size_t i = 1, count = p->size(); i < count; ++i)
             {
-                if (Geo::distance(point, (*p)[i - 1], (*p)[i]) <= catch_distance)
+                if (Geo::distance_square(point, (*p)[i - 1], (*p)[i]) <= catch_distance * catch_distance)
                 {
                     p->is_selected = true;
                     return p;
@@ -1353,7 +1353,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             }
             for (size_t i = 1, count = b->shape().size(); i < count; ++i)
             {
-                if (Geo::distance(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance)
+                if (Geo::distance_square(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance * catch_distance)
                 {
                     b->is_selected = true;
                     return b;
