@@ -265,6 +265,13 @@ void Container::scale(const double x, const double y, const double k)
     y_position = k * y1 + y * (1 - k);
 }
 
+void Container::update()
+{
+    const double x = x_position, y = y_position;
+    Physics::PhysicalObject::update();
+    Geo::Polygon::translate(x_position - x, y_position - y);
+}
+
 // CircleContainer
 
 CircleContainer::CircleContainer(const Geo::Circle &shape)
@@ -371,6 +378,13 @@ void CircleContainer::scale(const double x, const double y, const double k)
     Geo::Circle::scale(x, y, k);
     x_position = this->x;
     y_position = this->y;
+}
+
+void CircleContainer::update()
+{
+    Physics::PhysicalObject::update();
+    this->x = x_position;
+    this->y = y_position;
 }
 
 // ContainerGroup

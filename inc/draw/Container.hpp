@@ -89,6 +89,8 @@ public:
     void rotate(const double x, const double y, const double rad) override; // 弧度制
 
     void scale(const double x, const double y, const double k) override;
+
+    void update() override;
 };
 
 class CircleContainer : public Geo::Circle, public Physics::PhysicalObject
@@ -138,6 +140,8 @@ public:
     void rotate(const double x, const double y, const double rad) override; // 弧度制
 
     void scale(const double x, const double y, const double k) override;
+
+    void update() override;
 };
 
 class Combination;

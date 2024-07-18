@@ -12,7 +12,7 @@ namespace Physics
         double x_velocity = 0;
         double y_velocity = 0;
         double x_acceleration = 0;
-        double y_acceleration = 0;
+        double y_acceleration = -1;
         double angular_velocity = 0;
         double rotation = 0;
 

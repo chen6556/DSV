@@ -1,3 +1,6 @@
+#include <thread>
+#include <chrono>
+
 #include <QPainterPath>
 
 #include "base/Algorithm.hpp"
@@ -14,6 +17,8 @@ Canvas::Canvas(QWidget *parent)
 
 Canvas::~Canvas()
 {
+    _is_running = false;
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     delete []_cache;
     delete _menu;
     delete _up;
@@ -50,6 +55,9 @@ void Canvas::init()
 void Canvas::bind_editer(Editer *editer)
 {
     _editer = editer;
+
+    QObject::connect(this, &Canvas::redraw_signal, this, &Canvas::redraw, Qt::ConnectionType::QueuedConnection);
+    std::thread(&Canvas::physical_update, this).detach();
 }
 
 
@@ -3648,6 +3656,52 @@ void Canvas::refresh_catached_points(const bool current_group_only)
     } 
 }
 
+
+void Canvas::physical_update()
+{
+    std::chrono::steady_clock::time_point start_point;
+    while (_is_running)
+    {
+        start_point = std::chrono::steady_clock::now();
+
+        if (_editer == nullptr || _editer->graph() == nullptr ||
+            _editer->graph()->container_groups().empty())
+        {
+            std::this_thread::sleep_until(start_point + std::chrono::milliseconds(33));
+            continue;
+        }
+
+        for (Geo::Geometry *container : _editer->graph()->container_groups().front())
+        {
+            if (dynamic_cast<Container *>(container) != nullptr)
+            {
+                static_cast<Container *>(container)->update();
+                if (static_cast<Container *>(container)->y_position < -1000)
+                {
+                    
+                }
+            }
+            else if (dynamic_cast<CircleContainer *>(container) != nullptr)
+            {
+                static_cast<CircleContainer *>(container)->update();
+            }
+            if (dynamic_cast<Physics::PhysicalObject *>(container) != nullptr)
+            {
+
+            }
+        }
+
+        std::this_thread::sleep_until(start_point + std::chrono::milliseconds(33));
+        emit redraw_signal();
+    }
+}
+
+void Canvas::redraw()
+{
+    refresh_vbo();
+    refresh_selected_ibo();
+    update();
+}
 
 
 size_t Canvas::points_count() const

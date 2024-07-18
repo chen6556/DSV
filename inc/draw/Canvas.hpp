@@ -65,8 +65,13 @@ private:
     QAction *_up = nullptr;
     QAction *_down = nullptr;
 
+    bool _is_running = true;
+
 private:
     void init();
+
+private slots:
+    void redraw();
 
 protected:
     void initializeGL();
@@ -88,6 +93,8 @@ protected:
 public:
 signals:
     void tool_changed(const Tool);
+
+    void redraw_signal();
 
 public:
     Canvas(QWidget *parent = nullptr);
@@ -213,6 +220,8 @@ public:
 
     void refresh_catached_points(const bool current_group_only = true);
 
+
+    void physical_update();
 
 
     size_t points_count() const;
