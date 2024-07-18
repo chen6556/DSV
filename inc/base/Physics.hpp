@@ -23,6 +23,8 @@ namespace Physics
 
         PhysicalObject(const PhysicalObject &object);
 
+        PhysicalObject &operator=(const PhysicalObject &object);
+
         void add_force(const double x, const double y);
 
         virtual void update();

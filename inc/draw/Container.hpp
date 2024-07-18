@@ -3,6 +3,7 @@
 #include <QString>
 
 #include "base/Geometry.hpp"
+#include "base/Physics.hpp"
 
 
 class Text : public Geo::AABBRect
@@ -41,7 +42,7 @@ public:
     Text *clone() const override;
 };
 
-class Container : public Geo::Polygon
+class Container : public Geo::Polygon, public Physics::PhysicalObject
 {
 private:
     QString _txt;
@@ -78,9 +79,19 @@ public:
     const bool empty() const override;
 
     Container *clone() const override;
+
+    void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
+
+    void transform(const double mat[6]) override;
+
+    void translate(const double tx, const double ty) override;
+
+    void rotate(const double x, const double y, const double rad) override; // 弧度制
+
+    void scale(const double x, const double y, const double k) override;
 };
 
-class CircleContainer : public Geo::Circle
+class CircleContainer : public Geo::Circle, public Physics::PhysicalObject
 {
 private:
     QString _txt;
@@ -117,6 +128,16 @@ public:
     const bool empty() const override;
 
     CircleContainer *clone() const override;
+
+    void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
+
+    void transform(const double mat[6]) override;
+
+    void translate(const double tx, const double ty) override;
+
+    void rotate(const double x, const double y, const double rad) override; // 弧度制
+
+    void scale(const double x, const double y, const double k) override;
 };
 
 class Combination;

@@ -18,6 +18,21 @@ Physics::PhysicalObject::PhysicalObject(const PhysicalObject &object)
 {
 }
 
+Physics::PhysicalObject &Physics::PhysicalObject::operator=(const PhysicalObject &object)
+{
+    if (this != &object)
+    {
+        this->mass = object.mass;
+        this->x_position = object.x_position;
+        this->y_position = object.y_position;
+        this->x_acceleration = object.x_acceleration;
+        this->y_acceleration = object.y_acceleration;
+        this->rotation = object.rotation;
+        this->angular_velocity = object.angular_velocity;
+    }
+    return *this;
+}
+
 void Physics::PhysicalObject::add_force(const double x, const double y)
 {
     x_acceleration += (x / mass);

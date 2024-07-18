@@ -4,7 +4,6 @@
 #include <utility>
 #include "base/Geometry.hpp"
 #include "draw/Container.hpp"
-#include "base/PhysicalShape.hpp"
 
 
 namespace Geo
@@ -447,51 +446,6 @@ namespace Geo
                                 }
                                 else if (object->type() == Geo::Type::CIRCLECONTAINER && current_object->type() == Geo::Type::CIRCLECONTAINER &&
                                     Collision::epa(*static_cast<Geo::Circle *>(object), *static_cast<Geo::Circle *>(current_object), tx, ty, vec) > 0)
-                                {
-                                    if (vec.x * tx + vec.y * ty > 0)
-                                    {
-                                        current_object->translate(vec.x, vec.y);
-                                        _detector.update(current_object);
-                                        crushed_objects.push_back(current_object);
-                                    }
-                                    vec.clear();
-                                }
-
-                                else if (object->type() == Geo::Type::PHYSICAL_POLYGON && current_object->type() == Geo::Type::PHYSICAL_POLYGON &&
-                                    Collision::epa(static_cast<Physics::PhysicalPolygon *>(object)->shape(), static_cast<Physics::PhysicalPolygon *>(current_object)->shape(), tx, ty, vec) > 0)
-                                {
-                                    if (vec.x * tx + vec.y * ty > 0)
-                                    {
-                                        current_object->translate(vec.x, vec.y);
-                                        _detector.update(current_object);
-                                        crushed_objects.push_back(current_object);
-                                    }
-                                    vec.clear();
-                                }
-                                else if (object->type() == Geo::Type::PHYSICAL_POLYGON && current_object->type() == Geo::Type::PHYSICAL_CIRCLE &&
-                                    Collision::epa(static_cast<Physics::PhysicalPolygon *>(object)->shape(), static_cast<Physics::PhysicalCircle *>(current_object)->shape(), tx, ty, vec) > 0)
-                                {
-                                    if (vec.x * tx + vec.y * ty > 0)
-                                    {
-                                        current_object->translate(vec.x, vec.y);
-                                        _detector.update(current_object);
-                                        crushed_objects.push_back(current_object);
-                                    }
-                                    vec.clear();
-                                }
-                                else if (object->type() == Geo::Type::PHYSICAL_CIRCLE && current_object->type() == Geo::Type::PHYSICAL_POLYGON &&
-                                    Collision::epa(static_cast<Physics::PhysicalCircle *>(object)->shape(), static_cast<Physics::PhysicalPolygon *>(current_object)->shape(), tx, ty, vec) > 0)
-                                {
-                                    if (vec.x * tx + vec.y * ty > 0)
-                                    {
-                                        current_object->translate(vec.x, vec.y);
-                                        _detector.update(current_object);
-                                        crushed_objects.push_back(current_object);
-                                    }
-                                    vec.clear();
-                                }
-                                else if (object->type() == Geo::Type::PHYSICAL_CIRCLE && current_object->type() == Geo::Type::PHYSICAL_CIRCLE &&
-                                    Collision::epa(static_cast<Physics::PhysicalCircle *>(object)->shape(), static_cast<Physics::PhysicalCircle *>(current_object)->shape(), tx, ty, vec) > 0)
                                 {
                                     if (vec.x * tx + vec.y * ty > 0)
                                     {

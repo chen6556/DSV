@@ -143,16 +143,25 @@ Text *Text::clone() const
 
 Container::Container(const Geo::Polygon &shape)
     : Geo::Polygon(shape)
-{}
+{
+    const Geo::Point center(shape.bounding_rect().center());
+    x_position = center.x;
+    y_position = center.y;
+}
 
 Container::Container(const QString &txt, const Geo::Polygon &shape)
     : Geo::Polygon(shape), _txt(txt)
-{}
+{
+    const Geo::Point center(shape.bounding_rect().center());
+    x_position = center.x;
+    y_position = center.y;
+}
 
 Container::Container(const Container &container)
     : Geo::Polygon(container), _txt(container._txt),
     text_index(container.text_index),
-    text_count(container.text_count)
+    text_count(container.text_count),
+    Physics::PhysicalObject(container)
 {}
 
 const Geo::Type Container::type() const
@@ -165,6 +174,7 @@ Container &Container::operator=(const Container &container)
     if (this != &container)
     {
         Geo::Polygon::operator=(container);
+        Physics::PhysicalObject::operator=(container);
         _txt = container._txt;
         text_index = container.text_index;
         text_count = container.text_count;
@@ -212,23 +222,67 @@ Container *Container::clone() const
     return new Container(*this);
 }
 
+void Container::transform(const double a, const double b, const double c, const double d, const double e, const double f)
+{
+    Geo::Polygon::transform(a, b, c, d, e, f);
+    const double x = x_position, y = y_position;
+    x_position = a * x + b * y + c;
+    y_position = d * x + e * y + f;
+}
+
+void Container::transform(const double mat[6])
+{
+    Geo::Polygon::transform(mat);
+    const double x = x_position, y = y_position;
+    x_position = mat[0] * x + mat[1] * y + mat[2];
+    y_position = mat[3] * x + mat[4] * y + mat[5];
+}
+
+void Container::translate(const double tx, const double ty)
+{
+    Geo::Polygon::translate(tx, ty);
+    x_position += tx;
+    y_position += ty;
+}
+
+void Container::rotate(const double x, const double y, const double rad)
+{
+    Geo::Polygon::rotate(x, y, rad);
+    x_position -= x;
+    y_position -= y;
+    const double x1 = x_position, y1 = y_position;
+    x_position = x1 * std::cos(rad) - y1 * std::sin(rad);
+    y_position = x1 * std::sin(rad) + y1 * std::cos(rad);
+    x_position += x;
+    y_position += y;
+}
+
+void Container::scale(const double x, const double y, const double k)
+{
+    Geo::Polygon::scale(x, y, k);
+    const double x1 = x_position, y1 = y_position;
+    x_position = k * x1 + x * (1 - k);
+    y_position = k * y1 + y * (1 - k);
+}
+
 // CircleContainer
 
 CircleContainer::CircleContainer(const Geo::Circle &shape)
-    : Geo::Circle(shape)
+    : Geo::Circle(shape), Physics::PhysicalObject(shape.x, shape.y)
 {}
 
 CircleContainer::CircleContainer(const QString &txt, const Geo::Circle &shape)
-    : Geo::Circle(shape), _txt(txt)
+    : Geo::Circle(shape), _txt(txt), Physics::PhysicalObject(shape.x, shape.y)
 {}
 
 CircleContainer::CircleContainer(const QString &txt, const double x, const double y, const double r)
-    : Geo::Circle(x, y, r), _txt(txt)
+    : Geo::Circle(x, y, r), _txt(txt), Physics::PhysicalObject(x, y)
 {}
 
 CircleContainer::CircleContainer(const CircleContainer &container)
     : Geo::Circle(container), _txt(container._txt),
-    text_index(container.text_index), text_count(container.text_count)
+    text_index(container.text_index), text_count(container.text_count),
+    Physics::PhysicalObject(container)
 {}
 
 const Geo::Type CircleContainer::type() const
@@ -241,6 +295,7 @@ CircleContainer &CircleContainer::operator=(const CircleContainer &container)
     if (this != &container)
     {
         Geo::Circle::operator=(container);
+        Physics::PhysicalObject::operator=(container);
         _txt = container._txt;
         text_index = container.text_index;
         text_count = container.text_count;
@@ -281,6 +336,41 @@ const bool CircleContainer::empty() const
 CircleContainer *CircleContainer::clone() const
 {
     return new CircleContainer(*this);
+}
+
+void CircleContainer::transform(const double a, const double b, const double c, const double d, const double e, const double f)
+{
+    Geo::Circle::transform(a, b, c, d, e, f);
+    x_position = this->x;
+    y_position = this->y;
+}
+
+void CircleContainer::transform(const double mat[6])
+{
+    Geo::Circle::transform(mat);
+    x_position = this->x;
+    y_position = this->y;
+}
+
+void CircleContainer::translate(const double tx, const double ty)
+{
+    Geo::Circle::translate(tx, ty);
+    x_position = this->x;
+    y_position = this->y;
+}
+
+void CircleContainer::rotate(const double x, const double y, const double rad)
+{
+    Geo::Circle::rotate(x, y, rad);
+    x_position = this->x;
+    y_position = this->y;
+}
+
+void CircleContainer::scale(const double x, const double y, const double k)
+{
+    Geo::Circle::scale(x, y, k);
+    x_position = this->x;
+    y_position = this->y;
 }
 
 // ContainerGroup
