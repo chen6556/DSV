@@ -348,6 +348,9 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             temp->translate(x1 - x0, y1 - y0);
         }
         break;
+    case Geo::Type::PHYSICAL_POLYGON:
+        dynamic_cast<Physics::PhysicalPolygon *>(points)->translate(x1 - x0, y1 - y0);
+        break;
     case Geo::Type::CIRCLECONTAINER:
         {
             CircleContainer *temp = dynamic_cast<CircleContainer *>(points);
@@ -362,6 +365,9 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                 temp->translate(x1 - x0, y1 - y0);
             }
         }
+        break;
+    case Geo::Type::PHYSICAL_CIRCLE:
+        dynamic_cast<Physics::PhysicalCircle *>(points)->translate(x1 - x0, y1 - y0);
         break;
     case Geo::Type::TEXT:
     case Geo::Type::COMBINATION:
@@ -1270,6 +1276,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
     Text *t = nullptr;
     Container *c = nullptr;
     CircleContainer *cc = nullptr;
+    Physics::PhysicalPolygon *pp = nullptr;
+    Physics::PhysicalCircle *pc = nullptr;
     Geo::Polyline *p = nullptr;
     Geo::Bezier *b = nullptr;
     Combination *cb = nullptr;
@@ -1300,6 +1308,15 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             }
             c = nullptr;
             break;
+        case Geo::Type::PHYSICAL_POLYGON:
+            pp = dynamic_cast<Physics::PhysicalPolygon *>(*it);
+            if (Geo::is_inside(point, pp->shape(), true))
+            {
+                pp->is_selected = true;
+                return pp;
+            }
+            pp = nullptr;
+            break;
         case Geo::Type::CIRCLECONTAINER:
             cc = dynamic_cast<CircleContainer *>(*it);
             if (Geo::is_inside(point, cc->shape(), true))
@@ -1310,6 +1327,15 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                 return cc;
             }
             cc = nullptr;
+            break;
+        case Geo::Type::PHYSICAL_CIRCLE:
+            pc = dynamic_cast<Physics::PhysicalCircle *>(*it);
+            if (Geo::is_inside(point, pc->shape(), true))
+            {
+                pc->is_selected = true;
+                return pc;
+            }
+            pc = nullptr;
             break;
         case Geo::Type::COMBINATION:
             cb = dynamic_cast<Combination *>(*it);
@@ -1468,8 +1494,30 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
                     container->is_selected = false;
                 }
                 break;
+            case Geo::Type::PHYSICAL_POLYGON:
+                if (Geo::is_intersected(rect, dynamic_cast<Physics::PhysicalPolygon *>(container)->shape()))
+                {
+                    container->is_selected = true;
+                    result.push_back(container);
+                }
+                else
+                {
+                    container->is_selected = false;
+                }
+                break;
             case Geo::Type::CIRCLECONTAINER:
                 if (Geo::is_intersected(rect, dynamic_cast<CircleContainer *>(container)->shape()))
+                {
+                    container->is_selected = true;
+                    result.push_back(container);
+                }
+                else
+                {
+                    container->is_selected = false;
+                }
+                break;
+            case Geo::Type::PHYSICAL_CIRCLE:
+                if (Geo::is_intersected(rect, dynamic_cast<Physics::PhysicalCircle *>(container)->shape()))
                 {
                     container->is_selected = true;
                     result.push_back(container);

@@ -39,39 +39,39 @@ namespace Physics
             x_position = center.x, y_position = center.y;
         }
 
-        const Type type() const override
+        const Geo::Type type() const override
         {
             if constexpr (std::is_same_v<T, Geo::Point>)
             {
-                return Geo::Type::PYHSICAL_POINT;
+                return Geo::Type::PHYSICAL_POINT;
             }
             else if constexpr (std::is_same_v<T, Geo::Polyline>)
             {
-                return Geo::Type::PYHSICAL_POLYLINE;
+                return Geo::Type::PHYSICAL_POLYLINE;
             }
             else if constexpr (std::is_same_v<T, Geo::AABBRect>)
             {
-                return Geo::Type::PYHSICAL_AABBRECT;
+                return Geo::Type::PHYSICAL_AABBRECT;
             }
             else if constexpr (std::is_same_v<T, Geo::Polygon>)
             {
-                return Geo::Type::PYHSICAL_POLYGON;
+                return Geo::Type::PHYSICAL_POLYGON;
             }
             else if constexpr (std::is_same_v<T, Geo::Triangle>)
             {
-                return Geo::Type::PYHSICAL_TRIANGLE;
+                return Geo::Type::PHYSICAL_TRIANGLE;
             }
             else if constexpr (std::is_same_v<T, Geo::Circle>)
             {
-                return Geo::Type::PYHSICAL_CIRCLE;
+                return Geo::Type::PHYSICAL_CIRCLE;
             }
             else if constexpr (std::is_same_v<T, Geo::Line>)
             {
-                return Geo::Type::PYHSICAL_LINE;
+                return Geo::Type::PHYSICAL_LINE;
             }
             else if constexpr (std::is_same_v<T, Geo::Bezier>)
             {
-                return Geo::Type::PYHSICAL_BEZIER;
+                return Geo::Type::PHYSICAL_BEZIER;
             }
             else
             {
@@ -94,9 +94,9 @@ namespace Physics
             return _shape.clear();
         }
 
-        Geo::Geometry *clone() const override
+        PhysicalShape<T> *clone() const override
         {
-            return new PhysicalObject(*this);
+            return new PhysicalShape<T>(*this);
         }
 
         void transform(const double a, const double b, const double c, const double d, const double e, const double f) override

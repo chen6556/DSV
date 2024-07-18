@@ -2,6 +2,7 @@
 #include <random>
 #include "base/Collision.hpp"
 #include "base/Algorithm.hpp"
+#include "base/PhysicalShape.hpp"
 
 
 using namespace Geo;
@@ -107,9 +108,21 @@ bool Collision::DirectMode::select(const Geo::Point &pos, std::vector<Geo::Geome
                 objects.push_back(object);
             }
             break;
+        case Geo::Type::PHYSICAL_POLYGON:
+            if (Geo::is_inside(pos, static_cast<Physics::PhysicalPolygon *>(object)->shape()))
+            {
+                objects.push_back(object);
+            }
+            break;
         case Geo::Type::CIRCLE:
         case Geo::Type::CIRCLECONTAINER:
             if (Geo::is_inside(pos, *static_cast<Geo::Circle *>(object)))
+            {
+                objects.push_back(object);
+            }
+            break;
+        case Geo::Type::PHYSICAL_CIRCLE:
+            if (Geo::is_inside(pos, static_cast<Physics::PhysicalCircle *>(object)->shape()))
             {
                 objects.push_back(object);
             }
@@ -165,9 +178,21 @@ bool Collision::DirectMode::select(const Geo::AABBRect &rect, std::vector<Geo::G
                 objects.push_back(object);
             }
             break;
+        case Geo::Type::PHYSICAL_POLYGON:
+            if (Geo::is_intersected(rect, static_cast<Physics::PhysicalPolygon *>(object)->shape()))
+            {
+                objects.push_back(object);
+            }
+            break;
         case Geo::Type::CIRCLE:
         case Geo::Type::CIRCLECONTAINER:
             if (Geo::is_intersected(rect, *static_cast<Geo::Circle *>(object)))
+            {
+                objects.push_back(object);
+            }
+            break;
+        case Geo::Type::PHYSICAL_CIRCLE:
+            if (Geo::is_intersected(rect, static_cast<Physics::PhysicalCircle *>(object)->shape()))
             {
                 objects.push_back(object);
             }
@@ -311,9 +336,21 @@ bool Collision::GridNode::select(const Geo::Point &pos, std::vector<Geo::Geometr
                 objects.push_back(object);
             }
             break;
+        case Geo::Type::PHYSICAL_POLYGON:
+            if (Geo::is_inside(pos, static_cast<Physics::PhysicalPolygon *>(object)->shape()))
+            {
+                objects.push_back(object);
+            }
+            break;
         case Geo::Type::CIRCLE:
         case Geo::Type::CIRCLECONTAINER:
             if (Geo::is_inside(pos, *static_cast<Geo::Circle *>(object)))
+            {
+                objects.push_back(object);
+            }
+            break;
+        case Geo::Type::PHYSICAL_CIRCLE:
+            if (Geo::is_inside(pos, static_cast<Physics::PhysicalCircle *>(object)->shape()))
             {
                 objects.push_back(object);
             }
@@ -369,9 +406,21 @@ bool Collision::GridNode::select(const Geo::AABBRect &rect, std::vector<Geo::Geo
                 objects.push_back(object);
             }
             break;
+        case Geo::Type::PHYSICAL_POLYGON:
+            if (Geo::is_intersected(rect, static_cast<Physics::PhysicalPolygon *>(object)->shape()))
+            {
+                objects.push_back(object);
+            }
+            break;
         case Geo::Type::CIRCLE:
         case Geo::Type::CIRCLECONTAINER:
             if (Geo::is_intersected(rect, *static_cast<Geo::Circle *>(object)))
+            {
+                objects.push_back(object);
+            }
+            break;
+        case Geo::Type::PHYSICAL_CIRCLE:
+            if (Geo::is_intersected(rect, static_cast<Physics::PhysicalCircle *>(object)->shape()))
             {
                 objects.push_back(object);
             }

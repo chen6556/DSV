@@ -6,6 +6,7 @@
 #include "base/EarCut/EarCut.hpp"
 #include "base/Algorithm.hpp"
 #include "base/Collision.hpp"
+#include "base/PhysicalShape.hpp"
 
 
 
@@ -1369,6 +1370,9 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
         case Geo::Type::POLYGON:
             return Geo::Collision::gjk(*static_cast<const Geo::Polygon *>(object0),
                 *static_cast<const Geo::Polygon *>(object1));
+        case Geo::Type::PHYSICAL_POLYGON:
+            return Geo::Collision::gjk(*static_cast<const Geo::Polygon *>(object0),
+                static_cast<const Physics::PhysicalPolygon *>(object1)->shape());
         case Geo::Type::AABBRECT:
             return Geo::Collision::gjk(*static_cast<const Geo::AABBRect *>(object1),
                 *static_cast<const Geo::Polygon *>(object0));
@@ -1382,6 +1386,38 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
         case Geo::Type::CIRCLE:
             return Geo::is_intersected(*static_cast<const Geo::Polygon *>(object0),
                 *static_cast<const Geo::Circle *>(object1));
+        case Geo::Type::PHYSICAL_CIRCLE:
+            return Geo::Collision::gjk(*static_cast<const Geo::Polygon *>(object0),
+                static_cast<const Physics::PhysicalCircle *>(object1)->shape());
+        default:
+            return false;
+        }
+    case Geo::Type::PHYSICAL_POLYGON:
+        switch (object1->type())
+        {
+        case Geo::Type::CONTAINER:
+        case Geo::Type::POLYGON:
+            return Geo::Collision::gjk(static_cast<const Physics::PhysicalPolygon *>(object0)->shape(),
+                *static_cast<const Geo::Polygon *>(object1));
+        case Geo::Type::PHYSICAL_POLYGON:
+            return Geo::Collision::gjk(static_cast<const Physics::PhysicalPolygon *>(object0)->shape(),
+                static_cast<const Physics::PhysicalPolygon *>(object1)->shape());
+        case Geo::Type::AABBRECT:
+            return Geo::Collision::gjk(*static_cast<const Geo::AABBRect *>(object1),
+                static_cast<const Physics::PhysicalPolygon *>(object0)->shape());
+        case Geo::Type::POLYLINE:
+            return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::Polyline *>(object1),
+                static_cast<const Physics::PhysicalPolygon *>(object0)->shape());
+        case Geo::Type::BEZIER:
+            return Geo::NoAABBTest::is_intersected(static_cast<const Geo::Bezier *>(object1)->shape(),
+                static_cast<const Physics::PhysicalPolygon *>(object0)->shape());
+        case Geo::Type::CIRCLECONTAINER:
+        case Geo::Type::CIRCLE:
+            return Geo::is_intersected(static_cast<const Physics::PhysicalPolygon *>(object0)->shape(),
+                *static_cast<const Geo::Circle *>(object1));
+        case Geo::Type::PHYSICAL_CIRCLE:
+            return Geo::Collision::gjk(static_cast<const Physics::PhysicalPolygon *>(object0)->shape(),
+                static_cast<const Physics::PhysicalCircle *>(object1)->shape());
         default:
             return false;
         }
@@ -1392,6 +1428,9 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
         case Geo::Type::POLYGON:
             return Geo::Collision::gjk(*static_cast<const Geo::AABBRect *>(object0),
                 *static_cast<const Geo::Polygon *>(object1));
+        case Geo::Type::PHYSICAL_POLYGON:
+            return Geo::Collision::gjk(*static_cast<const Geo::AABBRect *>(object0),
+                static_cast<const Physics::PhysicalPolygon *>(object1)->shape());
         case Geo::Type::AABBRECT:
             return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
                 *static_cast<const Geo::AABBRect *>(object1));
@@ -1405,6 +1444,9 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
         case Geo::Type::CIRCLE:
             return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
                 *static_cast<const Geo::Circle *>(object1));
+        case Geo::Type::PHYSICAL_CIRCLE:
+            return Geo::Collision::gjk(*static_cast<const Geo::AABBRect *>(object0),
+                static_cast<const Physics::PhysicalCircle *>(object1)->shape());
         default:
             return false;
         }
@@ -1415,6 +1457,9 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
         case Geo::Type::POLYGON:
             return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::Polyline *>(object0),
                 *static_cast<const Geo::Polygon *>(object1));
+        case Geo::Type::PHYSICAL_POLYGON:
+            return Geo::Collision::gjk(*static_cast<const Geo::Polyline *>(object0),
+                static_cast<const Physics::PhysicalPolygon *>(object1)->shape());
         case Geo::Type::AABBRECT:
             return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::AABBRect *>(object1),
                 *static_cast<const Geo::Polyline *>(object0));
@@ -1428,6 +1473,9 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
         case Geo::Type::CIRCLE:
             return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object0),
                 *static_cast<const Geo::Circle *>(object1));
+        case Geo::Type::PHYSICAL_CIRCLE:
+            return Geo::Collision::gjk(*static_cast<const Geo::Polyline *>(object0),
+                static_cast<const Physics::PhysicalCircle *>(object1)->shape());
         default:
             return false;
         }
@@ -1439,6 +1487,9 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
         case Geo::Type::POLYGON:
             return Geo::is_intersected(*static_cast<const Geo::Polygon *>(object1),
                 *static_cast<const Geo::Circle *>(object0));
+        case Geo::Type::PHYSICAL_POLYGON:
+            return Geo::Collision::gjk(*static_cast<const Geo::Polygon *>(object0),
+                static_cast<const Physics::PhysicalPolygon *>(object1)->shape());
         case Geo::Type::AABBRECT:
             return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object1),
                 *static_cast<const Geo::Circle *>(object0));
@@ -1452,6 +1503,32 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
         case Geo::Type::CIRCLE:
             return Geo::is_intersected(*static_cast<const Geo::Circle *>(object0),
                 *static_cast<const Geo::Circle *>(object1));
+        case Geo::Type::PHYSICAL_CIRCLE:
+            return Geo::Collision::gjk(*static_cast<const Geo::Polyline *>(object0),
+                static_cast<const Physics::PhysicalCircle *>(object1)->shape());
+        default:
+            return false;
+        }
+    case Geo::Type::PHYSICAL_CIRCLE:
+        switch (object1->type())
+        {
+        case Geo::Type::CONTAINER:
+        case Geo::Type::POLYGON:
+            return Geo::Collision::gjk(static_cast<const Physics::PhysicalCircle *>(object0)->shape(),
+                *static_cast<const Geo::Polygon *>(object1));
+        case Geo::Type::PHYSICAL_POLYGON:
+            return Geo::Collision::gjk(static_cast<const Physics::PhysicalCircle *>(object0)->shape(),
+                static_cast<const Physics::PhysicalPolygon *>(object1)->shape());
+        case Geo::Type::AABBRECT:
+            return Geo::Collision::gjk(*static_cast<const Geo::AABBRect *>(object1),
+                static_cast<const Physics::PhysicalCircle *>(object0)->shape());
+        case Geo::Type::CIRCLECONTAINER:
+        case Geo::Type::CIRCLE:
+            return Geo::is_intersected(static_cast<const Physics::PhysicalCircle *>(object0)->shape(),
+                *static_cast<const Geo::Circle *>(object1));
+        case Geo::Type::PHYSICAL_CIRCLE:
+            return Geo::Collision::gjk(static_cast<const Physics::PhysicalCircle *>(object0)->shape(),
+                static_cast<const Physics::PhysicalCircle *>(object1)->shape());
         default:
             return false;
         }
@@ -1467,6 +1544,8 @@ bool Geo::NoAABBTest::is_intersected(const Geo::AABBRect &rect, const Geo::Geome
     case Geo::Type::CONTAINER:
     case Geo::Type::POLYGON:
         return Geo::Collision::gjk(rect, *static_cast<const Geo::Polygon *>(object));
+    case Geo::Type::PHYSICAL_POLYGON:
+        return Geo::Collision::gjk(rect, static_cast<const Physics::PhysicalPolygon *>(object)->shape());
     case Geo::Type::AABBRECT:
         return Geo::is_intersected(rect, *static_cast<const Geo::AABBRect *>(object));
     case Geo::Type::POLYLINE:
@@ -1476,6 +1555,8 @@ bool Geo::NoAABBTest::is_intersected(const Geo::AABBRect &rect, const Geo::Geome
     case Geo::CIRCLECONTAINER:
     case Geo::CIRCLE:
         return Geo::is_intersected(rect, *static_cast<const Geo::Circle *>(object));
+    case Geo::Type::PHYSICAL_CIRCLE:
+        return Geo::Collision::gjk(rect, static_cast<const Physics::PhysicalCircle *>(object)->shape());
     default:
         return false;
     }

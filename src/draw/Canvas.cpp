@@ -2269,7 +2269,7 @@ void Canvas::refresh_vbo()
                 polyline_indexs[polyline_index_count++] = UINT_MAX;
                 container->point_count = container->shape().size();
                 break;
-            case Geo::Type::PYHSICAL_POLYGON:
+            case Geo::Type::PHYSICAL_POLYGON:
                 physicalpolygon = dynamic_cast<Physics::PhysicalPolygon *>(geo);
                 for (size_t i : Geo::ear_cut_to_indexs(physicalpolygon->shape()))
                 {
@@ -2350,7 +2350,7 @@ void Canvas::refresh_vbo()
                 polyline_indexs[polyline_index_count++] = UINT_MAX;
                 circlecontainer->point_count = data_count / 3 - circlecontainer->point_index;
                 break;
-            case Geo::Type::PYHSICAL_CIRCLE:
+            case Geo::Type::PHYSICAL_CIRCLE:
                 physicalcircle = dynamic_cast<Physics::PhysicalCircle *>(geo);
                 points = Geo::circle_to_polygon(physicalcircle->shape());
                 for (size_t i : Geo::ear_cut_to_indexs(points))
@@ -2687,7 +2687,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         data = temp;
                     }
                 }
-            case Geo::Type::PYHSICAL_POLYGON:
+            case Geo::Type::PHYSICAL_POLYGON:
                 for (const Geo::Point &point : dynamic_cast<const Physics::PhysicalPolygon *>(geo)->shape())
                 {
                     data[data_count++] = point.x;
@@ -2719,7 +2719,7 @@ void Canvas::refresh_vbo(const bool unitary)
                     }
                 }
                 break;
-            case Geo::Type::PYHSICAL_CIRCLE:
+            case Geo::Type::PHYSICAL_CIRCLE:
                 for (const Geo::Point &point : Geo::circle_to_polygon(dynamic_cast<const Physics::PhysicalCircle *>(geo)->shape()))
                 {
                     data[data_count++] = point.x;
@@ -2891,8 +2891,8 @@ void Canvas::refresh_selected_ibo()
             case Geo::Type::CIRCLECONTAINER:
             case Geo::Type::POLYLINE:
             case Geo::Type::BEZIER:
-            case Geo::Type::PYHSICAL_POLYGON:
-            case Geo::Type::PYHSICAL_CIRCLE:
+            case Geo::Type::PHYSICAL_POLYGON:
+            case Geo::Type::PHYSICAL_CIRCLE:
                 for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
                 {
                     indexs[index_count++] = index++;
@@ -2991,7 +2991,7 @@ void Canvas::refresh_selected_vbo()
                 data[data_count++] = 0.5;
             }
             break;
-        case Geo::Type::PYHSICAL_POLYGON:
+        case Geo::Type::PHYSICAL_POLYGON:
             for (const Geo::Point &point : dynamic_cast<const Physics::PhysicalPolygon *>(obj)->shape())
             {
                 data[data_count++] = point.x;
@@ -3007,7 +3007,7 @@ void Canvas::refresh_selected_vbo()
                 data[data_count++] = 0.5;
             }
             break;
-        case Geo::Type::PYHSICAL_CIRCLE:
+        case Geo::Type::PHYSICAL_CIRCLE:
             for (const Geo::Point &point : Geo::circle_to_polygon(dynamic_cast<const Physics::PhysicalCircle *>(obj)->shape()))
             {
                 data[data_count++] = point.x;
@@ -3120,7 +3120,7 @@ void Canvas::refresh_brush_ibo()
                     }
                 }
                 break;
-            case Geo::Type::PYHSICAL_POLYGON:
+            case Geo::Type::PHYSICAL_POLYGON:
                 for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Physics::PhysicalPolygon *>(geo)->shape()))
                 {
                     polygon_indexs[polygon_index_count++] = geo->point_index + i;
@@ -3148,7 +3148,7 @@ void Canvas::refresh_brush_ibo()
                     }
                 }
                 break;
-            case Geo::Type::PYHSICAL_CIRCLE:
+            case Geo::Type::PHYSICAL_CIRCLE:
                 for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(dynamic_cast<const Physics::PhysicalCircle *>(geo)->shape())))
                 {
                     polygon_indexs[polygon_index_count++] = geo->point_index + i;
