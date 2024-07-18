@@ -1,6 +1,7 @@
 #pragma once
 
 #include "draw/Container.hpp"
+#include "base/PhysicalShape.hpp"
 
 
 class Graph : public Geo::Geometry
@@ -103,7 +104,11 @@ public:
 
     void append(Container *container, const size_t index = 0);
 
+    void append(Physics::PhysicalPolygon *container, const size_t index = 0);
+
     void append(CircleContainer *container, const size_t index = 0);
+
+    void append(Physics::PhysicalCircle *container, const size_t index = 0);
 
     void append(Geo::Polyline *polyline, const size_t index = 0);
 

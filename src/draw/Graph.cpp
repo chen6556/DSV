@@ -366,10 +366,30 @@ void Graph::append(Container *container, const size_t index)
     }
 }
 
+void Graph::append(Physics::PhysicalPolygon *container, const size_t index = 0)
+{
+    assert(index < _container_groups.size());
+    if (container->shape().size() > 3)
+    {
+        container_group(index).append(container);
+        container->is_selected = false;
+    }
+}
+
 void Graph::append(CircleContainer *container, const size_t index)
 {
     assert(index < _container_groups.size());
     if (!container->shape().empty())
+    {
+        container_group(index).append(container);
+        container->is_selected = false;
+    }
+}
+
+void Graph::append(Physics::PhysicalCircle *container, const size_t index = 0)
+{
+    assert(index < _container_groups.size());
+    if (container->shape().size() > 3)
     {
         container_group(index).append(container);
         container->is_selected = false;

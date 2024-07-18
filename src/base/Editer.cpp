@@ -190,7 +190,7 @@ void Editer::append_points()
     {
         _point_cache.pop_back();
         _point_cache.pop_back();
-        _graph->append(new Container(Geo::Polygon(_point_cache.cbegin(), _point_cache.cend())), _current_group);
+        _graph->append(new Physics::PhysicalPolygon(Geo::Polygon(_point_cache.cbegin(), _point_cache.cend())), _current_group);
     }
     else
     {
@@ -217,7 +217,7 @@ void Editer::append(const Geo::Circle &circle)
         _graph->append_group();
     }
     store_backup();
-    _graph->append(new CircleContainer(circle), _current_group);
+    _graph->append(new Physics::PhysicalCircle(circle), _current_group);
     if (_current_group == 0)
     {
         _collision_detector.append(_graph->container_group().back());
@@ -236,7 +236,7 @@ void Editer::append(const Geo::AABBRect &rect)
         _graph->append_group();
     }
     store_backup();
-    _graph->append(new Container(rect), _current_group);
+    _graph->append(new Physics::PhysicalPolygon(rect), _current_group);
     if (_current_group == 0)
     {
         _collision_detector.append(_graph->container_group().back());
