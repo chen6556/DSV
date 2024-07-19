@@ -220,7 +220,13 @@ void Editer::append(const Geo::Circle &circle)
     _graph->append(new CircleContainer(circle), _current_group);
     if (_current_group == 0)
     {
+        std::uniform_real_distribution<double> distribution(-4, 4);
         _collision_detector.append(_graph->container_group().back());
+        static_cast<CircleContainer *>(_graph->container_group().back())->y_acceleration = -0.327;
+        static_cast<CircleContainer *>(_graph->container_group().back())->y_velocity = -10;
+        static_cast<CircleContainer *>(_graph->container_group().back())->mass = 1;
+        static_cast<CircleContainer *>(_graph->container_group().back())->is_static = false;
+        static_cast<CircleContainer *>(_graph->container_group().back())->recover_ratio = 0.9;
     }
 }
 
@@ -240,6 +246,7 @@ void Editer::append(const Geo::AABBRect &rect)
     if (_current_group == 0)
     {
         _collision_detector.append(_graph->container_group().back());
+        static_cast<Container *>(_graph->container_group().back())->mass = 2;
     }
 }
 
@@ -1662,6 +1669,11 @@ void Editer::update_collision_detector(Geo::Geometry *object)
 void Editer::update_collision_detector()
 {
     _collision_detector.update();
+}
+
+Geo::Collision::CollisionDetector<Geo::Collision::GridMap> &Editer::collision_detector()
+{
+    return _collision_detector;
 }
 
 

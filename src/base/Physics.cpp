@@ -43,7 +43,11 @@ void Physics::PhysicalObject::update()
 {
     x_velocity += x_acceleration;
     y_velocity += y_acceleration;
+    x_delta = x_position;
+    y_delta = y_position;
     x_position += x_velocity;
     y_position += y_velocity;
+    x_delta = x_position - x_delta;
+    y_delta = y_position - y_delta;
     rotation += angular_velocity;
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <random>
+
 #include <QLineF>
 #include <QPolygonF>
 
@@ -20,6 +22,8 @@ private:
 
     Geo::Geometry *_catched_points = nullptr;
     Geo::Collision::CollisionDetector<Geo::Collision::GridMap> _collision_detector;
+
+    std::mt19937 generator;
 
 private:
     void init();
@@ -141,6 +145,8 @@ public:
     void update_collision_detector(Geo::Geometry *object);
 
     void update_collision_detector();
+
+    Geo::Collision::CollisionDetector<Geo::Collision::GridMap> &collision_detector();
 
 
 

@@ -3671,23 +3671,30 @@ void Canvas::physical_update()
             continue;
         }
 
-        for (Geo::Geometry *container : _editer->graph()->container_groups().front())
+        _editer->collision_detector().physical_update();
+
+        ContainerGroup &group = _editer->graph()->container_groups().front();
+        for (size_t i = 0, count = group.size(); i < count; ++i)
         {
-            if (dynamic_cast<Container *>(container) != nullptr)
+            if (dynamic_cast<Container *>(group[i]) != nullptr)
             {
-                static_cast<Container *>(container)->update();
-                if (static_cast<Container *>(container)->y_position < -1000)
+                static_cast<Container *>(group[i])->update();
+                if (static_cast<Container *>(group[i])->y_position < -1000)
                 {
-                    
+                    _editer->collision_detector().remove(group[i]);
+                    group.remove(i--);
+                    --count;
                 }
             }
-            else if (dynamic_cast<CircleContainer *>(container) != nullptr)
+            else if (dynamic_cast<CircleContainer *>(group[i]) != nullptr)
             {
-                static_cast<CircleContainer *>(container)->update();
-            }
-            if (dynamic_cast<Physics::PhysicalObject *>(container) != nullptr)
-            {
-
+                static_cast<CircleContainer *>(group[i])->update();
+                if (static_cast<CircleContainer *>(group[i])->y_position < -1000)
+                {
+                    _editer->collision_detector().remove(group[i]);
+                    group.remove(i--);
+                    --count;
+                }
             }
         }
 

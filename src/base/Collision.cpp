@@ -2367,3 +2367,181 @@ double Collision::epa(const Geo::Polygon &polygon, const Geo::Circle &circle, co
     }
     return vec.Geo::Point::length();
 }
+
+double Collision::epa(Container &polygon0, Container &polygon1, const double tx, const double ty, Geo::Vector &vec)
+{
+    const double value = Collision::epa(polygon0.shape(), polygon1.shape(), tx, ty, vec);
+    if (value >= 0)
+    {
+        if (!polygon0.is_static)
+        {
+            if (polygon1.is_static)
+            {
+                polygon0.x_velocity = -polygon0.recover_ratio * polygon0.x_velocity;
+                polygon0.y_velocity = -polygon0.recover_ratio * polygon0.y_velocity;
+            }
+            else
+            {
+                double vx0 = (polygon0.mass * polygon0.x_velocity + polygon1.mass * polygon1.x_velocity +
+                    polygon0.recover_ratio * polygon1.mass * (polygon1.x_velocity - polygon0.x_velocity))
+                    / (polygon0.mass + polygon1.mass);
+                double vy0 = (polygon0.mass * polygon0.y_velocity + polygon1.mass * polygon1.y_velocity +
+                    polygon0.recover_ratio * polygon1.mass * (polygon1.y_velocity - polygon0.y_velocity))
+                    / (polygon0.mass + polygon1.mass);
+                polygon0.x_velocity = vx0, polygon0.y_velocity = vy0;
+            }
+        }
+        if (!polygon1.is_static)
+        {
+            if (polygon0.is_static)
+            {
+                polygon1.x_velocity = -polygon1.recover_ratio * polygon1.x_velocity;
+                polygon1.y_velocity = -polygon1.recover_ratio * polygon1.y_velocity;
+            }
+            else
+            {
+                double vx1 = (polygon0.mass * polygon0.x_velocity + polygon1.mass * polygon1.x_velocity +
+                    polygon1.recover_ratio * polygon1.mass * (polygon0.x_velocity - polygon1.x_velocity))
+                    / (polygon0.mass + polygon1.mass);
+                double vy1 = (polygon0.mass * polygon0.y_velocity + polygon1.mass * polygon1.y_velocity +
+                    polygon1.recover_ratio * polygon1.mass * (polygon0.y_velocity - polygon1.y_velocity))
+                    / (polygon0.mass + polygon1.mass);
+                polygon1.x_velocity = vx1, polygon1.y_velocity = vy1;
+            }
+        }
+    }
+    return value;
+}
+
+double Collision::epa(CircleContainer &circle, Container &polygon, const double tx, const double ty, Geo::Vector &vec)
+{
+    const double value = Collision::epa(circle.shape(), polygon.shape(), tx, ty, vec);
+    if (value >= 0)
+    {
+        if (!circle.is_static)
+        {
+            if (polygon.is_static)
+            {
+                circle.x_velocity = -circle.recover_ratio * circle.x_velocity;
+                circle.y_velocity = -circle.recover_ratio * circle.y_velocity;
+            }
+            else
+            {
+                double vx0 = (circle.mass * circle.x_velocity + polygon.mass * polygon.x_velocity +
+                    circle.recover_ratio * polygon.mass * (polygon.x_velocity - circle.x_velocity))
+                    / (circle.mass + polygon.mass);
+                double vy0 = (circle.mass * circle.y_velocity + polygon.mass * polygon.y_velocity +
+                    circle.recover_ratio * polygon.mass * (polygon.y_velocity - circle.y_velocity))
+                    / (circle.mass + polygon.mass);
+                circle.x_velocity = vx0, circle.y_velocity = vy0;
+            }
+        }
+        if (!polygon.is_static)
+        {
+            if (circle.is_static)
+            {
+                polygon.x_velocity = -polygon.recover_ratio * polygon.x_velocity;
+                polygon.y_velocity = -polygon.recover_ratio * polygon.y_velocity;
+            }
+            else
+            {
+                double vx1 = (circle.mass * circle.x_velocity + polygon.mass * polygon.x_velocity +
+                    polygon.recover_ratio * polygon.mass * (circle.x_velocity - polygon.x_velocity))
+                    / (circle.mass + polygon.mass);
+                double vy1 = (circle.mass * circle.y_velocity + polygon.mass * polygon.y_velocity +
+                    polygon.recover_ratio * polygon.mass * (circle.y_velocity - polygon.y_velocity))
+                    / (circle.mass + polygon.mass);
+                polygon.x_velocity = vx1, polygon.y_velocity = vy1;
+            }
+        }
+    }
+    return value;
+}
+
+double Collision::epa(Container &polygon, CircleContainer &circle, const double tx, const double ty, Geo::Vector &vec)
+{
+    const double value = Collision::epa(polygon.shape(), circle.shape(), tx, ty, vec);
+    if (value >= 0)
+    {
+        if (!polygon.is_static)
+        {
+            if (circle.is_static)
+            {
+                polygon.x_velocity = -polygon.recover_ratio * polygon.x_velocity;
+                polygon.y_velocity = -polygon.recover_ratio * polygon.y_velocity;
+            }
+            else
+            {
+                double vx0 = (polygon.mass * polygon.x_velocity + circle.mass * circle.x_velocity +
+                    polygon.recover_ratio * circle.mass * (circle.x_velocity - polygon.x_velocity)) / (polygon.mass + circle.mass);
+                double vy0 = (polygon.mass * polygon.y_velocity + circle.mass * circle.y_velocity +
+                    polygon.recover_ratio * circle.mass * (circle.y_velocity - polygon.y_velocity)) / (polygon.mass + circle.mass);
+                polygon.x_velocity = vx0, polygon.y_velocity = vy0;
+            }
+        }
+        if (!circle.is_static)
+        {
+            if (polygon.is_static)
+            {
+                circle.x_velocity = -circle.recover_ratio * circle.x_velocity;
+                circle.y_velocity = -circle.recover_ratio * circle.y_velocity;
+            }
+            else
+            {
+                double vx1 = (polygon.mass * polygon.x_velocity + circle.mass * circle.x_velocity +
+                    circle.recover_ratio * circle.mass * (polygon.x_velocity - circle.x_velocity))
+                    / (polygon.mass + circle.mass);
+                double vy1 = (polygon.mass * polygon.y_velocity + circle.mass * circle.y_velocity +
+                    circle.recover_ratio * circle.mass * (polygon.y_velocity - circle.y_velocity))
+                    / (polygon.mass + circle.mass);
+                circle.x_velocity = vx1, circle.y_velocity = vy1;
+            }
+        }
+    }
+    return value;
+}
+
+double Collision::epa(CircleContainer &circle0, CircleContainer &circle1, const double tx, const double ty, Geo::Vector &vec)
+{
+    const double value = Collision::epa(circle0.shape(), circle1.shape(), tx, ty, vec);
+    if (value >= 0)
+    {
+        if (!circle0.is_static)
+        {
+            if (circle1.is_static)
+            {
+                circle0.x_velocity = -circle0.recover_ratio * circle0.x_velocity;
+                circle0.y_velocity = -circle0.recover_ratio * circle0.y_velocity;
+            }
+            else
+            {
+                double vx0 = (circle0.mass * circle0.x_velocity + circle1.mass * circle1.x_velocity +
+                    circle0.recover_ratio * circle1.mass * (circle1.x_velocity - circle0.x_velocity))
+                    / (circle0.mass + circle1.mass);
+                double vy0 = (circle0.mass * circle0.y_velocity + circle1.mass * circle1.y_velocity +
+                    circle0.recover_ratio * circle1.mass * (circle1.y_velocity - circle0.y_velocity))
+                    / (circle0.mass + circle1.mass);
+                circle0.x_velocity = vx0, circle0.y_velocity = vy0;
+            }
+        }
+        if (!circle1.is_static)
+        {
+            if (circle0.is_static)
+            {
+                circle1.x_velocity = -circle1.recover_ratio * circle1.x_velocity;
+                circle1.y_velocity = -circle1.recover_ratio * circle1.y_velocity;
+            }
+            else
+            {
+                double vx1 = (circle0.mass * circle0.x_velocity + circle1.mass * circle1.x_velocity +
+                    circle1.recover_ratio * circle1.mass * (circle0.x_velocity - circle1.x_velocity))
+                    / (circle0.mass + circle1.mass);
+                double vy1 = (circle0.mass * circle0.y_velocity + circle1.mass * circle1.y_velocity +
+                    circle1.recover_ratio * circle1.mass * (circle0.y_velocity - circle1.y_velocity))
+                    / (circle0.mass + circle1.mass);
+                circle1.x_velocity = vx1, circle1.y_velocity = vy1;
+            }
+        }
+    }
+    return value;
+}

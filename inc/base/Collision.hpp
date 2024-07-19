@@ -249,6 +249,14 @@ namespace Geo
 
         double epa(const Geo::Polygon &polygon, const Geo::Circle &circle, const double tx, const double ty, Geo::Vector &vec);
 
+        double epa(Container &polygon0, Container &polygon1, const double tx, const double ty, Geo::Vector &vec);
+
+        double epa( CircleContainer &circle, Container &polygon, const double tx, const double ty, Geo::Vector &vec);
+
+        double epa(Container &polygon, CircleContainer &circle, const double tx, const double ty, Geo::Vector &vec);
+
+        double epa(CircleContainer &circle0, CircleContainer &circle, const double tx, const double ty, Geo::Vector &vec);
+
         template <typename T = GridMap>
         class CollisionDetector
         {
@@ -460,6 +468,63 @@ namespace Geo
                         current_objects.clear();
                     }
                 }
+            }
+        
+            void physical_update()
+            {
+                std::vector<std::pair<Geometry *, Geometry *>> pairs;
+                _detector.find_collision_pairs(pairs);
+                double tx, ty;
+                Geo::Vector vec;
+                for (std::pair<Geometry *, Geometry *> &pair : pairs)
+                {
+                    if (pair.first->type() == Geo::Type::CONTAINER && pair.second->type() == Geo::Type::CONTAINER)
+                    {
+                        tx = static_cast<Container *>(pair.first)->x_delta, ty = static_cast<Container *>(pair.first)->y_delta;
+                        if (Collision::epa(*static_cast<Container *>(pair.first), *static_cast<Container *>(pair.second), tx, ty, vec) > 0
+                            &&vec.x * tx + vec.y * ty > 0)
+                        {
+                            pair.first->translate(-vec.x, -vec.y);
+                            _detector.update(pair.first);
+                        }
+                        vec.clear();
+                    }
+                    else if (pair.first->type() == Geo::Type::CONTAINER && pair.second->type() == Geo::Type::CIRCLECONTAINER)
+                    {
+                        tx = static_cast<Container *>(pair.first)->x_delta, ty = static_cast<Container *>(pair.first)->y_delta;
+                        if (Collision::epa(*static_cast<Container *>(pair.first), *static_cast<CircleContainer *>(pair.second), tx, ty, vec) > 0
+                            && vec.x * tx + vec.y * ty > 0)
+                        {
+                            pair.first->translate(-vec.x, -vec.y);
+                            _detector.update(pair.first);
+                        }
+                        vec.clear();
+                    }
+                    else if (pair.first->type() == Geo::Type::CIRCLECONTAINER && pair.second->type() == Geo::Type::CONTAINER)
+                    {
+                        tx = static_cast<CircleContainer *>(pair.first)->x_delta, ty = static_cast<CircleContainer *>(pair.first)->y_delta;
+                        if (Collision::epa(*static_cast<CircleContainer *>(pair.first), *static_cast<Container *>(pair.second), tx, ty, vec) > 0
+                            && vec.x * tx + vec.y * ty > 0)
+                        {
+                            pair.first->translate(-vec.x, -vec.y);
+                            _detector.update(pair.first);
+                        }
+                        vec.clear();
+                    }
+                    else if (pair.first->type() == Geo::Type::CIRCLECONTAINER && pair.second->type() == Geo::Type::CIRCLECONTAINER)
+                    {
+                        tx = static_cast<CircleContainer *>(pair.first)->x_delta, ty = static_cast<CircleContainer *>(pair.first)->y_delta;
+                        if (Collision::epa(*static_cast<CircleContainer *>(pair.first), *static_cast<CircleContainer *>(pair.second), tx, ty, vec) > 0
+                            && vec.x * tx + vec.y * ty > 0)
+                        {
+                            pair.first->translate(-vec.x, -vec.y);
+                            _detector.update(pair.first);
+                        }
+                        vec.clear();
+                    }
+                }
+
+                _detector.update();
             }
         };
     }
