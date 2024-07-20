@@ -476,12 +476,16 @@ namespace Geo
                 _detector.find_collision_pairs(pairs);
                 double tx, ty;
                 Geo::Vector vec;
+                Container *container = nullptr;
+                CircleContainer *circlecontainer = nullptr;
                 for (std::pair<Geometry *, Geometry *> &pair : pairs)
                 {
                     if (pair.first->type() == Geo::Type::CONTAINER && pair.second->type() == Geo::Type::CONTAINER)
                     {
-                        tx = static_cast<Container *>(pair.first)->x_delta, ty = static_cast<Container *>(pair.first)->y_delta;
-                        if (Collision::epa(*static_cast<Container *>(pair.first), *static_cast<Container *>(pair.second), tx, ty, vec) > 0
+                        container = static_cast<Container *>(pair.first);
+                        tx = container->x_position - container->last_x_position;
+                        ty = container->y_position - container->last_y_position;
+                        if (Collision::epa(*container, *static_cast<Container *>(pair.second), tx, ty, vec) > 0
                             &&vec.x * tx + vec.y * ty > 0)
                         {
                             pair.first->translate(-vec.x, -vec.y);
@@ -491,8 +495,10 @@ namespace Geo
                     }
                     else if (pair.first->type() == Geo::Type::CONTAINER && pair.second->type() == Geo::Type::CIRCLECONTAINER)
                     {
-                        tx = static_cast<Container *>(pair.first)->x_delta, ty = static_cast<Container *>(pair.first)->y_delta;
-                        if (Collision::epa(*static_cast<Container *>(pair.first), *static_cast<CircleContainer *>(pair.second), tx, ty, vec) > 0
+                        container = static_cast<Container *>(pair.first);
+                        tx = container->x_position - container->last_x_position;
+                        ty = container->y_position - container->last_y_position;
+                        if (Collision::epa(*container, *static_cast<CircleContainer *>(pair.second), tx, ty, vec) > 0
                             && vec.x * tx + vec.y * ty > 0)
                         {
                             pair.first->translate(-vec.x, -vec.y);
@@ -502,8 +508,10 @@ namespace Geo
                     }
                     else if (pair.first->type() == Geo::Type::CIRCLECONTAINER && pair.second->type() == Geo::Type::CONTAINER)
                     {
-                        tx = static_cast<CircleContainer *>(pair.first)->x_delta, ty = static_cast<CircleContainer *>(pair.first)->y_delta;
-                        if (Collision::epa(*static_cast<CircleContainer *>(pair.first), *static_cast<Container *>(pair.second), tx, ty, vec) > 0
+                        circlecontainer = static_cast<CircleContainer *>(pair.first);
+                        tx = circlecontainer->x_position - circlecontainer->last_x_position;
+                        ty = circlecontainer->y_position - circlecontainer->last_y_position;
+                        if (Collision::epa(*circlecontainer, *static_cast<Container *>(pair.second), tx, ty, vec) > 0
                             && vec.x * tx + vec.y * ty > 0)
                         {
                             pair.first->translate(-vec.x, -vec.y);
@@ -513,8 +521,10 @@ namespace Geo
                     }
                     else if (pair.first->type() == Geo::Type::CIRCLECONTAINER && pair.second->type() == Geo::Type::CIRCLECONTAINER)
                     {
-                        tx = static_cast<CircleContainer *>(pair.first)->x_delta, ty = static_cast<CircleContainer *>(pair.first)->y_delta;
-                        if (Collision::epa(*static_cast<CircleContainer *>(pair.first), *static_cast<CircleContainer *>(pair.second), tx, ty, vec) > 0
+                        circlecontainer = static_cast<CircleContainer *>(pair.first);
+                        tx = circlecontainer->x_position - circlecontainer->last_x_position;
+                        ty = circlecontainer->y_position - circlecontainer->last_y_position;
+                        if (Collision::epa(*circlecontainer, *static_cast<CircleContainer *>(pair.second), tx, ty, vec) > 0
                             && vec.x * tx + vec.y * ty > 0)
                         {
                             pair.first->translate(-vec.x, -vec.y);

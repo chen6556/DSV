@@ -222,11 +222,11 @@ void Editer::append(const Geo::Circle &circle)
     {
         std::uniform_real_distribution<double> distribution(-4, 4);
         _collision_detector.append(_graph->container_group().back());
-        static_cast<CircleContainer *>(_graph->container_group().back())->y_acceleration = -0.327;
+        static_cast<CircleContainer *>(_graph->container_group().back())->y_force = -1;
         static_cast<CircleContainer *>(_graph->container_group().back())->y_velocity = -10;
-        static_cast<CircleContainer *>(_graph->container_group().back())->mass = 1;
+        static_cast<CircleContainer *>(_graph->container_group().back())->set_mass(1);
         static_cast<CircleContainer *>(_graph->container_group().back())->is_static = false;
-        static_cast<CircleContainer *>(_graph->container_group().back())->recover_ratio = 0.9;
+        static_cast<CircleContainer *>(_graph->container_group().back())->set_recover_ratio(0.9);
     }
 }
 
@@ -246,7 +246,7 @@ void Editer::append(const Geo::AABBRect &rect)
     if (_current_group == 0)
     {
         _collision_detector.append(_graph->container_group().back());
-        static_cast<Container *>(_graph->container_group().back())->mass = 2;
+        static_cast<Container *>(_graph->container_group().back())->set_mass(2);
     }
 }
 
@@ -1713,6 +1713,14 @@ void Editer::rotate(std::list<Geo::Geometry *> objects, const double angle, cons
                 for (Geo::Geometry *geo : group)
                 {
                     geo->rotate(coord.x, coord.y, rad);
+                    if (dynamic_cast<Container *>(geo) != nullptr)
+                    {
+                        static_cast<Container *>(geo)->is_static = !static_cast<Container *>(geo)->is_static;
+                    }
+                    else if (dynamic_cast<CircleContainer *>(geo) != nullptr)
+                    {
+                        static_cast<CircleContainer *>(geo)->is_static = !static_cast<CircleContainer *>(geo)->is_static;
+                    }
                 }
             }
             _collision_detector.update();
@@ -1723,6 +1731,14 @@ void Editer::rotate(std::list<Geo::Geometry *> objects, const double angle, cons
             for (Geo::Geometry *geo : _graph->container_group(_current_group))
             {
                 geo->rotate(coord.x, coord.y, rad);
+                if (dynamic_cast<Container *>(geo) != nullptr)
+                {
+                    static_cast<Container *>(geo)->is_static = !static_cast<Container *>(geo)->is_static;
+                }
+                else if (dynamic_cast<CircleContainer *>(geo) != nullptr)
+                {
+                    static_cast<CircleContainer *>(geo)->is_static = !static_cast<CircleContainer *>(geo)->is_static;
+                }
             }
             if (_current_group == 0)
             {
@@ -1736,6 +1752,14 @@ void Editer::rotate(std::list<Geo::Geometry *> objects, const double angle, cons
         {
             coord = geo->bounding_rect().center();
             geo->rotate(coord.x, coord.y, rad);
+            if (dynamic_cast<Container *>(geo) != nullptr)
+            {
+                static_cast<Container *>(geo)->is_static = !static_cast<Container *>(geo)->is_static;
+            }
+            else if (dynamic_cast<CircleContainer *>(geo) != nullptr)
+            {
+                static_cast<CircleContainer *>(geo)->is_static = !static_cast<CircleContainer *>(geo)->is_static;
+            }
             _collision_detector.update(geo);
         }
     }

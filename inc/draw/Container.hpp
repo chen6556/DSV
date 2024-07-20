@@ -90,7 +90,9 @@ public:
 
     void scale(const double x, const double y, const double k) override;
 
-    void update() override;
+    void calculate_inertia() override;
+
+    void update(const double dt = 0.33) override;
 };
 
 class CircleContainer : public Geo::Circle, public Physics::PhysicalObject
@@ -141,7 +143,9 @@ public:
 
     void scale(const double x, const double y, const double k) override;
 
-    void update() override;
+    void calculate_inertia() override;
+
+    void update(const double dt = 0.33) override;
 };
 
 class Combination;

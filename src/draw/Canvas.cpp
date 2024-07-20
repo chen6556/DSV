@@ -57,7 +57,7 @@ void Canvas::bind_editer(Editer *editer)
     _editer = editer;
 
     QObject::connect(this, &Canvas::redraw_signal, this, &Canvas::redraw, Qt::ConnectionType::QueuedConnection);
-    std::thread(&Canvas::physical_update, this).detach();
+    std::thread(&Canvas::physical_update, this, 0.33).detach();
 }
 
 
@@ -2611,6 +2611,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         data = temp;
                     }
                 }
+                break;
             case Geo::Type::CIRCLECONTAINER:
                 for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(geo)))
                 {
@@ -3657,8 +3658,12 @@ void Canvas::refresh_catached_points(const bool current_group_only)
 }
 
 
-void Canvas::physical_update()
+void Canvas::physical_update(const double dt)
 {
+    Container *container;
+    CircleContainer *circlecontainer;
+    const double g = -3.4;
+
     std::chrono::steady_clock::time_point start_point;
     while (_is_running)
     {
@@ -3678,20 +3683,32 @@ void Canvas::physical_update()
         {
             if (dynamic_cast<Container *>(group[i]) != nullptr)
             {
-                static_cast<Container *>(group[i])->update();
-                if (static_cast<Container *>(group[i])->y_position < -1000)
+                container = static_cast<Container *>(group[i]);
+                if (!container->is_static)
                 {
-                    _editer->collision_detector().remove(group[i]);
+                    container->y_force += container->mass() * g * dt;
+                }
+                container->y_velocity += container->inv_mass() * container->y_force * dt;
+                container->update(dt);
+                if (!container->is_static && container->y_position < -1000)
+                {
+                    _editer->collision_detector().remove(container);
                     group.remove(i--);
                     --count;
                 }
             }
             else if (dynamic_cast<CircleContainer *>(group[i]) != nullptr)
             {
-                static_cast<CircleContainer *>(group[i])->update();
-                if (static_cast<CircleContainer *>(group[i])->y_position < -1000)
+                circlecontainer = static_cast<CircleContainer *>(group[i]);
+                if (!circlecontainer->is_static)
                 {
-                    _editer->collision_detector().remove(group[i]);
+                    circlecontainer->y_force += circlecontainer->mass() * g * dt;
+                }
+                circlecontainer->y_velocity += circlecontainer->inv_mass() * circlecontainer->y_force * dt;
+                circlecontainer->update(dt);
+                if (!circlecontainer->is_static && circlecontainer->y_position < -1000)
+                {
+                    _editer->collision_detector().remove(circlecontainer);
                     group.remove(i--);
                     --count;
                 }

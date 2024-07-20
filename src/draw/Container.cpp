@@ -265,10 +265,46 @@ void Container::scale(const double x, const double y, const double k)
     y_position = k * y1 + y * (1 - k);
 }
 
-void Container::update()
+void Container::calculate_inertia()
+{
+    double x0 = 0, y0 = 0, a0 = 0, x1, y1, a1;
+    for (size_t i = 2, count = _points.size(); i < count; ++i)
+    {
+        x1 = (_points.front().x + _points[i - 1].x + _points[i].x) / 3;
+        y1 = (_points.front().y + _points[i - 1].y + _points[i].y) / 3;
+        a1 = std::abs((_points[i - 1].x - _points.front().x) * (_points[i].y - _points.front().y) - 
+            (_points[i - 1].y - _points.front().y) * (_points[i].x - _points.front().x)) / 2.0;
+        x0 += x1 * a1;
+        y0 += y1 * a1;
+        a0 += a1;
+    }
+    x0 /= a0;
+    y0 /= a0;
+
+    double sum1 = 0, sum2 = 0, x2, y2;
+    for (size_t i = 1, count = _points.size(); i < count; ++i)
+    {
+        x1 = _points[i - 1].x - x0;
+        y1 = _points[i - 1].y - y0;
+        x2 = _points[i].x - x0;
+        y2 = _points[i].y - y0;
+        a0 = std::fabs(x1 * y2 - y1 * x2);
+        a1 = x2 * x2 + y2 * y2 + x1 * x2 + y1 * y2 + x1 * x1 + y1 * y1;
+        sum1 += a0 * a1;
+        sum2 += a0;
+    }
+
+    _inertia = _mass * (1.0 / 6.0) * sum1 / sum2;
+    if (_inertia != 0)
+    {
+        _inv_inertia = 1.0 / _inertia;
+    }
+}
+
+void Container::update(const double dt)
 {
     const double x = x_position, y = y_position;
-    Physics::PhysicalObject::update();
+    Physics::PhysicalObject::update(dt);
     Geo::Polygon::translate(x_position - x, y_position - y);
 }
 
@@ -380,9 +416,18 @@ void CircleContainer::scale(const double x, const double y, const double k)
     y_position = this->y;
 }
 
-void CircleContainer::update()
+void CircleContainer::calculate_inertia()
 {
-    Physics::PhysicalObject::update();
+    _inertia = _mass * this->radius * this->radius / 2.0;
+    if (_inertia != 0)
+    {
+        _inv_inertia = 1.0 / _inertia;
+    }
+}
+
+void CircleContainer::update(const double dt)
+{
+    Physics::PhysicalObject::update(dt);
     this->x = x_position;
     this->y = y_position;
 }

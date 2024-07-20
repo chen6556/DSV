@@ -221,7 +221,7 @@ public:
     void refresh_catached_points(const bool current_group_only = true);
 
 
-    void physical_update();
+    void physical_update(const double dt = 0.33);
 
 
     size_t points_count() const;
