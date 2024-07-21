@@ -4,6 +4,7 @@
 #include <QPainterPath>
 
 #include "base/Algorithm.hpp"
+#include "base/Collision.hpp"
 #include "draw/Canvas.hpp"
 #include "draw/GLSL.hpp"
 #include "io/GlobalSetting.hpp"
@@ -3663,6 +3664,8 @@ void Canvas::physical_update(const double dt)
     Container *container;
     CircleContainer *circlecontainer;
     const double g = -3.4;
+    std::vector<Physics::PhysicalObject *> physical_objects;
+    std::vector<Physics::CollisionPair> collisions;
 
     std::chrono::steady_clock::time_point start_point;
     while (_is_running)
@@ -3676,8 +3679,6 @@ void Canvas::physical_update(const double dt)
             continue;
         }
 
-        _editer->collision_detector().physical_update();
-
         ContainerGroup &group = _editer->graph()->container_groups().front();
         for (size_t i = 0, count = group.size(); i < count; ++i)
         {
@@ -3686,15 +3687,10 @@ void Canvas::physical_update(const double dt)
                 container = static_cast<Container *>(group[i]);
                 if (!container->is_static)
                 {
-                    container->y_force += container->mass() * g * dt;
-                }
-                container->y_velocity += container->inv_mass() * container->y_force * dt;
-                container->update(dt);
-                if (!container->is_static && container->y_position < -1000)
-                {
-                    _editer->collision_detector().remove(container);
-                    group.remove(i--);
-                    --count;
+                    container->force.y += container->mass() * g * dt;
+                    container->velocity.y += container->inv_mass() * container->force.y * dt;
+                    container->angular_velocity += container->inv_inertia() * container->torques * dt;
+                    physical_objects.push_back(container);
                 }
             }
             else if (dynamic_cast<CircleContainer *>(group[i]) != nullptr)
@@ -3702,21 +3698,27 @@ void Canvas::physical_update(const double dt)
                 circlecontainer = static_cast<CircleContainer *>(group[i]);
                 if (!circlecontainer->is_static)
                 {
-                    circlecontainer->y_force += circlecontainer->mass() * g * dt;
-                }
-                circlecontainer->y_velocity += circlecontainer->inv_mass() * circlecontainer->y_force * dt;
-                circlecontainer->update(dt);
-                if (!circlecontainer->is_static && circlecontainer->y_position < -1000)
-                {
-                    _editer->collision_detector().remove(circlecontainer);
-                    group.remove(i--);
-                    --count;
+                    circlecontainer->force.y += circlecontainer->mass() * g * dt;
+                    circlecontainer->velocity.y += circlecontainer->inv_mass() * circlecontainer->force.y * dt;
+                    circlecontainer->angular_velocity += circlecontainer->inv_inertia() * circlecontainer->torques * dt;
+                    physical_objects.push_back(circlecontainer);
                 }
             }
         }
 
+        _editer->collision_detector().physical_update(collisions);
+        Physics::solve_velocity(collisions);
+
+        for (Physics::PhysicalObject *object : physical_objects)
+        {
+            object->update_position(dt);
+        }
+        Physics::solve_position(collisions);
+
         std::this_thread::sleep_until(start_point + std::chrono::milliseconds(33));
         emit redraw_signal();
+        physical_objects.clear();
+        // collisions.clear();
     }
 }
 

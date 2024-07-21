@@ -145,16 +145,16 @@ Container::Container(const Geo::Polygon &shape)
     : Geo::Polygon(shape)
 {
     const Geo::Point center(shape.bounding_rect().center());
-    x_position = center.x;
-    y_position = center.y;
+    position.x = center.x;
+    position.y = center.y;
 }
 
 Container::Container(const QString &txt, const Geo::Polygon &shape)
     : Geo::Polygon(shape), _txt(txt)
 {
     const Geo::Point center(shape.bounding_rect().center());
-    x_position = center.x;
-    y_position = center.y;
+    position.x = center.x;
+    position.y = center.y;
 }
 
 Container::Container(const Container &container)
@@ -225,44 +225,44 @@ Container *Container::clone() const
 void Container::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
     Geo::Polygon::transform(a, b, c, d, e, f);
-    const double x = x_position, y = y_position;
-    x_position = a * x + b * y + c;
-    y_position = d * x + e * y + f;
+    const double x = position.x, y = position.y;
+    position.x = a * x + b * y + c;
+    position.y = d * x + e * y + f;
 }
 
 void Container::transform(const double mat[6])
 {
     Geo::Polygon::transform(mat);
-    const double x = x_position, y = y_position;
-    x_position = mat[0] * x + mat[1] * y + mat[2];
-    y_position = mat[3] * x + mat[4] * y + mat[5];
+    const double x = position.x, y = position.y;
+    position.x = mat[0] * x + mat[1] * y + mat[2];
+    position.y = mat[3] * x + mat[4] * y + mat[5];
 }
 
 void Container::translate(const double tx, const double ty)
 {
     Geo::Polygon::translate(tx, ty);
-    x_position += tx;
-    y_position += ty;
+    position.x += tx;
+    position.y += ty;
 }
 
 void Container::rotate(const double x, const double y, const double rad)
 {
     Geo::Polygon::rotate(x, y, rad);
-    x_position -= x;
-    y_position -= y;
-    const double x1 = x_position, y1 = y_position;
-    x_position = x1 * std::cos(rad) - y1 * std::sin(rad);
-    y_position = x1 * std::sin(rad) + y1 * std::cos(rad);
-    x_position += x;
-    y_position += y;
+    position.x -= x;
+    position.y -= y;
+    const double x1 = position.x, y1 = position.y;
+    position.x = x1 * std::cos(rad) - y1 * std::sin(rad);
+    position.y = x1 * std::sin(rad) + y1 * std::cos(rad);
+    position.x += x;
+    position.y += y;
 }
 
 void Container::scale(const double x, const double y, const double k)
 {
     Geo::Polygon::scale(x, y, k);
-    const double x1 = x_position, y1 = y_position;
-    x_position = k * x1 + x * (1 - k);
-    y_position = k * y1 + y * (1 - k);
+    const double x1 = position.x, y1 = position.y;
+    position.x = k * x1 + x * (1 - k);
+    position.y = k * y1 + y * (1 - k);
 }
 
 void Container::calculate_inertia()
@@ -301,11 +301,24 @@ void Container::calculate_inertia()
     }
 }
 
-void Container::update(const double dt)
+void Container::update_velocity(const double dt)
 {
-    const double x = x_position, y = y_position;
-    Physics::PhysicalObject::update(dt);
-    Geo::Polygon::translate(x_position - x, y_position - y);
+    Physics::PhysicalObject::update_velocity(dt);
+}
+
+void Container::update_position(const double dt)
+{
+    if (this->is_static)
+    {
+        Physics::PhysicalObject::update_position(dt);
+    }
+    else
+    {
+        const double x = position.x, y = position.y;
+        Physics::PhysicalObject::update_position(dt);
+        Geo::Polygon::translate(position.x - x, position.y - y);
+        Geo::Polygon::rotate(position.x, position.y, angular_velocity * dt);
+    }
 }
 
 // CircleContainer
@@ -384,36 +397,36 @@ CircleContainer *CircleContainer::clone() const
 void CircleContainer::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
     Geo::Circle::transform(a, b, c, d, e, f);
-    x_position = this->x;
-    y_position = this->y;
+    position.x = this->x;
+    position.y = this->y;
 }
 
 void CircleContainer::transform(const double mat[6])
 {
     Geo::Circle::transform(mat);
-    x_position = this->x;
-    y_position = this->y;
+    position.x = this->x;
+    position.y = this->y;
 }
 
 void CircleContainer::translate(const double tx, const double ty)
 {
     Geo::Circle::translate(tx, ty);
-    x_position = this->x;
-    y_position = this->y;
+    position.x = this->x;
+    position.y = this->y;
 }
 
 void CircleContainer::rotate(const double x, const double y, const double rad)
 {
     Geo::Circle::rotate(x, y, rad);
-    x_position = this->x;
-    y_position = this->y;
+    position.x = this->x;
+    position.y = this->y;
 }
 
 void CircleContainer::scale(const double x, const double y, const double k)
 {
     Geo::Circle::scale(x, y, k);
-    x_position = this->x;
-    y_position = this->y;
+    position.x = this->x;
+    position.y = this->y;
 }
 
 void CircleContainer::calculate_inertia()
@@ -425,11 +438,23 @@ void CircleContainer::calculate_inertia()
     }
 }
 
-void CircleContainer::update(const double dt)
+void CircleContainer::update_velocity(const double dt)
 {
-    Physics::PhysicalObject::update(dt);
-    this->x = x_position;
-    this->y = y_position;
+    Physics::PhysicalObject::update_velocity(dt);
+}
+
+void CircleContainer::update_position(const double dt)
+{
+    if (this->is_static)
+    {
+        Physics::PhysicalObject::update_position(dt);
+    }
+    else
+    {
+        Physics::PhysicalObject::update_position(dt);
+        this->x = position.x;
+        this->y = position.y;
+    }
 }
 
 // ContainerGroup

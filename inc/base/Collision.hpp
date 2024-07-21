@@ -4,6 +4,7 @@
 #include <utility>
 #include "base/Geometry.hpp"
 #include "draw/Container.hpp"
+#include "base/Physics.hpp"
 
 
 namespace Geo
@@ -214,7 +215,6 @@ namespace Geo
             bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs, const bool norepeat = true) const;
         };
 
-
         Geo::Point edge_direciton(const Geo::Point &start, const Geo::Point &end, const bool to_origin); 
 
         void gjk_furthest_point(const Geo::Polygon &polygon, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
@@ -241,8 +241,6 @@ namespace Geo
 
         double epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, const double tx, const double ty, Geo::Vector &vec);
 
-        double epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Point &start, Geo::Point &end);
-
         double epa(const Geo::Circle &circle0, const Geo::Circle &circle1, const double tx, const double ty, Geo::Vector &vec);
 
         double epa(const Geo::Circle &circle, const Geo::Polygon &polygon, const double tx, const double ty, Geo::Vector &vec);
@@ -256,6 +254,22 @@ namespace Geo
         double epa(Container &polygon, CircleContainer &circle, const double tx, const double ty, Geo::Vector &vec);
 
         double epa(CircleContainer &circle0, CircleContainer &circle, const double tx, const double ty, Geo::Vector &vec);
+
+        double epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, const double tx, const double ty, Geo::Point &start, Geo::Point &end);
+
+        double epa(const Geo::Circle &circle0, const Geo::Circle &circle1, const double tx, const double ty, Geo::Point &start, Geo::Point &end);
+
+        double epa(const Geo::Circle &circle, const Geo::Polygon &polygon, const double tx, const double ty, Geo::Point &start, Geo::Point &end);
+
+        double epa(const Geo::Polygon &polygon, const Geo::Circle &circle, const double tx, const double ty, Geo::Point &start, Geo::Point &end);
+
+        double epa(Container &polygon0, Container &polygon1, const double tx, const double ty, Physics::CollisionPair &collision);
+
+        double epa(CircleContainer &circle0, CircleContainer &circle1, const double tx, const double ty, Physics::CollisionPair &collision);
+
+        double epa(CircleContainer &circle, Container &polygon, const double tx, const double ty, Physics::CollisionPair &collision);
+
+        double epa(Container &polygon, CircleContainer &circle, const double tx, const double ty, Physics::CollisionPair &collision);
 
         template <typename T = GridMap>
         class CollisionDetector
@@ -469,72 +483,85 @@ namespace Geo
                     }
                 }
             }
-        
-            void physical_update()
+
+            void physical_update(std::vector<Physics::CollisionPair> &collisions)
             {
                 std::vector<std::pair<Geometry *, Geometry *>> pairs;
                 _detector.find_collision_pairs(pairs);
+                if (!collisions.empty())
+                {
+                    for (size_t i = collisions.size() - 1; i > 0; --i)
+                    {
+                        if (std::find_if(pairs.begin(), pairs.end(), [&](const std::pair<Geo::Geometry *, Geo::Geometry *> &pair)
+                            { return dynamic_cast<Physics::PhysicalObject *>(pair.first) == collisions[i].object0
+                                && dynamic_cast<Physics::PhysicalObject *>(pair.second) == collisions[i].object1; }) == pairs.end())
+                        {
+                            collisions.erase(collisions.begin() + i);
+                        }
+                    }
+                    if (std::find_if(pairs.begin(), pairs.end(), [&](const std::pair<Geo::Geometry *, Geo::Geometry *> &pair)
+                            { return dynamic_cast<Physics::PhysicalObject *>(pair.first) == collisions.front().object0
+                                && dynamic_cast<Physics::PhysicalObject *>(pair.second) == collisions.front().object1; }) == pairs.end())
+                    {
+                        collisions.erase(collisions.begin());
+                    }
+                }
+
                 double tx, ty;
-                Geo::Vector vec;
+                size_t index;
                 Container *container = nullptr;
                 CircleContainer *circlecontainer = nullptr;
                 for (std::pair<Geometry *, Geometry *> &pair : pairs)
                 {
+                    index = SIZE_MAX;
+                    for (size_t i = 0, count = collisions.size(); i < count; ++i)
+                    {
+                        if (collisions[i].object0 == dynamic_cast<Physics::PhysicalObject *>(pair.first)
+                            && collisions[i].object1 == dynamic_cast<Physics::PhysicalObject *>(pair.second))
+                        {
+                            index = i;
+                            break;
+                        }
+                    }
+                    if (index == SIZE_MAX)
+                    {
+                        index = collisions.size();
+                        collisions.emplace_back();
+                    }
+
                     if (pair.first->type() == Geo::Type::CONTAINER && pair.second->type() == Geo::Type::CONTAINER)
                     {
                         container = static_cast<Container *>(pair.first);
-                        tx = container->x_position - container->last_x_position;
-                        ty = container->y_position - container->last_y_position;
-                        if (Collision::epa(*container, *static_cast<Container *>(pair.second), tx, ty, vec) > 0
-                            &&vec.x * tx + vec.y * ty > 0)
-                        {
-                            pair.first->translate(-vec.x, -vec.y);
-                            _detector.update(pair.first);
-                        }
-                        vec.clear();
+                        tx = container->position.x - container->last_position.x;
+                        ty = container->position.y - container->last_position.y;
+                        Collision::epa(*container, *static_cast<Container *>(pair.second), tx, ty, collisions[index]);
                     }
                     else if (pair.first->type() == Geo::Type::CONTAINER && pair.second->type() == Geo::Type::CIRCLECONTAINER)
                     {
                         container = static_cast<Container *>(pair.first);
-                        tx = container->x_position - container->last_x_position;
-                        ty = container->y_position - container->last_y_position;
-                        if (Collision::epa(*container, *static_cast<CircleContainer *>(pair.second), tx, ty, vec) > 0
-                            && vec.x * tx + vec.y * ty > 0)
-                        {
-                            pair.first->translate(-vec.x, -vec.y);
-                            _detector.update(pair.first);
-                        }
-                        vec.clear();
+                        tx = container->position.x - container->last_position.x;
+                        ty = container->position.y - container->last_position.y;
+                        Collision::epa(*container, *static_cast<CircleContainer *>(pair.second), tx, ty, collisions[index]);
                     }
                     else if (pair.first->type() == Geo::Type::CIRCLECONTAINER && pair.second->type() == Geo::Type::CONTAINER)
                     {
                         circlecontainer = static_cast<CircleContainer *>(pair.first);
-                        tx = circlecontainer->x_position - circlecontainer->last_x_position;
-                        ty = circlecontainer->y_position - circlecontainer->last_y_position;
-                        if (Collision::epa(*circlecontainer, *static_cast<Container *>(pair.second), tx, ty, vec) > 0
-                            && vec.x * tx + vec.y * ty > 0)
-                        {
-                            pair.first->translate(-vec.x, -vec.y);
-                            _detector.update(pair.first);
-                        }
-                        vec.clear();
+                        tx = circlecontainer->position.x - circlecontainer->last_position.x;
+                        ty = circlecontainer->position.y - circlecontainer->last_position.y;
+                        Collision::epa(*circlecontainer, *static_cast<Container *>(pair.second), tx, ty, collisions[index]);
                     }
                     else if (pair.first->type() == Geo::Type::CIRCLECONTAINER && pair.second->type() == Geo::Type::CIRCLECONTAINER)
                     {
                         circlecontainer = static_cast<CircleContainer *>(pair.first);
-                        tx = circlecontainer->x_position - circlecontainer->last_x_position;
-                        ty = circlecontainer->y_position - circlecontainer->last_y_position;
-                        if (Collision::epa(*circlecontainer, *static_cast<CircleContainer *>(pair.second), tx, ty, vec) > 0
-                            && vec.x * tx + vec.y * ty > 0)
-                        {
-                            pair.first->translate(-vec.x, -vec.y);
-                            _detector.update(pair.first);
-                        }
-                        vec.clear();
+                        tx = circlecontainer->position.x - circlecontainer->last_position.x;
+                        ty = circlecontainer->position.y - circlecontainer->last_position.y;
+                        Collision::epa(*circlecontainer, *static_cast<CircleContainer *>(pair.second), tx, ty, collisions[index]);
+                    }
+                    else
+                    {
+                        collisions.erase(collisions.begin() + index);
                     }
                 }
-
-                _detector.update();
             }
         };
     }

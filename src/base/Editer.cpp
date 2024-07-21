@@ -222,11 +222,11 @@ void Editer::append(const Geo::Circle &circle)
     {
         std::uniform_real_distribution<double> distribution(-4, 4);
         _collision_detector.append(_graph->container_group().back());
-        static_cast<CircleContainer *>(_graph->container_group().back())->y_force = -1;
-        static_cast<CircleContainer *>(_graph->container_group().back())->y_velocity = -10;
+        static_cast<CircleContainer *>(_graph->container_group().back())->force.y = -1;
+        static_cast<CircleContainer *>(_graph->container_group().back())->velocity.y = -10;
         static_cast<CircleContainer *>(_graph->container_group().back())->set_mass(1);
         static_cast<CircleContainer *>(_graph->container_group().back())->is_static = false;
-        static_cast<CircleContainer *>(_graph->container_group().back())->set_recover_ratio(0.9);
+        static_cast<CircleContainer *>(_graph->container_group().back())->restitution = 0.8;
     }
 }
 
@@ -247,6 +247,7 @@ void Editer::append(const Geo::AABBRect &rect)
     {
         _collision_detector.append(_graph->container_group().back());
         static_cast<Container *>(_graph->container_group().back())->set_mass(2);
+        static_cast<Container *>(_graph->container_group().back())->restitution = 0.8;
     }
 }
 

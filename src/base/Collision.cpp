@@ -2078,139 +2078,6 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
     return vec.Geo::Point::length();
 }
 
-double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Point &start0, Geo::Point &end0)
-{
-    Geo::Point start = polygon0.average_point(), end = polygon1.average_point();
-    Geo::Point point0, point1, point2;
-    Geo::Triangle triangle, last_triangle;
-    double distance[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
-
-    std::vector<std::tuple<Geo::Point, Geo::Point>> point_pairs;
-
-    if (start.x == end.x)
-    {
-        start.x += 1;
-    }
-    if (start.y == end.y)
-    {
-        start.y += 1;
-    }
-    Collision::gjk_furthest_point(polygon0, start, end, point0);
-    Collision::gjk_furthest_point(polygon1, end, start, point1);
-    point_pairs.emplace_back(point0, point1);
-    triangle[0] = point0 - point1;
-    Collision::gjk_furthest_point(polygon0, end, start, point0);
-    Collision::gjk_furthest_point(polygon1, start, end, point1);
-    point_pairs.emplace_back(point0, point1);
-    triangle[1] = point0 - point1;
-    end.clear();
-    start = Collision::edge_direciton(triangle[0], triangle[1], false);
-
-    while (true)
-    {
-        if (start.y == 0)
-        {
-            start.y = 1;
-        }
-        Collision::gjk_furthest_point(polygon0, start, end, point0);
-        Collision::gjk_furthest_point(polygon1, end, start, point1);
-        point_pairs.emplace_back(point0, point1);
-        triangle[2] = point0 - point1;
-
-        if (triangle[2] * (point0 - point1) < 0)
-        {
-            return -1;
-        }
-
-        if (Geo::is_inside(end, triangle))
-        {
-            break;
-        }
-        else if (last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1]
-            && last_triangle[2] == triangle[2])
-        {
-            return -1;
-        }
-
-        distance[0] = Geo::distance_square(end, triangle[0], triangle[1], true);
-        distance[1] = Geo::distance_square(end, triangle[1], triangle[2], true);
-        distance[2] = Geo::distance_square(end, triangle[0], triangle[2], true);
-        last_triangle = triangle;
-        if (distance[0] <= distance[1])
-        {
-            if (distance[0] > distance[2])
-            {
-                triangle[1] = triangle[2];
-                point_pairs[1] = point_pairs[2];
-            }
-        }
-        else
-        {
-            if (distance[1] <= distance[2])
-            {
-                triangle[0] = triangle[2];
-                point_pairs[0] = point_pairs[2];
-            }
-            else
-            {
-                triangle[1] = triangle[2];
-                point_pairs[1] = point_pairs[2];
-            }
-        }
-        start = Collision::edge_direciton(triangle[0], triangle[1], false);
-        point_pairs.pop_back();
-    }
-
-    std::vector<Geo::Point> points;
-    points.emplace_back(triangle[0]);
-    points.emplace_back(triangle[1]);
-    points.emplace_back(triangle[2]);
-
-    if (Geo::is_on_left(points[2], points[0], points[1]))
-    {
-        std::reverse(points.begin(), points.end());
-    }
-
-    size_t index;
-    while (true)
-    {
-        distance[0] = Geo::distance_square(end, points.front(), points.back());
-        index = points.size();
-        for (size_t i = 1, count = points.size(); i < count; ++i)
-        {
-            distance[1] = Geo::distance_square(end, points[i - 1], points[i]);
-            if (distance[1] < distance[0])
-            {
-                distance[0] = distance[1];
-                index = i;
-            }
-        }
-
-        start0 = Collision::edge_direciton(points[index - 1], points[index % points.size()], false);
-        Collision::gjk_furthest_point(polygon0, end, start0, point0);
-        Collision::gjk_furthest_point(polygon1, start0, end, point1);
-        point2 = point0 - point1;
-        if (start0 * point2 <= 0 || points[index - 1] == point2 || points[index % points.size()] == point2)
-        {
-            return Geo::distance(std::get<0>(point_pairs[index - 1]), std::get<0>(point_pairs[index % points.size()]),
-                std::get<1>(point_pairs[index - 1]), std::get<1>(point_pairs[index % points.size()]), start0, end0);
-        }
-        else
-        {
-            if (index < points.size())
-            {
-                points.insert(points.begin() + index, point2);
-                point_pairs.insert(point_pairs.begin() + index, std::make_tuple(point0, point1));
-            }
-            else
-            {
-                points.emplace_back(point2);
-                point_pairs.emplace_back(point0, point1);
-            }
-        }
-    }
-}
-
 double Collision::epa(const Geo::Circle &circle0, const Geo::Circle &circle1, const double tx, const double ty, Geo::Vector &vec)
 {
     vec.clear();
@@ -2373,40 +2240,31 @@ double Collision::epa(Container &polygon0, Container &polygon1, const double tx,
     const double value = Collision::epa(polygon0.shape(), polygon1.shape(), tx, ty, vec);
     if (value >= 0)
     {
+        const double ratio = std::min(polygon0.restitution, polygon1.restitution);
         if (!polygon0.is_static)
         {
             if (polygon1.is_static)
             {
-                polygon0.x_velocity = -polygon0.recover_ratio() * polygon0.x_velocity;
-                polygon0.y_velocity = -polygon0.recover_ratio() * polygon0.y_velocity;
+                polygon0.velocity *= (-ratio);
             }
             else
             {
-                double vx0 = (polygon0.mass() * polygon0.x_velocity + polygon1.mass() * polygon1.x_velocity +
-                    polygon0.recover_ratio() * polygon1.mass() * (polygon1.x_velocity - polygon0.x_velocity))
+                polygon0.velocity = (polygon0.velocity * polygon0.mass() + polygon1.velocity * polygon1.mass()
+                    + (polygon1.velocity - polygon0.velocity) * ratio * polygon1.mass())
                     / (polygon0.mass() + polygon1.mass());
-                double vy0 = (polygon0.mass() * polygon0.y_velocity + polygon1.mass() * polygon1.y_velocity +
-                    polygon0.recover_ratio() * polygon1.mass() * (polygon1.y_velocity - polygon0.y_velocity))
-                    / (polygon0.mass() + polygon1.mass());
-                polygon0.x_velocity = vx0, polygon0.y_velocity = vy0;
             }
         }
         if (!polygon1.is_static)
         {
             if (polygon0.is_static)
             {
-                polygon1.x_velocity = -polygon1.recover_ratio() * polygon1.x_velocity;
-                polygon1.y_velocity = -polygon1.recover_ratio() * polygon1.y_velocity;
+                polygon1.velocity *= (-ratio);
             }
             else
             {
-                double vx1 = (polygon0.mass() * polygon0.x_velocity + polygon1.mass() * polygon1.x_velocity +
-                    polygon1.recover_ratio() * polygon1.mass() * (polygon0.x_velocity - polygon1.x_velocity))
+                polygon1.velocity = (polygon0.velocity * polygon0.mass() + polygon1.velocity * polygon1.mass()
+                    + (polygon0.velocity - polygon1.velocity) * ratio * polygon1.mass())
                     / (polygon0.mass() + polygon1.mass());
-                double vy1 = (polygon0.mass() * polygon0.y_velocity + polygon1.mass() * polygon1.y_velocity +
-                    polygon1.recover_ratio() * polygon1.mass() * (polygon0.y_velocity - polygon1.y_velocity))
-                    / (polygon0.mass() + polygon1.mass());
-                polygon1.x_velocity = vx1, polygon1.y_velocity = vy1;
             }
         }
     }
@@ -2418,42 +2276,40 @@ double Collision::epa(CircleContainer &circle, Container &polygon, const double 
     const double value = Collision::epa(circle.shape(), polygon.shape(), tx, ty, vec);
     if (value >= 0)
     {
+        const double ratio = std::min(circle.restitution, polygon.restitution);
         if (!circle.is_static)
         {
             if (polygon.is_static)
             {
-                circle.x_velocity = -circle.recover_ratio() * circle.x_velocity;
-                circle.y_velocity = -circle.recover_ratio() * circle.y_velocity;
+                circle.velocity *= (-ratio);
             }
             else
             {
-                double vx0 = (circle.mass() * circle.x_velocity + polygon.mass() * polygon.x_velocity +
-                    circle.recover_ratio() * polygon.mass() * (polygon.x_velocity - circle.x_velocity))
+                circle.velocity = (circle.velocity * circle.mass() + polygon.velocity * polygon.mass()
+                    + (polygon.velocity - circle.velocity) * ratio * polygon.mass())
                     / (circle.mass() + polygon.mass());
-                double vy0 = (circle.mass() * circle.y_velocity + polygon.mass() * polygon.y_velocity +
-                    circle.recover_ratio() * polygon.mass() * (polygon.y_velocity - circle.y_velocity))
-                    / (circle.mass() + polygon.mass());
-                circle.x_velocity = vx0, circle.y_velocity = vy0;
             }
         }
         if (!polygon.is_static)
         {
             if (circle.is_static)
             {
-                polygon.x_velocity = -polygon.recover_ratio() * polygon.x_velocity;
-                polygon.y_velocity = -polygon.recover_ratio() * polygon.y_velocity;
+                polygon.velocity *= (-ratio);
             }
             else
             {
-                double vx1 = (circle.mass() * circle.x_velocity + polygon.mass() * polygon.x_velocity +
-                    polygon.recover_ratio() * polygon.mass() * (circle.x_velocity - polygon.x_velocity))
+                polygon.velocity = (circle.velocity * circle.mass() + polygon.velocity * polygon.mass()
+                    + (circle.velocity - polygon.velocity) * ratio * polygon.mass())
                     / (circle.mass() + polygon.mass());
-                double vy1 = (circle.mass() * circle.y_velocity + polygon.mass() * polygon.y_velocity +
-                    polygon.recover_ratio() * polygon.mass() * (circle.y_velocity - polygon.y_velocity))
-                    / (circle.mass() + polygon.mass());
-                polygon.x_velocity = vx1, polygon.y_velocity = vy1;
             }
         }
+    
+        const double bias = std::max(0.2 * (vec.length() - 0.005), 0.0);
+        const double im0 = polygon.inv_mass(), im1 = circle.inv_mass();
+        const double ii0 = polygon.inv_inertia(), ii1 = circle.inv_inertia();
+        
+        const double k_normal = im0 + im1;
+        double lambda = k_normal * bias;
     }
     return value;
 }
@@ -2463,42 +2319,40 @@ double Collision::epa(Container &polygon, CircleContainer &circle, const double 
     const double value = Collision::epa(polygon.shape(), circle.shape(), tx, ty, vec);
     if (value >= 0)
     {
+        const double ratio = std::min(polygon.restitution, circle.restitution);
         if (!polygon.is_static)
         {
             if (circle.is_static)
             {
-                polygon.x_velocity = -polygon.recover_ratio() * polygon.x_velocity;
-                polygon.y_velocity = -polygon.recover_ratio() * polygon.y_velocity;
+                polygon.velocity *= (-ratio);
             }
             else
             {
-                double vx0 = (polygon.mass() * polygon.x_velocity + circle.mass() * circle.x_velocity +
-                    polygon.recover_ratio() * circle.mass() * (circle.x_velocity - polygon.x_velocity))
+                polygon.velocity = (polygon.velocity * polygon.mass() + circle.velocity * circle.mass()
+                    + (circle.velocity - polygon.velocity) * ratio * circle.mass())
                     / (polygon.mass() + circle.mass());
-                double vy0 = (polygon.mass() * polygon.y_velocity + circle.mass() * circle.y_velocity +
-                    polygon.recover_ratio() * circle.mass() * (circle.y_velocity - polygon.y_velocity))
-                    / (polygon.mass() + circle.mass());
-                polygon.x_velocity = vx0, polygon.y_velocity = vy0;
             }
         }
         if (!circle.is_static)
         {
             if (polygon.is_static)
             {
-                circle.x_velocity = -circle.recover_ratio() * circle.x_velocity;
-                circle.y_velocity = -circle.recover_ratio() * circle.y_velocity;
+                circle.velocity *= (-ratio);
             }
             else
             {
-                double vx1 = (polygon.mass() * polygon.x_velocity + circle.mass() * circle.x_velocity +
-                    circle.recover_ratio() * circle.mass() * (polygon.x_velocity - circle.x_velocity))
+                circle.velocity = (polygon.velocity * polygon.mass() + circle.velocity * circle.mass()
+                    + (polygon.velocity - circle.velocity) * ratio * circle.mass())
                     / (polygon.mass() + circle.mass());
-                double vy1 = (polygon.mass() * polygon.y_velocity + circle.mass() * circle.y_velocity +
-                    circle.recover_ratio() * circle.mass() * (polygon.y_velocity - circle.y_velocity))
-                    / (polygon.mass() + circle.mass());
-                circle.x_velocity = vx1, circle.y_velocity = vy1;
             }
         }
+    
+        const double bias = std::max(0.2 * (vec.length() - 0.005), 0.0);
+        const double im0 = polygon.inv_mass(), im1 = circle.inv_mass();
+        const double ii0 = polygon.inv_inertia(), ii1 = circle.inv_inertia();
+        
+        const double k_normal = im0 + im1;
+        double lambda = k_normal * bias;
     }
     return value;
 }
@@ -2508,42 +2362,577 @@ double Collision::epa(CircleContainer &circle0, CircleContainer &circle1, const 
     const double value = Collision::epa(circle0.shape(), circle1.shape(), tx, ty, vec);
     if (value >= 0)
     {
+        const double ratio = std::min(circle0.restitution, circle1.restitution);
         if (!circle0.is_static)
         {
             if (circle1.is_static)
             {
-                circle0.x_velocity = -circle0.recover_ratio() * circle0.x_velocity;
-                circle0.y_velocity = -circle0.recover_ratio() * circle0.y_velocity;
+                circle0.velocity *= (-ratio);
             }
             else
             {
-                double vx0 = (circle0.mass() * circle0.x_velocity + circle1.mass() * circle1.x_velocity +
-                    circle0.recover_ratio() * circle1.mass() * (circle1.x_velocity - circle0.x_velocity))
+                circle0.velocity = (circle0.velocity * circle0.mass() + circle1.velocity * circle1.mass()
+                    + (circle1.velocity - circle0.velocity) * ratio * circle1.mass())
                     / (circle0.mass() + circle1.mass());
-                double vy0 = (circle0.mass() * circle0.y_velocity + circle1.mass() * circle1.y_velocity +
-                    circle0.recover_ratio() * circle1.mass() * (circle1.y_velocity - circle0.y_velocity))
-                    / (circle0.mass() + circle1.mass());
-                circle0.x_velocity = vx0, circle0.y_velocity = vy0;
             }
         }
         if (!circle1.is_static)
         {
             if (circle0.is_static)
             {
-                circle1.x_velocity = -circle1.recover_ratio() * circle1.x_velocity;
-                circle1.y_velocity = -circle1.recover_ratio() * circle1.y_velocity;
+                circle1.velocity *= (-ratio);
             }
             else
             {
-                double vx1 = (circle0.mass() * circle0.x_velocity + circle1.mass() * circle1.x_velocity +
-                    circle1.recover_ratio() * circle1.mass() * (circle0.x_velocity - circle1.x_velocity))
+                circle1.velocity = (circle0.velocity * circle0.mass() + circle1.velocity * circle1.mass()
+                    + (circle0.velocity - circle1.velocity) * ratio * circle1.mass())
                     / (circle0.mass() + circle1.mass());
-                double vy1 = (circle0.mass() * circle0.y_velocity + circle1.mass() * circle1.y_velocity +
-                    circle1.recover_ratio() * circle1.mass() * (circle0.y_velocity - circle1.y_velocity))
-                    / (circle0.mass() + circle1.mass());
-                circle1.x_velocity = vx1, circle1.y_velocity = vy1;
             }
         }
     }
     return value;
 }
+
+double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, const double tx, const double ty, Geo::Point &start0, Geo::Point &end0)
+{
+    Geo::Point start = polygon0.average_point(), end = polygon1.average_point();
+    Geo::Point point0, point1, point2;
+    Geo::Triangle triangle, last_triangle;
+    double distance[3] = {DBL_MAX, DBL_MAX, DBL_MAX};
+
+    std::vector<std::tuple<Geo::Point, Geo::Point>> point_pairs;
+
+    if (start.x == end.x)
+    {
+        start.x += 1;
+    }
+    if (start.y == end.y)
+    {
+        start.y += 1;
+    }
+    Collision::gjk_furthest_point(polygon0, start, end, point0);
+    Collision::gjk_furthest_point(polygon1, end, start, point1);
+    point_pairs.emplace_back(point0, point1);
+    triangle[0] = point0 - point1;
+    Collision::gjk_furthest_point(polygon0, end, start, point0);
+    Collision::gjk_furthest_point(polygon1, start, end, point1);
+    point_pairs.emplace_back(point0, point1);
+    triangle[1] = point0 - point1;
+    end.clear();
+    start = Collision::edge_direciton(triangle[0], triangle[1], false);
+
+    while (true)
+    {
+        if (start.y == 0)
+        {
+            start.y = 1;
+        }
+        Collision::gjk_furthest_point(polygon0, start, end, point0);
+        Collision::gjk_furthest_point(polygon1, end, start, point1);
+        point_pairs.emplace_back(point0, point1);
+        triangle[2] = point0 - point1;
+
+        if (triangle[2] * (point0 - point1) < 0)
+        {
+            return -1;
+        }
+
+        if (Geo::is_inside(end, triangle))
+        {
+            break;
+        }
+        else if (last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1]
+            && last_triangle[2] == triangle[2])
+        {
+            return -1;
+        }
+
+        distance[0] = Geo::distance_square(end, triangle[0], triangle[1], true);
+        distance[1] = Geo::distance_square(end, triangle[1], triangle[2], true);
+        distance[2] = Geo::distance_square(end, triangle[0], triangle[2], true);
+        last_triangle = triangle;
+        if (distance[0] <= distance[1])
+        {
+            if (distance[0] > distance[2])
+            {
+                triangle[1] = triangle[2];
+                point_pairs[1] = point_pairs[2];
+            }
+        }
+        else
+        {
+            if (distance[1] <= distance[2])
+            {
+                triangle[0] = triangle[2];
+                point_pairs[0] = point_pairs[2];
+            }
+            else
+            {
+                triangle[1] = triangle[2];
+                point_pairs[1] = point_pairs[2];
+            }
+        }
+        start = Collision::edge_direciton(triangle[0], triangle[1], false);
+        point_pairs.pop_back();
+    }
+
+    std::vector<Geo::Point> points;
+    points.emplace_back(triangle[0]);
+    points.emplace_back(triangle[1]);
+    points.emplace_back(triangle[2]);
+
+    if (Geo::is_on_left(points[2], points[0], points[1]))
+    {
+        std::reverse(points.begin(), points.end());
+    }
+
+    size_t index;
+    while (true)
+    {
+        distance[0] = Geo::distance_square(end, points.front(), points.back());
+        index = points.size();
+        for (size_t i = 1, count = points.size(); i < count; ++i)
+        {
+            distance[1] = Geo::distance_square(end, points[i - 1], points[i]);
+            if (distance[1] < distance[0])
+            {
+                distance[0] = distance[1];
+                index = i;
+            }
+        }
+
+        start0 = Collision::edge_direciton(points[index - 1], points[index % points.size()], false);
+        Collision::gjk_furthest_point(polygon0, end, start0, point0);
+        Collision::gjk_furthest_point(polygon1, start0, end, point1);
+        point2 = point0 - point1;
+        if (start0 * point2 <= 0 || points[index - 1] == point2 || points[index % points.size()] == point2)
+        {
+            break;
+        }
+        else
+        {
+            if (std::find(points.begin(), points.end(), point2) == points.end())
+            {
+                if (index < points.size())
+                {
+                    points.insert(points.begin() + index, point2);
+                    point_pairs.insert(point_pairs.begin() + index, std::make_tuple(point0, point1));
+                }
+                else
+                {
+                    points.emplace_back(point2);
+                    point_pairs.emplace_back(point0, point1);
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+    }
+
+    distance[0] = Geo::distance_square(end, points.front(), points.back());
+    index = points.size();
+    std::vector<size_t> indexs;
+    for (size_t i = 1, count = points.size(); i < count; ++i)
+    {
+        distance[1] = Geo::distance_square(end, points[i - 1], points[i]);
+        if (distance[1] < distance[0])
+        {
+            distance[0] = distance[1];
+            index = i;
+        }
+        else if (distance[1] == distance[0])
+        {
+            indexs.push_back(i);
+        }
+    }
+    if (!Geo::foot_point(points[index - 1], points[index % points.size()], end, point0))
+    {
+        if (Geo::distance_square(end, points[index - 1]) <=
+            Geo::distance_square(end, points[index % points.size()]))
+        {
+            point0 = points[index - 1];
+        }
+        else
+        {
+            point0 = points[index % points.size()];
+        }
+    }
+    if (!indexs.empty())
+    {
+        distance[0] = point0.x * tx + point0.y * ty;
+        for (const size_t i : indexs)
+        {
+            if (!Geo::foot_point(points[i - 1], points[i % points.size()], end, point0))
+            {
+                if (Geo::distance_square(end, points[i - 1]) <=
+                    Geo::distance_square(end, points[i % points.size()]))
+                {
+                    point2 = points[i - 1];
+                }
+                else
+                {
+                    point2 = points[i % points.size()];
+                }
+            }
+            distance[1] = point2.x * tx + point2.y * ty;
+            if (distance[1] > distance[0])
+            {
+                distance[0] = distance[1];
+                index = i;
+            }
+        }
+    }
+    return Geo::distance(std::get<0>(point_pairs[index - 1]), std::get<0>(point_pairs[index % points.size()]),
+                std::get<1>(point_pairs[index - 1]), std::get<1>(point_pairs[index % points.size()]), start0, end0);
+}
+
+double Collision::epa(const Geo::Circle &circle0, const Geo::Circle &circle1, const double tx, const double ty, Geo::Point &start, Geo::Point &end)
+{
+    const double length = Geo::distance(circle0, circle1);
+    start.clear(), end.clear();
+    if (length < circle0.radius + circle1.radius)
+    {
+        end = circle1 + (circle0 - circle1).normalize() * (length - circle0.radius);
+        start = circle0 + (circle1 - circle0).normalize() * (length - circle1.radius);
+        return circle0.radius + circle1.radius - length;
+    }
+    else if (length == circle0.radius + circle1.radius)
+    {
+        return 0;
+    }
+    else
+    {
+        return -1;
+    }
+}
+
+double Collision::epa(const Geo::Circle &circle, const Geo::Polygon &polygon, const double tx, const double ty, Geo::Point &start, Geo::Point &end)
+{
+    double length = DBL_MAX, distance = 0;
+    size_t index = 1;
+    start.clear(), end.clear();
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        distance = Geo::distance_square(circle, polygon[i - 1], polygon[i]);
+        if (distance < length)
+        {
+            length = distance;
+            index = i;
+        }
+    }
+    if (length > circle.radius * circle.radius)
+    {
+        return -1;
+    }
+    else if (length == circle.radius * circle.radius)
+    {
+        return 0;
+    }
+
+    if (Collision::is_inside(circle, polygon))
+    {
+        if (Geo::foot_point(polygon[index - 1], polygon[index], circle, start, false))
+        {
+            Collision::gjk_furthest_point(circle, start, circle, end);
+        }
+        else
+        {
+            if (Geo::distance_square(circle, polygon[index - 1]) <= Geo::distance_square(circle, polygon[index]))
+            {
+                Collision::gjk_furthest_point(circle, polygon[index - 1], circle, end);
+                start = polygon[index - 1];
+            }
+            else
+            {
+                Collision::gjk_furthest_point(circle, polygon[index], circle, end);
+                start = polygon[index];
+            }
+        }
+    }
+    else
+    {
+        if (Geo::foot_point(polygon[index - 1], polygon[index], circle, start, false))
+        {
+            Collision::gjk_furthest_point(circle, circle, start, end);
+        }
+        else
+        {
+            if (Geo::distance_square(circle, polygon[index - 1]) <= Geo::distance_square(circle, polygon[index]))
+            {
+                Collision::gjk_furthest_point(circle, circle, polygon[index - 1], end);
+                start = polygon[index - 1];
+            }
+            else
+            {
+                Collision::gjk_furthest_point(circle, circle, polygon[index], end);
+                start = polygon[index];
+            }
+        }
+    }
+    return Geo::distance(start, end);
+}
+
+double Collision::epa(const Geo::Polygon &polygon, const Geo::Circle &circle, const double tx, const double ty, Geo::Point &start, Geo::Point &end)
+{
+    double length = DBL_MAX, distance = 0;
+    size_t index = 1;
+    start.clear(), end.clear();
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        distance = Geo::distance_square(circle, polygon[i - 1], polygon[i]);
+        if (distance < length)
+        {
+            length = distance;
+            index = i;
+        }
+    }
+    if (length > circle.radius * circle.radius)
+    {
+        return -1;
+    }
+    else if (length == circle.radius * circle.radius)
+    {
+        return 0;
+    }
+
+    if (Collision::is_inside(circle, polygon))
+    {
+        if (Geo::foot_point(polygon[index - 1], polygon[index], circle, end, false))
+        {
+            Collision::gjk_furthest_point(circle, end, circle, start);
+        }
+        else
+        {
+            if (Geo::distance_square(circle, polygon[index - 1]) <= Geo::distance_square(circle, polygon[index]))
+            {
+                Collision::gjk_furthest_point(circle, polygon[index - 1], circle, start);
+                end = polygon[index - 1];
+            }
+            else
+            {
+                Collision::gjk_furthest_point(circle, polygon[index], circle, start);
+                end = polygon[index];
+            }
+        }
+    }
+    else
+    {
+        if (Geo::foot_point(polygon[index - 1], polygon[index], circle, end, false))
+        {
+            Collision::gjk_furthest_point(circle, circle, end, start);
+        }
+        else
+        {
+            if (Geo::distance_square(circle, polygon[index - 1]) <= Geo::distance_square(circle, polygon[index]))
+            {
+                Collision::gjk_furthest_point(circle, circle, polygon[index - 1], start);
+                end = polygon[index - 1];
+            }
+            else
+            {
+                Collision::gjk_furthest_point(circle, circle, polygon[index], start);
+                end = polygon[index];
+            }
+        }
+    }
+    return Geo::distance(start, end);
+}
+
+double Collision::epa(Container &polygon0, Container &polygon1, const double tx, const double ty, Physics::CollisionPair &collision)
+{
+    Geo::Point start, end;
+    const double value = Collision::epa(polygon0.shape(), polygon1.shape(), tx, ty, start, end);
+    if (value >= 0)
+    {
+        collision.object0 = &polygon0;
+        collision.object1 = &polygon1;
+
+        collision.r[0] = Physics::Vector(end.x, end.y) - polygon0.position;
+        collision.r[1] = Physics::Vector(start.x, start.y) - polygon1.position;
+        collision.start.x = start.x;
+        collision.start.y = start.y;
+        collision.end.x = end.x;
+        collision.end.y = end.y;
+        collision.normal = (collision.end - collision.start).normalize();
+        collision.tangent.x = -collision.normal.y;
+        collision.tangent.y = collision.normal.x;
+
+        collision.w[0] = Physics::Vector::cross(polygon0.angular_velocity, collision.r[0]);
+        collision.w[1] = Physics::Vector::cross(polygon1.angular_velocity, collision.r[1]);
+        collision.v[0] = polygon0.velocity + collision.w[0];
+        collision.v[1] = polygon1.velocity + collision.w[1];
+
+        collision.im[0] = polygon0.inv_mass();
+        collision.im[1] = polygon1.inv_mass();
+        collision.ii[0] = polygon0.inv_inertia();
+        collision.ii[1] = polygon1.inv_inertia();
+        collision.rn[0] = collision.r[0].cross(collision.normal);
+        collision.rn[1] = collision.r[1].cross(collision.normal);
+        collision.rt[0] = collision.r[0].cross(collision.tangent);
+        collision.rt[1] = collision.r[1].cross(collision.tangent);
+
+        collision.kn = collision.im[0] + collision.ii[0] * collision.rn[0] * collision.rn[0] + collision.im[1] + collision.ii[1] * collision.rn[1] * collision.rn[1];
+        collision.kt = collision.im[0] + collision.ii[0] * collision.rt[0] * collision.rt[0] + collision.im[1] + collision.ii[1] * collision.rt[1] * collision.rt[1];
+        collision.effective_mass_n = (collision.kn == 0 ? 0 : 1.0 / collision.kn);
+        collision.effective_mass_t = (collision.kt == 0 ? 0 : 1.0 / collision.kt);
+
+        collision.restitution = std::min(polygon0.restitution, polygon1.restitution);
+        collision.friction = std::max(polygon0.friction, polygon1.friction);
+
+        const Physics::Vector dv = collision.v[0] - collision.v[1];
+        collision.jvn = collision.normal.dot(dv);
+        collision.jvt = collision.tangent.dot(dv);
+        collision.velocity_bias =  dv * (-collision.restitution);
+    }
+    return value;
+}
+
+double Collision::epa(CircleContainer &circle0, CircleContainer &circle1, const double tx, const double ty, Physics::CollisionPair &collision)
+{
+    Geo::Point start, end;
+    const double value = Collision::epa(circle0.shape(), circle1.shape(), tx, ty, start, end);
+    if (value >= 0)
+    {
+        collision.object0 = &circle0;
+        collision.object1 = &circle1;
+
+        collision.r[0] = Physics::Vector(end.x, end.y) - circle0.position;
+        collision.r[1] = Physics::Vector(start.x, start.y) - circle1.position;
+        collision.start.x = start.x;
+        collision.start.y = start.y;
+        collision.end.x = end.x;
+        collision.end.y = end.y;
+        collision.normal = (collision.end - collision.start).normalize();
+        collision.tangent.x = -collision.normal.y;
+        collision.tangent.y = collision.normal.x;
+
+        collision.w[0] = Physics::Vector::cross(circle0.angular_velocity, collision.r[0]);
+        collision.w[1] = Physics::Vector::cross(circle1.angular_velocity, collision.r[1]);
+        collision.v[0] = circle0.velocity + collision.w[0];
+        collision.v[1] = circle1.velocity + collision.w[1];
+
+        collision.im[0] = circle0.inv_mass();
+        collision.im[1] = circle1.inv_mass();
+        collision.ii[0] = circle0.inv_inertia();
+        collision.ii[1] = circle1.inv_inertia();
+        collision.rn[0] = collision.r[0].cross(collision.normal);
+        collision.rn[1] = collision.r[1].cross(collision.normal);
+        collision.rt[0] = collision.r[0].cross(collision.tangent);
+        collision.rt[1] = collision.r[1].cross(collision.tangent);
+
+        collision.kn = collision.im[0] + collision.ii[0] * collision.rn[0] * collision.rn[0] + collision.im[1] + collision.ii[1] * collision.rn[1] * collision.rn[1];
+        collision.kt = collision.im[0] + collision.ii[0] * collision.rt[0] * collision.rt[0] + collision.im[1] + collision.ii[1] * collision.rt[1] * collision.rt[1];
+        collision.effective_mass_n = (collision.kn == 0 ? 0 : 1.0 / collision.kn);
+        collision.effective_mass_t = (collision.kt == 0 ? 0 : 1.0 / collision.kt);
+
+        collision.restitution = std::min(circle0.restitution, circle1.restitution);
+        collision.friction = std::max(circle0.friction, circle1.friction);
+
+        const Physics::Vector dv = collision.v[0] - collision.v[1];
+        collision.jvn = collision.normal.dot(dv);
+        collision.jvt = collision.tangent.dot(dv);
+        collision.velocity_bias =  dv * (-collision.restitution);
+    }
+    return value;
+}
+
+double Collision::epa(CircleContainer &circle, Container &polygon, const double tx, const double ty, Physics::CollisionPair &collision)
+{
+    Geo::Point start, end;
+    const double value = Collision::epa(circle.shape(), polygon.shape(), tx, ty, start, end);
+    if (value > 0)
+    {
+        collision.object0 = &circle;
+        collision.object1 = &polygon;
+
+        collision.r[0] = Physics::Vector(end.x, end.y) - circle.position;
+        collision.r[1] = Physics::Vector(start.x, start.y) - polygon.position;
+        collision.start.x = start.x;
+        collision.start.y = start.y;
+        collision.end.x = end.x;
+        collision.end.y = end.y;
+        collision.normal = (collision.end - collision.start).normalize();
+        collision.tangent.x = -collision.normal.y;
+        collision.tangent.y = collision.normal.x;
+
+        collision.w[0] = Physics::Vector::cross(circle.angular_velocity, collision.r[0]);
+        collision.w[1] = Physics::Vector::cross(polygon.angular_velocity, collision.r[1]);
+        collision.v[0] = circle.velocity + collision.w[0];
+        collision.v[1] = polygon.velocity + collision.w[1];
+
+        collision.im[0] = circle.inv_mass();
+        collision.im[1] = polygon.inv_mass();
+        collision.ii[0] = circle.inv_inertia();
+        collision.ii[1] = polygon.inv_inertia();
+        collision.rn[0] = collision.r[0].cross(collision.normal);
+        collision.rn[1] = collision.r[1].cross(collision.normal);
+        collision.rt[0] = collision.r[0].cross(collision.tangent);
+        collision.rt[1] = collision.r[1].cross(collision.tangent);
+
+        collision.kn = collision.im[0] + collision.ii[0] * collision.rn[0] * collision.rn[0] + collision.im[1] + collision.ii[1] * collision.rn[1] * collision.rn[1];
+        collision.kt = collision.im[0] + collision.ii[0] * collision.rt[0] * collision.rt[0] + collision.im[1] + collision.ii[1] * collision.rt[1] * collision.rt[1];
+        collision.effective_mass_n = (collision.kn == 0 ? 0 : 1.0 / collision.kn);
+        collision.effective_mass_t = (collision.kt == 0 ? 0 : 1.0 / collision.kt);
+
+        collision.restitution = std::min(circle.restitution, polygon.restitution);
+        collision.friction = std::max(circle.friction, polygon.friction);
+
+        const Physics::Vector dv = collision.v[0] - collision.v[1];
+        collision.jvn = collision.normal.dot(dv);
+        collision.jvt = collision.tangent.dot(dv);
+        collision.velocity_bias =  dv * (-collision.restitution);
+    }
+    return value;
+}
+
+double Collision::epa(Container &polygon, CircleContainer &circle, const double tx, const double ty, Physics::CollisionPair &collision)
+{
+    Geo::Point start, end;
+    const double value = Collision::epa(polygon.shape(), circle.shape(), tx, ty, start, end);
+    if (value > 0)
+    {
+        collision.object0 = &polygon;
+        collision.object1 = &circle;
+
+        collision.r[0] = Physics::Vector(end.x, end.y) - polygon.position;
+        collision.r[1] = Physics::Vector(start.x, start.y) - circle.position;
+        collision.start.x = start.x;
+        collision.start.y = start.y;
+        collision.end.x = end.x;
+        collision.end.y = end.y;
+        collision.normal = (collision.end - collision.start).normalize();
+        collision.tangent.x = -collision.normal.y;
+        collision.tangent.y = collision.normal.x;
+
+        collision.w[0] = Physics::Vector::cross(polygon.angular_velocity, collision.r[0]);
+        collision.w[1] = Physics::Vector::cross(circle.angular_velocity, collision.r[1]);
+        collision.v[0] = polygon.velocity + collision.w[0];
+        collision.v[1] = circle.velocity + collision.w[1];
+
+        collision.im[0] = polygon.inv_mass();
+        collision.im[1] = circle.inv_mass();
+        collision.ii[0] = polygon.inv_inertia();
+        collision.ii[1] = circle.inv_inertia();
+        collision.rn[0] = collision.r[0].cross(collision.normal);
+        collision.rn[1] = collision.r[1].cross(collision.normal);
+        collision.rt[0] = collision.r[0].cross(collision.tangent);
+        collision.rt[1] = collision.r[1].cross(collision.tangent);
+
+        collision.kn = collision.im[0] + collision.ii[0] * collision.rn[0] * collision.rn[0] + collision.im[1] + collision.ii[1] * collision.rn[1] * collision.rn[1];
+        collision.kt = collision.im[0] + collision.ii[0] * collision.rt[0] * collision.rt[0] + collision.im[1] + collision.ii[1] * collision.rt[1] * collision.rt[1];
+        collision.effective_mass_n = (collision.kn == 0 ? 0 : 1.0 / collision.kn);
+        collision.effective_mass_t = (collision.kt == 0 ? 0 : 1.0 / collision.kt);
+
+        collision.restitution = std::min(polygon.restitution, circle.restitution);
+        collision.friction = std::max(polygon.friction, circle.friction);
+
+        const Physics::Vector dv = collision.v[0] - collision.v[1];
+        collision.jvn = collision.normal.dot(dv);
+        collision.jvt = collision.tangent.dot(dv);
+        collision.velocity_bias =  dv * (-collision.restitution);
+    }
+    return value;
+}
+
