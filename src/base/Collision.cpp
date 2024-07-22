@@ -2303,13 +2303,6 @@ double Collision::epa(CircleContainer &circle, Container &polygon, const double 
                     / (circle.mass() + polygon.mass());
             }
         }
-    
-        const double bias = std::max(0.2 * (vec.length() - 0.005), 0.0);
-        const double im0 = polygon.inv_mass(), im1 = circle.inv_mass();
-        const double ii0 = polygon.inv_inertia(), ii1 = circle.inv_inertia();
-        
-        const double k_normal = im0 + im1;
-        double lambda = k_normal * bias;
     }
     return value;
 }
@@ -2346,13 +2339,6 @@ double Collision::epa(Container &polygon, CircleContainer &circle, const double 
                     / (polygon.mass() + circle.mass());
             }
         }
-    
-        const double bias = std::max(0.2 * (vec.length() - 0.005), 0.0);
-        const double im0 = polygon.inv_mass(), im1 = circle.inv_mass();
-        const double ii0 = polygon.inv_inertia(), ii1 = circle.inv_inertia();
-        
-        const double k_normal = im0 + im1;
-        double lambda = k_normal * bias;
     }
     return value;
 }
@@ -2759,10 +2745,8 @@ double Collision::epa(Container &polygon0, Container &polygon1, const double tx,
         collision.tangent.x = -collision.normal.y;
         collision.tangent.y = collision.normal.x;
 
-        collision.w[0] = Physics::Vector::cross(polygon0.angular_velocity, collision.r[0]);
-        collision.w[1] = Physics::Vector::cross(polygon1.angular_velocity, collision.r[1]);
-        collision.v[0] = polygon0.velocity + collision.w[0];
-        collision.v[1] = polygon1.velocity + collision.w[1];
+        collision.v[0] = polygon0.velocity + Physics::Vector::cross(polygon0.angular_velocity, collision.r[0]);
+        collision.v[1] = polygon1.velocity + Physics::Vector::cross(polygon1.angular_velocity, collision.r[1]);
 
         collision.im[0] = polygon0.inv_mass();
         collision.im[1] = polygon1.inv_mass();
@@ -2779,12 +2763,14 @@ double Collision::epa(Container &polygon0, Container &polygon1, const double tx,
         collision.effective_mass_t = (collision.kt == 0 ? 0 : 1.0 / collision.kt);
 
         collision.restitution = std::min(polygon0.restitution, polygon1.restitution);
-        collision.friction = std::max(polygon0.friction, polygon1.friction);
+        collision.friction = std::sqrt(polygon0.friction * polygon1.friction);
 
-        const Physics::Vector dv = collision.v[0] - collision.v[1];
-        collision.jvn = collision.normal.dot(dv);
-        collision.jvt = collision.tangent.dot(dv);
-        collision.velocity_bias =  dv * (-collision.restitution);
+        collision.velocity_bias = -collision.restitution * (collision.v[0] - collision.v[1]);
+
+        Physics::Vector impulse = collision.accumulated_impulse_n * collision.normal 
+            + collision.accumulated_impulse_t * collision.tangent;
+        collision.object0->add_impulse(impulse, collision.r[0]);
+        collision.object1->add_impulse(-impulse, collision.r[1]);
     }
     return value;
 }
@@ -2808,10 +2794,8 @@ double Collision::epa(CircleContainer &circle0, CircleContainer &circle1, const 
         collision.tangent.x = -collision.normal.y;
         collision.tangent.y = collision.normal.x;
 
-        collision.w[0] = Physics::Vector::cross(circle0.angular_velocity, collision.r[0]);
-        collision.w[1] = Physics::Vector::cross(circle1.angular_velocity, collision.r[1]);
-        collision.v[0] = circle0.velocity + collision.w[0];
-        collision.v[1] = circle1.velocity + collision.w[1];
+        collision.v[0] = circle0.velocity + Physics::Vector::cross(circle0.angular_velocity, collision.r[0]);
+        collision.v[1] = circle1.velocity + Physics::Vector::cross(circle1.angular_velocity, collision.r[1]);
 
         collision.im[0] = circle0.inv_mass();
         collision.im[1] = circle1.inv_mass();
@@ -2830,10 +2814,12 @@ double Collision::epa(CircleContainer &circle0, CircleContainer &circle1, const 
         collision.restitution = std::min(circle0.restitution, circle1.restitution);
         collision.friction = std::max(circle0.friction, circle1.friction);
 
-        const Physics::Vector dv = collision.v[0] - collision.v[1];
-        collision.jvn = collision.normal.dot(dv);
-        collision.jvt = collision.tangent.dot(dv);
-        collision.velocity_bias =  dv * (-collision.restitution);
+        collision.velocity_bias = -collision.restitution * (collision.v[0] - collision.v[1]);
+
+        Physics::Vector impulse = collision.accumulated_impulse_n * collision.normal 
+            + collision.accumulated_impulse_t * collision.tangent;
+        collision.object0->add_impulse(impulse, collision.r[0]);
+        collision.object1->add_impulse(-impulse, collision.r[1]);
     }
     return value;
 }
@@ -2841,7 +2827,7 @@ double Collision::epa(CircleContainer &circle0, CircleContainer &circle1, const 
 double Collision::epa(CircleContainer &circle, Container &polygon, const double tx, const double ty, Physics::CollisionPair &collision)
 {
     Geo::Point start, end;
-    const double value = Collision::epa(circle.shape(), polygon.shape(), tx, ty, start, end);
+    const double value = Collision::epa(circle.shape(), polygon.shape(), tx, ty, end, start);
     if (value > 0)
     {
         collision.object0 = &circle;
@@ -2857,10 +2843,8 @@ double Collision::epa(CircleContainer &circle, Container &polygon, const double 
         collision.tangent.x = -collision.normal.y;
         collision.tangent.y = collision.normal.x;
 
-        collision.w[0] = Physics::Vector::cross(circle.angular_velocity, collision.r[0]);
-        collision.w[1] = Physics::Vector::cross(polygon.angular_velocity, collision.r[1]);
-        collision.v[0] = circle.velocity + collision.w[0];
-        collision.v[1] = polygon.velocity + collision.w[1];
+        collision.v[0] = circle.velocity + Physics::Vector::cross(circle.angular_velocity, collision.r[0]);
+        collision.v[1] = polygon.velocity + Physics::Vector::cross(polygon.angular_velocity, collision.r[1]);
 
         collision.im[0] = circle.inv_mass();
         collision.im[1] = polygon.inv_mass();
@@ -2879,10 +2863,12 @@ double Collision::epa(CircleContainer &circle, Container &polygon, const double 
         collision.restitution = std::min(circle.restitution, polygon.restitution);
         collision.friction = std::max(circle.friction, polygon.friction);
 
-        const Physics::Vector dv = collision.v[0] - collision.v[1];
-        collision.jvn = collision.normal.dot(dv);
-        collision.jvt = collision.tangent.dot(dv);
-        collision.velocity_bias =  dv * (-collision.restitution);
+        collision.velocity_bias = -collision.restitution * (collision.v[0] - collision.v[1]);
+
+        Physics::Vector impulse = collision.accumulated_impulse_n * collision.normal 
+            + collision.accumulated_impulse_t * collision.tangent;
+        collision.object0->add_impulse(impulse, collision.r[0]);
+        collision.object1->add_impulse(-impulse, collision.r[1]);
     }
     return value;
 }
@@ -2890,7 +2876,7 @@ double Collision::epa(CircleContainer &circle, Container &polygon, const double 
 double Collision::epa(Container &polygon, CircleContainer &circle, const double tx, const double ty, Physics::CollisionPair &collision)
 {
     Geo::Point start, end;
-    const double value = Collision::epa(polygon.shape(), circle.shape(), tx, ty, start, end);
+    const double value = Collision::epa(polygon.shape(), circle.shape(), tx, ty, end, start);
     if (value > 0)
     {
         collision.object0 = &polygon;
@@ -2906,10 +2892,8 @@ double Collision::epa(Container &polygon, CircleContainer &circle, const double 
         collision.tangent.x = -collision.normal.y;
         collision.tangent.y = collision.normal.x;
 
-        collision.w[0] = Physics::Vector::cross(polygon.angular_velocity, collision.r[0]);
-        collision.w[1] = Physics::Vector::cross(circle.angular_velocity, collision.r[1]);
-        collision.v[0] = polygon.velocity + collision.w[0];
-        collision.v[1] = circle.velocity + collision.w[1];
+        collision.v[0] = polygon.velocity + Physics::Vector::cross(polygon.angular_velocity, collision.r[0]);
+        collision.v[1] = circle.velocity + Physics::Vector::cross(circle.angular_velocity, collision.r[1]);
 
         collision.im[0] = polygon.inv_mass();
         collision.im[1] = circle.inv_mass();
@@ -2928,10 +2912,12 @@ double Collision::epa(Container &polygon, CircleContainer &circle, const double 
         collision.restitution = std::min(polygon.restitution, circle.restitution);
         collision.friction = std::max(polygon.friction, circle.friction);
 
-        const Physics::Vector dv = collision.v[0] - collision.v[1];
-        collision.jvn = collision.normal.dot(dv);
-        collision.jvt = collision.tangent.dot(dv);
-        collision.velocity_bias =  dv * (-collision.restitution);
+        collision.velocity_bias = -collision.restitution * (collision.v[0] - collision.v[1]);
+
+        Physics::Vector impulse = collision.accumulated_impulse_n * collision.normal 
+            + collision.accumulated_impulse_t * collision.tangent;
+        collision.object0->add_impulse(impulse, collision.r[0]);
+        collision.object1->add_impulse(-impulse, collision.r[1]);
     }
     return value;
 }

@@ -3663,7 +3663,7 @@ void Canvas::physical_update(const double dt)
 {
     Container *container;
     CircleContainer *circlecontainer;
-    const double g = -3.4;
+    const double g = -10;
     std::vector<Physics::PhysicalObject *> physical_objects;
     std::vector<Physics::CollisionPair> collisions;
 

@@ -120,88 +120,34 @@ void Physics::solve_velocity(std::vector<Physics::CollisionPair> &collisions)
     Physics::Vector velocity0, velocity1;
     for (Physics::CollisionPair &collision : collisions)
     {
-        // velocity0.clear(), velocity1.clear();
-        // if (!collision.object0->is_static)
-        // {
-        //     if (collision.object1->is_static)
-        //     {
-        //         velocity0 = collision.object0->velocity * (-collision.restitution);
-        //         // collision.object0->velocity *= (-collision.restitution);
-        //     }
-        //     else
-        //     {
-        //         velocity0 = (collision.object0->velocity * collision.object0->mass() + collision.object1->velocity * collision.object1->mass()
-        //             + (collision.object1->velocity - collision.object0->velocity) * collision.restitution * collision.object0->mass()) / (collision.object0->mass() + collision.object1->mass());
-        //         // collision.object0->velocity = (collision.object0->velocity * collision.object0->mass() + collision.object1->velocity * collision.object1->mass()
-        //         //    + (collision.object1->velocity - collision.object0->velocity) * collision.restitution * collision.object0->mass()) / (collision.object0->mass() + collision.object1->mass());
-        //     }
-        // }
-        // if (!collision.object1->is_static)
-        // {
-        //     if (collision.object0->is_static)
-        //     {
-        //         velocity1 = collision.object1->velocity * (-collision.restitution);
-        //         // collision.object1->velocity *= (-collision.restitution);
-        //     }
-        //     else
-        //     {
-        //         velocity1 = (collision.object0->velocity * collision.object0->mass() + collision.object1->velocity * collision.object1->mass()
-        //             + (collision.object0->velocity - collision.object1->velocity) * collision.restitution * collision.object1->mass()) / (collision.object0->mass() + collision.object1->mass());
-        //         // collision.object1->velocity = (collision.object0->velocity * collision.object0->mass() + collision.object1->velocity * collision.object1->mass()
-        //         //     + (collision.object0->velocity - collision.object1->velocity) * collision.restitution * collision.object1->mass()) / (collision.object0->mass() + collision.object1->mass());
-        //     }
-        // }
-        // if (!collision.object0->is_static)
-        // {
-        //     collision.object0->velocity = velocity0;
-        // }
-        // if (!collision.object1->is_static)
-        // {
-        //     collision.object1->velocity = velocity1;
-        // }
-
-        collision.w[0] = Physics::Vector::cross(collision.object0->angular_velocity, collision.r[0]);
-        collision.w[1] = Physics::Vector::cross(collision.object1->angular_velocity, collision.r[1]);
-        collision.v[0] = collision.object0->velocity + collision.w[0];
-        collision.v[1] = collision.object1->velocity + collision.w[1];
+        collision.v[0] = collision.object0->velocity + Physics::Vector::cross(collision.object0->angular_velocity, collision.r[0]);
+        collision.v[1] = collision.object1->velocity + Physics::Vector::cross(collision.object1->angular_velocity, collision.r[1]);
         Physics::Vector dv = collision.v[0] - collision.v[1];
 
         const double jvt = collision.tangent.dot(dv);
         double lambda_t = collision.effective_mass_t * (-jvt);
 
-        double max_friction = collision.friction * collision.accumulated_implus_n;
-        double new_impulse = std::clamp(collision.accumulated_implus_t + lambda_t, -max_friction, max_friction);
-        lambda_t = new_impulse - collision.accumulated_implus_t;
+        double max_friction = collision.friction * collision.accumulated_impulse_n;
+        double new_impulse = std::clamp(collision.accumulated_impulse_t + lambda_t, -max_friction, max_friction);
+        lambda_t = new_impulse - collision.accumulated_impulse_t;
 
         const Physics::Vector impulse_t = lambda_t * collision.tangent;
         collision.object0->add_impulse(impulse_t, collision.r[0]);
         collision.object1->add_impulse(-impulse_t, collision.r[1]);
 
-        collision.w[0] = Physics::Vector::cross(collision.object0->angular_velocity, collision.r[0]);
-        collision.w[1] = Physics::Vector::cross(collision.object1->angular_velocity, collision.r[1]);
-        collision.v[0] = collision.object0->velocity + collision.w[0];
-        collision.v[1] = collision.object1->velocity + collision.w[1];
+        collision.v[0] = collision.object0->velocity + Physics::Vector::cross(collision.object0->angular_velocity, collision.r[0]);
+        collision.v[1] = collision.object1->velocity + Physics::Vector::cross(collision.object1->angular_velocity, collision.r[1]);
         dv = collision.v[0] - collision.v[1];
 
         const double jvn = collision.normal.dot(dv - collision.velocity_bias);
         double lambda_n = collision.effective_mass_n * (-jvn);
-        double old_normal_impulse = collision.accumulated_implus_n;
-        collision.accumulated_implus_n = std::max(old_normal_impulse + lambda_n, 0.0);
-        lambda_n = collision.accumulated_implus_n - old_normal_impulse;
+        double old_normal_impulse = collision.accumulated_impulse_n;
+        collision.accumulated_impulse_n = std::max(old_normal_impulse + lambda_n, 0.0);
+        lambda_n = collision.accumulated_impulse_n - old_normal_impulse;
 
         const Physics::Vector impulse_n = lambda_n * collision.normal;
         collision.object0->add_impulse(impulse_n, collision.r[0]);
         collision.object1->add_impulse(-impulse_n, collision.r[1]);
-
-        // if (!collision.object0->is_static)
-        // {
-        //     collision.object0->velocity += velocity0;
-        // }
-        // if (!collision.object1->is_static)
-        // {
-        //     collision.object1->velocity += velocity1;
-        // }
-        
     }
 }
 
@@ -211,11 +157,14 @@ void Physics::solve_position(std::vector<Physics::CollisionPair> &collisions)
     {
         Physics::Vector vec = collision.object1->position - collision.object1->position;
 
-        const double bias = std::max(0.2 * (vec.dot(collision.normal) - 0.005), 0.0);
+        const double bias = std::max(0.01 * (vec.dot(collision.normal) - 0.001), 0.0);
         Physics::Vector impulse = collision.effective_mass_n * bias * collision.normal;
         
-        collision.object0->add_impulse(impulse, collision.r[0]);
-        collision.object1->add_impulse(impulse, collision.r[1]);
+        collision.object0->position += collision.object0->inv_mass() * impulse;
+        collision.object0->rotation += collision.object0->inv_inertia() * collision.r[0].cross(impulse);
+
+        collision.object1->position -= collision.object1->inv_mass() * impulse;
+        collision.object1->rotation -= collision.object1->inv_inertia() * collision.r[1].cross(impulse);
     }
 }
 

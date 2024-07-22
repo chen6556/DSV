@@ -252,7 +252,6 @@ namespace Physics
         Physics::Vector normal;
         Physics::Vector tangent;
 
-        Physics::Vector w[2];
         Physics::Vector v[2];
         Physics::Vector velocity_bias;
 
@@ -267,11 +266,8 @@ namespace Physics
         double restitution = 1.0;
         double friction = 0.2;
 
-        double jvn = 0;
-        double jvt = 0;
-
-        double accumulated_implus_n = 0;
-        double accumulated_implus_t = 0;
+        double accumulated_impulse_n = 0;
+        double accumulated_impulse_t = 0;
     };
         
     void solve_velocity(std::vector<Physics::CollisionPair> &collisions);
