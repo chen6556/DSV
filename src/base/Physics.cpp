@@ -130,8 +130,9 @@ void Physics::solve_velocity(std::vector<Physics::CollisionPair> &collisions)
         double max_friction = collision.friction * collision.accumulated_impulse_n;
         double new_impulse = std::clamp(collision.accumulated_impulse_t + lambda_t, -max_friction, max_friction);
         lambda_t = new_impulse - collision.accumulated_impulse_t;
+        collision.accumulated_impulse_t = new_impulse;
 
-        const Physics::Vector impulse_t = lambda_t * collision.tangent;
+        const Physics::Vector impulse_t = collision.tangent * lambda_t;
         collision.object0->add_impulse(impulse_t, collision.r[0]);
         collision.object1->add_impulse(-impulse_t, collision.r[1]);
 
@@ -145,7 +146,7 @@ void Physics::solve_velocity(std::vector<Physics::CollisionPair> &collisions)
         collision.accumulated_impulse_n = std::max(old_normal_impulse + lambda_n, 0.0);
         lambda_n = collision.accumulated_impulse_n - old_normal_impulse;
 
-        const Physics::Vector impulse_n = lambda_n * collision.normal;
+        const Physics::Vector impulse_n = collision.normal * lambda_n;
         collision.object0->add_impulse(impulse_n, collision.r[0]);
         collision.object1->add_impulse(-impulse_n, collision.r[1]);
     }
@@ -155,16 +156,16 @@ void Physics::solve_position(std::vector<Physics::CollisionPair> &collisions)
 {
     for (Physics::CollisionPair &collision : collisions)
     {
-        Physics::Vector vec = collision.object1->position - collision.object1->position;
+        Physics::Vector vec = collision.point[1] - collision.point[0];
 
-        const double bias = std::max(0.01 * (vec.dot(collision.normal) - 0.001), 0.0);
-        Physics::Vector impulse = collision.effective_mass_n * bias * collision.normal;
-        
-        collision.object0->position += collision.object0->inv_mass() * impulse;
-        collision.object0->rotation += collision.object0->inv_inertia() * collision.r[0].cross(impulse);
+        const double bias = std::max(0.2 * (vec.dot(collision.normal) - 0.005), 0.0);
+        Physics::Vector impulse = collision.normal * collision.effective_mass_n * bias;
 
-        collision.object1->position -= collision.object1->inv_mass() * impulse;
-        collision.object1->rotation -= collision.object1->inv_inertia() * collision.r[1].cross(impulse);
+        collision.object0->position += (impulse * collision.object0->inv_mass());
+        collision.object0->rotation += (collision.object0->inv_inertia() * collision.r[0].cross(impulse));
+
+        collision.object1->position -= (impulse * collision.object1->inv_mass());
+        collision.object1->rotation -= (collision.object1->inv_inertia() * collision.r[1].cross(impulse));
     }
 }
 

@@ -2735,13 +2735,19 @@ double Collision::epa(Container &polygon0, Container &polygon1, const double tx,
         collision.object0 = &polygon0;
         collision.object1 = &polygon1;
 
-        collision.r[0] = Physics::Vector(end.x, end.y) - polygon0.position;
-        collision.r[1] = Physics::Vector(start.x, start.y) - polygon1.position;
-        collision.start.x = start.x;
-        collision.start.y = start.y;
-        collision.end.x = end.x;
-        collision.end.y = end.y;
-        collision.normal = (collision.end - collision.start).normalize();
+        collision.point[0].x = start.x;
+        collision.point[0].y = start.y;
+        collision.point[1].x = end.x;
+        collision.point[1].y = end.y;
+        collision.r[0] = collision.point[0] - polygon0.position;
+        collision.r[1] = collision.point[1] - polygon1.position;
+
+        collision.normal = collision.point[1] - collision.point[0];
+        collision.penetration = collision.normal.length();
+        if (collision.penetration != 0)
+        {
+            collision.normal /= collision.penetration;
+        }
         collision.tangent.x = -collision.normal.y;
         collision.tangent.y = collision.normal.x;
 
@@ -2765,12 +2771,12 @@ double Collision::epa(Container &polygon0, Container &polygon1, const double tx,
         collision.restitution = std::min(polygon0.restitution, polygon1.restitution);
         collision.friction = std::sqrt(polygon0.friction * polygon1.friction);
 
-        collision.velocity_bias = -collision.restitution * (collision.v[0] - collision.v[1]);
+        collision.velocity_bias = (collision.v[0] - collision.v[1]) * (-collision.restitution);
 
-        Physics::Vector impulse = collision.accumulated_impulse_n * collision.normal 
-            + collision.accumulated_impulse_t * collision.tangent;
-        collision.object0->add_impulse(impulse, collision.r[0]);
-        collision.object1->add_impulse(-impulse, collision.r[1]);
+        // Physics::Vector impulse = collision.accumulated_impulse_n * collision.normal 
+        //     + collision.accumulated_impulse_t * collision.tangent;
+        // collision.object0->add_impulse(impulse, collision.r[0]);
+        // collision.object1->add_impulse(-impulse, collision.r[1]);
     }
     return value;
 }
@@ -2784,13 +2790,31 @@ double Collision::epa(CircleContainer &circle0, CircleContainer &circle1, const 
         collision.object0 = &circle0;
         collision.object1 = &circle1;
 
-        collision.r[0] = Physics::Vector(end.x, end.y) - circle0.position;
-        collision.r[1] = Physics::Vector(start.x, start.y) - circle1.position;
-        collision.start.x = start.x;
-        collision.start.y = start.y;
-        collision.end.x = end.x;
-        collision.end.y = end.y;
-        collision.normal = (collision.end - collision.start).normalize();
+        if (std::abs(Geo::distance_square(start, circle0) - circle0.radius * circle0.radius) <=
+            std::abs(Geo::distance_square(start, circle1) - circle1.radius * circle1.radius))
+        {
+            collision.point[0].x = start.x;
+            collision.point[0].y = start.y;
+            collision.point[1].x = end.x;
+            collision.point[1].y = end.y;
+        }
+        else
+        {
+            collision.point[0].x = end.x;
+            collision.point[0].y = end.y;
+            collision.point[1].x = start.x;
+            collision.point[1].y = start.y;
+        }
+
+        collision.r[0] = collision.point[0] - circle0.position;
+        collision.r[1] = collision.point[1] - circle1.position;
+        
+        collision.normal = collision.point[0] - collision.point[1];
+        collision.penetration = collision.normal.length();
+        if (collision.penetration != 0)
+        {
+            collision.normal /= collision.penetration;
+        }
         collision.tangent.x = -collision.normal.y;
         collision.tangent.y = collision.normal.x;
 
@@ -2814,10 +2838,10 @@ double Collision::epa(CircleContainer &circle0, CircleContainer &circle1, const 
         collision.restitution = std::min(circle0.restitution, circle1.restitution);
         collision.friction = std::max(circle0.friction, circle1.friction);
 
-        collision.velocity_bias = -collision.restitution * (collision.v[0] - collision.v[1]);
+        collision.velocity_bias = (collision.v[0] - collision.v[1]) * (-collision.restitution);
 
-        Physics::Vector impulse = collision.accumulated_impulse_n * collision.normal 
-            + collision.accumulated_impulse_t * collision.tangent;
+        Physics::Vector impulse = collision.normal * collision.accumulated_impulse_n
+            + collision.tangent * collision.accumulated_impulse_t;
         collision.object0->add_impulse(impulse, collision.r[0]);
         collision.object1->add_impulse(-impulse, collision.r[1]);
     }
@@ -2827,19 +2851,59 @@ double Collision::epa(CircleContainer &circle0, CircleContainer &circle1, const 
 double Collision::epa(CircleContainer &circle, Container &polygon, const double tx, const double ty, Physics::CollisionPair &collision)
 {
     Geo::Point start, end;
-    const double value = Collision::epa(circle.shape(), polygon.shape(), tx, ty, end, start);
+    const double value = Collision::epa(circle.shape(), polygon.shape(), tx, ty, start, end);
     if (value > 0)
     {
         collision.object0 = &circle;
         collision.object1 = &polygon;
 
+        if (std::abs(Geo::distance_square(start, circle) - circle.radius * circle.radius) <
+            std::abs(Geo::distance_square(end, circle) - circle.radius * circle.radius))
+        {
+            collision.point[0].x = start.x;
+            collision.point[0].y = start.y;
+            collision.point[1].x = end.x;
+            collision.point[1].y = end.y;
+        }
+        else if (std::abs(Geo::distance_square(start, circle) - circle.radius * circle.radius) >
+            std::abs(Geo::distance_square(end, circle) - circle.radius * circle.radius))
+        {
+            collision.point[0].x = end.x;
+            collision.point[0].y = end.y;
+            collision.point[1].x = start.x;
+            collision.point[1].y = start.y;
+        }
+        else
+        {
+            if (Geo::distance(start, polygon) <= Geo::distance(start, circle))
+            {
+                collision.point[0].x = end.x;
+                collision.point[0].y = end.y;
+                collision.point[1].x = start.x;
+                collision.point[1].y = start.y;
+            }
+            else
+            {
+                collision.point[0].x = start.x;
+                collision.point[0].y = start.y;
+                collision.point[1].x = end.x;
+                collision.point[1].y = end.y;
+            }
+        }
+
         collision.r[0] = Physics::Vector(end.x, end.y) - circle.position;
         collision.r[1] = Physics::Vector(start.x, start.y) - polygon.position;
-        collision.start.x = start.x;
-        collision.start.y = start.y;
-        collision.end.x = end.x;
-        collision.end.y = end.y;
-        collision.normal = (collision.end - collision.start).normalize();
+        collision.point[0].x = start.x;
+        collision.point[0].y = start.y;
+        collision.point[1].x = end.x;
+        collision.point[1].y = end.y;
+
+        collision.normal = collision.point[0] - collision.point[1];
+        collision.penetration = collision.normal.length();
+        if (collision.penetration != 0)
+        {
+            collision.normal /= collision.penetration;
+        }
         collision.tangent.x = -collision.normal.y;
         collision.tangent.y = collision.normal.x;
 
@@ -2863,10 +2927,10 @@ double Collision::epa(CircleContainer &circle, Container &polygon, const double 
         collision.restitution = std::min(circle.restitution, polygon.restitution);
         collision.friction = std::max(circle.friction, polygon.friction);
 
-        collision.velocity_bias = -collision.restitution * (collision.v[0] - collision.v[1]);
+        collision.velocity_bias = (collision.v[0] - collision.v[1]) * (-collision.restitution);
 
-        Physics::Vector impulse = collision.accumulated_impulse_n * collision.normal 
-            + collision.accumulated_impulse_t * collision.tangent;
+        Physics::Vector impulse = collision.normal * collision.accumulated_impulse_n
+            + collision.tangent * (collision.accumulated_impulse_t);
         collision.object0->add_impulse(impulse, collision.r[0]);
         collision.object1->add_impulse(-impulse, collision.r[1]);
     }
@@ -2876,19 +2940,55 @@ double Collision::epa(CircleContainer &circle, Container &polygon, const double 
 double Collision::epa(Container &polygon, CircleContainer &circle, const double tx, const double ty, Physics::CollisionPair &collision)
 {
     Geo::Point start, end;
-    const double value = Collision::epa(polygon.shape(), circle.shape(), tx, ty, end, start);
+    const double value = Collision::epa(polygon.shape(), circle.shape(), tx, ty, start, end);
     if (value > 0)
     {
         collision.object0 = &polygon;
         collision.object1 = &circle;
 
-        collision.r[0] = Physics::Vector(end.x, end.y) - polygon.position;
-        collision.r[1] = Physics::Vector(start.x, start.y) - circle.position;
-        collision.start.x = start.x;
-        collision.start.y = start.y;
-        collision.end.x = end.x;
-        collision.end.y = end.y;
-        collision.normal = (collision.end - collision.start).normalize();
+        if (std::abs(Geo::distance_square(start, circle) - circle.radius * circle.radius) <
+            std::abs(Geo::distance_square(end, circle) - circle.radius * circle.radius))
+        {
+            collision.point[0].x = end.x;
+            collision.point[0].y = end.y;
+            collision.point[1].x = start.x;
+            collision.point[1].y = start.y;
+        }
+        else if (std::abs(Geo::distance_square(start, circle) - circle.radius * circle.radius) >
+            std::abs(Geo::distance_square(end, circle) - circle.radius * circle.radius))
+        {
+            collision.point[0].x = start.x;
+            collision.point[0].y = start.y;
+            collision.point[1].x = end.x;
+            collision.point[1].y = end.y;
+        }
+        else
+        {
+            if (Geo::distance(start, polygon) <= Geo::distance(start, circle))
+            {
+                collision.point[0].x = start.x;
+                collision.point[0].y = start.y;
+                collision.point[1].x = end.x;
+                collision.point[1].y = end.y;
+            }
+            else
+            {
+                collision.point[0].x = end.x;
+                collision.point[0].y = end.y;
+                collision.point[1].x = start.x;
+                collision.point[1].y = start.y;
+            }
+        }
+
+        collision.r[0] = collision.point[0] - polygon.position;
+        collision.r[1] = collision.point[1] - circle.position;
+
+        collision.normal = collision.point[0] - collision.point[1];
+        collision.penetration = collision.normal.length();
+        if (collision.penetration != 0)
+        {
+            collision.normal /= collision.penetration;
+        }
         collision.tangent.x = -collision.normal.y;
         collision.tangent.y = collision.normal.x;
 
@@ -2912,10 +3012,10 @@ double Collision::epa(Container &polygon, CircleContainer &circle, const double 
         collision.restitution = std::min(polygon.restitution, circle.restitution);
         collision.friction = std::max(polygon.friction, circle.friction);
 
-        collision.velocity_bias = -collision.restitution * (collision.v[0] - collision.v[1]);
+        collision.velocity_bias = (collision.v[0] - collision.v[1]) * (-collision.restitution);
 
-        Physics::Vector impulse = collision.accumulated_impulse_n * collision.normal 
-            + collision.accumulated_impulse_t * collision.tangent;
+        Physics::Vector impulse = collision.normal * collision.accumulated_impulse_n
+            + collision.tangent * collision.accumulated_impulse_t;
         collision.object0->add_impulse(impulse, collision.r[0]);
         collision.object1->add_impulse(-impulse, collision.r[1]);
     }

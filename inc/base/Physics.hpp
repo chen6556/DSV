@@ -13,12 +13,12 @@ namespace Physics
 
         static Vector cross(double value, const Vector &vec)
         {
-            return Vector(-value * vec.y, value * vec.y);
+            return Vector(-value * vec.y, value * vec.x);
         }
 
         static Vector cross(const Vector &vec, double value)
         {
-            return Vector(value * vec.y, -value * vec.y);
+            return Vector(value * vec.y, -value * vec.x);
         }
 
         Vector() {}
@@ -173,16 +173,16 @@ namespace Physics
             const double len = std::sqrt(x * x + y * y);
             return Vector(x / len, y / len);
         }
-    
-        friend Vector operator-(const Vector &vec)
+
+        Vector operator-() const
         {
-            return Vector(-vec.x, -vec.y);
+            return Vector(-x, -y);
         }
 
-        friend Vector operator*(const double value, const Vector &vec)
-        {
-            return Vector(vec.x * value, vec.y * value);
-        }
+        // friend Vector operator*(const double value, const Vector &vec)
+        // {
+        //     return Vector(vec.x * value, vec.y * value);
+        // }
     };
 
     class PhysicalObject
@@ -245,10 +245,9 @@ namespace Physics
     {
         Physics::PhysicalObject *object0 = nullptr;
         Physics::PhysicalObject *object1 = nullptr;
-        
+
         Physics::Vector r[2];
-        Physics::Vector start;
-        Physics::Vector end;
+        Physics::Vector point[2];
         Physics::Vector normal;
         Physics::Vector tangent;
 
@@ -263,8 +262,10 @@ namespace Physics
         double kt = 0;
         double effective_mass_n = 0;
         double effective_mass_t = 0;
+
+        double penetration = 0;
         double restitution = 1.0;
-        double friction = 0.2;
+        double friction = 0.0;
 
         double accumulated_impulse_n = 0;
         double accumulated_impulse_t = 0;

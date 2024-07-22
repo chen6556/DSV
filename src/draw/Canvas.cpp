@@ -3713,7 +3713,7 @@ void Canvas::physical_update(const double dt)
         {
             object->update_position(dt);
         }
-        Physics::solve_position(collisions);
+        // Physics::solve_position(collisions);
 
         std::this_thread::sleep_until(start_point + std::chrono::milliseconds(33));
         emit redraw_signal();
