@@ -212,7 +212,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 
 void MainWindow::dropEvent(QDropEvent *event)
 {
-    const QString suffixs = "dsv DSV pdf PDF plt PLT cut CUT";
+    const QString suffixs = "dsv DSV plt PLT cut CUT";
     QFileInfo file_info(event->mimeData()->urls().front().toLocalFile());
     if( file_info.isFile() && suffixs.contains(file_info.suffix()))
     {
@@ -233,7 +233,7 @@ void MainWindow::open_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;PLT: (*.plt *.PLT);;PDF: (*.pdf *.PDF);;RS274D: (*.cut *.CUT *.nc *.NC)", &_file_type);
+    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;PLT: (*.plt *.PLT);;RS274D: (*.cut *.CUT *.nc *.NC)", &_file_type);
     open_file(path);
     delete dialog;
 }
@@ -355,7 +355,7 @@ void MainWindow::append_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;PLT: (*.plt *.PLT);;PDF: (*.pdf *.PDF);;RS274D: (*.cut *.CUT *.nc *.NC)", &_file_type);
+    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;PLT: (*.plt *.PLT);;RS274D: (*.cut *.CUT *.nc *.NC)", &_file_type);
     append_file(path);
     delete dialog;
 }
