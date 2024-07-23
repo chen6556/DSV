@@ -2735,16 +2735,10 @@ double Collision::epa(Container &polygon0, Container &polygon1, const double tx,
         collision.object0 = &polygon0;
         collision.object1 = &polygon1;
 
-        collision.point[0].x = start.x;
-        collision.point[0].y = start.y;
-        collision.point[1].x = end.x;
-        collision.point[1].y = end.y;
-        collision.r[0] = collision.point[0] - polygon0.position;
-        collision.r[1] = collision.point[1] - polygon1.position;
-
         Collision::calculate_collision_points(polygon0, polygon1, start, end, collision);
 
-        collision.normal = collision.point[1] - collision.point[0];
+        collision.normal.x = start.x - end.x;
+        collision.normal.y = start.y - end.y;
         collision.penetration = collision.normal.length();
         if (collision.penetration != 0)
         {
@@ -3054,72 +3048,105 @@ void Collision::calculate_collision_points(Container &polygon0, Container &polyg
     else
     {
         point1 = polygon0.next_point(index);
+        angle0 = angle1;
     }
 
     index = polygon1.index(point2);
-    angle0 = std::abs(Geo::angle(polygon1.last_point(index), point2, start, end));
-    angle1 = std::abs(Geo::angle(polygon1.next_point(index), point2, start, end));
-    if (std::abs(angle0 - Geo::PI / 2) <= std::abs(angle1 - Geo::PI / 2))
+    angle1 = std::abs(Geo::angle(polygon1.last_point(index), point2, start, end));
+    double angle2 = std::abs(Geo::angle(polygon1.next_point(index), point2, start, end));
+    if (std::abs(angle1 - Geo::PI / 2) <= std::abs(angle2 - Geo::PI / 2))
     {
         point3 = polygon1.last_point(index);
     }
     else
     {
-        point3 = polygon0.next_point(index);
+        point3 = polygon1.next_point(index);
+        angle1 = angle2;
     }
 
-    Geo::Point point4;
-    if (Geo::is_intersected(point0, point1, point2, point3, point4, false))
+    size_t count = 0;
+    std::vector<Geo::Polygon> result;
+    Geo::polygon_intersection(polygon0, polygon1, result);
+    index = result.front().index(point0);
+    if (index < SIZE_MAX)
     {
-        return;
+        collision.point[0].x = point0.x;
+        collision.point[0].y = point0.y;
+        if (result.front().last_point(index) == point1)
+        {
+            collision.point[1].x = result.front().next_point(index).x;
+            collision.point[1].y = result.front().next_point(index).y;
+        }
+        else
+        {
+            collision.point[1].x = result.front().last_point(index).x;
+            collision.point[1].y = result.front().last_point(index).y;
+        }
+        count += 2;
+    }
+    index = result.front().index(point1);
+    if (index < SIZE_MAX)
+    {
+        collision.point[count].x = point1.x;
+        collision.point[count].y = point1.y;
+        if (result.front().last_point(index) == point0)
+        {
+            collision.point[count + 1].x = result.front().next_point(index).x;
+            collision.point[count + 1].y = result.front().next_point(index).y;
+        }
+        else
+        {
+            collision.point[count + 1].x = result.front().last_point(index).x;
+            collision.point[count + 1].y = result.front().last_point(index).y;
+        }
+        count += 2;
+    }
+    index = result.front().index(point2);
+    if (index < SIZE_MAX && count < 4)
+    {
+        collision.point[count + 1].x = point2.x;
+        collision.point[count + 1].y = point2.y;
+        if (result.front().last_point(index) == point3)
+        {
+            collision.point[count].x = result.front().next_point(index).x;
+            collision.point[count].y = result.front().next_point(index).y;
+        }
+        else
+        {
+            collision.point[count].x = result.front().last_point(index).x;
+            collision.point[count].y = result.front().last_point(index).y;
+        }
+        count += 2;
+    }
+    index = result.front().index(point3);
+    if (index < SIZE_MAX && count < 4)
+    {
+        collision.point[count + 1].x = point3.x;
+        collision.point[count + 1].y = point3.y;
+        if (result.front().last_point(index) == point2)
+        {
+            collision.point[count].x = result.front().next_point(index).x;
+            collision.point[count].y = result.front().next_point(index).y;
+        }
+        else
+        {
+            collision.point[count].x = result.front().last_point(index).x;
+            collision.point[count].y = result.front().last_point(index).y;
+        }
+        count += 2;
     }
 
-    if (Collision::is_point_in_polygon(point0, polygon1) &&
-        Geo::is_intersected(point2, point3, point0, point0 + (start - end) * 10, point4)
-        && (point4.x != collision.point[1].x || point4.y != collision.point[1].y))
-    {
-        collision.point[2].x = point0.x;
-        collision.point[2].y = point0.y;
-        collision.point[3].x = point4.x;
-        collision.point[3].y = point4.y;
-        collision.point_count = 4;
-    }
-    else if (Collision::is_point_in_polygon(point1, polygon1) &&
-        Geo::is_intersected(point2, point3, point1, point1 + (start - end) * 10, point4)
-        && (point4.x != collision.point[1].x || point4.y != collision.point[1].y))
-    {
-        collision.point[2].x = point1.x;
-        collision.point[2].y = point1.y;
-        collision.point[3].x = point4.x;
-        collision.point[3].y = point4.y;
-        collision.point_count = 4;
-    }
-    else if (Collision::is_point_in_polygon(point2, polygon0) &&
-        Geo::is_intersected(point0, point1, point2, point2 + (end - start) * 10, point4)
-        && (point4.x != collision.point[0].x || point4.y != collision.point[0].y))
-    {
-        collision.point[2].x = point4.x;
-        collision.point[2].y = point4.y;
-        collision.point[3].x = point2.x;
-        collision.point[3].y = point2.y;
-        collision.point_count = 4;
-    }
-    else if (Collision::is_point_in_polygon(point3, polygon0) &&
-        Geo::is_intersected(point0, point1, point3, point3 + (end - start) * 10, point4)
-        && (point4.x != collision.point[1].x || point4.y != collision.point[1].y))
-    {
-        collision.point[2].x = point4.x;
-        collision.point[2].y = point4.y;
-        collision.point[3].x = point3.x;
-        collision.point[3].y = point3.y;
-        collision.point_count = 4;
-    }
+    collision.r[0] = collision.point[0] - polygon0.position;
+    collision.r[1] = collision.point[1] - polygon1.position;
+    collision.v[0] = polygon0.velocity + Physics::Vector::cross(polygon0.angular_velocity, collision.r[0]);
+    collision.v[1] = polygon1.velocity + Physics::Vector::cross(polygon1.angular_velocity, collision.r[1]);
 
-    if (collision.point_count == 4)
+    if (count > 2)
     {
+        collision.point_count = 4;
+
         collision.r[2] = collision.point[2] - polygon0.position;
         collision.r[3] = collision.point[3] - polygon1.position;
-
         collision.v[2] = polygon0.velocity + Physics::Vector::cross(polygon0.angular_velocity, collision.r[2]);
         collision.v[3] = polygon1.velocity + Physics::Vector::cross(polygon1.angular_velocity, collision.r[3]);
     }

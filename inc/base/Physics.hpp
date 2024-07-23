@@ -166,6 +166,11 @@ namespace Physics
             return std::sqrt(x * x + y * y);
         }
 
+        bool empty() const
+        {
+            return x == 0 && y == 0;
+        }
+
         void clear()
         {
             x = y = 0;

@@ -160,18 +160,19 @@ void Physics::solve_velocity(std::vector<Physics::CollisionPair> &collisions)
             const double t = a[1] * a[2] - a[0] * a[3];
             a[0] /= t, a[1] /= (-t), a[2] /= (-t), a[3] /= t;
 
-            Physics::Vector impulse_n0 = collision.normal * (a[3] * b[0] + a[1] * b[1]);
-            collision.object0->add_impulse(impulse_n0, collision.r[0]);
-            collision.object1->add_impulse(-impulse_n0, collision.r[1]);
+            if (b[0] != 0)
+            {
+                Physics::Vector impulse_n0 = collision.normal * (a[3] * b[0] + a[1] * b[1]);
+                collision.object0->add_impulse(impulse_n0, collision.r[0]);
+                collision.object1->add_impulse(-impulse_n0, collision.r[1]);
+            }
 
-            Physics::Vector impulse_n1 = collision.normal * (a[2] * b[0] + a[0] * b[1]);
-            collision.object0->add_impulse(impulse_n1, collision.r[2]);
-            collision.object1->add_impulse(-impulse_n1, collision.r[3]);
-
-            collision.v[0] = collision.object0->velocity + Physics::Vector::cross(collision.object0->angular_velocity, collision.r[0]);
-            collision.v[1] = collision.object1->velocity + Physics::Vector::cross(collision.object1->angular_velocity, collision.r[1]);
-            collision.v[2] = collision.object0->velocity + Physics::Vector::cross(collision.object0->angular_velocity, collision.r[2]);
-            collision.v[3] = collision.object1->velocity + Physics::Vector::cross(collision.object1->angular_velocity, collision.r[3]);
+            if (b[1] != 0)
+            {
+                Physics::Vector impulse_n1 = collision.normal * (a[2] * b[0] + a[0] * b[1]);
+                collision.object0->add_impulse(impulse_n1, collision.r[2]);
+                collision.object1->add_impulse(-impulse_n1, collision.r[3]);
+            }
         }
         else
         {
@@ -212,31 +213,84 @@ void Physics::solve_position(std::vector<Physics::CollisionPair> &collisions)
 {
     for (Physics::CollisionPair &collision : collisions)
     {
-        Physics::Vector vec = collision.point[1] - collision.point[0];
-
-        const double bias = std::max(0.2 * (vec.dot(collision.normal) - 0.005), 0.0);
-        Physics::Vector impulse = collision.normal * collision.effective_mass_n * bias;
-
-        collision.object0->position += (impulse * collision.object0->inv_mass());
-        collision.object0->rotation += (collision.object0->inv_inertia() * collision.r[0].cross(impulse));
-
-        collision.object1->position -= (impulse * collision.object1->inv_mass());
-        collision.object1->rotation -= (collision.object1->inv_inertia() * collision.r[1].cross(impulse));
-
-        collision.point[0] += (impulse * collision.object0->inv_mass());
-        collision.point[1] += (impulse * collision.object1->inv_mass());
-        Vector::rotate(collision.point[0], collision.object0->position.x, collision.object0->position.y,
-            collision.object0->inv_inertia() * collision.r[0].cross(impulse));
-        Vector::rotate(collision.point[1], collision.object1->position.x, collision.object1->position.y,
-            collision.object1->inv_inertia() * collision.r[1].cross(impulse));
         if (collision.point_count == 4)
         {
-            collision.point[2] += (impulse * collision.object0->inv_mass());
-            collision.point[3] += (impulse * collision.object1->inv_mass());
-            Vector::rotate(collision.point[2], collision.object0->position.x, collision.object0->position.y,
-                collision.object0->inv_inertia() * collision.r[2].cross(impulse));
-            Vector::rotate(collision.point[3], collision.object1->position.x, collision.object1->position.y,
-                collision.object1->inv_inertia() * collision.r[3].cross(impulse));
+            const double jn0[6] = {collision.normal.x, collision.normal.y, collision.normal.cross(collision.r[0]),
+                -collision.normal.x, -collision.normal.y, -collision.normal.cross(collision.r[1])};
+            const double jn1[6] = {collision.normal.x, collision.normal.y, collision.normal.cross(collision.r[2]),
+                -collision.normal.x, -collision.normal.y, -collision.normal.cross(collision.r[3])};
+            const double m[6] = {collision.object0->inv_mass(), collision.object0->inv_mass(), collision.object0->inv_inertia(),
+                collision.object1->inv_mass(), collision.object1->inv_mass(), collision.object1->inv_inertia()};
+            const double v[6] = {collision.object0->velocity.x, collision.object0->velocity.y, collision.object0->angular_velocity,
+                collision.object1->velocity.x, collision.object1->velocity.y, collision.object1->angular_velocity};
+
+            double a[4], b[2];
+            a[0] = jn0[0] * m[0] * jn0[0] + jn0[1] * m[1] * jn0[1]
+                + jn0[2] * m[2] * jn0[2] + jn0[3] * m[3] * jn0[3]
+                + jn0[4] * m[4] * jn0[4] + jn0[5] * m[5] * jn0[5];
+            a[1] = a[2] = jn0[0] * m[0] * jn1[0] + jn0[1] * m[1] * jn1[1]
+                + jn0[2] * m[2] * jn1[2] + jn0[3] * m[3] * jn1[3]
+                + jn0[4] * m[4] * jn1[4] + jn0[5] * m[5] * jn1[5];
+            a[3] = jn1[0] * m[0] * jn1[0] + jn1[1] * m[1] * jn1[1] 
+                + jn1[2] * m[2] * jn1[2] + jn1[3] * m[3] * jn1[3]
+                + jn1[4] * m[4] * jn1[4] + jn1[5] * m[5] * jn1[5];
+
+            b[0] = collision.normal.dot(collision.object0->position + collision.r[0] - collision.object1->position - collision.r[1]) * 0.02;
+            b[1] = collision.normal.dot(collision.object0->position + collision.r[2] - collision.object1->position - collision.r[3]) * 0.02;
+
+            if (b[0] < 0 && b[1] >= 0)
+            {
+                b[1] = 0;
+            }
+            else if (b[0] >= 0 && b[1] < 0)
+            {
+                b[0] = 0;
+            }
+            else if (b[0] >= 0 && b[1] >= 0)
+            {
+                continue;
+            }
+
+            const double t = a[1] * a[2] - a[0] * a[3];
+            a[0] /= t, a[1] /= (-t), a[2] /= (-t), a[3] /= t;
+
+            if (b[0] != 0)
+            {
+                Physics::Vector impulse_n0 = collision.normal * (a[3] * b[0] + a[1] * b[1]);
+                collision.object0->position += (impulse_n0 * collision.object0->inv_mass());
+                collision.object0->rotation += (collision.object0->inv_inertia() * collision.r[0].cross(impulse_n0));
+                collision.object1->position -= (impulse_n0 * collision.object1->inv_mass());
+                collision.object1->rotation -= (collision.object1->inv_inertia() * collision.r[1].cross(impulse_n0));
+            }
+
+            if (b[1] != 0)
+            {
+                Physics::Vector impulse_n1 = collision.normal * (a[2] * b[0] + a[0] * b[1]);
+                collision.object0->position += (impulse_n1 * collision.object0->inv_mass());
+                collision.object0->rotation += (collision.object0->inv_inertia() * collision.r[2].cross(impulse_n1));
+                collision.object1->position -= (impulse_n1 * collision.object1->inv_mass());
+                collision.object1->rotation -= (collision.object1->inv_inertia() * collision.r[3].cross(impulse_n1));
+            }
+        }
+        else
+        {
+            const double jn0[6] = {collision.normal.x, collision.normal.y, collision.normal.cross(collision.r[0]),
+                -collision.normal.x, -collision.normal.y, -collision.normal.cross(collision.r[1])};
+            const double m[6] = {collision.object0->inv_mass(), collision.object0->inv_mass(), collision.object0->inv_inertia(),
+                collision.object1->inv_mass(), collision.object1->inv_mass(), collision.object1->inv_inertia()};
+            const double a = jn0[0] * m[0] * jn0[0] + jn0[1] * m[1] * jn0[1]
+                + jn0[2] * m[2] * jn0[2] + jn0[3] * m[3] * jn0[3]
+                + jn0[4] * m[4] * jn0[4] + jn0[5] * m[5] * jn0[5];
+            const double b = collision.normal.dot(collision.object0->position + collision.r[0]
+                - collision.object1->position - collision.r[1]) * 0.02;
+
+            Physics::Vector impulse_n = collision.normal * (-b / a);
+
+            collision.object0->position += (impulse_n * collision.object0->inv_mass());
+            collision.object0->rotation += (collision.object0->inv_inertia() * collision.r[0].cross(impulse_n));
+
+            collision.object1->position -= (impulse_n * collision.object1->inv_mass());
+            collision.object1->rotation -= (collision.object1->inv_inertia() * collision.r[1].cross(impulse_n));
         }
     }
 }

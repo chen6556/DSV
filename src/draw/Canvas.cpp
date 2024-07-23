@@ -3733,9 +3733,15 @@ void Canvas::physical_update(const double dt)
         }
         Physics::solve_position(collisions);
 
-        std::this_thread::sleep_until(start_point + std::chrono::milliseconds(33));
-        emit redraw_signal();
+        for (Physics::PhysicalObject *object : physical_objects)
+        {
+            object->force.clear();
+            object->torques = 0;
+        }
         physical_objects.clear();
+
+        emit redraw_signal();
+        std::this_thread::sleep_until(start_point + std::chrono::milliseconds(33));        
         // collisions.clear();
     }
 }
