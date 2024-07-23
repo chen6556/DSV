@@ -2742,6 +2742,8 @@ double Collision::epa(Container &polygon0, Container &polygon1, const double tx,
         collision.r[0] = collision.point[0] - polygon0.position;
         collision.r[1] = collision.point[1] - polygon1.position;
 
+        Collision::calculate_collision_points(polygon0, polygon1, start, end, collision);
+
         collision.normal = collision.point[1] - collision.point[0];
         collision.penetration = collision.normal.length();
         if (collision.penetration != 0)
@@ -2773,8 +2775,8 @@ double Collision::epa(Container &polygon0, Container &polygon1, const double tx,
 
         collision.velocity_bias = (collision.v[0] - collision.v[1]) * (-collision.restitution);
 
-        // Physics::Vector impulse = collision.accumulated_impulse_n * collision.normal 
-        //     + collision.accumulated_impulse_t * collision.tangent;
+        // Physics::Vector impulse = collision.normal * collision.accumulated_impulse_n
+        //     + collision.tangent * collision.accumulated_impulse_t;
         // collision.object0->add_impulse(impulse, collision.r[0]);
         // collision.object1->add_impulse(-impulse, collision.r[1]);
     }
@@ -2860,18 +2862,18 @@ double Collision::epa(CircleContainer &circle, Container &polygon, const double 
         if (std::abs(Geo::distance_square(start, circle) - circle.radius * circle.radius) <
             std::abs(Geo::distance_square(end, circle) - circle.radius * circle.radius))
         {
-            collision.point[0].x = start.x;
-            collision.point[0].y = start.y;
-            collision.point[1].x = end.x;
-            collision.point[1].y = end.y;
-        }
-        else if (std::abs(Geo::distance_square(start, circle) - circle.radius * circle.radius) >
-            std::abs(Geo::distance_square(end, circle) - circle.radius * circle.radius))
-        {
             collision.point[0].x = end.x;
             collision.point[0].y = end.y;
             collision.point[1].x = start.x;
             collision.point[1].y = start.y;
+        }
+        else if (std::abs(Geo::distance_square(start, circle) - circle.radius * circle.radius) >
+            std::abs(Geo::distance_square(end, circle) - circle.radius * circle.radius))
+        {
+            collision.point[0].x = start.x;
+            collision.point[0].y = start.y;
+            collision.point[1].x = end.x;
+            collision.point[1].y = end.y;
         }
         else
         {
@@ -2949,18 +2951,18 @@ double Collision::epa(Container &polygon, CircleContainer &circle, const double 
         if (std::abs(Geo::distance_square(start, circle) - circle.radius * circle.radius) <
             std::abs(Geo::distance_square(end, circle) - circle.radius * circle.radius))
         {
-            collision.point[0].x = end.x;
-            collision.point[0].y = end.y;
-            collision.point[1].x = start.x;
-            collision.point[1].y = start.y;
-        }
-        else if (std::abs(Geo::distance_square(start, circle) - circle.radius * circle.radius) >
-            std::abs(Geo::distance_square(end, circle) - circle.radius * circle.radius))
-        {
             collision.point[0].x = start.x;
             collision.point[0].y = start.y;
             collision.point[1].x = end.x;
             collision.point[1].y = end.y;
+        }
+        else if (std::abs(Geo::distance_square(start, circle) - circle.radius * circle.radius) >
+            std::abs(Geo::distance_square(end, circle) - circle.radius * circle.radius))
+        {
+            collision.point[0].x = end.x;
+            collision.point[0].y = end.y;
+            collision.point[1].x = start.x;
+            collision.point[1].y = start.y;
         }
         else
         {
@@ -3021,4 +3023,109 @@ double Collision::epa(Container &polygon, CircleContainer &circle, const double 
     }
     return value;
 }
+
+
+
+bool Collision::is_point_in_polygon(const Geo::Point &point, const Geo::Polygon &polygon, const bool coincide)
+{
+    for (size_t i = 2, count = polygon.size(); i < count; ++i)
+    {
+        if (Geo::is_inside(point, polygon.front(), polygon[i - 1], polygon[i], coincide))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Collision::calculate_collision_points(Container &polygon0, Container &polygon1, const Geo::Point &start, const Geo::Point &end, Physics::CollisionPair &collision)
+{
+    Geo::Point point0, point1, point2, point3;
+    gjk_furthest_point(polygon0.shape(), end, start, point0);
+    gjk_furthest_point(polygon1.shape(), start, end, point2);
+
+    size_t index = polygon0.index(point0);
+    double angle0 = std::abs(Geo::angle(polygon0.last_point(index), point0, start, end));
+    double angle1 = std::abs(Geo::angle(polygon0.next_point(index), point0, start, end));
+    if (std::abs(angle0 - Geo::PI / 2) <= std::abs(angle1 - Geo::PI / 2))
+    {
+        point1 = polygon0.last_point(index);
+    }
+    else
+    {
+        point1 = polygon0.next_point(index);
+    }
+
+    index = polygon1.index(point2);
+    angle0 = std::abs(Geo::angle(polygon1.last_point(index), point2, start, end));
+    angle1 = std::abs(Geo::angle(polygon1.next_point(index), point2, start, end));
+    if (std::abs(angle0 - Geo::PI / 2) <= std::abs(angle1 - Geo::PI / 2))
+    {
+        point3 = polygon1.last_point(index);
+    }
+    else
+    {
+        point3 = polygon0.next_point(index);
+    }
+
+    Geo::Point point4;
+    if (Geo::is_intersected(point0, point1, point2, point3, point4, false))
+    {
+        return;
+    }
+
+    if (Collision::is_point_in_polygon(point0, polygon1) &&
+        Geo::is_intersected(point2, point3, point0, point0 + (start - end) * 10, point4)
+        && (point4.x != collision.point[1].x || point4.y != collision.point[1].y))
+    {
+        collision.point[2].x = point0.x;
+        collision.point[2].y = point0.y;
+        collision.point[3].x = point4.x;
+        collision.point[3].y = point4.y;
+        collision.point_count = 4;
+    }
+    else if (Collision::is_point_in_polygon(point1, polygon1) &&
+        Geo::is_intersected(point2, point3, point1, point1 + (start - end) * 10, point4)
+        && (point4.x != collision.point[1].x || point4.y != collision.point[1].y))
+    {
+        collision.point[2].x = point1.x;
+        collision.point[2].y = point1.y;
+        collision.point[3].x = point4.x;
+        collision.point[3].y = point4.y;
+        collision.point_count = 4;
+    }
+    else if (Collision::is_point_in_polygon(point2, polygon0) &&
+        Geo::is_intersected(point0, point1, point2, point2 + (end - start) * 10, point4)
+        && (point4.x != collision.point[0].x || point4.y != collision.point[0].y))
+    {
+        collision.point[2].x = point4.x;
+        collision.point[2].y = point4.y;
+        collision.point[3].x = point2.x;
+        collision.point[3].y = point2.y;
+        collision.point_count = 4;
+    }
+    else if (Collision::is_point_in_polygon(point3, polygon0) &&
+        Geo::is_intersected(point0, point1, point3, point3 + (end - start) * 10, point4)
+        && (point4.x != collision.point[1].x || point4.y != collision.point[1].y))
+    {
+        collision.point[2].x = point4.x;
+        collision.point[2].y = point4.y;
+        collision.point[3].x = point3.x;
+        collision.point[3].y = point3.y;
+        collision.point_count = 4;
+    }
+
+    if (collision.point_count == 4)
+    {
+        collision.r[2] = collision.point[2] - polygon0.position;
+        collision.r[3] = collision.point[3] - polygon1.position;
+
+        collision.v[2] = polygon0.velocity + Physics::Vector::cross(polygon0.angular_velocity, collision.r[2]);
+        collision.v[3] = polygon1.velocity + Physics::Vector::cross(polygon1.angular_velocity, collision.r[3]);
+    }
+}
+
+
+
+
 

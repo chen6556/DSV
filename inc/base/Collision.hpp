@@ -564,5 +564,10 @@ namespace Geo
                 }
             }
         };
+
+
+        bool is_point_in_polygon(const Geo::Point &point, const Geo::Polygon &polygon, const bool coincide = false);
+
+        void calculate_collision_points(Container &polygon0, Container &polygon1, const Geo::Point &start, const Geo::Point &end, Physics::CollisionPair &collision);
     }
 }

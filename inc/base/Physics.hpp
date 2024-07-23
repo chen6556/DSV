@@ -21,6 +21,17 @@ namespace Physics
             return Vector(value * vec.y, -value * vec.x);
         }
 
+        static void rotate(Vector &vec, const double x, const double y, const double rad)
+        {
+            vec.x -= x;
+            vec.y -= y;
+            const double x1 = vec.x, y1 = vec.y;
+            vec.x = x1 * std::cos(rad) - y1 * std::sin(rad);
+            vec.y = x1 * std::sin(rad) + y1 * std::cos(rad);
+            vec.x += x;
+            vec.y += y;
+        }
+
         Vector() {}
 
         Vector(const double x_, const double y_)
@@ -246,12 +257,12 @@ namespace Physics
         Physics::PhysicalObject *object0 = nullptr;
         Physics::PhysicalObject *object1 = nullptr;
 
-        Physics::Vector r[2];
-        Physics::Vector point[2];
+        Physics::Vector r[4];
+        Physics::Vector point[4];
         Physics::Vector normal;
         Physics::Vector tangent;
 
-        Physics::Vector v[2];
+        Physics::Vector v[4];
         Physics::Vector velocity_bias;
 
         double im[2];
@@ -269,8 +280,10 @@ namespace Physics
 
         double accumulated_impulse_n = 0;
         double accumulated_impulse_t = 0;
+
+        int point_count = 2;
     };
-        
+
     void solve_velocity(std::vector<Physics::CollisionPair> &collisions);
 
     void solve_position(std::vector<Physics::CollisionPair> &collisions);
