@@ -4,14 +4,11 @@
 #include <QJsonDocument>
 #include <QAbstractItemView>
 #include <QMimeData>
-#include <qpdf/QPDF.hh>
-#include <qpdf/QPDFWriter.hh>
 
 #include "ui/MainWindow.hpp"
 #include "./ui_MainWindow.h"
 #include "io/File.hpp"
 #include "io/PLTParser.hpp"
-#include "io/PDFParser.hpp"
 #include "io/RS274DParser.hpp"
 #include "io/DSVParser.hpp"
 #include "io/GlobalSetting.hpp"
@@ -706,43 +703,6 @@ void MainWindow::open_file(const QString &path)
             _file_type = "PLT: (*.plt *.PLT)";
         }
     }
-    else if (path.toUpper().endsWith(".PDF"))
-    {
-        QPDF pdf;
-        pdf.processFile(path.toStdString().c_str());
-        for (int i = 0, count = pdf.getObjectCount(); i < count; ++i)
-        {
-            QPDFObjectHandle handle = pdf.getObject(i, 0);
-            if (handle.isImage() || handle.isFormXObject() || handle.isInlineImage())
-            {
-                pdf.replaceObject(i, 0, QPDFObjectHandle::newNull());
-            }
-            else if (handle.isStream())
-            {
-                std::shared_ptr<Buffer> buffer = handle.getStreamData(qpdf_stream_decode_level_e::qpdf_dl_all);
-                if (std::find(buffer->getBuffer(), buffer->getBuffer() + buffer->getSize(), '%') != buffer->getBuffer() + buffer->getSize())
-                {
-                    pdf.replaceObject(i, 0, QPDFObjectHandle::newNull());
-                }
-            }
-        }
-
-        QPDFWriter outpdf(pdf);
-        outpdf.setStreamDataMode(qpdf_stream_data_e::qpdf_s_uncompress);
-        outpdf.setDecodeLevel(qpdf_stream_decode_level_e::qpdf_dl_all);
-        outpdf.setOutputMemory();
-        outpdf.setNewlineBeforeEndstream(true);
-        outpdf.write();
-        std::shared_ptr<Buffer> buffer = outpdf.getBufferSharedPointer();
-
-        std::string_view sv(reinterpret_cast<char *>(buffer->getBuffer()), buffer->getSize());
-        PDFParser::parse(sv, g);
-
-        if (ui->remember_file_type->isChecked())
-        {
-            _file_type = "PDF: (*.pdf *.PDF)";
-        }
-    }
     else if(path.toUpper().endsWith(".CUT") || path.toUpper().endsWith(".NC"))
     {
         std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
@@ -789,38 +749,6 @@ void MainWindow::append_file(const QString &path)
         std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
         PLTParser::parse(file, g);
         file.close();
-    }
-    else if (path.toUpper().endsWith(".PDF"))
-    {
-        QPDF pdf;
-        pdf.processFile(path.toStdString().c_str());
-        for (int i = 0, count = pdf.getObjectCount(); i < count; ++i)
-        {
-            QPDFObjectHandle handle = pdf.getObject(i, 0);
-            if (handle.isImage() || handle.isFormXObject() || handle.isInlineImage())
-            {
-                pdf.replaceObject(i, 0, QPDFObjectHandle::newNull());
-            }
-            else if (handle.isStream())
-            {
-                std::shared_ptr<Buffer> buffer = handle.getStreamData(qpdf_stream_decode_level_e::qpdf_dl_all);
-                if (std::find(buffer->getBuffer(), buffer->getBuffer() + buffer->getSize(), '%') != buffer->getBuffer() + buffer->getSize())
-                {
-                    pdf.replaceObject(i, 0, QPDFObjectHandle::newNull());
-                }
-            }
-        }
-
-        QPDFWriter outpdf(pdf);
-        outpdf.setStreamDataMode(qpdf_stream_data_e::qpdf_s_uncompress);
-        outpdf.setDecodeLevel(qpdf_stream_decode_level_e::qpdf_dl_all);
-        outpdf.setOutputMemory();
-        outpdf.setNewlineBeforeEndstream(true);
-        outpdf.write();
-        std::shared_ptr<Buffer> buffer = outpdf.getBufferSharedPointer();
-
-        std::string_view sv(reinterpret_cast<char *>(buffer->getBuffer()), buffer->getSize());
-        PDFParser::parse(sv, g);
     }
     else if(path.toUpper().endsWith(".CUT") || path.toUpper().endsWith(".NC"))
     {
