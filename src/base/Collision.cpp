@@ -3032,6 +3032,53 @@ bool Collision::is_point_in_polygon(const Geo::Point &point, const Geo::Polygon 
     return false;
 }
 
+bool Collision::is_point_in_clip_side(const Geo::Point &point, const Geo::Point &start, const Geo::Point &end)
+{
+    return (end.x - start.x) * (point.y - start.y) > (end.y - start.y) * (point.x - start.x);
+}
+
+Geo::Polygon Collision::clip(const Geo::Polygon &src, const Geo::Polygon &dst)
+{
+    std::vector<Point> input, output(dst.begin(), dst.end() - 1);
+    Polygon clipper(src);
+    if (clipper.is_cw())
+    {
+        clipper.flip();
+    }
+
+    Geo::Point point;
+    for (size_t i = 1, count0 = clipper.size(); i < count0; ++i)
+    {
+        std::swap(input, output);
+        output.clear();
+
+        const Point &edgeStart = clipper[i - 1];
+        const Point &edgeEnd = clipper[i];
+
+        for (size_t j = 0, count1 = input.size(); j < count1; ++j)
+        {
+            const Point &currentVertex = input[j];
+            const Point &prevVertex = input[(j + count1 - 1) % count1];
+
+            if (Collision::is_point_in_clip_side(currentVertex, edgeStart, edgeEnd))
+            {
+                if (!Collision::is_point_in_clip_side(prevVertex, edgeStart, edgeEnd))
+                {
+                    Geo::is_intersected(prevVertex, currentVertex, edgeStart, edgeEnd, point, true);
+                    output.emplace_back(point);
+                }
+                output.emplace_back(currentVertex);
+            }
+            else if (Collision::is_point_in_clip_side(prevVertex, edgeStart, edgeEnd))
+            {
+                Geo::is_intersected(prevVertex, currentVertex, edgeStart, edgeEnd, point, true);
+                output.emplace_back(point);
+            }
+        }
+    }
+    return Polygon(output.begin(), output.end());
+}
+
 void Collision::calculate_collision_points(Container &polygon0, Container &polygon1, const Geo::Point &start, const Geo::Point &end, Physics::CollisionPair &collision)
 {
     Geo::Point point0, point1, point2, point3;
@@ -3064,74 +3111,82 @@ void Collision::calculate_collision_points(Container &polygon0, Container &polyg
         angle1 = angle2;
     }
 
+    Geo::Polygon result;
+    if (std::abs(angle0 - Geo::PI / 2) >= std::abs(angle1 - Geo::PI / 2))
+    {
+        result = Collision::clip(polygon0, polygon1);
+    }
+    else
+    {
+        result = Collision::clip(polygon1, polygon0);
+    }
+
     size_t count = 0;
-    std::vector<Geo::Polygon> result;
-    Geo::polygon_intersection(polygon0, polygon1, result);
-    index = result.front().index(point0);
+    index = result.index(point0);
     if (index < SIZE_MAX)
     {
         collision.point[0].x = point0.x;
         collision.point[0].y = point0.y;
-        if (result.front().last_point(index) == point1)
+        if (result.last_point(index) == point1)
         {
-            collision.point[1].x = result.front().next_point(index).x;
-            collision.point[1].y = result.front().next_point(index).y;
+            collision.point[1].x = result.next_point(index).x;
+            collision.point[1].y = result.next_point(index).y;
         }
         else
         {
-            collision.point[1].x = result.front().last_point(index).x;
-            collision.point[1].y = result.front().last_point(index).y;
+            collision.point[1].x = result.last_point(index).x;
+            collision.point[1].y = result.last_point(index).y;
         }
         count += 2;
     }
-    index = result.front().index(point1);
+    index = result.index(point1);
     if (index < SIZE_MAX)
     {
         collision.point[count].x = point1.x;
         collision.point[count].y = point1.y;
-        if (result.front().last_point(index) == point0)
+        if (result.last_point(index) == point0)
         {
-            collision.point[count + 1].x = result.front().next_point(index).x;
-            collision.point[count + 1].y = result.front().next_point(index).y;
+            collision.point[count + 1].x = result.next_point(index).x;
+            collision.point[count + 1].y = result.next_point(index).y;
         }
         else
         {
-            collision.point[count + 1].x = result.front().last_point(index).x;
-            collision.point[count + 1].y = result.front().last_point(index).y;
+            collision.point[count + 1].x = result.last_point(index).x;
+            collision.point[count + 1].y = result.last_point(index).y;
         }
         count += 2;
     }
-    index = result.front().index(point2);
+    index = result.index(point2);
     if (index < SIZE_MAX && count < 4)
     {
         collision.point[count + 1].x = point2.x;
         collision.point[count + 1].y = point2.y;
-        if (result.front().last_point(index) == point3)
+        if (result.last_point(index) == point3)
         {
-            collision.point[count].x = result.front().next_point(index).x;
-            collision.point[count].y = result.front().next_point(index).y;
+            collision.point[count].x = result.next_point(index).x;
+            collision.point[count].y = result.next_point(index).y;
         }
         else
         {
-            collision.point[count].x = result.front().last_point(index).x;
-            collision.point[count].y = result.front().last_point(index).y;
+            collision.point[count].x = result.last_point(index).x;
+            collision.point[count].y = result.last_point(index).y;
         }
         count += 2;
     }
-    index = result.front().index(point3);
+    index = result.index(point3);
     if (index < SIZE_MAX && count < 4)
     {
         collision.point[count + 1].x = point3.x;
         collision.point[count + 1].y = point3.y;
-        if (result.front().last_point(index) == point2)
+        if (result.last_point(index) == point2)
         {
-            collision.point[count].x = result.front().next_point(index).x;
-            collision.point[count].y = result.front().next_point(index).y;
+            collision.point[count].x = result.next_point(index).x;
+            collision.point[count].y = result.next_point(index).y;
         }
         else
         {
-            collision.point[count].x = result.front().last_point(index).x;
-            collision.point[count].y = result.front().last_point(index).y;
+            collision.point[count].x = result.last_point(index).x;
+            collision.point[count].y = result.last_point(index).y;
         }
         count += 2;
     }

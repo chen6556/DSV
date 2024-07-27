@@ -568,6 +568,10 @@ namespace Geo
 
         bool is_point_in_polygon(const Geo::Point &point, const Geo::Polygon &polygon, const bool coincide = false);
 
+        bool is_point_in_clip_side(const Geo::Point &point, const Geo::Point &start, const Geo::Point &end);
+
+        Geo::Polygon clip(const Geo::Polygon &src, const Geo::Polygon &dst);
+
         void calculate_collision_points(Container &polygon0, Container &polygon1, const Geo::Point &start, const Geo::Point &end, Physics::CollisionPair &collision);
     }
 }

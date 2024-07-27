@@ -3713,25 +3713,25 @@ void Canvas::physical_update(const double dt)
         {
             object->update_position(dt);
         }
-        for (Physics::CollisionPair &collision : collisions)
-        {
-            collision.point[0] += (collision.object0->velocity * dt);
-            collision.point[1] += (collision.object1->velocity * dt);
-            Physics::Vector::rotate(collision.point[0], collision.object0->position.x,
-                collision.object0->position.y, collision.object0->angular_velocity * dt);
-            Physics::Vector::rotate(collision.point[1], collision.object1->position.x,
-                collision.object1->position.y, collision.object1->angular_velocity * dt);
-            if (collision.point_count == 4)
-            {
-                collision.point[2] += (collision.object0->velocity * dt);
-                collision.point[3] += (collision.object1->velocity * dt);
-                Physics::Vector::rotate(collision.point[2], collision.object0->position.x,
-                    collision.object0->position.y, collision.object0->angular_velocity * dt);
-                Physics::Vector::rotate(collision.point[3], collision.object1->position.x,
-                    collision.object1->position.y, collision.object1->angular_velocity * dt);
-            }
-        }
-        Physics::solve_position(collisions);
+        // for (Physics::CollisionPair &collision : collisions)
+        // {
+        //     collision.point[0] += (collision.object0->velocity * dt);
+        //     collision.point[1] += (collision.object1->velocity * dt);
+        //     Physics::Vector::rotate(collision.point[0], collision.object0->position.x,
+        //         collision.object0->position.y, collision.object0->angular_velocity * dt);
+        //     Physics::Vector::rotate(collision.point[1], collision.object1->position.x,
+        //         collision.object1->position.y, collision.object1->angular_velocity * dt);
+        //     if (collision.point_count == 4)
+        //     {
+        //         collision.point[2] += (collision.object0->velocity * dt);
+        //         collision.point[3] += (collision.object1->velocity * dt);
+        //         Physics::Vector::rotate(collision.point[2], collision.object0->position.x,
+        //             collision.object0->position.y, collision.object0->angular_velocity * dt);
+        //         Physics::Vector::rotate(collision.point[3], collision.object1->position.x,
+        //             collision.object1->position.y, collision.object1->angular_velocity * dt);
+        //     }
+        // }
+        // Physics::solve_position(collisions);
 
         for (Physics::PhysicalObject *object : physical_objects)
         {
