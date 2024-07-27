@@ -2737,8 +2737,8 @@ double Collision::epa(Container &polygon0, Container &polygon1, const double tx,
 
         Collision::calculate_collision_points(polygon0, polygon1, start, end, collision);
 
-        collision.normal.x = start.x - end.x;
-        collision.normal.y = start.y - end.y;
+        collision.normal.x = end.x - start.x;
+        collision.normal.y = end.y - start.y;
         collision.penetration = collision.normal.length();
         if (collision.penetration != 0)
         {
@@ -3191,19 +3191,31 @@ void Collision::calculate_collision_points(Container &polygon0, Container &polyg
         count += 2;
     }
 
-    collision.r[0] = collision.point[0] - polygon0.position;
-    collision.r[1] = collision.point[1] - polygon1.position;
-    collision.v[0] = polygon0.velocity + Physics::Vector::cross(polygon0.angular_velocity, collision.r[0]);
-    collision.v[1] = polygon1.velocity + Physics::Vector::cross(polygon1.angular_velocity, collision.r[1]);
-
     if (count > 2)
     {
         collision.point_count = 4;
+
+        collision.r[0] = collision.point[0] - polygon0.position;
+        collision.r[1] = collision.point[1] - polygon1.position;
+        collision.v[0] = polygon0.velocity + Physics::Vector::cross(polygon0.angular_velocity, collision.r[0]);
+        collision.v[1] = polygon1.velocity + Physics::Vector::cross(polygon1.angular_velocity, collision.r[1]);
 
         collision.r[2] = collision.point[2] - polygon0.position;
         collision.r[3] = collision.point[3] - polygon1.position;
         collision.v[2] = polygon0.velocity + Physics::Vector::cross(polygon0.angular_velocity, collision.r[2]);
         collision.v[3] = polygon1.velocity + Physics::Vector::cross(polygon1.angular_velocity, collision.r[3]);
+    }
+    else
+    {
+        collision.point[0].x = start.x;
+        collision.point[0].y = start.y;
+        collision.point[1].x = end.x;
+        collision.point[1].y = end.y;
+
+        collision.r[0] = collision.point[0] - polygon0.position;
+        collision.r[1] = collision.point[1] - polygon1.position;
+        collision.v[0] = polygon0.velocity + Physics::Vector::cross(polygon0.angular_velocity, collision.r[0]);
+        collision.v[1] = polygon1.velocity + Physics::Vector::cross(polygon1.angular_velocity, collision.r[1]);
     }
 }
 

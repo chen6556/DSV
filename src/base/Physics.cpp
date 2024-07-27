@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <QDebug>
 #include "base/Physics.hpp"
 #include "base/Algorithm.hpp"
 
@@ -47,6 +48,10 @@ void Physics::PhysicalObject::set_mass(const double value)
     {
         _inv_mass = 1.0 / value;
     }
+    else
+    {
+        _inv_mass = 0;
+    }
 
     calculate_inertia();
 }
@@ -58,6 +63,10 @@ void Physics::PhysicalObject::set_inertia(const double value)
     {
         _inv_inertia = 1.0 / value;
     }
+    else
+    {
+        _inv_inertia = 0;
+    }
 }
 
 double Physics::PhysicalObject::mass() const
@@ -67,7 +76,7 @@ double Physics::PhysicalObject::mass() const
 
 double Physics::PhysicalObject::inv_mass() const
 {
-    return _inv_mass;
+    return this->is_static ? 0 : _inv_mass;
 }
 
 double Physics::PhysicalObject::inertia() const
@@ -77,7 +86,7 @@ double Physics::PhysicalObject::inertia() const
 
 double Physics::PhysicalObject::inv_inertia() const
 {
-    return _inv_inertia;
+    return this->is_static ? 0 : _inv_inertia;
 }
 
 void Physics::PhysicalObject::add_impulse(const double x, const double y, const double rx, const double ry)
@@ -137,7 +146,7 @@ void Physics::solve_velocity(std::vector<Physics::CollisionPair> &collisions)
             a[1] = a[2] = jn0[0] * m[0] * jn1[0] + jn0[1] * m[1] * jn1[1]
                 + jn0[2] * m[2] * jn1[2] + jn0[3] * m[3] * jn1[3]
                 + jn0[4] * m[4] * jn1[4] + jn0[5] * m[5] * jn1[5];
-            a[3] = jn1[0] * m[0] * jn1[0] + jn1[1] * m[1] * jn1[1] 
+            a[3] = jn1[0] * m[0] * jn1[0] + jn1[1] * m[1] * jn1[1]
                 + jn1[2] * m[2] * jn1[2] + jn1[3] * m[3] * jn1[3]
                 + jn1[4] * m[4] * jn1[4] + jn1[5] * m[5] * jn1[5];
 
@@ -206,6 +215,11 @@ void Physics::solve_velocity(std::vector<Physics::CollisionPair> &collisions)
             collision.object0->add_impulse(impulse_n, collision.r[0]);
             collision.object1->add_impulse(-impulse_n, collision.r[1]);
         }
+
+        // qDebug() << collision.object0 << " -> v:(" << collision.object0->velocity.x << ','
+        //     << collision.object0->velocity.y << ")w: " << collision.object0->angular_velocity;
+        qDebug() << collision.object1 << "-> v:(" << collision.object1->velocity.x << ','
+            << collision.object1->velocity.y << ")w:" << collision.object1->angular_velocity;
     }
 }
 
@@ -217,23 +231,30 @@ void Physics::solve_position(std::vector<Physics::CollisionPair> &collisions)
         {
             const double jn0[6] = {collision.normal.x, collision.normal.y, collision.normal.cross(collision.r[0]),
                 -collision.normal.x, -collision.normal.y, -collision.normal.cross(collision.r[1])};
+            const double jnt0[6] = {collision.normal.x, collision.normal.y, -collision.normal.cross(collision.r[0]),
+                -collision.normal.x, -collision.normal.y, collision.normal.cross(collision.r[1])};
             const double jn1[6] = {collision.normal.x, collision.normal.y, collision.normal.cross(collision.r[2]),
                 -collision.normal.x, -collision.normal.y, -collision.normal.cross(collision.r[3])};
+            const double jnt1[6] = {collision.normal.x, collision.normal.y, -collision.normal.cross(collision.r[2]),
+                -collision.normal.x, -collision.normal.y, collision.normal.cross(collision.r[3])};
             const double m[6] = {collision.object0->inv_mass(), collision.object0->inv_mass(), collision.object0->inv_inertia(),
                 collision.object1->inv_mass(), collision.object1->inv_mass(), collision.object1->inv_inertia()};
             const double v[6] = {collision.object0->velocity.x, collision.object0->velocity.y, collision.object0->angular_velocity,
                 collision.object1->velocity.x, collision.object1->velocity.y, collision.object1->angular_velocity};
 
             double a[4], b[2];
-            a[0] = jn0[0] * m[0] * jn0[0] + jn0[1] * m[1] * jn0[1]
-                + jn0[2] * m[2] * jn0[2] + jn0[3] * m[3] * jn0[3]
-                + jn0[4] * m[4] * jn0[4] + jn0[5] * m[5] * jn0[5];
-            a[1] = a[2] = jn0[0] * m[0] * jn1[0] + jn0[1] * m[1] * jn1[1]
-                + jn0[2] * m[2] * jn1[2] + jn0[3] * m[3] * jn1[3]
-                + jn0[4] * m[4] * jn1[4] + jn0[5] * m[5] * jn1[5];
-            a[3] = jn1[0] * m[0] * jn1[0] + jn1[1] * m[1] * jn1[1] 
-                + jn1[2] * m[2] * jn1[2] + jn1[3] * m[3] * jn1[3]
-                + jn1[4] * m[4] * jn1[4] + jn1[5] * m[5] * jn1[5];
+            a[0] = jn0[0] * m[0] * jnt0[0] + jn0[1] * m[1] * jnt0[1]
+                + jn0[2] * m[2] * jnt0[2] + jn0[3] * m[3] * jnt0[3]
+                + jn0[4] * m[4] * jnt0[4] + jn0[5] * m[5] * jnt0[5];
+            a[1] = jn0[0] * m[0] * jnt1[0] + jn0[1] * m[1] * jnt1[1]
+                + jn0[2] * m[2] * jnt1[2] + jn0[3] * m[3] * jnt1[3]
+                + jn0[4] * m[4] * jnt1[4] + jn0[5] * m[5] * jnt1[5];
+            a[2] = jn1[0] * m[0] * jnt0[0] + jn1[1] * m[1] * jnt0[1]
+                + jn1[2] * m[2] * jnt0[2] + jn1[3] * m[3] * jnt0[3]
+                + jn1[4] * m[4] * jnt0[4] + jn1[5] * m[5] * jnt0[5];
+            a[3] = jn1[0] * m[0] * jnt1[0] + jn1[1] * m[1] * jnt1[1] 
+                + jn1[2] * m[2] * jnt1[2] + jn1[3] * m[3] * jnt1[3]
+                + jn1[4] * m[4] * jnt1[4] + jn1[5] * m[5] * jnt1[5];
 
             b[0] = collision.normal.dot(collision.object0->position + collision.r[0] - collision.object1->position - collision.r[1]) * 0.02;
             b[1] = collision.normal.dot(collision.object0->position + collision.r[2] - collision.object1->position - collision.r[3]) * 0.02;
