@@ -65,6 +65,7 @@ void DataPanel::load_draw_data(const Graph *graph, const size_t point_count)
                         break;
                     }
                 }
+                break;
             default:
                 break;
             }

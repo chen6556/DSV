@@ -963,7 +963,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         index_len *= 2;
                         unsigned int *temp = new unsigned int[index_len];
                         std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                        delete indexs;
+                        delete []indexs;
                         indexs = temp;
                     }
                 }
