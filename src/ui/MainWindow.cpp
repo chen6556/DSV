@@ -683,7 +683,7 @@ void MainWindow::open_file(const QString &path)
     Graph *g = new Graph;
     if (path.toUpper().endsWith(".DSV"))
     {
-        std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
+        std::ifstream file(path.toLocal8Bit(), std::ios::in);
         DSVParser::parse(file, g);
         file.close();
         
@@ -694,7 +694,7 @@ void MainWindow::open_file(const QString &path)
     }
     else if (path.toUpper().endsWith(".PLT"))
     {
-        std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
+        std::ifstream file(path.toLocal8Bit(), std::ios::in);
         PLTParser::parse(file, g);
         file.close();
         
@@ -705,14 +705,45 @@ void MainWindow::open_file(const QString &path)
     }
     else if(path.toUpper().endsWith(".CUT") || path.toUpper().endsWith(".NC"))
     {
-        std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
-        RS274DParser::parse(file,g);
+        std::ifstream file(path.toLocal8Bit(), std::ios::in);
+        RS274DParser::parse(file, g);
         file.close();
 
         if (ui->remember_file_type->isChecked())
         {
             _file_type = "RS274D: (*.cut *.CUT *.nc *NC)";
         }
+    }
+    else
+    {
+        std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
+        std::string line;
+        std::getline(file, line);
+        while (file)
+        {
+            if (line.find("IN") != std::string::npos || line.find("PU") != std::string::npos || line.find("PD") != std::string::npos)
+            {
+                file.clear();
+                file.seekg(0, std::ios::beg);
+                PLTParser::parse(file, g);
+                break;
+            }
+            else if (line.find("M15") != std::string::npos || line.find('X') != std::string::npos || line.find('Y') != std::string::npos)
+            {
+                file.clear();
+                file.seekg(0, std::ios::beg);
+                RS274DParser::parse(file, g);
+                break;
+            }
+            else if (line.find("END") != std::string::npos)
+            {
+                file.clear();
+                file.seekg(0, std::ios::beg);
+                DSVParser::parse(file, g);
+                break;
+            }
+        }
+        file.close();
     }
     _editer.load_graph(g, path);
     if (ui->auto_layering->isChecked())
