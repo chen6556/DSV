@@ -25,7 +25,10 @@ void Importer::set_x_coord(const int value)
 void Importer::set_y_coord(const int value)
 {
     _last_coord.y = unit_scale(value);
-    _points.emplace_back(_last_coord);
+    if (_points.empty() || _points.back() != _last_coord)
+    {
+        _points.emplace_back(_last_coord);
+    }
 }
 
 void Importer::store_points()

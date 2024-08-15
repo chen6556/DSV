@@ -130,11 +130,11 @@ void Importer::x_coord(const double value)
 {
     if (_relative_coord)
     {
-        _points.emplace_back(Geo::Point(_last_coord.x + value * _x_ratio, 0));
+        _points.emplace_back(_last_coord.x + value * _x_ratio, 0);
     }
     else
     {
-        _points.emplace_back(Geo::Point(value * _x_ratio, 0));
+        _points.emplace_back(value * _x_ratio, 0);
     }
 }
 
