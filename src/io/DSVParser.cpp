@@ -197,14 +197,14 @@ Parser<bool> dsv = +group;
 
 
 
-bool DSVParser::parse(std::string_view &stream, Graph *graph)
+bool parse(std::string_view &stream, Graph *graph)
 {
     importer.reset();
     importer.load_graph(graph);
     return dsv(stream);
 }
 
-bool DSVParser::parse(std::ifstream &stream, Graph *graph)
+bool parse(std::ifstream &stream, Graph *graph)
 {
     importer.reset();
     importer.load_graph(graph);

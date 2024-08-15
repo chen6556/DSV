@@ -10,6 +10,12 @@ if (MSVC)
     add_compile_options("/GL")
     add_compile_options("/MP")
     add_link_options("/LTCG")
+elseif (CMAKE_COMPILER_IS_GNUCXX)
+    add_compile_options("-m64")
+    add_compile_options("-mavx2")
+    add_compile_options("-funroll-loops")
+    add_compile_options("-ffunction-sections")
+    add_compile_options("-fdata-sections")
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -20,7 +26,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/output/)
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/output/)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets OpenGL Gui Core)
 
