@@ -14,7 +14,7 @@ namespace RS274DParser
 
 double Importer::unit_scale(int value)
 {
-    return (double)value * (UNIT_SACLES[static_cast<int>(this->unit)]);
+    return (double)value * (UNIT_SACLES[static_cast<int>(this->unit)]) / 10;
 }
 
 void Importer::set_x_coord(const int value)
@@ -25,7 +25,7 @@ void Importer::set_x_coord(const int value)
 void Importer::set_y_coord(const int value)
 {
     _last_coord.y = unit_scale(value);
-    _points.emplace_back(Geo::Point(_last_coord));
+    _points.emplace_back(_last_coord);
 }
 
 void Importer::store_points()
@@ -49,11 +49,12 @@ void Importer::store_points()
     _points.clear();
 }
 
-void Importer::draw_circle(const int radius)
+void Importer::draw_circle()
 {
-    _last_circle_container = new CircleContainer(Geo::Circle(Geo::Point(_last_coord), radius));
+    _last_circle_container = new CircleContainer(Geo::Circle(_last_coord, _circle_radius));
     _last_container = nullptr;
     _graph->container_groups().back().append(_last_circle_container);
+    _points.clear();
 }
 
 void Importer::set_unit_mm()
@@ -69,7 +70,7 @@ void Importer::set_unit_hectomil()
 void Importer::pen_down()
 {
     this->_is_pen_down = true;
-    _points.emplace_back(Geo::Point(_last_coord));
+    _points.emplace_back(_last_coord);
 }
 
 void Importer::pen_up()
@@ -81,7 +82,7 @@ void Importer::pen_up()
 void Importer::knife_down()
 {
     this->_is_knife_down = true;
-    _points.emplace_back(Geo::Point(_last_coord));
+    _points.emplace_back(_last_coord);
 }
 
 void Importer::knife_up()
@@ -90,24 +91,28 @@ void Importer::knife_up()
     store_points();
 }
 
-void Importer::draw_cricle_10()
+void Importer::set_circle_radius(const std::string &text)
 {
-    draw_circle(10);
-}
-
-void Importer::draw_cricle_20()
-{
-    draw_circle(20);
-}
-
-void Importer::draw_cricle_30()
-{
-    draw_circle(30);
-}
-
-void Importer::draw_cricle_40()
-{
-    draw_circle(40);
+    if (text == "M43")
+    {
+        _circle_radius = 20;
+    }
+    else if (text == "M44")
+    {
+        _circle_radius = 10;
+    }
+    else if (text == "M45" || text == "M72")
+    {
+        _circle_radius = 15;
+    }
+    else if (text == "M73")
+    {
+        _circle_radius = 20;
+    }
+    else
+    {
+        _circle_radius = 10;
+    }
 }
 
 void Importer::load_graph(Graph *g)
@@ -118,6 +123,14 @@ void Importer::load_graph(Graph *g)
 
 void Importer::reset()
 {
+    _points.clear();
+    _last_coord.clear();
+    _circle_radius = 10;
+    _is_pen_down = _is_knife_down = false;
+    _curve_type = CurveType::Linear;
+    unit = Unit::mm;
+    _last_circle_container = nullptr;
+    _last_container = nullptr;
 }
 
 void Importer::store_text(const std::string &text)
@@ -191,22 +204,15 @@ Parser<std::string> linear = str_p("G01");
 Parser<std::string> interp = (linear) >> separator;
 
 // 圆
-Action<void> circle20_a(&importer, &Importer::draw_cricle_20);
-Action<void> circle10_a(&importer, &Importer::draw_cricle_10);
-Action<void> circle30_a(&importer, &Importer::draw_cricle_30);
-Action<void> circle40_a(&importer, &Importer::draw_cricle_40);
+Action<std::string> circle_radius_a(&importer, &Importer::set_circle_radius);
+Action<void> circle_a(&importer, &Importer::draw_circle);
 
-// Parser<std::string> circle00 = str_p("M0")[circle00_a];
-Parser<std::string> circle20 = str_p("M43")[circle20_a];
-Parser<std::string> circle10 = str_p("M44")[circle10_a];
-Parser<std::string> circle30 = (str_p("M45") | str_p("M72"))[circle30_a];
-Parser<std::string> circle40 = str_p("M73")[circle40_a];
-
-Parser<std::string> circle = (circle10 | circle20 | circle30 | circle40) >> separator;
+Parser<std::string> circle_radius = (str_p("M43") | str_p("M44") | str_p("M45") | str_p("M72") | str_p("M73"))[circle_radius_a];
+Parser<bool> circle = (circle_radius >> (separator | coord))[circle_a];
 
 // 文字处理
 Action<std::string> a_text(&importer, &Importer::store_text);
-Parser<std::string> text = confix_p(str_p("M31*"), (*anychar_p())[a_text], separator);
+Parser<bool> text = confix_p(str_p("M31*") >> !coord, (*anychar_p())[a_text], separator);
 Parser<std::string> skip_text = confix_p(str_p("M20*"), separator);
 
 // 步骤
@@ -217,7 +223,7 @@ Parser<std::string> end = str_p("M0")[end_a] >> separator;
 // 未知命令
 Action<std::string> a_unkown(&importer, &Importer::print_symbol);
 
-Parser<std::string> unkown_cmds = confix_p(alphaa_p(), (*anychar_p())[a_unkown], separator) - end;
+Parser<std::string> unkown_cmds = confix_p(alphaa_p(), *anychar_p(), separator)[a_unkown] - end;
 
 Parser<bool> cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | text | skip_text | blank | skip_cmd | separator | unkown_cmds);
 

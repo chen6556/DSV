@@ -35,6 +35,8 @@ private:
     CircleContainer *_last_circle_container;
     Container *_last_container;
 
+    int _circle_radius = 10;
+
     bool _is_pen_down = false;
     bool _is_knife_down = false;
 
@@ -47,11 +49,8 @@ public:
     void set_y_coord(const int value);
     void store_points();
 
-    void draw_circle(const int radius);
-    void draw_cricle_10();
-    void draw_cricle_20();
-    void draw_cricle_30();
-    void draw_cricle_40();
+    void draw_circle();
+    void set_circle_radius(const std::string &text);
 
     void set_unit_mm();
     void set_unit_hectomil();
