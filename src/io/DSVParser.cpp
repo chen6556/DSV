@@ -28,8 +28,7 @@ void Importer::store_polygon()
     {
         if (_is_combination)
         {
-            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
-                new Container(Geo::Polygon(_points.cbegin(), _points.cend())));
+            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Container(Geo::Polygon(_points.cbegin(), _points.cend())));
         }
         else
         {
@@ -41,8 +40,7 @@ void Importer::store_polygon()
     {
         if (_is_combination)
         {
-            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
-                new Container(QString::fromStdString(_text), Geo::Polygon(_points.cbegin(), _points.cend())));
+            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Container(QString::fromStdString(_text), Geo::Polygon(_points.cbegin(), _points.cend())));
         }
         else
         {
@@ -58,13 +56,12 @@ void Importer::store_circle()
 {
     if (_is_combination)
     {
-        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new CircleContainer(
-            QString::fromStdString(_text), _points.back().x, _points.back().y, _parameters.back()));
+        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new CircleContainer(QString::fromStdString(_text), _points.back().x, _points.back().y, _parameters.back()));
     }
     else
     {
-        _graph->container_groups().back().append(new CircleContainer(QString::fromStdString(_text), 
-            _points.back().x, _points.back().y, _parameters.back()));
+        _graph->container_groups().back().append(new CircleContainer(QString::fromStdString(_text),
+                                                                     _points.back().x, _points.back().y, _parameters.back()));
     }
     _text.clear();
     _points.clear();
@@ -75,8 +72,7 @@ void Importer::store_polyline()
 {
     if (_is_combination)
     {
-        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
-            new Geo::Polyline(_points.cbegin(), _points.cend()));
+        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Geo::Polyline(_points.cbegin(), _points.cend()));
     }
     else
     {
@@ -90,10 +86,11 @@ void Importer::store_bezier()
 {
     if (_is_combination)
     {
-        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
-            new Geo::Bezier(_points.cbegin(), _points.cend(), _parameters.back()));
+        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Geo::Bezier(_points.cbegin(), _points.cend(), _parameters.back()));
         dynamic_cast<Geo::Bezier *>(dynamic_cast<Combination *>(
-            _graph->container_groups().back().back())->back())->update_shape();
+                                        _graph->container_groups().back().back())
+                                        ->back())
+            ->update_shape();
     }
     else
     {
@@ -109,13 +106,12 @@ void Importer::store_text()
 {
     if (_is_combination)
     {
-        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
-            new Text(_points.back().x, _points.back().y, 12, QString::fromStdString(_text)));
+        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Text(_points.back().x, _points.back().y, 12, QString::fromStdString(_text)));
     }
     else
     {
-        _graph->container_groups().back().append(new Text(_points.back().x, 
-            _points.back().y, 12, QString::fromStdString(_text)));
+        _graph->container_groups().back().append(new Text(_points.back().x,
+                                                          _points.back().y, 12, QString::fromStdString(_text)));
     }
     _points.clear();
 }
@@ -148,7 +144,6 @@ void Importer::store_group()
 }
 
 
-
 void Importer::load_graph(Graph *g)
 {
     _graph = g;
@@ -160,7 +155,6 @@ void Importer::reset()
     _parameters.clear();
     _text.clear();
 }
-
 
 
 Importer importer;
@@ -190,11 +184,10 @@ Parser<bool> polyline = str_p("POLYLINE") >> !eol_p() >> +(coord >> !separator) 
 Parser<bool> bezier = str_p("BEZIER") >> !eol_p() >> parameter >> +(separator >> coord) >> !eol_p() >> end[bezier_a];
 Parser<bool> text = str_p("TEXT") >> str >> !eol_p() >> coord >> !eol_p() >> end[text_a];
 Parser<bool> combination = str_p("COMBINATION")[begin_combination_a] >> !eol_p() >>
-    +(polygon | polyline | circle | text | bezier ) >> end[end_combination_a];
+                           +(polygon | polyline | circle | text | bezier) >> end[end_combination_a];
 Parser<bool> group = str_p("GROUP") >> str[group_a] >> !eol_p() >>
-    *(polygon | polyline | circle | text | combination | bezier ) >> str_p("END") >> !eol_p();
+                     *(polygon | polyline | circle | text | combination | bezier) >> str_p("END") >> !eol_p();
 Parser<bool> dsv = +group;
-
 
 
 bool parse(std::string_view &stream, Graph *graph)
@@ -214,5 +207,4 @@ bool parse(std::ifstream &stream, Graph *graph)
     std::string_view temp(str);
     return dsv(temp);
 }
-
-}
+} // namespace DSVParser

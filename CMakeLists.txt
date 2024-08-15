@@ -64,3 +64,19 @@ qt_finalize_executable(DSV)
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
+
+install(
+  TARGETS DSV
+  # RUNTIME_DEPENDENCIES DIRECTORIES /usr/lib 
+  DESTINATION bin
+)
+
+install(
+  FILES DSV.desktop
+  DESTINATION share/applications/
+)
+
+install(
+  FILES src/resource/DSV.ico
+  DESTINATION share/icons/hicolor/128x128/apps
+)

@@ -89,7 +89,7 @@ void Importer::store_arc()
         }
     }
     polyline->append(center + dir);
-    
+
     _graph->container_groups().back().append(polyline);
     _points.clear();
     _parameters.clear();
@@ -170,8 +170,8 @@ void Importer::ci()
     {
         _parameters.pop_back();
     }
-    _graph->container_groups().back().append(new CircleContainer(QString(), 
-        _points.front().x, _points.front().y, _parameters.back()));
+    _graph->container_groups().back().append(new CircleContainer(QString(),
+                                                                 _points.front().x, _points.front().y, _parameters.back()));
     _points.clear();
     _parameters.clear();
 }
@@ -220,7 +220,7 @@ void Importer::end()
     const int text_size = GlobalSetting::get_instance()->setting()["text_size"].toInt();
     std::vector<Geo::Geometry *> group(_graph->container_group().begin(), _graph->container_group().end());
     std::sort(group.begin(), group.end(), [](const Geo::Geometry *a, const Geo::Geometry *b)
-        { return a->bounding_rect().area() < b->bounding_rect().area(); });
+              { return a->bounding_rect().area() < b->bounding_rect().area(); });
     for (Txt &text : _texts)
     {
         for (Geo::Geometry *geo : group)
@@ -304,7 +304,6 @@ Parser<std::string> dci = confix_p(ch_p(27), end);
 Parser<bool> plt = (*(all_cmds | dci))[end_a];
 
 
-
 bool parse(std::string_view &stream, Graph *graph)
 {
     importer.reset();
@@ -322,5 +321,4 @@ bool parse(std::ifstream &stream, Graph *graph)
     std::string_view temp(str);
     return plt(temp);
 }
-
-}
+} // namespace PLTParser
