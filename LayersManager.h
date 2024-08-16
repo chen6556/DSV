@@ -1,0 +1,66 @@
+#ifndef LAYERSMANAGER_H
+#define LAYERSMANAGER_H
+
+#include <QDialog>
+#include <QMenu>
+#include <QAction>
+#include <QStringListModel>
+#include <QStringList>
+
+#include "draw/Graph.h"
+
+
+QT_BEGIN_NAMESPACE
+namespace Ui { class LayersManager;}
+QT_END_NAMESPACE
+
+class LayersManager : public QDialog
+{
+    Q_OBJECT
+
+private:
+    Ui::LayersManager *ui = nullptr;
+    QMenu *_menu = nullptr;
+    QAction *_show = nullptr;
+    QAction *_up = nullptr;
+    QAction *_down = nullptr;
+    QAction *_add = nullptr;
+    QAction *_insert = nullptr;
+    QAction *_del = nullptr;
+
+    Graph *_graph = nullptr;
+    QStringList _layers;
+    QStringListModel *_layers_model = nullptr;
+    bool _append_to_last = true;
+
+private:
+    void init();
+
+protected:
+    void closeEvent(QCloseEvent *event);
+
+private slots:
+    void show_layer();
+
+    void layer_up();
+
+    void layer_down();
+
+    void add_layer();
+
+    void insert_layer();
+
+    void remove_layer();
+
+    void change_layer_name(const QModelIndex &row, const QModelIndex &col, const QVector<int> &roles);
+
+public:
+    LayersManager(QWidget *parent);
+    ~LayersManager();
+
+    void load_layers(Graph *graph);
+
+    QStringListModel *model();
+};
+
+#endif // LAYERSMANAGER_H
