@@ -16,11 +16,29 @@
     <height>400</height>
    </size>
   </property>
+  <property name="font">
+   <font>
+    <pointsize>10</pointsize>
+   </font>
+  </property>
+  <property name="acceptDrops">
+   <bool>true</bool>
+  </property>
   <property name="windowTitle">
    <string>DSV 0.5.0</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../resource/Icons.qrc">
+    <normaloff>:/DSV2.ico</normaloff>:/DSV2.ico</iconset>
+  </property>
   <property name="styleSheet">
    <string notr="true">QMainWindow#MainWindow{background-color: rgb(38, 38, 38)};</string>
+  </property>
+  <property name="iconSize">
+   <size>
+    <width>128</width>
+    <height>128</height>
+   </size>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
