@@ -44,6 +44,7 @@ void GlobalSetting::load_setting()
     {   
         _instance->_setting["active_layer_catch_only"] = true;
         _instance->_setting["auto_aligning"] = true;
+        _instance->_setting["auto_connect"] = true;
         _instance->_setting["auto_layering"] = true;
         _instance->_setting["auto_save"] = false;
         _instance->_setting["backup_times"] = 50;

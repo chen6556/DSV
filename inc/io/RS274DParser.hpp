@@ -36,6 +36,7 @@ private:
     Container *_last_container;
 
     int _circle_radius = 10;
+    size_t _index = 0;
 
     bool _is_pen_down = false;
     bool _is_knife_down = false;

@@ -158,4 +158,6 @@ public:
 
 
 	void auto_layering();
+
+    void auto_connect();
 };

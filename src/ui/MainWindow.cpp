@@ -428,6 +428,7 @@ void MainWindow::load_settings()
     _editer.set_path(setting["file_path"].toString());
     ui->auto_save->setChecked(setting["auto_save"].toBool());
     ui->auto_layering->setChecked(setting["auto_layering"].toBool());
+    ui->auto_connect->setChecked(setting["auto_connect"].toBool());
     ui->auto_aligning->setChecked(setting["auto_aligning"].toBool());
     ui->remember_file_type->setChecked(setting["remember_file_type"].toBool());
     ui->show_cmd_line->setChecked(setting["show_cmd_line"].toBool());
@@ -460,6 +461,7 @@ void MainWindow::save_settings()
 
     setting["auto_save"] = ui->auto_save->isChecked();
     setting["auto_layering"] = ui->auto_layering->isChecked();
+    setting["auto_connect"] = ui->auto_connect->isChecked();
     setting["auto_aligning"] = ui->auto_aligning->isChecked();
     setting["remember_file_type"] = ui->remember_file_type->isChecked();
     setting["show_cmd_line"] = ui->show_cmd_line->isChecked();
@@ -703,7 +705,7 @@ void MainWindow::open_file(const QString &path)
             _file_type = "PLT: (*.plt *.PLT)";
         }
     }
-    else if(path.toUpper().endsWith(".CUT") || path.toUpper().endsWith(".NC"))
+    else if(path.toUpper().endsWith(".CUT") || path.toUpper().endsWith(".NC") || path.toUpper().endsWith(".ISO"))
     {
         std::ifstream file(path.toLocal8Bit(), std::ios::in);
         RS274DParser::parse(file, g);
@@ -745,12 +747,18 @@ void MainWindow::open_file(const QString &path)
         }
         file.close();
     }
+
     _editer.load_graph(g, path);
     if (ui->auto_layering->isChecked())
     {
         _editer.auto_layering();
     }
+    if (ui->auto_connect->isChecked())
+    {
+        _editer.auto_connect();
+    }
     _editer.reset_modified();
+    
     ui->canvas->refresh_vbo();
     _info_labels[2]->setText(path);
     _layers_manager->load_layers(g);

@@ -2357,3 +2357,99 @@ void Editer::auto_layering()
         }
     }
 }
+
+void Editer::auto_connect()
+{
+    if (_graph == nullptr || _graph->empty())
+    {
+        return;
+    }
+
+    Geo::Polyline *polyline0, *polyline1;
+    for (size_t i = 0, count = _graph->container_group().size(); i < count; ++i)
+    {
+        polyline0 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[i]);
+        if (polyline0 == nullptr)
+        {
+            continue;
+        }
+
+        for (size_t j = i; j < count; ++j)
+        {
+            polyline1 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[j]);
+            if (polyline1 == nullptr || j == i)
+            {
+                continue;
+            }
+
+            if (polyline0->front() == polyline1->front() && polyline0->back() == polyline1->back())
+            {
+                polyline1->flip();
+                polyline0->insert(0, polyline1->begin(), polyline1->end());
+                _graph->container_group().remove(j);
+                break;
+            }
+            else if (polyline0->front() == polyline1->back() && polyline0->back() == polyline1->front())
+            {
+                polyline0->insert(0, polyline1->begin(), polyline1->end());
+                _graph->container_group().remove(j);
+                break;
+            }
+        }
+
+        if (polyline0->front() == polyline0->back())
+        {
+            _graph->container_group().insert(i, new Container(
+                Geo::Polygon(polyline0->begin(), polyline0->end())));
+            _graph->container_group().remove(i + 1);
+            continue;
+        }
+
+        for (size_t j = i; j < count; ++j)
+        {
+            polyline1 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[j]);
+            if (polyline1 == nullptr || j == i)
+            {
+                continue;
+            }
+
+            if (polyline0->front() == polyline1->front())
+            {
+                polyline1->flip();
+                polyline0->insert(0, polyline1->begin(), polyline1->end());
+                _graph->container_group().remove(j);
+                --count;
+                j = i;
+            }
+            else if (polyline0->front() == polyline1->back())
+            {
+                polyline0->insert(0, polyline1->begin(), polyline1->end());
+                _graph->container_group().remove(j);
+                --count;
+                j = i;
+            }
+            else if (polyline0->back() == polyline1->front())
+            {
+                polyline0->append(polyline1->begin(), polyline1->end());
+                _graph->container_group().remove(j);
+                --count;
+                j = i;
+            }
+            else if (polyline0->back() == polyline1->back())
+            {
+                polyline1->flip();
+                polyline0->append(polyline1->begin(), polyline1->end());
+                _graph->container_group().remove(j);
+                --count;
+                j = i;
+            }
+        }
+
+        if (polyline0->front() == polyline0->back())
+        {
+            _graph->container_group().insert(i, new Container(
+                Geo::Polygon(polyline0->begin(), polyline0->end())));
+            _graph->container_group().remove(i + 1);
+        }
+    }
+}

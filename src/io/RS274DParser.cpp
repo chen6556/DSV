@@ -39,6 +39,20 @@ void Importer::store_points()
         return;
     }
 
+    for (size_t i = _points.size() - 1; i > 0; --i)
+    {
+        if (_points[i] == _points[i - 1])
+        {
+            _points.erase(_points.begin() + i);
+        }
+    }
+
+    if (_points.size() <= 1)
+    {
+        _points.clear();
+        return;
+    }
+
     if (_points.front() == _points.back() && _points.size() >= 3)
     {
         _last_container = new Container(Geo::Polygon(_points.cbegin(), _points.cend()));
@@ -129,6 +143,7 @@ void Importer::reset()
     _points.clear();
     _last_coord.clear();
     _circle_radius = 10;
+    _index = 0;
     _is_pen_down = _is_knife_down = false;
     _curve_type = CurveType::Linear;
     unit = Unit::mm;
