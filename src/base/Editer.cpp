@@ -2374,10 +2374,10 @@ void Editer::auto_connect()
             continue;
         }
 
-        for (size_t j = i; j < count; ++j)
+        for (size_t j = i + 1; j < count; ++j)
         {
             polyline1 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[j]);
-            if (polyline1 == nullptr || j == i)
+            if (polyline1 == nullptr)
             {
                 continue;
             }
@@ -2387,12 +2387,14 @@ void Editer::auto_connect()
                 polyline1->flip();
                 polyline0->insert(0, polyline1->begin(), polyline1->end());
                 _graph->container_group().remove(j);
+                --count;
                 break;
             }
             else if (polyline0->front() == polyline1->back() && polyline0->back() == polyline1->front())
             {
                 polyline0->insert(0, polyline1->begin(), polyline1->end());
                 _graph->container_group().remove(j);
+                --count;
                 break;
             }
         }
@@ -2405,10 +2407,10 @@ void Editer::auto_connect()
             continue;
         }
 
-        for (size_t j = i; j < count; ++j)
+        for (size_t j = i + 1; j < count; ++j)
         {
             polyline1 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[j]);
-            if (polyline1 == nullptr || j == i)
+            if (polyline1 == nullptr)
             {
                 continue;
             }

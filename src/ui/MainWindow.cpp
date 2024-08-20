@@ -749,13 +749,13 @@ void MainWindow::open_file(const QString &path)
     }
 
     _editer.load_graph(g, path);
-    if (ui->auto_layering->isChecked())
-    {
-        _editer.auto_layering();
-    }
     if (ui->auto_connect->isChecked())
     {
         _editer.auto_connect();
+    }
+    if (ui->auto_layering->isChecked())
+    {
+        _editer.auto_layering();
     }
     _editer.reset_modified();
     
@@ -799,13 +799,13 @@ void MainWindow::append_file(const QString &path)
     _editer.store_backup();
     Graph *graph = _editer.graph();
     _editer.load_graph(g);
-    if (ui->auto_layering->isChecked())
-    {
-        _editer.auto_layering();
-    }
     if (ui->auto_connect->isChecked())
     {
         _editer.auto_connect();
+    }
+    if (ui->auto_layering->isChecked())
+    {
+        _editer.auto_layering();
     }
     Geo::AABBRect rect0(graph->bounding_rect()), rect1(g->bounding_rect());
     g->translate(rect0.right() + 10 - rect1.left(), rect0.bottom() - rect1.bottom());
