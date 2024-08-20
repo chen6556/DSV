@@ -5,7 +5,7 @@
 
 #include "base/EarCut/EarCut.hpp"
 #include "base/Algorithm.hpp"
-
+#include "base/Collision.hpp"
 
 
 double Geo::distance(const double x0, const double y0, const double x1, const double y1)
@@ -169,6 +169,159 @@ double Geo::distance(const Point &point, const Polygon &polygon)
         dis = std::min(dis, Geo::distance(point, polygon[i - 1], polygon[i]));
     }
     return dis;
+}
+
+double Geo::distance(const Geo::Point &start0, const Geo::Point &end0, const Geo::Point &start1, const Geo::Point &end1, Geo::Point &point0, Geo::Point &point1)
+{
+    if (Geo::is_parallel(start0, end0, start1, end1))
+    {
+        if (Geo::foot_point(start1, end1, start0, point1) && Geo::foot_point(start1, end1, end0, point1))
+        {
+            point0 = (start0 + end0) / 2;
+            Geo::foot_point(start1, end1, point0, point1, true);
+        }
+        else if (Geo::foot_point(start0, end0, start1, point0) && Geo::foot_point(start0, end0, end1, point0))
+        {
+            point1 = (start1 + end1) / 2;
+            Geo::foot_point(start0, end0, point1, point0, true);
+        }
+        else
+        {
+            if (Geo::foot_point(start1, end1, start0, point0))
+            {
+                if ((end0 - start0) * (end1 - start1) >= 0)
+                {
+                    point1 = (point0 + end1) / 2;
+                }
+                else
+                {
+                    point1 = (point0 + start1) / 2;
+                }
+                Geo::foot_point(start0, end0, point1, point0, true);
+            }
+            else if (Geo::foot_point(start1, end1, end0, point0))
+            {
+                if ((end0 - start0) * (end1 - start1) >= 0)
+                {
+                    point1 = (point0 + start1) / 2;
+                }
+                else
+                {
+                    point1 = (point0 + end1) / 2;
+                }
+                Geo::foot_point(start0, end0, point1, point0, true);
+            }
+            else
+            {
+                double distance[5] = {Geo::distance_square(start0, start1), Geo::distance_square(start0, end1),
+                    Geo::distance_square(end0, start1), Geo::distance(end0, end1), DBL_MAX};
+                int index = 0;
+                for (int i = 0; i < 4; ++i)
+                {
+                    if (distance[i] < distance[4])
+                    {
+                        index = i;
+                        distance[4] = distance[i];
+                    }
+                }
+                switch (index)
+                {
+                case 0:
+                    point0 = start0;
+                    point1 = start1;
+                    break;
+                case 1:
+                    point0 = start0;
+                    point1 = end1;
+                    break;
+                case 2:
+                    point0 = end0;
+                    point1 = start1;
+                    break;
+                case 3:
+                    point0 = end0;
+                    point1 = end1;
+                    break;
+                }
+            }
+        }
+        return Geo::distance(start0, start1, end1);
+    }
+    else
+    {
+        double distance[5] = {Geo::distance(start0, start1, end1), Geo::distance(end0, start1, end1),
+            Geo::distance(start1, start0, end0), Geo::distance(end1, start0, end0), DBL_MAX};
+        int index = 0;
+        for (int i = 0; i < 4; ++i)
+        {
+            if (distance[i] < distance[4])
+            {
+                index = i;
+                distance[4] = distance[i];
+            }
+        }
+
+        switch (index)
+        {
+        case 0:
+            point0 = start0;
+            if (!Geo::foot_point(start1, end1, start0, point1))
+            {
+                if (Geo::distance_square(start0, start1) <= Geo::distance_square(start0, end1))
+                {
+                    point1 = start1;
+                }
+                else
+                {
+                    point1 = end1;
+                }
+            }
+            break;
+        case 1:
+            point0 = end0;
+            if (!Geo::foot_point(start1, end1, end0, point1))
+            {
+                if (Geo::distance_square(end0, start1) <= Geo::distance_square(end0, end1))
+                {
+                    point1 = start1;
+                }
+                else
+                {
+                    point1 = end1;
+                }
+            }
+            break;
+        case 2:
+            point1 = start1;
+            if (!Geo::foot_point(start0, end0, start1, point0))
+            {
+                if (Geo::distance_square(start1, start0) <= Geo::distance_square(start1, end0))
+                {
+                    point0 = start0;
+                }
+                else
+                {
+                    point0 = end0;
+                }
+            }
+            break;
+        case 3:
+            point1 = end1;
+            if (Geo::foot_point(start0, end0, end1, point0))
+            {
+                if (Geo::distance_square(end1, start0) <= Geo::distance_square(end1, end0))
+                {
+                    point0 = start0;
+                }
+                else
+                {
+                    point0 = end0;
+                }
+            }
+            break;
+        }
+        return distance[4];
+    }
 }
 
 
@@ -1183,13 +1336,277 @@ bool Geo::is_intersected(const Line &line, const Triangle &triangle, Point &outp
     return Geo::is_intersected(line.front(), line.back(), triangle, output0, output1);
 }
 
+bool Geo::is_intersected(const Geometry *object0, const Geometry *object1)
+{
+    return Geo::is_intersected(object0->bounding_rect(), object1->bounding_rect())
+        && Geo::NoAABBTest::is_intersected(object0, object1);
+}
 
+bool Geo::is_intersected(const AABBRect &rect, const Geometry *object)
+{
+    return Geo::is_intersected(rect, object->bounding_rect()) && Geo::NoAABBTest::is_intersected(rect, object);
+}
+
+
+bool Geo::NoAABBTest::is_intersected(const Geo::Polyline &polyline0, const Geo::Polyline &polyline1)
+{
+    Geo::Point point;
+    for (size_t i = 1, count0 = polyline0.size(); i < count0; ++i)
+    {
+        for (size_t j = 1, count1 = polyline1.size(); j < count1; ++j)
+        {
+            if (Geo::is_intersected(polyline0[i-1], polyline0[i], polyline1[j-1], polyline1[j], point))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool Geo::NoAABBTest::is_intersected(const Geo::Polyline &polyline, const Geo::Polygon &polygon, const bool inside)
+{
+    Geo::Point point;
+    for (size_t i = 1, count0 = polyline.size(); i < count0; ++i)
+    {
+        for (size_t j = 1, count1 = polygon.size(); j < count1; ++j)
+        {
+            if (Geo::is_intersected(polyline[i-1], polyline[i], polygon[j-1], polygon[j], point))
+            {
+                return true;
+            }
+            else if (inside && Geo::is_inside(polyline[i-1], polygon))
+            {
+                return true;
+            }
+        }
+    }
+    if (inside)
+    {
+        return Geo::is_inside(polyline.back(), polygon);
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Geo::NoAABBTest::is_intersected(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, const bool inside)
+{
+    Geo::Point point;
+    for (size_t i = 1, count0 = polygon0.size(); i < count0; ++i)
+    {
+        for (size_t j = 1, count1 = polygon1.size(); j < count1; ++j)
+        {
+            if (Geo::is_intersected(polygon0[i-1], polygon0[i], polygon1[j-1], polygon1[j], point))
+            {
+                return true;
+            }
+        }
+    }
+    if (inside)
+    {
+        for (const Geo::Point &point : polygon0)
+        {
+            if (Geo::is_inside(point, polygon1, true))
+            {
+                return true;
+            }
+        }
+        for (const Geo::Point &point : polygon1)
+        {
+            if (Geo::is_inside(point, polygon0, true))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool Geo::NoAABBTest::is_intersected(const Geo::AABBRect &rect, const Geo::Polyline &polyline)
+{
+    for (size_t i = 1, count = polyline.size(); i < count; ++i)
+    {
+        if (Geo::is_intersected(rect, polyline[i - 1], polyline[i]))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Geo::NoAABBTest::is_intersected(const Geo::AABBRect &rect, const Geo::Polygon &polygon)
+{
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        if (Geo::is_intersected(rect, polygon[i - 1], polygon[i]))
+        {
+            return true;
+        }
+    }
+    for (size_t i = 0; i < 4; ++i)
+    {
+        if (Geo::is_inside(rect[i], polygon))
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Geometry *object1)
+{
+    switch (object0->type())
+    {
+    case Geo::Type::CONTAINER:
+    case Geo::Type::POLYGON:
+        switch (object1->type())
+        {
+        case Geo::Type::CONTAINER:
+        case Geo::Type::POLYGON:
+            return Geo::Collision::gjk(*static_cast<const Geo::Polygon *>(object0),
+                *static_cast<const Geo::Polygon *>(object1));
+        case Geo::Type::AABBRECT:
+            return Geo::Collision::gjk(*static_cast<const Geo::AABBRect *>(object1),
+                *static_cast<const Geo::Polygon *>(object0));
+        case Geo::Type::POLYLINE:
+            return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::Polyline *>(object1),
+                *static_cast<const Geo::Polygon *>(object0));
+        case Geo::Type::BEZIER:
+            return Geo::NoAABBTest::is_intersected(static_cast<const Geo::Bezier *>(object1)->shape(),
+                *static_cast<const Geo::Polygon *>(object0));
+        case Geo::Type::CIRCLECONTAINER:
+        case Geo::Type::CIRCLE:
+            return Geo::is_intersected(*static_cast<const Geo::Polygon *>(object0),
+                *static_cast<const Geo::Circle *>(object1));
+        default:
+            return false;
+        }
+    case Geo::Type::AABBRECT:
+        switch (object1->type())
+        {
+        case Geo::Type::CONTAINER:
+        case Geo::Type::POLYGON:
+            return Geo::Collision::gjk(*static_cast<const Geo::AABBRect *>(object0),
+                *static_cast<const Geo::Polygon *>(object1));
+        case Geo::Type::AABBRECT:
+            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
+                *static_cast<const Geo::AABBRect *>(object1));
+        case Geo::Type::POLYLINE:
+            return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
+                *static_cast<const Geo::Polyline *>(object1));
+        case Geo::Type::BEZIER:
+            return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
+                static_cast<const Geo::Bezier *>(object1)->shape());
+        case Geo::Type::CIRCLECONTAINER:
+        case Geo::Type::CIRCLE:
+            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
+                *static_cast<const Geo::Circle *>(object1));
+        default:
+            return false;
+        }
+    case Geo::Type::POLYLINE:
+        switch (object1->type())
+        {
+        case Geo::Type::CONTAINER:
+        case Geo::Type::POLYGON:
+            return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::Polyline *>(object0),
+                *static_cast<const Geo::Polygon *>(object1));
+        case Geo::Type::AABBRECT:
+            return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::AABBRect *>(object1),
+                *static_cast<const Geo::Polyline *>(object0));
+        case Geo::Type::POLYLINE:
+            return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::Polyline *>(object0),
+                *static_cast<const Geo::Polyline *>(object1));
+        case Geo::Type::BEZIER:
+            return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::Polyline *>(object0),
+                static_cast<const Geo::Bezier *>(object1)->shape());
+        case Geo::Type::CIRCLECONTAINER:
+        case Geo::Type::CIRCLE:
+            return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object0),
+                *static_cast<const Geo::Circle *>(object1));
+        default:
+            return false;
+        }
+    case Geo::Type::CIRCLECONTAINER:
+    case Geo::Type::CIRCLE:
+        switch (object1->type())
+        {
+        case Geo::Type::CONTAINER:
+        case Geo::Type::POLYGON:
+            return Geo::is_intersected(*static_cast<const Geo::Polygon *>(object1),
+                *static_cast<const Geo::Circle *>(object0));
+        case Geo::Type::AABBRECT:
+            return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object1),
+                *static_cast<const Geo::Circle *>(object0));
+        case Geo::Type::POLYLINE:
+            return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object1),
+                *static_cast<const Geo::Circle *>(object0));
+        case Geo::Type::BEZIER:
+            return Geo::is_intersected(static_cast<const Geo::Bezier *>(object1)->shape(),
+                *static_cast<const Geo::Circle *>(object0));
+        case Geo::Type::CIRCLECONTAINER:
+        case Geo::Type::CIRCLE:
+            return Geo::is_intersected(*static_cast<const Geo::Circle *>(object0),
+                *static_cast<const Geo::Circle *>(object1));
+        default:
+            return false;
+        }
+    default:
+        return false;
+    }
+}
+
+bool Geo::NoAABBTest::is_intersected(const Geo::AABBRect &rect, const Geo::Geometry *object)
+{
+    switch (object->type())
+    {
+    case Geo::Type::CONTAINER:
+    case Geo::Type::POLYGON:
+        return Geo::Collision::gjk(rect, *static_cast<const Geo::Polygon *>(object));
+    case Geo::Type::AABBRECT:
+        return Geo::is_intersected(rect, *static_cast<const Geo::AABBRect *>(object));
+    case Geo::Type::POLYLINE:
+        return Geo::NoAABBTest::is_intersected(rect, *static_cast<const Geo::Polyline *>(object));
+    case Geo::Type::BEZIER:
+        return Geo::NoAABBTest::is_intersected(rect, static_cast<const Geo::Bezier *>(object)->shape());
+    case Geo::CIRCLECONTAINER:
+    case Geo::CIRCLE:
+        return Geo::is_intersected(rect, *static_cast<const Geo::Circle *>(object));
+    default:
+        return false;
+    }
+}
 
 
 bool Geo::is_on_left(const Point &point, const Point &start, const Point &end)
 {
     return (end.x - start.x) * (point.y - start.y) -
         (end.y - start.y) * (point.x - end.x) > 0;
+}
+
+
+bool Geo::is_point_on(const Point &point, const Triangle &triangle)
+{
+    return ((Geo::cross(triangle[1] - triangle[0], point - triangle[0]) == 0 &&
+        Geo::distance(point, triangle[0]) + Geo::distance(point, triangle[1]) < Geo::distance(triangle[0], triangle[1]) + Geo::EPSILON)
+        || (Geo::cross(triangle[2] - triangle[1], point - triangle[1]) == 0 &&
+        Geo::distance(point, triangle[1]) + Geo::distance(point, triangle[2]) < Geo::distance(triangle[1], triangle[2]) + Geo::EPSILON)
+        || (Geo::cross(triangle[2] - triangle[0], point - triangle[0]) == 0) &&
+        Geo::distance(point, triangle[0]) + Geo::distance(point, triangle[2]) < Geo::distance(triangle[0], triangle[2]) + Geo::EPSILON);
+}
+
+bool Geo::is_point_on(const Geo::Point &point, std::vector<Geo::Point>::const_iterator begin, std::vector<Geo::Point>::const_iterator end)
+{
+    for (std::vector<Geo::Point>::const_iterator it0 = begin, it1 = begin + 1; it1 != end; ++it1, ++it0)
+    {
+        if (Geo::is_inside(point, *it0, *it1))
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 

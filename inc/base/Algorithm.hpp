@@ -23,6 +23,9 @@ namespace Geo
     // 点到多边形距离,计算点到每一段有限长线段的距离,取最近距离
     double distance(const Point &point, const Polygon &polygon);
 
+    // 两有限长线段间的最短距离
+    double distance(const Point &start0, const Point &end0, const Point &start1, const Point &end1, Point &point0, Point &point1);
+
     // 两点间距离的平方
     double distance_square(const double x0, const double y0, const double x1, const double y1);
 
@@ -137,8 +140,44 @@ namespace Geo
     // 判断有限长线段是否与三角形相交,线段完全在三角形内不算相交
     bool is_intersected(const Line &line, const Triangle &triangle, Point &output0, Point &output1);
 
+    // 判断两Geometry Object是否相交
+    bool is_intersected(const Geometry *object0, const Geometry *object1);
+
+    // 判断AABB矩形与Geometry Object是否相交
+    bool is_intersected(const AABBRect &rect, const Geometry *object);
+
+    namespace NoAABBTest
+    {
+        // 判断两多段线是否相交
+        bool is_intersected(const Polyline &polyline0, const Polyline &polyline1);
+
+        // 判断多段线是否与多边形相交,inside决定多段线完全在多边形内部是否算相交
+        bool is_intersected(const Polyline &polyline, const Polygon &polygon, const bool inside = true);
+
+        // 判断两多边形是否相交,inside决定完全在多边形内部是否算相交
+        bool is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside = true);
+
+        // 判断AABB矩形是否与多段线相交,多段线完全在AABB矩形内也算相交
+        bool is_intersected(const AABBRect &rect, const Polyline &polyline);
+
+        // 判断AABB矩形是否与多边形相交,多边形完全在AABB矩形内或AABB矩形完全在多边形内也算相交
+        bool is_intersected(const AABBRect &rect, const Polygon &polygon);
+
+        // 判断两Geometry Object是否相交
+        bool is_intersected(const Geometry *object0, const Geometry *object1);
+
+        // 判断AABB矩形与Geometry Object是否相交
+        bool is_intersected(const AABBRect &rect, const Geometry *object);
+    }
+
     // 判断点是否在直线的左侧
     bool is_on_left(const Point &point, const Point &start, const Point &end);
+
+    // 判断点在三角形上
+    bool is_point_on(const Point &point, const Triangle &triangle);
+
+    // 判断点在线上
+    bool is_point_on(const Geo::Point &point, std::vector<Geo::Point>::const_iterator begin, std::vector<Geo::Point>::const_iterator end);
 
     // 判断多边形是否是矩形
     bool is_Rectangle(const Polygon &polygon);

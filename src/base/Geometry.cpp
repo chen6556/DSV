@@ -1478,6 +1478,34 @@ size_t Polygon::index(const Point &point) const
     return SIZE_MAX;
 }
 
+Point Polygon::center_of_gravity() const
+{
+    Point result;
+    double s, a = 0;
+    for (size_t i = 1, count = _points.size(); i < count; ++i)
+    {
+        s = _points[i - 1].x * _points[i].y - _points[i - 1].y * _points[i].x;
+        result.x += ((_points[i - 1].x + _points[i].x) * s / 3);
+        result.y += ((_points[i - 1].y + _points[i].y) * s / 3);
+        a += s;
+    }
+    result.x /= a;
+    result.y /= a;
+    return result;
+}
+
+Point Polygon::average_point() const
+{
+    Point point;
+    for (size_t i = 0, count = _points.size() - 1; i < count; ++i)
+    {
+        point += _points[i];
+    }
+    point.x /= (_points.size() - 1);
+    point.y /= (_points.size() - 1);
+    return point;
+}
+
 // Triangle
 
 Triangle::Triangle(const Point &point0, const Point &point1, const Point &point2)
