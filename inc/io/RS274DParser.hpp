@@ -26,6 +26,31 @@ enum class CurveType
     Linear = 0,
 };
 
+enum class Command
+{
+    None,		// Nothing
+    Q,			// Invalid
+
+    // G Command
+    G70,		// Unit inch
+    G71,		// Unit mm
+
+    // D Command
+    D1,			// Pen down
+    D2,			// Pen up
+
+    // M Command
+    M01,		// 
+    M14,		// Knife down
+    M15,		// Knife up
+    M19,		// Notch
+    M43,		// Drill2
+    M44,		// Drill1
+    M45,		// Drill3
+    M72,		// Drill3
+    M73			// Drill4
+};
+
 class Importer
 {
 private:
@@ -40,6 +65,7 @@ private:
 
     bool _is_pen_down = false;
     bool _is_knife_down = false;
+    Command _command = Command::None;
 
     CurveType _curve_type = CurveType::Linear;
 
@@ -59,7 +85,7 @@ public:
     void pen_down();
     void pen_up();
 
-    void knife_down();
+    void knife_down(const std::string &value);
     void knife_up();
 
     void load_graph(Graph *g);

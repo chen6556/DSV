@@ -471,7 +471,7 @@ void Polyline::insert(const size_t index, std::vector<Point>::const_iterator beg
 {
     assert(index < _points.size());
     int i = (index > 0 && _points[index] == *begin);
-    _points.insert(_points.end(), begin + i, end);
+    _points.insert(_points.begin() + index, begin + i, end);
     const size_t len = std::distance(begin, end);
     if (_points[index + len] == _points[index + len + 1])
     {

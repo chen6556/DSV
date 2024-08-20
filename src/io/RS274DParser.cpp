@@ -88,24 +88,38 @@ void Importer::pen_down()
 {
     this->_is_pen_down = true;
     _points.emplace_back(_last_coord);
+    _command = Command::D1;
 }
 
 void Importer::pen_up()
 {
     this->_is_pen_down = false;
     store_points();
+    _command = Command::D2;
 }
 
-void Importer::knife_down()
+void Importer::knife_down(const std::string &value)
 {
     this->_is_knife_down = true;
     _points.emplace_back(_last_coord);
+    if (value == "M14")
+    {
+        _command = Command::M14;
+    }
+    else
+    {
+        _command = Command::M19;
+    }
 }
 
 void Importer::knife_up()
 {
-    this->_is_knife_down = false;
-    store_points();
+    if (_command != Command::M19)
+    {
+        this->_is_knife_down = false;
+        store_points();
+    }
+    _command = Command::M15;
 }
 
 void Importer::set_circle_radius(const std::string &text)
@@ -204,13 +218,13 @@ Parser<std::string> set_mil_unit = (str_p("G72") | str_p("G70"))[set_mil_unit_a]
 Parser<std::string> set_unit = (set_mm_unit | set_mil_unit) >> separator;
 
 // 下刀提刀，下笔提笔
-Action<void> knife_down_a(&importer, &Importer::knife_down);
+Action<std::string> knife_down_a(&importer, &Importer::knife_down);
 Action<void> knife_up_a(&importer, &Importer::knife_up);
 Action<void> pen_down_a(&importer, &Importer::pen_down);
 Action<void> pen_up_a(&importer, &Importer::pen_up);
 
-Parser<std::string> knife_down = str_p("M14")[knife_down_a];
-Parser<std::string> knife_up = (str_p("M15") | str_p("M19"))[knife_up_a];
+Parser<std::string> knife_down = (str_p("M14") | str_p("M19"))[knife_down_a];
+Parser<std::string> knife_up = str_p("M15")[knife_up_a];
 Parser<std::string> pen_down = (str_p("D1") | str_p("D01"))[pen_down_a];
 Parser<std::string> pen_up = (str_p("D2") | str_p("D02"))[pen_up_a];
 
@@ -241,9 +255,9 @@ Parser<std::string> end = str_p("M0")[end_a] >> separator;
 // 未知命令
 Action<std::string> a_unkown(&importer, &Importer::print_symbol);
 
-Parser<std::string> unkown_cmds = confix_p(alphaa_p(), *anychar_p(), separator)[a_unkown] - end;
+Parser<std::string> unkown_cmds = confix_p(alphaa_p(), *anychar_p(), separator)[a_unkown];
 
-Parser<bool> cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | text | skip_text | blank | skip_cmd | separator | unkown_cmds);
+Parser<bool> cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | text | skip_text | blank | skip_cmd | separator | end | unkown_cmds);
 
 Parser<std::string> table_start = str_p("N,0001") >> eol_p();
 Parser<std::string> rest_of_line = *(anychar_p() - eol_p());
@@ -255,7 +269,7 @@ Parser<bool> text_line = str_p("D,") >> int_p() >> ch_p(',') >> rest_of_line >> 
 Parser<std::string> table_end = str_p("L0*") >> !eol_p();
 Parser<bool> table = confix_p(table_start, *(text_line | position_line | table_line), table_end);
 
-Parser<bool> rs274 = cmd >> !end >> *(anychar_p() - table_start) >> !table;
+Parser<bool> rs274 = cmd >> *(anychar_p() - table_start) >> !table;
 
 
 bool parse(std::string_view &stream, Graph *graph)
