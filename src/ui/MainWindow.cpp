@@ -705,7 +705,7 @@ void MainWindow::open_file(const QString &path)
             _file_type = "PLT: (*.plt *.PLT)";
         }
     }
-    else if(path.toUpper().endsWith(".CUT") || path.toUpper().endsWith(".NC") || path.toUpper().endsWith(".ISO"))
+    else if(path.toUpper().endsWith(".CUT") || path.toUpper().endsWith(".NC"))
     {
         std::ifstream file(path.toLocal8Bit(), std::ios::in);
         RS274DParser::parse(file, g);
@@ -802,6 +802,10 @@ void MainWindow::append_file(const QString &path)
     if (ui->auto_layering->isChecked())
     {
         _editer.auto_layering();
+    }
+    if (ui->auto_connect->isChecked())
+    {
+        _editer.auto_connect();
     }
     Geo::AABBRect rect0(graph->bounding_rect()), rect1(g->bounding_rect());
     g->translate(rect0.right() + 10 - rect1.left(), rect0.bottom() - rect1.bottom());
