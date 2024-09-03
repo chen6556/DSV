@@ -220,7 +220,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 break;
             case Geo::Type::CONTAINER:
                 container = dynamic_cast<const Container *>(geo);
-                output << "PU" << container->shape().front().x * x_ratio << ',' << container->shape().front().y * x_ratio << ";PD";
+                output << "PU" << container->shape().front().x * x_ratio << ',' << container->shape().front().y * y_ratio << ";PD";
                 for (const Geo::Point &point : container->shape())
                 {
                     output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
@@ -237,7 +237,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
             case Geo::Type::CIRCLECONTAINER:
                 circlecontainer = dynamic_cast<const CircleContainer *>(geo);
                 output << "PU" << circlecontainer->x * x_ratio << ',' << circlecontainer->y * y_ratio << ';';
-                output << "CI" << circlecontainer->radius << ';';
+                output << "CI" << circlecontainer->radius * x_ratio << ';';
                 if (circlecontainer->text().isEmpty())
                 {
                     output << std::endl;
@@ -280,7 +280,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     case Geo::Type::CIRCLECONTAINER:
                         circlecontainer = dynamic_cast<const CircleContainer *>(item);
                         output << "PU" << circlecontainer->x * x_ratio << ',' << circlecontainer->y * y_ratio << ';';
-                        output << "CI" << circlecontainer->radius << ';';
+                        output << "CI" << circlecontainer->radius * x_ratio << ';';
                         if (circlecontainer->text().isEmpty())
                         {
                             output << std::endl;

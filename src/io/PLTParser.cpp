@@ -110,8 +110,8 @@ void Importer::sc()
 {
     if (_parameters.size() >= 9 && _parameters.front() == 4)
     {
-        _x_ratio *= (_parameters[3] - _parameters[1]) / (_parameters[6] - _parameters[5]);
-        _y_ratio *= (_parameters[4] - _parameters[2]) / (_parameters[8] - _parameters[7]);
+        _x_ratio = (_parameters[6] - _parameters[5]) / (_parameters[3] - _parameters[1]);
+        _y_ratio = (_parameters[8] - _parameters[7]) / (_parameters[4] - _parameters[2]);
     }
     _parameters.clear();
 }
@@ -171,7 +171,7 @@ void Importer::ci()
         _parameters.pop_back();
     }
     _graph->container_groups().back().append(new CircleContainer(QString(),
-        _points.front().x, _points.front().y, _parameters.back()));
+        _points.front().x, _points.front().y, _parameters.back() * _x_ratio));
     _points.clear();
     _parameters.clear();
 }
@@ -292,8 +292,8 @@ Parser<bool> pa = str_p("PA")[pa_a] >> !list_p(coord, separator) >> end;
 Parser<bool> pr = str_p("PR")[pr_a] >> !list_p(coord, separator) >> end;
 Parser<bool> sp = str_p("SP") >> int_p()[sp_a] >> end;
 Parser<bool> ci = (str_p("CI") >> parameter >> !(separator >> parameter))[ci_a] >> end;
-Parser<bool> aa = (str_p("AA") >> coord >> separator >> parameter >> !(separator >> parameter))[aa_a] >> end;
-Parser<bool> ar = (str_p("AR") >> coord >> separator >> parameter >> !(separator >> parameter))[ar_a] >> end;
+Parser<bool> aa = (str_p("AA") >> list_p(parameter, separator))[aa_a] >> end;
+Parser<bool> ar = (str_p("AR") >> list_p(parameter, separator))[ar_a] >> end;
 
 Parser<std::string> unkown_cmds = confix_p(alphaa_p() | ch_p(28), end);
 Parser<std::string> text_end = ch_p('\x3') | ch_p('\x4') | end;
