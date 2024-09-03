@@ -236,7 +236,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 break;
             case Geo::Type::CIRCLECONTAINER:
                 circlecontainer = dynamic_cast<const CircleContainer *>(geo);
-                output << "PA" << circlecontainer->x * x_ratio << ',' << circlecontainer->y * y_ratio << ';';
+                output << "PU" << circlecontainer->x * x_ratio << ',' << circlecontainer->y * y_ratio << ';';
                 output << "CI" << circlecontainer->radius << ';';
                 if (circlecontainer->text().isEmpty())
                 {
