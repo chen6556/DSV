@@ -220,7 +220,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 break;
             case Geo::Type::CONTAINER:
                 container = dynamic_cast<const Container *>(geo);
-                output << "PU" << container->shape().front().x << ',' << container->shape().front().y << ";PD";
+                output << "PU" << container->shape().front().x * x_ratio << ',' << container->shape().front().y * x_ratio << ";PD";
                 for (const Geo::Point &point : container->shape())
                 {
                     output << point.x * x_ratio << ',' << point.y * y_ratio << ',';

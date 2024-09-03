@@ -148,7 +148,7 @@ void Importer::y_coord(const double value)
     {
         _points.back().y = value * _y_ratio;
     }
-    if (_points.back() == _last_coord)
+    if (_points.size() > 1 && _points.back() == _last_coord)
     {
         _points.pop_back();
     }
@@ -171,7 +171,7 @@ void Importer::ci()
         _parameters.pop_back();
     }
     _graph->container_groups().back().append(new CircleContainer(QString(),
-                                                                 _points.front().x, _points.front().y, _parameters.back()));
+        _points.front().x, _points.front().y, _parameters.back()));
     _points.clear();
     _parameters.clear();
 }
