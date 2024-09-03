@@ -1876,7 +1876,14 @@ Geo::Polygon Geo::circle_to_polygon(const double x, const double y, const double
         points.emplace_back(center + vec);
         vec.rotate(0, 0, degree);
     }
-    return Geo::Polygon(points.cbegin(), points.cend());
+    if (points.size() >= 3)
+    {
+        return Geo::Polygon(points.cbegin(), points.cend());
+    }
+    else
+    {
+        return Geo::Polygon();
+    }
 }
 
 Geo::Polygon Geo::circle_to_polygon(const Circle &circle)
