@@ -47,51 +47,40 @@ void Importer::store_points()
 
 void Importer::store_arc()
 {
-    _points.front() += _points[1];
-    double radius, step;
+    const Geo::Point center(_parameters[0], _parameters[1]);
+    Geo::Vector dir(_last_coord.x - _parameters[0], _last_coord.y - _parameters[1]);
+    const double radius = std::sqrt(std::pow(_parameters[0] - _last_coord.x, 2) + 
+        std::pow(_parameters[1] - _last_coord.y, 2));
 
-    if (_parameters.size() >= 2)
+    double angle = Geo::degree_to_rad(_parameters[2]);
+    double step = radius > 3000 ? Geo::PI / 360 : Geo::PI / 180;
+    if (angle >= 0)
     {
-        radius = _parameters[_parameters.size() - 2];
-        step = _parameters.back() >= 15 ? _parameters.back() : _parameters.back() * 180 / Geo::PI;
-    }
-    else
-    {
-        step = 1;
-    }
-
-    if (radius < 0)
-    {
-        step = -step;
-    }
-
-    Geo::Polyline *polyline = new Geo::Polyline();
-    const Geo::Point center(_points.front());
-    Geo::Vector dir = _points[1] - _points.front();
-
-    double angle = step;
-    if (radius >= 0)
-    {
-        while (angle <= radius)
+        dir.rotate(0, 0, step);
+        angle -= step;
+        while (angle > 0)
         {
-            polyline->append(center + dir);
-            dir.rotate(0, 0, step * Geo::PI / 180.0);
-            angle += step;
+            _points.emplace_back(center + dir);
+            angle -= step;
+            dir.rotate(0, 0, step);
         }
     }
     else
     {
-        while (angle >= radius)
+        dir.rotate(0, 0, -step);
+        angle += step;
+        while (angle < 0)
         {
-            polyline->append(center + dir);
-            dir.rotate(0, 0, step * Geo::PI / 180.0);
+            _points.emplace_back(center + dir);
             angle += step;
+            dir.rotate(0, 0, -step);
         }
     }
-    polyline->append(center + dir);
+    dir.x = _last_coord.x - _parameters[0], dir.y = _last_coord.y - _parameters[1];
+    dir.rotate(0, 0, Geo::degree_to_rad(_parameters[2]));
+    _points.emplace_back(center + dir);
+    _last_coord = _points.back();
 
-    _graph->container_groups().back().append(polyline);
-    _points.clear();
     _parameters.clear();
 }
 
@@ -108,7 +97,7 @@ void Importer::ip()
 
 void Importer::sc()
 {
-    if (_parameters.size() >= 9 && _parameters.front() == 4)
+    if (_parameters.size() >= 9 &&  _parameters.front() == 4)
     {
         _x_ratio = (_parameters[6] - _parameters[5]) / (_parameters[3] - _parameters[1]);
         _y_ratio = (_parameters[8] - _parameters[7]) / (_parameters[4] - _parameters[2]);
@@ -188,12 +177,18 @@ void Importer::pr()
 
 void Importer::aa()
 {
-    store_points();
+    _parameters[0] *= _x_ratio;
+    _parameters[1] *= _y_ratio;
+    store_arc();
 }
 
 void Importer::ar()
 {
-    store_points();
+    _parameters[0] *= _x_ratio;
+    _parameters[1] *= _y_ratio;
+    _parameters[0] += _last_coord.x;
+    _parameters[1] += _last_coord.y;
+    store_arc();
 }
 
 void Importer::store_text(const std::string &text)
