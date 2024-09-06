@@ -107,7 +107,7 @@ void Canvas::initializeGL()
     glBufferData(GL_ARRAY_BUFFER, 30 * sizeof(double), _refline_points, GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-    glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_STREAM_DRAW);
 
     double data[24] = {-10, 0, 0, 10, 0, 0, 0, -10, 0, 0, 10, 0};
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]); // origin and select rect
@@ -386,7 +386,7 @@ void Canvas::paintGL()
             glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
             glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
             glEnableVertexAttribArray(0);
-            glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_STREAM_DRAW);
         }
         else
         {
@@ -490,7 +490,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         std::memmove(temp, _cache, _cache_count * sizeof(double));
                         delete []_cache;
                         _cache = temp;
-                        glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_DYNAMIC_DRAW);
+                        glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_STREAM_DRAW);
                     }
                     else
                     {
@@ -1899,7 +1899,7 @@ void Canvas::polyline_cmd(const double x, const double y)
             std::memmove(temp, _cache, _cache_count * sizeof(double));
             delete []_cache;
             _cache = temp;
-            glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_STREAM_DRAW);
         }
         else
         {
@@ -2534,10 +2534,10 @@ void Canvas::refresh_vbo()
 	glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]); // polyline
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polyline_index_count, polyline_indexs, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polyline_index_count, polyline_indexs, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]); // polygon
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_STATIC_DRAW);
     doneCurrent();
 
     _indexs_count[2] = 0;
@@ -3039,7 +3039,7 @@ void Canvas::refresh_brush_ibo()
 
     makeCurrent();
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]); // polygon
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_STATIC_DRAW);
     doneCurrent();
 
     delete []polygon_indexs;
@@ -3322,10 +3322,10 @@ void Canvas::refresh_text_vbo()
 
     makeCurrent();
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[3]); // text
-	glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[3]); // text
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_STATIC_DRAW);
     doneCurrent();
 
     delete []data;
