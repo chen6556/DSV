@@ -8,6 +8,7 @@
 
 namespace PLTParser
 {
+const double Importer::plotter_unit = 0.025;
 
 void Importer::load_graph(Graph *g)
 {
@@ -20,7 +21,11 @@ void Importer::reset()
     _points.clear();
     _parameters.clear();
     _last_coord.x = _last_coord.y = 0;
-    _x_ratio = _y_ratio = 0.025;
+    _ip[0] = _ip[1] = _ip[4] = _ip[5] = 0;
+    _ip[2] = _ip[3] = 1;
+    _sc[0] = _sc[2] = 0;
+    _sc[1] = _sc[3] = 1;
+    _x_ratio = _y_ratio = Importer::plotter_unit;
     _relative_coord = false;
     _texts.clear();
 }
@@ -92,15 +97,67 @@ void Importer::ip()
     {
         _parameters.erase(_parameters.begin() + 4, _parameters.end());
     }
-    _parameters.insert(_parameters.begin(), _parameters.size());
+    if (_parameters.size() >= 2)
+    {
+        if (_parameters.size() >= 4)
+        {
+            _ip[2] = _parameters[2];
+            _ip[3] = _parameters[3];
+        }
+        else
+        {
+            _ip[2] = _parameters[0] + _ip[2] - _ip[0];
+            _ip[3] = _parameters[1] + _ip[3] - _ip[1];
+        }
+        _ip[0] = _parameters[0];
+        _ip[1] = _parameters[1];
+        _x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]) * Importer::plotter_unit;
+        _y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]) * Importer::plotter_unit;
+        _ip[4] = std::min(_ip[0], _ip[2]) * Importer::plotter_unit;
+        _ip[5] = std::min(_ip[1], _ip[3]) * Importer::plotter_unit;
+    }
+    _parameters.clear();
 }
 
 void Importer::sc()
 {
-    if (_parameters.size() >= 9 &&  _parameters.front() == 4)
+    if (_parameters.size() == 4)
     {
-        _x_ratio = (_parameters[6] - _parameters[5]) / (_parameters[3] - _parameters[1]);
-        _y_ratio = (_parameters[8] - _parameters[7]) / (_parameters[4] - _parameters[2]);
+        for (int i = 0; i < 4; ++i)
+        {
+            _sc[i] = _parameters[i];
+        }
+        _x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]) * Importer::plotter_unit;
+        _y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]) * Importer::plotter_unit;
+    }
+    else if (_parameters.size() >= 5)
+    {
+        switch (static_cast<int>(_parameters[4]))
+        {
+        case 0:
+            for (int i = 0; i < 4; ++i)
+            {
+                _sc[i] = _parameters[i];
+            }
+            _x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]) * Importer::plotter_unit;
+            _y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]) * Importer::plotter_unit;
+            break;
+        case 2:
+            _x_ratio = _parameters[1] * Importer::plotter_unit;
+            _y_ratio = _parameters[3] * Importer::plotter_unit;
+            break;
+        default:
+            _sc[0] = _sc[2] = 0;
+            _sc[1] = _sc[3] = 1;
+            _x_ratio = _y_ratio = Importer::plotter_unit;
+            break;
+        }
+    }
+    else
+    {
+        _sc[0] = _sc[2] = 0;
+        _sc[1] = _sc[3] = 1;
+        _x_ratio = _y_ratio = Importer::plotter_unit;
     }
     _parameters.clear();
 }
@@ -123,7 +180,7 @@ void Importer::x_coord(const double value)
     }
     else
     {
-        _points.emplace_back(value * _x_ratio, 0);
+        _points.emplace_back(_ip[4] + value * _x_ratio, 0);
     }
 }
 
@@ -135,7 +192,7 @@ void Importer::y_coord(const double value)
     }
     else
     {
-        _points.back().y = value * _y_ratio;
+        _points.back().y = _ip[5] + value * _y_ratio;
     }
     if (_points.size() > 1 && _points.back() == _last_coord)
     {
@@ -280,7 +337,7 @@ Parser<double> parameter = float_p()[parameter_a];
 Parser<bool> coord = float_p()[x_coord_a] >> separator >> float_p()[y_coord_a];
 Parser<std::string> in = str_p("IN")[in_a] >> end;
 Parser<bool> ip = (str_p("IP") >> list_p(parameter, separator))[ip_a] >> end;
-Parser<bool> sc = (str_p("SC") >> list_p(parameter, separator))[sc_a] >> end;
+Parser<bool> sc = (str_p("SC") >> !list_p(parameter, separator))[sc_a] >> end;
 Parser<bool> pu = str_p("PU")[pu_a] >> !list_p(coord, separator) >> end;
 Parser<bool> pd = str_p("PD") >> !list_p(coord, separator) >> end;
 Parser<bool> pa = str_p("PA")[pa_a] >> !list_p(coord, separator) >> end;

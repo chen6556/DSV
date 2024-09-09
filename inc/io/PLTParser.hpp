@@ -19,6 +19,7 @@ private:
 
     bool _relative_coord = false;
     double _x_ratio = 0.025, _y_ratio = 0.025;
+    double _ip[6], _sc[4];
 
     struct Txt
     {
@@ -30,6 +31,9 @@ private:
             : txt(text), pos(position) {};
     };
     std::list<Txt> _texts;
+
+public:
+    static const double plotter_unit;
 
 private:
     void store_points();
