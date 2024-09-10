@@ -66,6 +66,10 @@ public:
 
     void ar();
 
+    void ea();
+
+    void er();
+
     void store_text(const std::string &text);
 
     void end();

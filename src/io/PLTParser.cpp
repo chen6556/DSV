@@ -248,6 +248,30 @@ void Importer::ar()
     store_arc();
 }
 
+void Importer::ea()
+{
+    if (_parameters.size() >= 2)
+    {
+        _parameters.erase(_parameters.begin(), _parameters.begin() + _parameters.size() - 2);
+        _graph->container_groups().back().append(new Container(Geo::AABBRect(_last_coord.x, _last_coord.y,
+            _parameters.front() * _x_ratio + _ip[4], _parameters.back() * _y_ratio + _ip[5])));
+    }
+    _points.clear();
+    _parameters.clear();
+}
+
+void Importer::er()
+{
+    if (_parameters.size() >= 2)
+    {
+        _parameters.erase(_parameters.begin(), _parameters.begin() + _parameters.size() - 2);
+        _graph->container_groups().back().append(new Container(Geo::AABBRect(_last_coord.x, _last_coord.y,
+            _parameters.front() * _x_ratio + _last_coord.x, _parameters.back() * _y_ratio + _last_coord.y)));
+    }
+    _points.clear();
+    _parameters.clear();
+}
+
 void Importer::store_text(const std::string &text)
 {
     std::string str(text);
@@ -325,6 +349,8 @@ Action<int> sp_a(&importer, &Importer::sp);
 Action<void> ci_a(&importer, &Importer::ci);
 Action<void> aa_a(&importer, &Importer::aa);
 Action<void> ar_a(&importer, &Importer::ar);
+Action<void> ea_a(&importer, &Importer::ea);
+Action<void> er_a(&importer, &Importer::er);
 Action<void> in_a(&importer, &Importer::reset);
 Action<void> ip_a(&importer, &Importer::ip);
 Action<void> sc_a(&importer, &Importer::sc);
@@ -346,11 +372,13 @@ Parser<bool> sp = str_p("SP") >> int_p()[sp_a] >> end;
 Parser<bool> ci = (str_p("CI") >> parameter >> !(separator >> parameter))[ci_a] >> end;
 Parser<bool> aa = (str_p("AA") >> list_p(parameter, separator))[aa_a] >> end;
 Parser<bool> ar = (str_p("AR") >> list_p(parameter, separator))[ar_a] >> end;
+Parser<bool> ea = (str_p("EA") >> list_p(parameter, separator))[ea_a] >> end;
+Parser<bool> er = (str_p("ER") >> list_p(parameter, separator))[er_a] >> end;
 
 Parser<std::string> unkown_cmds = confix_p(alphaa_p() | ch_p(28), end);
 Parser<std::string> text_end = ch_p('\x3') | ch_p('\x4') | end;
 Parser<std::string> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], text_end) >> !separator >> !end;
-Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | ci | aa | ar | in | ip | sc | unkown_cmds;
+Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | ci | aa | ar | ea | er | in | ip | sc | unkown_cmds;
 
 Parser<std::string> dci = confix_p(ch_p(27), end);
 Parser<bool> plt = (*(all_cmds | dci))[end_a];
