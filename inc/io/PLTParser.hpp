@@ -14,10 +14,12 @@ class Importer
 private:
     Graph *_graph = nullptr;
     std::vector<Geo::Point> _points;
+    std::vector<Geo::Polygon> _polygon_cache;
     std::vector<double> _parameters;
     Geo::Point _last_coord;
 
     bool _relative_coord = false;
+    bool _polygon_mode = false;
     double _x_ratio = 0.025, _y_ratio = 0.025;
     double _ip[6], _sc[4];
 
@@ -69,6 +71,12 @@ public:
     void ea();
 
     void er();
+
+    void pm(const int value);
+
+    void pm();
+
+    void ep();
 
     void store_text(const std::string &text);
 

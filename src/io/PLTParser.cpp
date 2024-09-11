@@ -20,19 +20,24 @@ void Importer::reset()
 {
     _points.clear();
     _parameters.clear();
+    _polygon_cache.clear();
     _last_coord.x = _last_coord.y = 0;
     _ip[0] = _ip[1] = _ip[4] = _ip[5] = 0;
     _ip[2] = _ip[3] = 1;
     _sc[0] = _sc[2] = 0;
     _sc[1] = _sc[3] = 1;
     _x_ratio = _y_ratio = Importer::plotter_unit;
-    _relative_coord = false;
+    _relative_coord = _polygon_mode = false;
     _texts.clear();
 }
 
 
 void Importer::store_points()
 {
+    if (_polygon_mode)
+    {
+        return;
+    }
     if (_points.size() <= 1)
     {
         _points.clear();
@@ -272,6 +277,42 @@ void Importer::er()
     _parameters.clear();
 }
 
+void Importer::pm(const int value)
+{
+    switch (value)
+    {
+    case 0:
+        _polygon_cache.clear();
+        _polygon_mode = true;
+        break;
+    case 2:
+        _polygon_mode = false;
+    case 1:
+        if (!_points.empty())
+        {
+            _polygon_cache.emplace_back(_points.begin(), _points.end());
+        }
+        break;
+    default:
+        break;
+    }
+    _points.clear();
+}
+
+void Importer::pm()
+{
+    return pm(0);
+}
+
+void Importer::ep()
+{
+    for (Geo::Polygon &polygon : _polygon_cache)
+    {
+        _graph->container_group().append(new Container(polygon));
+    }
+    _polygon_cache.clear();
+}
+
 void Importer::store_text(const std::string &text)
 {
     std::string str(text);
@@ -351,6 +392,9 @@ Action<void> aa_a(&importer, &Importer::aa);
 Action<void> ar_a(&importer, &Importer::ar);
 Action<void> ea_a(&importer, &Importer::ea);
 Action<void> er_a(&importer, &Importer::er);
+Action<int> pm_int_a(&importer, &Importer::pm);
+Action<void> pm_void_a(&importer, &Importer::pm);
+Action<void> ep_a(&importer, &Importer::ep);
 Action<void> in_a(&importer, &Importer::reset);
 Action<void> ip_a(&importer, &Importer::ip);
 Action<void> sc_a(&importer, &Importer::sc);
@@ -374,11 +418,13 @@ Parser<bool> aa = (str_p("AA") >> list_p(parameter, separator))[aa_a] >> end;
 Parser<bool> ar = (str_p("AR") >> list_p(parameter, separator))[ar_a] >> end;
 Parser<bool> ea = (str_p("EA") >> list_p(parameter, separator))[ea_a] >> end;
 Parser<bool> er = (str_p("ER") >> list_p(parameter, separator))[er_a] >> end;
+Parser<bool> pm = ((str_p("PM") >> digit_p()[pm_int_a]) | str_p("PM")[pm_void_a]) >> end;
+Parser<std::string> ep = str_p("EP")[ep_a] >> end;
 
 Parser<std::string> unkown_cmds = confix_p(alphaa_p() | ch_p(28), end);
 Parser<std::string> text_end = ch_p('\x3') | ch_p('\x4') | end;
 Parser<std::string> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], text_end) >> !separator >> !end;
-Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | ci | aa | ar | ea | er | in | ip | sc | unkown_cmds;
+Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | ci | aa | ar | ea | er | pm | ep | in | ip | sc | unkown_cmds;
 
 Parser<std::string> dci = confix_p(ch_p(27), end);
 Parser<bool> plt = (*(all_cmds | dci))[end_a];
