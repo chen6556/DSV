@@ -236,13 +236,13 @@ color: rgb(230, 230, 230);</string>
        <property name="geometry">
         <rect>
          <x>180</x>
-         <y>25</y>
+         <y>20</y>
          <width>161</width>
-         <height>141</height>
+         <height>131</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="4" column="0">
+        <item row="3" column="0">
          <widget class="QCheckBox" name="cursor_catch">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -286,32 +286,7 @@ color: rgb(230, 230, 230);</string>
           </property>
          </widget>
         </item>
-        <item row="2" column="0">
-         <widget class="QCheckBox" name="catch_only">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>22</height>
-           </size>
-          </property>
-          <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
-          </property>
-          <property name="text">
-           <string>Active Layer Catch Only</string>
-          </property>
-          <property name="checked">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="0">
+        <item row="4" column="0">
          <widget class="QCheckBox" name="show_points">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -333,7 +308,7 @@ color: rgb(230, 230, 230);</string>
           </property>
          </widget>
         </item>
-        <item row="3" column="0">
+        <item row="2" column="0">
          <widget class="QCheckBox" name="multiple_select">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">

@@ -23,7 +23,6 @@ void Setting::init()
     ui->text_size->setValue(setting["text_size"].toInt());
 
     ui->show_text->setChecked(setting["show_text"].toBool());
-    ui->catch_only->setChecked(setting["active_layer_catch_only"].toBool());
     ui->multiple_select->setChecked(setting["multiple_select"].toBool());
     ui->cursor_catch->setChecked(setting["cursor_catch"].toBool());
     ui->show_points->setChecked(setting["show_points"].toBool());
@@ -38,7 +37,6 @@ void Setting::accept()
     setting["text_size"] = ui->text_size->value();
 
     setting["show_text"] = ui->show_text->isChecked();
-    setting["active_layer_catch_only"] = ui->catch_only->isChecked();
     setting["multiple_select"] = ui->multiple_select->isChecked();
     setting["cursor_catch"] = ui->cursor_catch->isChecked();
     setting["show_points"] = ui->show_points->isChecked();

@@ -41,8 +41,7 @@ void GlobalSetting::load_setting()
     file.close();
 
     if (_instance->_setting.isEmpty())
-    {   
-        _instance->_setting["active_layer_catch_only"] = true;
+    {
         _instance->_setting["auto_aligning"] = true;
         _instance->_setting["auto_connect"] = true;
         _instance->_setting["auto_layering"] = true;
