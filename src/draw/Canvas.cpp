@@ -138,6 +138,7 @@ void Canvas::resizeGL(int w, int h)
 
 void Canvas::paintGL()
 {
+    glUseProgram(_shader_program);
     if (!_select_rect.empty())
     {
         _editer->select(_select_rect);
@@ -2531,13 +2532,13 @@ void Canvas::refresh_vbo()
 
     makeCurrent();
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
-	glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]); // polyline
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polyline_index_count, polyline_indexs, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polyline_index_count, polyline_indexs, GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]); // polygon
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_DYNAMIC_DRAW);
     doneCurrent();
 
     _indexs_count[2] = 0;
