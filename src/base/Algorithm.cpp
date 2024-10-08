@@ -570,7 +570,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
             {
                 points.insert(points.begin() + i++, MarkedPoint(temp.x, temp.y, false));
                 ++count;
-                if (Geo::cross(temp, end, points[i], points[i - 1]) >= 0)
+                if (Geo::cross(temp, end, points[i], points[i - 2]) >= 0)
                 {
                     points[i - 1].value = -1;
                 }
@@ -918,6 +918,19 @@ bool Geo::is_part(const Line &line0, const Line &line1)
 
 bool Geo::is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite)
 {
+    // if (point0 == point1 && point2 == point3)
+    // {
+    //     return point0 == point2;
+    // }
+    // else if (point0 == point1)
+    // {
+    //     return Geo::is_inside(point0, point2, point3);
+    // }
+    // else if (point2 == point3)
+    // {
+    //     return Geo::is_inside(point2, point0, point1);
+    // }
+    assert(point0 != point1 && point2 != point3);
     if (point0 == point2 || point0 == point3)
     {
         output = point0;
@@ -941,7 +954,7 @@ bool Geo::is_intersected(const Point &point0, const Point &point1, const Point &
         }
     }
 
-    const double a0 = point1.y - point0.y, 
+    const double a0 = point1.y - point0.y,
                 b0 = point0.x - point1.x,
                 c0 = point1.x * point0.y - point0.x * point1.y;
     const double a1 = point3.y - point2.y,
@@ -1094,26 +1107,36 @@ bool Geo::is_intersected(const Polyline &polyline, const Polygon &polygon, const
     }
 
     Point point;
-    for (size_t i = 1, count0 = polyline.size(); i < count0; ++i)
-    {
-        for (size_t j = 1, count1 = polygon.size(); j < count1; ++j)
-        {
-            if (Geo::is_intersected(polyline[i-1], polyline[i], polygon[j-1], polygon[j], point))
-            {
-                return true;
-            }
-            else if (inside && Geo::is_inside(polyline[i-1], polygon))
-            {
-                return true;
-            }
-        }
-    }
     if (inside)
     {
+        for (size_t i = 1, count0 = polyline.size(); i < count0; ++i)
+        {
+            if (Geo::is_inside(polyline[i-1], polygon))
+            {
+                return true;
+            }
+            for (size_t j = 1, count1 = polygon.size(); j < count1; ++j)
+            {
+                if (Geo::is_intersected(polyline[i-1], polyline[i], polygon[j-1], polygon[j], point))
+                {
+                    return true;
+                }
+            }
+        }
         return Geo::is_inside(polyline.back(), polygon);
     }
     else
     {
+        for (size_t i = 1, count0 = polyline.size(); i < count0; ++i)
+        {
+            for (size_t j = 1, count1 = polygon.size(); j < count1; ++j)
+            {
+                if (Geo::is_intersected(polyline[i-1], polyline[i], polygon[j-1], polygon[j], point))
+                {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 }

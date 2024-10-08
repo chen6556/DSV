@@ -433,6 +433,7 @@ void Polyline::append(const Polyline &polyline)
 
 void Polyline::append(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
 {
+    const size_t index = _points.size();
     if (_points.empty() || _points.back() != *begin)
     {
         _points.insert(_points.end(), begin, end);
@@ -440,6 +441,14 @@ void Polyline::append(std::vector<Point>::const_iterator begin, std::vector<Poin
     else
     {
         _points.insert(_points.end(), begin + 1, end);
+    }
+    for (size_t i = index <= 1 ? 1 : index - 1, count = _points.size(); i < count; ++i)
+    {
+        if (_points[i - 1] == _points[i])
+        {
+            _points.erase(_points.begin() + i--);
+            --count;
+        }
     }
 }
 
@@ -472,10 +481,13 @@ void Polyline::insert(const size_t index, std::vector<Point>::const_iterator beg
     assert(index < _points.size());
     int i = (index > 0 && _points[index] == *begin);
     _points.insert(_points.begin() + index, begin + i, end);
-    const size_t len = std::distance(begin, end);
-    if (_points[index + len] == _points[index + len + 1])
+    for (size_t i = index <= 1 ? 1 : index - 1, count = _points.size(); i < count; ++i)
     {
-        _points.erase(_points.begin() + index + len + 1);
+        if (_points[i - 1] == _points[i])
+        {
+            _points.erase(_points.begin() + i--);
+            --count;
+        }
     }
 }
 
