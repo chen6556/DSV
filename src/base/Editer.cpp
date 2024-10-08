@@ -2695,6 +2695,293 @@ bool Editer::auto_aligning(Geo::Point &coord, std::list<QLineF> &reflines, const
     return flag;
 }
 
+void Editer::auto_combinate()
+{
+    if (_graph == nullptr || _graph->empty())
+    {
+        return;
+    }
+
+    std::vector<Geo::Geometry *> all_containers;
+    std::vector<Geo::Polyline *> all_polylines;
+    for (ContainerGroup &group : _graph->container_groups())
+    {
+        while (!group.empty())
+        {
+            switch (group.back()->type())
+            {
+            case Geo::Type::POLYLINE:
+            case Geo::Type::BEZIER:
+                all_polylines.push_back(static_cast<Geo::Polyline *>(group.pop_back()));
+                break;
+            default:
+                all_containers.push_back(group.pop_back());
+                break;
+            }
+        }
+    }
+    _graph->clear();
+
+    if (all_containers.empty())
+    {
+        _graph->append_group();
+        for (Geo::Geometry *item : all_polylines)
+        {
+            _graph->back().append(item);
+        }
+        return;
+    }
+
+    std::sort(all_containers.begin(), all_containers.end(), [](const Geo::Geometry *a, const Geo::Geometry *b)
+              { return a->bounding_rect().area() > b->bounding_rect().area(); });
+    _graph->append_group();
+    for (size_t i = 0, count = all_containers.size(); _graph->back().empty() && i < count; ++i)
+    {
+        _graph->back().append(all_containers[i]);
+        all_containers.erase(all_containers.begin() + i);
+    }
+
+    bool flag;
+    Container *container = nullptr;
+    CircleContainer *circle_container = nullptr;
+    for (size_t i = 0, count = all_containers.size(); i < count; ++i)
+    {
+        flag = true;
+        switch (all_containers[i]->type())
+        {
+        case Geo::Type::CONTAINER:
+            container = static_cast<Container *>(all_containers[i]);
+            for (Geo::Geometry *geo : _graph->back())
+            {
+                switch (geo->type())
+                {
+                case Geo::Type::CONTAINER:
+                    if (Geo::is_intersected(container->shape(), static_cast<Container *>(geo)->shape()))
+                    {
+                        flag = false;
+                    }
+                    break;
+                case Geo::Type::CIRCLECONTAINER:
+                    if (Geo::is_inside(*static_cast<CircleContainer *>(geo), container->shape()))
+                    {
+                        flag = false;
+                    }
+                    break;
+                default:
+                    break;
+                }
+                if (!flag)
+                {
+                    break;
+                }
+            }
+            if (flag)
+            {
+                _graph->back().append(container);
+                all_containers.erase(all_containers.begin() + i--);
+                --count;
+            }
+            break;
+        case Geo::Type::CIRCLECONTAINER:
+            circle_container = static_cast<CircleContainer *>(all_containers[i]);
+            for (Geo::Geometry *geo : _graph->back())
+            {
+                switch (geo->type())
+                {
+                case Geo::Type::CONTAINER:
+                    if (Geo::is_inside(*circle_container, static_cast<Container *>(geo)->shape()))
+                    {
+                        flag = false;
+                    }
+                    break;
+                case Geo::Type::CIRCLECONTAINER:
+                    if (Geo::is_intersected(circle_container->shape(), static_cast<CircleContainer *>(geo)->shape()))
+                    {
+                        flag = false;
+                    }
+                    break;
+                default:
+                    break;
+                }
+                if (!flag)
+                {
+                    break;
+                }
+            }
+            if (flag)
+            {
+                _graph->back().append(circle_container);
+                all_containers.erase(all_containers.begin() + i--);
+                --count;
+            }
+            break;
+        default:
+            break;
+        }
+    }
+    for (std::vector<Geo::Geometry *>::iterator it = _graph->back().begin(); it != _graph->back().end(); ++it)
+    {
+        container = static_cast<Container *>(*it);
+        (*it) = new Combination({container});
+    }
+
+    for (Geo::Geometry *item : all_containers)
+    {
+        switch (item->type())
+        {
+        case Geo::Type::CONTAINER:
+            container = static_cast<Container *>(item);
+            for (Geo::Geometry *combination : _graph->back())
+            {
+                flag = false;
+                for (Geo::Geometry *item : *static_cast<Combination *>(combination))
+                {
+                    if (dynamic_cast<Container *>(item) != nullptr)
+                    {
+                        if (Geo::is_intersected(container->shape(), static_cast<Container *>(item)->shape()))
+                        {
+                            static_cast<Combination *>(combination)->append(container);
+                            static_cast<Combination *>(combination)->update_border();
+                            flag = true;
+                            break;
+                        }
+                    }
+                    else if (dynamic_cast<CircleContainer *>(item) != nullptr)
+                    {
+                        if (Geo::is_intersected(container->shape(), static_cast<CircleContainer *>(item)->shape()))
+                        {
+                            static_cast<Combination *>(combination)->append(container);
+                            static_cast<Combination *>(combination)->update_border();
+                            flag = true;
+                            break;
+                        }
+                    }
+                }
+                if (flag)
+                {
+                    break;
+                }
+            }
+            break;
+        case Geo::Type::CIRCLECONTAINER:
+            circle_container = static_cast<CircleContainer *>(item);
+            for (Geo::Geometry *combination : _graph->back())
+            {
+                flag = false;
+                for (Geo::Geometry *item : *static_cast<Combination *>(combination))
+                {
+                    if (dynamic_cast<Container *>(item) != nullptr)
+                    {
+                        if (Geo::is_inside(circle_container->shape(), static_cast<Container *>(item)->shape()))
+                        {
+                            static_cast<Combination *>(combination)->append(circle_container);
+                            static_cast<Combination *>(combination)->update_border();
+                            flag = true;
+                            break;
+                        }
+                    }
+                    else if (dynamic_cast<CircleContainer *>(item) != nullptr)
+                    {
+                        if (Geo::is_inside(circle_container->shape(), static_cast<CircleContainer *>(item)->shape()))
+                        {
+                            static_cast<Combination *>(combination)->append(circle_container);
+                            static_cast<Combination *>(combination)->update_border();
+                            flag = true;
+                            break;
+                        }
+                    }
+                }
+                if (flag)
+                {
+                    break;
+                }
+            }
+            break;
+        }
+    }
+
+    std::vector<bool> flags(all_polylines.size(), false);
+    size_t index = 0;
+    for (Geo::Polyline *polyline : all_polylines)
+    {
+        if (dynamic_cast<Geo::Bezier *>(polyline) == nullptr)
+        {
+            for (Geo::Geometry *combination : _graph->back())
+            {
+                for (Geo::Geometry *item : *static_cast<Combination *>(combination))
+                {
+                    if (dynamic_cast<Container *>(item) != nullptr)
+                    {
+                        if (Geo::is_intersected(*polyline, static_cast<Container *>(item)->shape()))
+                        {
+                            static_cast<Combination *>(combination)->append(polyline);
+                            static_cast<Combination *>(combination)->update_border();
+                            flags[index] = true;
+                            break;
+                        }
+                    }
+                    else if (dynamic_cast<CircleContainer *>(item) != nullptr)
+                    {
+                        if (Geo::is_intersected(*polyline, static_cast<CircleContainer *>(item)->shape()))
+                        {
+                            static_cast<Combination *>(combination)->append(polyline);
+                            static_cast<Combination *>(combination)->update_border();
+                            flags[index] = true;
+                            break;
+                        }
+                    }
+                }
+                if (flags[index])
+                {
+                    break;
+                }
+            }
+        }
+        else
+        {
+            Geo::Bezier *bezier = static_cast<Geo::Bezier *>(polyline);
+            for (Geo::Geometry *combination : _graph->back())
+            {
+                for (Geo::Geometry *item : *static_cast<Combination *>(combination))
+                {
+                    if (dynamic_cast<Container *>(item) != nullptr)
+                    {
+                        if (Geo::is_intersected(bezier->shape(), static_cast<Container *>(item)->shape()))
+                        {
+                            static_cast<Combination *>(combination)->append(bezier);
+                            static_cast<Combination *>(combination)->update_border();
+                            flags[index] = true;
+                            break;
+                        }
+                    }
+                    else if (dynamic_cast<CircleContainer *>(item) != nullptr)
+                    {
+                        if (Geo::is_intersected(bezier->shape(), static_cast<CircleContainer *>(item)->shape()))
+                        {
+                            static_cast<Combination *>(combination)->append(bezier);
+                            static_cast<Combination *>(combination)->update_border();
+                            flags[index] = true;
+                            break;
+                        }
+                    }
+                }
+                if (flags[index])
+                {
+                    break;
+                }
+            }
+        }
+        ++index;
+    }
+    for (size_t i = 0, count = flags.size(); i < count; ++i)
+    {
+        if (!flags[i])
+        {
+            _graph->back().append(all_polylines[i]);
+        }
+    }
+}
+
 void Editer::auto_layering()
 {
     if (_graph == nullptr || _graph->empty())
@@ -2739,7 +3026,7 @@ void Editer::auto_layering()
         _graph->back().append(all_containers[i]);
         all_containers.erase(all_containers.begin() + i);
     }
-    
+
     bool flag;
     Container *container = nullptr;
     CircleContainer *circle_container = nullptr;
@@ -2752,19 +3039,19 @@ void Editer::auto_layering()
             switch (all_containers[i]->type())
             {
             case Geo::Type::CONTAINER:
-                container = dynamic_cast<Container *>(all_containers[i]);
+                container = static_cast<Container *>(all_containers[i]);
                 for (Geo::Geometry *geo : _graph->back())
                 {
                     switch (geo->type())
                     {
                     case Geo::Type::CONTAINER:
-                        if (Geo::is_intersected(container->shape(), dynamic_cast<Container *>(geo)->shape()))
+                        if (Geo::is_intersected(container->shape(), static_cast<Container *>(geo)->shape()))
                         {
                             flag = false;
                         }
                         break;
                     case Geo::Type::CIRCLECONTAINER:
-                        if (Geo::is_inside(*dynamic_cast<CircleContainer *>(geo), container->shape()))
+                        if (Geo::is_inside(*static_cast<CircleContainer *>(geo), container->shape()))
                         {
                             flag = false;
                         }
@@ -2785,19 +3072,19 @@ void Editer::auto_layering()
                 }
                 break;
             case Geo::Type::CIRCLECONTAINER:
-                circle_container = dynamic_cast<CircleContainer *>(all_containers[i]);
+                circle_container = static_cast<CircleContainer *>(all_containers[i]);
                 for (Geo::Geometry *geo : _graph->back())
                 {
                     switch (geo->type())
                     {
                     case Geo::Type::CONTAINER:
-                        if (Geo::is_inside(*circle_container, dynamic_cast<Container *>(geo)->shape()))
+                        if (Geo::is_inside(*circle_container, static_cast<Container *>(geo)->shape()))
                         {
                             flag = false;
                         }
                         break;
                     case Geo::Type::CIRCLECONTAINER:
-                        if (Geo::is_intersected(circle_container->shape(), dynamic_cast<CircleContainer *>(geo)->shape()))
+                        if (Geo::is_intersected(circle_container->shape(), static_cast<CircleContainer *>(geo)->shape()))
                         {
                             flag = false;
                         }
@@ -2823,7 +3110,7 @@ void Editer::auto_layering()
         }
         _graph->append_group();
     }
-    
+
     _graph->append_group();
     for (Geo::Geometry *geo : all_polylines)
     {

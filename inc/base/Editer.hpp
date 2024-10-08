@@ -160,6 +160,8 @@ public:
 
     bool auto_aligning(Geo::Point &coord, std::list<QLineF> &reflines, const bool current_group_only = true);
 
+    void auto_combinate();
+
 	void auto_layering();
 
     void auto_connect();
