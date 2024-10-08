@@ -65,13 +65,19 @@ private slots:
 
     void refresh_tool_label(const Canvas::Tool tool);
 
+    void refresh_tool_label(const Canvas::Operation operation);
+
     void refresh_cmd(const CMDWidget::CMD cmd);
+
+    void refresh_settings();
 
     void load_settings();
 
     void save_settings();
 
     void show_layers_manager();
+
+    void hide_layers_manager();
 
     void to_main_page();
 

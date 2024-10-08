@@ -55,6 +55,7 @@ private:
     Operation _operation = Operation::NOOPERATION;
 
     QPointF _mouse_pos_0, _mouse_pos_1;
+    Geo::Point _mouse_press_pos, _mouse_release_pos;
     Geo::Point _stored_coord;
     Geo::Point _last_point;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
@@ -88,6 +89,8 @@ protected:
 public:
 signals:
     void tool_changed(const Tool);
+
+    void operation_changed(const Operation);
 
 public:
     Canvas(QWidget *parent = nullptr);

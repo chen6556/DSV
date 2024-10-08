@@ -51,21 +51,9 @@ void LayersManager::init()
 }
 
 
-void LayersManager::load_layers(Graph *graph)
+void LayersManager::bind_editer(Editer *editer)
 {
-    _layers.clear();
-    int index = 0;
-    for (ContainerGroup &group : graph->container_groups())
-    {
-        if (group.name.isEmpty())
-        {
-            group.name = QString::number(index++);
-        }
-        _layers.append((group.visible() ? QString("O ") : QString("X ")) + group.name);
-    }
-    std::reverse(_layers.begin(), _layers.end());
-    _layers_model->setStringList(_layers);
-    _graph = graph;
+    _editer = editer;
 }
 
 void LayersManager::closeEvent(QCloseEvent *event)
@@ -79,16 +67,16 @@ void LayersManager::show_layer()
 {
     const int count = _layers.length();
     const int index = count - 1 - ui->layers_view->currentIndex().row();
-    if (_graph->container_group(index).visible())
+    if (_editer->group_is_visible(index))
     {
-        _graph->container_group(index).hide();
+        _editer->hide_group(index);
+        _layers[count - 1 - index] = "x " + _editer->group_name(index);
     }
     else
     {
-        _graph->container_group(index).show();
+        _editer->show_group(index);
+        _layers[count - 1- index] = "O " + _editer->group_name(index);
     }
-    _layers[count - 1 - index] = (_graph->container_group(index).visible() ? QString("O ") : QString("X ")) + 
-        _graph->container_group(index).name;
     _layers_model->setStringList(_layers);
 }
 
@@ -101,33 +89,17 @@ void LayersManager::layer_up()
     }
 
     const int count = _layers.length();
+    _editer->reorder_group(index, index + 1);
     if (index == count - 2)
     {
-        _graph->append_group();
-        _graph->container_group(index).transfer(_graph->back());
-        if (!_graph->container_group(index).visible())
-        {
-            _graph->back().hide();
-        }
-        _graph->remove_group(index);
-        
         _layers.push_front(_layers[count - 1 - index]);
     }
     else
     {
-        _graph->insert_group(index + 2);
-        _graph->container_group(index).transfer(_graph->container_group(index + 2));
-        if (!_graph->container_group(index).visible())
-        {
-            _graph->container_group(index + 2).hide();
-        }
-        _graph->remove_group(index);
-
-        _layers.insert(count - 2 - index, _layers[count - 1 - index]);
+        _layers.insert(count - 2 - index, _layers[count - 1 - index]);  
     }
     _layers.remove(count - index);
     _layers_model->setStringList(_layers);
-    _graph->modified = true;
 }
 
 void LayersManager::layer_down()
@@ -139,13 +111,7 @@ void LayersManager::layer_down()
     }
 
     const int count = _layers.length();
-    _graph->insert_group(index - 1);
-    _graph->container_group(index + 1).transfer(_graph->container_group(index - 1));
-    if (!_graph->container_group(index + 1).visible())
-    {
-        _graph->container_group(index - 1).hide();
-    }
-    _graph->remove_group(index + 1);
+    _editer->reorder_group(index, index - 1);
 
     if (index > 1)
     {
@@ -157,43 +123,39 @@ void LayersManager::layer_down()
     }
     _layers.remove(count - 1 - index);
     _layers_model->setStringList(_layers);
-    _graph->modified = true;
 }
 
 void LayersManager::add_layer()
 {
-    _graph->append_group();
-    _graph->container_groups().back().name = QString::number(_layers.size());
-    _layers.push_front(QString("O ") + QString::number(_layers.size()));
+    _editer->append_group();
+    _editer->set_group_name(_editer->groups_count() - 1, QString::number(_layers.size()));
+    _layers.push_front("O " + QString::number(_layers.size()));
     _layers_model->setStringList(_layers);
-    _graph->modified = true;
 }
 
 void LayersManager::insert_layer()
 {
     const int count = _layers.length();
     const int index = count - 1 - ui->layers_view->currentIndex().row();
-    _graph->insert_group(index);
-    _graph->container_group(index).name = QString::number(_layers.size());
-    _layers.insert(count - 1 - index, QString("O ") + QString::number(_layers.size()));
+    _editer->append_group(index);
+    _editer->set_group_name(index, QString::number(_layers.size()));
+    _layers.insert(count - index, "O " + QString::number(_layers.size()));
     _layers_model->setStringList(_layers);
-    _graph->modified = true;
 }
 
 void LayersManager::remove_layer()
 {
     const int count = _layers.length();
     const int index = count - 1 - ui->layers_view->currentIndex().row();
-    _graph->remove_group(index);
+    _editer->remove_group(index);
     _layers.remove(count - 1 - index);
     if (_layers.empty())
     {
         _layers.append("O 0");
-        _graph->append_group();
-        _graph->back().name = '0';
+        _editer->append_group();
+        _editer->set_group_name(0, QString::number(0));
     }
     _layers_model->setStringList(_layers);
-    _graph->modified = true;  
 }
 
 void LayersManager::change_layer_name(const QModelIndex &row, const QModelIndex &col, const QList<int> &roles)
@@ -205,14 +167,27 @@ void LayersManager::change_layer_name(const QModelIndex &row, const QModelIndex 
     }
 
     const int count = _layers.length();
-    _layers[row.row()] = (_graph->container_group(count - 1 - row.row()).visible() ? QString("O ") : QString("X ")) + new_name;
-    _graph->container_group(count - 1 - row.row()).name = new_name;
+    _layers[row.row()] = (_editer->group_is_visible(count - 1 - row.row()) ? "O " : "X ") + new_name;
+    _editer->set_group_name(count - 1 - row.row(), new_name);
     _layers_model->setStringList(_layers);
-    _graph->modified = true;
 }
 
-
-
+void LayersManager::update_layers()
+{
+    _layers.clear();
+    int index = 0;
+    for (size_t i = 0, count = _editer->groups_count(); i < count; ++i)
+    {
+        if (_editer->group_name(i).isEmpty())
+        {
+            _editer->set_group_name(i, QString::number(index++));
+        }
+        std::string value = _editer->group_name(i).toStdString();
+        _layers.append((_editer->group_is_visible(i) ? "O " : "X ") + _editer->group_name(i));
+    }
+    std::reverse(_layers.begin(), _layers.end());
+    _layers_model->setStringList(_layers);
+}
 
 QStringListModel *LayersManager::model()
 {

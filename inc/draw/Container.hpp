@@ -144,7 +144,7 @@ public:
 
     const Geo::Type type() const override;
 
-    const bool &visible() const;
+    const bool visible() const;
 
     void show();
 
@@ -262,6 +262,10 @@ public:
     Combination() {};
 
     Combination(const Combination &combination);
+
+    Combination(const std::initializer_list<Geo::Geometry *> &containers);
+
+    Combination(std::vector<Geo::Geometry *>::const_iterator begin, std::vector<Geo::Geometry *>::const_iterator end);
 
     const Geo::Type type() const override;
 

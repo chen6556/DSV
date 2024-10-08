@@ -334,7 +334,7 @@ void Importer::store_text(const std::string &text)
 void Importer::end()
 {
     store_points();
-    const int text_size = GlobalSetting::get_instance()->setting()["text_size"].toInt();
+    const int text_size = GlobalSetting::get_instance()->setting["text_size"].toInt();
     std::vector<Geo::Geometry *> group(_graph->container_group().begin(), _graph->container_group().end());
     std::sort(group.begin(), group.end(), [](const Geo::Geometry *a, const Geo::Geometry *b)
               { return a->bounding_rect().area() < b->bounding_rect().area(); });

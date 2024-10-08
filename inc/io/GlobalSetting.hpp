@@ -8,10 +8,8 @@
 class GlobalSetting
 {
 private:
-    QJsonObject _setting;
-    Ui::MainWindow *_ui = nullptr;
     static GlobalSetting *_instance;
-    
+
 private:
     GlobalSetting() {}
 
@@ -22,15 +20,16 @@ private:
     ~GlobalSetting() {};
 
 public:
+    Graph *graph = nullptr;
+    Ui::MainWindow *ui = nullptr;
+    QJsonObject setting;
+
+    bool translated_points = false;
+
+public:
     static GlobalSetting *get_instance();
 
     static void release();
-
-    QJsonObject &setting();
-
-    Ui::MainWindow *ui();
-
-    void load_ui(Ui::MainWindow *ui);
 
     void load_setting();
     

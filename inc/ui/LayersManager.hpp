@@ -6,7 +6,7 @@
 #include <QStringListModel>
 #include <QStringList>
 
-#include "draw/Graph.hpp"
+#include "base/Editer.hpp"
 
 
 QT_BEGIN_NAMESPACE
@@ -27,7 +27,7 @@ private:
     QAction *_insert = nullptr;
     QAction *_del = nullptr;
 
-    Graph *_graph = nullptr;
+    Editer *_editer = nullptr;
     QStringList _layers;
     QStringListModel *_layers_model = nullptr;
     bool _append_to_last = true;
@@ -53,13 +53,13 @@ private slots:
 
     void change_layer_name(const QModelIndex &row, const QModelIndex &col, const QList<int> &roles);
 
-    
-
 public:
     LayersManager(QWidget *parent);
     ~LayersManager();
 
-    void load_layers(Graph *graph);
+    void bind_editer(Editer *editer);
+
+    void update_layers();
 
     QStringListModel *model();
 };

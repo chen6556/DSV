@@ -338,7 +338,7 @@ const Geo::Type ContainerGroup::type() const
     return Geo::Type::CONTAINERGROUP;
 }
 
-const bool &ContainerGroup::visible() const
+const bool ContainerGroup::visible() const
 {
     return _visible;
 }
@@ -393,6 +393,7 @@ void ContainerGroup::transfer(ContainerGroup &group)
     group.clear();
     group._containers.assign(_containers.begin(), _containers.end());
     group.name = name;
+    group._visible = _visible;
     _containers.clear();
 }
 
@@ -817,6 +818,18 @@ void ContainerGroup::remove_back()
 Combination::Combination(const Combination &combination)
     : ContainerGroup(combination), _border(combination._border)
 {}
+
+Combination::Combination(const std::initializer_list<Geo::Geometry *> &containers)
+    : ContainerGroup(containers)
+{
+    update_border();
+}
+
+Combination::Combination(std::vector<Geo::Geometry *>::const_iterator begin, std::vector<Geo::Geometry *>::const_iterator end)
+    : ContainerGroup(begin, end)
+{
+    update_border();
+}
 
 const Geo::Type Combination::type() const
 {

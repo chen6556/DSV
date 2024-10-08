@@ -1641,6 +1641,7 @@ color:rgb(230, 230, 230);</string>
    <header>draw/Canvas.hpp</header>
    <slots>
     <signal>tool_changed(Canvas::Tool)</signal>
+    <signal>operation_changed(Canvas::Operation)</signal>
     <slot>cancel_painting()</slot>
    </slots>
   </customwidget>
@@ -2065,6 +2066,22 @@ color:rgb(230, 230, 230);</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>canvas</sender>
+   <signal>operation_changed(Canvas::Operation)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>refresh_tool_label(Canvas::Operation)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>562</x>
+     <y>350</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -2092,5 +2109,6 @@ color:rgb(230, 230, 230);</string>
   <slot>append_file()</slot>
   <slot>refresh_tool_label(Canvas::Tool)</slot>
   <slot>fillet()</slot>
+  <slot>refresh_tool_label(Canvas::Operation)</slot>
  </slots>
 </ui>

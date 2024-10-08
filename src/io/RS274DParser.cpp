@@ -178,7 +178,7 @@ void Importer::store_text(const std::string &text)
     else
     {
         _graph->container_groups().back().append(new Text(_last_coord.x, _last_coord.y,
-            GlobalSetting::get_instance()->setting()["text_size"].toInt(), QString::fromUtf8(text)));
+            GlobalSetting::get_instance()->setting["text_size"].toInt(), QString::fromUtf8(text)));
     }
 }
 

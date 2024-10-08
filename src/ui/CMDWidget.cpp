@@ -29,8 +29,8 @@ void CMDWidget::init()
         << "LENGTH" << "CIRCLE" << "POLYLINE" << "RECTANGLE" << "BEZIER" << "TEXT"
         << "CONNECT" << "CLOSE" << "COMBINATE" << "SPLIT"
         << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "ARRAY" << "LINEARRAY" << "RINGARRAY"
-        << "BOOLEAN" << "UNION" << "INTERSECTION" << "DIFFERENCE"
-        << "OFFSET" << "SCALE" << "ABSOLUTE" << "RELATIVE"
+        << "UNION" << "INTERSECTION" << "DIFFERENCE"
+        << "OFFSET" << "SCALE" << "FILLET" << "ABSOLUTE" << "RELATIVE"
         << "DELETE" << "COPY" << "CUT" << "PASTE" << "UNDO" << "ALL";
 
     _cmd_dict = {{"OPEN",CMD::OPEN_CMD}, {"SAVE",CMD::SAVE_CMD}, {"EXIT",CMD::EXIT_CMD},
@@ -40,7 +40,7 @@ void CMDWidget::init()
         {"COMBINATE",CMD::COMBINATE_CMD}, {"CLOSE",CMD::CLOSE_CMD}, {"SPLIT",CMD::SPLIT_CMD},
         {"ROTATE",CMD::ROTATE_CMD}, {"FLIPX",CMD::FLIPX_CMD}, {"FLIPY",CMD::FLIPY_CMD}, {"MIRROR",CMD::MIRROR_CMD},
         {"ARRAY",CMD::ARRAY_CMD}, {"LINEARRAY",CMD::LINEARRAY_CMD}, {"RINGARRAY",CMD::RINGARRAY_CMD},
-        {"OFFSET",CMD::OFFSET_CMD}, {"SCALE", CMD::SCALE_CMD}, {"BOOLEAN",CMD::BOOLEAN_CMD},
+        {"OFFSET",CMD::OFFSET_CMD}, {"SCALE", CMD::SCALE_CMD}, {"FILLET",CMD::FILLET_CMD},
         {"UNION",CMD::UNION_CMD}, {"INTERSECTION",CMD::INTERSECTION_CMD}, {"DIFFERENCE",CMD::DIFFERENCE_CMD},
         {"DELETE",CMD::DELETE_CMD}, {"COPY",CMD::COPY_CMD}, {"CUT",CMD::CUT_CMD}, {"PASTE",CMD::PASTE_CMD},
         {"UNDO",CMD::UNDO_CMD}, {"ALL",CMD::SELECTALL_CMD}};
@@ -222,7 +222,7 @@ bool CMDWidget::work()
         break;
 
     case CMD::CONNECT_CMD:
-        if (_editer->connect(_editer->selected(), GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()))
+        if (_editer->connect(_editer->selected(), GlobalSetting::get_instance()->setting["catch_distance"].toDouble()))
         {
             _canvas->refresh_vbo();
             _canvas->refresh_selected_ibo();
@@ -258,18 +258,18 @@ bool CMDWidget::work()
         break;
     case CMD::FLIPX_CMD:
         {
-            const bool unitary = _editer->selected_count() == 0;
-            _editer->flip(_editer->selected(), true, unitary, GlobalSetting::get_instance()->ui()->to_all_layers->isChecked());
-            _canvas->refresh_vbo(unitary);
+            std::list<Geo::Geometry *> objects = _editer->selected();
+            _editer->flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::get_instance()->ui->to_all_layers->isChecked());
+            _canvas->refresh_vbo(objects.empty());
             _canvas->update();
         }
         _current_cmd = CMD::ERROR_CMD;
         break;
     case CMD::FLIPY_CMD:
         {
-            const bool unitary = _editer->selected_count() == 0;
-            _editer->flip(_editer->selected(), false, unitary, GlobalSetting::get_instance()->ui()->to_all_layers->isChecked());
-            _canvas->refresh_vbo(unitary);
+            std::list<Geo::Geometry *> objects = _editer->selected();
+            _editer->flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::get_instance()->ui->to_all_layers->isChecked());
+            _canvas->refresh_vbo(objects.empty());
             _canvas->update();
         }
         _current_cmd = CMD::ERROR_CMD;
@@ -282,10 +282,12 @@ bool CMDWidget::work()
         ui->cmd_label->setText("Offset");
         offset();
         break;
+    case CMD::FILLET_CMD:
+        fillet();
+        break;
 
     case CMD::MIRROR_CMD:
     case CMD::ARRAY_CMD:
-    case CMD::BOOLEAN_CMD:
         emit cmd_changed(_current_cmd);
         _current_cmd = CMD::ERROR_CMD;
         break;
@@ -392,7 +394,7 @@ bool CMDWidget::work()
     case CMD::UNDO_CMD:
         if (!_canvas->is_painting())
         {
-            _editer->load_backup();
+            _editer->undo();
             _canvas->refresh_vbo();
             _canvas->refresh_selected_ibo();
             _canvas->update();
@@ -698,9 +700,10 @@ void CMDWidget::rotate()
         break;
     case 2:
         {
-            const bool unitary = _editer->selected_count() == 0;
-            _editer->rotate(_editer->selected(), _parameters[1], unitary, GlobalSetting::get_instance()->ui()->to_all_layers->isChecked());
-            _canvas->refresh_vbo(unitary);
+            std::list<Geo::Geometry *> objects = _editer->selected();
+            GlobalSetting::get_instance()->ui->rotate_angle->setValue(_parameters[1]);
+            _editer->rotate(objects, _parameters[1], QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::get_instance()->ui->to_all_layers->isChecked());
+            _canvas->refresh_vbo(objects.empty());
             _parameters.pop_back();
             _canvas->update();
         }
@@ -722,7 +725,8 @@ void CMDWidget::scale()
         clear();
         break;
     case 2:
-        _editer->scale(_editer->selected(), _parameters.back());
+        GlobalSetting::get_instance()->ui->scale_sbx->setValue(_parameters.back());
+        _editer->scale(_editer->selected(), QApplication::keyboardModifiers() != Qt::ControlModifier, _parameters.back());
         _canvas->refresh_vbo();
         _canvas->refresh_selected_ibo();
         _parameters.pop_back();
@@ -745,11 +749,36 @@ void CMDWidget::offset()
         clear();
         break;
     case 2:
+        GlobalSetting::get_instance()->ui->offset_sbx->setValue(_parameters.back());
         _editer->offset(_editer->selected(), _parameters.back());
         _canvas->refresh_vbo();
         _canvas->refresh_selected_ibo();
         _canvas->update();
         clear();
+        break;
+    default:
+        break;
+    }
+}
+
+void CMDWidget::fillet()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        GlobalSetting::get_instance()->ui->canvas->set_operation(Canvas::Operation::FILLET);
+        ui->cmd_label->setText("Fillet Radius: " + QString::number(
+            GlobalSetting::get_instance()->ui->fillet_sbx->value()));
+        _parameters.push_back(0);
+        break;
+    case 1:
+        clear();
+        GlobalSetting::get_instance()->ui->canvas->set_operation(Canvas::Operation::NOOPERATION);
+        break;
+    case 2:
+        ui->cmd_label->setText("Fillet Radius: " + QString::number(_parameters.back()));
+        GlobalSetting::get_instance()->ui->fillet_sbx->setValue(_parameters.back());
+        _parameters.pop_back();
         break;
     default:
         break;
@@ -765,16 +794,20 @@ void CMDWidget::line_array()
         break;
     case 1:
         ui->parameter_label->setText("X Items:" + QString::number(_parameters[0]) + " Y Items:");
+        GlobalSetting::get_instance()->ui->array_x_item->setValue(_parameters[0]);
         break;
     case 2:
         ui->parameter_label->setText("X Items:" + QString::number(_parameters[0]) + " Y Items:"
             + QString::number(_parameters[1]) + " X Space:");
+        GlobalSetting::get_instance()->ui->array_x_space->setValue(_parameters[1]);
         break;
     case 3:
         ui->parameter_label->setText("X Items:" + QString::number(_parameters[0]) + " Y Items:"
             + QString::number(_parameters[1]) + " X Space:" +  QString::number(_parameters[2]) + " Y Space:");
+        GlobalSetting::get_instance()->ui->array_y_item->setValue(_parameters[2]);
         break;
     case 4:
+        GlobalSetting::get_instance()->ui->array_y_space->setValue(_parameters[3]);
         if (_editer->line_array(_editer->selected(), _parameters[0], _parameters[1], _parameters[2], _parameters[3]))
         {
             _canvas->refresh_vbo();
@@ -807,6 +840,7 @@ void CMDWidget::ring_array()
             + QString::number(_parameters[1]) + " Items:");
         break;
     case 3:
+        GlobalSetting::get_instance()->ui->array_item->setValue(_parameters[2]);
         if (_editer->ring_array(_editer->selected(), _parameters[0], _parameters[1], _parameters[2]))
         {
             _canvas->refresh_vbo();

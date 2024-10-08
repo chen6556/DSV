@@ -44,7 +44,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::init()
 {
-    GlobalSetting::get_instance()->load_ui(ui);
+    GlobalSetting::get_instance()->ui = ui;
 
     _editer.load_graph(new Graph());
     ui->canvas->bind_editer(&_editer);
@@ -63,12 +63,13 @@ void MainWindow::init()
     QObject::connect(ui->split_btn, &QPushButton::clicked, [this]() { _editer.split(_editer.selected()); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
-    QObject::connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::get_instance()->setting()["auto_aligning"] = ui->auto_aligning->isChecked(); });
+    QObject::connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::get_instance()->setting["auto_aligning"] = ui->auto_aligning->isChecked(); });
     QObject::connect(ui->actionadvanced, &QAction::triggered, _setting, &Setting::exec);
     QObject::connect(ui->show_origin, &QAction::triggered, [this]() { ui->show_origin->isChecked() ? ui->canvas->show_origin() : ui->canvas->hide_origin(); });
     QObject::connect(ui->show_cmd_line, &QAction::triggered, [this]() { ui->show_cmd_line->isChecked() ? _cmd_widget->show() : _cmd_widget->hide(); });
 
     QObject::connect(_setting, &Setting::accepted, ui->canvas, static_cast<void(Canvas::*)(void)>(&Canvas::refresh_text_vbo));
+    QObject::connect(_setting, &Setting::accepted, this, &MainWindow::refresh_settings);
 
     for (size_t i = 0; i < 3; ++i)
     {
@@ -79,9 +80,9 @@ void MainWindow::init()
     ui->canvas->set_info_labels(_info_labels);
 
     _layers_manager = new LayersManager(this);
-    _layers_manager->load_layers(_editer.graph());
-    QObject::connect(_layers_manager, &LayersManager::accepted,
-        [this]() { _layers_cbx->setModel(_layers_manager->model()); ui->canvas->refresh_vbo(); _editer.reset_selected_mark(); });
+    _layers_manager->bind_editer(&_editer);
+    _layers_manager->update_layers();
+    QObject::connect(_layers_manager, &LayersManager::accepted, this, &MainWindow::hide_layers_manager);
 
     _layers_btn = new QToolButton(this);
     _layers_btn->setText("Layers");
@@ -98,12 +99,12 @@ void MainWindow::init()
     ui->statusBar->addPermanentWidget(_layers_cbx);
     _layers_cbx->setModel(_layers_manager->model());
     QObject::connect(_layers_cbx, &QComboBox::currentIndexChanged,
-        [this](const int index) { _editer.set_current_group(_editer.groups_count() - 1 - index); });
+        [this](int index) { _editer.set_current_group(_editer.groups_count() - 1 - index); });
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (_editer.modified() && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
+    if (GlobalSetting::get_instance()->graph->modified && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
     {
         save_file();
     }
@@ -179,7 +180,18 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     case Qt::Key_Z:
         if (event->modifiers() == Qt::ControlModifier && !ui->canvas->is_painting())
         {
-            _editer.load_backup();
+            const size_t layers_count = _editer.groups_count();
+            _editer.undo();
+            if (_editer.groups_count() != layers_count)
+            {
+                if (_editer.groups_count() == 0)
+                {
+                    _editer.append_group();
+                }
+                _editer.set_current_group(std::min(_editer.current_group(), _editer.groups_count() - 1));
+                _layers_manager->update_layers();
+                _layers_cbx->setModel(_layers_manager->model());
+            }
             ui->canvas->refresh_vbo();
             ui->canvas->refresh_selected_ibo();
             ui->canvas->update();
@@ -240,24 +252,24 @@ void MainWindow::open_file()
 
 void MainWindow::close_file()
 {
-    if (_editer.modified() && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
+    if (GlobalSetting::get_instance()->graph->modified && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
     {
         save_file();
     }
 
     _editer.delete_graph();
     _editer.load_graph(new Graph());
-    _editer.reset_modified();
+    GlobalSetting::get_instance()->graph->modified = false;
     ui->canvas->refresh_vbo();
     _info_labels[2]->clear();
-    _layers_manager->load_layers(_editer.graph());
+    _layers_manager->update_layers();
     _layers_cbx->setModel(_layers_manager->model());
     ui->canvas->update();
 }
 
 void MainWindow::save_file()
 {
-    if (_editer.graph() == nullptr || ui->canvas->empty())
+    if (GlobalSetting::get_instance()->graph == nullptr || ui->canvas->empty())
     {
         return;
     }
@@ -273,18 +285,18 @@ void MainWindow::save_file()
             bool flag = false;
             if (path.toLower().endsWith(".dsv"))
             {
-                File::write(path, _editer.graph(), File::DSV);
+                File::write(path, GlobalSetting::get_instance()->graph, File::DSV);
                 flag = true;
             }
             else if (path.toLower().endsWith(".plt"))
             {
-                File::write(path, _editer.graph(), File::PLT);
+                File::write(path, GlobalSetting::get_instance()->graph, File::PLT);
                 flag = true;
             }
             if (flag)
             {
                 _editer.set_path(path);
-                _editer.reset_modified();
+                GlobalSetting::get_instance()->graph->modified = false;
                 _info_labels[2]->setText(path);
             }
         }
@@ -294,13 +306,13 @@ void MainWindow::save_file()
     {
         if (_info_labels[2]->text().toLower().endsWith(".dsv"))
         {
-            File::write(_info_labels[2]->text(), _editer.graph(), File::DSV);
-            _editer.reset_modified();
+            File::write(_info_labels[2]->text(), GlobalSetting::get_instance()->graph, File::DSV);
+            GlobalSetting::get_instance()->graph->modified = false;
         }
         else if (_info_labels[2]->text().toLower().endsWith(".plt"))
         {
-            File::write(_info_labels[2]->text(), _editer.graph(), File::PLT);
-            _editer.reset_modified();
+            File::write(_info_labels[2]->text(), GlobalSetting::get_instance()->graph, File::PLT);
+            GlobalSetting::get_instance()->graph->modified = false;
         }
     }
 }
@@ -312,23 +324,23 @@ void MainWindow::auto_save()
     {
         return;
     }
-    if (_editer.modified())
+    if (GlobalSetting::get_instance()->graph->modified)
     {
         if (_editer.path().toLower().endsWith(".dsv"))
         {
-            File::write(_editer.path(), _editer.graph(), File::DSV);
+            File::write(_editer.path(), GlobalSetting::get_instance()->graph, File::DSV);
         }
         else if (_editer.path().toLower().endsWith(".plt"))
         {
-            File::write(_editer.path(), _editer.graph(), File::PLT);
+            File::write(_editer.path(), GlobalSetting::get_instance()->graph, File::PLT);
         }
-        _editer.reset_modified();
+        GlobalSetting::get_instance()->graph->modified = false;
     }
 }
 
 void MainWindow::saveas_file()
 {
-    if (_editer.graph() == nullptr || ui->canvas->empty())
+    if (GlobalSetting::get_instance()->graph == nullptr || ui->canvas->empty())
     {
         return;
     }
@@ -339,13 +351,13 @@ void MainWindow::saveas_file()
     {
         if (path.toLower().endsWith(".dsv"))
         {
-            File::write(path, _editer.graph(), File::DSV);
+            File::write(path, GlobalSetting::get_instance()->graph, File::DSV);
         }
         else if (path.toLower().endsWith(".plt"))
         {
-            File::write(path, _editer.graph(), File::PLT);
+            File::write(path, GlobalSetting::get_instance()->graph, File::PLT);
         }
-        _editer.reset_modified();
+        GlobalSetting::get_instance()->graph->modified = false;
     }
     delete dialog;
 }
@@ -389,6 +401,19 @@ void MainWindow::refresh_tool_label(const Canvas::Tool tool)
     }
 }
 
+void MainWindow::refresh_tool_label(const Canvas::Operation operation)
+{
+    switch (operation)
+    {
+    case Canvas::Operation::FILLET:
+        ui->current_tool->setText("Fillet");
+        break;
+    default:
+        ui->current_tool->clear();
+        break;
+    }
+}
+
 void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
 {
     switch (cmd)
@@ -410,8 +435,6 @@ void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
     case CMDWidget::CMD::RINGARRAY_CMD:
         ui->array_tool->setText("Ring Array");
         break;
-    case CMDWidget::CMD::BOOLEAN_CMD:
-        return ui->tool_widget->setCurrentIndex(2);
     case CMDWidget::CMD::DIFFERENCE_CMD:
         ui->current_tool->setText("Difference");
         break;
@@ -420,12 +443,18 @@ void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
     }
 }
 
+void MainWindow::refresh_settings()
+{
+    _editer.set_backup_count(GlobalSetting::get_instance()->setting["backup_times"].toInt());
+}
+
 void MainWindow::load_settings()
 {
     GlobalSetting::get_instance()->load_setting();
-    const QJsonObject &setting = GlobalSetting::get_instance()->setting();
+    const QJsonObject &setting = GlobalSetting::get_instance()->setting;
 
     _editer.set_path(setting["file_path"].toString());
+    _editer.set_backup_count(setting["backup_times"].toInt());
     ui->auto_save->setChecked(setting["auto_save"].toBool());
     ui->auto_layering->setChecked(setting["auto_layering"].toBool());
     ui->auto_connect->setChecked(setting["auto_connect"].toBool());
@@ -457,7 +486,7 @@ void MainWindow::load_settings()
 
 void MainWindow::save_settings()
 {
-    QJsonObject &setting = GlobalSetting::get_instance()->setting();
+    QJsonObject &setting = GlobalSetting::get_instance()->setting;
 
     setting["auto_save"] = ui->auto_save->isChecked();
     setting["auto_layering"] = ui->auto_layering->isChecked();
@@ -476,8 +505,15 @@ void MainWindow::save_settings()
 
 void MainWindow::show_layers_manager()
 {
-    _layers_manager->load_layers(_editer.graph());
+    _layers_manager->update_layers();
     _layers_manager->exec();
+}
+
+void MainWindow::hide_layers_manager()
+{
+    _layers_cbx->setModel(_layers_manager->model());
+    ui->canvas->refresh_vbo();
+    _editer.reset_selected_mark();
 }
 
 void MainWindow::to_main_page()
@@ -490,7 +526,7 @@ void MainWindow::to_main_page()
 
 void MainWindow::connect_polylines()
 {
-    if (_editer.connect(_editer.selected(), GlobalSetting::get_instance()->setting()["catch_distance"].toDouble()))
+    if (_editer.connect(_editer.selected(), GlobalSetting::get_instance()->setting["catch_distance"].toDouble()))
     {
         ui->canvas->refresh_vbo();
         ui->canvas->refresh_selected_ibo();
@@ -517,25 +553,25 @@ void MainWindow::combinate()
 
 void MainWindow::rotate()
 {
-    const bool unitary = _editer.selected_count() == 0;
-    _editer.rotate(_editer.selected(), ui->rotate_angle->value(), unitary, ui->to_all_layers->isChecked());
-    ui->canvas->refresh_vbo(unitary);
+    std::list<Geo::Geometry *> objects = _editer.selected();
+    _editer.rotate(objects, ui->rotate_angle->value(), QApplication::keyboardModifiers() != Qt::ControlModifier, ui->to_all_layers->isChecked());
+    ui->canvas->refresh_vbo(objects.empty());
     ui->canvas->update();
 }
 
 void MainWindow::flip_x()
 {
-    const bool unitary = _editer.selected_count() == 0;
-    _editer.flip(_editer.selected(), true, unitary, ui->to_all_layers->isChecked());
-    ui->canvas->refresh_vbo(unitary);
+    std::list<Geo::Geometry *> objects = _editer.selected();
+    _editer.flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier, ui->to_all_layers->isChecked());
+    ui->canvas->refresh_vbo(objects.empty());
     ui->canvas->update();
 }
 
 void MainWindow::flip_y()
 {
-    const bool unitary = _editer.selected_count() == 0;
-    _editer.flip(_editer.selected(), false, unitary, ui->to_all_layers->isChecked());
-    ui->canvas->refresh_vbo(unitary);
+    std::list<Geo::Geometry *> objects = _editer.selected();
+    _editer.flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier, ui->to_all_layers->isChecked());
+    ui->canvas->refresh_vbo(objects.empty());
     ui->canvas->update();
 }
 
@@ -547,7 +583,7 @@ void MainWindow::mirror()
 
 void MainWindow::scale()
 {
-    if (_editer.scale(_editer.selected(), ui->scale_sbx->value()))
+    if (_editer.scale(_editer.selected(), QApplication::keyboardModifiers() != Qt::ControlModifier, ui->scale_sbx->value()))
     {
         ui->canvas->refresh_vbo();
         ui->canvas->refresh_selected_ibo();
@@ -654,7 +690,6 @@ void MainWindow::polygon_difference()
 
 void MainWindow::fillet()
 {
-    ui->current_tool->setText("FILLET");
     ui->canvas->set_operation(Canvas::Operation::FILLET);
 }
 
@@ -662,7 +697,7 @@ void MainWindow::fillet()
 
 void MainWindow::show_data_panel()
 {
-    _panel->load_draw_data(_editer.graph(), ui->canvas->points_count());
+    _panel->load_draw_data(GlobalSetting::get_instance()->graph, ui->canvas->points_count());
     _panel->exec();
 }
 
@@ -674,12 +709,12 @@ void MainWindow::open_file(const QString &path)
     {
         return;
     }
-    else if (_editer.modified() && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
+    else if (GlobalSetting::get_instance()->graph->modified && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
     {
         save_file();
     }
 
-    GlobalSetting::get_instance()->setting()["file_path"] = path;
+    GlobalSetting::get_instance()->setting["file_path"] = path;
 
     _editer.delete_graph();
     Graph *g = new Graph;
@@ -757,11 +792,11 @@ void MainWindow::open_file(const QString &path)
     {
         _editer.auto_layering();
     }
-    _editer.reset_modified();
-    
+    GlobalSetting::get_instance()->graph->modified = false;
+
     ui->canvas->refresh_vbo();
     _info_labels[2]->setText(path);
-    _layers_manager->load_layers(g);
+    _layers_manager->update_layers();
     _layers_cbx->setModel(_layers_manager->model());
     g = nullptr;
 
@@ -796,8 +831,8 @@ void MainWindow::append_file(const QString &path)
         file.close();
     }
 
-    _editer.store_backup();
-    Graph *graph = _editer.graph();
+    GlobalSetting::get_instance()->graph->modified = true;
+    Graph *graph = GlobalSetting::get_instance()->graph;
     _editer.load_graph(g);
     if (ui->auto_connect->isChecked())
     {
@@ -814,7 +849,7 @@ void MainWindow::append_file(const QString &path)
     delete g;
     ui->canvas->refresh_vbo();
     ui->canvas->refresh_selected_ibo();
-    _layers_manager->load_layers(graph);
+    _layers_manager->update_layers();
     _layers_cbx->setModel(_layers_manager->model());
 
     ui->canvas->show_overview();
