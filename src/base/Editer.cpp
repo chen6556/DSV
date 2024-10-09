@@ -2733,7 +2733,30 @@ void Editer::auto_combinate()
     }
 
     std::sort(all_containers.begin(), all_containers.end(), [](const Geo::Geometry *a, const Geo::Geometry *b)
-              { return a->bounding_rect().area() > b->bounding_rect().area(); });
+        {
+            if (dynamic_cast<const Container *>(a) == nullptr)
+            {
+                if (dynamic_cast<const Container *>(b) == nullptr)
+                {
+                    return static_cast<const CircleContainer *>(a)->area() > static_cast<const CircleContainer *>(b)->area();
+                }
+                else
+                {
+                    return static_cast<const CircleContainer *>(a)->area() > static_cast<const Container *>(b)->area();
+                }
+            }
+            else
+            {
+                if (dynamic_cast<const Container *>(b) == nullptr)
+                {
+                    return static_cast<const Container *>(a)->area() > static_cast<const CircleContainer *>(b)->area();
+                }
+                else
+                {
+                    return static_cast<const Container *>(a)->area() > static_cast<const Container *>(b)->area();
+                }
+            }
+        });
     _graph->append_group();
     for (size_t i = 0, count = all_containers.size(); _graph->back().empty() && i < count; ++i)
     {
@@ -2973,6 +2996,18 @@ void Editer::auto_combinate()
         }
         ++index;
     }
+
+    for (std::vector<Geo::Geometry *>::iterator it = _graph->back().begin(); it != _graph->back().end(); ++it)
+    {
+        if (dynamic_cast<Combination *>(*it) != nullptr &&
+            static_cast<Combination *>(*it)->size() == 1)
+        {
+            Combination *combination = static_cast<Combination *>(*it);
+            *it = combination->pop_back();
+            delete combination;
+        }
+    }
+
     for (size_t i = 0, count = flags.size(); i < count; ++i)
     {
         if (!flags[i])

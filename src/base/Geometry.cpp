@@ -2111,7 +2111,7 @@ void Bezier::update_shape(const double step)
     {
         for (size_t j = 1; j < i; ++j)
         {
-            nums[j] = temp[j - 1] + temp[j]; 
+            nums[j] = temp[j - 1] + temp[j];
         }
         temp.assign(nums.begin(), nums.begin() + i + 1);
     }
