@@ -44,8 +44,8 @@ qt_add_executable(DSV
     ${_BASE_SOURCES}
     ${_UI_SOURCES}
     ${_IO_SOURCES}
-    src/resource/icon.rc
-    src/resource/Icons.qrc
+    res/icon.rc
+    res/Icons.qrc
 )
 
 target_link_libraries(DSV PRIVATE Qt6::Widgets Qt6::OpenGLWidgets Qt6::OpenGL Qt6::Gui Qt6::Core)
