@@ -8,54 +8,9 @@
 
 using namespace Geo;
 
-Geometry::Geometry(const Geometry &geo)
-    : shape_fixed(geo.shape_fixed), is_selected(geo.is_selected),
-    point_index(geo.point_index), point_count(geo.point_count)
-{}
+Geometry::~Geometry() {}
 
-Geometry &Geometry::operator=(const Geometry &geo)
-{
-    if (this != &geo)
-    {
-        shape_fixed = geo.shape_fixed;
-        is_selected = geo.is_selected;
-        point_index = geo.point_index;
-        point_count = geo.point_count;
-    }
-    return *this;
-}
-
-const Type Geometry::type() const
-{
-    return Type::GEOMETRY;
-}
-
-const double Geometry::length() const
-{
-    return 0;
-}
-
-const bool Geometry::empty() const
-{
-    return true;
-}
-
-void Geometry::clear(){}
-
-Geometry *Geometry::clone() const
-{
-    return new Geometry(*this);
-}
-
-void Geometry::transform(const double a, const double b, const double c, const double d, const double e, const double f){}
-
-void Geometry::transform(const double mat[6]){}
-
-void Geometry::translate(const double tx, const double ty){}
-
-void Geometry::rotate(const double x, const double y, const double rad){}
-
-void Geometry::scale(const double x, const double y, const double k){}
+const double Geometry::length() const { return 0; }
 
 Polygon Geometry::convex_hull() const { return Polygon(); }
 

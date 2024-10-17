@@ -25,33 +25,27 @@ namespace Geo
         unsigned long long point_count = 0;
 
     public:
-        Geometry() {};
+        virtual ~Geometry();
 
-        Geometry(const Geometry &geo);
-
-        virtual ~Geometry() {};
-
-        Geometry &operator=(const Geometry &geo);
-
-        virtual const Type type() const;
+        virtual const Type type() const = 0;
 
         virtual const double length() const;
 
-        virtual const bool empty() const;
+        virtual const bool empty() const = 0;
 
-        virtual void clear();
+        virtual void clear() = 0;
 
-        virtual Geo::Geometry *clone() const;
+        virtual Geo::Geometry *clone() const = 0;
 
-        virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f);
+        virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f) = 0;
 
-        virtual void transform(const double mat[6]);
+        virtual void transform(const double mat[6]) = 0;
 
-        virtual void translate(const double tx, const double ty);
+        virtual void translate(const double tx, const double ty) = 0;
 
-        virtual void rotate(const double x, const double y, const double rad); // 弧度制
+        virtual void rotate(const double x, const double y, const double rad) = 0; // 弧度制
 
-        virtual void scale(const double x, const double y, const double k);
+        virtual void scale(const double x, const double y, const double k) = 0;
 
         // 凸包
         virtual Polygon convex_hull() const;
