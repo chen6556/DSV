@@ -154,7 +154,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                     output << "END" << std::endl;
                 }
                 break;
-            case Geo::POLYLINE:
+            case Geo::Type::POLYLINE:
                 polyline = dynamic_cast<const Geo::Polyline *>(geo);
                 if (polyline->empty())
                 {

@@ -608,7 +608,7 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
                 y1 = std::max(y1, rect.bottom());
             }
             break;
-        case Geo::POLYLINE:
+        case Geo::Type::POLYLINE:
             for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(continer))
             {
                 x0 = std::min(x0, point.x);
