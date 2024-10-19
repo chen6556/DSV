@@ -454,6 +454,13 @@ void Canvas::mousePressEvent(QMouseEvent *event)
     switch (event->button())
     {
     case Qt::LeftButton:
+        if (Geo::Point coord; GlobalSetting::get_instance()->setting["cursor_catch"].toBool() &&
+            catch_cursor(real_x1, real_y1, coord, GlobalSetting::get_instance()->setting["catch_distance"].toDouble()))
+        {
+            _mouse_pos_1.setX(coord.x);
+            _mouse_pos_1.setY(coord.y);
+            QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
+        }
         if (is_paintable()) // paintable
         {
             switch (_tool_flags[0])
@@ -1013,6 +1020,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
     default:
         break;
     }
+
+    QOpenGLWidget::mousePressEvent(event);
 }
 
 void Canvas::mouseReleaseEvent(QMouseEvent *event)
@@ -1074,11 +1083,20 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
     default:
         break;
     }
+
+    if (Geo::Point coord; GlobalSetting::get_instance()->setting["cursor_catch"].toBool() &&
+        catch_cursor(_mouse_release_pos.x, _mouse_release_pos.y, coord, GlobalSetting::get_instance()->setting["catch_distance"].toDouble()))
+    {
+        _mouse_pos_1.setX(coord.x);
+        _mouse_pos_1.setY(coord.y);
+        QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
+    }
+
+    QOpenGLWidget::mouseReleaseEvent(event);
 }
 
 void Canvas::mouseMoveEvent(QMouseEvent *event)
 {
-    setCursor(Qt::CursorShape::CrossCursor);
     const double center_x = size().width() / 2.0, center_y = size().height() / 2.0;
     std::swap(_mouse_pos_0, _mouse_pos_1);
     _mouse_pos_1 = event->position();
@@ -1378,14 +1396,15 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         update();
     }
 
-    Geo::Point coord;
-    if (GlobalSetting::get_instance()->setting["cursor_catch"].toBool() &&
-        catch_cursor(real_x1, real_y1, coord, GlobalSetting::get_instance()->setting["catch_distance"].toDouble()))
+    if (Geo::Point coord; !(event->buttons() & Qt::MouseButton::LeftButton) && GlobalSetting::get_instance()->setting["cursor_catch"].toBool()
+        && catch_cursor(real_x1, real_y1, coord, GlobalSetting::get_instance()->setting["catch_distance"].toDouble()))
     {
         _mouse_pos_1.setX(coord.x);
         _mouse_pos_1.setY(coord.y);
         QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
     }
+
+    QOpenGLWidget::mouseMoveEvent(event);
 }
 
 void Canvas::wheelEvent(QWheelEvent *event)
