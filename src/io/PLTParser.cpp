@@ -172,6 +172,14 @@ void Importer::pu()
     store_points();
 }
 
+void Importer::pd()
+{
+    if (_points.empty() || _points.back() != _last_coord)
+    {
+        _points.emplace_back(_last_coord);
+    }
+}
+
 void Importer::sp(const int value)
 {
     store_points();
@@ -214,6 +222,34 @@ void Importer::parameter(const double value)
     _parameters.emplace_back(value);
 }
 
+
+void Importer::br()
+{
+    store_points();
+    _points.emplace_back(_last_coord);
+    for (size_t i = 1, count = _parameters.size(); i < count; i += 2)
+    {
+        _points.emplace_back(_parameters[i - 1] * _x_ratio + _last_coord.x, _parameters[i] * _y_ratio + _last_coord.y);
+        _last_coord = _points.back();
+    }
+    _graph->container_groups().back().append(new Geo::Bezier(_points.cbegin(), _points.cend(), 3));
+    _points.clear();
+    _parameters.clear();
+}
+
+void Importer::bz()
+{
+    store_points();
+    _points.emplace_back(_last_coord);
+    for (size_t i = 1, count = _parameters.size(); i < count; i += 2)
+    {
+        _points.emplace_back(_parameters[i - 1] * _x_ratio, _parameters[i] * _y_ratio);
+    }
+    _last_coord = _points.back();
+    _graph->container_groups().back().append(new Geo::Bezier(_points.cbegin(), _points.cend(), 3));
+    _points.clear();
+    _parameters.clear();
+}
 
 void Importer::ci()
 {
@@ -384,9 +420,12 @@ Action<double> x_coord_a(&importer, &Importer::x_coord);
 Action<double> y_coord_a(&importer, &Importer::y_coord);
 Action<double> parameter_a(&importer, &Importer::parameter);
 Action<void> pu_a(&importer, &Importer::pu);
+Action<void> pd_a(&importer, &Importer::pd);
 Action<void> pa_a(&importer, &Importer::pa);
 Action<void> pr_a(&importer, &Importer::pr);
 Action<int> sp_a(&importer, &Importer::sp);
+Action<void> br_a(&importer, &Importer::br);
+Action<void> bz_a(&importer, &Importer::bz);
 Action<void> ci_a(&importer, &Importer::ci);
 Action<void> aa_a(&importer, &Importer::aa);
 Action<void> ar_a(&importer, &Importer::ar);
@@ -409,10 +448,12 @@ Parser<std::string> in = str_p("IN")[in_a] >> end;
 Parser<bool> ip = (str_p("IP") >> list_p(parameter, separator))[ip_a] >> end;
 Parser<bool> sc = (str_p("SC") >> !list_p(parameter, separator))[sc_a] >> end;
 Parser<bool> pu = str_p("PU")[pu_a] >> !list_p(coord, separator) >> end;
-Parser<bool> pd = str_p("PD") >> !list_p(coord, separator) >> end;
+Parser<bool> pd = str_p("PD")[pd_a] >> !list_p(coord, separator) >> end;
 Parser<bool> pa = str_p("PA")[pa_a] >> !list_p(coord, separator) >> end;
 Parser<bool> pr = str_p("PR")[pr_a] >> !list_p(coord, separator) >> end;
 Parser<bool> sp = str_p("SP") >> int_p()[sp_a] >> end;
+Parser<bool> br = str_p("BR") >> list_p(parameter, separator)[br_a] >> end;
+Parser<bool> bz = str_p("BZ") >> list_p(parameter, separator)[bz_a] >> end;
 Parser<bool> ci = (str_p("CI") >> parameter >> !(separator >> parameter))[ci_a] >> end;
 Parser<bool> aa = (str_p("AA") >> list_p(parameter, separator))[aa_a] >> end;
 Parser<bool> ar = (str_p("AR") >> list_p(parameter, separator))[ar_a] >> end;
@@ -424,7 +465,7 @@ Parser<std::string> ep = str_p("EP")[ep_a] >> end;
 Parser<std::string> unkown_cmds = confix_p(alphaa_p() | ch_p(28), end);
 Parser<std::string> text_end = ch_p('\x3') | ch_p('\x4') | end;
 Parser<std::string> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], text_end) >> !separator >> !end;
-Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | ci | aa | ar | ea | er | pm | ep | in | ip | sc | unkown_cmds;
+Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | br | bz | ci | aa | ar | ea | er | pm | ep | in | ip | sc | unkown_cmds;
 
 Parser<std::string> dci = confix_p(ch_p(27), end);
 Parser<bool> plt = (*(all_cmds | dci))[end_a];

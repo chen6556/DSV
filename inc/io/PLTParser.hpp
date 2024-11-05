@@ -16,7 +16,7 @@ private:
     std::vector<Geo::Point> _points;
     std::vector<Geo::Polygon> _polygon_cache;
     std::vector<double> _parameters;
-    Geo::Point _last_coord;
+    Geo::Point _last_coord, _last_cmd_coord;
 
     bool _relative_coord = false;
     bool _polygon_mode = false;
@@ -56,7 +56,13 @@ public:
 
     void pu();
 
+    void pd();
+
     void sp(const int value);
+
+    void br();
+
+    void bz();
 
     void ci();
 
