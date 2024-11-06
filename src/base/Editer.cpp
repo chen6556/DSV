@@ -3196,84 +3196,321 @@ void Editer::auto_connect()
     }
 
     Geo::Polyline *polyline0, *polyline1;
+    Geo::Bezier *bezier0, *bezier1;
     for (size_t i = 0, count = _graph->container_group().size(); i < count; ++i)
     {
-        polyline0 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[i]);
-        if (polyline0 == nullptr)
+        bezier0 = dynamic_cast<Geo::Bezier *>(_graph->container_group()[i]);
+        if (bezier0 == nullptr)
         {
-            continue;
-        }
-
-        for (size_t j = i + 1; j < count; ++j)
-        {
-            polyline1 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[j]);
-            if (polyline1 == nullptr)
+            polyline0 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[i]);
+            if (polyline0 == nullptr)
             {
                 continue;
             }
 
-            if (polyline0->front() == polyline1->front() && polyline0->back() == polyline1->back())
+            for (size_t j = i + 1; j < count; ++j)
             {
-                polyline1->flip();
-                polyline0->insert(0, polyline1->begin(), polyline1->end());
-                _graph->container_group().remove(j);
-                --count;
-                break;
+                bezier1 = dynamic_cast<Geo::Bezier *>(_graph->container_group()[j]);
+                if (bezier1 == nullptr)
+                {
+                    polyline1 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[j]);
+                    if (polyline1 == nullptr)
+                    {
+                        continue;
+                    }
+
+                    if (polyline0->front() == polyline1->front() && polyline0->back() == polyline1->back())
+                    {
+                        polyline1->flip();
+                        polyline0->insert(0, polyline1->begin(), polyline1->end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        break;
+                    }
+                    else if (polyline0->front() == polyline1->back() && polyline0->back() == polyline1->front())
+                    {
+                        polyline0->insert(0, polyline1->begin(), polyline1->end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        break;
+                    }
+                }
+                else
+                {
+                    if (polyline0->front() == bezier1->front() && polyline0->back() == bezier1->back())
+                    {
+                        polyline1->flip();
+                        polyline0->insert(0, bezier1->shape().begin(), bezier1->shape().end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        break;
+                    }
+                    else if (polyline0->front() == bezier1->back() && polyline0->back() == bezier1->front())
+                    {
+                        polyline0->insert(0, bezier1->shape().begin(), bezier1->shape().end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        break;
+                    }
+                }
             }
-            else if (polyline0->front() == polyline1->back() && polyline0->back() == polyline1->front())
+        }
+        else
+        {
+            polyline0 = nullptr;
+            for (size_t j = i + 1; j < count; ++j)
             {
-                polyline0->insert(0, polyline1->begin(), polyline1->end());
-                _graph->container_group().remove(j);
-                --count;
-                break;
+                polyline1 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[j]);
+                if (polyline1 == nullptr)
+                {
+                    continue;
+                }
+                if ((bezier0->front() == polyline1->front() && bezier0->back() == polyline1->back()) ||
+                    (bezier0->front() == polyline1->back() && bezier0->back() == polyline1->front()))
+                {
+                    polyline0 = new Geo::Polyline(bezier0->shape());
+                    _graph->container_group().insert(i, polyline0);
+                    _graph->container_group().remove(i + 1);
+                    bezier0 = nullptr;
+
+                    bezier1 = dynamic_cast<Geo::Bezier *>(_graph->container_group()[j]);
+                    if (bezier1 == nullptr)
+                    {
+                        if (polyline0->front() == polyline1->front() && polyline0->back() == polyline1->back())
+                        {
+                            polyline1->flip();
+                            polyline0->insert(0, polyline1->begin(), polyline1->end());
+                            _graph->container_group().remove(j);
+                            --count;
+                            break;
+                        }
+                        else if (polyline0->front() == polyline1->back() && polyline0->back() == polyline1->front())
+                        {
+                            polyline0->insert(0, polyline1->begin(), polyline1->end());
+                            _graph->container_group().remove(j);
+                            --count;
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        if (polyline0->front() == bezier1->front() && polyline0->back() == bezier1->back())
+                        {
+                            polyline1->flip();
+                            polyline0->insert(0, bezier1->shape().begin(), bezier1->shape().end());
+                            _graph->container_group().remove(j);
+                            --count;
+                            break;
+                        }
+                        else if (polyline0->front() == bezier1->back() && polyline0->back() == bezier1->front())
+                        {
+                            polyline0->insert(0, bezier1->shape().begin(), bezier1->shape().end());
+                            _graph->container_group().remove(j);
+                            --count;
+                            break;
+                        }
+                    }
+                }
             }
         }
 
-        if (polyline0->front() == polyline0->back())
+        if (polyline0 != nullptr && polyline0->front() == polyline0->back())
         {
             _graph->container_group().insert(i, new Container(
                 Geo::Polygon(polyline0->begin(), polyline0->end())));
             _graph->container_group().remove(i + 1);
             continue;
         }
-
-        for (size_t j = i + 1; j < count; ++j)
+        else if (bezier0 != nullptr && bezier0->front() == bezier0->back())
         {
-            polyline1 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[j]);
-            if (polyline1 == nullptr)
+            _graph->container_group().insert(i, new Container(
+                Geo::Polygon(bezier0->shape().begin(), bezier0->shape().end())));
+            _graph->container_group().remove(i + 1);
+            continue;
+        }
+
+        if (bezier0 == nullptr)
+        {
+            for (size_t j = i + 1; j < count; ++j)
+            {
+                bezier1 = dynamic_cast<Geo::Bezier *>(_graph->container_group()[j]);
+                if (bezier1 == nullptr)
+                {
+                    polyline1 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[j]);
+                    if (polyline1 == nullptr)
+                    {
+                        continue;
+                    }
+
+                    if (polyline0->front() == polyline1->front())
+                    {
+                        polyline1->flip();
+                        polyline0->insert(0, polyline1->begin(), polyline1->end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                    else if (polyline0->front() == polyline1->back())
+                    {
+                        polyline0->insert(0, polyline1->begin(), polyline1->end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                    else if (polyline0->back() == polyline1->front())
+                    {
+                        polyline0->append(polyline1->begin(), polyline1->end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                    else if (polyline0->back() == polyline1->back())
+                    {
+                        polyline1->flip();
+                        polyline0->append(polyline1->begin(), polyline1->end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                }
+                else
+                {
+                    if (polyline0->front() == bezier1->front())
+                    {
+                        bezier1->flip();
+                        bezier1->update_shape();
+                        polyline0->insert(0, bezier1->shape().cbegin(), bezier1->shape().cend());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                    else if (polyline0->front() == bezier1->back())
+                    {
+                        polyline0->insert(0, bezier1->shape().begin(), bezier1->shape().end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                    else if (polyline0->back() == bezier1->front())
+                    {
+                        polyline0->append(bezier1->shape().begin(), bezier1->shape().end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                    else if (polyline0->back() == bezier1->back())
+                    {
+                        bezier1->flip();
+                        bezier1->update_shape();
+                        polyline0->append(bezier1->shape().begin(), bezier1->shape().end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (size_t j = i + 1; j < count; ++j)
+            {
+                polyline1 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[j]);
+                if (polyline1 == nullptr)
+                {
+                    continue;
+                }
+
+                if (bezier0->front() == polyline1->front() || bezier0->front() == polyline1->back()
+                    || bezier0->back() == polyline1->front() || bezier0->back() == polyline1->back())
+                {
+                    polyline0 = new Geo::Polyline(bezier0->shape());
+                    bezier0 = nullptr;
+                    _graph->container_group().insert(i, polyline0);
+                    _graph->container_group().remove(i + 1);
+                    break;
+                }
+            }
+            if (bezier0 != nullptr)
             {
                 continue;
             }
+            for (size_t j = i + 1; j < count; ++j)
+            {
+                bezier1 = dynamic_cast<Geo::Bezier *>(_graph->container_group()[j]);
+                if (bezier1 == nullptr)
+                {
+                    polyline1 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[j]);
+                    if (polyline1 == nullptr)
+                    {
+                        continue;
+                    }
 
-            if (polyline0->front() == polyline1->front())
-            {
-                polyline1->flip();
-                polyline0->insert(0, polyline1->begin(), polyline1->end());
-                _graph->container_group().remove(j);
-                --count;
-                j = i;
-            }
-            else if (polyline0->front() == polyline1->back())
-            {
-                polyline0->insert(0, polyline1->begin(), polyline1->end());
-                _graph->container_group().remove(j);
-                --count;
-                j = i;
-            }
-            else if (polyline0->back() == polyline1->front())
-            {
-                polyline0->append(polyline1->begin(), polyline1->end());
-                _graph->container_group().remove(j);
-                --count;
-                j = i;
-            }
-            else if (polyline0->back() == polyline1->back())
-            {
-                polyline1->flip();
-                polyline0->append(polyline1->begin(), polyline1->end());
-                _graph->container_group().remove(j);
-                --count;
-                j = i;
+                    if (polyline0->front() == polyline1->front())
+                    {
+                        polyline1->flip();
+                        polyline0->insert(0, polyline1->begin(), polyline1->end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                    else if (polyline0->front() == polyline1->back())
+                    {
+                        polyline0->insert(0, polyline1->begin(), polyline1->end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                    else if (polyline0->back() == polyline1->front())
+                    {
+                        polyline0->append(polyline1->begin(), polyline1->end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                    else if (polyline0->back() == polyline1->back())
+                    {
+                        polyline1->flip();
+                        polyline0->append(polyline1->begin(), polyline1->end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                }
+                else
+                {
+                    if (polyline0->front() == bezier1->front())
+                    {
+                        bezier1->flip();
+                        bezier1->update_shape();
+                        polyline0->insert(0, bezier1->shape().cbegin(), bezier1->shape().cend());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                    else if (polyline0->front() == bezier1->back())
+                    {
+                        polyline0->insert(0, bezier1->shape().begin(), bezier1->shape().end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                    else if (polyline0->back() == bezier1->front())
+                    {
+                        polyline0->append(bezier1->shape().begin(), bezier1->shape().end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                    else if (polyline0->back() == bezier1->back())
+                    {
+                        bezier1->flip();
+                        bezier1->update_shape();
+                        polyline0->append(bezier1->shape().begin(), bezier1->shape().end());
+                        _graph->container_group().remove(j);
+                        --count;
+                        j = i;
+                    }
+                }
             }
         }
 
