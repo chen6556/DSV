@@ -44,13 +44,13 @@ private:
     int _canvas_width = 0, _canvas_height = 0;
     size_t _bezier_order = 3; // 贝塞尔曲线阶数
 
-    // 可移动视图, 可绘图, 正在绘图, 测量, 可移动单个object, 选中一个obj, 正在移动obj, 显示坐标原点
+    // 0:可移动视图, 1:可绘图, 2:正在绘图, 3:测量, 4:可移动单个object, 5:选中一个obj, 6:正在移动obj, 7:显示坐标原点
     bool _bool_flags[8] = {false, false, false, false, false, false, false, true};
 
     // First point and second point
     bool _measure_flags[2] = {false, false};
 
-    // current_tool, last_tool
+    // 0:current_tool, 1:last_tool
     Tool _tool_flags[2] = {Tool::NOTOOL, Tool::NOTOOL};
     Operation _operation = Operation::NOOPERATION;
 
