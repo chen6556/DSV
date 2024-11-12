@@ -4,6 +4,7 @@
 #include <QJsonDocument>
 #include <QAbstractItemView>
 #include <QMimeData>
+#include <QWindow>
 
 #include "ui/MainWindow.hpp"
 #include "./ui_MainWindow.h"
@@ -15,8 +16,9 @@
 
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), _setting(new Setting(this)),
-    _panel(new DataPanel(this))
+    : QMainWindow(parent, Qt::FramelessWindowHint),
+    ui(new Ui::MainWindow), _setting(new Setting(this)),
+    _panel(new DataPanel(this)), _title(new TitleBar(this))
 {
     ui->setupUi(this);
     init();
@@ -32,6 +34,7 @@ MainWindow::~MainWindow()
     {
         delete _info_labels[i];
     }
+    delete _title;
     delete _layers_cbx;
     delete _layers_btn;
     delete _layers_manager;
@@ -48,6 +51,9 @@ void MainWindow::init()
 
     _editer.load_graph(new Graph());
     ui->canvas->bind_editer(&_editer);
+
+    ui->centralLayout->insertWidget(0, _title);
+    ui->centralLayout->insertWidget(1, ui->menubar);
 
     _cmd_widget = new CMDWidget(&_editer, ui->canvas, this);
     _cmd_widget->show();
@@ -237,6 +243,22 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     QMainWindow::resizeEvent(event);
     _cmd_widget->move(_cmd_widget->mapToParent(QPoint((width() - _cmd_widget->width()) / 2,
         height() - 33 - _cmd_widget->height()) - _cmd_widget->pos()));
+}
+
+bool MainWindow::event(QEvent *event)
+{
+    #if defined(Q_OS_WIN)
+    if (event->type() == QEvent::WinIdChange)
+    {
+        if (windowHandle())
+        {
+            HWND handle = reinterpret_cast<HWND>(windowHandle()->winId());
+            SetWindowLongPtr(handle, GWL_STYLE, GetWindowLongPtr(handle, GWL_STYLE) | WS_BORDER);
+        }
+    }
+    #endif
+
+    return QMainWindow::event(event);
 }
 
 

@@ -11,6 +11,7 @@
 #include "ui/Setting.hpp"
 #include "ui/CMDWidget.hpp"
 #include "ui/DataPanel.hpp"
+#include "ui/TitleBar.hpp"
 
 
 QT_BEGIN_NAMESPACE
@@ -30,6 +31,7 @@ private:
     QLabel *_info_labels[3] = {nullptr, nullptr, nullptr};
     CMDWidget *_cmd_widget = nullptr;
     DataPanel *_panel = nullptr;
+    TitleBar *_title = nullptr;
 
     QComboBox *_layers_cbx = nullptr;
     LayersManager *_layers_manager = nullptr;
@@ -49,6 +51,8 @@ protected:
     void dropEvent(QDropEvent *event);
 
     void resizeEvent(QResizeEvent *event);
+
+    bool event(QEvent *event);
 
 private slots:
     void open_file();

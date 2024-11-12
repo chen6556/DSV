@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TitleBar</class>
+ <widget class="QWidget" name="TitleBar">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>600</width>
+    <height>24</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>0</width>
+    <height>24</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>24</height>
+   </size>
+  </property>
+  <property name="contextMenuPolicy">
+   <enum>Qt::NoContextMenu</enum>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget{background-color:rgb(60,60,61);}
+QPushButton{background-color:transparent; border:no-border;}</string>
+  </property>
+  <property name="locale">
+   <locale language="English" country="UnitedStates"/>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout">
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>1</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="maximumSize">
+      <size>
+       <width>24</width>
+       <height>24</height>
+      </size>
+     </property>
+     <property name="pixmap">
+      <pixmap resource="../../res/Icons.qrc">:/icons/DSV.svg</pixmap>
+     </property>
+     <property name="scaledContents">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_2">
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">color:rgb(230, 230, 231)</string>
+     </property>
+     <property name="text">
+      <string>DSV 0.5.1</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <spacer name="horizontalSpacer">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>40</width>
+       <height>20</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item>
+    <widget class="QPushButton" name="min_btn">
+     <property name="maximumSize">
+      <size>
+       <width>24</width>
+       <height>24</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton:hover, :pressed { background-color:  rgb(80, 80, 81) }</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../../res/Icons.qrc">
+       <normaloff>:/icons/min_btn.svg</normaloff>:/icons/min_btn.svg</iconset>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="max_btn">
+     <property name="maximumSize">
+      <size>
+       <width>24</width>
+       <height>24</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton:hover, :pressed { background-color:  rgb(80, 80, 81) }</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../../res/Icons.qrc">
+       <normaloff>:/icons/max_btn_0.svg</normaloff>:/icons/max_btn_0.svg</iconset>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="close_btn">
+     <property name="maximumSize">
+      <size>
+       <width>24</width>
+       <height>24</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QPushButton:hover, :pressed { background-color:  rgb(232, 17, 35) }</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../../res/Icons.qrc">
+       <normaloff>:/icons/close_btn.svg</normaloff>:/icons/close_btn.svg</iconset>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="../../res/Icons.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>close_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>TitleBar</receiver>
+   <slot>close_widget()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>572</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>299</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>max_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>TitleBar</receiver>
+   <slot>max_widget()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>530</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>299</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>min_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>TitleBar</receiver>
+   <slot>min_widget()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>488</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>299</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>max_widget()</slot>
+  <slot>min_widget()</slot>
+  <slot>close_widget()</slot>
+ </slots>
+</ui>
