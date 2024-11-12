@@ -12,7 +12,7 @@ TitleBar::TitleBar(QWidget *parent)
 
 void TitleBar::max_widget()
 {
-    if (_maximized)
+    if (_parent->isMaximized())
     {
         _parent->showNormal();
         ui->max_btn->setIcon(QIcon(":/icons/max_btn_0.svg"));
@@ -22,7 +22,6 @@ void TitleBar::max_widget()
         _parent->showMaximized();
         ui->max_btn->setIcon(QIcon(":/icons/max_btn_1.svg"));
     }
-    _maximized = !_maximized;
 }
 
 void TitleBar::min_widget()
@@ -59,12 +58,11 @@ void TitleBar::mousePressEvent(QMouseEvent *event)
 
 void TitleBar::mouseMoveEvent(QMouseEvent *event)
 {
-    if (_pressed)
+    if (_pressed && !_parent->isMaximized())
 	{
 		QPoint target = event->globalPos();
 		_parent->move(_parent->pos() + target - _move_pos);
 		_move_pos = target;
-        _maximized = false;
 	}
 
     return QWidget::mouseMoveEvent(event);
@@ -73,10 +71,6 @@ void TitleBar::mouseMoveEvent(QMouseEvent *event)
 void TitleBar::mouseReleaseEvent(QMouseEvent *event)
 {
     _pressed = false;
-    if (!_maximized)
-    {   
-        ui->max_btn->setIcon(QIcon(":/icons/max_btn_0.svg"));
-    }
 
 	QWidget::mouseReleaseEvent(event);
 }

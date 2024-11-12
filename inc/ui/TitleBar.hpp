@@ -35,7 +35,6 @@ private:
     Ui::TitleBar *ui = nullptr;
     QWidget *_parent = nullptr;
 
-    bool _maximized = false;
     bool _pressed = false;
     QPoint _move_pos;
 };
