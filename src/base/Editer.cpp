@@ -3057,6 +3057,7 @@ void Editer::auto_layering()
         {
             switch (group.back()->type())
             {
+            case Geo::Type::TEXT:
             case Geo::Type::POLYLINE:
             case Geo::Type::BEZIER:
                 all_polylines.emplace_back(group.pop_back());
