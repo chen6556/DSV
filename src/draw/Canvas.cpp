@@ -101,7 +101,6 @@ void Canvas::initializeGL()
     glCreateBuffers(5, _VBO);
 
     glBindVertexArray(_VAO);
-    glVertexAttribLFormat(0, 3, GL_DOUBLE, 0);
 
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[4]); // reflines
     glBufferData(GL_ARRAY_BUFFER, 30 * sizeof(double), _refline_points, GL_DYNAMIC_DRAW);
