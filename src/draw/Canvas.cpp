@@ -3028,7 +3028,7 @@ void Canvas::refresh_brush_ibo()
             case Geo::Type::CIRCLECONTAINER:
                 for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(geo))))
                 {
-                    polygon_indexs[polygon_index_count++] = geo->point_index / 3 + i;
+                    polygon_indexs[polygon_index_count++] = geo->point_index + i;
                     if (polygon_index_count == polygon_index_len)
                     {
                         polygon_index_len *= 2;
