@@ -28,7 +28,7 @@
    <bool>true</bool>
   </property>
   <property name="windowTitle">
-   <string>DSV 0.5.0</string>
+   <string>DSV 0.5.1</string>
   </property>
   <property name="windowIcon">
    <iconset resource="../../res/Icons.qrc">

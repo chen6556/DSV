@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20.0)
-project(DSV VERSION 0.5.0)
+project(DSV VERSION 0.5.1)
 
 include(CTest)
 enable_testing()
