@@ -27,7 +27,7 @@ void Importer::reset()
     _sc[0] = _sc[2] = 0;
     _sc[1] = _sc[3] = 1;
     _x_ratio = _y_ratio = Importer::plotter_unit;
-    _relative_coord = _polygon_mode = false;
+    _pen_down = _relative_coord = _polygon_mode = false;
     _texts.clear();
 }
 
@@ -169,12 +169,14 @@ void Importer::sc()
 
 void Importer::pu()
 {
+    _pen_down = false;
     store_points();
 }
 
 void Importer::pd()
 {
-    if (_points.empty() || _points.back() != _last_coord)
+    _pen_down = true;
+    if (!_polygon_mode && (_points.empty() || _points.back() != _last_coord))
     {
         _points.emplace_back(_last_coord);
     }
@@ -214,6 +216,10 @@ void Importer::y_coord(const double value)
     else
     {
         _last_coord = _points.back();
+    }
+    if (!_pen_down && _points.size() > 1)
+    {
+        _points.erase(_points.begin(), _points.end() - 1);
     }
 }
 

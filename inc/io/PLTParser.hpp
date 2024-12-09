@@ -18,6 +18,7 @@ private:
     std::vector<double> _parameters;
     Geo::Point _last_coord, _last_cmd_coord;
 
+    bool _pen_down = false;
     bool _relative_coord = false;
     bool _polygon_mode = false;
     double _x_ratio = 0.025, _y_ratio = 0.025;
