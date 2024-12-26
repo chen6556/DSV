@@ -1161,9 +1161,40 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 Geo::distance(_editer->point_cache().back(), _editer->point_cache()[_editer->point_cache().size() - 2]))).c_str());
             break;
         case Tool::RECT:
-            _AABBRect_cache = Geo::AABBRect(_last_point, Geo::Point(real_x1, real_y1));
-            _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.x)))
-                .append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.y))).c_str());
+            if (event->modifiers() == Qt::ControlModifier)
+            {
+                const double width = std::max(std::abs(real_x1 - _last_point.x), std::abs(real_y1 - _last_point.y));
+                if (real_x1 > _last_point.x)
+                {
+                    if (real_y1 > _last_point.y)
+                    {
+                        _AABBRect_cache = Geo::AABBRect(_last_point.x, _last_point.y, _last_point.x + width, _last_point.y + width);
+                    }
+                    else
+                    {
+                        _AABBRect_cache = Geo::AABBRect(_last_point.x, _last_point.y - width, _last_point.x + width, _last_point.y);
+                    }
+                }
+                else
+                {
+                    if (real_y1 > _last_point.y)
+                    {
+                        _AABBRect_cache = Geo::AABBRect(_last_point.x - width, _last_point.y, _last_point.x, _last_point.y + width);
+                    }
+                    else
+                    {
+                        _AABBRect_cache = Geo::AABBRect(_last_point.x - width, _last_point.y - width, _last_point.x, _last_point.y);
+                    }
+                }
+                _info_labels[1]->setText(std::string("Width:").append(std::to_string(width))
+                    .append(" Height:").append(std::to_string(width)).c_str());
+            }
+            else
+            {
+                _AABBRect_cache = Geo::AABBRect(_last_point.x, _last_point.y, real_x1, real_y1);
+                _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.x)))
+                    .append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.y))).c_str());
+            }
             break;
         case Tool::CURVE:
             if (_editer->point_cache().size() > _bezier_order && (_editer->point_cache().size() - 2) % _bezier_order == 0) 
