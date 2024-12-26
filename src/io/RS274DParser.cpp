@@ -126,11 +126,11 @@ void Importer::set_circle_radius(const std::string &text)
 {
     if (text == "M43")
     {
-        _circle_radius = 20;
+        _circle_radius = 10;
     }
     else if (text == "M44")
     {
-        _circle_radius = 10;
+        _circle_radius = 5;
     }
     else if (text == "M45" || text == "M72")
     {
