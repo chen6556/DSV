@@ -44,6 +44,7 @@ enum class Command
     M14,		// Knife down
     M15,		// Knife up
     M19,		// Notch
+    M31,        // Text
     M43,		// Drill2
     M44,		// Drill1
     M45,		// Drill3
@@ -91,6 +92,7 @@ public:
     void load_graph(Graph *g);
     void reset();
 
+    void read_text();
     void store_text(const std::string& text);
 
     void print_symbol(const std::string& str);

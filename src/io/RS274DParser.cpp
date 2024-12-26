@@ -165,6 +165,15 @@ void Importer::reset()
     _last_container = nullptr;
 }
 
+void Importer::read_text()
+{
+    if (!_points.empty() && _command == Command::M15)
+    {
+        _points.pop_back();
+    }
+    _command = Command::M31;
+}
+
 void Importer::store_text(const std::string &text)
 {
     if (_last_container != nullptr)
@@ -243,8 +252,9 @@ Parser<std::string> circle_radius = (str_p("M43") | str_p("M44") | str_p("M45") 
 Parser<bool> circle = (circle_radius >> (separator | coord))[circle_a];
 
 // 文字处理
-Action<std::string> a_text(&importer, &Importer::store_text);
-Parser<bool> text = confix_p(str_p("M31*") >> !coord, (*anychar_p())[a_text], separator);
+Action<void> read_text_a(&importer, &Importer::read_text);
+Action<std::string> text_a(&importer, &Importer::store_text);
+Parser<bool> text = confix_p(str_p("M31*")[read_text_a] >> !coord, (*anychar_p())[text_a], separator);
 Parser<std::string> skip_text = confix_p(str_p("M20*"), separator);
 
 // 步骤
