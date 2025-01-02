@@ -94,6 +94,7 @@ public:
 
     void read_text();
     void store_text(const std::string& text);
+    void store_table_text(const std::string &text);
 
     void print_symbol(const std::string& str);
 

@@ -3,6 +3,7 @@
 #include <QDebug>
 
 #include "base/Geometry.hpp"
+#include "base/Algorithm.hpp"
 #include "draw/Container.hpp"
 #include "io/RS274DParser.hpp"
 #include "io/Parser/ParserGen2.hpp"
@@ -191,6 +192,54 @@ void Importer::store_text(const std::string &text)
     }
 }
 
+void Importer::store_table_text(const std::string &text)
+{
+    if (!_points.empty())
+    {
+        _points.pop_back();
+    }
+    Container *c;
+    CircleContainer *cc;
+    for (Geo::Geometry *container : _graph->container_groups().back())
+    {
+        switch (container->type())
+        {
+        case Geo::Type::CONTAINER:
+            c = static_cast<Container *>(container);
+            if (Geo::is_inside(_last_coord, c->shape()))
+            {
+                if (c->text().isEmpty())
+                {
+                    c->set_text(QString::fromUtf8(text));
+                }
+                else
+                {
+                    c->set_text(c->text() + '\n' + QString::fromUtf8(text));
+                }
+                return;
+            }
+            break;
+        case Geo::Type::CIRCLECONTAINER:
+            cc = static_cast<CircleContainer *>(container);
+            if (Geo::is_inside(_last_coord, cc->shape()))
+            {
+                if (cc->text().isEmpty())
+                {
+                    cc->set_text(QString::fromUtf8(text));
+                }
+                else
+                {
+                    cc->set_text(cc->text() + '\n' + QString::fromUtf8(text));
+                }
+                return;
+            }
+            break;
+        default:
+            break;
+        }
+    }
+}
+
 void Importer::print_symbol(const std::string &str)
 {
     qDebug() << str;
@@ -269,13 +318,15 @@ Parser<std::string> unkown_cmds = confix_p(alphaa_p(), *anychar_p(), separator)[
 
 Parser<bool> cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | text | skip_text | blank | skip_cmd | separator | end | unkown_cmds);
 
+Action<std::string> table_text_a(&importer, &Importer::store_table_text);
+
 Parser<std::string> table_start = str_p("N,0001") >> eol_p();
 Parser<std::string> rest_of_line = *(anychar_p() - eol_p());
 Parser<std::string> unknown_gap_line = rest_of_line >> eol_p();
 Parser<std::string> unknown_gap = *(unknown_gap_line - table_start);
 Parser<std::string> table_line = rest_of_line >> eol_p();
-Parser<bool> position_line = str_p("P,") >> int_p() >> ch_p(',') >> int_p() >> rest_of_line >> eol_p();
-Parser<bool> text_line = str_p("D,") >> int_p() >> ch_p(',') >> rest_of_line >> eol_p();
+Parser<bool> position_line = str_p("P,") >> int_p()[x_coord_a] >> ch_p(',') >> int_p()[y_coord_a] >> rest_of_line >> eol_p();
+Parser<bool> text_line = str_p("D,") >> int_p() >> ch_p(',') >> rest_of_line[table_text_a] >> eol_p();
 Parser<std::string> table_end = str_p("L0*") >> !eol_p();
 Parser<bool> table = confix_p(table_start, *(text_line | position_line | table_line), table_end);
 
