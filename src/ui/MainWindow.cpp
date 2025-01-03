@@ -720,7 +720,7 @@ void MainWindow::open_file(const QString &path)
     Graph *g = new Graph;
     if (path.toUpper().endsWith(".DSV"))
     {
-        std::ifstream file(path.toLocal8Bit(), std::ios::in);
+        std::ifstream file(path.toLocal8Bit(), std::ios::in | std::ios::binary);
         DSVParser::parse(file, g);
         file.close();
         
@@ -731,7 +731,7 @@ void MainWindow::open_file(const QString &path)
     }
     else if (path.toUpper().endsWith(".PLT"))
     {
-        std::ifstream file(path.toLocal8Bit(), std::ios::in);
+        std::ifstream file(path.toLocal8Bit(), std::ios::in | std::ios::binary);
         PLTParser::parse(file, g);
         file.close();
         
@@ -742,7 +742,7 @@ void MainWindow::open_file(const QString &path)
     }
     else if(path.toUpper().endsWith(".CUT") || path.toUpper().endsWith(".NC"))
     {
-        std::ifstream file(path.toLocal8Bit(), std::ios::in);
+        std::ifstream file(path.toLocal8Bit(), std::ios::in | std::ios::binary);
         RS274DParser::parse(file, g);
         file.close();
 
@@ -753,7 +753,7 @@ void MainWindow::open_file(const QString &path)
     }
     else
     {
-        std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
+        std::ifstream file(path.toLocal8Bit(), std::ios_base::in | std::ios::binary);
         std::string line;
         std::getline(file, line);
         while (file)
