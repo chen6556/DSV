@@ -35,7 +35,50 @@
     <normaloff>:/DSV2.ico</normaloff>:/DSV2.ico</iconset>
   </property>
   <property name="styleSheet">
-   <string notr="true">QMainWindow#MainWindow{background-color: rgb(38, 38, 38)};</string>
+   <string notr="true">QMainWindow#MainWindow
+{
+	background-color: rgb(38, 38, 38);
+}
+
+QToolButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QToolButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QToolButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+
+QMenuBar
+{
+	background-color:rgb(50, 50, 51);
+	color:rgb(230, 230, 230);
+}
+QMenuBar::item
+{
+    background-color:rgb(50, 50 , 51);
+}
+QMenuBar::item:hover
+{
+    background-color:rgb(0,  85, 127);
+}
+QMenuBar::item:pressed
+{
+    background-color:rgb(0 , 85 , 127);
+}
+
+QMenu
+{
+	color: rgb(230, 230, 230);
+     background-color: rgb(50, 50, 51);
+     selection-color: rgb(230, 230, 230);
+     selection-background-color: rgb(0, 85, 127);
+}</string>
   </property>
   <property name="locale">
    <locale language="English" country="UnitedStates"/>
@@ -1456,32 +1499,6 @@ QPushButton:pressed
    </property>
    <property name="acceptDrops">
     <bool>false</bool>
-   </property>
-   <property name="styleSheet">
-    <string notr="true">QMenuBar
-{
-	background-color:rgb(50, 50, 51);
-	color:rgb(230, 230, 230);
-}
-QMenuBar::item
-{
-    background-color:rgb(50, 50 , 51);
-}
-QMenuBar::item:hover
-{
-    background-color:rgb(0,  85, 127);
-}
-QMenuBar::item:pressed
-{
-    background-color:rgb(0 , 85 , 127);
-}
-QMenu
-{
-	background-color: rgb(50, 50, 51);
-	color: rgb(230, 230, 230);
-	selection-color: rgb(230, 230, 230);
-	selection-background-color: rgb(0, 85, 127);
-}</string>
    </property>
    <widget class="QMenu" name="file_menu">
     <property name="acceptDrops">
