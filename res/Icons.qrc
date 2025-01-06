@@ -23,5 +23,6 @@
     <file>icons/rectangle_btn.png</file>
     <file>icons/measure_btn.png</file>
     <file>icons/circle_btn.png</file>
+    <file>styles/dark.qss</file>
   </qresource>
 </RCC>

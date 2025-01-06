@@ -1,0 +1,154 @@
+QMainWindow#MainWindow
+{
+    background-color: rgb(38, 38, 38)
+}
+
+QToolButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QToolButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QToolButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+
+QMenuBar
+{
+	background-color:rgb(50, 50, 51);
+	color:rgb(230, 230, 230);
+}
+QMenuBar::item
+{
+    background-color:rgb(50, 50 , 51);
+}
+QMenuBar::item:hover
+{
+    background-color:rgb(0,  85, 127);
+}
+QMenuBar::item:pressed
+{
+    background-color:rgb(0 , 85 , 127);
+}
+
+QMenu
+{
+	color: rgb(230, 230, 230);
+    background-color: rgb(50, 50, 51);
+    selection-color: rgb(230, 230, 230);
+    selection-background-color: rgb(0, 85, 127);
+}
+
+QStackedWidget, QStackedWidget *
+{
+	color:rgb(230, 230, 230);
+	background:rgb(37, 37, 38);
+}
+QStackedWidget QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QStackedWidget QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QStackedWidget QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+QSpinBox
+{
+    background-color: rgb(70, 70, 71);
+}
+QDoubleSpinBox
+{
+    background-color: rgb(70, 70, 71);
+}
+QStackedWidget QLabel
+{
+    background-color: rgb(70, 70, 71);
+}
+
+QToolTip
+{
+	border-style: none;
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}
+
+QScrollBar:vertical
+{
+	width:6px; background:transparent;
+	margin:0px,1px,0px,1px;
+	padding-top:0px;
+	padding-bottom:0px;
+	border-radius:3px;
+}
+QScrollBar::handle:vertical
+{
+	width:6px;
+	background:rgb(50, 50, 51);
+	border-radius:3px;
+}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical
+{
+	background:transparent; border-radius:2px;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical
+{
+	height:0px; width:0px;
+}
+
+QStatusBar, QStatusBar *
+{
+    color:rgb(230, 230, 230);
+    background:rgb(50, 50, 51);
+}
+
+DataPanel, LayersManager, QDialog#Setting, DataPanel *, LayersManager *, QDialog#Setting *
+{
+    background-color: rgb(50, 50, 51);
+    selection-color: rgb(230, 230, 230);
+    selection-background-color: rgb(0, 85, 127);
+    color: rgb(230, 230, 230);
+}
+DataPanel QPushButton, LayersManager QPushButton, QDialog#Setting QPushButton
+{
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+DataPanel QPushButton:hover, LayersManager QPushButton:hover, QDialog#Setting QPushButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+DataPanel QPushButton:pressed, LayersManager QPushButton:pressed, QDialog#Setting QPushButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+DataPanel, LayersManager, QDialog#Setting QSpinBox
+{
+    background-color: rgb(70, 70, 71);
+}
+DataPanel, LayersManager, QDialog#Setting QDoubleSpinBox
+{
+    background-color: rgb(70, 70, 71);
+}
+
+CMDWidget *
+{
+    background-color: transparent;
+    color:rgb(230, 230, 230);
+}
+CMDWidget QLineEdit
+{
+    background-color: rgb(120, 120, 121);
+}
+CMDWidget QLabel#label
+{
+    background-color: rgb(90, 90, 91);
+}

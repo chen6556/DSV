@@ -44,6 +44,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::init()
 {
+    QFile style(":/styles/dark.qss");
+    style.open(QFile::ReadOnly);
+    setStyleSheet(style.readAll());
+
     GlobalSetting::get_instance()->ui = ui;
 
     _editer.load_graph(new Graph());
