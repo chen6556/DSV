@@ -260,21 +260,6 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
               </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}</string>
-              </property>
               <property name="text">
                <string>←</string>
               </property>
@@ -1036,10 +1021,10 @@ QPushButton:pressed
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>-12</x>
+             <x>0</x>
              <y>0</y>
-             <width>106</width>
-             <height>387</height>
+             <width>120</width>
+             <height>639</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
