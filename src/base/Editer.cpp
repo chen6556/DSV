@@ -3200,6 +3200,11 @@ void Editer::auto_connect()
     Geo::Bezier *bezier0, *bezier1;
     for (size_t i = 0, count = _graph->container_group().size(); i < count; ++i)
     {
+        if (dynamic_cast<Container *>(_graph->container_group()[i]) != nullptr)
+        {
+            continue;
+        }
+
         bezier0 = dynamic_cast<Geo::Bezier *>(_graph->container_group()[i]);
         if (bezier0 == nullptr)
         {
@@ -3211,6 +3216,11 @@ void Editer::auto_connect()
 
             for (size_t j = i + 1; j < count; ++j)
             {
+                if (dynamic_cast<Container *>(_graph->container_group()[j]) != nullptr)
+                {
+                    continue;
+                }
+
                 bezier1 = dynamic_cast<Geo::Bezier *>(_graph->container_group()[j]);
                 if (bezier1 == nullptr)
                 {
@@ -3261,6 +3271,11 @@ void Editer::auto_connect()
             polyline0 = nullptr;
             for (size_t j = i + 1; j < count; ++j)
             {
+                if (dynamic_cast<Container *>(_graph->container_group()[j]) != nullptr)
+                {
+                    continue;
+                }
+
                 polyline1 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[j]);
                 if (polyline1 == nullptr)
                 {
@@ -3334,6 +3349,10 @@ void Editer::auto_connect()
         {
             for (size_t j = i + 1; j < count; ++j)
             {
+                if (dynamic_cast<Container *>(_graph->container_group()[j]) != nullptr)
+                {
+                    continue;
+                }
                 bezier1 = dynamic_cast<Geo::Bezier *>(_graph->container_group()[j]);
                 if (bezier1 == nullptr)
                 {
@@ -3415,6 +3434,10 @@ void Editer::auto_connect()
         {
             for (size_t j = i + 1; j < count; ++j)
             {
+                if (dynamic_cast<Container *>(_graph->container_group()[j]) != nullptr)
+                {
+                    continue;
+                }
                 polyline1 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[j]);
                 if (polyline1 == nullptr)
                 {
@@ -3437,6 +3460,10 @@ void Editer::auto_connect()
             }
             for (size_t j = i + 1; j < count; ++j)
             {
+                if (dynamic_cast<Container *>(_graph->container_group()[j]) != nullptr)
+                {
+                    continue;
+                }
                 bezier1 = dynamic_cast<Geo::Bezier *>(_graph->container_group()[j]);
                 if (bezier1 == nullptr)
                 {
