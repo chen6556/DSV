@@ -564,9 +564,6 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               <property name="layoutDirection">
                <enum>Qt::LeftToRight</enum>
               </property>
-              <property name="styleSheet">
-               <string notr="true">color: rgb(230, 230, 230);</string>
-              </property>
               <property name="text">
                <string>To All Layers</string>
               </property>
