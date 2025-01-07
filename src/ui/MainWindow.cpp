@@ -485,6 +485,7 @@ void MainWindow::load_settings()
     {
        _file_type = setting["file_type"].toString();
     }
+    _color_group.actions().at(setting["color"].toInt())->setChecked(true);
 }
 
 void MainWindow::save_settings()
@@ -502,6 +503,7 @@ void MainWindow::save_settings()
     {
         setting["file_type"] = _file_type;
     }
+    setting["color"] = _color_group.actions().indexOf(_color_group.checkedAction());
 
     GlobalSetting::get_instance()->save_setting();
 }
