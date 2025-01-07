@@ -16,11 +16,12 @@
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent), ui(new Ui::MainWindow), _setting(new Setting(this)),
-    _panel(new DataPanel(this))
+    _panel(new DataPanel(this)), _color_group(this)
 {
     ui->setupUi(this);
     init();
     load_settings();
+    change_color();
 }
 
 MainWindow::~MainWindow()
@@ -44,10 +45,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::init()
 {
-    QFile style(":/styles/dark.qss");
-    style.open(QFile::ReadOnly);
-    setStyleSheet(style.readAll());
-
     GlobalSetting::get_instance()->ui = ui;
 
     _editer.load_graph(new Graph());
@@ -71,6 +68,11 @@ void MainWindow::init()
     QObject::connect(ui->actionadvanced, &QAction::triggered, _setting, &Setting::exec);
     QObject::connect(ui->show_origin, &QAction::triggered, [this]() { ui->show_origin->isChecked() ? ui->canvas->show_origin() : ui->canvas->hide_origin(); });
     QObject::connect(ui->show_cmd_line, &QAction::triggered, [this]() { ui->show_cmd_line->isChecked() ? _cmd_widget->show() : _cmd_widget->hide(); });
+
+    for (QAction *action : ui->menuColor->actions())
+    {
+        _color_group.addAction(action);
+    }
 
     QObject::connect(_setting, &Setting::accepted, ui->canvas, static_cast<void(Canvas::*)(void)>(&Canvas::refresh_text_vbo));
     QObject::connect(_setting, &Setting::accepted, this, &MainWindow::refresh_settings);
@@ -702,6 +704,37 @@ void MainWindow::show_data_panel()
     _panel->exec();
 }
 
+
+void MainWindow::change_color()
+{
+    const QString color = _color_group.checkedAction()->text().toLower();
+    QFile style(":/styles/" + color + ".qss");
+    style.open(QFile::ReadOnly);
+    setStyleSheet(style.readAll());
+    style.close();
+
+    ui->measure_btn->setIcon(QIcon(":/icons/" + color + "/measure_btn.png"));
+    ui->line_btn->setIcon(QIcon(":/icons/" + color + "/polyline_btn.png"));
+    ui->rect_btn->setIcon(QIcon(":/icons/" + color + "/rectangle_btn.png"));
+    ui->circle_btn->setIcon(QIcon(":/icons/" + color + "/circle_btn.png"));
+    ui->curve_btn->setIcon(QIcon(":/icons/" + color + "/curve_btn.png"));
+    ui->connect_btn->setIcon(QIcon(":/icons/" + color + "/connect_btn.png"));
+    ui->close_btn->setIcon(QIcon(":/icons/" + color + "/close_btn.png"));
+    ui->combinate_btn->setIcon(QIcon(":/icons/" + color + "/combinate_btn.png"));
+    ui->split_btn->setIcon(QIcon(":/icons/" + color + "/split_btn.png"));
+    ui->rotate_btn->setIcon(QIcon(":/icons/" + color + "/rotate_btn.png"));
+    ui->flipx_btn->setIcon(QIcon(":/icons/" + color + "/flipx_btn.png"));
+    ui->flipy_btn->setIcon(QIcon(":/icons/" + color + "/flipy_btn.png"));
+    ui->mirror_btn->setIcon(QIcon(":/icons/" + color + "/mirror_btn.png"));
+    ui->union_btn->setIcon(QIcon(":/icons/" + color + "/union_btn.png"));
+    ui->intersection_btn->setIcon(QIcon(":/icons/" + color + "/intersection_btn.png"));
+    ui->difference_btn->setIcon(QIcon(":/icons/" + color + "/difference_btn.png"));
+    ui->scale_btn->setIcon(QIcon(":/icons/" + color + "/scale_btn.png"));
+    ui->offset_btn->setIcon(QIcon(":/icons/" + color + "/offset_btn.png"));
+    ui->fillet_btn->setIcon(QIcon(":/icons/" + color + "/fillet_btn.png"));
+    ui->line_array_btn->setIcon(QIcon(":/icons/" + color + "/line_array_btn.png"));
+    ui->ring_array_btn->setIcon(QIcon(":/icons/" + color + "/ring_array_btn.png"));
+}
 
 
 void MainWindow::open_file(const QString &path)

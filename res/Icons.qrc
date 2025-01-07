@@ -1,28 +1,50 @@
 <RCC>
   <qresource prefix="/">
-    <file>icons/fillet_btn.png</file>
+    <file>icons/dark/fillet_btn.png</file>
     <file>icons/DSV_logo.png</file>
-    <file>icons/ring_array_btn.png</file>
-    <file>icons/line_array_btn.png</file>
-    <file>icons/offset_btn.png</file>
-    <file>icons/scale_btn.png</file>
-    <file>icons/flipx_btn.png</file>
-    <file>icons/mirror_btn.png</file>
-    <file>icons/flipy_btn.png</file>
-    <file>icons/rotate_btn.png</file>
-    <file>icons/difference_btn.png</file>
-    <file>icons/intersection_btn.png</file>
-    <file>icons/union_btn.png</file>
-    <file>icons/split_btn.png</file>
-    <file>icons/combinate_btn.png</file>
-    <file>icons/connect_btn.png</file>
-    <file>icons/close_btn.png</file>
+    <file>icons/dark/ring_array_btn.png</file>
+    <file>icons/dark/line_array_btn.png</file>
+    <file>icons/dark/offset_btn.png</file>
+    <file>icons/dark/scale_btn.png</file>
+    <file>icons/dark/flipx_btn.png</file>
+    <file>icons/dark/mirror_btn.png</file>
+    <file>icons/dark/flipy_btn.png</file>
+    <file>icons/dark/rotate_btn.png</file>
+    <file>icons/dark/difference_btn.png</file>
+    <file>icons/dark/intersection_btn.png</file>
+    <file>icons/dark/union_btn.png</file>
+    <file>icons/dark/split_btn.png</file>
+    <file>icons/dark/combinate_btn.png</file>
+    <file>icons/dark/connect_btn.png</file>
+    <file>icons/dark/close_btn.png</file>
     <file>DSV2.ico</file>
-    <file>icons/curve_btn.png</file>
-    <file>icons/polyline_btn.png</file>
-    <file>icons/rectangle_btn.png</file>
-    <file>icons/measure_btn.png</file>
-    <file>icons/circle_btn.png</file>
+    <file>icons/dark/curve_btn.png</file>
+    <file>icons/dark/polyline_btn.png</file>
+    <file>icons/dark/rectangle_btn.png</file>
+    <file>icons/dark/measure_btn.png</file>
+    <file>icons/dark/circle_btn.png</file>
+    <file>icons/light/fillet_btn.png</file>
+    <file>icons/light/ring_array_btn.png</file>
+    <file>icons/light/line_array_btn.png</file>
+    <file>icons/light/offset_btn.png</file>
+    <file>icons/light/scale_btn.png</file>
+    <file>icons/light/flipx_btn.png</file>
+    <file>icons/light/mirror_btn.png</file>
+    <file>icons/light/flipy_btn.png</file>
+    <file>icons/light/rotate_btn.png</file>
+    <file>icons/light/difference_btn.png</file>
+    <file>icons/light/intersection_btn.png</file>
+    <file>icons/light/union_btn.png</file>
+    <file>icons/light/split_btn.png</file>
+    <file>icons/light/combinate_btn.png</file>
+    <file>icons/light/connect_btn.png</file>
+    <file>icons/light/close_btn.png</file>
+    <file>icons/light/curve_btn.png</file>
+    <file>icons/light/polyline_btn.png</file>
+    <file>icons/light/rectangle_btn.png</file>
+    <file>icons/light/measure_btn.png</file>
+    <file>icons/light/circle_btn.png</file>
     <file>styles/dark.qss</file>
+    <file>styles/light.qss</file>
   </qresource>
 </RCC>

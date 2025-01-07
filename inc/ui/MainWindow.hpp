@@ -3,6 +3,7 @@
 #include <QMainWindow>
 #include <QComboBox>
 #include <QToolButton>
+#include <QActionGroup>
 #include <QTimer>
 #include <QString>
 
@@ -30,6 +31,8 @@ private:
     QLabel *_info_labels[3] = {nullptr, nullptr, nullptr};
     CMDWidget *_cmd_widget = nullptr;
     DataPanel *_panel = nullptr;
+
+    QActionGroup _color_group;
 
     QComboBox *_layers_cbx = nullptr;
     LayersManager *_layers_manager = nullptr;
@@ -119,6 +122,9 @@ private slots:
 
 
     void show_data_panel();
+
+
+    void change_color();
 
 private:
     void open_file(const QString &path);

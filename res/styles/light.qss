@@ -1,84 +1,84 @@
 QMainWindow#MainWindow
 {
-    background-color: rgb(38, 38, 38)
+    background-color: rgb(226, 229, 232);
 }
 
 QToolButton
 {
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
+	color:rgb(64, 64, 64);
+	background-color:rgb(210, 210, 210);
 }
 QToolButton:hover
 {
-	background-color:rgb(0, 85, 127);
+	background-color:rgb(204, 222, 246);
 }
 QToolButton:pressed
 {
-	background-color:rgb(0, 85, 127);
+	background-color:rgb(0, 122, 204);
 }
 
 QMenuBar
 {
-	background-color:rgb(50, 50, 51);
-	color:rgb(230, 230, 230);
+	background-color:rgb(204, 209, 214);
+	color:rgb(64, 64, 64);
 }
 QMenuBar::item
 {
-    background-color:rgb(50, 50 , 51);
+    background-color:rgb(204, 209, 214);
 }
 QMenuBar::item:hover
 {
-    background-color:rgb(0,  85, 127);
+    background-color:rgb(201, 222, 245);
 }
 QMenuBar::item:pressed
 {
-    background-color:rgb(0 , 85 , 127);
+    background-color:rgb(201, 222, 245);
 }
 
 QMenu
 {
-	color: rgb(230, 230, 230);
-    background-color: rgb(50, 50, 51);
-    selection-color: rgb(230, 230, 230);
-    selection-background-color: rgb(0, 85, 127);
+	color: rgb(64, 64, 64);
+    background-color: rgb(246, 246, 246);
+    selection-color: rgb(64, 64, 64);
+    selection-background-color: rgb(201, 222, 245);
 }
 
 QStackedWidget, QStackedWidget *
 {
-	color:rgb(230, 230, 230);
-	background:rgb(37, 37, 38);
+	color:rgb(64, 64, 64);
+	background:rgb(226, 229, 232);
 }
 QStackedWidget QPushButton
 {
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
+	color: rgb(64, 64, 64);
+	background-color: rgb(210, 210, 210);
 }
 QStackedWidget QPushButton:hover
 {
-	background-color:rgb(0, 85, 127);
+	background-color:rgb(204, 222, 246);
 }
 QStackedWidget QPushButton:pressed
 {
-	background-color:rgb(0, 85, 127);
+	background-color:rgb(0, 122, 204);
 }
 QSpinBox
 {
-    background-color: rgb(70, 70, 71);
+    background-color: rgb(210, 210, 210);
 }
 QDoubleSpinBox
 {
-    background-color: rgb(70, 70, 71);
+    background-color: rgb(210, 210, 210);
 }
 QStackedWidget QLabel
 {
-    background-color: rgb(70, 70, 71);
+    background-color: rgb(210, 210, 210);
 }
 
 QToolTip
 {
 	border-style: none;
-	background-color: rgb(70, 70, 71);
-	color: rgb(230, 230, 230);
+	background-color: rgb(230, 230, 230);
+	color: rgb(70, 70, 71);
 }
 
 QScrollBar:vertical
@@ -92,7 +92,7 @@ QScrollBar:vertical
 QScrollBar::handle:vertical
 {
 	width:6px;
-	background:rgb(50, 50, 51);
+	background:rgb(130, 130, 130);
 	border-radius:3px;
 }
 QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical
@@ -106,41 +106,41 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical
 
 QStatusBar, QStatusBar *
 {
-    color:rgb(230, 230, 230);
-    background:rgb(50, 50, 51);
+    color: rgb(64, 64, 64);
+    background: rgb(204, 209, 214);
+}
+QStatusBar::item
+{
+    border-right: 1px solid rgb(64, 64, 64);
 }
 
 DataPanel, LayersManager, QDialog#Setting, DataPanel *, LayersManager *, QDialog#Setting *
 {
-    background-color: rgb(50, 50, 51);
-    selection-color: rgb(230, 230, 230);
-    selection-background-color: rgb(0, 85, 127);
-    color: rgb(230, 230, 230);
+    background-color: rgb(226, 229, 232);
+    selection-color: rgb(64, 64, 64);
+    selection-background-color: rgb(201, 222, 245);
+    color: rgb(64, 64, 64);
 }
 DataPanel QPushButton, LayersManager QPushButton, QDialog#Setting QPushButton
 {
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
+	color: rgb(64, 64, 64);
+	background-color: rgb(210, 210, 210);
 }
 DataPanel QPushButton:hover, LayersManager QPushButton:hover, QDialog#Setting QPushButton:hover
 {
-	background-color:rgb(0, 85, 127);
+	background-color: rgb(204, 222, 246);
 }
 DataPanel QPushButton:pressed, LayersManager QPushButton:pressed, QDialog#Setting QPushButton:pressed
 {
-	background-color:rgb(0, 85, 127);
-}
-DataPanel QLabel, LayersManager QLabel, QDialog#Setting QLabel
-{
-    background-color: rgb(50, 50, 51);
+	background-color: rgb(0, 122, 204);
 }
 DataPanel QSpinBox, LayersManager QSpinBox, QDialog#Setting QSpinBox
 {
-    background-color: rgb(70, 70, 71);
+    background-color: rgb(210, 210, 210);
 }
 DataPanel QDoubleSpinBox, LayersManager QDoubleSpinBox, QDialog#Setting QDoubleSpinBox
 {
-    background-color: rgb(70, 70, 71);
+    background-color: rgb(210, 210, 210);
 }
 
 CMDWidget *

@@ -116,7 +116,7 @@
              <x>0</x>
              <y>0</y>
              <width>120</width>
-             <height>639</height>
+             <height>638</height>
             </rect>
            </property>
            <property name="maximumSize">
@@ -172,10 +172,6 @@
               </property>
               <property name="toolTip">
                <string>Length</string>
-              </property>
-              <property name="icon">
-               <iconset resource="../../res/Icons.qrc">
-                <normaloff>:/icons/measure_btn.png</normaloff>:/icons/measure_btn.png</iconset>
               </property>
               <property name="iconSize">
                <size>
@@ -235,10 +231,6 @@
                 <property name="toolTip">
                  <string>Polyline</string>
                 </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/polyline_btn.png</normaloff>:/icons/polyline_btn.png</iconset>
-                </property>
                 <property name="iconSize">
                  <size>
                   <width>24</width>
@@ -254,10 +246,6 @@
                 </property>
                 <property name="toolTip">
                  <string>Rectangle</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/rectangle_btn.png</normaloff>:/icons/rectangle_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -275,10 +263,6 @@
                 <property name="toolTip">
                  <string>Circle</string>
                 </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/circle_btn.png</normaloff>:/icons/circle_btn.png</iconset>
-                </property>
                 <property name="iconSize">
                  <size>
                   <width>24</width>
@@ -294,10 +278,6 @@
                 </property>
                 <property name="toolTip">
                  <string>Bezier Curve</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/curve_btn.png</normaloff>:/icons/curve_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -365,10 +345,6 @@
                 <property name="toolTip">
                  <string>Close</string>
                 </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/close_btn.png</normaloff>:/icons/close_btn.png</iconset>
-                </property>
                 <property name="iconSize">
                  <size>
                   <width>24</width>
@@ -385,10 +361,6 @@
                 <property name="toolTip">
                  <string>Connect</string>
                 </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/connect_btn.png</normaloff>:/icons/connect_btn.png</iconset>
-                </property>
                 <property name="iconSize">
                  <size>
                   <width>24</width>
@@ -404,10 +376,6 @@
                 </property>
                 <property name="toolTip">
                  <string>Combinate</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/combinate_btn.png</normaloff>:/icons/combinate_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -429,10 +397,6 @@
                 </property>
                 <property name="toolTip">
                  <string>Split</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/split_btn.png</normaloff>:/icons/split_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -464,9 +428,6 @@
               <property name="layoutDirection">
                <enum>Qt::LeftToRight</enum>
               </property>
-              <property name="styleSheet">
-               <string notr="true">color: rgb(230, 230, 230);</string>
-              </property>
               <property name="text">
                <string>To All Layers</string>
               </property>
@@ -487,10 +448,6 @@
                 </property>
                 <property name="toolTip">
                  <string>Offset</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/offset_btn.png</normaloff>:/icons/offset_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -550,10 +507,6 @@
                 <property name="toolTip">
                  <string>Flip X</string>
                 </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/flipx_btn.png</normaloff>:/icons/flipx_btn.png</iconset>
-                </property>
                 <property name="iconSize">
                  <size>
                   <width>24</width>
@@ -569,10 +522,6 @@
                 </property>
                 <property name="toolTip">
                  <string>Mirror</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/mirror_btn.png</normaloff>:/icons/mirror_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -590,10 +539,6 @@
                 <property name="toolTip">
                  <string>Difference</string>
                 </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/difference_btn.png</normaloff>:/icons/difference_btn.png</iconset>
-                </property>
                 <property name="iconSize">
                  <size>
                   <width>24</width>
@@ -609,10 +554,6 @@
                 </property>
                 <property name="toolTip">
                  <string>Intersection</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/intersection_btn.png</normaloff>:/icons/intersection_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -630,10 +571,6 @@
                 <property name="toolTip">
                  <string>Flip Y</string>
                 </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/flipy_btn.png</normaloff>:/icons/flipy_btn.png</iconset>
-                </property>
                 <property name="iconSize">
                  <size>
                   <width>24</width>
@@ -649,10 +586,6 @@
                 </property>
                 <property name="toolTip">
                  <string>Union</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/union_btn.png</normaloff>:/icons/union_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -745,15 +678,17 @@
               </item>
               <item row="0" column="1">
                <widget class="QPushButton" name="rotate_btn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Rotate</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/rotate_btn.png</normaloff>:/icons/rotate_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -771,10 +706,6 @@
                 <property name="toolTip">
                  <string>Scale</string>
                 </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/scale_btn.png</normaloff>:/icons/scale_btn.png</iconset>
-                </property>
                 <property name="iconSize">
                  <size>
                   <width>24</width>
@@ -787,10 +718,6 @@
                <widget class="QPushButton" name="fillet_btn">
                 <property name="toolTip">
                  <string>Fillet</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/fillet_btn.png</normaloff>:/icons/fillet_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -924,7 +851,7 @@
              <x>0</x>
              <y>0</y>
              <width>120</width>
-             <height>639</height>
+             <height>638</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1220,10 +1147,6 @@
               <property name="toolTip">
                <string>Line Array</string>
               </property>
-              <property name="icon">
-               <iconset resource="../../res/Icons.qrc">
-                <normaloff>:/icons/line_array_btn.png</normaloff>:/icons/line_array_btn.png</iconset>
-              </property>
               <property name="iconSize">
                <size>
                 <width>24</width>
@@ -1325,10 +1248,6 @@
               <property name="toolTip">
                <string>Ring Array</string>
               </property>
-              <property name="icon">
-               <iconset resource="../../res/Icons.qrc">
-                <normaloff>:/icons/ring_array_btn.png</normaloff>:/icons/ring_array_btn.png</iconset>
-              </property>
               <property name="iconSize">
                <size>
                 <width>24</width>
@@ -1379,7 +1298,7 @@
      <x>0</x>
      <y>0</y>
      <width>1008</width>
-     <height>22</height>
+     <height>23</height>
     </rect>
    </property>
    <property name="acceptDrops">
@@ -1415,8 +1334,16 @@
     <addaction name="auto_aligning"/>
     <addaction name="actionadvanced"/>
    </widget>
+   <widget class="QMenu" name="menuColor">
+    <property name="title">
+     <string>Color</string>
+    </property>
+    <addaction name="dark_color"/>
+    <addaction name="light_color"/>
+   </widget>
    <addaction name="file_menu"/>
    <addaction name="menusetting"/>
+   <addaction name="menuColor"/>
   </widget>
   <widget class="QStatusBar" name="statusBar">
    <property name="font">
@@ -1529,6 +1456,25 @@
    </property>
    <property name="text">
     <string>Auto connect</string>
+   </property>
+  </action>
+  <action name="dark_color">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Dark</string>
+   </property>
+  </action>
+  <action name="light_color">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Light</string>
    </property>
   </action>
  </widget>
@@ -1980,6 +1926,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>dark_color</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>change_color()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>light_color</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>change_color()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -2008,5 +1986,6 @@
   <slot>refresh_tool_label(Canvas::Tool)</slot>
   <slot>fillet()</slot>
   <slot>refresh_tool_label(Canvas::Operation)</slot>
+  <slot>change_color()</slot>
  </slots>
 </ui>
