@@ -1848,7 +1848,7 @@ double Geo::degree_to_rad(double value)
 }
 
 
-bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Polyline &arc)
+bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Polyline &arc, const double step)
 {
     if (radius <= 0)
     {
@@ -1857,9 +1857,13 @@ bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &po
 
     arc.clear();
     const double len = radius / std::tan(std::abs(Geo::angle(point0, point1, point2)) / 2);
-    if ((point1 - point0).length() >= len && (point2 - point1).length() >= len)
+    if (Geo::distance_square(point1, point0) >= len * len && Geo::distance_square(point2, point1) >= len * len)
     {
         double c = std::atan(len / radius) * radius;
+        if (c < step * 2)
+        {
+            return false;
+        }
         const Geo::Vector vec0 = (point0 - point1).normalize() * len;
         const Geo::Vector vec1 = (point2 - point1).normalize() * len;
         const Geo::Point center = point1 + (vec0 + vec1);
@@ -1867,7 +1871,7 @@ bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &po
         Geo::foot_point(point0, point1, center, foot0, true);
         Geo::foot_point(point2, point1, center, foot1, true);
         Geo::Vector vec = (foot0 - center).normalize() * radius;
-        double degree = std::asin(0.8 / radius) * 2;
+        double degree = std::asin(step / radius) * 2;
         if (Geo::angle(foot0, center, foot1) < 0)
         {
             degree = -degree;
@@ -1876,7 +1880,7 @@ bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &po
         {
             arc.append(center + vec);
             vec.rotate(0, 0, degree);
-            c -= 0.8;
+            c -= step;
         }
         return true;
     }

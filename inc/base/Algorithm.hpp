@@ -228,7 +228,7 @@ namespace Geo
     double degree_to_rad(double value);
 
     // 倒圆角
-    bool angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Polyline &arc);
+    bool angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Polyline &arc, const double step = 0.8);
 
     Polygon circle_to_polygon(const double x, const double y, const double r);
 
