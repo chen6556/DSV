@@ -75,6 +75,9 @@ color: rgb(230, 230, 230);</string>
             <pointsize>10</pointsize>
            </font>
           </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::NoContextMenu</enum>
+          </property>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(70, 70, 71);
 color: rgb(230, 230, 230);</string>
@@ -133,6 +136,9 @@ color: rgb(230, 230, 230);</string>
            <font>
             <pointsize>10</pointsize>
            </font>
+          </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::NoContextMenu</enum>
           </property>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(70, 70, 71);
@@ -205,6 +211,9 @@ color: rgb(230, 230, 230);</string>
            <font>
             <pointsize>10</pointsize>
            </font>
+          </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::NoContextMenu</enum>
           </property>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(70, 70, 71);

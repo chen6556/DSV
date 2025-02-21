@@ -420,6 +420,9 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                   <pointsize>12</pointsize>
                  </font>
                 </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
+                </property>
                 <property name="toolTip">
                  <string>Order of Bezier Curve</string>
                 </property>
@@ -616,6 +619,9 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                   <pointsize>12</pointsize>
                  </font>
                 </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
+                </property>
                 <property name="toolTip">
                  <string>Scale Rate</string>
                 </property>
@@ -778,6 +784,9 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                   <pointsize>12</pointsize>
                  </font>
                 </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
+                </property>
                 <property name="toolTip">
                  <string>Offset Distance</string>
                 </property>
@@ -816,6 +825,9 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  <font>
                   <pointsize>12</pointsize>
                  </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
                 </property>
                 <property name="toolTip">
                  <string>Rotate Degree</string>
@@ -915,6 +927,9 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  <font>
                   <pointsize>12</pointsize>
                  </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
                 </property>
                 <property name="toolTip">
                  <string>Fillet Radius</string>
@@ -1018,10 +1033,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>0</x>
+             <x>-12</x>
              <y>0</y>
-             <width>120</width>
-             <height>639</height>
+             <width>106</width>
+             <height>387</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1106,6 +1121,9 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                   <pointsize>10</pointsize>
                  </font>
                 </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
+                </property>
                 <property name="frame">
                  <bool>false</bool>
                 </property>
@@ -1169,6 +1187,9 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  <font>
                   <pointsize>10</pointsize>
                  </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
@@ -1244,6 +1265,9 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 <pointsize>10</pointsize>
                </font>
               </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::NoContextMenu</enum>
+              </property>
               <property name="frame">
                <bool>false</bool>
               </property>
@@ -1291,6 +1315,9 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                <font>
                 <pointsize>10</pointsize>
                </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::NoContextMenu</enum>
               </property>
               <property name="frame">
                <bool>false</bool>
@@ -1373,6 +1400,9 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  <font>
                   <pointsize>10</pointsize>
                  </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
                 </property>
                 <property name="frame">
                  <bool>false</bool>

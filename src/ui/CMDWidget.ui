@@ -111,6 +111,9 @@ color:rgb(230, 230, 230);</string>
        <property name="mouseTracking">
         <bool>false</bool>
        </property>
+       <property name="contextMenuPolicy">
+        <enum>Qt::NoContextMenu</enum>
+       </property>
        <property name="styleSheet">
         <string notr="true">background-color: rgb(120, 120, 121);
 color:rgb(230, 230, 230);</string>
