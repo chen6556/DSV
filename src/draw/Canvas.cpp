@@ -1263,12 +1263,30 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             if (!_editer->selected().empty())
             {
                 double angle = Geo::angle(Geo::Point(real_x0, real_y0), _stored_coord, Geo::Point(real_x1, real_y1));
-                angle = Geo::degree_to_rad(std::round(Geo::rad_to_degree(angle)));
+                angle = Geo::rad_to_degree(angle);
+                if (angle > 0.2 && angle < 1) // 提高灵敏度,直接四舍五入会导致难以转动小角度
+                {
+                    angle = 1;
+                }
+                else if (angle < -0.2 && angle > -1)
+                {
+                    angle = -1;
+                }
+                angle = Geo::degree_to_rad(std::round(angle));
                 for (Geo::Geometry *obj : _editer->selected())
                 {
                     obj->rotate(_stored_coord.x, _stored_coord.y, angle);
                 }
-                _info_labels[1]->setText(QString::number(_info_labels[1]->text().split("°").front().toDouble() + Geo::rad_to_degree(angle)) + "°");
+                angle = _info_labels[1]->text().split("°").front().toDouble() + Geo::rad_to_degree(angle);
+                if (angle > 360)
+                {
+                    angle -= 360;
+                }
+                else if (angle < -360)
+                {
+                    angle += 360;
+                }
+                _info_labels[1]->setText(QString("%1°").arg(angle));
                 refresh_selected_vbo();
             }
         }
