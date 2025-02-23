@@ -485,22 +485,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _cache[_cache_count++] = real_x1;
                     _cache[_cache_count++] = real_y1;
                     _cache[_cache_count++] = 0;
-                    makeCurrent();
-                    glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-                    if (_cache_count == _cache_len)
-                    {
-                        _cache_len *= 2;
-                        double *temp = new double[_cache_len];
-                        std::memmove(temp, _cache, _cache_count * sizeof(double));
-                        delete []_cache;
-                        _cache = temp;
-                        glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_STREAM_DRAW);
-                    }
-                    else
-                    {
-                        glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - 3) * sizeof(double), 3 * sizeof(double), &_cache[_cache_count - 3]);
-                    }
-                    doneCurrent();
+                    check_cache();
+                    refresh_cache_vbo(3);
                 }
                 else
                 {
@@ -511,10 +497,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _cache[0] = _cache[3] = real_x1;
                     _cache[1] = _cache[4] = real_y1;
                     _cache[2] = _cache[5] = 0;
-                    makeCurrent();
-                    glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-                    glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * sizeof(double), _cache);
-                    doneCurrent();
+                    check_cache();
+                    refresh_cache_vbo(0);
                 }
                 break;
             case Tool::RECT:
@@ -803,91 +787,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     break;
                 }
 
-                size_t index_len = 512, index_count = 0;
-                unsigned int *indexs = new unsigned int[index_len];
-                for (const Geo::Geometry *obj : selected_objs)
-                {
-                    if (obj->is_selected)
-                    {
-                        if (obj->type() == Geo::Type::COMBINATION)
-                        {
-                            for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
-                            {
-                                for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
-                                {
-                                    indexs[index_count++] = index++;
-                                    if (index_count == index_len)
-                                    {
-                                        index_len *= 2;
-                                        unsigned int *temp = new unsigned int[index_len];
-                                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                                        delete []indexs;
-                                        indexs = temp;
-                                    }
-                                }
-                                indexs[index_count++] = UINT_MAX;
-                                if (index_count == index_len)
-                                {
-                                    index_len *= 2;
-                                    unsigned int *temp = new unsigned int[index_len];
-                                    std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                                    delete []indexs;
-                                    indexs = temp;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            for (size_t i = 0, index = obj->point_index, count = obj->point_count; i < count; ++i)
-                            {
-                                indexs[index_count++] = index++;
-                                if (index_count == index_len)
-                                {
-                                    index_len *= 2;
-                                    unsigned int *temp = new unsigned int[index_len];
-                                    std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                                    delete []indexs;
-                                    indexs = temp;
-                                }
-                            }
-                            indexs[index_count++] = UINT_MAX;
-                            if (index_count == index_len)
-                            {
-                                index_len *= 2;
-                                unsigned int *temp = new unsigned int[index_len];
-                                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                                delete []indexs;
-                                indexs = temp;
-                            }
-
-                            if (obj->type() == Geo::Type::BEZIER)
-                            {
-                                _cache_count = 0;
-                                for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(obj))
-                                {
-                                    _cache[_cache_count++] = point.x;
-                                    _cache[_cache_count++] = point.y;
-                                    _cache[_cache_count++] = 0.5;
-                                }
-                            }
-                        }
-                    }
-                }
-                _indexs_count[2] = index_count;
-                makeCurrent();
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
-                if (selected_objs.size() == 1 && _cache_count > 0)
-                {
-                    glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-                    glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
-                }
-                else
-                {
-                    _cache_count = 0;
-                }
-                doneCurrent();
-                delete []indexs;
+                refresh_selected_ibo();
+                refresh_cache_vbo(0);
 
                 _bool_flags[4] = true; // is obj moveable
                 _bool_flags[5] = true; // is obj selected
@@ -954,66 +855,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             _clicked_obj = _editer->select(real_x1, real_y1, true);
             if (_clicked_obj != nullptr)
             {
-                size_t index_len = 512, index_count = 0;
-                unsigned int *indexs = new unsigned int[index_len];
-                if (_clicked_obj->type() == Geo::Type::COMBINATION)
-                {
-                    for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(_clicked_obj))
-                    {
-                        for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
-                        {
-                            indexs[index_count++] = index++;
-                            if (index_count == index_len)
-                            {
-                                index_len *= 2;
-                                unsigned int *temp = new unsigned int[index_len];
-                                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                                delete []indexs;
-                                indexs = temp;
-                            }
-                        }
-                        indexs[index_count++] = UINT_MAX;
-                        if (index_count == index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                            delete []indexs;
-                            indexs = temp;
-                        }
-                    }
-                }
-                else
-                {
-                    for (size_t i = 0, index = _clicked_obj->point_index, count = _clicked_obj->point_count; i < count; ++i)
-                    {
-                        indexs[index_count++] = index++;
-                        if (index_count == index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                            delete []indexs;
-                            indexs = temp;
-                        }
-                    }
-                    indexs[index_count++] = UINT_MAX;
-                    if (index_count == index_len)
-                    {
-                        index_len *= 2;
-                        unsigned int *temp = new unsigned int[index_len];
-                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
-                        delete []indexs;
-                        indexs = temp;
-                    }
-                }
-                _indexs_count[2] = index_count;
-                makeCurrent();
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
-                doneCurrent();
-                delete []indexs;
-
+                refresh_selected_ibo(_clicked_obj);
                 const QAction *a = _menu->exec(QCursor::pos());
                 if (a == _up)
                 {
@@ -1190,10 +1032,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             _cache[_cache_count - 3] = _editer->point_cache().back().x;
             _cache[_cache_count - 2] = _editer->point_cache().back().y;
-            makeCurrent();
-            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-            glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - 3) * sizeof(double), 2 * sizeof(double), &_cache[_cache_count - 3]);
-            doneCurrent();
+            refresh_cache_vbo(3);
             _info_labels[1]->setText(std::string("Length:").append(std::to_string(
                 Geo::distance(_editer->point_cache().back(), _editer->point_cache()[_editer->point_cache().size() - 2]))).c_str());
             break;
@@ -1256,10 +1095,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             _cache[_cache_count - 3] = _editer->point_cache().back().x;
             _cache[_cache_count - 2] = _editer->point_cache().back().y;
-            makeCurrent();
-            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-            glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - 3) * sizeof(double), 2 * sizeof(double), &_cache[_cache_count - 3]);
-            doneCurrent();
+            refresh_cache_vbo(3);
             break;
         default:
             _info_labels[1]->clear();
@@ -1308,153 +1144,37 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             {
                 _bool_flags[6] = true; // is moving obj
             }
-            size_t data_len = 513, data_count;
-            double *data = new double[data_len];
-            bool update_vbo = false;
-            makeCurrent();
-            glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
-            std::list<Geo::Geometry *> objs = _editer->selected();
-            const bool only_one_selected = objs.size() == 1;
-            for (Geo::Geometry *obj : objs)
+            if (_editer->selected().size() == 1)
             {
-                _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier && only_one_selected);
-                data_count = data_len;
-                while (obj->point_count * 3 > data_len)
+                bool update_vbo = false;
+                for (Geo::Geometry *obj : _editer->selected())
                 {
-                    data_len *= 2;
-                }
-                if (data_count < data_len)
-                {
-                    delete []data;
-                    data = new double[data_len];
-                }
-                data_count = 0;
-
-                switch (obj->type())
-                {
-                case Geo::Type::CONTAINER:
-                    for (const Geo::Point &point : dynamic_cast<const Container *>(obj)->shape())
-                    {
-                        data[data_count++] = point.x;
-                        data[data_count++] = point.y;
-                        data[data_count++] = 0.5;
-                    }
-                    break;
-                case Geo::Type::CIRCLECONTAINER:
-                    for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(obj)))
-                    {
-                        data[data_count++] = point.x;
-                        data[data_count++] = point.y;
-                        data[data_count++] = 0.5;
-                        if (event->modifiers() == Qt::ControlModifier && data_len == data_count)
-                        {
-                            data_len *= 2;
-                            double *temp = new double[data_len];
-                            delete []data;
-                            data = temp;
-                        }
-                    }
-                    update_vbo = (event->modifiers() == Qt::ControlModifier && only_one_selected);
-                    break;
-                case Geo::Type::COMBINATION:
-                    for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
-                    {
-                        data_count = 0;
-                        switch (item->type())
-                        {
-                        case Geo::Type::CONTAINER:
-                            for (const Geo::Point &point : dynamic_cast<const Container *>(item)->shape())
-                            {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                            }
-                            break;
-                        case Geo::Type::CIRCLECONTAINER:
-                            for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item)))
-                            {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                            }
-                            break;
-                        case Geo::Type::POLYLINE:
-                            for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(item))
-                            {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                            }
-                            break;
-                        case Geo::Type::BEZIER:
-                            for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
-                            {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                            }
-                            break;
-                        default:
-                            break;
-                        }
-                        glBufferSubData(GL_ARRAY_BUFFER, item->point_index * 3 * sizeof(double), data_count * sizeof(double), data);
-                    }
-                    data_count = 0;
-                    break;
-                case Geo::Type::POLYLINE:
-                    for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(obj))
-                    {
-                        data[data_count++] = point.x;
-                        data[data_count++] = point.y;
-                        data[data_count++] = 0.5;
-                    }
-                    break;
-                case Geo::Type::BEZIER:
-                    for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(obj)->shape())
-                    {
-                        data[data_count++] = point.x;
-                        data[data_count++] = point.y;
-                        data[data_count++] = 0.5;
-                        if (event->modifiers() == Qt::ControlModifier && data_len == data_count)
-                        {
-                            data_len *= 2;
-                            double *temp = new double[data_len];
-                            delete []data;
-                            data = temp;
-                        }
-                    }
-                    if (only_one_selected)
+                    _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier);
+                    if (obj->type() == Geo::Type::BEZIER)
                     {
                         _cache_count = 0;
-                        for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(obj))
+                        for (const Geo::Point &point : *dynamic_cast<Geo::Bezier *>(obj))
                         {
                             _cache[_cache_count++] = point.x;
                             _cache[_cache_count++] = point.y;
                             _cache[_cache_count++] = 0.5;
                         }
+                        refresh_cache_vbo(0);
+                        update_vbo = obj->point_count != dynamic_cast<Geo::Bezier *>(obj)->shape().size();
+                        if (update_vbo)
+                        {
+                            break;
+                        }
                     }
-                    update_vbo = (event->modifiers() == Qt::ControlModifier && only_one_selected);
-                    break;
-                default:
-                    break;
+                    else if (obj->type() == Geo::Type::CIRCLECONTAINER)
+                    {
+                        update_vbo = obj->point_count != Geo::circle_to_polygon(dynamic_cast<CircleContainer *>(obj)->shape()).size();
+                        if (update_vbo)
+                        {
+                            break;
+                        }
+                    }
                 }
-                if (data_count > 0)
-                {
-                    glBufferSubData(GL_ARRAY_BUFFER, obj->point_index * 3 * sizeof(double), data_count * sizeof(double), data);
-                }
-            }
-            if (only_one_selected && _cache_count > 0)
-            {
-                glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-                glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
-            }
-            else
-            {
-                _cache_count = 0;
-            }
-            doneCurrent();
-            if (only_one_selected && event->modifiers() == Qt::ControlModifier)
-            {
                 if (update_vbo)
                 {
                     refresh_vbo();
@@ -1462,10 +1182,19 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 }
                 else
                 {
+                    refresh_selected_vbo();
                     refresh_brush_ibo();
                 }
             }
-            delete []data;
+            else
+            {
+                for (Geo::Geometry *obj : _editer->selected())
+                {
+                    _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, false);
+                }
+                refresh_selected_vbo();
+                refresh_brush_ibo();
+            }
             if (GlobalSetting::get_instance()->setting["show_text"].toBool())
             {
                 refresh_text_vbo(false);
@@ -2039,22 +1768,8 @@ void Canvas::polyline_cmd(const double x, const double y)
         _cache[_cache_count++] = _editer->point_cache().back().x;
         _cache[_cache_count++] = _editer->point_cache().back().y;
         _cache[_cache_count++] = 0;
-        makeCurrent();
-        glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-        if (_cache_count == _cache_len)
-        {
-            _cache_len *= 2;
-            double *temp = new double[_cache_len];
-            std::memmove(temp, _cache, _cache_count * sizeof(double));
-            delete []_cache;
-            _cache = temp;
-            glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_STREAM_DRAW);
-        }
-        else
-        {
-            glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - 6) * sizeof(double), 6 * sizeof(double), &_cache[_cache_count - 6]);
-        }
-        doneCurrent();
+        check_cache();
+        refresh_cache_vbo(6);
     }
     else
     {
@@ -2068,10 +1783,7 @@ void Canvas::polyline_cmd(const double x, const double y)
         _cache[3] = _editer->point_cache().back().x;
         _cache[4] = _editer->point_cache().back().y;
         _cache[2] = _cache[5] = 0;
-        makeCurrent();
-        glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-        glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * sizeof(double), _cache);
-        doneCurrent();
+        refresh_cache_vbo(0);
     }
     update();
 }
@@ -2338,6 +2050,17 @@ bool Canvas::catch_point(const double x, const double y, Geo::Point &coord, cons
     }
 }
 
+
+void Canvas::check_cache()
+{
+    if (_cache_count == _cache_len)
+    {
+        double *temp = new double[_cache_len];
+        std::memmove(temp, _cache, sizeof(double) * _cache_count);
+        delete _cache;
+        _cache = temp;
+    }
+}
 
 
 void Canvas::refresh_vbo()
@@ -2890,9 +2613,40 @@ void Canvas::refresh_vbo(const bool unitary)
     }
 }
 
+void Canvas::refresh_cache_vbo(const unsigned int count)
+{
+    if (_cache_count == 0)
+    {
+        return;
+    }
+    makeCurrent();
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
+    if (_cache_count == _cache_len)
+    {
+        _cache_len *= 2;
+        double *temp = new double[_cache_len];
+        std::memmove(temp, _cache, _cache_count * sizeof(double));
+        delete []_cache;
+        _cache = temp;
+        glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_STREAM_DRAW);
+    }
+    else
+    {
+        if (count == 0)
+        {
+            glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
+        }
+        else
+        {
+            glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - count) * sizeof(double), count * sizeof(double), &_cache[_cache_count - count]);
+        }
+    }
+    doneCurrent();
+}
+
 void Canvas::refresh_selected_ibo()
 {
-    size_t index_len = 512, index_count = 0;
+    size_t index_len = 512, index_count = 0, count = 0;
     unsigned int *indexs = new unsigned int[index_len];
 
     for (const ContainerGroup &group : GlobalSetting::get_instance()->graph->container_groups())
@@ -2909,6 +2663,7 @@ void Canvas::refresh_selected_ibo()
                 continue;
             }
 
+            ++count;
             switch (geo->type())
             {
             case Geo::Type::CONTAINER:
@@ -2935,6 +2690,17 @@ void Canvas::refresh_selected_ibo()
                     std::memmove(temp, indexs, index_count * sizeof(unsigned int));
                     delete []indexs;
                     indexs = temp;
+                }
+                if (geo->type() == Geo::Type::BEZIER && count == 1)
+                {
+                    _cache_count = 0;
+                    for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(geo))
+                    {
+                        _cache[_cache_count++] = point.x;
+                        _cache[_cache_count++] = point.y;
+                        _cache[_cache_count++] = 0.5;
+                        check_cache();
+                    }
                 }
                 break;
             case Geo::Type::COMBINATION:
@@ -2973,6 +2739,11 @@ void Canvas::refresh_selected_ibo()
         }
     }
 
+    if (count > 1)
+    {
+        _cache_count = 0;
+    }
+
     makeCurrent();
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
@@ -2983,9 +2754,73 @@ void Canvas::refresh_selected_ibo()
     delete []indexs;
 }
 
+void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
+{
+    size_t index_len = 512, index_count = 0;
+    unsigned int *indexs = new unsigned int[index_len];
+    if (object->type() == Geo::Type::COMBINATION)
+    {
+        for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(object))
+        {
+            for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
+            {
+                indexs[index_count++] = index++;
+                if (index_count == index_len)
+                {
+                    index_len *= 2;
+                    unsigned int *temp = new unsigned int[index_len];
+                    std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                    delete []indexs;
+                    indexs = temp;
+                }
+            }
+            indexs[index_count++] = UINT_MAX;
+            if (index_count == index_len)
+            {
+                index_len *= 2;
+                unsigned int *temp = new unsigned int[index_len];
+                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                delete []indexs;
+                indexs = temp;
+            }
+        }
+    }
+    else
+    {
+        for (size_t i = 0, index = object->point_index, count = object->point_count; i < count; ++i)
+        {
+            indexs[index_count++] = index++;
+            if (index_count == index_len)
+            {
+                index_len *= 2;
+                unsigned int *temp = new unsigned int[index_len];
+                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                delete []indexs;
+                indexs = temp;
+            }
+        }
+        indexs[index_count++] = UINT_MAX;
+        if (index_count == index_len)
+        {
+            index_len *= 2;
+            unsigned int *temp = new unsigned int[index_len];
+            std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+            delete []indexs;
+            indexs = temp;
+        }
+    }
+
+    _indexs_count[2] = index_count;
+    makeCurrent();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
+    doneCurrent();
+    delete []indexs;
+}
+
 void Canvas::refresh_selected_vbo()
 {
-    size_t data_len = 513, data_count;
+    size_t data_len = 513, data_count = 0, count = 0;
     double *data = new double[data_len];
 
     makeCurrent();
@@ -3003,6 +2838,7 @@ void Canvas::refresh_selected_vbo()
             data = new double[data_len];
         }
         data_count = 0;
+        ++count;
         switch (obj->type())
         {
         case Geo::Type::CONTAINER:
@@ -3081,6 +2917,17 @@ void Canvas::refresh_selected_vbo()
                 data[data_count++] = point.y;
                 data[data_count++] = 0.5;
             }
+            if (count == 1)
+            {
+                _cache_count = 0;
+                for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(obj))
+                {
+                    _cache[_cache_count++] = point.x;
+                    _cache[_cache_count++] = point.y;
+                    _cache[_cache_count++] = 0.5;
+                    check_cache();
+                }
+            }
             break;
         default:
             break;
@@ -3092,6 +2939,11 @@ void Canvas::refresh_selected_vbo()
     }
     doneCurrent();
     delete []data;
+
+    if (count > 1)
+    {
+        _cache_count = 0;
+    }
 
     refresh_catached_points();
 }

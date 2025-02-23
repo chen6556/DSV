@@ -198,12 +198,18 @@ public:
     bool catch_point(const double x, const double y, Geo::Point &coord, const double distance);
 
 
+    void check_cache();
+
 
     void refresh_vbo();
 
     void refresh_vbo(const bool unitary);
 
+    void refresh_cache_vbo(const unsigned int count);
+
     void refresh_selected_ibo();
+
+    void refresh_selected_ibo(const Geo::Geometry *object);
 
     void refresh_selected_vbo();
 
