@@ -101,9 +101,19 @@ void MainWindow::init()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (GlobalSetting::get_instance()->graph->modified && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
+    if (GlobalSetting::get_instance()->graph->modified)
     {
-        save_file();
+        switch (QMessageBox::question(this, "File is modified", "Save or not?", QMessageBox::StandardButton::Yes,
+            QMessageBox::StandardButton::No, QMessageBox::StandardButton::Cancel))
+        {
+        case QMessageBox::StandardButton::Yes:
+            save_file();
+            break;
+        case QMessageBox::StandardButton::Cancel:
+            return event->ignore();
+        default:
+            break;
+        }
     }
     QMainWindow::closeEvent(event);
 }
