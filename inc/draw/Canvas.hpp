@@ -16,8 +16,8 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
     Q_OBJECT
 
 public:
-    enum Tool {NOTOOL, MEASURE, CIRCLE, POLYLINE, RECT, CURVE, TEXT};
-    enum Operation {NOOPERATION, MIRROR, RINGARRAY, POLYGONDIFFERENCE, FILLET};
+    enum class Tool {NOTOOL, MEASURE, CIRCLE, POLYLINE, RECT, CURVE, TEXT};
+    enum class Operation {NOOPERATION, MIRROR, RINGARRAY, POLYGONDIFFERENCE, FILLET, ROTATE};
 
 private:
     Geo::Circle _circle_cache;

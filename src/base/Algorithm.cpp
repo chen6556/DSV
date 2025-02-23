@@ -1722,53 +1722,61 @@ bool Geo::foot_point(const Line &line, const Point &point, Point &foot, const bo
 double Geo::angle(const Point &start, const Point &end)
 {
     const Geo::Point vec = start - end;
-    if (vec.y > 0)
+    double value = vec.x / vec.length();
+    if (value > 1)
     {
-        return std::acos(vec.x / vec.length());
+        value = 1;
     }
-    else
+    else if (value < -1)
     {
-        return -std::acos(vec.x / vec.length());
+        value = -1;
     }
+    return vec.y > 0 ? std::acos(value) : -std::acos(value);
 }
 
 double Geo::angle(const Point &point0, const Point &point1, const Point &point2)
 {
     const Geo::Point vec0 = point0 - point1, vec1 = point2 - point1;
-    if (vec0.cross(vec1) > 0)
+    double value = vec0 * vec1 / (vec0.length() * vec1.length());
+    if (value > 1)
     {
-        return std::acos(vec0 * vec1 / (vec0.length() * vec1.length()));
+        value = 1;
     }
-    else
+    else if (value < -1)
     {
-        return -std::acos(vec0 * vec1 / (vec0.length() * vec1.length()));
+        value = -1;
     }
+    return vec0.cross(vec1) > 0 ? std::acos(value) : -std::acos(value);
 }
 
 double Geo::angle(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
 {
     const Geo::Point vec0 = end0 - start0, vec1 = end1 - start1;
-    if (vec0.cross(vec1) > 0)
+    double value = vec0 * vec1 / (vec0.length() * vec1.length());
+    if (value > 1)
     {
-        return std::acos(vec0 * vec1 / (vec0.length() * vec1.length()));
+        value = 1;
     }
-    else
+    else if (value < -1)
     {
-        return -std::acos(vec0 * vec1 / (vec0.length() * vec1.length()));
+        value = -1;
     }
+    return vec0.cross(vec1) > 0 ? std::acos(value) : -std::acos(value);
 }
 
 double Geo::angle(const Line &line0, const Line &line1)
 {
     const Geo::Point vec0 = line0.back() - line0.front(), vec1 = line1.back() - line1.front();
-    if (vec0.cross(vec1) > 0)
+    double value = vec0 * vec1 / (vec0.length() * vec1.length());
+    if (value > 1)
     {
-        return std::acos(vec0 * vec1 / (vec0.length() * vec1.length()));
+        value = 1;
     }
-    else
+    else if (value < -1)
     {
-        return -std::acos(vec0 * vec1 / (vec0.length() * vec1.length()));
+        value = -1;
     }
+    return vec0.cross(vec1) > 0 ? std::acos(value) : -std::acos(value);
 }
 
 double Geo::rad_to_PI(double value)

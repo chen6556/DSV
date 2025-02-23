@@ -550,7 +550,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         }
         else
         {
-
             switch (_operation)
             {
             case Operation::RINGARRAY:
@@ -564,6 +563,26 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 emit tool_changed(Tool::NOTOOL);
                 _object_cache.clear();
                 return update();
+            case Operation::NOOPERATION:
+                if (event->modifiers() == Qt::AltModifier)
+                {
+                    std::list<Geo::Geometry *> objs = _editer->selected();
+                    double left = DBL_MAX, top = -DBL_MAX, right = -DBL_MAX, bottom = DBL_MAX;
+                    for (Geo::Geometry *obj : objs)
+                    {
+                        Geo::AABBRect rect = obj->bounding_rect();
+                        left = std::min(left, rect.left());
+                        top = std::max(top, rect.top());
+                        right = std::max(right, rect.right());
+                        bottom = std::min(bottom, rect.bottom());
+                    }
+                    _stored_coord.x = (left + right) / 2;
+                    _stored_coord.y = (top + bottom) / 2;
+                    _operation = Operation::ROTATE;
+                    setCursor(Qt::CursorShape::ClosedHandCursor);
+                    return;
+                }
+                break;
             default:
                 break;
             }
@@ -1050,6 +1069,17 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
             _pressed_obj = nullptr;
             update();
 
+            switch (_operation)
+            {
+            case Operation::ROTATE:
+                _operation = Operation::NOOPERATION;
+                _info_labels[1]->clear();
+                setCursor(Qt::CursorShape::CrossCursor);
+                break;
+            default:
+                break;
+            }
+
             const std::list<Geo::Geometry *> objects = _editer->selected();
             if (!objects.empty() && GlobalSetting::get_instance()->translated_points
                 && _mouse_press_pos != _mouse_release_pos)
@@ -1228,7 +1258,21 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     }
     else
     {
-        if (is_obj_moveable())
+        if (_operation == Operation::ROTATE)
+        {
+            if (!_editer->selected().empty())
+            {
+                double angle = Geo::angle(Geo::Point(real_x0, real_y0), _stored_coord, Geo::Point(real_x1, real_y1));
+                angle = Geo::degree_to_rad(std::round(Geo::rad_to_degree(angle)));
+                for (Geo::Geometry *obj : _editer->selected())
+                {
+                    obj->rotate(_stored_coord.x, _stored_coord.y, angle);
+                }
+                _info_labels[1]->setText(QString::number(_info_labels[1]->text().split("°").front().toDouble() + Geo::rad_to_degree(angle)) + "°");
+                refresh_selected_vbo();
+            }
+        }
+        else if (is_obj_moveable())
         {
             if (!is_moving_obj())
             {

@@ -1671,7 +1671,6 @@ color:rgb(230, 230, 230);</string>
    <slots>
     <signal>tool_changed(Canvas::Tool)</signal>
     <signal>operation_changed(Canvas::Operation)</signal>
-    <slot>cancel_painting()</slot>
    </slots>
   </customwidget>
  </customwidgets>
