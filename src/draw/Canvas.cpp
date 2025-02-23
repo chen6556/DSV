@@ -562,7 +562,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 }
                 emit tool_changed(Tool::NOTOOL);
                 _object_cache.clear();
-                return update();
+                update();
+                return QOpenGLWidget::mousePressEvent(event);
             case Operation::NOOPERATION:
                 if (event->modifiers() == Qt::AltModifier)
                 {
@@ -578,9 +579,10 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     }
                     _stored_coord.x = (left + right) / 2;
                     _stored_coord.y = (top + bottom) / 2;
+                    _refline_points[0] = 0;
                     _operation = Operation::ROTATE;
                     setCursor(Qt::CursorShape::ClosedHandCursor);
-                    return;
+                    return QOpenGLWidget::mousePressEvent(event);
                 }
                 break;
             default:
@@ -641,7 +643,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                             QString::number(Geo::distance(_cache[0], _cache[1],
                                 _cache[3], _cache[4])));
                     }
-                    return update();
+                    update();
+                    return QOpenGLWidget::mousePressEvent(event);
                 default:
                     break;
                 }
@@ -698,7 +701,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _object_cache.clear();
                     _operation = Operation::NOOPERATION;
                     emit tool_changed(Tool::NOTOOL);
-                    return update();
+                    update();
+                    return QOpenGLWidget::mousePressEvent(event);
                 case Operation::POLYGONDIFFERENCE:
                     if (_editer->polygon_difference(dynamic_cast<Container *>(_last_clicked_obj), 
                         dynamic_cast<const Container *>(_clicked_obj)))
@@ -709,7 +713,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _object_cache.clear();
                     emit tool_changed(Tool::NOTOOL);
                     _operation = Operation::NOOPERATION;
-                    return update();
+                    update();
+                    return QOpenGLWidget::mousePressEvent(event);
                 case Operation::FILLET:
                     {
                         double dis = DBL_MAX;
@@ -751,9 +756,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         default:
                             break;
                         }
-                        // _operation = Operation::NOOPERATION;
-                        // emit tool_changed(Tool::NOTOOL);
-                        return update();
+                        update();
+                        return QOpenGLWidget::mousePressEvent(event);
                     }
                     break;
                 default:
@@ -775,7 +779,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                             _cache[2] = _cache[5] = 0.51;
                             _cache[0] = _cache[3] = coord.x;
                             _cache[1] = _cache[4] = coord.y;
-                            return update();
+                            update();
+                            return QOpenGLWidget::mousePressEvent(event);
                         }
                     }
                     else
@@ -789,7 +794,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                             _info_labels[1]->setText("Length:" +
                                 QString::number(Geo::distance(_cache[0], _cache[1],
                                     _cache[3], _cache[4])));
-                            return update();
+                            update();
+                            return QOpenGLWidget::mousePressEvent(event);
                         }
                     }
                     break;
@@ -917,7 +923,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     default:
                         break;
                     }
-                    return update();
+                    update();
+                    return QOpenGLWidget::mousePressEvent(event);
                 default:
                     break;
                 }
@@ -1073,7 +1080,11 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
             {
             case Operation::ROTATE:
                 _operation = Operation::NOOPERATION;
-                _info_labels[1]->clear();
+                {
+                    const std::list<Geo::Geometry *> objs = _editer->selected();
+                    _editer->push_backup_command(new UndoStack::RotateCommand(objs.begin(), objs.end(), 
+                        _stored_coord.x, _stored_coord.y, Geo::degree_to_rad(_refline_points[0]), true));
+                }
                 setCursor(Qt::CursorShape::CrossCursor);
                 break;
             default:
@@ -1277,7 +1288,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 {
                     obj->rotate(_stored_coord.x, _stored_coord.y, angle);
                 }
-                angle = _info_labels[1]->text().split("°").front().toDouble() + Geo::rad_to_degree(angle);
+                angle = _refline_points[0] + Geo::rad_to_degree(angle);
                 if (angle > 360)
                 {
                     angle -= 360;
@@ -1286,6 +1297,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 {
                     angle += 360;
                 }
+                _refline_points[0] = angle;
                 _info_labels[1]->setText(QString("%1°").arg(angle));
                 refresh_selected_vbo();
             }
