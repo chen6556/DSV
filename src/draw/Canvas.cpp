@@ -2644,8 +2644,14 @@ void Canvas::refresh_cache_vbo(const unsigned int count)
     doneCurrent();
 }
 
+void Canvas::clear_cache()
+{
+    _cache_count = 0;
+}
+
 void Canvas::refresh_selected_ibo()
 {
+    _cache_count = 0;
     size_t index_len = 512, index_count = 0, count = 0;
     unsigned int *indexs = new unsigned int[index_len];
 
@@ -2820,6 +2826,7 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
 
 void Canvas::refresh_selected_vbo()
 {
+    _cache_count = 0;
     size_t data_len = 513, data_count = 0, count = 0;
     double *data = new double[data_len];
 

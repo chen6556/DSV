@@ -207,6 +207,8 @@ public:
 
     void refresh_cache_vbo(const unsigned int count);
 
+    void clear_cache();
+
     void refresh_selected_ibo();
 
     void refresh_selected_ibo(const Geo::Geometry *object);

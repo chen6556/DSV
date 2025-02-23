@@ -134,6 +134,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         ui->canvas->cancel_painting();
         _editer.reset_selected_mark();
         ui->canvas->refresh_selected_ibo();
+        ui->canvas->refresh_cache_vbo(0);
         _cmd_widget->clear();
         break;
     case Qt::Key_Space:
@@ -147,6 +148,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         if (_editer.remove_selected())
         {
             ui->canvas->refresh_vbo();
+            ui->canvas->clear_cache();
             ui->canvas->update();
         }
         break;
@@ -155,6 +157,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         {
             _editer.reset_selected_mark(true);
             ui->canvas->refresh_selected_ibo();
+            ui->canvas->refresh_cache_vbo(0);
             ui->canvas->update();
         }
         break;
@@ -201,6 +204,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             }
             ui->canvas->refresh_vbo();
             ui->canvas->refresh_selected_ibo();
+            ui->canvas->refresh_cache_vbo(0);
             ui->canvas->update();
         }
         break;
