@@ -18,14 +18,15 @@ class CMDWidget : public QWidget
     Q_OBJECT
 
 public:
-    enum CMD {ERROR_CMD, OPEN_CMD, APPEND_CMD, SAVE_CMD, EXIT_CMD, MAIN_CMD,
-        LENGTH_CMD, POLYLINE_CMD, CIRCLE_CMD, RECTANGLE_CMD, BEZIER_CMD, TEXT_CMD,
-        CONNECT_CMD, CLOSE_CMD, COMBINATE_CMD, SPLIT_CMD, ROTATE_CMD, FLIPX_CMD, FLIPY_CMD,
-        MIRROR_CMD, ARRAY_CMD, LINEARRAY_CMD, RINGARRAY_CMD, OFFSET_CMD, SCALE_CMD, FILLET_CMD,
-        UNION_CMD, INTERSECTION_CMD, DIFFERENCE_CMD,
-        DELETE_CMD, COPY_CMD, CUT_CMD, PASTE_CMD, UNDO_CMD, SELECTALL_CMD};
+    enum class CMD {Error_CMD, Open_CMD, Append_CMD, Save_CMD, Exit_CMD, Main_CMD,
+        Length_CMD, Polyline_CMD, Circle_CMD, Rectangle_CMD, Bezier_CMD, Text_CMD,
+        Connect_CMD, Close_CMD, Combinate_CMD, Split_CMD, Rotate_CMD, FlipX_CMD, FlipY_CMD,
+        Mirror_CMD, PointMirror_CMD, Array_CMD, LineArray_CMD, RingArray_CMD,
+        Offset_CMD, Scale_CMD, Fillet_CMD,
+        Union_CMD, Intersection_CMD, Difference_CMD,
+        Delete_CMD, Copy_CMD, Cut_CMD, Paste_CMD, Undo_CMD, SelectAll_CMD};
 
-    enum SETTING {ABSOLUTE_SETTING, RELATIVE_SETTING};
+    enum class SETTING {Absolute_SETTING, Relative_SETTING};
 
 private:
     Ui::CMDWidget *ui = nullptr;
@@ -37,7 +38,7 @@ private:
     std::map<QString, CMD> _cmd_dict;
     std::map<QString, SETTING> _setting_dict;
 
-    CMD _current_cmd = CMD::ERROR_CMD;
+    CMD _current_cmd = CMD::Error_CMD;
     std::vector<double> _parameters;
     bool _relative = false;
     double _last_x, _last_y;

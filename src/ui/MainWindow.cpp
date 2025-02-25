@@ -444,24 +444,29 @@ void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
 {
     switch (cmd)
     {
-    case CMDWidget::CMD::OPEN_CMD:
+    case CMDWidget::CMD::Open_CMD:
         return open_file();
-    case CMDWidget::CMD::SAVE_CMD:
+    case CMDWidget::CMD::Append_CMD:
+        return append_file();
+    case CMDWidget::CMD::Save_CMD:
         return save_file();
-    case CMDWidget::CMD::EXIT_CMD:
+    case CMDWidget::CMD::Exit_CMD:
         this->close();
         break;
-    case CMDWidget::CMD::MAIN_CMD:
+    case CMDWidget::CMD::Main_CMD:
         return ui->tool_widget->setCurrentIndex(0);
-    case CMDWidget::CMD::MIRROR_CMD:
+    case CMDWidget::CMD::Mirror_CMD:
         ui->current_tool->setText("Mirror");
         return ui->canvas->set_operation(Canvas::Operation::Mirror);
-    case CMDWidget::CMD::ARRAY_CMD:
+    case CMDWidget::CMD::PointMirror_CMD:
+        ui->current_tool->setText("Point Mirror");
+        return ui->canvas->set_operation(Canvas::Operation::PointMirror);
+    case CMDWidget::CMD::Array_CMD:
         return ui->tool_widget->setCurrentIndex(1);
-    case CMDWidget::CMD::RINGARRAY_CMD:
+    case CMDWidget::CMD::RingArray_CMD:
         ui->array_tool->setText("Ring Array");
         break;
-    case CMDWidget::CMD::DIFFERENCE_CMD:
+    case CMDWidget::CMD::Difference_CMD:
         ui->current_tool->setText("Difference");
         break;
     default:

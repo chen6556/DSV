@@ -25,27 +25,29 @@ void CMDWidget::init()
     ui->cmd->setValidator(new QRegularExpressionValidator(QRegularExpression("([A-Za-z]+)|(-?[0-9]+(.[0-9]+)?)$")));
     ui->cmd->installEventFilter(this);
 
-    _cmd_list << QString() << "OPEN" << "SAVE" << "EXIT" << "MAIN"
+    _cmd_list << QString() << "OPEN" << "APPEND" << "SAVE" << "EXIT" << "MAIN"
         << "LENGTH" << "CIRCLE" << "POLYLINE" << "RECTANGLE" << "BEZIER" << "TEXT"
         << "CONNECT" << "CLOSE" << "COMBINATE" << "SPLIT"
-        << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "ARRAY" << "LINEARRAY" << "RINGARRAY"
+        << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "POINTMIRROR"
+        << "ARRAY" << "LINEARRAY" << "RINGARRAY"
         << "UNION" << "INTERSECTION" << "DIFFERENCE"
         << "OFFSET" << "SCALE" << "FILLET" << "ABSOLUTE" << "RELATIVE"
         << "DELETE" << "COPY" << "CUT" << "PASTE" << "UNDO" << "ALL";
 
-    _cmd_dict = {{"OPEN",CMD::OPEN_CMD}, {"SAVE",CMD::SAVE_CMD}, {"EXIT",CMD::EXIT_CMD},
-        {"LENGTH",CMD::LENGTH_CMD}, {"MAIN",CMD::MAIN_CMD},
-        {"CIRCLE",CMD::CIRCLE_CMD}, {"POLYLINE",CMD::POLYLINE_CMD}, {"RECTANGLE",CMD::RECTANGLE_CMD}, 
-        {"BEZIER",CMD::BEZIER_CMD}, {"TEXT",CMD::TEXT_CMD}, {"CONNECT",CMD::CONNECT_CMD},
-        {"COMBINATE",CMD::COMBINATE_CMD}, {"CLOSE",CMD::CLOSE_CMD}, {"SPLIT",CMD::SPLIT_CMD},
-        {"ROTATE",CMD::ROTATE_CMD}, {"FLIPX",CMD::FLIPX_CMD}, {"FLIPY",CMD::FLIPY_CMD}, {"MIRROR",CMD::MIRROR_CMD},
-        {"ARRAY",CMD::ARRAY_CMD}, {"LINEARRAY",CMD::LINEARRAY_CMD}, {"RINGARRAY",CMD::RINGARRAY_CMD},
-        {"OFFSET",CMD::OFFSET_CMD}, {"SCALE", CMD::SCALE_CMD}, {"FILLET",CMD::FILLET_CMD},
-        {"UNION",CMD::UNION_CMD}, {"INTERSECTION",CMD::INTERSECTION_CMD}, {"DIFFERENCE",CMD::DIFFERENCE_CMD},
-        {"DELETE",CMD::DELETE_CMD}, {"COPY",CMD::COPY_CMD}, {"CUT",CMD::CUT_CMD}, {"PASTE",CMD::PASTE_CMD},
-        {"UNDO",CMD::UNDO_CMD}, {"ALL",CMD::SELECTALL_CMD}};
+    _cmd_dict = {{"OPEN",CMD::Open_CMD}, {"APPEND",CMD::Append_CMD}, {"SAVE",CMD::Save_CMD}, {"EXIT",CMD::Exit_CMD},
+        {"LENGTH",CMD::Length_CMD}, {"MAIN",CMD::Main_CMD},
+        {"CIRCLE",CMD::Circle_CMD}, {"POLYLINE",CMD::Polyline_CMD}, {"RECTANGLE",CMD::Rectangle_CMD}, 
+        {"BEZIER",CMD::Bezier_CMD}, {"TEXT",CMD::Text_CMD}, {"CONNECT",CMD::Connect_CMD},
+        {"COMBINATE",CMD::Combinate_CMD}, {"CLOSE",CMD::Close_CMD}, {"SPLIT",CMD::Split_CMD},
+        {"ROTATE",CMD::Rotate_CMD}, {"FLIPX",CMD::FlipX_CMD}, {"FLIPY",CMD::FlipY_CMD},
+        {"MIRROR",CMD::Mirror_CMD}, {"POINTMIRROR",CMD::PointMirror_CMD},
+        {"ARRAY",CMD::Array_CMD}, {"LINEARRAY",CMD::LineArray_CMD}, {"RINGARRAY",CMD::RingArray_CMD},
+        {"OFFSET",CMD::Offset_CMD}, {"SCALE", CMD::Scale_CMD}, {"FILLET",CMD::Fillet_CMD},
+        {"UNION",CMD::Union_CMD}, {"INTERSECTION",CMD::Intersection_CMD}, {"DIFFERENCE",CMD::Difference_CMD},
+        {"DELETE",CMD::Delete_CMD}, {"COPY",CMD::Copy_CMD}, {"CUT",CMD::Cut_CMD}, {"PASTE",CMD::Paste_CMD},
+        {"UNDO",CMD::Undo_CMD}, {"ALL",CMD::SelectAll_CMD}};
 
-    _setting_dict = {{"RELATIVE", SETTING::RELATIVE_SETTING}, {"ABSOLUTE", SETTING::ABSOLUTE_SETTING}};
+    _setting_dict = {{"RELATIVE", SETTING::Relative_SETTING}, {"ABSOLUTE", SETTING::Absolute_SETTING}};
 
     _completer = new QCompleter(_cmd_list, this);
     _completer->setCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
@@ -129,7 +131,7 @@ void CMDWidget::clear()
     ui->cmd->clear();
     ui->cmd_label->clear();
     ui->parameter_label->clear();
-    _current_cmd = CMD::ERROR_CMD;
+    _current_cmd = CMD::Error_CMD;
     _completer->setCurrentRow(0);
     _parameters.clear();
 }
@@ -139,7 +141,7 @@ CMDWidget::CMD CMDWidget::cmd() const
     std::map<QString, CMDWidget::CMD>::const_iterator result = _cmd_dict.find(ui->cmd->text().toUpper());
     if (result == _cmd_dict.end())
     {
-        return CMD::ERROR_CMD;
+        return CMD::Error_CMD;
     }
     else
     {
@@ -149,7 +151,7 @@ CMDWidget::CMD CMDWidget::cmd() const
 
 bool CMDWidget::empty() const
 {
-    return ui->cmd->text().isEmpty() && _current_cmd == CMD::ERROR_CMD;
+    return ui->cmd->text().isEmpty() && _current_cmd == CMD::Error_CMD;
 }
 
 std::vector<double> &CMDWidget::parameters()
@@ -189,119 +191,121 @@ bool CMDWidget::work()
     _completer->setCurrentRow(0);
     switch (_current_cmd)
     {
-    case CMD::OPEN_CMD:
-    case CMD::SAVE_CMD:
-    case CMD::EXIT_CMD:
-    case CMD::MAIN_CMD:
+    case CMD::Open_CMD:
+    case CMD::Append_CMD:
+    case CMD::Save_CMD:
+    case CMD::Exit_CMD:
+    case CMD::Main_CMD:
         emit cmd_changed(_current_cmd);
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
 
-    case CMD::LENGTH_CMD:
+    case CMD::Length_CMD:
         _canvas->use_tool(Canvas::Tool::Measure);
         break;
-    case CMD::POLYLINE_CMD:
+    case CMD::Polyline_CMD:
         ui->cmd_label->setText("Polyline");
         polyline();
         break;
-    case CMD::RECTANGLE_CMD:
+    case CMD::Rectangle_CMD:
         ui->cmd_label->setText("Rectangle");
         rectangle();
         break;
-    case CMD::CIRCLE_CMD:
+    case CMD::Circle_CMD:
         ui->cmd_label->setText("Circle");
         circle();
         break;
-    case CMD::BEZIER_CMD:
+    case CMD::Bezier_CMD:
         ui->cmd_label->setText("Curve");
         curve();
         break;
-    case CMD::TEXT_CMD:
+    case CMD::Text_CMD:
         ui->cmd_label->setText("Text");
         text();
         break;
 
-    case CMD::CONNECT_CMD:
+    case CMD::Connect_CMD:
         if (_editer->connect(_editer->selected(), GlobalSetting::get_instance()->setting["catch_distance"].toDouble()))
         {
             _canvas->refresh_vbo();
             _canvas->refresh_selected_ibo();
             _canvas->update();
         }
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
-    case CMD::CLOSE_CMD:
+    case CMD::Close_CMD:
         if (_editer->close_polyline(_editer->selected()))
         {
             _canvas->refresh_vbo();
             _canvas->refresh_selected_ibo();
             _canvas->update();
         }
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
-    case CMD::COMBINATE_CMD:
+    case CMD::Combinate_CMD:
         if (_editer->combinate(_editer->selected()))
         {
             _canvas->refresh_vbo();
             _canvas->refresh_selected_ibo();
             _canvas->update();
         }
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
-    case CMD::SPLIT_CMD:
+    case CMD::Split_CMD:
         _editer->split(_editer->selected());
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
-    case CMD::ROTATE_CMD:
+    case CMD::Rotate_CMD:
         ui->cmd_label->setText("Rotate");
         rotate();
         break;
-    case CMD::FLIPX_CMD:
+    case CMD::FlipX_CMD:
         {
             std::list<Geo::Geometry *> objects = _editer->selected();
             _editer->flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::get_instance()->ui->to_all_layers->isChecked());
             _canvas->refresh_vbo(objects.empty());
             _canvas->update();
         }
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
-    case CMD::FLIPY_CMD:
+    case CMD::FlipY_CMD:
         {
             std::list<Geo::Geometry *> objects = _editer->selected();
             _editer->flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::get_instance()->ui->to_all_layers->isChecked());
             _canvas->refresh_vbo(objects.empty());
             _canvas->update();
         }
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
-    case CMD::SCALE_CMD:
+    case CMD::Scale_CMD:
         ui->cmd_label->setText("Scale");
         scale();
         break;
-    case CMD::OFFSET_CMD:
+    case CMD::Offset_CMD:
         ui->cmd_label->setText("Offset");
         offset();
         break;
-    case CMD::FILLET_CMD:
+    case CMD::Fillet_CMD:
         fillet();
         break;
 
-    case CMD::MIRROR_CMD:
-    case CMD::ARRAY_CMD:
+    case CMD::Mirror_CMD:
+    case CMD::PointMirror_CMD:
+    case CMD::Array_CMD:
         emit cmd_changed(_current_cmd);
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
 
-    case CMD::LINEARRAY_CMD:
+    case CMD::LineArray_CMD:
         ui->cmd_label->setText("Line Array");
         line_array();
         break;
-    case CMD::RINGARRAY_CMD:
+    case CMD::RingArray_CMD:
         ui->cmd_label->setText("Ring Array");
         ring_array();
         break;
 
-    case CMD::UNION_CMD:
+    case CMD::Union_CMD:
         {
             Container *container0 = nullptr, *container1 = nullptr;
             for (Geo::Geometry *object : _editer->selected())
@@ -327,9 +331,9 @@ bool CMDWidget::work()
                 _canvas->update();
             }
         }
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
-    case CMD::INTERSECTION_CMD:
+    case CMD::Intersection_CMD:
         {
             Container *container0 = nullptr, *container1 = nullptr;
             for (Geo::Geometry *object : _editer->selected())
@@ -355,43 +359,43 @@ bool CMDWidget::work()
                 _canvas->update();
             }
         }
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
-    case CMD::DIFFERENCE_CMD:
+    case CMD::Difference_CMD:
         _canvas->set_operation(Canvas::Operation::PolygonDifference);
         emit cmd_changed(_current_cmd);
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         ui->cmd_label->setText("Difference");
         break;
 
-    case CMD::SELECTALL_CMD:
+    case CMD::SelectAll_CMD:
         _editer->reset_selected_mark(true);
         _canvas->refresh_selected_ibo();
         _canvas->update();
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
-    case CMD::DELETE_CMD:
+    case CMD::Delete_CMD:
         if (_editer->remove_selected())
         {
             _canvas->refresh_vbo();
             _canvas->update();
         }
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
-    case CMD::COPY_CMD:
+    case CMD::Copy_CMD:
         _canvas->copy();
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
-    case CMD::CUT_CMD:
+    case CMD::Cut_CMD:
         _canvas->cut();
         _canvas->update();
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
-    case CMD::PASTE_CMD:
+    case CMD::Paste_CMD:
         ui->cmd_label->setText("Paste");
         paste();
         break;
-    case CMD::UNDO_CMD:
+    case CMD::Undo_CMD:
         if (!_canvas->is_painting())
         {
             _editer->undo();
@@ -399,7 +403,7 @@ bool CMDWidget::work()
             _canvas->refresh_selected_ibo();
             _canvas->update();
         }
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
 
     default:
@@ -453,12 +457,12 @@ bool CMDWidget::get_setting()
 
     switch (result->second)
     {
-    case SETTING::RELATIVE_SETTING:
-    case SETTING::ABSOLUTE_SETTING:
+    case SETTING::Relative_SETTING:
+    case SETTING::Absolute_SETTING:
         if (_parameters.size() < 2)
         {
-            _relative = (result->second == SETTING::RELATIVE_SETTING);
-            if (_current_cmd == CMD::POLYLINE_CMD || _current_cmd == CMD::BEZIER_CMD)
+            _relative = (result->second == SETTING::Relative_SETTING);
+            if (_current_cmd == CMD::Polyline_CMD || _current_cmd == CMD::Bezier_CMD)
             {
                 ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
             }
@@ -817,7 +821,7 @@ void CMDWidget::line_array()
         _parameters.clear();
         ui->parameter_label->clear();
         ui->cmd_label->clear();
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
     default:
         break;
@@ -829,7 +833,7 @@ void CMDWidget::ring_array()
     switch (_parameters.size())
     {
     case 0:
-        emit cmd_changed(CMD::RINGARRAY_CMD);
+        emit cmd_changed(CMD::RingArray_CMD);
         ui->parameter_label->setText("Center X:");
         break;
     case 1:
@@ -851,7 +855,7 @@ void CMDWidget::ring_array()
         ui->parameter_label->clear();
         ui->cmd_label->clear();
         emit _canvas->tool_changed(Canvas::Tool::NoTool);
-        _current_cmd = CMD::ERROR_CMD;
+        _current_cmd = CMD::Error_CMD;
         break;
     default:
         break;
