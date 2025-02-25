@@ -61,7 +61,7 @@ void CMDWidget::refresh_tool(const Canvas::Tool tool)
 {
     switch (tool)
     {
-    case Canvas::Tool::NOTOOL:
+    case Canvas::Tool::NoTool:
         clear();
         break;
     default:
@@ -198,7 +198,7 @@ bool CMDWidget::work()
         break;
 
     case CMD::LENGTH_CMD:
-        _canvas->use_tool(Canvas::Tool::MEASURE);
+        _canvas->use_tool(Canvas::Tool::Measure);
         break;
     case CMD::POLYLINE_CMD:
         ui->cmd_label->setText("Polyline");
@@ -358,7 +358,7 @@ bool CMDWidget::work()
         _current_cmd = CMD::ERROR_CMD;
         break;
     case CMD::DIFFERENCE_CMD:
-        _canvas->set_operation(Canvas::Operation::POLYGONDIFFERENCE);
+        _canvas->set_operation(Canvas::Operation::PolygonDifference);
         emit cmd_changed(_current_cmd);
         _current_cmd = CMD::ERROR_CMD;
         ui->cmd_label->setText("Difference");
@@ -418,8 +418,8 @@ bool CMDWidget::get_cmd()
     }
     else
     {
-        _canvas->set_operation(Canvas::Operation::NOOPERATION);
-        _canvas->use_tool(Canvas::Tool::NOTOOL);
+        _canvas->set_operation(Canvas::Operation::NoOperation);
+        _canvas->use_tool(Canvas::Tool::NoTool);
         _current_cmd = result->second;
         return true;
     }
@@ -514,7 +514,7 @@ void CMDWidget::polyline()
     switch (_parameters.size())
     {
     case 0:
-        _canvas->use_tool(Canvas::Tool::POLYLINE);
+        _canvas->use_tool(Canvas::Tool::Polyline);
         _parameters.emplace_back(0);
         ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
         _last_x = _last_y = 0;
@@ -554,7 +554,7 @@ void CMDWidget::curve()
     switch (_parameters.size())
     {
     case 0:
-        _canvas->use_tool(Canvas::Tool::CURVE);
+        _canvas->use_tool(Canvas::Tool::Curve);
         _parameters.emplace_back(0);
         ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
         _last_x = _last_y = 0;
@@ -594,7 +594,7 @@ void CMDWidget::text()
     switch (_parameters.size())
     {
     case 0:
-        _canvas->use_tool(Canvas::Tool::TEXT);
+        _canvas->use_tool(Canvas::Tool::Text);
         ui->parameter_label->setText("X: Y:");
         break;
     case 1:
@@ -614,7 +614,7 @@ void CMDWidget::rectangle()
     switch (_parameters.size())
     {
     case 0:
-        _canvas->use_tool(Canvas::Tool::RECT);
+        _canvas->use_tool(Canvas::Tool::Rect);
         _parameters.emplace_back(0);
         ui->parameter_label->setText("X: Y:");
         break;
@@ -657,7 +657,7 @@ void CMDWidget::circle()
     switch (_parameters.size())
     {
     case 0:
-        _canvas->use_tool(Canvas::Tool::CIRCLE);
+        _canvas->use_tool(Canvas::Tool::Circle);
         _parameters.emplace_back(0);
         ui->parameter_label->setText("X: Y:");
         break;
@@ -766,14 +766,14 @@ void CMDWidget::fillet()
     switch (_parameters.size())
     {
     case 0:
-        GlobalSetting::get_instance()->ui->canvas->set_operation(Canvas::Operation::FILLET);
+        GlobalSetting::get_instance()->ui->canvas->set_operation(Canvas::Operation::Fillet);
         ui->cmd_label->setText("Fillet Radius: " + QString::number(
             GlobalSetting::get_instance()->ui->fillet_sbx->value()));
         _parameters.push_back(0);
         break;
     case 1:
         clear();
-        GlobalSetting::get_instance()->ui->canvas->set_operation(Canvas::Operation::NOOPERATION);
+        GlobalSetting::get_instance()->ui->canvas->set_operation(Canvas::Operation::NoOperation);
         break;
     case 2:
         ui->cmd_label->setText("Fillet Radius: " + QString::number(_parameters.back()));
@@ -850,7 +850,7 @@ void CMDWidget::ring_array()
         _parameters.clear();
         ui->parameter_label->clear();
         ui->cmd_label->clear();
-        emit _canvas->tool_changed(Canvas::Tool::NOTOOL);
+        emit _canvas->tool_changed(Canvas::Tool::NoTool);
         _current_cmd = CMD::ERROR_CMD;
         break;
     default:

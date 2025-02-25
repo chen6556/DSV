@@ -54,12 +54,12 @@ void MainWindow::init()
     QObject::connect(_cmd_widget, &CMDWidget::cmd_changed, this, &MainWindow::refresh_cmd);
 
     _clock.start(5000);
-    QObject::connect(ui->measure_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::MEASURE); });
-    QObject::connect(ui->circle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::CIRCLE); });
-    QObject::connect(ui->line_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::POLYLINE); });
-    QObject::connect(ui->rect_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::RECT); });
-    QObject::connect(ui->curve_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::CURVE); ui->canvas->set_bezier_order(ui->curve_sbx->value()); });
-    QObject::connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::TEXT); });
+    QObject::connect(ui->measure_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Measure); });
+    QObject::connect(ui->circle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Circle); });
+    QObject::connect(ui->line_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Polyline); });
+    QObject::connect(ui->rect_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Rect); });
+    QObject::connect(ui->curve_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Curve); ui->canvas->set_bezier_order(ui->curve_sbx->value()); });
+    QObject::connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Text); });
     QObject::connect(ui->split_btn, &QPushButton::clicked, [this]() { _editer.split(_editer.selected()); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
@@ -387,22 +387,22 @@ void MainWindow::refresh_tool_label(const Canvas::Tool tool)
 {
     switch (tool)
     {
-    case Canvas::Tool::MEASURE:
+    case Canvas::Tool::Measure:
         ui->current_tool->setText("Length");
         break;
-    case Canvas::Tool::CIRCLE:
+    case Canvas::Tool::Circle:
         ui->current_tool->setText("Circle");
         break;
-    case Canvas::Tool::POLYLINE:
+    case Canvas::Tool::Polyline:
         ui->current_tool->setText("Polyline");
         break;
-    case Canvas::Tool::RECT:
+    case Canvas::Tool::Rect:
         ui->current_tool->setText("Rectangle");
         break;
-    case Canvas::Tool::CURVE:
+    case Canvas::Tool::Curve:
         ui->current_tool->setText("Bezier Curve");
         break;
-    case Canvas::Tool::TEXT:
+    case Canvas::Tool::Text:
         ui->current_tool->setText("Text");
         break;
     default:
@@ -416,8 +416,23 @@ void MainWindow::refresh_tool_label(const Canvas::Operation operation)
 {
     switch (operation)
     {
-    case Canvas::Operation::FILLET:
+    case Canvas::Operation::Mirror:
+        ui->current_tool->setText("Mirror");
+        break;
+    case Canvas::Operation::PointMirror:
+        ui->current_tool->setText("Point Mirror");
+        break;
+    case Canvas::Operation::PolygonDifference:
+        ui->current_tool->setText("Difference");
+        break;
+    case Canvas::Operation::RingArray:
+        ui->current_tool->setText("Ring Array");
+        break;
+    case Canvas::Operation::Fillet:
         ui->current_tool->setText("Fillet");
+        break;
+    case Canvas::Operation::Rotate:
+        ui->current_tool->setText("Rotate");
         break;
     default:
         ui->current_tool->clear();
@@ -440,7 +455,7 @@ void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
         return ui->tool_widget->setCurrentIndex(0);
     case CMDWidget::CMD::MIRROR_CMD:
         ui->current_tool->setText("Mirror");
-        return ui->canvas->set_operation(Canvas::Operation::MIRROR);
+        return ui->canvas->set_operation(Canvas::Operation::Mirror);
     case CMDWidget::CMD::ARRAY_CMD:
         return ui->tool_widget->setCurrentIndex(1);
     case CMDWidget::CMD::RINGARRAY_CMD:
@@ -589,7 +604,13 @@ void MainWindow::flip_y()
 void MainWindow::mirror()
 {
     ui->current_tool->setText("Mirror");
-    ui->canvas->set_operation(Canvas::Operation::MIRROR);
+    ui->canvas->set_operation(Canvas::Operation::Mirror);
+}
+
+void MainWindow::point_mirror()
+{
+    ui->current_tool->setText("Point Mirror");
+    ui->canvas->set_operation(Canvas::Operation::PointMirror);
 }
 
 void MainWindow::scale()
@@ -632,7 +653,7 @@ void MainWindow::line_array()
 void MainWindow::ring_array()
 {
     ui->array_tool->setText("Ring Array");
-    ui->canvas->set_operation(Canvas::Operation::RINGARRAY);
+    ui->canvas->set_operation(Canvas::Operation::RingArray);
 }
 
 
@@ -694,14 +715,14 @@ void MainWindow::polygon_intersection()
 void MainWindow::polygon_difference()
 {
     ui->current_tool->setText("Difference");
-    ui->canvas->set_operation(Canvas::Operation::POLYGONDIFFERENCE);
+    ui->canvas->set_operation(Canvas::Operation::PolygonDifference);
 }
 
 
 
 void MainWindow::fillet()
 {
-    ui->canvas->set_operation(Canvas::Operation::FILLET);
+    ui->canvas->set_operation(Canvas::Operation::Fillet);
 }
 
 

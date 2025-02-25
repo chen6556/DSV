@@ -323,7 +323,7 @@ void Canvas::paintGL()
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        if (_tool_flags[0] != Tool::CURVE)
+        if (_tool_flags[0] != Tool::Curve)
         {
             glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color
         }
@@ -332,7 +332,7 @@ void Canvas::paintGL()
             glUniform4f(_uniforms[4], 1.0f, 0.549f, 0.0f, 1.0f); // color
         }
         glDrawArrays(GL_LINE_STRIP, 0, _cache_count / 3);
-        if (_tool_flags[0] == Tool::CURVE || GlobalSetting::get_instance()->setting["show_points"].toBool())
+        if (_tool_flags[0] == Tool::Curve || GlobalSetting::get_instance()->setting["show_points"].toBool())
         {
             glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
             glDrawArrays(GL_POINTS, 0, _cache_count / 3);
@@ -460,7 +460,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         {
             switch (_tool_flags[0])
             {
-            case Tool::CIRCLE:
+            case Tool::Circle:
                 if (!is_painting()) // not painting
                 {
                     _circle_cache = Geo::Circle(real_x1, real_y1, 10);
@@ -470,15 +470,15 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _editer->append(_circle_cache);
                     _circle_cache.clear();
                     _tool_flags[1] = _tool_flags[0];
-                    _tool_flags[0] = Tool::NOTOOL;
+                    _tool_flags[0] = Tool::NoTool;
                     _bool_flags[1] = false; // moveable
                     emit tool_changed(_tool_flags[0]);
                     refresh_vbo();
                 }
                 _bool_flags[2] = !_bool_flags[2]; // painting
                 break;
-            case Tool::POLYLINE:
-            case Tool::CURVE:
+            case Tool::Polyline:
+            case Tool::Curve:
                 if (is_painting())
                 {
                     _editer->point_cache().emplace_back(Geo::Point(real_x1, real_y1));
@@ -501,7 +501,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     refresh_cache_vbo(0);
                 }
                 break;
-            case Tool::RECT:
+            case Tool::Rect:
                 if (!is_painting())
                 {
                     _last_point.x = real_x1;
@@ -513,16 +513,16 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _editer->append(_AABBRect_cache);
                     _AABBRect_cache.clear();
                     _tool_flags[1] = _tool_flags[0];
-                    _tool_flags[0] = Tool::NOTOOL;
+                    _tool_flags[0] = Tool::NoTool;
                     _bool_flags[1] = false; // paintable
                     emit tool_changed(_tool_flags[0]);
                     refresh_vbo();
                 }
                 _bool_flags[2] = !_bool_flags[2]; // painting
                 break;
-            case Tool::TEXT:
+            case Tool::Text:
                 _editer->append_text(real_x1, real_y1);
-                _tool_flags[0] = Tool::NOTOOL;
+                _tool_flags[0] = Tool::NoTool;
                 _bool_flags[1] = _bool_flags[2] = false;
                 emit tool_changed(_tool_flags[0]);
                 refresh_vbo();
@@ -536,19 +536,30 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         {
             switch (_operation)
             {
-            case Operation::RINGARRAY:
-                _operation = Operation::NOOPERATION;
+            case Operation::PointMirror:
+                _operation = Operation::NoOperation;
+                if (_editer->mirror(_object_cache, real_x1, real_y1, event->modifiers() == Qt::ControlModifier))
+                {
+                    refresh_vbo();
+                    refresh_selected_ibo();
+                }
+                emit tool_changed(Tool::NoTool);
+                _object_cache.clear();
+                update();
+                return QOpenGLWidget::mousePressEvent(event);
+            case Operation::RingArray:
+                _operation = Operation::NoOperation;
                 if (_editer->ring_array(_object_cache, real_x1, real_y1,
                         GlobalSetting::get_instance()->ui->array_item->value()))
                 {
                     refresh_vbo();
                     refresh_selected_ibo();
                 }
-                emit tool_changed(Tool::NOTOOL);
+                emit tool_changed(Tool::NoTool);
                 _object_cache.clear();
                 update();
                 return QOpenGLWidget::mousePressEvent(event);
-            case Operation::NOOPERATION:
+            case Operation::NoOperation:
                 if (event->modifiers() == Qt::AltModifier)
                 {
                     std::list<Geo::Geometry *> objs = _editer->selected();
@@ -564,7 +575,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _stored_coord.x = (left + right) / 2;
                     _stored_coord.y = (top + bottom) / 2;
                     _refline_points[0] = 0;
-                    _operation = Operation::ROTATE;
+                    _operation = Operation::Rotate;
+                    emit operation_changed(Operation::Rotate);
                     setCursor(Qt::CursorShape::ClosedHandCursor);
                     return QOpenGLWidget::mousePressEvent(event);
                 }
@@ -589,14 +601,14 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
                 switch (_operation)
                 {
-                case Operation::MIRROR:
-                    _operation = Operation::NOOPERATION;
-                    emit tool_changed(Tool::NOTOOL);
+                case Operation::Mirror:
+                    _operation = Operation::NoOperation;
+                    emit tool_changed(Tool::NoTool);
                     _object_cache.clear();
                     break;
-                case Operation::POLYGONDIFFERENCE:
-                    _operation = Operation::NOOPERATION;
-                    emit tool_changed(Tool::NOTOOL);
+                case Operation::PolygonDifference:
+                    _operation = Operation::NoOperation;
+                    emit tool_changed(Tool::NoTool);
                     _object_cache.clear();
                     break;
                 default:
@@ -605,7 +617,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
                 switch (_tool_flags[0])
                 {
-                case Tool::MEASURE:
+                case Tool::Measure:
                     if (!_measure_flags[0] || _measure_flags[1])
                     {
                         Geo::Point coord(real_x1, real_y1);
@@ -676,18 +688,18 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
                 switch (_operation)
                 {
-                case Operation::MIRROR:
+                case Operation::Mirror:
                     if (_editer->mirror(_object_cache, _clicked_obj, event->modifiers() == Qt::ControlModifier))
                     {
                         refresh_vbo();
                         refresh_selected_ibo();
                     }
                     _object_cache.clear();
-                    _operation = Operation::NOOPERATION;
-                    emit tool_changed(Tool::NOTOOL);
+                    _operation = Operation::NoOperation;
+                    emit tool_changed(Tool::NoTool);
                     update();
                     return QOpenGLWidget::mousePressEvent(event);
-                case Operation::POLYGONDIFFERENCE:
+                case Operation::PolygonDifference:
                     if (_editer->polygon_difference(dynamic_cast<Container *>(_last_clicked_obj), 
                         dynamic_cast<const Container *>(_clicked_obj)))
                     {
@@ -695,11 +707,11 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         refresh_selected_ibo();
                     }
                     _object_cache.clear();
-                    emit tool_changed(Tool::NOTOOL);
-                    _operation = Operation::NOOPERATION;
+                    emit tool_changed(Tool::NoTool);
+                    _operation = Operation::NoOperation;
                     update();
                     return QOpenGLWidget::mousePressEvent(event);
-                case Operation::FILLET:
+                case Operation::Fillet:
                     {
                         double dis = DBL_MAX;
                         Geo::Point point;
@@ -745,14 +757,14 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     }
                     break;
                 default:
-                    _operation = Operation::NOOPERATION;
-                    emit tool_changed(Tool::NOTOOL);
+                    _operation = Operation::NoOperation;
+                    emit tool_changed(Tool::NoTool);
                     break;
                 }
 
                 switch (_tool_flags[0])
                 {
-                case Tool::MEASURE:
+                case Tool::Measure:
                     if (!_measure_flags[0] || _measure_flags[1])
                     {
                         Geo::Point coord(real_x1, real_y1);
@@ -795,7 +807,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
                 switch (_tool_flags[0])
                 {
-                case Tool::MEASURE:
+                case Tool::Measure:
                     _measure_flags[0] = _measure_flags[1] = false;
                     switch (_clicked_obj->type())
                     {
@@ -850,7 +862,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
     case Qt::RightButton:
         if (!is_paintable())
         {
-            _operation = Operation::NOOPERATION;
+            _operation = Operation::NoOperation;
             _object_cache.clear();
             _clicked_obj = _editer->select(real_x1, real_y1, true);
             if (_clicked_obj != nullptr)
@@ -868,7 +880,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     refresh_vbo();
                 }
             }
-            use_tool(Tool::NOTOOL);
+            use_tool(Tool::NoTool);
         }
         else
         {
@@ -909,7 +921,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         {
             _select_rect.clear();
             _last_point.clear();
-            if (_tool_flags[0] != Tool::MEASURE)
+            if (_tool_flags[0] != Tool::Measure)
             {
                 _info_labels[1]->clear();
             }
@@ -920,13 +932,14 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
 
             switch (_operation)
             {
-            case Operation::ROTATE:
-                _operation = Operation::NOOPERATION;
+            case Operation::Rotate:
+                _operation = Operation::NoOperation;
                 {
                     const std::list<Geo::Geometry *> objs = _editer->selected();
                     _editer->push_backup_command(new UndoStack::RotateCommand(objs.begin(), objs.end(), 
                         _stored_coord.x, _stored_coord.y, Geo::degree_to_rad(_refline_points[0]), true));
                 }
+                emit operation_changed(Operation::NoOperation);
                 setCursor(Qt::CursorShape::CrossCursor);
                 break;
             default:
@@ -1004,11 +1017,11 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     {
         switch (_tool_flags[0])
         {
-        case Tool::CIRCLE:
+        case Tool::Circle:
             _circle_cache.radius = Geo::distance(real_x1, real_y1, _circle_cache.x, _circle_cache.y);
             _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius)).c_str());
             break;
-        case Tool::POLYLINE:
+        case Tool::Polyline:
             if (event->modifiers() == Qt::ControlModifier)
             {
                 const Geo::Point &coord =_editer->point_cache().at(_editer->point_cache().size() - 2);
@@ -1034,7 +1047,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             _info_labels[1]->setText(std::string("Length:").append(std::to_string(
                 Geo::distance(_editer->point_cache().back(), _editer->point_cache()[_editer->point_cache().size() - 2]))).c_str());
             break;
-        case Tool::RECT:
+        case Tool::Rect:
             if (event->modifiers() == Qt::ControlModifier)
             {
                 const double width = std::max(std::abs(real_x1 - _last_point.x), std::abs(real_y1 - _last_point.y));
@@ -1070,7 +1083,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     .append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.y))).c_str());
             }
             break;
-        case Tool::CURVE:
+        case Tool::Curve:
             if (_editer->point_cache().size() > _bezier_order && (_editer->point_cache().size() - 2) % _bezier_order == 0) 
             {
                 const size_t count = _editer->point_cache().size();
@@ -1103,7 +1116,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     }
     else
     {
-        if (_operation == Operation::ROTATE)
+        if (_operation == Operation::Rotate)
         {
             if (!_editer->selected().empty())
             {
@@ -1297,17 +1310,17 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
             _bool_flags[2] = false; // painting
             switch (_tool_flags[0])
             {
-            case Tool::CIRCLE:
+            case Tool::Circle:
                 _circle_cache.clear();
                 break;
-            case Tool::POLYLINE:
+            case Tool::Polyline:
                 _editer->append_points();
                 _cache_count = 0;
                 break;
-            case Tool::RECT:
+            case Tool::Rect:
                 _AABBRect_cache.clear();
                 break;
-            case Tool::CURVE:
+            case Tool::Curve:
                 _editer->append_bezier(_bezier_order);
                 _cache_count = 0;
                 break;
@@ -1315,7 +1328,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                 break;
             }
             _tool_flags[1] = _tool_flags[0];
-            _tool_flags[0] = Tool::NOTOOL;
+            _tool_flags[0] = Tool::NoTool;
             emit tool_changed(_tool_flags[0]);
             refresh_vbo();
             update();
@@ -1446,7 +1459,7 @@ void Canvas::use_tool(const Tool tool)
 {
     _tool_flags[1] = _tool_flags[0];
     _tool_flags[0] = tool;
-    _bool_flags[1] = (tool != Tool::NOTOOL && tool != Tool::MEASURE); // paintable
+    _bool_flags[1] = (tool != Tool::NoTool && tool != Tool::Measure); // paintable
     _bool_flags[2] = false; // painting
 
     _editer->point_cache().clear();
@@ -1466,8 +1479,9 @@ void Canvas::set_operation(const Operation operation)
     _operation = operation;
     switch (operation)
     {
-    case Operation::MIRROR:
-    case Operation::RINGARRAY:
+    case Operation::PointMirror:
+    case Operation::Mirror:
+    case Operation::RingArray:
         _object_cache = _editer->selected();
         break;
     default:
@@ -1674,7 +1688,7 @@ void Canvas::cancel_painting()
     _bool_flags[1] = false; // paintable
     _bool_flags[2] = false; // painting
     _tool_flags[1] = _tool_flags[0];
-    _tool_flags[0] = Tool::NOTOOL;
+    _tool_flags[0] = Tool::NoTool;
 
     _editer->point_cache().clear();
     _circle_cache.clear();
@@ -1684,7 +1698,7 @@ void Canvas::cancel_painting()
     _measure_flags[0] = _measure_flags[1] = false;
     _info_labels[1]->clear();
 
-    _operation = Operation::NOOPERATION;
+    _operation = Operation::NoOperation;
     _object_cache.clear();
 
     emit tool_changed(_tool_flags[0]);
@@ -1700,8 +1714,8 @@ void Canvas::use_last_tool()
     _tool_flags[0] = _tool_flags[1];
     _measure_flags[0] = _measure_flags[1] = false;
     _info_labels[1]->clear();
-    _bool_flags[1] = _tool_flags[0] != Tool::MEASURE; // paintable
-    if (_tool_flags[0] == Tool::NOTOOL)
+    _bool_flags[1] = _tool_flags[0] != Tool::Measure; // paintable
+    if (_tool_flags[0] == Tool::NoTool)
     {
         cancel_painting();
     }
@@ -1790,7 +1804,7 @@ void Canvas::polyline_cmd()
 {
     _bool_flags[1] = false; // paintable
     _bool_flags[2] = false; // painting
-    if (_tool_flags[0] == Tool::POLYLINE)
+    if (_tool_flags[0] == Tool::Polyline)
     {
         _editer->append_points();
     }
@@ -1800,7 +1814,7 @@ void Canvas::polyline_cmd()
     }
     _cache_count = 0;
     _tool_flags[1] = _tool_flags[0];
-    _tool_flags[0] = Tool::NOTOOL;
+    _tool_flags[0] = Tool::NoTool;
     emit tool_changed(_tool_flags[0]);
     refresh_vbo();
     update();
@@ -1814,7 +1828,7 @@ void Canvas::rect_cmd(const double x, const double y)
             _last_point.x + x, _last_point.y + y));
         _AABBRect_cache.clear();
         _tool_flags[1] = _tool_flags[0];
-        _tool_flags[0] = Tool::NOTOOL;
+        _tool_flags[0] = Tool::NoTool;
         _bool_flags[1] = false; // paintable
         emit tool_changed(_tool_flags[0]);
         refresh_vbo();
@@ -1837,7 +1851,7 @@ void Canvas::rect_cmd()
         _editer->append(_AABBRect_cache);
         _AABBRect_cache.clear();
         _tool_flags[1] = _tool_flags[0];
-        _tool_flags[0] = Tool::NOTOOL;
+        _tool_flags[0] = Tool::NoTool;
         _bool_flags[1] = false; // paintable
         emit tool_changed(_tool_flags[0]);
         refresh_vbo();
@@ -1885,7 +1899,7 @@ void Canvas::circle_cmd(const double x, const double y, const double r)
     }
     _circle_cache.clear();
     _tool_flags[1] = _tool_flags[0];
-    _tool_flags[0] = Tool::NOTOOL;
+    _tool_flags[0] = Tool::NoTool;
     _bool_flags[1] = false; // moveable
     emit tool_changed(_tool_flags[0]);
     refresh_vbo();
@@ -1896,7 +1910,7 @@ void Canvas::circle_cmd(const double x, const double y, const double r)
 void Canvas::text_cmd(const double x, const double y)
 {
     _editer->append_text(x, y);
-    _tool_flags[0] = Tool::NOTOOL;
+    _tool_flags[0] = Tool::NoTool;
     _bool_flags[1] = _bool_flags[2] = false;
     emit tool_changed(_tool_flags[0]);
     refresh_vbo();

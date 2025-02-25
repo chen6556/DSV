@@ -215,8 +215,8 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>120</width>
-             <height>639</height>
+             <width>114</width>
+             <height>650</height>
             </rect>
            </property>
            <property name="maximumSize">
@@ -580,233 +580,6 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               <property name="spacing">
                <number>2</number>
               </property>
-              <item row="5" column="1">
-               <widget class="QPushButton" name="offset_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Offset</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/offset_btn.png</normaloff>:/icons/offset_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="0">
-               <widget class="QDoubleSpinBox" name="scale_sbx">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>51</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="contextMenuPolicy">
-                 <enum>Qt::NoContextMenu</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Scale Rate</string>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
-                </property>
-                <property name="maximum">
-                 <double>100000000.000000000000000</double>
-                </property>
-                <property name="singleStep">
-                 <double>0.100000000000000</double>
-                </property>
-                <property name="value">
-                 <double>1.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QPushButton" name="flipx_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Flip X</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/flipx_btn.png</normaloff>:/icons/flipx_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QPushButton" name="mirror_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Mirror</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/mirror_btn.png</normaloff>:/icons/mirror_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="0">
-               <widget class="QPushButton" name="difference_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Difference</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/difference_btn.png</normaloff>:/icons/difference_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="1">
-               <widget class="QPushButton" name="intersection_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Intersection</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/intersection_btn.png</normaloff>:/icons/intersection_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QPushButton" name="flipy_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Flip Y</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/flipy_btn.png</normaloff>:/icons/flipy_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QPushButton" name="union_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Union</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/union_btn.png</normaloff>:/icons/union_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="5" column="0">
-               <widget class="QDoubleSpinBox" name="offset_sbx">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>51</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="contextMenuPolicy">
-                 <enum>Qt::NoContextMenu</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Offset Distance</string>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
-                </property>
-                <property name="minimum">
-                 <double>-100000000.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>100000000.000000000000000</double>
-                </property>
-               </widget>
-              </item>
               <item row="0" column="0">
                <widget class="QSpinBox" name="rotate_angle">
                 <property name="sizePolicy">
@@ -852,17 +625,17 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
-              <item row="0" column="1">
-               <widget class="QPushButton" name="rotate_btn">
+              <item row="1" column="0">
+               <widget class="QPushButton" name="flipy_btn">
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Rotate</string>
+                 <string>Flip Y</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/rotate_btn.png</normaloff>:/icons/rotate_btn.png</iconset>
+                  <normaloff>:/icons/flipy_btn.png</normaloff>:/icons/flipy_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -872,7 +645,109 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
-              <item row="4" column="1">
+              <item row="6" column="0">
+               <widget class="QDoubleSpinBox" name="offset_sbx">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                 </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Offset Distance</string>
+                </property>
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
+                <property name="minimum">
+                 <double>-100000000.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>100000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="1">
+               <widget class="QPushButton" name="offset_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Offset</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/offset_btn.png</normaloff>:/icons/offset_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="0">
+               <widget class="QPushButton" name="union_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Union</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/union_btn.png</normaloff>:/icons/union_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QPushButton" name="flipx_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Flip X</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/flipx_btn.png</normaloff>:/icons/flipx_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
                <widget class="QPushButton" name="scale_btn">
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
@@ -892,7 +767,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
-              <item row="6" column="1">
+              <item row="7" column="1">
                <widget class="QPushButton" name="fillet_btn">
                 <property name="toolTip">
                  <string>Fillet</string>
@@ -909,7 +784,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
-              <item row="6" column="0">
+              <item row="7" column="0">
                <widget class="QDoubleSpinBox" name="fillet_sbx">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -945,6 +820,151 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                 <property name="maximum">
                  <double>100000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QPushButton" name="intersection_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Intersection</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/intersection_btn.png</normaloff>:/icons/intersection_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="rotate_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Rotate</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/rotate_btn.png</normaloff>:/icons/rotate_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QDoubleSpinBox" name="scale_sbx">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                 </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Scale Rate</string>
+                </property>
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
+                <property name="maximum">
+                 <double>100000000.000000000000000</double>
+                </property>
+                <property name="singleStep">
+                 <double>0.100000000000000</double>
+                </property>
+                <property name="value">
+                 <double>1.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QPushButton" name="difference_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Difference</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/difference_btn.png</normaloff>:/icons/difference_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QPushButton" name="point_mirror_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>PointMirror</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/point_mirror_btn.png</normaloff>:/icons/point_mirror_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QPushButton" name="mirror_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Mirror</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/mirror_btn.png</normaloff>:/icons/mirror_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
                 </property>
                </widget>
               </item>
@@ -2110,6 +2130,22 @@ color:rgb(230, 230, 230);</string>
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>point_mirror_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>point_mirror()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>90</x>
+     <y>447</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -2138,5 +2174,6 @@ color:rgb(230, 230, 230);</string>
   <slot>refresh_tool_label(Canvas::Tool)</slot>
   <slot>fillet()</slot>
   <slot>refresh_tool_label(Canvas::Operation)</slot>
+  <slot>point_mirror()</slot>
  </slots>
 </ui>

@@ -16,8 +16,8 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
     Q_OBJECT
 
 public:
-    enum class Tool {NOTOOL, MEASURE, CIRCLE, POLYLINE, RECT, CURVE, TEXT};
-    enum class Operation {NOOPERATION, MIRROR, RINGARRAY, POLYGONDIFFERENCE, FILLET, ROTATE};
+    enum class Tool {NoTool, Measure, Circle, Polyline, Rect, Curve, Text};
+    enum class Operation {NoOperation, Mirror, PointMirror, RingArray, PolygonDifference, Fillet, Rotate};
 
 private:
     Geo::Circle _circle_cache;
@@ -51,8 +51,8 @@ private:
     bool _measure_flags[2] = {false, false};
 
     // 0:current_tool, 1:last_tool
-    Tool _tool_flags[2] = {Tool::NOTOOL, Tool::NOTOOL};
-    Operation _operation = Operation::NOOPERATION;
+    Tool _tool_flags[2] = {Tool::NoTool, Tool::NoTool};
+    Operation _operation = Operation::NoOperation;
 
     QPointF _mouse_pos_0, _mouse_pos_1;
     Geo::Point _mouse_press_pos, _mouse_release_pos;
