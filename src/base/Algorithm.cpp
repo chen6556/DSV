@@ -1482,11 +1482,9 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
 {
     switch (object0->type())
     {
-    case Geo::Type::CONTAINER:
     case Geo::Type::POLYGON:
         switch (object1->type())
         {
-        case Geo::Type::CONTAINER:
         case Geo::Type::POLYGON:
             return Geo::Collision::gjk(*static_cast<const Geo::Polygon *>(object0),
                 *static_cast<const Geo::Polygon *>(object1));
@@ -1499,7 +1497,6 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
         case Geo::Type::BEZIER:
             return Geo::NoAABBTest::is_intersected(static_cast<const Geo::Bezier *>(object1)->shape(),
                 *static_cast<const Geo::Polygon *>(object0));
-        case Geo::Type::CIRCLECONTAINER:
         case Geo::Type::CIRCLE:
             return Geo::is_intersected(*static_cast<const Geo::Polygon *>(object0),
                 *static_cast<const Geo::Circle *>(object1));
@@ -1509,7 +1506,6 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
     case Geo::Type::AABBRECT:
         switch (object1->type())
         {
-        case Geo::Type::CONTAINER:
         case Geo::Type::POLYGON:
             return Geo::Collision::gjk(*static_cast<const Geo::AABBRect *>(object0),
                 *static_cast<const Geo::Polygon *>(object1));
@@ -1522,7 +1518,6 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
         case Geo::Type::BEZIER:
             return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
                 static_cast<const Geo::Bezier *>(object1)->shape());
-        case Geo::Type::CIRCLECONTAINER:
         case Geo::Type::CIRCLE:
             return Geo::is_intersected(*static_cast<const Geo::AABBRect *>(object0),
                 *static_cast<const Geo::Circle *>(object1));
@@ -1532,7 +1527,6 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
     case Geo::Type::POLYLINE:
         switch (object1->type())
         {
-        case Geo::Type::CONTAINER:
         case Geo::Type::POLYGON:
             return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::Polyline *>(object0),
                 *static_cast<const Geo::Polygon *>(object1));
@@ -1545,18 +1539,15 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
         case Geo::Type::BEZIER:
             return Geo::NoAABBTest::is_intersected(*static_cast<const Geo::Polyline *>(object0),
                 static_cast<const Geo::Bezier *>(object1)->shape());
-        case Geo::Type::CIRCLECONTAINER:
         case Geo::Type::CIRCLE:
             return Geo::is_intersected(*static_cast<const Geo::Polyline *>(object0),
                 *static_cast<const Geo::Circle *>(object1));
         default:
             return false;
         }
-    case Geo::Type::CIRCLECONTAINER:
     case Geo::Type::CIRCLE:
         switch (object1->type())
         {
-        case Geo::Type::CONTAINER:
         case Geo::Type::POLYGON:
             return Geo::is_intersected(*static_cast<const Geo::Polygon *>(object1),
                 *static_cast<const Geo::Circle *>(object0));
@@ -1569,7 +1560,6 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Geometry *object0, const Geo::Ge
         case Geo::Type::BEZIER:
             return Geo::is_intersected(static_cast<const Geo::Bezier *>(object1)->shape(),
                 *static_cast<const Geo::Circle *>(object0));
-        case Geo::Type::CIRCLECONTAINER:
         case Geo::Type::CIRCLE:
             return Geo::is_intersected(*static_cast<const Geo::Circle *>(object0),
                 *static_cast<const Geo::Circle *>(object1));
@@ -1585,7 +1575,6 @@ bool Geo::NoAABBTest::is_intersected(const Geo::AABBRect &rect, const Geo::Geome
 {
     switch (object->type())
     {
-    case Geo::Type::CONTAINER:
     case Geo::Type::POLYGON:
         return Geo::Collision::gjk(rect, *static_cast<const Geo::Polygon *>(object));
     case Geo::Type::AABBRECT:
@@ -1594,7 +1583,6 @@ bool Geo::NoAABBTest::is_intersected(const Geo::AABBRect &rect, const Geo::Geome
         return Geo::NoAABBTest::is_intersected(rect, *static_cast<const Geo::Polyline *>(object));
     case Geo::Type::BEZIER:
         return Geo::NoAABBTest::is_intersected(rect, static_cast<const Geo::Bezier *>(object)->shape());
-    case Geo::Type::CIRCLECONTAINER:
     case Geo::Type::CIRCLE:
         return Geo::is_intersected(rect, *static_cast<const Geo::Circle *>(object));
     default:

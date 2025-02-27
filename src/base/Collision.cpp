@@ -102,14 +102,12 @@ bool Collision::DirectMode::select(const Geo::Point &pos, std::vector<Geo::Geome
             }
             break;
         case Geo::Type::POLYGON:
-        case Geo::Type::CONTAINER:
             if (Geo::is_inside(pos, *static_cast<Geo::Polygon *>(object)))
             {
                 objects.push_back(object);
             }
             break;
         case Geo::Type::CIRCLE:
-        case Geo::Type::CIRCLECONTAINER:
             if (Geo::is_inside(pos, *static_cast<Geo::Circle *>(object)))
             {
                 objects.push_back(object);
@@ -160,14 +158,12 @@ bool Collision::DirectMode::select(const Geo::AABBRect &rect, std::vector<Geo::G
             }
             break;
         case Geo::Type::POLYGON:
-        case Geo::Type::CONTAINER:
             if (Geo::is_intersected(rect, *static_cast<Geo::Polygon *>(object)))
             {
                 objects.push_back(object);
             }
             break;
         case Geo::Type::CIRCLE:
-        case Geo::Type::CIRCLECONTAINER:
             if (Geo::is_intersected(rect, *static_cast<Geo::Circle *>(object)))
             {
                 objects.push_back(object);
@@ -306,14 +302,12 @@ bool Collision::GridNode::select(const Geo::Point &pos, std::vector<Geo::Geometr
             }
             break;
         case Geo::Type::POLYGON:
-        case Geo::Type::CONTAINER:
             if (Geo::is_inside(pos, *static_cast<Geo::Polygon *>(object)))
             {
                 objects.push_back(object);
             }
             break;
         case Geo::Type::CIRCLE:
-        case Geo::Type::CIRCLECONTAINER:
             if (Geo::is_inside(pos, *static_cast<Geo::Circle *>(object)))
             {
                 objects.push_back(object);
@@ -364,14 +358,12 @@ bool Collision::GridNode::select(const Geo::AABBRect &rect, std::vector<Geo::Geo
             }
             break;
         case Geo::Type::POLYGON:
-        case Geo::Type::CONTAINER:
             if (Geo::is_intersected(rect, *static_cast<Geo::Polygon *>(object)))
             {
                 objects.push_back(object);
             }
             break;
         case Geo::Type::CIRCLE:
-        case Geo::Type::CIRCLECONTAINER:
             if (Geo::is_intersected(rect, *static_cast<Geo::Circle *>(object)))
             {
                 objects.push_back(object);

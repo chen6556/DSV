@@ -10,8 +10,8 @@
 
 void File::write_dsv(const std::string &path, const Graph *graph)
 {
-    const Container *container = nullptr;
-    const CircleContainer *circlecontainer = nullptr;
+    const Container<Geo::Polygon> *container = nullptr;
+    const Container<Geo::Circle> *circlecontainer = nullptr;
     const Text *text = nullptr;
     const Geo::Polyline *polyline = nullptr;
     const Geo::Bezier *bezier = nullptr;
@@ -38,8 +38,8 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 output << text->center().x << ',' << text->center().y << std::endl;
                 text = nullptr;
                 break;
-            case Geo::Type::CONTAINER:
-                container = dynamic_cast<const Container *>(geo);
+            case Geo::Type::POLYGON:
+                container = dynamic_cast<const Container<Geo::Polygon> *>(geo);
                 if (container->text().isEmpty())
                 {
                     output << "POLYGON" << std::endl;
@@ -56,8 +56,8 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 output << std::endl;
                 container = nullptr;
                 break;
-            case Geo::Type::CIRCLECONTAINER:
-                circlecontainer = dynamic_cast<const CircleContainer *>(geo);
+            case Geo::Type::CIRCLE:
+                circlecontainer = dynamic_cast<const Container<Geo::Circle> *>(geo);
                 if (circlecontainer->text().isEmpty())
                 {
                     output << "CIRCLE" << std::endl;
@@ -84,8 +84,8 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         output << text->center().x << ',' << text->center().y;
                         text = nullptr;
                         break;
-                    case Geo::Type::CONTAINER:
-                        container = dynamic_cast<const Container *>(item);
+                    case Geo::Type::POLYGON:
+                        container = dynamic_cast<const Container<Geo::Polygon> *>(item);
                         if (container->text().isEmpty())
                         {
                             output << "POLYGON" << std::endl;
@@ -102,8 +102,8 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         output << std::endl;
                         container = nullptr;
                         break;
-                    case Geo::Type::CIRCLECONTAINER:
-                        circlecontainer = dynamic_cast<const CircleContainer *>(item);
+                    case Geo::Type::CIRCLE:
+                        circlecontainer = dynamic_cast<const Container<Geo::Circle> *>(item);
                         if (circlecontainer->text().isEmpty())
                         {
                             output << "CIRCLE" << std::endl;
@@ -198,8 +198,8 @@ void File::write_dsv(const std::string &path, const Graph *graph)
 void File::write_plt(const std::string &path, const Graph *graph)
 {
     const Text *text = nullptr;
-    const Container *container = nullptr;
-    const CircleContainer *circlecontainer = nullptr;
+    const Container<Geo::Polygon> *container = nullptr;
+    const Container<Geo::Circle> *circlecontainer = nullptr;
     const Geo::Polyline *polyline = nullptr;
     const Geo::Bezier *bezier = nullptr;
     const double x_ratio = 40, y_ratio = 40;
@@ -218,8 +218,8 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 output << ";LB" << text->text().toStdString() << ';' << std::endl;
                 text = nullptr;
                 break;
-            case Geo::Type::CONTAINER:
-                container = dynamic_cast<const Container *>(geo);
+            case Geo::Type::POLYGON:
+                container = dynamic_cast<const Container<Geo::Polygon> *>(geo);
                 output << "PU" << container->shape().front().x * x_ratio << ',' << container->shape().front().y * y_ratio << ";PD";
                 for (const Geo::Point &point : container->shape())
                 {
@@ -234,8 +234,8 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 output << ';' << std::endl;
                 container = nullptr;
                 break;
-            case Geo::Type::CIRCLECONTAINER:
-                circlecontainer = dynamic_cast<const CircleContainer *>(geo);
+            case Geo::Type::CIRCLE:
+                circlecontainer = dynamic_cast<const Container<Geo::Circle> *>(geo);
                 output << "PU" << circlecontainer->x * x_ratio << ',' << circlecontainer->y * y_ratio << ';';
                 output << "CI" << circlecontainer->radius * x_ratio << ';';
                 if (circlecontainer->text().isEmpty())
@@ -261,8 +261,8 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         output << ";LB" << text->text().toStdString() << ';' << std::endl;
                         text = nullptr;
                         break;
-                    case Geo::Type::CONTAINER:
-                        container = dynamic_cast<const Container *>(item);
+                    case Geo::Type::POLYGON:
+                        container = dynamic_cast<const Container<Geo::Polygon> *>(item);
                         output << "PU" << container->shape().front().x * x_ratio << ',' << container->shape().front().y * y_ratio << ";PD";
                         for (const Geo::Point &point : container->shape())
                         {
@@ -277,8 +277,8 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         output << ';' << std::endl;
                         container = nullptr;
                         break;
-                    case Geo::Type::CIRCLECONTAINER:
-                        circlecontainer = dynamic_cast<const CircleContainer *>(item);
+                    case Geo::Type::CIRCLE:
+                        circlecontainer = dynamic_cast<const Container<Geo::Circle> *>(item);
                         output << "PU" << circlecontainer->x * x_ratio << ',' << circlecontainer->y * y_ratio << ';';
                         output << "CI" << circlecontainer->radius * x_ratio << ';';
                         if (circlecontainer->text().isEmpty())

@@ -208,7 +208,6 @@ void ChangeShapeCommand::undo(Graph *graph)
         }
         break;
     case Geo::Type::POLYGON:
-    case Geo::Type::CONTAINER:
         {
             Geo::Polygon *polygon = static_cast<Geo::Polygon *>(_object);
             polygon->clear();
@@ -219,7 +218,6 @@ void ChangeShapeCommand::undo(Graph *graph)
         }
         break;
     case Geo::Type::CIRCLE:
-    case Geo::Type::CIRCLECONTAINER:
         {
             Geo::Circle *circle = static_cast<Geo::Circle *>(_object);
             circle->x = std::get<0>(_shape.front());
@@ -533,19 +531,13 @@ TextChangedCommand::TextChangedCommand(Geo::Geometry *item, const QString &text)
 
 void TextChangedCommand::undo(Graph *graph)
 {
-    switch (_item->type())
+    if (dynamic_cast<Containerized *>(_item) == nullptr)
     {
-    case Geo::Type::CONTAINER:
-        static_cast<Container *>(_item)->set_text(_text);
-        break;
-    case Geo::Type::CIRCLECONTAINER:
-        static_cast<CircleContainer *>(_item)->set_text(_text);
-        break;
-    case Geo::Type::TEXT:
         static_cast<Text *>(_item)->set_text(_text,
             GlobalSetting::get_instance()->setting["text_size"].toInt());
-        break;
-    default:
-        break;
+    }
+    else
+    {
+        dynamic_cast<Containerized *>(_item)->set_text(_text);
     }
 }

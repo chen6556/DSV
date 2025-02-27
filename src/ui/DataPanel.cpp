@@ -29,10 +29,10 @@ void DataPanel::load_draw_data(const Graph *graph, const size_t point_count)
             case Geo::Type::TEXT:
                 ++text_count;
                 break;
-            case Geo::Type::CONTAINER:
+            case Geo::Type::POLYGON:
                 ++polygon_count;
                 break;
-            case Geo::Type::CIRCLECONTAINER:
+            case Geo::Type::CIRCLE:
                 ++circle_count;
                 break;
             case Geo::Type::POLYLINE:
@@ -49,10 +49,10 @@ void DataPanel::load_draw_data(const Graph *graph, const size_t point_count)
                     case Geo::Type::TEXT:
                         ++text_count;
                         break;
-                    case Geo::Type::CONTAINER:
+                    case Geo::Type::POLYGON:
                         ++polygon_count;
                         break;
-                    case Geo::Type::CIRCLECONTAINER:
+                    case Geo::Type::CIRCLE:
                         ++circle_count;
                         break;
                     case Geo::Type::POLYLINE:

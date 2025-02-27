@@ -307,18 +307,18 @@ bool CMDWidget::work()
 
     case CMD::Union_CMD:
         {
-            Container *container0 = nullptr, *container1 = nullptr;
+            Container<Geo::Polygon> *container0 = nullptr, *container1 = nullptr;
             for (Geo::Geometry *object : _editer->selected())
             {
-                if (object->type() == Geo::Type::CONTAINER)
+                if (object->type() == Geo::Type::POLYGON)
                 {
                     if (container0 == nullptr)
                     {
-                        container0 = dynamic_cast<Container *>(object);
+                        container0 = dynamic_cast<Container<Geo::Polygon> *>(object);
                     }
                     else
                     {
-                        container1 = dynamic_cast<Container *>(object);
+                        container1 = dynamic_cast<Container<Geo::Polygon> *>(object);
                         break;
                     }
                 }
@@ -335,18 +335,18 @@ bool CMDWidget::work()
         break;
     case CMD::Intersection_CMD:
         {
-            Container *container0 = nullptr, *container1 = nullptr;
+            Container<Geo::Polygon> *container0 = nullptr, *container1 = nullptr;
             for (Geo::Geometry *object : _editer->selected())
             {
-                if (object->type() == Geo::Type::CONTAINER)
+                if (object->type() == Geo::Type::POLYGON)
                 {
                     if (container0 == nullptr)
                     {
-                        container0 = dynamic_cast<Container *>(object);
+                        container0 = dynamic_cast<Container<Geo::Polygon> *>(object);
                     }
                     else
                     {
-                        container1 = dynamic_cast<Container *>(object);
+                        container1 = dynamic_cast<Container<Geo::Polygon> *>(object);
                         break;
                     }
                 }

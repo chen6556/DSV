@@ -413,7 +413,7 @@ namespace Geo
                             if (!pair_in_pairs(moved_object_pairs, object, current_object, true))
                             {
                                 moved_object_pairs.emplace_back(object, current_object);
-                                if (object->type() == Geo::Type::CONTAINER && current_object->type() == Geo::Type::CONTAINER &&
+                                if (object->type() == Geo::Type::POLYGON && current_object->type() == Geo::Type::POLYGON &&
                                     Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(current_object), tx, ty, vec) > 0)
                                 {
                                     if (vec.x * tx + vec.y * ty > 0)
@@ -424,7 +424,7 @@ namespace Geo
                                     }
                                     vec.clear();
                                 }
-                                else if (object->type() == Geo::Type::CONTAINER && current_object->type() == Geo::Type::CIRCLECONTAINER &&
+                                else if (object->type() == Geo::Type::POLYGON && current_object->type() == Geo::Type::CIRCLE &&
                                     Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Circle *>(current_object), tx, ty, vec) > 0)
                                 {
                                     if (vec.x * tx + vec.y * ty > 0)
@@ -435,7 +435,7 @@ namespace Geo
                                     }
                                     vec.clear();
                                 }
-                                else if (object->type() == Geo::Type::CIRCLECONTAINER && current_object->type() == Geo::Type::CONTAINER &&
+                                else if (object->type() == Geo::Type::CIRCLE && current_object->type() == Geo::Type::POLYGON &&
                                     Collision::epa(*static_cast<Geo::Circle *>(object), *static_cast<Geo::Polygon *>(current_object), tx, ty, vec) > 0)
                                 {
                                     if (vec.x * tx + vec.y * ty > 0)
@@ -446,7 +446,7 @@ namespace Geo
                                     }
                                     vec.clear();
                                 }
-                                else if (object->type() == Geo::Type::CIRCLECONTAINER && current_object->type() == Geo::Type::CIRCLECONTAINER &&
+                                else if (object->type() == Geo::Type::CIRCLE && current_object->type() == Geo::Type::CIRCLE &&
                                     Collision::epa(*static_cast<Geo::Circle *>(object), *static_cast<Geo::Circle *>(current_object), tx, ty, vec) > 0)
                                 {
                                     if (vec.x * tx + vec.y * ty > 0)

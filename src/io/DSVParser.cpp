@@ -56,12 +56,13 @@ void Importer::store_circle()
 {
     if (_is_combination)
     {
-        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new CircleContainer(QString::fromStdString(_text), _points.back().x, _points.back().y, _parameters.back()));
+        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
+            new Container<Geo::Circle>(QString::fromStdString(_text), _points.back().x, _points.back().y, _parameters.back()));
     }
     else
     {
-        _graph->container_groups().back().append(new CircleContainer(QString::fromStdString(_text),
-                                                                     _points.back().x, _points.back().y, _parameters.back()));
+        _graph->container_groups().back().append(new Container<Geo::Circle>(
+            QString::fromStdString(_text), _points.back().x, _points.back().y, _parameters.back()));
     }
     _text.clear();
     _points.clear();

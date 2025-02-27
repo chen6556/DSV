@@ -263,7 +263,7 @@ void Importer::ci()
     {
         _parameters.pop_back();
     }
-    _graph->container_groups().back().append(new CircleContainer(QString(),
+    _graph->container_groups().back().append(new Container<Geo::Circle>(QString(),
         _points.front().x, _points.front().y, _parameters.back() * _x_ratio));
     _points.clear();
     _parameters.clear();
@@ -384,28 +384,28 @@ void Importer::end()
     {
         for (Geo::Geometry *geo : group)
         {
-            if (geo->type() == Geo::Type::CONTAINER && Geo::is_inside(text.pos, dynamic_cast<Container *>(geo)->shape(), true))
+            if (geo->type() == Geo::Type::POLYGON && Geo::is_inside(text.pos, dynamic_cast<Container<Geo::Polygon> *>(geo)->shape(), true))
             {
-                if (dynamic_cast<Container *>(geo)->text().isEmpty())
+                if (dynamic_cast<Container<Geo::Polygon> *>(geo)->text().isEmpty())
                 {
-                    dynamic_cast<Container *>(geo)->set_text(QString::fromUtf8(text.txt));
+                    dynamic_cast<Container<Geo::Polygon> *>(geo)->set_text(QString::fromUtf8(text.txt));
                 }
                 else
                 {
-                    dynamic_cast<Container *>(geo)->set_text(dynamic_cast<Container *>(geo)->text() + '\n' + QString::fromUtf8(text.txt));
+                    dynamic_cast<Container<Geo::Polygon> *>(geo)->set_text(dynamic_cast<Container<Geo::Polygon> *>(geo)->text() + '\n' + QString::fromUtf8(text.txt));
                 }
                 text.marked = true;
                 break;
             }
-            else if (geo->type() == Geo::Type::CIRCLECONTAINER && Geo::is_inside(text.pos, dynamic_cast<CircleContainer *>(geo)->shape(), true))
+            else if (geo->type() == Geo::Type::CIRCLE && Geo::is_inside(text.pos, dynamic_cast<Container<Geo::Circle> *>(geo)->shape(), true))
             {
-                if (dynamic_cast<CircleContainer *>(geo)->text().isEmpty())
+                if (dynamic_cast<Container<Geo::Circle> *>(geo)->text().isEmpty())
                 {
-                    dynamic_cast<CircleContainer *>(geo)->set_text(QString::fromUtf8(text.txt));
+                    dynamic_cast<Container<Geo::Circle> *>(geo)->set_text(QString::fromUtf8(text.txt));
                 }
                 else
                 {
-                    dynamic_cast<CircleContainer *>(geo)->set_text(dynamic_cast<CircleContainer *>(geo)->text() + '\n' + QString::fromUtf8(text.txt));
+                    dynamic_cast<Container<Geo::Circle> *>(geo)->set_text(dynamic_cast<Container<Geo::Circle> *>(geo)->text() + '\n' + QString::fromUtf8(text.txt));
                 }
                 text.marked = true;
                 break;

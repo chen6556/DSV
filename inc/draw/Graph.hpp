@@ -103,9 +103,9 @@ public:
 
     void append(Text *text, const size_t index = 0);
 
-    void append(Container *container, const size_t index = 0);
+    void append(Container<Geo::Polygon> *container, const size_t index = 0);
 
-    void append(CircleContainer *container, const size_t index = 0);
+    void append(Container<Geo::Circle> *container, const size_t index = 0);
 
     void append(Geo::Polyline *polyline, const size_t index = 0);
 

@@ -143,8 +143,8 @@ void Canvas::paintGL()
         {
             switch (obj->type())
             {
-            case Geo::Type::CONTAINER:
-            case Geo::Type::CIRCLECONTAINER:
+            case Geo::Type::POLYGON:
+            case Geo::Type::CIRCLE:
             case Geo::Type::POLYLINE:
             case Geo::Type::BEZIER:
                 for (size_t index = obj->point_index, i = 0, count = obj->point_count; i < count; ++i)
@@ -648,23 +648,16 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 if (_input_line.isVisible() && _last_clicked_obj != nullptr)
                 {
                     QString text;
-                    switch (_last_clicked_obj->type())
+                    if (dynamic_cast<Text *>(_last_clicked_obj) != nullptr)
                     {
-                    case Geo::Type::TEXT:
                         text = static_cast<Text *>(_last_clicked_obj)->text();
                         static_cast<Text *>(_last_clicked_obj)->set_text(_input_line.toPlainText(), 
                             GlobalSetting::get_instance()->setting["text_size"].toInt());
-                        break;
-                    case Geo::Type::CONTAINER:
-                        text = static_cast<Container *>(_last_clicked_obj)->text();
-                        static_cast<Container *>(_last_clicked_obj)->set_text(_input_line.toPlainText());
-                        break;
-                    case Geo::Type::CIRCLECONTAINER:
-                        text = static_cast<CircleContainer *>(_last_clicked_obj)->text();
-                        static_cast<CircleContainer *>(_last_clicked_obj)->set_text(_input_line.toPlainText());
-                        break;
-                    default:
-                        break;
+                    }
+                    else if (dynamic_cast<Containerized *>(_last_clicked_obj) != nullptr)
+                    {
+                        text = dynamic_cast<Containerized *>(_last_clicked_obj)->text();
+                        dynamic_cast<Containerized *>(_last_clicked_obj)->set_text(_input_line.toPlainText());
                     }
 
                     if (text != _input_line.toPlainText())
@@ -700,8 +693,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     update();
                     return QOpenGLWidget::mousePressEvent(event);
                 case Operation::PolygonDifference:
-                    if (_editer->polygon_difference(dynamic_cast<Container *>(_last_clicked_obj), 
-                        dynamic_cast<const Container *>(_clicked_obj)))
+                    if (_editer->polygon_difference(dynamic_cast<Container<Geo::Polygon> *>(_last_clicked_obj), 
+                        dynamic_cast<const Container<Geo::Polygon> *>(_clicked_obj)))
                     {
                         refresh_vbo();
                         refresh_selected_ibo();
@@ -717,8 +710,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         Geo::Point point;
                         switch (_clicked_obj->type())
                         {
-                        case Geo::Type::CONTAINER:
-                            for (const Geo::Point &p : dynamic_cast<Container *>(_clicked_obj)->shape())
+                        case Geo::Type::POLYGON:
+                            for (const Geo::Point &p : *dynamic_cast<Geo::Polygon *>(_clicked_obj))
                             {
                                 if (Geo::distance(p.x, p.y, real_x1, real_y1) < dis)
                                 {
@@ -726,7 +719,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                                     point = p;
                                 }
                             }
-                            if (_editer->fillet(dynamic_cast<Container *>(_clicked_obj),
+                            if (_editer->fillet(dynamic_cast<Container<Geo::Polygon> *>(_clicked_obj),
                                 point, GlobalSetting::get_instance()->ui->fillet_sbx->value()))
                             {
                                 refresh_vbo();
@@ -815,16 +808,16 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const Text*>(_clicked_obj)->center().x) +
                             "Y:" + QString::number(dynamic_cast<const Text*>(_clicked_obj)->center().y));
                         break;
-                    case Geo::Type::CONTAINER:
-                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const Container*>(_clicked_obj)->center().x) +
-                            " Y:" + QString::number(dynamic_cast<const Container*>(_clicked_obj)->center().y) +
+                    case Geo::Type::POLYGON:
+                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const Container<Geo::Polygon>*>(_clicked_obj)->center().x) +
+                            " Y:" + QString::number(dynamic_cast<const Container<Geo::Polygon>*>(_clicked_obj)->center().y) +
                             " Length:" + QString::number(_clicked_obj->length()) +
-                            " Area:" + QString::number(dynamic_cast<const Container*>(_clicked_obj)->area()));
+                            " Area:" + QString::number(dynamic_cast<const Container<Geo::Polygon>*>(_clicked_obj)->area()));
                         break;
-                    case Geo::Type::CIRCLECONTAINER:
-                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const CircleContainer*>(_clicked_obj)->x) +
-                            " Y:" + QString::number(dynamic_cast<const CircleContainer*>(_clicked_obj)->y) +
-                            " Radius:" + QString::number(dynamic_cast<const CircleContainer*>(_clicked_obj)->radius));
+                    case Geo::Type::CIRCLE:
+                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const Container<Geo::Circle>*>(_clicked_obj)->x) +
+                            " Y:" + QString::number(dynamic_cast<const Container<Geo::Circle>*>(_clicked_obj)->y) +
+                            " Radius:" + QString::number(dynamic_cast<const Container<Geo::Circle>*>(_clicked_obj)->radius));
                         break;
                     case Geo::Type::POLYLINE:
                         _info_labels[1]->setText("Length:" + QString::number(dynamic_cast<const Geo::Polyline*>(_clicked_obj)->length()));
@@ -1177,9 +1170,9 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                             break;
                         }
                     }
-                    else if (obj->type() == Geo::Type::CIRCLECONTAINER)
+                    else if (obj->type() == Geo::Type::CIRCLE)
                     {
-                        update_vbo = obj->point_count != Geo::circle_to_polygon(dynamic_cast<CircleContainer *>(obj)->shape()).size();
+                        update_vbo = obj->point_count != Geo::circle_to_polygon(*dynamic_cast<Geo::Circle *>(obj)).size();
                         if (update_vbo)
                         {
                             break;
@@ -1336,8 +1329,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         else
         {
             if (is_obj_selected() && (_last_clicked_obj->type() == Geo::Type::TEXT
-                || _last_clicked_obj->type() == Geo::Type::CONTAINER
-                || _last_clicked_obj->type() == Geo::Type::CIRCLECONTAINER))
+                || dynamic_cast<Containerized *>(_last_clicked_obj) != nullptr))
             {
                 Geo::AABBRect rect(_last_clicked_obj->bounding_rect());
                 rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
@@ -1345,19 +1337,13 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                 _input_line.move(rect.center().x - _input_line.rect().center().x(),
                                  rect.center().y - _input_line.rect().center().y());
                 _input_line.setFocus();
-                switch (_last_clicked_obj->type())
+                if (_last_clicked_obj->type() == Geo::Type::TEXT)
                 {
-                case Geo::Type::TEXT:
                     _input_line.setText(dynamic_cast<Text *>(_last_clicked_obj)->text());
-                    break;
-                case Geo::Type::CONTAINER:
-                    _input_line.setText(dynamic_cast<Container *>(_last_clicked_obj)->text());
-                    break;
-                case Geo::Type::CIRCLECONTAINER:
-                    _input_line.setText(dynamic_cast<CircleContainer *>(_last_clicked_obj)->text());
-                    break;
-                default:
-                    break;
+                }
+                else
+                {
+                    _input_line.setText(dynamic_cast<Containerized *>(_last_clicked_obj)->text());
                 }
                 _input_line.moveCursor(QTextCursor::End);
                 _input_line.show();
@@ -2084,9 +2070,9 @@ void Canvas::refresh_vbo()
     unsigned int *polyline_indexs = new unsigned int[polyline_index_len];
     unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
     Geo::Polygon points;
-    Container *container = nullptr;
+    Geo::Polygon *polygon = nullptr;
     Geo::Polyline *polyline = nullptr;
-    CircleContainer *circlecontainer = nullptr;
+    Geo::Circle *circle = nullptr;
 
     for (ContainerGroup &group : GlobalSetting::get_instance()->graph->container_groups())
     {
@@ -2100,9 +2086,9 @@ void Canvas::refresh_vbo()
             geo->point_index = data_count / 3;
             switch (geo->type())
             {
-            case Geo::Type::CONTAINER:
-                container = dynamic_cast<Container *>(geo);
-                for (size_t i : Geo::ear_cut_to_indexs(container->shape()))
+            case Geo::Type::POLYGON:
+                polygon = dynamic_cast<Geo::Polygon *>(geo);
+                for (size_t i : Geo::ear_cut_to_indexs(*polygon))
                 {
                     polygon_indexs[polygon_index_count++] = data_count / 3 + i;
                     if (polygon_index_count == polygon_index_len)
@@ -2114,7 +2100,7 @@ void Canvas::refresh_vbo()
                         polygon_indexs = temp;
                     }
                 }
-                for (const Geo::Point &point : container->shape())
+                for (const Geo::Point &point : *polygon)
                 {
                     polyline_indexs[polyline_index_count++] = data_count / 3;
                     data[data_count++] = point.x;
@@ -2138,11 +2124,11 @@ void Canvas::refresh_vbo()
                     }
                 }
                 polyline_indexs[polyline_index_count++] = UINT_MAX;
-                container->point_count = container->shape().size();
+                polygon->point_count = polygon->size();
                 break;
-            case Geo::Type::CIRCLECONTAINER:
-                circlecontainer = dynamic_cast<CircleContainer *>(geo);
-                points = Geo::circle_to_polygon(circlecontainer->shape());
+            case Geo::Type::CIRCLE:
+                circle = dynamic_cast<Geo::Circle *>(geo);
+                points = Geo::circle_to_polygon(*circle);
                 for (size_t i : Geo::ear_cut_to_indexs(points))
                 {
                     polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2179,7 +2165,7 @@ void Canvas::refresh_vbo()
                     }
                 }
                 polyline_indexs[polyline_index_count++] = UINT_MAX;
-                circlecontainer->point_count = data_count / 3 - circlecontainer->point_index;
+                circle->point_count = data_count / 3 - circle->point_index;
                 break;
             case Geo::Type::COMBINATION:
                 geo->point_count = polyline_index_count;
@@ -2188,9 +2174,9 @@ void Canvas::refresh_vbo()
                     item->point_index = data_count / 3;
                     switch (item->type())
                     {
-                    case Geo::Type::CONTAINER:
-                        container = dynamic_cast<Container *>(item);
-                        for (size_t i : Geo::ear_cut_to_indexs(container->shape()))
+                    case Geo::Type::POLYGON:
+                        polygon = dynamic_cast<Geo::Polygon *>(item);
+                        for (size_t i : Geo::ear_cut_to_indexs(*polygon))
                         {
                             polygon_indexs[polygon_index_count++] = data_count / 3 + i;
                             if (polygon_index_count == polygon_index_len)
@@ -2202,7 +2188,7 @@ void Canvas::refresh_vbo()
                                 polygon_indexs = temp;
                             }
                         }
-                        for (const Geo::Point &point : container->shape())
+                        for (const Geo::Point &point : *polygon)
                         {
                             polyline_indexs[polyline_index_count++] = data_count / 3;
                             data[data_count++] = point.x;
@@ -2226,11 +2212,11 @@ void Canvas::refresh_vbo()
                             }
                         }
                         polyline_indexs[polyline_index_count++] = UINT_MAX;
-                        container->point_count = container->shape().size();
+                        polygon->point_count = polygon->size();
                         break;
-                    case Geo::Type::CIRCLECONTAINER:
-                        circlecontainer = dynamic_cast<CircleContainer *>(item);
-                        points = Geo::circle_to_polygon(circlecontainer->shape());
+                    case Geo::Type::CIRCLE:
+                        circle = dynamic_cast<Geo::Circle *>(item);
+                        points = Geo::circle_to_polygon(*circle);
                         for (size_t i : Geo::ear_cut_to_indexs(points))
                         {
                             polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2267,7 +2253,7 @@ void Canvas::refresh_vbo()
                             }
                         }
                         polyline_indexs[polyline_index_count++] = UINT_MAX;
-                        circlecontainer->point_count = data_count / 3 - circlecontainer->point_index;
+                        circle->point_count = data_count / 3 - circle->point_index;
                         break;
                     case Geo::Type::POLYLINE:
                         polyline = dynamic_cast<Geo::Polyline *>(item);
@@ -2462,8 +2448,8 @@ void Canvas::refresh_vbo(const bool unitary)
             data_count = 0;
             switch (geo->type())
             {
-            case Geo::Type::CONTAINER:
-                for (const Geo::Point &point : dynamic_cast<const Container *>(geo)->shape())
+            case Geo::Type::POLYGON:
+                for (const Geo::Point &point : *dynamic_cast<const Geo::Polygon *>(geo))
                 {
                     data[data_count++] = point.x;
                     data[data_count++] = point.y;
@@ -2478,7 +2464,7 @@ void Canvas::refresh_vbo(const bool unitary)
                     }
                 }
                 break;
-            case Geo::Type::CIRCLECONTAINER:
+            case Geo::Type::CIRCLE:
                 for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(geo)))
                 {
                     data[data_count++] = point.x;
@@ -2500,8 +2486,8 @@ void Canvas::refresh_vbo(const bool unitary)
                     data_count = 0;
                     switch (item->type())
                     {
-                    case Geo::Type::CONTAINER:
-                        for (const Geo::Point &point : dynamic_cast<const Container *>(item)->shape())
+                    case Geo::Type::POLYGON:
+                        for (const Geo::Point &point : *dynamic_cast<const Geo::Polygon *>(item))
                         {
                             data[data_count++] = point.x;
                             data[data_count++] = point.y;
@@ -2516,7 +2502,7 @@ void Canvas::refresh_vbo(const bool unitary)
                             }
                         }
                         break;
-                    case Geo::Type::CIRCLECONTAINER:
+                    case Geo::Type::CIRCLE:
                         for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item)))
                         {
                             data[data_count++] = point.x;
@@ -2684,8 +2670,8 @@ void Canvas::refresh_selected_ibo()
             ++count;
             switch (geo->type())
             {
-            case Geo::Type::CONTAINER:
-            case Geo::Type::CIRCLECONTAINER:
+            case Geo::Type::POLYGON:
+            case Geo::Type::CIRCLE:
             case Geo::Type::POLYLINE:
             case Geo::Type::BEZIER:
                 for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
@@ -2860,15 +2846,15 @@ void Canvas::refresh_selected_vbo()
         ++count;
         switch (obj->type())
         {
-        case Geo::Type::CONTAINER:
-            for (const Geo::Point &point : dynamic_cast<const Container *>(obj)->shape())
+        case Geo::Type::POLYGON:
+            for (const Geo::Point &point : *dynamic_cast<const Geo::Polygon *>(obj))
             {
                 data[data_count++] = point.x;
                 data[data_count++] = point.y;
                 data[data_count++] = 0.5;
             }
             break;
-        case Geo::Type::CIRCLECONTAINER:
+        case Geo::Type::CIRCLE:
             for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(obj)))
             {
                 data[data_count++] = point.x;
@@ -2882,15 +2868,15 @@ void Canvas::refresh_selected_vbo()
                 data_count = 0;
                 switch (item->type())
                 {
-                case Geo::Type::CONTAINER:
-                    for (const Geo::Point &point : dynamic_cast<const Container *>(item)->shape())
+                case Geo::Type::POLYGON:
+                    for (const Geo::Point &point : *dynamic_cast<const Geo::Polygon *>(item))
                     {
                         data[data_count++] = point.x;
                         data[data_count++] = point.y;
                         data[data_count++] = 0.5;
                     }
                     break;
-                case Geo::Type::CIRCLECONTAINER:
+                case Geo::Type::CIRCLE:
                     for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item)))
                     {
                         data[data_count++] = point.x;
@@ -2983,8 +2969,8 @@ void Canvas::refresh_brush_ibo()
         {
             switch (geo->type())
             {
-            case Geo::Type::CONTAINER:
-                for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Container *>(geo)->shape()))
+            case Geo::Type::POLYGON:
+                for (size_t i : Geo::ear_cut_to_indexs(*dynamic_cast<const Geo::Polygon *>(geo)))
                 {
                     polygon_indexs[polygon_index_count++] = geo->point_index + i;
                     if (polygon_index_count == polygon_index_len)
@@ -2997,7 +2983,7 @@ void Canvas::refresh_brush_ibo()
                     }
                 }
                 break;
-            case Geo::Type::CIRCLECONTAINER:
+            case Geo::Type::CIRCLE:
                 for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(geo))))
                 {
                     polygon_indexs[polygon_index_count++] = geo->point_index + i;
@@ -3016,8 +3002,8 @@ void Canvas::refresh_brush_ibo()
                 {
                     switch (item->type())
                     {
-                    case Geo::Type::CONTAINER:
-                        for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Container *>(item)->shape()))
+                    case Geo::Type::POLYGON:
+                        for (size_t i : Geo::ear_cut_to_indexs(*dynamic_cast<const Geo::Polygon *>(item)))
                         {
                             polygon_indexs[polygon_index_count++] = item->point_index + i;
                             if (polygon_index_count == polygon_index_len)
@@ -3030,7 +3016,7 @@ void Canvas::refresh_brush_ibo()
                             }
                         }
                         break;
-                    case Geo::Type::CIRCLECONTAINER:
+                    case Geo::Type::CIRCLE:
                         for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item))))
                         {
                             polygon_indexs[polygon_index_count++] = item->point_index + i;
@@ -3079,8 +3065,8 @@ void Canvas::refresh_text_vbo()
     QRectF text_rect;
 
     Text *text = nullptr;
-    Container *container = nullptr;
-    CircleContainer *circlecontainer = nullptr;
+    Container<Geo::Polygon> *container = nullptr;
+    Container<Geo::Circle> *circlecontainer = nullptr;
     Geo::Point coord;
     Geo::Polygon points;
     size_t offset;
@@ -3119,8 +3105,8 @@ void Canvas::refresh_text_vbo()
                 }
                 text->text_index = data_count;
                 break;
-            case Geo::Type::CONTAINER:
-                container = dynamic_cast<Container *>(geo);
+            case Geo::Type::POLYGON:
+                container = dynamic_cast<Container<Geo::Polygon> *>(geo);
                 if (container->text().isEmpty())
                 {
                     continue;
@@ -3136,8 +3122,8 @@ void Canvas::refresh_text_vbo()
                 }
                 container->text_index = data_count;
                 break;
-            case Geo::Type::CIRCLECONTAINER:
-                circlecontainer = dynamic_cast<CircleContainer *>(geo);
+            case Geo::Type::CIRCLE:
+                circlecontainer = dynamic_cast<Container<Geo::Circle> *>(geo);
                 if (circlecontainer->text().isEmpty())
                 {
                     continue;
@@ -3175,8 +3161,8 @@ void Canvas::refresh_text_vbo()
                         }
                         text->text_index = data_count;
                         break;
-                    case Geo::Type::CONTAINER:
-                        container = dynamic_cast<Container *>(item);
+                    case Geo::Type::POLYGON:
+                        container = dynamic_cast<Container<Geo::Polygon> *>(item);
                         if (container->text().isEmpty())
                         {
                             continue;
@@ -3193,8 +3179,8 @@ void Canvas::refresh_text_vbo()
                         }
                         container->text_index = data_count;
                         break;
-                    case Geo::Type::CIRCLECONTAINER:
-                        circlecontainer = dynamic_cast<CircleContainer *>(item);
+                    case Geo::Type::CIRCLE:
+                        circlecontainer = dynamic_cast<Container<Geo::Circle> *>(item);
                         if (circlecontainer->text().isEmpty())
                         {
                             continue;
@@ -3262,10 +3248,10 @@ void Canvas::refresh_text_vbo()
                     case Geo::Type::TEXT:
                         text->text_count = data_count - text->text_index;
                         break;
-                    case Geo::Type::CONTAINER:
+                    case Geo::Type::POLYGON:
                         container->text_count = data_count - container->text_index;
                         break;
-                    case Geo::Type::CIRCLECONTAINER:
+                    case Geo::Type::CIRCLE:
                         circlecontainer->text_count = data_count - circlecontainer->text_index;
                         break; 
                     default:
@@ -3325,10 +3311,10 @@ void Canvas::refresh_text_vbo()
             case Geo::Type::TEXT:
                 text->text_count = data_count - text->text_index;
                 break;
-            case Geo::Type::CONTAINER:
+            case Geo::Type::POLYGON:
                 container->text_count = data_count - container->text_index;
                 break;
-            case Geo::Type::CIRCLECONTAINER:
+            case Geo::Type::CIRCLE:
                 circlecontainer->text_count = data_count - circlecontainer->text_index;
                 break;
             default:
@@ -3365,8 +3351,8 @@ void Canvas::refresh_text_vbo(const bool unitary)
     QRectF text_rect;
 
     Text *text = nullptr;
-    Container *container = nullptr;
-    CircleContainer *circlecontainer = nullptr;
+    Container<Geo::Polygon> *container = nullptr;
+    Container<Geo::Circle> *circlecontainer = nullptr;
     Geo::Point coord;
     int string_index;
     QStringList strings;
@@ -3407,8 +3393,8 @@ void Canvas::refresh_text_vbo(const bool unitary)
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
                 break;
-            case Geo::Type::CONTAINER:
-                container = dynamic_cast<Container *>(geo);
+            case Geo::Type::POLYGON:
+                container = dynamic_cast<Container<Geo::Polygon> *>(geo);
                 if (container->text().isEmpty())
                 {
                     continue;
@@ -3423,8 +3409,8 @@ void Canvas::refresh_text_vbo(const bool unitary)
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
                 break;
-            case Geo::Type::CIRCLECONTAINER:
-                circlecontainer = dynamic_cast<CircleContainer *>(geo);
+            case Geo::Type::CIRCLE:
+                circlecontainer = dynamic_cast<Container<Geo::Circle> *>(geo);
                 if (circlecontainer->text().isEmpty())
                 {
                     continue;
@@ -3460,8 +3446,8 @@ void Canvas::refresh_text_vbo(const bool unitary)
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
                         break;
-                    case Geo::Type::CONTAINER:
-                        container = dynamic_cast<Container *>(item);
+                    case Geo::Type::POLYGON:
+                        container = dynamic_cast<Container<Geo::Polygon> *>(item);
                         if (container->text().isEmpty())
                         {
                             continue;
@@ -3477,8 +3463,8 @@ void Canvas::refresh_text_vbo(const bool unitary)
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
                         break;
-                    case Geo::Type::CIRCLECONTAINER:
-                        circlecontainer = dynamic_cast<CircleContainer *>(item);
+                    case Geo::Type::CIRCLE:
+                        circlecontainer = dynamic_cast<Container<Geo::Circle> *>(item);
                         if (circlecontainer->text().isEmpty())
                         {
                             continue;
@@ -3520,10 +3506,10 @@ void Canvas::refresh_text_vbo(const bool unitary)
                     case Geo::Type::TEXT:
                         glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * text->text_index, sizeof(double) * data_count, data);
                         break;
-                    case Geo::Type::CONTAINER:
+                    case Geo::Type::POLYGON:
                         glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * container->text_index, sizeof(double) * data_count, data);
                         break;
-                    case Geo::Type::CIRCLECONTAINER:
+                    case Geo::Type::CIRCLE:
                         glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * circlecontainer->text_index, sizeof(double) * data_count, data);
                         break; 
                     default:
@@ -3558,10 +3544,10 @@ void Canvas::refresh_text_vbo(const bool unitary)
             case Geo::Type::TEXT:
                 glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * text->text_index, sizeof(double) * data_count, data);
                 break;
-            case Geo::Type::CONTAINER:
+            case Geo::Type::POLYGON:
                 glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * container->text_index, sizeof(double) * data_count, data);
                 break;
-            case Geo::Type::CIRCLECONTAINER:
+            case Geo::Type::CIRCLE:
                 glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * circlecontainer->text_index, sizeof(double) * data_count, data);
                 break;
             default:
@@ -3577,7 +3563,7 @@ void Canvas::refresh_text_vbo(const bool unitary)
 
 void Canvas::refresh_catached_points(const bool current_group_only)
 {
-    const CircleContainer *c = nullptr;
+    const Geo::Circle *c = nullptr;
     _catched_points.clear();
     if (current_group_only)
     {
@@ -3588,15 +3574,15 @@ void Canvas::refresh_catached_points(const bool current_group_only)
             case Geo::Type::TEXT:
                 _catched_points.emplace_back(dynamic_cast<const Text*>(geo)->center());
                 break;
-            case Geo::Type::CONTAINER:
-                _catched_points.emplace_back(dynamic_cast<const Container *>(geo)->shape().bounding_rect().center());
-                for (const Geo::Point &point : dynamic_cast<const Container *>(geo)->shape())
+            case Geo::Type::POLYGON:
+                _catched_points.emplace_back(dynamic_cast<const Geo::Polygon *>(geo)->bounding_rect().center());
+                for (const Geo::Point &point : *dynamic_cast<const Geo::Polygon *>(geo))
                 {
                     _catched_points.emplace_back(point);
                 }
                 break;
-            case Geo::Type::CIRCLECONTAINER:
-                c = dynamic_cast<const CircleContainer *>(geo);
+            case Geo::Type::CIRCLE:
+                c = dynamic_cast<const Geo::Circle *>(geo);
                 _catched_points.emplace_back(c->x, c->y);
                 _catched_points.emplace_back(c->x + c->radius, c->y);
                 _catched_points.emplace_back(c->x, c->y - c->radius);
@@ -3630,15 +3616,15 @@ void Canvas::refresh_catached_points(const bool current_group_only)
                 case Geo::Type::TEXT:
                     _catched_points.emplace_back(dynamic_cast<const Text*>(geo)->center());
                     break;
-                case Geo::Type::CONTAINER:
-                    _catched_points.emplace_back(dynamic_cast<const Container *>(geo)->shape().bounding_rect().center());
-                    for (const Geo::Point &point : dynamic_cast<const Container *>(geo)->shape())
+                case Geo::Type::POLYGON:
+                    _catched_points.emplace_back(dynamic_cast<const Geo::Polygon *>(geo)->bounding_rect().center());
+                    for (const Geo::Point &point : *dynamic_cast<const Geo::Polygon *>(geo))
                     {
                         _catched_points.emplace_back(point);
                     }
                     break;
-                case Geo::Type::CIRCLECONTAINER:
-                    c = dynamic_cast<const CircleContainer *>(geo);
+                case Geo::Type::CIRCLE:
+                    c = dynamic_cast<const Geo::Circle *>(geo);
                     _catched_points.emplace_back(c->x, c->y);
                     _catched_points.emplace_back(c->x + c->radius, c->y);
                     _catched_points.emplace_back(c->x, c->y - c->radius);

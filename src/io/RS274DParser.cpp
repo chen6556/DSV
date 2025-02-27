@@ -69,7 +69,7 @@ void Importer::store_points()
 
 void Importer::draw_circle()
 {
-    _last_circle_container = new CircleContainer(Geo::Circle(_last_coord, _circle_radius));
+    _last_circle_container = new Container<Geo::Circle>(Geo::Circle(_last_coord, _circle_radius));
     _last_container = nullptr;
     _graph->container_groups().back().append(_last_circle_container);
     _points.clear();
@@ -198,38 +198,40 @@ void Importer::store_table_text(const std::string &text)
     {
         _points.pop_back();
     }
-    Container *c;
-    CircleContainer *cc;
+    Containerized *containerized = nullptr;
     for (Geo::Geometry *container : _graph->container_groups().back())
     {
+        containerized = dynamic_cast<Containerized *>(container);
+        if (containerized == nullptr)
+        {
+            continue;
+        }
         switch (container->type())
         {
-        case Geo::Type::CONTAINER:
-            c = static_cast<Container *>(container);
-            if (Geo::is_inside(_last_coord, c->shape()))
+        case Geo::Type::POLYGON:
+            if (Geo::is_inside(_last_coord, *dynamic_cast<Geo::Polygon *>(container)))
             {
-                if (c->text().isEmpty())
+                if (containerized->text().isEmpty())
                 {
-                    c->set_text(QString::fromUtf8(text));
+                    containerized->set_text(QString::fromUtf8(text));
                 }
                 else
                 {
-                    c->set_text(c->text() + '\n' + QString::fromUtf8(text));
+                    containerized->set_text(containerized->text() + '\n' + QString::fromUtf8(text));
                 }
                 return;
             }
             break;
-        case Geo::Type::CIRCLECONTAINER:
-            cc = static_cast<CircleContainer *>(container);
-            if (Geo::is_inside(_last_coord, cc->shape()))
+        case Geo::Type::CIRCLE:
+            if (Geo::is_inside(_last_coord, *dynamic_cast<Geo::Circle *>(container)))
             {
-                if (cc->text().isEmpty())
+                if (containerized->text().isEmpty())
                 {
-                    cc->set_text(QString::fromUtf8(text));
+                    containerized->set_text(QString::fromUtf8(text));
                 }
                 else
                 {
-                    cc->set_text(cc->text() + '\n' + QString::fromUtf8(text));
+                    containerized->set_text(containerized->text() + '\n' + QString::fromUtf8(text));
                 }
                 return;
             }

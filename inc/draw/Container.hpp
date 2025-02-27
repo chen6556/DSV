@@ -41,82 +41,83 @@ public:
     Text *clone() const override;
 };
 
-class Container : public Geo::Polygon
+class Containerized
 {
-private:
+protected:
     QString _txt;
 
 public:
     unsigned long long text_index = 0;
     unsigned long long text_count = 0;
 
+public:
+    Containerized() {};
+
+    Containerized(const QString &txt);
+
+    const QString &text() const;
+
+    void set_text(const QString &txt);
+
+    void clear_text();
+};
+
+template<typename T>
+class Container : public T, public Containerized
+{
 public:
     Container() {};
 
-    Container(const Geo::Polygon &shape);
+    Container(const T &shape)
+        : T(shape) {}
 
-    Container(const QString &txt, const Geo::Polygon &shape);
+    Container(const QString &txt, const T &shape)
+        : T(shape), Containerized(txt) {}
 
-    Container(const Container &container);
+    template<typename ...Ts>
+    Container(const QString &txt, Ts... args)
+        : T(args...), Containerized(txt) {}
 
-    const Geo::Type type() const override;
+    Container(const Container<T> &container)
+        : T(container), Containerized(container)
+    {}
 
-    Container &operator=(const Container &container);
+    Container<T> &operator=(const Container<T> &container)
+    {
+        if (this != &container)
+        {
+            T::operator=(container);
+            _txt = container._txt;
+            text_index = container.text_index;
+            text_count = container.text_count;
+        }
+        return *this;
+    }
 
-    Geo::Polygon &shape();
+    T &shape()
+    {
+        return *dynamic_cast<T *>(this);
+    }
 
-    const Geo::Polygon &shape() const;
+    const T &shape() const
+    {
+        return *dynamic_cast<const T *>(this);
+    }
 
-    const QString &text() const;
+    const Geo::Point center() const
+    {
+        return static_cast<const T *>(this)->bounding_rect().center();
+    }
 
-    void set_text(const QString &txt);
+    const bool empty() const override
+    {
+        return T::empty() && _txt.isEmpty();
+    }
 
-    void clear_text();
-
-    const Geo::Point center() const;
-
-    const bool empty() const override;
-
-    Container *clone() const override;
-};
-
-class CircleContainer : public Geo::Circle
-{
-private:
-    QString _txt;
-
-public:
-    unsigned long long text_index = 0;
-    unsigned long long text_count = 0;
-
-public:
-    CircleContainer() {};
-
-    CircleContainer(const Geo::Circle &shape);
-
-    CircleContainer(const QString &txt, const Geo::Circle &shape);
-
-    CircleContainer(const QString &txt, const double x, const double y, const double r);
-
-    CircleContainer(const CircleContainer &container);
-
-    const Geo::Type type() const override;
-
-    CircleContainer &operator=(const CircleContainer &container);
-
-    Geo::Circle &shape();
-
-    const Geo::Circle &shape() const;
-
-    const QString &text() const;
-
-    void set_text(const QString &txt);
-
-    void clear_text();
-
-    const bool empty() const override;
-
-    CircleContainer *clone() const override;
+    Container<T> *clone() const override
+    {
+        return new Container<T>(*this);
+    }
 };
 
 class Combination;
@@ -202,19 +203,7 @@ public:
 
     const size_t size() const;
 
-    void append(Container *container);
-
-    void append(CircleContainer *container);
-
-    void append(Geo::Polyline *polyline);
-
-    void append(Geo::Bezier *bezier);
-
-    void append(Combination *combination);
-
     void append(ContainerGroup &group, const bool merge = true);
-
-    void append(Text *text);
 
     void append(Geo::Geometry *object);
 
