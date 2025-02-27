@@ -215,8 +215,8 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>114</width>
-             <height>650</height>
+             <width>120</width>
+             <height>639</height>
             </rect>
            </property>
            <property name="maximumSize">
@@ -707,26 +707,6 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
-              <item row="3" column="0">
-               <widget class="QPushButton" name="union_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Union</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/union_btn.png</normaloff>:/icons/union_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
               <item row="1" column="1">
                <widget class="QPushButton" name="flipx_btn">
                 <property name="focusPolicy">
@@ -928,26 +908,6 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
-              <item row="2" column="0">
-               <widget class="QPushButton" name="point_mirror_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>PointMirror</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/point_mirror_btn.png</normaloff>:/icons/point_mirror_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
               <item row="2" column="1">
                <widget class="QPushButton" name="mirror_btn">
                 <property name="focusPolicy">
@@ -959,6 +919,26 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
                   <normaloff>:/icons/mirror_btn.png</normaloff>:/icons/mirror_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QPushButton" name="union_btn">
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Union</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/union_btn.png</normaloff>:/icons/union_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -2130,22 +2110,6 @@ color:rgb(230, 230, 230);</string>
     </hint>
    </hints>
   </connection>
-  <connection>
-   <sender>point_mirror_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>point_mirror()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>90</x>
-     <y>447</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>503</x>
-     <y>349</y>
-    </hint>
-   </hints>
-  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -2174,6 +2138,5 @@ color:rgb(230, 230, 230);</string>
   <slot>refresh_tool_label(Canvas::Tool)</slot>
   <slot>fillet()</slot>
   <slot>refresh_tool_label(Canvas::Operation)</slot>
-  <slot>point_mirror()</slot>
  </slots>
 </ui>

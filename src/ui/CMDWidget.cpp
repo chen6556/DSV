@@ -40,7 +40,7 @@ void CMDWidget::init()
         {"BEZIER",CMD::Bezier_CMD}, {"TEXT",CMD::Text_CMD}, {"CONNECT",CMD::Connect_CMD},
         {"COMBINATE",CMD::Combinate_CMD}, {"CLOSE",CMD::Close_CMD}, {"SPLIT",CMD::Split_CMD},
         {"ROTATE",CMD::Rotate_CMD}, {"FLIPX",CMD::FlipX_CMD}, {"FLIPY",CMD::FlipY_CMD},
-        {"MIRROR",CMD::Mirror_CMD}, {"POINTMIRROR",CMD::PointMirror_CMD},
+        {"MIRROR",CMD::Mirror_CMD},
         {"ARRAY",CMD::Array_CMD}, {"LINEARRAY",CMD::LineArray_CMD}, {"RINGARRAY",CMD::RingArray_CMD},
         {"OFFSET",CMD::Offset_CMD}, {"SCALE", CMD::Scale_CMD}, {"FILLET",CMD::Fillet_CMD},
         {"UNION",CMD::Union_CMD}, {"INTERSECTION",CMD::Intersection_CMD}, {"DIFFERENCE",CMD::Difference_CMD},
@@ -290,7 +290,6 @@ bool CMDWidget::work()
         break;
 
     case CMD::Mirror_CMD:
-    case CMD::PointMirror_CMD:
     case CMD::Array_CMD:
         emit cmd_changed(_current_cmd);
         _current_cmd = CMD::Error_CMD;

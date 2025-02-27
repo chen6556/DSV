@@ -21,7 +21,7 @@ public:
     enum class CMD {Error_CMD, Open_CMD, Append_CMD, Save_CMD, Exit_CMD, Main_CMD,
         Length_CMD, Polyline_CMD, Circle_CMD, Rectangle_CMD, Bezier_CMD, Text_CMD,
         Connect_CMD, Close_CMD, Combinate_CMD, Split_CMD, Rotate_CMD, FlipX_CMD, FlipY_CMD,
-        Mirror_CMD, PointMirror_CMD, Array_CMD, LineArray_CMD, RingArray_CMD,
+        Mirror_CMD, Array_CMD, LineArray_CMD, RingArray_CMD,
         Offset_CMD, Scale_CMD, Fillet_CMD,
         Union_CMD, Intersection_CMD, Difference_CMD,
         Delete_CMD, Copy_CMD, Cut_CMD, Paste_CMD, Undo_CMD, SelectAll_CMD};

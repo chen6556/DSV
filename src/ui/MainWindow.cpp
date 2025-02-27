@@ -419,9 +419,6 @@ void MainWindow::refresh_tool_label(const Canvas::Operation operation)
     case Canvas::Operation::Mirror:
         ui->current_tool->setText("Mirror");
         break;
-    case Canvas::Operation::PointMirror:
-        ui->current_tool->setText("Point Mirror");
-        break;
     case Canvas::Operation::PolygonDifference:
         ui->current_tool->setText("Difference");
         break;
@@ -458,9 +455,6 @@ void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
     case CMDWidget::CMD::Mirror_CMD:
         ui->current_tool->setText("Mirror");
         return ui->canvas->set_operation(Canvas::Operation::Mirror);
-    case CMDWidget::CMD::PointMirror_CMD:
-        ui->current_tool->setText("Point Mirror");
-        return ui->canvas->set_operation(Canvas::Operation::PointMirror);
     case CMDWidget::CMD::Array_CMD:
         return ui->tool_widget->setCurrentIndex(1);
     case CMDWidget::CMD::RingArray_CMD:
@@ -610,12 +604,6 @@ void MainWindow::mirror()
 {
     ui->current_tool->setText("Mirror");
     ui->canvas->set_operation(Canvas::Operation::Mirror);
-}
-
-void MainWindow::point_mirror()
-{
-    ui->current_tool->setText("Point Mirror");
-    ui->canvas->set_operation(Canvas::Operation::PointMirror);
 }
 
 void MainWindow::scale()

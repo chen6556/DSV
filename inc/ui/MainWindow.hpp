@@ -96,8 +96,6 @@ private slots:
 
     void mirror();
 
-    void point_mirror();
-
     void scale();
 
     void offset();

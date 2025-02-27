@@ -536,17 +536,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         {
             switch (_operation)
             {
-            case Operation::PointMirror:
-                _operation = Operation::NoOperation;
-                if (_editer->mirror(_object_cache, real_x1, real_y1, event->modifiers() == Qt::ControlModifier))
-                {
-                    refresh_vbo();
-                    refresh_selected_ibo();
-                }
-                emit tool_changed(Tool::NoTool);
-                _object_cache.clear();
-                update();
-                return QOpenGLWidget::mousePressEvent(event);
             case Operation::RingArray:
                 _operation = Operation::NoOperation;
                 if (_editer->ring_array(_object_cache, real_x1, real_y1,
@@ -1465,7 +1454,6 @@ void Canvas::set_operation(const Operation operation)
     _operation = operation;
     switch (operation)
     {
-    case Operation::PointMirror:
     case Operation::Mirror:
     case Operation::RingArray:
         _object_cache = _editer->selected();

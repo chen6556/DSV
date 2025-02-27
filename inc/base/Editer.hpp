@@ -122,8 +122,6 @@ public:
 
     bool mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy);
 
-    bool mirror(std::list<Geo::Geometry *> objects, const double x, const double y, const bool copy);
-
     bool offset(std::list<Geo::Geometry *> objects, const double distance);
 
     bool scale(std::list<Geo::Geometry *> objects, const bool unitary, const double k);

@@ -1498,41 +1498,6 @@ bool Editer::mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *lin
     return true;
 }
 
-bool Editer::mirror(std::list<Geo::Geometry *> objects, const double x, const double y, const bool copy)
-{
-    if (objects.empty())
-    {
-        return false;
-    }
-
-    if (copy)
-    {
-        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> items;
-        size_t index = _graph->container_group(_current_group).size();
-        for (Geo::Geometry *obj : objects)
-        {
-            _graph->container_group(_current_group).append(obj->clone());
-            _graph->container_group(_current_group).back()->rotate(x, y, Geo::PI);
-            _graph->container_group(_current_group).back()->is_selected = true;
-            items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
-        }
-        _backup.push_command(new UndoStack::ObjectCommand(items, true));
-    }
-    else
-    {
-        for (Geo::Geometry *obj : objects)
-        {
-            obj->rotate(x, y, Geo::PI);
-            obj->is_selected = true;
-        }
-        _backup.push_command(new UndoStack::RotateCommand(objects.begin(), objects.end(), x, y, Geo::PI, true));
-    }
-
-    _graph->modified = true;
-
-    return true;
-}
-
 bool Editer::offset(std::list<Geo::Geometry *> objects, const double distance)
 {
     const size_t count = _graph->container_group(_current_group).size();
