@@ -28,23 +28,23 @@ void Importer::store_polygon()
     {
         if (_is_combination)
         {
-            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Container(Geo::Polygon(_points.cbegin(), _points.cend())));
+            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Container<Geo::Polygon>(Geo::Polygon(_points.cbegin(), _points.cend())));
         }
         else
         {
             _graph->container_groups().back().append(
-                new Container(Geo::Polygon(_points.cbegin(), _points.cend())));
+                new Container<Geo::Polygon>(Geo::Polygon(_points.cbegin(), _points.cend())));
         }
     }
     else
     {
         if (_is_combination)
         {
-            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Container(QString::fromStdString(_text), Geo::Polygon(_points.cbegin(), _points.cend())));
+            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Container<Geo::Polygon>(QString::fromStdString(_text), Geo::Polygon(_points.cbegin(), _points.cend())));
         }
         else
         {
-            _graph->container_groups().back().append(new Container(
+            _graph->container_groups().back().append(new Container<Geo::Polygon>(
                 QString::fromStdString(_text), Geo::Polygon(_points.cbegin(), _points.cend())));
         }
         _text.clear();

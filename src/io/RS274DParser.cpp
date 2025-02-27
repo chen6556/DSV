@@ -56,7 +56,7 @@ void Importer::store_points()
 
     if (_points.front() == _points.back() && _points.size() >= 3)
     {
-        _last_container = new Container(Geo::Polygon(_points.cbegin(), _points.cend()));
+        _last_container = new Container<Geo::Polygon>(Geo::Polygon(_points.cbegin(), _points.cend()));
         _last_circle_container = nullptr;
         _graph->container_groups().back().append(_last_container);
     }

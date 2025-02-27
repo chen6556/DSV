@@ -458,8 +458,7 @@ const size_t Editer::selected_count() const
         return count;
     }
     count += std::count_if(_graph->container_group(_current_group).cbegin(), _graph->container_group(_current_group).cend(),
-                           [](const Geo::Geometry *c)
-                           { return c->is_selected; });
+                           [](const Geo::Geometry *c) { return c->is_selected; });
     return count;
 }
 
@@ -590,7 +589,7 @@ void Editer::append_points()
     {
         _point_cache.pop_back();
         _point_cache.pop_back();
-        _graph->append(new Container(Geo::Polygon(_point_cache.cbegin(), _point_cache.cend())), _current_group);
+        _graph->append(new Container<Geo::Polygon>(Geo::Polygon(_point_cache.cbegin(), _point_cache.cend())), _current_group);
     }
     else
     {
@@ -695,12 +694,12 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     {
     case Geo::Type::POLYGON:
         {
-            Container<Geo::Polygon> *temp = dynamic_cast<Container<Geo::Polygon> *>(points);
+            Geo::Polygon *temp = dynamic_cast<Geo::Polygon *>(points);
             if (change_shape && !points->shape_fixed)
             {
                 size_t count = 0, index = SIZE_MAX;
                 double distance, min_distance = DBL_MAX;
-                for (Geo::Point &point : temp->shape())
+                for (Geo::Point &point : *temp)
                 {
                     distance = std::min(Geo::distance_square(x0, y0, point.x, point.y), Geo::distance_square(x1, y1, point.x, point.y));
                     if (distance <= catch_distance * catch_distance && distance < min_distance)
@@ -714,47 +713,47 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                 {
                     if (_edited_shape.empty())
                     {
-                        for (const Geo::Point &point : temp->shape())
+                        for (const Geo::Point &point : *temp)
                         {
                             _edited_shape.emplace_back(point.x, point.y);
                         }
                     }
 
-                    Geo::Point &point = temp->shape()[index];
+                    Geo::Point &point = (*temp)[index];
                     if (temp->size() == 5)
                     {
-                        if (temp->shape()[0].y == temp->shape()[1].y && temp->shape()[2].y == temp->shape()[3].y
-                            && temp->shape()[0].x == temp->shape()[3].x && temp->shape()[2].x == temp->shape()[1].x)
+                        if ((*temp)[0].y == (*temp)[1].y && (*temp)[2].y == (*temp)[3].y
+                            && (*temp)[0].x == (*temp)[3].x && (*temp)[2].x == (*temp)[1].x)
                         {
                             point.translate(x1 - x0, y1 - y0);
                             if (index % 2 == 0)
                             {
-                                temp->shape()[index == 0 ? 3 : 1].x = point.x;
-                                temp->shape()[index + 1].y = point.y;
+                                (*temp)[index == 0 ? 3 : 1].x = point.x;
+                                (*temp)[index + 1].y = point.y;
                             }
                             else
                             {
-                                temp->shape()[index - 1].y = point.y;
-                                temp->shape()[index + 1].x = point.x;
+                                (*temp)[index - 1].y = point.y;
+                                (*temp)[index + 1].x = point.x;
                                 if (index == 3)
                                 {
                                     temp->front().x = temp->back().x;
                                 }
                             }
                         }
-                        else if (temp->shape()[0].x == temp->shape()[1].x && temp->shape()[2].x == temp->shape()[3].x
-                            && temp->shape()[0].y == temp->shape()[3].y && temp->shape()[2].y == temp->shape()[1].y)
+                        else if ((*temp)[0].x == (*temp)[1].x && (*temp)[2].x == (*temp)[3].x
+                            && (*temp)[0].y == (*temp)[3].y && (*temp)[2].y == (*temp)[1].y)
                         {
                             point.translate(x1 - x0, y1 - y0);
                             if (index % 2 == 0)
                             {
-                                temp->shape()[index == 0 ? 3 : 1].y = point.y;
-                                temp->shape()[index + 1].x = point.x;                                
+                                (*temp)[index == 0 ? 3 : 1].y = point.y;
+                                (*temp)[index + 1].x = point.x;                                
                             }
                             else
                             {
-                                temp->shape()[index - 1].x = point.x;
-                                temp->shape()[index + 1].y = point.y;
+                                (*temp)[index - 1].x = point.x;
+                                (*temp)[index + 1].y = point.y;
                                 if (index == 3)
                                 {
                                     temp->front().y = temp->back().y;
@@ -780,7 +779,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         break;
     case Geo::Type::CIRCLE:
         {
-            Container<Geo::Circle> *temp = dynamic_cast<Container<Geo::Circle> *>(points);
+            Geo::Circle *temp = dynamic_cast<Geo::Circle *>(points);
             if (change_shape && !points->shape_fixed &&
                 (std::abs(temp->radius - Geo::distance(*temp, Geo::Point(x0, y0))) <= catch_distance ||
                 std::abs(temp->radius - Geo::distance(*temp, Geo::Point(x1, y1))) <= catch_distance))
@@ -1706,18 +1705,18 @@ bool Editer::polygon_union(Container<Geo::Polygon> *container0, Container<Geo::P
 
         if (index0 == group.size())
         {
-            group.append(new Container(shapes.front()));
+            group.append(new Container<Geo::Polygon>(shapes.front()));
         }
         else
         {
-            group.insert(index0, new Container(shapes.front()));
+            group.insert(index0, new Container<Geo::Polygon>(shapes.front()));
         }
         add_items.emplace_back(group[index0], _current_group, index0);
 
         index0 = group.size();
         for (size_t i = 1, count = shapes.size(); i < count; ++i)
         {
-            group.append(new Container(shapes[i]));
+            group.append(new Container<Geo::Polygon>(shapes[i]));
             add_items.emplace_back(group.back(), _current_group, index0++);
         }
 
@@ -1753,18 +1752,18 @@ bool Editer::polygon_intersection(Container<Geo::Polygon> *container0, Container
 
         if (index0 == group.size())
         {
-            group.append(new Container(shapes.front()));
+            group.append(new Container<Geo::Polygon>(shapes.front()));
         }
         else
         {
-            group.insert(index0, new Container(shapes.front()));
+            group.insert(index0, new Container<Geo::Polygon>(shapes.front()));
         }
         add_items.emplace_back(group[index0], _current_group, index0);
 
         index0 = group.size();        
         for (size_t i = 1, count = shapes.size(); i < count; ++i)
         {
-            group.append(new Container(shapes[i]));
+            group.append(new Container<Geo::Polygon>(shapes[i]));
             add_items.emplace_back(group.back(), _current_group, index0++);
         }
 
@@ -1797,18 +1796,18 @@ bool Editer::polygon_difference(Container<Geo::Polygon> *container0, const Conta
 
         if (index0 == group.size())
         {
-            group.append(new Container(shapes.front()));
+            group.append(new Container<Geo::Polygon>(shapes.front()));
         }
         else
         {
-            group.insert(index0, new Container(shapes.front()));
+            group.insert(index0, new Container<Geo::Polygon>(shapes.front()));
         }
         add_items.emplace_back(group[index0], _current_group, index0);
 
         index0 = group.size();
         for (size_t i = 1, count = shapes.size(); i < count; ++i)
         {
-            group.append(new Container(shapes[i]));
+            group.append(new Container<Geo::Polygon>(shapes[i]));
             add_items.emplace_back(group.back(), _current_group, index0++);
         }
 
