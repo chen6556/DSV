@@ -56,6 +56,7 @@ void MainWindow::init()
     _clock.start(5000);
     QObject::connect(ui->measure_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Measure); });
     QObject::connect(ui->circle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Circle); });
+    QObject::connect(ui->ellipse_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Ellipse); });
     QObject::connect(ui->line_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Polyline); });
     QObject::connect(ui->rect_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Rect); });
     QObject::connect(ui->curve_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Curve); ui->canvas->set_bezier_order(ui->curve_sbx->value()); });
@@ -392,6 +393,9 @@ void MainWindow::refresh_tool_label(const Canvas::Tool tool)
         break;
     case Canvas::Tool::Circle:
         ui->current_tool->setText("Circle");
+        break;
+    case Canvas::Tool::Ellipse:
+        ui->current_tool->setText("Ellipse");
         break;
     case Canvas::Tool::Polyline:
         ui->current_tool->setText("Polyline");

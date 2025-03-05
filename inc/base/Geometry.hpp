@@ -10,7 +10,7 @@ namespace Geo
     const static double EPSILON = 1e-10;
 
     enum class Type {GEOMETRY, POINT, POLYLINE, AABBRECT, POLYGON, TRIANGLE, CIRCLE, LINE, BEZIER,
-        TEXT, CONTAINERGROUP, COMBINATION, GRAPH};
+        ELLIPSE, TEXT, CONTAINERGROUP, COMBINATION, GRAPH};
 
     class AABBRect;
 
@@ -551,6 +551,8 @@ namespace Geo
 
         void scale(const double x, const double y, const double k) override;
 
+        Polygon convex_hull() const override;
+
         AABBRect bounding_rect() const override;
 
         Polygon mini_bounding_rect() const override;
@@ -604,6 +606,8 @@ namespace Geo
         void rotate(const double x, const double y, const double rad) override; // 弧度制
 
         void scale(const double x, const double y, const double k) override;
+
+        Polygon convex_hull() const override;
 
         AABBRect bounding_rect() const override;
 
@@ -669,4 +673,80 @@ namespace Geo
         Polygon mini_bounding_rect() const override;
     };
 
+    class Ellipse : public Geometry
+    {
+    private:
+        Point _a[2], _b[2];
+
+    public:
+        Ellipse() {};
+
+        Ellipse(const double x, const double y, const double a, const double b);
+
+        Ellipse(const Point &point, const double a, const double b);
+
+        Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point &b1);
+
+        Ellipse(const Ellipse &ellipse);
+
+        Ellipse &operator=(const Ellipse &ellipse);
+
+        const Type type() const override;
+
+        const double area() const;
+
+        const double length() const override;
+
+        const bool empty() const override;
+
+        void clear() override;
+
+        Ellipse *clone() const override;
+
+        void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
+
+        void transform(const double mat[6]) override;
+
+        void translate(const double x, const double y) override;
+
+        void rotate(const double x, const double y, const double rad) override; // 弧度制
+
+        void scale(const double x, const double y, const double k) override;
+
+        Polygon convex_hull() const override;
+
+        AABBRect bounding_rect() const override;
+
+        Polygon mini_bounding_rect() const override;
+
+        Ellipse operator+(const Point &point) const;
+
+        Ellipse operator-(const Point &point) const;
+
+        double lengtha() const;
+
+        double lengthb() const;
+
+        double angle() const;
+
+        Point center() const;
+
+        void set_lengtha(const double a);
+
+        void set_lengthb(const double b);
+
+        void set_center(const double x, const double y);
+
+        const Point &a0() const;
+
+        const Point &a1() const;
+
+        const Point &b0() const;
+
+        const Point &b1() const;
+
+        Point c0() const;
+
+        Point c1() const;
+    };
 };

@@ -1827,6 +1827,18 @@ void Circle::scale(const double x, const double y, const double k)
     radius *= k;
 }
 
+Polygon Circle::convex_hull() const
+{
+    if (radius == 0)
+    {
+        return Polygon();
+    }
+    else
+    {
+        return AABBRect(x - radius, y + radius, x + radius, y - radius);
+    }
+}
+
 AABBRect Circle::bounding_rect() const
 {
     if (radius == 0)
@@ -1962,6 +1974,21 @@ void Line::scale(const double x, const double y, const double k)
 {
     _start_point.scale(x, y, k);
     _end_point.scale(x, y, k);
+}
+
+Polygon Line::convex_hull() const
+{
+    if (_start_point == _end_point)
+    {
+        return Polygon();
+    }
+    else
+    {
+        return AABBRect(std::min(_start_point.x, _end_point.x),
+                        std::max(_start_point.y, _end_point.y),
+                        std::max(_start_point.x, _end_point.x),
+                        std::min(_start_point.y, _end_point.y));
+    }
 }
 
 AABBRect Line::bounding_rect() const
@@ -2196,3 +2223,326 @@ Polygon Bezier::mini_bounding_rect() const
     return _shape.mini_bounding_rect();
 }
 
+
+// Ellipse
+Ellipse::Ellipse(const double x, const double y, const double a, const double b)
+{
+    assert(a > 0 && b > 0);
+    if (a >= b)
+    {
+        _a[0].x = x - a;
+        _a[1].x = x + a;
+        _a[0].y = _a[1].y = y;
+        _b[0].y = y + b;
+        _b[1].y = y - b;
+        _b[0].x = _b[1].x = x;
+    }
+    else
+    {
+        _a[0].x = x - b;
+        _a[1].x = x + b;
+        _a[0].y = _a[1].y = y;
+        _b[0].y = y + a;
+        _b[1].y = y - a;
+        _b[0].x = _b[1].x = x;
+    }
+}
+
+Ellipse::Ellipse(const Point &point, const double a, const double b)
+{
+    assert(a > 0 && b > 0);
+    if (a >= b)
+    {
+        _a[0].x = point.x - a;
+        _a[1].x = point.x + a;
+        _a[0].y = _a[1].y = point.y;
+        _b[0].y = point.y + b;
+        _b[1].y = point.y - b;
+        _b[0].x = _b[1].x = point.x;
+    }
+    else
+    {
+        _a[0].x = point.x - b;
+        _a[1].x = point.x + b;
+        _a[0].y = _a[1].y = point.y;
+        _b[0].y = point.y + a;
+        _b[1].y = point.y - a;
+        _b[0].x = _b[1].x = point.x;
+    }
+}
+
+Ellipse::Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point &b1)
+{
+    _a[0] = a0, _a[1] = a1;
+    _b[0] = b0, _b[1] = b1;
+}
+
+Ellipse::Ellipse(const Ellipse &ellipse)
+    : Geometry(ellipse)
+{
+    _a[0] = ellipse._a[0];
+    _a[1] = ellipse._a[1];
+    _b[0] = ellipse._b[0];
+    _b[1] = ellipse._b[1];
+}
+
+Ellipse &Ellipse::operator=(const Ellipse &ellipse)
+{
+    if (this != &ellipse)
+    {
+        Geometry::operator=(ellipse);
+        _a[0] = ellipse._a[0];
+        _a[1] = ellipse._a[1];
+        _b[0] = ellipse._b[0];
+        _b[1] = ellipse._b[1];
+    }
+    return *this;
+}
+
+const Type Ellipse::type() const
+{
+    return Geo::Type::ELLIPSE;
+}
+
+const double Ellipse::area() const
+{
+    return Geo::PI * Geo::distance(_a[0], _a[1]) * Geo::distance(_b[0], _b[1]) / 4;
+}
+
+const double Ellipse::length() const
+{
+    const double a = Geo::distance(_a[0], _a[1]) / 2, b = Geo::distance(_b[0], _b[1]) / 2;
+    const double t = (a - b) / (a + b);
+    return Geo::PI * (a + b) * (1 + 3 * std::pow(t, 2) / (10 + std::sqrt(4 - 3 * std::pow(t, 2))));
+}
+
+const bool Ellipse::empty() const
+{
+    return _a[0] == _a[1] || _b[0] == _b[1];
+}
+
+void Ellipse::clear()
+{
+    _a[0].clear();
+    _a[1].clear();
+    _b[0].clear();
+    _b[1].clear();
+}
+
+Ellipse *Ellipse::clone() const
+{
+    return new Ellipse(*this);
+}
+
+void Ellipse::transform(const double a, const double b, const double c, const double d, const double e, const double f)
+{
+    _a[0].transform(a, b, c, d, e, f);
+    _a[1].transform(a, b, c, d, e, f);
+    _b[0].transform(a, b, c, d, e, f);
+    _b[1].transform(a, b, c, d, e, f);
+}
+
+void Ellipse::transform(const double mat[6])
+{
+    _a[0].transform(mat);
+    _a[1].transform(mat);
+    _b[0].transform(mat);
+    _b[1].transform(mat);
+}
+
+void Ellipse::translate(const double x, const double y)
+{
+    _a[0].translate(x, y);
+    _a[1].translate(x, y);
+    _b[0].translate(x, y);
+    _b[1].translate(x, y);
+}
+
+void Ellipse::rotate(const double x, const double y, const double rad)
+{
+    _a[0].rotate(x, y, rad);
+    _a[1].rotate(x, y, rad);
+    _b[0].rotate(x, y, rad);
+    _b[1].rotate(x, y, rad);
+}
+
+void Ellipse::scale(const double x, const double y, const double k)
+{
+    _a[0].scale(x, y, k);
+    _a[1].scale(x, y, k);
+    _b[0].scale(x, y, k);
+    _b[1].scale(x, y, k);
+}
+
+Polygon Ellipse::convex_hull() const
+{
+    const Geo::Point center = (_a[0] + _a[1] + _b[0] + _b[1]) / 4;
+    const double a = Geo::distance(_a[0], _a[1]) / 2, b = Geo::distance(_b[0], _b[1]) / 2;
+    const double left = center.x - a, top = center.y + b, right = center.x + a, bottom = center.y - b;
+    Geo::Polygon polygon({Geo::Point(left, top), Geo::Point(right, top), Geo::Point(right, bottom), Geo::Point(left, bottom)});
+    polygon.rotate(center.x, center.y, Geo::angle(_a[0], _a[1]));
+    return polygon;
+}
+
+AABBRect Ellipse::bounding_rect() const
+{
+    const Geo::Point center = (_a[0] + _a[1] + _b[0] + _b[1]) / 4;
+    const double aa = Geo::distance_square(_a[0], _a[1]) / 4, bb = Geo::distance_square(_b[0], _b[1]) / 4;
+    const Geo::Vector vec = _a[0] - _a[1];
+    const double cc = std::pow(vec.x, 2) / (std::pow(vec.x, 2) + std::pow(vec.y, 2));
+    const double ss = 1 - cc;
+    const double left = center.x - std::sqrt(aa * cc + bb * ss);
+    const double top = center.y + std::sqrt(aa * ss + bb * cc);
+    const double right = center.x + std::sqrt(aa * cc + bb * ss);
+    const double bottom = center.y - std::sqrt(aa * ss + bb * cc);
+    return AABBRect(left, top, right, bottom);
+}
+
+Polygon Ellipse::mini_bounding_rect() const
+{
+    const Geo::Point center = (_a[0] + _a[1] + _b[0] + _b[1]) / 4;
+    const double a = Geo::distance(_a[0], _a[1]) / 2, b = Geo::distance(_b[0], _b[1]) / 2;
+    const double left = center.x - a, top = center.y + b, right = center.x + a, bottom = center.y - b;
+    Geo::Polygon polygon({Geo::Point(left, top), Geo::Point(right, top), Geo::Point(right, bottom), Geo::Point(left, bottom)});
+    polygon.rotate(center.x, center.y, Geo::angle(_a[0], _a[1]));
+    return polygon;
+}
+
+Ellipse Ellipse::operator+(const Point &point) const
+{
+    return Ellipse(_a[0] + point, _a[1] + point, _b[0] + point, _b[1] + point);
+}
+
+Ellipse Ellipse::operator-(const Point &point) const
+{
+    return Ellipse(_a[0] - point, _a[1] - point, _b[0] - point, _b[1] - point);
+}
+
+double Ellipse::lengtha() const
+{
+    return Geo::distance(_a[0], _a[1]) / 2;
+}
+
+double Ellipse::lengthb() const
+{
+    return Geo::distance(_b[0], _b[1]) / 2;
+}
+
+double Ellipse::angle() const
+{
+    double value = Geo::angle(_a[0], _a[1]);
+    return value >= 0 ? value : value + Geo::PI;
+}
+
+Geo::Point Ellipse::center() const
+{
+    return (_a[0] + _a[1] + _b[0] + _b[1]) / 4;
+}
+
+void Ellipse::set_lengtha(const double a)
+{
+    if (_a[0] == _a[1])
+    {
+        if (_b[0] == _b[1])
+        {
+            _a[0].x -= a;
+            _a[1].x += a;
+        }
+        else
+        {
+            const Geo::Vector vec((_b[0] - _b[1]).vertical().normalize());
+            _a[0] -= (vec * a);
+            _a[1] += (vec * a);
+        } 
+    }
+    else
+    {
+        const Geo::Vector vec((_a[0] - _a[1]).normalize());
+        const double l = a - lengtha();
+        _a[0] += (vec * l);
+        _a[1] -= (vec * l);
+    }
+}
+
+void Ellipse::set_lengthb(const double b)
+{
+    if (_b[0] == _b[1])
+    {
+        if (_a[0] == _a[1])
+        {
+            _b[0].y += b;
+            _b[1].y -= b;
+        }
+        else
+        {
+            const Geo::Vector vec((_a[0] - _a[1]).vertical().normalize());
+            _b[0] += (vec * b);
+            _b[1] -= (vec * b);
+        }
+    }
+    else
+    {
+        const Geo::Vector vec((_b[0] - _b[1]).normalize());
+        const double l = b - lengthb();
+        _b[0] += (vec * l);
+        _b[1] -= (vec * l);
+    }
+}
+
+void Ellipse::set_center(const double x, const double y)
+{
+    const Geo::Point anchor = center();
+    translate(x - anchor.x, y - anchor.y);
+}
+
+const Point &Ellipse::a0() const
+{
+    return _a[0];
+}
+
+const Point &Ellipse::a1() const
+{
+    return _a[1];
+}
+
+const Point &Ellipse::b0() const
+{
+    return _b[0];
+}
+
+const Point &Ellipse::b1() const
+{
+    return _b[1];
+}
+
+Point Ellipse::c0() const
+{
+    if (Geo::distance_square(_a[0], _a[1]) >= Geo::distance_square(_b[0], _b[1]))
+    {
+        const double aa = Geo::distance_square(_a[0], _a[1]);
+        const double bb = Geo::distance_square(_b[0], _b[1]);
+        return center() + (_a[0] - _a[1]).normalize() * std::sqrt(aa - bb) / 2;
+    }
+    else
+    {
+        const double aa = Geo::distance_square(_b[0], _b[1]);
+        const double bb = Geo::distance_square(_a[0], _a[1]);
+        return center() + (_b[0] - _b[1]).normalize() * std::sqrt(aa - bb) / 2;
+    }
+}
+
+Point Ellipse::c1() const
+{
+    if (Geo::distance_square(_a[0], _a[1]) >= Geo::distance_square(_b[0], _b[1]))
+    {
+        const double aa = Geo::distance_square(_a[0], _a[1]);
+        const double bb = Geo::distance_square(_b[0], _b[1]);
+        return center() + (_a[1] - _a[0]).normalize() * std::sqrt(aa - bb) / 2;
+    }
+    else
+    {
+        const double aa = Geo::distance_square(_b[0], _b[1]);
+        const double bb = Geo::distance_square(_a[0], _a[1]);
+        return center() + (_b[1] - _b[0]).normalize() * std::sqrt(aa - bb) / 2;
+    }
+}

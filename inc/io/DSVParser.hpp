@@ -31,6 +31,8 @@ public:
 
     void store_circle();
 
+    void store_ellipse();
+
     void store_polyline();
 
     void store_bezier();

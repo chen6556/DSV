@@ -23,6 +23,9 @@ namespace Geo
     // 点到多边形距离,计算点到每一段有限长线段的距离,取最近距离
     double distance(const Point &point, const Polygon &polygon);
 
+    // 点到椭圆距离,数值解
+    double distance(const Point &point, const Ellipse &ellipse);
+
     // 两有限长线段间的最短距离
     double distance(const Point &start0, const Point &end0, const Point &start1, const Point &end1, Point &point0, Point &point1);
 
@@ -62,6 +65,9 @@ namespace Geo
     // 判断点是否在圆内,coincide决定是否包含点在圆上的情况
     bool is_inside(const Point &point, const Circle &circle, const bool coincide = false);
 
+    // 判断点是否在椭圆内,coincide决定是否包含点在椭圆上的情况
+    bool is_inside(const Point &point, const Ellipse &ellipse, const bool coincide = false);
+
     // 判断点是否在三角形内,coincide决定是否包含点在三角形上的情况
     bool is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2, const bool coincide = false);
 
@@ -98,6 +104,9 @@ namespace Geo
     // 判断两线段是否相交并尝试获取交点,共线相交时仅在一个端点相交时获取交点
     bool is_intersected(const Line &line0, const Line &line1, Point &output, const bool infinite = true);
 
+    // 判断线段是否与椭圆相交并尝试获取交点,返回交点数量
+    int is_intersected(const Point &point0, const Point &point1, const Ellipse &ellipse, Point &output0, Point &output1, const bool infinite = false);
+
     // 判断两个AABB矩形是否相交,inside决定完全在AABB矩形内部是否算相交
     bool is_intersected(const AABBRect &rect0, const AABBRect &rect1, const bool inside = true);
 
@@ -110,11 +119,17 @@ namespace Geo
     // 判断多段线是否与圆相交
     bool is_intersected(const Polyline &polyline, const Circle &circle);
 
+    // 判断多段线是否与椭圆相交,inside决定多段线完全在多边形内部是否算相交
+    bool is_intersected(const Polyline &polyline, const Ellipse &ellipse, const bool inside = true);
+
     // 判断两多边形是否相交,inside决定完全在多边形内部是否算相交
     bool is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside = true);
 
     // 判断多边形与圆是否相交,inside决定多边形完全在圆内或圆完全在多边形内是否算相交
     bool is_intersected(const Polygon &polygon, const Circle &circle, const bool inside = true);
+
+    // 判断多边形与椭圆是否相交,inside决定多边形完全在椭圆内或椭圆完全在多边形内是否算相交
+    bool is_intersected(const Polygon &polygon, const Ellipse &ellipse, const bool inside = true);
 
     // 判断两圆是否相交,inside决定完全在圆内是否算相交
     bool is_intersected(const Circle &circle0, const Circle &circle1, const bool inside = true);
@@ -133,6 +148,9 @@ namespace Geo
 
     // 判断AABB矩形是否与圆相交,圆完全在AABB矩形内或AABB矩形完全在圆内也算相交
     bool is_intersected(const AABBRect &rect, const Circle &circle);
+
+    // 判断AABB矩形是否与椭圆相交,椭圆完全在AABB矩形内或AABB矩形完全在圆内也算相交
+    bool is_intersected(const AABBRect &rect, const Ellipse &ellipse);
 
     // 判断有限长线段是否与三角形相交,线段完全在三角形内不算相交
     bool is_intersected(const Point &start, const Point &end, const Triangle &triangle, Point &output0, Point &output1);
@@ -162,6 +180,9 @@ namespace Geo
 
         // 判断AABB矩形是否与多边形相交,多边形完全在AABB矩形内或AABB矩形完全在多边形内也算相交
         bool is_intersected(const AABBRect &rect, const Polygon &polygon);
+
+        // 判断AABB矩形是否与椭圆相交,椭圆完全在AABB矩形内或AABB矩形完全在多边形内也算相交
+        bool is_intersected(const AABBRect &rect, const Ellipse &ellipse);
 
         // 判断两Geometry Object是否相交
         bool is_intersected(const Geometry *object0, const Geometry *object1);
@@ -227,12 +248,19 @@ namespace Geo
     // 角度转为弧度
     double degree_to_rad(double value);
 
+    // 点在另一坐标系下的坐标
+    Point to_coord(const Point &point, const double x, const double y, const double rad);
+
     // 倒圆角
     bool angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Polyline &arc, const double step = 0.8);
 
     Polygon circle_to_polygon(const double x, const double y, const double r);
 
     Polygon circle_to_polygon(const Circle &circle);
+
+    Polygon ellipse_to_polygon(const double x, const double y, const double a, const double b, const double rad);
+
+    Polygon ellipse_to_polygon(const Ellipse &ellipse);
 
     std::vector<size_t> ear_cut_to_indexs(const Polygon &polygon);
 

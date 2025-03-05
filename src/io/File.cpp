@@ -6,12 +6,14 @@
 
 #include "io/File.hpp"
 #include "io/GlobalSetting.hpp"
+#include "base/Algorithm.hpp"
 
 
 void File::write_dsv(const std::string &path, const Graph *graph)
 {
     const Container<Geo::Polygon> *container = nullptr;
     const Container<Geo::Circle> *circlecontainer = nullptr;
+    const Container<Geo::Ellipse> *ellipsecontainer = nullptr;
     const Text *text = nullptr;
     const Geo::Polyline *polyline = nullptr;
     const Geo::Bezier *bezier = nullptr;
@@ -72,6 +74,22 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 output << std::endl;
                 circlecontainer = nullptr;
                 break;
+            case Geo::Type::ELLIPSE:
+                ellipsecontainer = dynamic_cast<const Container<Geo::Ellipse> *>(geo);
+                if (ellipsecontainer->text().isEmpty())
+                {
+                    output << "ELLIPSE" << std::endl;
+                }
+                else
+                {
+                    output << "ELLIPSE<" << ellipsecontainer->text().toStdString() << '>' << std::endl;
+                }
+                output << ellipsecontainer->a0().x << ',' << ellipsecontainer->a0().y << ',';
+                output << ellipsecontainer->a1().x << ',' << ellipsecontainer->a1().y << ',';
+                output << ellipsecontainer->b0().x << ',' << ellipsecontainer->b0().y << ',';
+                output << ellipsecontainer->b1().x << ',' << ellipsecontainer->b1().y << std::endl;
+                ellipsecontainer = nullptr;
+                break;
             case Geo::Type::COMBINATION:
                 output << "COMBINATION" << std::endl;
                 for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
@@ -117,6 +135,22 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         output << circlecontainer->radius;
                         output << std::endl;
                         circlecontainer = nullptr;
+                        break;
+                    case Geo::Type::ELLIPSE:
+                        ellipsecontainer = dynamic_cast<const Container<Geo::Ellipse> *>(item);
+                        if (ellipsecontainer->text().isEmpty())
+                        {
+                            output << "ELLIPSE" << std::endl;
+                        }
+                        else
+                        {
+                            output << "ELLIPSE<" << ellipsecontainer->text().toStdString() << '>' << std::endl;
+                        }
+                        output << ellipsecontainer->a0().x << ',' << ellipsecontainer->a0().y << ',';
+                        output << ellipsecontainer->a1().x << ',' << ellipsecontainer->a1().y << ',';
+                        output << ellipsecontainer->b0().x << ',' << ellipsecontainer->b0().y << ',';
+                        output << ellipsecontainer->b1().x << ',' << ellipsecontainer->b1().y << std::endl;
+                        ellipsecontainer = nullptr;
                         break;
                     case Geo::Type::POLYLINE:
                         polyline = dynamic_cast<const Geo::Polyline *>(item);
@@ -200,6 +234,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
     const Text *text = nullptr;
     const Container<Geo::Polygon> *container = nullptr;
     const Container<Geo::Circle> *circlecontainer = nullptr;
+    const Container<Geo::Ellipse> *ellipsecontainer = nullptr;
     const Geo::Polyline *polyline = nullptr;
     const Geo::Bezier *bezier = nullptr;
     const double x_ratio = 40, y_ratio = 40;
@@ -249,6 +284,25 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 }
                 circlecontainer = nullptr;
                 break;
+            case Geo::Type::ELLIPSE:
+                ellipsecontainer = dynamic_cast<const Container<Geo::Ellipse> *>(geo);
+                {
+                    const Geo::Polygon points = Geo::ellipse_to_polygon(ellipsecontainer->shape());
+                    output << "PU" << points.front().x * x_ratio << ',' << points.front().y * y_ratio << ";PD";
+                    for (const Geo::Point &point : points)
+                    {
+                        output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
+                    }
+                }
+                output.seekp(-1, std::ios::cur);
+                if (!ellipsecontainer->text().isEmpty())
+                {
+                    output << ";PU" << ellipsecontainer->center().x * x_ratio<< ',' << ellipsecontainer->center().y * y_ratio
+                        << ";LB" << ellipsecontainer->text().toStdString();
+                }
+                output << ';' << std::endl;
+                ellipsecontainer = nullptr;
+                break;
             case Geo::Type::COMBINATION:
                 output << "Block;" << std::endl;
                 for (Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
@@ -291,6 +345,25 @@ void File::write_plt(const std::string &path, const Graph *graph)
                                 << ";LB" << circlecontainer->text().toStdString() << ';' << std::endl;
                         }
                         circlecontainer = nullptr;
+                        break;
+                    case Geo::Type::ELLIPSE:
+                        ellipsecontainer = dynamic_cast<const Container<Geo::Ellipse> *>(item);
+                        {
+                            const Geo::Polygon points = Geo::ellipse_to_polygon(ellipsecontainer->shape());
+                            output << "PU" << points.front().x * x_ratio << ',' << points.front().y * y_ratio << ";PD";
+                            for (const Geo::Point &point : points)
+                            {
+                                output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
+                            }
+                        }
+                        output.seekp(-1, std::ios::cur);
+                        if (!ellipsecontainer->text().isEmpty())
+                        {
+                            output << ";PU" << ellipsecontainer->center().x * x_ratio<< ',' << ellipsecontainer->center().y * y_ratio
+                                << ";LB" << ellipsecontainer->text().toStdString();
+                        }
+                        output << ';' << std::endl;
+                        ellipsecontainer = nullptr;
                         break;
                     case Geo::Type::POLYLINE:
                         polyline = dynamic_cast<const Geo::Polyline *>(item);

@@ -96,6 +96,8 @@ public:
 
     void append(const Geo::Circle &circle);
 
+    void append(const Geo::Ellipse &ellipse);
+
     void append(const Geo::AABBRect &rect);
 
     void append_bezier(const size_t order);

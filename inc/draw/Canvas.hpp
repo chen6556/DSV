@@ -16,11 +16,12 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
     Q_OBJECT
 
 public:
-    enum class Tool {NoTool, Measure, Circle, Polyline, Rect, Curve, Text};
+    enum class Tool {NoTool, Measure, Circle, Polyline, Rect, Curve, Text, Ellipse};
     enum class Operation {NoOperation, Mirror, RingArray, PolygonDifference, Fillet, Rotate};
 
 private:
     Geo::Circle _circle_cache;
+    Geo::Ellipse _ellipse_cache;
     Geo::AABBRect _AABBRect_cache, _select_rect, _visible_area;
     std::list<QLineF> _reflines;
     std::vector<Geo::Point> _catched_points;
@@ -172,6 +173,12 @@ public:
     void circle_cmd(const double x, const double y);
 
     void circle_cmd(const double x, const double y, const double r);
+
+    void ellipse_cmd(const double x, const double y);
+
+    void ellipse_cmd(const double x, const double y, const double rad, const double a);
+
+    void ellipse_cmd(const double x, const double y, const double rad,  const double a, const double b);
 
     void text_cmd(const double x, const double y);
 

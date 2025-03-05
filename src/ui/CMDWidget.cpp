@@ -3,6 +3,7 @@
 #include "ui/CMDWidget.hpp"
 #include "./ui_CMDWidget.h"
 #include "io/GlobalSetting.hpp"
+#include "base/Algorithm.hpp"
 
 
 CMDWidget::CMDWidget(Editer *editer, Canvas *canvas, QWidget *parent)
@@ -26,7 +27,7 @@ void CMDWidget::init()
     ui->cmd->installEventFilter(this);
 
     _cmd_list << QString() << "OPEN" << "APPEND" << "SAVE" << "EXIT" << "MAIN"
-        << "LENGTH" << "CIRCLE" << "POLYLINE" << "RECTANGLE" << "BEZIER" << "TEXT"
+        << "LENGTH" << "CIRCLE" << "ELLIPSE" << "POLYLINE" << "RECTANGLE" << "BEZIER" << "TEXT"
         << "CONNECT" << "CLOSE" << "COMBINATE" << "SPLIT"
         << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "POINTMIRROR"
         << "ARRAY" << "LINEARRAY" << "RINGARRAY"
@@ -36,7 +37,8 @@ void CMDWidget::init()
 
     _cmd_dict = {{"OPEN",CMD::Open_CMD}, {"APPEND",CMD::Append_CMD}, {"SAVE",CMD::Save_CMD}, {"EXIT",CMD::Exit_CMD},
         {"LENGTH",CMD::Length_CMD}, {"MAIN",CMD::Main_CMD},
-        {"CIRCLE",CMD::Circle_CMD}, {"POLYLINE",CMD::Polyline_CMD}, {"RECTANGLE",CMD::Rectangle_CMD}, 
+        {"CIRCLE",CMD::Circle_CMD}, {"ELLIPSE",CMD::Ellipse_CMD},
+        {"POLYLINE",CMD::Polyline_CMD}, {"RECTANGLE",CMD::Rectangle_CMD},
         {"BEZIER",CMD::Bezier_CMD}, {"TEXT",CMD::Text_CMD}, {"CONNECT",CMD::Connect_CMD},
         {"COMBINATE",CMD::Combinate_CMD}, {"CLOSE",CMD::Close_CMD}, {"SPLIT",CMD::Split_CMD},
         {"ROTATE",CMD::Rotate_CMD}, {"FLIPX",CMD::FlipX_CMD}, {"FLIPY",CMD::FlipY_CMD},
@@ -214,6 +216,10 @@ bool CMDWidget::work()
     case CMD::Circle_CMD:
         ui->cmd_label->setText("Circle");
         circle();
+        break;
+    case CMD::Ellipse_CMD:
+        ui->cmd_label->setText("Ellipse");
+        ellipse();
         break;
     case CMD::Bezier_CMD:
         ui->cmd_label->setText("Curve");
@@ -684,6 +690,88 @@ void CMDWidget::circle()
         break;
     case 4:
         _canvas->circle_cmd(_parameters[1], _parameters[2], _parameters[3]);
+        break;
+    default:
+        break;
+    }
+}
+
+void CMDWidget::ellipse()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        _canvas->use_tool(Canvas::Tool::Ellipse);
+        _parameters.emplace_back(0);
+        ui->parameter_label->setText("X: Y:");
+        break;
+    case 1:
+        {
+            _parameters.emplace_back(_canvas->mouse_position().x);
+            _parameters.emplace_back(_canvas->mouse_position().y);
+            _parameters.emplace_back(0);
+            ui->parameter_label->setText("X:" + QString::number(_parameters[1])
+            + " Y:" + QString::number(_parameters[2]) + " angle:");
+            _canvas->ellipse_cmd(_parameters[1], _parameters[2]);
+        }
+        break;
+    case 2:
+        ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
+        break;
+    case 3:
+        _parameters.emplace_back(0);
+        ui->parameter_label->setText("X:" + QString::number(_parameters[1])
+            + " Y:" + QString::number(_parameters[2]) + " angle:");
+        _canvas->ellipse_cmd(_parameters[1], _parameters[2]);
+        break;
+    case 4:
+        {
+            const Geo::Point coord(_canvas->mouse_position());
+            const Geo::Point center(_parameters[1], _parameters[2]);
+            _parameters.emplace_back(Geo::angle(center, coord));
+            _parameters.emplace_back(0);
+            _parameters.emplace_back(Geo::distance(coord, center));
+            _parameters.emplace_back(0);
+            _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6]);
+            ui->parameter_label->setText("X:" + QString::number(_parameters[1])
+                + " Y:" + QString::number(_parameters[2]) + " angle:" + QString::number(_parameters[4])
+                + " a:" + QString::number(_parameters[6]) + " b:");
+        }
+        break;
+    case 5:
+        {
+            ui->parameter_label->setText("X:" + QString::number(_parameters[1])
+                + " Y:" + QString::number(_parameters[2]) + " angle:" + QString::number(_parameters[4]) + " a:");
+            _parameters.emplace_back(0);
+        }
+        break;
+    case 6:
+        {
+            const Geo::Point coord(_canvas->mouse_position());
+            const Geo::Point center(_parameters[1], _parameters[2]);
+            _parameters.emplace_back(Geo::distance(coord, center));
+            _parameters.emplace_back(0);
+            ui->parameter_label->setText("X:" + QString::number(_parameters[1])
+                + " Y:" + QString::number(_parameters[2]) + " angle:" + QString::number(_parameters[4])
+                + " a:" + QString::number(_parameters[6]) + " b:");
+            _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6]);
+        }
+        break;
+    case 7:
+        {
+            _parameters.emplace_back(0);
+            ui->parameter_label->setText("X:" + QString::number(_parameters[1])
+                + " Y:" + QString::number(_parameters[2]) + " angle:" + QString::number(_parameters[4])
+                + " a:" + QString::number(_parameters[6]) + " b:");
+            _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6]);
+        }
+        break;
+    case 8:
+        _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6], 
+            Geo::distance(_canvas->mouse_position(), Geo::Point(_parameters[1], _parameters[2])));
+        break;
+    case 9:
+        _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6], _parameters[8]);
         break;
     default:
         break;

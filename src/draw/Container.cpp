@@ -409,6 +409,15 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
             x1 = std::max(x1, coord.x + r);
             y1 = std::max(y1, coord.y + r);
             break;
+        case Geo::Type::ELLIPSE:
+            {
+                const Geo::AABBRect rect(dynamic_cast<const Geo::Ellipse *>(continer)->bounding_rect());
+                x0 = std::min(x0, rect.left());
+                y0 = std::min(y0, rect.top());
+                x1 = std::max(x1, rect.right());
+                y1 = std::max(y1, rect.bottom());
+            }
+            break;
         case Geo::Type::COMBINATION:
             {
                 const Geo::AABBRect rect(dynamic_cast<const Combination *>(continer)->bounding_rect());

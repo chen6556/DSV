@@ -2,6 +2,7 @@
   <qresource prefix="/">
     <file>icons/fillet_btn.png</file>
     <file>icons/DSV_logo.png</file>
+    <file>icons/ellipse_btn.png</file>
     <file>icons/ring_array_btn.png</file>
     <file>icons/line_array_btn.png</file>
     <file>icons/offset_btn.png</file>
