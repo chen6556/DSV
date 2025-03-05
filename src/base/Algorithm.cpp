@@ -1166,7 +1166,33 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Circle &
     const double l =  std::sqrt(std::pow(circle.radius, 2) - Geo::distance_square(circle, point0, point1, true));
     output0 = foot + (point0 - point1).normalize() * l;
     output1 = foot + (point1 - point0).normalize() * l;
-    return Geo::distance_square(circle, point0, point1, true) < std::pow(circle.radius, 2) ? 2 : 1;
+    if (infinite)
+    {
+        return Geo::distance_square(circle, point0, point1, true) < std::pow(circle.radius, 2) ? 2 : 1;
+    }
+    if (Geo::is_inside(output0, point0, point1))
+    {
+        if (Geo::is_inside(output1, point0, point1))
+        {
+            return 2;
+        }
+        else
+        {
+            return 1;
+        }
+    }
+    else
+    {
+        if (Geo::is_inside(output1, point0, point1))
+        {
+            output0 = output1;
+            return 1;
+        }
+        else
+        {
+            return 0;
+        }
+    }
 }
 
 int Geo::is_intersected(const Point &point0, const Point &point1, const Ellipse &ellipse, Point &output0, Point &output1, const bool infinite)
