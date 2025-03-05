@@ -66,6 +66,7 @@ private:
 
     bool _is_pen_down = false;
     bool _is_knife_down = false;
+    bool _ignore_M19 = true;
     Command _command = Command::None;
 
     CurveType _curve_type = CurveType::Linear;

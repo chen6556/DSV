@@ -247,10 +247,32 @@ color: rgb(230, 230, 230);</string>
          <x>180</x>
          <y>20</y>
          <width>161</width>
-         <height>131</height>
+         <height>161</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
+        <item row="1" column="0">
+         <widget class="QCheckBox" name="show_text">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="layoutDirection">
+           <enum>Qt::RightToLeft</enum>
+          </property>
+          <property name="text">
+           <string>Show Text</string>
+          </property>
+         </widget>
+        </item>
         <item row="3" column="0">
          <widget class="QCheckBox" name="cursor_catch">
           <property name="sizePolicy">
@@ -273,8 +295,8 @@ color: rgb(230, 230, 230);</string>
           </property>
          </widget>
         </item>
-        <item row="1" column="0">
-         <widget class="QCheckBox" name="show_text">
+        <item row="2" column="0">
+         <widget class="QCheckBox" name="multiple_select">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
             <horstretch>0</horstretch>
@@ -291,7 +313,7 @@ color: rgb(230, 230, 230);</string>
            <enum>Qt::RightToLeft</enum>
           </property>
           <property name="text">
-           <string>Show Text</string>
+           <string>Multiple Select</string>
           </property>
          </widget>
         </item>
@@ -317,25 +339,16 @@ color: rgb(230, 230, 230);</string>
           </property>
          </widget>
         </item>
-        <item row="2" column="0">
-         <widget class="QCheckBox" name="multiple_select">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>22</height>
-           </size>
-          </property>
+        <item row="5" column="0">
+         <widget class="QCheckBox" name="ignroe_M19">
           <property name="layoutDirection">
            <enum>Qt::RightToLeft</enum>
           </property>
           <property name="text">
-           <string>Multiple Select</string>
+           <string>Ignore M19</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
           </property>
          </widget>
         </item>

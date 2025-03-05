@@ -36,6 +36,7 @@ void GlobalSetting::load_setting()
         _instance->setting["cursor_catch"] = false;
         _instance->setting["file_path"] = "/";
         _instance->setting["file_type"] = "All Files: (*.*)";
+        _instance->setting["ignore_M19"] = true;
         _instance->setting["multiple_select"] = false;
         _instance->setting["remember_file_type"] = true;
         _instance->setting["show_cmd_line"] = false;

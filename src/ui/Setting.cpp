@@ -26,6 +26,7 @@ void Setting::init()
     ui->multiple_select->setChecked(setting["multiple_select"].toBool());
     ui->cursor_catch->setChecked(setting["cursor_catch"].toBool());
     ui->show_points->setChecked(setting["show_points"].toBool());
+    ui->ignroe_M19->setChecked(setting["ignore_M19"].toBool());
 }
 
 void Setting::accept()
@@ -40,6 +41,7 @@ void Setting::accept()
     setting["multiple_select"] = ui->multiple_select->isChecked();
     setting["cursor_catch"] = ui->cursor_catch->isChecked();
     setting["show_points"] = ui->show_points->isChecked();
+    setting["ignore_M19"] = ui->ignroe_M19->isChecked();
 
     QDialog::accept();
 }

@@ -115,7 +115,7 @@ void Importer::knife_down(const std::string &value)
 
 void Importer::knife_up()
 {
-    if (_command != Command::M19)
+    if (_ignore_M19 || _command != Command::M19)
     {
         this->_is_knife_down = false;
         store_points();
@@ -160,6 +160,7 @@ void Importer::reset()
     _circle_radius = 10;
     _index = 0;
     _is_pen_down = _is_knife_down = false;
+    _ignore_M19 = GlobalSetting::get_instance()->setting["ignore_M19"].toBool();
     _curve_type = CurveType::Linear;
     unit = Unit::mm;
     _last_circle_container = nullptr;
