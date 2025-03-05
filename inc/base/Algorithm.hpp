@@ -104,6 +104,9 @@ namespace Geo
     // 判断两线段是否相交并尝试获取交点,共线相交时仅在一个端点相交时获取交点
     bool is_intersected(const Line &line0, const Line &line1, Point &output, const bool infinite = true);
 
+    // 判断线段是否与圆相交并尝试获取交点,返回交点数量
+    int is_intersected(const Point &point0, const Point &point1, const Circle &circle, Point &output0, Point &output1, const bool infinite = false);
+
     // 判断线段是否与椭圆相交并尝试获取交点,返回交点数量
     int is_intersected(const Point &point0, const Point &point1, const Ellipse &ellipse, Point &output0, Point &output1, const bool infinite = false);
 

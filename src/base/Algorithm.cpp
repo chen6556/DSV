@@ -1155,6 +1155,20 @@ bool Geo::is_intersected(const Line &line0, const Line &line1, Point &output, co
     return Geo::is_intersected(line0.front(), line0.back(), line1.front(), line1.back(), output, infinite);
 }
 
+int Geo::is_intersected(const Point &point0, const Point &point1, const Circle &circle, Point &output0, Point &output1, const bool infinite)
+{
+    if (Geo::distance_square(circle, point0, point1, infinite) > std::pow(circle.radius, 2))
+    {
+        return 0;
+    }
+    Geo::Point foot;
+    Geo::foot_point(point0, point1, circle, foot, true);
+    const double l =  std::sqrt(std::pow(circle.radius, 2) - Geo::distance_square(circle, point0, point1, true));
+    output0 = foot + (point0 - point1).normalize() * l;
+    output1 = foot + (point1 - point0).normalize() * l;
+    return Geo::distance_square(circle, point0, point1, true) < std::pow(circle.radius, 2) ? 2 : 1;
+}
+
 int Geo::is_intersected(const Point &point0, const Point &point1, const Ellipse &ellipse, Point &output0, Point &output1, const bool infinite)
 {
     const Geo::Point center = ellipse.center();
