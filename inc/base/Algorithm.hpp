@@ -221,6 +221,12 @@ namespace Geo
     // 计算线段或直线外一点的垂足
     bool foot_point(const Line &line, const Point &point, Point &foot, const bool infinite = false);
 
+    // 计算圆外一点与圆的切点
+    bool tangency_point(const Point &point, const Circle &circle, Point &output0, Point &output1);
+
+    // 计算椭圆外一点与椭圆的切点
+    bool tangency_point(const Point &point, const Ellipse &ellipse, Point &output0, Point &output1);
+
     // 计算直线的旋转角度(弧度制,-PI-PI)
     double angle(const Point &start, const Point &end);
 

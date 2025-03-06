@@ -2086,6 +2086,55 @@ bool Geo::foot_point(const Line &line, const Point &point, Point &foot, const bo
 }
 
 
+bool Geo::tangency_point(const Point &point, const Circle &circle, Point &output0, Point &output1)
+{
+    if (Geo::distance_square(point, circle) <= std::pow(circle.radius, 2))
+    {
+        return false;
+    }
+    const Geo::Point point1(-100, (std::pow(circle.radius, 2) - (point.x - circle.x) * (-100 - circle.x))  / (point.y - circle.y) + circle.y);
+    const Geo::Point point2(100, (std::pow(circle.radius, 2) - (point.x - circle.x) * (100 - circle.x))  / (point.y - circle.y) + circle.y);
+    return Geo::is_intersected(point1, point2, circle, output0, output1, true);
+}
+
+bool Geo::tangency_point(const Point &point, const Ellipse &ellipse, Point &output0, Point &output1)
+{
+    if (Geo::is_inside(point, ellipse, true))
+    {
+        return false;
+    }
+    const Geo::Point center = ellipse.center();
+    const double angle = Geo::angle(ellipse.a0(), ellipse.a1());
+    Geo::Point coord =  Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+    const double aa = Geo::distance_square(ellipse.a0(), ellipse.a1()) / 4;
+    const double bb = Geo::distance_square(ellipse.b0(), ellipse.b1()) / 4;
+    const double a1 = coord.x / aa, b1 = coord.y / bb, c1 = -1;
+    const double a = std::pow(a1, 2) * aa  + std::pow(b1, 2) * bb;
+    if (b1 != 0)
+    {
+        const double b = 2 * a1 * aa * c1;
+        const double c = (std::pow(c1, 2) - std::pow(b1, 2) * bb) * aa;
+        output0.x = (-b - std::sqrt(std::pow(b, 2) - 4 * a *c)) / (2 * a);
+        output1.x = (-b + std::sqrt(std::pow(b, 2) - 4 * a *c)) / (2 * a);
+        output0.y = (-a1 * output0.x - c1) / b1;
+        output1.y = (-a1 * output1.x - c1) / b1;
+    }
+    else
+    {
+        const double b = 2 * b1 * bb * c1;
+        const double c = (std::pow(c1, 2) - std::pow(a1, 2) * aa) * bb;
+        output0.y = (-b - std::sqrt(std::pow(b, 2) - 4 * a *c)) / (2 * a);
+        output1.y = (-b + std::sqrt(std::pow(b, 2) - 4 * a *c)) / (2 * a);
+        output0.x = (-b1 * output0.y - c1) / a1;
+        output1.x = (-b1 * output1.y - c1) / a1;
+    }
+    coord = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+    output0 = Geo::to_coord(output0, coord.x, coord.y, -angle);
+    output1 = Geo::to_coord(output1, coord.x, coord.y, -angle);
+    return true;
+}
+
+
 double Geo::angle(const Point &start, const Point &end)
 {
     const Geo::Point vec = end - start;
