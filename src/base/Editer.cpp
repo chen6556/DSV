@@ -1609,7 +1609,7 @@ bool Editer::offset(std::list<Geo::Geometry *> objects, const double distance)
             break;
         case Geo::Type::ELLIPSE:
             ellipsecontainer = dynamic_cast<Container<Geo::Ellipse> *>(object);
-            if (distance >= 0 || -distance < circlecontainer->radius)
+            if (distance >= 0 || -distance < std::min(ellipsecontainer->lengtha(), ellipsecontainer->lengthb()))
             {
                 _graph->append(new Container<Geo::Ellipse>(ellipsecontainer->text(), ellipsecontainer->center(),
                     ellipsecontainer->lengtha() + distance, ellipsecontainer->lengthb() + distance), _current_group);
