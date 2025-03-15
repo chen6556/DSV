@@ -22,7 +22,7 @@
    </font>
   </property>
   <property name="focusPolicy">
-   <enum>Qt::StrongFocus</enum>
+   <enum>Qt::FocusPolicy::StrongFocus</enum>
   </property>
   <property name="acceptDrops">
    <bool>true</bool>
@@ -38,20 +38,6 @@
    <string notr="true">QMainWindow#MainWindow
 {
 	background-color: rgb(38, 38, 38);
-}
-
-QToolButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QToolButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QToolButton:pressed
-{
-	background-color:rgb(0, 85, 127);
 }
 
 QMenuBar
@@ -78,6 +64,23 @@ QMenu
      background-color: rgb(50, 50, 51);
      selection-color: rgb(230, 230, 230);
      selection-background-color: rgb(0, 85, 127);
+}
+
+QCheckBox::indicator
+{
+	border:1 solid rgb(230, 230, 230);
+	border-radius:9;
+	width:16;
+	height:16;
+}
+QCheckBox::indicator:checked
+{
+	background-color:qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 rgb(255, 255, 255), stop:0.479904 rgb(255, 255, 255) stop:0.522685 rgba(0,0,0,0), stop:1 rgba(0,0,0,0));
+}
+QCheckBox::indicator:unchecked
+{
+	border:1 solid rgb(230, 230, 230);
+	border-radius:8;
 }</string>
   </property>
   <property name="locale">
@@ -88,6 +91,9 @@ QMenu
     <width>128</width>
     <height>128</height>
    </size>
+  </property>
+  <property name="toolButtonStyle">
+   <enum>Qt::ToolButtonStyle::ToolButtonTextOnly</enum>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="styleSheet">
@@ -111,7 +117,7 @@ QMenu
        </font>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::FocusPolicy::NoFocus</enum>
       </property>
       <property name="styleSheet">
        <string notr="true">QWidget
@@ -123,6 +129,7 @@ QPushButton
 {
 	color:rgb(230, 230, 230);
 	background-color:rgb(70, 70, 71);
+	border: none;
 }
 QPushButton:hover
 {
@@ -132,8 +139,16 @@ QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
 }
-QSpinBox {background-color: rgb(70, 70, 71);}
-QDoubleSpinBox {background-color: rgb(70, 70, 71);}
+QSpinBox
+{
+	background-color: rgb(70, 70, 71);
+	border: none;
+}
+QDoubleSpinBox
+{
+	background-color: rgb(70, 70, 71);
+	border: none;
+}
 QLabel {background-color: rgb(70, 70, 71);}
 QToolTip
 {
@@ -187,28 +202,28 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
         <item>
          <widget class="QScrollArea" name="scrollArea">
           <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
+           <enum>Qt::FocusPolicy::NoFocus</enum>
           </property>
           <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
+           <enum>Qt::LayoutDirection::RightToLeft</enum>
           </property>
           <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
+           <enum>QFrame::Shape::NoFrame</enum>
           </property>
           <property name="lineWidth">
            <number>0</number>
           </property>
           <property name="verticalScrollBarPolicy">
-           <enum>Qt::ScrollBarAsNeeded</enum>
+           <enum>Qt::ScrollBarPolicy::ScrollBarAsNeeded</enum>
           </property>
           <property name="horizontalScrollBarPolicy">
-           <enum>Qt::ScrollBarAlwaysOff</enum>
+           <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
           </property>
           <property name="widgetResizable">
            <bool>true</bool>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
           <widget class="QWidget" name="scrollAreaWidgetContents_2">
            <property name="geometry">
@@ -246,19 +261,25 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                <string notr="true">background-color: none</string>
               </property>
               <property name="alignment">
-               <set>Qt::AlignCenter</set>
+               <set>Qt::AlignmentFlag::AlignCenter</set>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="view_btn">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
                </font>
               </property>
               <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
+               <enum>Qt::FocusPolicy::NoFocus</enum>
               </property>
               <property name="text">
                <string>←</string>
@@ -267,8 +288,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
             </item>
             <item>
              <widget class="QPushButton" name="measure_btn">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>28</height>
+               </size>
+              </property>
               <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
+               <enum>Qt::FocusPolicy::NoFocus</enum>
               </property>
               <property name="toolTip">
                <string>Length</string>
@@ -288,7 +315,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
             <item>
              <widget class="Line" name="line">
               <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+               <enum>Qt::Orientation::Horizontal</enum>
               </property>
              </widget>
             </item>
@@ -299,8 +326,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </property>
               <item row="3" column="1">
                <widget class="QPushButton" name="curve_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Bezier Curve</string>
@@ -319,8 +352,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="0" column="1">
                <widget class="QPushButton" name="line_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Polyline</string>
@@ -339,8 +378,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="0" column="0">
                <widget class="QPushButton" name="rect_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Rectangle</string>
@@ -365,13 +410,19 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="font">
                  <font>
                   <pointsize>12</pointsize>
                  </font>
                 </property>
                 <property name="contextMenuPolicy">
-                 <enum>Qt::NoContextMenu</enum>
+                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
                 </property>
                 <property name="toolTip">
                  <string>Order of Bezier Curve</string>
@@ -380,10 +431,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  <bool>false</bool>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                 <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
                 </property>
                 <property name="minimum">
                  <number>2</number>
@@ -404,6 +455,12 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>51</width>
@@ -416,7 +473,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  </font>
                 </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Text</string>
@@ -428,8 +485,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="1" column="0">
                <widget class="QPushButton" name="ellipse_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Ellipse</string>
@@ -448,8 +511,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="1" column="1">
                <widget class="QPushButton" name="circle_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Circle</string>
@@ -471,7 +540,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
             <item>
              <widget class="Line" name="line_2">
               <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+               <enum>Qt::Orientation::Horizontal</enum>
               </property>
              </widget>
             </item>
@@ -482,8 +551,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </property>
               <item row="0" column="0">
                <widget class="QPushButton" name="close_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Close</string>
@@ -502,8 +577,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="0" column="1">
                <widget class="QPushButton" name="connect_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Connect</string>
@@ -522,8 +603,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="1" column="1">
                <widget class="QPushButton" name="combinate_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Combinate</string>
@@ -542,13 +629,19 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="1" column="0">
                <widget class="QPushButton" name="split_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="font">
                  <font>
                   <pointsize>10</pointsize>
                  </font>
                 </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Split</string>
@@ -570,22 +663,28 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
             <item>
              <widget class="Line" name="line_3">
               <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+               <enum>Qt::Orientation::Horizontal</enum>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QCheckBox" name="to_all_layers">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>20</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
                </font>
               </property>
               <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
+               <enum>Qt::FocusPolicy::NoFocus</enum>
               </property>
               <property name="layoutDirection">
-               <enum>Qt::LeftToRight</enum>
+               <enum>Qt::LayoutDirection::LeftToRight</enum>
               </property>
               <property name="text">
                <string>To All Layers</string>
@@ -608,6 +707,12 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>51</width>
@@ -620,7 +725,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  </font>
                 </property>
                 <property name="contextMenuPolicy">
-                 <enum>Qt::NoContextMenu</enum>
+                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
                 </property>
                 <property name="toolTip">
                  <string>Rotate Degree</string>
@@ -629,10 +734,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  <bool>false</bool>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                 <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
                 </property>
                 <property name="suffix">
                  <string>°</string>
@@ -647,8 +752,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="1" column="0">
                <widget class="QPushButton" name="flipy_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Flip Y</string>
@@ -673,6 +784,12 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>51</width>
@@ -685,7 +802,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  </font>
                 </property>
                 <property name="contextMenuPolicy">
-                 <enum>Qt::NoContextMenu</enum>
+                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
                 </property>
                 <property name="toolTip">
                  <string>Offset Distance</string>
@@ -694,10 +811,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  <bool>false</bool>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                 <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
                 </property>
                 <property name="minimum">
                  <double>-100000000.000000000000000</double>
@@ -709,8 +826,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="6" column="1">
                <widget class="QPushButton" name="offset_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Offset</string>
@@ -729,8 +852,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="1" column="1">
                <widget class="QPushButton" name="flipx_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Flip X</string>
@@ -749,8 +878,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="5" column="1">
                <widget class="QPushButton" name="scale_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Scale</string>
@@ -769,6 +904,12 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="7" column="1">
                <widget class="QPushButton" name="fillet_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="toolTip">
                  <string>Fillet</string>
                 </property>
@@ -792,6 +933,12 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>51</width>
@@ -804,7 +951,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  </font>
                 </property>
                 <property name="contextMenuPolicy">
-                 <enum>Qt::NoContextMenu</enum>
+                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
                 </property>
                 <property name="toolTip">
                  <string>Fillet Radius</string>
@@ -813,10 +960,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  <bool>false</bool>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                 <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
                 </property>
                 <property name="maximum">
                  <double>100000000.000000000000000</double>
@@ -825,8 +972,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="4" column="1">
                <widget class="QPushButton" name="intersection_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Intersection</string>
@@ -845,8 +998,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="0" column="1">
                <widget class="QPushButton" name="rotate_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Rotate</string>
@@ -871,6 +1030,12 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>51</width>
@@ -883,7 +1048,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  </font>
                 </property>
                 <property name="contextMenuPolicy">
-                 <enum>Qt::NoContextMenu</enum>
+                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
                 </property>
                 <property name="toolTip">
                  <string>Scale Rate</string>
@@ -892,10 +1057,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  <bool>false</bool>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                 <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
                 </property>
                 <property name="maximum">
                  <double>100000000.000000000000000</double>
@@ -910,8 +1075,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="4" column="0">
                <widget class="QPushButton" name="difference_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Difference</string>
@@ -930,8 +1101,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="2" column="1">
                <widget class="QPushButton" name="mirror_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Mirror</string>
@@ -950,8 +1127,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </item>
               <item row="2" column="0">
                <widget class="QPushButton" name="union_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Union</string>
@@ -972,13 +1155,19 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
             </item>
             <item>
              <widget class="QPushButton" name="array_btn">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
                </font>
               </property>
               <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
+               <enum>Qt::FocusPolicy::NoFocus</enum>
               </property>
               <property name="text">
                <string>Array</string>
@@ -988,7 +1177,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
             <item>
              <spacer name="verticalSpacer">
               <property name="orientation">
-               <enum>Qt::Vertical</enum>
+               <enum>Qt::Orientation::Vertical</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -1030,33 +1219,33 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
            </size>
           </property>
           <property name="focusPolicy">
-           <enum>Qt::NoFocus</enum>
+           <enum>Qt::FocusPolicy::NoFocus</enum>
           </property>
           <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
+           <enum>Qt::LayoutDirection::RightToLeft</enum>
           </property>
           <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
+           <enum>QFrame::Shape::NoFrame</enum>
           </property>
           <property name="lineWidth">
            <number>0</number>
           </property>
           <property name="horizontalScrollBarPolicy">
-           <enum>Qt::ScrollBarAlwaysOff</enum>
+           <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
           </property>
           <property name="widgetResizable">
            <bool>true</bool>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>-12</x>
+             <x>-16</x>
              <y>0</y>
-             <width>106</width>
-             <height>387</height>
+             <width>110</width>
+             <height>414</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1077,19 +1266,25 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                <string/>
               </property>
               <property name="alignment">
-               <set>Qt::AlignCenter</set>
+               <set>Qt::AlignmentFlag::AlignCenter</set>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="back_btn_0">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
                </font>
               </property>
               <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
+               <enum>Qt::FocusPolicy::NoFocus</enum>
               </property>
               <property name="text">
                <string>←</string>
@@ -1116,7 +1311,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                <string>Line Array</string>
               </property>
               <property name="alignment">
-               <set>Qt::AlignCenter</set>
+               <set>Qt::AlignmentFlag::AlignCenter</set>
               </property>
              </widget>
             </item>
@@ -1130,6 +1325,12 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>24</height>
+                 </size>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>40</width>
@@ -1142,16 +1343,16 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  </font>
                 </property>
                 <property name="contextMenuPolicy">
-                 <enum>Qt::NoContextMenu</enum>
+                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                 <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
                 </property>
                 <property name="minimum">
                  <number>-100</number>
@@ -1169,7 +1370,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>20</height>
+                  <height>24</height>
                  </size>
                 </property>
                 <property name="font">
@@ -1181,7 +1382,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  <string>X items:</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                </widget>
               </item>
@@ -1197,6 +1398,12 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>24</height>
+                 </size>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>40</width>
@@ -1209,16 +1416,16 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  </font>
                 </property>
                 <property name="contextMenuPolicy">
-                 <enum>Qt::NoContextMenu</enum>
+                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                 <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
                 </property>
                 <property name="minimum">
                  <number>-100</number>
@@ -1236,7 +1443,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>20</height>
+                  <height>24</height>
                  </size>
                 </property>
                 <property name="font">
@@ -1248,7 +1455,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  <string>Y items:</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                </widget>
               </item>
@@ -1259,7 +1466,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               <property name="minimumSize">
                <size>
                 <width>0</width>
-                <height>20</height>
+                <height>24</height>
                </size>
               </property>
               <property name="font">
@@ -1280,22 +1487,28 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
                </font>
               </property>
               <property name="contextMenuPolicy">
-               <enum>Qt::NoContextMenu</enum>
+               <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
               </property>
               <property name="frame">
                <bool>false</bool>
               </property>
               <property name="alignment">
-               <set>Qt::AlignCenter</set>
+               <set>Qt::AlignmentFlag::AlignCenter</set>
               </property>
               <property name="buttonSymbols">
-               <enum>QAbstractSpinBox::NoButtons</enum>
+               <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
               </property>
               <property name="maximum">
                <double>10000.000000000000000</double>
@@ -1310,7 +1523,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               <property name="minimumSize">
                <size>
                 <width>0</width>
-                <height>20</height>
+                <height>24</height>
                </size>
               </property>
               <property name="font">
@@ -1331,22 +1544,28 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
                </font>
               </property>
               <property name="contextMenuPolicy">
-               <enum>Qt::NoContextMenu</enum>
+               <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
               </property>
               <property name="frame">
                <bool>false</bool>
               </property>
               <property name="alignment">
-               <set>Qt::AlignCenter</set>
+               <set>Qt::AlignmentFlag::AlignCenter</set>
               </property>
               <property name="buttonSymbols">
-               <enum>QAbstractSpinBox::NoButtons</enum>
+               <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
               </property>
               <property name="maximum">
                <double>10000.000000000000000</double>
@@ -1358,8 +1577,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
             </item>
             <item>
              <widget class="QPushButton" name="line_array_btn">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>32</height>
+               </size>
+              </property>
               <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
+               <enum>Qt::FocusPolicy::NoFocus</enum>
               </property>
               <property name="toolTip">
                <string>Line Array</string>
@@ -1396,7 +1621,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                <string>Ring Array</string>
               </property>
               <property name="alignment">
-               <set>Qt::AlignCenter</set>
+               <set>Qt::AlignmentFlag::AlignCenter</set>
               </property>
              </widget>
             </item>
@@ -1410,6 +1635,12 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>24</height>
+                 </size>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>40</width>
@@ -1422,16 +1653,16 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  </font>
                 </property>
                 <property name="contextMenuPolicy">
-                 <enum>Qt::NoContextMenu</enum>
+                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                 <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
                 </property>
                 <property name="maximum">
                  <number>720</number>
@@ -1446,7 +1677,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>20</height>
+                  <height>24</height>
                  </size>
                 </property>
                 <property name="font">
@@ -1458,7 +1689,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  <string>Items:</string>
                 </property>
                 <property name="alignment">
-                 <set>Qt::AlignCenter</set>
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
                 </property>
                </widget>
               </item>
@@ -1466,8 +1697,14 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
             </item>
             <item>
              <widget class="QPushButton" name="ring_array_btn">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>32</height>
+               </size>
+              </property>
               <property name="focusPolicy">
-               <enum>Qt::NoFocus</enum>
+               <enum>Qt::FocusPolicy::NoFocus</enum>
               </property>
               <property name="toolTip">
                <string>Ring Array</string>
@@ -1487,7 +1724,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
             <item>
              <spacer name="verticalSpacer_2">
               <property name="orientation">
-               <enum>Qt::Vertical</enum>
+               <enum>Qt::Orientation::Vertical</enum>
               </property>
               <property name="sizeHint" stdset="0">
                <size>
@@ -1514,7 +1751,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
        <bool>true</bool>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::ClickFocus</enum>
+       <enum>Qt::FocusPolicy::ClickFocus</enum>
       </property>
      </widget>
     </item>
@@ -1526,13 +1763,25 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
      <x>0</x>
      <y>0</y>
      <width>1008</width>
-     <height>22</height>
+     <height>33</height>
     </rect>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>0</width>
+     <height>24</height>
+    </size>
    </property>
    <property name="acceptDrops">
     <bool>false</bool>
    </property>
    <widget class="QMenu" name="file_menu">
+    <property name="minimumSize">
+     <size>
+      <width>0</width>
+      <height>24</height>
+     </size>
+    </property>
     <property name="acceptDrops">
      <bool>false</bool>
     </property>
@@ -1548,6 +1797,12 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
     <addaction name="performace_panel"/>
    </widget>
    <widget class="QMenu" name="menusetting">
+    <property name="minimumSize">
+     <size>
+      <width>0</width>
+      <height>24</height>
+     </size>
+    </property>
     <property name="acceptDrops">
      <bool>false</bool>
     </property>
@@ -1572,8 +1827,65 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
     </font>
    </property>
    <property name="styleSheet">
-    <string notr="true">background:rgb(50, 50, 51);
-color:rgb(230, 230, 230);</string>
+    <string notr="true">QStatusBar
+{
+	background:rgb(50, 50, 51);
+	color:rgb(230, 230, 230);
+	padding-left: 4;
+	padding-right: 4;
+}
+
+QLabel
+{
+	color:rgb(230, 230, 230);
+}
+
+.QFrame
+{
+	color: rgb(230, 230, 230);
+}
+
+QToolButton
+{
+	border:none;
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QToolButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QToolButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+
+QComboBox
+{
+	border:none;
+	padding-left:4;
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QComboBox QAbstractItemView
+{
+	background-color:rgb(50, 50 , 51);
+	border:none;
+}
+QComboBox QAbstractItemView::item
+{
+	height:20;
+	background-color:rgb(50, 50 , 51);
+	color:rgb(230, 230, 230);
+}
+QComboBox QAbstractItemView::item:hover
+{
+	background-color:rgb(0,  85, 127);
+}
+QComboBox QAbstractItemView::item:selected
+{
+	background-color:rgb(0, 85, 127);
+}</string>
    </property>
    <property name="sizeGripEnabled">
     <bool>false</bool>

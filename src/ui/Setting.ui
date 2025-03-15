@@ -35,7 +35,10 @@ color: rgb(230, 230, 230);</string>
       <locale language="English" country="UnitedStates"/>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Box</enum>
+      <enum>QFrame::Shape::Panel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Shadow::Plain</enum>
      </property>
      <property name="widgetResizable">
       <bool>true</bool>
@@ -45,9 +48,22 @@ color: rgb(230, 230, 230);</string>
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>378</width>
-        <height>248</height>
+        <width>380</width>
+        <height>250</height>
        </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QCheckBox::indicator
+{
+	border:1 solid rgb(230, 230, 230);
+	border-radius:9;
+	width:16;
+	height:16;
+}
+QCheckBox::indicator:checked
+{
+	background-color:qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 rgb(255, 255, 255), stop:0.479904 rgb(255, 255, 255) stop:0.522685 rgba(0,0,0,0), stop:1 rgba(0,0,0,0));
+} </string>
       </property>
       <widget class="QWidget" name="formLayoutWidget">
        <property name="geometry">
@@ -76,7 +92,7 @@ color: rgb(230, 230, 230);</string>
            </font>
           </property>
           <property name="contextMenuPolicy">
-           <enum>Qt::NoContextMenu</enum>
+           <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
           </property>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(70, 70, 71);
@@ -86,10 +102,10 @@ color: rgb(230, 230, 230);</string>
            <bool>false</bool>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
           <property name="buttonSymbols">
-           <enum>QAbstractSpinBox::NoButtons</enum>
+           <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
           </property>
           <property name="minimum">
            <number>0</number>
@@ -114,7 +130,7 @@ color: rgb(230, 230, 230);</string>
            <string>Backup Times</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -138,7 +154,7 @@ color: rgb(230, 230, 230);</string>
            </font>
           </property>
           <property name="contextMenuPolicy">
-           <enum>Qt::NoContextMenu</enum>
+           <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
           </property>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(70, 70, 71);
@@ -148,10 +164,10 @@ color: rgb(230, 230, 230);</string>
            <bool>false</bool>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
           <property name="buttonSymbols">
-           <enum>QAbstractSpinBox::NoButtons</enum>
+           <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
           </property>
           <property name="decimals">
            <number>1</number>
@@ -179,7 +195,7 @@ color: rgb(230, 230, 230);</string>
            <string>Catch Distance</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -195,7 +211,7 @@ color: rgb(230, 230, 230);</string>
            <string>Text Size</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
          </widget>
         </item>
@@ -213,7 +229,7 @@ color: rgb(230, 230, 230);</string>
            </font>
           </property>
           <property name="contextMenuPolicy">
-           <enum>Qt::NoContextMenu</enum>
+           <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
           </property>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(70, 70, 71);
@@ -223,10 +239,10 @@ color: rgb(230, 230, 230);</string>
            <bool>false</bool>
           </property>
           <property name="alignment">
-           <set>Qt::AlignCenter</set>
+           <set>Qt::AlignmentFlag::AlignCenter</set>
           </property>
           <property name="buttonSymbols">
-           <enum>QAbstractSpinBox::NoButtons</enum>
+           <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
           </property>
           <property name="minimum">
            <number>4</number>
@@ -266,7 +282,7 @@ color: rgb(230, 230, 230);</string>
            </size>
           </property>
           <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
+           <enum>Qt::LayoutDirection::RightToLeft</enum>
           </property>
           <property name="text">
            <string>Show Text</string>
@@ -288,7 +304,7 @@ color: rgb(230, 230, 230);</string>
            </size>
           </property>
           <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
+           <enum>Qt::LayoutDirection::RightToLeft</enum>
           </property>
           <property name="text">
            <string>Cursor Catch</string>
@@ -310,7 +326,7 @@ color: rgb(230, 230, 230);</string>
            </size>
           </property>
           <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
+           <enum>Qt::LayoutDirection::RightToLeft</enum>
           </property>
           <property name="text">
            <string>Multiple Select</string>
@@ -332,7 +348,7 @@ color: rgb(230, 230, 230);</string>
            </size>
           </property>
           <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
+           <enum>Qt::LayoutDirection::RightToLeft</enum>
           </property>
           <property name="text">
            <string>Show Points</string>
@@ -342,7 +358,7 @@ color: rgb(230, 230, 230);</string>
         <item row="5" column="0">
          <widget class="QCheckBox" name="ignroe_M19">
           <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
+           <enum>Qt::LayoutDirection::RightToLeft</enum>
           </property>
           <property name="text">
            <string>Ignore M19</string>
@@ -359,14 +375,23 @@ color: rgb(230, 230, 230);</string>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>24</height>
+      </size>
+     </property>
      <property name="contextMenuPolicy">
-      <enum>Qt::NoContextMenu</enum>
+      <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton
 {
 	color:rgb(230, 230, 230);
 	background-color:rgb(70, 70, 71);
+	border:none;
+	min-width:80;
+	min-height:24;
 }
 QPushButton:hover
 {
@@ -375,16 +400,17 @@ QPushButton:hover
 QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
-}</string>
+}
+</string>
      </property>
      <property name="locale">
       <locale language="English" country="UnitedStates"/>
      </property>
      <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+      <enum>Qt::Orientation::Horizontal</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+      <set>QDialogButtonBox::StandardButton::Cancel|QDialogButtonBox::StandardButton::Ok</set>
      </property>
     </widget>
    </item>

@@ -1163,7 +1163,7 @@ Collision::QuadTree::QuadTree()
 }
 
 Collision::QuadTree::QuadTree(const ContainerGroup &group)
-    : _objects(group.cbegin(), _objects.cend())
+    : _objects(group.cbegin(), group.cend())
 {
     build(_objects);
 }

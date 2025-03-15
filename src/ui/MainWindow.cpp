@@ -3,6 +3,7 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 #include <QAbstractItemView>
+#include <QListView>
 #include <QMimeData>
 
 #include "ui/MainWindow.hpp"
@@ -77,6 +78,10 @@ void MainWindow::init()
         _info_labels[i] = new QLabel(this);
         _info_labels[i]->setMinimumWidth(70 + 45 * i);
         ui->statusBar->addWidget(_info_labels[i]);
+        QFrame *line = new QFrame(this);
+        line->setFrameShape(QFrame::Shape::VLine);
+        line->setFrameShadow(QFrame::Shadow::Plain);
+        ui->statusBar->addWidget(line);
     }
     ui->canvas->set_info_labels(_info_labels);
 
@@ -87,12 +92,14 @@ void MainWindow::init()
 
     _layers_btn = new QToolButton(this);
     _layers_btn->setText("Layers");
+    _layers_btn->setMinimumHeight(22);
     _layers_btn->setFocusPolicy(Qt::FocusPolicy::NoFocus);
     ui->statusBar->addPermanentWidget(_layers_btn);
     QObject::connect(_layers_btn, &QToolButton::clicked, this, &MainWindow::show_layers_manager);
 
     _layers_cbx = new QComboBox(this);
     _layers_cbx->setFocusPolicy(Qt::FocusPolicy::NoFocus);
+    _layers_cbx->setView(new QListView(_layers_cbx));
     _layers_cbx->view()->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->statusBar->addPermanentWidget(_layers_cbx);
     _layers_cbx->setModel(_layers_manager->model());
