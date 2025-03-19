@@ -316,8 +316,7 @@ Action<void> end_a(&importer, &Importer::end);
 Parser<std::string> end = str_p("M0")[end_a] >> separator;
 // 未知命令
 Action<std::string> a_unkown(&importer, &Importer::print_symbol);
-
-Parser<std::string> unkown_cmds = confix_p(alphaa_p(), *anychar_p(), separator)[a_unkown];
+Parser<std::string> unkown_cmds = confix_p(alnum_p() | ch_p(' '), separator)[a_unkown];
 
 Parser<bool> cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | text | skip_text | blank | skip_cmd | separator | end | unkown_cmds);
 

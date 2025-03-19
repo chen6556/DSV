@@ -373,6 +373,11 @@ void Importer::store_text(const std::string &text)
     _points.clear();
 }
 
+void Importer::print_symbol(const std::string& str)
+{
+    qDebug() << str;
+}
+
 void Importer::end()
 {
     store_points();
@@ -444,6 +449,7 @@ Action<void> in_a(&importer, &Importer::reset);
 Action<void> ip_a(&importer, &Importer::ip);
 Action<void> sc_a(&importer, &Importer::sc);
 Action<std::string> lb_a(&importer, &Importer::store_text);
+Action<std::string> unkown_a(&importer, &Importer::print_symbol);
 Action<void> end_a(&importer, &Importer::end);
 
 Parser<char> separator = ch_p(',') | ch_p(' ');
@@ -468,7 +474,7 @@ Parser<bool> er = (str_p("ER") >> list_p(parameter, separator))[er_a] >> end;
 Parser<bool> pm = ((str_p("PM") >> digit_p()[pm_int_a]) | str_p("PM")[pm_void_a]) >> end;
 Parser<std::string> ep = str_p("EP")[ep_a] >> end;
 
-Parser<std::string> unkown_cmds = confix_p(alphaa_p() | ch_p(28), end);
+Parser<std::string> unkown_cmds = confix_p(alphaa_p() | ch_p(28), end)[unkown_a];
 Parser<std::string> text_end = ch_p('\x3') | ch_p('\x4') | end;
 Parser<std::string> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], text_end) >> !separator >> !end;
 Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | br | bz | ci | aa | ar | ea | er | pm | ep | in | ip | sc | unkown_cmds;

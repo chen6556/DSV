@@ -87,6 +87,8 @@ public:
 
     void store_text(const std::string &text);
 
+    void print_symbol(const std::string& str);
+
     void end();
 
 
