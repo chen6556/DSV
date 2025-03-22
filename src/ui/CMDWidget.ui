@@ -22,6 +22,9 @@
     <height>60</height>
    </size>
   </property>
+  <property name="contextMenuPolicy">
+   <enum>Qt::NoContextMenu</enum>
+  </property>
   <property name="windowTitle">
    <string>Command</string>
   </property>
@@ -104,6 +107,9 @@ color:rgb(230, 230, 230);</string>
        </property>
        <property name="mouseTracking">
         <bool>false</bool>
+       </property>
+       <property name="contextMenuPolicy">
+        <enum>Qt::NoContextMenu</enum>
        </property>
        <property name="styleSheet">
         <string notr="true">background-color: rgb(120, 120, 121);

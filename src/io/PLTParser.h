@@ -14,11 +14,15 @@ class Importer
 private:
     Graph *_graph = nullptr;
     std::vector<Geo::Point> _points;
+    std::vector<Geo::Polygon> _polygon_cache;
     std::vector<double> _parameters;
-    Geo::Point _last_coord;
+    Geo::Point _last_coord, _last_cmd_coord;
 
+    bool _pen_down = false;
     bool _relative_coord = false;
+    bool _polygon_mode = false;
     double _x_ratio = 0.025, _y_ratio = 0.025;
+    double _ip[6], _sc[4];
 
     struct Txt
     {
@@ -30,6 +34,9 @@ private:
             : txt(text), pos(position) {};
     };
     std::list<Txt> _texts;
+
+public:
+    static const double plotter_unit;
 
 private:
     void store_points();
@@ -50,7 +57,13 @@ public:
 
     void pu();
 
+    void pd();
+
     void sp(const int value);
+
+    void br();
+
+    void bz();
 
     void ci();
 
@@ -62,7 +75,19 @@ public:
 
     void ar();
 
+    void ea();
+
+    void er();
+
+    void pm(const int value);
+
+    void pm();
+
+    void ep();
+
     void store_text(const std::string &text);
+
+    void print_symbol(const std::string& str);
 
     void end();
 

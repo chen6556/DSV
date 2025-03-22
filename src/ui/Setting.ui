@@ -35,7 +35,10 @@ color: rgb(230, 230, 230);</string>
       <locale language="English" country="UnitedStates"/>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Box</enum>
+      <enum>QFrame::Panel</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Plain</enum>
      </property>
      <property name="widgetResizable">
       <bool>true</bool>
@@ -45,9 +48,22 @@ color: rgb(230, 230, 230);</string>
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>384</width>
-        <height>262</height>
+        <width>380</width>
+        <height>250</height>
        </rect>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">QCheckBox::indicator
+{
+	border:1 solid rgb(230, 230, 230);
+	border-radius:9;
+	width:16;
+	height:16;
+}
+QCheckBox::indicator:checked
+{
+	background-color:qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 rgb(255, 255, 255), stop:0.479904 rgb(255, 255, 255) stop:0.522685 rgba(0,0,0,0), stop:1 rgba(0,0,0,0));
+} </string>
       </property>
       <widget class="QWidget" name="formLayoutWidget">
        <property name="geometry">
@@ -74,6 +90,9 @@ color: rgb(230, 230, 230);</string>
            <font>
             <pointsize>10</pointsize>
            </font>
+          </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::NoContextMenu</enum>
           </property>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(70, 70, 71);
@@ -133,6 +152,9 @@ color: rgb(230, 230, 230);</string>
            <font>
             <pointsize>10</pointsize>
            </font>
+          </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::NoContextMenu</enum>
           </property>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(70, 70, 71);
@@ -206,6 +228,9 @@ color: rgb(230, 230, 230);</string>
             <pointsize>10</pointsize>
            </font>
           </property>
+          <property name="contextMenuPolicy">
+           <enum>Qt::NoContextMenu</enum>
+          </property>
           <property name="styleSheet">
            <string notr="true">background-color: rgb(70, 70, 71);
 color: rgb(230, 230, 230);</string>
@@ -223,7 +248,7 @@ color: rgb(230, 230, 230);</string>
            <number>4</number>
           </property>
           <property name="maximum">
-           <number>100</number>
+           <number>800</number>
           </property>
           <property name="value">
            <number>12</number>
@@ -236,34 +261,12 @@ color: rgb(230, 230, 230);</string>
        <property name="geometry">
         <rect>
          <x>180</x>
-         <y>25</y>
+         <y>20</y>
          <width>161</width>
-         <height>141</height>
+         <height>161</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="4" column="0">
-         <widget class="QCheckBox" name="cursor_catch">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>22</height>
-           </size>
-          </property>
-          <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
-          </property>
-          <property name="text">
-           <string>Cursor Catch</string>
-          </property>
-         </widget>
-        </item>
         <item row="1" column="0">
          <widget class="QCheckBox" name="show_text">
           <property name="sizePolicy">
@@ -286,54 +289,29 @@ color: rgb(230, 230, 230);</string>
           </property>
          </widget>
         </item>
-        <item row="2" column="0">
-         <widget class="QCheckBox" name="catch_only">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>22</height>
-           </size>
-          </property>
-          <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
-          </property>
-          <property name="text">
-           <string>Active Layer Catch Only</string>
-          </property>
-          <property name="checked">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="0">
-         <widget class="QCheckBox" name="show_points">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>22</height>
-           </size>
-          </property>
-          <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
-          </property>
-          <property name="text">
-           <string>Show Points</string>
-          </property>
-         </widget>
-        </item>
         <item row="3" column="0">
+         <widget class="QCheckBox" name="cursor_catch">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="layoutDirection">
+           <enum>Qt::RightToLeft</enum>
+          </property>
+          <property name="text">
+           <string>Cursor Catch</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
          <widget class="QCheckBox" name="multiple_select">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
@@ -355,6 +333,41 @@ color: rgb(230, 230, 230);</string>
           </property>
          </widget>
         </item>
+        <item row="4" column="0">
+         <widget class="QCheckBox" name="show_points">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>22</height>
+           </size>
+          </property>
+          <property name="layoutDirection">
+           <enum>Qt::RightToLeft</enum>
+          </property>
+          <property name="text">
+           <string>Show Points</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="0">
+         <widget class="QCheckBox" name="ignroe_M19">
+          <property name="layoutDirection">
+           <enum>Qt::RightToLeft</enum>
+          </property>
+          <property name="text">
+           <string>Ignore M19</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
      </widget>
@@ -362,6 +375,12 @@ color: rgb(230, 230, 230);</string>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>24</height>
+      </size>
+     </property>
      <property name="contextMenuPolicy">
       <enum>Qt::NoContextMenu</enum>
      </property>
@@ -370,6 +389,9 @@ color: rgb(230, 230, 230);</string>
 {
 	color:rgb(230, 230, 230);
 	background-color:rgb(70, 70, 71);
+	border:none;
+	min-width:80;
+	min-height:24;
 }
 QPushButton:hover
 {
@@ -378,7 +400,8 @@ QPushButton:hover
 QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
-}</string>
+}
+</string>
      </property>
      <property name="locale">
       <locale language="English" country="UnitedStates"/>
@@ -394,5 +417,38 @@ QPushButton:pressed
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>Setting</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>199</x>
+     <y>278</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>Setting</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>199</x>
+     <y>278</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

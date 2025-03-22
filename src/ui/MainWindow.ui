@@ -21,18 +21,70 @@
     <pointsize>10</pointsize>
    </font>
   </property>
+  <property name="focusPolicy">
+   <enum>Qt::NoFocus</enum>
+  </property>
   <property name="acceptDrops">
    <bool>true</bool>
   </property>
   <property name="windowTitle">
-   <string>DSV 0.5.0</string>
+   <string>DSV 0.5.1</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="../resource/Icons.qrc">
+   <iconset resource="../../res/Icons.qrc">
     <normaloff>:/DSV2.ico</normaloff>:/DSV2.ico</iconset>
   </property>
   <property name="styleSheet">
-   <string notr="true">QMainWindow#MainWindow{background-color: rgb(38, 38, 38)};</string>
+   <string notr="true">QMainWindow#MainWindow
+{
+	background-color: rgb(38, 38, 38);
+}
+
+QMenuBar
+{
+	background-color:rgb(50, 50, 51);
+	color:rgb(230, 230, 230);
+}
+QMenuBar::item
+{
+    background-color:rgb(50, 50 , 51);
+}
+QMenuBar::item:hover
+{
+    background-color:rgb(0,  85, 127);
+}
+QMenuBar::item:pressed
+{
+    background-color:rgb(0 , 85 , 127);
+}
+
+QMenu
+{
+	color: rgb(230, 230, 230);
+     background-color: rgb(50, 50, 51);
+     selection-color: rgb(230, 230, 230);
+     selection-background-color: rgb(0, 85, 127);
+}
+
+QCheckBox::indicator
+{
+	border:1 solid rgb(230, 230, 230);
+	border-radius:9;
+	width:16;
+	height:16;
+}
+QCheckBox::indicator:checked
+{
+	background-color:qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 rgb(255, 255, 255), stop:0.479904 rgb(255, 255, 255) stop:0.522685 rgba(0,0,0,0), stop:1 rgba(0,0,0,0));
+}
+QCheckBox::indicator:unchecked
+{
+	border:1 solid rgb(230, 230, 230);
+	border-radius:8;
+}</string>
+  </property>
+  <property name="locale">
+   <locale language="English" country="UnitedStates"/>
   </property>
   <property name="iconSize">
    <size>
@@ -40,7 +92,13 @@
     <height>128</height>
    </size>
   </property>
+  <property name="toolButtonStyle">
+   <enum>Qt::ToolButtonIconOnly</enum>
+  </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="styleSheet">
+    <string notr="true">Widget#centralWidget{background:rgb(37, 37, 38);}</string>
+   </property>
    <layout class="QHBoxLayout" name="horizontalLayout">
     <property name="leftMargin">
      <number>0</number>
@@ -61,6 +119,9 @@
       <property name="focusPolicy">
        <enum>Qt::NoFocus</enum>
       </property>
+      <property name="layoutDirection">
+       <enum>Qt::RightToLeft</enum>
+      </property>
       <property name="styleSheet">
        <string notr="true">QWidget
 {
@@ -71,6 +132,7 @@ QPushButton
 {
 	color:rgb(230, 230, 230);
 	background-color:rgb(70, 70, 71);
+	border: none;
 }
 QPushButton:hover
 {
@@ -80,8 +142,16 @@ QPushButton:pressed
 {
 	background-color:rgb(0, 85, 127);
 }
-QSpinBox {background-color: rgb(70, 70, 71);}
-QDoubleSpinBox {background-color: rgb(70, 70, 71);}
+QSpinBox
+{
+	background-color: rgb(70, 70, 71);
+	border: none;
+}
+QDoubleSpinBox
+{
+	background-color: rgb(70, 70, 71);
+	border: none;
+}
 QLabel {background-color: rgb(70, 70, 71);}
 QToolTip
 {
@@ -137,9 +207,6 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <property name="focusPolicy">
            <enum>Qt::NoFocus</enum>
           </property>
-          <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
-          </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
           </property>
@@ -150,21 +217,18 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
            <enum>Qt::ScrollBarAsNeeded</enum>
           </property>
           <property name="horizontalScrollBarPolicy">
-           <enum>Qt::ScrollBarAlwaysOff</enum>
+           <enum>Qt::ScrollBarAsNeeded</enum>
           </property>
           <property name="widgetResizable">
            <bool>true</bool>
           </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
           <widget class="QWidget" name="scrollAreaWidgetContents_2">
            <property name="geometry">
             <rect>
-             <x>0</x>
+             <x>-6</x>
              <y>0</y>
              <width>120</width>
-             <height>649</height>
+             <height>638</height>
             </rect>
            </property>
            <property name="maximumSize">
@@ -179,6 +243,12 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
             </property>
             <item>
              <widget class="QLabel" name="current_tool">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>16</height>
+               </size>
+              </property>
               <property name="maximumSize">
                <size>
                 <width>120</width>
@@ -200,6 +270,12 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
             </item>
             <item>
              <widget class="QPushButton" name="view_btn">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
@@ -208,21 +284,6 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
               </property>
-              <property name="styleSheet">
-               <string notr="true">QPushButton
-{
-	color:rgb(230, 230, 230);
-	background-color:rgb(70, 70, 71);
-}
-QPushButton:hover
-{
-	background-color:rgb(0, 85, 127);
-}
-QPushButton:pressed
-{
-	background-color:rgb(0, 85, 127);
-}</string>
-              </property>
               <property name="text">
                <string>←</string>
               </property>
@@ -230,6 +291,12 @@ QPushButton:pressed
             </item>
             <item>
              <widget class="QPushButton" name="measure_btn">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>28</height>
+               </size>
+              </property>
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
               </property>
@@ -237,7 +304,7 @@ QPushButton:pressed
                <string>Length</string>
               </property>
               <property name="icon">
-               <iconset resource="../resource/Icons.qrc">
+               <iconset resource="../../res/Icons.qrc">
                 <normaloff>:/icons/measure_btn.png</normaloff>:/icons/measure_btn.png</iconset>
               </property>
               <property name="iconSize">
@@ -251,7 +318,7 @@ QPushButton:pressed
             <item>
              <widget class="Line" name="line">
               <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+               <enum>Qt::Vertical</enum>
               </property>
              </widget>
             </item>
@@ -260,38 +327,40 @@ QPushButton:pressed
               <property name="spacing">
                <number>2</number>
               </property>
-              <item row="1" column="0">
-               <widget class="QPushButton" name="text_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
+              <item row="3" column="1">
+               <widget class="QPushButton" name="curve_btn">
+                <property name="minimumSize">
                  <size>
-                  <width>51</width>
-                  <height>16777215</height>
+                  <width>0</width>
+                  <height>32</height>
                  </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
                 </property>
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Text</string>
+                 <string>Bezier Curve</string>
                 </property>
-                <property name="text">
-                 <string>Text</string>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/curve_btn.png</normaloff>:/icons/curve_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
                 </property>
                </widget>
               </item>
               <item row="0" column="1">
                <widget class="QPushButton" name="line_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
@@ -299,7 +368,7 @@ QPushButton:pressed
                  <string>Polyline</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
+                 <iconset resource="../../res/Icons.qrc">
                   <normaloff>:/icons/polyline_btn.png</normaloff>:/icons/polyline_btn.png</iconset>
                 </property>
                 <property name="iconSize">
@@ -312,6 +381,12 @@ QPushButton:pressed
               </item>
               <item row="0" column="0">
                <widget class="QPushButton" name="rect_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
@@ -319,7 +394,7 @@ QPushButton:pressed
                  <string>Rectangle</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
+                 <iconset resource="../../res/Icons.qrc">
                   <normaloff>:/icons/rectangle_btn.png</normaloff>:/icons/rectangle_btn.png</iconset>
                 </property>
                 <property name="iconSize">
@@ -330,47 +405,7 @@ QPushButton:pressed
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
-               <widget class="QPushButton" name="circle_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Circle</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/circle_btn.png</normaloff>:/icons/circle_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QPushButton" name="curve_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Bezier Curve</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/curve_btn.png</normaloff>:/icons/curve_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
+              <item row="3" column="0">
                <widget class="QSpinBox" name="curve_sbx">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -378,10 +413,19 @@ QPushButton:pressed
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="font">
                  <font>
                   <pointsize>12</pointsize>
                  </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
                 </property>
                 <property name="toolTip">
                  <string>Order of Bezier Curve</string>
@@ -406,12 +450,100 @@ QPushButton:pressed
                 </property>
                </widget>
               </item>
+              <item row="2" column="0">
+               <widget class="QPushButton" name="text_btn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                 </font>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Text</string>
+                </property>
+                <property name="text">
+                 <string>Text</string>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QPushButton" name="ellipse_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Ellipse</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/ellipse_btn.png</normaloff>:/icons/ellipse_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QPushButton" name="circle_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Circle</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/circle_btn.png</normaloff>:/icons/circle_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
              </layout>
             </item>
             <item>
              <widget class="Line" name="line_2">
               <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+               <enum>Qt::Vertical</enum>
               </property>
              </widget>
             </item>
@@ -422,6 +554,12 @@ QPushButton:pressed
               </property>
               <item row="0" column="0">
                <widget class="QPushButton" name="close_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
@@ -429,7 +567,7 @@ QPushButton:pressed
                  <string>Close</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
+                 <iconset resource="../../res/Icons.qrc">
                   <normaloff>:/icons/close_btn.png</normaloff>:/icons/close_btn.png</iconset>
                 </property>
                 <property name="iconSize">
@@ -442,6 +580,12 @@ QPushButton:pressed
               </item>
               <item row="0" column="1">
                <widget class="QPushButton" name="connect_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
@@ -449,7 +593,7 @@ QPushButton:pressed
                  <string>Connect</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
+                 <iconset resource="../../res/Icons.qrc">
                   <normaloff>:/icons/connect_btn.png</normaloff>:/icons/connect_btn.png</iconset>
                 </property>
                 <property name="iconSize">
@@ -462,6 +606,12 @@ QPushButton:pressed
               </item>
               <item row="1" column="1">
                <widget class="QPushButton" name="combinate_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
@@ -469,7 +619,7 @@ QPushButton:pressed
                  <string>Combinate</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
+                 <iconset resource="../../res/Icons.qrc">
                   <normaloff>:/icons/combinate_btn.png</normaloff>:/icons/combinate_btn.png</iconset>
                 </property>
                 <property name="iconSize">
@@ -482,6 +632,12 @@ QPushButton:pressed
               </item>
               <item row="1" column="0">
                <widget class="QPushButton" name="split_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="font">
                  <font>
                   <pointsize>10</pointsize>
@@ -494,7 +650,7 @@ QPushButton:pressed
                  <string>Split</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
+                 <iconset resource="../../res/Icons.qrc">
                   <normaloff>:/icons/split_btn.png</normaloff>:/icons/split_btn.png</iconset>
                 </property>
                 <property name="iconSize">
@@ -510,12 +666,18 @@ QPushButton:pressed
             <item>
              <widget class="Line" name="line_3">
               <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+               <enum>Qt::Vertical</enum>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QCheckBox" name="to_all_layers">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>20</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
@@ -526,9 +688,6 @@ QPushButton:pressed
               </property>
               <property name="layoutDirection">
                <enum>Qt::LeftToRight</enum>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">color: rgb(230, 230, 230);</string>
               </property>
               <property name="text">
                <string>To All Layers</string>
@@ -543,33 +702,19 @@ QPushButton:pressed
               <property name="spacing">
                <number>2</number>
               </property>
-              <item row="5" column="1">
-               <widget class="QPushButton" name="offset_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Offset</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/offset_btn.png</normaloff>:/icons/offset_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="0">
-               <widget class="QDoubleSpinBox" name="scale_sbx">
+              <item row="0" column="0">
+               <widget class="QSpinBox" name="rotate_angle">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
                 </property>
                 <property name="maximumSize">
                  <size>
@@ -581,6 +726,332 @@ QPushButton:pressed
                  <font>
                   <pointsize>12</pointsize>
                  </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Rotate Degree</string>
+                </property>
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
+                <property name="suffix">
+                 <string>°</string>
+                </property>
+                <property name="minimum">
+                 <number>-360</number>
+                </property>
+                <property name="maximum">
+                 <number>360</number>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QPushButton" name="flipy_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Flip Y</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/flipy_btn.png</normaloff>:/icons/flipy_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="0">
+               <widget class="QDoubleSpinBox" name="offset_sbx">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                 </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Offset Distance</string>
+                </property>
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
+                <property name="minimum">
+                 <double>-100000000.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>100000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="1">
+               <widget class="QPushButton" name="offset_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Offset</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/offset_btn.png</normaloff>:/icons/offset_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QPushButton" name="flipx_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Flip X</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/flipx_btn.png</normaloff>:/icons/flipx_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QPushButton" name="scale_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Scale</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/scale_btn.png</normaloff>:/icons/scale_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="1">
+               <widget class="QPushButton" name="fillet_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Fillet</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/fillet_btn.png</normaloff>:/icons/fillet_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0">
+               <widget class="QDoubleSpinBox" name="fillet_sbx">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                 </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Fillet Radius</string>
+                </property>
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::NoButtons</enum>
+                </property>
+                <property name="maximum">
+                 <double>100000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
+               <widget class="QPushButton" name="intersection_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Intersection</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/intersection_btn.png</normaloff>:/icons/intersection_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="rotate_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Rotate</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/rotate_btn.png</normaloff>:/icons/rotate_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QDoubleSpinBox" name="scale_sbx">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                 </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
                 </property>
                 <property name="toolTip">
                  <string>Scale Rate</string>
@@ -605,17 +1076,23 @@ QPushButton:pressed
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
-               <widget class="QPushButton" name="flipx_btn">
+              <item row="4" column="0">
+               <widget class="QPushButton" name="difference_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Flip X</string>
+                 <string>Difference</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/flipx_btn.png</normaloff>:/icons/flipx_btn.png</iconset>
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/difference_btn.png</normaloff>:/icons/difference_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -627,6 +1104,12 @@ QPushButton:pressed
               </item>
               <item row="2" column="1">
                <widget class="QPushButton" name="mirror_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
@@ -634,68 +1117,8 @@ QPushButton:pressed
                  <string>Mirror</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
+                 <iconset resource="../../res/Icons.qrc">
                   <normaloff>:/icons/mirror_btn.png</normaloff>:/icons/mirror_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="0">
-               <widget class="QPushButton" name="difference_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Difference</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/difference_btn.png</normaloff>:/icons/difference_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="1">
-               <widget class="QPushButton" name="intersection_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Intersection</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/intersection_btn.png</normaloff>:/icons/intersection_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QPushButton" name="flipy_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Flip Y</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/flipy_btn.png</normaloff>:/icons/flipy_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -707,6 +1130,12 @@ QPushButton:pressed
               </item>
               <item row="2" column="0">
                <widget class="QPushButton" name="union_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::NoFocus</enum>
                 </property>
@@ -714,7 +1143,7 @@ QPushButton:pressed
                  <string>Union</string>
                 </property>
                 <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
+                 <iconset resource="../../res/Icons.qrc">
                   <normaloff>:/icons/union_btn.png</normaloff>:/icons/union_btn.png</iconset>
                 </property>
                 <property name="iconSize">
@@ -725,184 +1154,16 @@ QPushButton:pressed
                 </property>
                </widget>
               </item>
-              <item row="5" column="0">
-               <widget class="QDoubleSpinBox" name="offset_sbx">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>51</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="toolTip">
-                 <string>Offset Distance</string>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
-                </property>
-                <property name="minimum">
-                 <double>-100000000.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>100000000.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0">
-               <widget class="QSpinBox" name="rotate_angle">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>51</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="toolTip">
-                 <string>Rotate Degree</string>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
-                </property>
-                <property name="suffix">
-                 <string>°</string>
-                </property>
-                <property name="minimum">
-                 <number>-360</number>
-                </property>
-                <property name="maximum">
-                 <number>360</number>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QPushButton" name="rotate_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Rotate</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/rotate_btn.png</normaloff>:/icons/rotate_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="1">
-               <widget class="QPushButton" name="scale_btn">
-                <property name="focusPolicy">
-                 <enum>Qt::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Scale</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/scale_btn.png</normaloff>:/icons/scale_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="1">
-               <widget class="QPushButton" name="fillet_btn">
-                <property name="toolTip">
-                 <string>Fillet</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../resource/Icons.qrc">
-                  <normaloff>:/icons/fillet_btn.png</normaloff>:/icons/fillet_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="0">
-               <widget class="QDoubleSpinBox" name="fillet_sbx">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>51</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="toolTip">
-                 <string>Fillet Radius</string>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::NoButtons</enum>
-                </property>
-                <property name="maximum">
-                 <double>100000000.000000000000000</double>
-                </property>
-               </widget>
-              </item>
              </layout>
             </item>
             <item>
              <widget class="QPushButton" name="array_btn">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
@@ -963,9 +1224,6 @@ QPushButton:pressed
           <property name="focusPolicy">
            <enum>Qt::NoFocus</enum>
           </property>
-          <property name="layoutDirection">
-           <enum>Qt::RightToLeft</enum>
-          </property>
           <property name="frameShape">
            <enum>QFrame::NoFrame</enum>
           </property>
@@ -973,21 +1231,18 @@ QPushButton:pressed
            <number>0</number>
           </property>
           <property name="horizontalScrollBarPolicy">
-           <enum>Qt::ScrollBarAlwaysOff</enum>
+           <enum>Qt::ScrollBarAsNeeded</enum>
           </property>
           <property name="widgetResizable">
            <bool>true</bool>
           </property>
-          <property name="alignment">
-           <set>Qt::AlignCenter</set>
-          </property>
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>0</x>
+             <x>-13</x>
              <y>0</y>
-             <width>94</width>
-             <height>336</height>
+             <width>107</width>
+             <height>413</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1007,13 +1262,16 @@ QPushButton:pressed
               <property name="text">
                <string/>
               </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
              </widget>
             </item>
             <item>
              <widget class="QPushButton" name="back_btn_0">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
@@ -1046,9 +1304,6 @@ QPushButton:pressed
               <property name="text">
                <string>Line Array</string>
               </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
              </widget>
             </item>
             <item>
@@ -1061,6 +1316,12 @@ QPushButton:pressed
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>24</height>
+                 </size>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>40</width>
@@ -1071,6 +1332,9 @@ QPushButton:pressed
                  <font>
                   <pointsize>10</pointsize>
                  </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
@@ -1097,7 +1361,7 @@ QPushButton:pressed
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>20</height>
+                  <height>24</height>
                  </size>
                 </property>
                 <property name="font">
@@ -1107,9 +1371,6 @@ QPushButton:pressed
                 </property>
                 <property name="text">
                  <string>X items:</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
                 </property>
                </widget>
               </item>
@@ -1125,6 +1386,12 @@ QPushButton:pressed
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>24</height>
+                 </size>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>40</width>
@@ -1135,6 +1402,9 @@ QPushButton:pressed
                  <font>
                   <pointsize>10</pointsize>
                  </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
@@ -1161,7 +1431,7 @@ QPushButton:pressed
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>20</height>
+                  <height>24</height>
                  </size>
                 </property>
                 <property name="font">
@@ -1172,9 +1442,6 @@ QPushButton:pressed
                 <property name="text">
                  <string>Y items:</string>
                 </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
                </widget>
               </item>
              </layout>
@@ -1184,7 +1451,7 @@ QPushButton:pressed
               <property name="minimumSize">
                <size>
                 <width>0</width>
-                <height>20</height>
+                <height>24</height>
                </size>
               </property>
               <property name="font">
@@ -1205,10 +1472,19 @@ QPushButton:pressed
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
                </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::NoContextMenu</enum>
               </property>
               <property name="frame">
                <bool>false</bool>
@@ -1232,7 +1508,7 @@ QPushButton:pressed
               <property name="minimumSize">
                <size>
                 <width>0</width>
-                <height>20</height>
+                <height>24</height>
                </size>
               </property>
               <property name="font">
@@ -1253,10 +1529,19 @@ QPushButton:pressed
                 <verstretch>0</verstretch>
                </sizepolicy>
               </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>24</height>
+               </size>
+              </property>
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
                </font>
+              </property>
+              <property name="contextMenuPolicy">
+               <enum>Qt::NoContextMenu</enum>
               </property>
               <property name="frame">
                <bool>false</bool>
@@ -1277,6 +1562,12 @@ QPushButton:pressed
             </item>
             <item>
              <widget class="QPushButton" name="line_array_btn">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>32</height>
+               </size>
+              </property>
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
               </property>
@@ -1284,7 +1575,7 @@ QPushButton:pressed
                <string>Line Array</string>
               </property>
               <property name="icon">
-               <iconset resource="../resource/Icons.qrc">
+               <iconset resource="../../res/Icons.qrc">
                 <normaloff>:/icons/line_array_btn.png</normaloff>:/icons/line_array_btn.png</iconset>
               </property>
               <property name="iconSize">
@@ -1314,9 +1605,6 @@ QPushButton:pressed
               <property name="text">
                <string>Ring Array</string>
               </property>
-              <property name="alignment">
-               <set>Qt::AlignCenter</set>
-              </property>
              </widget>
             </item>
             <item>
@@ -1329,6 +1617,12 @@ QPushButton:pressed
                   <verstretch>0</verstretch>
                  </sizepolicy>
                 </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>24</height>
+                 </size>
+                </property>
                 <property name="maximumSize">
                  <size>
                   <width>40</width>
@@ -1339,6 +1633,9 @@ QPushButton:pressed
                  <font>
                   <pointsize>10</pointsize>
                  </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::NoContextMenu</enum>
                 </property>
                 <property name="frame">
                  <bool>false</bool>
@@ -1362,7 +1659,7 @@ QPushButton:pressed
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
-                  <height>20</height>
+                  <height>24</height>
                  </size>
                 </property>
                 <property name="font">
@@ -1373,15 +1670,18 @@ QPushButton:pressed
                 <property name="text">
                  <string>Items:</string>
                 </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
                </widget>
               </item>
              </layout>
             </item>
             <item>
              <widget class="QPushButton" name="ring_array_btn">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>32</height>
+               </size>
+              </property>
               <property name="focusPolicy">
                <enum>Qt::NoFocus</enum>
               </property>
@@ -1389,7 +1689,7 @@ QPushButton:pressed
                <string>Ring Array</string>
               </property>
               <property name="icon">
-               <iconset resource="../resource/Icons.qrc">
+               <iconset resource="../../res/Icons.qrc">
                 <normaloff>:/icons/ring_array_btn.png</normaloff>:/icons/ring_array_btn.png</iconset>
               </property>
               <property name="iconSize">
@@ -1436,43 +1736,34 @@ QPushButton:pressed
     </item>
    </layout>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
-  <widget class="QMenuBar" name="menuBar">
+  <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
      <width>1008</width>
-     <height>17</height>
+     <height>24</height>
     </rect>
    </property>
-   <property name="styleSheet">
-    <string notr="true">QMenuBar
-{
-	background-color:rgb(50, 50, 51);
-	color:rgb(230, 230, 230);
-}
-QMenuBar::item
-{
-    background-color:rgb(50, 50 , 51);
-}
-QMenuBar::item:hover
-{
-    background-color:rgb(0,  85, 127);
-}
-QMenuBar::item:pressed
-{
-    background-color:rgb(0 , 85 , 127);
-}
-QMenu
-{
-	background-color: rgb(50, 50, 51);
-	color: rgb(230, 230, 230);
-	selection-color: rgb(230, 230, 230);
-	selection-background-color: rgb(0, 85, 127);
-}</string>
+   <property name="minimumSize">
+    <size>
+     <width>0</width>
+     <height>24</height>
+    </size>
+   </property>
+   <property name="acceptDrops">
+    <bool>false</bool>
    </property>
    <widget class="QMenu" name="file_menu">
+    <property name="minimumSize">
+     <size>
+      <width>0</width>
+      <height>24</height>
+     </size>
+    </property>
+    <property name="acceptDrops">
+     <bool>false</bool>
+    </property>
     <property name="title">
      <string>File</string>
     </property>
@@ -1485,12 +1776,22 @@ QMenu
     <addaction name="performace_panel"/>
    </widget>
    <widget class="QMenu" name="menusetting">
+    <property name="minimumSize">
+     <size>
+      <width>0</width>
+      <height>24</height>
+     </size>
+    </property>
+    <property name="acceptDrops">
+     <bool>false</bool>
+    </property>
     <property name="title">
      <string>Settings</string>
     </property>
     <addaction name="show_cmd_line"/>
     <addaction name="show_origin"/>
     <addaction name="auto_layering"/>
+    <addaction name="auto_connect"/>
     <addaction name="remember_file_type"/>
     <addaction name="auto_aligning"/>
     <addaction name="actionadvanced"/>
@@ -1498,14 +1799,80 @@ QMenu
    <addaction name="file_menu"/>
    <addaction name="menusetting"/>
   </widget>
+  <widget class="QStatusBar" name="statusBar">
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">QStatusBar
+{
+	background:rgb(50, 50, 51);
+	color:rgb(230, 230, 230);
+	padding-left: 4;
+	padding-right: 4;
+}
+
+QLabel
+{
+	color:rgb(230, 230, 230);
+}
+
+.QFrame
+{
+	color: rgb(230, 230, 230);
+}
+
+QToolButton
+{
+	border:none;
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QToolButton:hover
+{
+	background-color:rgb(0, 85, 127);
+}
+QToolButton:pressed
+{
+	background-color:rgb(0, 85, 127);
+}
+
+QComboBox
+{
+	border:none;
+	padding-left:4;
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QComboBox QAbstractItemView
+{
+	background-color:rgb(50, 50 , 51);
+	border:none;
+}
+QComboBox QAbstractItemView::item
+{
+	height:20;
+	background-color:rgb(50, 50 , 51);
+	color:rgb(230, 230, 230);
+}
+QComboBox QAbstractItemView::item:hover
+{
+	background-color:rgb(0,  85, 127);
+}
+QComboBox QAbstractItemView::item:selected
+{
+	background-color:rgb(0, 85, 127);
+}</string>
+   </property>
+   <property name="sizeGripEnabled">
+    <bool>false</bool>
+   </property>
+  </widget>
   <action name="open_file">
    <property name="text">
     <string>Open</string>
-   </property>
-  </action>
-  <action name="close_file">
-   <property name="text">
-    <string>Close</string>
    </property>
   </action>
   <action name="save_file">
@@ -1526,41 +1893,12 @@ QMenu
     <string>Auto save</string>
    </property>
   </action>
-  <action name="append_file">
-   <property name="text">
-    <string>Append</string>
-   </property>
-  </action>
-  <action name="performace_panel">
-   <property name="text">
-    <string>Data</string>
-   </property>
-  </action>
-  <action name="show_cmd_line">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Show CMD line</string>
-   </property>
-  </action>
-  <action name="show_origin">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Show origin</string>
-   </property>
-  </action>
   <action name="auto_layering">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="checked">
-    <bool>true</bool>
+    <bool>false</bool>
    </property>
    <property name="text">
     <string>Auto layering</string>
@@ -1590,6 +1928,51 @@ QMenu
     <string>Advanced Settings</string>
    </property>
   </action>
+  <action name="show_origin">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show origin</string>
+   </property>
+  </action>
+  <action name="show_cmd_line">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show CMD line</string>
+   </property>
+  </action>
+  <action name="close_file">
+   <property name="text">
+    <string>Close</string>
+   </property>
+  </action>
+  <action name="performace_panel">
+   <property name="text">
+    <string>Data</string>
+   </property>
+  </action>
+  <action name="append_file">
+   <property name="text">
+    <string>Append</string>
+   </property>
+  </action>
+  <action name="auto_connect">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Auto connect</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
@@ -1598,12 +1981,473 @@ QMenu
    <header>draw/Canvas.h</header>
    <slots>
     <signal>tool_changed(Canvas::Tool)</signal>
-    <slot>cancel_painting()</slot>
+    <signal>operation_changed(Canvas::Operation)</signal>
    </slots>
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="../resource/Icons.qrc"/>
+  <include location="../../res/Icons.qrc"/>
  </resources>
- <connections/>
+ <connections>
+  <connection>
+   <sender>open_file</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>open_file()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>599</x>
+     <y>399</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>save_file</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>save_file()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>599</x>
+     <y>399</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>saveas_file</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>saveas_file()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>599</x>
+     <y>399</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>auto_save</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>auto_save()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>599</x>
+     <y>399</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>back_btn_0</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>to_main_page()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>464</x>
+     <y>45</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>close_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close_polyline()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>477</x>
+     <y>293</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>combinate_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>combinate()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>477</x>
+     <y>324</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>connect_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>connect_polylines()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>477</x>
+     <y>262</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>flipx_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>flip_x()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>449</x>
+     <y>447</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>flipy_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>flip_y()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>505</x>
+     <y>447</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mirror_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>mirror()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>477</x>
+     <y>479</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rotate_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>rotate()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>453</x>
+     <y>414</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>array_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>to_array_page()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>477</x>
+     <y>510</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>line_array_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>line_array()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>474</x>
+     <y>252</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>ring_array_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>ring_array()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>474</x>
+     <y>370</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>479</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>close_file</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close_file()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>314</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>performace_panel</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>show_data_panel()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>314</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>offset_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>offset()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>473</x>
+     <y>600</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>intersection_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>polygon_intersection()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>498</x>
+     <y>114</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>difference_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>polygon_difference()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>498</x>
+     <y>145</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>scale_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>scale()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>473</x>
+     <y>569</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>append_file</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>append_file()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>union_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>polygon_union()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>528</x>
+     <y>472</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>view_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>canvas</receiver>
+   <slot>cancel_painting()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>62</x>
+     <y>74</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>562</x>
+     <y>350</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>fillet_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>fillet()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>36</x>
+     <y>579</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>canvas</sender>
+   <signal>tool_changed(Canvas::Tool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>refresh_tool_label(Canvas::Tool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>562</x>
+     <y>351</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>canvas</sender>
+   <signal>operation_changed(Canvas::Operation)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>refresh_tool_label(Canvas::Operation)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>562</x>
+     <y>351</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>open_file()</slot>
+  <slot>save_file()</slot>
+  <slot>saveas_file()</slot>
+  <slot>auto_save()</slot>
+  <slot>rotate()</slot>
+  <slot>flip_x()</slot>
+  <slot>flip_y()</slot>
+  <slot>mirror()</slot>
+  <slot>connect_polylines()</slot>
+  <slot>combinate()</slot>
+  <slot>close_polyline()</slot>
+  <slot>to_main_page()</slot>
+  <slot>to_array_page()</slot>
+  <slot>line_array()</slot>
+  <slot>ring_array()</slot>
+  <slot>close_file()</slot>
+  <slot>show_data_panel()</slot>
+  <slot>offset()</slot>
+  <slot>polygon_union()</slot>
+  <slot>polygon_intersection()</slot>
+  <slot>polygon_difference()</slot>
+  <slot>scale()</slot>
+  <slot>append_file()</slot>
+  <slot>refresh_tool_label(Canvas::Tool)</slot>
+  <slot>fillet()</slot>
+  <slot>refresh_tool_label(Canvas::Operation)</slot>
+ </slots>
 </ui>

@@ -26,19 +26,48 @@ enum class CurveType
     Linear = 0,
 };
 
+enum class Command
+{
+    None,		// Nothing
+    Q,			// Invalid
+
+    // G Command
+    G70,		// Unit inch
+    G71,		// Unit mm
+
+    // D Command
+    D1,			// Pen down
+    D2,			// Pen up
+
+    // M Command
+    M01,		// 
+    M14,		// Knife down
+    M15,		// Knife up
+    M19,		// Notch
+    M31,        // Text
+    M43,		// Drill2
+    M44,		// Drill1
+    M45,		// Drill3
+    M72,		// Drill3
+    M73			// Drill4
+};
+
 class Importer
 {
 private:
     Graph *_graph = nullptr;
     std::vector<Geo::Point> _points;
     Geo::Point _last_coord;
-    CircleContainer *_last_circle_container;
-    Container *_last_container;
+    Container<Geo::Circle> *_last_circle_container;
+    Container<Geo::Polygon> *_last_container;
 
     int _circle_radius = 10;
+    size_t _index = 0;
 
     bool _is_pen_down = false;
     bool _is_knife_down = false;
+    bool _ignore_M19 = true;
+    Command _command = Command::None;
 
     CurveType _curve_type = CurveType::Linear;
 
@@ -58,13 +87,15 @@ public:
     void pen_down();
     void pen_up();
 
-    void knife_down();
+    void knife_down(const std::string &value);
     void knife_up();
 
     void load_graph(Graph *g);
     void reset();
 
+    void read_text();
     void store_text(const std::string& text);
+    void store_table_text(const std::string &text);
 
     void print_symbol(const std::string& str);
 

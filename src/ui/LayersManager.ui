@@ -32,7 +32,7 @@ color: rgb(230, 230, 230);</string>
       <enum>Qt::CustomContextMenu</enum>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Box</enum>
+      <enum>QFrame::Panel</enum>
      </property>
      <property name="frameShadow">
       <enum>QFrame::Plain</enum>
@@ -44,7 +44,7 @@ color: rgb(230, 230, 230);</string>
       <enum>Qt::ScrollBarAlwaysOff</enum>
      </property>
      <property name="editTriggers">
-      <set>QAbstractItemView::DoubleClicked</set>
+      <set>QAbstractItemView::NoEditTriggers</set>
      </property>
     </widget>
    </item>
@@ -65,11 +65,18 @@ color: rgb(230, 230, 230);</string>
      </item>
      <item>
       <widget class="QPushButton" name="pushButton">
+       <property name="minimumSize">
+        <size>
+         <width>80</width>
+         <height>24</height>
+        </size>
+       </property>
        <property name="styleSheet">
         <string notr="true">QPushButton
 {
 	color:rgb(230, 230, 230);
 	background-color:rgb(70, 70, 71);
+	border:none;
 }
 QPushButton:hover
 {
@@ -90,5 +97,22 @@ QPushButton:pressed
   </layout>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>LayersManager</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>349</x>
+     <y>277</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>199</x>
+     <y>149</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>

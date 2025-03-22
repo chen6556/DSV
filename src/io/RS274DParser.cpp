@@ -8,6 +8,14 @@
 #include <string>
 #include <QDebug>
 
+#include "base/Geometry.h"
+#include "base/Algorithm.h"
+#include "draw/Container.h"
+#include "io/RS274DParser.h"
+#include "io/Parser/ParserGen2.hpp"
+#include "io/GlobalSetting.h"
+
+
 namespace RS274DParser
 {
 
@@ -38,9 +46,23 @@ void Importer::store_points()
         return;
     }
 
+    for (size_t i = _points.size() - 1; i > 0; --i)
+    {
+        if (_points[i] == _points[i - 1])
+        {
+            _points.erase(_points.begin() + i);
+        }
+    }
+
+    if (_points.size() <= 1)
+    {
+        _points.clear();
+        return;
+    }
+
     if (_points.front() == _points.back() && _points.size() >= 3)
     {
-        _last_container = new Container(Geo::Polygon(_points.cbegin(), _points.cend()));
+        _last_container = new Container<Geo::Polygon>(Geo::Polygon(_points.cbegin(), _points.cend()));
         _last_circle_container = nullptr;
         _graph->container_groups().back().append(_last_container);
     }
@@ -53,7 +75,7 @@ void Importer::store_points()
 
 void Importer::draw_circle()
 {
-    _last_circle_container = new CircleContainer(Geo::Circle(_last_coord, _circle_radius));
+    _last_circle_container = new Container<Geo::Circle>(Geo::Circle(_last_coord, _circle_radius));
     _last_container = nullptr;
     _graph->container_groups().back().append(_last_circle_container);
     _points.clear();
@@ -73,35 +95,49 @@ void Importer::pen_down()
 {
     this->_is_pen_down = true;
     _points.emplace_back(_last_coord);
+    _command = Command::D1;
 }
 
 void Importer::pen_up()
 {
     this->_is_pen_down = false;
     store_points();
+    _command = Command::D2;
 }
 
-void Importer::knife_down()
+void Importer::knife_down(const std::string &value)
 {
     this->_is_knife_down = true;
     _points.emplace_back(_last_coord);
+    if (value == "M14")
+    {
+        _command = Command::M14;
+    }
+    else
+    {
+        _command = Command::M19;
+    }
 }
 
 void Importer::knife_up()
 {
-    this->_is_knife_down = false;
-    store_points();
+    if (_ignore_M19 || _command != Command::M19)
+    {
+        this->_is_knife_down = false;
+        store_points();
+    }
+    _command = Command::M15;
 }
 
 void Importer::set_circle_radius(const std::string &text)
 {
     if (text == "M43")
     {
-        _circle_radius = 20;
+        _circle_radius = 10;
     }
     else if (text == "M44")
     {
-        _circle_radius = 10;
+        _circle_radius = 5;
     }
     else if (text == "M45" || text == "M72")
     {
@@ -128,11 +164,22 @@ void Importer::reset()
     _points.clear();
     _last_coord.clear();
     _circle_radius = 10;
+    _index = 0;
     _is_pen_down = _is_knife_down = false;
+    _ignore_M19 = GlobalSetting::get_instance()->setting["ignore_M19"].toBool();
     _curve_type = CurveType::Linear;
     unit = Unit::mm;
     _last_circle_container = nullptr;
     _last_container = nullptr;
+}
+
+void Importer::read_text()
+{
+    if (!_points.empty() && _command == Command::M15)
+    {
+        _points.pop_back();
+    }
+    _command = Command::M31;
 }
 
 void Importer::store_text(const std::string &text)
@@ -148,7 +195,57 @@ void Importer::store_text(const std::string &text)
     else
     {
         _graph->container_groups().back().append(new Text(_last_coord.x, _last_coord.y,
-            GlobalSetting::get_instance()->setting()["text_size"].toInt(), QString::fromStdString(text)));
+            GlobalSetting::get_instance()->setting["text_size"].toInt(), QString::fromUtf8(text.c_str())));
+    }
+}
+
+void Importer::store_table_text(const std::string &text)
+{
+    if (!_points.empty())
+    {
+        _points.pop_back();
+    }
+    Containerized *containerized = nullptr;
+    for (Geo::Geometry *container : _graph->container_groups().back())
+    {
+        containerized = dynamic_cast<Containerized *>(container);
+        if (containerized == nullptr)
+        {
+            continue;
+        }
+        switch (container->type())
+        {
+        case Geo::Type::POLYGON:
+            if (Geo::is_inside(_last_coord, *dynamic_cast<Geo::Polygon *>(container)))
+            {
+                if (containerized->text().isEmpty())
+                {
+                    containerized->set_text(QString::fromUtf8(text.c_str()));
+                }
+                else
+                {
+                    containerized->set_text(containerized->text() + '\n' + QString::fromUtf8(text.c_str()));
+                }
+                return;
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            if (Geo::is_inside(_last_coord, *dynamic_cast<Geo::Circle *>(container)))
+            {
+                if (containerized->text().isEmpty())
+                {
+                    containerized->set_text(QString::fromUtf8(text.c_str()));
+                }
+                else
+                {
+                    containerized->set_text(containerized->text() + '\n' + QString::fromUtf8(text.c_str()));
+                }
+                return;
+            }
+            break;
+        default:
+            break;
+        }
     }
 }
 
@@ -188,13 +285,13 @@ Parser<std::string> set_mil_unit = (str_p("G72") | str_p("G70"))[set_mil_unit_a]
 Parser<std::string> set_unit = (set_mm_unit | set_mil_unit) >> separator;
 
 // 下刀提刀，下笔提笔
-Action<void> knife_down_a(&importer, &Importer::knife_down);
+Action<std::string> knife_down_a(&importer, &Importer::knife_down);
 Action<void> knife_up_a(&importer, &Importer::knife_up);
 Action<void> pen_down_a(&importer, &Importer::pen_down);
 Action<void> pen_up_a(&importer, &Importer::pen_up);
 
-Parser<std::string> knife_down = str_p("M14")[knife_down_a];
-Parser<std::string> knife_up = (str_p("M15") | str_p("M19"))[knife_up_a];
+Parser<std::string> knife_down = (str_p("M14") | str_p("M19"))[knife_down_a];
+Parser<std::string> knife_up = str_p("M15")[knife_up_a];
 Parser<std::string> pen_down = (str_p("D1") | str_p("D01"))[pen_down_a];
 Parser<std::string> pen_up = (str_p("D2") | str_p("D02"))[pen_up_a];
 
@@ -213,8 +310,9 @@ Parser<std::string> circle_radius = (str_p("M43") | str_p("M44") | str_p("M45") 
 Parser<bool> circle = (circle_radius >> (separator | coord))[circle_a];
 
 // 文字处理
-Action<std::string> a_text(&importer, &Importer::store_text);
-Parser<bool> text = confix_p(str_p("M31*") >> !coord, (*anychar_p())[a_text], separator);
+Action<void> read_text_a(&importer, &Importer::read_text);
+Action<std::string> text_a(&importer, &Importer::store_text);
+Parser<bool> text = confix_p(str_p("M31*")[read_text_a] >> !coord, (*anychar_p())[text_a], separator);
 Parser<std::string> skip_text = confix_p(str_p("M20*"), separator);
 
 // 步骤
@@ -224,22 +322,23 @@ Action<void> end_a(&importer, &Importer::end);
 Parser<std::string> end = str_p("M0")[end_a] >> separator;
 // 未知命令
 Action<std::string> a_unkown(&importer, &Importer::print_symbol);
+Parser<std::string> unkown_cmds = confix_p(alnum_p() | ch_p(' '), separator)[a_unkown];
 
-Parser<std::string> unkown_cmds = confix_p(alphaa_p(), *anychar_p(), separator)[a_unkown] - end;
+Parser<bool> cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | text | skip_text | blank | skip_cmd | separator | end | unkown_cmds);
 
-Parser<bool> cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | text | skip_text | blank | skip_cmd | separator | unkown_cmds);
+Action<std::string> table_text_a(&importer, &Importer::store_table_text);
 
 Parser<std::string> table_start = str_p("N,0001") >> eol_p();
 Parser<std::string> rest_of_line = *(anychar_p() - eol_p());
 Parser<std::string> unknown_gap_line = rest_of_line >> eol_p();
 Parser<std::string> unknown_gap = *(unknown_gap_line - table_start);
 Parser<std::string> table_line = rest_of_line >> eol_p();
-Parser<bool> position_line = str_p("P,") >> int_p() >> ch_p(',') >> int_p() >> rest_of_line >> eol_p();
-Parser<bool> text_line = str_p("D,") >> int_p() >> ch_p(',') >> rest_of_line >> eol_p();
+Parser<bool> position_line = str_p("P,") >> int_p()[x_coord_a] >> ch_p(',') >> int_p()[y_coord_a] >> rest_of_line >> eol_p();
+Parser<bool> text_line = str_p("D,") >> int_p() >> ch_p(',') >> rest_of_line[table_text_a] >> eol_p();
 Parser<std::string> table_end = str_p("L0*") >> !eol_p();
 Parser<bool> table = confix_p(table_start, *(text_line | position_line | table_line), table_end);
 
-Parser<bool> rs274 = cmd >> !end >> *(anychar_p() - table_start) >> !table;
+Parser<bool> rs274 = cmd >> *(anychar_p() - table_start) >> !table;
 
 
 bool parse(std::string_view &stream, Graph *graph)

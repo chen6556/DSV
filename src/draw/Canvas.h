@@ -17,20 +17,22 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
     Q_OBJECT
 
 public:
-    enum Tool {NOTOOL, MEASURE, CIRCLE, POLYLINE, RECT, CURVE, TEXT};
-    enum Operation {NOOPERATION, MIRROR, RINGARRAY, POLYGONDIFFERENCE, FILLET};
+    enum class Tool {NoTool, Measure, Circle, Polyline, Rect, Curve, Text, Ellipse};
+    enum class Operation {NoOperation, Mirror, RingArray, PolygonDifference, Fillet, Rotate};
+    enum class CatchedPointType {Vertex, Center, Foot, Tangency};
 
 private:
     Geo::Circle _circle_cache;
+    Geo::Ellipse _ellipse_cache;
     Geo::AABBRect _AABBRect_cache, _select_rect, _visible_area;
     std::list<QLineF> _reflines;
-    std::vector<Geo::Point> _catched_points;
+    const Geo::Geometry *_catched_object = nullptr;
     Editer *_editer = nullptr;
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
 
     unsigned int _shader_program, _VAO;
-    unsigned int _VBO[5]; //0:points 1:origin and select rect 2:cache 3:text 4:reflines
+    unsigned int _VBO[6]; //0:points 1:origin and select rect 2:cache 3:text 4:reflines 5:catched point
     unsigned int _IBO[4]; //0:polyline 1:polygon 2:selected 3:text
     int _uniforms[5]; // w, h, vec0, vec1, color
     size_t _points_count = 0;
@@ -38,6 +40,7 @@ private:
     double *_cache = nullptr;
     size_t _cache_len = 513, _cache_count = 0;
     double _refline_points[30];
+    double _catchline_points[24];
 
     double _canvas_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
     double _view_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
@@ -45,17 +48,18 @@ private:
     int _canvas_width = 0, _canvas_height = 0;
     size_t _bezier_order = 3; // 贝塞尔曲线阶数
 
-    // 可移动视图, 可绘图, 正在绘图, 测量, 可移动单个object, 选中一个obj, 正在移动obj, 显示坐标原点
-    bool _bool_flags[8] = {false, false, false, false, false, false, false, true};
+    // 0:可移动视图, 1:可绘图, 2:正在绘图, 3:测量, 4:可移动单个object, 5:选中一个obj, 6:正在移动obj, 7:显示坐标原点, 8:显示捕捉点
+    bool _bool_flags[9] = {false, false, false, false, false, false, false, true, false};
 
     // First point and second point
     bool _measure_flags[2] = {false, false};
 
-    // current_tool, last_tool
-    Tool _tool_flags[2] = {Tool::NOTOOL, Tool::NOTOOL};
-    Operation _operation = Operation::NOOPERATION;
+    // 0:current_tool, 1:last_tool
+    Tool _tool_flags[2] = {Tool::NoTool, Tool::NoTool};
+    Operation _operation = Operation::NoOperation;
 
     QPointF _mouse_pos_0, _mouse_pos_1;
+    Geo::Point _mouse_press_pos, _mouse_release_pos;
     Geo::Point _stored_coord;
     Geo::Point _last_point;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
@@ -88,7 +92,9 @@ protected:
 
 public:
 signals:
-    void tool_changed(const Tool);
+    void tool_changed(const Canvas::Tool);
+
+    void operation_changed(const Canvas::Operation);
 
 public:
     Canvas(QWidget *parent = nullptr);
@@ -145,6 +151,7 @@ public:
 
     const bool empty() const;
 
+public slots:
     void cancel_painting();
 
     void use_last_tool();
@@ -171,6 +178,12 @@ public:
 
     void circle_cmd(const double x, const double y, const double r);
 
+    void ellipse_cmd(const double x, const double y);
+
+    void ellipse_cmd(const double x, const double y, const double rad, const double a);
+
+    void ellipse_cmd(const double x, const double y, const double rad,  const double a, const double b);
+
     void text_cmd(const double x, const double y);
 
 
@@ -191,17 +204,25 @@ public:
 
     Geo::Point canvas_coord_to_real_coord(const double x, const double y) const;
 
-    bool catch_cursor(const double x, const double y, Geo::Point &coord, const double distance);
+    bool catch_cursor(const double x, const double y, Geo::Point &coord, const double distance, const bool skip_selected);
 
     bool catch_point(const double x, const double y, Geo::Point &coord, const double distance);
 
+
+    void check_cache();
 
 
     void refresh_vbo();
 
     void refresh_vbo(const bool unitary);
 
+    void refresh_cache_vbo(const unsigned int count);
+
+    void clear_cache();
+
     void refresh_selected_ibo();
+
+    void refresh_selected_ibo(const Geo::Geometry *object);
 
     void refresh_selected_vbo();
 
@@ -212,7 +233,9 @@ public:
     void refresh_text_vbo(const bool unitary);
 
 
-    void refresh_catached_points(const bool current_group_only = true);
+    const Geo::Geometry *refresh_catached_points(const double x, const double y, const double distance, const bool skip_selected, const bool current_group_only = true) const;
+
+    bool refresh_catchline_points(const Geo::Geometry *object, const double distance, Geo::Point &pos);
 
 
 

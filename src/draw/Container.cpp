@@ -138,148 +138,24 @@ Text *Text::clone() const
     return new Text(*this);
 }
 
-// Container
+// Containerized
 
-Container::Container(const Geo::Polygon &shape)
-    : Geo::Polygon(shape)
-{}
+Containerized::Containerized(const QString &txt)
+    : _txt(txt) {}
 
-Container::Container(const QString &txt, const Geo::Polygon &shape)
-    : Geo::Polygon(shape), _txt(txt)
-{}
-
-Container::Container(const Container &container)
-    : Geo::Polygon(container), _txt(container._txt),
-    text_index(container.text_index),
-    text_count(container.text_count)
-{}
-
-const Geo::Type Container::type() const
-{
-    return Geo::Type::CONTAINER;
-}
-
-Container &Container::operator=(const Container &container)
-{
-    if (this != &container)
-    {
-        Geo::Polygon::operator=(container);
-        _txt = container._txt;
-        text_index = container.text_index;
-        text_count = container.text_count;
-    }
-    return *this;
-}
-
-Geo::Polygon &Container::shape()
-{
-    return *dynamic_cast<Geo::Polygon *>(this);
-}
-
-const Geo::Polygon &Container::shape() const
-{
-    return *dynamic_cast<const Geo::Polygon *>(this);
-}
-
-const QString &Container::text() const
+const QString &Containerized::text() const
 {
     return _txt;
 }
 
-void Container::set_text(const QString &txt)
+void Containerized::set_text(const QString &txt)
 {
     _txt = txt;
 }
 
-void Container::clear_text()
+void Containerized::clear_text()
 {
     _txt.clear();
-}
-
-const Geo::Point Container::center() const
-{
-    return bounding_rect().center();
-}
-
-const bool Container::empty() const
-{
-    return Geo::Polygon::empty() && _txt.isEmpty();
-}
-
-Container *Container::clone() const
-{
-    return new Container(*this);
-}
-
-// CircleContainer
-
-CircleContainer::CircleContainer(const Geo::Circle &shape)
-    : Geo::Circle(shape)
-{}
-
-CircleContainer::CircleContainer(const QString &txt, const Geo::Circle &shape)
-    : Geo::Circle(shape), _txt(txt)
-{}
-
-CircleContainer::CircleContainer(const QString &txt, const double x, const double y, const double r)
-    : Geo::Circle(x, y, r), _txt(txt)
-{}
-
-CircleContainer::CircleContainer(const CircleContainer &container)
-    : Geo::Circle(container), _txt(container._txt),
-    text_index(container.text_index), text_count(container.text_count)
-{}
-
-const Geo::Type CircleContainer::type() const
-{
-    return Geo::Type::CIRCLECONTAINER;
-}
-
-CircleContainer &CircleContainer::operator=(const CircleContainer &container)
-{
-    if (this != &container)
-    {
-        Geo::Circle::operator=(container);
-        _txt = container._txt;
-        text_index = container.text_index;
-        text_count = container.text_count;
-    }
-    return *this;
-}
-
-Geo::Circle &CircleContainer::shape()
-{
-    return *dynamic_cast<Geo::Circle *>(this);
-}
-
-const Geo::Circle &CircleContainer::shape() const
-{
-    return *dynamic_cast<const Geo::Circle *>(this);
-}
-
-const QString &CircleContainer::text() const
-{
-    return _txt;
-}
-
-void CircleContainer::set_text(const QString &txt)
-{
-    _txt = txt;
-}
-
-void CircleContainer::clear_text()
-{
-    _txt.clear();
-}
-
-const bool CircleContainer::empty() const
-{
-    return radius <= 0 && _txt.isEmpty();
-}
-
-CircleContainer *CircleContainer::clone() const
-{
-    return new CircleContainer(*this);
 }
 
 // ContainerGroup
@@ -290,29 +166,7 @@ ContainerGroup::ContainerGroup(const ContainerGroup &containers)
 {
     for (const Geo::Geometry *geo : containers)
     {
-        switch (geo->type())
-        {
-        case Geo::Type::TEXT:
-            _containers.push_back(dynamic_cast<const Text *>(geo)->clone());
-            break;
-        case Geo::Type::CONTAINER:
-            _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
-            break;
-        case Geo::Type::CIRCLECONTAINER:
-            _containers.push_back(dynamic_cast<const CircleContainer *>(geo)->clone());
-            break;
-        case Geo::Type::COMBINATION:
-            _containers.push_back(dynamic_cast<const Combination *>(geo)->clone());
-            break;
-        case Geo::Type::POLYLINE:
-            _containers.push_back(dynamic_cast<const Geo::Polyline *>(geo)->clone());
-            break;
-        case Geo::Type::BEZIER:
-            _containers.push_back(dynamic_cast<const Geo::Bezier *>(geo)->clone());
-            break;
-        default:
-            break;
-        }
+        _containers.push_back(geo->clone());
     }
 }
 
@@ -337,7 +191,7 @@ const Geo::Type ContainerGroup::type() const
     return Geo::Type::CONTAINERGROUP;
 }
 
-const bool &ContainerGroup::visible() const
+const bool ContainerGroup::visible() const
 {
     return _visible;
 }
@@ -357,29 +211,7 @@ ContainerGroup *ContainerGroup::clone() const
     std::vector<Geo::Geometry *> containers;
     for (const Geo::Geometry *geo : _containers)
     {
-        switch (geo->type())
-        {
-        case Geo::Type::TEXT:
-            containers.push_back(dynamic_cast<const Text *>(geo)->clone());
-            break;
-        case Geo::Type::CONTAINER:
-            containers.push_back(dynamic_cast<const Container *>(geo)->clone());
-            break;
-        case Geo::Type::CIRCLECONTAINER:
-            containers.push_back(dynamic_cast<const CircleContainer *>(geo)->clone());
-            break;
-        case Geo::Type::COMBINATION:
-            containers.push_back(dynamic_cast<const Combination *>(geo)->clone());
-            break;
-        case Geo::Type::POLYLINE:
-            containers.push_back(dynamic_cast<const Geo::Polyline *>(geo)->clone());
-            break;
-        case Geo::Type::BEZIER:
-            containers.push_back(dynamic_cast<const Geo::Bezier *>(geo)->clone());
-            break;
-        default:
-            break;
-        }
+        containers.push_back(geo->clone());
     }
 
     ContainerGroup *g = new ContainerGroup(containers.cbegin(), containers.cend());
@@ -392,6 +224,7 @@ void ContainerGroup::transfer(ContainerGroup &group)
     group.clear();
     group._containers.assign(_containers.begin(), _containers.end());
     group.name = name;
+    group._visible = _visible;
     _containers.clear();
 }
 
@@ -409,29 +242,7 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
         _containers.shrink_to_fit();
         for (const Geo::Geometry *geo : group._containers)
         {
-            switch (geo->type())
-            {
-            case Geo::Type::TEXT:
-                _containers.push_back(dynamic_cast<const Text *>(geo)->clone());
-                break;
-            case Geo::Type::CONTAINER:
-                _containers.push_back(dynamic_cast<const Container *>(geo)->clone());
-                break;
-            case Geo::Type::CIRCLECONTAINER:
-                _containers.push_back(dynamic_cast<const CircleContainer *>(geo)->clone());
-                break;
-            case Geo::Type::COMBINATION:
-                _containers.push_back(dynamic_cast<const Combination *>(geo)->clone());
-                break;
-            case Geo::Type::POLYLINE:
-                _containers.push_back(dynamic_cast<const Geo::Polyline *>(geo)->clone());
-                break;
-            case Geo::Type::BEZIER:
-                _containers.push_back(dynamic_cast<const Geo::Bezier *>(geo)->clone());
-                break;
-            default:
-                break;
-            }
+            _containers.push_back(geo->clone());
         }
         _ratio = group._ratio;
         _visible = group._visible;
@@ -580,8 +391,8 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
             x1 = std::max(x1, dynamic_cast<const Text *>(continer)->right());
             y1 = std::max(y1, dynamic_cast<const Text *>(continer)->top());
             break;
-        case Geo::Type::CONTAINER:
-            for (const Geo::Point &point : dynamic_cast<const Container *>(continer)->shape())
+        case Geo::Type::POLYGON:
+            for (const Geo::Point &point : *dynamic_cast<const Geo::Polygon *>(continer))
             {
                 x0 = std::min(x0, point.x);
                 y0 = std::min(y0, point.y);
@@ -589,13 +400,22 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
                 y1 = std::max(y1, point.y);
             }
             break;
-        case Geo::Type::CIRCLECONTAINER:
-            r = dynamic_cast<const CircleContainer *>(continer)->radius;
-            coord = *dynamic_cast<const CircleContainer *>(continer);
+        case Geo::Type::CIRCLE:
+            r = dynamic_cast<const Geo::Circle *>(continer)->radius;
+            coord = *dynamic_cast<const Geo::Circle *>(continer);
             x0 = std::min(x0, coord.x - r);
             y0 = std::min(y0, coord.y - r);
             x1 = std::max(x1, coord.x + r);
             y1 = std::max(y1, coord.y + r);
+            break;
+        case Geo::Type::ELLIPSE:
+            {
+                const Geo::AABBRect rect(dynamic_cast<const Geo::Ellipse *>(continer)->bounding_rect());
+                x0 = std::min(x0, rect.left());
+                y0 = std::min(y0, rect.top());
+                x1 = std::max(x1, rect.right());
+                y1 = std::max(y1, rect.bottom());
+            }
             break;
         case Geo::Type::COMBINATION:
             {
@@ -606,7 +426,7 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
                 y1 = std::max(y1, rect.bottom());
             }
             break;
-        case Geo::POLYLINE:
+        case Geo::Type::POLYLINE:
             for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(continer))
             {
                 x0 = std::min(x0, point.x);
@@ -636,31 +456,6 @@ const size_t ContainerGroup::size() const
     return _containers.size();
 }
 
-void ContainerGroup::append(Container *container)
-{
-    _containers.push_back(container);
-}
-
-void ContainerGroup::append(CircleContainer *container)
-{
-    _containers.push_back(container);
-}
-
-void ContainerGroup::append(Geo::Polyline *polyline)
-{
-    _containers.push_back(polyline);
-}
-
-void ContainerGroup::append(Geo::Bezier *bezier)
-{
-    _containers.push_back(bezier);
-}
-
-void ContainerGroup::append(Combination *combination)
-{
-    _containers.push_back(combination);
-}
-
 void ContainerGroup::append(ContainerGroup &group, const bool merge)
 {
     if (merge)
@@ -675,11 +470,6 @@ void ContainerGroup::append(ContainerGroup &group, const bool merge)
             _containers.emplace_back(geo->clone());
         }
     }
-}
-
-void ContainerGroup::append(Text *text)
-{
-    _containers.push_back(text);
 }
 
 void ContainerGroup::append(Geo::Geometry *object)
@@ -816,6 +606,18 @@ void ContainerGroup::remove_back()
 Combination::Combination(const Combination &combination)
     : ContainerGroup(combination), _border(combination._border)
 {}
+
+Combination::Combination(const std::initializer_list<Geo::Geometry *> &containers)
+    : ContainerGroup(containers)
+{
+    update_border();
+}
+
+Combination::Combination(std::vector<Geo::Geometry *>::const_iterator begin, std::vector<Geo::Geometry *>::const_iterator end)
+    : ContainerGroup(begin, end)
+{
+    update_border();
+}
 
 const Geo::Type Combination::type() const
 {

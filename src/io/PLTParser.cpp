@@ -1,12 +1,14 @@
+#include <sstream>
+
+#include "base/Algorithm.h"
 #include "io/PLTParser.h"
 #include "io/Parser/ParserGen2.hpp"
 #include "io/GlobalSetting.h"
-#include "base/Algorithm.h"
 
-#include <sstream>
 
 namespace PLTParser
 {
+const double Importer::plotter_unit = 0.025;
 
 void Importer::load_graph(Graph *g)
 {
@@ -18,15 +20,24 @@ void Importer::reset()
 {
     _points.clear();
     _parameters.clear();
+    _polygon_cache.clear();
     _last_coord.x = _last_coord.y = 0;
-    _x_ratio = _y_ratio = 0.025;
-    _relative_coord = false;
+    _ip[0] = _ip[1] = _ip[4] = _ip[5] = 0;
+    _ip[2] = _ip[3] = 1;
+    _sc[0] = _sc[2] = 0;
+    _sc[1] = _sc[3] = 1;
+    _x_ratio = _y_ratio = Importer::plotter_unit;
+    _pen_down = _relative_coord = _polygon_mode = false;
     _texts.clear();
 }
 
 
 void Importer::store_points()
 {
+    if (_polygon_mode)
+    {
+        return;
+    }
     if (_points.size() <= 1)
     {
         _points.clear();
@@ -35,7 +46,7 @@ void Importer::store_points()
 
     if (_points.front() == _points.back() && _points.size() >= 3)
     {
-        _graph->container_groups().back().append(new Container(Geo::Polygon(_points.cbegin(), _points.cend())));
+        _graph->container_groups().back().append(new Container<Geo::Polygon>(Geo::Polygon(_points.cbegin(), _points.cend())));
     }
     else
     {
@@ -46,51 +57,40 @@ void Importer::store_points()
 
 void Importer::store_arc()
 {
-    _points.front() += _points[1];
-    double radius, step;
+    const Geo::Point center(_parameters[0], _parameters[1]);
+    Geo::Vector dir(_last_coord.x - _parameters[0], _last_coord.y - _parameters[1]);
+    const double radius = std::sqrt(std::pow(_parameters[0] - _last_coord.x, 2) + 
+        std::pow(_parameters[1] - _last_coord.y, 2));
 
-    if (_parameters.size() >= 2)
+    double angle = Geo::degree_to_rad(_parameters[2]);
+    double step = radius > 3000 ? Geo::PI / 360 : Geo::PI / 180;
+    if (angle >= 0)
     {
-        radius = _parameters[_parameters.size() - 2];
-        step = _parameters.back() >= 15 ? _parameters.back() : _parameters.back() * 180 / Geo::PI;
-    }
-    else
-    {
-        step = 1;
-    }
-
-    if (radius < 0)
-    {
-        step = -step;
-    }
-
-    Geo::Polyline *polyline = new Geo::Polyline();
-    const Geo::Point center(_points.front());
-    Geo::Vector dir = _points[1] - _points.front();
-
-    double angle = step;
-    if (radius >= 0)
-    {
-        while (angle <= radius)
+        dir.rotate(0, 0, step);
+        angle -= step;
+        while (angle > 0)
         {
-            polyline->append(center + dir);
-            dir.rotate(0, 0, step * Geo::PI / 180.0);
-            angle += step;
+            _points.emplace_back(center + dir);
+            angle -= step;
+            dir.rotate(0, 0, step);
         }
     }
     else
     {
-        while (angle >= radius)
+        dir.rotate(0, 0, -step);
+        angle += step;
+        while (angle < 0)
         {
-            polyline->append(center + dir);
-            dir.rotate(0, 0, step * Geo::PI / 180.0);
+            _points.emplace_back(center + dir);
             angle += step;
+            dir.rotate(0, 0, -step);
         }
     }
-    polyline->append(center + dir);
+    dir.x = _last_coord.x - _parameters[0], dir.y = _last_coord.y - _parameters[1];
+    dir.rotate(0, 0, Geo::degree_to_rad(_parameters[2]));
+    _points.emplace_back(center + dir);
+    _last_coord = _points.back();
 
-    _graph->container_groups().back().append(polyline);
-    _points.clear();
     _parameters.clear();
 }
 
@@ -102,22 +102,84 @@ void Importer::ip()
     {
         _parameters.erase(_parameters.begin() + 4, _parameters.end());
     }
-    _parameters.insert(_parameters.begin(), _parameters.size());
+    if (_parameters.size() >= 2)
+    {
+        if (_parameters.size() >= 4)
+        {
+            _ip[2] = _parameters[2];
+            _ip[3] = _parameters[3];
+        }
+        else
+        {
+            _ip[2] = _parameters[0] + _ip[2] - _ip[0];
+            _ip[3] = _parameters[1] + _ip[3] - _ip[1];
+        }
+        _ip[0] = _parameters[0];
+        _ip[1] = _parameters[1];
+        _x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]) * Importer::plotter_unit;
+        _y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]) * Importer::plotter_unit;
+        _ip[4] = std::min(_ip[0], _ip[2]) * Importer::plotter_unit;
+        _ip[5] = std::min(_ip[1], _ip[3]) * Importer::plotter_unit;
+    }
+    _parameters.clear();
 }
 
 void Importer::sc()
 {
-    if (_parameters.size() >= 9 && _parameters.front() == 4)
+    if (_parameters.size() == 4)
     {
-        _x_ratio *= (_parameters[3] - _parameters[1]) / (_parameters[6] - _parameters[5]);
-        _y_ratio *= (_parameters[4] - _parameters[2]) / (_parameters[8] - _parameters[7]);
+        for (int i = 0; i < 4; ++i)
+        {
+            _sc[i] = _parameters[i];
+        }
+        _x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]) * Importer::plotter_unit;
+        _y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]) * Importer::plotter_unit;
+    }
+    else if (_parameters.size() >= 5)
+    {
+        switch (static_cast<int>(_parameters[4]))
+        {
+        case 0:
+            for (int i = 0; i < 4; ++i)
+            {
+                _sc[i] = _parameters[i];
+            }
+            _x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]) * Importer::plotter_unit;
+            _y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]) * Importer::plotter_unit;
+            break;
+        case 2:
+            _x_ratio = _parameters[1] * Importer::plotter_unit;
+            _y_ratio = _parameters[3] * Importer::plotter_unit;
+            break;
+        default:
+            _sc[0] = _sc[2] = 0;
+            _sc[1] = _sc[3] = 1;
+            _x_ratio = _y_ratio = Importer::plotter_unit;
+            break;
+        }
+    }
+    else
+    {
+        _sc[0] = _sc[2] = 0;
+        _sc[1] = _sc[3] = 1;
+        _x_ratio = _y_ratio = Importer::plotter_unit;
     }
     _parameters.clear();
 }
 
 void Importer::pu()
 {
+    _pen_down = false;
     store_points();
+}
+
+void Importer::pd()
+{
+    _pen_down = true;
+    if (!_polygon_mode && (_points.empty() || _points.back() != _last_coord))
+    {
+        _points.emplace_back(_last_coord);
+    }
 }
 
 void Importer::sp(const int value)
@@ -133,7 +195,7 @@ void Importer::x_coord(const double value)
     }
     else
     {
-        _points.emplace_back(value * _x_ratio, 0);
+        _points.emplace_back(_ip[4] + value * _x_ratio, 0);
     }
 }
 
@@ -145,15 +207,19 @@ void Importer::y_coord(const double value)
     }
     else
     {
-        _points.back().y = value * _y_ratio;
+        _points.back().y = _ip[5] + value * _y_ratio;
     }
-    if (_points.back() == _last_coord)
+    if (_points.size() > 1 && _points.back() == _last_coord)
     {
         _points.pop_back();
     }
     else
     {
         _last_coord = _points.back();
+    }
+    if (!_pen_down && _points.size() > 1)
+    {
+        _points.erase(_points.begin(), _points.end() - 1);
     }
 }
 
@@ -163,14 +229,42 @@ void Importer::parameter(const double value)
 }
 
 
+void Importer::br()
+{
+    store_points();
+    _points.emplace_back(_last_coord);
+    for (size_t i = 1, count = _parameters.size(); i < count; i += 2)
+    {
+        _points.emplace_back(_parameters[i - 1] * _x_ratio + _last_coord.x, _parameters[i] * _y_ratio + _last_coord.y);
+        _last_coord = _points.back();
+    }
+    _graph->container_groups().back().append(new Geo::Bezier(_points.cbegin(), _points.cend(), 3));
+    _points.clear();
+    _parameters.clear();
+}
+
+void Importer::bz()
+{
+    store_points();
+    _points.emplace_back(_last_coord);
+    for (size_t i = 1, count = _parameters.size(); i < count; i += 2)
+    {
+        _points.emplace_back(_parameters[i - 1] * _x_ratio, _parameters[i] * _y_ratio);
+    }
+    _last_coord = _points.back();
+    _graph->container_groups().back().append(new Geo::Bezier(_points.cbegin(), _points.cend(), 3));
+    _points.clear();
+    _parameters.clear();
+}
+
 void Importer::ci()
 {
     if (_parameters.size() > 1)
     {
         _parameters.pop_back();
     }
-    _graph->container_groups().back().append(new CircleContainer(QString(),
-                                                                 _points.front().x, _points.front().y, _parameters.back()));
+    _graph->container_groups().back().append(new Container<Geo::Circle>(QString(),
+        _points.front().x, _points.front().y, _parameters.back() * _x_ratio));
     _points.clear();
     _parameters.clear();
 }
@@ -187,12 +281,78 @@ void Importer::pr()
 
 void Importer::aa()
 {
-    store_points();
+    _parameters[0] *= _x_ratio;
+    _parameters[1] *= _y_ratio;
+    store_arc();
 }
 
 void Importer::ar()
 {
-    store_points();
+    _parameters[0] *= _x_ratio;
+    _parameters[1] *= _y_ratio;
+    _parameters[0] += _last_coord.x;
+    _parameters[1] += _last_coord.y;
+    store_arc();
+}
+
+void Importer::ea()
+{
+    if (_parameters.size() >= 2)
+    {
+        _parameters.erase(_parameters.begin(), _parameters.begin() + _parameters.size() - 2);
+        _graph->container_groups().back().append(new Container<Geo::Polygon>(Geo::AABBRect(_last_coord.x, _last_coord.y,
+            _parameters.front() * _x_ratio + _ip[4], _parameters.back() * _y_ratio + _ip[5])));
+    }
+    _points.clear();
+    _parameters.clear();
+}
+
+void Importer::er()
+{
+    if (_parameters.size() >= 2)
+    {
+        _parameters.erase(_parameters.begin(), _parameters.begin() + _parameters.size() - 2);
+        _graph->container_groups().back().append(new Container<Geo::Polygon>(Geo::AABBRect(_last_coord.x, _last_coord.y,
+            _parameters.front() * _x_ratio + _last_coord.x, _parameters.back() * _y_ratio + _last_coord.y)));
+    }
+    _points.clear();
+    _parameters.clear();
+}
+
+void Importer::pm(const int value)
+{
+    switch (value)
+    {
+    case 0:
+        _polygon_cache.clear();
+        _polygon_mode = true;
+        break;
+    case 2:
+        _polygon_mode = false;
+    case 1:
+        if (!_points.empty())
+        {
+            _polygon_cache.emplace_back(_points.begin(), _points.end());
+        }
+        break;
+    default:
+        break;
+    }
+    _points.clear();
+}
+
+void Importer::pm()
+{
+    return pm(0);
+}
+
+void Importer::ep()
+{
+    for (Geo::Polygon &polygon : _polygon_cache)
+    {
+        _graph->container_group().append(new Container<Geo::Polygon>(polygon));
+    }
+    _polygon_cache.clear();
 }
 
 void Importer::store_text(const std::string &text)
@@ -213,10 +373,15 @@ void Importer::store_text(const std::string &text)
     _points.clear();
 }
 
+void Importer::print_symbol(const std::string& str)
+{
+    qDebug() << QString::fromStdString(str);
+}
+
 void Importer::end()
 {
     store_points();
-    const int text_size = GlobalSetting::get_instance()->setting()["text_size"].toInt();
+    const int text_size = GlobalSetting::get_instance()->setting["text_size"].toInt();
     std::vector<Geo::Geometry *> group(_graph->container_group().begin(), _graph->container_group().end());
     std::sort(group.begin(), group.end(), [](const Geo::Geometry *a, const Geo::Geometry *b)
               { return a->bounding_rect().area() < b->bounding_rect().area(); });
@@ -224,28 +389,28 @@ void Importer::end()
     {
         for (Geo::Geometry *geo : group)
         {
-            if (geo->type() == Geo::Type::CONTAINER && Geo::is_inside(text.pos, dynamic_cast<Container *>(geo)->shape(), true))
+            if (geo->type() == Geo::Type::POLYGON && Geo::is_inside(text.pos, dynamic_cast<Container<Geo::Polygon> *>(geo)->shape(), true))
             {
-                if (dynamic_cast<Container *>(geo)->text().isEmpty())
+                if (dynamic_cast<Container<Geo::Polygon> *>(geo)->text().isEmpty())
                 {
-                    dynamic_cast<Container *>(geo)->set_text(QString::fromStdString(text.txt));
+                    dynamic_cast<Container<Geo::Polygon> *>(geo)->set_text(QString::fromUtf8(text.txt.c_str()));
                 }
                 else
                 {
-                    dynamic_cast<Container *>(geo)->set_text(dynamic_cast<Container *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
+                    dynamic_cast<Container<Geo::Polygon> *>(geo)->set_text(dynamic_cast<Container<Geo::Polygon> *>(geo)->text() + '\n' + QString::fromUtf8(text.txt.c_str()));
                 }
                 text.marked = true;
                 break;
             }
-            else if (geo->type() == Geo::Type::CIRCLECONTAINER && Geo::is_inside(text.pos, dynamic_cast<CircleContainer *>(geo)->shape(), true))
+            else if (geo->type() == Geo::Type::CIRCLE && Geo::is_inside(text.pos, dynamic_cast<Container<Geo::Circle> *>(geo)->shape(), true))
             {
-                if (dynamic_cast<CircleContainer *>(geo)->text().isEmpty())
+                if (dynamic_cast<Container<Geo::Circle> *>(geo)->text().isEmpty())
                 {
-                    dynamic_cast<CircleContainer *>(geo)->set_text(QString::fromStdString(text.txt));
+                    dynamic_cast<Container<Geo::Circle> *>(geo)->set_text(QString::fromUtf8(text.txt.c_str()));
                 }
                 else
                 {
-                    dynamic_cast<CircleContainer *>(geo)->set_text(dynamic_cast<CircleContainer *>(geo)->text() + '\n' + QString::fromStdString(text.txt));
+                    dynamic_cast<Container<Geo::Circle> *>(geo)->set_text(dynamic_cast<Container<Geo::Circle> *>(geo)->text() + '\n' + QString::fromUtf8(text.txt.c_str()));
                 }
                 text.marked = true;
                 break;
@@ -253,7 +418,7 @@ void Importer::end()
         }
         if (!text.marked)
         {
-            _graph->container_group().append(new Text(text.pos.x, text.pos.y, text_size, QString::fromStdString(text.txt)));
+            _graph->container_group().append(new Text(text.pos.x, text.pos.y, text_size, QString::fromUtf8(text.txt.c_str())));
         }
     }
     _texts.clear();
@@ -266,16 +431,25 @@ Action<double> x_coord_a(&importer, &Importer::x_coord);
 Action<double> y_coord_a(&importer, &Importer::y_coord);
 Action<double> parameter_a(&importer, &Importer::parameter);
 Action<void> pu_a(&importer, &Importer::pu);
+Action<void> pd_a(&importer, &Importer::pd);
 Action<void> pa_a(&importer, &Importer::pa);
 Action<void> pr_a(&importer, &Importer::pr);
 Action<int> sp_a(&importer, &Importer::sp);
+Action<void> br_a(&importer, &Importer::br);
+Action<void> bz_a(&importer, &Importer::bz);
 Action<void> ci_a(&importer, &Importer::ci);
 Action<void> aa_a(&importer, &Importer::aa);
 Action<void> ar_a(&importer, &Importer::ar);
+Action<void> ea_a(&importer, &Importer::ea);
+Action<void> er_a(&importer, &Importer::er);
+Action<int> pm_int_a(&importer, &Importer::pm);
+Action<void> pm_void_a(&importer, &Importer::pm);
+Action<void> ep_a(&importer, &Importer::ep);
 Action<void> in_a(&importer, &Importer::reset);
 Action<void> ip_a(&importer, &Importer::ip);
 Action<void> sc_a(&importer, &Importer::sc);
 Action<std::string> lb_a(&importer, &Importer::store_text);
+Action<std::string> unkown_a(&importer, &Importer::print_symbol);
 Action<void> end_a(&importer, &Importer::end);
 
 Parser<char> separator = ch_p(',') | ch_p(' ');
@@ -284,20 +458,26 @@ Parser<double> parameter = float_p()[parameter_a];
 Parser<bool> coord = float_p()[x_coord_a] >> separator >> float_p()[y_coord_a];
 Parser<std::string> in = str_p("IN")[in_a] >> end;
 Parser<bool> ip = (str_p("IP") >> list_p(parameter, separator))[ip_a] >> end;
-Parser<bool> sc = (str_p("SC") >> list_p(parameter, separator))[sc_a] >> end;
+Parser<bool> sc = (str_p("SC") >> !list_p(parameter, separator))[sc_a] >> end;
 Parser<bool> pu = str_p("PU")[pu_a] >> !list_p(coord, separator) >> end;
-Parser<bool> pd = str_p("PD") >> !list_p(coord, separator) >> end;
+Parser<bool> pd = str_p("PD")[pd_a] >> !list_p(coord, separator) >> end;
 Parser<bool> pa = str_p("PA")[pa_a] >> !list_p(coord, separator) >> end;
 Parser<bool> pr = str_p("PR")[pr_a] >> !list_p(coord, separator) >> end;
 Parser<bool> sp = str_p("SP") >> int_p()[sp_a] >> end;
+Parser<bool> br = str_p("BR") >> list_p(parameter, separator)[br_a] >> end;
+Parser<bool> bz = str_p("BZ") >> list_p(parameter, separator)[bz_a] >> end;
 Parser<bool> ci = (str_p("CI") >> parameter >> !(separator >> parameter))[ci_a] >> end;
-Parser<bool> aa = (str_p("AA") >> coord >> separator >> parameter >> !(separator >> parameter))[aa_a] >> end;
-Parser<bool> ar = (str_p("AR") >> coord >> separator >> parameter >> !(separator >> parameter))[ar_a] >> end;
+Parser<bool> aa = (str_p("AA") >> list_p(parameter, separator))[aa_a] >> end;
+Parser<bool> ar = (str_p("AR") >> list_p(parameter, separator))[ar_a] >> end;
+Parser<bool> ea = (str_p("EA") >> list_p(parameter, separator))[ea_a] >> end;
+Parser<bool> er = (str_p("ER") >> list_p(parameter, separator))[er_a] >> end;
+Parser<bool> pm = ((str_p("PM") >> digit_p()[pm_int_a]) | str_p("PM")[pm_void_a]) >> end;
+Parser<std::string> ep = str_p("EP")[ep_a] >> end;
 
-Parser<std::string> unkown_cmds = confix_p(alphaa_p() | ch_p(28), end);
+Parser<std::string> unkown_cmds = confix_p(alphaa_p() | ch_p(28), end)[unkown_a];
 Parser<std::string> text_end = ch_p('\x3') | ch_p('\x4') | end;
 Parser<std::string> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], text_end) >> !separator >> !end;
-Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | ci | aa | ar | in | ip | sc | unkown_cmds;
+Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | br | bz | ci | aa | ar | ea | er | pm | ep | in | ip | sc | unkown_cmds;
 
 Parser<std::string> dci = confix_p(ch_p(27), end);
 Parser<bool> plt = (*(all_cmds | dci))[end_a];

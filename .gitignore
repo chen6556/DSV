@@ -1,0 +1,19 @@
+/build
+/files
+/install
+/output
+/Testing
+
+# 排除三方库(cmake自动下载)
+/lib
+
+# 排除clangd缓存
+/.cache
+
+*.json
+*.yaml
+*.log
+*.tlog
+*.7z
+*.exe
+*.bkp

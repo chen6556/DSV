@@ -501,6 +501,10 @@ inline Parser<char> eol_p()
             {
                 const char ch = stream.front();
                 stream.remove_prefix(1);
+                if (ch == 13 && !stream.empty() && stream.front() == 10)
+                {
+                    stream.remove_prefix(1);
+                }
                 return ch;
             }
             else

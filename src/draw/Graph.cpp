@@ -355,7 +355,7 @@ void Graph::append(Text *text, const size_t index)
     text->is_selected = false;
 }
 
-void Graph::append(Container *container, const size_t index)
+void Graph::append(Container<Geo::Polygon> *container, const size_t index)
 {
     assert(index < _container_groups.size());
     if (container->shape().size() > 3)
@@ -365,7 +365,17 @@ void Graph::append(Container *container, const size_t index)
     }
 }
 
-void Graph::append(CircleContainer *container, const size_t index)
+void Graph::append(Container<Geo::Circle> *container, const size_t index)
+{
+    assert(index < _container_groups.size());
+    if (!container->shape().empty())
+    {
+        container_group(index).append(container);
+        container->is_selected = false;
+    }
+}
+
+void Graph::append(Container<Geo::Ellipse> *container, const size_t index)
 {
     assert(index < _container_groups.size());
     if (!container->shape().empty())

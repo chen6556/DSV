@@ -9,8 +9,8 @@ namespace Geo
     const static double PI = 3.14159265358979323846;
     const static double EPSILON = 1e-10;
 
-    enum Type {GEOMETRY, POINT, POLYLINE, AABBRECT, POLYGON, TRIANGLE, CIRCLE, LINE, BEZIER,
-        TEXT, CONTAINER, CIRCLECONTAINER, CONTAINERGROUP, COMBINATION, GRAPH};
+    enum class Type {GEOMETRY, POINT, POLYLINE, AABBRECT, POLYGON, TRIANGLE, CIRCLE, LINE, BEZIER,
+        ELLIPSE, TEXT, CONTAINERGROUP, COMBINATION, GRAPH};
 
     class AABBRect;
 
@@ -25,33 +25,27 @@ namespace Geo
         unsigned long long point_count = 0;
 
     public:
-        Geometry() {};
+        virtual ~Geometry();
 
-        Geometry(const Geometry &geo);
-
-        virtual ~Geometry() {};
-
-        Geometry &operator=(const Geometry &geo);
-
-        virtual const Type type() const;
+        virtual const Type type() const = 0;
 
         virtual const double length() const;
 
-        virtual const bool empty() const;
+        virtual const bool empty() const = 0;
 
-        virtual void clear();
+        virtual void clear() = 0;
 
-        virtual Geo::Geometry *clone() const;
+        virtual Geo::Geometry *clone() const = 0;
 
-        virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f);
+        virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f) = 0;
 
-        virtual void transform(const double mat[6]);
+        virtual void transform(const double mat[6]) = 0;
 
-        virtual void translate(const double tx, const double ty);
+        virtual void translate(const double tx, const double ty) = 0;
 
-        virtual void rotate(const double x, const double y, const double rad); // 弧度制
+        virtual void rotate(const double x, const double y, const double rad) = 0; // 弧度制
 
-        virtual void scale(const double x, const double y, const double k);
+        virtual void scale(const double x, const double y, const double k) = 0;
 
         // 凸包
         virtual Polygon convex_hull() const;
@@ -446,6 +440,10 @@ namespace Geo
         size_t index(const double x, const double y) const;
 
         size_t index(const Point &point) const;
+
+        Point center_of_gravity() const;
+
+        Point average_point() const;
     };
 
     class Triangle : public Geometry
@@ -553,6 +551,8 @@ namespace Geo
 
         void scale(const double x, const double y, const double k) override;
 
+        Polygon convex_hull() const override;
+
         AABBRect bounding_rect() const override;
 
         Polygon mini_bounding_rect() const override;
@@ -606,6 +606,8 @@ namespace Geo
         void rotate(const double x, const double y, const double rad) override; // 弧度制
 
         void scale(const double x, const double y, const double k) override;
+
+        Polygon convex_hull() const override;
 
         AABBRect bounding_rect() const override;
 
@@ -671,6 +673,82 @@ namespace Geo
         Polygon mini_bounding_rect() const override;
     };
 
+    class Ellipse : public Geometry
+    {
+    private:
+        Point _a[2], _b[2];
+
+    public:
+        Ellipse() {};
+
+        Ellipse(const double x, const double y, const double a, const double b);
+
+        Ellipse(const Point &point, const double a, const double b);
+
+        Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point &b1);
+
+        Ellipse(const Ellipse &ellipse);
+
+        Ellipse &operator=(const Ellipse &ellipse);
+
+        const Type type() const override;
+
+        const double area() const;
+
+        const double length() const override;
+
+        const bool empty() const override;
+
+        void clear() override;
+
+        Ellipse *clone() const override;
+
+        void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
+
+        void transform(const double mat[6]) override;
+
+        void translate(const double x, const double y) override;
+
+        void rotate(const double x, const double y, const double rad) override; // 弧度制
+
+        void scale(const double x, const double y, const double k) override;
+
+        Polygon convex_hull() const override;
+
+        AABBRect bounding_rect() const override;
+
+        Polygon mini_bounding_rect() const override;
+
+        Ellipse operator+(const Point &point) const;
+
+        Ellipse operator-(const Point &point) const;
+
+        double lengtha() const;
+
+        double lengthb() const;
+
+        double angle() const;
+
+        Point center() const;
+
+        void set_lengtha(const double a);
+
+        void set_lengthb(const double b);
+
+        void set_center(const double x, const double y);
+
+        const Point &a0() const;
+
+        const Point &a1() const;
+
+        const Point &b0() const;
+
+        const Point &b1() const;
+
+        Point c0() const;
+
+        Point c1() const;
+    };
 };
 
-#endif // GEOMETRY_H
+#endif

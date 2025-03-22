@@ -1,6 +1,5 @@
-cmake_minimum_required(VERSION 3.5)
-
-project(DSV VERSION 0.5.0 LANGUAGES CXX)
+cmake_minimum_required(VERSION 3.20.0)
+project(DSV VERSION 0.5.1 LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -10,6 +9,20 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if (MSVC)
+    add_compile_options("/utf-8")
+    add_compile_options("/arch:AVX2")
+    add_compile_options("/GL")
+    add_compile_options("/MP")
+    add_link_options("/LTCG")
+elseif (CMAKE_COMPILER_IS_GNUCXX)
+    add_compile_options("-m64")
+    add_compile_options("-mavx2")
+    add_compile_options("-funroll-loops")
+    add_compile_options("-ffunction-sections")
+    add_compile_options("-fdata-sections")
+endif()
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/output/)
 
@@ -35,7 +48,7 @@ set(PROJECT_SOURCES
 
     ${_UI_FILES}
 
-    src/resource/Icons.qrc
+    res/Icons.qrc
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
