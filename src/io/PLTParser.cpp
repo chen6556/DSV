@@ -22,6 +22,7 @@ void Importer::reset()
     _parameters.clear();
     _polygon_cache.clear();
     _last_coord.x = _last_coord.y = 0;
+    _rotate_coord = 0;
     _ip[0] = _ip[1] = _ip[4] = _ip[5] = 0;
     _ip[2] = _ip[3] = 1;
     _sc[0] = _sc[2] = 0;
@@ -116,6 +117,29 @@ void Importer::ip()
         }
         _ip[0] = _parameters[0];
         _ip[1] = _parameters[1];
+        switch (_rotate_coord)
+        {
+        case 90:
+            std::swap(_ip[0], _ip[1]);
+            _ip[0] = -_ip[0];
+            std::swap(_ip[2], _ip[3]);
+            _ip[2] = -_ip[2];
+            break;
+        case 180:
+            _ip[0] = -_ip[0];
+            _ip[1] = -_ip[1];
+            _ip[2] = -_ip[2];
+            _ip[3] = -_ip[3];
+            break;
+        case 270:
+            std::swap(_ip[0], _ip[1]);
+            _ip[1] = -_ip[1];
+            std::swap(_ip[2], _ip[3]);
+            _ip[3] = -_ip[3];
+            break;
+        default:
+            break;
+        }
         _x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]) * Importer::plotter_unit;
         _y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]) * Importer::plotter_unit;
         _ip[4] = std::min(_ip[0], _ip[2]) * Importer::plotter_unit;
@@ -167,6 +191,43 @@ void Importer::sc()
     _parameters.clear();
 }
 
+void Importer::ro()
+{
+    store_points();
+    _rotate_coord = _parameters.front();
+    _parameters.clear();
+    switch (_rotate_coord)
+    {
+    case 90:
+        std::swap(_ip[0], _ip[1]);
+        _ip[0] = -_ip[0];
+        std::swap(_ip[2], _ip[3]);
+        _ip[2] = -_ip[2];
+        _ip[4] = std::min(_ip[0], _ip[2]) * Importer::plotter_unit;
+        _ip[5] = std::min(_ip[1], _ip[3]) * Importer::plotter_unit;
+        break;
+    case 180:
+        _ip[0] = -_ip[0];
+        _ip[1] = -_ip[1];
+        _ip[2] = -_ip[2];
+        _ip[3] = -_ip[3];
+        _ip[4] = std::min(_ip[0], _ip[2]) * Importer::plotter_unit;
+        _ip[5] = std::min(_ip[1], _ip[3]) * Importer::plotter_unit;
+        break;
+    case 270:
+        std::swap(_ip[0], _ip[1]);
+        _ip[1] = -_ip[1];
+        std::swap(_ip[2], _ip[3]);
+        _ip[3] = -_ip[3];
+        _ip[4] = std::min(_ip[0], _ip[2]) * Importer::plotter_unit;
+        _ip[5] = std::min(_ip[1], _ip[3]) * Importer::plotter_unit;
+        break;
+    default:
+        _rotate_coord = 0;
+        break;
+    }
+}
+
 void Importer::pu()
 {
     _pen_down = false;
@@ -189,26 +250,97 @@ void Importer::sp(const int value)
 
 void Importer::x_coord(const double value)
 {
-    if (_relative_coord)
+    switch (_rotate_coord)
     {
-        _points.emplace_back(_last_coord.x + value * _x_ratio, 0);
-    }
-    else
-    {
-        _points.emplace_back(_ip[4] + value * _x_ratio, 0);
+    case 90:
+        if (_relative_coord)
+        {
+            _points.emplace_back(0, _last_coord.x + value * _x_ratio);
+        }
+        else
+        {
+            _points.emplace_back(0, _ip[4] + value * _x_ratio);
+        }
+        break;
+    case 180:
+        if (_relative_coord)
+        {
+            _points.emplace_back(_last_coord.x - value * _x_ratio, 0);
+        }
+        else
+        {
+            _points.emplace_back(_ip[4] - value * _x_ratio, 0);
+        }
+        break;
+    case 270:
+        if (_relative_coord)
+        {
+            _points.emplace_back(0, _last_coord.x - value * _x_ratio);
+        }
+        else
+        {
+            _points.emplace_back(0, _ip[4] - value * _x_ratio);
+        }
+        break;
+    default:
+        if (_relative_coord)
+        {
+            _points.emplace_back(_last_coord.x + value * _x_ratio, 0);
+        }
+        else
+        {
+            _points.emplace_back(_ip[4] + value * _x_ratio, 0);
+        }
+        break;
     }
 }
 
 void Importer::y_coord(const double value)
 {
-    if (_relative_coord)
+    switch (_rotate_coord)
     {
-        _points.back().y = _last_coord.y + value * _y_ratio;
+    case 90:
+        if (_relative_coord)
+        {
+            _points.back().x = _last_coord.y - value * _y_ratio;
+        }
+        else
+        {
+            _points.back().x = _ip[5] - value * _y_ratio;
+        }
+        break;
+    case 180:
+        if (_relative_coord)
+        {
+            _points.back().y = _last_coord.y - value * _y_ratio;
+        }
+        else
+        {
+            _points.back().y = _ip[5] - value * _y_ratio;
+        }
+        break;
+    case 270:
+        if (_relative_coord)
+        {
+            _points.back().x = _last_coord.y + value * _y_ratio;
+        }
+        else
+        {
+            _points.back().x = _ip[5] + value * _y_ratio;
+        }
+        break;
+    default:
+        if (_relative_coord)
+        {
+            _points.back().y = _last_coord.y + value * _y_ratio;
+        }
+        else
+        {
+            _points.back().y = _ip[5] + value * _y_ratio;
+        }
+        break;
     }
-    else
-    {
-        _points.back().y = _ip[5] + value * _y_ratio;
-    }
+
     if (_points.size() > 1 && _points.back() == _last_coord)
     {
         _points.pop_back();
@@ -448,6 +580,7 @@ Action<void> ep_a(&importer, &Importer::ep);
 Action<void> in_a(&importer, &Importer::reset);
 Action<void> ip_a(&importer, &Importer::ip);
 Action<void> sc_a(&importer, &Importer::sc);
+Action<void> ro_a(&importer, &Importer::ro);
 Action<std::string> lb_a(&importer, &Importer::store_text);
 Action<std::string> unkown_a(&importer, &Importer::print_symbol);
 Action<void> end_a(&importer, &Importer::end);
@@ -456,9 +589,11 @@ Parser<char> separator = ch_p(',') | ch_p(' ');
 Parser<std::string> end = +(ch_p(';') | ch_p('\n') | eol_p());
 Parser<double> parameter = float_p()[parameter_a];
 Parser<bool> coord = float_p()[x_coord_a] >> separator >> float_p()[y_coord_a];
+Parser<std::string> df = str_p("DF")[in_a] >> end;
 Parser<std::string> in = str_p("IN")[in_a] >> end;
 Parser<bool> ip = (str_p("IP") >> list_p(parameter, separator))[ip_a] >> end;
 Parser<bool> sc = (str_p("SC") >> !list_p(parameter, separator))[sc_a] >> end;
+Parser<bool> ro = (str_p("RO") >> !parameter)[ro_a] >> end;
 Parser<bool> pu = str_p("PU")[pu_a] >> !list_p(coord, separator) >> end;
 Parser<bool> pd = str_p("PD")[pd_a] >> !list_p(coord, separator) >> end;
 Parser<bool> pa = str_p("PA")[pa_a] >> !list_p(coord, separator) >> end;
@@ -477,7 +612,7 @@ Parser<std::string> ep = str_p("EP")[ep_a] >> end;
 Parser<std::string> unkown_cmds = confix_p(alphaa_p() | ch_p(28), end)[unkown_a];
 Parser<std::string> text_end = ch_p('\x3') | ch_p('\x4') | end;
 Parser<std::string> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], text_end) >> !separator >> !end;
-Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | br | bz | ci | aa | ar | ea | er | pm | ep | in | ip | sc | unkown_cmds;
+Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | br | bz | ci | aa | ar | ea | er | pm | ep | in | ip | sc | df | ro | unkown_cmds;
 
 Parser<std::string> dci = confix_p(ch_p(27), end);
 Parser<bool> plt = (*(all_cmds | dci))[end_a];

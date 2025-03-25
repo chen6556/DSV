@@ -21,6 +21,7 @@ private:
     bool _pen_down = false;
     bool _relative_coord = false;
     bool _polygon_mode = false;
+    int _rotate_coord = 0;
     double _x_ratio = 0.025, _y_ratio = 0.025;
     double _ip[6], _sc[4];
 
@@ -54,6 +55,8 @@ public:
     void ip();
 
     void sc();
+
+    void ro();
 
     void pu();
 
