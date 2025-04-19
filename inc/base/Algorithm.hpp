@@ -23,7 +23,7 @@ namespace Geo
     // 点到多边形距离,计算点到每一段有限长线段的距离,取最近距离
     double distance(const Point &point, const Polygon &polygon);
 
-    // 点到椭圆距离,数值解
+    // [数值解]点到椭圆距离
     double distance(const Point &point, const Ellipse &ellipse);
 
     // 两有限长线段间的最短距离
@@ -137,6 +137,15 @@ namespace Geo
     // 判断两圆是否相交,inside决定完全在圆内是否算相交
     bool is_intersected(const Circle &circle0, const Circle &circle1, const bool inside = true);
 
+    // 计算两圆交点
+    int is_intersected(const Circle &circle0, const Circle &circle1, Point &point0, Point &point1);
+
+    // 计算两椭圆交点
+    int is_intersected(const Ellipse &ellipse0, const Ellipse &ellipse1, Point &point0, Point &point1, Point &point2, Point &point3);
+
+    // 计算圆与椭圆的交点
+    int is_intersected(const Circle &circle, const Ellipse &ellipse, Point &point0, Point &point1, Point &point2, Point &point3);
+
     // 判断AABB矩形是否与有限长线段相交,线段完全在AABB矩形内也算相交
     bool is_intersected(const AABBRect &rect, const Point &point0, const Point &point1);
 
@@ -193,6 +202,39 @@ namespace Geo
         // 判断AABB矩形与Geometry Object是否相交
         bool is_intersected(const AABBRect &rect, const Geometry *object);
     }
+
+    // 找到Polyline与Polyline在pos附近的交点
+    bool find_intersections(const Polyline &polyline0, const Polyline &polyline1, const Point &pos, const double distance, std::vector<Point> &intersections);
+
+    // 找到Polyline与Polygon在pos附近的交点
+    bool find_intersections(const Polyline &polyline, const Polygon &polygon, const Point &pos, const double distance, std::vector<Point> &intersections);
+
+    // 找到Polyline与Cirlce在pos附近的交点
+    bool find_intersections(const Polyline &polyline, const Circle &circle, const Point &pos, const double distance, std::vector<Point> &intersections);
+
+    // 找到Polyline与Ellipse在pos附近的交点
+    bool find_intersections(const Polyline &polyline, const Ellipse &ellipse, const Point &pos, const double distance, std::vector<Point> &intersections);
+
+    // 找到Polygon与Polygon在pos附近的交点
+    bool find_intersections(const Polygon &polygon0, const Polygon &polygon1, const Point &pos, const double distance, std::vector<Point> &intersections);
+
+    // 找到Polygon与Cirlce在pos附近的交点
+    bool find_intersections(const Polygon &polygon, const Circle &circle, const Point &pos, const double distance, std::vector<Point> &intersections);
+
+    // 找到Polygon与Ellipse在pos附近的交点
+    bool find_intersections(const Polygon &polygon, const Ellipse &ellipse, const Point &pos, const double distance, std::vector<Point> &intersections);
+    
+    // 找到Circle与Circle在pos附近的交点
+    bool find_intersections(const Circle &circle0, const Circle &circle1, const Point &pos, const double distance, std::vector<Point> &intersections);
+
+    // 找到Ellipse与Ellipse在pos附近的交点
+    bool find_intersections(const Ellipse &ellipse0, const Ellipse &ellipse1, const Point &pos, const double distance, std::vector<Point> &intersections);
+
+    // 找到Ellipse与Circle在pos附近的交点
+    bool find_intersections(const Ellipse &ellipse, const Circle &circle, const Point &pos, const double distance, std::vector<Point> &intersections);
+
+    // 找到pos附近的交点
+    bool find_intersections(const Geometry *object0, const Geometry *object1, const Point &pos, const double distance, std::vector<Point> &intersections);
 
     // 判断点是否在直线的左侧
     bool is_on_left(const Point &point, const Point &start, const Point &end);

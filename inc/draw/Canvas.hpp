@@ -18,14 +18,14 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
 public:
     enum class Tool {NoTool, Measure, Circle, Polyline, Rect, Curve, Text, Ellipse};
     enum class Operation {NoOperation, Mirror, RingArray, PolygonDifference, Fillet, Rotate};
-    enum class CatchedPointType {Vertex, Center, Foot, Tangency};
+    enum class CatchedPointType {Vertex, Center, Foot, Tangency, Intersection};
 
 private:
     Geo::Circle _circle_cache;
     Geo::Ellipse _ellipse_cache;
     Geo::AABBRect _AABBRect_cache, _select_rect, _visible_area;
     std::list<QLineF> _reflines;
-    const Geo::Geometry *_catched_object = nullptr;
+    std::vector<const Geo::Geometry *> _catched_objects;
     Editer *_editer = nullptr;
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
@@ -40,6 +40,10 @@ private:
     size_t _cache_len = 513, _cache_count = 0;
     double _refline_points[30];
     double _catchline_points[24];
+    
+    double _catch_distance = 0;
+    static const int catch_count = 5;
+    bool _catch_types[5] = {false, false, false, false, false};
 
     double _canvas_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
     double _view_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
@@ -129,6 +133,12 @@ public:
     const bool is_obj_selected() const;
 
     const bool is_moving_obj() const;
+
+    void set_catch_distance(const double value);
+
+    void set_cursor_catch(const CatchedPointType type, const bool value);
+
+    const bool is_catching(const CatchedPointType type) const;
 
     const size_t current_group() const;
 
@@ -231,10 +241,9 @@ public:
     void refresh_text_vbo(const bool unitary);
 
 
-    const Geo::Geometry *refresh_catached_points(const double x, const double y, const double distance, const bool skip_selected, const bool current_group_only = true) const;
+    bool refresh_catached_points(const double x, const double y, const double distance, std::vector<const Geo::Geometry *> &catched_objects, const bool skip_selected, const bool current_group_only = true) const;
 
-    bool refresh_catchline_points(const Geo::Geometry *object, const double distance, Geo::Point &pos);
-
+    bool refresh_catchline_points(const std::vector<const Geo::Geometry *> &objects, const double distance, Geo::Point &pos);
 
 
     size_t points_count() const;

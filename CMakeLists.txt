@@ -10,6 +10,7 @@ if (MSVC)
     add_compile_options("/GL")
     add_compile_options("/MP")
     add_link_options("/LTCG")
+    add_link_options("/NODEFAULTLIB:LIBCMT.lib")
 elseif (CMAKE_COMPILER_IS_GNUCXX)
     add_compile_options("-m64")
     add_compile_options("-mavx2")
@@ -29,6 +30,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/output/)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets OpenGL Gui Core)
+find_package(GSL REQUIRED)
 
 add_subdirectory(src)
 include_directories(inc)
@@ -48,7 +50,7 @@ qt_add_executable(DSV
     res/Icons.qrc
 )
 
-target_link_libraries(DSV PRIVATE Qt6::Widgets Qt6::OpenGLWidgets Qt6::OpenGL Qt6::Gui Qt6::Core)
+target_link_libraries(DSV PRIVATE Qt6::Widgets Qt6::OpenGLWidgets Qt6::OpenGL Qt6::Gui Qt6::Core GSL::gsl)
 target_compile_definitions(DSV PUBLIC POINTERHOLDER_TRANSITION=0)
 
 set_target_properties(DSV PROPERTIES

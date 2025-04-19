@@ -33,7 +33,10 @@ void GlobalSetting::load_setting()
         _instance->setting["auto_save"] = false;
         _instance->setting["backup_times"] = 50;
         _instance->setting["catch_distance"] = 2;
-        _instance->setting["cursor_catch"] = false;
+        _instance->setting["catch_center"] = false;
+        _instance->setting["catch_foot"] = false;
+        _instance->setting["catch_tangency"] = false;
+        _instance->setting["catch_vertex"] = false;
         _instance->setting["file_path"] = "/";
         _instance->setting["file_type"] = "All Files: (*.*)";
         _instance->setting["ignore_M19"] = true;

@@ -24,7 +24,6 @@ void Setting::init()
 
     ui->show_text->setChecked(setting["show_text"].toBool());
     ui->multiple_select->setChecked(setting["multiple_select"].toBool());
-    ui->cursor_catch->setChecked(setting["cursor_catch"].toBool());
     ui->show_points->setChecked(setting["show_points"].toBool());
     ui->ignroe_M19->setChecked(setting["ignore_M19"].toBool());
 }
@@ -39,7 +38,6 @@ void Setting::accept()
 
     setting["show_text"] = ui->show_text->isChecked();
     setting["multiple_select"] = ui->multiple_select->isChecked();
-    setting["cursor_catch"] = ui->cursor_catch->isChecked();
     setting["show_points"] = ui->show_points->isChecked();
     setting["ignore_M19"] = ui->ignroe_M19->isChecked();
 

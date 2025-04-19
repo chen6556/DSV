@@ -1817,8 +1817,19 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
     <addaction name="auto_aligning"/>
     <addaction name="actionadvanced"/>
    </widget>
+   <widget class="QMenu" name="menuCursorCatch">
+    <property name="title">
+     <string>Cursor Catch</string>
+    </property>
+    <addaction name="actionVertex"/>
+    <addaction name="actionCenter"/>
+    <addaction name="actionFoot"/>
+    <addaction name="actionTangency"/>
+    <addaction name="actionIntersection"/>
+   </widget>
    <addaction name="file_menu"/>
    <addaction name="menusetting"/>
+   <addaction name="menuCursorCatch"/>
   </widget>
   <widget class="QStatusBar" name="statusBar">
    <property name="font">
@@ -1992,6 +2003,46 @@ QComboBox QAbstractItemView::item:selected
    </property>
    <property name="text">
     <string>Auto connect</string>
+   </property>
+  </action>
+  <action name="actionVertex">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Vertex</string>
+   </property>
+  </action>
+  <action name="actionCenter">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Center</string>
+   </property>
+  </action>
+  <action name="actionFoot">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Foot</string>
+   </property>
+  </action>
+  <action name="actionTangency">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Tangency</string>
+   </property>
+  </action>
+  <action name="actionIntersection">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Intersection</string>
    </property>
   </action>
  </widget>
@@ -2442,6 +2493,22 @@ QComboBox QAbstractItemView::item:selected
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>menuCursorCatch</sender>
+   <signal>triggered(QAction*)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>set_catch(QAction*)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>64</x>
+     <y>84</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>350</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -2470,5 +2537,6 @@ QComboBox QAbstractItemView::item:selected
   <slot>refresh_tool_label(Canvas::Tool)</slot>
   <slot>fillet()</slot>
   <slot>refresh_tool_label(Canvas::Operation)</slot>
+  <slot>set_catch(QAction*)</slot>
  </slots>
 </ui>

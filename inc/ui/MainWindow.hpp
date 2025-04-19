@@ -63,6 +63,8 @@ private slots:
 
     void append_file();
 
+    void set_catch(QAction *action);
+
     void refresh_tool_label(const Canvas::Tool tool);
 
     void refresh_tool_label(const Canvas::Operation operation);

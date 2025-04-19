@@ -6,6 +6,7 @@
 #include "base/EarCut/EarCut.hpp"
 #include "base/Algorithm.hpp"
 #include "base/Collision.hpp"
+#include "base/Math.hpp"
 
 
 double Geo::distance(const double x0, const double y0, const double x1, const double y1)
@@ -173,80 +174,50 @@ double Geo::distance(const Point &point, const Polygon &polygon)
 
 double Geo::distance(const Point &point, const Ellipse &ellipse)
 {
+    // Approximate the distance between a point and an ellipse using Rosin distance.
+    /*const double ae2 = Geo::distance_square(ellipse.a0(), ellipse.a1()) / 4;
+    const double be2 = Geo::distance_square(ellipse.b0(), ellipse.b1()) / 4;
+    if (ae2 == be2)
+    {
+        return Geo::distance(point, ellipse.center()) - std::sqrt(ae2);
+    }
+    const double angle = -ellipse.angle();
+    const double x = point.x - ellipse.center().x;
+    const double y = point.y - ellipse.center().y;
+    const double xp = x * std::cos(angle) - y * std::sin(angle);
+    const double yp = x * std::sin(angle) + y * std::cos(angle);
+    const double fe2 = std::abs(ae2 - be2);
+    const double X = xp * xp, Y = yp * yp;
+    const double delta = (X + Y + fe2) * (X + Y + fe2) - 4 * X * fe2;
+    const double A = (X + Y + fe2 - std::sqrt(delta)) / 2;
+    const double ah = std::sqrt(A);
+    const double bh2 = fe2 - A;
+    const double term = A * be2 + ae2 * bh2;
+    const double xi = ah * std::sqrt(ae2 * (be2 + bh2) / term);
+    const double yi = ellipse.lengthb() * std::sqrt(bh2 * (ae2 - A) / term);
+    const double d[4] = {Geo::distance(xp, yp, xi, yi), Geo::distance(xp, yp, xi, -yi),
+        Geo::distance(xp, yp, -xi, yi), Geo::distance(xp, yp, -xi, -yi)};
+    return *std::min_element(d, d + 4);*/
+
     const Geo::Point center = ellipse.center();
     const Geo::Point coord = Geo::to_coord(point, center.x, center.y, Geo::angle(ellipse.a0(), ellipse.a1()));
     const double a = ellipse.lengtha(), b = ellipse.lengthb();
-    double degree0 = Geo::rad_to_2PI(Geo::angle(Geo::Point(0, 0), coord)) - Geo::PI / 6,
-        degree1 = Geo::rad_to_2PI(Geo::angle(Geo::Point(0, 0), coord)) + Geo::PI / 6;
-    if (degree0 > degree1)
+    double degree0 = Geo::angle(Geo::Point(0, 0), coord) - Geo::PI / 2,
+        degree1 = Geo::angle(Geo::Point(0, 0), coord) + Geo::PI / 2;
+    double m0 = (degree1 - degree0) / 3 + degree0, m1 = degree1 - (degree1 - degree0) / 3;
+    double x0, y0, x1, y1;
+    while (degree0 + Geo::EPSILON < degree1)
     {
-        std::swap(degree0, degree1);
-    }
-    if (coord.x >= 0)
-    {
-        if (coord.y >= 0)
-        {
-            if (degree0 < 0)
-            {
-                degree0 = 0;
-            }
-            if (degree1 > Geo::PI / 2)
-            {
-                degree1 = Geo::PI / 2;
-            }
-        }
-        else
-        {
-            if (degree0 < Geo::PI * 1.5)
-            {
-                degree0 = Geo::PI * 1.5;
-            }
-            if (degree1 > Geo::PI * 2)
-            {
-                degree1 = Geo::PI * 2;
-            }
-        }
-    }
-    else
-    {
-        if (coord.y >= 0)
-        {
-            if (degree0 < Geo::PI / 2)
-            {
-                degree0 = Geo::PI / 2;
-            }
-            if (degree1 > Geo::PI)
-            {
-                degree1 = Geo::PI;
-            }
-        }
-        else
-        {
-            if (degree0 < Geo::PI)
-            {
-                degree0 = Geo::PI;
-            }
-            if (degree1 > Geo::PI * 1.5)
-            {
-                degree1 = Geo::PI * 1.5;
-            }
-        }
-    }
-    double x0 = a * std::cos(degree0), y0 = b * std::sin(degree0);
-    double x1 = a * std::cos(degree1), y1 = b * std::sin(degree1);
-    while (std::abs(Geo::distance_square(x0, y0, coord.x, coord.y) - Geo::distance_square(x1, y1, coord.x, coord.y)) > Geo::EPSILON)
-    {
+        m0 = (degree1 - degree0) / 3 + degree0, m1 = degree1 - (degree1 - degree0) / 3;
+        x0 = a * std::cos(m0), y0 = b * std::sin(m0);
+        x1 = a * std::cos(m1), y1 = b * std::sin(m1);
         if (Geo::distance_square(x0, y0, coord.x, coord.y) > Geo::distance_square(x1, y1, coord.x, coord.y))
         {
-            degree0 = (degree0 + degree1) / 2;
-            x0 = a * std::cos(degree0);
-            y0 = b * std::sin(degree0);
+            degree0 = m0;
         }
         else
         {
-            degree1 = (degree0 + degree1) / 2;
-            x1 = a * std::cos(degree1);
-            y1 = b * std::sin(degree1);
+            degree1 = m1;
         }
     }
     return std::min(Geo::distance(x0, y0, coord.x, coord.y), Geo::distance(x1, y1, coord.x, coord.y));
@@ -1209,30 +1180,19 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Ellipse 
 
     if (std::pow(a1, 2) * a0 + std::pow(b1, 2) * b0 > std::pow(c1, 2))
     {
-        const double a = std::pow(a1, 2) * a0  + std::pow(b1, 2) * b0;
-        if (b1 != 0)
-        {
-            const double b = 2 * a1 * a0 * c1;
-            const double c = (std::pow(c1, 2) - std::pow(b1, 2) * b0) * a0;
-            output0.x = (-b - std::sqrt(std::pow(b, 2) - 4 * a *c)) / (2 * a);
-            output1.x = (-b + std::sqrt(std::pow(b, 2) - 4 * a *c)) / (2 * a);
-            output0.y = (-a1 * output0.x - c1) / b1;
-            output1.y = (-a1 * output1.x - c1) / b1;
-        }
-        else
-        {
-            const double b = 2 * b1 * b0 * c1;
-            const double c = (std::pow(c1, 2) - std::pow(a1, 2) * a0) * b0;
-            output0.y = (-b - std::sqrt(std::pow(b, 2) - 4 * a *c)) / (2 * a);
-            output1.y = (-b + std::sqrt(std::pow(b, 2) - 4 * a *c)) / (2 * a);
-            output0.x = (-b1 * output0.y - c1) / a1;
-            output1.x = (-b1 * output1.y - c1) / a1;
-        }
+        const double t0 = a0 * std::pow(a1, 2) + b0 * std::pow(b1, 2);
+        const double t1 = b0 * std::pow(b1, 2) * c1;
+        const double t2 = std::sqrt(a0 * b0 * std::pow(b1, 2) * (t0 - std::pow(c1, 2)));
+        output0.x = (-a0 * a1 * c1 - t2) / t0;
+        output0.y = (a1 * t2 - t1) / (b1 * t0);
+        output1.x = (t2 - a0 * a1 * c1) / t0;
+        output1.y = (-a1 * t2 - t1) / (b1 * t0);
+        
         if (infinite)
         {
             const Geo::Point coord = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
-            output0 = Geo::to_coord(point2, coord.x, coord.y, -angle);
-            output1 = Geo::to_coord(point3, coord.x, coord.y, -angle);
+            output0 = Geo::to_coord(output0, coord.x, coord.y, -angle);
+            output1 = Geo::to_coord(output1, coord.x, coord.y, -angle);
             return 2;
         }
         else
@@ -1242,14 +1202,14 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Ellipse 
                 if (Geo::is_inside(output1, point2, point3))
                 {
                     const Geo::Point coord = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
-                    output0 = Geo::to_coord(point2, coord.x, coord.y, -angle);
-                    output1 = Geo::to_coord(point3, coord.x, coord.y, -angle);
+                    output0 = Geo::to_coord(output0, coord.x, coord.y, -angle);
+                    output1 = Geo::to_coord(output1, coord.x, coord.y, -angle);
                     return 2;
                 }
                 else
                 {
                     const Geo::Point coord = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
-                    output0 = Geo::to_coord(point2, coord.x, coord.y, -angle);
+                    output0 = Geo::to_coord(output0, coord.x, coord.y, -angle);
                     return 1;
                 }
             }
@@ -1257,9 +1217,8 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Ellipse 
             {
                 if (Geo::is_inside(output1, point2, point3))
                 {
-                    output0 = output1;
                     const Geo::Point coord = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
-                    output0 = Geo::to_coord(point2, coord.x, coord.y, -angle);
+                    output0 = Geo::to_coord(output1, coord.x, coord.y, -angle);
                     return 1;
                 }
                 else
@@ -1271,25 +1230,15 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Ellipse 
     }
     else if (std::pow(a1, 2) * a0 + std::pow(b1, 2) * b0 == std::pow(c1, 2))
     {
-        const double a = std::pow(a1, 2) * a0 + std::pow(b1, 2) * b0;
-        if (b1 != 0)
-        {
-            const double b = 2 * a1 * a0 * c1;
-            const double c = (std::pow(c1, 2) - std::pow(b1, 2) * b0) * a0;
-            output0.x = -b / (2 * a);
-            output0.y = (-a1 * output0.x - c1) / b1;
-        }
-        else
-        {
-            const double b = 2 * b1 * b0 * c1;
-            const double c = (std::pow(c1, 2) - std::pow(a1, 2) * a0) * b0;
-            output0.y = -b / (2 * a);
-            output0.x = (-b1 * output0.y - c1) / a1;
-        }
+        const double t0 = a0 * std::pow(a1, 2) + b0 * std::pow(b1, 2);
+        const double t1 = b0 * std::pow(b1, 2) * c1;
+        output0.x = (-a0 * a1 * c1) / t0;
+        output0.y = t1 / (b1 * t0);
+
         if (infinite)
         {
             const Geo::Point coord = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
-            output0 = Geo::to_coord(point2, coord.x, coord.y, -angle);
+            output0 = Geo::to_coord(output0, coord.x, coord.y, -angle);
             return 1;
         }
         else
@@ -1297,7 +1246,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Ellipse 
             if (Geo::is_inside(output0, point2, point3))
             {
                 const Geo::Point coord = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
-                output0 = Geo::to_coord(point2, coord.x, coord.y, -angle);
+                output0 = Geo::to_coord(output0, coord.x, coord.y, -angle);
                 return 1;
             }
             else
@@ -1548,6 +1497,276 @@ bool Geo::is_intersected(const Circle &circle0, const Circle& circle1, const boo
     }
 }
 
+int Geo::is_intersected(const Circle &circle0, const Circle &circle1, Point &point0, Point &point1)
+{
+    const double distance = Geo::distance(circle0, circle1);
+    if (distance <= circle0.radius + circle1.radius && distance >= std::abs(circle0.radius - circle1.radius))
+    {
+        const double d = Geo::distance(circle0, circle1), dd = Geo::distance_square(circle0, circle1);
+        const double a = (std::pow(circle0.radius, 2) - std::pow(circle1.radius, 2) + dd) / (2 * d);
+        const double x = circle0.x + (a / d) * (circle1.x - circle0.x);
+        const double y = circle0.y + (a / d) * (circle1.y - circle0.y);
+        if (distance == circle0.radius + circle1.radius || distance == std::abs(circle0.radius - circle1.radius))
+        {
+            if (circle0 == circle1)
+            {
+                return 0;
+            }
+            point0.x = x;
+            point0.y = y;
+            return 1;
+        }
+        else
+        {
+            const double aa = std::pow(std::pow(circle0.radius, 2) - std::pow(circle1.radius, 2) + dd, 2) / (4 * dd);
+            const double h = std::sqrt(std::pow(circle0.radius, 2) - aa);
+            point0.x = x - (circle1.y - circle0.y) * h / d;
+            point0.y = y - (circle0.x - circle1.x) * h / d;
+            point1.x = x + (circle1.y - circle0.y) * h / d;
+            point1.y = y + (circle0.x - circle1.x) * h / d;
+            return 2;
+        }
+    }
+    else
+    {
+        return 0;
+    }
+}
+
+int Geo::is_intersected(const Ellipse &ellipse0, const Ellipse &ellipse1, Point &point0, Point &point1, Point &point2, Point &point3)
+{
+    if (!Geo::is_intersected(ellipse0.bounding_rect(), ellipse1.bounding_rect()))
+    {
+        return 0;
+    }
+
+    const Geo::Polygon polygon0(Geo::ellipse_to_polygon(ellipse0));
+    const Geo::Polygon polygon1(Geo::ellipse_to_polygon(ellipse1));
+    std::vector<Geo::Point> points;
+    for (size_t i = 1, count0 = polygon0.size(); i < count0; ++i)
+    {
+        Geo::Point point;
+        for (size_t j = 1, count1 = polygon1.size(); j < count1; ++j)
+        {
+            if (Geo::is_intersected(polygon0[i - 1], polygon0[i], polygon1[j - 1], polygon1[j], point, false)
+                && std::find(points.cbegin(), points.cend(), point) == points.cend())
+            {
+                points.emplace_back(point);
+            }
+        }
+    }
+
+    if (points.empty())
+    {
+        return 0;
+    }
+
+    if (points.size() > 4)
+    {
+        std::vector<std::tuple<size_t, size_t, double>> distance_table;
+        std::vector<size_t> remove_index;
+        for (size_t i = 0, count = points.size(); i < count; ++i)
+        {
+            for (size_t j = i + 1; j < count; ++i)
+            {
+                distance_table.emplace_back(i, j, Geo::distance_square(points[i], points[j]));
+            }
+        }
+        std::sort(distance_table.begin(), distance_table.end(), [](const std::tuple<size_t, size_t, double> &a,
+            const std::tuple<size_t, size_t, double> &b) { return std::get<2>(a) > std::get<2>(b); });
+        while (points.size() - remove_index.size() > 4)
+        {
+            const size_t index = std::get<1>(distance_table.back());
+            remove_index.push_back(index);
+            distance_table.pop_back();
+            for (size_t i = distance_table.size() - 1; i > 0; --i)
+            {
+                if (std::get<1>(distance_table[i]) == index || std::get<0>(distance_table[i]) == index)
+                {
+                    distance_table.erase(distance_table.begin() + i);
+                }
+            }
+            if (std::get<1>(distance_table.front()) == index || std::get<0>(distance_table.front()) == index)
+            {
+                distance_table.erase(distance_table.begin());
+            }
+        }
+        std::sort(remove_index.begin(), remove_index.end(), std::greater<size_t>());
+        for (const size_t index : remove_index)
+        {
+            points.erase(points.begin() + index);
+        }
+    }
+
+    const Geo::Point center0 = ellipse0.center(), center1 = ellipse1.center();
+    const double theta0 = Geo::angle(ellipse0.a0(), ellipse0.a1()), theta1 = Geo::angle(ellipse1.a0(), ellipse1.a1());
+    const double a0 = ellipse0.lengtha(), b0 = ellipse0.lengthb(), a1 = ellipse1.lengtha(), b1 = ellipse1.lengthb();
+    const double A0 = std::pow(std::sin(theta0) / b0, 2) + std::pow(std::cos(theta0) / a0, 2),
+        A1 = std::pow(std::sin(theta1) / b1, 2) + std::pow(std::cos(theta1) / a1, 2);
+    const double B0 = 2 * (std::pow(1 / a0, 2) - std::pow(1 / b0, 2)) * std::sin(theta0) * std::cos(theta0),
+        B1 = 2 * (std::pow(1 / a1, 2) - std::pow(1 / b1, 2)) * std::sin(theta1) * std::cos(theta1);
+    const double C0 = std::pow(std::cos(theta0) / b0, 2) + std::pow(std::sin(theta0) / a0, 2),
+        C1 = std::pow(std::cos(theta1) / b1, 2) + std::pow(std::sin(theta1) / a1, 2);
+    const double D0 = -(2 * A0 * center0.x + B0 * center0.y), D1 = -(2 * A1 * center1.x + B1 * center1.y);
+    const double E0 = -(2 * C0 * center0.y + B0 * center0.x), E1 = -(2 * C1 * center1.y + B1 * center1.x);
+    const double F0 = -(D0 * center0.x + E0 * center0.y) / 2 - 1, F1 = -(D1 * center1.x + E1 * center1.y) / 2 - 1;
+
+    Math::EllipseParameter param;
+    param.a[0] = A0, param.a[1] = A1;
+    param.b[0] = B0, param.b[1] = B1;
+    param.c[0] = C0, param.c[1] = C1;
+    param.d[0] = D0, param.d[1] = D1;
+    param.e[0] = E0, param.e[1] = E1;
+    param.f[0] = F0, param.f[1] = F1;
+
+    switch (points.size())
+    {
+    case 4:
+        {
+            auto [x, y] = Math::solve_ellipse_ellipse_intersection(param, points[3].x, points[3].y);
+            point3.x = x, point3.y = y;
+        }
+        [[fallthrough]];
+    case 3:
+        {
+            auto [x, y] = Math::solve_ellipse_ellipse_intersection(param, points[2].x, points[2].y);
+            point2.x = x, point2.y = y;
+        }
+        [[fallthrough]];
+    case 2:
+        {
+            auto [x, y] = Math::solve_ellipse_ellipse_intersection(param, points[1].x, points[1].y);
+            point1.x = x, point1.y = y;
+        }
+        [[fallthrough]];
+    case 1:
+        {
+            auto [x, y] = Math::solve_ellipse_ellipse_intersection(param, points[0].x, points[0].y);
+            point0.x = x, point0.y = y;
+        }
+        break;
+    default:
+        break;
+    }
+    return points.size();
+}
+
+int Geo::is_intersected(const Circle &circle, const Ellipse &ellipse, Point &point0, Point &point1, Point &point2, Point &point3)
+{
+    if (!Geo::is_intersected(circle.bounding_rect(), ellipse.bounding_rect()))
+    {
+        return 0;
+    }
+
+    const Geo::Polygon polygon0(Geo::circle_to_polygon(circle));
+    const Geo::Polygon polygon1(Geo::ellipse_to_polygon(ellipse));
+    std::vector<Geo::Point> points;
+    for (size_t i = 1, count0 = polygon0.size(); i < count0; ++i)
+    {
+        Geo::Point point;
+        for (size_t j = 1, count1 = polygon1.size(); j < count1; ++j)
+        {
+            if (Geo::is_intersected(polygon0[i - 1], polygon0[i], polygon1[j - 1], polygon1[j], point, false)
+                && std::find(points.cbegin(), points.cend(), point) == points.cend())
+            {
+                points.emplace_back(point);
+            }
+        }
+    }
+
+    if (points.empty())
+    {
+        return 0;
+    }
+
+    if (points.size() > 4)
+    {
+        std::vector<std::tuple<size_t, size_t, double>> distance_table;
+        std::vector<size_t> remove_index;
+        for (size_t i = 0, count = points.size(); i < count; ++i)
+        {
+            for (size_t j = i + 1; j < count; ++i)
+            {
+                distance_table.emplace_back(i, j, Geo::distance_square(points[i], points[j]));
+            }
+        }
+        std::sort(distance_table.begin(), distance_table.end(), [](const std::tuple<size_t, size_t, double> &a,
+            const std::tuple<size_t, size_t, double> &b) { return std::get<2>(a) > std::get<2>(b); });
+        while (points.size() - remove_index.size() > 4)
+        {
+            const size_t index = std::get<1>(distance_table.back());
+            remove_index.push_back(index);
+            distance_table.pop_back();
+            for (size_t i = distance_table.size() - 1; i > 0; --i)
+            {
+                if (std::get<1>(distance_table[i]) == index || std::get<0>(distance_table[i]) == index)
+                {
+                    distance_table.erase(distance_table.begin() + i);
+                }
+            }
+            if (std::get<1>(distance_table.front()) == index || std::get<0>(distance_table.front()) == index)
+            {
+                distance_table.erase(distance_table.begin());
+            }
+        }
+        std::sort(remove_index.begin(), remove_index.end(), std::greater<size_t>());
+        for (const size_t index : remove_index)
+        {
+            points.erase(points.begin() + index);
+        }
+    }
+
+    const Geo::Point center0 = circle, center1 = ellipse.center();
+    const double theta0 = 0, theta1 = Geo::angle(ellipse.a0(), ellipse.a1());
+    const double a0 = circle.radius, b0 = circle.radius, a1 = ellipse.lengtha(), b1 = ellipse.lengthb();
+    const double A0 = std::pow(1 / a0, 2), A1 = std::pow(std::sin(theta1) / b1, 2) + std::pow(std::cos(theta1) / a1, 2);
+    const double B0 = 2 * (std::pow(1 / a0, 2) - std::pow(1 / b0, 2)) * std::sin(theta0) * std::cos(theta0),
+        B1 = 2 * (std::pow(1 / a1, 2) - std::pow(1 / b1, 2)) * std::sin(theta1) * std::cos(theta1);
+    const double C0 = std::pow(1 / b0, 2), C1 = std::pow(std::cos(theta1) / b1, 2) + std::pow(std::sin(theta1) / a1, 2);
+    const double D0 = -(2 * A0 * center0.x + B0 * center0.y), D1 = -(2 * A1 * center1.x + B1 * center1.y);
+    const double E0 = -(2 * C0 * center0.y + B0 * center0.x), E1 = -(2 * C1 * center1.y + B1 * center1.x);
+    const double F0 = -(D0 * center0.x + E0 * center0.y) / 2 - 1, F1 = -(D1 * center1.x + E1 * center1.y) / 2 - 1;
+
+    Math::EllipseParameter param;
+    param.a[0] = A0, param.a[1] = A1;
+    param.b[0] = B0, param.b[1] = B1;
+    param.c[0] = C0, param.c[1] = C1;
+    param.d[0] = D0, param.d[1] = D1;
+    param.e[0] = E0, param.e[1] = E1;
+    param.f[0] = F0, param.f[1] = F1;
+
+    switch (points.size())
+    {
+    case 4:
+        {
+            auto [x, y] = Math::solve_ellipse_ellipse_intersection(param, points[3].x, points[3].y);
+            point3.x = x, point3.y = y;
+        }
+        [[fallthrough]];
+    case 3:
+        {
+            auto [x, y] = Math::solve_ellipse_ellipse_intersection(param, points[2].x, points[2].y);
+            point2.x = x, point2.y = y;
+        }
+        [[fallthrough]];
+    case 2:
+        {
+            auto [x, y] = Math::solve_ellipse_ellipse_intersection(param, points[1].x, points[1].y);
+            point1.x = x, point1.y = y;
+        }
+        [[fallthrough]];
+    case 1:
+        {
+            auto [x, y] = Math::solve_ellipse_ellipse_intersection(param, points[0].x, points[0].y);
+            point0.x = x, point0.y = y;
+        }
+        break;
+    default:
+        break;
+    }
+    return points.size();
+}
+
 bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const Point &point1)
 {
     if (Geo::is_inside(point0, rect) || Geo::is_inside(point1, rect))
@@ -1719,6 +1938,453 @@ bool Geo::is_intersected(const Geometry *object0, const Geometry *object1)
 bool Geo::is_intersected(const AABBRect &rect, const Geometry *object)
 {
     return Geo::is_intersected(rect, object->bounding_rect()) && Geo::NoAABBTest::is_intersected(rect, object);
+}
+
+
+bool Geo::find_intersections(const Geo::Polyline &polyline0, const Geo::Polyline &polyline1, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
+{
+    std::vector<size_t> index0, index1;
+    for (size_t i = 1, count = polyline0.size(); i < count; ++i)
+    {
+        if (Geo::distance(pos, polyline0[i - 1], polyline0[i], false) <= distance)
+        {
+            index0.push_back(i);
+        }
+    }
+    for (size_t i = 1, count = polyline1.size(); i < count; ++i)
+    {
+        if (Geo::distance(pos, polyline1[i - 1], polyline1[i], false) <= distance)
+        {
+            index1.push_back(i);
+        }
+    }
+
+    const size_t count = intersections.size();
+    for (const size_t i : index0)
+    {
+        for (const size_t j : index1)
+        {
+            if (Geo::Point point; Geo::is_intersected(polyline0[i - 1], polyline0[i],
+                polyline1[j - 1], polyline1[j], point, false) && Geo::distance(pos, point) <= distance)
+            {
+                intersections.emplace_back(point);
+            }
+        }
+    }
+    return intersections.size() > count;
+}
+
+bool Geo::find_intersections(const Geo::Polyline &polyline, const Geo::Polygon &polygon, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
+{
+    std::vector<size_t> index0, index1;
+    for (size_t i = 1, count = polyline.size(); i < count; ++i)
+    {
+        if (Geo::distance(pos, polyline[i - 1], polyline[i], false) <= distance)
+        {
+            index0.push_back(i);
+        }
+    }
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        if (Geo::distance(pos, polygon[i - 1], polygon[i], false) <= distance)
+        {
+            index1.push_back(i);
+        }
+    }
+
+    const size_t count = intersections.size();
+    for (const size_t i : index0)
+    {
+        for (const size_t j : index1)
+        {
+            if (Geo::Point point; Geo::is_intersected(polyline[i - 1], polyline[i],
+                polygon[j - 1], polygon[j], point, false) && Geo::distance(pos, point) <= distance)
+            {
+                intersections.emplace_back(point);
+            }
+        }
+    }
+    return intersections.size() > count;
+}
+
+bool Geo::find_intersections(const Geo::Polyline &polyline, const Geo::Circle &circle, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
+{
+    std::vector<size_t> index;
+    for (size_t i = 1, count = polyline.size(); i < count; ++i)
+    {
+        if (Geo::distance(pos, polyline[i - 1], polyline[i], false) <= distance)
+        {
+            index.push_back(i);
+        }
+    }
+
+    const size_t count = intersections.size();
+    for (const size_t i : index)
+    {
+        Geo::Point point0, point1;
+        switch (Geo::is_intersected(polyline[i - 1], polyline[i], circle, point0, point1, false))
+        {
+        case 2:
+            if (Geo::distance(pos, point1) <= distance)
+            {
+                intersections.emplace_back(point1);
+            }
+            [[fallthrough]];
+        case 1:
+            if (Geo::distance(pos, point0) <= distance)
+            {
+                intersections.emplace_back(point0);
+            }
+            break;
+        default:
+            break;
+        }
+    }
+    return intersections.size() > count;
+}
+
+bool Geo::find_intersections(const Geo::Polyline &polyline, const Geo::Ellipse &ellipse, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
+{
+    std::vector<size_t> index;
+    for (size_t i = 1, count = polyline.size(); i < count; ++i)
+    {
+        if (Geo::distance(pos, polyline[i - 1], polyline[i], false) <= distance)
+        {
+            index.push_back(i);
+        }
+    }
+
+    const size_t count = intersections.size();
+    for (const size_t i : index)
+    {
+        Geo::Point point0, point1;
+        switch (Geo::is_intersected(polyline[i - 1], polyline[i], ellipse, point0, point1, true))
+        {
+        case 2:
+            if (Geo::distance(pos, point1) <= distance)
+            {
+                intersections.emplace_back(point1);
+            }
+            [[fallthrough]];
+        case 1:
+            if (Geo::distance(pos, point0) <= distance)
+            {
+                intersections.emplace_back(point0);
+            }
+            break;
+        default:
+            break;
+        }
+    }
+    return intersections.size() > count;
+}
+
+bool Geo::find_intersections(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
+{
+    std::vector<size_t> index0, index1;
+    for (size_t i = 1, count = polygon0.size(); i < count; ++i)
+    {
+        if (Geo::distance(pos, polygon0[i - 1], polygon0[i], false) <= distance)
+        {
+            index0.push_back(i);
+        }
+    }
+    for (size_t i = 1, count = polygon1.size(); i < count; ++i)
+    {
+        if (Geo::distance(pos, polygon1[i - 1], polygon1[i], false) <= distance)
+        {
+            index1.push_back(i);
+        }
+    }
+
+    const size_t count = intersections.size();
+    for (const size_t i : index0)
+    {
+        for (const size_t j : index1)
+        {
+            if (Geo::Point point; Geo::is_intersected(polygon0[i - 1], polygon0[i],
+                polygon1[j - 1], polygon1[j], point, false) && Geo::distance(pos, point) <= distance)
+            {
+                intersections.emplace_back(point);
+            }
+        }
+    }
+    return intersections.size() > count;
+}
+
+bool Geo::find_intersections(const Geo::Polygon &polygon, const Geo::Circle &circle, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
+{
+    std::vector<size_t> index;
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        if (Geo::distance(pos, polygon[i - 1], polygon[i], false) <= distance)
+        {
+            index.push_back(i);
+        }
+    }
+
+    const size_t count = intersections.size();
+    for (const size_t i : index)
+    {
+        Geo::Point point0, point1;
+        switch (Geo::is_intersected(polygon[i - 1], polygon[i], circle, point0, point1, false))
+        {
+        case 2:
+            if (Geo::distance(pos, point1) <= distance)
+            {
+                intersections.emplace_back(point1);
+            }
+            [[fallthrough]];
+        case 1:
+            if (Geo::distance(pos, point0) <= distance)
+            {
+                intersections.emplace_back(point0);
+            }
+            break;
+        default:
+            break;
+        }
+    }
+    return intersections.size() > count;
+}
+
+bool Geo::find_intersections(const Geo::Polygon &polygon, const Geo::Ellipse &ellipse, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
+{
+    std::vector<size_t> index;
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        if (Geo::distance(pos, polygon[i - 1], polygon[i], false) <= distance)
+        {
+            index.push_back(i);
+        }
+    }
+
+    const size_t count = intersections.size();
+    for (const size_t i : index)
+    {
+        Geo::Point point0, point1;
+        switch (Geo::is_intersected(polygon[i - 1], polygon[i], ellipse, point0, point1, true))
+        {
+        case 2:
+            if (Geo::distance(pos, point1) <= distance)
+            {
+                intersections.emplace_back(point1);
+            }
+            [[fallthrough]];
+        case 1:
+            if (Geo::distance(pos, point0) <= distance)
+            {
+                intersections.emplace_back(point0);
+            }
+            break;
+        default:
+            break;
+        }
+    }
+    return intersections.size() > count;
+}
+
+bool Geo::find_intersections(const Geo::Circle &circle0, const Geo::Circle &circle1, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
+{
+    Geo::Point point0, point1;
+    switch (Geo::is_intersected(circle0, circle1, point0, point1))
+    {
+    case 2:
+        if (Geo::distance(pos, point1) <= distance)
+        {
+            intersections.emplace_back(point1);
+        }
+        [[fallthrough]];
+    case 1:
+        if (Geo::distance(pos, point0) <= distance)
+        {
+            intersections.emplace_back(point0);
+        }
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool Geo::find_intersections(const Geo::Ellipse &ellipse0, const Geo::Ellipse &ellipse1, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
+{
+    const size_t count0 = intersections.size();
+    if (std::vector<Geo::Point> points; Geo::find_intersections(Geo::ellipse_to_polygon(ellipse0),
+        Geo::ellipse_to_polygon(ellipse1), pos, distance, points))
+    {
+        intersections.insert(intersections.end(), points.begin(), points.end());
+    }
+    else
+    {
+        return false;
+    }
+
+    if (intersections.size() > count0)
+    {
+        const Geo::Point center0 = ellipse0.center(), center1 = ellipse1.center();
+        double theta0 = Geo::angle(ellipse0.a0(), ellipse0.a1()), theta1 = Geo::angle(ellipse1.a0(), ellipse1.a1());
+        double a0 = ellipse0.lengtha(), b0 = ellipse0.lengthb(), a1 = ellipse1.lengtha(), b1 = ellipse1.lengthb();
+        double A0 = (std::sin(theta0) / b0) * (std::sin(theta0) / b0) + (std::cos(theta0) / a0) * (std::cos(theta0) / a0),
+            A1 = (std::sin(theta1) / b1) * (std::sin(theta1) / b1) + (std::cos(theta1) / a1) * (std::cos(theta1) / a1);
+        double B0 = 2 * (std::pow(1 / a0, 2) - std::pow(1 / b0, 2)) * std::sin(theta0) * std::cos(theta0),
+            B1 = 2 * (std::pow(1 / a1, 2) - std::pow(1 / b1, 2)) * std::sin(theta1) * std::cos(theta1);
+        double C0 = (std::cos(theta0) / b0) * (std::cos(theta0) / b0) + (std::sin(theta0) / a0) * (std::sin(theta0) / a0),
+            C1 = (std::cos(theta1) / b1) * (std::cos(theta1) / b1) + (std::sin(theta1) / a1) * (std::sin(theta1) / a1);
+        double D0 = -(2 * A0 * center0.x + B0 * center0.y), D1 = -(2 * A1 * center1.x + B1 * center1.y);
+        double E0 = -(2 * C0 * center0.y + B0 * center0.x), E1 = -(2 * C1 * center1.y + B1 * center1.x);
+        double F0 = -(D0 * center0.x + E0 * center0.y) / 2 - 1, F1 = -(D1 * center1.x + E1 * center1.y) / 2 - 1;
+
+        Math::EllipseParameter param;
+        param.a[0] = A0, param.a[1] = A1;
+        param.b[0] = B0, param.b[1] = B1;
+        param.c[0] = C0, param.c[1] = C1;
+        param.d[0] = D0, param.d[1] = D1;
+        param.e[0] = E0, param.e[1] = E1;
+        param.f[0] = F0, param.f[1] = F1;
+
+        for (size_t i = count0, count1 = intersections.size(); i < count1; ++i)
+        {
+            auto [x, y] = Math::solve_ellipse_ellipse_intersection(param, intersections[i].x, intersections[i].y);
+            intersections[i].x = x, intersections[i].y = y;
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Geo::find_intersections(const Geo::Ellipse &ellipse, const Geo::Circle &circle, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
+{
+    const size_t count0 = intersections.size();
+    if (std::vector<Geo::Point> points; Geo::find_intersections(Geo::ellipse_to_polygon(ellipse),
+        Geo::circle_to_polygon(circle), pos, distance, points))
+    {
+        intersections.insert(intersections.end(), points.begin(), points.end());
+    }
+    else
+    {
+        return false;
+    }
+
+    if (intersections.size() > count0)
+    {
+        const Geo::Point center0 = circle, center1 = ellipse.center();
+        const double theta0 = 0, theta1 = Geo::angle(ellipse.a0(), ellipse.a1());
+        const double a0 = circle.radius, b0 = circle.radius, a1 = ellipse.lengtha(), b1 = ellipse.lengthb();
+        const double A0 = std::pow(1 / a0, 2), A1 = std::pow(std::sin(theta1) / b1, 2) + std::pow(std::cos(theta1) / a1, 2);
+        const double B0 = 2 * (std::pow(1 / a0, 2) - std::pow(1 / b0, 2)) * std::sin(theta0) * std::cos(theta0),
+            B1 = 2 * (std::pow(1 / a1, 2) - std::pow(1 / b1, 2)) * std::sin(theta1) * std::cos(theta1);
+        const double C0 = std::pow(1 / b0, 2), C1 = std::pow(std::cos(theta1) / b1, 2) + std::pow(std::sin(theta1) / a1, 2);
+        const double D0 = -(2 * A0 * center0.x + B0 * center0.y), D1 = -(2 * A1 * center1.x + B1 * center1.y);
+        const double E0 = -(2 * C0 * center0.y + B0 * center0.x), E1 = -(2 * C1 * center1.y + B1 * center1.x);
+        const double F0 = -(D0 * center0.x + E0 * center0.y) / 2 - 1, F1 = -(D1 * center1.x + E1 * center1.y) / 2 - 1;
+
+        Math::EllipseParameter param;
+        param.a[0] = A0, param.a[1] = A1;
+        param.b[0] = B0, param.b[1] = B1;
+        param.c[0] = C0, param.c[1] = C1;
+        param.d[0] = D0, param.d[1] = D1;
+        param.e[0] = E0, param.e[1] = E1;
+        param.f[0] = F0, param.f[1] = F1;
+        for (size_t i = count0, count1 = intersections.size(); i < count1; ++i)
+        {
+            auto [x, y] = Math::solve_ellipse_ellipse_intersection(param, intersections[i].x, intersections[i].y);
+            intersections[i].x = x, intersections[i].y = y;
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *object1, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
+{
+    switch (object0->type())
+    {
+    case Geo::Type::POLYLINE:
+        switch (object1->type())
+        {
+        case Geo::Type::POLYLINE:
+            return Geo::find_intersections(*static_cast<const Geo::Polyline *>(object0),
+                *static_cast<const Geo::Polyline *>(object1), pos, distance, intersections);
+        case Geo::Type::POLYGON:
+            return Geo::find_intersections(*static_cast<const Geo::Polyline *>(object0),
+                *static_cast<const Geo::Polygon *>(object1), pos, distance, intersections);
+        case Geo::Type::CIRCLE:
+            return Geo::find_intersections(*static_cast<const Geo::Polyline *>(object0),
+                *static_cast<const Geo::Circle *>(object1), pos, distance, intersections);
+        case Geo::Type::ELLIPSE:
+            return Geo::find_intersections(*static_cast<const Geo::Polyline *>(object0),
+                *static_cast<const Geo::Ellipse *>(object1), pos, distance, intersections);
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::POLYGON:
+        switch (object1->type())
+        {
+        case Geo::Type::POLYLINE:
+            return Geo::find_intersections(*static_cast<const Geo::Polyline *>(object1),
+                *static_cast<const Geo::Polygon *>(object0), pos, distance, intersections);
+        case Geo::Type::POLYGON:
+            return Geo::find_intersections(*static_cast<const Geo::Polygon *>(object0),
+                *static_cast<const Geo::Polygon *>(object1), pos, distance, intersections);
+        case Geo::Type::CIRCLE:
+            return Geo::find_intersections(*static_cast<const Geo::Polygon *>(object0),
+                *static_cast<const Geo::Circle *>(object1), pos, distance, intersections);
+        case Geo::Type::ELLIPSE:
+            return Geo::find_intersections(*static_cast<const Geo::Polygon *>(object0),
+                *static_cast<const Geo::Ellipse *>(object1), pos, distance, intersections);
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::CIRCLE:
+        switch (object1->type())
+        {
+        case Geo::Type::POLYLINE:
+            return Geo::find_intersections(*static_cast<const Geo::Polyline *>(object1),
+                *static_cast<const Geo::Circle *>(object0), pos, distance, intersections);
+        case Geo::Type::POLYGON:
+            return Geo::find_intersections(*static_cast<const Geo::Polygon *>(object1),
+                *static_cast<const Geo::Circle *>(object0), pos, distance, intersections);
+        case Geo::Type::CIRCLE:
+            return Geo::find_intersections(*static_cast<const Geo::Circle *>(object0),
+                *static_cast<const Geo::Circle *>(object1), pos, distance, intersections);
+        case Geo::Type::ELLIPSE:
+            return Geo::find_intersections(*static_cast<const Geo::Ellipse *>(object1),
+                *static_cast<const Geo::Circle *>(object0), pos, distance, intersections);
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::ELLIPSE:
+        switch (object1->type())
+        {
+        case Geo::Type::POLYLINE:
+            return Geo::find_intersections(*static_cast<const Geo::Polyline *>(object1),
+                *static_cast<const Geo::Ellipse *>(object0), pos, distance, intersections);
+        case Geo::Type::POLYGON:
+            return Geo::find_intersections(*static_cast<const Geo::Polygon *>(object1),
+                *static_cast<const Geo::Ellipse *>(object0), pos, distance, intersections);
+        case Geo::Type::CIRCLE:
+            return Geo::find_intersections(*static_cast<const Geo::Ellipse *>(object0),
+                *static_cast<const Geo::Circle *>(object1), pos, distance, intersections);
+        case Geo::Type::ELLIPSE:
+            return Geo::find_intersections(*static_cast<const Geo::Ellipse *>(object0),
+                *static_cast<const Geo::Ellipse *>(object1), pos, distance, intersections);
+        default:
+            break;
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
 }
 
 

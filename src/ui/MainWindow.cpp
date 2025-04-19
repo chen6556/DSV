@@ -391,6 +391,30 @@ void MainWindow::append_file()
     delete dialog;
 }
 
+void MainWindow::set_catch(QAction *action)
+{
+    switch (ui->menuCursorCatch->actions().indexOf(action))
+    {
+    case 0:
+        ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Vertex, action->isChecked());
+        break;
+    case 1:
+        ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Center, action->isChecked());
+        break;
+    case 2:
+        ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Foot, action->isChecked());
+        break;
+    case 3:
+        ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Tangency, action->isChecked());
+        break;
+    case 4:
+        ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Intersection, action->isChecked());
+        break;
+    default:
+        break;
+    }
+}
+
 void MainWindow::refresh_tool_label(const Canvas::Tool tool)
 {
     switch (tool)
@@ -482,6 +506,7 @@ void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
 void MainWindow::refresh_settings()
 {
     _editer.set_backup_count(GlobalSetting::get_instance()->setting["backup_times"].toInt());
+    ui->canvas->set_catch_distance(GlobalSetting::get_instance()->setting["catch_distance"].toDouble());
 }
 
 void MainWindow::load_settings()
@@ -518,6 +543,18 @@ void MainWindow::load_settings()
     {
        _file_type = setting["file_type"].toString();
     }
+
+    ui->canvas->set_catch_distance(GlobalSetting::get_instance()->setting["catch_distance"].toDouble());
+    ui->actionVertex->setChecked(setting["catch_vertex"].toBool());
+    ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Vertex, ui->actionVertex->isChecked());
+    ui->actionCenter->setChecked(setting["catch_center"].toBool());
+    ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Center, ui->actionCenter->isChecked());
+    ui->actionFoot->setChecked(setting["catch_foot"].toBool());
+    ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Foot, ui->actionFoot->isChecked());
+    ui->actionTangency->setChecked(setting["catch_tangency"].toBool());
+    ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Tangency, ui->actionTangency->isChecked());
+    ui->actionIntersection->setChecked(setting["catch_intersection"].toBool());
+    ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Intersection, ui->actionIntersection->isChecked());
 }
 
 void MainWindow::save_settings()
@@ -535,6 +572,11 @@ void MainWindow::save_settings()
     {
         setting["file_type"] = _file_type;
     }
+    setting["catch_vertex"] = ui->actionVertex->isChecked();
+    setting["catch_center"] = ui->actionCenter->isChecked();
+    setting["catch_foot"] = ui->actionFoot->isChecked();
+    setting["catch_tangency"] = ui->actionTangency->isChecked();
+    setting["catch_intersection"] = ui->actionIntersection->isChecked();
 
     GlobalSetting::get_instance()->save_setting();
 }
