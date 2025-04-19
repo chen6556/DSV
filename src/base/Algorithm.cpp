@@ -11,13 +11,12 @@
 
 double Geo::distance(const double x0, const double y0, const double x1, const double y1)
 {
-    return std::sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
+    return std::hypot(x0 - x1, y0 - y1);
 }
 
 double Geo::distance(const Point &point0, const Point &point1)
 {
-    return std::sqrt((point0.x - point1.x) * (point0.x - point1.x)
-                        + (point0.y - point1.y) * (point0.y - point1.y));
+    return std::hypot(point0.x - point1.x, point0.y - point1.y);
 }
 
 double Geo::distance(const Point &point, const Line &line, const bool infinite)
