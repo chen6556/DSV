@@ -1288,60 +1288,48 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             {
                 _bool_flags[6] = true; // is moving obj
             }
-            if (_editer->selected().size() == 1)
+            const std::list<Geo::Geometry *> selected_objects = _editer->selected();
+            if (selected_objects.size() == 1)
             {
                 bool update_vbo = false;
-                for (Geo::Geometry *obj : _editer->selected())
+                std::vector<size_t> indexs0;
+                if (dynamic_cast<const Container<Geo::Polygon> *>(selected_objects.back()) != nullptr)
                 {
-                    _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier);
-                    if (obj->type() == Geo::Type::BEZIER)
+                    indexs0 = Geo::ear_cut_to_indexs(*dynamic_cast<const Geo::Polygon *>(selected_objects.back()));
+                }
+                _editer->translate_points(selected_objects.back(), real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier);
+                switch (selected_objects.back()->type())
+                {
+                case Geo::Type::BEZIER:
+                    _cache_count = 0;
+                    for (const Geo::Point &point : *dynamic_cast<Geo::Bezier *>(selected_objects.back()))
                     {
-                        _cache_count = 0;
-                        for (const Geo::Point &point : *dynamic_cast<Geo::Bezier *>(obj))
-                        {
-                            _cache[_cache_count++] = point.x;
-                            _cache[_cache_count++] = point.y;
-                            _cache[_cache_count++] = 0.5;
-                        }
-                        refresh_cache_vbo(0);
-                        update_vbo = obj->point_count != dynamic_cast<Geo::Bezier *>(obj)->shape().size();
-                        if (update_vbo)
-                        {
-                            break;
-                        }
+                        _cache[_cache_count++] = point.x;
+                        _cache[_cache_count++] = point.y;
+                        _cache[_cache_count++] = 0.5;
                     }
-                    else if (obj->type() == Geo::Type::BSPLINE)
+                    refresh_cache_vbo(0);
+                    update_vbo = selected_objects.back()->point_count != dynamic_cast<Geo::Bezier *>(selected_objects.back())->shape().size();
+                    break;
+                case Geo::Type::BSPLINE:
+                    _cache_count = 0;
+                    for (const Geo::Point &point : dynamic_cast<Geo::BSpline *>(selected_objects.back())->path_points)
                     {
-                        _cache_count = 0;
-                        for (const Geo::Point &point : dynamic_cast<Geo::BSpline *>(obj)->path_points)
-                        {
-                            _cache[_cache_count++] = point.x;
-                            _cache[_cache_count++] = point.y;
-                            _cache[_cache_count++] = 0.5;
-                        }
-                        refresh_cache_vbo(0);
-                        update_vbo = obj->point_count != dynamic_cast<Geo::BSpline *>(obj)->shape().size();
-                        if (update_vbo)
-                        {
-                            break;
-                        }
-                    }  
-                    else if (obj->type() == Geo::Type::CIRCLE)
-                    {
-                        update_vbo = obj->point_count != dynamic_cast<Geo::Circle *>(obj)->shape().size();
-                        if (update_vbo)
-                        {
-                            break;
-                        }
+                        _cache[_cache_count++] = point.x;
+                        _cache[_cache_count++] = point.y;
+                        _cache[_cache_count++] = 0.5;
                     }
-                    else if (obj->type() == Geo::Type::ELLIPSE)
-                    {
-                        update_vbo = obj->point_count != dynamic_cast<Geo::Ellipse *>(obj)->shape().size();
-                        if (update_vbo)
-                        {
-                            break;
-                        }
-                    }
+                    refresh_cache_vbo(0);
+                    update_vbo = selected_objects.back()->point_count != dynamic_cast<Geo::BSpline *>(selected_objects.back())->shape().size();
+                    break;
+                case Geo::Type::CIRCLE:
+                    update_vbo = selected_objects.back()->point_count != dynamic_cast<Geo::Circle *>(selected_objects.back())->shape().size();
+                    break;
+                case Geo::Type::ELLIPSE:
+                    update_vbo = selected_objects.back()->point_count != dynamic_cast<Geo::Ellipse *>(selected_objects.back())->shape().size();
+                    break;
+                default:
+                    break;
                 }
                 if (update_vbo)
                 {
@@ -1351,17 +1339,44 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 else
                 {
                     refresh_selected_vbo();
-                    refresh_brush_ibo();
+                    if (const Geo::Type type = selected_objects.back()->type(); event->modifiers() == Qt::ControlModifier
+                        && (type == Geo::Type::POLYGON || type == Geo::Type::CIRCLE || type == Geo::Type::ELLIPSE))
+                    {
+                        std::vector<size_t> indexs1;
+                        switch (type)
+                        {
+                        case Geo::Type::POLYGON:
+                            indexs1 = Geo::ear_cut_to_indexs(*dynamic_cast<const Geo::Polygon *>(selected_objects.back()));
+                            break;
+                        case Geo::Type::CIRCLE:
+                            indexs1 = Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Circle *>(selected_objects.back())->shape());
+                            break;
+                        case Geo::Type::ELLIPSE:
+                            indexs1 = Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Ellipse *>(selected_objects.back())->shape());
+                            break;
+                        default:
+                            break;
+                        }
+                        if (indexs0.size() != indexs1.size())
+                        {
+                            refresh_brush_ibo();
+                        }
+                        else if (!std::equal(indexs0.begin(), indexs0.end(), indexs1.begin(), indexs1.end()))
+                        {
+                            refresh_brush_ibo(dynamic_cast<const Containerized *>(selected_objects.back())->IBO_index,
+                                selected_objects.back()->point_index, indexs1);
+                        }
+                    }
                 }
             }
             else
             {
-                for (Geo::Geometry *obj : _editer->selected())
+                for (Geo::Geometry *obj : selected_objects)
                 {
                     _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, false);
                 }
                 refresh_selected_vbo();
-                refresh_brush_ibo();
+                // refresh_brush_ibo();
             }
             if (GlobalSetting::get_instance()->setting["show_text"].toBool())
             {
@@ -2319,6 +2334,7 @@ void Canvas::refresh_vbo()
             {
             case Geo::Type::POLYGON:
                 polygon = dynamic_cast<Geo::Polygon *>(geo);
+                dynamic_cast<Containerized *>(geo)->IBO_index = polygon_index_count;
                 for (size_t i : Geo::ear_cut_to_indexs(*polygon))
                 {
                     polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2359,6 +2375,7 @@ void Canvas::refresh_vbo()
                 break;
             case Geo::Type::CIRCLE:
                 circle = dynamic_cast<Geo::Circle *>(geo);
+                dynamic_cast<Containerized *>(geo)->IBO_index = polygon_index_count;
                 for (size_t i : Geo::ear_cut_to_indexs(circle->shape()))
                 {
                     polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2399,6 +2416,7 @@ void Canvas::refresh_vbo()
                 break;
             case Geo::Type::ELLIPSE:
                 ellipse = dynamic_cast<Geo::Ellipse *>(geo);
+                dynamic_cast<Containerized *>(geo)->IBO_index = polygon_index_count;
                 for (size_t i : Geo::ear_cut_to_indexs(ellipse->shape()))
                 {
                     polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2446,6 +2464,7 @@ void Canvas::refresh_vbo()
                     {
                     case Geo::Type::POLYGON:
                         polygon = dynamic_cast<Geo::Polygon *>(item);
+                        dynamic_cast<Containerized *>(item)->IBO_index = polygon_index_count;
                         for (size_t i : Geo::ear_cut_to_indexs(*polygon))
                         {
                             polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2486,6 +2505,7 @@ void Canvas::refresh_vbo()
                         break;
                     case Geo::Type::CIRCLE:
                         circle = dynamic_cast<Geo::Circle *>(item);
+                        dynamic_cast<Containerized *>(item)->IBO_index = polygon_index_count;
                         for (size_t i : Geo::ear_cut_to_indexs(circle->shape()))
                         {
                             polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2526,6 +2546,7 @@ void Canvas::refresh_vbo()
                         break;
                     case Geo::Type::ELLIPSE:
                         ellipse = dynamic_cast<Geo::Ellipse *>(item);
+                        dynamic_cast<Containerized *>(item)->IBO_index = polygon_index_count;
                         for (size_t i : Geo::ear_cut_to_indexs(ellipse->shape()))
                         {
                             polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2790,6 +2811,7 @@ void Canvas::refresh_vbo(const bool unitary)
     size_t data_len = 1026, data_count = 0;
     double *data = new double[data_len];
 
+    qDebug() << "refresh vbo";
     makeCurrent();
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
 
@@ -3029,6 +3051,8 @@ void Canvas::refresh_vbo(const bool unitary)
 
     doneCurrent();
     delete []data;
+
+    qDebug() << "refresh vbo end";
 
     if (GlobalSetting::get_instance()->setting["show_text"].toBool())
     {
@@ -3477,6 +3501,7 @@ void Canvas::refresh_brush_ibo()
             switch (geo->type())
             {
             case Geo::Type::POLYGON:
+                dynamic_cast<Containerized *>(geo)->IBO_index = polygon_index_count;
                 for (size_t i : Geo::ear_cut_to_indexs(*dynamic_cast<const Geo::Polygon *>(geo)))
                 {
                     polygon_indexs[polygon_index_count++] = geo->point_index + i;
@@ -3491,6 +3516,7 @@ void Canvas::refresh_brush_ibo()
                 }
                 break;
             case Geo::Type::CIRCLE:
+                dynamic_cast<Containerized *>(geo)->IBO_index = polygon_index_count;
                 for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Circle *>(geo)->shape()))
                 {
                     polygon_indexs[polygon_index_count++] = geo->point_index + i;
@@ -3505,6 +3531,7 @@ void Canvas::refresh_brush_ibo()
                 }
                 break;
             case Geo::Type::ELLIPSE:
+                dynamic_cast<Containerized *>(geo)->IBO_index = polygon_index_count;
                 for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Ellipse *>(geo)->shape()))
                 {
                     polygon_indexs[polygon_index_count++] = geo->point_index + i;
@@ -3519,11 +3546,12 @@ void Canvas::refresh_brush_ibo()
                 }
                 break;
             case Geo::Type::COMBINATION:
-                for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                for (Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
                 {
                     switch (item->type())
                     {
                     case Geo::Type::POLYGON:
+                        dynamic_cast<Containerized *>(item)->IBO_index = polygon_index_count;
                         for (size_t i : Geo::ear_cut_to_indexs(*dynamic_cast<const Geo::Polygon *>(item)))
                         {
                             polygon_indexs[polygon_index_count++] = item->point_index + i;
@@ -3538,6 +3566,7 @@ void Canvas::refresh_brush_ibo()
                         }
                         break;
                     case Geo::Type::CIRCLE:
+                        dynamic_cast<Containerized *>(item)->IBO_index = polygon_index_count;
                         for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Circle *>(item)->shape()))
                         {
                             polygon_indexs[polygon_index_count++] = item->point_index + i;
@@ -3552,6 +3581,7 @@ void Canvas::refresh_brush_ibo()
                         }
                         break;
                     case Geo::Type::ELLIPSE:
+                        dynamic_cast<Containerized *>(item)->IBO_index = polygon_index_count;
                         for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Ellipse *>(item)->shape()))
                         {
                             polygon_indexs[polygon_index_count++] = item->point_index + i;
@@ -3583,6 +3613,20 @@ void Canvas::refresh_brush_ibo()
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_STATIC_DRAW);
     doneCurrent();
 
+    delete []polygon_indexs;
+}
+
+void Canvas::refresh_brush_ibo(const unsigned int index, const unsigned int offset, const std::vector<size_t> &values)
+{
+    unsigned int *polygon_indexs = new unsigned int[values.size()];
+    for (size_t i = 0, count = values.size(); i < count; ++i)
+    {
+        polygon_indexs[i] = values[i] + offset;
+    }
+    makeCurrent();
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]); // polygon
+    glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index, sizeof(unsigned int) * values.size(), polygon_indexs);
+    doneCurrent();
     delete []polygon_indexs;
 }
 

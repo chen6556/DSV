@@ -49,6 +49,7 @@ protected:
 public:
     unsigned long long text_index = 0;
     unsigned long long text_count = 0;
+    unsigned long long IBO_index = 0;
 
 public:
     Containerized() {};

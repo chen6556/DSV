@@ -222,6 +222,16 @@ void ChangeShapeCommand::undo(Graph *graph)
             circle->x = std::get<0>(_shape.front());
             circle->y = std::get<1>(_shape.front());
             circle->radius = std::get<0>(_shape.back());
+            circle->update_shape(Geo::Circle::default_down_sampling_value);
+        }
+        break;
+    case Geo::Type::ELLIPSE:
+        {
+            Geo::Ellipse *ellipse = static_cast<Geo::Ellipse *>(_object);
+            const double parameter[8] = {std::get<0>(_shape[0]), std::get<1>(_shape[0]), std::get<0>(_shape[1]), std::get<1>(_shape[1]),
+                std::get<0>(_shape[2]), std::get<1>(_shape[2]), std::get<0>(_shape[3]), std::get<1>(_shape[3])};
+            ellipse->reset_parameter(parameter);
+            ellipse->update_shape(Geo::Ellipse::default_down_sampling_value);
         }
         break;
     default:

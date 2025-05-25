@@ -761,6 +761,11 @@ namespace Geo
 
         void set_center(const double x, const double y);
 
+        void reset_parameter(const Geo::Point &a0, const Geo::Point &a1, const Geo::Point &b0, const Geo::Point &b1);
+
+        // a0x, a0y, a1x, a1y, b0x, b0y, b1x, b1y
+        void reset_parameter(const double parameters[8]);
+
         const Point &a0() const;
 
         const Point &a1() const;

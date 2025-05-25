@@ -236,7 +236,11 @@ public:
 
     void refresh_selected_vbo();
 
+    // 数量发生变化时更新IBO数组
     void refresh_brush_ibo();
+
+    // 数量不发生变化时更新部分IBO数组
+    void refresh_brush_ibo(const unsigned int index, const unsigned int offset, const std::vector<size_t> &values);
 
     void refresh_text_vbo();
 

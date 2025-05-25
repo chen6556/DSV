@@ -2597,6 +2597,22 @@ void Ellipse::set_center(const double x, const double y)
     translate(x - anchor.x, y - anchor.y);
 }
 
+void Ellipse::reset_parameter(const Geo::Point &a0, const Geo::Point &a1, const Geo::Point &b0, const Geo::Point &b1)
+{
+    _a[0] = a0;
+    _a[1] = a1;
+    _b[0] = b0;
+    _b[1] = b1;
+}
+
+void Ellipse::reset_parameter(const double parameters[8])
+{
+    _a[0].x = parameters[0], _a[0].y = parameters[1];
+    _a[1].y = parameters[2], _a[1].y = parameters[3];
+    _b[0].x = parameters[4], _b[0].y = parameters[5];
+    _b[1].x = parameters[6], _b[1].y = parameters[7];
+}
+
 const Point &Ellipse::a0() const
 {
     return _a[0];

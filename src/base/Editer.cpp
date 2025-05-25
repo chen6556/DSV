@@ -929,6 +929,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                         _edited_shape.emplace_back(temp->radius, 0);
                     }
                     temp->radius = Geo::distance(*temp, Geo::Point(x1, y1));
+                    temp->update_shape(Geo::Circle::default_down_sampling_value);
                 }
             }
             else
@@ -946,12 +947,28 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                 if (Geo::distance(temp->a0(), point0) <= catch_distance || Geo::distance(temp->a0(), point1) <= catch_distance
                     || Geo::distance(temp->a1(), point0) <= catch_distance || Geo::distance(temp->a1(), point1) <= catch_distance)
                 {
+                    if (_edited_shape.empty())
+                    {
+                        _edited_shape.emplace_back(temp->a0().x, temp->a0().y);
+                        _edited_shape.emplace_back(temp->a1().x, temp->a1().y);
+                        _edited_shape.emplace_back(temp->b0().x, temp->b0().y);
+                        _edited_shape.emplace_back(temp->b1().x, temp->b1().y);
+                    }
                     temp->set_lengtha(Geo::distance(point1, temp->center()));
+                    temp->update_shape(Geo::Ellipse::default_down_sampling_value);
                 }
                 else if (Geo::distance(temp->b0(), point0) <= catch_distance || Geo::distance(temp->b0(), point1) <= catch_distance
                     || Geo::distance(temp->b1(), point0) <= catch_distance || Geo::distance(temp->b1(), point1) <= catch_distance)
                 {
+                    if (_edited_shape.empty())
+                    {
+                        _edited_shape.emplace_back(temp->a0().x, temp->a0().y);
+                        _edited_shape.emplace_back(temp->a1().x, temp->a1().y);
+                        _edited_shape.emplace_back(temp->b0().x, temp->b0().y);
+                        _edited_shape.emplace_back(temp->b1().x, temp->b1().y);
+                    }
                     temp->set_lengthb(Geo::distance(point1, temp->center()));
+                    temp->update_shape(Geo::Ellipse::default_down_sampling_value);
                 }
             }
             else
