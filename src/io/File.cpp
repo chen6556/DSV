@@ -319,8 +319,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
             case Geo::Type::ELLIPSE:
                 ellipsecontainer = dynamic_cast<const Container<Geo::Ellipse> *>(geo);
                 {
-                    const Geo::Polygon points = Geo::ellipse_to_polygon(ellipsecontainer->shape(),
-                        Geo::Ellipse::default_down_sampling_value);
+                    const Geo::Polygon &points = ellipsecontainer->shape().shape();
                     output << "PU" << points.front().x * x_ratio << ',' << points.front().y * y_ratio << ";PD";
                     for (const Geo::Point &point : points)
                     {
@@ -382,8 +381,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     case Geo::Type::ELLIPSE:
                         ellipsecontainer = dynamic_cast<const Container<Geo::Ellipse> *>(item);
                         {
-                            const Geo::Polygon points = Geo::ellipse_to_polygon(ellipsecontainer->shape(),
-                                Geo::Ellipse::default_down_sampling_value);
+                            const Geo::Polygon &points = ellipsecontainer->shape().shape();
                             output << "PU" << points.front().x * x_ratio << ',' << points.front().y * y_ratio << ";PD";
                             for (const Geo::Point &point : points)
                             {

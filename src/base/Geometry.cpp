@@ -1794,16 +1794,18 @@ Circle::Circle(const double x, const double y, const double r)
     : Point(x, y), radius(r)
 {
     assert(r > 0);
+    update_shape(Geo::Circle::default_down_sampling_value);
 }
 
 Circle::Circle(const Point &point, const double r)
     : Point(point), radius(r)
 {
     assert(r > 0);
+    update_shape(Geo::Circle::default_down_sampling_value);
 }
 
 Circle::Circle(const Circle &circle)
-    : Point(circle), radius(circle.radius)
+    : Point(circle), radius(circle.radius), _shape(circle._shape)
 {}
 
 Circle &Circle::operator=(const Circle &circle)
@@ -1812,6 +1814,7 @@ Circle &Circle::operator=(const Circle &circle)
     {
         Point::operator=(circle);
         radius = circle.radius;
+        _shape = circle._shape;
     }
     return *this;
 }
@@ -1851,18 +1854,41 @@ void Circle::transform(const double a, const double b, const double c, const dou
 {
     Point::transform(a,b,c,d,e,f);
     radius *= std::abs(a);
+    if (std::abs(a) == 1 && std::abs(e) == 1)
+    {
+        _shape.transform(a, b, c, d, e, f);
+    }
+    else
+    {
+        update_shape(Geo::Circle::default_down_sampling_value);
+    }
 }
 
 void Circle::transform(const double mat[6])
 {
     Point::transform(mat);
     radius *= std::abs(mat[0]);
+    if (std::abs(mat[0]) == 1 && std::abs(mat[4]) == 1)
+    {
+        _shape.transform(mat);
+    }
+    else
+    {
+        update_shape(Geo::Circle::default_down_sampling_value);
+    }
+}
+
+void Circle::translate(const double tx, const double ty)
+{
+    Point::translate(tx, ty);
+    _shape.translate(tx, ty);
 }
 
 void Circle::scale(const double x, const double y, const double k)
 {
     Point::scale(x, y, k);
     radius *= k;
+    update_shape(Geo::Circle::default_down_sampling_value);
 }
 
 Polygon Circle::convex_hull() const
@@ -1910,6 +1936,17 @@ Circle Circle::operator-(const Point &point) const
 {
     return Circle(x - point.x, y - point.y, radius);
 }
+
+void Circle::update_shape(const double down_sampling_value)
+{
+    _shape = Geo::circle_to_polygon(x, y, radius, down_sampling_value);
+}
+
+const Polygon &Circle::shape() const
+{
+    return _shape;
+}
+
 
 // Line
 
@@ -2323,7 +2360,7 @@ Ellipse::Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point 
 }
 
 Ellipse::Ellipse(const Ellipse &ellipse)
-    : Geometry(ellipse)
+    : Geometry(ellipse), _shape(ellipse._shape)
 {
     _a[0] = ellipse._a[0];
     _a[1] = ellipse._a[1];
@@ -2340,6 +2377,7 @@ Ellipse &Ellipse::operator=(const Ellipse &ellipse)
         _a[1] = ellipse._a[1];
         _b[0] = ellipse._b[0];
         _b[1] = ellipse._b[1];
+        _shape = ellipse._shape;
     }
     return *this;
 }
@@ -2385,6 +2423,14 @@ void Ellipse::transform(const double a, const double b, const double c, const do
     _a[1].transform(a, b, c, d, e, f);
     _b[0].transform(a, b, c, d, e, f);
     _b[1].transform(a, b, c, d, e, f);
+    if (std::abs(a) == 1 && std::abs(e) == 1)
+    {
+        _shape.transform(a, b, c, d, e, f);
+    }
+    else
+    {
+        update_shape(Geo::Ellipse::default_down_sampling_value);
+    }
 }
 
 void Ellipse::transform(const double mat[6])
@@ -2393,6 +2439,14 @@ void Ellipse::transform(const double mat[6])
     _a[1].transform(mat);
     _b[0].transform(mat);
     _b[1].transform(mat);
+    if (std::abs(mat[0]) == 1 && std::abs(mat[4]) == 1)
+    {
+        _shape.transform(mat);
+    }
+    else
+    {
+        update_shape(Geo::Ellipse::default_down_sampling_value);
+    }
 }
 
 void Ellipse::translate(const double x, const double y)
@@ -2401,6 +2455,7 @@ void Ellipse::translate(const double x, const double y)
     _a[1].translate(x, y);
     _b[0].translate(x, y);
     _b[1].translate(x, y);
+    _shape.translate(x, y);
 }
 
 void Ellipse::rotate(const double x, const double y, const double rad)
@@ -2409,6 +2464,7 @@ void Ellipse::rotate(const double x, const double y, const double rad)
     _a[1].rotate(x, y, rad);
     _b[0].rotate(x, y, rad);
     _b[1].rotate(x, y, rad);
+    _shape.rotate(x, y, rad);
 }
 
 void Ellipse::scale(const double x, const double y, const double k)
@@ -2417,6 +2473,7 @@ void Ellipse::scale(const double x, const double y, const double k)
     _a[1].scale(x, y, k);
     _b[0].scale(x, y, k);
     _b[1].scale(x, y, k);
+    update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
 Polygon Ellipse::convex_hull() const
@@ -2590,6 +2647,17 @@ Point Ellipse::c1() const
         const double bb = Geo::distance_square(_a[0], _a[1]);
         return center() + (_b[1] - _b[0]).normalize() * std::sqrt(aa - bb) / 2;
     }
+}
+
+void Ellipse::update_shape(const double down_sampling_value)
+{
+    const Geo::Point point = center();
+    _shape = Geo::ellipse_to_polygon(point.x, point.y, lengtha(), lengthb(), angle(), down_sampling_value);
+}
+
+const Polygon &Ellipse::shape() const
+{
+    return _shape;
 }
 
 

@@ -361,7 +361,8 @@ void Canvas::paintGL()
     }
     else if (!_circle_cache.empty())
     {
-        const Geo::Polygon points(Geo::circle_to_polygon(_circle_cache, Geo::Circle::default_down_sampling_value));
+        _circle_cache.update_shape(Geo::Circle::default_down_sampling_value);
+        const Geo::Polygon &points = _circle_cache.shape();
         _cache_count = _cache_len;
         while (_cache_len < points.size() * 3)
         {
@@ -410,7 +411,8 @@ void Canvas::paintGL()
     }
     else if (!_ellipse_cache.empty())
     {
-        const Geo::Polygon points(Geo::ellipse_to_polygon(_ellipse_cache, Geo::Ellipse::default_down_sampling_value));
+        _ellipse_cache.update_shape(Geo::Ellipse::default_down_sampling_value);
+        const Geo::Polygon &points = _ellipse_cache.shape();
         _cache_count = _cache_len;
         while (_cache_len < points.size() * 3)
         {
@@ -533,6 +535,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 }
                 else
                 {
+                    _circle_cache.update_shape(Geo::Circle::default_down_sampling_value);
                     _editer->append(_circle_cache);
                     _circle_cache.clear();
                     _tool_flags[1] = _tool_flags[0];
@@ -565,6 +568,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     else
                     {
                         _ellipse_cache.set_lengthb(Geo::distance(real_x1, real_y1, _stored_coord.x, _stored_coord.y));
+                        _ellipse_cache.update_shape(Geo::Ellipse::default_down_sampling_value);
                         _editer->append(_ellipse_cache);
                         _ellipse_cache.clear();
                         _tool_flags[1] = _tool_flags[0];
@@ -1324,7 +1328,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     }  
                     else if (obj->type() == Geo::Type::CIRCLE)
                     {
-                        update_vbo = obj->point_count != Geo::circle_to_polygon(*dynamic_cast<Geo::Circle *>(obj), Geo::Circle::default_down_sampling_value).size();
+                        update_vbo = obj->point_count != dynamic_cast<Geo::Circle *>(obj)->shape().size();
                         if (update_vbo)
                         {
                             break;
@@ -1332,7 +1336,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     }
                     else if (obj->type() == Geo::Type::ELLIPSE)
                     {
-                        update_vbo = obj->point_count != Geo::ellipse_to_polygon(*dynamic_cast<Geo::Ellipse *>(obj), Geo::Ellipse::default_down_sampling_value).size();
+                        update_vbo = obj->point_count != dynamic_cast<Geo::Ellipse *>(obj)->shape().size();
                         if (update_vbo)
                         {
                             break;
@@ -2118,6 +2122,7 @@ void Canvas::ellipse_cmd(const double x, const double y, const double rad, const
     _ellipse_cache.set_lengtha(a);
     _ellipse_cache.set_lengthb(b);
     _ellipse_cache.rotate(_ellipse_cache.center().x, _ellipse_cache.center().y, rad);
+    _ellipse_cache.update_shape(Geo::Ellipse::default_down_sampling_value);
     _editer->append(_ellipse_cache);
     _ellipse_cache.clear();
     _tool_flags[1] = _tool_flags[0];
@@ -2295,7 +2300,6 @@ void Canvas::refresh_vbo()
     double *data = new double[data_len];
     unsigned int *polyline_indexs = new unsigned int[polyline_index_len];
     unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
-    Geo::Polygon points;
     Geo::Polygon *polygon = nullptr;
     Geo::Polyline *polyline = nullptr;
     Geo::Circle *circle = nullptr;
@@ -2355,8 +2359,7 @@ void Canvas::refresh_vbo()
                 break;
             case Geo::Type::CIRCLE:
                 circle = dynamic_cast<Geo::Circle *>(geo);
-                points = Geo::circle_to_polygon(*circle, Geo::Circle::default_down_sampling_value);
-                for (size_t i : Geo::ear_cut_to_indexs(points))
+                for (size_t i : Geo::ear_cut_to_indexs(circle->shape()))
                 {
                     polygon_indexs[polygon_index_count++] = data_count / 3 + i;
                     if (polygon_index_count == polygon_index_len)
@@ -2368,7 +2371,7 @@ void Canvas::refresh_vbo()
                         polygon_indexs = temp;
                     }
                 }
-                for (const Geo::Point &point : points)
+                for (const Geo::Point &point : circle->shape())
                 {
                     polyline_indexs[polyline_index_count++] = data_count / 3;
                     data[data_count++] = point.x;
@@ -2396,8 +2399,7 @@ void Canvas::refresh_vbo()
                 break;
             case Geo::Type::ELLIPSE:
                 ellipse = dynamic_cast<Geo::Ellipse *>(geo);
-                points = Geo::ellipse_to_polygon(*ellipse, Geo::Ellipse::default_down_sampling_value);
-                for (size_t i : Geo::ear_cut_to_indexs(points))
+                for (size_t i : Geo::ear_cut_to_indexs(ellipse->shape()))
                 {
                     polygon_indexs[polygon_index_count++] = data_count / 3 + i;
                     if (polygon_index_count == polygon_index_len)
@@ -2409,7 +2411,7 @@ void Canvas::refresh_vbo()
                         polygon_indexs = temp;
                     }
                 }
-                for (const Geo::Point &point : points)
+                for (const Geo::Point &point : ellipse->shape())
                 {
                     polyline_indexs[polyline_index_count++] = data_count / 3;
                     data[data_count++] = point.x;
@@ -2484,8 +2486,7 @@ void Canvas::refresh_vbo()
                         break;
                     case Geo::Type::CIRCLE:
                         circle = dynamic_cast<Geo::Circle *>(item);
-                        points = Geo::circle_to_polygon(*circle, Geo::Circle::default_down_sampling_value);
-                        for (size_t i : Geo::ear_cut_to_indexs(points))
+                        for (size_t i : Geo::ear_cut_to_indexs(circle->shape()))
                         {
                             polygon_indexs[polygon_index_count++] = data_count / 3 + i;
                             if (polygon_index_count == polygon_index_len)
@@ -2497,7 +2498,7 @@ void Canvas::refresh_vbo()
                                 polygon_indexs = temp;
                             }
                         }
-                        for (const Geo::Point &point : points)
+                        for (const Geo::Point &point : circle->shape())
                         {
                             polyline_indexs[polyline_index_count++] = data_count / 3;
                             data[data_count++] = point.x;
@@ -2525,8 +2526,7 @@ void Canvas::refresh_vbo()
                         break;
                     case Geo::Type::ELLIPSE:
                         ellipse = dynamic_cast<Geo::Ellipse *>(item);
-                        points = Geo::ellipse_to_polygon(*ellipse, Geo::Ellipse::default_down_sampling_value);
-                        for (size_t i : Geo::ear_cut_to_indexs(points))
+                        for (size_t i : Geo::ear_cut_to_indexs(ellipse->shape()))
                         {
                             polygon_indexs[polygon_index_count++] = data_count / 3 + i;
                             if (polygon_index_count == polygon_index_len)
@@ -2538,7 +2538,7 @@ void Canvas::refresh_vbo()
                                 polygon_indexs = temp;
                             }
                         }
-                        for (const Geo::Point &point : points)
+                        for (const Geo::Point &point : ellipse->shape())
                         {
                             polyline_indexs[polyline_index_count++] = data_count / 3;
                             data[data_count++] = point.x;
@@ -2827,7 +2827,7 @@ void Canvas::refresh_vbo(const bool unitary)
                 }
                 break;
             case Geo::Type::CIRCLE:
-                for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(geo), Geo::Circle::default_down_sampling_value))
+                for (const Geo::Point &point : dynamic_cast<const Geo::Circle *>(geo)->shape())
                 {
                     data[data_count++] = point.x;
                     data[data_count++] = point.y;
@@ -2843,7 +2843,7 @@ void Canvas::refresh_vbo(const bool unitary)
                 }
                 break;
             case Geo::Type::ELLIPSE:
-                for (const Geo::Point &point : Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(geo), Geo::Ellipse::default_down_sampling_value))
+                for (const Geo::Point &point : dynamic_cast<const Geo::Ellipse *>(geo)->shape())
                 {
                     data[data_count++] = point.x;
                     data[data_count++] = point.y;
@@ -2881,7 +2881,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         }
                         break;
                     case Geo::Type::CIRCLE:
-                        for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item), Geo::Circle::default_down_sampling_value))
+                        for (const Geo::Point &point : dynamic_cast<const Geo::Circle *>(item)->shape())
                         {
                             data[data_count++] = point.x;
                             data[data_count++] = point.y;
@@ -2897,7 +2897,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         }
                         break;
                     case Geo::Type::ELLIPSE:
-                        for (const Geo::Point &point : Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(item), Geo::Ellipse::default_down_sampling_value))
+                        for (const Geo::Point &point : dynamic_cast<const Geo::Ellipse *>(item)->shape())
                         {
                             data[data_count++] = point.x;
                             data[data_count++] = point.y;
@@ -3321,7 +3321,7 @@ void Canvas::refresh_selected_vbo()
             }
             break;
         case Geo::Type::CIRCLE:
-            for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(obj), Geo::Circle::default_down_sampling_value))
+            for (const Geo::Point &point : dynamic_cast<const Geo::Circle *>(obj)->shape())
             {
                 data[data_count++] = point.x;
                 data[data_count++] = point.y;
@@ -3329,7 +3329,7 @@ void Canvas::refresh_selected_vbo()
             }
             break;
         case Geo::Type::ELLIPSE:
-            for (const Geo::Point &point : Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(obj), Geo::Ellipse::default_down_sampling_value))
+            for (const Geo::Point &point : dynamic_cast<const Geo::Ellipse *>(obj)->shape())
             {
                 data[data_count++] = point.x;
                 data[data_count++] = point.y;
@@ -3351,7 +3351,7 @@ void Canvas::refresh_selected_vbo()
                     }
                     break;
                 case Geo::Type::CIRCLE:
-                    for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item), Geo::Circle::default_down_sampling_value))
+                    for (const Geo::Point &point : dynamic_cast<const Geo::Circle *>(item)->shape())
                     {
                         data[data_count++] = point.x;
                         data[data_count++] = point.y;
@@ -3359,7 +3359,7 @@ void Canvas::refresh_selected_vbo()
                     }
                     break;
                 case Geo::Type::ELLIPSE:
-                    for (const Geo::Point &point : Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(item), Geo::Ellipse::default_down_sampling_value))
+                    for (const Geo::Point &point : dynamic_cast<const Geo::Ellipse *>(item)->shape())
                     {
                         data[data_count++] = point.x;
                         data[data_count++] = point.y;
@@ -3491,7 +3491,7 @@ void Canvas::refresh_brush_ibo()
                 }
                 break;
             case Geo::Type::CIRCLE:
-                for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(geo), Geo::Circle::default_down_sampling_value)))
+                for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Circle *>(geo)->shape()))
                 {
                     polygon_indexs[polygon_index_count++] = geo->point_index + i;
                     if (polygon_index_count == polygon_index_len)
@@ -3505,7 +3505,7 @@ void Canvas::refresh_brush_ibo()
                 }
                 break;
             case Geo::Type::ELLIPSE:
-                for (size_t i : Geo::ear_cut_to_indexs(Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(geo), Geo::Ellipse::default_down_sampling_value)))
+                for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Ellipse *>(geo)->shape()))
                 {
                     polygon_indexs[polygon_index_count++] = geo->point_index + i;
                     if (polygon_index_count == polygon_index_len)
@@ -3538,7 +3538,7 @@ void Canvas::refresh_brush_ibo()
                         }
                         break;
                     case Geo::Type::CIRCLE:
-                        for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item), Geo::Circle::default_down_sampling_value)))
+                        for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Circle *>(item)->shape()))
                         {
                             polygon_indexs[polygon_index_count++] = item->point_index + i;
                             if (polygon_index_count == polygon_index_len)
@@ -3552,7 +3552,7 @@ void Canvas::refresh_brush_ibo()
                         }
                         break;
                     case Geo::Type::ELLIPSE:
-                        for (size_t i : Geo::ear_cut_to_indexs(Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(item), Geo::Ellipse::default_down_sampling_value)))
+                        for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Ellipse *>(item)->shape()))
                         {
                             polygon_indexs[polygon_index_count++] = item->point_index + i;
                             if (polygon_index_count == polygon_index_len)

@@ -1539,8 +1539,8 @@ int Geo::is_intersected(const Ellipse &ellipse0, const Ellipse &ellipse1, Point 
         return 0;
     }
 
-    const Geo::Polygon polygon0(Geo::ellipse_to_polygon(ellipse0, Geo::Ellipse::default_down_sampling_value));
-    const Geo::Polygon polygon1(Geo::ellipse_to_polygon(ellipse1, Geo::Ellipse::default_down_sampling_value));
+    const Geo::Polygon &polygon0 = ellipse0.shape();
+    const Geo::Polygon &polygon1 = ellipse1.shape();
     std::vector<Geo::Point> points;
     for (size_t i = 1, count0 = polygon0.size(); i < count0; ++i)
     {
@@ -1657,8 +1657,8 @@ int Geo::is_intersected(const Circle &circle, const Ellipse &ellipse, Point &poi
         return 0;
     }
 
-    const Geo::Polygon polygon0(Geo::circle_to_polygon(circle, Geo::Circle::default_down_sampling_value));
-    const Geo::Polygon polygon1(Geo::ellipse_to_polygon(ellipse, Geo::Ellipse::default_down_sampling_value));
+    const Geo::Polygon &polygon0 = circle.shape();
+    const Geo::Polygon &polygon1 = ellipse.shape();
     std::vector<Geo::Point> points;
     for (size_t i = 1, count0 = polygon0.size(); i < count0; ++i)
     {
@@ -2208,8 +2208,7 @@ bool Geo::find_intersections(const Geo::Circle &circle0, const Geo::Circle &circ
 bool Geo::find_intersections(const Geo::Ellipse &ellipse0, const Geo::Ellipse &ellipse1, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
 {
     const size_t count0 = intersections.size();
-    if (std::vector<Geo::Point> points; Geo::find_intersections(Geo::ellipse_to_polygon(ellipse0, Geo::Ellipse::default_down_sampling_value),
-        Geo::ellipse_to_polygon(ellipse1, Geo::Ellipse::default_down_sampling_value), pos, distance, points))
+    if (std::vector<Geo::Point> points; Geo::find_intersections(ellipse0.shape(), ellipse1.shape(), pos, distance, points))
     {
         intersections.insert(intersections.end(), points.begin(), points.end());
     }
@@ -2257,8 +2256,7 @@ bool Geo::find_intersections(const Geo::Ellipse &ellipse0, const Geo::Ellipse &e
 bool Geo::find_intersections(const Geo::Ellipse &ellipse, const Geo::Circle &circle, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
 {
     const size_t count0 = intersections.size();
-    if (std::vector<Geo::Point> points; Geo::find_intersections(Geo::ellipse_to_polygon(ellipse, Geo::Ellipse::default_down_sampling_value),
-        Geo::circle_to_polygon(circle, Geo::Circle::default_down_sampling_value), pos, distance, points))
+    if (std::vector<Geo::Point> points; Geo::find_intersections(ellipse.shape(), circle.shape(), pos, distance, points))
     {
         intersections.insert(intersections.end(), points.begin(), points.end());
     }

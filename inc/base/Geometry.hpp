@@ -529,6 +529,9 @@ namespace Geo
         double radius = 0;
         static double default_down_sampling_value;
 
+    private:
+        Polygon _shape;
+
     public:
         Circle() {};
 
@@ -556,6 +559,8 @@ namespace Geo
 
         void transform(const double mat[6]) override;
 
+        void translate(const double tx, const double ty) override;
+
         void scale(const double x, const double y, const double k) override;
 
         Polygon convex_hull() const override;
@@ -567,6 +572,10 @@ namespace Geo
         Circle operator+(const Point &point) const;
 
         Circle operator-(const Point &point) const;
+
+        void update_shape(const double down_sampling_value);
+
+        const Polygon &shape() const;
     };
 
     class Line : public Geometry
@@ -691,6 +700,7 @@ namespace Geo
 
     private:
         Point _a[2], _b[2];
+        Polygon _shape;
 
     public:
         Ellipse() {};
@@ -762,6 +772,10 @@ namespace Geo
         Point c0() const;
 
         Point c1() const;
+
+        void update_shape(const double down_sampling_value);
+
+        const Polygon &shape() const;
     };
 
     class BSpline : public Geometry
