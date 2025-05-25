@@ -2,7 +2,7 @@
 #include <QString>
 
 #include "io/DSVParser.hpp"
-#include "io/Parser/ParserGen2.hpp"
+#include <Parser/ParserGen2.hpp>
 
 
 namespace DSVParser
@@ -103,17 +103,52 @@ void Importer::store_bezier()
 {
     if (_is_combination)
     {
-        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Geo::Bezier(_points.cbegin(), _points.cend(), _parameters.back()));
-        dynamic_cast<Geo::Bezier *>(dynamic_cast<Combination *>(
-                                        _graph->container_groups().back().back())
-                                        ->back())
-            ->update_shape();
+        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
+            new Geo::Bezier(_points.cbegin(), _points.cend(), _parameters.back()));
+        dynamic_cast<Geo::Bezier *>(dynamic_cast<Combination *>(_graph->container_groups().back().back())
+            ->back())->update_shape();
     }
     else
     {
         _graph->container_groups().back().append(
             new Geo::Bezier(_points.cbegin(), _points.cend(), _parameters.back()));
         dynamic_cast<Geo::Bezier *>(_graph->container_groups().back().back())->update_shape();
+    }
+    _points.clear();
+    _parameters.pop_back();
+}
+
+void Importer::store_bspline()
+{
+    if (_parameters.size() > 2)
+    {
+        _parameters.erase(_parameters.begin(), _parameters.begin() + (_parameters.size() - 2));
+    }
+    if (_is_combination)
+    {
+        if (_parameters.front() == 2)
+        {
+            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
+                new Geo::QuadBSpline(_points.cbegin(), _points.cend(), true));
+        }
+        else
+        {
+            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
+                new Geo::CubicBSpline(_points.cbegin(), _points.cend(), true));
+        }
+    }
+    else
+    {
+        if (_parameters.front() == 2)
+        {
+            _graph->container_groups().back().append(
+                new Geo::QuadBSpline(_points.cbegin(), _points.cend(), true));
+        }
+        else
+        {
+            _graph->container_groups().back().append(
+                new Geo::CubicBSpline(_points.cbegin(), _points.cend(), true));
+        }
     }
     _points.clear();
     _parameters.pop_back();
@@ -184,6 +219,7 @@ Action<void> circle_a(&importer, &Importer::store_circle);
 Action<void> ellipse_a(&importer, &Importer::store_ellipse);
 Action<void> polyline_a(&importer, &Importer::store_polyline);
 Action<void> bezier_a(&importer, &Importer::store_bezier);
+Action<void> bspline_a(&importer, &Importer::store_bspline);
 Action<void> text_a(&importer, &Importer::store_text);
 Action<std::string> str_a(&importer, &Importer::store_text);
 Action<void> begin_combination_a(&importer, &Importer::begin_combination);
@@ -200,12 +236,13 @@ Parser<bool> polygon = str_p("POLYGON") >> !str >> !eol_p() >> list_p(coord, sep
 Parser<bool> circle = str_p("CIRCLE") >> !str >> !eol_p() >> coord >> separator >> parameter >> !eol_p() >> end[circle_a];
 Parser<bool> ellipse = str_p("ELLIPSE") >> !str >> !eol_p() >> list_p(coord, separator) >> !eol_p() >> end[ellipse_a];
 Parser<bool> polyline = str_p("POLYLINE") >> !eol_p() >> list_p(coord, separator) >> !eol_p() >> end[polyline_a];
-Parser<bool> bezier = str_p("BEZIER") >> !eol_p() >> parameter >> separator >> list_p(coord, separator) >> !eol_p() >> end[bezier_a];
+Parser<bool> bezier = str_p("BEZIER") >> !eol_p() >> parameter >> separator >> parameter >> separator >> list_p(coord, separator) >> !eol_p() >> end[bezier_a];
+Parser<bool> bspline = str_p("BSPLINE") >> !eol_p() >> parameter >> separator >> list_p(coord, separator) >> !eol_p() >> end[bspline_a];
 Parser<bool> text = str_p("TEXT") >> str >> !eol_p() >> coord >> !eol_p() >> end[text_a];
 Parser<bool> combination = str_p("COMBINATION")[begin_combination_a] >> !eol_p() >>
                            +(polygon | polyline | circle | ellipse | text | bezier) >> end[end_combination_a];
 Parser<bool> group = str_p("GROUP") >> str[group_a] >> !eol_p() >>
-                     *(polygon | polyline | circle | ellipse | text | combination | bezier) >> str_p("END") >> !eol_p();
+                     *(polygon | polyline | circle | ellipse | text | combination | bezier | bspline) >> str_p("END") >> !eol_p();
 Parser<bool> dsv = +group;
 
 

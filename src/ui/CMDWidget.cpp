@@ -27,7 +27,7 @@ void CMDWidget::init()
     ui->cmd->installEventFilter(this);
 
     _cmd_list << QString() << "OPEN" << "APPEND" << "SAVE" << "EXIT" << "MAIN"
-        << "LENGTH" << "CIRCLE" << "ELLIPSE" << "POLYLINE" << "RECTANGLE" << "BEZIER" << "TEXT"
+        << "LENGTH" << "CIRCLE" << "ELLIPSE" << "POLYLINE" << "RECTANGLE" << "BSPLINE" << "BEZIER" << "TEXT"
         << "CONNECT" << "CLOSE" << "COMBINATE" << "SPLIT"
         << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "POINTMIRROR"
         << "ARRAY" << "LINEARRAY" << "RINGARRAY"
@@ -39,7 +39,7 @@ void CMDWidget::init()
         {"LENGTH",CMD::Length_CMD}, {"MAIN",CMD::Main_CMD},
         {"CIRCLE",CMD::Circle_CMD}, {"ELLIPSE",CMD::Ellipse_CMD},
         {"POLYLINE",CMD::Polyline_CMD}, {"RECTANGLE",CMD::Rectangle_CMD},
-        {"BEZIER",CMD::Bezier_CMD}, {"TEXT",CMD::Text_CMD}, {"CONNECT",CMD::Connect_CMD},
+        {"BSPLINE",CMD::BSpline_CMD}, {"BEZIER",CMD::Bezier_CMD}, {"TEXT",CMD::Text_CMD}, {"CONNECT",CMD::Connect_CMD},
         {"COMBINATE",CMD::Combinate_CMD}, {"CLOSE",CMD::Close_CMD}, {"SPLIT",CMD::Split_CMD},
         {"ROTATE",CMD::Rotate_CMD}, {"FLIPX",CMD::FlipX_CMD}, {"FLIPY",CMD::FlipY_CMD},
         {"MIRROR",CMD::Mirror_CMD},
@@ -221,9 +221,13 @@ bool CMDWidget::work()
         ui->cmd_label->setText("Ellipse");
         ellipse();
         break;
+    case CMD::BSpline_CMD:
+        ui->cmd_label->setText("BSpline");
+        bspline();
+        break;
     case CMD::Bezier_CMD:
-        ui->cmd_label->setText("Curve");
-        curve();
+        ui->cmd_label->setText("Bezier");
+        bezier();
         break;
     case CMD::Text_CMD:
         ui->cmd_label->setText("Text");
@@ -467,7 +471,7 @@ bool CMDWidget::get_setting()
         if (_parameters.size() < 2)
         {
             _relative = (result->second == SETTING::Relative_SETTING);
-            if (_current_cmd == CMD::Polyline_CMD || _current_cmd == CMD::Bezier_CMD)
+            if (_current_cmd == CMD::Polyline_CMD || _current_cmd == CMD::BSpline_CMD || _current_cmd == CMD::BSpline_CMD)
             {
                 ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
             }
@@ -558,12 +562,52 @@ void CMDWidget::polyline()
     }
 }
 
-void CMDWidget::curve()
+void CMDWidget::bspline()
 {
     switch (_parameters.size())
     {
     case 0:
-        _canvas->use_tool(Canvas::Tool::Curve);
+        _canvas->use_tool(Canvas::Tool::BSpline);
+        _parameters.emplace_back(0);
+        ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
+        _last_x = _last_y = 0;
+        break;
+    case 1:
+        _parameters.clear();
+        ui->parameter_label->clear();
+        _editer->point_cache().back() = _editer->point_cache()[_editer->point_cache().size() - 2];
+        _editer->point_cache().emplace_back(_editer->point_cache().back());
+        _canvas->polyline_cmd();
+        break;
+    case 2:
+        ui->parameter_label->setText((_relative ? "Relative X:" : "Absolute X:") + QString::number(_parameters[1]) + " Y:");
+        break;
+    case 3:
+        ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
+        if (_relative)
+        {
+            _canvas->polyline_cmd(_parameters[1] + _last_x, _parameters[2] + _last_y);
+            _last_x += _parameters[1];
+            _last_y += _parameters[2];
+        }
+        else
+        {
+            _canvas->polyline_cmd(_parameters[1], _parameters[2]);
+        }
+        _parameters.pop_back();
+        _parameters.pop_back();
+        break;
+    default:
+        break;
+    }
+}
+
+void CMDWidget::bezier()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        _canvas->use_tool(Canvas::Tool::Bezier);
         _parameters.emplace_back(0);
         ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
         _last_x = _last_y = 0;

@@ -3,7 +3,7 @@
 #include <array>
 #include <functional>
 
-#include "base/EarCut/EarCut.hpp"
+#include <EarCut/EarCut.hpp>
 #include "base/Algorithm.hpp"
 #include "base/Collision.hpp"
 #include "base/Math.hpp"
@@ -1539,8 +1539,8 @@ int Geo::is_intersected(const Ellipse &ellipse0, const Ellipse &ellipse1, Point 
         return 0;
     }
 
-    const Geo::Polygon polygon0(Geo::ellipse_to_polygon(ellipse0));
-    const Geo::Polygon polygon1(Geo::ellipse_to_polygon(ellipse1));
+    const Geo::Polygon polygon0(Geo::ellipse_to_polygon(ellipse0, Geo::Ellipse::default_down_sampling_value));
+    const Geo::Polygon polygon1(Geo::ellipse_to_polygon(ellipse1, Geo::Ellipse::default_down_sampling_value));
     std::vector<Geo::Point> points;
     for (size_t i = 1, count0 = polygon0.size(); i < count0; ++i)
     {
@@ -1657,8 +1657,8 @@ int Geo::is_intersected(const Circle &circle, const Ellipse &ellipse, Point &poi
         return 0;
     }
 
-    const Geo::Polygon polygon0(Geo::circle_to_polygon(circle));
-    const Geo::Polygon polygon1(Geo::ellipse_to_polygon(ellipse));
+    const Geo::Polygon polygon0(Geo::circle_to_polygon(circle, Geo::Circle::default_down_sampling_value));
+    const Geo::Polygon polygon1(Geo::ellipse_to_polygon(ellipse, Geo::Ellipse::default_down_sampling_value));
     std::vector<Geo::Point> points;
     for (size_t i = 1, count0 = polygon0.size(); i < count0; ++i)
     {
@@ -2208,8 +2208,8 @@ bool Geo::find_intersections(const Geo::Circle &circle0, const Geo::Circle &circ
 bool Geo::find_intersections(const Geo::Ellipse &ellipse0, const Geo::Ellipse &ellipse1, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
 {
     const size_t count0 = intersections.size();
-    if (std::vector<Geo::Point> points; Geo::find_intersections(Geo::ellipse_to_polygon(ellipse0),
-        Geo::ellipse_to_polygon(ellipse1), pos, distance, points))
+    if (std::vector<Geo::Point> points; Geo::find_intersections(Geo::ellipse_to_polygon(ellipse0, Geo::Ellipse::default_down_sampling_value),
+        Geo::ellipse_to_polygon(ellipse1, Geo::Ellipse::default_down_sampling_value), pos, distance, points))
     {
         intersections.insert(intersections.end(), points.begin(), points.end());
     }
@@ -2257,8 +2257,8 @@ bool Geo::find_intersections(const Geo::Ellipse &ellipse0, const Geo::Ellipse &e
 bool Geo::find_intersections(const Geo::Ellipse &ellipse, const Geo::Circle &circle, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
 {
     const size_t count0 = intersections.size();
-    if (std::vector<Geo::Point> points; Geo::find_intersections(Geo::ellipse_to_polygon(ellipse),
-        Geo::circle_to_polygon(circle), pos, distance, points))
+    if (std::vector<Geo::Point> points; Geo::find_intersections(Geo::ellipse_to_polygon(ellipse, Geo::Ellipse::default_down_sampling_value),
+        Geo::circle_to_polygon(circle, Geo::Circle::default_down_sampling_value), pos, distance, points))
     {
         intersections.insert(intersections.end(), points.begin(), points.end());
     }
@@ -2803,16 +2803,7 @@ bool Geo::tangency_point(const Point &point, const Ellipse &ellipse, Point &outp
 double Geo::angle(const Point &start, const Point &end)
 {
     const Geo::Point vec = end - start;
-    double value = vec.x / vec.length();
-    if (value > 1)
-    {
-        value = 1;
-    }
-    else if (value < -1)
-    {
-        value = -1;
-    }
-    return vec.y > 0 ? std::acos(value) : -std::acos(value);
+    return std::atan2(vec.y, vec.x);
 }
 
 double Geo::angle(const Point &point0, const Point &point1, const Point &point2)
@@ -2944,52 +2935,52 @@ Geo::Point Geo::to_coord(const Geo::Point &point, const double x, const double y
 }
 
 
-bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Polyline &arc, const double step)
+bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Polyline &arc, const double step, const double down_sampling_value)
 {
     if (radius <= 0)
     {
         return false;
     }
 
-    arc.clear();
-    const double len = radius / std::tan(std::abs(Geo::angle(point0, point1, point2)) / 2);
-    if (Geo::distance_square(point1, point0) >= len * len && Geo::distance_square(point2, point1) >= len * len)
-    {
-        double c = std::atan(len / radius) * radius;
-        if (c < step * 2)
-        {
-            return false;
-        }
-        const Geo::Vector vec0 = (point0 - point1).normalize() * len;
-        const Geo::Vector vec1 = (point2 - point1).normalize() * len;
-        const Geo::Point center = point1 + (vec0 + vec1);
-        Geo::Point foot0, foot1;
-        Geo::foot_point(point0, point1, center, foot0, true);
-        Geo::foot_point(point2, point1, center, foot1, true);
-        Geo::Vector vec = (foot0 - center).normalize() * radius;
-        double degree = std::asin(step / radius) * 2;
-        if (Geo::angle(foot0, center, foot1) < 0)
-        {
-            degree = -degree;
-        }
-        while (c > 0)
-        {
-            arc.append(center + vec);
-            vec.rotate(0, 0, degree);
-            c -= step;
-        }
-        return true;
-    }
-    else
+    const double rad1 = std::abs(Geo::angle(point0, point1, point2));
+    const double len = radius / std::tan(rad1/2.0);
+    if (Geo::distance_square(point1, point0) < len * len || Geo::distance_square(point2, point1) < len * len)
     {
         return false;
     }
+
+    Geo::Vector vp = ((point0 - point1).normalize() + (point2 - point1).normalize()).normalize();
+    Geo::Point center = point1 + vp * std::sqrt(len * len + radius * radius);
+    Geo::Point foot0, foot1;
+    Geo::foot_point(point0, point1, center, foot0, true);
+    Geo::foot_point(point2, point1, center, foot1, true);
+
+    Geo::Vector vec = foot0 - center;
+    double vrad = std::atan2(vec.y, vec.x);
+    double rad2 = Geo::PI - rad1;
+    if (Geo::angle(foot0, center, foot1) < 0)
+    {
+        rad2 = -rad2;
+    }
+
+    arc.clear();
+    const double c = std::atan(len / radius) * radius * 2;
+    const size_t slice_num = std::max(c / step, 10.0);
+    const double d_rad = rad2 / slice_num;
+    for (size_t i = 0; i <= slice_num; i++)
+    {
+        arc.append(center + Geo::Point(radius * std::cos(vrad), radius * std::sin(vrad)));
+        vrad += d_rad;
+    }
+    Geo::down_sampling(arc, down_sampling_value);
+    return true;
 }
 
 
-Geo::Polygon Geo::circle_to_polygon(const double x, const double y, const double r)
+
+Geo::Polygon Geo::circle_to_polygon(const double x, const double y, const double r, const double down_sampling_value)
 {
-    const double step = std::asin(1 / r);
+    const double step = std::min(std::asin(1 / r), Geo::PI / 16);
     double degree = 0;
     std::vector<Geo::Point> points;
     while (degree < Geo::PI * 2)
@@ -2999,7 +2990,9 @@ Geo::Polygon Geo::circle_to_polygon(const double x, const double y, const double
     }
     if (points.size() >= 3)
     {
-        return Geo::Polygon(points.cbegin(), points.cend());
+        Geo::Polygon shape(points.cbegin(), points.cend());
+        Geo::down_sampling(shape, down_sampling_value);
+        return shape;
     }
     else
     {
@@ -3007,13 +3000,55 @@ Geo::Polygon Geo::circle_to_polygon(const double x, const double y, const double
     }
 }
 
-Geo::Polygon Geo::circle_to_polygon(const Circle &circle)
+Geo::Polyline Geo::arc_to_polyline(const Geo::Point &center, const double radius, double start_angle, double end_angle, const bool is_cw, const double down_sampling_value)
 {
-    return Geo::circle_to_polygon(circle.x, circle.y, circle.radius);
+    const double step = std::min(std::asin(1 / radius), Geo::PI / 16);
+    std::vector<Geo::Point> points;
+    if (is_cw)
+    {
+        if (start_angle < end_angle)
+        {
+            start_angle += Geo::PI * 2;
+        }
+        while (start_angle >= end_angle)
+        {
+            points.emplace_back(radius * std::cos(start_angle) + center.x, radius * std::sin(start_angle) + center.y);
+            start_angle -= step;
+        }
+        points.emplace_back(radius * std::cos(end_angle) + center.x, radius * std::sin(end_angle) + center.y);
+    }
+    else
+    {
+        if (start_angle > end_angle)
+        {
+            end_angle += Geo::PI * 2;
+        }
+        while (start_angle <= end_angle)
+        {
+            points.emplace_back(radius * std::cos(start_angle) + center.x, radius * std::sin(start_angle) + center.y);
+            start_angle += step;
+        }
+        points.emplace_back(radius * std::cos(end_angle) + center.x, radius * std::sin(end_angle) + center.y);
+    }
+    if (points.size() < 2)
+    {
+        return Geo::Polyline();
+    }
+    else
+    {
+        Geo::Polyline shape(points.begin(), points.end());
+        Geo::down_sampling(shape, down_sampling_value);
+        return shape;
+    }
+}
+
+Geo::Polygon Geo::circle_to_polygon(const Circle &circle, const double down_sampling_value)
+{
+    return Geo::circle_to_polygon(circle.x, circle.y, circle.radius, down_sampling_value);
 }
 
 
-Geo::Polygon Geo::ellipse_to_polygon(const double x, const double y, const double a, const double b, const double rad)
+Geo::Polygon Geo::ellipse_to_polygon(const double x, const double y, const double a, const double b, const double rad, const double down_sampling_value)
 {
     const double step = std::asin(1 / std::max(a, b));
     double degree = 0;
@@ -3026,7 +3061,9 @@ Geo::Polygon Geo::ellipse_to_polygon(const double x, const double y, const doubl
     }
     if (points.size() >= 3)
     {
-        return Geo::Polygon(points.cbegin(), points.cend());
+        Geo::Polygon shape(points.cbegin(), points.cend());
+        Geo::down_sampling(shape, down_sampling_value);
+        return shape;
     }
     else
     {
@@ -3034,9 +3071,9 @@ Geo::Polygon Geo::ellipse_to_polygon(const double x, const double y, const doubl
     }
 }
 
-Geo::Polygon Geo::ellipse_to_polygon(const Ellipse &ellipse)
+Geo::Polygon Geo::ellipse_to_polygon(const Ellipse &ellipse, const double down_sampling_value)
 {
-    return Geo::ellipse_to_polygon(ellipse.center().x, ellipse.center().y, ellipse.lengtha(), ellipse.lengthb(), ellipse.angle());
+    return Geo::ellipse_to_polygon(ellipse.center().x, ellipse.center().y, ellipse.lengtha(), ellipse.lengthb(), ellipse.angle(), down_sampling_value);
 }
 
 
@@ -6240,4 +6277,46 @@ bool Geo::merge_ear_cut_triangles(const std::vector<Geo::Triangle> &triangles, s
     }
 
     return !polygons.empty();
+}
+
+
+void Geo::down_sampling(Geo::Polyline &points, const double distance)
+{
+	std::vector<bool> mask(points.size(), true);
+	std::vector<std::tuple<size_t, size_t>> stack;
+	std::tuple<size_t, size_t> currentRange;
+	mask.front() = mask.back() = false;
+	stack.emplace_back(0, mask.size() - 1);
+	size_t index;
+	double maxDistance, currentDistance;
+	while (!stack.empty())
+	{
+		currentRange = stack.back();
+		stack.pop_back();
+		maxDistance = -1;
+		index = std::get<0>(currentRange);
+		for (size_t i = std::get<0>(currentRange) + 1, end = std::get<1>(currentRange); i < end; ++i)
+		{
+			currentDistance = Geo::distance(points[i],points[std::get<0>(currentRange)], points[std::get<1>(currentRange)]);
+			if (currentDistance > distance && maxDistance < currentDistance)
+			{
+				maxDistance = currentDistance;
+				index = i;
+			}
+		}
+		if (index > std::get<0>(currentRange))
+		{
+			mask[index] = false;
+			stack.emplace_back(std::get<0>(currentRange), index);
+			stack.emplace_back(index, std::get<1>(currentRange));
+		}
+	}
+
+	for (size_t i = points.size() - 2; i > 0; --i)
+	{
+		if (mask[i])
+		{
+			points.remove(i);
+		}
+	}
 }

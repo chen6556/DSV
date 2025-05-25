@@ -17,6 +17,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
     const Text *text = nullptr;
     const Geo::Polyline *polyline = nullptr;
     const Geo::Bezier *bezier = nullptr;
+    const Geo::BSpline *bspline = nullptr;
 
     std::ofstream output(path);
     for (const ContainerGroup &group : graph->container_groups())
@@ -182,6 +183,21 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         output << std::endl;
                         bezier = nullptr;
                         break;
+                    case Geo::Type::BSPLINE:
+                        bspline = dynamic_cast<const Geo::BSpline *>(item);
+                        if (bspline->empty())
+                        {
+                            continue;
+                        }
+                        output << "BSPLINE" << std::endl;
+                        output << (dynamic_cast<const Geo::CubicBSpline *>(bspline) == nullptr ? '2' : '3');
+                        for (const Geo::Point &point : bspline->path_points)
+                        {
+                            output << ',' << point.x << ',' << point.y;
+                        }
+                        output << std::endl;
+                        bspline = nullptr;
+                        break;
                     default:
                         break;
                     }
@@ -218,6 +234,21 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 output << std::endl;
                 bezier = nullptr;
                 break;
+            case Geo::Type::BSPLINE:
+                bspline = dynamic_cast<const Geo::BSpline *>(geo);
+                if (bspline->empty())
+                {
+                    continue;
+                }
+                output << "BSPLINE" << std::endl;
+                output << (dynamic_cast<const Geo::CubicBSpline *>(bspline) == nullptr ? '2' : '3');
+                for (const Geo::Point &point : bspline->path_points)
+                {
+                    output << ',' << point.x << ',' << point.y;
+                }
+                output << std::endl;
+                bspline = nullptr;
+                break;
             default:
                 break;
             }
@@ -237,6 +268,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
     const Container<Geo::Ellipse> *ellipsecontainer = nullptr;
     const Geo::Polyline *polyline = nullptr;
     const Geo::Bezier *bezier = nullptr;
+    const Geo::BSpline *bspline = nullptr;
     const double x_ratio = 40, y_ratio = 40;
 
     std::ofstream output(path);
@@ -287,7 +319,8 @@ void File::write_plt(const std::string &path, const Graph *graph)
             case Geo::Type::ELLIPSE:
                 ellipsecontainer = dynamic_cast<const Container<Geo::Ellipse> *>(geo);
                 {
-                    const Geo::Polygon points = Geo::ellipse_to_polygon(ellipsecontainer->shape());
+                    const Geo::Polygon points = Geo::ellipse_to_polygon(ellipsecontainer->shape(),
+                        Geo::Ellipse::default_down_sampling_value);
                     output << "PU" << points.front().x * x_ratio << ',' << points.front().y * y_ratio << ";PD";
                     for (const Geo::Point &point : points)
                     {
@@ -349,7 +382,8 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     case Geo::Type::ELLIPSE:
                         ellipsecontainer = dynamic_cast<const Container<Geo::Ellipse> *>(item);
                         {
-                            const Geo::Polygon points = Geo::ellipse_to_polygon(ellipsecontainer->shape());
+                            const Geo::Polygon points = Geo::ellipse_to_polygon(ellipsecontainer->shape(),
+                                Geo::Ellipse::default_down_sampling_value);
                             output << "PU" << points.front().x * x_ratio << ',' << points.front().y * y_ratio << ";PD";
                             for (const Geo::Point &point : points)
                             {
@@ -386,15 +420,40 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         {
                             break;
                         }
-                        const_cast<Geo::Bezier *>(bezier)->update_shape();
-                        output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";PD";
-                        for (const Geo::Point &point : bezier->shape())
+                        if (bezier->order() == 3)
+                        {
+                            output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";BZ";
+                            for (const Geo::Point &point : *bezier)
+                            {
+                                output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
+                            }
+                        }
+                        else
+                        {
+                            output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";PD";
+                            for (const Geo::Point &point : bezier->shape())
+                            {
+                                output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
+                            }
+                        }
+                        output.seekp(-1, std::ios::cur);
+                        output << ';' << std::endl;
+                        bezier = nullptr;
+                        break;
+                    case Geo::Type::BSPLINE:
+                        bspline = dynamic_cast<const Geo::BSpline *>(item);
+                        if (bspline->empty())
+                        {
+                            break;
+                        }
+                        output << "PU" << bspline->front().x * x_ratio << ',' << bspline->front().y * y_ratio << ";PD";
+                        for (const Geo::Point &point : bspline->shape())
                         {
                             output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                         }
                         output.seekp(-1, std::ios::cur);
                         output << ';' << std::endl;
-                        bezier = nullptr;
+                        bspline = nullptr;
                         break;
                     default:
                         break;
@@ -423,15 +482,40 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 {
                     break;
                 }
-                const_cast<Geo::Bezier *>(bezier)->update_shape();
-                output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";PD";
-                for (const Geo::Point &point : bezier->shape())
+                if (bezier->order() == 3)
+                {
+                    output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";BZ";
+                    for (const Geo::Point &point : *bezier)
+                    {
+                        output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
+                    }
+                }
+                else
+                {
+                    output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";PD";
+                    for (const Geo::Point &point : bezier->shape())
+                    {
+                        output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
+                    }
+                }
+                output.seekp(-1, std::ios::cur);
+                output << ';' << std::endl;
+                bezier = nullptr;
+                break;
+            case Geo::Type::BSPLINE:
+                bspline = dynamic_cast<const Geo::BSpline *>(geo);
+                if (bspline->empty())
+                {
+                    break;
+                }
+                output << "PU" << bspline->front().x * x_ratio << ',' << bspline->front().y * y_ratio << ";PD";
+                for (const Geo::Point &point : bspline->shape())
                 {
                     output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                 }
                 output.seekp(-1, std::ios::cur);
                 output << ';' << std::endl;
-                bezier = nullptr;
+                bspline = nullptr;
                 break;
             default:
                 break;

@@ -13,6 +13,7 @@
 #include "io/RS274DParser.hpp"
 #include "io/DSVParser.hpp"
 #include "io/GlobalSetting.hpp"
+#include "io/DXFReaderWriter.hpp"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -60,7 +61,9 @@ void MainWindow::init()
     QObject::connect(ui->ellipse_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Ellipse); });
     QObject::connect(ui->line_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Polyline); });
     QObject::connect(ui->rect_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Rect); });
-    QObject::connect(ui->curve_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Curve); ui->canvas->set_bezier_order(ui->curve_sbx->value()); });
+    QObject::connect(ui->bspline_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::BSpline); });
+    QObject::connect(ui->bezier_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Bezier); });
+    QObject::connect(ui->curve_spb, &QSpinBox::valueChanged, ui->canvas, &Canvas::set_curve_order);
     QObject::connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Text); });
     QObject::connect(ui->split_btn, &QPushButton::clicked, [this]() { _editer.split(_editer.selected()); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
@@ -70,7 +73,6 @@ void MainWindow::init()
     QObject::connect(ui->show_origin, &QAction::triggered, [this]() { ui->show_origin->isChecked() ? ui->canvas->show_origin() : ui->canvas->hide_origin(); });
     QObject::connect(ui->show_cmd_line, &QAction::triggered, [this]() { ui->show_cmd_line->isChecked() ? _cmd_widget->show() : _cmd_widget->hide(); });
 
-    QObject::connect(_setting, &Setting::accepted, ui->canvas, static_cast<void(Canvas::*)(void)>(&Canvas::refresh_text_vbo));
     QObject::connect(_setting, &Setting::accepted, this, &MainWindow::refresh_settings);
 
     for (size_t i = 0; i < 3; ++i)
@@ -264,7 +266,8 @@ void MainWindow::open_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;PLT: (*.plt *.PLT);;RS274D: (*.cut *.CUT *.nc *.NC)", &_file_type);
+    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;"
+        "PLT: (*.plt *.PLT);;RS274D: (*.cut *.CUT *.nc *.NC);;DXF: (*.dxf *.DXF)", &_file_type);
     open_file(path);
     delete dialog;
 }
@@ -386,7 +389,8 @@ void MainWindow::append_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;PLT: (*.plt *.PLT);;RS274D: (*.cut *.CUT *.nc *.NC)", &_file_type);
+    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;"
+        "PLT: (*.plt *.PLT);;RS274D: (*.cut *.CUT *.nc *.NC);;DXF: (*.dxf *.DXF)", &_file_type);
     append_file(path);
     delete dialog;
 }
@@ -434,8 +438,11 @@ void MainWindow::refresh_tool_label(const Canvas::Tool tool)
     case Canvas::Tool::Rect:
         ui->current_tool->setText("Rectangle");
         break;
-    case Canvas::Tool::Curve:
-        ui->current_tool->setText("Bezier Curve");
+    case Canvas::Tool::BSpline:
+        ui->current_tool->setText("BSpline");
+        break;
+    case Canvas::Tool::Bezier:
+        ui->current_tool->setText("Bezier");
         break;
     case Canvas::Tool::Text:
         ui->current_tool->setText("Text");
@@ -505,6 +512,17 @@ void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
 
 void MainWindow::refresh_settings()
 {
+    if (_setting->update_curve_vbo())
+    {
+        const double value = GlobalSetting::get_instance()->setting["down_sampling"].toDouble();
+        Geo::BSpline::default_down_sampling_value = Geo::Bezier::default_down_sampling_value = value;
+        GlobalSetting::get_instance()->graph->update_curve_shape(0.2, value);
+        ui->canvas->refresh_vbo();
+    }
+    if (_setting->update_text_vbo())
+    {
+        ui->canvas->refresh_text_vbo();
+    }
     _editer.set_backup_count(GlobalSetting::get_instance()->setting["backup_times"].toInt());
     ui->canvas->set_catch_distance(GlobalSetting::get_instance()->setting["catch_distance"].toDouble());
 }
@@ -513,6 +531,10 @@ void MainWindow::load_settings()
 {
     GlobalSetting::get_instance()->load_setting();
     const QJsonObject &setting = GlobalSetting::get_instance()->setting;
+
+    Geo::Bezier::default_down_sampling_value = Geo::BSpline::default_down_sampling_value =
+        Geo::Circle::default_down_sampling_value = Geo::Ellipse::default_down_sampling_value =
+        setting["down_sampling"].toDouble();
 
     _editer.set_path(setting["file_path"].toString());
     _editer.set_backup_count(setting["backup_times"].toInt());
@@ -634,6 +656,11 @@ void MainWindow::rotate()
     std::list<Geo::Geometry *> objects = _editer.selected();
     _editer.rotate(objects, ui->rotate_angle->value(), QApplication::keyboardModifiers() != Qt::ControlModifier, ui->to_all_layers->isChecked());
     ui->canvas->refresh_vbo(objects.empty());
+    if (objects.size() == 1)
+    {
+        ui->canvas->refresh_selected_ibo(objects.front());
+        ui->canvas->refresh_cache_vbo(0);
+    }
     ui->canvas->update();
 }
 
@@ -642,6 +669,11 @@ void MainWindow::flip_x()
     std::list<Geo::Geometry *> objects = _editer.selected();
     _editer.flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier, ui->to_all_layers->isChecked());
     ui->canvas->refresh_vbo(objects.empty());
+    if (objects.size() == 1)
+    {
+        ui->canvas->refresh_selected_ibo(objects.front());
+        ui->canvas->refresh_cache_vbo(0);
+    }
     ui->canvas->update();
 }
 
@@ -650,6 +682,11 @@ void MainWindow::flip_y()
     std::list<Geo::Geometry *> objects = _editer.selected();
     _editer.flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier, ui->to_all_layers->isChecked());
     ui->canvas->refresh_vbo(objects.empty());
+    if (objects.size() == 1)
+    {
+        ui->canvas->refresh_selected_ibo(objects.front());
+        ui->canvas->refresh_cache_vbo(0);
+    }
     ui->canvas->update();
 }
 
@@ -661,10 +698,15 @@ void MainWindow::mirror()
 
 void MainWindow::scale()
 {
-    if (_editer.scale(_editer.selected(), QApplication::keyboardModifiers() != Qt::ControlModifier, ui->scale_sbx->value()))
+    if (std::list<Geo::Geometry *> objects = _editer.selected();
+        _editer.scale(objects, QApplication::keyboardModifiers() != Qt::ControlModifier, ui->scale_sbx->value()))
     {
         ui->canvas->refresh_vbo();
-        ui->canvas->refresh_selected_ibo();
+        if (objects.size() == 1)
+        {
+            ui->canvas->refresh_selected_ibo(objects.front());
+            ui->canvas->refresh_cache_vbo(0);
+        }
         ui->canvas->update();
     }
 }
@@ -829,6 +871,12 @@ void MainWindow::open_file(const QString &path)
             _file_type = "RS274D: (*.cut *.CUT *.nc *NC)";
         }
     }
+    else if (path.toUpper().endsWith(".DXF"))
+    {
+        DXFReaderWriter dxf_interface(g);
+        dxfRW dxfRW(path.toLocal8Bit());
+        dxfRW.read(&dxf_interface, false);
+    }
     else
     {
         std::ifstream file(path.toLocal8Bit(), std::ios_base::in | std::ios::binary);
@@ -907,6 +955,12 @@ void MainWindow::append_file(const QString &path)
         std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
         RS274DParser::parse(file,g);
         file.close();
+    }
+    else if (path.toUpper().endsWith(".DXF"))
+    {
+        DXFReaderWriter dxf_interface(g);
+        dxfRW dxfRW(path.toLocal8Bit());
+        dxfRW.read(&dxf_interface, false);
     }
 
     GlobalSetting::get_instance()->graph->modified = true;

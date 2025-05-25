@@ -18,8 +18,8 @@ void DataPanel::load_draw_data(const Graph *graph, const size_t point_count)
 {
     ui->point_label->setText(QString::number(point_count));
 
-    size_t polyline_count = 0, bezier_count = 0,
-        polygon_count = 0, circle_count = 0, text_count = 0;
+    size_t polyline_count = 0, bezier_count = 0, bspline_count = 0,
+        polygon_count = 0, circle_count = 0, ellipse_count = 0, text_count = 0;
     for (const ContainerGroup &group : *graph)
     {
         for (const Geo::Geometry *object : group)
@@ -35,11 +35,17 @@ void DataPanel::load_draw_data(const Graph *graph, const size_t point_count)
             case Geo::Type::CIRCLE:
                 ++circle_count;
                 break;
+            case Geo::Type::ELLIPSE:
+                ++ellipse_count;
+                break;
             case Geo::Type::POLYLINE:
                 ++polyline_count;
                 break;
             case Geo::Type::BEZIER:
                 ++bezier_count;
+                break;
+            case Geo::Type::BSPLINE:
+                ++bspline_count;
                 break;
             case Geo::Type::COMBINATION:
                 for (Geo::Geometry *obj : *dynamic_cast<const Combination *>(object))
@@ -55,11 +61,17 @@ void DataPanel::load_draw_data(const Graph *graph, const size_t point_count)
                     case Geo::Type::CIRCLE:
                         ++circle_count;
                         break;
+                    case Geo::Type::ELLIPSE:
+                        ++ellipse_count;
+                        break;
                     case Geo::Type::POLYLINE:
                         ++polyline_count;
                         break;
                     case Geo::Type::BEZIER:
                         ++bezier_count;
+                        break;
+                    case Geo::Type::BSPLINE:
+                        ++bspline_count;
                         break;
                     default:
                         break;
@@ -73,9 +85,11 @@ void DataPanel::load_draw_data(const Graph *graph, const size_t point_count)
     }
 
     ui->polyline_label->setText(QString::number(polyline_count));
-    ui->bezier_label->setText(QString::number(bezier_count));
     ui->polygon_label->setText(QString::number(polygon_count));
+    ui->bezier_label->setText(QString::number(bezier_count));
+    ui->bspline_label->setText(QString::number(bspline_count));
     ui->circle_label->setText(QString::number(circle_count));
+    ui->ellipse_label->setText(QString::number(ellipse_count));
     ui->text_label->setText(QString::number(text_count));
 
     const Geo::AABBRect rect(graph->bounding_rect());

@@ -2,9 +2,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <numeric>
 
 #include "base/Algorithm.hpp"
-
+#include "base/Math.hpp"
 
 using namespace Geo;
 
@@ -80,7 +81,7 @@ Point Point::vertical() const
 
 const double Point::length() const
 {
-    return std::sqrt(x * x + y * y);
+    return std::hypot(x, y);
 }
 
 const bool Point::empty() const
@@ -407,6 +408,27 @@ void Polyline::append(std::vector<Point>::const_iterator begin, std::vector<Poin
     }
 }
 
+void Polyline::append(std::vector<Point>::const_reverse_iterator rbegin, std::vector<Point>::const_reverse_iterator rend)
+{
+    const size_t index = _points.size();
+    if (_points.empty() || _points.back() != *rbegin)
+    {
+        _points.insert(_points.end(), rbegin, rend);
+    }
+    else
+    {
+        _points.insert(_points.end(), rbegin + 1, rend);
+    }
+    for (size_t i = index <= 1 ? 1 : index - 1, count = _points.size(); i < count; ++i)
+    {
+        if (_points[i - 1] == _points[i])
+        {
+            _points.erase(_points.begin() + i--);
+            --count;
+        }
+    }
+}
+
 void Polyline::insert(const size_t index, const Point &point)
 {
     assert(index < _points.size());
@@ -436,6 +458,21 @@ void Polyline::insert(const size_t index, std::vector<Point>::const_iterator beg
     assert(index < _points.size());
     int i = (index > 0 && _points[index] == *begin);
     _points.insert(_points.begin() + index, begin + i, end);
+    for (size_t i = index <= 1 ? 1 : index - 1, count = _points.size(); i < count; ++i)
+    {
+        if (_points[i - 1] == _points[i])
+        {
+            _points.erase(_points.begin() + i--);
+            --count;
+        }
+    }
+}
+
+void Polyline::insert(const size_t index, std::vector<Point>::const_reverse_iterator rbegin, std::vector<Point>::const_reverse_iterator rend)
+{
+    assert(index < _points.size());
+    int i = (index > 0 && _points[index] == *rbegin);
+    _points.insert(_points.begin() + index, rbegin + i, rend);
     for (size_t i = index <= 1 ? 1 : index - 1, count = _points.size(); i < count; ++i)
     {
         if (_points[i - 1] == _points[i])
@@ -1751,6 +1788,7 @@ double Triangle::inner_circle_radius() const
 
 
 // Circle
+double Circle::default_down_sampling_value = 0.02;
 
 Circle::Circle(const double x, const double y, const double r)
     : Point(x, y), radius(r)
@@ -2043,6 +2081,9 @@ const Point &Line::back() const
 
 
 // Bezier
+double Bezier::default_step = 0.01;
+double Bezier::default_down_sampling_value = 0.02;
+
 Bezier::Bezier(const size_t n)
     : _order(n)
 {
@@ -2059,14 +2100,14 @@ Bezier::Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::con
     : Polyline(begin, end), _order(n)
 {
     _shape.shape_fixed = true;
-    update_shape();
+    update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
 
 Bezier::Bezier(const std::initializer_list<Point> &points, const size_t n)
     : Polyline(points), _order(n)
 {
     _shape.shape_fixed = true;
-    update_shape();
+    update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
 
 const Type Bezier::type() const
@@ -2084,7 +2125,7 @@ const Polyline &Bezier::shape() const
     return _shape;
 }
 
-void Bezier::update_shape(const double step)
+void Bezier::update_shape(const double step, const double down_sampling_value)
 {
     assert(0 < step && step < 1);
     _shape.clear();
@@ -2116,9 +2157,10 @@ void Bezier::update_shape(const double step)
         }
     }
     _shape.append(_points.back());
+    Geo::down_sampling(_shape, down_sampling_value);
 }
 
-void Bezier::append_shape(const double step)
+void Bezier::append_shape(const double step, const double down_sampling_value)
 {
     assert(0 < step && step < 1);
     if ((_points.size() - 1) % _order > 0)
@@ -2150,6 +2192,7 @@ void Bezier::append_shape(const double step)
         t += step;
     }
     _shape.append(_points.back());
+    Geo::down_sampling(_shape, down_sampling_value);
 }
 
 const double Bezier::length() const
@@ -2225,6 +2268,8 @@ Polygon Bezier::mini_bounding_rect() const
 
 
 // Ellipse
+double Ellipse::default_down_sampling_value = 0.02;
+
 Ellipse::Ellipse(const double x, const double y, const double a, const double b)
 {
     assert(a > 0 && b > 0);
@@ -2545,4 +2590,798 @@ Point Ellipse::c1() const
         const double bb = Geo::distance_square(_a[0], _a[1]);
         return center() + (_b[1] - _b[0]).normalize() * std::sqrt(aa - bb) / 2;
     }
+}
+
+
+// BSpline
+double BSpline::default_step = 0.2;
+double BSpline::default_down_sampling_value = 0.02;
+
+BSpline::BSpline()
+{   
+    _shape.shape_fixed = true;
+}
+
+BSpline::BSpline(const BSpline &bspline)
+    : Geometry(bspline), _shape(bspline._shape), control_points(bspline.control_points), path_points(bspline.path_points)
+{
+    _shape.shape_fixed = true;
+}
+
+BSpline &BSpline::operator=(const BSpline &bspline)
+{
+    if (this != &bspline)
+    {
+        Geometry::operator=(bspline);
+        _shape = bspline._shape;
+        control_points = bspline.control_points;
+        path_points = bspline.path_points;
+    }
+    return *this;
+}
+
+const Polyline &BSpline::shape() const
+{
+    return _shape;
+}
+
+const double BSpline::length() const
+{
+    return _shape.length();
+}
+
+const bool BSpline::empty() const
+{
+    return control_points.empty() && path_points.empty();
+}
+
+void BSpline::clear()
+{
+    _shape.clear();
+    control_points.clear();
+    path_points.clear();
+}
+
+void BSpline::transform(const double a, const double b, const double c, const double d, const double e, const double f)
+{
+    _shape.transform(a, b, c, d, e, f);
+    std::for_each(path_points.begin(), path_points.end(), [=](Point &point) { point.transform(a, b, c, d, e, f); });
+    std::for_each(control_points.begin(), control_points.end(), [=](Point &point) { point.transform(a, b, c, d, e, f); });
+}
+
+void BSpline::transform(const double mat[6])
+{
+    _shape.transform(mat);
+    std::for_each(path_points.begin(), path_points.end(), [=](Point &point) { point.transform(mat); });
+    std::for_each(control_points.begin(), control_points.end(), [=](Point &point) { point.transform(mat); });
+}
+
+void BSpline::translate(const double tx, const double ty)
+{
+    _shape.translate(tx, ty);
+    std::for_each(path_points.begin(), path_points.end(), [=](Point &point) { point.translate(tx, ty); });
+    std::for_each(control_points.begin(), control_points.end(), [=](Point &point) { point.translate(tx, ty); });
+}
+
+void BSpline::rotate(const double x, const double y, const double rad)
+{
+    _shape.rotate(x, y, rad);
+    std::for_each(path_points.begin(), path_points.end(), [=](Point &point) { point.rotate(x, y, rad); });
+    std::for_each(control_points.begin(), control_points.end(), [=](Point &point) { point.rotate(x, y, rad); });
+}
+
+void BSpline::scale(const double x, const double y, const double k)
+{
+    _shape.scale(x, y, k);
+    std::for_each(path_points.begin(), path_points.end(), [=](Point &point) { point.scale(x, y, k); });
+    std::for_each(control_points.begin(), control_points.end(), [=](Point &point) { point.scale(x, y, k); });
+}
+
+Polygon BSpline::convex_hull() const
+{
+    return _shape.convex_hull();
+}
+
+AABBRect BSpline::bounding_rect() const
+{
+    return _shape.bounding_rect();
+}
+
+Polygon BSpline::mini_bounding_rect() const
+{
+    return _shape.mini_bounding_rect();
+}
+
+const Point &BSpline::front() const
+{
+    return _shape.front();
+}
+
+const Point &BSpline::back() const
+{
+    return _shape.back();
+}
+
+const std::vector<double> &BSpline::knots() const
+{
+    return _knots;
+}
+
+
+// QuadBSpline
+QuadBSpline::QuadBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const bool is_path_points)
+{
+    _shape.shape_fixed = true;
+    if (is_path_points)
+    {
+        path_points.assign(begin, end);
+        for (size_t i = path_points.size() - 1; i > 1; --i)
+        {
+            if (path_points[i] == path_points[i - 1])
+            {
+                path_points.erase(path_points.begin() + i);
+            }
+        }
+        update_control_points();
+        knot(control_points.size(), _knots);
+    }
+    else
+    {
+        control_points.assign(begin, end);
+        const size_t num = control_points.size();
+        path_points.resize(num - 2);
+        knot(num, _knots);
+        rbspline(num, num - 2, _knots, control_points, path_points);
+    }
+    update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
+}
+
+QuadBSpline::QuadBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const std::vector<double> &knots, const bool is_path_points)
+{
+    _shape.shape_fixed = true;
+    if (is_path_points)
+    {
+        path_points.assign(begin, end);
+        for (size_t i = path_points.size() - 1; i > 1; --i)
+        {
+            if (path_points[i] == path_points[i - 1])
+            {
+                path_points.erase(path_points.begin() + i);
+            }
+        }
+        update_control_points();
+        knot(control_points.size(), _knots);
+    }
+    else
+    {
+        _knots.assign(knots.begin(), knots.end());
+        control_points.assign(begin, end);
+        const size_t num = control_points.size();
+        path_points.resize(num - 2);
+        rbspline(num, num - 2, _knots, control_points, path_points);
+    }
+    update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
+}
+
+QuadBSpline::QuadBSpline(const std::initializer_list<Point> &points, const bool is_path_points)
+{
+    _shape.shape_fixed = true;
+    if (is_path_points)
+    {
+        path_points.assign(points.begin(), points.end());
+        for (size_t i = path_points.size() - 1; i > 1; --i)
+        {
+            if (path_points[i] == path_points[i - 1])
+            {
+                path_points.erase(path_points.begin() + i);
+            }
+        }
+        update_control_points();
+        knot(control_points.size(), _knots);
+    }
+    else
+    {
+        control_points.assign(points.begin(), points.end());
+        const size_t num = control_points.size();
+        path_points.resize(num - 2);
+        knot(num, _knots);
+        rbspline(num, num - 2, _knots, control_points, path_points);
+    }
+    update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
+}
+
+const Type QuadBSpline::type() const
+{
+    return Type::BSPLINE;
+}
+
+void QuadBSpline::update_control_points() // 从LibreCAD抄的
+{
+    control_points.clear();
+    const size_t n = path_points.size();
+    if(n < 4)
+    {
+        if(n > 0)
+        {
+            control_points.emplace_back(path_points[0]);
+        }
+        if(Point control; n > 2 && get_three_points_control(path_points[0], path_points[1], path_points[2], control))
+        {
+            control_points.emplace_back(control);
+        }
+        if(n > 1)
+        {
+            control_points.emplace_back(path_points[n - 1]);
+        }
+        return;
+    }
+
+    const int dim = n - 2;
+    std::vector<double> dt(dim);
+    {
+        // 使用向心参数化算法,计算每段的参数分布(参数值在0-1之间),累积弦长法面对极端不均匀的分布时会受到很大干扰
+        double dl1 = std::sqrt(Geo::distance(path_points[1], path_points[0]));
+        double dl2 = std::sqrt(Geo::distance(path_points[2], path_points[1]));
+        dt[0] = dl1 / (dl1 + dl2 / 2.0); 
+        /* "dl2 / 2.0"是为了更平滑地处理二次B样条插值首段的参数化，使得首段的参数分布更自然，避免端点处曲线过于“尖锐”或“拉伸”。
+        对于中间段，常用的弦长参数化是 dt[i] = dl1 / (dl1 + dl2)，这样每一段的参数分布与相邻两段的长度成比例。
+        但对于首段，如果直接用 dt[0] = dl1 / (dl1 + dl2)，会导致首段的参数分布只考虑了前两段的长度，忽略了后续曲线的“延续性”，容易在端点产生不自然的曲率变化。
+        让首段的参数分布不仅考虑 P0-P1 的长度，还适当考虑了 P1-P2 的影响，但权重减半（即只取一半）。
+        这样做可以让首段的插值更平滑，首端的切线方向和曲率更自然，减少端点处的异常。*/
+        for(int i = 1; i < dim - 1; ++i)
+        {
+            dl1 = dl2;
+            dl2 = std::sqrt(Geo::distance(path_points[i + 2], path_points[i + 1]));
+            dt[i] = dl1 / (dl1 + dl2);
+        }
+        dl1 = dl2;
+        dl2 = std::sqrt(Geo::distance(path_points[dim], path_points[dim + 1]));
+        dt[dim - 1] = dl1 / (dl1 + 2.0 * dl2);
+        /* "dl1 + 2.0 * dl2"是为了让末段的参数分布更加平滑，兼顾末尾两段的长度，提升B样条曲线在末端的平滑性和自然性。
+        对于中间段，常用弦长参数化是 dt[i] = dl1 / (dl1 + dl2)，即只考虑本段和下一段的长度。
+        但对于末段，如果直接用 dt = dl1 / (dl1 + dl2)，只考虑了最后两段的长度，容易导致末端曲线的切线或曲率变化不自然，出现“尖角”或“拉伸”。
+        让末段的参数分布更加“偏向”末端，末段的参数跨度更大，等价于让末端的影响力加倍。
+        这样可以让末端的插值更平滑，末端的切线方向和曲率更自然，减少端点处的异常。*/
+        /*首段用 dt[0] = dl1 / (dl1 + dl2 / 2.0)，末段用 dt[dim-1] = dl1 / (dl1 + 2.0 * dl2)，
+        两者对称，都是为了让两端的参数分布更平滑，兼顾端点与相邻段的长度。*/
+    }
+
+    std::vector<double> matrix;
+    get_matrix(n, dt, matrix); // 计算出平方根分解后的矩阵
+    if (matrix.empty())
+    {
+        return;
+    }
+
+    double *dx = new double[dim];
+    double *dy = new double[dim];
+    double *dx2 = new double[dim];
+    double *dy2 = new double[dim];
+    {
+        double *pdDiag = matrix.data();
+        double *pdDiag1 = &matrix[n - 2];
+        double *pdDiag2 = &matrix[2 * n - 5];
+
+        // 由 Ly = b 求解y
+        dx[0] = (path_points[1].x - path_points[0].x * std::pow(1.0 - dt[0], 2)) / pdDiag[0];
+        dy[0] = (path_points[1].y - path_points[0].y * std::pow(1.0 - dt[0], 2)) / pdDiag[0];
+        for (int i = 1; i < dim - 1; i++)
+        {
+            dx[i] = (path_points[i + 1].x - pdDiag2[i - 1] * dx[i - 1]) / pdDiag[i];
+            dy[i] = (path_points[i + 1].y - pdDiag2[i - 1] * dy[i - 1]) / pdDiag[i];
+        }
+        dx[dim - 1] = ((path_points[dim].x - path_points[dim + 1].x * std::pow(dt[n - 3], 2)) -
+                        pdDiag2[dim - 2] * dx[dim - 2]) / pdDiag[dim - 1];
+        dy[dim - 1] = ((path_points[dim].y - path_points[dim + 1].y * std::pow(dt[n - 3], 2)) -
+                        pdDiag2[dim - 2] * dy[dim - 2]) /  pdDiag[dim - 1];
+
+        // 由 Trans(L)x = y 求解x
+        dx2[dim - 1] = dx[dim - 1] / pdDiag[dim - 1];
+        dy2[dim - 1] = dy[dim - 1] / pdDiag[dim - 1];
+        for (int i = dim - 2; i >= 0; i--)
+        {
+            dx2[i] = (dx[i] - pdDiag1[i] * dx2[i + 1]) / pdDiag[i];
+            dy2[i] = (dy[i] - pdDiag1[i] * dy2[i + 1]) / pdDiag[i];
+        }
+
+        control_points.emplace_back(path_points[0]);
+        for (int i = 0; i < dim; i++)
+        {
+            control_points.emplace_back(dx2[i], dy2[i]);
+        }
+        control_points.emplace_back(path_points[n - 1]);
+    }
+    delete[] dx;
+    delete[] dy;
+    delete[] dx2;
+    delete[] dy2;
+}
+
+bool QuadBSpline::get_three_points_control(const Point &point0, const Point &point1, const Point &point2, Point &output)  // 从LibreCAD抄的
+{
+    double dl1 = Geo::distance(point1, point0);
+	double dl2 = Geo::distance(point2, point1);
+	double dt = dl1 / (dl1 + dl2);
+    if (dt < 1e-10 || dt > 1.0 - 1e-10)
+    {
+        return false;
+    }
+    else
+    {
+        output.x = (point1.x - point0.x * std::pow(1.0 - dt, 2) - point2.x * std::pow(dt, 2)) / (dt * (1 - dt) * 2);
+        output.y = (point1.y - point0.y * std::pow(1.0 - dt, 2) - point2.y * std::pow(dt, 2)) / (dt * (1 - dt) * 2);
+        return true;
+    }
+}
+
+void QuadBSpline::get_matrix(const size_t count, const std::vector<double>& dt, std::vector<double> &output)  // 从LibreCAD抄的
+{
+    if(count < 4 || dt.size() != count - 2)
+    {
+        return;
+    }
+
+    size_t dim = 3 * count - 8; // 主对角线元素(n-2) + 上对角线元素(n-3) + 下对角线元素(n-3)
+    double *res = new double[dim]; // 三对角矩阵
+    {
+        double *pdDiag = res; // 主对角线元素
+        double *pdDiag1 = &res[count - 2]; // 上对角线元素
+        double *pdDiag2 = &res[2 * count - 5]; // 下对角线元素
+
+        double x3 = std::pow(dt[0], 2) / 2.0; // 首部点使用非均匀B样条曲线公式计算
+        double x2 = 2.0 * dt[0] * (1.0 - dt[0]) + x3;
+        pdDiag[0] = std::sqrt(x2); // L矩阵主对角线第一个元素,使用平方根分解而非追赶分解
+        pdDiag1[0] = x3 / pdDiag[0]; // U矩阵上对角线第一个元素
+
+        for(size_t i = 1; i < count - 3; ++i)
+        {
+            double x1 = std::pow(1.0 - dt[i], 2) / 2.0;
+            x3 = std::pow(dt[i], 2) / 2.0; // 除去首尾两点,中间部分的点按照均匀B样条曲线公式计算
+            x2 = x1 + 2.0 * dt[i] * (1.0 - dt[i]) + x3;
+
+            pdDiag2[i - 1] = x1 / pdDiag[i - 1]; // L矩阵下对角线元素
+            pdDiag[i] = std::sqrt(x2 - pdDiag1[i - 1] * pdDiag2[i - 1]); // L矩阵主对角线元素,使用平方根分解而非追赶分解
+            pdDiag1[i] = x3 / pdDiag[i]; // U矩阵上对角线元素
+        }
+
+        double x1 = std::pow(1.0 - dt[count - 3], 2) / 2.0; // 尾部点使用非均匀B样条曲线公式计算
+        x2 = x1 + 2.0 * dt[count - 3] * (1.0 - dt[count - 3]);
+        pdDiag2[count - 4] = x1 / pdDiag[count - 4]; // U矩阵下对角线最后一个元素
+        pdDiag[count - 3] = std::sqrt(x2 - pdDiag1[count - 4] * pdDiag2[count - 4]); // L矩阵主对角线最后一个元素,使用平方根分解而非追赶分解
+    }
+    output.assign(res, res + dim);
+    delete[] res;
+}
+
+void QuadBSpline::knot(const size_t num, std::vector<double> &output)  // 从LibreCAD抄的
+{
+    output.resize(num + 3, 0);
+	//use uniform knots
+	std::iota(output.begin() + 3, output.begin() + num + 1, 1);
+	std::fill(output.begin() + num + 1, output.end(), output[num]);
+}
+
+void QuadBSpline::rbasis(const double t, const int npts, const std::vector<double> &x, std::vector<double> &output)  // 从LibreCAD抄的
+{
+    const int nplusc = npts + 3;
+    std::vector<double> temp(nplusc, 0);
+    // calculate the first order nonrational basis functions n[i]
+    for (int i = 0; i< nplusc - 1; ++i)
+    {
+        if ((t >= x[i]) && (t < x[i+1]))
+        {
+            temp[i] = 1;
+        }
+    }
+
+    /* calculate the higher order nonrational basis functions */
+
+    for (int k = 2; k <= 3; ++k)
+    {
+        for (int i = 0; i < nplusc - k; ++i)
+        {
+            // if the lower order basis function is zero skip the calculation
+            if (temp[i] != 0)
+            {
+                temp[i] = ((t - x[i]) * temp[i]) / (x[i + k - 1] - x[i]);
+            }
+            // if the lower order basis function is zero skip the calculation
+            if (temp[i + 1] != 0)
+            {
+                temp[i] += ((x[i + k] - t) * temp[i + 1]) / (x[i + k] - x[i + 1]);
+            }
+        }
+    }
+
+    // pick up last point
+    if (t >= x[nplusc - 1])
+    {
+        temp[npts-1] = 1;
+    }
+
+    // calculate sum for denominator of rational basis functions
+    double sum = 0;
+    for (int i = 0; i < npts; ++i)
+    {
+        sum += temp[i];
+    }
+
+    output.resize(npts, 0);
+    // form rational basis functions and put in r vector
+    if (sum != 0)
+    {
+        for (int i = 0; i < npts; ++i)
+        {
+            output[i] = temp[i] / sum;
+        }
+    }
+}
+
+void QuadBSpline::rbspline(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point>& b, std::vector<Point>& p)  // 从LibreCAD抄的
+{
+    const size_t nplusc = npts + 3;
+    // calculate the points on the rational B-spline curve
+    double t = knots[0];
+    const double step = (knots[nplusc - 1] - t) / (p1 - 1);
+
+    for (Geo::Point &vp: p)
+    {
+        if (knots[nplusc - 1] - t < 5e-6)
+        {
+            t = knots[nplusc-1];
+        }
+        // generate the basis function for this value of t
+        std::vector<double> nbasis;
+        rbasis(t, npts, knots, nbasis);
+        // generate a point on the curve
+		for (size_t i = 0; i < npts; ++i)
+        {
+            vp += b[i] * nbasis[i];
+        }
+        t += step;
+    }
+}
+
+void QuadBSpline::update_shape(const double step, const double down_sampling_value)
+{
+    const size_t npts = control_points.size();
+
+    double length = 0;
+    for (size_t i = 1, count = control_points.size(); i < count; ++i)
+    {
+        length += Geo::distance(control_points[i - 1], control_points[i]);
+    }
+
+    // resolution:
+    const size_t points_count = std::max(npts * 8.0, length / step);
+
+    std::vector<Point> points(points_count, Point(0, 0));
+    rbspline(npts, points_count, _knots, control_points, points);
+
+    _shape.clear();
+    _shape.append(path_points.empty() ? control_points.front() : path_points.front());
+    _shape.append(points.begin(), points.end());
+    _shape.append(path_points.empty() ? control_points.back() : path_points.back());
+    Geo::down_sampling(_shape, down_sampling_value);
+}
+
+QuadBSpline *QuadBSpline::clone() const
+{
+    return new QuadBSpline(*this);
+}
+
+
+// CubicBSpline
+CubicBSpline::CubicBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const bool is_path_points)
+{
+    _shape.shape_fixed = true;
+    if (is_path_points)
+    {
+        path_points.assign(begin, end);
+        for (size_t i = path_points.size() - 1; i > 1; --i)
+        {
+            if (path_points[i] == path_points[i - 1])
+            {
+                path_points.erase(path_points.begin() + i);
+            }
+        }
+        update_control_points();
+    }
+    else
+    {
+        control_points.assign(begin, end);
+        const size_t num = control_points.size();
+        _knots.resize(num + 4, 0);
+        std::iota(_knots.begin() + 4, _knots.begin() + num + 1, 1);
+        std::fill(_knots.begin() + num + 1, _knots.end(), _knots[num]);
+        path_points.resize(num - 2);
+        rbspline(num, num - 2, _knots, control_points, path_points);
+    }
+    update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
+}
+
+CubicBSpline::CubicBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const std::vector<double> &knots, const bool is_path_points)
+{
+    _shape.shape_fixed = true;
+    if (is_path_points)
+    {
+        path_points.assign(begin, end);
+        for (size_t i = path_points.size() - 1; i > 1; --i)
+        {
+            if (path_points[i] == path_points[i - 1])
+            {
+                path_points.erase(path_points.begin() + i);
+            }
+        }
+        update_control_points();
+    }
+    else
+    {
+        _knots.assign(knots.begin(), knots.end());
+        control_points.assign(begin, end);
+        const size_t num = control_points.size();
+        path_points.resize(num - 2);
+        rbspline(num, num - 2, _knots, control_points, path_points);
+    }
+    update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
+}
+
+CubicBSpline::CubicBSpline(const std::initializer_list<Point> &points, const bool is_path_points)
+{
+    _shape.shape_fixed = true;
+    if (is_path_points)
+    {
+        path_points.assign(points.begin(), points.end());
+        for (size_t i = path_points.size() - 1; i > 1; --i)
+        {
+            if (path_points[i] == path_points[i - 1])
+            {
+                path_points.erase(path_points.begin() + i);
+            }
+        }
+        update_control_points();
+    }
+    else
+    {
+        control_points.assign(points.begin(), points.end());
+        const size_t num = control_points.size();
+        _knots.resize(num + 4, 0);
+        std::iota(_knots.begin() + 4, _knots.begin() + num + 1, 1);
+        std::fill(_knots.begin() + num + 1, _knots.end(), _knots[num]);
+        path_points.resize(num - 2);
+        rbspline(num, num - 2, _knots, control_points, path_points);
+    }
+    update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
+}
+
+const Type CubicBSpline::type() const
+{
+    return Geo::Type::BSPLINE;
+}
+
+void CubicBSpline::update_control_points()
+{
+    control_points.clear();
+    const size_t n = path_points.size();
+    if (n < 3)
+    {
+        if(n > 0)
+        {
+            control_points.emplace_back(path_points.front());
+        }
+        if(n > 1)
+        {
+            control_points.emplace_back(path_points.back());
+        }
+        return;
+    }
+
+    double *delta = new double[n + 5];
+    {
+        _knots.assign(n + 6, 0);
+        double *l = new double[n - 1];
+        double l1 = 0;
+        for (size_t i = 0; i < n - 1; ++i)
+        {
+            l[i] = std::sqrt(Geo::distance(path_points[i + 1], path_points[i]));
+            l1 += l[i];
+        }
+        for (size_t i = 0; i <= 3; ++i)
+        {
+            _knots[i] = 0;
+            _knots[i + n + 2] = 1;
+        }
+        for (size_t i = 4; i < n + 2; ++i)
+        {   
+            double l2 = 0;
+            for (size_t j = 0; j < i - 3; ++j)
+            {
+                l2 += l[j];
+            }
+            _knots[i] = l2 / l1;
+        }
+        delete[] l;
+
+        for (size_t i = 0; i < n + 5; ++i)
+        {
+            delta[i] = _knots[i + 1] - _knots[i];
+        }
+    }
+
+    double *a = new double[n];
+    double *b = new double[n];
+    double *c = new double[n];
+    double *e = new double[n];
+    double *f = new double[n];
+    // 抛物线条件
+    a[0] = 1 - delta[3] * delta[4] / std::pow(delta[3] + delta[4], 2);
+    b[0] = delta[3] / (delta[3] + delta[4]) * (delta[4] / (delta[3] + delta[4]) - delta[3] / (delta[3] + delta[4] + delta[5]));
+    c[0] = std::pow(delta[3], 2) / ((delta[3] + delta[4]) * (delta[3] + delta[4] + delta[5]));
+    e[0] = (path_points[0].x + 2 * path_points[1].x) / 3;
+    f[0] = (path_points[0].y + 2 * path_points[1].y) / 3;
+    a[n - 1] = -std::pow(delta[n + 1], 2) / ((delta[n] + delta[n + 1]) * (delta[n] + delta[n] + delta[n + 1]));
+    b[n - 1] = delta[n + 1] / (delta[n] + delta[n + 1]) * (delta[n + 1] / (delta[n] + delta[n] + delta[n + 1]) - delta[n] / (delta[n] + delta[n + 1]));
+    c[n - 1] = delta[n] * delta[n + 1] / std::pow(delta[n] + delta[n + 1], 2) - 1;
+    e[n - 1] = -(path_points[n - 1].x + 2 * path_points[n - 2].x) / 3;
+    f[n - 1] = -(path_points[n - 1].y + 2 * path_points[n - 2].y) / 3;
+    for (size_t i = 1; i < n - 1; ++i)
+    {
+        a[i] = std::pow(delta[i + 3], 2) / (delta[i + 1] + delta[i + 2] + delta[i + 3]);
+        b[i] = delta[i + 3] * (delta[i + 1] + delta[i + 2]) / (delta[i + 1] + delta[i + 2] + delta[i + 3])
+            + delta[i + 2] * (delta[i + 3] + delta[i + 4]) / (delta[i + 2] + delta[i + 3] + delta[i + 4]);
+        c[i] = std::pow(delta[i + 2], 2) / (delta[i + 2] + delta[i + 3] + delta[i + 4]);
+        e[i] = (delta[i + 2] + delta[i + 3]) * path_points[i].x;
+        f[i] = (delta[i + 2] + delta[i + 3]) * path_points[i].y;
+    }
+    delete[] delta;
+    double *matrix = new double[n * n];
+    std::fill_n(matrix, n * n, 0);
+    matrix[0] = a[0];
+    matrix[1] = b[0];
+    matrix[2] = c[0];
+    matrix[n * n - 3] = a[n - 1];
+    matrix[n * n - 2] = b[n - 1];
+    matrix[n * n - 1] = c[n - 1];
+    for (size_t i = 1; i < n - 1; ++i)
+    {
+        matrix[i * n + i - 1] = a[i];
+        matrix[i * n + i] = b[i];
+        matrix[i * n + i + 1] = c[i];
+    }
+    delete[] a;
+    delete[] b;
+    delete[] c;
+
+    double *x = new double[n];
+    double *y = new double[n];
+    Math::solve(matrix, n, e, x);
+    Math::solve(matrix, n, f, y);
+    delete[] matrix;
+    delete[] e;
+    delete[] f;
+    control_points.emplace_back(path_points.front());
+    for (size_t i = 0; i < n; ++i)
+    {
+        control_points.emplace_back(x[i], y[i]);
+    }
+    control_points.emplace_back(path_points.back());
+    delete[] x;
+    delete[] y;
+}
+
+void CubicBSpline::rbasis(const double t, const int npts, const std::vector<double> &x, std::vector<double> &output)
+{
+    const int nplusc = npts + 4;
+    std::vector<double> temp(nplusc, 0);
+    // calculate the first order nonrational basis functions n[i]
+    for (int i = 0; i< nplusc - 1; ++i)
+    {
+        if ((t >= x[i]) && (t < x[i+1]))
+        {
+            temp[i] = 1;
+        }
+    }
+
+    /* calculate the higher order nonrational basis functions */
+
+    for (int k = 2; k <= 4; ++k)
+    {
+        for (int i = 0; i < nplusc - k; ++i)
+        {
+            // if the lower order basis function is zero skip the calculation
+            if (temp[i] != 0)
+            {
+                temp[i] = ((t - x[i]) * temp[i]) / (x[i + k - 1] - x[i]);
+            }
+            // if the lower order basis function is zero skip the calculation
+            if (temp[i + 1] != 0)
+            {
+                temp[i] += ((x[i + k] - t) * temp[i + 1]) / (x[i + k] - x[i + 1]);
+            }
+        }
+    }
+
+    // pick up last point
+    if (t >= x[nplusc - 1])
+    {
+        temp[npts-1] = 1;
+    }
+
+    // calculate sum for denominator of rational basis functions
+    double sum = 0;
+    for (int i = 0; i < npts; ++i)
+    {
+        sum += temp[i];
+    }
+
+    output.resize(npts, 0);
+    // form rational basis functions and put in r vector
+    if (sum != 0)
+    {
+        for (int i = 0; i < npts; ++i)
+        {
+            output[i] = temp[i] / sum;
+        }
+    }
+}
+
+void CubicBSpline::rbspline(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p)
+{
+    const size_t nplusc = npts + 4;
+    // calculate the points on the rational B-spline curve
+    double t = knots[0];
+    const double step = (knots[nplusc - 1] - t) / (p1 - 1);
+
+    for (Geo::Point &vp: p)
+    {
+        if (knots[nplusc - 1] - t < 5e-6)
+        {
+            t = knots[nplusc-1];
+        }
+        // generate the basis function for this value of t
+        std::vector<double> nbasis;
+        rbasis(t, npts, knots, nbasis);
+        // generate a point on the curve
+		for (size_t i = 0; i < npts; ++i)
+        {
+            vp += b[i] * nbasis[i];
+        }
+        t += step;
+    }
+}
+
+void CubicBSpline::update_shape(const double step, const double down_sampling_value)
+{
+    const size_t npts = control_points.size();
+
+    if (npts == 2)
+    {
+        _shape.clear();
+        _shape.append(control_points.front());
+        _shape.append(control_points.back());
+        return;
+    }
+
+    double length = 0;
+    for (size_t i = 1, count = control_points.size(); i < count; ++i)
+    {
+        length += Geo::distance(control_points[i - 1], control_points[i]);
+    }
+
+    // resolution:
+    const size_t points_count = std::max(npts * 8.0, length / step);
+
+    std::vector<Point> points(points_count, Point(0, 0));
+    rbspline(npts, points_count, _knots, control_points, points);
+
+    _shape.clear();
+    _shape.append(path_points.empty() ? control_points.front() : path_points.front());
+    _shape.append(points.begin(), points.end());
+    _shape.append(path_points.empty() ? control_points.back() : path_points.back());
+    Geo::down_sampling(_shape, down_sampling_value);
+}
+
+CubicBSpline *CubicBSpline::clone() const
+{
+    return new CubicBSpline(*this);
 }

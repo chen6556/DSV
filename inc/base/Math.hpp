@@ -26,4 +26,10 @@ namespace Math
     int ellipse_ellipse_fdf(const gsl_vector *x, void *params, gsl_vector *f, gsl_matrix *j);
 
     std::tuple<double, double> solve_ellipse_ellipse_intersection(EllipseParameter &param, const double init_x, const double init_y);
+
+    void inverse(const double *input, const size_t n, double *output);
+
+    void mul(const double *mat0, const size_t m0, const size_t n0, const double *mat1, const size_t n1, double *output);
+
+    void solve(const double *mat, const size_t n, const double *b, double *output);
 };

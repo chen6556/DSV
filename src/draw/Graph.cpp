@@ -249,6 +249,10 @@ Geo::AABBRect Graph::bounding_rect() const
     double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
     for (const ContainerGroup &group : _container_groups)
     {
+        if (group.empty())
+        {
+            continue;
+        }
         for (const Geo::Point &point : group.bounding_rect())
         {
             x0 = std::min(x0, point.x);
@@ -349,58 +353,11 @@ const ContainerGroup &Graph::back() const
 
 
 
-void Graph::append(Text *text, const size_t index)
+void Graph::append(Geo::Geometry *object, const size_t index)
 {
     assert(index < _container_groups.size());
-    container_group(index).append(text);
-    text->is_selected = false;
-}
-
-void Graph::append(Container<Geo::Polygon> *container, const size_t index)
-{
-    assert(index < _container_groups.size());
-    if (container->shape().size() > 3)
-    {
-        container_group(index).append(container);
-        container->is_selected = false;
-    }
-}
-
-void Graph::append(Container<Geo::Circle> *container, const size_t index)
-{
-    assert(index < _container_groups.size());
-    if (!container->shape().empty())
-    {
-        container_group(index).append(container);
-        container->is_selected = false;
-    }
-}
-
-void Graph::append(Container<Geo::Ellipse> *container, const size_t index)
-{
-    assert(index < _container_groups.size());
-    if (!container->shape().empty())
-    {
-        container_group(index).append(container);
-        container->is_selected = false;
-    }
-}
-
-void Graph::append(Geo::Polyline *polyline, const size_t index)
-{
-    assert(index < _container_groups.size());
-    if (polyline->size() > 1)
-    {
-        container_group(index).append(polyline);
-        polyline->is_selected = false;
-    }
-}
-
-void Graph::append(Geo::Bezier *bezier, const size_t index)
-{
-    assert(index < _container_groups.size());
-    container_group(index).append(bezier);
-    bezier->is_selected = false;
+    container_group(index).append(object);
+    object->is_selected = false;
 }
 
 void Graph::append_group()
@@ -460,4 +417,72 @@ void Graph::remove_group(const size_t index)
         ++it;
     }
     _container_groups.erase(it);
+}
+
+
+
+
+bool Graph::has_group(const QString &name) const
+{
+    for (const ContainerGroup &group : _container_groups)
+    {
+        if (group.name == name)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Graph::has_object(const QString &name) const
+{
+    for (const ContainerGroup &group : _container_groups)
+    {
+        for (const Geo::Geometry *object : group)
+        {
+            if (object->name == name)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool Graph::remove_object(const Geo::Geometry *object)
+{
+    for (ContainerGroup &group : _container_groups)
+    {
+        for (size_t i = 0, count = group.size(); i < count; ++i)
+        {
+            if (group[i] == object)
+            {
+                group.remove(i);
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+void Graph::update_curve_shape(const double step, const double down_sampling_value)
+{
+    for (ContainerGroup &group : _container_groups)
+    {
+        for (Geo::Geometry *object : group)
+        {
+            switch (object->type())
+            {
+            case Geo::Type::BEZIER:
+                static_cast<Geo::Bezier *>(object)->update_shape(step, down_sampling_value);
+                break;
+            case Geo::Type::BSPLINE:
+                static_cast<Geo::BSpline *>(object)->update_shape(step, down_sampling_value);
+                break;
+            default:
+                break;
+            }
+        }
+    }
 }

@@ -1,5 +1,6 @@
 <RCC>
   <qresource prefix="/">
+    <file>icons/bezier_btn.png</file>
     <file>icons/fillet_btn.png</file>
     <file>icons/DSV_logo.png</file>
     <file>icons/ellipse_btn.png</file>

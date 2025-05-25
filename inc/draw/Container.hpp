@@ -130,9 +130,6 @@ private:
     bool _visible = true;
 
 public:
-    QString name;
-
-public:
     ContainerGroup() {};
 
     ContainerGroup(const ContainerGroup &containers);

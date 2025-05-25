@@ -32,6 +32,9 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/output/)
 find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets OpenGL Gui Core)
 find_package(GSL REQUIRED)
 
+include_directories(libs)
+add_subdirectory(libs)
+
 add_subdirectory(src)
 include_directories(inc)
 file(GLOB _UI_HEADS inc/ui/*hpp)
@@ -46,6 +49,7 @@ qt_add_executable(DSV
     ${_BASE_SOURCES}
     ${_UI_SOURCES}
     ${_IO_SOURCES}
+    ${_LIBRARY_SOURCES}
     res/icon.rc
     res/Icons.qrc
 )

@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <cfloat>
+#include <QString>
 
 
 namespace Geo
@@ -10,7 +11,7 @@ namespace Geo
     const static double EPSILON = 1e-10;
 
     enum class Type {GEOMETRY, POINT, POLYLINE, AABBRECT, POLYGON, TRIANGLE, CIRCLE, LINE, BEZIER,
-        ELLIPSE, TEXT, CONTAINERGROUP, COMBINATION, GRAPH};
+        ELLIPSE, BSPLINE, TEXT, CONTAINERGROUP, COMBINATION, GRAPH};
 
     class AABBRect;
 
@@ -23,6 +24,7 @@ namespace Geo
         bool is_selected = false;
         unsigned long long point_index = 0;
         unsigned long long point_count = 0;
+        QString name;
 
     public:
         virtual ~Geometry();
@@ -209,11 +211,15 @@ namespace Geo
 
         virtual void append(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end);
 
+        virtual void append(std::vector<Point>::const_reverse_iterator rbegin, std::vector<Point>::const_reverse_iterator rend);
+
         virtual void insert(const size_t index, const Point &point);
 
         virtual void insert(const size_t index, const Polyline &polyline);
 
         virtual void insert(const size_t index, std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end);
+
+        virtual void insert(const size_t index, std::vector<Point>::const_reverse_iterator rbegin, std::vector<Point>::const_reverse_iterator rend);
 
         virtual void remove(const size_t index);
 
@@ -521,6 +527,7 @@ namespace Geo
     {
     public:
         double radius = 0;
+        static double default_down_sampling_value;
 
     public:
         Circle() {};
@@ -629,6 +636,10 @@ namespace Geo
         Polyline _shape;
 
     public:
+        static double default_step;
+        static double default_down_sampling_value;
+
+    public:
         Bezier(const size_t n);
 
         Bezier(const Bezier &bezier);
@@ -644,9 +655,9 @@ namespace Geo
 
         const Polyline &shape() const;
 
-        void update_shape(const double step = 0.01);
+        void update_shape(const double step = 0.01, const double down_sampling_value = 0.02);
 
-        void append_shape(const double step = 0.01);
+        void append_shape(const double step = 0.01, const double down_sampling_value = 0.02);
 
         const double length() const override;
 
@@ -675,6 +686,9 @@ namespace Geo
 
     class Ellipse : public Geometry
     {
+    public:
+        static double default_down_sampling_value;
+
     private:
         Point _a[2], _b[2];
 
@@ -748,5 +762,112 @@ namespace Geo
         Point c0() const;
 
         Point c1() const;
+    };
+
+    class BSpline : public Geometry
+    {
+    protected:
+        Polyline _shape;
+        std::vector<double> _knots;
+
+    public:
+        std::vector<Point> control_points;
+        std::vector<Point> path_points;
+
+        static double default_step;
+        static double default_down_sampling_value;
+
+    public:
+        BSpline();
+
+        BSpline(const BSpline &bspline);
+
+        BSpline &operator=(const BSpline &bspline);
+
+        virtual void update_control_points() = 0;
+
+        virtual void update_shape(const double step, const double down_sampling_value) = 0;
+
+        const Polyline &shape() const;
+
+        const double length() const override;
+
+        const bool empty() const override;
+
+        void clear() override;
+
+        void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
+
+        void transform(const double mat[6]) override;
+
+        void translate(const double tx, const double ty) override;
+
+        void rotate(const double x, const double y, const double rad) override;
+
+        void scale(const double x, const double y, const double k) override;
+
+        Polygon convex_hull() const override;
+
+        AABBRect bounding_rect() const override;
+
+        Polygon mini_bounding_rect() const override;
+
+        const Point &front() const;
+
+        const Point &back() const;
+
+        const std::vector<double> &knots() const;
+    };
+
+    class QuadBSpline : public BSpline
+    {
+    public:
+        QuadBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const bool is_path_points);
+
+        QuadBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const std::vector<double> &knots, const bool is_path_points);
+
+        QuadBSpline(const std::initializer_list<Point> &points, const bool is_path_points);
+
+        const Type type() const override;
+
+        void update_control_points() override;
+
+        static bool get_three_points_control(const Point &point0, const Point &point1, const Point &point2, Point &output);
+
+        static void get_matrix(const size_t count, const std::vector<double>& dt, std::vector<double> &output);
+
+        static void knot(const size_t num, std::vector<double> &output);
+
+        static void rbasis(const double t, const int npts, const std::vector<double> &x, std::vector<double> &output);
+
+        static void rbspline(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p);
+
+        void update_shape(const double step, const double down_sampling_value) override;
+
+        QuadBSpline *clone() const override;
+    };
+
+    class CubicBSpline : public BSpline
+    {
+    public:
+        CubicBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const bool is_path_points);
+
+        CubicBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const std::vector<double> &knots, const bool is_path_points);
+
+        CubicBSpline(const std::initializer_list<Point> &points, const bool is_path_points);
+
+        const Type type() const override;
+
+        void update_control_points() override;
+
+        static void rbasis(const double t, const int npts, const std::vector<double> &x, std::vector<double> &output);
+
+        static void rbspline(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p);
+
+        static void update_path_points(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p);
+
+        void update_shape(const double step, const double down_sampling_value) override;
+
+        CubicBSpline *clone() const override;
     };
 };

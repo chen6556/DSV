@@ -11,6 +11,8 @@ class Setting : public QDialog
 {
 private:
     Ui::Setting *ui = nullptr;
+    int _text_size = 24;
+    double _down_sampling_value = 0.02;
 
 private:
     void init();
@@ -24,4 +26,8 @@ public:
 
     void show();
     int exec();
+
+    bool update_text_vbo() const;
+
+    bool update_curve_vbo() const;
 };

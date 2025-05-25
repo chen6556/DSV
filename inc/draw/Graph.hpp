@@ -99,19 +99,8 @@ public:
     const ContainerGroup &back() const;
 
 
-    
 
-    void append(Text *text, const size_t index = 0);
-
-    void append(Container<Geo::Polygon> *container, const size_t index = 0);
-
-    void append(Container<Geo::Circle> *container, const size_t index = 0);
-
-    void append(Container<Geo::Ellipse> *container, const size_t index = 0);
-
-    void append(Geo::Polyline *polyline, const size_t index = 0);
-
-    void append(Geo::Bezier *bezier, const size_t index = 0);
+    void append(Geo::Geometry *object, const size_t index = 0);
 
     void append_group();
 
@@ -126,4 +115,14 @@ public:
     void insert_group(const size_t index, const ContainerGroup &&group);
 
     void remove_group(const size_t index);
+
+
+    bool has_group(const QString &name) const;
+
+    bool has_object(const QString &name) const;
+
+    bool remove_object(const Geo::Geometry *object);
+
+
+    void update_curve_shape(const double step, const double down_sampling_value);
 };

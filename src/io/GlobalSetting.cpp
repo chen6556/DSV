@@ -37,6 +37,7 @@ void GlobalSetting::load_setting()
         _instance->setting["catch_foot"] = false;
         _instance->setting["catch_tangency"] = false;
         _instance->setting["catch_vertex"] = false;
+        _instance->setting["down_sampling"] = 0.02;
         _instance->setting["file_path"] = "/";
         _instance->setting["file_type"] = "All Files: (*.*)";
         _instance->setting["ignore_M19"] = true;

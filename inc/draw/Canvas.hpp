@@ -16,7 +16,7 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
     Q_OBJECT
 
 public:
-    enum class Tool {NoTool, Measure, Circle, Polyline, Rect, Curve, Text, Ellipse};
+    enum class Tool {NoTool, Measure, Circle, Polyline, Rect, BSpline, Bezier, Text, Ellipse};
     enum class Operation {NoOperation, Mirror, RingArray, PolygonDifference, Fillet, Rotate};
     enum class CatchedPointType {Vertex, Center, Foot, Tangency, Intersection};
 
@@ -49,7 +49,7 @@ private:
     double _view_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
     double _ratio = 1; // 缩放系数
     int _canvas_width = 0, _canvas_height = 0;
-    size_t _bezier_order = 3; // 贝塞尔曲线阶数
+    size_t _curve_order = 3; // 曲线次数
 
     // 0:可移动视图, 1:可绘图, 2:正在绘图, 3:测量, 4:可移动单个object, 5:选中一个obj, 6:正在移动obj, 7:显示坐标原点, 8:显示捕捉点
     bool _bool_flags[9] = {false, false, false, false, false, false, false, true, false};
@@ -146,9 +146,9 @@ public:
 
     const size_t groups_count() const;
 
-    void set_bezier_order(const size_t order);
-    
-    const size_t bezier_order() const;
+    void set_curve_order(const size_t order);
+
+    const size_t curve_order() const;
 
     double ratio() const;
 
@@ -220,8 +220,10 @@ public:
     void check_cache();
 
 
+    // 直接更新所有VBO,点数量可能发生变化
     void refresh_vbo();
 
+    // 更新被选中或所有VBO,点数量可能发生变化
     void refresh_vbo(const bool unitary);
 
     void refresh_cache_vbo(const unsigned int count);

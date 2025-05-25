@@ -162,8 +162,7 @@ void Containerized::clear_text()
 // ContainerGroup
 
 ContainerGroup::ContainerGroup(const ContainerGroup &containers)
-    : Geo::Geometry(containers), _ratio(containers._ratio), _visible(containers._visible),
-    name(containers.name)
+    : Geo::Geometry(containers), _ratio(containers._ratio), _visible(containers._visible)
 {
     for (const Geo::Geometry *geo : containers)
     {
@@ -438,6 +437,15 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
             break;
         case Geo::Type::BEZIER:
             for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(continer)->shape())
+            {
+                x0 = std::min(x0, point.x);
+                y0 = std::min(y0, point.y);
+                x1 = std::max(x1, point.x);
+                y1 = std::max(y1, point.y);
+            }
+            break;
+        case Geo::Type::BSPLINE:
+            for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(continer)->shape())
             {
                 x0 = std::min(x0, point.x);
                 y0 = std::min(y0, point.y);

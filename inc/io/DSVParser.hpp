@@ -37,6 +37,8 @@ public:
 
     void store_bezier();
 
+    void store_bspline();
+
     void store_text();
 
     void begin_combination();

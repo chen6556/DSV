@@ -323,22 +323,23 @@ void Canvas::paintGL()
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        if (_tool_flags[0] != Tool::Curve)
-        {
-            glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color
-        }
-        else
+        if (_tool_flags[0] == Tool::BSpline || _tool_flags[0] == Tool::Bezier)
         {
             glUniform4f(_uniforms[4], 1.0f, 0.549f, 0.0f, 1.0f); // color
         }
+        else
+        {
+            glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color
+        }
         glDrawArrays(GL_LINE_STRIP, 0, _cache_count / 3);
-        if (_tool_flags[0] == Tool::Curve || GlobalSetting::get_instance()->setting["show_points"].toBool())
+        if (_tool_flags[0] == Tool::BSpline || _tool_flags[0] == Tool::Bezier
+            || GlobalSetting::get_instance()->setting["show_points"].toBool())
         {
             glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
             glDrawArrays(GL_POINTS, 0, _cache_count / 3);
         }
     }
-    else if (!_AABBRect_cache.empty())
+    else if (_AABBRect_cache.width() > 0 && _AABBRect_cache.height() > 0)
     {
         for (int i = 0; i < 4; ++i)
         {
@@ -360,7 +361,7 @@ void Canvas::paintGL()
     }
     else if (!_circle_cache.empty())
     {
-        const Geo::Polygon points(Geo::circle_to_polygon(_circle_cache));
+        const Geo::Polygon points(Geo::circle_to_polygon(_circle_cache, Geo::Circle::default_down_sampling_value));
         _cache_count = _cache_len;
         while (_cache_len < points.size() * 3)
         {
@@ -409,7 +410,7 @@ void Canvas::paintGL()
     }
     else if (!_ellipse_cache.empty())
     {
-        const Geo::Polygon points(Geo::ellipse_to_polygon(_ellipse_cache));
+        const Geo::Polygon points(Geo::ellipse_to_polygon(_ellipse_cache, Geo::Ellipse::default_down_sampling_value));
         _cache_count = _cache_len;
         while (_cache_len < points.size() * 3)
         {
@@ -576,7 +577,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 }
                 break;
             case Tool::Polyline:
-            case Tool::Curve:
+            case Tool::Bezier:
+            case Tool::BSpline:
                 if (is_painting())
                 {
                     _editer->point_cache().emplace_back(Geo::Point(real_x1, real_y1));
@@ -909,9 +911,21 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     case Geo::Type::POLYLINE:
                         _info_labels[1]->setText("Length:" + QString::number(dynamic_cast<const Geo::Polyline*>(_clicked_obj)->length()));
                         break;
+                    case Geo::Type::ELLIPSE:
+                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const Geo::Ellipse*>(_clicked_obj)->center().x)
+                            + " Y:" + QString::number(dynamic_cast<const Geo::Ellipse*>(_clicked_obj)->center().y)
+                            + " Angle:" + QString::number(dynamic_cast<const Geo::Ellipse*>(_clicked_obj)->angle())
+                            + " A:" + QString::number(dynamic_cast<const Geo::Ellipse*>(_clicked_obj)->lengtha())
+                            + " B:" + QString::number(dynamic_cast<const Geo::Ellipse*>(_clicked_obj)->lengthb())
+                            + " Length:" + QString::number(dynamic_cast<const Geo::Ellipse*>(_clicked_obj)->length())
+                            + " Area:" + QString::number(dynamic_cast<const Geo::Ellipse*>(_clicked_obj)->area()));
+                        break;
                     case Geo::Type::BEZIER:
                         _info_labels[1]->setText("Order:" + QString::number(dynamic_cast<const Geo::Bezier*>(_clicked_obj)->order()) +
                             " Length:" + QString::number(dynamic_cast<const Geo::Bezier*>(_clicked_obj)->length()));
+                        break;
+                    case Geo::Type::BSPLINE:
+                        _info_labels[1]->setText("Length:" + QString::number(dynamic_cast<const Geo::BSpline*>(_clicked_obj)->length()));
                         break;
                     default:
                         break;
@@ -1192,8 +1206,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     .append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.y))).c_str());
             }
             break;
-        case Tool::Curve:
-            if (_editer->point_cache().size() > _bezier_order && (_editer->point_cache().size() - 2) % _bezier_order == 0) 
+        case Tool::Bezier:
+            if (_editer->point_cache().size() > _curve_order && (_editer->point_cache().size() - 2) % _curve_order == 0) 
             {
                 const size_t count = _editer->point_cache().size();
                 if (_editer->point_cache()[count - 2].x == _editer->point_cache()[count - 3].x)
@@ -1213,6 +1227,12 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             {
                 _editer->point_cache().back() = Geo::Point(real_x1, real_y1);
             }
+            _cache[_cache_count - 3] = _editer->point_cache().back().x;
+            _cache[_cache_count - 2] = _editer->point_cache().back().y;
+            refresh_cache_vbo(3);
+            break;
+        case Tool::BSpline:
+            _editer->point_cache().back() = Geo::Point(real_x1, real_y1);
             _cache[_cache_count - 3] = _editer->point_cache().back().x;
             _cache[_cache_count - 2] = _editer->point_cache().back().y;
             refresh_cache_vbo(3);
@@ -1286,9 +1306,25 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                             break;
                         }
                     }
+                    else if (obj->type() == Geo::Type::BSPLINE)
+                    {
+                        _cache_count = 0;
+                        for (const Geo::Point &point : dynamic_cast<Geo::BSpline *>(obj)->path_points)
+                        {
+                            _cache[_cache_count++] = point.x;
+                            _cache[_cache_count++] = point.y;
+                            _cache[_cache_count++] = 0.5;
+                        }
+                        refresh_cache_vbo(0);
+                        update_vbo = obj->point_count != dynamic_cast<Geo::BSpline *>(obj)->shape().size();
+                        if (update_vbo)
+                        {
+                            break;
+                        }
+                    }  
                     else if (obj->type() == Geo::Type::CIRCLE)
                     {
-                        update_vbo = obj->point_count != Geo::circle_to_polygon(*dynamic_cast<Geo::Circle *>(obj)).size();
+                        update_vbo = obj->point_count != Geo::circle_to_polygon(*dynamic_cast<Geo::Circle *>(obj), Geo::Circle::default_down_sampling_value).size();
                         if (update_vbo)
                         {
                             break;
@@ -1296,7 +1332,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     }
                     else if (obj->type() == Geo::Type::ELLIPSE)
                     {
-                        update_vbo = obj->point_count != Geo::ellipse_to_polygon(*dynamic_cast<Geo::Ellipse *>(obj)).size();
+                        update_vbo = obj->point_count != Geo::ellipse_to_polygon(*dynamic_cast<Geo::Ellipse *>(obj), Geo::Ellipse::default_down_sampling_value).size();
                         if (update_vbo)
                         {
                             break;
@@ -1433,8 +1469,12 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
             case Tool::Rect:
                 _AABBRect_cache.clear();
                 break;
-            case Tool::Curve:
-                _editer->append_bezier(_bezier_order);
+            case Tool::Bezier:
+                _editer->append_bezier(_curve_order);
+                _cache_count = 0;
+                break;
+            case Tool::BSpline:
+                _editer->append_bspline(_curve_order);
                 _cache_count = 0;
                 break;
             default:
@@ -1683,16 +1723,15 @@ const size_t Canvas::groups_count() const
     return _editer->groups_count();
 }
 
-void Canvas::set_bezier_order(const size_t order)
+void Canvas::set_curve_order(const size_t order)
 {
-    _bezier_order = order;
+    _curve_order = order;
 }
 
-const size_t Canvas::bezier_order() const
+const size_t Canvas::curve_order() const
 {
-    return _bezier_order;
+    return _curve_order;
 }
-
 
 
 
@@ -1926,13 +1965,19 @@ void Canvas::polyline_cmd()
 {
     _bool_flags[1] = false; // paintable
     _bool_flags[2] = false; // painting
-    if (_tool_flags[0] == Tool::Polyline)
+    switch (_tool_flags[0])
     {
+    case Tool::Polyline:
         _editer->append_points();
-    }
-    else
-    {
-        _editer->append_bezier(_bezier_order);
+        break;
+    case Tool::BSpline:
+        _editer->append_bspline(_curve_order);
+        break;
+    case Tool::Bezier:
+        _editer->append_bezier(_curve_order);
+        break;
+    default:
+        break;
     }
     _cache_count = 0;
     _tool_flags[1] = _tool_flags[0];
@@ -2233,9 +2278,10 @@ void Canvas::check_cache()
 {
     if (_cache_count == _cache_len)
     {
+        _cache_len *= 2;
         double *temp = new double[_cache_len];
         std::memmove(temp, _cache, sizeof(double) * _cache_count);
-        delete _cache;
+        delete[] _cache;
         _cache = temp;
     }
 }
@@ -2309,7 +2355,7 @@ void Canvas::refresh_vbo()
                 break;
             case Geo::Type::CIRCLE:
                 circle = dynamic_cast<Geo::Circle *>(geo);
-                points = Geo::circle_to_polygon(*circle);
+                points = Geo::circle_to_polygon(*circle, Geo::Circle::default_down_sampling_value);
                 for (size_t i : Geo::ear_cut_to_indexs(points))
                 {
                     polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2350,7 +2396,7 @@ void Canvas::refresh_vbo()
                 break;
             case Geo::Type::ELLIPSE:
                 ellipse = dynamic_cast<Geo::Ellipse *>(geo);
-                points = Geo::ellipse_to_polygon(*ellipse);
+                points = Geo::ellipse_to_polygon(*ellipse, Geo::Ellipse::default_down_sampling_value);
                 for (size_t i : Geo::ear_cut_to_indexs(points))
                 {
                     polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2438,7 +2484,7 @@ void Canvas::refresh_vbo()
                         break;
                     case Geo::Type::CIRCLE:
                         circle = dynamic_cast<Geo::Circle *>(item);
-                        points = Geo::circle_to_polygon(*circle);
+                        points = Geo::circle_to_polygon(*circle, Geo::Circle::default_down_sampling_value);
                         for (size_t i : Geo::ear_cut_to_indexs(points))
                         {
                             polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2479,7 +2525,7 @@ void Canvas::refresh_vbo()
                         break;
                     case Geo::Type::ELLIPSE:
                         ellipse = dynamic_cast<Geo::Ellipse *>(item);
-                        points = Geo::ellipse_to_polygon(*ellipse);
+                        points = Geo::ellipse_to_polygon(*ellipse, Geo::Ellipse::default_down_sampling_value);
                         for (size_t i : Geo::ear_cut_to_indexs(points))
                         {
                             polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2573,6 +2619,33 @@ void Canvas::refresh_vbo()
                         polyline_indexs[polyline_index_count++] = UINT_MAX;
                         item->point_count = dynamic_cast<const Geo::Bezier *>(item)->shape().size();
                         break;
+                    case Geo::Type::BSPLINE:
+                        for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->shape())
+                        {
+                            polyline_indexs[polyline_index_count++] = data_count / 3;
+                            data[data_count++] = point.x;
+                            data[data_count++] = point.y;
+                            data[data_count++] = 0.5;
+                            if (data_count == data_len)
+                            {
+                                data_len *= 2;
+                                double *temp = new double[data_len];
+                                std::memmove(temp, data, data_count * sizeof(double));
+                                delete []data;
+                                data = temp;
+                            }
+                            if (polyline_index_count == polyline_index_len)
+                            {
+                                polyline_index_len *= 2;
+                                unsigned int *temp = new unsigned int[polyline_index_len];
+                                std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                                delete []polyline_indexs;
+                                polyline_indexs = temp;
+                            }
+                        }
+                        polyline_indexs[polyline_index_count++] = UINT_MAX;
+                        item->point_count = dynamic_cast<const Geo::BSpline *>(item)->shape().size();
+                        break;
                     default:
                         break;
                     }
@@ -2642,6 +2715,33 @@ void Canvas::refresh_vbo()
                 }
                 polyline_indexs[polyline_index_count++] = UINT_MAX;
                 geo->point_count = dynamic_cast<const Geo::Bezier *>(geo)->shape().size();
+                break;
+            case Geo::Type::BSPLINE:
+                for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(geo)->shape())
+                {
+                    polyline_indexs[polyline_index_count++] = data_count / 3;
+                    data[data_count++] = point.x;
+                    data[data_count++] = point.y;
+                    data[data_count++] = 0.5;
+                    if (data_count == data_len)
+                    {
+                        data_len *= 2;
+                        double *temp = new double[data_len];
+                        std::memmove(temp, data, data_count * sizeof(double));
+                        delete []data;
+                        data = temp;
+                    }
+                    if (polyline_index_count == polyline_index_len)
+                    {
+                        polyline_index_len *= 2;
+                        unsigned int *temp = new unsigned int[polyline_index_len];
+                        std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                        delete []polyline_indexs;
+                        polyline_indexs = temp;
+                    }
+                }
+                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                geo->point_count = dynamic_cast<const Geo::BSpline *>(geo)->shape().size();
                 break;
             default:
                 break;
@@ -2727,7 +2827,7 @@ void Canvas::refresh_vbo(const bool unitary)
                 }
                 break;
             case Geo::Type::CIRCLE:
-                for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(geo)))
+                for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(geo), Geo::Circle::default_down_sampling_value))
                 {
                     data[data_count++] = point.x;
                     data[data_count++] = point.y;
@@ -2743,7 +2843,7 @@ void Canvas::refresh_vbo(const bool unitary)
                 }
                 break;
             case Geo::Type::ELLIPSE:
-                for (const Geo::Point &point : Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(geo)))
+                for (const Geo::Point &point : Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(geo), Geo::Ellipse::default_down_sampling_value))
                 {
                     data[data_count++] = point.x;
                     data[data_count++] = point.y;
@@ -2781,7 +2881,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         }
                         break;
                     case Geo::Type::CIRCLE:
-                        for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item)))
+                        for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item), Geo::Circle::default_down_sampling_value))
                         {
                             data[data_count++] = point.x;
                             data[data_count++] = point.y;
@@ -2797,7 +2897,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         }
                         break;
                     case Geo::Type::ELLIPSE:
-                        for (const Geo::Point &point : Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(item)))
+                        for (const Geo::Point &point : Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(item), Geo::Ellipse::default_down_sampling_value))
                         {
                             data[data_count++] = point.x;
                             data[data_count++] = point.y;
@@ -2844,6 +2944,22 @@ void Canvas::refresh_vbo(const bool unitary)
                             }
                         }
                         break;
+                    case Geo::Type::BSPLINE:
+                        for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(geo)->shape())
+                        {
+                            data[data_count++] = point.x;
+                            data[data_count++] = point.y;
+                            data[data_count++] = 0.5;
+                            if (data_count == data_len)
+                            {
+                                data_len *= 2;
+                                double *temp = new double[data_len];
+                                std::memmove(temp, data, data_count * sizeof(double));
+                                delete []data;
+                                data = temp;
+                            }
+                        }
+                        break;
                     default:
                         break;
                     }
@@ -2870,6 +2986,22 @@ void Canvas::refresh_vbo(const bool unitary)
                 break;
             case Geo::Type::BEZIER:
                 for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(geo)->shape())
+                {
+                    data[data_count++] = point.x;
+                    data[data_count++] = point.y;
+                    data[data_count++] = 0.5;
+                    if (data_count == data_len)
+                    {
+                        data_len *= 2;
+                        double *temp = new double[data_len];
+                        std::memmove(temp, data, data_count * sizeof(double));
+                        delete []data;
+                        data = temp;
+                    }
+                }
+                break;
+            case Geo::Type::BSPLINE:
+                for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(geo)->shape())
                 {
                     data[data_count++] = point.x;
                     data[data_count++] = point.y;
@@ -2968,6 +3100,7 @@ void Canvas::refresh_selected_ibo()
             case Geo::Type::ELLIPSE:
             case Geo::Type::POLYLINE:
             case Geo::Type::BEZIER:
+            case Geo::Type::BSPLINE:
                 for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
                 {
                     indexs[index_count++] = index++;
@@ -2989,15 +3122,30 @@ void Canvas::refresh_selected_ibo()
                     delete []indexs;
                     indexs = temp;
                 }
-                if (geo->type() == Geo::Type::BEZIER && count == 1)
+                if (count == 1)
                 {
                     _cache_count = 0;
-                    for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(geo))
+                    switch (geo->type())
                     {
-                        _cache[_cache_count++] = point.x;
-                        _cache[_cache_count++] = point.y;
-                        _cache[_cache_count++] = 0.5;
-                        check_cache();
+                    case Geo::Type::BEZIER:
+                        for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(geo))
+                        {
+                            _cache[_cache_count++] = point.x;
+                            _cache[_cache_count++] = point.y;
+                            _cache[_cache_count++] = 0.5;
+                            check_cache();
+                        }
+                        break;
+                    case Geo::Type::BSPLINE:
+                        for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(geo)->path_points)
+                        {
+                            _cache[_cache_count++] = point.x;
+                            _cache[_cache_count++] = point.y;
+                            _cache[_cache_count++] = 0.5;
+                            check_cache();
+                        }
+                    default:
+                        break;
                     }
                 }
                 break;
@@ -3106,6 +3254,30 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
             delete []indexs;
             indexs = temp;
         }
+
+        _cache_count = 0;
+        switch (object->type())
+        {
+        case Geo::Type::BEZIER:
+            for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(object))
+            {
+                _cache[_cache_count++] = point.x;
+                _cache[_cache_count++] = point.y;
+                _cache[_cache_count++] = 0.5;
+                check_cache();
+            }
+            break;
+        case Geo::Type::BSPLINE:
+            for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(object)->path_points)
+            {
+                _cache[_cache_count++] = point.x;
+                _cache[_cache_count++] = point.y;
+                _cache[_cache_count++] = 0.5;
+                check_cache();
+            }
+        default:
+            break;
+        }
     }
 
     _indexs_count[2] = index_count;
@@ -3149,7 +3321,7 @@ void Canvas::refresh_selected_vbo()
             }
             break;
         case Geo::Type::CIRCLE:
-            for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(obj)))
+            for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(obj), Geo::Circle::default_down_sampling_value))
             {
                 data[data_count++] = point.x;
                 data[data_count++] = point.y;
@@ -3157,7 +3329,7 @@ void Canvas::refresh_selected_vbo()
             }
             break;
         case Geo::Type::ELLIPSE:
-            for (const Geo::Point &point : Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(obj)))
+            for (const Geo::Point &point : Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(obj), Geo::Ellipse::default_down_sampling_value))
             {
                 data[data_count++] = point.x;
                 data[data_count++] = point.y;
@@ -3179,7 +3351,7 @@ void Canvas::refresh_selected_vbo()
                     }
                     break;
                 case Geo::Type::CIRCLE:
-                    for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item)))
+                    for (const Geo::Point &point : Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item), Geo::Circle::default_down_sampling_value))
                     {
                         data[data_count++] = point.x;
                         data[data_count++] = point.y;
@@ -3187,7 +3359,7 @@ void Canvas::refresh_selected_vbo()
                     }
                     break;
                 case Geo::Type::ELLIPSE:
-                    for (const Geo::Point &point : Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(item)))
+                    for (const Geo::Point &point : Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(item), Geo::Ellipse::default_down_sampling_value))
                     {
                         data[data_count++] = point.x;
                         data[data_count++] = point.y;
@@ -3204,6 +3376,14 @@ void Canvas::refresh_selected_vbo()
                     break;
                 case Geo::Type::BEZIER:
                     for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
+                    {
+                        data[data_count++] = point.x;
+                        data[data_count++] = point.y;
+                        data[data_count++] = 0.5;
+                    }
+                    break;
+                case Geo::Type::BSPLINE:
+                    for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->shape())
                     {
                         data[data_count++] = point.x;
                         data[data_count++] = point.y;
@@ -3236,6 +3416,25 @@ void Canvas::refresh_selected_vbo()
             {
                 _cache_count = 0;
                 for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(obj))
+                {
+                    _cache[_cache_count++] = point.x;
+                    _cache[_cache_count++] = point.y;
+                    _cache[_cache_count++] = 0.5;
+                    check_cache();
+                }
+            }
+            break;
+        case Geo::Type::BSPLINE:
+            for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(obj)->shape())
+            {
+                data[data_count++] = point.x;
+                data[data_count++] = point.y;
+                data[data_count++] = 0.5;
+            }
+            if (count == 1)
+            {
+                _cache_count = 0;
+                for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(obj)->path_points)
                 {
                     _cache[_cache_count++] = point.x;
                     _cache[_cache_count++] = point.y;
@@ -3292,7 +3491,7 @@ void Canvas::refresh_brush_ibo()
                 }
                 break;
             case Geo::Type::CIRCLE:
-                for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(geo))))
+                for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(geo), Geo::Circle::default_down_sampling_value)))
                 {
                     polygon_indexs[polygon_index_count++] = geo->point_index + i;
                     if (polygon_index_count == polygon_index_len)
@@ -3306,7 +3505,7 @@ void Canvas::refresh_brush_ibo()
                 }
                 break;
             case Geo::Type::ELLIPSE:
-                for (size_t i : Geo::ear_cut_to_indexs(Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(geo))))
+                for (size_t i : Geo::ear_cut_to_indexs(Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(geo), Geo::Ellipse::default_down_sampling_value)))
                 {
                     polygon_indexs[polygon_index_count++] = geo->point_index + i;
                     if (polygon_index_count == polygon_index_len)
@@ -3339,7 +3538,7 @@ void Canvas::refresh_brush_ibo()
                         }
                         break;
                     case Geo::Type::CIRCLE:
-                        for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item))))
+                        for (size_t i : Geo::ear_cut_to_indexs(Geo::circle_to_polygon(*dynamic_cast<const Geo::Circle *>(item), Geo::Circle::default_down_sampling_value)))
                         {
                             polygon_indexs[polygon_index_count++] = item->point_index + i;
                             if (polygon_index_count == polygon_index_len)
@@ -3353,7 +3552,7 @@ void Canvas::refresh_brush_ibo()
                         }
                         break;
                     case Geo::Type::ELLIPSE:
-                        for (size_t i : Geo::ear_cut_to_indexs(Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(item))))
+                        for (size_t i : Geo::ear_cut_to_indexs(Geo::ellipse_to_polygon(*dynamic_cast<const Geo::Ellipse *>(item), Geo::Ellipse::default_down_sampling_value)))
                         {
                             polygon_indexs[polygon_index_count++] = item->point_index + i;
                             if (polygon_index_count == polygon_index_len)
@@ -4030,6 +4229,25 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                     }
                 }
                 break;
+            case Geo::Type::BSPLINE:
+                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                {
+                    if (Geo::distance(pos, dynamic_cast<const Geo::BSpline *>(geo)->shape()) * _ratio < distance)
+                    {
+                        catched_objects.push_back(geo);
+                    }
+                }
+                break;
+            case Geo::Type::BEZIER:
+                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                {
+                    if (Geo::distance(pos, dynamic_cast<const Geo::Bezier *>(geo)->front()) * _ratio < distance
+                        || Geo::distance(pos, dynamic_cast<const Geo::Bezier *>(geo)->back()) * _ratio < distance)
+                    {
+                        catched_objects.push_back(geo);
+                    }
+                }
+                break;
             default:
                 break;
             }
@@ -4304,6 +4522,43 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                             result[3].x = output1.x;
                             result[3].y = output1.y;
                         }
+                    }
+                }
+            }
+            break;
+        case Geo::Type::BSPLINE:
+            {
+                const Geo::BSpline &bspline = *dynamic_cast<const Geo::BSpline *>(object);
+                if (_catch_types[0])
+                {
+                    dis[0] = Geo::distance(pos, bspline.path_points.front());
+                    result[0] = bspline.path_points.front();
+                }
+                for (size_t i = 1, count = bspline.path_points.size(); i < count; ++i)
+                {
+                    if (const double d = Geo::distance(pos, bspline.path_points[i]); _catch_types[0] && d < dis[0])
+                    {
+                        result[0] = bspline.path_points[i];
+                        dis[0] = d;
+                    }
+                }
+            }
+            break;
+        case Geo::Type::BEZIER:
+            {
+                const Geo::Bezier &bezier = *dynamic_cast<const Geo::Bezier *>(object);
+                if (_catch_types[0])
+                {
+                    if (double dis0 = Geo::distance(pos, bezier.front()),
+                        dis1 = Geo::distance(pos, bezier.back()); dis0 <= dis1)
+                    {
+                        dis[0] = dis0;
+                        result[0] = bezier.front();
+                    }
+                    else
+                    {
+                        dis[0] = dis1;
+                        result[0] = bezier.back();
                     }
                 }
             }

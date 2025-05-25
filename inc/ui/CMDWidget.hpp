@@ -19,7 +19,7 @@ class CMDWidget : public QWidget
 
 public:
     enum class CMD {Error_CMD, Open_CMD, Append_CMD, Save_CMD, Exit_CMD, Main_CMD,
-        Length_CMD, Polyline_CMD, Circle_CMD, Ellipse_CMD, Rectangle_CMD, Bezier_CMD, Text_CMD,
+        Length_CMD, Polyline_CMD, Circle_CMD, Ellipse_CMD, Rectangle_CMD, BSpline_CMD, Bezier_CMD, Text_CMD,
         Connect_CMD, Close_CMD, Combinate_CMD, Split_CMD, Rotate_CMD, FlipX_CMD, FlipY_CMD,
         Mirror_CMD, Array_CMD, LineArray_CMD, RingArray_CMD,
         Offset_CMD, Scale_CMD, Fillet_CMD,
@@ -97,7 +97,9 @@ public:
 
     void polyline();
 
-    void curve();
+    void bspline();
+
+    void bezier();
 
     void text();
 

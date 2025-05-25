@@ -17,3 +17,6 @@
 *.7z
 *.exe
 *.bkp
+
+
+/build.cmd

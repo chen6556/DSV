@@ -2,11 +2,16 @@ The DSV repository and source distributions bundle several libraries that are
 compatibly licensed.  We list these here.
 
 Name: earcut.hpp
-Files: inc/base/EarCut/EarCut.hpp
+Files: libs/EarCut/EarCut.hpp
 License: ISC
-  For license text, see inc/base/EarCut/LICENSE.txt
+  For license text, see libs/EarCut/LICENSE.txt
 
 Name: ParserCombinator
-Files: inc/io/Parser/*
+Files: libs/Parser/*
 License: MIT
-  For license text, see inc/io/Parser/LICENSE
+  For license text, see libs/Parser/LICENSE
+
+Name: libdxfrw
+Files: libs/libdxfrw/*
+License: GPL-2.0
+  For license text, see libs/libdxfrw/LICENSE.txt

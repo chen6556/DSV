@@ -1,4 +1,6 @@
 #include "base/Math.hpp"
+#include <gsl/gsl_linalg.h>
+#include <gsl/gsl_cblas.h>
 
 
 int Math::ellipse_ellipse_f(const gsl_vector *x, void *params, gsl_vector *f)
@@ -63,4 +65,51 @@ std::tuple<double, double> Math::solve_ellipse_ellipse_intersection(EllipseParam
 	gsl_vector_free(x);
 
     return res;
+}
+
+void Math::inverse(const double *input, const size_t n, double *output)
+{
+    gsl_matrix_const_view a = gsl_matrix_const_view_array(input, n, n);
+    gsl_matrix *tmpA = gsl_matrix_alloc(n, n);
+	gsl_matrix_memcpy(tmpA, &a.matrix);
+	gsl_permutation *p = gsl_permutation_alloc(n);
+	int sign = n % 2 == 0 ? 1 : -1;
+	gsl_linalg_LU_decomp(tmpA, p, &sign);
+	gsl_matrix *inv = gsl_matrix_alloc(n, n);
+	gsl_linalg_LU_invert(tmpA, p, inv);
+	gsl_permutation_free(p);
+	gsl_matrix_free(tmpA);
+    for (size_t i = 0; i < n; ++i)
+    {
+        for (size_t j = 0; j < n; ++j)
+        {
+            output[i * n + j] = gsl_matrix_get(inv, i, j);
+        }
+    }
+    gsl_matrix_free(inv);
+}
+
+void Math::mul(const double *mat0, const size_t m0, const size_t n0, const double *mat1, const size_t n1, double *output)
+{
+    gsl_matrix_const_view a = gsl_matrix_const_view_array(mat0, m0, n0);
+    gsl_matrix_const_view b = gsl_matrix_const_view_array(mat1, n0, n1);
+    gsl_matrix_view c = gsl_matrix_view_array(output, n0, n1);
+    gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &a.matrix, &b.matrix, 0.0, &c.matrix);
+}
+
+void Math::solve(const double *mat, const size_t n, const double *b, double *output)
+{
+    double *a = new double[n * n];
+    std::memmove(a, mat, sizeof(mat) * n * n);
+    gsl_matrix_view aa = gsl_matrix_view_array(a, n, n);
+    gsl_vector_const_view bb = gsl_vector_const_view_array(b, n);
+    gsl_matrix *aa2 = gsl_matrix_alloc(n, n);
+    int sign = n % 2 == 0 ? 1 : -1;
+    gsl_permutation *p = gsl_permutation_alloc(n);
+    gsl_linalg_LU_decomp(&aa.matrix, p, &sign);
+    gsl_vector_view x = gsl_vector_view_array(output, n);
+    gsl_linalg_LU_solve(&aa.matrix, p, &bb.vector, &x.vector);
+    gsl_permutation_free(p);
+    gsl_matrix_free(aa2);
+    delete[] a;
 }

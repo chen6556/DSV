@@ -204,7 +204,6 @@ void ChangeShapeCommand::undo(Graph *graph)
             {
                 bezier->append(Geo::Point(std::get<0>(point), std::get<1>(point)));
             }
-            bezier->update_shape();
         }
         break;
     case Geo::Type::POLYGON:
@@ -427,14 +426,14 @@ void FlipCommand::undo(Graph *graph)
 
 
 // ConnectCommand
-ConnectCommand::ConnectCommand(const std::vector<std::tuple<Geo::Polyline *, size_t>> &polylines, const Geo::Polyline *polyline, const size_t index)
+ConnectCommand::ConnectCommand(const std::vector<std::tuple<Geo::Geometry *, size_t>> &polylines, const Geo::Polyline *polyline, const size_t index)
     : _items(polylines), _polyline(polyline), _group_index(index) {}
 
 ConnectCommand::~ConnectCommand()
 {
-    for (std::tuple<Geo::Polyline *, size_t> &item : _items)
+    for (std::tuple<Geo::Geometry *, size_t> &item : _items)
     {
-        delete std::get<Geo::Polyline *>(item);
+        delete std::get<Geo::Geometry *>(item);
     }
 }
 
@@ -442,10 +441,10 @@ void ConnectCommand::undo(Graph *graph)
 {
     graph->container_group(_group_index).remove(std::find(graph->container_group(_group_index).begin(), 
        graph->container_group(_group_index).end(), _polyline));
-    for (std::tuple<Geo::Polyline *, size_t> &item : _items)
+    for (std::tuple<Geo::Geometry *, size_t> &item : _items)
     {
         graph->container_group(_group_index).insert(std::get<size_t>(item),
-            std::get<Geo::Polyline *>(item));
+            std::get<Geo::Geometry*>(item));
     }
     _items.clear();
 }

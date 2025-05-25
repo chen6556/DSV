@@ -188,12 +188,12 @@ namespace UndoStack
     class ConnectCommand : public Command
     {
     private:
-        std::vector<std::tuple<Geo::Polyline *, size_t>> _items;
+        std::vector<std::tuple<Geo::Geometry *, size_t>> _items;
         const Geo::Polyline *_polyline = nullptr; 
         size_t _group_index = 0;
 
     public:
-        ConnectCommand(const std::vector<std::tuple<Geo::Polyline *, size_t>> &polylines, const Geo::Polyline *polyline, const size_t index);
+        ConnectCommand(const std::vector<std::tuple<Geo::Geometry *, size_t>> &polylines, const Geo::Polyline *polyline, const size_t index);
 
         ~ConnectCommand();
 
