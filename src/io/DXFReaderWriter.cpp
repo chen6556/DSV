@@ -181,7 +181,7 @@ void DXFReaderWriter::addLine(const DRW_Line &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name == data.layer)
+            if (group.name.toStdString() == data.layer)
             {
                 group.append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y},
                     {data.secPoint.x, data.secPoint.y}}));
@@ -214,7 +214,7 @@ void DXFReaderWriter::addRay(const DRW_Ray &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name == data.layer)
+            if (group.name.toStdString() == data.layer)
             {
                 group.append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y},
                     {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
@@ -247,7 +247,7 @@ void DXFReaderWriter::addXline(const DRW_Xline &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name == data.layer)
+            if (group.name.toStdString() == data.layer)
             {
                 group.append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y},
                     {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
@@ -280,7 +280,7 @@ void DXFReaderWriter::addArc(const DRW_Arc &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name == data.layer)
+            if (group.name.toStdString() == data.layer)
             {
                 Geo::Polyline *polyline = new Geo::Polyline(Geo::arc_to_polyline(Geo::Point(data.basePoint.x, data.basePoint.y), 
                     data.radious, data.staangle, data.endangle, !data.isccw, Geo::Circle::default_down_sampling_value));
@@ -316,7 +316,7 @@ void DXFReaderWriter::addCircle(const DRW_Circle &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name == data.layer)
+            if (group.name.toStdString() == data.layer)
             {
                 group.append(new Container<Geo::Circle>(QString(), data.basePoint.x, data.basePoint.y, data.radious));
                 _object_map[group.back()] = data.handle;
@@ -347,7 +347,7 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name == data.layer)
+            if (group.name.toStdString() == data.layer)
             {
                 const double a = std::hypot(data.secPoint.x, data.secPoint.y);
                 group.append(new Container<Geo::Ellipse>(QString(), data.basePoint.x, data.basePoint.y, a, a * data.ratio));
@@ -381,7 +381,7 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name == data.layer)
+            if (group.name.toStdString() == data.layer)
             {
                 Geo::Polyline *polyline = new Geo::Polyline();
                 for (size_t i = 1, count = data.vertlist.size(); i < count; ++i)
@@ -515,7 +515,7 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name == data.layer)
+            if (group.name.toStdString() == data.layer)
             {
                 Geo::Polyline *polyline = new Geo::Polyline();
                 for (size_t i = 1, count = data.vertlist.size(); i < count; ++i)
@@ -766,7 +766,7 @@ void DXFReaderWriter::addMText(const DRW_MText &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name == data.layer)
+            if (group.name.toStdString() == data.layer)
             {
                 group.append(new Text(data.basePoint.x, data.basePoint.y,
                     GlobalSetting::get_instance()->setting["text_size"].toInt(), 
@@ -801,7 +801,7 @@ void DXFReaderWriter::addText(const DRW_Text &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name == data.layer)
+            if (group.name.toStdString() == data.layer)
             {
                 group.append(new Text(data.basePoint.x, data.basePoint.y,
                     GlobalSetting::get_instance()->setting["text_size"].toInt(), 

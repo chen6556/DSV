@@ -1,3 +1,4 @@
+#include <memory>
 #include "base/Math.hpp"
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_cblas.h>
