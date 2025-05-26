@@ -664,7 +664,7 @@ void DXFReaderWriter::addSpline(const DRW_Spline *data)
         {
             for (ContainerGroup &group : _graph->container_groups())
             {
-                if (group.name == data->layer)
+                if (group.name.toStdString() == data->layer)
                 {
                     group.append(bspline);
                     _object_map[bspline] = data->handle;
@@ -706,7 +706,7 @@ void DXFReaderWriter::addSpline(const DRW_Spline *data)
         {
             for (ContainerGroup &group : _graph->container_groups())
             {
-                if (group.name == data->layer)
+                if (group.name.toStdString() == data->layer)
                 {
                     group.append(bspline);
                     _object_map[bspline] = data->handle;
