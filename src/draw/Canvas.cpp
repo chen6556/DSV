@@ -2811,7 +2811,6 @@ void Canvas::refresh_vbo(const bool unitary)
     size_t data_len = 1026, data_count = 0;
     double *data = new double[data_len];
 
-    qDebug() << "refresh vbo";
     makeCurrent();
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
 
@@ -3051,8 +3050,6 @@ void Canvas::refresh_vbo(const bool unitary)
 
     doneCurrent();
     delete []data;
-
-    qDebug() << "refresh vbo end";
 
     if (GlobalSetting::get_instance()->setting["show_text"].toBool())
     {
