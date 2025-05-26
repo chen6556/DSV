@@ -2328,6 +2328,7 @@ Ellipse::Ellipse(const double x, const double y, const double a, const double b)
         _b[1].y = y - a;
         _b[0].x = _b[1].x = x;
     }
+    update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
 Ellipse::Ellipse(const Point &point, const double a, const double b)
@@ -2351,12 +2352,14 @@ Ellipse::Ellipse(const Point &point, const double a, const double b)
         _b[1].y = point.y - a;
         _b[0].x = _b[1].x = point.x;
     }
+    update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
 Ellipse::Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point &b1)
 {
     _a[0] = a0, _a[1] = a1;
     _b[0] = b0, _b[1] = b1;
+    update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
 Ellipse::Ellipse(const Ellipse &ellipse)
