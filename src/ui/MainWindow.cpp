@@ -1,7 +1,5 @@
 #include <QFileDialog>
 #include <QMessageBox>
-#include <QJsonObject>
-#include <QJsonDocument>
 #include <QAbstractItemView>
 #include <QListView>
 #include <QMimeData>
@@ -40,13 +38,11 @@ MainWindow::~MainWindow()
     delete _cmd_widget;
     delete _setting;
     delete _panel;
-
-    GlobalSetting::release();
 }
 
 void MainWindow::init()
 {
-    GlobalSetting::get_instance()->ui = ui;
+    GlobalSetting::setting().ui = ui;
 
     _editer.load_graph(new Graph());
     ui->canvas->bind_editer(&_editer);
@@ -68,7 +64,7 @@ void MainWindow::init()
     QObject::connect(ui->split_btn, &QPushButton::clicked, [this]() { _editer.split(_editer.selected()); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
-    QObject::connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::get_instance()->setting["auto_aligning"] = ui->auto_aligning->isChecked(); });
+    QObject::connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::setting().auto_aligning = ui->auto_aligning->isChecked(); });
     QObject::connect(ui->actionadvanced, &QAction::triggered, _setting, &Setting::exec);
     QObject::connect(ui->show_origin, &QAction::triggered, [this]() { ui->show_origin->isChecked() ? ui->canvas->show_origin() : ui->canvas->hide_origin(); });
     QObject::connect(ui->show_cmd_line, &QAction::triggered, [this]() { ui->show_cmd_line->isChecked() ? _cmd_widget->show() : _cmd_widget->hide(); });
@@ -111,7 +107,7 @@ void MainWindow::init()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (GlobalSetting::get_instance()->graph->modified)
+    if (GlobalSetting::setting().graph->modified)
     {
         switch (QMessageBox::question(this, "File is modified", "Save or not?", QMessageBox::StandardButton::Yes,
             QMessageBox::StandardButton::No, QMessageBox::StandardButton::Cancel))
@@ -274,24 +270,25 @@ void MainWindow::open_file()
 
 void MainWindow::close_file()
 {
-    if (GlobalSetting::get_instance()->graph->modified && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
+    if (GlobalSetting::setting().graph->modified && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
     {
         save_file();
     }
 
     _editer.delete_graph();
     _editer.load_graph(new Graph());
-    GlobalSetting::get_instance()->graph->modified = false;
+    GlobalSetting::setting().graph->modified = false;
     ui->canvas->refresh_vbo();
     _info_labels[2]->clear();
     _layers_manager->update_layers();
     _layers_cbx->setModel(_layers_manager->model());
     ui->canvas->update();
+    GlobalSetting::setting().save_setting();
 }
 
 void MainWindow::save_file()
 {
-    if (GlobalSetting::get_instance()->graph == nullptr || ui->canvas->empty())
+    if (GlobalSetting::setting().graph == nullptr || ui->canvas->empty())
     {
         return;
     }
@@ -307,18 +304,18 @@ void MainWindow::save_file()
             bool flag = false;
             if (path.toLower().endsWith(".dsv"))
             {
-                File::write(path, GlobalSetting::get_instance()->graph, File::DSV);
+                File::write(path, GlobalSetting::setting().graph, File::DSV);
                 flag = true;
             }
             else if (path.toLower().endsWith(".plt"))
             {
-                File::write(path, GlobalSetting::get_instance()->graph, File::PLT);
+                File::write(path, GlobalSetting::setting().graph, File::PLT);
                 flag = true;
             }
             if (flag)
             {
                 _editer.set_path(path);
-                GlobalSetting::get_instance()->graph->modified = false;
+                GlobalSetting::setting().graph->modified = false;
                 _info_labels[2]->setText(path);
             }
         }
@@ -328,13 +325,13 @@ void MainWindow::save_file()
     {
         if (_info_labels[2]->text().toLower().endsWith(".dsv"))
         {
-            File::write(_info_labels[2]->text(), GlobalSetting::get_instance()->graph, File::DSV);
-            GlobalSetting::get_instance()->graph->modified = false;
+            File::write(_info_labels[2]->text(), GlobalSetting::setting().graph, File::DSV);
+            GlobalSetting::setting().graph->modified = false;
         }
         else if (_info_labels[2]->text().toLower().endsWith(".plt"))
         {
-            File::write(_info_labels[2]->text(), GlobalSetting::get_instance()->graph, File::PLT);
-            GlobalSetting::get_instance()->graph->modified = false;
+            File::write(_info_labels[2]->text(), GlobalSetting::setting().graph, File::PLT);
+            GlobalSetting::setting().graph->modified = false;
         }
     }
 }
@@ -346,23 +343,23 @@ void MainWindow::auto_save()
     {
         return;
     }
-    if (GlobalSetting::get_instance()->graph->modified)
+    if (GlobalSetting::setting().graph->modified)
     {
         if (_editer.path().toLower().endsWith(".dsv"))
         {
-            File::write(_editer.path(), GlobalSetting::get_instance()->graph, File::DSV);
+            File::write(_editer.path(), GlobalSetting::setting().graph, File::DSV);
         }
         else if (_editer.path().toLower().endsWith(".plt"))
         {
-            File::write(_editer.path(), GlobalSetting::get_instance()->graph, File::PLT);
+            File::write(_editer.path(), GlobalSetting::setting().graph, File::PLT);
         }
-        GlobalSetting::get_instance()->graph->modified = false;
+        GlobalSetting::setting().graph->modified = false;
     }
 }
 
 void MainWindow::saveas_file()
 {
-    if (GlobalSetting::get_instance()->graph == nullptr || ui->canvas->empty())
+    if (GlobalSetting::setting().graph == nullptr || ui->canvas->empty())
     {
         return;
     }
@@ -373,13 +370,13 @@ void MainWindow::saveas_file()
     {
         if (path.toLower().endsWith(".dsv"))
         {
-            File::write(path, GlobalSetting::get_instance()->graph, File::DSV);
+            File::write(path, GlobalSetting::setting().graph, File::DSV);
         }
         else if (path.toLower().endsWith(".plt"))
         {
-            File::write(path, GlobalSetting::get_instance()->graph, File::PLT);
+            File::write(path, GlobalSetting::setting().graph, File::PLT);
         }
-        GlobalSetting::get_instance()->graph->modified = false;
+        GlobalSetting::setting().graph->modified = false;
     }
     delete dialog;
 }
@@ -514,37 +511,37 @@ void MainWindow::refresh_settings()
 {
     if (_setting->update_curve_vbo())
     {
-        const double value = GlobalSetting::get_instance()->setting["down_sampling"].toDouble();
+        const double value = GlobalSetting::setting().down_sampling;
         Geo::BSpline::default_down_sampling_value = Geo::Bezier::default_down_sampling_value = value;
-        GlobalSetting::get_instance()->graph->update_curve_shape(0.2, value);
+        GlobalSetting::setting().graph->update_curve_shape(0.2, value);
         ui->canvas->refresh_vbo();
     }
     if (_setting->update_text_vbo())
     {
         ui->canvas->refresh_text_vbo();
     }
-    _editer.set_backup_count(GlobalSetting::get_instance()->setting["backup_times"].toInt());
-    ui->canvas->set_catch_distance(GlobalSetting::get_instance()->setting["catch_distance"].toDouble());
+    _editer.set_backup_count(GlobalSetting::setting().backup_times);
+    ui->canvas->set_catch_distance(GlobalSetting::setting().catch_distance);
+    GlobalSetting::setting().save_setting();
 }
 
 void MainWindow::load_settings()
 {
-    GlobalSetting::get_instance()->load_setting();
-    const QJsonObject &setting = GlobalSetting::get_instance()->setting;
+    GlobalSetting::setting().load_setting();
 
     Geo::Bezier::default_down_sampling_value = Geo::BSpline::default_down_sampling_value =
         Geo::Circle::default_down_sampling_value = Geo::Ellipse::default_down_sampling_value =
-        setting["down_sampling"].toDouble();
+        GlobalSetting::setting().down_sampling;
 
-    _editer.set_path(setting["file_path"].toString());
-    _editer.set_backup_count(setting["backup_times"].toInt());
-    ui->auto_save->setChecked(setting["auto_save"].toBool());
-    ui->auto_layering->setChecked(setting["auto_layering"].toBool());
-    ui->auto_connect->setChecked(setting["auto_connect"].toBool());
-    ui->auto_aligning->setChecked(setting["auto_aligning"].toBool());
-    ui->remember_file_type->setChecked(setting["remember_file_type"].toBool());
-    ui->show_cmd_line->setChecked(setting["show_cmd_line"].toBool());
-    ui->show_origin->setChecked(setting["show_origin"].toBool());
+    _editer.set_path(GlobalSetting::setting().file_path);
+    _editer.set_backup_count(GlobalSetting::setting().backup_times);
+    ui->auto_save->setChecked(GlobalSetting::setting().auto_save);
+    ui->auto_layering->setChecked(GlobalSetting::setting().auto_layering);
+    ui->auto_connect->setChecked(GlobalSetting::setting().auto_connect);
+    ui->auto_aligning->setChecked(GlobalSetting::setting().auto_aligning);
+    ui->remember_file_type->setChecked(GlobalSetting::setting().remember_file_type);
+    ui->show_cmd_line->setChecked(GlobalSetting::setting().show_cmd_line);
+    ui->show_origin->setChecked(GlobalSetting::setting().show_origin);
     if (ui->show_cmd_line->isChecked())
     {
         _cmd_widget->show();
@@ -563,44 +560,42 @@ void MainWindow::load_settings()
     }
     if (ui->remember_file_type->isChecked())
     {
-       _file_type = setting["file_type"].toString();
+       _file_type = GlobalSetting::setting().file_type;
     }
 
-    ui->canvas->set_catch_distance(GlobalSetting::get_instance()->setting["catch_distance"].toDouble());
-    ui->actionVertex->setChecked(setting["catch_vertex"].toBool());
+    ui->canvas->set_catch_distance(GlobalSetting::setting().catch_distance);
+    ui->actionVertex->setChecked(GlobalSetting::setting().catch_vertex);
     ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Vertex, ui->actionVertex->isChecked());
-    ui->actionCenter->setChecked(setting["catch_center"].toBool());
+    ui->actionCenter->setChecked(GlobalSetting::setting().catch_center);
     ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Center, ui->actionCenter->isChecked());
-    ui->actionFoot->setChecked(setting["catch_foot"].toBool());
+    ui->actionFoot->setChecked(GlobalSetting::setting().catch_foot);
     ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Foot, ui->actionFoot->isChecked());
-    ui->actionTangency->setChecked(setting["catch_tangency"].toBool());
+    ui->actionTangency->setChecked(GlobalSetting::setting().catch_tangency);
     ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Tangency, ui->actionTangency->isChecked());
-    ui->actionIntersection->setChecked(setting["catch_intersection"].toBool());
+    ui->actionIntersection->setChecked(GlobalSetting::setting().catch_intersection);
     ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Intersection, ui->actionIntersection->isChecked());
 }
 
 void MainWindow::save_settings()
 {
-    QJsonObject &setting = GlobalSetting::get_instance()->setting;
-
-    setting["auto_save"] = ui->auto_save->isChecked();
-    setting["auto_layering"] = ui->auto_layering->isChecked();
-    setting["auto_connect"] = ui->auto_connect->isChecked();
-    setting["auto_aligning"] = ui->auto_aligning->isChecked();
-    setting["remember_file_type"] = ui->remember_file_type->isChecked();
-    setting["show_cmd_line"] = ui->show_cmd_line->isChecked();
-    setting["show_origin"] = ui->show_origin->isChecked();
+    GlobalSetting::setting().auto_save = ui->auto_save->isChecked();
+    GlobalSetting::setting().auto_layering = ui->auto_layering->isChecked();
+    GlobalSetting::setting().auto_connect = ui->auto_connect->isChecked();
+    GlobalSetting::setting().auto_aligning = ui->auto_aligning->isChecked();
+    GlobalSetting::setting().remember_file_type = ui->remember_file_type->isChecked();
+    GlobalSetting::setting().show_cmd_line = ui->show_cmd_line->isChecked();
+    GlobalSetting::setting().show_origin = ui->show_origin->isChecked();
     if (ui->remember_file_type->isChecked())
     {
-        setting["file_type"] = _file_type;
+        GlobalSetting::setting().file_type = _file_type;
     }
-    setting["catch_vertex"] = ui->actionVertex->isChecked();
-    setting["catch_center"] = ui->actionCenter->isChecked();
-    setting["catch_foot"] = ui->actionFoot->isChecked();
-    setting["catch_tangency"] = ui->actionTangency->isChecked();
-    setting["catch_intersection"] = ui->actionIntersection->isChecked();
+    GlobalSetting::setting().catch_vertex = ui->actionVertex->isChecked();
+    GlobalSetting::setting().catch_center = ui->actionCenter->isChecked();
+    GlobalSetting::setting().catch_foot = ui->actionFoot->isChecked();
+    GlobalSetting::setting().catch_tangency = ui->actionTangency->isChecked();
+    GlobalSetting::setting().catch_intersection = ui->actionIntersection->isChecked();
 
-    GlobalSetting::get_instance()->save_setting();
+    GlobalSetting::setting().save_setting();
 }
 
 void MainWindow::show_layers_manager()
@@ -626,7 +621,7 @@ void MainWindow::to_main_page()
 
 void MainWindow::connect_polylines()
 {
-    if (_editer.connect(_editer.selected(), GlobalSetting::get_instance()->setting["catch_distance"].toDouble()))
+    if (_editer.connect(_editer.selected(), GlobalSetting::setting().catch_distance))
     {
         ui->canvas->refresh_vbo();
         ui->canvas->refresh_selected_ibo();
@@ -817,7 +812,7 @@ void MainWindow::fillet()
 
 void MainWindow::show_data_panel()
 {
-    _panel->load_draw_data(GlobalSetting::get_instance()->graph, ui->canvas->points_count());
+    _panel->load_draw_data(GlobalSetting::setting().graph, ui->canvas->points_count());
     _panel->exec();
 }
 
@@ -829,12 +824,12 @@ void MainWindow::open_file(const QString &path)
     {
         return;
     }
-    else if (GlobalSetting::get_instance()->graph->modified && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
+    else if (GlobalSetting::setting().graph->modified && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
     {
         save_file();
     }
 
-    GlobalSetting::get_instance()->setting["file_path"] = path;
+    GlobalSetting::setting().file_path = path;
 
     _editer.delete_graph();
     Graph *g = new Graph;
@@ -918,7 +913,7 @@ void MainWindow::open_file(const QString &path)
     {
         _editer.auto_layering();
     }
-    GlobalSetting::get_instance()->graph->modified = false;
+    GlobalSetting::setting().graph->modified = false;
 
     ui->canvas->refresh_vbo();
     _info_labels[2]->setText(path);
@@ -963,8 +958,8 @@ void MainWindow::append_file(const QString &path)
         dxfRW.read(&dxf_interface, false);
     }
 
-    GlobalSetting::get_instance()->graph->modified = true;
-    Graph *graph = GlobalSetting::get_instance()->graph;
+    Graph *graph = GlobalSetting::setting().graph;
+    graph->modified = true;
     _editer.load_graph(g);
     if (ui->auto_connect->isChecked())
     {

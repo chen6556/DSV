@@ -311,7 +311,7 @@ void Canvas::paintGL()
         glDrawElements(GL_TRIANGLES, _indexs_count[1], GL_UNSIGNED_INT, NULL);
     }
 
-    if (GlobalSetting::get_instance()->setting["show_points"].toBool())
+    if (GlobalSetting::setting().show_points)
     {
         glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
         glDrawArrays(GL_POINTS, 0, _points_count);
@@ -333,7 +333,7 @@ void Canvas::paintGL()
         }
         glDrawArrays(GL_LINE_STRIP, 0, _cache_count / 3);
         if (_tool_flags[0] == Tool::BSpline || _tool_flags[0] == Tool::Bezier
-            || GlobalSetting::get_instance()->setting["show_points"].toBool())
+            || GlobalSetting::setting().show_points)
         {
             glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
             glDrawArrays(GL_POINTS, 0, _cache_count / 3);
@@ -642,8 +642,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             {
             case Operation::RingArray:
                 _operation = Operation::NoOperation;
-                if (_editer->ring_array(_object_cache, real_x1, real_y1,
-                        GlobalSetting::get_instance()->ui->array_item->value()))
+                if (_editer->ring_array(_object_cache, real_x1, real_y1, GlobalSetting::setting().ui->array_item->value()))
                 {
                     refresh_vbo();
                     refresh_selected_ibo();
@@ -678,8 +677,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 break;
             }
 
-            const bool reset = !(GlobalSetting::get_instance()->setting["multiple_select"].toBool()
-                || event->modifiers() == Qt::ControlModifier);
+            const bool reset = !(GlobalSetting::setting().multiple_select || event->modifiers() == Qt::ControlModifier);
             _clicked_obj = _editer->select(real_x1, real_y1, reset);
             std::list<Geo::Geometry *> selected_objs = _editer->selected();
             if (_clicked_obj == nullptr)
@@ -744,8 +742,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     if (dynamic_cast<Text *>(_last_clicked_obj) != nullptr)
                     {
                         text = static_cast<Text *>(_last_clicked_obj)->text();
-                        static_cast<Text *>(_last_clicked_obj)->set_text(_input_line.toPlainText(), 
-                            GlobalSetting::get_instance()->setting["text_size"].toInt());
+                        static_cast<Text *>(_last_clicked_obj)->set_text(_input_line.toPlainText(),
+                            GlobalSetting::setting().text_size);
                     }
                     else if (dynamic_cast<Containerized *>(_last_clicked_obj) != nullptr)
                     {
@@ -813,7 +811,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                                 }
                             }
                             if (_editer->fillet(dynamic_cast<Container<Geo::Polygon> *>(_clicked_obj),
-                                point, GlobalSetting::get_instance()->ui->fillet_sbx->value()))
+                                point, GlobalSetting::setting().ui->fillet_sbx->value()))
                             {
                                 refresh_vbo();
                                 refresh_selected_ibo();
@@ -829,7 +827,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                                 }
                             }
                             if (_editer->fillet(dynamic_cast<Geo::Polyline *>(_clicked_obj),
-                                point, GlobalSetting::get_instance()->ui->fillet_sbx->value()))
+                                point, GlobalSetting::setting().ui->fillet_sbx->value()))
                             {
                                 refresh_vbo();
                                 refresh_selected_ibo();
@@ -1047,10 +1045,9 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
             }
 
             const std::list<Geo::Geometry *> objects = _editer->selected();
-            if (!objects.empty() && GlobalSetting::get_instance()->translated_points
-                && _mouse_press_pos != _mouse_release_pos)
+            if (!objects.empty() && GlobalSetting::setting().translated_points && _mouse_press_pos != _mouse_release_pos)
             {
-                GlobalSetting::get_instance()->translated_points = false;
+                GlobalSetting::setting().translated_points = false;
                 if (_editer->edited_shape().empty())
                 {
                     _editer->push_backup_command(new UndoStack::TranslateCommand(objects.begin(), objects.end(),
@@ -1378,11 +1375,11 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 refresh_selected_vbo();
                 // refresh_brush_ibo();
             }
-            if (GlobalSetting::get_instance()->setting["show_text"].toBool())
+            if (GlobalSetting::setting().show_text)
             {
                 refresh_text_vbo(false);
             }
-            if (event->modifiers() != Qt::ControlModifier && GlobalSetting::get_instance()->setting["auto_aligning"].toBool())
+            if (event->modifiers() != Qt::ControlModifier && GlobalSetting::setting().auto_aligning)
             {
                 _reflines.clear();
                 if (_editer->auto_aligning(_pressed_obj, real_x1, real_y1, _reflines, true))
@@ -1548,7 +1545,7 @@ void Canvas::show_overview()
     _editer->set_view_ratio(1.0);
     _bool_flags[8] = false;
 
-    Graph *graph = GlobalSetting::get_instance()->graph;
+    Graph *graph = GlobalSetting::setting().graph;
     if (graph->empty())
     {
         _ratio = 1.0;
@@ -1733,7 +1730,7 @@ const size_t Canvas::current_group() const
 
 void Canvas::set_current_group(const size_t index)
 {
-    assert(index < GlobalSetting::get_instance()->graph->container_groups().size());
+    assert(index < GlobalSetting::setting().graph->container_groups().size());
     _editer->set_current_group(index);
 }
 
@@ -1761,7 +1758,7 @@ double Canvas::ratio() const
 
 Geo::Point Canvas::center() const
 {
-    if (_circle_cache.empty() && _AABBRect_cache.empty() && (GlobalSetting::get_instance()->graph == nullptr || GlobalSetting::get_instance()->graph->empty()))
+    if (_circle_cache.empty() && _AABBRect_cache.empty() && (GlobalSetting::setting().graph == nullptr || GlobalSetting::setting().graph->empty()))
     {
         return Geo::Point();
     }
@@ -1782,12 +1779,12 @@ Geo::Point Canvas::center() const
         y1 = std::max(y1, _circle_cache.y + _circle_cache.radius);
     }
 
-    if (GlobalSetting::get_instance()->graph == nullptr || GlobalSetting::get_instance()->graph->empty())
+    if (GlobalSetting::setting().graph == nullptr || GlobalSetting::setting().graph->empty())
     {
         return Geo::Point((x0 + x1) / 2, (y0 + y1) / 2);
     }
 
-    for (const ContainerGroup &group : GlobalSetting::get_instance()->graph->container_groups())
+    for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
         for (const Geo::Point &point : group.bounding_rect())
         {
@@ -1803,7 +1800,7 @@ Geo::Point Canvas::center() const
 
 Geo::AABBRect Canvas::bounding_rect() const
 {
-    if (_circle_cache.empty() && _AABBRect_cache.empty() && (GlobalSetting::get_instance()->graph == nullptr || GlobalSetting::get_instance()->graph->empty()))
+    if (_circle_cache.empty() && _AABBRect_cache.empty() && (GlobalSetting::setting().graph == nullptr || GlobalSetting::setting().graph->empty()))
     {
         return Geo::AABBRect();
     }
@@ -1824,12 +1821,12 @@ Geo::AABBRect Canvas::bounding_rect() const
         y1 = std::max(y1, _circle_cache.y + _circle_cache.radius);
     }
 
-    if (GlobalSetting::get_instance()->graph == nullptr || GlobalSetting::get_instance()->graph->empty())
+    if (GlobalSetting::setting().graph == nullptr || GlobalSetting::setting().graph->empty())
     {
         return Geo::AABBRect(x0, y0, x1, y1);
     }
 
-    for (const ContainerGroup &group : GlobalSetting::get_instance()->graph->container_groups())
+    for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
         for (const Geo::Point &point : group.bounding_rect())
         {
@@ -1859,7 +1856,7 @@ Geo::Point Canvas::mouse_position(const bool to_real_coord) const
 const bool Canvas::empty() const
 {
     return _circle_cache.empty() && _AABBRect_cache.empty() &&
-           (GlobalSetting::get_instance()->graph == nullptr || GlobalSetting::get_instance()->graph->empty());
+           (GlobalSetting::setting().graph == nullptr || GlobalSetting::setting().graph->empty());
 }
 
 void Canvas::cancel_painting()
@@ -2320,7 +2317,7 @@ void Canvas::refresh_vbo()
     Geo::Circle *circle = nullptr;
     Geo::Ellipse *ellipse = nullptr;
 
-    for (ContainerGroup &group : GlobalSetting::get_instance()->graph->container_groups())
+    for (ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
         if (!group.visible())
         {
@@ -2800,7 +2797,7 @@ void Canvas::refresh_vbo()
     delete []polyline_indexs;
     delete []polygon_indexs;
 
-    if (GlobalSetting::get_instance()->setting["show_text"].toBool())
+    if (GlobalSetting::setting().show_text)
     {
         refresh_text_vbo();
     }
@@ -2814,7 +2811,7 @@ void Canvas::refresh_vbo(const bool unitary)
     makeCurrent();
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
 
-    for (const ContainerGroup &group : GlobalSetting::get_instance()->graph->container_groups())
+    for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
         if (!group.visible())
         {
@@ -3051,7 +3048,7 @@ void Canvas::refresh_vbo(const bool unitary)
     doneCurrent();
     delete []data;
 
-    if (GlobalSetting::get_instance()->setting["show_text"].toBool())
+    if (GlobalSetting::setting().show_text)
     {
         refresh_text_vbo(unitary);
     }
@@ -3099,7 +3096,7 @@ void Canvas::refresh_selected_ibo()
     size_t index_len = 512, index_count = 0, count = 0;
     unsigned int *indexs = new unsigned int[index_len];
 
-    for (const ContainerGroup &group : GlobalSetting::get_instance()->graph->container_groups())
+    for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
         if (!group.visible())
         {
@@ -3486,7 +3483,7 @@ void Canvas::refresh_brush_ibo()
     size_t polygon_index_len = 512, polygon_index_count = 0;
     unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
 
-    for (ContainerGroup &group : GlobalSetting::get_instance()->graph->container_groups())
+    for (ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
         if (!group.visible())
         {
@@ -3629,14 +3626,14 @@ void Canvas::refresh_brush_ibo(const unsigned int index, const unsigned int offs
 
 void Canvas::refresh_text_vbo()
 {
-    if (!GlobalSetting::get_instance()->setting["show_text"].toBool())
+    if (!GlobalSetting::setting().show_text)
     {
         _indexs_count[3] = 0;
         return;
     }
 
     QPainterPath path;
-    const QFont font("SimSun", GlobalSetting::get_instance()->setting["text_size"].toInt());
+    const QFont font("SimSun", GlobalSetting::setting().text_size);
     const QFontMetrics font_metrics(font);
     QRectF text_rect;
 
@@ -3654,7 +3651,7 @@ void Canvas::refresh_text_vbo()
     double *data = new double[data_len];
     size_t index_len = 1368, index_count = 0;
     unsigned int *indexs = new unsigned int[index_len];
-    for (const ContainerGroup &group : GlobalSetting::get_instance()->graph->container_groups())
+    for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
         if (!group.visible())
         {
@@ -3955,13 +3952,13 @@ void Canvas::refresh_text_vbo()
 
 void Canvas::refresh_text_vbo(const bool unitary)
 {
-    if (!GlobalSetting::get_instance()->setting["show_text"].toBool())
+    if (!GlobalSetting::setting().show_text)
     {
         return;
     }
 
     QPainterPath path;
-    const QFont font("SimSun", GlobalSetting::get_instance()->setting["text_size"].toInt());
+    const QFont font("SimSun", GlobalSetting::setting().text_size);
     const QFontMetrics font_metrics(font);
     QRectF text_rect;
 
@@ -3977,7 +3974,7 @@ void Canvas::refresh_text_vbo(const bool unitary)
     double *data = new double[data_len];
     makeCurrent();
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[3]); // text
-    for (const ContainerGroup &group : GlobalSetting::get_instance()->graph->container_groups())
+    for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
         if (!group.visible())
         {
@@ -4226,7 +4223,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
 
     if (current_group_only)
     {
-        for (const Geo::Geometry *geo : GlobalSetting::get_instance()->graph->container_group(_editer->current_group()))
+        for (const Geo::Geometry *geo : GlobalSetting::setting().graph->container_group(_editer->current_group()))
         {
             if (skip_selected && geo->is_selected)
             {
@@ -4296,7 +4293,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
     }
     else
     {
-        for (const ContainerGroup &group : GlobalSetting::get_instance()->graph->container_groups())
+        for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
         {
             if (!group.visible())
             {

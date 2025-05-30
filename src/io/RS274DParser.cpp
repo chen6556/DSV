@@ -160,7 +160,7 @@ void Importer::reset()
     _circle_radius = 10;
     _index = 0;
     _is_pen_down = _is_knife_down = false;
-    _ignore_M19 = GlobalSetting::get_instance()->setting["ignore_M19"].toBool();
+    _ignore_M19 = GlobalSetting::setting().ignore_M19;
     _curve_type = CurveType::Linear;
     unit = Unit::mm;
     _last_circle_container = nullptr;
@@ -189,7 +189,7 @@ void Importer::store_text(const std::string &text)
     else
     {
         _graph->container_groups().back().append(new Text(_last_coord.x, _last_coord.y,
-            GlobalSetting::get_instance()->setting["text_size"].toInt(), QString::fromUtf8(text)));
+            GlobalSetting::setting().text_size, QString::fromUtf8(text)));
     }
 }
 

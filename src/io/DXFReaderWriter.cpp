@@ -769,8 +769,7 @@ void DXFReaderWriter::addMText(const DRW_MText &data)
             if (group.name.toStdString() == data.layer)
             {
                 group.append(new Text(data.basePoint.x, data.basePoint.y,
-                    GlobalSetting::get_instance()->setting["text_size"].toInt(), 
-                    QString::fromUtf8(data.text.c_str())));
+                    GlobalSetting::setting().text_size, QString::fromUtf8(data.text.c_str())));
                 _object_map[group.back()] = data.handle;
                 return;
             }
@@ -778,14 +777,13 @@ void DXFReaderWriter::addMText(const DRW_MText &data)
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
         _graph->container_groups().back().append(new Text(data.basePoint.x, data.basePoint.y,
-            GlobalSetting::get_instance()->setting["text_size"].toInt(), 
-            QString::fromUtf8(data.text.c_str())));
+            GlobalSetting::setting().text_size, QString::fromUtf8(data.text.c_str())));
         _object_map[_graph->container_groups().back().back()] = data.handle;
     }
     else
     {
         _combination->append(new Text(data.basePoint.x, data.basePoint.y,
-            GlobalSetting::get_instance()->setting["text_size"].toInt(), QString::fromUtf8(data.text.c_str())));
+            GlobalSetting::setting().text_size, QString::fromUtf8(data.text.c_str())));
         _object_map[_combination->back()] = data.handle;
     }
 }
@@ -804,8 +802,7 @@ void DXFReaderWriter::addText(const DRW_Text &data)
             if (group.name.toStdString() == data.layer)
             {
                 group.append(new Text(data.basePoint.x, data.basePoint.y,
-                    GlobalSetting::get_instance()->setting["text_size"].toInt(), 
-                    QString::fromUtf8(data.text.c_str())));
+                    GlobalSetting::setting().text_size, QString::fromUtf8(data.text.c_str())));
                 _object_map[group.back()] = data.handle;
                 return;
             }
@@ -813,14 +810,13 @@ void DXFReaderWriter::addText(const DRW_Text &data)
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
         _graph->container_groups().back().append(new Text(data.basePoint.x, data.basePoint.y,
-            GlobalSetting::get_instance()->setting["text_size"].toInt(), 
-            QString::fromUtf8(data.text.c_str())));
+            GlobalSetting::setting().text_size, QString::fromUtf8(data.text.c_str())));
         _object_map[_graph->container_groups().back().back()] = data.handle;
     }
     else
     {
         _combination->append(new Text(data.basePoint.x, data.basePoint.y,
-            GlobalSetting::get_instance()->setting["text_size"].toInt(), QString::fromUtf8(data.text.c_str())));
+            GlobalSetting::setting().text_size, QString::fromUtf8(data.text.c_str())));
         _object_map[_combination->back()] = data.handle;
     }
 }

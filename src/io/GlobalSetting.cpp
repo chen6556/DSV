@@ -1,20 +1,15 @@
 #include <QFile>
 #include <QIODevice>
+#include <QJsonObject>
 #include <QJsonDocument>
 
 #include "io/GlobalSetting.hpp"
 
 
-GlobalSetting *GlobalSetting::_instance = new GlobalSetting();
-
-GlobalSetting *GlobalSetting::get_instance()
+GlobalSetting &GlobalSetting::setting()
 {
-    return _instance;
-}
-
-void GlobalSetting::release()
-{
-    delete _instance;
+    static GlobalSetting instance;
+    return instance;
 }
 
 void GlobalSetting::load_setting()
@@ -22,39 +17,127 @@ void GlobalSetting::load_setting()
     QFile file("./config.json");
     file.open(QIODevice::ReadOnly);
     QJsonParseError jerr;
-    _instance->setting = QJsonDocument::fromJson(file.readAll(), &jerr).object();
+    const QJsonObject values = QJsonDocument::fromJson(file.readAll(), &jerr).object();
     file.close();
 
-    if (_instance->setting.isEmpty())
+    if (values.contains("auto_aliging"))
     {
-        _instance->setting["auto_aligning"] = true;
-        _instance->setting["auto_connect"] = true;
-        _instance->setting["auto_layering"] = true;
-        _instance->setting["auto_save"] = false;
-        _instance->setting["backup_times"] = 50;
-        _instance->setting["catch_distance"] = 2;
-        _instance->setting["catch_center"] = false;
-        _instance->setting["catch_foot"] = false;
-        _instance->setting["catch_tangency"] = false;
-        _instance->setting["catch_vertex"] = false;
-        _instance->setting["down_sampling"] = 0.02;
-        _instance->setting["file_path"] = "/";
-        _instance->setting["file_type"] = "All Files: (*.*)";
-        _instance->setting["ignore_M19"] = true;
-        _instance->setting["multiple_select"] = false;
-        _instance->setting["remember_file_type"] = true;
-        _instance->setting["show_cmd_line"] = false;
-        _instance->setting["show_origin"] = true;
-        _instance->setting["show_points"] = false;
-        _instance->setting["show_text"] = false;
-        _instance->setting["text_size"] = 16;
+        this->auto_aligning = values.value("auto_aligning").toBool();
+    }
+    if (values.contains("auto_connect"))
+    {
+        this->auto_connect = values.value("auto_connect").toBool();
+    }
+    if (values.contains("auto_layering"))
+    {
+        this->auto_layering = values.value("auto_layering").toBool();
+    }
+    if (values.contains("auto_save"))
+    {
+        this->auto_save = values.value("auto_save").toBool();
+    }
+    if (values.contains("backup_times"))
+    {
+        this->backup_times = values.value("backup_times").toInt();
+    }
+    if (values.contains("catch_distance"))
+    {
+        this->catch_distance = values.value("catch_distance").toDouble();
+    }
+    if (values.contains("catch_center"))
+    {
+        this->catch_center = values.value("catch_center").toBool();
+    }
+    if (values.contains("catch_foot"))
+    {
+        this->catch_foot = values.value("catch_foot").toBool();
+    }
+    if (values.contains("catch_tangency"))
+    {
+        this->catch_tangency = values.value("catch_tangency").toBool();
+    }
+    if (values.contains("catch_vertex"))
+    {
+        this->catch_vertex = values.value("catch_vertex").toBool();
+    }
+    if (values.contains("catch_intersection"))
+    {
+        this->catch_intersection = values.value("catch_intersection").toBool();
+    }
+    if (values.contains("down_sampling"))
+    {
+        this->down_sampling = values.value("down_sampling").toDouble();
+    }
+    if (values.contains("file_path"))
+    {
+        this->file_path = values.value("file_path").toString();
+    }
+    if (values.contains("file_type"))
+    {
+        this->file_type = values.value("file_type").toString();
+    }
+    if (values.contains("ignore_M19"))
+    {
+        this->ignore_M19 = values.value("ignore_M19").toBool();
+    }
+    if (values.contains("multiple_select"))
+    {
+        this->multiple_select = values.value("multiple_select").toBool();
+    }
+    if (values.contains("remember_file_type"))
+    {
+        this->remember_file_type = values.value("remember_file_type").toBool();
+    }
+    if (values.contains("show_cmd_line"))
+    {
+        this->show_cmd_line = values.value("show_cmd_line").toBool();
+    }
+    if (values.contains("show_origin"))
+    {
+        this->show_origin = values.value("show_origin").toBool();
+    }
+    if (values.contains("show_points"))
+    {
+        this->show_points = values.value("show_points").toBool();
+    }
+    if (values.contains("show_text"))
+    {
+        this->show_text = values.value("show_text").toBool();
+    }
+    if (values.contains("text_size"))
+    {
+        this->text_size = values.value("text_size").toInt();
     }
 }
 
 void GlobalSetting::save_setting()
 {
+    QJsonObject values;
+    values.insert("auto_aligning", this->auto_aligning);
+    values.insert("auto_connect", this->auto_connect);
+    values.insert("auto_layering", this->auto_layering);
+    values.insert("auto_save", this->auto_save);
+    values.insert("backup_times", this->backup_times);
+    values.insert("catch_distance", this->catch_distance);
+    values.insert("catch_center", this->catch_center);
+    values.insert("catch_foot", this->catch_foot);
+    values.insert("catch_tangency", this->catch_tangency);
+    values.insert("catch_vertex", this->catch_vertex);
+    values.insert("catch_intersection", this->catch_intersection);
+    values.insert("down_sampling", this->down_sampling);
+    values.insert("file_path", this->file_path);
+    values.insert("file_type", this->file_type);
+    values.insert("ignore_M19", this->ignore_M19);
+    values.insert("multiple_select", this->multiple_select);
+    values.insert("remember_file_type", this->remember_file_type);
+    values.insert("show_cmd_line", this->show_cmd_line);
+    values.insert("show_origin", this->show_origin);
+    values.insert("show_points", this->show_points);
+    values.insert("show_text", this->show_text);
+    values.insert("text_size", this->text_size);
+
     QJsonDocument doc;
-    doc.setObject(_instance->setting);
+    doc.setObject(values);
     QFile file("./config.json");
     file.open(QIODevice::WriteOnly);
     file.write(doc.toJson());

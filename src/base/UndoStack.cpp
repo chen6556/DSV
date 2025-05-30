@@ -542,8 +542,7 @@ void TextChangedCommand::undo(Graph *graph)
 {
     if (dynamic_cast<Containerized *>(_item) == nullptr)
     {
-        static_cast<Text *>(_item)->set_text(_text,
-            GlobalSetting::get_instance()->setting["text_size"].toInt());
+        static_cast<Text *>(_item)->set_text(_text, GlobalSetting::setting().text_size);
     }
     else
     {

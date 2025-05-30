@@ -27,7 +27,7 @@ Editer::~Editer()
 
 void Editer::init()
 {
-    GlobalSetting::get_instance()->graph = _graph;
+    GlobalSetting::setting().graph = _graph;
     if (_graph != nullptr)
     {
         for (ContainerGroup &group : _graph->container_groups())
@@ -58,7 +58,7 @@ void Editer::load_graph(Graph *graph, const QString &path)
     }
     else
     {
-        GlobalSetting::get_instance()->graph = nullptr;
+        GlobalSetting::setting().graph = nullptr;
     }
 }
 
@@ -73,7 +73,7 @@ void Editer::load_graph(Graph *graph)
     }
     else
     {
-        GlobalSetting::get_instance()->graph = nullptr;
+        GlobalSetting::setting().graph = nullptr;
     }
 }
 
@@ -83,7 +83,7 @@ void Editer::delete_graph()
     {
         delete _graph;
         _graph = nullptr;
-        GlobalSetting::get_instance()->graph = nullptr;
+        GlobalSetting::setting().graph = nullptr;
         _current_group = 0;
         _file_path.clear();
         _backup.clear();
@@ -663,7 +663,7 @@ void Editer::append_points()
     if (_graph == nullptr)
     {
         _graph = new Graph;
-        GlobalSetting::get_instance()->graph = _graph;
+        GlobalSetting::setting().graph = _graph;
         _graph->append_group();
         _backup.set_graph(_graph);
     }
@@ -702,7 +702,7 @@ void Editer::append(const Geo::Circle &circle)
     if (_graph == nullptr)
     {
         _graph = new Graph;
-        GlobalSetting::get_instance()->graph = _graph;
+        GlobalSetting::setting().graph = _graph;
         _graph->append_group();
         _backup.set_graph(_graph);
     }
@@ -722,7 +722,7 @@ void Editer::append(const Geo::Ellipse &ellipse)
     if (_graph == nullptr)
     {
         _graph = new Graph;
-        GlobalSetting::get_instance()->graph = _graph;
+        GlobalSetting::setting().graph = _graph;
         _graph->append_group();
         _backup.set_graph(_graph);
     }
@@ -742,7 +742,7 @@ void Editer::append(const Geo::AABBRect &rect)
     if (_graph == nullptr)
     {
         _graph = new Graph;
-        GlobalSetting::get_instance()->graph = _graph;
+        GlobalSetting::setting().graph = _graph;
         _graph->append_group();
         _backup.set_graph(_graph);
     }
@@ -758,7 +758,7 @@ void Editer::append_bezier(const size_t order)
     if (_graph == nullptr)
     {
         _graph = new Graph;
-        GlobalSetting::get_instance()->graph = _graph;
+        GlobalSetting::setting().graph = _graph;
         _graph->append_group();
         _backup.set_graph(_graph);
     }
@@ -784,7 +784,7 @@ void Editer::append_bspline(const size_t k)
     if (_graph == nullptr)
     {
         _graph = new Graph;
-        GlobalSetting::get_instance()->graph = _graph;
+        GlobalSetting::setting().graph = _graph;
         _graph->append_group();
         _backup.set_graph(_graph);
     }
@@ -814,11 +814,11 @@ void Editer::append_text(const double x, const double y)
     if (_graph == nullptr)
     {
         _graph = new Graph;
-        GlobalSetting::get_instance()->graph = _graph;
+        GlobalSetting::setting().graph = _graph;
         _graph->append_group();
         _backup.set_graph(_graph);
     }
-    _graph->append(new Text(x, y, GlobalSetting::get_instance()->setting["text_size"].toInt()), _current_group);
+    _graph->append(new Text(x, y, GlobalSetting::setting().text_size), _current_group);
 
     _graph->modified = true;
     _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
@@ -827,8 +827,8 @@ void Editer::append_text(const double x, const double y)
 
 void Editer::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1, const bool change_shape)
 {
-    const double catch_distance = GlobalSetting::get_instance()->setting["catch_distance"].toDouble();
-    GlobalSetting::get_instance()->translated_points = true;
+    const double catch_distance = GlobalSetting::setting().catch_distance;
+    GlobalSetting::setting().translated_points = true;
     switch (points->type())
     {
     case Geo::Type::POLYGON:

@@ -235,7 +235,7 @@ bool CMDWidget::work()
         break;
 
     case CMD::Connect_CMD:
-        if (_editer->connect(_editer->selected(), GlobalSetting::get_instance()->setting["catch_distance"].toDouble()))
+        if (_editer->connect(_editer->selected(), GlobalSetting::setting().catch_distance))
         {
             _canvas->refresh_vbo();
             _canvas->refresh_selected_ibo();
@@ -272,7 +272,7 @@ bool CMDWidget::work()
     case CMD::FlipX_CMD:
         {
             std::list<Geo::Geometry *> objects = _editer->selected();
-            _editer->flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::get_instance()->ui->to_all_layers->isChecked());
+            _editer->flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
             _canvas->refresh_vbo(objects.empty());
             _canvas->update();
         }
@@ -281,7 +281,7 @@ bool CMDWidget::work()
     case CMD::FlipY_CMD:
         {
             std::list<Geo::Geometry *> objects = _editer->selected();
-            _editer->flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::get_instance()->ui->to_all_layers->isChecked());
+            _editer->flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
             _canvas->refresh_vbo(objects.empty());
             _canvas->update();
         }
@@ -836,8 +836,8 @@ void CMDWidget::rotate()
     case 2:
         {
             std::list<Geo::Geometry *> objects = _editer->selected();
-            GlobalSetting::get_instance()->ui->rotate_angle->setValue(_parameters[1]);
-            _editer->rotate(objects, _parameters[1], QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::get_instance()->ui->to_all_layers->isChecked());
+            GlobalSetting::setting().ui->rotate_angle->setValue(_parameters[1]);
+            _editer->rotate(objects, _parameters[1], QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
             _canvas->refresh_vbo(objects.empty());
             _parameters.pop_back();
             _canvas->update();
@@ -860,7 +860,7 @@ void CMDWidget::scale()
         clear();
         break;
     case 2:
-        GlobalSetting::get_instance()->ui->scale_sbx->setValue(_parameters.back());
+        GlobalSetting::setting().ui->scale_sbx->setValue(_parameters.back());
         _editer->scale(_editer->selected(), QApplication::keyboardModifiers() != Qt::ControlModifier, _parameters.back());
         _canvas->refresh_vbo();
         _canvas->refresh_selected_ibo();
@@ -884,7 +884,7 @@ void CMDWidget::offset()
         clear();
         break;
     case 2:
-        GlobalSetting::get_instance()->ui->offset_sbx->setValue(_parameters.back());
+        GlobalSetting::setting().ui->offset_sbx->setValue(_parameters.back());
         _editer->offset(_editer->selected(), _parameters.back());
         _canvas->refresh_vbo();
         _canvas->refresh_selected_ibo();
@@ -901,18 +901,17 @@ void CMDWidget::fillet()
     switch (_parameters.size())
     {
     case 0:
-        GlobalSetting::get_instance()->ui->canvas->set_operation(Canvas::Operation::Fillet);
-        ui->cmd_label->setText("Fillet Radius: " + QString::number(
-            GlobalSetting::get_instance()->ui->fillet_sbx->value()));
+        GlobalSetting::setting().ui->canvas->set_operation(Canvas::Operation::Fillet);
+        ui->cmd_label->setText("Fillet Radius: " + QString::number(GlobalSetting::setting().ui->fillet_sbx->value()));
         _parameters.push_back(0);
         break;
     case 1:
         clear();
-        GlobalSetting::get_instance()->ui->canvas->set_operation(Canvas::Operation::NoOperation);
+        GlobalSetting::setting().ui->canvas->set_operation(Canvas::Operation::NoOperation);
         break;
     case 2:
         ui->cmd_label->setText("Fillet Radius: " + QString::number(_parameters.back()));
-        GlobalSetting::get_instance()->ui->fillet_sbx->setValue(_parameters.back());
+        GlobalSetting::setting().ui->fillet_sbx->setValue(_parameters.back());
         _parameters.pop_back();
         break;
     default:
@@ -929,20 +928,20 @@ void CMDWidget::line_array()
         break;
     case 1:
         ui->parameter_label->setText("X Items:" + QString::number(_parameters[0]) + " Y Items:");
-        GlobalSetting::get_instance()->ui->array_x_item->setValue(_parameters[0]);
+        GlobalSetting::setting().ui->array_x_item->setValue(_parameters[0]);
         break;
     case 2:
         ui->parameter_label->setText("X Items:" + QString::number(_parameters[0]) + " Y Items:"
             + QString::number(_parameters[1]) + " X Space:");
-        GlobalSetting::get_instance()->ui->array_x_space->setValue(_parameters[1]);
+        GlobalSetting::setting().ui->array_x_space->setValue(_parameters[1]);
         break;
     case 3:
         ui->parameter_label->setText("X Items:" + QString::number(_parameters[0]) + " Y Items:"
             + QString::number(_parameters[1]) + " X Space:" +  QString::number(_parameters[2]) + " Y Space:");
-        GlobalSetting::get_instance()->ui->array_y_item->setValue(_parameters[2]);
+        GlobalSetting::setting().ui->array_y_item->setValue(_parameters[2]);
         break;
     case 4:
-        GlobalSetting::get_instance()->ui->array_y_space->setValue(_parameters[3]);
+        GlobalSetting::setting().ui->array_y_space->setValue(_parameters[3]);
         if (_editer->line_array(_editer->selected(), _parameters[0], _parameters[1], _parameters[2], _parameters[3]))
         {
             _canvas->refresh_vbo();
@@ -975,7 +974,7 @@ void CMDWidget::ring_array()
             + QString::number(_parameters[1]) + " Items:");
         break;
     case 3:
-        GlobalSetting::get_instance()->ui->array_item->setValue(_parameters[2]);
+        GlobalSetting::setting().ui->array_item->setValue(_parameters[2]);
         if (_editer->ring_array(_editer->selected(), _parameters[0], _parameters[1], _parameters[2]))
         {
             _canvas->refresh_vbo();
