@@ -1121,7 +1121,12 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                 {
                     if (_edited_shape.empty())
                     {
+                        _edited_shape.emplace_back(temp->path_points.size(), temp->control_points.size());
                         for (const Geo::Point &point : temp->path_points)
+                        {
+                            _edited_shape.emplace_back(point.x, point.y);
+                        }
+                        for (const Geo::Point &point : temp->control_points)
                         {
                             _edited_shape.emplace_back(point.x, point.y);
                         }
@@ -1129,7 +1134,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
 
                     temp->path_points[index].translate(x1 - x0, y1 - y0);
                     temp->update_control_points();
-                    temp->update_shape(0.2, 0.02);
+                    temp->update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
                     _graph->modified = true;
                     return;
                 }

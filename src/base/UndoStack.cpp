@@ -204,6 +204,23 @@ void ChangeShapeCommand::undo(Graph *graph)
             {
                 bezier->append(Geo::Point(std::get<0>(point), std::get<1>(point)));
             }
+            bezier->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
+        }
+        break;
+    case Geo::Type::BSPLINE:
+        {
+            Geo::BSpline *bspline = static_cast<Geo::BSpline *>(_object);
+            bspline->path_points.clear();
+            bspline->control_points.clear();
+            for (size_t i = 1, count = 1 + std::get<0>(_shape.front()); i < count; ++i)
+            {
+                bspline->path_points.emplace_back(std::get<0>(_shape[i]), std::get<1>(_shape[i]));
+            }
+            for (size_t i = 1 + std::get<0>(_shape.front()), count = _shape.size(); i < count; ++i)
+            {
+                bspline->control_points.emplace_back(std::get<0>(_shape[i]), std::get<1>(_shape[i]));
+            }
+            bspline->update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
         }
         break;
     case Geo::Type::POLYGON:

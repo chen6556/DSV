@@ -2137,14 +2137,14 @@ Bezier::Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::con
     : Polyline(begin, end), _order(n)
 {
     _shape.shape_fixed = true;
-    update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
+    update_shape(Bezier::default_step, Bezier::default_down_sampling_value);
 }
 
 Bezier::Bezier(const std::initializer_list<Point> &points, const size_t n)
     : Polyline(points), _order(n)
 {
     _shape.shape_fixed = true;
-    update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
+    update_shape(Bezier::default_step, Bezier::default_down_sampling_value);
 }
 
 const Type Bezier::type() const
