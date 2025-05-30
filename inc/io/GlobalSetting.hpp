@@ -5,13 +5,13 @@
 class GlobalSetting
 {
 private:
-    GlobalSetting() { load_setting(); }
+    GlobalSetting() {}
 
     GlobalSetting(const GlobalSetting &) = delete;
 
     GlobalSetting &operator=(const GlobalSetting &) = delete;
 
-    ~GlobalSetting() { save_setting(); };
+    ~GlobalSetting() {};
 
 public:
     Graph *graph = nullptr;
