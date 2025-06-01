@@ -255,84 +255,84 @@ void Importer::end()
     store_points();
 }
 
-Importer importer;
+static Importer importer;
 
 
 // 分隔符设置 '*'
-Parser<char> blank = ch_p(' ') | ch_p('\t') | ch_p('\v');
-Parser<char> separator = ch_p('*');
+static Parser<char> blank = ch_p(' ') | ch_p('\t') | ch_p('\v');
+static Parser<char> separator = ch_p('*');
 
-Parser<bool> skip_cmd = ((ch_p('H') >> int_p()) | ch_p('Q')) >> !separator;
+static Parser<bool> skip_cmd = ((ch_p('H') >> int_p()) | ch_p('Q')) >> !separator;
 
 // 坐标设置
-Action<int> x_coord_a(&importer, &Importer::set_x_coord);
-Action<int> y_coord_a(&importer, &Importer::set_y_coord);
-Parser<bool> coord = ch_p('X') >> int_p()[x_coord_a] >>
+static Action<int> x_coord_a(&importer, &Importer::set_x_coord);
+static Action<int> y_coord_a(&importer, &Importer::set_y_coord);
+static Parser<bool> coord = ch_p('X') >> int_p()[x_coord_a] >>
                     ch_p('Y') >> int_p()[y_coord_a] >> !separator;
 // 单位设置 mil实际为100mil，换算为2.54mm
-Action<void> set_mm_unit_a(&importer, &Importer::set_unit_mm);
-Action<void> set_mil_unit_a(&importer, &Importer::set_unit_hectomil);
+static Action<void> set_mm_unit_a(&importer, &Importer::set_unit_mm);
+static Action<void> set_mil_unit_a(&importer, &Importer::set_unit_hectomil);
 
-Parser<std::string> set_mm_unit = str_p("G71")[set_mm_unit_a];
-Parser<std::string> set_mil_unit = (str_p("G72") | str_p("G70"))[set_mil_unit_a];
+static Parser<std::string> set_mm_unit = str_p("G71")[set_mm_unit_a];
+static Parser<std::string> set_mil_unit = (str_p("G72") | str_p("G70"))[set_mil_unit_a];
 
-Parser<std::string> set_unit = (set_mm_unit | set_mil_unit) >> separator;
+static Parser<std::string> set_unit = (set_mm_unit | set_mil_unit) >> separator;
 
 // 下刀提刀，下笔提笔
-Action<std::string> knife_down_a(&importer, &Importer::knife_down);
-Action<void> knife_up_a(&importer, &Importer::knife_up);
-Action<void> pen_down_a(&importer, &Importer::pen_down);
-Action<void> pen_up_a(&importer, &Importer::pen_up);
+static Action<std::string> knife_down_a(&importer, &Importer::knife_down);
+static Action<void> knife_up_a(&importer, &Importer::knife_up);
+static Action<void> pen_down_a(&importer, &Importer::pen_down);
+static Action<void> pen_up_a(&importer, &Importer::pen_up);
 
-Parser<std::string> knife_down = (str_p("M14") | str_p("M19"))[knife_down_a];
-Parser<std::string> knife_up = str_p("M15")[knife_up_a];
-Parser<std::string> pen_down = (str_p("D1") | str_p("D01"))[pen_down_a];
-Parser<std::string> pen_up = (str_p("D2") | str_p("D02"))[pen_up_a];
+static Parser<std::string> knife_down = (str_p("M14") | str_p("M19"))[knife_down_a];
+static Parser<std::string> knife_up = str_p("M15")[knife_up_a];
+static Parser<std::string> pen_down = (str_p("D1") | str_p("D01"))[pen_down_a];
+static Parser<std::string> pen_up = (str_p("D2") | str_p("D02"))[pen_up_a];
 
-Parser<std::string> pen_move = (knife_down | knife_up | pen_down | pen_up);
+static Parser<std::string> pen_move = (knife_down | knife_up | pen_down | pen_up);
 
 // 插值方式(线型?) 目前只有线性
-Parser<std::string> linear = str_p("G01");
+static Parser<std::string> linear = str_p("G01");
 
-Parser<std::string> interp = (linear) >> separator;
+static Parser<std::string> interp = (linear) >> separator;
 
 // 圆
-Action<std::string> circle_radius_a(&importer, &Importer::set_circle_radius);
-Action<void> circle_a(&importer, &Importer::draw_circle);
+static Action<std::string> circle_radius_a(&importer, &Importer::set_circle_radius);
+static Action<void> circle_a(&importer, &Importer::draw_circle);
 
-Parser<std::string> circle_radius = (str_p("M43") | str_p("M44") | str_p("M45") | str_p("M72") | str_p("M73"))[circle_radius_a];
-Parser<bool> circle = (circle_radius >> (separator | coord))[circle_a];
+static Parser<std::string> circle_radius = (str_p("M43") | str_p("M44") | str_p("M45") | str_p("M72") | str_p("M73"))[circle_radius_a];
+static Parser<bool> circle = (circle_radius >> (separator | coord))[circle_a];
 
 // 文字处理
-Action<void> read_text_a(&importer, &Importer::read_text);
-Action<std::string> text_a(&importer, &Importer::store_text);
-Parser<bool> text = confix_p(str_p("M31*")[read_text_a] >> !coord, (*anychar_p())[text_a], separator);
-Parser<std::string> skip_text = confix_p(str_p("M20*"), separator);
+static Action<void> read_text_a(&importer, &Importer::read_text);
+static Action<std::string> text_a(&importer, &Importer::store_text);
+static Parser<bool> text = confix_p(str_p("M31*")[read_text_a] >> !coord, (*anychar_p())[text_a], separator);
+static Parser<std::string> skip_text = confix_p(str_p("M20*"), separator);
 
 // 步骤
-Parser<bool> steps = ch_p('N') >> int_p() >> separator;
+static Parser<bool> steps = ch_p('N') >> int_p() >> separator;
 // 文件终止
-Action<void> end_a(&importer, &Importer::end);
-Parser<std::string> end = str_p("M0")[end_a] >> separator;
+static Action<void> end_a(&importer, &Importer::end);
+static Parser<std::string> end = str_p("M0")[end_a] >> separator;
 // 未知命令
-Action<std::string> a_unkown(&importer, &Importer::print_symbol);
-Parser<std::string> unkown_cmds = confix_p(alnum_p() | ch_p(' '), separator)[a_unkown];
+static Action<std::string> a_unkown(&importer, &Importer::print_symbol);
+static Parser<std::string> unkown_cmds = confix_p(alnum_p() | ch_p(' '), separator)[a_unkown];
 
-Parser<bool> cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | text | skip_text | blank | skip_cmd | separator | end | unkown_cmds);
+static Parser<bool> cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | text | skip_text | blank | skip_cmd | separator | end | unkown_cmds);
 
-Action<std::string> table_text_a(&importer, &Importer::store_table_text);
+static Action<std::string> table_text_a(&importer, &Importer::store_table_text);
 
-Parser<std::string> table_start = str_p("N,0001") >> eol_p();
-Parser<std::string> rest_of_line = *(anychar_p() - eol_p());
-Parser<std::string> unknown_gap_line = rest_of_line >> eol_p();
-Parser<std::string> unknown_gap = *(unknown_gap_line - table_start);
-Parser<std::string> table_line = rest_of_line >> eol_p();
-Parser<bool> position_line = str_p("P,") >> int_p()[x_coord_a] >> ch_p(',') >> int_p()[y_coord_a] >> rest_of_line >> eol_p();
-Parser<bool> text_line = str_p("D,") >> int_p() >> ch_p(',') >> rest_of_line[table_text_a] >> eol_p();
-Parser<std::string> table_end = str_p("L0*") >> !eol_p();
-Parser<bool> table = confix_p(table_start, *(text_line | position_line | table_line), table_end);
+static Parser<std::string> table_start = str_p("N,0001") >> eol_p();
+static Parser<std::string> rest_of_line = *(anychar_p() - eol_p());
+static Parser<std::string> unknown_gap_line = rest_of_line >> eol_p();
+static Parser<std::string> unknown_gap = *(unknown_gap_line - table_start);
+static Parser<std::string> table_line = rest_of_line >> eol_p();
+static Parser<bool> position_line = str_p("P,") >> int_p()[x_coord_a] >> ch_p(',') >> int_p()[y_coord_a] >> rest_of_line >> eol_p();
+static Parser<bool> text_line = str_p("D,") >> int_p() >> ch_p(',') >> rest_of_line[table_text_a] >> eol_p();
+static Parser<std::string> table_end = str_p("L0*") >> !eol_p();
+static Parser<bool> table = confix_p(table_start, *(text_line | position_line | table_line), table_end);
 
-Parser<bool> rs274 = cmd >> *(anychar_p() - table_start) >> !table;
+static Parser<bool> rs274 = cmd >> *(anychar_p() - table_start) >> !table;
 
 
 bool parse(std::string_view &stream, Graph *graph)

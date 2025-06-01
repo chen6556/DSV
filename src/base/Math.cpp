@@ -1,4 +1,4 @@
-#include <memory>
+#include <algorithm>
 #include "base/Math.hpp"
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_cblas.h>
@@ -101,7 +101,7 @@ void Math::mul(const double *mat0, const size_t m0, const size_t n0, const doubl
 void Math::solve(const double *mat, const size_t n, const double *b, double *output)
 {
     double *a = new double[n * n];
-    std::memmove(a, mat, sizeof(mat) * n * n);
+    std::move(mat, mat + n * n, a);
     gsl_matrix_view aa = gsl_matrix_view_array(a, n, n);
     gsl_vector_const_view bb = gsl_vector_const_view_array(b, n);
     gsl_matrix *aa2 = gsl_matrix_alloc(n, n);

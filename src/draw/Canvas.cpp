@@ -162,7 +162,7 @@ void Canvas::paintGL()
                         {
                             index_len *= 2;
                             unsigned int *temp = new unsigned int[index_len];
-                            std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                            std::move(indexs, indexs + index_count, temp);
                             delete []indexs;
                             indexs = temp;
                         }
@@ -172,7 +172,7 @@ void Canvas::paintGL()
                     {
                         index_len *= 2;
                         unsigned int *temp = new unsigned int[index_len];
-                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                        std::move(indexs, indexs + index_count, temp);
                         delete []indexs;
                         indexs = temp;
                     }
@@ -186,7 +186,7 @@ void Canvas::paintGL()
                     {
                         index_len *= 2;
                         unsigned int *temp = new unsigned int[index_len];
-                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                        std::move(indexs, indexs + index_count, temp);
                         delete []indexs;
                         indexs = temp;
                     }
@@ -196,7 +196,7 @@ void Canvas::paintGL()
                 {
                     index_len *= 2;
                     unsigned int *temp = new unsigned int[index_len];
-                    std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                    std::move(indexs, indexs + index_count, temp);
                     delete []indexs;
                     indexs = temp;
                 }
@@ -2297,7 +2297,7 @@ void Canvas::check_cache()
     {
         _cache_len *= 2;
         double *temp = new double[_cache_len];
-        std::memmove(temp, _cache, sizeof(double) * _cache_count);
+        std::move(_cache, _cache + _cache_count, temp);
         delete[] _cache;
         _cache = temp;
     }
@@ -2339,7 +2339,7 @@ void Canvas::refresh_vbo()
                     {
                         polygon_index_len *= 2;
                         unsigned int *temp = new unsigned int[polygon_index_len];
-                        std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                        std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
                         delete []polygon_indexs;
                         polygon_indexs = temp;
                     }
@@ -2354,7 +2354,7 @@ void Canvas::refresh_vbo()
                     {
                         data_len *= 2;
                         double *temp = new double[data_len];
-                        std::memmove(temp, data, data_count * sizeof(double));
+                        std::move(data, data + data_count, temp);
                         delete []data;
                         data = temp;
                     }
@@ -2362,7 +2362,7 @@ void Canvas::refresh_vbo()
                     {
                         polyline_index_len *= 2;
                         unsigned int *temp = new unsigned int[polyline_index_len];
-                        std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
                         delete []polyline_indexs;
                         polyline_indexs = temp;
                     }
@@ -2380,7 +2380,7 @@ void Canvas::refresh_vbo()
                     {
                         polygon_index_len *= 2;
                         unsigned int *temp = new unsigned int[polygon_index_len];
-                        std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                        std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
                         delete []polygon_indexs;
                         polygon_indexs = temp;
                     }
@@ -2395,7 +2395,7 @@ void Canvas::refresh_vbo()
                     {
                         data_len *= 2;
                         double *temp = new double[data_len];
-                        std::memmove(temp, data, data_count * sizeof(double));
+                        std::move(data, data + data_count, temp);
                         delete []data;
                         data = temp;
                     }
@@ -2403,7 +2403,7 @@ void Canvas::refresh_vbo()
                     {
                         polyline_index_len *= 2;
                         unsigned int *temp = new unsigned int[polyline_index_len];
-                        std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
                         delete []polyline_indexs;
                         polyline_indexs = temp;
                     }
@@ -2421,7 +2421,7 @@ void Canvas::refresh_vbo()
                     {
                         polygon_index_len *= 2;
                         unsigned int *temp = new unsigned int[polygon_index_len];
-                        std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                        std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
                         delete []polygon_indexs;
                         polygon_indexs = temp;
                     }
@@ -2436,7 +2436,7 @@ void Canvas::refresh_vbo()
                     {
                         data_len *= 2;
                         double *temp = new double[data_len];
-                        std::memmove(temp, data, data_count * sizeof(double));
+                        std::move(data, data + data_count, temp);
                         delete []data;
                         data = temp;
                     }
@@ -2444,7 +2444,7 @@ void Canvas::refresh_vbo()
                     {
                         polyline_index_len *= 2;
                         unsigned int *temp = new unsigned int[polyline_index_len];
-                        std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
                         delete []polyline_indexs;
                         polyline_indexs = temp;
                     }
@@ -2469,7 +2469,7 @@ void Canvas::refresh_vbo()
                             {
                                 polygon_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polygon_index_len];
-                                std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
                                 delete []polygon_indexs;
                                 polygon_indexs = temp;
                             }
@@ -2484,7 +2484,7 @@ void Canvas::refresh_vbo()
                             {
                                 data_len *= 2;
                                 double *temp = new double[data_len];
-                                std::memmove(temp, data, data_count * sizeof(double));
+                                std::move(data, data + data_count, temp);
                                 delete []data;
                                 data = temp;
                             }
@@ -2492,7 +2492,7 @@ void Canvas::refresh_vbo()
                             {
                                 polyline_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polyline_index_len];
-                                std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                                std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
                                 delete []polyline_indexs;
                                 polyline_indexs = temp;
                             }
@@ -2510,7 +2510,7 @@ void Canvas::refresh_vbo()
                             {
                                 polygon_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polygon_index_len];
-                                std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
                                 delete []polygon_indexs;
                                 polygon_indexs = temp;
                             }
@@ -2525,7 +2525,7 @@ void Canvas::refresh_vbo()
                             {
                                 data_len *= 2;
                                 double *temp = new double[data_len];
-                                std::memmove(temp, data, data_count * sizeof(double));
+                                std::move(data, data + data_count, temp);
                                 delete []data;
                                 data = temp;
                             }
@@ -2533,7 +2533,7 @@ void Canvas::refresh_vbo()
                             {
                                 polyline_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polyline_index_len];
-                                std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                                std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
                                 delete []polyline_indexs;
                                 polyline_indexs = temp;
                             }
@@ -2551,7 +2551,7 @@ void Canvas::refresh_vbo()
                             {
                                 polygon_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polygon_index_len];
-                                std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
                                 delete []polygon_indexs;
                                 polygon_indexs = temp;
                             }
@@ -2566,7 +2566,7 @@ void Canvas::refresh_vbo()
                             {
                                 data_len *= 2;
                                 double *temp = new double[data_len];
-                                std::memmove(temp, data, data_count * sizeof(double));
+                                std::move(data, data + data_count, temp);
                                 delete []data;
                                 data = temp;
                             }
@@ -2574,7 +2574,7 @@ void Canvas::refresh_vbo()
                             {
                                 polyline_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polyline_index_len];
-                                std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                                std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
                                 delete []polyline_indexs;
                                 polyline_indexs = temp;
                             }
@@ -2594,7 +2594,7 @@ void Canvas::refresh_vbo()
                             {
                                 data_len *= 2;
                                 double *temp = new double[data_len];
-                                std::memmove(temp, data, data_count * sizeof(double));
+                                std::move(data, data + data_count, temp);
                                 delete []data;
                                 data = temp;
                             }
@@ -2602,7 +2602,7 @@ void Canvas::refresh_vbo()
                             {
                                 polyline_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polyline_index_len];
-                                std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                                std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
                                 delete []polyline_indexs;
                                 polyline_indexs = temp;
                             }
@@ -2621,7 +2621,7 @@ void Canvas::refresh_vbo()
                             {
                                 data_len *= 2;
                                 double *temp = new double[data_len];
-                                std::memmove(temp, data, data_count * sizeof(double));
+                                std::move(data, data + data_count, temp);
                                 delete []data;
                                 data = temp;
                             }
@@ -2629,7 +2629,7 @@ void Canvas::refresh_vbo()
                             {
                                 polyline_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polyline_index_len];
-                                std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                                std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
                                 delete []polyline_indexs;
                                 polyline_indexs = temp;
                             }
@@ -2648,7 +2648,7 @@ void Canvas::refresh_vbo()
                             {
                                 data_len *= 2;
                                 double *temp = new double[data_len];
-                                std::memmove(temp, data, data_count * sizeof(double));
+                                std::move(data, data + data_count, temp);
                                 delete []data;
                                 data = temp;
                             }
@@ -2656,7 +2656,7 @@ void Canvas::refresh_vbo()
                             {
                                 polyline_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polyline_index_len];
-                                std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                                std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
                                 delete []polyline_indexs;
                                 polyline_indexs = temp;
                             }
@@ -2672,7 +2672,7 @@ void Canvas::refresh_vbo()
                     {
                         polyline_index_len *= 2;
                         unsigned int *temp = new unsigned int[polyline_index_len];
-                        std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
                         delete []polyline_indexs;
                         polyline_indexs = temp;
                     }
@@ -2691,7 +2691,7 @@ void Canvas::refresh_vbo()
                     {
                         data_len *= 2;
                         double *temp = new double[data_len];
-                        std::memmove(temp, data, data_count * sizeof(double));
+                        std::move(data, data + data_count, temp);
                         delete []data;
                         data = temp;
                     }
@@ -2699,7 +2699,7 @@ void Canvas::refresh_vbo()
                     {
                         polyline_index_len *= 2;
                         unsigned int *temp = new unsigned int[polyline_index_len];
-                        std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
                         delete []polyline_indexs;
                         polyline_indexs = temp;
                     }
@@ -2718,7 +2718,7 @@ void Canvas::refresh_vbo()
                     {
                         data_len *= 2;
                         double *temp = new double[data_len];
-                        std::memmove(temp, data, data_count * sizeof(double));
+                        std::move(data, data + data_count, temp);
                         delete []data;
                         data = temp;
                     }
@@ -2726,7 +2726,7 @@ void Canvas::refresh_vbo()
                     {
                         polyline_index_len *= 2;
                         unsigned int *temp = new unsigned int[polyline_index_len];
-                        std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
                         delete []polyline_indexs;
                         polyline_indexs = temp;
                     }
@@ -2745,7 +2745,7 @@ void Canvas::refresh_vbo()
                     {
                         data_len *= 2;
                         double *temp = new double[data_len];
-                        std::memmove(temp, data, data_count * sizeof(double));
+                        std::move(data, data + data_count, temp);
                         delete []data;
                         data = temp;
                     }
@@ -2753,7 +2753,7 @@ void Canvas::refresh_vbo()
                     {
                         polyline_index_len *= 2;
                         unsigned int *temp = new unsigned int[polyline_index_len];
-                        std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
                         delete []polyline_indexs;
                         polyline_indexs = temp;
                     }
@@ -2769,7 +2769,7 @@ void Canvas::refresh_vbo()
             {
                 polyline_index_len *= 2;
                 unsigned int *temp = new unsigned int[polyline_index_len];
-                std::memmove(temp, polyline_indexs, polyline_index_count * sizeof(unsigned int));
+                std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
                 delete []polyline_indexs;
                 polyline_indexs = temp;
             }
@@ -2838,7 +2838,7 @@ void Canvas::refresh_vbo(const bool unitary)
                     {
                         data_len *= 2;
                         double *temp = new double[data_len];
-                        std::memmove(temp, data, data_count * sizeof(double));
+                        std::move(data, data + data_count, temp);
                         delete []data;
                         data = temp;
                     }
@@ -2854,7 +2854,7 @@ void Canvas::refresh_vbo(const bool unitary)
                     {
                         data_len *= 2;
                         double *temp = new double[data_len];
-                        std::memmove(temp, data, data_count * sizeof(double));
+                        std::move(data, data + data_count, temp);
                         delete []data;
                         data = temp;
                     }
@@ -2870,7 +2870,7 @@ void Canvas::refresh_vbo(const bool unitary)
                     {
                         data_len *= 2;
                         double *temp = new double[data_len];
-                        std::memmove(temp, data, data_count * sizeof(double));
+                        std::move(data, data + data_count, temp);
                         delete []data;
                         data = temp;
                     }
@@ -2892,7 +2892,7 @@ void Canvas::refresh_vbo(const bool unitary)
                             {
                                 data_len *= 2;
                                 double *temp = new double[data_len];
-                                std::memmove(temp, data, data_count * sizeof(double));
+                                std::move(data, data + data_count, temp);
                                 delete []data;
                                 data = temp;
                             }
@@ -2908,7 +2908,7 @@ void Canvas::refresh_vbo(const bool unitary)
                             {
                                 data_len *= 2;
                                 double *temp = new double[data_len];
-                                std::memmove(temp, data, data_count * sizeof(double));
+                                std::move(data, data + data_count, temp);
                                 delete []data;
                                 data = temp;
                             }
@@ -2924,7 +2924,7 @@ void Canvas::refresh_vbo(const bool unitary)
                             {
                                 data_len *= 2;
                                 double *temp = new double[data_len];
-                                std::memmove(temp, data, data_count * sizeof(double));
+                                std::move(data, data + data_count, temp);
                                 delete []data;
                                 data = temp;
                             }
@@ -2940,7 +2940,7 @@ void Canvas::refresh_vbo(const bool unitary)
                             {
                                 data_len *= 2;
                                 double *temp = new double[data_len];
-                                std::memmove(temp, data, data_count * sizeof(double));
+                                std::move(data, data + data_count, temp);
                                 delete []data;
                                 data = temp;
                             }
@@ -2956,7 +2956,7 @@ void Canvas::refresh_vbo(const bool unitary)
                             {
                                 data_len *= 2;
                                 double *temp = new double[data_len];
-                                std::memmove(temp, data, data_count * sizeof(double));
+                                std::move(data, data + data_count, temp);
                                 delete []data;
                                 data = temp;
                             }
@@ -2972,7 +2972,7 @@ void Canvas::refresh_vbo(const bool unitary)
                             {
                                 data_len *= 2;
                                 double *temp = new double[data_len];
-                                std::memmove(temp, data, data_count * sizeof(double));
+                                std::move(data, data + data_count, temp);
                                 delete []data;
                                 data = temp;
                             }
@@ -2996,7 +2996,7 @@ void Canvas::refresh_vbo(const bool unitary)
                     {
                         data_len *= 2;
                         double *temp = new double[data_len];
-                        std::memmove(temp, data, data_count * sizeof(double));
+                        std::move(data, data + data_count, temp);
                         delete []data;
                         data = temp;
                     }
@@ -3012,7 +3012,7 @@ void Canvas::refresh_vbo(const bool unitary)
                     {
                         data_len *= 2;
                         double *temp = new double[data_len];
-                        std::memmove(temp, data, data_count * sizeof(double));
+                        std::move(data, data + data_count, temp);
                         delete []data;
                         data = temp;
                     }
@@ -3028,7 +3028,7 @@ void Canvas::refresh_vbo(const bool unitary)
                     {
                         data_len *= 2;
                         double *temp = new double[data_len];
-                        std::memmove(temp, data, data_count * sizeof(double));
+                        std::move(data, data + data_count, temp);
                         delete []data;
                         data = temp;
                     }
@@ -3066,7 +3066,7 @@ void Canvas::refresh_cache_vbo(const unsigned int count)
     {
         _cache_len *= 2;
         double *temp = new double[_cache_len];
-        std::memmove(temp, _cache, _cache_count * sizeof(double));
+        std::move(_cache, _cache + _cache_count, temp);
         delete []_cache;
         _cache = temp;
         glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_STREAM_DRAW);
@@ -3126,7 +3126,7 @@ void Canvas::refresh_selected_ibo()
                     {
                         index_len *= 2;
                         unsigned int *temp = new unsigned int[index_len];
-                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                        std::move(indexs, indexs + index_count, temp);
                         delete []indexs;
                         indexs = temp;
                     }
@@ -3136,7 +3136,7 @@ void Canvas::refresh_selected_ibo()
                 {
                     index_len *= 2;
                     unsigned int *temp = new unsigned int[index_len];
-                    std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                    std::move(indexs, indexs + index_count, temp);
                     delete []indexs;
                     indexs = temp;
                 }
@@ -3181,7 +3181,7 @@ void Canvas::refresh_selected_ibo()
                         {
                             index_len *= 2;
                             unsigned int *temp = new unsigned int[index_len];
-                            std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                            std::move(indexs, indexs + index_count, temp);
                             delete []indexs;
                             indexs = temp;
                         }
@@ -3191,7 +3191,7 @@ void Canvas::refresh_selected_ibo()
                     {
                         index_len *= 2;
                         unsigned int *temp = new unsigned int[index_len];
-                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                        std::move(indexs, indexs + index_count, temp);
                         delete []indexs;
                         indexs = temp;
                     }
@@ -3233,7 +3233,7 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
                 {
                     index_len *= 2;
                     unsigned int *temp = new unsigned int[index_len];
-                    std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                    std::move(indexs, indexs + index_count, temp);
                     delete []indexs;
                     indexs = temp;
                 }
@@ -3243,7 +3243,7 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
             {
                 index_len *= 2;
                 unsigned int *temp = new unsigned int[index_len];
-                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                std::move(indexs, indexs + index_count, temp);
                 delete []indexs;
                 indexs = temp;
             }
@@ -3258,7 +3258,7 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
             {
                 index_len *= 2;
                 unsigned int *temp = new unsigned int[index_len];
-                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                std::move(indexs, indexs + index_count, temp);
                 delete []indexs;
                 indexs = temp;
             }
@@ -3268,7 +3268,7 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
         {
             index_len *= 2;
             unsigned int *temp = new unsigned int[index_len];
-            std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+            std::move(indexs, indexs + index_count, temp);
             delete []indexs;
             indexs = temp;
         }
@@ -3503,7 +3503,7 @@ void Canvas::refresh_brush_ibo()
                     {
                         polygon_index_len *= 2;
                         unsigned int *temp = new unsigned int[polygon_index_len];
-                        std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                        std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
                         delete []polygon_indexs;
                         polygon_indexs = temp;
                     }
@@ -3518,7 +3518,7 @@ void Canvas::refresh_brush_ibo()
                     {
                         polygon_index_len *= 2;
                         unsigned int *temp = new unsigned int[polygon_index_len];
-                        std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                        std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
                         delete []polygon_indexs;
                         polygon_indexs = temp;
                     }
@@ -3533,7 +3533,7 @@ void Canvas::refresh_brush_ibo()
                     {
                         polygon_index_len *= 2;
                         unsigned int *temp = new unsigned int[polygon_index_len];
-                        std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                        std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
                         delete []polygon_indexs;
                         polygon_indexs = temp;
                     }
@@ -3553,7 +3553,7 @@ void Canvas::refresh_brush_ibo()
                             {
                                 polygon_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polygon_index_len];
-                                std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
                                 delete []polygon_indexs;
                                 polygon_indexs = temp;
                             }
@@ -3568,7 +3568,7 @@ void Canvas::refresh_brush_ibo()
                             {
                                 polygon_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polygon_index_len];
-                                std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
                                 delete []polygon_indexs;
                                 polygon_indexs = temp;
                             }
@@ -3583,7 +3583,7 @@ void Canvas::refresh_brush_ibo()
                             {
                                 polygon_index_len *= 2;
                                 unsigned int *temp = new unsigned int[polygon_index_len];
-                                std::memmove(temp, polygon_indexs, polygon_index_count * sizeof(unsigned int));
+                                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
                                 delete []polygon_indexs;
                                 polygon_indexs = temp;
                             }
@@ -3819,7 +3819,7 @@ void Canvas::refresh_text_vbo()
                             {
                                 data_len *= 2;
                                 double *temp = new double[data_len];
-                                std::memmove(temp, data, data_count * sizeof(double));
+                                std::move(data, data + data_count, temp);
                                 delete []data;
                                 data = temp;
                             }
@@ -3832,7 +3832,7 @@ void Canvas::refresh_text_vbo()
                             {
                                 index_len *= 2;
                                 unsigned int *temp = new unsigned int[index_len];
-                                std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                                std::move(indexs, indexs + index_count, temp);
                                 delete []indexs;
                                 indexs = temp;
                             }
@@ -3844,7 +3844,7 @@ void Canvas::refresh_text_vbo()
                         {
                             index_len *= 2;
                             unsigned int *temp = new unsigned int[index_len];
-                            std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                            std::move(indexs, indexs + index_count, temp);
                             delete []indexs;
                             indexs = temp;
                         }
@@ -3885,7 +3885,7 @@ void Canvas::refresh_text_vbo()
                     {
                         data_len *= 2;
                         double *temp = new double[data_len];
-                        std::memmove(temp, data, data_count * sizeof(double));
+                        std::move(data, data + data_count, temp);
                         delete []data;
                         data = temp;
                     }
@@ -3898,7 +3898,7 @@ void Canvas::refresh_text_vbo()
                     {
                         index_len *= 2;
                         unsigned int *temp = new unsigned int[index_len];
-                        std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                        std::move(indexs, indexs + index_count, temp);
                         delete []indexs;
                         indexs = temp;
                     }
@@ -3910,7 +3910,7 @@ void Canvas::refresh_text_vbo()
                 {
                     index_len *= 2;
                     unsigned int *temp = new unsigned int[index_len];
-                    std::memmove(temp, indexs, index_count * sizeof(unsigned int));
+                    std::move(indexs, indexs + index_count, temp);
                     delete []indexs;
                     indexs = temp;
                 }
@@ -4138,7 +4138,7 @@ void Canvas::refresh_text_vbo(const bool unitary)
                             {
                                 data_len *= 2;
                                 double *temp = new double[data_len];
-                                std::memmove(temp, data, data_count * sizeof(double));
+                                std::move(data, data + data_count, temp);
                                 delete []data;
                                 data = temp;
                             }
@@ -4179,7 +4179,7 @@ void Canvas::refresh_text_vbo(const bool unitary)
                     {
                         data_len *= 2;
                         double *temp = new double[data_len];
-                        std::memmove(temp, data, data_count * sizeof(double));
+                        std::move(data, data + data_count, temp);
                         delete []data;
                         data = temp;
                     }

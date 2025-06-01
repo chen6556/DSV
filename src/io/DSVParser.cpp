@@ -209,41 +209,41 @@ void Importer::reset()
 }
 
 
-Importer importer;
+static Importer importer;
 
-Action<double> x_coord_a(&importer, &Importer::x_coord);
-Action<double> y_coord_a(&importer, &Importer::y_coord);
-Action<double> parameter_a(&importer, &Importer::parameter);
-Action<void> polygon_a(&importer, &Importer::store_polygon);
-Action<void> circle_a(&importer, &Importer::store_circle);
-Action<void> ellipse_a(&importer, &Importer::store_ellipse);
-Action<void> polyline_a(&importer, &Importer::store_polyline);
-Action<void> bezier_a(&importer, &Importer::store_bezier);
-Action<void> bspline_a(&importer, &Importer::store_bspline);
-Action<void> text_a(&importer, &Importer::store_text);
-Action<std::string> str_a(&importer, &Importer::store_text);
-Action<void> begin_combination_a(&importer, &Importer::begin_combination);
-Action<void> end_combination_a(&importer, &Importer::end_combination);
-Action<void> group_a(&importer, &Importer::store_group);
+static Action<double> x_coord_a(&importer, &Importer::x_coord);
+static Action<double> y_coord_a(&importer, &Importer::y_coord);
+static Action<double> parameter_a(&importer, &Importer::parameter);
+static Action<void> polygon_a(&importer, &Importer::store_polygon);
+static Action<void> circle_a(&importer, &Importer::store_circle);
+static Action<void> ellipse_a(&importer, &Importer::store_ellipse);
+static Action<void> polyline_a(&importer, &Importer::store_polyline);
+static Action<void> bezier_a(&importer, &Importer::store_bezier);
+static Action<void> bspline_a(&importer, &Importer::store_bspline);
+static Action<void> text_a(&importer, &Importer::store_text);
+static Action<std::string> str_a(&importer, &Importer::store_text);
+static Action<void> begin_combination_a(&importer, &Importer::begin_combination);
+static Action<void> end_combination_a(&importer, &Importer::end_combination);
+static Action<void> group_a(&importer, &Importer::store_group);
 
 
-Parser<char> separator = ch_p(',');
-Parser<double> parameter = float_p()[parameter_a];
-Parser<std::string> end = str_p("END") >> !eol_p();
-Parser<bool> coord = float_p()[x_coord_a] >> separator >> float_p()[y_coord_a];
-Parser<std::string> str = confix_p(ch_p('<'), (*anychar_p())[str_a], ch_p('>'));
-Parser<bool> polygon = str_p("POLYGON") >> !str >> !eol_p() >> list_p(coord, separator) >> !eol_p() >> end[polygon_a];
-Parser<bool> circle = str_p("CIRCLE") >> !str >> !eol_p() >> coord >> separator >> parameter >> !eol_p() >> end[circle_a];
-Parser<bool> ellipse = str_p("ELLIPSE") >> !str >> !eol_p() >> list_p(coord, separator) >> !eol_p() >> end[ellipse_a];
-Parser<bool> polyline = str_p("POLYLINE") >> !eol_p() >> list_p(coord, separator) >> !eol_p() >> end[polyline_a];
-Parser<bool> bezier = str_p("BEZIER") >> !eol_p() >> parameter >> separator >> parameter >> separator >> list_p(coord, separator) >> !eol_p() >> end[bezier_a];
-Parser<bool> bspline = str_p("BSPLINE") >> !eol_p() >> parameter >> separator >> list_p(coord, separator) >> !eol_p() >> end[bspline_a];
-Parser<bool> text = str_p("TEXT") >> str >> !eol_p() >> coord >> !eol_p() >> end[text_a];
-Parser<bool> combination = str_p("COMBINATION")[begin_combination_a] >> !eol_p() >>
+static Parser<char> separator = ch_p(',');
+static Parser<double> parameter = float_p()[parameter_a];
+static Parser<std::string> end = str_p("END") >> !eol_p();
+static Parser<bool> coord = float_p()[x_coord_a] >> separator >> float_p()[y_coord_a];
+static Parser<std::string> str = confix_p(ch_p('<'), (*anychar_p())[str_a], ch_p('>'));
+static Parser<bool> polygon = str_p("POLYGON") >> !str >> !eol_p() >> list_p(coord, separator) >> !eol_p() >> end[polygon_a];
+static Parser<bool> circle = str_p("CIRCLE") >> !str >> !eol_p() >> coord >> separator >> parameter >> !eol_p() >> end[circle_a];
+static Parser<bool> ellipse = str_p("ELLIPSE") >> !str >> !eol_p() >> list_p(coord, separator) >> !eol_p() >> end[ellipse_a];
+static Parser<bool> polyline = str_p("POLYLINE") >> !eol_p() >> list_p(coord, separator) >> !eol_p() >> end[polyline_a];
+static Parser<bool> bezier = str_p("BEZIER") >> !eol_p() >> parameter >> separator >> parameter >> separator >> list_p(coord, separator) >> !eol_p() >> end[bezier_a];
+static Parser<bool> bspline = str_p("BSPLINE") >> !eol_p() >> parameter >> separator >> list_p(coord, separator) >> !eol_p() >> end[bspline_a];
+static Parser<bool> text = str_p("TEXT") >> str >> !eol_p() >> coord >> !eol_p() >> end[text_a];
+static Parser<bool> combination = str_p("COMBINATION")[begin_combination_a] >> !eol_p() >>
                            +(polygon | polyline | circle | ellipse | text | bezier) >> end[end_combination_a];
-Parser<bool> group = str_p("GROUP") >> str[group_a] >> !eol_p() >>
+static Parser<bool> group = str_p("GROUP") >> str[group_a] >> !eol_p() >>
                      *(polygon | polyline | circle | ellipse | text | combination | bezier | bspline) >> str_p("END") >> !eol_p();
-Parser<bool> dsv = +group;
+static Parser<bool> dsv = +group;
 
 
 bool parse(std::string_view &stream, Graph *graph)
