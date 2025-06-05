@@ -241,7 +241,7 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 
 void MainWindow::dropEvent(QDropEvent *event)
 {
-    const QString suffixs = "dsv DSV plt PLT cut CUT";
+    const QString suffixs = "dsv DSV plt PLT cut CUT dxf DXF nc NC";
     QFileInfo file_info(event->mimeData()->urls().front().toLocalFile());
     if( file_info.isFile() && suffixs.contains(file_info.suffix()))
     {
