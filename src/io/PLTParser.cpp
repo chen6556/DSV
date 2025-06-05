@@ -501,7 +501,10 @@ void Importer::store_text(const std::string &text)
         }
     }
 
-    _texts.emplace_back(str, _last_coord);
+    // _texts.emplace_back(str, _last_coord);
+    _graph->container_group().append(new Text(_last_coord.x, _last_coord.y,
+        GlobalSetting::setting().text_size, QString::fromUtf8(str)));
+
     _points.clear();
 }
 
@@ -513,7 +516,7 @@ void Importer::print_symbol(const std::string& str)
 void Importer::end()
 {
     store_points();
-    const int text_size = GlobalSetting::setting().text_size;
+    /*const int text_size = GlobalSetting::setting().text_size;
     std::vector<Geo::Geometry *> group(_graph->container_group().begin(), _graph->container_group().end());
     std::sort(group.begin(), group.end(), [](const Geo::Geometry *a, const Geo::Geometry *b)
               { return a->bounding_rect().area() < b->bounding_rect().area(); });
@@ -553,7 +556,7 @@ void Importer::end()
             _graph->container_group().append(new Text(text.pos.x, text.pos.y, text_size, QString::fromUtf8(text.txt)));
         }
     }
-    _texts.clear();
+    _texts.clear();*/
 }
 
 
