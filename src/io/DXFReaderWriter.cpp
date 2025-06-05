@@ -66,7 +66,10 @@ DXFReaderWriter::DXFReaderWriter(Graph *graph, dxfRW *dxfrw)
 DXFReaderWriter::~DXFReaderWriter()
 {
     check_block();
-    clear_empty_group();
+    if (_dxfrw == nullptr)
+    {
+        clear_empty_group();
+    }
 }
 
 void DXFReaderWriter::addHeader(const DRW_Header *data)
