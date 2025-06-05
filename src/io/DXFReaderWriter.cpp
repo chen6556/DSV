@@ -768,8 +768,9 @@ void DXFReaderWriter::addSolid(const DRW_Solid &data)
 
 void DXFReaderWriter::addMText(const DRW_MText &data)
 {
+    const QString txt = to_native_string(QString::fromUtf8(data.text.c_str()));
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    if (_ignore_entity || data.text.empty() || std::count(data.text.begin(), data.text.end(), ' ')  == data.text.size())
+    if (_ignore_entity || txt.isEmpty() || txt.count(' ')  == txt.size())
     {
         return;
     }
@@ -780,7 +781,7 @@ void DXFReaderWriter::addMText(const DRW_MText &data)
             if (group.name.toStdString() == data.layer)
             {
                 group.append(new Text(data.basePoint.x, data.basePoint.y,
-                    GlobalSetting::setting().text_size, QString::fromUtf8(data.text.c_str())));
+                    GlobalSetting::setting().text_size, txt));
                 _object_map[group.back()] = data.handle;
                 return;
             }
@@ -788,21 +789,22 @@ void DXFReaderWriter::addMText(const DRW_MText &data)
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
         _graph->container_groups().back().append(new Text(data.basePoint.x, data.basePoint.y,
-            GlobalSetting::setting().text_size, QString::fromUtf8(data.text.c_str())));
+            GlobalSetting::setting().text_size, txt));
         _object_map[_graph->container_groups().back().back()] = data.handle;
     }
     else
     {
         _combination->append(new Text(data.basePoint.x, data.basePoint.y,
-            GlobalSetting::setting().text_size, QString::fromUtf8(data.text.c_str())));
+            GlobalSetting::setting().text_size, txt));
         _object_map[_combination->back()] = data.handle;
     }
 }
 
 void DXFReaderWriter::addText(const DRW_Text &data)
 {
+    const QString txt = to_native_string(QString::fromUtf8(data.text.c_str()));
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    if (_ignore_entity || data.text.empty() || std::count(data.text.begin(), data.text.end(), ' ')  == data.text.size())
+    if (_ignore_entity || txt.isEmpty() || txt.count(' ')  == txt.size())
     {
         return;
     }
@@ -813,7 +815,7 @@ void DXFReaderWriter::addText(const DRW_Text &data)
             if (group.name.toStdString() == data.layer)
             {
                 group.append(new Text(data.basePoint.x, data.basePoint.y,
-                    GlobalSetting::setting().text_size, QString::fromUtf8(data.text.c_str())));
+                    GlobalSetting::setting().text_size, txt));
                 _object_map[group.back()] = data.handle;
                 return;
             }
@@ -821,13 +823,13 @@ void DXFReaderWriter::addText(const DRW_Text &data)
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
         _graph->container_groups().back().append(new Text(data.basePoint.x, data.basePoint.y,
-            GlobalSetting::setting().text_size, QString::fromUtf8(data.text.c_str())));
+            GlobalSetting::setting().text_size, txt));
         _object_map[_graph->container_groups().back().back()] = data.handle;
     }
     else
     {
         _combination->append(new Text(data.basePoint.x, data.basePoint.y,
-            GlobalSetting::setting().text_size, QString::fromUtf8(data.text.c_str())));
+            GlobalSetting::setting().text_size, txt));
         _object_map[_combination->back()] = data.handle;
     }
 }
@@ -1145,10 +1147,14 @@ void DXFReaderWriter::write_text(const Text *text)
     DRW_Text t;
     t.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
     t.lineType = "CONTINUOUS";
-    t.basePoint.x = text->center().x;
-    t.basePoint.y = text->center().y;
-    t.text = text->text().toStdString();
+    t.secPoint.x = t.basePoint.x = text->center().x;
+    t.secPoint.y = t.basePoint.y = text->center().y;
+    t.widthscale = 1.0;
+    t.height = text->height();
+    t.text = to_dxf_string(text->text()).toStdString();
     t.height = text->text_size();
+    t.alignH = DRW_Text::HAlign::HCenter;
+    t.alignV = DRW_Text::VAlign::VMiddle;
     _dxfrw->writeText(&t);
 }
 
@@ -1196,4 +1202,99 @@ void DXFReaderWriter::clear_empty_group()
             --count;
         }
     }
+}
+
+QString DXFReaderWriter::to_dxf_string(const QString &txt)
+{
+    QString res;
+    int j = 0;
+    for (size_t i = 0, count = txt.length(); i < count; ++i)
+    {
+        int c = txt.at(i).unicode();
+        if (c > 175 || c < 11)
+        {
+            res.append(txt.mid(j, i - j));
+            j = i;
+            switch (c)
+            {
+            case 0x0A:
+                res+="\\P";
+                break;
+                // diameter:
+            case 0x2205://RLZ: Empty_set, diameter is 0x2300 need to add in all fonts
+            case 0x2300:
+                res+="%%C";
+                break;
+                // degree:
+            case 0x00B0:
+                res+="%%D";
+                break;
+                // plus/minus
+            case 0x00B1:
+                res+="%%P";
+                break;
+            default:
+                --j;
+                break;
+            }
+            ++j;
+        }
+    }
+    res.append(txt.mid(j));
+    return res;
+}
+
+QString DXFReaderWriter::to_native_string(const QString &txt)
+{
+    QString res;
+    // Ignore font tags:
+    int j = 0;
+    for (size_t i = 0, count = txt.length(); i < count; ++i)
+    {
+        if (txt.at(i).unicode() == 0x7B)
+        { //is '{' ?
+            if (txt.at(i+1).unicode() == 0x5c)
+            { //and is "{\" ?
+                //check known codes
+                if ( (txt.at(i+2).unicode() == 0x66) || //is "\f" ?
+                     (txt.at(i+2).unicode() == 0x48) || //is "\H" ?
+                     (txt.at(i+2).unicode() == 0x43)    //is "\C" ?
+                    )
+                {
+                    //found tag, append parsed part
+                    res.append(txt.mid(j,i-j));
+                    qsizetype pos = txt.indexOf(QChar(0x7D), i + 3);//find '}'
+                    if (pos <0)
+                    {
+                        break; //'}' not found
+                    }
+                    QString tmp = txt.mid(i + 1, pos - i - 1);
+                    do
+                    {
+                        tmp = tmp.remove(0, tmp.indexOf(QChar{0x3B}, 0) + 1);//remove to ';'
+                    }
+                    while (tmp.startsWith("\\f") || tmp.startsWith("\\H") || tmp.startsWith("\\C"));
+                    res.append(tmp);
+                    i = j = pos;
+                    ++j;
+                }
+            }
+        }
+    }
+    res.append(txt.mid(j));
+
+    // Line feed:
+    res = res.replace(QRegularExpression("\\\\P"), "\n");
+    // Space:
+    res = res.replace(QRegularExpression("\\\\~"), " ");
+    // Tab:
+    res = res.replace(QRegularExpression("\\^I"), "    ");//RLZ: change 4 spaces for \t when mtext have support for tab
+    // diameter:
+    res = res.replace(QRegularExpression("%%[cC]"), QChar(0x2300));//RLZ: Empty_set is 0x2205, diameter is 0x2300 need to add in all fonts
+    // degree:
+    res = res.replace(QRegularExpression("%%[dD]"), QChar(0x00B0));
+    // plus/minus
+    res = res.replace(QRegularExpression("%%[pP]"), QChar(0x00B1));
+
+    return res;
 }

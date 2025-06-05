@@ -256,4 +256,8 @@ public:
     void check_block();
 
     void clear_empty_group();
+
+    static QString to_dxf_string(const QString &txt);
+
+    static QString to_native_string(const QString &txt);
 };

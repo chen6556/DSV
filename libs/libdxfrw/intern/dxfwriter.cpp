@@ -93,7 +93,7 @@
 
 bool dxfWriter::writeUtf8String(int code, std::string text) {
     std::string t = encoder.fromUtf8(text);
-    return writeString(code, t);
+    return writeString(code, text);
 }
 
 bool dxfWriter::writeUtf8Caps(int code, std::string text) {
