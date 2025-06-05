@@ -42,6 +42,8 @@ private:
     int _version;
     Graph *_graph;
     Combination *_combination = nullptr;
+    const ContainerGroup *_current_group = nullptr;
+    dxfRW *_dxfrw = nullptr;
 
     std::set<std::string> _inserted_blocks;
     std::unordered_map<const Geo::Geometry *, int> _object_map;
@@ -51,6 +53,8 @@ private:
 
 public:
     DXFReaderWriter(Graph *graph);
+
+    DXFReaderWriter(Graph *graph, dxfRW *dxfrw);
 
     ~DXFReaderWriter();
 
@@ -228,6 +232,25 @@ public:
     void writeDimstyles() override;
 
     void writeAppId() override;
+
+private:
+    void write_geometry_object(const Geo::Geometry *object);
+
+    void write_bezier(const Geo::Bezier *bezier);
+
+    void write_bspline(const Geo::BSpline *bspline);
+
+    void write_circle(const Geo::Circle *circle);
+
+    void write_ellipse(const Geo::Ellipse *ellipse);
+
+    void write_line(const Geo::Line *line);
+
+    void write_polygon(const Geo::Polygon *polygon);
+
+    void write_polyline(const Geo::Polyline *polyline);
+
+    void write_text(const Text *text);
 
 public:
     void check_block();

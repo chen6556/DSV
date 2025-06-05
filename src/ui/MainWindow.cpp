@@ -293,12 +293,12 @@ void MainWindow::save_file()
         return;
     }
 
-    if (_info_labels[2]->text().isEmpty() || !(_info_labels[2]->text().toLower().endsWith(".dsv") 
-        || _info_labels[2]->text().toLower().endsWith(".plt")))
+    if (const QString label_path = _info_labels[2]->text(); label_path.isEmpty() || !(label_path.toLower().endsWith(".dsv")
+        || label_path.toLower().endsWith(".plt") || label_path.toLower().endsWith(".dxf")))
     {
         QFileDialog *dialog = new QFileDialog();
         dialog->setModal(true);
-        QString path = dialog->getSaveFileName(dialog, nullptr, _editer.path(), "DSV: (*.dsv);;PLT: (*.plt)");
+        QString path = dialog->getSaveFileName(dialog, nullptr, _editer.path(), "DSV: (*.dsv);;PLT: (*.plt);;DXF: (*.dxf)");
         if (!path.isEmpty())
         {
             bool flag = false;
@@ -312,6 +312,13 @@ void MainWindow::save_file()
                 File::write(path, GlobalSetting::setting().graph, File::PLT);
                 flag = true;
             }
+            else if (path.toLower().endsWith(".dxf"))
+            {
+                dxfRW dxfRW(path.toLocal8Bit());
+                DXFReaderWriter dxf_interface(GlobalSetting::setting().graph, &dxfRW);
+                dxfRW.write(&dxf_interface, DRW::Version::AC1018, false);
+                flag = true;
+            }
             if (flag)
             {
                 _editer.set_path(path);
@@ -323,14 +330,21 @@ void MainWindow::save_file()
     }
     else
     {
-        if (_info_labels[2]->text().toLower().endsWith(".dsv"))
+        if (label_path.toLower().endsWith(".dsv"))
         {
-            File::write(_info_labels[2]->text(), GlobalSetting::setting().graph, File::DSV);
+            File::write(label_path, GlobalSetting::setting().graph, File::DSV);
             GlobalSetting::setting().graph->modified = false;
         }
-        else if (_info_labels[2]->text().toLower().endsWith(".plt"))
+        else if (label_path.toLower().endsWith(".plt"))
         {
-            File::write(_info_labels[2]->text(), GlobalSetting::setting().graph, File::PLT);
+            File::write(label_path, GlobalSetting::setting().graph, File::PLT);
+            GlobalSetting::setting().graph->modified = false;
+        }
+        else if (label_path.toLower().endsWith(".dxf"))
+        {
+            dxfRW dxfRW(label_path.toLocal8Bit());
+            DXFReaderWriter dxf_interface(GlobalSetting::setting().graph, &dxfRW);
+            dxfRW.write(&dxf_interface, DRW::Version::AC1018, false);
             GlobalSetting::setting().graph->modified = false;
         }
     }
@@ -338,8 +352,8 @@ void MainWindow::save_file()
 
 void MainWindow::auto_save()
 {
-    if (!ui->auto_save->isChecked() || _editer.path().isEmpty() ||
-        !(_editer.path().toLower().endsWith(".dsv") || _editer.path().toLower().endsWith(".plt")))
+    if (!ui->auto_save->isChecked() || _editer.path().isEmpty() || !(_editer.path().toLower().endsWith(".dsv")
+        || _editer.path().toLower().endsWith(".plt") || _editer.path().toLower().endsWith(".dxf")))
     {
         return;
     }
@@ -353,6 +367,12 @@ void MainWindow::auto_save()
         {
             File::write(_editer.path(), GlobalSetting::setting().graph, File::PLT);
         }
+        else if (_editer.path().toLower().endsWith(".dxf"))
+        {
+            dxfRW dxfRW(_editer.path().toLocal8Bit());
+            DXFReaderWriter dxf_interface(GlobalSetting::setting().graph, &dxfRW);
+            dxfRW.write(&dxf_interface, DRW::Version::AC1018, false);
+        }
         GlobalSetting::setting().graph->modified = false;
     }
 }
@@ -365,7 +385,7 @@ void MainWindow::saveas_file()
     }
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
-    QString path = dialog->getSaveFileName(dialog, nullptr, _editer.path().isEmpty() ? "D:/output.dsv" : _editer.path(), "DSV: (*.dsv);;PLT: (*.plt)");
+    QString path = dialog->getSaveFileName(dialog, nullptr, _editer.path().isEmpty() ? "D:/output.dsv" : _editer.path(), "DSV: (*.dsv);;PLT: (*.plt);;DXF: (*.dxf)");
     if (!path.isEmpty())
     {
         if (path.toLower().endsWith(".dsv"))
@@ -375,6 +395,12 @@ void MainWindow::saveas_file()
         else if (path.toLower().endsWith(".plt"))
         {
             File::write(path, GlobalSetting::setting().graph, File::PLT);
+        }
+        else if (path.toLower().endsWith(".dxf"))
+        {
+            dxfRW dxfRW(path.toLocal8Bit());
+            DXFReaderWriter dxf_interface(GlobalSetting::setting().graph, &dxfRW);
+            dxfRW.write(&dxf_interface, DRW::Version::AC1018, false);
         }
         GlobalSetting::setting().graph->modified = false;
     }

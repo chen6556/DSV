@@ -58,8 +58,10 @@ bool Bulge::is_line() const
 
 
 DXFReaderWriter::DXFReaderWriter(Graph *graph)
-    : _graph(graph)
-{}
+    : _graph(graph) {}
+
+DXFReaderWriter::DXFReaderWriter(Graph *graph, dxfRW *dxfrw)
+    : _graph(graph), _dxfrw(dxfrw) {}
 
 DXFReaderWriter::~DXFReaderWriter()
 {
@@ -888,19 +890,80 @@ void DXFReaderWriter::writeHeader(DRW_Header &data)
 {}
 
 void DXFReaderWriter::writeBlocks()
-{}
+{
+    for (const ContainerGroup &group : _graph->container_groups())
+    {
+        _current_group = &group;
+        for (const Geo::Geometry *object : group)
+        {
+            if (const Combination *combination = dynamic_cast<const Combination *>(object); combination != nullptr)
+            {
+                DRW_Block block;
+                block.name = combination->name.toStdString();
+                const Geo::AABBRect rect = combination->bounding_rect();
+                block.basePoint.x = rect.left();
+                block.basePoint.y = rect.bottom();
+                block.basePoint.z = 0;
+                _dxfrw->writeBlock(&block);
+                for (const Geo::Geometry *object : *combination)
+                {
+                    write_geometry_object(object);
+                }
+            }
+        }
+        _current_group = nullptr;
+    }
+}
 
 void DXFReaderWriter::writeBlockRecords()
-{}
+{
+    unsigned int count = 0;
+    for (ContainerGroup &group : _graph->container_groups())
+    {
+        for (Geo::Geometry *object : group)
+        {
+            if (dynamic_cast<Combination *>(object) != nullptr)
+            {
+                if (object->name.isEmpty())
+                {
+                    object->name = QString::number(count++);
+                }
+                _dxfrw->writeBlockRecord(object->name.toStdString());
+            }
+        }
+    }
+}
 
 void DXFReaderWriter::writeEntities()
-{}
+{
+    for (const ContainerGroup &group : _graph->container_groups())
+    {
+        _current_group = &group;
+        for (const Geo::Geometry *object : group)
+        {
+            if (dynamic_cast<const Combination *>(object) == nullptr)
+            {
+                write_geometry_object(object);
+            }
+        }
+        _current_group = nullptr;
+    }
+}
 
 void DXFReaderWriter::writeLTypes()
 {}
 
 void DXFReaderWriter::writeLayers()
-{}
+{
+    DRW_Layer lay;
+    for (const ContainerGroup &group : _graph->container_groups())
+    {
+        lay.reset();
+
+        lay.name = group.name.toStdString();
+        _dxfrw->writeLayer(&lay);
+    }
+}
 
 void DXFReaderWriter::writeTextstyles()
 {}
@@ -913,6 +976,170 @@ void DXFReaderWriter::writeDimstyles()
 
 void DXFReaderWriter::writeAppId()
 {}
+
+void DXFReaderWriter::write_geometry_object(const Geo::Geometry *object)
+{
+    switch (object->type())
+    {
+    case Geo::Type::AABBRECT:
+        break;
+    case Geo::Type::BEZIER:
+        write_bezier(static_cast<const Geo::Bezier *>(object));
+        break;
+    case Geo::Type::BSPLINE:
+        write_bspline(static_cast<const Geo::BSpline *>(object));
+        break;
+    case Geo::Type::CIRCLE:
+        write_circle(static_cast<const Geo::Circle *>(object));
+        break;
+    case Geo::Type::COMBINATION:
+        break;
+    case Geo::Type::CONTAINERGROUP:
+        break;
+    case Geo::Type::ELLIPSE:
+        write_ellipse(static_cast<const Geo::Ellipse *>(object));
+        break;
+    case Geo::Type::LINE:
+        write_line(static_cast<const Geo::Line *>(object));
+        break;
+    case Geo::Type::POINT:
+        break;
+    case Geo::Type::POLYGON:
+        write_polygon(static_cast<const Geo::Polygon *>(object));
+        break;
+    case Geo::Type::POLYLINE:
+        write_polyline(static_cast<const Geo::Polyline *>(object));
+        break;
+    case Geo::Type::TEXT:
+        write_text(static_cast<const Text *>(object));
+        break;
+    case Geo::Type::TRIANGLE:
+        break;
+    default:
+        break;
+    }
+}
+
+void DXFReaderWriter::write_bezier(const Geo::Bezier *bezier)
+{
+    DRW_LWPolyline pol;
+    for (const Geo::Point &point : bezier->shape())
+    {
+        pol.addVertex(DRW_Vertex2D(point.x, point.y, 0));
+    }
+    pol.addVertex(DRW_Vertex2D(bezier->shape().back().x, bezier->shape().back().y, 0));
+    pol.vertexnum = pol.vertlist.size();
+    pol.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    pol.lineType = "CONTINUOUS";
+    _dxfrw->writeLWPolyline(&pol);
+}
+
+void DXFReaderWriter::write_bspline(const Geo::BSpline *bspline)
+{
+    DRW_Spline sp;
+
+    // dxf spline group code=70
+    // bit coded: 1: closed; 2: periodic; 4: rational; 8: planar; 16:linear
+    sp.flags = 0x1000;
+
+    // write spline control points:
+    for (const Geo::Point &v: bspline->control_points)
+    {
+        sp.controllist.push_back(new DRW_Coord(v.x, v.y, 0));
+    }
+
+    sp.ncontrol = sp.controllist.size();
+    sp.degree = dynamic_cast<const Geo::CubicBSpline *>(bspline) == nullptr ? 2 : 3;
+
+    // knot vector from RS_Spline
+    sp.knotslist = bspline->knots();
+    sp.nknots = sp.knotslist.size();
+
+    sp.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    sp.lineType = "CONTINUOUS";
+    _dxfrw->writeSpline(&sp);
+}
+
+void DXFReaderWriter::write_circle(const Geo::Circle *circle)
+{
+    DRW_Circle c;
+    c.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    c.lineType = "CONTINUOUS";
+    c.basePoint.x = circle->x;
+    c.basePoint.y = circle->y;
+    c.radious = circle->radius;
+    _dxfrw->writeCircle(&c);
+}
+
+void DXFReaderWriter::write_ellipse(const Geo::Ellipse *ellipse)
+{
+    DRW_Ellipse el;
+    el.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    el.lineType = "CONTINUOUS";
+    el.basePoint.x = ellipse->center().x;
+    el.basePoint.y = ellipse->center().y;
+    el.secPoint.x = ellipse->lengtha();
+    el.secPoint.y = 0;
+    el.ratio = ellipse->lengthb() / ellipse->lengtha();
+    el.staparam = el.endparam = 0;
+    _dxfrw->writeEllipse(&el);
+}
+
+void DXFReaderWriter::write_line(const Geo::Line *line)
+{
+    DRW_Line l;
+    l.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    l.lineType = "CONTINUOUS";
+    l.basePoint.x = line->front().x;
+    l.basePoint.y = line->front().y;
+    l.secPoint.x = line->back().x;
+    l.secPoint.y = line->back().y;
+    _dxfrw->writeLine(&l);
+}
+
+void DXFReaderWriter::write_polygon(const Geo::Polygon *polygon)
+{
+    DRW_LWPolyline pol;
+    for (const Geo::Point &point : *polygon)
+    {
+        pol.addVertex(DRW_Vertex2D(point.x, point.y, 0));
+    }
+    pol.flags = 1;
+    pol.vertexnum = pol.vertlist.size();
+    pol.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    pol.lineType = "CONTINUOUS";
+    _dxfrw->writeLWPolyline(&pol);
+}
+
+void DXFReaderWriter::write_polyline(const Geo::Polyline *polyline)
+{
+    DRW_LWPolyline pol;
+    for (const Geo::Point &point : *polyline)
+    {
+        pol.addVertex(DRW_Vertex2D(point.x, point.y, 0));
+    }
+    pol.addVertex(DRW_Vertex2D(polyline->back().x, polyline->back().y, 0));
+    pol.vertexnum = pol.vertlist.size();
+    pol.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    pol.lineType = "CONTINUOUS";
+    _dxfrw->writeLWPolyline(&pol);
+}
+
+void DXFReaderWriter::write_text(const Text *text)
+{
+    if (text->text().isEmpty())
+    {
+        return;
+    }
+    DRW_Text t;
+    t.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    t.lineType = "CONTINUOUS";
+    t.basePoint.x = text->center().x;
+    t.basePoint.y = text->center().y;
+    t.text = text->text().toStdString();
+    t.height = text->text_size();
+    _dxfrw->writeText(&t);
+}
 
 void DXFReaderWriter::check_block()
 {
