@@ -353,6 +353,8 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
             {
                 const double a = std::hypot(data.secPoint.x, data.secPoint.y);
                 group.append(new Container<Geo::Ellipse>(QString(), data.basePoint.x, data.basePoint.y, a, a * data.ratio));
+                group.back()->rotate(data.basePoint.x, data.basePoint.y,
+                    data.secPoint.x >= 0 ? std::sin(data.secPoint.y / a) : -std::sin(data.secPoint.y / a));
                 _object_map[group.back()] = data.handle;
                 return;
             }
@@ -362,12 +364,16 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
         const double a = std::hypot(data.secPoint.x, data.secPoint.y);
         _graph->container_groups().back().append(new Container<Geo::Ellipse>(QString(),
             data.basePoint.x, data.basePoint.y, a, a * data.ratio));
+        _graph->container_groups().back().back()->rotate(data.basePoint.x, data.basePoint.y,
+                data.secPoint.x >= 0 ? std::sin(data.secPoint.y / a) : -std::sin(data.secPoint.y / a));
         _object_map[_graph->container_groups().back().back()] = data.handle;
     }
     else
     {
         const double a = std::hypot(data.secPoint.x, data.secPoint.y);
         _combination->append(new Container<Geo::Ellipse>(QString(), data.basePoint.x, data.basePoint.y, a, a * data.ratio));
+        _combination->back()->rotate(data.basePoint.x, data.basePoint.y,
+            data.secPoint.x >= 0 ? std::sin(data.secPoint.y / a) : -std::sin(data.secPoint.y / a));
         _object_map[_combination->back()] = data.handle;
     }
 }
@@ -1078,10 +1084,12 @@ void DXFReaderWriter::write_ellipse(const Geo::Ellipse *ellipse)
     el.lineType = "CONTINUOUS";
     el.basePoint.x = ellipse->center().x;
     el.basePoint.y = ellipse->center().y;
-    el.secPoint.x = ellipse->lengtha();
-    el.secPoint.y = 0;
+    const double angle = ellipse->angle();
+    el.secPoint.x = ellipse->lengtha() * std::cos(angle);
+    el.secPoint.y = ellipse->lengtha() * std::sin(angle);
     el.ratio = ellipse->lengthb() / ellipse->lengtha();
-    el.staparam = el.endparam = 0;
+    el.staparam = 0;
+    el.endparam = Geo::PI * 2;
     _dxfrw->writeEllipse(&el);
 }
 
