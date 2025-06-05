@@ -901,49 +901,10 @@ void DXFReaderWriter::writeHeader(DRW_Header &data)
 {}
 
 void DXFReaderWriter::writeBlocks()
-{
-    for (const ContainerGroup &group : _graph->container_groups())
-    {
-        _current_group = &group;
-        for (const Geo::Geometry *object : group)
-        {
-            if (const Combination *combination = dynamic_cast<const Combination *>(object); combination != nullptr)
-            {
-                DRW_Block block;
-                block.name = combination->name.toStdString();
-                const Geo::AABBRect rect = combination->bounding_rect();
-                block.basePoint.x = rect.left();
-                block.basePoint.y = rect.bottom();
-                block.basePoint.z = 0;
-                _dxfrw->writeBlock(&block);
-                for (const Geo::Geometry *object : *combination)
-                {
-                    write_geometry_object(object);
-                }
-            }
-        }
-        _current_group = nullptr;
-    }
-}
+{}
 
 void DXFReaderWriter::writeBlockRecords()
-{
-    unsigned int count = 0;
-    for (ContainerGroup &group : _graph->container_groups())
-    {
-        for (Geo::Geometry *object : group)
-        {
-            if (dynamic_cast<Combination *>(object) != nullptr)
-            {
-                if (object->name.isEmpty())
-                {
-                    object->name = QString::number(count++);
-                }
-                _dxfrw->writeBlockRecord(object->name.toStdString());
-            }
-        }
-    }
-}
+{}
 
 void DXFReaderWriter::writeEntities()
 {
@@ -952,10 +913,7 @@ void DXFReaderWriter::writeEntities()
         _current_group = &group;
         for (const Geo::Geometry *object : group)
         {
-            if (dynamic_cast<const Combination *>(object) == nullptr)
-            {
-                write_geometry_object(object);
-            }
+            write_geometry_object(object);
         }
         _current_group = nullptr;
     }
@@ -1004,6 +962,10 @@ void DXFReaderWriter::write_geometry_object(const Geo::Geometry *object)
         write_circle(static_cast<const Geo::Circle *>(object));
         break;
     case Geo::Type::COMBINATION:
+        for (const Geo::Geometry *obj : *static_cast<const Combination *>(object))
+        {
+            write_geometry_object(obj);
+        }
         break;
     case Geo::Type::CONTAINERGROUP:
         break;
