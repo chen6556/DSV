@@ -508,7 +508,7 @@ void Canvas::paintGL()
 
 void Canvas::mousePressEvent(QMouseEvent *event)
 {
-    _mouse_pos_1 = event->position();
+    _mouse_pos_1 = event->pos();
     double real_x1 = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
     double real_y1 = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
     _mouse_press_pos.x = real_x1, _mouse_press_pos.y = real_y1;
@@ -522,7 +522,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             coord = real_coord_to_view_coord(coord.x, coord.y);
             _mouse_pos_1.setX(coord.x);
             _mouse_pos_1.setY(coord.y);
-            QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
+            const QPoint pos(_mouse_pos_1.x(), _mouse_pos_1.y());
+            QCursor::setPos(this->mapToGlobal(pos).x(), this->mapToGlobal(pos).y());
         }
         if (is_paintable()) // paintable
         {
@@ -946,7 +947,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     coord = real_coord_to_view_coord(coord.x, coord.y);
                     _mouse_pos_1.setX(coord.x);
                     _mouse_pos_1.setY(coord.y);
-                    QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
+                    const QPoint pos(_mouse_pos_1.x(), _mouse_pos_1.y());
+                    QCursor::setPos(this->mapToGlobal(pos).x(), this->mapToGlobal(pos).y());
                 }
                 if (_input_line.isVisible() && _last_clicked_obj != _clicked_obj)
                 {
@@ -1000,7 +1002,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 void Canvas::mouseReleaseEvent(QMouseEvent *event)
 {
     std::swap(_mouse_pos_0, _mouse_pos_1);
-    _mouse_pos_1 = event->position();
+    _mouse_pos_1 = event->pos();
     _mouse_release_pos.x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
     _mouse_release_pos.y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
 
@@ -1077,7 +1079,8 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         coord = real_coord_to_view_coord(coord.x, coord.y);
         _mouse_pos_1.setX(coord.x);
         _mouse_pos_1.setY(coord.y);
-        QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
+        const QPoint pos(_mouse_pos_1.x(), _mouse_pos_1.y());
+        QCursor::setPos(this->mapToGlobal(pos).x(), this->mapToGlobal(pos).y());
     }
 
     QOpenGLWidget::mouseReleaseEvent(event);
@@ -1087,7 +1090,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
 {
     const double center_x = size().width() / 2.0, center_y = size().height() / 2.0;
     std::swap(_mouse_pos_0, _mouse_pos_1);
-    _mouse_pos_1 = event->position();
+    _mouse_pos_1 = event->pos();
     double real_x1 = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
     double real_y1 = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
     const double real_x0 = _mouse_pos_0.x() * _view_ctm[0] + _mouse_pos_0.y() * _view_ctm[3] + _view_ctm[6];
@@ -1103,7 +1106,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         coord = real_coord_to_view_coord(coord.x, coord.y);
         _mouse_pos_1.setX(coord.x);
         _mouse_pos_1.setY(coord.y);
-        QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
+        const QPoint pos(_mouse_pos_1.x(), _mouse_pos_1.y());
+        QCursor::setPos(this->mapToGlobal(pos).x(), this->mapToGlobal(pos).y());
         canvas_x1 = real_x1 * _canvas_ctm[0] + real_y1 * _canvas_ctm[3] + _canvas_ctm[6];
         canvas_y1 = real_x1 * _canvas_ctm[1] + real_y1 * _canvas_ctm[4] + _canvas_ctm[7];
     }
@@ -1465,7 +1469,7 @@ void Canvas::wheelEvent(QWheelEvent *event)
 
 void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    _mouse_pos_1 = event->position();
+    _mouse_pos_1 = event->pos();
     switch (event->button())
     {
     case Qt::LeftButton:

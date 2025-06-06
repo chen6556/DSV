@@ -7,6 +7,7 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
     a.setStyle("Fusion");
+    a.setAttribute(Qt::ApplicationAttribute::AA_EnableHighDpiScaling);
 
     MainWindow w;
 

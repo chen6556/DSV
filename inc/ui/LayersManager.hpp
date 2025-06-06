@@ -51,7 +51,7 @@ private slots:
 
     void remove_layer();
 
-    void change_layer_name(const QModelIndex &row, const QModelIndex &col, const QList<int> &roles);
+    void change_layer_name(const QModelIndex &row, const QModelIndex &col, const QVector<int> &roles);
 
 public:
     LayersManager(QWidget *parent);

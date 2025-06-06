@@ -180,16 +180,16 @@ void Importer::store_text(const std::string &text)
 {
     if (_last_container != nullptr)
     {
-        _last_container->set_text(_last_container->text() + '\n' + QString::fromUtf8(text));
+        _last_container->set_text(_last_container->text() + '\n' + QString::fromUtf8(text.c_str()));
     }
     else if (_last_circle_container != nullptr)
     {
-        _last_circle_container->set_text(_last_circle_container->text() + '\n' + QString::fromUtf8(text));
+        _last_circle_container->set_text(_last_circle_container->text() + '\n' + QString::fromUtf8(text.c_str()));
     }
     else
     {
         _graph->container_groups().back().append(new Text(_last_coord.x, _last_coord.y,
-            GlobalSetting::setting().text_size, QString::fromUtf8(text)));
+            GlobalSetting::setting().text_size, QString::fromUtf8(text.c_str())));
     }
 }
 
@@ -214,11 +214,11 @@ void Importer::store_table_text(const std::string &text)
             {
                 if (containerized->text().isEmpty())
                 {
-                    containerized->set_text(QString::fromUtf8(text));
+                    containerized->set_text(QString::fromUtf8(text.c_str()));
                 }
                 else
                 {
-                    containerized->set_text(containerized->text() + '\n' + QString::fromUtf8(text));
+                    containerized->set_text(containerized->text() + '\n' + QString::fromUtf8(text.c_str()));
                 }
                 return;
             }
@@ -228,11 +228,11 @@ void Importer::store_table_text(const std::string &text)
             {
                 if (containerized->text().isEmpty())
                 {
-                    containerized->set_text(QString::fromUtf8(text));
+                    containerized->set_text(QString::fromUtf8(text.c_str()));
                 }
                 else
                 {
-                    containerized->set_text(containerized->text() + '\n' + QString::fromUtf8(text));
+                    containerized->set_text(containerized->text() + '\n' + QString::fromUtf8(text.c_str()));
                 }
                 return;
             }
@@ -245,7 +245,7 @@ void Importer::store_table_text(const std::string &text)
 
 void Importer::print_symbol(const std::string &str)
 {
-    qDebug() << str;
+    qDebug() << QString::fromStdString(str);
 }
 
 void Importer::end()

@@ -12,7 +12,7 @@ Text::Text(const double x, const double y, const int size, const QString &text)
     QFont font("SimSun");
     font.setPixelSize(size);
     const QFontMetrics font_metrics(font);
-    long long width = 0;
+    int width = 0;
     for (const QString &s : text.split('\n'))
     {
         width = std::max(width, font.pixelSize() * s.length());
@@ -21,8 +21,8 @@ Text::Text(const double x, const double y, const int size, const QString &text)
     {
         width = font.pixelSize() * text.length();
     }
-    width = std::max(20ll, width);
-    long long height = std::max(font_metrics.lineSpacing() * (text.count('\n') + 1), 20ll);
+    width = std::max(20, width);
+    int height = std::max(font_metrics.lineSpacing() * (text.count('\n') + 1), 20);
     set_left(x - 1 - width / 2);
     set_right(x + 1 + width / 2);
     set_top(y + height / 2);
@@ -60,7 +60,7 @@ void Text::set_text(const QString &str, const int size)
     QFont font("SimSun");
     font.setPixelSize(size);
     const QFontMetrics font_metrics(font);
-    long long width = 0;
+    int width = 0;
     for (const QString &s : str.split('\n'))
     {
         width = std::max(width, font.pixelSize() * s.length());
@@ -69,8 +69,8 @@ void Text::set_text(const QString &str, const int size)
     {
         width = font.pixelSize() * str.length();
     }
-    width = std::max(20ll, width);
-    long long height = std::max(font_metrics.lineSpacing() * (str.count('\n') + 1), 20ll);
+    width = std::max(20, width);
+    int height = std::max(font_metrics.lineSpacing() * (str.count('\n') + 1), 20);
     set_left(coord.x - 1 - width / 2);
     set_right(coord.x + 1 + width / 2);
     set_top(coord.y + height / 2);
@@ -87,7 +87,7 @@ void Text::update_size(const int size)
     QFont font("SimSun");
     font.setPixelSize(size);
     const QFontMetrics font_metrics(font);
-    long long width = 0;
+    int width = 0;
     for (const QString &s : _text.split('\n'))
     {
         width = std::max(width, font.pixelSize() * s.length());
@@ -96,8 +96,8 @@ void Text::update_size(const int size)
     {
         width = font.pixelSize() * _text.length();
     }
-    width = std::max(20ll, width);
-    long long height = std::max(font_metrics.lineSpacing() * (_text.count('\n') + 1), 20ll);
+    width = std::max(20, width);
+    int height = std::max(font_metrics.lineSpacing() * (_text.count('\n') + 1), 20);
     set_left(coord.x - 1 - width / 2);
     set_right(coord.x + 1 + width / 2);
     set_top(coord.y + height / 2);

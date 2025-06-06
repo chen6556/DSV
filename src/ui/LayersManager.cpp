@@ -98,7 +98,7 @@ void LayersManager::layer_up()
     {
         _layers.insert(count - 2 - index, _layers[count - 1 - index]);  
     }
-    _layers.remove(count - index);
+    _layers.erase(_layers.begin() + count - index);
     _layers_model->setStringList(_layers);
 }
 
@@ -121,7 +121,7 @@ void LayersManager::layer_down()
     {
         _layers.append(_layers[count - 1 - index]);
     }
-    _layers.remove(count - 1 - index);
+    _layers.erase(_layers.begin() + count - 1 - index);
     _layers_model->setStringList(_layers);
 }
 
@@ -148,7 +148,7 @@ void LayersManager::remove_layer()
     const int count = _layers.length();
     const int index = count - 1 - ui->layers_view->currentIndex().row();
     _editer->remove_group(index);
-    _layers.remove(count - 1 - index);
+    _layers.erase(_layers.begin() + count - 1 - index);
     if (_layers.empty())
     {
         _layers.append("O 0");
@@ -158,7 +158,7 @@ void LayersManager::remove_layer()
     _layers_model->setStringList(_layers);
 }
 
-void LayersManager::change_layer_name(const QModelIndex &row, const QModelIndex &col, const QList<int> &roles)
+void LayersManager::change_layer_name(const QModelIndex &row, const QModelIndex &col, const QVector<int> &roles)
 {
     QString new_name(_layers_model->index(row.row()).data().toString());
     if (new_name[1] == ' ' && (new_name.front() == 'O' || new_name.front() == 'X'))

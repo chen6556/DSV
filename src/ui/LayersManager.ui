@@ -32,22 +32,22 @@ color: rgb(230, 230, 230);</string>
    <item>
     <widget class="QListView" name="layers_view">
      <property name="contextMenuPolicy">
-      <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
+      <enum>Qt::CustomContextMenu</enum>
      </property>
      <property name="frameShape">
-      <enum>QFrame::Shape::Box</enum>
+      <enum>QFrame::Box</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Shadow::Plain</enum>
+      <enum>QFrame::Plain</enum>
      </property>
      <property name="verticalScrollBarPolicy">
-      <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+      <enum>Qt::ScrollBarAlwaysOff</enum>
      </property>
      <property name="horizontalScrollBarPolicy">
-      <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+      <enum>Qt::ScrollBarAlwaysOff</enum>
      </property>
      <property name="editTriggers">
-      <set>QAbstractItemView::EditTrigger::DoubleClicked</set>
+      <set>QAbstractItemView::DoubleClicked</set>
      </property>
     </widget>
    </item>
@@ -56,7 +56,7 @@ color: rgb(230, 230, 230);</string>
      <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
+        <enum>Qt::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>

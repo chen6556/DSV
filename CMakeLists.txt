@@ -29,7 +29,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/output/)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets OpenGL Gui Core)
+find_package(Qt5 REQUIRED COMPONENTS Widgets OpenGL Gui Core)
 find_package(GSL REQUIRED)
 
 include_directories(libs)
@@ -39,8 +39,7 @@ add_subdirectory(src)
 include_directories(inc)
 file(GLOB _UI_HEADS inc/ui/*hpp)
 
-qt_add_executable(DSV
-    MANUAL_FINALIZATION
+add_executable(DSV
     src/main.cpp
     ${_UI_HEADS}
     inc/draw/Canvas.hpp
@@ -54,7 +53,7 @@ qt_add_executable(DSV
     res/Icons.qrc
 )
 
-target_link_libraries(DSV PRIVATE Qt6::Widgets Qt6::OpenGLWidgets Qt6::OpenGL Qt6::Gui Qt6::Core GSL::gsl)
+target_link_libraries(DSV PRIVATE Qt5::Widgets Qt5::OpenGL Qt5::Gui Qt5::Core GSL::gsl)
 target_compile_definitions(DSV PUBLIC POINTERHOLDER_TRANSITION=0)
 
 set_target_properties(DSV PROPERTIES
@@ -64,8 +63,6 @@ set_target_properties(DSV PROPERTIES
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
-
-qt_finalize_executable(DSV)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

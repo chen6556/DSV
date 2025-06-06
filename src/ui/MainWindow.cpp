@@ -59,7 +59,7 @@ void MainWindow::init()
     QObject::connect(ui->rect_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Rect); });
     QObject::connect(ui->bspline_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::BSpline); });
     QObject::connect(ui->bezier_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Bezier); });
-    QObject::connect(ui->curve_spb, &QSpinBox::valueChanged, ui->canvas, &Canvas::set_curve_order);
+    QObject::connect(ui->curve_spb, QOverload<int>::of(&QSpinBox::valueChanged), ui->canvas, &Canvas::set_curve_order);
     QObject::connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Text); });
     QObject::connect(ui->split_btn, &QPushButton::clicked, [this]() { _editer.split(_editer.selected()); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
@@ -101,7 +101,7 @@ void MainWindow::init()
     _layers_cbx->view()->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->statusBar->addPermanentWidget(_layers_cbx);
     _layers_cbx->setModel(_layers_manager->model());
-    QObject::connect(_layers_cbx, &QComboBox::currentIndexChanged,
+    QObject::connect(_layers_cbx, QOverload<int>::of(&QComboBox::currentIndexChanged),
         [this](int index) { _editer.set_current_group(_editer.groups_count() - 1 - index); });
 }
 

@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="contextMenuPolicy">
-   <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
+   <enum>Qt::NoContextMenu</enum>
   </property>
   <property name="windowTitle">
    <string>Command</string>
@@ -97,7 +97,7 @@ color:rgb(230, 230, 230);</string>
         <string> CMD </string>
        </property>
        <property name="alignment">
-        <set>Qt::AlignmentFlag::AlignCenter</set>
+        <set>Qt::AlignCenter</set>
        </property>
       </widget>
      </item>
@@ -112,7 +112,7 @@ color:rgb(230, 230, 230);</string>
         <bool>false</bool>
        </property>
        <property name="contextMenuPolicy">
-        <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
+        <enum>Qt::NoContextMenu</enum>
        </property>
        <property name="styleSheet">
         <string notr="true">background-color: rgb(120, 120, 121);

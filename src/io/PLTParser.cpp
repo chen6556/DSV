@@ -1,5 +1,5 @@
 #include <sstream>
-
+#include <QDebug>
 #include "base/Algorithm.hpp"
 #include "io/PLTParser.hpp"
 #include <Parser/ParserGen2.hpp>
@@ -503,14 +503,14 @@ void Importer::store_text(const std::string &text)
 
     // _texts.emplace_back(str, _last_coord);
     _graph->container_group().append(new Text(_last_coord.x, _last_coord.y,
-        GlobalSetting::setting().text_size, QString::fromUtf8(str)));
+        GlobalSetting::setting().text_size, QString::fromUtf8(str.c_str())));
 
     _points.clear();
 }
 
 void Importer::print_symbol(const std::string& str)
 {
-    qDebug() << str;
+    qDebug() << QString::fromStdString(str);
 }
 
 void Importer::end()

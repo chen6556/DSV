@@ -32,10 +32,10 @@ color: rgb(230, 230, 230);</string>
    <item>
     <widget class="QFrame" name="frame">
      <property name="frameShape">
-      <enum>QFrame::Shape::Box</enum>
+      <enum>QFrame::Box</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Shadow::Plain</enum>
+      <enum>QFrame::Plain</enum>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="8" column="0">
@@ -224,10 +224,10 @@ QPushButton:pressed
       <locale language="English" country="UnitedStates"/>
      </property>
      <property name="orientation">
-      <enum>Qt::Orientation::Horizontal</enum>
+      <enum>Qt::Horizontal</enum>
      </property>
      <property name="standardButtons">
-      <set>QDialogButtonBox::StandardButton::Close</set>
+      <set>QDialogButtonBox::Close</set>
      </property>
     </widget>
    </item>
