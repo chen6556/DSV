@@ -323,20 +323,20 @@ void DXFReaderWriter::addCircle(const DRW_Circle &data)
         {
             if (group.name.toStdString() == data.layer)
             {
-                group.append(new Container<Geo::Circle>(QString(), data.basePoint.x, data.basePoint.y, data.radious));
+                group.append(new Geo::Circle(data.basePoint.x, data.basePoint.y, data.radious));
                 _object_map[group.back()] = data.handle;
                 return;
             }
         }
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
-        _graph->container_groups().back().append(new Container<Geo::Circle>(QString(),
-            data.basePoint.x, data.basePoint.y, data.radious));
+        _graph->container_groups().back().append(
+            new Geo::Circle(data.basePoint.x, data.basePoint.y, data.radious));
         _object_map[_graph->container_groups().back().back()] = data.handle;
     }
     else
     {
-        _combination->append(new Container<Geo::Circle>(QString(), data.basePoint.x, data.basePoint.y, data.radious));
+        _combination->append(new Geo::Circle(data.basePoint.x, data.basePoint.y, data.radious));
         _object_map[_combination->back()] = data.handle;
     }
 }
@@ -355,7 +355,7 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
             if (group.name.toStdString() == data.layer)
             {
                 const double a = std::hypot(data.secPoint.x, data.secPoint.y);
-                group.append(new Container<Geo::Ellipse>(QString(), data.basePoint.x, data.basePoint.y, a, a * data.ratio));
+                group.append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y, a, a * data.ratio));
                 group.back()->rotate(data.basePoint.x, data.basePoint.y,
                     data.secPoint.x >= 0 ? std::sin(data.secPoint.y / a) : -std::sin(data.secPoint.y / a));
                 _object_map[group.back()] = data.handle;
@@ -365,7 +365,7 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
         const double a = std::hypot(data.secPoint.x, data.secPoint.y);
-        _graph->container_groups().back().append(new Container<Geo::Ellipse>(QString(),
+        _graph->container_groups().back().append(new Geo::Ellipse(
             data.basePoint.x, data.basePoint.y, a, a * data.ratio));
         _graph->container_groups().back().back()->rotate(data.basePoint.x, data.basePoint.y,
                 data.secPoint.x >= 0 ? std::sin(data.secPoint.y / a) : -std::sin(data.secPoint.y / a));
@@ -374,7 +374,7 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
     else
     {
         const double a = std::hypot(data.secPoint.x, data.secPoint.y);
-        _combination->append(new Container<Geo::Ellipse>(QString(), data.basePoint.x, data.basePoint.y, a, a * data.ratio));
+        _combination->append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y, a, a * data.ratio));
         _combination->back()->rotate(data.basePoint.x, data.basePoint.y,
             data.secPoint.x >= 0 ? std::sin(data.secPoint.y / a) : -std::sin(data.secPoint.y / a));
         _object_map[_combination->back()] = data.handle;

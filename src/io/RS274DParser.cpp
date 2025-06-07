@@ -56,9 +56,9 @@ void Importer::store_points()
 
     if (_points.front() == _points.back() && _points.size() >= 3)
     {
-        _last_container = new Container<Geo::Polygon>(Geo::Polygon(_points.cbegin(), _points.cend()));
-        _last_circle_container = nullptr;
-        _graph->container_groups().back().append(_last_container);
+        _last_polygon = new Geo::Polygon(_points.cbegin(), _points.cend());
+        _last_circle = nullptr;
+        _graph->container_groups().back().append(_last_polygon);
     }
     else
     {
@@ -69,9 +69,9 @@ void Importer::store_points()
 
 void Importer::draw_circle()
 {
-    _last_circle_container = new Container<Geo::Circle>(Geo::Circle(_last_coord, _circle_radius));
-    _last_container = nullptr;
-    _graph->container_groups().back().append(_last_circle_container);
+    _last_circle = new Geo::Circle(_last_coord, _circle_radius);
+    _last_polygon = nullptr;
+    _graph->container_groups().back().append(_last_circle);
     _points.clear();
 }
 
@@ -163,8 +163,8 @@ void Importer::reset()
     _ignore_M19 = GlobalSetting::setting().ignore_M19;
     _curve_type = CurveType::Linear;
     unit = Unit::mm;
-    _last_circle_container = nullptr;
-    _last_container = nullptr;
+    _last_circle = nullptr;
+    _last_polygon = nullptr;
 }
 
 void Importer::read_text()
@@ -178,19 +178,8 @@ void Importer::read_text()
 
 void Importer::store_text(const std::string &text)
 {
-    if (_last_container != nullptr)
-    {
-        _last_container->set_text(_last_container->text() + '\n' + QString::fromUtf8(text));
-    }
-    else if (_last_circle_container != nullptr)
-    {
-        _last_circle_container->set_text(_last_circle_container->text() + '\n' + QString::fromUtf8(text));
-    }
-    else
-    {
-        _graph->container_groups().back().append(new Text(_last_coord.x, _last_coord.y,
-            GlobalSetting::setting().text_size, QString::fromUtf8(text)));
-    }
+    _graph->container_groups().back().append(new Text(_last_coord.x, _last_coord.y,
+        GlobalSetting::setting().text_size, QString::fromUtf8(text)));
 }
 
 void Importer::store_table_text(const std::string &text)
@@ -199,48 +188,8 @@ void Importer::store_table_text(const std::string &text)
     {
         _points.pop_back();
     }
-    Containerized *containerized = nullptr;
-    for (Geo::Geometry *container : _graph->container_groups().back())
-    {
-        containerized = dynamic_cast<Containerized *>(container);
-        if (containerized == nullptr)
-        {
-            continue;
-        }
-        switch (container->type())
-        {
-        case Geo::Type::POLYGON:
-            if (Geo::is_inside(_last_coord, *dynamic_cast<Geo::Polygon *>(container)))
-            {
-                if (containerized->text().isEmpty())
-                {
-                    containerized->set_text(QString::fromUtf8(text));
-                }
-                else
-                {
-                    containerized->set_text(containerized->text() + '\n' + QString::fromUtf8(text));
-                }
-                return;
-            }
-            break;
-        case Geo::Type::CIRCLE:
-            if (Geo::is_inside(_last_coord, *dynamic_cast<Geo::Circle *>(container)))
-            {
-                if (containerized->text().isEmpty())
-                {
-                    containerized->set_text(QString::fromUtf8(text));
-                }
-                else
-                {
-                    containerized->set_text(containerized->text() + '\n' + QString::fromUtf8(text));
-                }
-                return;
-            }
-            break;
-        default:
-            break;
-        }
-    }
+    _graph->container_groups().back().append(new Text(_last_coord.x, _last_coord.y,
+        GlobalSetting::setting().text_size, QString::fromUtf8(text)));
 }
 
 void Importer::print_symbol(const std::string &str)

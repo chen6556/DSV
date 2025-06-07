@@ -139,25 +139,6 @@ Text *Text::clone() const
     return new Text(*this);
 }
 
-// Containerized
-
-Containerized::Containerized(const QString &txt)
-    : _txt(txt) {}
-
-const QString &Containerized::text() const
-{
-    return _txt;
-}
-
-void Containerized::set_text(const QString &txt)
-{
-    _txt = txt;
-}
-
-void Containerized::clear_text()
-{
-    _txt.clear();
-}
 
 // ContainerGroup
 

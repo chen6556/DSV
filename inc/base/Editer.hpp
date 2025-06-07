@@ -130,13 +130,13 @@ public:
 
     bool scale(std::list<Geo::Geometry *> objects, const bool unitary, const double k);
 
-    bool polygon_union(Container<Geo::Polygon> *container0, Container<Geo::Polygon> *container1);
+    bool polygon_union(Geo::Polygon *shape0, Geo::Polygon *shape1);
 
-    bool polygon_intersection(Container<Geo::Polygon> *container0, Container<Geo::Polygon> *container1);
+    bool polygon_intersection(Geo::Polygon *shape0, Geo::Polygon *shape1);
 
-    bool polygon_difference(Container<Geo::Polygon> *container0, const Container<Geo::Polygon> *container1); 
+    bool polygon_difference(Geo::Polygon *shape0, const Geo::Polygon *shape1); 
 
-    bool fillet(Container<Geo::Polygon> *container, const Geo::Point &point, const double radius);
+    bool fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius);
 
     bool fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius);
 

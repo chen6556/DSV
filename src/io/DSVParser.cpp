@@ -28,24 +28,22 @@ void Importer::store_polygon()
     {
         if (_is_combination)
         {
-            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Container<Geo::Polygon>(Geo::Polygon(_points.cbegin(), _points.cend())));
+            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Geo::Polygon(_points.cbegin(), _points.cend()));
         }
         else
         {
-            _graph->container_groups().back().append(
-                new Container<Geo::Polygon>(Geo::Polygon(_points.cbegin(), _points.cend())));
+            _graph->container_groups().back().append(new Geo::Polygon(_points.cbegin(), _points.cend()));
         }
     }
     else
     {
         if (_is_combination)
         {
-            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Container<Geo::Polygon>(QString::fromStdString(_text), Geo::Polygon(_points.cbegin(), _points.cend())));
+            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Geo::Polygon(_points.cbegin(), _points.cend()));
         }
         else
         {
-            _graph->container_groups().back().append(new Container<Geo::Polygon>(
-                QString::fromStdString(_text), Geo::Polygon(_points.cbegin(), _points.cend())));
+            _graph->container_groups().back().append(new Geo::Polygon(_points.cbegin(), _points.cend()));
         }
         _text.clear();
     }
@@ -57,12 +55,11 @@ void Importer::store_circle()
     if (_is_combination)
     {
         dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
-            new Container<Geo::Circle>(QString::fromStdString(_text), _points.back().x, _points.back().y, _parameters.back()));
+            new Geo::Circle(_points.back().x, _points.back().y, _parameters.back()));
     }
     else
     {
-        _graph->container_groups().back().append(new Container<Geo::Circle>(
-            QString::fromStdString(_text), _points.back().x, _points.back().y, _parameters.back()));
+        _graph->container_groups().back().append(new Geo::Circle(_points.back().x, _points.back().y, _parameters.back()));
     }
     _text.clear();
     _points.clear();
@@ -74,12 +71,12 @@ void Importer::store_ellipse()
     if (_is_combination)
     {
         dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
-            new Container<Geo::Ellipse>(QString::fromStdString(_text), _points[0], _points[1], _points[2], _points[3]));
+            new Geo::Ellipse(_points[0], _points[1], _points[2], _points[3]));
     }
     else
     {
-        _graph->container_groups().back().append(new Container<Geo::Ellipse>(
-            QString::fromStdString(_text), _points[0], _points[1], _points[2], _points[3]));
+        _graph->container_groups().back().append(
+            new Geo::Ellipse(_points[0], _points[1], _points[2], _points[3]));
     }
     _text.clear();
     _points.clear();

@@ -557,12 +557,8 @@ TextChangedCommand::TextChangedCommand(Geo::Geometry *item, const QString &text)
 
 void TextChangedCommand::undo(Graph *graph)
 {
-    if (dynamic_cast<Containerized *>(_item) == nullptr)
+    if (dynamic_cast<Text *>(_item) != nullptr)
     {
         static_cast<Text *>(_item)->set_text(_text, GlobalSetting::setting().text_size);
-    }
-    else
-    {
-        dynamic_cast<Containerized *>(_item)->set_text(_text);
     }
 }

@@ -47,7 +47,7 @@ void Importer::store_points()
 
     if (_points.front() == _points.back() && _points.size() >= 3)
     {
-        _graph->container_groups().back().append(new Container<Geo::Polygon>(Geo::Polygon(_points.cbegin(), _points.cend())));
+        _graph->container_groups().back().append(new Geo::Polygon(_points.cbegin(), _points.cend()));
     }
     else
     {
@@ -395,7 +395,7 @@ void Importer::ci()
     {
         _parameters.pop_back();
     }
-    _graph->container_groups().back().append(new Container<Geo::Circle>(QString(),
+    _graph->container_groups().back().append(new Geo::Circle(
         _points.front().x, _points.front().y, _parameters.back() * _x_ratio));
     _points.clear();
     _parameters.clear();
@@ -432,7 +432,7 @@ void Importer::ea()
     if (_parameters.size() >= 2)
     {
         _parameters.erase(_parameters.begin(), _parameters.begin() + _parameters.size() - 2);
-        _graph->container_groups().back().append(new Container<Geo::Polygon>(Geo::AABBRect(_last_coord.x, _last_coord.y,
+        _graph->container_groups().back().append(new Geo::Polygon(Geo::AABBRect(_last_coord.x, _last_coord.y,
             _parameters.front() * _x_ratio + _ip[4], _parameters.back() * _y_ratio + _ip[5])));
     }
     _points.clear();
@@ -444,7 +444,7 @@ void Importer::er()
     if (_parameters.size() >= 2)
     {
         _parameters.erase(_parameters.begin(), _parameters.begin() + _parameters.size() - 2);
-        _graph->container_groups().back().append(new Container<Geo::Polygon>(Geo::AABBRect(_last_coord.x, _last_coord.y,
+        _graph->container_groups().back().append(new Geo::Polygon(Geo::AABBRect(_last_coord.x, _last_coord.y,
             _parameters.front() * _x_ratio + _last_coord.x, _parameters.back() * _y_ratio + _last_coord.y)));
     }
     _points.clear();
@@ -482,7 +482,7 @@ void Importer::ep()
 {
     for (Geo::Polygon &polygon : _polygon_cache)
     {
-        _graph->container_group().append(new Container<Geo::Polygon>(polygon));
+        _graph->container_group().append(new Geo::Polygon(polygon));
     }
     _polygon_cache.clear();
 }

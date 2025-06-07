@@ -316,24 +316,24 @@ bool CMDWidget::work()
 
     case CMD::Union_CMD:
         {
-            Container<Geo::Polygon> *container0 = nullptr, *container1 = nullptr;
+            Geo::Polygon *polygon0 = nullptr, *polygon1 = nullptr;
             for (Geo::Geometry *object : _editer->selected())
             {
                 if (object->type() == Geo::Type::POLYGON)
                 {
-                    if (container0 == nullptr)
+                    if (polygon0 == nullptr)
                     {
-                        container0 = dynamic_cast<Container<Geo::Polygon> *>(object);
+                        polygon0 = dynamic_cast<Geo::Polygon *>(object);
                     }
                     else
                     {
-                        container1 = dynamic_cast<Container<Geo::Polygon> *>(object);
+                        polygon1 = dynamic_cast<Geo::Polygon *>(object);
                         break;
                     }
                 }
             }
 
-            if (_editer->polygon_union(container0, container1))
+            if (_editer->polygon_union(polygon0, polygon1))
             {
                 _canvas->refresh_vbo();
                 _canvas->refresh_selected_ibo();
@@ -344,24 +344,24 @@ bool CMDWidget::work()
         break;
     case CMD::Intersection_CMD:
         {
-            Container<Geo::Polygon> *container0 = nullptr, *container1 = nullptr;
+            Geo::Polygon *polygon0 = nullptr, *polygon1 = nullptr;
             for (Geo::Geometry *object : _editer->selected())
             {
                 if (object->type() == Geo::Type::POLYGON)
                 {
-                    if (container0 == nullptr)
+                    if (polygon0 == nullptr)
                     {
-                        container0 = dynamic_cast<Container<Geo::Polygon> *>(object);
+                        polygon0 = dynamic_cast<Geo::Polygon *>(object);
                     }
                     else
                     {
-                        container1 = dynamic_cast<Container<Geo::Polygon> *>(object);
+                        polygon1 = dynamic_cast<Geo::Polygon *>(object);
                         break;
                     }
                 }
             }
 
-            if (_editer->polygon_intersection(container0, container1))
+            if (_editer->polygon_intersection(polygon0, polygon1))
             {
                 _canvas->refresh_vbo();
                 _canvas->refresh_selected_ibo();

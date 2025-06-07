@@ -745,11 +745,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         static_cast<Text *>(_last_clicked_obj)->set_text(_input_line.toPlainText(),
                             GlobalSetting::setting().text_size);
                     }
-                    else if (dynamic_cast<Containerized *>(_last_clicked_obj) != nullptr)
-                    {
-                        text = dynamic_cast<Containerized *>(_last_clicked_obj)->text();
-                        dynamic_cast<Containerized *>(_last_clicked_obj)->set_text(_input_line.toPlainText());
-                    }
 
                     if (text != _input_line.toPlainText())
                     {
@@ -784,8 +779,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     update();
                     return QOpenGLWidget::mousePressEvent(event);
                 case Operation::PolygonDifference:
-                    if (_editer->polygon_difference(dynamic_cast<Container<Geo::Polygon> *>(_last_clicked_obj), 
-                        dynamic_cast<const Container<Geo::Polygon> *>(_clicked_obj)))
+                    if (_editer->polygon_difference(dynamic_cast<Geo::Polygon *>(_last_clicked_obj), 
+                        dynamic_cast<const Geo::Polygon *>(_clicked_obj)))
                     {
                         refresh_vbo();
                         refresh_selected_ibo();
@@ -810,7 +805,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                                     point = p;
                                 }
                             }
-                            if (_editer->fillet(dynamic_cast<Container<Geo::Polygon> *>(_clicked_obj),
+                            if (_editer->fillet(dynamic_cast<Geo::Polygon *>(_clicked_obj),
                                 point, GlobalSetting::setting().ui->fillet_sbx->value()))
                             {
                                 refresh_vbo();
@@ -900,15 +895,18 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                             "Y:" + QString::number(dynamic_cast<const Text*>(_clicked_obj)->center().y));
                         break;
                     case Geo::Type::POLYGON:
-                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const Container<Geo::Polygon>*>(_clicked_obj)->center().x) +
-                            " Y:" + QString::number(dynamic_cast<const Container<Geo::Polygon>*>(_clicked_obj)->center().y) +
-                            " Length:" + QString::number(_clicked_obj->length()) +
-                            " Area:" + QString::number(dynamic_cast<const Container<Geo::Polygon>*>(_clicked_obj)->area()));
+                        {
+                            const Geo::Point center = _clicked_obj->bounding_rect().center();
+                            _info_labels[1]->setText("X:" + QString::number(center.x) +
+                                " Y:" + QString::number(center.y) +
+                                " Length:" + QString::number(_clicked_obj->length()) +
+                                " Area:" + QString::number(dynamic_cast<const Geo::Polygon *>(_clicked_obj)->area()));
+                        }
                         break;
                     case Geo::Type::CIRCLE:
-                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const Container<Geo::Circle>*>(_clicked_obj)->x) +
-                            " Y:" + QString::number(dynamic_cast<const Container<Geo::Circle>*>(_clicked_obj)->y) +
-                            " Radius:" + QString::number(dynamic_cast<const Container<Geo::Circle>*>(_clicked_obj)->radius));
+                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const Geo::Circle *>(_clicked_obj)->x) +
+                            " Y:" + QString::number(dynamic_cast<const Geo::Circle *>(_clicked_obj)->y) +
+                            " Radius:" + QString::number(dynamic_cast<const Geo::Circle *>(_clicked_obj)->radius));
                         break;
                     case Geo::Type::POLYLINE:
                         _info_labels[1]->setText("Length:" + QString::number(dynamic_cast<const Geo::Polyline*>(_clicked_obj)->length()));
@@ -1290,7 +1288,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             {
                 bool update_vbo = false;
                 std::vector<size_t> indexs0;
-                if (dynamic_cast<const Container<Geo::Polygon> *>(selected_objects.back()) != nullptr)
+                if (dynamic_cast<const Geo::Polygon *>(selected_objects.back()) != nullptr)
                 {
                     indexs0 = Geo::ear_cut_to_indexs(*dynamic_cast<const Geo::Polygon *>(selected_objects.back()));
                 }
@@ -1360,7 +1358,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                         }
                         else if (!std::equal(indexs0.begin(), indexs0.end(), indexs1.begin(), indexs1.end()))
                         {
-                            refresh_brush_ibo(dynamic_cast<const Containerized *>(selected_objects.back())->IBO_index,
+                            refresh_brush_ibo(dynamic_cast<const Geo::ClosedShape *>(selected_objects.back())->IBO_index,
                                 selected_objects.back()->point_index, indexs1);
                         }
                     }
@@ -1504,8 +1502,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         }
         else
         {
-            if (is_obj_selected() && (_last_clicked_obj->type() == Geo::Type::TEXT
-                || dynamic_cast<Containerized *>(_last_clicked_obj) != nullptr))
+            if (is_obj_selected() && dynamic_cast<Text *>(_last_clicked_obj) != nullptr)
             {
                 Geo::AABBRect rect(_last_clicked_obj->bounding_rect());
                 rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
@@ -1513,14 +1510,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                 _input_line.move(rect.center().x - _input_line.rect().center().x(),
                                  rect.center().y - _input_line.rect().center().y());
                 _input_line.setFocus();
-                if (_last_clicked_obj->type() == Geo::Type::TEXT)
-                {
-                    _input_line.setText(dynamic_cast<Text *>(_last_clicked_obj)->text());
-                }
-                else
-                {
-                    _input_line.setText(dynamic_cast<Containerized *>(_last_clicked_obj)->text());
-                }
+                _input_line.setText(dynamic_cast<Text *>(_last_clicked_obj)->text());
                 _input_line.moveCursor(QTextCursor::End);
                 _input_line.show();
             }
@@ -2331,7 +2321,7 @@ void Canvas::refresh_vbo()
             {
             case Geo::Type::POLYGON:
                 polygon = dynamic_cast<Geo::Polygon *>(geo);
-                dynamic_cast<Containerized *>(geo)->IBO_index = polygon_index_count;
+                polygon->IBO_index = polygon_index_count;
                 for (size_t i : Geo::ear_cut_to_indexs(*polygon))
                 {
                     polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2372,7 +2362,7 @@ void Canvas::refresh_vbo()
                 break;
             case Geo::Type::CIRCLE:
                 circle = dynamic_cast<Geo::Circle *>(geo);
-                dynamic_cast<Containerized *>(geo)->IBO_index = polygon_index_count;
+                circle->IBO_index = polygon_index_count;
                 for (size_t i : Geo::ear_cut_to_indexs(circle->shape()))
                 {
                     polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2413,7 +2403,7 @@ void Canvas::refresh_vbo()
                 break;
             case Geo::Type::ELLIPSE:
                 ellipse = dynamic_cast<Geo::Ellipse *>(geo);
-                dynamic_cast<Containerized *>(geo)->IBO_index = polygon_index_count;
+                ellipse->IBO_index = polygon_index_count;
                 for (size_t i : Geo::ear_cut_to_indexs(ellipse->shape()))
                 {
                     polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2461,7 +2451,7 @@ void Canvas::refresh_vbo()
                     {
                     case Geo::Type::POLYGON:
                         polygon = dynamic_cast<Geo::Polygon *>(item);
-                        dynamic_cast<Containerized *>(item)->IBO_index = polygon_index_count;
+                        polygon->IBO_index = polygon_index_count;
                         for (size_t i : Geo::ear_cut_to_indexs(*polygon))
                         {
                             polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2502,7 +2492,7 @@ void Canvas::refresh_vbo()
                         break;
                     case Geo::Type::CIRCLE:
                         circle = dynamic_cast<Geo::Circle *>(item);
-                        dynamic_cast<Containerized *>(item)->IBO_index = polygon_index_count;
+                        circle->IBO_index = polygon_index_count;
                         for (size_t i : Geo::ear_cut_to_indexs(circle->shape()))
                         {
                             polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -2543,7 +2533,7 @@ void Canvas::refresh_vbo()
                         break;
                     case Geo::Type::ELLIPSE:
                         ellipse = dynamic_cast<Geo::Ellipse *>(item);
-                        dynamic_cast<Containerized *>(item)->IBO_index = polygon_index_count;
+                        ellipse->IBO_index = polygon_index_count;
                         for (size_t i : Geo::ear_cut_to_indexs(ellipse->shape()))
                         {
                             polygon_indexs[polygon_index_count++] = data_count / 3 + i;
@@ -3495,7 +3485,7 @@ void Canvas::refresh_brush_ibo()
             switch (geo->type())
             {
             case Geo::Type::POLYGON:
-                dynamic_cast<Containerized *>(geo)->IBO_index = polygon_index_count;
+                dynamic_cast<Geo::ClosedShape *>(geo)->IBO_index = polygon_index_count;
                 for (size_t i : Geo::ear_cut_to_indexs(*dynamic_cast<const Geo::Polygon *>(geo)))
                 {
                     polygon_indexs[polygon_index_count++] = geo->point_index + i;
@@ -3510,7 +3500,7 @@ void Canvas::refresh_brush_ibo()
                 }
                 break;
             case Geo::Type::CIRCLE:
-                dynamic_cast<Containerized *>(geo)->IBO_index = polygon_index_count;
+                dynamic_cast<Geo::ClosedShape *>(geo)->IBO_index = polygon_index_count;
                 for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Circle *>(geo)->shape()))
                 {
                     polygon_indexs[polygon_index_count++] = geo->point_index + i;
@@ -3525,7 +3515,7 @@ void Canvas::refresh_brush_ibo()
                 }
                 break;
             case Geo::Type::ELLIPSE:
-                dynamic_cast<Containerized *>(geo)->IBO_index = polygon_index_count;
+                dynamic_cast<Geo::ClosedShape *>(geo)->IBO_index = polygon_index_count;
                 for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Ellipse *>(geo)->shape()))
                 {
                     polygon_indexs[polygon_index_count++] = geo->point_index + i;
@@ -3545,7 +3535,7 @@ void Canvas::refresh_brush_ibo()
                     switch (item->type())
                     {
                     case Geo::Type::POLYGON:
-                        dynamic_cast<Containerized *>(item)->IBO_index = polygon_index_count;
+                        dynamic_cast<Geo::ClosedShape *>(item)->IBO_index = polygon_index_count;
                         for (size_t i : Geo::ear_cut_to_indexs(*dynamic_cast<const Geo::Polygon *>(item)))
                         {
                             polygon_indexs[polygon_index_count++] = item->point_index + i;
@@ -3560,7 +3550,7 @@ void Canvas::refresh_brush_ibo()
                         }
                         break;
                     case Geo::Type::CIRCLE:
-                        dynamic_cast<Containerized *>(item)->IBO_index = polygon_index_count;
+                        dynamic_cast<Geo::ClosedShape *>(item)->IBO_index = polygon_index_count;
                         for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Circle *>(item)->shape()))
                         {
                             polygon_indexs[polygon_index_count++] = item->point_index + i;
@@ -3575,7 +3565,7 @@ void Canvas::refresh_brush_ibo()
                         }
                         break;
                     case Geo::Type::ELLIPSE:
-                        dynamic_cast<Containerized *>(item)->IBO_index = polygon_index_count;
+                        dynamic_cast<Geo::ClosedShape *>(item)->IBO_index = polygon_index_count;
                         for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Ellipse *>(item)->shape()))
                         {
                             polygon_indexs[polygon_index_count++] = item->point_index + i;
@@ -3638,9 +3628,6 @@ void Canvas::refresh_text_vbo()
     QRectF text_rect;
 
     Text *text = nullptr;
-    Container<Geo::Polygon> *container = nullptr;
-    Container<Geo::Circle> *circlecontainer = nullptr;
-    Container<Geo::Ellipse> *ellipsecontainer = nullptr;
     Geo::Point coord;
     Geo::Polygon points;
     size_t offset;
@@ -3679,64 +3666,11 @@ void Canvas::refresh_text_vbo()
                 }
                 text->text_index = data_count;
                 break;
-            case Geo::Type::POLYGON:
-                container = dynamic_cast<Container<Geo::Polygon> *>(geo);
-                if (container->text().isEmpty())
-                {
-                    continue;
-                }
-                coord = container->center();
-                strings = container->text().split('\n');
-                string_index = 1;
-                for (const QString &string : strings)
-                {
-                    text_rect = font_metrics.boundingRect(string);
-                    path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
-                        * (strings.length() / 2.0 - string_index++), font, string);
-                }
-                container->text_index = data_count;
-                break;
-            case Geo::Type::CIRCLE:
-                circlecontainer = dynamic_cast<Container<Geo::Circle> *>(geo);
-                if (circlecontainer->text().isEmpty())
-                {
-                    continue;
-                }
-                coord = circlecontainer->center();
-                strings = circlecontainer->text().split('\n');
-                string_index = 1;
-                for (const QString &string : strings)
-                {
-                    text_rect = font_metrics.boundingRect(string);
-                    path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
-                        * (strings.length() / 2.0 - string_index++), font, string);
-                }
-                circlecontainer->text_index = data_count;
-                break;
-            case Geo::Type::ELLIPSE:
-                ellipsecontainer = dynamic_cast<Container<Geo::Ellipse> *>(geo);
-                if (ellipsecontainer->text().isEmpty())
-                {
-                    continue;
-                }
-                coord = ellipsecontainer->center();
-                strings = ellipsecontainer->text().split('\n');
-                string_index = 1;
-                for (const QString &string : strings)
-                {
-                    text_rect = font_metrics.boundingRect(string);
-                    path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
-                        * (strings.length() / 2.0 - string_index++), font, string);
-                }
-                ellipsecontainer->text_index = data_count;
-                break;
             case Geo::Type::COMBINATION:
                 for (Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
                 {
-                    switch (item->type())
+                    if (text = dynamic_cast<Text *>(item); text != nullptr)
                     {
-                    case Geo::Type::TEXT:
-                        text = dynamic_cast<Text *>(item);
                         if (text->text().isEmpty())
                         {
                             continue;
@@ -3751,60 +3685,6 @@ void Canvas::refresh_text_vbo()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
                         text->text_index = data_count;
-                        break;
-                    case Geo::Type::POLYGON:
-                        container = dynamic_cast<Container<Geo::Polygon> *>(item);
-                        if (container->text().isEmpty())
-                        {
-                            continue;
-                        }
-                        coord = container->center();
-                        strings = container->text().split('\n');
-                        string_index = 1;
-                        for (const QString &string : strings)
-                        {
-                            text_rect = font_metrics.boundingRect(string);
-                            path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
-                                * (strings.length() / 2.0 - string_index++), font, string);
-                        }
-                        container->text_index = data_count;
-                        break;
-                    case Geo::Type::CIRCLE:
-                        circlecontainer = dynamic_cast<Container<Geo::Circle> *>(item);
-                        if (circlecontainer->text().isEmpty())
-                        {
-                            continue;
-                        }
-                        coord = circlecontainer->center();
-                        strings = circlecontainer->text().split('\n');
-                        string_index = 1;
-                        for (const QString &string : strings)
-                        {
-                            text_rect = font_metrics.boundingRect(string);
-                            path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
-                                * (strings.length() / 2.0 - string_index++), font, string);
-                        }
-                        circlecontainer->text_index = data_count;
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        ellipsecontainer = dynamic_cast<Container<Geo::Ellipse> *>(item);
-                        if (ellipsecontainer->text().isEmpty())
-                        {
-                            continue;
-                        }
-                        coord = ellipsecontainer->center();
-                        strings = ellipsecontainer->text().split('\n');
-                        string_index = 1;
-                        for (const QString &string : strings)
-                        {
-                            text_rect = font_metrics.boundingRect(string);
-                            path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
-                                * (strings.length() / 2.0 - string_index++), font, string);
-                        }
-                        ellipsecontainer->text_index = data_count;
-                        break;
-                    default:
-                        break;
                     }
                     for (const QPolygonF &polygon : path.toSubpathPolygons())
                     {
@@ -3849,22 +3729,9 @@ void Canvas::refresh_text_vbo()
                             indexs = temp;
                         }
                     }
-                    switch (item->type())
+                    if (text != nullptr)
                     {
-                    case Geo::Type::TEXT:
                         text->text_count = data_count - text->text_index;
-                        break;
-                    case Geo::Type::POLYGON:
-                        container->text_count = data_count - container->text_index;
-                        break;
-                    case Geo::Type::CIRCLE:
-                        circlecontainer->text_count = data_count - circlecontainer->text_index;
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        ellipsecontainer->text_count = data_count - ellipsecontainer->text_index;
-                        break;
-                    default:
-                        break;
                     }
                     path.clear();
                 }
@@ -3915,22 +3782,9 @@ void Canvas::refresh_text_vbo()
                     indexs = temp;
                 }
             }
-            switch (geo->type())
+            if (dynamic_cast<Text *>(geo) != nullptr)
             {
-            case Geo::Type::TEXT:
                 text->text_count = data_count - text->text_index;
-                break;
-            case Geo::Type::POLYGON:
-                container->text_count = data_count - container->text_index;
-                break;
-            case Geo::Type::CIRCLE:
-                circlecontainer->text_count = data_count - circlecontainer->text_index;
-                break;
-            case Geo::Type::ELLIPSE:
-                ellipsecontainer->text_count = data_count - ellipsecontainer->text_index;
-                break;
-            default:
-                break;
             }
             path.clear();
         }
@@ -3963,9 +3817,6 @@ void Canvas::refresh_text_vbo(const bool unitary)
     QRectF text_rect;
 
     Text *text = nullptr;
-    Container<Geo::Polygon> *container = nullptr;
-    Container<Geo::Circle> *circlecontainer = nullptr;
-    Container<Geo::Ellipse> *ellipsecontainer = nullptr;
     Geo::Point coord;
     int string_index;
     QStringList strings;
@@ -4006,61 +3857,11 @@ void Canvas::refresh_text_vbo(const bool unitary)
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
                 break;
-            case Geo::Type::POLYGON:
-                container = dynamic_cast<Container<Geo::Polygon> *>(geo);
-                if (container->text().isEmpty())
-                {
-                    continue;
-                }
-                coord = container->center();
-                strings = container->text().split('\n');
-                string_index = 1;
-                for (const QString &string : strings)
-                {
-                    text_rect = font_metrics.boundingRect(string);
-                    path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
-                        * (strings.length() / 2.0 - string_index++), font, string);
-                }
-                break;
-            case Geo::Type::CIRCLE:
-                circlecontainer = dynamic_cast<Container<Geo::Circle> *>(geo);
-                if (circlecontainer->text().isEmpty())
-                {
-                    continue;
-                }
-                coord = circlecontainer->center();
-                strings = circlecontainer->text().split('\n');
-                string_index = 1;
-                for (const QString &string : strings)
-                {
-                    text_rect = font_metrics.boundingRect(string);
-                    path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
-                        * (strings.length() / 2.0 - string_index++), font, string);
-                }
-                break;
-            case Geo::Type::ELLIPSE:
-                ellipsecontainer = dynamic_cast<Container<Geo::Ellipse> *>(geo);
-                if (ellipsecontainer->text().isEmpty())
-                {
-                    continue;
-                }
-                coord = ellipsecontainer->center();
-                strings = ellipsecontainer->text().split('\n');
-                string_index = 1;
-                for (const QString &string : strings)
-                {
-                    text_rect = font_metrics.boundingRect(string);
-                    path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
-                        * (strings.length() / 2.0 - string_index++), font, string);
-                }
-                break;
             case Geo::Type::COMBINATION:
                 for (Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
                 {
-                    switch (item->type())
+                    if (text = dynamic_cast<Text *>(item); text != nullptr)
                     {
-                    case Geo::Type::TEXT:
-                        text = dynamic_cast<Text *>(item);
                         if (text->text().isEmpty())
                         {
                             continue;
@@ -4074,57 +3875,6 @@ void Canvas::refresh_text_vbo(const bool unitary)
                             path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
-                        break;
-                    case Geo::Type::POLYGON:
-                        container = dynamic_cast<Container<Geo::Polygon> *>(item);
-                        if (container->text().isEmpty())
-                        {
-                            continue;
-                        }
-                        coord = container->center();
-                        strings = container->text().split('\n');
-                        string_index = 1;
-                        for (const QString &string : strings)
-                        {
-                            text_rect = font_metrics.boundingRect(string);
-                            path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
-                                * (strings.length() / 2.0 - string_index++), font, string);
-                        }
-                        break;
-                    case Geo::Type::CIRCLE:
-                        circlecontainer = dynamic_cast<Container<Geo::Circle> *>(item);
-                        if (circlecontainer->text().isEmpty())
-                        {
-                            continue;
-                        }
-                        coord = circlecontainer->center();
-                        strings = circlecontainer->text().split('\n');
-                        string_index = 1;
-                        for (const QString &string : strings)
-                        {
-                            text_rect = font_metrics.boundingRect(string);
-                            path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
-                                * (strings.length() / 2.0 - string_index++), font, string);
-                        }
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        ellipsecontainer = dynamic_cast<Container<Geo::Ellipse> *>(item);
-                        if (ellipsecontainer->text().isEmpty())
-                        {
-                            continue;
-                        }
-                        coord = ellipsecontainer->center();
-                        strings = ellipsecontainer->text().split('\n');
-                        string_index = 1;
-                        for (const QString &string : strings)
-                        {
-                            text_rect = font_metrics.boundingRect(string);
-                            path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
-                                * (strings.length() / 2.0 - string_index++), font, string);
-                        }
-                        break;
-                    default:
-                        break;
                     }
                     data_count = 0;
                     for (const QPolygonF &polygon : path.toSubpathPolygons())
@@ -4144,22 +3894,9 @@ void Canvas::refresh_text_vbo(const bool unitary)
                             }
                         }
                     }
-                    switch (item->type())
+                    if (text != nullptr)
                     {
-                    case Geo::Type::TEXT:
                         glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * text->text_index, sizeof(double) * data_count, data);
-                        break;
-                    case Geo::Type::POLYGON:
-                        glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * container->text_index, sizeof(double) * data_count, data);
-                        break;
-                    case Geo::Type::CIRCLE:
-                        glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * circlecontainer->text_index, sizeof(double) * data_count, data);
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * ellipsecontainer->text_index, sizeof(double) * data_count, data);
-                        break;
-                    default:
-                        break;
                     }
                     path.clear();
                 }
@@ -4185,22 +3922,9 @@ void Canvas::refresh_text_vbo(const bool unitary)
                     }
                 }
             }
-            switch (geo->type())
+            if (dynamic_cast<Text *>(geo) != nullptr)
             {
-            case Geo::Type::TEXT:
                 glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * text->text_index, sizeof(double) * data_count, data);
-                break;
-            case Geo::Type::POLYGON:
-                glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * container->text_index, sizeof(double) * data_count, data);
-                break;
-            case Geo::Type::CIRCLE:
-                glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * circlecontainer->text_index, sizeof(double) * data_count, data);
-                break;
-            case Geo::Type::ELLIPSE:
-                glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * ellipsecontainer->text_index, sizeof(double) * data_count, data);
-                break;
-            default:
-                break;
             }
             path.clear();
         }
