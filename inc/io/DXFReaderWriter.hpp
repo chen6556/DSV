@@ -47,8 +47,10 @@ private:
 
     std::set<std::string> _inserted_blocks;
     std::unordered_map<const Geo::Geometry *, int> _object_map;
-    std::unordered_map<Combination *, int> _block_map1;
+    std::unordered_map<int, Geo::Geometry *> _handle_map;
+    std::unordered_map<Combination *, int> _block_map;
     std::unordered_map<Combination *, std::string> _block_names;
+    std::unordered_map<std::string, Combination *> _block_name_map;
     std::unordered_map<int, int> _handle_pairs; // handle-parentHandle
 
 public:
@@ -260,4 +262,5 @@ public:
     static QString to_dxf_string(const QString &txt);
 
     static QString to_native_string(const QString &txt);
+
 };
