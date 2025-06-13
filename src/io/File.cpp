@@ -236,7 +236,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
             case Geo::Type::TEXT:
                 text = dynamic_cast<const Text *>(geo);
                 output << "PU" << text->center().x * x_ratio << ',' << text->center().y * y_ratio << ";PD";
-                output << ";LB" << text->text().toStdString() << ';' << std::endl;
+                output << ";LB" << QString(text->text()).remove(';').toStdString() << ';' << std::endl;
                 text = nullptr;
                 break;
             case Geo::Type::POLYGON:
@@ -280,7 +280,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     case Geo::Type::TEXT:
                         text = dynamic_cast<const Text *>(geo);
                         output << "PU" << text->center().x * x_ratio << ',' << text->center().y * y_ratio << ";PD";
-                        output << ";LB" << text->text().toStdString() << ';' << std::endl;
+                        output << ";LB" << QString(text->text()).remove(';').toStdString() << ';' << std::endl;
                         text = nullptr;
                         break;
                     case Geo::Type::POLYGON:
