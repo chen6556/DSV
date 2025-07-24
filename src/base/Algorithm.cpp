@@ -2636,7 +2636,7 @@ bool Geo::NoAABBTest::is_intersected(const Geo::AABBRect &rect, const Geo::Geome
 bool Geo::is_on_left(const Point &point, const Point &start, const Point &end)
 {
     return (end.x - start.x) * (point.y - start.y) -
-        (end.y - start.y) * (point.x - end.x) > 0;
+        (end.y - start.y) * (point.x - start.x) > 0;
 }
 
 

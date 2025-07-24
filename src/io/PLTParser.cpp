@@ -510,7 +510,7 @@ void Importer::store_text(const std::string &text)
 
 void Importer::print_symbol(const std::string& str)
 {
-    qDebug() << str;
+    qDebug() << str.c_str();
 }
 
 void Importer::end()
