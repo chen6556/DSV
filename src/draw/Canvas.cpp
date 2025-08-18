@@ -25,13 +25,6 @@ Canvas::~Canvas()
 
 void Canvas::init()
 {
-    QSurfaceFormat format;
-    format.setDepthBufferSize(24);
-    format.setStencilBufferSize(8);
-    format.setSamples(4);
-    format.setProfile(QSurfaceFormat::CoreProfile);
-    setFormat(format);
-
     _cache = new double[_cache_len];
     _input_line.hide();
     _select_rect.clear();
@@ -65,6 +58,7 @@ void Canvas::initializeGL()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_MULTISAMPLE); // 抗锯齿
+    glEnable(GL_POINT_SMOOTH);
     glEnable(GL_LINE_SMOOTH);
     glEnable(GL_POLYGON_SMOOTH);
 
