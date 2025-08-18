@@ -23,6 +23,7 @@ namespace Geo
         bool shape_fixed = false;
         bool is_selected = false;
         unsigned long long point_index = 0;
+        unsigned long long printable_point_index = 0;
         unsigned long long point_count = 0;
         QString name;
 

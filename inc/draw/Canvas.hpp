@@ -31,10 +31,10 @@ private:
     QTextEdit _input_line;
 
     unsigned int _shader_program, _VAO;
-    unsigned int _VBO[6]; //0:points 1:origin and select rect 2:cache 3:text 4:reflines 5:catched point
+    unsigned int _VBO[7]; //0:points 1:origin and select rect 2:cache 3:text 4:reflines 5:catched point 6:printable points
     unsigned int _IBO[4]; //0:polyline 1:polygon 2:selected 3:text
     int _uniforms[5]; // w, h, vec0, vec1, color
-    size_t _points_count = 0;
+    size_t _points_count = 0, _printable_points_count = 0;
     size_t _indexs_count[4] = {0, 0, 0, 0}; //0:polyline 1:polygon 2:selected 3:text
     double *_cache = nullptr;
     size_t _cache_len = 513, _cache_count = 0;
