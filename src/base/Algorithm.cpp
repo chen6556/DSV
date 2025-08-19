@@ -3441,7 +3441,8 @@ bool Geo::offset(const Geo::Polygon &input, Geo::Polygon &result, const double d
     return true;
 }
 
-bool Geo::offset(const Geo::Polygon &input, std::vector<Geo::Polygon> &result, const double distance, const Offset::JoinType join_type, const Offset::EndType end_type)
+bool Geo::offset(const Geo::Polygon &input, std::vector<Geo::Polygon> &result, const double distance,
+    const Offset::JoinType join_type, const Offset::EndType end_type, const double epsilon)
 {
     if (distance == 0)
     {
@@ -3462,6 +3463,7 @@ bool Geo::offset(const Geo::Polygon &input, std::vector<Geo::Polygon> &result, c
     Clipper2Lib::ClipperOffset offsetter;
     offsetter.AddPaths(subject, static_cast<Clipper2Lib::JoinType>(join_type), static_cast<Clipper2Lib::EndType>(end_type));
     offsetter.Execute(distance * 1e8, solution);
+    solution = Clipper2Lib::SimplifyPaths(solution, epsilon);
 
     const size_t count = result.size();
     for (const Clipper2Lib::Path64 &path : solution)

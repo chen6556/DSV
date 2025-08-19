@@ -1,3 +1,4 @@
+#include <QListView>
 #include "ui/Setting.hpp"
 #include "./ui_Setting.h"
 #include "io/GlobalSetting.hpp"
@@ -16,10 +17,17 @@ Setting::~Setting()
 
 void Setting::init()
 {
+    ui->offset_join_type->setView(new QListView(ui->offset_join_type));
+    ui->offset_join_type->view()->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    ui->offset_end_type->setView(new QListView(ui->offset_end_type));
+    ui->offset_end_type->view()->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+
     ui->catch_distance->setValue(GlobalSetting::setting().catch_distance);
     ui->backup_times->setValue(GlobalSetting::setting().backup_times);
     ui->text_size->setValue(GlobalSetting::setting().text_size);
     ui->down_sampling->setValue(GlobalSetting::setting().down_sampling);
+    ui->offset_join_type->setCurrentIndex(GlobalSetting::setting().offset_join_type);
+    ui->offset_end_type->setCurrentIndex(GlobalSetting::setting().offset_end_type);
 
     _text_size = ui->text_size->value();
     _down_sampling_value = ui->down_sampling->value();
@@ -36,6 +44,8 @@ void Setting::accept()
     GlobalSetting::setting().backup_times = ui->backup_times->value();
     GlobalSetting::setting().text_size = ui->text_size->value();
     GlobalSetting::setting().down_sampling = ui->down_sampling->value();
+    GlobalSetting::setting().offset_join_type = ui->offset_join_type->currentIndex();
+    GlobalSetting::setting().offset_end_type = ui->offset_end_type->currentIndex();
 
     GlobalSetting::setting().show_text = ui->show_text->isChecked();
     GlobalSetting::setting().multiple_select = ui->multiple_select->isChecked();

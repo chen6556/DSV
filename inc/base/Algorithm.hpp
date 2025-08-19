@@ -335,7 +335,7 @@ namespace Geo
 
     bool offset(const Polygon &input, std::vector<Polygon> &result, const double distance,
         const Offset::JoinType join_type = Offset::JoinType::Round,
-        const Offset::EndType end_type = Offset::EndType::Polygon);
+        const Offset::EndType end_type = Offset::EndType::Polygon, const double epsilon = 2.0);
 
     bool offset(const Circle &input, Circle &result, const double distance);
 

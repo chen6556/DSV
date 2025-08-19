@@ -16,6 +16,11 @@
     <height>300</height>
    </size>
   </property>
+  <property name="font">
+   <font>
+    <pointsize>10</pointsize>
+   </font>
+  </property>
   <property name="windowTitle">
    <string>Setting</string>
   </property>
@@ -27,6 +32,11 @@ color: rgb(230, 230, 230);}
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QScrollArea" name="scrollArea">
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
+     </property>
      <property name="styleSheet">
       <string notr="true">background-color: rgb(50, 50, 51);
 color: rgb(230, 230, 230);</string>
@@ -52,6 +62,11 @@ color: rgb(230, 230, 230);</string>
         <height>250</height>
        </rect>
       </property>
+      <property name="font">
+       <font>
+        <pointsize>10</pointsize>
+       </font>
+      </property>
       <property name="styleSheet">
        <string notr="true">QCheckBox::indicator
 {
@@ -63,7 +78,38 @@ color: rgb(230, 230, 230);</string>
 QCheckBox::indicator:checked
 {
 	background-color:qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 rgb(255, 255, 255), stop:0.479904 rgb(255, 255, 255) stop:0.522685 rgba(0,0,0,0), stop:1 rgba(0,0,0,0));
-} </string>
+} 
+QSpinBox, QDoubleSpinBox
+{
+	background-color: rgb(70, 70, 71);
+	color: rgb(230, 230, 230);
+}
+QComboBox
+{
+	border:none;
+	padding-left:6;
+	color:rgb(230, 230, 230);
+	background-color:rgb(70, 70, 71);
+}
+QComboBox QAbstractItemView
+{
+	font-size:10pt;
+	background-color:rgb(50, 50 , 51);
+	border:none;
+}
+QComboBox QAbstractItemView::item
+{
+	background-color:rgb(50, 50 , 51);
+	color:rgb(230, 230, 230);
+}
+QComboBox QAbstractItemView::item:hover
+{
+	background-color:rgb(0,  85, 127);
+}
+QComboBox QAbstractItemView::item:selected
+{
+	background-color:rgb(0, 85, 127);
+}</string>
       </property>
       <layout class="QHBoxLayout" name="horizontalLayout">
        <property name="spacing">
@@ -100,6 +146,11 @@ QCheckBox::indicator:checked
              <height>22</height>
             </size>
            </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Catch Distance</string>
            </property>
@@ -123,10 +174,6 @@ QCheckBox::indicator:checked
            </property>
            <property name="contextMenuPolicy">
             <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">background-color: rgb(70, 70, 71);
-color: rgb(230, 230, 230);</string>
            </property>
            <property name="frame">
             <bool>false</bool>
@@ -159,6 +206,11 @@ color: rgb(230, 230, 230);</string>
              <height>22</height>
             </size>
            </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Backup Times</string>
            </property>
@@ -182,10 +234,6 @@ color: rgb(230, 230, 230);</string>
            </property>
            <property name="contextMenuPolicy">
             <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">background-color: rgb(70, 70, 71);
-color: rgb(230, 230, 230);</string>
            </property>
            <property name="frame">
             <bool>false</bool>
@@ -215,6 +263,11 @@ color: rgb(230, 230, 230);</string>
              <height>22</height>
             </size>
            </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Text Size</string>
            </property>
@@ -239,10 +292,6 @@ color: rgb(230, 230, 230);</string>
            <property name="contextMenuPolicy">
             <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
            </property>
-           <property name="styleSheet">
-            <string notr="true">background-color: rgb(70, 70, 71);
-color: rgb(230, 230, 230);</string>
-           </property>
            <property name="frame">
             <bool>false</bool>
            </property>
@@ -265,6 +314,11 @@ color: rgb(230, 230, 230);</string>
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="label_4">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="text">
             <string>Down Sampling</string>
            </property>
@@ -289,10 +343,6 @@ color: rgb(230, 230, 230);</string>
            <property name="contextMenuPolicy">
             <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
            </property>
-           <property name="styleSheet">
-            <string notr="true">background-color: rgb(70, 70, 71);
-color: rgb(230, 230, 230);</string>
-           </property>
            <property name="frame">
             <bool>false</bool>
            </property>
@@ -311,6 +361,99 @@ color: rgb(230, 230, 230);</string>
            <property name="value">
             <double>0.020000000000000</double>
            </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="offsetJoinTypeLabel">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Offset Join Type</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QComboBox" name="offset_join_type">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="contextMenuPolicy">
+            <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
+           </property>
+           <item>
+            <property name="text">
+             <string>Square</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Bevel</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Round</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Miter</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="offsetEndTypeLabel">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Offset End Type</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QComboBox" name="offset_end_type">
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="contextMenuPolicy">
+            <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
+           </property>
+           <item>
+            <property name="text">
+             <string>Polygon</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Joined</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Butt</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Square</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Round</string>
+            </property>
+           </item>
           </widget>
          </item>
         </layout>
@@ -334,6 +477,11 @@ color: rgb(230, 230, 230);</string>
              <height>22</height>
             </size>
            </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="layoutDirection">
             <enum>Qt::LayoutDirection::RightToLeft</enum>
            </property>
@@ -355,6 +503,11 @@ color: rgb(230, 230, 230);</string>
              <width>0</width>
              <height>22</height>
             </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
            </property>
            <property name="layoutDirection">
             <enum>Qt::LayoutDirection::RightToLeft</enum>
@@ -378,6 +531,11 @@ color: rgb(230, 230, 230);</string>
              <height>22</height>
             </size>
            </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
            <property name="layoutDirection">
             <enum>Qt::LayoutDirection::RightToLeft</enum>
            </property>
@@ -399,6 +557,11 @@ color: rgb(230, 230, 230);</string>
              <width>0</width>
              <height>22</height>
             </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
            </property>
            <property name="layoutDirection">
             <enum>Qt::LayoutDirection::RightToLeft</enum>
@@ -437,6 +600,11 @@ color: rgb(230, 230, 230);</string>
        <width>0</width>
        <height>24</height>
       </size>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+      </font>
      </property>
      <property name="contextMenuPolicy">
       <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
