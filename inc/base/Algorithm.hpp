@@ -317,8 +317,6 @@ namespace Geo
 
     std::vector<size_t> ear_cut_to_indexs(const Polygon &polygon);
 
-    std::vector<size_t> ear_cut_to_indexs_test(const Polygon &polygon);
-
     std::vector<MarkedPoint> ear_cut_to_coords(const Polygon &polygon);
 
     std::vector<Point> ear_cut_to_points(const Polygon &polygon);

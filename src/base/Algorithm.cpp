@@ -3078,69 +3078,12 @@ Geo::Polygon Geo::ellipse_to_polygon(const Ellipse &ellipse, const double down_s
 std::vector<size_t> Geo::ear_cut_to_indexs(const Geo::Polygon &polygon)
 {
     std::vector<std::vector<std::array<double, 2>>> points;
-    points.emplace_back(std::vector<std::array<double, 2>>());
+    points.emplace_back();
     for (const Point &point : polygon)
     {
         points.front().emplace_back(std::array<double, 2>({point.x, point.y}));
     }
     return mapbox::earcut<size_t>(points);
-}
-
-std::vector<size_t> Geo::ear_cut_to_indexs_test(const Geo::Polygon &polygon)
-{
-    std::vector<size_t> indexs, ear_indexs;
-    if (polygon.is_cw())
-    {
-        for (size_t i = 0, count = polygon.size() - 1; i < count; ++i)
-        {
-            indexs.push_back(count - i);
-        }
-    }
-    else
-    {
-        for (size_t i = 0, count = polygon.size() - 1; i < count; ++i)
-        {
-            indexs.push_back(i);
-        }
-    }
-
-    bool is_ear;
-    while (indexs.size() > 3)
-    {
-        for (size_t pre, cur, nxt, i = 0, count = indexs.size(); i < count; ++i)
-        {
-            pre = i > 0 ? indexs[i - 1] : indexs[count - 1];
-            cur = indexs[i];
-            nxt = i < count - 1 ? indexs[i + 1] : indexs[0];
-            if ((polygon[cur] - polygon[pre]).cross(polygon[nxt] - polygon[cur]) > 0)
-            {
-                is_ear = true;
-                for (size_t index : indexs)
-                {
-                    if (index == pre || index == cur || index == nxt)
-                    {
-                        continue;
-                    }
-                    if (is_inside(polygon[index], polygon[pre], polygon[cur], polygon[nxt]))
-                    {
-                        is_ear = false;
-                        break;
-                    }
-                }
-                if (is_ear)
-                {
-                    ear_indexs.push_back(pre);
-                    ear_indexs.push_back(cur);
-                    ear_indexs.push_back(nxt);
-                    indexs.erase(indexs.begin() + i--);
-                    --count;
-                }
-            }
-        }
-    }
-
-    ear_indexs.insert(ear_indexs.end(), indexs.begin(), indexs.end());
-    return ear_indexs;
 }
 
 std::vector<Geo::MarkedPoint> Geo::ear_cut_to_coords(const Geo::Polygon &polygon)
