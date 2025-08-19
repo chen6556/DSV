@@ -84,6 +84,14 @@ void GlobalSetting::load_setting()
     {
         this->multiple_select = values.value("multiple_select").toBool();
     }
+    if (values.contains("offset_end_type"))
+    {
+        this->offset_end_type = values.value("offset_end_type").toInt();
+    }
+    if (values.contains("offset_join_type"))
+    {
+        this->offset_join_type = values.value("offset_join_type").toInt();
+    }
     if (values.contains("remember_file_type"))
     {
         this->remember_file_type = values.value("remember_file_type").toBool();
@@ -129,6 +137,8 @@ void GlobalSetting::save_setting()
     values.insert("file_type", this->file_type);
     values.insert("ignore_M19", this->ignore_M19);
     values.insert("multiple_select", this->multiple_select);
+    values.insert("offset_end_type", this->offset_end_type);
+    values.insert("offset_join_type", this->offset_join_type);
     values.insert("remember_file_type", this->remember_file_type);
     values.insert("show_cmd_line", this->show_cmd_line);
     values.insert("show_origin", this->show_origin);

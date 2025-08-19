@@ -4,6 +4,7 @@
 #include <QPolygonF>
 
 #include "base/UndoStack.hpp"
+#include "base/Algorithm.hpp"
 
 
 class Editer
@@ -126,7 +127,9 @@ public:
 
     bool mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy);
 
-    bool offset(std::list<Geo::Geometry *> objects, const double distance);
+    bool offset(std::list<Geo::Geometry *> objects, const double distance,
+        const Geo::Offset::JoinType join_type = Geo::Offset::JoinType::Round,
+        const Geo::Offset::EndType end_type = Geo::Offset::EndType::Polygon);
 
     bool scale(std::list<Geo::Geometry *> objects, const bool unitary, const double k);
 

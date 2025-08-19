@@ -4,6 +4,7 @@
 #include <functional>
 
 #include <EarCut/EarCut.hpp>
+#include <clipper2/clipper.h>
 #include "base/Algorithm.hpp"
 #include "base/Collision.hpp"
 #include "base/Math.hpp"
@@ -3440,278 +3441,39 @@ bool Geo::offset(const Geo::Polygon &input, Geo::Polygon &result, const double d
     return true;
 }
 
-bool Geo::offset_test(const Geo::Polygon &input, Geo::Polygon &result, const double distance)
+bool Geo::offset(const Geo::Polygon &input, std::vector<Geo::Polygon> &result, const double distance, const Offset::JoinType join_type, const Offset::EndType end_type)
 {
     if (distance == 0)
     {
-        result = input;
+        result.emplace_back(input);
         return true;
     }
 
-    Polygon temp(input);
-    temp.reorder_points();
-    result.clear();
-    std::vector<Point> points;
-    Point a, b;
-    std::vector<bool> error_edges;
-    if (distance > 0)
+    std::vector<int64_t> values;
+    for (const Geo::Point &point : input)
     {
-        for (size_t i = 0, count = temp.size(); i < count; ++i)
-        {
-            a = (temp[i] - temp[i > 0 ? i - 1 : count - 2]).vertical().normalize();
-            b = (temp[i < count - 1 ? i + 1 : 1] - temp[i]).vertical().normalize();
-            points.emplace_back(temp[i] + (a + b).normalize() * (distance / std::sqrt((1 + a * b) / 2)));
-        }
-        result.append(points.cbegin(), points.cend());
-
-        for (size_t i = 1, count = result.size(); i < count; ++i)
-        {
-            error_edges.push_back((temp[i] - temp[i - 1]) * (result[i] - result[i - 1]) < 0);
-        }
-        for (size_t i = 0, edge_count = error_edges.size(), point_count = temp.size(),
-                count = result.size(), of = 0, j = 0; i < edge_count; ++i)
-        {
-            if (error_edges[i])
-            {
-                j = i - of++;
-                if (error_edges[(i + 1) % edge_count])
-                {
-                    b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
-                    a.x = a.y = std::numeric_limits<double>::infinity();
-                    Geo::is_intersected(result.last_point(j), result[j],
-                        temp[i] + b, temp.next_point(i) + b, a, true);
-                    if (!std::isinf(a.x) && !std::isinf(a.y))
-                    {
-                        result[j] = a;
-                    }
-                    a.x = a.y = std::numeric_limits<double>::infinity();
-                    Geo::is_intersected(result.next_point(result.next_point_index(j)),
-                        result.next_point(result.next_point_index(result.next_point_index(j))),
-                        temp[i] + b, temp.next_point(i) + b, a, true);
-                    if (!std::isinf(a.x) && !std::isinf(a.y))
-                    {
-                        result.next_point(result.next_point_index(j)) = a;
-                    }
-                    result.remove(result.next_point_index(j));
-                    --count;
-                    ++i;
-                }
-                else
-                {
-                    a.x = a.y = std::numeric_limits<double>::infinity();
-                    if (Geo::is_intersected(result.last_point(j), result[j],
-                        result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
-                    {
-                        if (!std::isinf(a.x) && !std::isinf(a.y))
-                        {
-                            result[j] = a;
-                        }
-                        result.remove(result.next_point_index(j));
-                        --count;
-                    }
-                    else
-                    {
-                        b = (temp[i] - temp.last_point(i)).vertical().normalize() * distance;
-                        Geo::is_intersected(result.next_point(result.next_point_index(j)),
-                            result.next_point(result.next_point_index(result.next_point_index(j))),
-                            temp[i] + b, temp.last_point(i) + b, a, true);
-                        b = (temp.next_point(temp.next_point_index(i)) - temp.next_point(i)).vertical().normalize() * distance;
-                        Geo::is_intersected(result.last_point(j), result.last_point(result.last_point_index(j)),
-                            temp.next_point(i) + b, temp.next_point(temp.next_point_index(i)) + b, b, true);
-
-                        if ((temp.next_point(temp.next_point_index(i)) - temp.last_point(i)) * (a - b) < 0)
-                        {
-                            result.next_point(result.next_point_index(j)) = a;
-                        }
-                        else
-                        {
-                            result.last_point(j) = b;
-                        }
-
-                        size_t temp_index = result.next_point_index(j);
-                        result.remove(temp_index);
-                        --count;
-                        if (temp_index > j)
-                        {
-                            result.remove(j % count--);
-                        }
-                        else
-                        {
-                            result.remove((j - 1) % count--);
-                        }
-                        ++of;
-                    }
-                }
-            }
-        }
-    }
-    else
-    {
-        for (size_t i = 0, count = temp.size(); i < count; ++i)
-        {
-            a = (temp[i] - temp[i > 0 ? i - 1 : count - 2]).vertical().normalize();
-            b = (temp[i < count - 1 ? i + 1 : 1] - temp[i]).vertical().normalize();
-            points.emplace_back(temp[i] + (a + b).normalize() * (distance / std::sqrt((1 + a * b) / 2)));
-        }
-        result.append(points.cbegin(), points.cend());
-
-        for (size_t i = 1, count = result.size(); i < count; ++i)
-        {
-            error_edges.push_back((temp[i] - temp[i - 1]) * (result[i] - result[i - 1]) < 0);
-        }
-        for (size_t i = 0, edge_count = error_edges.size(), point_count = temp.size(),
-                count = result.size(), of = 0, j = 0; i < edge_count; ++i)
-        {
-            if (error_edges[i])
-            {
-                j = i - of++;
-                if (error_edges[(i + 1) % edge_count])
-                {
-                    b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
-                    a.x = a.y = std::numeric_limits<double>::infinity();
-                    Geo::is_intersected(result.last_point(j), result[j],
-                        temp[i] + b, temp.next_point(i) + b, a, true);
-                    if (!std::isinf(a.x) && !std::isinf(a.y))
-                    {
-                        result[j] = a;
-                    }
-                    a.x = a.y = std::numeric_limits<double>::infinity();
-                    Geo::is_intersected(result.next_point(result.next_point_index(j)),
-                        result.next_point(result.next_point_index(result.next_point_index(j))),
-                        temp[i] + b, temp.next_point(i) + b, a, true);
-                    if (!std::isinf(a.x) && !std::isinf(a.y))
-                    {
-                        result.next_point(result.next_point_index(j)) = a;
-                    }
-                    result.remove(result.next_point_index(j));
-                    --count;
-                    ++i;
-                }
-                else
-                {
-                    a.x = a.y = std::numeric_limits<double>::infinity();
-                    if (Geo::is_intersected(result.last_point(j), result[j],
-                        result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
-                    {
-                        if (!std::isinf(a.x) && !std::isinf(a.y))
-                        {
-                            result[j] = a;
-                        }
-                        result.remove(result.next_point_index(j));
-                        --count;
-                    }
-                    else
-                    {
-                        b = (temp[i] - temp.last_point(i)).vertical().normalize() * distance;
-                        Geo::is_intersected(result.next_point(result.next_point_index(j)),
-                            result.next_point(result.next_point_index(result.next_point_index(j))),
-                            temp[i] + b, temp.last_point(i) + b, a, true);
-                        b = (temp.next_point(temp.next_point_index(i)) - temp.next_point(i)).vertical().normalize() * distance;
-                        Geo::is_intersected(result.last_point(j), result.last_point(result.last_point_index(j)),
-                            temp.next_point(i) + b, temp.next_point(temp.next_point_index(i)) + b, b, true);
-
-                        if ((temp.next_point(temp.next_point_index(i)) - temp.last_point(i)) * (a - b) < 0)
-                        {
-                            result.next_point(result.next_point_index(j)) = a;
-                        }
-                        else
-                        {
-                            result.last_point(j) = b;
-                        }
-
-                        size_t temp_index = result.next_point_index(j);
-                        result.remove(temp_index);
-                        --count;
-                        if (temp_index > j)
-                        {
-                            result.remove(j % count--);
-                        }
-                        else
-                        {
-                            result.remove((j - 1) % count--);
-                        }
-                        ++of;
-                    }
-                }
-            }
-        }
+        values.push_back(point.x * 100'000'000);
+        values.push_back(point.y * 100'000'000);
     }
 
-    for (size_t i = 0, count = result.size(); i < count; ++i)
-    {
-        if (std::isnan(result[i].x) || std::isnan(result[i].y)
-            || std::isinf(result[i].x) || std::isinf(result[i].y))
-        {
-            result.remove(i--);
-            --count;
-        }
-    }
-    result.back() = result.front();
+    Clipper2Lib::Paths64 subject;
+    subject.push_back(Clipper2Lib::MakePath(values));
+    Clipper2Lib::Paths64 solution;
+    Clipper2Lib::ClipperOffset offsetter;
+    offsetter.AddPaths(subject, static_cast<Clipper2Lib::JoinType>(join_type), static_cast<Clipper2Lib::EndType>(end_type));
+    offsetter.Execute(distance * 1e8, solution);
 
-    std::vector<Polygon> polygons;
-    if (result.is_self_intersected() && Geo::merge_ear_cut_triangles(Geo::ear_cut_to_triangles(result), polygons))
+    const size_t count = result.size();
+    for (const Clipper2Lib::Path64 &path : solution)
     {
-        std::sort(polygons.begin(), polygons.end(),
-            [](const Polygon &a, const Polygon &b) { return a.area() < b.area(); });
-        temp = polygons.back();
-        polygons.pop_back();
-        bool flag;
-        std::vector<Polygon> polygons2;
-        while (!polygons.empty())
+        std::vector<Geo::Point> points;
+        for (const Clipper2Lib::Point64 &point : path)
         {
-            flag = true;
-            for (size_t i = 0, count = polygons.size(); i < count; ++i)
-            {
-                if (Geo::polygon_union(temp, polygons[i], polygons2))
-                {
-                    if (polygons2.size() > 1)
-                    {
-                        temp = *std::max_element(polygons2.begin(), polygons2.end(), 
-                            [](const Polygon &a, const Polygon &b) { return a.area() < b.area(); });
-                    }
-                    else
-                    {
-                        temp = polygons2.front();
-                    }
-                    polygons.erase(polygons.begin() + i);
-                    polygons2.clear();
-                    flag = false;
-                    break;
-                }
-            }
-            if (flag)
-            {
-                break;
-            }
+            points.emplace_back(point.x / 1e8, point.y / 1e8);
         }
-
-        if (!temp.is_self_intersected())
-        {
-            result = temp;
-        }
+        result.emplace_back(points.begin(), points.end());
     }
-
-    for (size_t i = 0, count = result.size() - 1; i < count; ++i)
-    {
-        if (Geo::is_inside(result[i], result[i + 1], result.next_point(i + 1))
-            && Geo::is_inside(result[i + 1], result[i], result.last_point(i)))
-        {
-            result.remove(i + 1);
-            result.remove(i--);
-            --count;
-            --count;
-        }
-    }
-    for (size_t i = 0, count = result.size(); i < count; ++i)
-    {
-        if (Geo::is_inside(result[i], result.last_point(i), result.next_point(i)))
-        {
-            result.remove(i--);
-            --count;
-        }
-    }
-
-    return true;
+    return result.size() > count;
 }
 
 bool Geo::offset(const Geo::Circle &input, Geo::Circle &result, const double distance)

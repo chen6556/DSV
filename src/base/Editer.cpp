@@ -1,5 +1,4 @@
 #include "base/Editer.hpp"
-#include "base/Algorithm.hpp"
 #include "io/GlobalSetting.hpp"
 
 
@@ -1854,14 +1853,12 @@ bool Editer::mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *lin
     return true;
 }
 
-bool Editer::offset(std::list<Geo::Geometry *> objects, const double distance)
+bool Editer::offset(std::list<Geo::Geometry *> objects, const double distance, const Geo::Offset::JoinType join_type, const Geo::Offset::EndType end_type)
 {
     const size_t count = _graph->container_group(_current_group).size();
     Geo::Polygon *polygon = nullptr;
     Geo::Circle *circle = nullptr;
     Geo::Ellipse *ellipse = nullptr;
-    Geo::Polygon shape0;
-    Geo::Polyline shape1;
     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> items;
     size_t index = count;
     for (Geo::Geometry *object : objects)
@@ -1870,10 +1867,13 @@ bool Editer::offset(std::list<Geo::Geometry *> objects, const double distance)
         {
         case Geo::Type::POLYGON:
             polygon = dynamic_cast<Geo::Polygon *>(object);
-            if (Geo::offset(*polygon, shape0, distance))
+            if (std::vector<Geo::Polygon> result; Geo::offset(*polygon, result, distance, join_type, end_type))
             {
-                _graph->append(new Geo::Polygon(shape0), _current_group);
-                items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
+                for (const Geo::Polygon &shape0 : result)
+                {
+                    _graph->append(new Geo::Polygon(shape0), _current_group);
+                    items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
+                }
             }
             break;
         case Geo::Type::CIRCLE:
@@ -1896,7 +1896,7 @@ bool Editer::offset(std::list<Geo::Geometry *> objects, const double distance)
             }
             break;
         case Geo::Type::POLYLINE:
-            if (Geo::offset(*dynamic_cast<const Geo::Polyline *>(object), shape1, distance))
+            if (Geo::Polyline shape1; Geo::offset(*dynamic_cast<const Geo::Polyline *>(object), shape1, distance))
             {
                 _graph->append(shape1.clone(), _current_group);
                 items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);

@@ -39,6 +39,8 @@ public:
 
     int backup_times = 50;
     int text_size = 16;
+    int offset_join_type = 2;
+    int offset_end_type = 0;
 
     double catch_distance = 2.0;
     double down_sampling = 0.02;

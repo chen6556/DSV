@@ -734,7 +734,9 @@ void MainWindow::scale()
 
 void MainWindow::offset()
 {
-    if (_editer.offset(_editer.selected(), ui->offset_sbx->value()))
+    if (_editer.offset(_editer.selected(), ui->offset_sbx->value(),
+        static_cast<Geo::Offset::JoinType>(GlobalSetting::setting().offset_join_type),
+        static_cast<Geo::Offset::EndType>(GlobalSetting::setting().offset_end_type)))
     {
         ui->canvas->refresh_vbo();
         ui->canvas->update();
