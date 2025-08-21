@@ -31,7 +31,7 @@ void CMDWidget::init()
         << "CONNECT" << "CLOSE" << "COMBINATE" << "SPLIT"
         << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "POINTMIRROR"
         << "ARRAY" << "LINEARRAY" << "RINGARRAY"
-        << "UNION" << "INTERSECTION" << "DIFFERENCE"
+        << "UNION" << "INTERSECTION" << "DIFFERENCE" << "XOR"
         << "OFFSET" << "SCALE" << "FILLET" << "ABSOLUTE" << "RELATIVE"
         << "DELETE" << "COPY" << "CUT" << "PASTE" << "UNDO" << "ALL";
 
@@ -46,6 +46,7 @@ void CMDWidget::init()
         {"ARRAY",CMD::Array_CMD}, {"LINEARRAY",CMD::LineArray_CMD}, {"RINGARRAY",CMD::RingArray_CMD},
         {"OFFSET",CMD::Offset_CMD}, {"SCALE", CMD::Scale_CMD}, {"FILLET",CMD::Fillet_CMD},
         {"UNION",CMD::Union_CMD}, {"INTERSECTION",CMD::Intersection_CMD}, {"DIFFERENCE",CMD::Difference_CMD},
+        {"XOR",CMD::XOR_CMD},
         {"DELETE",CMD::Delete_CMD}, {"COPY",CMD::Copy_CMD}, {"CUT",CMD::Cut_CMD}, {"PASTE",CMD::Paste_CMD},
         {"UNDO",CMD::Undo_CMD}, {"ALL",CMD::SelectAll_CMD}};
 
@@ -375,6 +376,34 @@ bool CMDWidget::work()
         emit cmd_changed(_current_cmd);
         _current_cmd = CMD::Error_CMD;
         ui->cmd_label->setText("Difference");
+        break;
+    case CMD::XOR_CMD:
+        {
+            Geo::Polygon *polygon0 = nullptr, *polygon1 = nullptr;
+            for (Geo::Geometry *object : _editer->selected())
+            {
+                if (object->type() == Geo::Type::POLYGON)
+                {
+                    if (polygon0 == nullptr)
+                    {
+                        polygon0 = dynamic_cast<Geo::Polygon *>(object);
+                    }
+                    else
+                    {
+                        polygon1 = dynamic_cast<Geo::Polygon *>(object);
+                        break;
+                    }
+                }
+            }
+
+            if (_editer->polygon_xor(polygon0, polygon1))
+            {
+                _canvas->refresh_vbo();
+                _canvas->refresh_selected_ibo();
+                _canvas->update();
+            }
+        }
+        _current_cmd = CMD::Error_CMD;
         break;
 
     case CMD::SelectAll_CMD:

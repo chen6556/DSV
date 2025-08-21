@@ -23,7 +23,7 @@ public:
         Connect_CMD, Close_CMD, Combinate_CMD, Split_CMD, Rotate_CMD, FlipX_CMD, FlipY_CMD,
         Mirror_CMD, Array_CMD, LineArray_CMD, RingArray_CMD,
         Offset_CMD, Scale_CMD, Fillet_CMD,
-        Union_CMD, Intersection_CMD, Difference_CMD,
+        Union_CMD, Intersection_CMD, Difference_CMD, XOR_CMD,
         Delete_CMD, Copy_CMD, Cut_CMD, Paste_CMD, Undo_CMD, SelectAll_CMD};
 
     enum class SETTING {Absolute_SETTING, Relative_SETTING};
