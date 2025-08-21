@@ -347,6 +347,8 @@ namespace Geo
 
     bool polygon_difference(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output);
 
+    bool polygon_xor(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output);
+
     bool merge_ear_cut_triangles(const std::vector<Triangle> &triangles, std::vector<Polygon> &polygons);
 
     void down_sampling(Geo::Polyline &points, const double distance);

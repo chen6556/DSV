@@ -139,6 +139,8 @@ public:
 
     bool polygon_difference(Geo::Polygon *shape0, const Geo::Polygon *shape1); 
 
+    bool polygon_xor(Geo::Polygon *shape0, Geo::Polygon *shape1); 
+
     bool fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius);
 
     bool fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius);

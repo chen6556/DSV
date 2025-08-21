@@ -116,6 +116,8 @@ private slots:
 
     void polygon_difference();
 
+    void polygon_xor();
+
 
     void fillet();
 

@@ -2005,8 +2005,7 @@ bool Editer::polygon_union(Geo::Polygon *shape0, Geo::Polygon *shape1)
         return false;
     }
 
-    std::vector<Geo::Polygon> shapes;
-    if (Geo::polygon_union(*shape0, *shape1, shapes))
+    if (std::vector<Geo::Polygon> shapes; Geo::polygon_union(*shape0, *shape1, shapes))
     {
         ContainerGroup &group = _graph->container_group(_current_group);
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
@@ -2052,8 +2051,7 @@ bool Editer::polygon_intersection(Geo::Polygon *shape0, Geo::Polygon *shape1)
         return false;
     }
 
-    std::vector<Geo::Polygon> shapes;
-    if (Geo::polygon_intersection(*shape0, *shape1, shapes))
+    if (std::vector<Geo::Polygon> shapes; Geo::polygon_intersection(*shape0, *shape1, shapes))
     {
         ContainerGroup &group = _graph->container_group(_current_group);
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
@@ -2099,13 +2097,58 @@ bool Editer::polygon_difference(Geo::Polygon *shape0, const Geo::Polygon *shape1
         return false;
     }
 
-    std::vector<Geo::Polygon> shapes;
-    if (Geo::polygon_difference(*shape0, *shape1, shapes))
+    if (std::vector<Geo::Polygon> shapes; Geo::polygon_difference(*shape0, *shape1, shapes))
     {
         ContainerGroup &group = _graph->container_group(_current_group);
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
         size_t index0 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape0));
         remove_items.emplace_back(shape0, _current_group, index0);
+        group.pop(index0);
+
+        if (index0 == group.size())
+        {
+            group.append(new Geo::Polygon(shapes.front()));
+        }
+        else
+        {
+            group.insert(index0, new Geo::Polygon(shapes.front()));
+        }
+        add_items.emplace_back(group[index0], _current_group, index0);
+
+        index0 = group.size();
+        for (size_t i = 1, count = shapes.size(); i < count; ++i)
+        {
+            group.append(new Geo::Polygon(shapes[i]));
+            add_items.emplace_back(group.back(), _current_group, index0++);
+        }
+
+        _graph->modified = true;
+        _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Editer::polygon_xor(Geo::Polygon *shape0, Geo::Polygon *shape1)
+{
+    if (shape0 == nullptr || shape1 == nullptr || shape0 == shape1)
+    {
+        return false;
+    }
+
+    if (std::vector<Geo::Polygon> shapes; Geo::polygon_xor(*shape0, *shape1, shapes))
+    {
+        ContainerGroup &group = _graph->container_group(_current_group);
+        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+        size_t index0 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape0));
+        size_t index1 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape1));
+        remove_items.emplace_back(shape0, _current_group, index0);
+        remove_items.emplace_back(shape1, _current_group, index1);
+        group.pop(index1);
         group.pop(index0);
 
         if (index0 == group.size())

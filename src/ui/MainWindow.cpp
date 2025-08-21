@@ -831,6 +831,34 @@ void MainWindow::polygon_difference()
     ui->canvas->set_operation(Canvas::Operation::PolygonDifference);
 }
 
+void MainWindow::polygon_xor()
+{
+    Geo::Polygon *polygon0 = nullptr, *polygon1 = nullptr;
+    for (Geo::Geometry *object : _editer.selected())
+    {
+        if (dynamic_cast<Geo::Polygon *>(object) == nullptr)
+        {
+            continue;
+        }
+        if (polygon0 == nullptr)
+        {
+            polygon0 = dynamic_cast<Geo::Polygon *>(object);
+        }
+        else
+        {
+            polygon1 = dynamic_cast<Geo::Polygon *>(object);
+            break;
+        }
+    }
+
+    if (_editer.polygon_xor(polygon0, polygon1))
+    {
+        ui->canvas->refresh_vbo();
+        ui->canvas->refresh_selected_ibo();
+        ui->canvas->update();
+    }
+}
+
 
 
 void MainWindow::fillet()
