@@ -480,9 +480,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             case Operation::NoOperation:
                 if (event->modifiers() == Qt::AltModifier)
                 {
-                    std::vector<Geo::Geometry *> &objs = _editer->selected();
                     double left = DBL_MAX, top = -DBL_MAX, right = -DBL_MAX, bottom = DBL_MAX;
-                    for (Geo::Geometry *obj : objs)
+                    for (Geo::Geometry *obj : _editer->selected())
                     {
                         Geo::AABBRect rect = obj->bounding_rect();
                         left = std::min(left, rect.left());
@@ -505,8 +504,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
             const bool reset = !(GlobalSetting::setting().multiple_select || event->modifiers() == Qt::ControlModifier);
             _clicked_obj = _editer->select(real_x1, real_y1, reset);
-            std::vector<Geo::Geometry *> &selected_objs = _editer->selected();
-            if (_clicked_obj == nullptr)
+            if (std::vector<Geo::Geometry *> selected_objs = _editer->selected(); _clicked_obj == nullptr)
             {
                 _editer->reset_selected_mark();
                 _indexs_count[2] = 0;

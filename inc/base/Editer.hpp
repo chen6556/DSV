@@ -15,7 +15,6 @@ private:
     std::vector<Geo::Point> _point_cache;
     UndoStack::CommandStack _backup;
     std::vector<Geo::Geometry *> _paste_table;
-    std::vector<Geo::Geometry *> _selected_cache;
     size_t _current_group = 0;
     double _view_ratio = 1.0;
 
@@ -62,13 +61,11 @@ public:
 
     Geo::Geometry *select(const double x, const double y, const bool reset_others = true);
 
-    const std::vector<Geo::Geometry *> &selected() const;
-
-    std::vector<Geo::Geometry *> &selected();
+    std::vector<Geo::Geometry *> selected() const;
 
     const size_t selected_count() const;
 
-    std::vector<Geo::Geometry *> &select(const Geo::AABBRect &rect);
+    std::vector<Geo::Geometry *> select(const Geo::AABBRect &rect);
 
     void reset_selected_mark(const bool value = false);
 
