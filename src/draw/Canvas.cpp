@@ -142,13 +142,20 @@ void Canvas::paintGL()
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]); // polyline
         glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
         glDrawElements(GL_LINE_STRIP, _indexs_count[0], GL_UNSIGNED_INT, NULL);
-    }
 
-    if (_indexs_count[2] > 0) // selected
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
-        glUniform4f(_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
-        glDrawElements(GL_LINE_STRIP, _indexs_count[2], GL_UNSIGNED_INT, NULL);
+        if (_indexs_count[1] > 0) // polygon
+        {
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]); // polygon
+            glUniform4f(_uniforms[4], 0.831372f, 0.843137f, 0.850980f, 0.078431f); // color 绘制填充色
+            glDrawElements(GL_TRIANGLES, _indexs_count[1], GL_UNSIGNED_INT, NULL);
+        }
+
+        if (_indexs_count[2] > 0) // selected
+        {
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
+            glUniform4f(_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
+            glDrawElements(GL_LINE_STRIP, _indexs_count[2], GL_UNSIGNED_INT, NULL);
+        }
     }
 
     if (_editer->point_cache().empty() && _cache_count > 0) // cache
@@ -202,35 +209,14 @@ void Canvas::paintGL()
 
     if (!_reflines.empty()) // reflines
     {
-        int i = 0;
-        for (const QLineF &line : _reflines)
-        {
-            _refline_points[i++] = line.p1().x();
-            _refline_points[i++] = line.p1().y();
-            _refline_points[i++] = 0.51;
-            _refline_points[i++] = line.p2().x();
-            _refline_points[i++] = line.p2().y();
-            _refline_points[i++] = 0.51;
-        }
         glBindBuffer(GL_ARRAY_BUFFER, _VBO[4]); // reflines
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
-        glBufferSubData(GL_ARRAY_BUFFER, 0, i * sizeof(double), _refline_points);
 
         glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
         glLineWidth(2.0f);
-        glDrawArrays(GL_LINES, 0, i / 3);
+        glDrawArrays(GL_LINES, 0, _reflines.size() * 2);
         glLineWidth(1.4f);
-    }
-
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
-    glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
-    glEnableVertexAttribArray(0);
-    if (_indexs_count[1] > 0) // polygon
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[1]); // polygon
-        glUniform4f(_uniforms[4], 0.831372f, 0.843137f, 0.850980f, 0.078431f); // color 绘制填充色
-        glDrawElements(GL_TRIANGLES, _indexs_count[1], GL_UNSIGNED_INT, NULL);
     }
 
     if (GlobalSetting::setting().show_points)
@@ -264,17 +250,9 @@ void Canvas::paintGL()
             glDrawArrays(GL_POINTS, 0, _cache_count / 3);
         }
     }
-    else if (_AABBRect_cache.width() > 0 && _AABBRect_cache.height() > 0)
+    else if (!_AABBRect_cache.empty() && _AABBRect_cache[0] != _AABBRect_cache[2])
     {
-        for (int i = 0; i < 4; ++i)
-        {
-            _cache[i * 3] = _AABBRect_cache[i].x;
-            _cache[i * 3 + 1] = _AABBRect_cache[i].y;
-            _cache[i * 3 + 2] = 0;
-        }
-
         glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-        glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), _cache);
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
@@ -286,46 +264,9 @@ void Canvas::paintGL()
     }
     else if (!_circle_cache.empty())
     {
-        _circle_cache.update_shape(Geo::Circle::default_down_sampling_value);
-        const Geo::Polygon &points = _circle_cache.shape();
-        _cache_count = _cache_len;
-        while (_cache_len < points.size() * 3)
-        {
-            _cache_len *= 2;
-        }
-        if (_cache_count < _cache_len)
-        {
-            _cache_len *= 2;
-            delete []_cache;
-            _cache = new double[_cache_len];
-            _cache_count = 0;
-            for (const Geo::Point &point : points)
-            {
-                _cache[_cache_count++] = point.x;
-                _cache[_cache_count++] = point.y;
-                _cache[_cache_count++] = 0;
-            }
-
-            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-            glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
-            glEnableVertexAttribArray(0);
-            glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_STREAM_DRAW);
-        }
-        else
-        {
-            _cache_count = 0;
-            for (const Geo::Point &point : points)
-            {
-                _cache[_cache_count++] = point.x;
-                _cache[_cache_count++] = point.y;
-                _cache[_cache_count++] = 0;
-            }
-            
-            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-            glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
-            glEnableVertexAttribArray(0);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
-        }
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
+        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glEnableVertexAttribArray(0);
 
         glUniform4f(_uniforms[4], 0.831372f, 0.843137f, 0.850980f, 0.078431f); // color 绘制填充色
         glDrawArrays(GL_TRIANGLE_FAN, 0, _cache_count / 3);
@@ -336,46 +277,9 @@ void Canvas::paintGL()
     }
     else if (!_ellipse_cache.empty())
     {
-        _ellipse_cache.update_shape(Geo::Ellipse::default_down_sampling_value);
-        const Geo::Polygon &points = _ellipse_cache.shape();
-        _cache_count = _cache_len;
-        while (_cache_len < points.size() * 3)
-        {
-            _cache_len *= 2;
-        }
-        if (_cache_count < _cache_len)
-        {
-            _cache_len *= 2;
-            delete []_cache;
-            _cache = new double[_cache_len];
-            _cache_count = 0;
-            for (const Geo::Point &point : points)
-            {
-                _cache[_cache_count++] = point.x;
-                _cache[_cache_count++] = point.y;
-                _cache[_cache_count++] = 0;
-            }
-
-            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-            glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
-            glEnableVertexAttribArray(0);
-            glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_STREAM_DRAW);
-        }
-        else
-        {
-            _cache_count = 0;
-            for (const Geo::Point &point : points)
-            {
-                _cache[_cache_count++] = point.x;
-                _cache[_cache_count++] = point.y;
-                _cache[_cache_count++] = 0;
-            }
-            
-            glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-            glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
-            glEnableVertexAttribArray(0);
-            glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
-        }
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
+        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glEnableVertexAttribArray(0);
 
         glUniform4f(_uniforms[4], 0.831372f, 0.843137f, 0.850980f, 0.078431f); // color 绘制填充色
         glDrawArrays(GL_TRIANGLE_FAN, 0, _cache_count / 3);
@@ -399,35 +303,26 @@ void Canvas::paintGL()
         glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 0.549f); // color
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]); // origin and select rect
-    glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
-    glEnableVertexAttribArray(0);
-
-    if (_bool_flags[7]) // origin
+    if (_bool_flags[7] || (!_select_rect.empty() && _select_rect[0] != _select_rect[2]))
     {
-        glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 画原点
-        glDrawArrays(GL_LINES, 0, 4);
-    }
-
-    if (!_select_rect.empty())
-    {
-        double data[12];
-        for (int i = 0; i < 4; ++i)
-        {
-            data[i * 3] = _select_rect[i].x;
-            data[i * 3 + 1] = _select_rect[i].y;
-            data[i * 3 + 2] = 0;
-        }
-        
-        glBufferSubData(GL_ARRAY_BUFFER, 12 * sizeof(double), 12 * sizeof(double), data);
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]); // origin and select rect
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        glUniform4f(_uniforms[4], 0.0f, 0.47f, 0.843f, 0.1f); // color
-        glDrawArrays(GL_POLYGON, 4, 4);
+        if (_bool_flags[7]) // origin
+        {
+            glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 画原点
+            glDrawArrays(GL_LINES, 0, 4);
+        }
 
-        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 0.549f); // color
-        glDrawArrays(GL_LINE_LOOP, 4, 4);
+        if (!_select_rect.empty() && _select_rect[0] != _select_rect[2])
+        {
+            glUniform4f(_uniforms[4], 0.0f, 0.47f, 0.843f, 0.1f); // color
+            glDrawArrays(GL_POLYGON, 4, 4);
+
+            glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 0.549f); // color
+            glDrawArrays(GL_LINE_LOOP, 4, 4);
+        }
     }
 }
 
@@ -457,6 +352,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 if (!is_painting()) // not painting
                 {
                     _circle_cache = Geo::Circle(real_x1, real_y1, 10);
+                    refresh_circle_cache_vbo();
                 }
                 else
                 {
@@ -475,6 +371,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 if (!is_painting()) // not painting
                 {
                     _ellipse_cache = Geo::Ellipse(real_x1, real_y1, 10, 10);
+                    refresh_ellipse_cache_vbo();
                     _last_point.x = _stored_coord.x = real_x1;
                     _last_point.y = _stored_coord.y = real_y1;
                     _bool_flags[2] = true; // painting
@@ -488,6 +385,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         {
                             _ellipse_cache.rotate(_stored_coord.x, _stored_coord.y, Geo::angle(_mouse_press_pos, _stored_coord));
                         }
+                        _ellipse_cache.update_shape(Geo::Ellipse::default_down_sampling_value);
+                        refresh_ellipse_cache_vbo();
                         _last_point.x += 1;
                     }
                     else
@@ -536,6 +435,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _last_point.x = real_x1;
                     _last_point.y = real_y1;
                     _AABBRect_cache = Geo::AABBRect(real_x1, real_y1, real_x1 + 2, real_y1 + 2);
+                    refresh_AABBRect_cache_vbo();
                 }
                 else
                 {
@@ -1051,6 +951,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         {
         case Tool::Circle:
             _circle_cache.radius = Geo::distance(real_x1, real_y1, _circle_cache.x, _circle_cache.y);
+            _circle_cache.update_shape(Geo::Circle::default_down_sampling_value);
+            refresh_circle_cache_vbo();
             _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius)).c_str());
             break;
         case Tool::Ellipse:
@@ -1064,6 +966,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             {
                 _ellipse_cache.set_lengthb(Geo::distance(real_x1, real_y1, _stored_coord.x, _stored_coord.y));
             }
+            _ellipse_cache.update_shape(Geo::Ellipse::default_down_sampling_value);
+            refresh_ellipse_cache_vbo();
             break;
         case Tool::Polyline:
             if (event->modifiers() == Qt::ControlModifier)
@@ -1117,12 +1021,14 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                         _AABBRect_cache = Geo::AABBRect(_last_point.x - width, _last_point.y - width, _last_point.x, _last_point.y);
                     }
                 }
+                refresh_AABBRect_cache_vbo();
                 _info_labels[1]->setText(std::string("Width:").append(std::to_string(width))
                     .append(" Height:").append(std::to_string(width)).c_str());
             }
             else
             {
                 _AABBRect_cache = Geo::AABBRect(_last_point.x, _last_point.y, real_x1, real_y1);
+                refresh_AABBRect_cache_vbo();
                 _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.x)))
                     .append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.y))).c_str());
             }
@@ -1305,6 +1211,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 if (_editer->auto_aligning(_pressed_obj, real_x1, real_y1, _reflines, true))
                 {
                     refresh_selected_vbo();
+                    refresh_reflines_vbo();
                 }
             }
             _info_labels[1]->clear();
@@ -1312,6 +1219,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         else if (!_select_rect.empty())
         {
             _select_rect = Geo::AABBRect(_last_point.x, _last_point.y, real_x1, real_y1);
+            refresh_select_rect_vbo();
             if (!_editer->select(_select_rect).empty())
             {
                 refresh_selected_ibo();
@@ -1384,7 +1292,10 @@ void Canvas::wheelEvent(QWheelEvent *event)
     _editer->set_view_ratio(_ratio);
 
     _reflines.clear();
-    _editer->auto_aligning(_pressed_obj, _reflines);
+    if (_editer->auto_aligning(_pressed_obj, _reflines))
+    {
+        refresh_reflines_vbo();
+    }
 }
 
 void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
@@ -1939,6 +1850,7 @@ void Canvas::rect_cmd(const double x, const double y)
         _AABBRect_cache = Geo::AABBRect(x, y,
             _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6],
             _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
+        refresh_AABBRect_cache_vbo();
     }
     _bool_flags[2] = !_bool_flags[2]; // painting
 }
@@ -1961,6 +1873,7 @@ void Canvas::rect_cmd()
         _last_point.y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
         _AABBRect_cache = Geo::AABBRect(_last_point.x, _last_point.y,
             _last_point.x + 2, _last_point.y + 2);
+        refresh_AABBRect_cache_vbo();
     }
     _bool_flags[2] = !_bool_flags[2]; // painting
 }
@@ -1978,6 +1891,7 @@ void Canvas::circle_cmd(const double x, const double y)
     {
         _circle_cache = Geo::Circle(x, y, 10);
     }
+    refresh_circle_cache_vbo();
     _bool_flags[2] = !_bool_flags[2]; // painting
     update();
 }
@@ -2023,6 +1937,8 @@ void Canvas::ellipse_cmd(const double x, const double y)
         _ellipse_cache.set_lengtha(10);
         _ellipse_cache.set_lengthb(10);
     }
+    _ellipse_cache.update_shape(Geo::Ellipse::default_down_sampling_value);
+    refresh_ellipse_cache_vbo();
     _stored_coord.x = _last_point.x = x;
     _stored_coord.y = _last_point.y = y;
     _bool_flags[2] = true; // painting
@@ -2037,6 +1953,8 @@ void Canvas::ellipse_cmd(const double x, const double y, const double rad, const
     _ellipse_cache.set_lengtha(a);
     _ellipse_cache.set_lengthb(b);
     _ellipse_cache.rotate(_ellipse_cache.center().x, _ellipse_cache.center().y, rad);
+    _ellipse_cache.update_shape(Geo::Ellipse::default_down_sampling_value);
+    refresh_ellipse_cache_vbo();
     _last_point.x = x + 1;
     _stored_coord.x = x;
     _stored_coord.y = y;
@@ -3988,6 +3906,141 @@ void Canvas::refresh_cache_vbo(const unsigned int count)
             glBufferSubData(GL_ARRAY_BUFFER, (_cache_count - count) * sizeof(double), count * sizeof(double), &_cache[_cache_count - count]);
         }
     }
+    doneCurrent();
+}
+
+void Canvas::refresh_AABBRect_cache_vbo()
+{
+    for (int i = 0; i < 4; ++i)
+    {
+        _cache[i * 3] = _AABBRect_cache[i].x;
+        _cache[i * 3 + 1] = _AABBRect_cache[i].y;
+        _cache[i * 3 + 2] = 0;
+    }
+    makeCurrent();
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
+    glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), _cache);
+    doneCurrent();
+}
+
+void Canvas::refresh_reflines_vbo()
+{
+    int i = 0;
+    for (const QLineF &line : _reflines)
+    {
+        _refline_points[i++] = line.p1().x();
+        _refline_points[i++] = line.p1().y();
+        _refline_points[i++] = 0.51;
+        _refline_points[i++] = line.p2().x();
+        _refline_points[i++] = line.p2().y();
+        _refline_points[i++] = 0.51;
+    }
+
+    makeCurrent();
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[4]); // reflines
+    glBufferSubData(GL_ARRAY_BUFFER, 0, i * sizeof(double), _refline_points);
+    doneCurrent();
+}
+
+void Canvas::refresh_circle_cache_vbo()
+{
+    const Geo::Polygon &points = _circle_cache.shape();
+    _cache_count = _cache_len;
+    while (_cache_len < points.size() * 3)
+    {
+        _cache_len *= 2;
+    }
+    if (_cache_count < _cache_len)
+    {
+        _cache_len *= 2;
+        delete []_cache;
+        _cache = new double[_cache_len];
+        _cache_count = 0;
+        for (const Geo::Point &point : points)
+        {
+            _cache[_cache_count++] = point.x;
+            _cache[_cache_count++] = point.y;
+            _cache[_cache_count++] = 0;
+        }
+
+        makeCurrent();
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
+        glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_STREAM_DRAW);
+        doneCurrent();
+    }
+    else
+    {
+        _cache_count = 0;
+        for (const Geo::Point &point : points)
+        {
+            _cache[_cache_count++] = point.x;
+            _cache[_cache_count++] = point.y;
+            _cache[_cache_count++] = 0;
+        }
+        
+        makeCurrent();
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
+        glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
+        doneCurrent();
+    }
+}
+
+void Canvas::refresh_ellipse_cache_vbo()
+{
+    const Geo::Polygon &points = _ellipse_cache.shape();
+    _cache_count = _cache_len;
+    while (_cache_len < points.size() * 3)
+    {
+        _cache_len *= 2;
+    }
+    if (_cache_count < _cache_len)
+    {
+        _cache_len *= 2;
+        delete []_cache;
+        _cache = new double[_cache_len];
+        _cache_count = 0;
+        for (const Geo::Point &point : points)
+        {
+            _cache[_cache_count++] = point.x;
+            _cache[_cache_count++] = point.y;
+            _cache[_cache_count++] = 0;
+        }
+
+        makeCurrent();
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
+        glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_STREAM_DRAW);
+        doneCurrent();
+    }
+    else
+    {
+        _cache_count = 0;
+        for (const Geo::Point &point : points)
+        {
+            _cache[_cache_count++] = point.x;
+            _cache[_cache_count++] = point.y;
+            _cache[_cache_count++] = 0;
+        }
+
+        makeCurrent();
+        glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
+        glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
+        doneCurrent();
+    }
+}
+
+void Canvas::refresh_select_rect_vbo()
+{
+    double data[12];
+    for (int i = 0; i < 4; ++i)
+    {
+        data[i * 3] = _select_rect[i].x;
+        data[i * 3 + 1] = _select_rect[i].y;
+        data[i * 3 + 2] = 0;
+    }
+
+    makeCurrent();
+    glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]); // origin and select rect
+    glBufferSubData(GL_ARRAY_BUFFER, 12 * sizeof(double), 12 * sizeof(double), data);
     doneCurrent();
 }
 

@@ -228,6 +228,16 @@ public:
 
     void refresh_cache_vbo(const unsigned int count);
 
+    void refresh_AABBRect_cache_vbo();
+
+    void refresh_reflines_vbo();
+
+    void refresh_circle_cache_vbo();
+
+    void refresh_ellipse_cache_vbo();
+
+    void refresh_select_rect_vbo();
+
     void clear_cache();
 
     void refresh_selected_ibo();
