@@ -67,7 +67,7 @@ private:
     Geo::Point _last_point;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
     Geo::Geometry *_pressed_obj = nullptr;
-    std::list<Geo::Geometry *> _object_cache;
+    std::vector<Geo::Geometry *> _object_cache;
 
     QMenu *_menu = nullptr;
     QAction *_up = nullptr;

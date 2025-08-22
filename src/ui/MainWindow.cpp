@@ -674,7 +674,7 @@ void MainWindow::combinate()
 
 void MainWindow::rotate()
 {
-    std::list<Geo::Geometry *> objects = _editer.selected();
+    std::vector<Geo::Geometry *> &objects = _editer.selected();
     _editer.rotate(objects, ui->rotate_angle->value(), QApplication::keyboardModifiers() != Qt::ControlModifier, ui->to_all_layers->isChecked());
     ui->canvas->refresh_vbo(objects.empty());
     if (objects.size() == 1)
@@ -687,7 +687,7 @@ void MainWindow::rotate()
 
 void MainWindow::flip_x()
 {
-    std::list<Geo::Geometry *> objects = _editer.selected();
+    std::vector<Geo::Geometry *> &objects = _editer.selected();
     _editer.flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier, ui->to_all_layers->isChecked());
     ui->canvas->refresh_vbo(objects.empty());
     if (objects.size() == 1)
@@ -700,7 +700,7 @@ void MainWindow::flip_x()
 
 void MainWindow::flip_y()
 {
-    std::list<Geo::Geometry *> objects = _editer.selected();
+    std::vector<Geo::Geometry *> &objects = _editer.selected();
     _editer.flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier, ui->to_all_layers->isChecked());
     ui->canvas->refresh_vbo(objects.empty());
     if (objects.size() == 1)
@@ -719,7 +719,7 @@ void MainWindow::mirror()
 
 void MainWindow::scale()
 {
-    if (std::list<Geo::Geometry *> objects = _editer.selected();
+    if (std::vector<Geo::Geometry *> &objects = _editer.selected();
         _editer.scale(objects, QApplication::keyboardModifiers() != Qt::ControlModifier, ui->scale_sbx->value()))
     {
         ui->canvas->refresh_vbo();

@@ -272,7 +272,7 @@ bool CMDWidget::work()
         break;
     case CMD::FlipX_CMD:
         {
-            std::list<Geo::Geometry *> objects = _editer->selected();
+            std::vector<Geo::Geometry *> &objects = _editer->selected();
             _editer->flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
             _canvas->refresh_vbo(objects.empty());
             _canvas->update();
@@ -281,7 +281,7 @@ bool CMDWidget::work()
         break;
     case CMD::FlipY_CMD:
         {
-            std::list<Geo::Geometry *> objects = _editer->selected();
+            std::vector<Geo::Geometry *> &objects = _editer->selected();
             _editer->flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
             _canvas->refresh_vbo(objects.empty());
             _canvas->update();
@@ -864,7 +864,7 @@ void CMDWidget::rotate()
         break;
     case 2:
         {
-            std::list<Geo::Geometry *> objects = _editer->selected();
+            std::vector<Geo::Geometry *> &objects = _editer->selected();
             GlobalSetting::setting().ui->rotate_angle->setValue(_parameters[1]);
             _editer->rotate(objects, _parameters[1], QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
             _canvas->refresh_vbo(objects.empty());

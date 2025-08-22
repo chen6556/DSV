@@ -70,8 +70,6 @@ namespace UndoStack
     public:
         TranslateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y);
 
-        TranslateCommand(std::list<Geo::Geometry *>::const_iterator begin, std::list<Geo::Geometry *>::const_iterator end, const double x, const double y);
-
         TranslateCommand(Geo::Geometry *object, const double x, const double y);
 
         void undo(Graph *graph = nullptr) override;
@@ -86,8 +84,6 @@ namespace UndoStack
 
     public:
         TransformCommand(const std::vector<Geo::Geometry *> &objects, const double mat[6]);
-
-        TransformCommand(std::list<Geo::Geometry *>::const_iterator begin, std::list<Geo::Geometry *>::const_iterator end, const double mat[6]);
 
         TransformCommand(Geo::Geometry *object, const double mat[6]);
 
@@ -118,9 +114,6 @@ namespace UndoStack
     public:
         RotateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad, const bool unitary);
 
-        RotateCommand(std::list<Geo::Geometry *>::const_iterator begin, std::list<Geo::Geometry *>::const_iterator end,
-            const double x, const double y, const double rad, const bool unitary);
-
         RotateCommand(Geo::Geometry *object, const double x, const double y, const double rad);
 
         void undo(Graph *graph = nullptr) override;
@@ -136,9 +129,6 @@ namespace UndoStack
 
     public:
         ScaleCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double k, const bool unitary);
-
-        ScaleCommand(std::list<Geo::Geometry *>::const_iterator begin, std::list<Geo::Geometry *>::const_iterator end,
-            const double x, const double y, const double rad, const bool unitary);
 
         ScaleCommand(Geo::Geometry *object, const double x, const double y, const double k);
 
@@ -175,9 +165,6 @@ namespace UndoStack
 
     public:
         FlipCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const bool direction, const bool unitary);
-
-        FlipCommand(std::list<Geo::Geometry *>::const_iterator begin, std::list<Geo::Geometry *>::const_iterator end,
-            const double x, const double y, const bool direction, const bool unitary);
 
         FlipCommand(Geo::Geometry *object, const double x, const double y, const bool direction);
 

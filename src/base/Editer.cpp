@@ -43,6 +43,7 @@ void Editer::init()
 
         _backup.clear();
         _backup.set_graph(_graph);
+        _selected_cache.clear();
     }
 }
 
@@ -165,7 +166,11 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             t = dynamic_cast<Text *>(*it);
             if (Geo::distance_square(point, dynamic_cast<const Geo::AABBRect *>(t)->center()) <= catch_distance * catch_distance * 120)
             {
-                t->is_selected = true;
+                if (!t->is_selected)
+                {
+                    t->is_selected = true;
+                    _selected_cache.push_back(t);
+                }
                 return t;
             }
             break;
@@ -173,14 +178,22 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             polygon = dynamic_cast<Geo::Polygon *>(*it);
             if (Geo::is_inside(point, *polygon, true))
             {
-                polygon->is_selected = true;
+                if (!polygon->is_selected)
+                {
+                    polygon->is_selected = true;
+                    _selected_cache.push_back(polygon);
+                }
                 return polygon;
             }
             for (size_t i = 1, count = polygon->size(); i < count; ++i)
             {
                 if (Geo::distance_square(point, (*polygon)[i], (*polygon)[i - 1]) <= catch_distance * catch_distance)
                 {
-                    polygon->is_selected = true;
+                    if (!polygon->is_selected)
+                    {
+                        polygon->is_selected = true;
+                        _selected_cache.push_back(polygon);
+                    }
                     return polygon;
                 }
             }
@@ -190,7 +203,11 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             circle = dynamic_cast<Geo::Circle *>(*it);
             if (Geo::distance_square(point, *circle) <= std::pow(catch_distance + circle->radius, 2))
             {
-                circle->is_selected = true;
+                if (!circle->is_selected)
+                {
+                    circle->is_selected = true;
+                    _selected_cache.push_back(circle);
+                }
                 return circle;
             }
             circle = nullptr;
@@ -200,7 +217,11 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             if (Geo::distance(ellipse->c0(), point) + Geo::distance(ellipse->c1(), point)
                     <= catch_distance + std::max(ellipse->lengtha(), ellipse->lengthb()) * 2)
             {
-                ellipse->is_selected = true;
+                if (!ellipse->is_selected)
+                {
+                    ellipse->is_selected = true;
+                    _selected_cache.push_back(ellipse);
+                }
                 return ellipse;
             }
             ellipse = nullptr;
@@ -216,28 +237,44 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     case Geo::Type::TEXT:
                         if (Geo::distance_square(point, dynamic_cast<const Geo::AABBRect *>(item)->center()) <= catch_distance * catch_distance * 100)
                         {
-                            cb->is_selected = true;
+                            if (!cb->is_selected)
+                            {
+                                cb->is_selected = true;
+                                _selected_cache.push_back(cb);
+                            }
                             return cb;
                         }
                         break;
                     case Geo::Type::POLYGON:
                         if (Geo::is_inside(point, *dynamic_cast<Geo::Polygon *>(item), true))
                         {
-                            cb->is_selected = true;
+                            if (!cb->is_selected)
+                            {
+                                cb->is_selected = true;
+                                _selected_cache.push_back(cb);
+                            }
                             return cb;
                         }
                         break;
                     case Geo::Type::CIRCLE:
                         if (Geo::is_inside(point, *dynamic_cast<Geo::Circle *>(item), true))
                         {
-                            cb->is_selected = true;
+                            if (!cb->is_selected)
+                            {
+                                cb->is_selected = true;
+                                _selected_cache.push_back(cb);
+                            }
                             return cb;
                         }
                         break;
                     case Geo::Type::ELLIPSE:
                         if (Geo::is_inside(point, *dynamic_cast<Geo::Ellipse *>(item), true))
                         {
-                            cb->is_selected = true;
+                            if (!cb->is_selected)
+                            {
+                                cb->is_selected = true;
+                                _selected_cache.push_back(cb);
+                            }
                             return cb;
                         }
                         break;
@@ -247,7 +284,11 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         {
                             if (Geo::distance_square(point, (*p)[i - 1], (*p)[i]) <= catch_distance * catch_distance)
                             {
-                                cb->is_selected = true;
+                                if (!cb->is_selected)
+                                {
+                                    cb->is_selected = true;
+                                    _selected_cache.push_back(cb);
+                                }
                                 return cb;
                             }
                         }
@@ -259,7 +300,11 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         {
                             if (Geo::distance_square(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance * catch_distance)
                             {
-                                cb->is_selected = true;
+                                if (!cb->is_selected)
+                                {
+                                    cb->is_selected = true;
+                                    _selected_cache.push_back(cb);
+                                }
                                 return cb;
                             }
                         }
@@ -271,7 +316,11 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         {
                             if (Geo::distance_square(point, bs->shape()[i - 1], bs->shape()[i]) <= catch_distance * catch_distance)
                             {
-                                cb->is_selected = true;
+                                if (!cb->is_selected)
+                                {
+                                    cb->is_selected = true;
+                                    _selected_cache.push_back(cb);
+                                }
                                 return cb;
                             }
                         }
@@ -290,7 +339,11 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             {
                 if (Geo::distance_square(point, (*p)[i - 1], (*p)[i]) <= catch_distance * catch_distance)
                 {
-                    p->is_selected = true;
+                    if (!p->is_selected)
+                    {
+                        p->is_selected = true;
+                        _selected_cache.push_back(p);
+                    }
                     return p;
                 }
             }
@@ -312,7 +365,11 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             {
                 if (Geo::distance_square(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance * catch_distance)
                 {
-                    b->is_selected = true;
+                    if (!b->is_selected)
+                    {
+                        b->is_selected = true;
+                        _selected_cache.push_back(b);
+                    }
                     return b;
                 }
             }
@@ -334,7 +391,11 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             {
                 if (Geo::distance_square(point, bs->shape()[i - 1], bs->shape()[i]) <= catch_distance * catch_distance)
                 {
-                    bs->is_selected = true;
+                    if (!bs->is_selected)
+                    {
+                        bs->is_selected = true;
+                        _selected_cache.push_back(bs);
+                    }
                     return bs;
                 }
             }
@@ -353,14 +414,14 @@ Geo::Geometry *Editer::select(const double x, const double y, const bool reset_o
     return select(Geo::Point(x, y), reset_others);
 }
 
-std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
+std::vector<Geo::Geometry *> &Editer::select(const Geo::AABBRect &rect)
 {
-    std::vector<Geo::Geometry *> result;
     if (rect.empty() || _graph == nullptr || _graph->empty())
     {
-        return result;
+        return _selected_cache;
     }
 
+    _selected_cache.clear();
     for (Geo::Geometry *container : _graph->container_group(_current_group))
     {
         switch (container->type())
@@ -369,7 +430,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
             if (Geo::is_inside(dynamic_cast<const Geo::AABBRect *>(container)->center(), rect))
             {
                 container->is_selected = true;
-                result.push_back(container);
+                _selected_cache.push_back(container);
             }
             else
             {
@@ -380,7 +441,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
             if (Geo::is_intersected(rect, *dynamic_cast<Geo::Polygon *>(container)))
             {
                 container->is_selected = true;
-                result.push_back(container);
+                _selected_cache.push_back(container);
             }
             else
             {
@@ -391,7 +452,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
             if (Geo::is_intersected(rect, *dynamic_cast<Geo::Circle *>(container)))
             {
                 container->is_selected = true;
-                result.push_back(container);
+                _selected_cache.push_back(container);
             }
             else
             {
@@ -402,7 +463,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
             if (Geo::is_intersected(rect, *dynamic_cast<Geo::Ellipse *>(container)))
             {
                 container->is_selected = true;
-                result.push_back(container);
+                _selected_cache.push_back(container);
             }
             else
             {
@@ -470,7 +531,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
                 if (end)
                 {
                     container->is_selected = true;
-                    result.push_back(container);
+                    _selected_cache.push_back(container);
                 }
                 else
                 {
@@ -482,7 +543,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
             if (Geo::is_intersected(rect, *dynamic_cast<Geo::Polyline *>(container)))
             {
                 container->is_selected = true;
-                result.push_back(container);
+                _selected_cache.push_back(container);
             }
             else
             {
@@ -493,7 +554,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
             if (Geo::is_intersected(rect, dynamic_cast<Geo::Bezier *>(container)->shape()))
             {
                 container->is_selected = true;
-                result.push_back(container);
+                _selected_cache.push_back(container);
             }
             else
             {
@@ -504,7 +565,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
             if (Geo::is_intersected(rect, dynamic_cast<Geo::BSpline *>(container)->shape()))
             {
                 container->is_selected = true;
-                result.push_back(container);
+                _selected_cache.push_back(container);
             }
             else
             {
@@ -516,26 +577,17 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
         }
     }
 
-    return result;
+    return _selected_cache;
 }
 
-std::list<Geo::Geometry *> Editer::selected() const
+const std::vector<Geo::Geometry *> &Editer::selected() const
 {
-    std::list<Geo::Geometry *> result;
-    if (_graph == nullptr || _graph->empty())
-    {
-        return result;
-    }
+    return _selected_cache;
+}
 
-    for (Geo::Geometry *container : _graph->container_group(_current_group))
-    {
-        if (container->is_selected)
-        {
-            result.push_back(container);
-        }
-    }
-
-    return result;
+std::vector<Geo::Geometry *> &Editer::selected()
+{
+    return _selected_cache;
 }
 
 const size_t Editer::selected_count() const
@@ -560,6 +612,7 @@ void Editer::reset_selected_mark(const bool value)
     {
         container->is_selected = value;
     }
+    _selected_cache.clear();
 }
 
 void Editer::undo()
@@ -1253,7 +1306,7 @@ bool Editer::paste(const double tx, const double ty)
     return true;
 }
 
-bool Editer::connect(std::list<Geo::Geometry *> objects, const double connect_distance)
+bool Editer::connect(std::vector<Geo::Geometry *> objects, const double connect_distance)
 {
     if (_graph == nullptr || objects.empty())
     {
@@ -1654,7 +1707,7 @@ bool Editer::connect(std::list<Geo::Geometry *> objects, const double connect_di
     return true;
 }
 
-bool Editer::close_polyline(std::list<Geo::Geometry *> objects)
+bool Editer::close_polyline(std::vector<Geo::Geometry *> objects)
 {
     if (_graph == nullptr || objects.empty())
     {
@@ -1723,7 +1776,7 @@ bool Editer::close_polyline(std::list<Geo::Geometry *> objects)
     }
 }
 
-bool Editer::combinate(std::list<Geo::Geometry *> objects)
+bool Editer::combinate(std::vector<Geo::Geometry *> objects)
 {
     if (_graph == nullptr || objects.size() < 2)
     {
@@ -1773,7 +1826,7 @@ bool Editer::combinate(std::list<Geo::Geometry *> objects)
     return true;
 }
 
-bool Editer::split(std::list<Geo::Geometry *> objects)
+bool Editer::split(std::vector<Geo::Geometry *> objects)
 {
     if (_graph == nullptr || objects.empty())
     {
@@ -1809,7 +1862,7 @@ bool Editer::split(std::list<Geo::Geometry *> objects)
     return true;
 }
 
-bool Editer::mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy)
+bool Editer::mirror(std::vector<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy)
 {
     if (objects.empty() || line->type() != Geo::Type::POLYLINE)
     {
@@ -1845,7 +1898,7 @@ bool Editer::mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *lin
             obj->transform(mat);
             obj->is_selected = true;
         }
-        _backup.push_command(new UndoStack::TransformCommand(objects.begin(), objects.end(), mat));
+        _backup.push_command(new UndoStack::TransformCommand(objects, mat));
     }
 
     _graph->modified = true;
@@ -1853,7 +1906,7 @@ bool Editer::mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *lin
     return true;
 }
 
-bool Editer::offset(std::list<Geo::Geometry *> objects, const double distance, const Geo::Offset::JoinType join_type, const Geo::Offset::EndType end_type)
+bool Editer::offset(std::vector<Geo::Geometry *> objects, const double distance, const Geo::Offset::JoinType join_type, const Geo::Offset::EndType end_type)
 {
     const size_t count = _graph->container_group(_current_group).size();
     Geo::Polygon *polygon = nullptr;
@@ -1906,6 +1959,7 @@ bool Editer::offset(std::list<Geo::Geometry *> objects, const double distance, c
             break;
         }
         object->is_selected = false;
+        _selected_cache.erase(std::find(_selected_cache.begin(), _selected_cache.end(), object));
     }
 
     if (count == _graph->container_group(_current_group).size())
@@ -1920,7 +1974,7 @@ bool Editer::offset(std::list<Geo::Geometry *> objects, const double distance, c
     }
 }
 
-bool Editer::scale(std::list<Geo::Geometry *> objects, const bool unitary, const double k)
+bool Editer::scale(std::vector<Geo::Geometry *> objects, const bool unitary, const double k)
 {
     if (objects.empty() || k == 0 || k == 1)
     {
@@ -1939,6 +1993,7 @@ bool Editer::scale(std::list<Geo::Geometry *> objects, const bool unitary, const
             if (object->type() == Geo::Type::TEXT)
             {
                 object->is_selected = false;
+                _selected_cache.erase(std::find(_selected_cache.begin(), _selected_cache.end(), object));
             }
             else
             {
@@ -1965,7 +2020,7 @@ bool Editer::scale(std::list<Geo::Geometry *> objects, const bool unitary, const
             }
         }
 
-        _backup.push_command(new UndoStack::ScaleCommand(objects.begin(), objects.end(), x, y, k, unitary));
+        _backup.push_command(new UndoStack::ScaleCommand(objects, x, y, k, unitary));
     }
     else
     {
@@ -1976,6 +2031,7 @@ bool Editer::scale(std::list<Geo::Geometry *> objects, const bool unitary, const
             if (object->type() == Geo::Type::TEXT)
             {
                 object->is_selected = false;
+                _selected_cache.erase(std::find(_selected_cache.begin(), _selected_cache.end(), object));
             }
             else
             {
@@ -1990,7 +2046,7 @@ bool Editer::scale(std::list<Geo::Geometry *> objects, const bool unitary, const
             return false;
         }
 
-        _backup.push_command(new UndoStack::ScaleCommand(objects.begin(), objects.end(), 0, 0, k, unitary));
+        _backup.push_command(new UndoStack::ScaleCommand(objects, 0, 0, k, unitary));
     }
     
     _graph->modified = true;
@@ -2249,7 +2305,7 @@ bool Editer::fillet(Geo::Polyline *polyline, const Geo::Point &point, const doub
     }
 }
 
-bool Editer::line_array(std::list<Geo::Geometry *> objects, int x, int y, double x_space, double y_space)
+bool Editer::line_array(std::vector<Geo::Geometry *> objects, int x, int y, double x_space, double y_space)
 {
     if (objects.empty() || x == 0 || y == 0 || (x == 1 && y == 1))
     {
@@ -2306,7 +2362,7 @@ bool Editer::line_array(std::list<Geo::Geometry *> objects, int x, int y, double
     return true;
 }
 
-bool Editer::ring_array(std::list<Geo::Geometry *> objects, const double x, const double y, const int n)
+bool Editer::ring_array(std::vector<Geo::Geometry *> objects, const double x, const double y, const int n)
 {
     if (n <= 1 || objects.empty())
     {
@@ -2364,7 +2420,7 @@ void Editer::down(Geo::Geometry *item)
     }
 }
 
-void Editer::rotate(std::list<Geo::Geometry *> objects, const double angle, const bool unitary, const bool all_layers)
+void Editer::rotate(std::vector<Geo::Geometry *> objects, const double angle, const bool unitary, const bool all_layers)
 {
     const double rad = angle * Geo::PI / 180;
     Geo::Point coord;
@@ -2454,10 +2510,10 @@ void Editer::rotate(std::list<Geo::Geometry *> objects, const double angle, cons
     }
 
     _graph->modified = true;
-    _backup.push_command(new UndoStack::RotateCommand(objects.begin(), objects.end(), coord.x, coord.y, rad, unitary));
+    _backup.push_command(new UndoStack::RotateCommand(objects, coord.x, coord.y, rad, unitary));
 }
 
-void Editer::flip(std::list<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers)
+void Editer::flip(std::vector<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers)
 {
     Geo::Point coord;
     if (objects.empty())
@@ -2612,7 +2668,7 @@ void Editer::flip(std::list<Geo::Geometry *> objects, const bool direction, cons
     }
 
     _graph->modified = true;
-    _backup.push_command(new UndoStack::FlipCommand(objects.begin(), objects.end(), coord.x, coord.y, direction, unitary));
+    _backup.push_command(new UndoStack::FlipCommand(objects, coord.x, coord.y, direction, unitary));
 }
 
 

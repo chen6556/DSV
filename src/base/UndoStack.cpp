@@ -122,9 +122,6 @@ void ObjectCommand::undo(Graph *graph)
 TranslateCommand::TranslateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y)
     : _items(objects), _dx(x), _dy(y) {}
 
-TranslateCommand::TranslateCommand(std::list<Geo::Geometry *>::const_iterator begin, std::list<Geo::Geometry *>::const_iterator end,
-    const double x, const double y) : _items(begin, end), _dx(x), _dy(y) {}
-
 TranslateCommand::TranslateCommand(Geo::Geometry *object, const double x, const double y)
     : _items({object}), _dx(x), _dy(y) {}
 
@@ -141,16 +138,6 @@ void TranslateCommand::undo(Graph *graph)
 // TransformCommand
 TransformCommand::TransformCommand(const std::vector<Geo::Geometry *> &objects, const double mat[6])
     : _items(objects)
-{
-    const double k = mat[0] * mat[4] - mat[1] * mat[3];
-    _invmat[0] = mat[4] / k, _invmat[1] = -mat[1] / k;
-    _invmat[2] = (mat[1] * mat[5] - mat[2] * mat[4]) / k;
-    _invmat[3] = -mat[3] / k, _invmat[4] = mat[0] / k;
-    _invmat[5] = (mat[2] * mat[3] - mat[0] * mat[5]) / k;
-}
-
-TransformCommand::TransformCommand(std::list<Geo::Geometry *>::const_iterator begin, std::list<Geo::Geometry *>::const_iterator end, const double mat[6])
-    : _items(begin, end)
 {
     const double k = mat[0] * mat[4] - mat[1] * mat[3];
     _invmat[0] = mat[4] / k, _invmat[1] = -mat[1] / k;
@@ -261,9 +248,6 @@ void ChangeShapeCommand::undo(Graph *graph)
 RotateCommand::RotateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad, const bool unitary)
     : _items(objects), _x(x), _y(y), _rad(rad), _unitary(unitary) {}
 
-RotateCommand::RotateCommand(std::list<Geo::Geometry *>::const_iterator begin, std::list<Geo::Geometry *>::const_iterator end,
-    const double x, const double y, const double rad, const bool unitary) : _items(begin, end), _x(x), _y(y), _rad(rad), _unitary(unitary) {}
-
 RotateCommand::RotateCommand(Geo::Geometry *object, const double x, const double y, const double rad)
     : _items({object}), _x(x), _y(y), _rad(rad), _unitary(true) {}
 
@@ -291,9 +275,6 @@ void RotateCommand::undo(Graph *graph)
 // ScaleCommand
 ScaleCommand::ScaleCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double k, const bool unitary)
     : _items(objects), _x(x), _y(y), _k(k), _unitary(unitary) {}
-
-ScaleCommand::ScaleCommand(std::list<Geo::Geometry *>::const_iterator begin, std::list<Geo::Geometry *>::const_iterator end,
-    const double x, const double y, const double k, const bool unitary) : _items(begin, end), _x(x), _y(y), _k(k), _unitary(unitary) {}
 
 ScaleCommand::ScaleCommand(Geo::Geometry *object, const double x, const double y, const double k)
     : _items({object}), _x(x), _y(y), _k(k), _unitary(true) {}
@@ -394,10 +375,6 @@ void CombinateCommand::undo(Graph *graph)
 // FlipCommand
 FlipCommand::FlipCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const bool direction, const bool unitary)
     : _items(objects), _x(x), _y(y), _direction(direction), _unitary(unitary) {}
-
-FlipCommand::FlipCommand(std::list<Geo::Geometry *>::const_iterator begin, std::list<Geo::Geometry *>::const_iterator end,
-    const double x, const double y, const bool direction, const bool unitary)
-    : _items(begin, end), _x(x), _y(y), _direction(direction), _unitary(unitary) {}
 
 FlipCommand::FlipCommand(Geo::Geometry *object, const double x, const double y, const bool direction)
     : _items({object}), _x(x), _y(y), _direction(direction), _unitary(true) {}

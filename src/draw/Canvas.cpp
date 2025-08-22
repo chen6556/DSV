@@ -131,78 +131,6 @@ void Canvas::resizeGL(int w, int h)
 void Canvas::paintGL()
 {
     glUseProgram(_shader_program);
-    if (!_select_rect.empty())
-    {
-        _editer->select(_select_rect);
-        size_t index_len = 512, index_count = 0;
-        unsigned int *indexs = new unsigned int[index_len];
-        for (const Geo::Geometry *obj : _editer->selected())
-        {
-            switch (obj->type())
-            {
-            case Geo::Type::TEXT:
-                continue;
-            case Geo::Type::COMBINATION:
-                for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
-                {
-                    if (item->type() == Geo::Type::TEXT)
-                    {
-                        continue;
-                    }
-                    for (size_t index = item->point_index, i = 0, count = item->point_count; i < count; ++i)
-                    {
-                        indexs[index_count++] = index++;
-                        if (index_count == index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::move(indexs, indexs + index_count, temp);
-                            delete []indexs;
-                            indexs = temp;
-                        }
-                    }
-                    indexs[index_count++] = UINT_MAX;
-                    if (index_count == index_len)
-                    {
-                        index_len *= 2;
-                        unsigned int *temp = new unsigned int[index_len];
-                        std::move(indexs, indexs + index_count, temp);
-                        delete []indexs;
-                        indexs = temp;
-                    }
-                }
-                break;
-            default:
-                for (size_t index = obj->point_index, i = 0, count = obj->point_count; i < count; ++i)
-                {
-                    indexs[index_count++] = index++;
-                    if (index_count == index_len)
-                    {
-                        index_len *= 2;
-                        unsigned int *temp = new unsigned int[index_len];
-                        std::move(indexs, indexs + index_count, temp);
-                        delete []indexs;
-                        indexs = temp;
-                    }
-                }
-                indexs[index_count++] = UINT_MAX;
-                if (index_count == index_len)
-                {
-                    index_len *= 2;
-                    unsigned int *temp = new unsigned int[index_len];
-                    std::move(indexs, indexs + index_count, temp);
-                    delete []indexs;
-                    indexs = temp;
-                }
-                break;
-            }
-        }
-        _indexs_count[2] = index_count;
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[2]); // selected
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
-        delete []indexs;
-    }
-
     glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
     if (_indexs_count[0] > 0) // polyline
@@ -651,7 +579,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             case Operation::NoOperation:
                 if (event->modifiers() == Qt::AltModifier)
                 {
-                    std::list<Geo::Geometry *> objs = _editer->selected();
+                    std::vector<Geo::Geometry *> &objs = _editer->selected();
                     double left = DBL_MAX, top = -DBL_MAX, right = -DBL_MAX, bottom = DBL_MAX;
                     for (Geo::Geometry *obj : objs)
                     {
@@ -676,7 +604,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
             const bool reset = !(GlobalSetting::setting().multiple_select || event->modifiers() == Qt::ControlModifier);
             _clicked_obj = _editer->select(real_x1, real_y1, reset);
-            std::list<Geo::Geometry *> selected_objs = _editer->selected();
+            std::vector<Geo::Geometry *> &selected_objs = _editer->selected();
             if (_clicked_obj == nullptr)
             {
                 _editer->reset_selected_mark();
@@ -1027,11 +955,8 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
             {
             case Operation::Rotate:
                 _operation = Operation::NoOperation;
-                {
-                    const std::list<Geo::Geometry *> objs = _editer->selected();
-                    _editer->push_backup_command(new UndoStack::RotateCommand(objs.begin(), objs.end(), 
-                        _stored_coord.x, _stored_coord.y, Geo::degree_to_rad(_refline_points[0]), true));
-                }
+                _editer->push_backup_command(new UndoStack::RotateCommand(_editer->selected(),
+                    _stored_coord.x, _stored_coord.y, Geo::degree_to_rad(_refline_points[0]), true));
                 emit operation_changed(Operation::NoOperation);
                 setCursor(Qt::CursorShape::CrossCursor);
                 break;
@@ -1039,13 +964,13 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
                 break;
             }
 
-            const std::list<Geo::Geometry *> objects = _editer->selected();
-            if (!objects.empty() && GlobalSetting::setting().translated_points && _mouse_press_pos != _mouse_release_pos)
+            if (const std::vector<Geo::Geometry *> &objects = _editer->selected(); 
+                !objects.empty() && GlobalSetting::setting().translated_points && _mouse_press_pos != _mouse_release_pos)
             {
                 GlobalSetting::setting().translated_points = false;
                 if (_editer->edited_shape().empty())
                 {
-                    _editer->push_backup_command(new UndoStack::TranslateCommand(objects.begin(), objects.end(),
+                    _editer->push_backup_command(new UndoStack::TranslateCommand(objects,
                         _mouse_release_pos.x - _mouse_press_pos.x, _mouse_release_pos.y - _mouse_press_pos.y));
                 }
                 else
@@ -1280,7 +1205,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             {
                 _bool_flags[6] = true; // is moving obj
             }
-            const std::list<Geo::Geometry *> selected_objects = _editer->selected();
+            const std::vector<Geo::Geometry *> &selected_objects = _editer->selected();
             if (selected_objects.size() == 1)
             {
                 bool update_vbo = false;
@@ -1387,6 +1312,10 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         else if (!_select_rect.empty())
         {
             _select_rect = Geo::AABBRect(_last_point.x, _last_point.y, real_x1, real_y1);
+            if (!_editer->select(_select_rect).empty())
+            {
+                refresh_selected_ibo();
+            }
             _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.x)))
                 .append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.y))).c_str());
         }
@@ -4073,30 +4002,87 @@ void Canvas::refresh_selected_ibo()
     size_t index_len = 512, index_count = 0, count = 0;
     unsigned int *indexs = new unsigned int[index_len];
 
-    for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
+    for (const Geo::Geometry *geo : _editer->selected())
     {
-        if (!group.visible())
+        bool visible = true;
+        for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
+        {
+            if (std::find(group.begin(), group.end(), geo) != group.end())
+            {
+                visible = group.visible();
+                break;
+            }
+        }
+        if (!visible)
         {
             continue;
         }
 
-        for (const Geo::Geometry *geo : group)
+        ++count;
+        switch (geo->type())
         {
-            if (!geo->is_selected)
+        case Geo::Type::POLYGON:
+        case Geo::Type::CIRCLE:
+        case Geo::Type::ELLIPSE:
+        case Geo::Type::POLYLINE:
+        case Geo::Type::BEZIER:
+        case Geo::Type::BSPLINE:
+            for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                continue;
+                indexs[index_count++] = index++;
+                if (index_count == index_len)
+                {
+                    index_len *= 2;
+                    unsigned int *temp = new unsigned int[index_len];
+                    std::move(indexs, indexs + index_count, temp);
+                    delete []indexs;
+                    indexs = temp;
+                }
             }
-
-            ++count;
-            switch (geo->type())
+            indexs[index_count++] = UINT_MAX;
+            if (index_count == index_len)
             {
-            case Geo::Type::POLYGON:
-            case Geo::Type::CIRCLE:
-            case Geo::Type::ELLIPSE:
-            case Geo::Type::POLYLINE:
-            case Geo::Type::BEZIER:
-            case Geo::Type::BSPLINE:
-                for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
+                index_len *= 2;
+                unsigned int *temp = new unsigned int[index_len];
+                std::move(indexs, indexs + index_count, temp);
+                delete []indexs;
+                indexs = temp;
+            }
+            if (count == 1)
+            {
+                _cache_count = 0;
+                switch (geo->type())
+                {
+                case Geo::Type::BEZIER:
+                    for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(geo))
+                    {
+                        _cache[_cache_count++] = point.x;
+                        _cache[_cache_count++] = point.y;
+                        _cache[_cache_count++] = 0.5;
+                        check_cache();
+                    }
+                    break;
+                case Geo::Type::BSPLINE:
+                    for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(geo)->path_points)
+                    {
+                        _cache[_cache_count++] = point.x;
+                        _cache[_cache_count++] = point.y;
+                        _cache[_cache_count++] = 0.5;
+                        check_cache();
+                    }
+                default:
+                    break;
+                }
+            }
+            break;
+        case Geo::Type::COMBINATION:
+            for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+            {
+                if (item->type() == Geo::Type::TEXT)
+                {
+                    continue;
+                }
+                for (size_t index = item->point_index, i = 0, count = item->point_count; i < count; ++i)
                 {
                     indexs[index_count++] = index++;
                     if (index_count == index_len)
@@ -4117,66 +4103,10 @@ void Canvas::refresh_selected_ibo()
                     delete []indexs;
                     indexs = temp;
                 }
-                if (count == 1)
-                {
-                    _cache_count = 0;
-                    switch (geo->type())
-                    {
-                    case Geo::Type::BEZIER:
-                        for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(geo))
-                        {
-                            _cache[_cache_count++] = point.x;
-                            _cache[_cache_count++] = point.y;
-                            _cache[_cache_count++] = 0.5;
-                            check_cache();
-                        }
-                        break;
-                    case Geo::Type::BSPLINE:
-                        for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(geo)->path_points)
-                        {
-                            _cache[_cache_count++] = point.x;
-                            _cache[_cache_count++] = point.y;
-                            _cache[_cache_count++] = 0.5;
-                            check_cache();
-                        }
-                    default:
-                        break;
-                    }
-                }
-                break;
-            case Geo::Type::COMBINATION:
-                for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
-                {
-                    if (item->type() == Geo::Type::TEXT)
-                    {
-                        continue;
-                    }
-                    for (size_t index = item->point_index, i = 0, count = item->point_count; i < count; ++i)
-                    {
-                        indexs[index_count++] = index++;
-                        if (index_count == index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::move(indexs, indexs + index_count, temp);
-                            delete []indexs;
-                            indexs = temp;
-                        }
-                    }
-                    indexs[index_count++] = UINT_MAX;
-                    if (index_count == index_len)
-                    {
-                        index_len *= 2;
-                        unsigned int *temp = new unsigned int[index_len];
-                        std::move(indexs, indexs + index_count, temp);
-                        delete []indexs;
-                        indexs = temp;
-                    }
-                }
-                break;
-            default:
-                continue;
             }
+            break;
+        default:
+            continue;
         }
     }
 

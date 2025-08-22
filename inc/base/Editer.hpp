@@ -14,7 +14,8 @@ private:
     QString _file_path;
     std::vector<Geo::Point> _point_cache;
     UndoStack::CommandStack _backup;
-    std::list<Geo::Geometry *> _paste_table;
+    std::vector<Geo::Geometry *> _paste_table;
+    std::vector<Geo::Geometry *> _selected_cache;
     size_t _current_group = 0;
     double _view_ratio = 1.0;
 
@@ -61,11 +62,13 @@ public:
 
     Geo::Geometry *select(const double x, const double y, const bool reset_others = true);
 
-    std::list<Geo::Geometry *> selected() const;
+    const std::vector<Geo::Geometry *> &selected() const;
+
+    std::vector<Geo::Geometry *> &selected();
 
     const size_t selected_count() const;
 
-    std::vector<Geo::Geometry *> select(const Geo::AABBRect &rect);
+    std::vector<Geo::Geometry *> &select(const Geo::AABBRect &rect);
 
     void reset_selected_mark(const bool value = false);
 
@@ -117,21 +120,21 @@ public:
 
     bool paste(const double tx, const double ty);
 
-    bool connect(std::list<Geo::Geometry *> objects, const double connect_distance);
+    bool connect(std::vector<Geo::Geometry *> objects, const double connect_distance);
 
-    bool close_polyline(std::list<Geo::Geometry *> objects);
+    bool close_polyline(std::vector<Geo::Geometry *> objects);
 
-    bool combinate(std::list<Geo::Geometry *> objects);
+    bool combinate(std::vector<Geo::Geometry *> objects);
 
-    bool split(std::list<Geo::Geometry *> objects);
+    bool split(std::vector<Geo::Geometry *> objects);
 
-    bool mirror(std::list<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy);
+    bool mirror(std::vector<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy);
 
-    bool offset(std::list<Geo::Geometry *> objects, const double distance,
+    bool offset(std::vector<Geo::Geometry *> objects, const double distance,
         const Geo::Offset::JoinType join_type = Geo::Offset::JoinType::Round,
         const Geo::Offset::EndType end_type = Geo::Offset::EndType::Polygon);
 
-    bool scale(std::list<Geo::Geometry *> objects, const bool unitary, const double k);
+    bool scale(std::vector<Geo::Geometry *> objects, const bool unitary, const double k);
 
     bool polygon_union(Geo::Polygon *shape0, Geo::Polygon *shape1);
 
@@ -145,18 +148,18 @@ public:
 
     bool fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius);
 
-    bool line_array(std::list<Geo::Geometry *> objects, int x, int y, double x_space, double y_space);
+    bool line_array(std::vector<Geo::Geometry *> objects, int x, int y, double x_space, double y_space);
 
-    bool ring_array(std::list<Geo::Geometry *> objects, const double x, const double y, const int n);
+    bool ring_array(std::vector<Geo::Geometry *> objects, const double x, const double y, const int n);
 
     void up(Geo::Geometry *item);
 
     void down(Geo::Geometry *item);
 
-	void rotate(std::list<Geo::Geometry *> objects, const double angle, const bool unitary, const bool all_layers);
+	void rotate(std::vector<Geo::Geometry *> objects, const double angle, const bool unitary, const bool all_layers);
 
     // true:X false:Y
-    void flip(std::list<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers);
+    void flip(std::vector<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers);
 
 
     bool auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines);
