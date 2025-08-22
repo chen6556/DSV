@@ -223,6 +223,8 @@ public:
     // 直接更新所有VBO,点数量可能发生变化
     void refresh_vbo();
 
+    std::tuple<unsigned int*, size_t> refresh_polygon_ibo();
+
     // 更新被选中或所有VBO,点数量可能发生变化
     void refresh_vbo(const bool unitary);
 
@@ -252,7 +254,7 @@ public:
     // 数量不发生变化时更新部分IBO数组
     void refresh_brush_ibo(const unsigned int index, const unsigned int offset, const std::vector<size_t> &values);
 
-    void refresh_text_vbo();
+    std::tuple<double*, size_t, unsigned int*, size_t> refresh_text_vbo();
 
     void refresh_text_vbo(const bool unitary);
 
