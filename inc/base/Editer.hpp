@@ -117,21 +117,21 @@ public:
 
     bool paste(const double tx, const double ty);
 
-    bool connect(std::vector<Geo::Geometry *> objects, const double connect_distance);
+    bool connect(const std::vector<Geo::Geometry *> &objects, const double connect_distance);
 
-    bool close_polyline(std::vector<Geo::Geometry *> objects);
+    bool close_polyline(const std::vector<Geo::Geometry *> &objects);
 
     bool combinate(std::vector<Geo::Geometry *> objects);
 
-    bool split(std::vector<Geo::Geometry *> objects);
+    bool split(const std::vector<Geo::Geometry *> &objects);
 
-    bool mirror(std::vector<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy);
+    bool mirror(const std::vector<Geo::Geometry *> &objects, const Geo::Geometry *line, const bool copy);
 
-    bool offset(std::vector<Geo::Geometry *> objects, const double distance,
+    bool offset(const std::vector<Geo::Geometry *> &objects, const double distance,
         const Geo::Offset::JoinType join_type = Geo::Offset::JoinType::Round,
         const Geo::Offset::EndType end_type = Geo::Offset::EndType::Polygon);
 
-    bool scale(std::vector<Geo::Geometry *> objects, const bool unitary, const double k);
+    bool scale(const std::vector<Geo::Geometry *> &objects, const bool unitary, const double k);
 
     bool polygon_union(Geo::Polygon *shape0, Geo::Polygon *shape1);
 

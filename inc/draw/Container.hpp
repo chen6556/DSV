@@ -164,6 +164,7 @@ class Combination : public ContainerGroup
 {
 private:
     Geo::AABBRect _border;
+    std::vector<const Geo::Geometry *> _shape;
 
 public:
     Combination() {};
@@ -201,4 +202,6 @@ public:
     void update_border();
 
     const Geo::AABBRect &border() const;
+
+    const std::vector<const Geo::Geometry *> &shape() const;
 };

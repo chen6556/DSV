@@ -616,9 +616,13 @@ const Geo::Type Combination::type() const
 
 void Combination::append(Combination *combination)
 {
-    while (!combination->empty())
+    if (std::find(begin(), end(), combination) == end())
     {
-        ContainerGroup::append(combination->pop_back());
+        ContainerGroup::append(combination);
+        for (Geo::Geometry *object : *combination)
+        {
+            append(object);
+        }
     }
 }
 
@@ -630,7 +634,11 @@ void Combination::append(Geo::Geometry *geo)
     }
     else
     {
-        ContainerGroup::append(geo);
+        if (std::find(_shape.begin(), _shape.end(), geo) == _shape.end())
+        {
+            ContainerGroup::append(geo);
+            _shape.push_back(geo);
+        }
     }
 }
 
@@ -704,3 +712,7 @@ const Geo::AABBRect &Combination::border() const
     return _border;
 }
 
+const std::vector<const Geo::Geometry *> &Combination::shape() const
+{
+    return _shape;
+}

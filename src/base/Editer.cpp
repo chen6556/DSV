@@ -1262,7 +1262,7 @@ bool Editer::paste(const double tx, const double ty)
     return true;
 }
 
-bool Editer::connect(std::vector<Geo::Geometry *> objects, const double connect_distance)
+bool Editer::connect(const std::vector<Geo::Geometry *> &objects, const double connect_distance)
 {
     if (_graph == nullptr || objects.empty())
     {
@@ -1663,7 +1663,7 @@ bool Editer::connect(std::vector<Geo::Geometry *> objects, const double connect_
     return true;
 }
 
-bool Editer::close_polyline(std::vector<Geo::Geometry *> objects)
+bool Editer::close_polyline(const std::vector<Geo::Geometry *> &objects)
 {
     if (_graph == nullptr || objects.empty())
     {
@@ -1782,7 +1782,7 @@ bool Editer::combinate(std::vector<Geo::Geometry *> objects)
     return true;
 }
 
-bool Editer::split(std::vector<Geo::Geometry *> objects)
+bool Editer::split(const std::vector<Geo::Geometry *> &objects)
 {
     if (_graph == nullptr || objects.empty())
     {
@@ -1818,7 +1818,7 @@ bool Editer::split(std::vector<Geo::Geometry *> objects)
     return true;
 }
 
-bool Editer::mirror(std::vector<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy)
+bool Editer::mirror(const std::vector<Geo::Geometry *> &objects, const Geo::Geometry *line, const bool copy)
 {
     if (objects.empty() || line->type() != Geo::Type::POLYLINE)
     {
@@ -1862,7 +1862,7 @@ bool Editer::mirror(std::vector<Geo::Geometry *> objects, const Geo::Geometry *l
     return true;
 }
 
-bool Editer::offset(std::vector<Geo::Geometry *> objects, const double distance, const Geo::Offset::JoinType join_type, const Geo::Offset::EndType end_type)
+bool Editer::offset(const std::vector<Geo::Geometry *> &objects, const double distance, const Geo::Offset::JoinType join_type, const Geo::Offset::EndType end_type)
 {
     const size_t count = _graph->container_group(_current_group).size();
     Geo::Polygon *polygon = nullptr;
@@ -1929,7 +1929,7 @@ bool Editer::offset(std::vector<Geo::Geometry *> objects, const double distance,
     }
 }
 
-bool Editer::scale(std::vector<Geo::Geometry *> objects, const bool unitary, const double k)
+bool Editer::scale(const std::vector<Geo::Geometry *> &objects, const bool unitary, const double k)
 {
     if (objects.empty() || k == 0 || k == 1)
     {
