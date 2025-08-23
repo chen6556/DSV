@@ -658,6 +658,25 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         update();
                         return QOpenGLWidget::mousePressEvent(event);
                     }
+                case Operation::Trim:
+                    if (Geo::Polyline *polyline = dynamic_cast<Geo::Polyline *>(_clicked_obj))
+                    {
+                        _editer->trim(polyline, real_x1, real_y1);
+                        refresh_vbo();
+                        refresh_selected_ibo();
+                        update();
+                        return QOpenGLWidget::mousePressEvent(event);
+                    }
+                    break;
+                case Operation::Extend:
+                    if (Geo::Polyline *polyline = dynamic_cast<Geo::Polyline *>(_clicked_obj))
+                    {
+                        _editer->extend(polyline, real_x1, real_y1);
+                        refresh_selected_vbo();
+                        refresh_selected_ibo();
+                        update();
+                        return QOpenGLWidget::mousePressEvent(event);
+                    }
                     break;
                 default:
                     _operation = Operation::NoOperation;

@@ -1791,13 +1791,9 @@ bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const Point 
         }
         else
         {
-            const double dx = point1.x - point0.x;
-            const double dy = point1.y - point0.y;
-            const bool b0 = (rect[0].x - point0.x) * dy >= (rect[0].y - point0.y) * dx;
-            const bool b1 = (rect[1].x - point0.x) * dy >= (rect[1].y - point0.y) * dx;
-            const bool b2 = (rect[2].x - point0.x) * dy >= (rect[2].y - point0.y) * dx;
-            const bool b3 = (rect[3].x - point0.x) * dy >= (rect[3].y - point0.y) * dx;
-            return !(b0 == b1 && b1 == b2 && b2 == b3);
+            Geo::Point point;
+            return Geo::is_intersected(rect[0], rect[2], point0, point1, point)
+                || Geo::is_intersected(rect[1], rect[3], point0, point1, point);
         }
     }
 }

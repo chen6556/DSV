@@ -17,7 +17,7 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
 
 public:
     enum class Tool {NoTool, Measure, Circle, Polyline, Rect, BSpline, Bezier, Text, Ellipse};
-    enum class Operation {NoOperation, Mirror, RingArray, PolygonDifference, Fillet, Rotate};
+    enum class Operation {NoOperation, Mirror, RingArray, PolygonDifference, Fillet, Rotate, Trim, Extend};
     enum class CatchedPointType {Vertex, Center, Foot, Tangency, Intersection};
 
 private:

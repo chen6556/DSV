@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="/">
+    <file>icons/extend_btn.png</file>
+    <file>icons/trim_btn.png</file>
     <file>icons/xor_btn.png</file>
     <file>icons/bezier_btn.png</file>
     <file>icons/fillet_btn.png</file>

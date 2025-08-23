@@ -32,7 +32,7 @@ void CMDWidget::init()
         << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "POINTMIRROR"
         << "ARRAY" << "LINEARRAY" << "RINGARRAY"
         << "UNION" << "INTERSECTION" << "DIFFERENCE" << "XOR"
-        << "OFFSET" << "SCALE" << "FILLET" << "ABSOLUTE" << "RELATIVE"
+        << "OFFSET" << "SCALE" << "FILLET" << "TRIM" << "EXTEND" << "ABSOLUTE" << "RELATIVE"
         << "DELETE" << "COPY" << "CUT" << "PASTE" << "UNDO" << "ALL";
 
     _cmd_dict = {{"OPEN",CMD::Open_CMD}, {"APPEND",CMD::Append_CMD}, {"SAVE",CMD::Save_CMD}, {"EXIT",CMD::Exit_CMD},
@@ -42,7 +42,7 @@ void CMDWidget::init()
         {"BSPLINE",CMD::BSpline_CMD}, {"BEZIER",CMD::Bezier_CMD}, {"TEXT",CMD::Text_CMD}, {"CONNECT",CMD::Connect_CMD},
         {"COMBINATE",CMD::Combinate_CMD}, {"CLOSE",CMD::Close_CMD}, {"SPLIT",CMD::Split_CMD},
         {"ROTATE",CMD::Rotate_CMD}, {"FLIPX",CMD::FlipX_CMD}, {"FLIPY",CMD::FlipY_CMD},
-        {"MIRROR",CMD::Mirror_CMD},
+        {"TRIM",CMD::Trim_CMD}, {"EXTEND",CMD::Extend_CMD}, {"MIRROR",CMD::Mirror_CMD},
         {"ARRAY",CMD::Array_CMD}, {"LINEARRAY",CMD::LineArray_CMD}, {"RINGARRAY",CMD::RingArray_CMD},
         {"OFFSET",CMD::Offset_CMD}, {"SCALE", CMD::Scale_CMD}, {"FILLET",CMD::Fillet_CMD},
         {"UNION",CMD::Union_CMD}, {"INTERSECTION",CMD::Intersection_CMD}, {"DIFFERENCE",CMD::Difference_CMD},
@@ -298,6 +298,12 @@ bool CMDWidget::work()
         break;
     case CMD::Fillet_CMD:
         fillet();
+        break;
+    case CMD::Trim_CMD:
+        _canvas->set_operation(Canvas::Operation::Trim);
+        break;
+    case CMD::Extend_CMD:
+        _canvas->set_operation(Canvas::Operation::Extend);
         break;
 
     case CMD::Mirror_CMD:

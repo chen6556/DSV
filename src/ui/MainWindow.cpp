@@ -496,6 +496,12 @@ void MainWindow::refresh_tool_label(const Canvas::Operation operation)
     case Canvas::Operation::Rotate:
         ui->current_tool->setText("Rotate");
         break;
+    case Canvas::Operation::Trim:
+        ui->current_tool->setText("Trim");
+        break;
+    case Canvas::Operation::Extend:
+        ui->current_tool->setText("Extend");
+        break;
     default:
         ui->current_tool->clear();
         break;
@@ -865,6 +871,17 @@ void MainWindow::fillet()
 {
     ui->canvas->set_operation(Canvas::Operation::Fillet);
 }
+
+void MainWindow::trim()
+{
+    ui->canvas->set_operation(Canvas::Operation::Trim);
+}
+
+void MainWindow::extend()
+{
+    ui->canvas->set_operation(Canvas::Operation::Extend);
+}
+
 
 
 

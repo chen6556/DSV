@@ -231,7 +231,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
              <x>0</x>
              <y>0</y>
              <width>114</width>
-             <height>681</height>
+             <height>715</height>
             </rect>
            </property>
            <property name="maximumSize">
@@ -572,49 +572,28 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               <property name="spacing">
                <number>2</number>
               </property>
-              <item row="0" column="0">
-               <widget class="QPushButton" name="close_btn">
+              <item row="1" column="0">
+               <widget class="QPushButton" name="split_btn">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
                   <height>32</height>
                  </size>
                 </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Close</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/close_btn.png</normaloff>:/icons/close_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QPushButton" name="connect_btn">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
+                <property name="font">
+                 <font>
+                  <pointsize>10</pointsize>
+                 </font>
                 </property>
                 <property name="focusPolicy">
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Connect</string>
+                 <string>Split</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/connect_btn.png</normaloff>:/icons/connect_btn.png</iconset>
+                  <normaloff>:/icons/split_btn.png</normaloff>:/icons/split_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -650,28 +629,101 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
-              <item row="1" column="0">
-               <widget class="QPushButton" name="split_btn">
+              <item row="0" column="1">
+               <widget class="QPushButton" name="connect_btn">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
                   <height>32</height>
                  </size>
                 </property>
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Connect</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/connect_btn.png</normaloff>:/icons/connect_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QPushButton" name="close_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
                 </property>
                 <property name="focusPolicy">
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Split</string>
+                 <string>Close</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/split_btn.png</normaloff>:/icons/split_btn.png</iconset>
+                  <normaloff>:/icons/close_btn.png</normaloff>:/icons/close_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QPushButton" name="trim_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Trim</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/trim_btn.png</normaloff>:/icons/trim_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QPushButton" name="extend_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Extend</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/extend_btn.png</normaloff>:/icons/extend_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -1138,9 +1190,6 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                 <property name="toolTip">
                  <string>XOR</string>
-                </property>
-                <property name="text">
-                 <string/>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
@@ -2580,6 +2629,38 @@ QComboBox QAbstractItemView::item:selected
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>trim_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>trim()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>40</x>
+     <y>382</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>350</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>extend_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>extend()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>91</x>
+     <y>382</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>350</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -2610,5 +2691,7 @@ QComboBox QAbstractItemView::item:selected
   <slot>refresh_tool_label(Canvas::Operation)</slot>
   <slot>set_catch(QAction*)</slot>
   <slot>polygon_xor()</slot>
+  <slot>trim()</slot>
+  <slot>extend()</slot>
  </slots>
 </ui>

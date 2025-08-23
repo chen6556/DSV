@@ -121,6 +121,11 @@ private slots:
 
     void fillet();
 
+    void trim();
+
+    void extend();
+
+
 
     void show_data_panel();
 

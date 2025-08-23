@@ -158,6 +158,10 @@ public:
     // true:X false:Y
     void flip(std::vector<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers);
 
+    void trim(Geo::Polyline *polyline, const double x, const double y);
+
+    void extend(Geo::Polyline *polyline, const double x, const double y);
+
 
     bool auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines);
 

@@ -22,7 +22,7 @@ public:
         Length_CMD, Polyline_CMD, Circle_CMD, Ellipse_CMD, Rectangle_CMD, BSpline_CMD, Bezier_CMD, Text_CMD,
         Connect_CMD, Close_CMD, Combinate_CMD, Split_CMD, Rotate_CMD, FlipX_CMD, FlipY_CMD,
         Mirror_CMD, Array_CMD, LineArray_CMD, RingArray_CMD,
-        Offset_CMD, Scale_CMD, Fillet_CMD,
+        Offset_CMD, Scale_CMD, Fillet_CMD, Trim_CMD, Extend_CMD,
         Union_CMD, Intersection_CMD, Difference_CMD, XOR_CMD,
         Delete_CMD, Copy_CMD, Cut_CMD, Paste_CMD, Undo_CMD, SelectAll_CMD};
 
