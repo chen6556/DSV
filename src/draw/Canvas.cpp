@@ -167,8 +167,11 @@ void Canvas::paintGL()
 
         glUniform4f(_uniforms[4], 1.0f, 0.549f, 0.0f, 1.0f); // color
         glDrawArrays(GL_LINE_STRIP, 0, _cache_count / 3);
-        glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
-        glDrawArrays(GL_POINTS, 0, _cache_count / 3);
+        if (!_editer->point_cache().empty())
+        {
+            glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
+            glDrawArrays(GL_POINTS, 0, _cache_count / 3);
+        }
     }
     else if (_measure_flags[0])
     {
