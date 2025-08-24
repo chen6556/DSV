@@ -309,10 +309,12 @@ CombinateCommand::CombinateCommand(const std::vector<std::tuple<Combination *, s
         _items.emplace_back(std::get<0>(combiantion), std::get<1>(combiantion),
             std::vector<Geo::Geometry *>(std::get<0>(combiantion)->begin(), std::get<0>(combiantion)->end()));
     }
+    std::sort(_items.begin(), _items.end(), [](const std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>> &a,
+        const std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>> &b) { return std::get<1>(a) < std::get<1>(b); });
 }
 
-CombinateCommand::CombinateCommand(Combination *combination, const std::vector<std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>>> &items, const size_t index)
-    : _combination(combination), _items(items), _group_index(index) {}
+CombinateCommand::CombinateCommand(Combination *combination, const size_t index)
+    : _combination(combination), _group_index(index) {}
 
 CombinateCommand::~CombinateCommand()
 {
@@ -348,22 +350,6 @@ void CombinateCommand::undo(Graph *graph)
         graph->container_group(_group_index).pop(std::find(graph->container_group(_group_index).begin(),
             graph->container_group(_group_index).end(), _combination));
         std::reverse(_combination->begin(), _combination->end());
-        for (std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>> &item : _items)
-        {
-            for (Geo::Geometry *object : std::get<2>(item))
-            {
-                std::get<0>(item)->append(object);
-                _combination->pop(std::find(_combination->begin(), _combination->end(), object));
-            }
-            if (std::get<1>(item) >= graph->container_group(_group_index).size())
-            {
-                graph->container_group(_group_index).append(std::get<0>(item));
-            }
-            else
-            {
-                graph->container_group(_group_index).insert(std::get<1>(item), std::get<0>(item));
-            }
-        }
         graph->container_group(_group_index).append(*static_cast<ContainerGroup *>(_combination));
         delete _combination;
         _combination = nullptr;

@@ -2349,7 +2349,7 @@ void Canvas::refresh_vbo()
                     break;
                 case Geo::Type::COMBINATION:
                     geo->point_count = polyline_index_count;
-                    for (Geo::Geometry *item : *dynamic_cast<Combination *>(geo))
+                    for (Geo::Geometry *item : dynamic_cast<Combination *>(geo)->shape())
                     {
                         item->point_index = data_count / 3;
                         item->printable_point_index = printable_data_count / 3;
@@ -2852,7 +2852,7 @@ void Canvas::refresh_vbo()
                     break;
                 case Geo::Type::COMBINATION:
                     geo->point_count = polyline_index_count;
-                    for (Geo::Geometry *item : *dynamic_cast<Combination *>(geo))
+                    for (Geo::Geometry *item : dynamic_cast<Combination *>(geo)->shape())
                     {
                         item->point_index = data_count / 3;
                         item->printable_point_index = printable_data_count / 3;
@@ -3261,7 +3261,7 @@ std::tuple<unsigned int*, size_t> Canvas::refresh_polygon_ibo()
                 data_count += ellipse->shape().size() * 3;
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *dynamic_cast<Combination *>(geo))
+                for (Geo::Geometry *item : dynamic_cast<Combination *>(geo)->shape())
                 {
                     switch (item->type())
                     {
@@ -3444,7 +3444,7 @@ void Canvas::refresh_vbo(const bool unitary)
                         sizeof(double) * 12, printable_data);
                     break;
                 case Geo::Type::COMBINATION:
-                    for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                    for (const Geo::Geometry *item : dynamic_cast<const Combination *>(geo)->shape())
                     {
                         data_count = 0;
                         switch (item->type())
@@ -3744,7 +3744,7 @@ void Canvas::refresh_vbo(const bool unitary)
                     }
                     break;
                 case Geo::Type::COMBINATION:
-                    for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                    for (const Geo::Geometry *item : dynamic_cast<const Combination *>(geo)->shape())
                     {
                         data_count = 0;
                         switch (item->type())
@@ -4173,7 +4173,7 @@ void Canvas::refresh_selected_ibo()
             }
             break;
         case Geo::Type::COMBINATION:
-            for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+            for (const Geo::Geometry *item : dynamic_cast<const Combination *>(geo)->shape())
             {
                 if (item->type() == Geo::Type::TEXT)
                 {
@@ -4229,7 +4229,7 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
     unsigned int *indexs = new unsigned int[index_len];
     if (object->type() == Geo::Type::COMBINATION)
     {
-        for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(object))
+        for (const Geo::Geometry *item : dynamic_cast<const Combination *>(object)->shape())
         {
             for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
             {
@@ -4382,7 +4382,7 @@ void Canvas::refresh_selected_vbo()
                 glBufferSubData(GL_ARRAY_BUFFER, obj->printable_point_index * 3 * sizeof(double), 12 * sizeof(double), printable_data);
                 break;
             case Geo::Type::COMBINATION:
-                for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
+                for (const Geo::Geometry *item : dynamic_cast<const Combination *>(obj)->shape())
                 {
                     data_count = 0;
                     switch (item->type())
@@ -4581,7 +4581,7 @@ void Canvas::refresh_selected_vbo()
                 }
                 break;
             case Geo::Type::COMBINATION:
-                for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(obj))
+                for (const Geo::Geometry *item : dynamic_cast<const Combination *>(obj)->shape())
                 {
                     data_count = 0;
                     switch (item->type())
@@ -4767,7 +4767,7 @@ void Canvas::refresh_brush_ibo()
                 }
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                for (Geo::Geometry *item : dynamic_cast<const Combination *>(geo)->shape())
                 {
                     switch (item->type())
                     {
@@ -4905,7 +4905,7 @@ std::tuple<double*, size_t, unsigned int*, size_t> Canvas::refresh_text_vbo()
                 text->text_index = data_count;
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                for (Geo::Geometry *item : dynamic_cast<const Combination *>(geo)->shape())
                 {
                     if (text = dynamic_cast<Text *>(item); text != nullptr)
                     {
@@ -5086,7 +5086,7 @@ void Canvas::refresh_text_vbo(const bool unitary)
                 }
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                for (Geo::Geometry *item : dynamic_cast<const Combination *>(geo)->shape())
                 {
                     if (text = dynamic_cast<Text *>(item); text != nullptr)
                     {

@@ -147,7 +147,7 @@ namespace UndoStack
     public:
         CombinateCommand(const std::vector<std::tuple<Combination *, size_t>> &combinations, const size_t index);
 
-        CombinateCommand(Combination *combination, const std::vector<std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>>> &items, const size_t index);
+        CombinateCommand(Combination *combination, const size_t index);
 
         ~CombinateCommand();
 

@@ -68,7 +68,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 break;
             case Geo::Type::COMBINATION:
                 output << "COMBINATION" << std::endl;
-                for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                for (const Geo::Geometry *item : dynamic_cast<const Combination *>(geo)->shape())
                 {
                     switch (item->type())
                     {
@@ -273,7 +273,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 break;
             case Geo::Type::COMBINATION:
                 output << "Block;" << std::endl;
-                for (Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                for (Geo::Geometry *item : dynamic_cast<const Combination *>(geo)->shape())
                 {
                     switch (item->type())
                     {

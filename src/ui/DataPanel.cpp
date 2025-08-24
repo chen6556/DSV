@@ -48,7 +48,7 @@ void DataPanel::load_draw_data(const Graph *graph, const size_t point_count)
                 ++bspline_count;
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *obj : *dynamic_cast<const Combination *>(object))
+                for (Geo::Geometry *obj : dynamic_cast<const Combination *>(object)->shape())
                 {
                     switch (obj->type())
                     {
