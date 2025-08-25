@@ -2349,282 +2349,299 @@ void Canvas::refresh_vbo()
                     break;
                 case Geo::Type::COMBINATION:
                     geo->point_count = polyline_index_count;
-                    for (Geo::Geometry *item : dynamic_cast<Combination *>(geo)->shape())
                     {
-                        item->point_index = data_count / 3;
-                        item->printable_point_index = printable_data_count / 3;
-                        switch (item->type())
+                        Combination *combination = static_cast<Combination *>(geo);
+                        std::vector<Geo::Geometry *> temp(combination->rbegin(), combination->rend()), shape;
+                        while (!temp.empty())
                         {
-                        case Geo::Type::POLYGON:
-                            polygon = dynamic_cast<Geo::Polygon *>(item);
-                            for (const Geo::Point &point : *polygon)
+                            if (Combination * t = dynamic_cast<Combination *>(temp.back()))
                             {
-                                polyline_indexs[polyline_index_count++] = data_count / 3;
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                printable_data[printable_data_count++] = point.x;
-                                printable_data[printable_data_count++] = point.y;
-                                printable_data[printable_data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                                if (polyline_index_count == polyline_index_len)
-                                {
-                                    polyline_index_len *= 2;
-                                    unsigned int *temp = new unsigned int[polyline_index_len];
-                                    std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                                    delete []polyline_indexs;
-                                    polyline_indexs = temp;
-                                }
-                                if (printable_data_count == printable_data_len)
-                                {
-                                    printable_data_len *= 2;
-                                    double *temp = new double[printable_data_len];
-                                    std::move(printable_data, printable_data + printable_data_count, temp);
-                                    delete []printable_data;
-                                    printable_data = temp;
-                                }
+                                temp.pop_back();
+                                temp.insert(temp.end(), t->rbegin(), t->rend());
                             }
-                            polyline_indexs[polyline_index_count++] = UINT_MAX;
-                            polygon->point_count = polygon->size();
-                            break;
-                        case Geo::Type::CIRCLE:
-                            circle = dynamic_cast<Geo::Circle *>(item);
-                            for (const Geo::Point &point : circle->shape())
+                            else
                             {
-                                polyline_indexs[polyline_index_count++] = data_count / 3;
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                                if (polyline_index_count == polyline_index_len)
-                                {
-                                    polyline_index_len *= 2;
-                                    unsigned int *temp = new unsigned int[polyline_index_len];
-                                    std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                                    delete []polyline_indexs;
-                                    polyline_indexs = temp;
-                                }
+                                shape.push_back(temp.back());
+                                temp.pop_back();
                             }
-                            printable_data[printable_data_count++] = circle->x;
-                            printable_data[printable_data_count++] = circle->y;
-                            printable_data[printable_data_count++] = 0.5;
-                            if (printable_data_count == printable_data_len)
-                            {
-                                printable_data_len *= 2;
-                                double *temp = new double[printable_data_len];
-                                std::move(printable_data, printable_data + printable_data_count, temp);
-                                delete []printable_data;
-                                printable_data = temp;
-                            }
-                            polyline_indexs[polyline_index_count++] = UINT_MAX;
-                            circle->point_count = data_count / 3 - circle->point_index;
-                            break;
-                        case Geo::Type::ELLIPSE:
-                            ellipse = dynamic_cast<Geo::Ellipse *>(item);
-                            for (const Geo::Point &point : ellipse->shape())
-                            {
-                                polyline_indexs[polyline_index_count++] = data_count / 3;
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                                if (polyline_index_count == polyline_index_len)
-                                {
-                                    polyline_index_len *= 2;
-                                    unsigned int *temp = new unsigned int[polyline_index_len];
-                                    std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                                    delete []polyline_indexs;
-                                    polyline_indexs = temp;
-                                }
-                            }
-                            {
-                                printable_data[printable_data_count++] = ellipse->a0().x;
-                                printable_data[printable_data_count++] = ellipse->a0().y;
-                                printable_data[printable_data_count++] = 0.5;
-                                if (printable_data_count == printable_data_len)
-                                {
-                                    printable_data_len *= 2;
-                                    double *temp = new double[printable_data_len];
-                                    std::move(printable_data, printable_data + printable_data_count, temp);
-                                    delete []printable_data;
-                                    printable_data = temp;
-                                }
-                                printable_data[printable_data_count++] = ellipse->a1().x;
-                                printable_data[printable_data_count++] = ellipse->a1().y;
-                                printable_data[printable_data_count++] = 0.5;
-                                if (printable_data_count == printable_data_len)
-                                {
-                                    printable_data_len *= 2;
-                                    double *temp = new double[printable_data_len];
-                                    std::move(printable_data, printable_data + printable_data_count, temp);
-                                    delete []printable_data;
-                                    printable_data = temp;
-                                }
-                                printable_data[printable_data_count++] = ellipse->b0().x;
-                                printable_data[printable_data_count++] = ellipse->b0().y;
-                                printable_data[printable_data_count++] = 0.5;
-                                if (printable_data_count == printable_data_len)
-                                {
-                                    printable_data_len *= 2;
-                                    double *temp = new double[printable_data_len];
-                                    std::move(printable_data, printable_data + printable_data_count, temp);
-                                    delete []printable_data;
-                                    printable_data = temp;
-                                }
-                                printable_data[printable_data_count++] = ellipse->b1().x;
-                                printable_data[printable_data_count++] = ellipse->b1().y;
-                                printable_data[printable_data_count++] = 0.5;
-                                if (printable_data_count == printable_data_len)
-                                {
-                                    printable_data_len *= 2;
-                                    double *temp = new double[printable_data_len];
-                                    std::move(printable_data, printable_data + printable_data_count, temp);
-                                    delete []printable_data;
-                                    printable_data = temp;
-                                }
-                            }
-                            polyline_indexs[polyline_index_count++] = UINT_MAX;
-                            ellipse->point_count = data_count / 3 - ellipse->point_index;
-                            break;
-                        case Geo::Type::POLYLINE:
-                            polyline = dynamic_cast<Geo::Polyline *>(item);
-                            for (const Geo::Point &point : *polyline)
-                            {
-                                polyline_indexs[polyline_index_count++] = data_count / 3;
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                printable_data[printable_data_count++] = point.x;
-                                printable_data[printable_data_count++] = point.y;
-                                printable_data[printable_data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                                if (polyline_index_count == polyline_index_len)
-                                {
-                                    polyline_index_len *= 2;
-                                    unsigned int *temp = new unsigned int[polyline_index_len];
-                                    std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                                    delete []polyline_indexs;
-                                    polyline_indexs = temp;
-                                }
-                                if (printable_data_count == printable_data_len)
-                                {
-                                    printable_data_len *= 2;
-                                    double *temp = new double[printable_data_len];
-                                    std::move(printable_data, printable_data + printable_data_count, temp);
-                                    delete []printable_data;
-                                    printable_data = temp;
-                                }
-                            }
-                            polyline_indexs[polyline_index_count++] = UINT_MAX;
-                            polyline->point_count = polyline->size();
-                            break;
-                        case Geo::Type::BEZIER:
-                            for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
-                            {
-                                polyline_indexs[polyline_index_count++] = data_count / 3;
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                                if (polyline_index_count == polyline_index_len)
-                                {
-                                    polyline_index_len *= 2;
-                                    unsigned int *temp = new unsigned int[polyline_index_len];
-                                    std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                                    delete []polyline_indexs;
-                                    polyline_indexs = temp;
-                                }
-                            }
-                            polyline_indexs[polyline_index_count++] = UINT_MAX;
-                            item->point_count = dynamic_cast<const Geo::Bezier *>(item)->shape().size();
-                            break;
-                        case Geo::Type::BSPLINE:
-                            for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->path_points)
-                            {
-                                printable_data[printable_data_count++] = point.x;
-                                printable_data[printable_data_count++] = point.y;
-                                printable_data[printable_data_count++] = 0.5;
-                                if (printable_data_count == printable_data_len)
-                                {
-                                    printable_data_len *= 2;
-                                    double *temp = new double[printable_data_len];
-                                    std::move(printable_data, printable_data + printable_data_count, temp);
-                                    delete []printable_data;
-                                    printable_data = temp;
-                                }
-                            }
-                            for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->shape())
-                            {
-                                polyline_indexs[polyline_index_count++] = data_count / 3;
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                                if (polyline_index_count == polyline_index_len)
-                                {
-                                    polyline_index_len *= 2;
-                                    unsigned int *temp = new unsigned int[polyline_index_len];
-                                    std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                                    delete []polyline_indexs;
-                                    polyline_indexs = temp;
-                                }
-                            }
-                            polyline_indexs[polyline_index_count++] = UINT_MAX;
-                            item->point_count = dynamic_cast<const Geo::BSpline *>(item)->shape().size();
-                            break;
-                        default:
-                            break;
                         }
-
-                        if (polyline_index_count == polyline_index_len)
+                        for (Geo::Geometry *item : shape)
                         {
-                            polyline_index_len *= 2;
-                            unsigned int *temp = new unsigned int[polyline_index_len];
-                            std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                            delete []polyline_indexs;
-                            polyline_indexs = temp;
+                            item->point_index = data_count / 3;
+                            item->printable_point_index = printable_data_count / 3;
+                            switch (item->type())
+                            {
+                            case Geo::Type::POLYGON:
+                                polygon = dynamic_cast<Geo::Polygon *>(item);
+                                for (const Geo::Point &point : *polygon)
+                                {
+                                    polyline_indexs[polyline_index_count++] = data_count / 3;
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    printable_data[printable_data_count++] = point.x;
+                                    printable_data[printable_data_count++] = point.y;
+                                    printable_data[printable_data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                    if (polyline_index_count == polyline_index_len)
+                                    {
+                                        polyline_index_len *= 2;
+                                        unsigned int *temp = new unsigned int[polyline_index_len];
+                                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
+                                        delete []polyline_indexs;
+                                        polyline_indexs = temp;
+                                    }
+                                    if (printable_data_count == printable_data_len)
+                                    {
+                                        printable_data_len *= 2;
+                                        double *temp = new double[printable_data_len];
+                                        std::move(printable_data, printable_data + printable_data_count, temp);
+                                        delete []printable_data;
+                                        printable_data = temp;
+                                    }
+                                }
+                                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                                polygon->point_count = polygon->size();
+                                break;
+                            case Geo::Type::CIRCLE:
+                                circle = dynamic_cast<Geo::Circle *>(item);
+                                for (const Geo::Point &point : circle->shape())
+                                {
+                                    polyline_indexs[polyline_index_count++] = data_count / 3;
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                    if (polyline_index_count == polyline_index_len)
+                                    {
+                                        polyline_index_len *= 2;
+                                        unsigned int *temp = new unsigned int[polyline_index_len];
+                                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
+                                        delete []polyline_indexs;
+                                        polyline_indexs = temp;
+                                    }
+                                }
+                                printable_data[printable_data_count++] = circle->x;
+                                printable_data[printable_data_count++] = circle->y;
+                                printable_data[printable_data_count++] = 0.5;
+                                if (printable_data_count == printable_data_len)
+                                {
+                                    printable_data_len *= 2;
+                                    double *temp = new double[printable_data_len];
+                                    std::move(printable_data, printable_data + printable_data_count, temp);
+                                    delete []printable_data;
+                                    printable_data = temp;
+                                }
+                                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                                circle->point_count = data_count / 3 - circle->point_index;
+                                break;
+                            case Geo::Type::ELLIPSE:
+                                ellipse = dynamic_cast<Geo::Ellipse *>(item);
+                                for (const Geo::Point &point : ellipse->shape())
+                                {
+                                    polyline_indexs[polyline_index_count++] = data_count / 3;
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                    if (polyline_index_count == polyline_index_len)
+                                    {
+                                        polyline_index_len *= 2;
+                                        unsigned int *temp = new unsigned int[polyline_index_len];
+                                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
+                                        delete []polyline_indexs;
+                                        polyline_indexs = temp;
+                                    }
+                                }
+                                {
+                                    printable_data[printable_data_count++] = ellipse->a0().x;
+                                    printable_data[printable_data_count++] = ellipse->a0().y;
+                                    printable_data[printable_data_count++] = 0.5;
+                                    if (printable_data_count == printable_data_len)
+                                    {
+                                        printable_data_len *= 2;
+                                        double *temp = new double[printable_data_len];
+                                        std::move(printable_data, printable_data + printable_data_count, temp);
+                                        delete []printable_data;
+                                        printable_data = temp;
+                                    }
+                                    printable_data[printable_data_count++] = ellipse->a1().x;
+                                    printable_data[printable_data_count++] = ellipse->a1().y;
+                                    printable_data[printable_data_count++] = 0.5;
+                                    if (printable_data_count == printable_data_len)
+                                    {
+                                        printable_data_len *= 2;
+                                        double *temp = new double[printable_data_len];
+                                        std::move(printable_data, printable_data + printable_data_count, temp);
+                                        delete []printable_data;
+                                        printable_data = temp;
+                                    }
+                                    printable_data[printable_data_count++] = ellipse->b0().x;
+                                    printable_data[printable_data_count++] = ellipse->b0().y;
+                                    printable_data[printable_data_count++] = 0.5;
+                                    if (printable_data_count == printable_data_len)
+                                    {
+                                        printable_data_len *= 2;
+                                        double *temp = new double[printable_data_len];
+                                        std::move(printable_data, printable_data + printable_data_count, temp);
+                                        delete []printable_data;
+                                        printable_data = temp;
+                                    }
+                                    printable_data[printable_data_count++] = ellipse->b1().x;
+                                    printable_data[printable_data_count++] = ellipse->b1().y;
+                                    printable_data[printable_data_count++] = 0.5;
+                                    if (printable_data_count == printable_data_len)
+                                    {
+                                        printable_data_len *= 2;
+                                        double *temp = new double[printable_data_len];
+                                        std::move(printable_data, printable_data + printable_data_count, temp);
+                                        delete []printable_data;
+                                        printable_data = temp;
+                                    }
+                                }
+                                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                                ellipse->point_count = data_count / 3 - ellipse->point_index;
+                                break;
+                            case Geo::Type::POLYLINE:
+                                polyline = dynamic_cast<Geo::Polyline *>(item);
+                                for (const Geo::Point &point : *polyline)
+                                {
+                                    polyline_indexs[polyline_index_count++] = data_count / 3;
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    printable_data[printable_data_count++] = point.x;
+                                    printable_data[printable_data_count++] = point.y;
+                                    printable_data[printable_data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                    if (polyline_index_count == polyline_index_len)
+                                    {
+                                        polyline_index_len *= 2;
+                                        unsigned int *temp = new unsigned int[polyline_index_len];
+                                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
+                                        delete []polyline_indexs;
+                                        polyline_indexs = temp;
+                                    }
+                                    if (printable_data_count == printable_data_len)
+                                    {
+                                        printable_data_len *= 2;
+                                        double *temp = new double[printable_data_len];
+                                        std::move(printable_data, printable_data + printable_data_count, temp);
+                                        delete []printable_data;
+                                        printable_data = temp;
+                                    }
+                                }
+                                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                                polyline->point_count = polyline->size();
+                                break;
+                            case Geo::Type::BEZIER:
+                                for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
+                                {
+                                    polyline_indexs[polyline_index_count++] = data_count / 3;
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                    if (polyline_index_count == polyline_index_len)
+                                    {
+                                        polyline_index_len *= 2;
+                                        unsigned int *temp = new unsigned int[polyline_index_len];
+                                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
+                                        delete []polyline_indexs;
+                                        polyline_indexs = temp;
+                                    }
+                                }
+                                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                                item->point_count = dynamic_cast<const Geo::Bezier *>(item)->shape().size();
+                                break;
+                            case Geo::Type::BSPLINE:
+                                for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->path_points)
+                                {
+                                    printable_data[printable_data_count++] = point.x;
+                                    printable_data[printable_data_count++] = point.y;
+                                    printable_data[printable_data_count++] = 0.5;
+                                    if (printable_data_count == printable_data_len)
+                                    {
+                                        printable_data_len *= 2;
+                                        double *temp = new double[printable_data_len];
+                                        std::move(printable_data, printable_data + printable_data_count, temp);
+                                        delete []printable_data;
+                                        printable_data = temp;
+                                    }
+                                }
+                                for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->shape())
+                                {
+                                    polyline_indexs[polyline_index_count++] = data_count / 3;
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                    if (polyline_index_count == polyline_index_len)
+                                    {
+                                        polyline_index_len *= 2;
+                                        unsigned int *temp = new unsigned int[polyline_index_len];
+                                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
+                                        delete []polyline_indexs;
+                                        polyline_indexs = temp;
+                                    }
+                                }
+                                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                                item->point_count = dynamic_cast<const Geo::BSpline *>(item)->shape().size();
+                                break;
+                            default:
+                                break;
+                            }
+
+                            if (polyline_index_count == polyline_index_len)
+                            {
+                                polyline_index_len *= 2;
+                                unsigned int *temp = new unsigned int[polyline_index_len];
+                                std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
+                                delete []polyline_indexs;
+                                polyline_indexs = temp;
+                            }
                         }
                     }
                     geo->point_count = polyline_index_count - geo->point_count;
@@ -2852,189 +2869,206 @@ void Canvas::refresh_vbo()
                     break;
                 case Geo::Type::COMBINATION:
                     geo->point_count = polyline_index_count;
-                    for (Geo::Geometry *item : dynamic_cast<Combination *>(geo)->shape())
                     {
-                        item->point_index = data_count / 3;
-                        item->printable_point_index = printable_data_count / 3;
-                        switch (item->type())
+                        Combination *combination = static_cast<Combination *>(geo);
+                        std::vector<Geo::Geometry *> temp(combination->rbegin(), combination->rend()), shape;
+                        while (!temp.empty())
                         {
-                        case Geo::Type::POLYGON:
-                            polygon = dynamic_cast<Geo::Polygon *>(item);
-                            for (const Geo::Point &point : *polygon)
+                            if (Combination *t = dynamic_cast<Combination *>(temp.back()))
                             {
-                                polyline_indexs[polyline_index_count++] = data_count / 3;
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                                if (polyline_index_count == polyline_index_len)
-                                {
-                                    polyline_index_len *= 2;
-                                    unsigned int *temp = new unsigned int[polyline_index_len];
-                                    std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                                    delete []polyline_indexs;
-                                    polyline_indexs = temp;
-                                }
+                                temp.pop_back();
+                                temp.insert(temp.end(), t->rbegin(), t->rend());
                             }
-                            polyline_indexs[polyline_index_count++] = UINT_MAX;
-                            polygon->point_count = polygon->size();
-                            break;
-                        case Geo::Type::CIRCLE:
-                            circle = dynamic_cast<Geo::Circle *>(item);
-                            for (const Geo::Point &point : circle->shape())
+                            else
                             {
-                                polyline_indexs[polyline_index_count++] = data_count / 3;
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                                if (polyline_index_count == polyline_index_len)
-                                {
-                                    polyline_index_len *= 2;
-                                    unsigned int *temp = new unsigned int[polyline_index_len];
-                                    std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                                    delete []polyline_indexs;
-                                    polyline_indexs = temp;
-                                }
+                                shape.push_back(temp.back());
+                                temp.pop_back();
                             }
-                            polyline_indexs[polyline_index_count++] = UINT_MAX;
-                            circle->point_count = data_count / 3 - circle->point_index;
-                            break;
-                        case Geo::Type::ELLIPSE:
-                            ellipse = dynamic_cast<Geo::Ellipse *>(item);
-                            for (const Geo::Point &point : ellipse->shape())
-                            {
-                                polyline_indexs[polyline_index_count++] = data_count / 3;
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                                if (polyline_index_count == polyline_index_len)
-                                {
-                                    polyline_index_len *= 2;
-                                    unsigned int *temp = new unsigned int[polyline_index_len];
-                                    std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                                    delete []polyline_indexs;
-                                    polyline_indexs = temp;
-                                }
-                            }
-                            polyline_indexs[polyline_index_count++] = UINT_MAX;
-                            ellipse->point_count = data_count / 3 - ellipse->point_index;
-                            break;
-                        case Geo::Type::POLYLINE:
-                            polyline = dynamic_cast<Geo::Polyline *>(item);
-                            for (const Geo::Point &point : *polyline)
-                            {
-                                polyline_indexs[polyline_index_count++] = data_count / 3;
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                                if (polyline_index_count == polyline_index_len)
-                                {
-                                    polyline_index_len *= 2;
-                                    unsigned int *temp = new unsigned int[polyline_index_len];
-                                    std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                                    delete []polyline_indexs;
-                                    polyline_indexs = temp;
-                                }
-                            }
-                            polyline_indexs[polyline_index_count++] = UINT_MAX;
-                            polyline->point_count = polyline->size();
-                            break;
-                        case Geo::Type::BEZIER:
-                            for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
-                            {
-                                polyline_indexs[polyline_index_count++] = data_count / 3;
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                                if (polyline_index_count == polyline_index_len)
-                                {
-                                    polyline_index_len *= 2;
-                                    unsigned int *temp = new unsigned int[polyline_index_len];
-                                    std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                                    delete []polyline_indexs;
-                                    polyline_indexs = temp;
-                                }
-                            }
-                            polyline_indexs[polyline_index_count++] = UINT_MAX;
-                            item->point_count = dynamic_cast<const Geo::Bezier *>(item)->shape().size();
-                            break;
-                        case Geo::Type::BSPLINE:
-                            for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->shape())
-                            {
-                                polyline_indexs[polyline_index_count++] = data_count / 3;
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                                if (polyline_index_count == polyline_index_len)
-                                {
-                                    polyline_index_len *= 2;
-                                    unsigned int *temp = new unsigned int[polyline_index_len];
-                                    std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                                    delete []polyline_indexs;
-                                    polyline_indexs = temp;
-                                }
-                            }
-                            polyline_indexs[polyline_index_count++] = UINT_MAX;
-                            item->point_count = dynamic_cast<const Geo::BSpline *>(item)->shape().size();
-                            break;
-                        default:
-                            break;
                         }
-
-                        if (polyline_index_count == polyline_index_len)
+                        for (Geo::Geometry *item : shape)
                         {
-                            polyline_index_len *= 2;
-                            unsigned int *temp = new unsigned int[polyline_index_len];
-                            std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                            delete []polyline_indexs;
-                            polyline_indexs = temp;
+                            item->point_index = data_count / 3;
+                            item->printable_point_index = printable_data_count / 3;
+                            switch (item->type())
+                            {
+                            case Geo::Type::POLYGON:
+                                polygon = dynamic_cast<Geo::Polygon *>(item);
+                                for (const Geo::Point &point : *polygon)
+                                {
+                                    polyline_indexs[polyline_index_count++] = data_count / 3;
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                    if (polyline_index_count == polyline_index_len)
+                                    {
+                                        polyline_index_len *= 2;
+                                        unsigned int *temp = new unsigned int[polyline_index_len];
+                                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
+                                        delete []polyline_indexs;
+                                        polyline_indexs = temp;
+                                    }
+                                }
+                                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                                polygon->point_count = polygon->size();
+                                break;
+                            case Geo::Type::CIRCLE:
+                                circle = dynamic_cast<Geo::Circle *>(item);
+                                for (const Geo::Point &point : circle->shape())
+                                {
+                                    polyline_indexs[polyline_index_count++] = data_count / 3;
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                    if (polyline_index_count == polyline_index_len)
+                                    {
+                                        polyline_index_len *= 2;
+                                        unsigned int *temp = new unsigned int[polyline_index_len];
+                                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
+                                        delete []polyline_indexs;
+                                        polyline_indexs = temp;
+                                    }
+                                }
+                                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                                circle->point_count = data_count / 3 - circle->point_index;
+                                break;
+                            case Geo::Type::ELLIPSE:
+                                ellipse = dynamic_cast<Geo::Ellipse *>(item);
+                                for (const Geo::Point &point : ellipse->shape())
+                                {
+                                    polyline_indexs[polyline_index_count++] = data_count / 3;
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                    if (polyline_index_count == polyline_index_len)
+                                    {
+                                        polyline_index_len *= 2;
+                                        unsigned int *temp = new unsigned int[polyline_index_len];
+                                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
+                                        delete []polyline_indexs;
+                                        polyline_indexs = temp;
+                                    }
+                                }
+                                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                                ellipse->point_count = data_count / 3 - ellipse->point_index;
+                                break;
+                            case Geo::Type::POLYLINE:
+                                polyline = dynamic_cast<Geo::Polyline *>(item);
+                                for (const Geo::Point &point : *polyline)
+                                {
+                                    polyline_indexs[polyline_index_count++] = data_count / 3;
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                    if (polyline_index_count == polyline_index_len)
+                                    {
+                                        polyline_index_len *= 2;
+                                        unsigned int *temp = new unsigned int[polyline_index_len];
+                                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
+                                        delete []polyline_indexs;
+                                        polyline_indexs = temp;
+                                    }
+                                }
+                                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                                polyline->point_count = polyline->size();
+                                break;
+                            case Geo::Type::BEZIER:
+                                for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
+                                {
+                                    polyline_indexs[polyline_index_count++] = data_count / 3;
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                    if (polyline_index_count == polyline_index_len)
+                                    {
+                                        polyline_index_len *= 2;
+                                        unsigned int *temp = new unsigned int[polyline_index_len];
+                                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
+                                        delete []polyline_indexs;
+                                        polyline_indexs = temp;
+                                    }
+                                }
+                                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                                item->point_count = dynamic_cast<const Geo::Bezier *>(item)->shape().size();
+                                break;
+                            case Geo::Type::BSPLINE:
+                                for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->shape())
+                                {
+                                    polyline_indexs[polyline_index_count++] = data_count / 3;
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                    if (polyline_index_count == polyline_index_len)
+                                    {
+                                        polyline_index_len *= 2;
+                                        unsigned int *temp = new unsigned int[polyline_index_len];
+                                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
+                                        delete []polyline_indexs;
+                                        polyline_indexs = temp;
+                                    }
+                                }
+                                polyline_indexs[polyline_index_count++] = UINT_MAX;
+                                item->point_count = dynamic_cast<const Geo::BSpline *>(item)->shape().size();
+                                break;
+                            default:
+                                break;
+                            }
+
+                            if (polyline_index_count == polyline_index_len)
+                            {
+                                polyline_index_len *= 2;
+                                unsigned int *temp = new unsigned int[polyline_index_len];
+                                std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
+                                delete []polyline_indexs;
+                                polyline_indexs = temp;
+                            }
                         }
                     }
                     geo->point_count = polyline_index_count - geo->point_count;
@@ -3261,72 +3295,89 @@ std::tuple<unsigned int*, size_t> Canvas::refresh_polygon_ibo()
                 data_count += ellipse->shape().size() * 3;
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : dynamic_cast<Combination *>(geo)->shape())
                 {
-                    switch (item->type())
+                    Combination *combination = static_cast<Combination *>(geo);
+                    std::vector<Geo::Geometry *> temp(combination->rbegin(), combination->rend()), shape;
+                    while (!temp.empty())
                     {
-                    case Geo::Type::POLYGON:
-                        polygon = dynamic_cast<Geo::Polygon *>(item);
-                        polygon->IBO_index = polygon_index_count;
-                        for (size_t i : Geo::ear_cut_to_indexs(*polygon))
+                        if (Combination *t = dynamic_cast<Combination *>(temp.back()))
                         {
-                            polygon_indexs[polygon_index_count++] = data_count / 3 + i;
-                            if (polygon_index_count == polygon_index_len)
-                            {
-                                polygon_index_len *= 2;
-                                unsigned int *temp = new unsigned int[polygon_index_len];
-                                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                                delete []polygon_indexs;
-                                polygon_indexs = temp;
-                            }
+                            temp.pop_back();
+                            temp.insert(temp.end(), t->rbegin(), t->rend());
                         }
-                        data_count += polygon->size() * 3;
-                        break;
-                    case Geo::Type::CIRCLE:
-                        circle = dynamic_cast<Geo::Circle *>(item);
-                        circle->IBO_index = polygon_index_count;
-                        for (size_t i : Geo::ear_cut_to_indexs(circle->shape()))
+                        else
                         {
-                            polygon_indexs[polygon_index_count++] = data_count / 3 + i;
-                            if (polygon_index_count == polygon_index_len)
-                            {
-                                polygon_index_len *= 2;
-                                unsigned int *temp = new unsigned int[polygon_index_len];
-                                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                                delete []polygon_indexs;
-                                polygon_indexs = temp;
-                            }
+                            shape.push_back(temp.back());
+                            temp.pop_back();
                         }
-                        data_count += circle->shape().size() * 3;
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        ellipse = dynamic_cast<Geo::Ellipse *>(item);
-                        ellipse->IBO_index = polygon_index_count;
-                        for (size_t i : Geo::ear_cut_to_indexs(ellipse->shape()))
+                    }
+                    for (Geo::Geometry *item : shape)
+                    {
+                        switch (item->type())
                         {
-                            polygon_indexs[polygon_index_count++] = data_count / 3 + i;
-                            if (polygon_index_count == polygon_index_len)
+                        case Geo::Type::POLYGON:
+                            polygon = dynamic_cast<Geo::Polygon *>(item);
+                            polygon->IBO_index = polygon_index_count;
+                            for (size_t i : Geo::ear_cut_to_indexs(*polygon))
                             {
-                                polygon_index_len *= 2;
-                                unsigned int *temp = new unsigned int[polygon_index_len];
-                                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                                delete []polygon_indexs;
-                                polygon_indexs = temp;
+                                polygon_indexs[polygon_index_count++] = data_count / 3 + i;
+                                if (polygon_index_count == polygon_index_len)
+                                {
+                                    polygon_index_len *= 2;
+                                    unsigned int *temp = new unsigned int[polygon_index_len];
+                                    std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
+                                    delete []polygon_indexs;
+                                    polygon_indexs = temp;
+                                }
                             }
+                            data_count += polygon->size() * 3;
+                            break;
+                        case Geo::Type::CIRCLE:
+                            circle = dynamic_cast<Geo::Circle *>(item);
+                            circle->IBO_index = polygon_index_count;
+                            for (size_t i : Geo::ear_cut_to_indexs(circle->shape()))
+                            {
+                                polygon_indexs[polygon_index_count++] = data_count / 3 + i;
+                                if (polygon_index_count == polygon_index_len)
+                                {
+                                    polygon_index_len *= 2;
+                                    unsigned int *temp = new unsigned int[polygon_index_len];
+                                    std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
+                                    delete []polygon_indexs;
+                                    polygon_indexs = temp;
+                                }
+                            }
+                            data_count += circle->shape().size() * 3;
+                            break;
+                        case Geo::Type::ELLIPSE:
+                            ellipse = dynamic_cast<Geo::Ellipse *>(item);
+                            ellipse->IBO_index = polygon_index_count;
+                            for (size_t i : Geo::ear_cut_to_indexs(ellipse->shape()))
+                            {
+                                polygon_indexs[polygon_index_count++] = data_count / 3 + i;
+                                if (polygon_index_count == polygon_index_len)
+                                {
+                                    polygon_index_len *= 2;
+                                    unsigned int *temp = new unsigned int[polygon_index_len];
+                                    std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
+                                    delete []polygon_indexs;
+                                    polygon_indexs = temp;
+                                }
+                            }
+                            data_count += ellipse->shape().size() * 3;
+                            break;
+                        case Geo::Type::POLYLINE:
+                            data_count += dynamic_cast<Geo::Polyline *>(item)->size() * 3;
+                            break;
+                        case Geo::Type::BEZIER:
+                            data_count += dynamic_cast<const Geo::Bezier *>(item)->shape().size() * 3;
+                            break;
+                        case Geo::Type::BSPLINE:
+                            data_count += dynamic_cast<const Geo::BSpline *>(item)->shape().size() * 3;
+                            break;
+                        default:
+                            break;
                         }
-                        data_count += ellipse->shape().size() * 3;
-                        break;
-                    case Geo::Type::POLYLINE:
-                        data_count += dynamic_cast<Geo::Polyline *>(item)->size() * 3;
-                        break;
-                    case Geo::Type::BEZIER:
-                        data_count += dynamic_cast<const Geo::Bezier *>(item)->shape().size() * 3;
-                        break;
-                    case Geo::Type::BSPLINE:
-                        data_count += dynamic_cast<const Geo::BSpline *>(item)->shape().size() * 3;
-                        break;
-                    default:
-                        break;
                     }
                 }
                 break;
@@ -3444,153 +3495,170 @@ void Canvas::refresh_vbo(const bool unitary)
                         sizeof(double) * 12, printable_data);
                     break;
                 case Geo::Type::COMBINATION:
-                    for (const Geo::Geometry *item : dynamic_cast<const Combination *>(geo)->shape())
                     {
-                        data_count = 0;
-                        switch (item->type())
+                        const Combination *combination = static_cast<const Combination *>(geo);
+                        std::vector<const Geo::Geometry *> temp(combination->crbegin(), combination->crend()), shape;
+                        while (!temp.empty())
                         {
-                        case Geo::Type::POLYGON:
-                            for (const Geo::Point &point : *dynamic_cast<const Geo::Polygon *>(item))
+                            if (const Combination * t = dynamic_cast<const Combination *>(temp.back()))
                             {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
+                                temp.pop_back();
+                                temp.insert(temp.end(), t->crbegin(), t->crend());
                             }
-                            glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
-                            glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->printable_point_index * 3,
-                                sizeof(double) * data_count, data);
-                            break;
-                        case Geo::Type::CIRCLE:
-                            for (const Geo::Point &point : dynamic_cast<const Geo::Circle *>(item)->shape())
+                            else
                             {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
+                                shape.push_back(temp.back());
+                                temp.pop_back();
                             }
-                            printable_data[0] = dynamic_cast<const Geo::Circle *>(item)->x;
-                            printable_data[1] = dynamic_cast<const Geo::Circle *>(item)->y;
-                            glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
-                            glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->printable_point_index * 3,
-                                sizeof(double) * 3, printable_data);
-                            break;
-                        case Geo::Type::ELLIPSE:
-                            for (const Geo::Point &point : dynamic_cast<const Geo::Ellipse *>(item)->shape())
-                            {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                            }
-                            printable_data[0] = dynamic_cast<const Geo::Ellipse *>(item)->a0().x;
-                            printable_data[1] = dynamic_cast<const Geo::Ellipse *>(item)->a0().y;
-                            printable_data[3] = dynamic_cast<const Geo::Ellipse *>(item)->a1().x;
-                            printable_data[4] = dynamic_cast<const Geo::Ellipse *>(item)->a1().y;
-                            printable_data[6] = dynamic_cast<const Geo::Ellipse *>(item)->b0().x;
-                            printable_data[7] = dynamic_cast<const Geo::Ellipse *>(item)->b0().y;
-                            printable_data[9] = dynamic_cast<const Geo::Ellipse *>(item)->b1().x;
-                            printable_data[10] = dynamic_cast<const Geo::Ellipse *>(item)->b1().y;
-                            glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
-                            glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->printable_point_index * 3,
-                                sizeof(double) * 12, printable_data);
-                            break;
-                        case Geo::Type::POLYLINE:
-                            for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(item))
-                            {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                            }
-                            glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
-                            glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->printable_point_index * 3,
-                                sizeof(double) * data_count, data);
-                            break;
-                        case Geo::Type::BEZIER:
-                            for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
-                            {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                            }
-                            break;
-                        case Geo::Type::BSPLINE:
-                            for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->path_points)
-                            {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                            }
-                            glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
-                            glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->printable_point_index * 3,
-                                sizeof(double) * data_count, data);
-                            data_count = 0;
-                            for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->shape())
-                            {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                            }
-                            break;
-                        default:
-                            break;
                         }
-                        glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
-                        glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->point_index * 3,
-                            sizeof(double) * data_count, data);
+                        for (const Geo::Geometry *item : shape)
+                        {
+                            data_count = 0;
+                            switch (item->type())
+                            {
+                            case Geo::Type::POLYGON:
+                                for (const Geo::Point &point : *dynamic_cast<const Geo::Polygon *>(item))
+                                {
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                }
+                                glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
+                                glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->printable_point_index * 3,
+                                    sizeof(double) * data_count, data);
+                                break;
+                            case Geo::Type::CIRCLE:
+                                for (const Geo::Point &point : dynamic_cast<const Geo::Circle *>(item)->shape())
+                                {
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                }
+                                printable_data[0] = dynamic_cast<const Geo::Circle *>(item)->x;
+                                printable_data[1] = dynamic_cast<const Geo::Circle *>(item)->y;
+                                glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
+                                glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->printable_point_index * 3,
+                                    sizeof(double) * 3, printable_data);
+                                break;
+                            case Geo::Type::ELLIPSE:
+                                for (const Geo::Point &point : dynamic_cast<const Geo::Ellipse *>(item)->shape())
+                                {
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                }
+                                printable_data[0] = dynamic_cast<const Geo::Ellipse *>(item)->a0().x;
+                                printable_data[1] = dynamic_cast<const Geo::Ellipse *>(item)->a0().y;
+                                printable_data[3] = dynamic_cast<const Geo::Ellipse *>(item)->a1().x;
+                                printable_data[4] = dynamic_cast<const Geo::Ellipse *>(item)->a1().y;
+                                printable_data[6] = dynamic_cast<const Geo::Ellipse *>(item)->b0().x;
+                                printable_data[7] = dynamic_cast<const Geo::Ellipse *>(item)->b0().y;
+                                printable_data[9] = dynamic_cast<const Geo::Ellipse *>(item)->b1().x;
+                                printable_data[10] = dynamic_cast<const Geo::Ellipse *>(item)->b1().y;
+                                glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
+                                glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->printable_point_index * 3,
+                                    sizeof(double) * 12, printable_data);
+                                break;
+                            case Geo::Type::POLYLINE:
+                                for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(item))
+                                {
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                }
+                                glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
+                                glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->printable_point_index * 3,
+                                    sizeof(double) * data_count, data);
+                                break;
+                            case Geo::Type::BEZIER:
+                                for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
+                                {
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                }
+                                break;
+                            case Geo::Type::BSPLINE:
+                                for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->path_points)
+                                {
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                }
+                                glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
+                                glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->printable_point_index * 3,
+                                    sizeof(double) * data_count, data);
+                                data_count = 0;
+                                for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->shape())
+                                {
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                }
+                                break;
+                            default:
+                                break;
+                            }
+                            glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
+                            glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->point_index * 3,
+                                sizeof(double) * data_count, data);
+                        }
                     }
                     data_count = 0;
                     break;
@@ -3744,112 +3812,129 @@ void Canvas::refresh_vbo(const bool unitary)
                     }
                     break;
                 case Geo::Type::COMBINATION:
-                    for (const Geo::Geometry *item : dynamic_cast<const Combination *>(geo)->shape())
                     {
-                        data_count = 0;
-                        switch (item->type())
+                        const Combination *combination = static_cast<const Combination *>(geo);
+                        std::vector<const Geo::Geometry *> temp(combination->crbegin(), combination->crend()), shape;
+                        while (!temp.empty())
                         {
-                        case Geo::Type::POLYGON:
-                            for (const Geo::Point &point : *dynamic_cast<const Geo::Polygon *>(item))
+                            if (const Combination *t = dynamic_cast<const Combination *>(geo))
                             {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
+                                temp.pop_back();
+                                temp.insert(temp.end(), t->crbegin(), t->crend());
                             }
-                            break;
-                        case Geo::Type::CIRCLE:
-                            for (const Geo::Point &point : dynamic_cast<const Geo::Circle *>(item)->shape())
+                            else
                             {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
+                                shape.push_back(temp.back());
+                                temp.pop_back();
                             }
-                            break;
-                        case Geo::Type::ELLIPSE:
-                            for (const Geo::Point &point : dynamic_cast<const Geo::Ellipse *>(item)->shape())
-                            {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                            }
-                            break;
-                        case Geo::Type::POLYLINE:
-                            for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(item))
-                            {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                            }
-                            break;
-                        case Geo::Type::BEZIER:
-                            for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
-                            {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                            }
-                            break;
-                        case Geo::Type::BSPLINE:
-                            for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->shape())
-                            {
-                                data[data_count++] = point.x;
-                                data[data_count++] = point.y;
-                                data[data_count++] = 0.5;
-                                if (data_count == data_len)
-                                {
-                                    data_len *= 2;
-                                    double *temp = new double[data_len];
-                                    std::move(data, data + data_count, temp);
-                                    delete []data;
-                                    data = temp;
-                                }
-                            }
-                            break;
-                        default:
-                            break;
                         }
-                        glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->point_index * 3,
-                            sizeof(double) * data_count, data);
+                        for (const Geo::Geometry *item : shape)
+                        {
+                            data_count = 0;
+                            switch (item->type())
+                            {
+                            case Geo::Type::POLYGON:
+                                for (const Geo::Point &point : *dynamic_cast<const Geo::Polygon *>(item))
+                                {
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                }
+                                break;
+                            case Geo::Type::CIRCLE:
+                                for (const Geo::Point &point : dynamic_cast<const Geo::Circle *>(item)->shape())
+                                {
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                }
+                                break;
+                            case Geo::Type::ELLIPSE:
+                                for (const Geo::Point &point : dynamic_cast<const Geo::Ellipse *>(item)->shape())
+                                {
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                }
+                                break;
+                            case Geo::Type::POLYLINE:
+                                for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(item))
+                                {
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                }
+                                break;
+                            case Geo::Type::BEZIER:
+                                for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
+                                {
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                }
+                                break;
+                            case Geo::Type::BSPLINE:
+                                for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->shape())
+                                {
+                                    data[data_count++] = point.x;
+                                    data[data_count++] = point.y;
+                                    data[data_count++] = 0.5;
+                                    if (data_count == data_len)
+                                    {
+                                        data_len *= 2;
+                                        double *temp = new double[data_len];
+                                        std::move(data, data + data_count, temp);
+                                        delete []data;
+                                        data = temp;
+                                    }
+                                }
+                                break;
+                            default:
+                                break;
+                            }
+                            glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * item->point_index * 3,
+                                sizeof(double) * data_count, data);
+                        }
                     }
                     data_count = 0;
                     break;
@@ -4173,15 +4258,41 @@ void Canvas::refresh_selected_ibo()
             }
             break;
         case Geo::Type::COMBINATION:
-            for (const Geo::Geometry *item : dynamic_cast<const Combination *>(geo)->shape())
             {
-                if (item->type() == Geo::Type::TEXT)
+                const Combination *combination = static_cast<const Combination *>(geo);
+                std::vector<const Geo::Geometry *> temp(combination->crbegin(), combination->crend()), shape;
+                while (!temp.empty())
                 {
-                    continue;
+                    if (const Combination *t = dynamic_cast<const Combination *>(temp.back()))
+                    {
+                        temp.pop_back();
+                        temp.insert(temp.end(), t->crbegin(), t->crend());
+                    }
+                    else
+                    {
+                        shape.push_back(temp.back());
+                        temp.pop_back();
+                    }
                 }
-                for (size_t index = item->point_index, i = 0, count = item->point_count; i < count; ++i)
+                for (const Geo::Geometry *item : shape)
                 {
-                    indexs[index_count++] = index++;
+                    if (item->type() == Geo::Type::TEXT)
+                    {
+                        continue;
+                    }
+                    for (size_t index = item->point_index, i = 0, count = item->point_count; i < count; ++i)
+                    {
+                        indexs[index_count++] = index++;
+                        if (index_count == index_len)
+                        {
+                            index_len *= 2;
+                            unsigned int *temp = new unsigned int[index_len];
+                            std::move(indexs, indexs + index_count, temp);
+                            delete []indexs;
+                            indexs = temp;
+                        }
+                    }
+                    indexs[index_count++] = UINT_MAX;
                     if (index_count == index_len)
                     {
                         index_len *= 2;
@@ -4190,15 +4301,6 @@ void Canvas::refresh_selected_ibo()
                         delete []indexs;
                         indexs = temp;
                     }
-                }
-                indexs[index_count++] = UINT_MAX;
-                if (index_count == index_len)
-                {
-                    index_len *= 2;
-                    unsigned int *temp = new unsigned int[index_len];
-                    std::move(indexs, indexs + index_count, temp);
-                    delete []indexs;
-                    indexs = temp;
                 }
             }
             break;
@@ -4229,7 +4331,22 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
     unsigned int *indexs = new unsigned int[index_len];
     if (object->type() == Geo::Type::COMBINATION)
     {
-        for (const Geo::Geometry *item : dynamic_cast<const Combination *>(object)->shape())
+        const Combination *combination = static_cast<const Combination *>(object);
+        std::vector<const Geo::Geometry *> temp(combination->crbegin(), combination->crend()), shape;
+        while (!temp.empty())
+        {
+            if (const Combination *t = dynamic_cast<const Combination *>(temp.back()))
+            {
+                temp.pop_back();
+                temp.insert(temp.end(), t->crbegin(), t->crend());
+            }
+            else
+            {
+                shape.push_back(temp.back());
+                temp.pop_back();
+            }
+        }
+        for (const Geo::Geometry *item : shape)
         {
             for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
             {
@@ -4382,91 +4499,108 @@ void Canvas::refresh_selected_vbo()
                 glBufferSubData(GL_ARRAY_BUFFER, obj->printable_point_index * 3 * sizeof(double), 12 * sizeof(double), printable_data);
                 break;
             case Geo::Type::COMBINATION:
-                for (const Geo::Geometry *item : dynamic_cast<const Combination *>(obj)->shape())
                 {
-                    data_count = 0;
-                    switch (item->type())
+                    const Combination *combination = static_cast<const Combination *>(obj);
+                    std::vector<const Geo::Geometry *> temp(combination->crbegin(), combination->crend()), shape;
+                    while (!temp.empty())
                     {
-                    case Geo::Type::POLYGON:
-                        for (const Geo::Point &point : *dynamic_cast<const Geo::Polygon *>(item))
+                        if (const Combination *t = dynamic_cast<const Combination *>(temp.back()))
                         {
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
+                            temp.pop_back();
+                            temp.insert(temp.end(), t->crbegin(), t->crend());
                         }
-                        glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
-                        glBufferSubData(GL_ARRAY_BUFFER, item->printable_point_index * 3 * sizeof(double), data_count * sizeof(double), data);
-                        break;
-                    case Geo::Type::CIRCLE:
-                        for (const Geo::Point &point : dynamic_cast<const Geo::Circle *>(item)->shape())
+                        else
                         {
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
+                            shape.push_back(temp.back());
+                            temp.pop_back();
                         }
-                        printable_data[0] = dynamic_cast<const Geo::Circle *>(item)->x;
-                        printable_data[1] = dynamic_cast<const Geo::Circle *>(item)->y;
-                        glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
-                        glBufferSubData(GL_ARRAY_BUFFER, item->printable_point_index * 3 * sizeof(double), 3 * sizeof(double), printable_data);
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        for (const Geo::Point &point : dynamic_cast<const Geo::Ellipse *>(item)->shape())
-                        {
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
-                        }
-                        printable_data[0] = dynamic_cast<const Geo::Ellipse *>(item)->a0().x;
-                        printable_data[1] = dynamic_cast<const Geo::Ellipse *>(item)->a0().y;
-                        printable_data[3] = dynamic_cast<const Geo::Ellipse *>(item)->a1().x;
-                        printable_data[4] = dynamic_cast<const Geo::Ellipse *>(item)->a1().y;
-                        printable_data[6] = dynamic_cast<const Geo::Ellipse *>(item)->b0().x;
-                        printable_data[7] = dynamic_cast<const Geo::Ellipse *>(item)->b0().y;
-                        printable_data[9] = dynamic_cast<const Geo::Ellipse *>(item)->b1().x;
-                        printable_data[10] = dynamic_cast<const Geo::Ellipse *>(item)->b1().y;
-                        glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
-                        glBufferSubData(GL_ARRAY_BUFFER, item->printable_point_index * 3 * sizeof(double), 12 * sizeof(double), printable_data);
-                        break;
-                    case Geo::Type::POLYLINE:
-                        for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(item))
-                        {
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
-                        }
-                        glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
-                        glBufferSubData(GL_ARRAY_BUFFER, item->printable_point_index * 3 * sizeof(double), data_count * sizeof(double), data);
-                        break;
-                    case Geo::Type::BEZIER:
-                        for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
-                        {
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
-                        }
-                        break;
-                    case Geo::Type::BSPLINE:
-                        for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->path_points)
-                        {
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
-                        }
-                        glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
-                        glBufferSubData(GL_ARRAY_BUFFER, item->printable_point_index * 3 * sizeof(double), data_count * sizeof(double), data);
-                        data_count = 0;
-                        for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->shape())
-                        {
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
-                        }
-                        break;
-                    default:
-                        break;
                     }
-                    glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
-                    glBufferSubData(GL_ARRAY_BUFFER, item->point_index * 3 * sizeof(double), data_count * sizeof(double), data);
+                    for (const Geo::Geometry *item : shape)
+                    {
+                        data_count = 0;
+                        switch (item->type())
+                        {
+                        case Geo::Type::POLYGON:
+                            for (const Geo::Point &point : *dynamic_cast<const Geo::Polygon *>(item))
+                            {
+                                data[data_count++] = point.x;
+                                data[data_count++] = point.y;
+                                data[data_count++] = 0.5;
+                            }
+                            glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
+                            glBufferSubData(GL_ARRAY_BUFFER, item->printable_point_index * 3 * sizeof(double), data_count * sizeof(double), data);
+                            break;
+                        case Geo::Type::CIRCLE:
+                            for (const Geo::Point &point : dynamic_cast<const Geo::Circle *>(item)->shape())
+                            {
+                                data[data_count++] = point.x;
+                                data[data_count++] = point.y;
+                                data[data_count++] = 0.5;
+                            }
+                            printable_data[0] = dynamic_cast<const Geo::Circle *>(item)->x;
+                            printable_data[1] = dynamic_cast<const Geo::Circle *>(item)->y;
+                            glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
+                            glBufferSubData(GL_ARRAY_BUFFER, item->printable_point_index * 3 * sizeof(double), 3 * sizeof(double), printable_data);
+                            break;
+                        case Geo::Type::ELLIPSE:
+                            for (const Geo::Point &point : dynamic_cast<const Geo::Ellipse *>(item)->shape())
+                            {
+                                data[data_count++] = point.x;
+                                data[data_count++] = point.y;
+                                data[data_count++] = 0.5;
+                            }
+                            printable_data[0] = dynamic_cast<const Geo::Ellipse *>(item)->a0().x;
+                            printable_data[1] = dynamic_cast<const Geo::Ellipse *>(item)->a0().y;
+                            printable_data[3] = dynamic_cast<const Geo::Ellipse *>(item)->a1().x;
+                            printable_data[4] = dynamic_cast<const Geo::Ellipse *>(item)->a1().y;
+                            printable_data[6] = dynamic_cast<const Geo::Ellipse *>(item)->b0().x;
+                            printable_data[7] = dynamic_cast<const Geo::Ellipse *>(item)->b0().y;
+                            printable_data[9] = dynamic_cast<const Geo::Ellipse *>(item)->b1().x;
+                            printable_data[10] = dynamic_cast<const Geo::Ellipse *>(item)->b1().y;
+                            glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
+                            glBufferSubData(GL_ARRAY_BUFFER, item->printable_point_index * 3 * sizeof(double), 12 * sizeof(double), printable_data);
+                            break;
+                        case Geo::Type::POLYLINE:
+                            for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(item))
+                            {
+                                data[data_count++] = point.x;
+                                data[data_count++] = point.y;
+                                data[data_count++] = 0.5;
+                            }
+                            glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
+                            glBufferSubData(GL_ARRAY_BUFFER, item->printable_point_index * 3 * sizeof(double), data_count * sizeof(double), data);
+                            break;
+                        case Geo::Type::BEZIER:
+                            for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
+                            {
+                                data[data_count++] = point.x;
+                                data[data_count++] = point.y;
+                                data[data_count++] = 0.5;
+                            }
+                            break;
+                        case Geo::Type::BSPLINE:
+                            for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->path_points)
+                            {
+                                data[data_count++] = point.x;
+                                data[data_count++] = point.y;
+                                data[data_count++] = 0.5;
+                            }
+                            glBindBuffer(GL_ARRAY_BUFFER, _VBO[6]); // printable points
+                            glBufferSubData(GL_ARRAY_BUFFER, item->printable_point_index * 3 * sizeof(double), data_count * sizeof(double), data);
+                            data_count = 0;
+                            for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->shape())
+                            {
+                                data[data_count++] = point.x;
+                                data[data_count++] = point.y;
+                                data[data_count++] = 0.5;
+                            }
+                            break;
+                        default:
+                            break;
+                        }
+                        glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
+                        glBufferSubData(GL_ARRAY_BUFFER, item->point_index * 3 * sizeof(double), data_count * sizeof(double), data);
+                    }
                 }
                 data_count = 0;
                 break;
@@ -4581,63 +4715,80 @@ void Canvas::refresh_selected_vbo()
                 }
                 break;
             case Geo::Type::COMBINATION:
-                for (const Geo::Geometry *item : dynamic_cast<const Combination *>(obj)->shape())
                 {
-                    data_count = 0;
-                    switch (item->type())
+                    const Combination *combination = static_cast<const Combination *>(obj);
+                    std::vector<const Geo::Geometry *> temp(combination->crbegin(), combination->crend()), shape;
+                    while (!temp.empty())
                     {
-                    case Geo::Type::POLYGON:
-                        for (const Geo::Point &point : *dynamic_cast<const Geo::Polygon *>(item))
+                        if (const Combination *t = dynamic_cast<const Combination *>(temp.back()))
                         {
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
+                            temp.pop_back();
+                            temp.insert(temp.end(), t->crbegin(), t->crend());
                         }
-                        break;
-                    case Geo::Type::CIRCLE:
-                        for (const Geo::Point &point : dynamic_cast<const Geo::Circle *>(item)->shape())
+                        else
                         {
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
+                            shape.push_back(temp.back());
+                            temp.pop_back();
                         }
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        for (const Geo::Point &point : dynamic_cast<const Geo::Ellipse *>(item)->shape())
-                        {
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
-                        }
-                        break;
-                    case Geo::Type::POLYLINE:
-                        for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(item))
-                        {
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
-                        }
-                        break;
-                    case Geo::Type::BEZIER:
-                        for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
-                        {
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
-                        }
-                        break;
-                    case Geo::Type::BSPLINE:
-                        for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->shape())
-                        {
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
-                        }
-                        break;
-                    default:
-                        break;
                     }
-                    glBufferSubData(GL_ARRAY_BUFFER, item->point_index * 3 * sizeof(double), data_count * sizeof(double), data);
+                    for (const Geo::Geometry *item : shape)
+                    {
+                        data_count = 0;
+                        switch (item->type())
+                        {
+                        case Geo::Type::POLYGON:
+                            for (const Geo::Point &point : *dynamic_cast<const Geo::Polygon *>(item))
+                            {
+                                data[data_count++] = point.x;
+                                data[data_count++] = point.y;
+                                data[data_count++] = 0.5;
+                            }
+                            break;
+                        case Geo::Type::CIRCLE:
+                            for (const Geo::Point &point : dynamic_cast<const Geo::Circle *>(item)->shape())
+                            {
+                                data[data_count++] = point.x;
+                                data[data_count++] = point.y;
+                                data[data_count++] = 0.5;
+                            }
+                            break;
+                        case Geo::Type::ELLIPSE:
+                            for (const Geo::Point &point : dynamic_cast<const Geo::Ellipse *>(item)->shape())
+                            {
+                                data[data_count++] = point.x;
+                                data[data_count++] = point.y;
+                                data[data_count++] = 0.5;
+                            }
+                            break;
+                        case Geo::Type::POLYLINE:
+                            for (const Geo::Point &point : *dynamic_cast<const Geo::Polyline *>(item))
+                            {
+                                data[data_count++] = point.x;
+                                data[data_count++] = point.y;
+                                data[data_count++] = 0.5;
+                            }
+                            break;
+                        case Geo::Type::BEZIER:
+                            for (const Geo::Point &point : dynamic_cast<const Geo::Bezier *>(item)->shape())
+                            {
+                                data[data_count++] = point.x;
+                                data[data_count++] = point.y;
+                                data[data_count++] = 0.5;
+                            }
+                            break;
+                        case Geo::Type::BSPLINE:
+                            for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(item)->shape())
+                            {
+                                data[data_count++] = point.x;
+                                data[data_count++] = point.y;
+                                data[data_count++] = 0.5;
+                            }
+                            break;
+                        default:
+                            break;
+                        }
+                        glBufferSubData(GL_ARRAY_BUFFER, item->point_index * 3 * sizeof(double), data_count * sizeof(double), data);
+                    }
                 }
                 data_count = 0;
                 break;
@@ -4767,57 +4918,74 @@ void Canvas::refresh_brush_ibo()
                 }
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : dynamic_cast<const Combination *>(geo)->shape())
                 {
-                    switch (item->type())
+                    const Combination *combination = static_cast<const Combination *>(geo);
+                    std::vector<Geo::Geometry *> temp(combination->rbegin(), combination->rend()), shape;
+                    while (!temp.empty())
                     {
-                    case Geo::Type::POLYGON:
-                        dynamic_cast<Geo::ClosedShape *>(item)->IBO_index = polygon_index_count;
-                        for (size_t i : Geo::ear_cut_to_indexs(*dynamic_cast<const Geo::Polygon *>(item)))
+                        if (const Combination *t = dynamic_cast<const Combination *>(temp.back()))
                         {
-                            polygon_indexs[polygon_index_count++] = item->point_index + i;
-                            if (polygon_index_count == polygon_index_len)
-                            {
-                                polygon_index_len *= 2;
-                                unsigned int *temp = new unsigned int[polygon_index_len];
-                                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                                delete []polygon_indexs;
-                                polygon_indexs = temp;
-                            }
+                            temp.pop_back();
+                            temp.insert(temp.end(), t->rbegin(), t->rend());
                         }
-                        break;
-                    case Geo::Type::CIRCLE:
-                        dynamic_cast<Geo::ClosedShape *>(item)->IBO_index = polygon_index_count;
-                        for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Circle *>(item)->shape()))
+                        else
                         {
-                            polygon_indexs[polygon_index_count++] = item->point_index + i;
-                            if (polygon_index_count == polygon_index_len)
-                            {
-                                polygon_index_len *= 2;
-                                unsigned int *temp = new unsigned int[polygon_index_len];
-                                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                                delete []polygon_indexs;
-                                polygon_indexs = temp;
-                            }
+                            shape.push_back(temp.back());
+                            temp.pop_back();
                         }
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        dynamic_cast<Geo::ClosedShape *>(item)->IBO_index = polygon_index_count;
-                        for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Ellipse *>(item)->shape()))
+                    }
+                    for (Geo::Geometry *item : shape)
+                    {
+                        switch (item->type())
                         {
-                            polygon_indexs[polygon_index_count++] = item->point_index + i;
-                            if (polygon_index_count == polygon_index_len)
+                        case Geo::Type::POLYGON:
+                            dynamic_cast<Geo::ClosedShape *>(item)->IBO_index = polygon_index_count;
+                            for (size_t i : Geo::ear_cut_to_indexs(*dynamic_cast<const Geo::Polygon *>(item)))
                             {
-                                polygon_index_len *= 2;
-                                unsigned int *temp = new unsigned int[polygon_index_len];
-                                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                                delete []polygon_indexs;
-                                polygon_indexs = temp;
+                                polygon_indexs[polygon_index_count++] = item->point_index + i;
+                                if (polygon_index_count == polygon_index_len)
+                                {
+                                    polygon_index_len *= 2;
+                                    unsigned int *temp = new unsigned int[polygon_index_len];
+                                    std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
+                                    delete []polygon_indexs;
+                                    polygon_indexs = temp;
+                                }
                             }
+                            break;
+                        case Geo::Type::CIRCLE:
+                            dynamic_cast<Geo::ClosedShape *>(item)->IBO_index = polygon_index_count;
+                            for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Circle *>(item)->shape()))
+                            {
+                                polygon_indexs[polygon_index_count++] = item->point_index + i;
+                                if (polygon_index_count == polygon_index_len)
+                                {
+                                    polygon_index_len *= 2;
+                                    unsigned int *temp = new unsigned int[polygon_index_len];
+                                    std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
+                                    delete []polygon_indexs;
+                                    polygon_indexs = temp;
+                                }
+                            }
+                            break;
+                        case Geo::Type::ELLIPSE:
+                            dynamic_cast<Geo::ClosedShape *>(item)->IBO_index = polygon_index_count;
+                            for (size_t i : Geo::ear_cut_to_indexs(dynamic_cast<const Geo::Ellipse *>(item)->shape()))
+                            {
+                                polygon_indexs[polygon_index_count++] = item->point_index + i;
+                                if (polygon_index_count == polygon_index_len)
+                                {
+                                    polygon_index_len *= 2;
+                                    unsigned int *temp = new unsigned int[polygon_index_len];
+                                    std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
+                                    delete []polygon_indexs;
+                                    polygon_indexs = temp;
+                                }
+                            }
+                            break;
+                        default:
+                            break;
                         }
-                        break;
-                    default:
-                        break;
                     }
                 }
                 break;
@@ -4905,9 +5073,28 @@ std::tuple<double*, size_t, unsigned int*, size_t> Canvas::refresh_text_vbo()
                 text->text_index = data_count;
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : dynamic_cast<const Combination *>(geo)->shape())
                 {
-                    if (text = dynamic_cast<Text *>(item); text != nullptr)
+                    const Combination *combination = static_cast<const Combination *>(geo);
+                    std::vector<Geo::Geometry *> temp(combination->crbegin(), combination->crend());
+                    std::vector<Text *> texts;
+                    while (!temp.empty())
+                    {
+                        if (const Combination *t = dynamic_cast<const Combination *>(temp.back()))
+                        {
+                            temp.pop_back();
+                            temp.insert(temp.end(), t->crbegin(), t->crend());
+                        }
+                        else if (Text *txt = dynamic_cast<Text *>(temp.back()))
+                        {
+                            texts.push_back(txt);
+                            temp.pop_back();
+                        }
+                        else
+                        {
+                            temp.pop_back();
+                        }
+                    }
+                    for (Text *text : texts)
                     {
                         if (text->text().isEmpty())
                         {
@@ -4923,29 +5110,40 @@ std::tuple<double*, size_t, unsigned int*, size_t> Canvas::refresh_text_vbo()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
                         text->text_index = data_count;
-                    }
-                    for (const QPolygonF &polygon : path.toSubpathPolygons())
-                    {
-                        offset = data_count / 3;
-                        for (const QPointF &point : polygon)
+                        for (const QPolygonF &polygon : path.toSubpathPolygons())
                         {
-                            points.append(Geo::Point(point.x(), coord.y * 2 - point.y()));
-                            data[data_count++] = point.x();
-                            data[data_count++] = coord.y * 2 - point.y();
-                            data[data_count++] = 0.5;
-                            if (data_count == data_len)
+                            offset = data_count / 3;
+                            for (const QPointF &point : polygon)
                             {
-                                data_len *= 2;
-                                double *temp = new double[data_len];
-                                std::move(data, data + data_count, temp);
-                                delete []data;
-                                data = temp;
+                                points.append(Geo::Point(point.x(), coord.y * 2 - point.y()));
+                                data[data_count++] = point.x();
+                                data[data_count++] = coord.y * 2 - point.y();
+                                data[data_count++] = 0.5;
+                                if (data_count == data_len)
+                                {
+                                    data_len *= 2;
+                                    double *temp = new double[data_len];
+                                    std::move(data, data + data_count, temp);
+                                    delete []data;
+                                    data = temp;
+                                }
                             }
-                        }
 
-                        for (size_t i : Geo::ear_cut_to_indexs(points))
-                        {
-                            indexs[index_count++] = offset + i;
+                            for (size_t i : Geo::ear_cut_to_indexs(points))
+                            {
+                                indexs[index_count++] = offset + i;
+                                if (index_count == index_len)
+                                {
+                                    index_len *= 2;
+                                    unsigned int *temp = new unsigned int[index_len];
+                                    std::move(indexs, indexs + index_count, temp);
+                                    delete []indexs;
+                                    indexs = temp;
+                                }
+                            }
+
+                            points.clear();
+                            indexs[index_count++] = UINT_MAX;
                             if (index_count == index_len)
                             {
                                 index_len *= 2;
@@ -4955,23 +5153,9 @@ std::tuple<double*, size_t, unsigned int*, size_t> Canvas::refresh_text_vbo()
                                 indexs = temp;
                             }
                         }
-
-                        points.clear();
-                        indexs[index_count++] = UINT_MAX;
-                        if (index_count == index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::move(indexs, indexs + index_count, temp);
-                            delete []indexs;
-                            indexs = temp;
-                        }
-                    }
-                    if (text != nullptr)
-                    {
                         text->text_count = data_count - text->text_index;
+                        path.clear();
                     }
-                    path.clear();
                 }
                 break;
             default:
@@ -5086,9 +5270,28 @@ void Canvas::refresh_text_vbo(const bool unitary)
                 }
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : dynamic_cast<const Combination *>(geo)->shape())
                 {
-                    if (text = dynamic_cast<Text *>(item); text != nullptr)
+                    const Combination *combination = static_cast<const Combination *>(geo);
+                    std::vector<Geo::Geometry *> temp(combination->rbegin(), combination->rend());
+                    std::vector<Text *> texts;
+                    while (!temp.empty())
+                    {
+                        if (const Combination *t = dynamic_cast<const Combination *>(temp.back()))
+                        {
+                            temp.pop_back();
+                            temp.insert(temp.end(), t->rbegin(), t->rend());
+                        }
+                        else if (Text *txt = dynamic_cast<Text *>(temp.back()))
+                        {
+                            texts.push_back(txt);
+                            temp.pop_back();
+                        }
+                        else
+                        {
+                            temp.pop_back();
+                        }
+                    }
+                    for (Text *text: texts)
                     {
                         if (text->text().isEmpty())
                         {
@@ -5103,30 +5306,27 @@ void Canvas::refresh_text_vbo(const bool unitary)
                             path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
-                    }
-                    data_count = 0;
-                    for (const QPolygonF &polygon : path.toSubpathPolygons())
-                    {
-                        for (const QPointF &point : polygon)
+                        data_count = 0;
+                        for (const QPolygonF &polygon : path.toSubpathPolygons())
                         {
-                            data[data_count++] = point.x();
-                            data[data_count++] = coord.y * 2 - point.y();
-                            data[data_count++] = 0.5;
-                            if (data_count == data_len)
+                            for (const QPointF &point : polygon)
                             {
-                                data_len *= 2;
-                                double *temp = new double[data_len];
-                                std::move(data, data + data_count, temp);
-                                delete []data;
-                                data = temp;
+                                data[data_count++] = point.x();
+                                data[data_count++] = coord.y * 2 - point.y();
+                                data[data_count++] = 0.5;
+                                if (data_count == data_len)
+                                {
+                                    data_len *= 2;
+                                    double *temp = new double[data_len];
+                                    std::move(data, data + data_count, temp);
+                                    delete []data;
+                                    data = temp;
+                                }
                             }
                         }
-                    }
-                    if (text != nullptr)
-                    {
                         glBufferSubData(GL_ARRAY_BUFFER, sizeof(double) * text->text_index, sizeof(double) * data_count, data);
+                        path.clear();
                     }
-                    path.clear();
                 }
                 break;
             default:

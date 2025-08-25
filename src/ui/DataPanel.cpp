@@ -48,33 +48,50 @@ void DataPanel::load_draw_data(const Graph *graph, const size_t point_count)
                 ++bspline_count;
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *obj : dynamic_cast<const Combination *>(object)->shape())
                 {
-                    switch (obj->type())
+                    const Combination *combination = static_cast<const Combination *>(object);
+                    std::vector<const Geo::Geometry *> temp(combination->rbegin(), combination->rend()), shape;
+                    while (!temp.empty())
                     {
-                    case Geo::Type::TEXT:
-                        ++text_count;
-                        break;
-                    case Geo::Type::POLYGON:
-                        ++polygon_count;
-                        break;
-                    case Geo::Type::CIRCLE:
-                        ++circle_count;
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        ++ellipse_count;
-                        break;
-                    case Geo::Type::POLYLINE:
-                        ++polyline_count;
-                        break;
-                    case Geo::Type::BEZIER:
-                        ++bezier_count;
-                        break;
-                    case Geo::Type::BSPLINE:
-                        ++bspline_count;
-                        break;
-                    default:
-                        break;
+                        if (const Combination *t = dynamic_cast<const Combination *>(temp.back()))
+                        {
+                            temp.pop_back();
+                            temp.insert(temp.end(), t->rbegin(), t->rend());
+                        }
+                        else
+                        {
+                            shape.push_back(temp.back());
+                            temp.pop_back();
+                        }
+                    }
+                    for (const Geo::Geometry *obj : shape)
+                    {
+                        switch (obj->type())
+                        {
+                        case Geo::Type::TEXT:
+                            ++text_count;
+                            break;
+                        case Geo::Type::POLYGON:
+                            ++polygon_count;
+                            break;
+                        case Geo::Type::CIRCLE:
+                            ++circle_count;
+                            break;
+                        case Geo::Type::ELLIPSE:
+                            ++ellipse_count;
+                            break;
+                        case Geo::Type::POLYLINE:
+                            ++polyline_count;
+                            break;
+                        case Geo::Type::BEZIER:
+                            ++bezier_count;
+                            break;
+                        case Geo::Type::BSPLINE:
+                            ++bspline_count;
+                            break;
+                        default:
+                            break;
+                        }
                     }
                 }
                 break;

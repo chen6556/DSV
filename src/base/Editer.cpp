@@ -209,7 +209,21 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             cb = dynamic_cast<Combination *>(*it);
             if (Geo::is_inside(point, cb->border(), true))
             {
-                for (Geo::Geometry *item : cb->shape())
+                std::vector<Geo::Geometry *> temp(cb->rbegin(), cb->rend()), shape;
+                while (!temp.empty())
+                {
+                    if (Combination *t = dynamic_cast<Combination *>(temp.back()))
+                    {
+                        temp.pop_back();
+                        temp.insert(temp.end(), t->rbegin(), t->rend());
+                    }
+                    else
+                    {
+                        shape.push_back(temp.back());
+                        temp.pop_back();
+                    }
+                }
+                for (Geo::Geometry *item : shape)
                 {
                     switch (item->type())
                     {
@@ -413,7 +427,22 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
             if (Geo::is_intersected(rect, dynamic_cast<Combination *>(container)->border(), true))
             {
                 bool end = false;
-                for (Geo::Geometry *item : dynamic_cast<Combination *>(container)->shape())
+                Combination *combination = static_cast<Combination *>(container);
+                std::vector<Geo::Geometry *> temp(combination->rbegin(), combination->rend()), shape;
+                while (!temp.empty())
+                {
+                    if (Combination *t = dynamic_cast<Combination *>(temp.back()))
+                    {
+                        temp.pop_back();
+                        temp.insert(temp.end(), t->rbegin(), t->rend());
+                    }
+                    else
+                    {
+                        shape.push_back(temp.back());
+                        temp.pop_back();
+                    }
+                }
+                for (Geo::Geometry *item : shape)
                 {
                     switch (item->type())
                     {
@@ -3804,7 +3833,7 @@ void Editer::auto_combinate()
             for (Geo::Geometry *combination : _graph->back())
             {
                 flag = false;
-                for (Geo::Geometry *item1 : static_cast<Combination *>(combination)->shape())
+                for (Geo::Geometry *item1 : *static_cast<Combination *>(combination))
                 {
                     if (dynamic_cast<Geo::Polygon *>(item1) != nullptr)
                     {
@@ -3848,7 +3877,7 @@ void Editer::auto_combinate()
             for (Geo::Geometry *combination : _graph->back())
             {
                 flag = false;
-                for (Geo::Geometry *item1 : static_cast<Combination *>(combination)->shape())
+                for (Geo::Geometry *item1 : *static_cast<Combination *>(combination))
                 {
                     if (dynamic_cast<Geo::Polygon *>(item1) != nullptr)
                     {
@@ -3893,7 +3922,7 @@ void Editer::auto_combinate()
             for (Geo::Geometry *combination : _graph->back())
             {
                 flag = false;
-                for (Geo::Geometry *item1 : static_cast<Combination *>(combination)->shape())
+                for (Geo::Geometry *item1 : *static_cast<Combination *>(combination))
                 {
                     if (dynamic_cast<Geo::Polygon *>(item1) != nullptr)
                     {
@@ -3946,7 +3975,7 @@ void Editer::auto_combinate()
             Geo::Polyline *polyline = static_cast<Geo::Polyline *>(line);
             for (Geo::Geometry *combination : _graph->back())
             {
-                for (Geo::Geometry *item : static_cast<Combination *>(combination)->shape())
+                for (Geo::Geometry *item : *static_cast<Combination *>(combination))
                 {
                     if (dynamic_cast<Geo::Polygon *>(item) != nullptr)
                     {
@@ -3990,7 +4019,7 @@ void Editer::auto_combinate()
             Geo::Bezier *bezier = static_cast<Geo::Bezier *>(line);
             for (Geo::Geometry *combination : _graph->back())
             {
-                for (Geo::Geometry *item : static_cast<Combination *>(combination)->shape())
+                for (Geo::Geometry *item : *static_cast<Combination *>(combination))
                 {
                     if (dynamic_cast<Geo::Polygon *>(item) != nullptr)
                     {
@@ -4034,7 +4063,7 @@ void Editer::auto_combinate()
             Geo::BSpline *bspline = static_cast<Geo::BSpline *>(line);
             for (Geo::Geometry *combination : _graph->back())
             {
-                for (Geo::Geometry *item : static_cast<Combination *>(combination)->shape())
+                for (Geo::Geometry *item : *static_cast<Combination *>(combination))
                 {
                     if (dynamic_cast<Geo::Polygon *>(item) != nullptr)
                     {

@@ -594,21 +594,19 @@ void ContainerGroup::remove_back()
 // Combination
 
 Combination::Combination(const Combination &combination)
-    : ContainerGroup(combination), _border(combination._border), _shape(combination._shape)
+    : ContainerGroup(combination), _border(combination._border)
 {}
 
 Combination::Combination(const std::initializer_list<Geo::Geometry *> &containers)
     : ContainerGroup(containers)
 {
     update_border();
-    update_shape();
 }
 
 Combination::Combination(std::vector<Geo::Geometry *>::const_iterator begin, std::vector<Geo::Geometry *>::const_iterator end)
     : ContainerGroup(begin, end)
 {
     update_border();
-    update_shape();
 }
 
 const Geo::Type Combination::type() const
@@ -616,37 +614,11 @@ const Geo::Type Combination::type() const
     return Geo::Type::COMBINATION;
 }
 
-void Combination::append(Combination *combination)
-{
-    if (std::find(begin(), end(), combination) == end())
-    {
-        ContainerGroup::append(combination);
-        for (Geo::Geometry *object : combination->_shape)
-        {
-            if (std::find(_shape.begin(), _shape.end(), object) == _shape.end())
-            {
-                _shape.push_back(object);
-            }
-        }
-    }
-}
-
 void Combination::append(Geo::Geometry *geo)
 {
-    if (geo->type() == Geo::Type::COMBINATION)
+    if (std::find(begin(), end(), geo) == end())
     {
-        append(dynamic_cast<Combination *>(geo));
-    }
-    else
-    {
-        if (std::find(begin(), end(), geo) == end())
-        {
-            ContainerGroup::append(geo);
-            if (std::find(_shape.begin(), _shape.end(), geo) == _shape.end())
-            {
-                _shape.push_back(geo);
-            }
-        }
+        ContainerGroup::append(geo);
     }
 }
 
@@ -659,13 +631,11 @@ void Combination::transfer(Combination &combination)
 {
     ContainerGroup::transfer(combination);
     combination._border = _border;
-    combination._shape = _shape;
 }
 
 Combination &Combination::operator=(const Combination &combination)
 {
     ContainerGroup::operator=(combination);
-    _shape = combination._shape;
     _border = combination._border;
     return *this;
 }
@@ -674,7 +644,6 @@ void Combination::clear()
 {
     ContainerGroup::clear();
     _border.clear();
-    _shape.clear();
 }
 
 void Combination::transform(const double a, const double b, const double c, const double d, const double e, const double f)
@@ -722,28 +691,4 @@ void Combination::update_border()
 const Geo::AABBRect &Combination::border() const
 {
     return _border;
-}
-
-const std::vector<Geo::Geometry *> &Combination::shape() const
-{
-    return _shape;
-}
-
-void Combination::update_shape()
-{
-    _shape.clear();
-    std::vector<Geo::Geometry *> objects(rbegin(), rend());
-    while (!objects.empty())
-    {
-        if (const Combination *combination = dynamic_cast<const Combination *>(objects.back()))
-        {
-            objects.pop_back();
-            objects.insert(objects.end(), combination->rbegin(), combination->rend());
-        }
-        else
-        {
-            _shape.push_back(objects.back());
-            objects.pop_back();
-        }
-    }
 }
