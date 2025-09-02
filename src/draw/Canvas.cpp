@@ -839,7 +839,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     break;
                 default:
                     _operation = Operation::NoOperation;
-                    emit tool_changed(Tool::NoTool);
                     break;
                 }
 
