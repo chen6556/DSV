@@ -163,7 +163,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
         {
         case Geo::Type::TEXT:
             t = dynamic_cast<Text *>(*it);
-            if (Geo::distance_square(point, dynamic_cast<const Geo::AABBRect *>(t)->center()) <= catch_distance * catch_distance * 120)
+            if (Geo::is_inside(point, *dynamic_cast<const Geo::AABBRect *>(t), true))
             {
                 t->is_selected = true;
                 return t;
@@ -214,7 +214,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        if (Geo::distance_square(point, dynamic_cast<const Geo::AABBRect *>(item)->center()) <= catch_distance * catch_distance * 100)
+                        if (Geo::is_inside(point, *dynamic_cast<const Geo::AABBRect *>(item), true))
                         {
                             cb->is_selected = true;
                             return cb;
@@ -381,7 +381,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
         {
         case Geo::Type::TEXT:
             t = dynamic_cast<Text *>(*it);
-            if (Geo::distance_square(point, dynamic_cast<const Geo::AABBRect *>(t)->center()) <= catch_distance * catch_distance * 120)
+            if (Geo::is_inside(point, *dynamic_cast<const Geo::AABBRect *>(t), true))
             {
                 bool state = t->is_selected;
                 t->is_selected = true;
@@ -437,7 +437,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        if (Geo::distance_square(point, dynamic_cast<const Geo::AABBRect *>(item)->center()) <= catch_distance * catch_distance * 100)
+                        if (Geo::is_inside(point, *dynamic_cast<const Geo::AABBRect *>(item), true))
                         {
                             bool state = cb->is_selected;
                             cb->is_selected = true;
