@@ -1064,7 +1064,7 @@ void MainWindow::extend()
 
 void MainWindow::show_data_panel()
 {
-    _panel->load_draw_data(GlobalSetting::setting().graph, ui->canvas->points_count());
+    _panel->load_draw_data(GlobalSetting::setting().graph);
     _panel->exec();
 }
 

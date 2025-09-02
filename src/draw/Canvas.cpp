@@ -5419,12 +5419,6 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
 }
 
 
-size_t Canvas::points_count() const
-{
-    return _point_count[0] + _point_count[1] + _point_count[2] + _point_count[3];
-}
-
-
 void Canvas::refresh_polygon_brush_ibo_subfunc(size_t start, size_t end, std::unordered_map<const Geo::Polygon *, std::vector<size_t>> *result)
 {
     size_t index = 0;

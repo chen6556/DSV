@@ -14,11 +14,9 @@ DataPanel::~DataPanel()
 }
 
 
-void DataPanel::load_draw_data(const Graph *graph, const size_t point_count)
+void DataPanel::load_draw_data(const Graph *graph)
 {
-    ui->point_label->setText(QString::number(point_count));
-
-    size_t polyline_count = 0, bezier_count = 0, bspline_count = 0,
+    size_t point_count = 0, polyline_count = 0, bezier_count = 0, bspline_count = 0,
         polygon_count = 0, circle_count = 0, ellipse_count = 0, text_count = 0;
     for (const ContainerGroup &group : *graph)
     {
@@ -31,21 +29,27 @@ void DataPanel::load_draw_data(const Graph *graph, const size_t point_count)
                 break;
             case Geo::Type::POLYGON:
                 ++polygon_count;
+                point_count += static_cast<const Geo::Polygon *>(object)->size();
                 break;
             case Geo::Type::CIRCLE:
                 ++circle_count;
+                point_count += static_cast<const Geo::Circle *>(object)->shape().size();
                 break;
             case Geo::Type::ELLIPSE:
                 ++ellipse_count;
+                point_count += static_cast<const Geo::Ellipse *>(object)->shape().size();
                 break;
             case Geo::Type::POLYLINE:
                 ++polyline_count;
+                point_count += static_cast<const Geo::Polyline *>(object)->size();
                 break;
             case Geo::Type::BEZIER:
                 ++bezier_count;
+                point_count += static_cast<const Geo::Bezier *>(object)->shape().size();
                 break;
             case Geo::Type::BSPLINE:
                 ++bspline_count;
+                point_count += static_cast<const Geo::BSpline *>(object)->shape().size();
                 break;
             case Geo::Type::COMBINATION:
                 for (Geo::Geometry *obj : *dynamic_cast<const Combination *>(object))
@@ -57,21 +61,27 @@ void DataPanel::load_draw_data(const Graph *graph, const size_t point_count)
                         break;
                     case Geo::Type::POLYGON:
                         ++polygon_count;
+                        point_count += static_cast<const Geo::Polygon *>(obj)->size();
                         break;
                     case Geo::Type::CIRCLE:
                         ++circle_count;
+                        point_count += static_cast<const Geo::Circle *>(obj)->shape().size();
                         break;
                     case Geo::Type::ELLIPSE:
                         ++ellipse_count;
+                        point_count += static_cast<const Geo::Ellipse *>(obj)->shape().size();
                         break;
                     case Geo::Type::POLYLINE:
                         ++polyline_count;
+                        point_count += static_cast<const Geo::Polyline *>(obj)->size();
                         break;
                     case Geo::Type::BEZIER:
                         ++bezier_count;
+                        point_count += static_cast<const Geo::Bezier *>(obj)->shape().size();
                         break;
                     case Geo::Type::BSPLINE:
                         ++bspline_count;
+                        point_count += static_cast<const Geo::BSpline *>(obj)->shape().size();
                         break;
                     default:
                         break;
@@ -84,6 +94,7 @@ void DataPanel::load_draw_data(const Graph *graph, const size_t point_count)
         }
     }
 
+    ui->point_label->setText(QString::number(point_count));
     ui->polyline_label->setText(QString::number(polyline_count));
     ui->polygon_label->setText(QString::number(polygon_count));
     ui->bezier_label->setText(QString::number(bezier_count));
