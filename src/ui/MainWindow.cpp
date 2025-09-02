@@ -53,6 +53,7 @@ void MainWindow::init()
 
     _clock.start(5000);
     QObject::connect(ui->measure_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Measure); });
+    QObject::connect(ui->angle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Angle); });
     QObject::connect(ui->circle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Circle); });
     QObject::connect(ui->ellipse_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Ellipse); });
     QObject::connect(ui->line_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Polyline); });
@@ -465,6 +466,9 @@ void MainWindow::refresh_tool_label(const Canvas::Tool tool)
     {
     case Canvas::Tool::Measure:
         ui->current_tool->setText("Length");
+        break;
+    case Canvas::Tool::Angle:
+        ui->current_tool->setText("Angle");
         break;
     case Canvas::Tool::Circle:
         ui->current_tool->setText("Circle");

@@ -27,7 +27,8 @@ void CMDWidget::init()
     ui->cmd->installEventFilter(this);
 
     _cmd_list << QString() << "OPEN" << "APPEND" << "SAVE" << "EXIT" << "MAIN"
-        << "LENGTH" << "CIRCLE" << "ELLIPSE" << "POLYLINE" << "RECTANGLE" << "BSPLINE" << "BEZIER" << "TEXT"
+        << "LENGTH" << "ANGLE"
+        << "CIRCLE" << "ELLIPSE" << "POLYLINE" << "RECTANGLE" << "BSPLINE" << "BEZIER" << "TEXT"
         << "CONNECT" << "CLOSE" << "COMBINATE" << "SPLIT"
         << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "POINTMIRROR"
         << "ARRAY" << "LINEARRAY" << "RINGARRAY"
@@ -36,7 +37,7 @@ void CMDWidget::init()
         << "DELETE" << "COPY" << "CUT" << "PASTE" << "UNDO" << "ALL";
 
     _cmd_dict = {{"OPEN",CMD::Open_CMD}, {"APPEND",CMD::Append_CMD}, {"SAVE",CMD::Save_CMD}, {"EXIT",CMD::Exit_CMD},
-        {"LENGTH",CMD::Length_CMD}, {"MAIN",CMD::Main_CMD},
+        {"LENGTH",CMD::Length_CMD}, {"ANGLE",CMD::Angle_CMD}, {"MAIN",CMD::Main_CMD},
         {"CIRCLE",CMD::Circle_CMD}, {"ELLIPSE",CMD::Ellipse_CMD},
         {"POLYLINE",CMD::Polyline_CMD}, {"RECTANGLE",CMD::Rectangle_CMD},
         {"BSPLINE",CMD::BSpline_CMD}, {"BEZIER",CMD::Bezier_CMD}, {"TEXT",CMD::Text_CMD}, {"CONNECT",CMD::Connect_CMD},
@@ -205,6 +206,9 @@ bool CMDWidget::work()
 
     case CMD::Length_CMD:
         _canvas->use_tool(Canvas::Tool::Measure);
+        break;
+    case CMD::Angle_CMD:
+        _canvas->use_tool(Canvas::Tool::Angle);
         break;
     case CMD::Polyline_CMD:
         ui->cmd_label->setText("Polyline");

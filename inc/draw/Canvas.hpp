@@ -17,7 +17,7 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
     Q_OBJECT
 
 public:
-    enum class Tool {NoTool, Measure, Circle, Polyline, Rect, BSpline, Bezier, Text, Ellipse};
+    enum class Tool {NoTool, Measure, Angle, Circle, Polyline, Rect, BSpline, Bezier, Text, Ellipse};
     enum class Operation {NoOperation, Mirror, RingArray, PolygonDifference, Fillet, Rotate, Trim, Extend};
     enum class CatchedPointType {Vertex, Center, Foot, Tangency, Intersection};
 
@@ -60,8 +60,8 @@ private:
     // 0:可移动视图 1:可绘图 2:正在绘图 3:测量 4:可移动单个object 5:选中一个obj 6:正在移动obj 7:显示坐标原点 8:显示捕捉点
     bool _bool_flags[9] = {false, false, false, false, false, false, false, true, false};
 
-    // First point and second point
-    bool _measure_flags[2] = {false, false};
+    // Head, (vector,) tail
+    int _measure_angle_flag = 0;
 
     // 0:current_tool, 1:last_tool
     Tool _tool_flags[2] = {Tool::NoTool, Tool::NoTool};

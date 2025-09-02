@@ -253,16 +253,16 @@ void Canvas::paintGL()
             glDrawArrays(GL_POINTS, 0, _cache_count / 3);
         }
     }
-    else if (_measure_flags[0])
+    else if (_measure_angle_flag > 0)
     {
         glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[1]); // cache
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * sizeof(double), _cache);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, 9 * sizeof(double), _cache);
         glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
         glLineWidth(2.0f);
-        glDrawArrays(GL_LINES, 0, 2);
+        glDrawArrays(GL_LINE_STRIP, 0, 3);
         glLineWidth(1.4f);
     }
 
@@ -629,26 +629,74 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 switch (_tool_flags[0])
                 {
                 case Tool::Measure:
-                    if (!_measure_flags[0] || _measure_flags[1])
+                    if (_measure_angle_flag == 0 || _measure_angle_flag == 2)
                     {
                         Geo::Point coord(real_x1, real_y1);
                         catch_point(real_x1, real_y1, coord, 12.0 / _ratio);
-                        _measure_flags[0] = true;
-                        _measure_flags[1] = false;
-                        _cache[2] = _cache[5] = 0.51;
-                        _cache[0] = _cache[3] = coord.x;
-                        _cache[1] = _cache[4] = coord.y;
+                        _cache[2] = _cache[5] = _cache[8] = 0.51;
+                        _cache[0] = _cache[3] = _cache[6] = coord.x;
+                        _cache[1] = _cache[4] = _cache[7] = coord.y;
+                        _measure_angle_flag = 1;
                     }
                     else
                     {
                         Geo::Point coord(real_x1, real_y1);
                         catch_point(real_x1, real_y1, coord, 12.0 / _ratio);
-                        _measure_flags[1] = true;
-                        _cache[3] = coord.x;
-                        _cache[4] = coord.y;
+                        _cache[3] = _cache[6] = coord.x;
+                        _cache[4] = _cache[7] = coord.y;
                         _info_labels[1]->setText("Length:" +
                             QString::number(Geo::distance(_cache[0], _cache[1],
                                 _cache[3], _cache[4])));
+                        _measure_angle_flag = 2;
+                    }
+                    update();
+                    return QOpenGLWidget::mousePressEvent(event);
+                case Tool::Angle:
+                    switch (_measure_angle_flag)
+                    {
+                    case 1:
+                        _measure_angle_flag = 2;
+                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
+                        {
+                            _cache[3] = _cache[6] = coord.x;
+                            _cache[4] = _cache[7] = coord.y;
+                        }
+                        else
+                        {
+                            _cache[3] = _cache[6] = real_x1;
+                            _cache[4] = _cache[7] = real_y1;
+                        }
+                        break;
+                    case 2:
+                        _measure_angle_flag = 3;
+                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
+                        {
+                            _cache[6] = coord.x;
+                            _cache[7] = coord.y;
+                        }
+                        else
+                        {
+                            _cache[6] = real_x1;
+                            _cache[7] = real_y1;
+                        }
+                        _info_labels[1]->setText(QString("Angle: %1°").arg(
+                            std::abs(Geo::rad_to_degree(Geo::angle(Geo::Point(_cache[0], _cache[1]),
+                            Geo::Point(_cache[3], _cache[4]), Geo::Point(_cache[6], _cache[7]))))));
+                        break;
+                    default:
+                        _measure_angle_flag = 1;
+                        _cache[2] = _cache[5] = _cache[8] = 0.51;
+                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
+                        {
+                            _cache[0] = _cache[3] = _cache[6] = coord.x;
+                            _cache[1] = _cache[4] = _cache[7] = coord.y;
+                        }
+                        else
+                        {
+                            _cache[0] = _cache[3] = _cache[6] = real_x1;
+                            _cache[1] = _cache[4] = _cache[7] = real_y1;
+                        }
+                        break;
                     }
                     update();
                     return QOpenGLWidget::mousePressEvent(event);
@@ -798,34 +846,70 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 switch (_tool_flags[0])
                 {
                 case Tool::Measure:
-                    if (!_measure_flags[0] || _measure_flags[1])
+                    if (_measure_angle_flag == 0 || _measure_angle_flag == 2)
                     {
-                        Geo::Point coord(real_x1, real_y1);
-                        if (catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
+                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
                         {
-                            _measure_flags[0] = true;
-                            _measure_flags[1] = false;
-                            _cache[2] = _cache[5] = 0.51;
-                            _cache[0] = _cache[3] = coord.x;
-                            _cache[1] = _cache[4] = coord.y;
+                            _measure_angle_flag = 1;
+                            _cache[2] = _cache[5] = _cache[8] = 0.51;
+                            _cache[0] = _cache[3] = _cache[6] = coord.x;
+                            _cache[1] = _cache[4] = _cache[7] = coord.y;
                             update();
                             return QOpenGLWidget::mousePressEvent(event);
                         }
                     }
                     else
                     {
-                        Geo::Point coord(real_x1, real_y1);
-                        if (catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
+                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
                         {
-                            _measure_flags[1] = true;
-                            _cache[3] = coord.x;
-                            _cache[4] = coord.y;
+                            _measure_angle_flag = 2;
+                            _cache[3] = _cache[6] = coord.x;
+                            _cache[4] = _cache[7] = coord.y;
                             _info_labels[1]->setText("Length:" +
                                 QString::number(Geo::distance(_cache[0], _cache[1],
                                     _cache[3], _cache[4])));
                             update();
                             return QOpenGLWidget::mousePressEvent(event);
                         }
+                    }
+                    break;
+                case Tool::Angle:
+                    switch (_measure_angle_flag)
+                    {
+                    case 1:
+                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
+                        {
+                            _measure_angle_flag = 2;
+                            _cache[3] = _cache[6] = coord.x;
+                            _cache[4] = _cache[7] = coord.y;
+                            update();
+                            return QOpenGLWidget::mousePressEvent(event);
+                        }
+                        break;
+                    case 2:
+                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
+                        {
+                            _measure_angle_flag = 3;
+                            _cache[6] = coord.x;
+                            _cache[7] = coord.y;
+                            _info_labels[1]->setText(QString("Angle: %1°").arg(
+                                std::abs(Geo::rad_to_degree(Geo::angle(Geo::Point(_cache[0], _cache[1]),
+                                Geo::Point(_cache[3], _cache[4]), Geo::Point(_cache[6], _cache[7]))))));
+                            update();
+                            return QOpenGLWidget::mousePressEvent(event);
+                        }
+                        break;
+                    default:
+                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
+                        {
+                            _measure_angle_flag = 1;
+                            _cache[2] = _cache[5] = _cache[8] = 0.51;
+                            _cache[0] = _cache[3] = _cache[6] = coord.x;
+                            _cache[1] = _cache[4] = _cache[7] = coord.y;
+                            update();
+                            return QOpenGLWidget::mousePressEvent(event);
+                        }
+                        break;
                     }
                     break;
                 default:
@@ -841,7 +925,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 switch (_tool_flags[0])
                 {
                 case Tool::Measure:
-                    _measure_flags[0] = _measure_flags[1] = false;
+                    _measure_angle_flag = 0;
                     switch (_clicked_obj->type())
                     {
                     case Geo::Type::TEXT:
@@ -981,7 +1065,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         {
             _select_rect.clear();
             _last_point.clear();
-            if (_tool_flags[0] != Tool::Measure)
+            if (_tool_flags[0] != Tool::Measure && _tool_flags[0] != Tool::Angle)
             {
                 _info_labels[1]->clear();
             }
@@ -1346,12 +1430,29 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.x)))
                 .append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.y))).c_str());
         }
-        else if (_measure_flags[0] && !_measure_flags[1])
+        else if (_measure_angle_flag > 0)
         {
-            _cache[3] = real_x1;
-            _cache[4] = real_y1;
-            _info_labels[1]->setText("Length:" + QString::number(
-                Geo::distance(_cache[0], _cache[1], real_x1, real_y1)));
+            switch (_measure_angle_flag)
+            {
+            case 1:
+                _cache[3] = _cache[6] = real_x1;
+                _cache[4] = _cache[7] = real_y1;
+                if (_tool_flags[0] == Tool::Measure)
+                {
+                    _info_labels[1]->setText("Length:" + QString::number(
+                        Geo::distance(_cache[0], _cache[1], real_x1, real_y1)));
+                }
+                break;
+            case 2:
+                if (_tool_flags[0] == Tool::Angle)
+                {
+                    _cache[6] = real_x1;
+                    _cache[7] = real_y1;
+                }
+                break;
+            default:
+                break;
+            }
         }
         update();
     }
@@ -1579,7 +1680,7 @@ void Canvas::use_tool(const Tool tool)
 {
     _tool_flags[1] = _tool_flags[0];
     _tool_flags[0] = tool;
-    _bool_flags[1] = (tool != Tool::NoTool && tool != Tool::Measure); // paintable
+    _bool_flags[1] = (tool != Tool::NoTool && tool != Tool::Measure && tool != Tool::Angle); // paintable
     _bool_flags[2] = false; // painting
 
     _editer->point_cache().clear();
@@ -1587,7 +1688,7 @@ void Canvas::use_tool(const Tool tool)
     _AABBRect_cache.clear();
     _cache_count = 0;
 
-    _measure_flags[0] = _measure_flags[1] = false;
+    _measure_angle_flag = 0;
     _info_labels[1]->clear();
 
     emit tool_changed(_tool_flags[0]);
@@ -1829,7 +1930,7 @@ void Canvas::cancel_painting()
     _AABBRect_cache.clear();
     _cache_count = 0;
 
-    _measure_flags[0] = _measure_flags[1] = false;
+    _measure_angle_flag = 0;
     _info_labels[1]->clear();
 
     _operation = Operation::NoOperation;
@@ -1846,9 +1947,9 @@ void Canvas::use_last_tool()
         return;
     }
     _tool_flags[0] = _tool_flags[1];
-    _measure_flags[0] = _measure_flags[1] = false;
+    _measure_angle_flag = 0;
     _info_labels[1]->clear();
-    _bool_flags[1] = _tool_flags[0] != Tool::Measure; // paintable
+    _bool_flags[1] = (_tool_flags[0] != Tool::Measure && _tool_flags[0] != Tool::Angle); // paintable
     if (_tool_flags[0] == Tool::NoTool)
     {
         cancel_painting();
