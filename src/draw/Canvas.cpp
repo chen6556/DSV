@@ -1021,11 +1021,13 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     {
                         _editer->up(_clicked_obj);
                         refresh_vbo(_clicked_obj->type(), true);
+                        refresh_selected_ibo();
                     }
                     else if (a == _down)
                     {
                         _editer->down(_clicked_obj);
                         refresh_vbo(_clicked_obj->type(), true);
+                        refresh_selected_ibo();
                     }
                 }
             }
