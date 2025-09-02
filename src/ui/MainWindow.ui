@@ -231,7 +231,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
              <x>0</x>
              <y>0</y>
              <width>114</width>
-             <height>717</height>
+             <height>702</height>
             </rect>
            </property>
            <property name="maximumSize">
@@ -360,6 +360,58 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               <property name="spacing">
                <number>2</number>
               </property>
+              <item row="4" column="1">
+               <widget class="QPushButton" name="connect_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Connect</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/connect_btn.png</normaloff>:/icons/connect_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QPushButton" name="ellipse_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Ellipse</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/ellipse_btn.png</normaloff>:/icons/ellipse_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
               <item row="0" column="0">
                <widget class="QPushButton" name="rect_btn">
                 <property name="minimumSize">
@@ -377,6 +429,32 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
                   <normaloff>:/icons/rectangle_btn.png</normaloff>:/icons/rectangle_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QPushButton" name="circle_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Circle</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/circle_btn.png</normaloff>:/icons/circle_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -419,84 +497,6 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                 <property name="text">
                  <string>Text</string>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QPushButton" name="ellipse_btn">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Ellipse</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/ellipse_btn.png</normaloff>:/icons/ellipse_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QPushButton" name="circle_btn">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Circle</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/circle_btn.png</normaloff>:/icons/circle_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QPushButton" name="line_btn">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Polyline</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/polyline_btn.png</normaloff>:/icons/polyline_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
                 </property>
                </widget>
               </item>
@@ -552,6 +552,58 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
+              <item row="4" column="0">
+               <widget class="QPushButton" name="close_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Close</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/close_btn.png</normaloff>:/icons/close_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="1">
+               <widget class="QPushButton" name="line_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Polyline</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/polyline_btn.png</normaloff>:/icons/polyline_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
               <item row="3" column="0">
                <widget class="QSpinBox" name="curve_spb">
                 <property name="sizePolicy">
@@ -594,21 +646,33 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
-             </layout>
-            </item>
-            <item>
-             <widget class="Line" name="line_2">
-              <property name="orientation">
-               <enum>Qt::Orientation::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <layout class="QGridLayout" name="gridLayout">
-              <property name="spacing">
-               <number>2</number>
-              </property>
-              <item row="1" column="0">
+              <item row="5" column="1">
+               <widget class="QPushButton" name="combinate_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Combinate</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/combinate_btn.png</normaloff>:/icons/combinate_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
                <widget class="QPushButton" name="split_btn">
                 <property name="minimumSize">
                  <size>
@@ -639,140 +703,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
-              <item row="1" column="1">
-               <widget class="QPushButton" name="combinate_btn">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Combinate</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/combinate_btn.png</normaloff>:/icons/combinate_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QPushButton" name="connect_btn">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Connect</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/connect_btn.png</normaloff>:/icons/connect_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0">
-               <widget class="QPushButton" name="close_btn">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Close</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/close_btn.png</normaloff>:/icons/close_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QPushButton" name="trim_btn">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Trim</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/trim_btn.png</normaloff>:/icons/trim_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QPushButton" name="extend_btn">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Extend</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/extend_btn.png</normaloff>:/icons/extend_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
              </layout>
             </item>
             <item>
-             <widget class="Line" name="line_3">
+             <widget class="Line" name="line_2">
               <property name="orientation">
                <enum>Qt::Orientation::Horizontal</enum>
               </property>
@@ -810,82 +744,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               <property name="spacing">
                <number>2</number>
               </property>
-              <item row="1" column="1">
-               <widget class="QPushButton" name="flipx_btn">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Flip X</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/flipx_btn.png</normaloff>:/icons/flipx_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="1">
-               <widget class="QPushButton" name="intersection_btn">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Intersection</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/intersection_btn.png</normaloff>:/icons/intersection_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
               <item row="8" column="1">
-               <widget class="QPushButton" name="fillet_btn">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="toolTip">
-                 <string>Fillet</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/fillet_btn.png</normaloff>:/icons/fillet_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="7" column="1">
                <widget class="QPushButton" name="offset_btn">
                 <property name="minimumSize">
                  <size>
@@ -911,7 +770,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
-              <item row="1" column="0">
+              <item row="2" column="0">
                <widget class="QPushButton" name="flipy_btn">
                 <property name="minimumSize">
                  <size>
@@ -937,7 +796,185 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
+              <item row="2" column="1">
+               <widget class="QPushButton" name="flipx_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Flip X</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/flipx_btn.png</normaloff>:/icons/flipx_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QPushButton" name="intersection_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Intersection</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/intersection_btn.png</normaloff>:/icons/intersection_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="1">
+               <widget class="QPushButton" name="scale_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Scale</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/scale_btn.png</normaloff>:/icons/scale_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="autoRepeat">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="0">
+               <widget class="QPushButton" name="union_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Union</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/union_btn.png</normaloff>:/icons/union_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="9" column="0">
+               <widget class="QDoubleSpinBox" name="fillet_sbx">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                 </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Fillet Radius</string>
+                </property>
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+                </property>
+                <property name="maximum">
+                 <double>100000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
               <item row="6" column="0">
+               <widget class="QPushButton" name="difference_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Difference</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/difference_btn.png</normaloff>:/icons/difference_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0">
                <widget class="QDoubleSpinBox" name="scale_sbx">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -988,158 +1025,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
-              <item row="8" column="0">
-               <widget class="QDoubleSpinBox" name="fillet_sbx">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>51</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="contextMenuPolicy">
-                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Fillet Radius</string>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-                </property>
-                <property name="maximum">
-                 <double>100000000.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="7" column="0">
-               <widget class="QDoubleSpinBox" name="offset_sbx">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>51</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="contextMenuPolicy">
-                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Offset Distance</string>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-                </property>
-                <property name="minimum">
-                 <double>-100000000.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>100000000.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="1">
-               <widget class="QPushButton" name="rotate_btn">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Rotate</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/rotate_btn.png</normaloff>:/icons/rotate_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="autoRepeat">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="6" column="1">
-               <widget class="QPushButton" name="scale_btn">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Scale</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/scale_btn.png</normaloff>:/icons/scale_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="autoRepeat">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0">
+              <item row="1" column="0">
                <widget class="QSpinBox" name="rotate_angle">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
@@ -1190,7 +1076,84 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
-              <item row="2" column="1">
+              <item row="8" column="0">
+               <widget class="QDoubleSpinBox" name="offset_sbx">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>51</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                 </font>
+                </property>
+                <property name="contextMenuPolicy">
+                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Offset Distance</string>
+                </property>
+                <property name="frame">
+                 <bool>false</bool>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                </property>
+                <property name="buttonSymbols">
+                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+                </property>
+                <property name="minimum">
+                 <double>-100000000.000000000000000</double>
+                </property>
+                <property name="maximum">
+                 <double>100000000.000000000000000</double>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="1">
+               <widget class="QPushButton" name="rotate_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Rotate</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/rotate_btn.png</normaloff>:/icons/rotate_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="autoRepeat">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="3" column="1">
                <widget class="QPushButton" name="mirror_btn">
                 <property name="minimumSize">
                  <size>
@@ -1216,7 +1179,30 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
-              <item row="5" column="1">
+              <item row="9" column="1">
+               <widget class="QPushButton" name="fillet_btn">
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="toolTip">
+                 <string>Fillet</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/fillet_btn.png</normaloff>:/icons/fillet_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="6" column="1">
                <widget class="QPushButton" name="xor_btn">
                 <property name="minimumSize">
                  <size>
@@ -1242,8 +1228,8 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
-              <item row="5" column="0">
-               <widget class="QPushButton" name="difference_btn">
+              <item row="0" column="1">
+               <widget class="QPushButton" name="trim_btn">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
@@ -1254,11 +1240,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Difference</string>
+                 <string>Trim</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/difference_btn.png</normaloff>:/icons/difference_btn.png</iconset>
+                  <normaloff>:/icons/trim_btn.png</normaloff>:/icons/trim_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -1268,8 +1254,8 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 </property>
                </widget>
               </item>
-              <item row="4" column="0">
-               <widget class="QPushButton" name="union_btn">
+              <item row="0" column="0">
+               <widget class="QPushButton" name="extend_btn">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
@@ -1280,11 +1266,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Union</string>
+                 <string>Extend</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/union_btn.png</normaloff>:/icons/union_btn.png</iconset>
+                  <normaloff>:/icons/extend_btn.png</normaloff>:/icons/extend_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
