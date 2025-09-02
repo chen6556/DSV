@@ -594,7 +594,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
         switch (container->type())
         {
         case Geo::Type::TEXT:
-            if (Geo::is_inside(dynamic_cast<const Geo::AABBRect *>(container)->center(), rect))
+            if (Geo::is_intersected(*dynamic_cast<const Geo::AABBRect *>(container), rect))
             {
                 container->is_selected = true;
                 result.push_back(container);
@@ -646,7 +646,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        if (Geo::is_inside(dynamic_cast<const Geo::AABBRect *>(item)->center(), rect))
+                        if (Geo::is_intersected(*dynamic_cast<const Geo::AABBRect *>(item), rect))
                         {
                             end = true;
                         }
