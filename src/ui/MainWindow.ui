@@ -241,6 +241,9 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
             </size>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
+            <property name="leftMargin">
+             <number>6</number>
+            </property>
             <property name="rightMargin">
              <number>3</number>
             </property>
@@ -1382,13 +1385,16 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>-16</x>
+             <x>0</x>
              <y>0</y>
-             <width>110</width>
-             <height>414</height>
+             <width>120</width>
+             <height>628</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
+            <property name="leftMargin">
+             <number>6</number>
+            </property>
             <property name="rightMargin">
              <number>3</number>
             </property>
