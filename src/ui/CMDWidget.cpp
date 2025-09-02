@@ -236,34 +236,94 @@ bool CMDWidget::work()
         break;
 
     case CMD::Connect_CMD:
-        if (_editer->connect(_editer->selected(), GlobalSetting::setting().catch_distance))
         {
-            _canvas->refresh_vbo();
-            _canvas->refresh_selected_ibo();
-            _canvas->update();
+            std::vector<Geo::Geometry *> objects = _editer->selected();
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : objects)
+            {
+                if (Geo::Type type = object->type(); type == Geo::Type::POLYLINE
+                    || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE)
+                {
+                    types.insert(type);
+                }
+            }
+            if (_editer->connect(objects, GlobalSetting::setting().catch_distance))
+            {
+                _canvas->refresh_vbo(types, true);
+                _canvas->refresh_selected_ibo();
+                _canvas->update();
+            }
         }
         _current_cmd = CMD::Error_CMD;
         break;
     case CMD::Close_CMD:
-        if (_editer->close_polyline(_editer->selected()))
         {
-            _canvas->refresh_vbo();
-            _canvas->refresh_selected_ibo();
-            _canvas->update();
+            std::vector<Geo::Geometry *> objects = _editer->selected();
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : objects)
+            {
+                if (Geo::Type type = object->type(); type == Geo::Type::POLYLINE
+                    || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE)
+                {
+                    types.insert(type);
+                }
+            }
+            types.insert(Geo::Type::POLYGON);
+            if ( _editer->close_polyline(objects))
+            {
+                _canvas->refresh_vbo(types, true);
+                _canvas->refresh_selected_ibo();
+                _canvas->update();
+            }
         }
         _current_cmd = CMD::Error_CMD;
         break;
     case CMD::Combinate_CMD:
-        if (_editer->combinate(_editer->selected()))
+        if (std::vector<Geo::Geometry *> objects = _editer->selected(); _editer->combinate(objects))
         {
-            _canvas->refresh_vbo();
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : objects)
+            {
+                if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                {
+                    for (const Geo::Geometry *item : *combination)
+                    {
+                        types.insert(item->type());
+                    }
+                }
+                else
+                {
+                    types.insert(object->type());
+                }
+            }
+            _canvas->refresh_vbo(types, true);
             _canvas->refresh_selected_ibo();
             _canvas->update();
         }
         _current_cmd = CMD::Error_CMD;
         break;
     case CMD::Split_CMD:
-        _editer->split(_editer->selected());
+        {
+            std::vector<Geo::Geometry *> objects = _editer->selected();
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : objects)
+            {
+                if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                {
+                    for (const Geo::Geometry *item : *combination)
+                    {
+                        types.insert(item->type());
+                    }
+                }
+            }
+            if (!types.empty())
+            {
+                _editer->split(objects);
+                _canvas->refresh_vbo(types, true);
+                _canvas->refresh_selected_ibo();
+                _canvas->update();
+            }
+        }
         _current_cmd = CMD::Error_CMD;
         break;
     case CMD::Rotate_CMD:
@@ -273,8 +333,30 @@ bool CMDWidget::work()
     case CMD::FlipX_CMD:
         {
             std::vector<Geo::Geometry *> objects = _editer->selected();
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : objects)
+            {
+                if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                {
+                    for (const Geo::Geometry *item : *combination)
+                    {
+                        types.insert(item->type());
+                    }
+                }
+                else
+                {
+                    types.insert(object->type());
+                }
+            }
             _editer->flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
-            _canvas->refresh_vbo(objects.empty());
+            if (types.empty())
+            {
+                _canvas->refresh_vbo(false);
+            }
+            else
+            {
+                _canvas->refresh_vbo(types, false);
+            }
             _canvas->update();
         }
         _current_cmd = CMD::Error_CMD;
@@ -282,8 +364,30 @@ bool CMDWidget::work()
     case CMD::FlipY_CMD:
         {
             std::vector<Geo::Geometry *> objects = _editer->selected();
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : objects)
+            {
+                if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                {
+                    for (const Geo::Geometry *item : *combination)
+                    {
+                        types.insert(item->type());
+                    }
+                }
+                else
+                {
+                    types.insert(object->type());
+                }
+            }
             _editer->flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
-            _canvas->refresh_vbo(objects.empty());
+            if (types.empty())
+            {
+                _canvas->refresh_vbo(false);
+            }
+            else
+            {
+                _canvas->refresh_vbo(types, false);
+            }
             _canvas->update();
         }
         _current_cmd = CMD::Error_CMD;
@@ -342,7 +446,7 @@ bool CMDWidget::work()
 
             if (_editer->polygon_union(polygon0, polygon1))
             {
-                _canvas->refresh_vbo();
+                _canvas->refresh_vbo(Geo::Type::POLYGON, true);
                 _canvas->refresh_selected_ibo();
                 _canvas->update();
             }
@@ -370,7 +474,7 @@ bool CMDWidget::work()
 
             if (_editer->polygon_intersection(polygon0, polygon1))
             {
-                _canvas->refresh_vbo();
+                _canvas->refresh_vbo(Geo::Type::POLYGON, true);
                 _canvas->refresh_selected_ibo();
                 _canvas->update();
             }
@@ -404,7 +508,7 @@ bool CMDWidget::work()
 
             if (_editer->polygon_xor(polygon0, polygon1))
             {
-                _canvas->refresh_vbo();
+                _canvas->refresh_vbo(Geo::Type::POLYGON, true);
                 _canvas->refresh_selected_ibo();
                 _canvas->update();
             }
@@ -419,10 +523,28 @@ bool CMDWidget::work()
         _current_cmd = CMD::Error_CMD;
         break;
     case CMD::Delete_CMD:
-        if (_editer->remove_selected())
         {
-            _canvas->refresh_vbo();
-            _canvas->update();
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : _editer->selected())
+            {
+                if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                {
+                    for (const Geo::Geometry *item : *combination)
+                    {
+                        types.insert(item->type());
+                    }
+                }
+                else
+                {
+                    types.insert(object->type());
+                }
+            }
+            if (!types.empty())
+            {
+                _editer->remove_selected();
+                _canvas->refresh_vbo(types, true);
+                _canvas->update();
+            }
         }
         _current_cmd = CMD::Error_CMD;
         break;
@@ -443,7 +565,7 @@ bool CMDWidget::work()
         if (!_canvas->is_painting())
         {
             _editer->undo();
-            _canvas->refresh_vbo();
+            _canvas->refresh_vbo(true);
             _canvas->refresh_selected_ibo();
             _canvas->update();
         }
@@ -871,9 +993,31 @@ void CMDWidget::rotate()
     case 2:
         {
             std::vector<Geo::Geometry *> objects = _editer->selected();
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : objects)
+            {
+                if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                {
+                    for (const Geo::Geometry *item : *combination)
+                    {
+                        types.insert(item->type());
+                    }
+                }
+                else
+                {
+                    types.insert(object->type());
+                }
+            }
             GlobalSetting::setting().ui->rotate_angle->setValue(_parameters[1]);
             _editer->rotate(objects, _parameters[1], QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
-            _canvas->refresh_vbo(objects.empty());
+            if (types.empty())
+            {
+                _canvas->refresh_vbo(false);
+            }
+            else
+            {
+                _canvas->refresh_vbo(types, false);
+            }
             _parameters.pop_back();
             _canvas->update();
         }
@@ -895,12 +1039,30 @@ void CMDWidget::scale()
         clear();
         break;
     case 2:
-        GlobalSetting::setting().ui->scale_sbx->setValue(_parameters.back());
-        _editer->scale(_editer->selected(), QApplication::keyboardModifiers() != Qt::ControlModifier, _parameters.back());
-        _canvas->refresh_vbo();
-        _canvas->refresh_selected_ibo();
-        _parameters.pop_back();
-        _canvas->update();
+        {
+            GlobalSetting::setting().ui->scale_sbx->setValue(_parameters.back());
+            std::vector<Geo::Geometry *> objects = _editer->selected();
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : objects)
+            {
+                if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                {
+                    for (const Geo::Geometry *item : *combination)
+                    {
+                        types.insert(item->type());
+                    }
+                }
+                else
+                {
+                    types.insert(object->type());
+                }
+            }
+            _editer->scale(objects, QApplication::keyboardModifiers() != Qt::ControlModifier, _parameters.back());
+            _canvas->refresh_vbo(types, false);
+            _canvas->refresh_selected_ibo();
+            _parameters.pop_back();
+            _canvas->update();
+        }
         break;
     default:
         break;
@@ -919,12 +1081,20 @@ void CMDWidget::offset()
         clear();
         break;
     case 2:
-        GlobalSetting::setting().ui->offset_sbx->setValue(_parameters.back());
-        _editer->offset(_editer->selected(), _parameters.back());
-        _canvas->refresh_vbo();
-        _canvas->refresh_selected_ibo();
-        _canvas->update();
-        clear();
+        {
+            std::vector<Geo::Geometry *> objects = _editer->selected();
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : objects)
+            {
+                types.insert(object->type());
+            }
+            GlobalSetting::setting().ui->offset_sbx->setValue(_parameters.back());
+            _editer->offset(objects, _parameters.back());
+            _canvas->refresh_vbo(types, true);
+            _canvas->refresh_selected_ibo();
+            _canvas->update();
+            clear();
+        }
         break;
     default:
         break;
@@ -977,9 +1147,25 @@ void CMDWidget::line_array()
         break;
     case 4:
         GlobalSetting::setting().ui->array_y_space->setValue(_parameters[3]);
-        if (_editer->line_array(_editer->selected(), _parameters[0], _parameters[1], _parameters[2], _parameters[3]))
+        if (std::vector<Geo::Geometry *> objects = _editer->selected();
+            _editer->line_array(objects, _parameters[0], _parameters[1], _parameters[2], _parameters[3]))
         {
-            _canvas->refresh_vbo();
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : objects)
+            {
+                if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                {
+                    for (const Geo::Geometry *item : *combination)
+                    {
+                        types.insert(item->type());
+                    }
+                }
+                else
+                {
+                    types.insert(object->type());
+                }
+            }
+            _canvas->refresh_vbo(types, true);
             _canvas->refresh_selected_ibo();
             _canvas->update();
         }
@@ -1010,9 +1196,25 @@ void CMDWidget::ring_array()
         break;
     case 3:
         GlobalSetting::setting().ui->array_item->setValue(_parameters[2]);
-        if (_editer->ring_array(_editer->selected(), _parameters[0], _parameters[1], _parameters[2]))
+        if (std::vector<Geo::Geometry *> objects = _editer->selected();
+            _editer->ring_array(objects, _parameters[0], _parameters[1], _parameters[2]))
         {
-            _canvas->refresh_vbo();
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : objects)
+            {
+                if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                {
+                    for (const Geo::Geometry *item : *combination)
+                    {
+                        types.insert(item->type());
+                    }
+                }
+                else
+                {
+                    types.insert(object->type());
+                }
+            }
+            _canvas->refresh_vbo(types, true);
             _canvas->refresh_selected_ibo();
             _canvas->update();
         }

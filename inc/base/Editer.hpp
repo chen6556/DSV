@@ -61,6 +61,8 @@ public:
 
     Geo::Geometry *select(const double x, const double y, const bool reset_others = true);
 
+    std::tuple<Geo::Geometry *, bool> select_with_state(const Geo::Point &point, const bool reset_others = true);
+
     std::vector<Geo::Geometry *> selected() const;
 
     const size_t selected_count() const;
@@ -68,6 +70,8 @@ public:
     std::vector<Geo::Geometry *> select(const Geo::AABBRect &rect);
 
     void reset_selected_mark(const bool value = false);
+
+    const std::vector<Geo::Geometry *> &paste_table() const;
 
     void undo();
 
@@ -93,7 +97,7 @@ public:
     void set_group_name(const size_t index, const QString &name);
 
 
-    void append_points();
+    int append_points(); // 0:None 1:Polyline 2:Polygon
 
     void append(const Geo::Circle &circle);
 

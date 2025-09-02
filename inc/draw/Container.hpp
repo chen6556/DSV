@@ -121,6 +121,8 @@ public:
 
     const size_t size() const;
 
+    const size_t count(const Geo::Type type, const bool include_combinated) const;
+
     void append(ContainerGroup &group, const bool merge = true);
 
     void append(Geo::Geometry *object);

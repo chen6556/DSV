@@ -61,7 +61,6 @@ void MainWindow::init()
     QObject::connect(ui->bezier_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Bezier); });
     QObject::connect(ui->curve_spb, &QSpinBox::valueChanged, ui->canvas, &Canvas::set_curve_order);
     QObject::connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Text); });
-    QObject::connect(ui->split_btn, &QPushButton::clicked, [this]() { _editer.split(_editer.selected()); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
     QObject::connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::setting().auto_aligning = ui->auto_aligning->isChecked(); });
@@ -151,11 +150,29 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         break;
     case Qt::Key_Delete:
     case Qt::Key_Backspace:
-        if (_editer.remove_selected())
         {
-            ui->canvas->refresh_vbo();
-            ui->canvas->clear_cache();
-            ui->canvas->update();
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : _editer.selected())
+            {
+                if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                {
+                    for (const Geo::Geometry *item : *combination)
+                    {
+                        types.insert(item->type());
+                    }
+                }
+                else
+                {
+                    types.insert(object->type());
+                }
+            }
+            if (!types.empty())
+            {
+                _editer.remove_selected();
+                ui->canvas->refresh_vbo(types, true);
+                ui->canvas->clear_cache();
+                ui->canvas->update();
+            }
         }
         break;
     case Qt::Key_A:
@@ -208,7 +225,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
                 _layers_manager->update_layers();
                 _layers_cbx->setModel(_layers_manager->model());
             }
-            ui->canvas->refresh_vbo();
+            ui->canvas->refresh_vbo(true);
             ui->canvas->refresh_selected_ibo();
             ui->canvas->refresh_cache_vbo(0);
             ui->canvas->update();
@@ -278,7 +295,7 @@ void MainWindow::close_file()
     _editer.delete_graph();
     _editer.load_graph(new Graph());
     GlobalSetting::setting().graph->modified = false;
-    ui->canvas->refresh_vbo();
+    ui->canvas->refresh_vbo(true);
     _info_labels[2]->clear();
     _layers_manager->update_layers();
     _layers_cbx->setModel(_layers_manager->model());
@@ -546,7 +563,7 @@ void MainWindow::refresh_settings()
         const double value = GlobalSetting::setting().down_sampling;
         Geo::BSpline::default_down_sampling_value = Geo::Bezier::default_down_sampling_value = value;
         GlobalSetting::setting().graph->update_curve_shape(0.2, value);
-        ui->canvas->refresh_vbo();
+        ui->canvas->refresh_vbo(true);
     }
     if (_setting->update_text_vbo())
     {
@@ -639,7 +656,7 @@ void MainWindow::show_layers_manager()
 void MainWindow::hide_layers_manager()
 {
     _layers_cbx->setModel(_layers_manager->model());
-    ui->canvas->refresh_vbo();
+    ui->canvas->refresh_vbo(true);
     _editer.reset_selected_mark();
 }
 
@@ -653,27 +670,85 @@ void MainWindow::to_main_page()
 
 void MainWindow::connect_polylines()
 {
-    if (_editer.connect(_editer.selected(), GlobalSetting::setting().catch_distance))
+    std::vector<Geo::Geometry *> objects = _editer.selected();
+    std::set<Geo::Type> types;
+    for (const Geo::Geometry *object : objects)
     {
-        ui->canvas->refresh_vbo();
+        if (Geo::Type type = object->type(); type == Geo::Type::POLYLINE
+            || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE)
+        {
+            types.insert(type);
+        }
+    }
+    if (_editer.connect(objects, GlobalSetting::setting().catch_distance))
+    {
+        ui->canvas->refresh_vbo(types, true);
         ui->canvas->refresh_selected_ibo();
     }
 }
 
 void MainWindow::close_polyline()
 {
-    if (_editer.close_polyline(_editer.selected()))
+    std::vector<Geo::Geometry *> objects = _editer.selected();
+    std::set<Geo::Type> types;
+    for (const Geo::Geometry *object : objects)
     {
-        ui->canvas->refresh_vbo();
+        if (Geo::Type type = object->type(); type == Geo::Type::POLYLINE
+            || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE)
+        {
+            types.insert(type);
+        }
+    }
+    types.insert(Geo::Type::POLYGON);
+    if (_editer.close_polyline(objects))
+    {
+        ui->canvas->refresh_vbo(types, true);
         ui->canvas->refresh_selected_ibo();
     }
 }
 
 void MainWindow::combinate()
 {
-    if (_editer.combinate(_editer.selected()))
+    if (std::vector<Geo::Geometry *> objects = _editer.selected(); _editer.combinate(objects))
     {
-        ui->canvas->refresh_vbo();
+        std::set<Geo::Type> types;
+        for (const Geo::Geometry *object : objects)
+        {
+            if (const Combination *combination = dynamic_cast<const Combination *>(object))
+            {
+                for (const Geo::Geometry *item : *combination)
+                {
+                    types.insert(item->type());
+                }
+            }
+            else
+            {
+                types.insert(object->type());
+            }
+        }
+        ui->canvas->refresh_vbo(types, true);
+        ui->canvas->refresh_selected_ibo();
+    }
+}
+
+void MainWindow::split()
+{
+    std::vector<Geo::Geometry *> objects = _editer.selected();
+    std::set<Geo::Type> types;
+    for (const Geo::Geometry *object : objects)
+    {
+        if (const Combination *combination = dynamic_cast<const Combination *>(object))
+        {
+            for (const Geo::Geometry *item : *combination)
+            {
+                types.insert(item->type());
+            }
+        }
+    }
+    if (!types.empty())
+    {
+        _editer.split(objects);
+        ui->canvas->refresh_vbo(types, true);
         ui->canvas->refresh_selected_ibo();
     }
 }
@@ -682,7 +757,29 @@ void MainWindow::rotate()
 {
     std::vector<Geo::Geometry *> objects = _editer.selected();
     _editer.rotate(objects, ui->rotate_angle->value(), QApplication::keyboardModifiers() != Qt::ControlModifier, ui->to_all_layers->isChecked());
-    ui->canvas->refresh_vbo(objects.empty());
+    std::set<Geo::Type> types;
+    for (const Geo::Geometry *object : objects)
+    {
+        if (const Combination *combination = dynamic_cast<const Combination *>(object))
+        {
+            for (const Geo::Geometry *item : *combination)
+            {
+                types.insert(item->type());
+            }
+        }
+        else
+        {
+            types.insert(object->type());
+        }
+    }
+    if (types.empty())
+    {
+        ui->canvas->refresh_vbo(false);
+    }
+    else
+    {
+        ui->canvas->refresh_vbo(types, false);
+    }
     if (objects.size() == 1)
     {
         ui->canvas->refresh_selected_ibo(objects.front());
@@ -695,7 +792,29 @@ void MainWindow::flip_x()
 {
     std::vector<Geo::Geometry *> objects = _editer.selected();
     _editer.flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier, ui->to_all_layers->isChecked());
-    ui->canvas->refresh_vbo(objects.empty());
+    std::set<Geo::Type> types;
+    for (const Geo::Geometry *object : objects)
+    {
+        if (const Combination *combination = dynamic_cast<const Combination *>(object))
+        {
+            for (const Geo::Geometry *item : *combination)
+            {
+                types.insert(item->type());
+            }
+        }
+        else
+        {
+            types.insert(object->type());
+        }
+    }
+    if (types.empty())
+    {
+        ui->canvas->refresh_vbo(false);
+    }
+    else
+    {
+        ui->canvas->refresh_vbo(types, false);
+    }
     if (objects.size() == 1)
     {
         ui->canvas->refresh_selected_ibo(objects.front());
@@ -708,7 +827,29 @@ void MainWindow::flip_y()
 {
     std::vector<Geo::Geometry *> objects = _editer.selected();
     _editer.flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier, ui->to_all_layers->isChecked());
-    ui->canvas->refresh_vbo(objects.empty());
+    std::set<Geo::Type> types;
+    for (const Geo::Geometry *object : objects)
+    {
+        if (const Combination *combination = dynamic_cast<const Combination *>(object))
+        {
+            for (const Geo::Geometry *item : *combination)
+            {
+                types.insert(item->type());
+            }
+        }
+        else
+        {
+            types.insert(object->type());
+        }
+    }
+    if (types.empty())
+    {
+        ui->canvas->refresh_vbo(false);
+    }
+    else
+    {
+        ui->canvas->refresh_vbo(types, false);
+    }
     if (objects.size() == 1)
     {
         ui->canvas->refresh_selected_ibo(objects.front());
@@ -728,7 +869,22 @@ void MainWindow::scale()
     if (std::vector<Geo::Geometry *> objects = _editer.selected();
         _editer.scale(objects, QApplication::keyboardModifiers() != Qt::ControlModifier, ui->scale_sbx->value()))
     {
-        ui->canvas->refresh_vbo();
+        std::set<Geo::Type> types;
+        for (const Geo::Geometry *object : objects)
+        {
+            if (const Combination *combination = dynamic_cast<const Combination *>(object))
+            {
+                for (const Geo::Geometry *item : *combination)
+                {
+                    types.insert(item->type());
+                }
+            }
+            else
+            {
+                types.insert(object->type());
+            }
+        }
+        ui->canvas->refresh_vbo(types, false);
         if (objects.size() == 1)
         {
             ui->canvas->refresh_selected_ibo(objects.front());
@@ -740,11 +896,16 @@ void MainWindow::scale()
 
 void MainWindow::offset()
 {
-    if (_editer.offset(_editer.selected(), ui->offset_sbx->value(),
+    if (std::vector<Geo::Geometry *> objects = _editer.selected(); _editer.offset(objects, ui->offset_sbx->value(),
         static_cast<Geo::Offset::JoinType>(GlobalSetting::setting().offset_join_type),
         static_cast<Geo::Offset::EndType>(GlobalSetting::setting().offset_end_type)))
     {
-        ui->canvas->refresh_vbo();
+        std::set<Geo::Type> types;
+        for (const Geo::Geometry *object : objects)
+        {
+            types.insert(object->type());
+        }
+        ui->canvas->refresh_vbo(types, true);
         ui->canvas->update();
     }
 }
@@ -758,10 +919,26 @@ void MainWindow::to_array_page()
 
 void MainWindow::line_array()
 {
-    if (_editer.line_array(_editer.selected(), ui->array_x_item->value(), ui->array_y_item->value(),
+    if (std::vector<Geo::Geometry *> objects = _editer.selected();
+        _editer.line_array(objects, ui->array_x_item->value(), ui->array_y_item->value(),
             ui->array_x_space->value(), ui->array_y_space->value()))
     {
-        ui->canvas->refresh_vbo();
+        std::set<Geo::Type> types;
+        for (const Geo::Geometry *object : objects)
+        {
+            if (const Combination *combination = dynamic_cast<const Combination *>(object))
+            {
+                for (const Geo::Geometry *item : *combination)
+                {
+                    types.insert(item->type());
+                }
+            }
+            else
+            {
+                types.insert(object->type());
+            }
+        }
+        ui->canvas->refresh_vbo(types, true);
         ui->canvas->refresh_selected_ibo();
         ui->canvas->update();
     }
@@ -797,7 +974,7 @@ void MainWindow::polygon_union()
 
     if (_editer.polygon_union(polygon0, polygon1))
     {
-        ui->canvas->refresh_vbo();
+        ui->canvas->refresh_vbo(Geo::Type::POLYGON, true);
         ui->canvas->refresh_selected_ibo();
         ui->canvas->update();
     }
@@ -825,7 +1002,7 @@ void MainWindow::polygon_intersection()
 
     if (_editer.polygon_intersection(polygon0, polygon1))
     {
-        ui->canvas->refresh_vbo();
+        ui->canvas->refresh_vbo(Geo::Type::POLYGON, true);
         ui->canvas->refresh_selected_ibo();
         ui->canvas->update();
     }
@@ -859,7 +1036,7 @@ void MainWindow::polygon_xor()
 
     if (_editer.polygon_xor(polygon0, polygon1))
     {
-        ui->canvas->refresh_vbo();
+        ui->canvas->refresh_vbo(Geo::Type::POLYGON, true);
         ui->canvas->refresh_selected_ibo();
         ui->canvas->update();
     }
@@ -990,7 +1167,7 @@ void MainWindow::open_file(const QString &path)
     }
     GlobalSetting::setting().graph->modified = false;
 
-    ui->canvas->refresh_vbo();
+    ui->canvas->refresh_vbo(true);
     _info_labels[2]->setText(path);
     _layers_manager->update_layers();
     _layers_cbx->setModel(_layers_manager->model());
@@ -1049,7 +1226,7 @@ void MainWindow::append_file(const QString &path)
     graph->merge(*g);
     _editer.load_graph(graph);
     delete g;
-    ui->canvas->refresh_vbo();
+    ui->canvas->refresh_vbo(true);
     ui->canvas->refresh_selected_ibo();
     _layers_manager->update_layers();
     _layers_cbx->setModel(_layers_manager->model());

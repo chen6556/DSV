@@ -353,6 +353,234 @@ Geo::Geometry *Editer::select(const double x, const double y, const bool reset_o
     return select(Geo::Point(x, y), reset_others);
 }
 
+std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &point, const bool reset_others)
+{
+    if (_graph == nullptr || _graph->empty())
+    {
+        return std::make_tuple(nullptr, false);
+    }
+    if (reset_others)
+    {
+        reset_selected_mark();
+    }
+
+    const double catch_distance = 2 / _view_ratio;
+    Text *t = nullptr;
+    Geo::Polygon *polygon = nullptr;
+    Geo::Circle *circle = nullptr;
+    Geo::Ellipse *ellipse = nullptr;
+    Geo::Polyline *p = nullptr;
+    Geo::Bezier *b = nullptr;
+    Geo::BSpline *bs = nullptr;
+    Combination *cb = nullptr;
+    for (std::vector<Geo::Geometry *>::reverse_iterator it = _graph->container_group(_current_group).rbegin(),
+                                                        end = _graph->container_group(_current_group).rend();
+         it != end; ++it)
+    {
+        switch ((*it)->type())
+        {
+        case Geo::Type::TEXT:
+            t = dynamic_cast<Text *>(*it);
+            if (Geo::distance_square(point, dynamic_cast<const Geo::AABBRect *>(t)->center()) <= catch_distance * catch_distance * 120)
+            {
+                bool state = t->is_selected;
+                t->is_selected = true;
+                return std::make_tuple(t, state);
+            }
+            break;
+        case Geo::Type::POLYGON:
+            polygon = dynamic_cast<Geo::Polygon *>(*it);
+            if (Geo::is_inside(point, *polygon, true))
+            {
+                bool state = polygon->is_selected;
+                polygon->is_selected = true;
+                return std::make_tuple(polygon, state);
+            }
+            for (size_t i = 1, count = polygon->size(); i < count; ++i)
+            {
+                if (Geo::distance_square(point, (*polygon)[i], (*polygon)[i - 1]) <= catch_distance * catch_distance)
+                {
+                    bool state = polygon->is_selected;
+                    polygon->is_selected = true;
+                    return std::make_tuple(polygon, state);
+                }
+            }
+            polygon = nullptr;
+            break;
+        case Geo::Type::CIRCLE:
+            circle = dynamic_cast<Geo::Circle *>(*it);
+            if (Geo::distance_square(point, *circle) <= std::pow(catch_distance + circle->radius, 2))
+            {
+                bool state = circle->is_selected;
+                circle->is_selected = true;
+                return std::make_tuple(circle, state);
+            }
+            circle = nullptr;
+            break;
+        case Geo::Type::ELLIPSE:
+            ellipse = dynamic_cast<Geo::Ellipse *>(*it);
+            if (Geo::distance(ellipse->c0(), point) + Geo::distance(ellipse->c1(), point)
+                    <= catch_distance + std::max(ellipse->lengtha(), ellipse->lengthb()) * 2)
+            {
+                bool state = ellipse->is_selected;
+                ellipse->is_selected = true;
+                return std::make_tuple(ellipse, state);
+            }
+            ellipse = nullptr;
+            break;
+        case Geo::Type::COMBINATION:
+            cb = dynamic_cast<Combination *>(*it);
+            if (Geo::is_inside(point, cb->border(), true))
+            {
+                for (Geo::Geometry *item : *cb)
+                {
+                    switch (item->type())
+                    {
+                    case Geo::Type::TEXT:
+                        if (Geo::distance_square(point, dynamic_cast<const Geo::AABBRect *>(item)->center()) <= catch_distance * catch_distance * 100)
+                        {
+                            bool state = cb->is_selected;
+                            cb->is_selected = true;
+                            return std::make_tuple(cb, state);
+                        }
+                        break;
+                    case Geo::Type::POLYGON:
+                        if (Geo::is_inside(point, *dynamic_cast<Geo::Polygon *>(item), true))
+                        {
+                            bool state = cb->is_selected;
+                            cb->is_selected = true;
+                            return std::make_tuple(cb, state);
+                        }
+                        break;
+                    case Geo::Type::CIRCLE:
+                        if (Geo::is_inside(point, *dynamic_cast<Geo::Circle *>(item), true))
+                        {
+                            bool state = cb->is_selected;
+                            cb->is_selected = true;
+                            return std::make_tuple(cb, state);
+                        }
+                        break;
+                    case Geo::Type::ELLIPSE:
+                        if (Geo::is_inside(point, *dynamic_cast<Geo::Ellipse *>(item), true))
+                        {
+                            bool state = cb->is_selected;
+                            cb->is_selected = true;
+                            return std::make_tuple(cb, state);
+                        }
+                        break;
+                    case Geo::Type::POLYLINE:
+                        p = dynamic_cast<Geo::Polyline *>(item);
+                        for (size_t i = 1, count = p->size(); i < count; ++i)
+                        {
+                            if (Geo::distance_square(point, (*p)[i - 1], (*p)[i]) <= catch_distance * catch_distance)
+                            {
+                                bool state = cb->is_selected;
+                                cb->is_selected = true;
+                                return std::make_tuple(cb, state);
+                            }
+                        }
+                        p = nullptr;
+                        break;
+                    case Geo::Type::BEZIER:
+                        b = dynamic_cast<Geo::Bezier *>(item);
+                        for (size_t i = 1, count = b->shape().size(); i < count; ++i)
+                        {
+                            if (Geo::distance_square(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance * catch_distance)
+                            {
+                                bool state = cb->is_selected;
+                                cb->is_selected = true;
+                                return std::make_tuple(cb, state);
+                            }
+                        }
+                        b = nullptr;
+                        break;
+                    case Geo::Type::BSPLINE:
+                        bs = dynamic_cast<Geo::BSpline *>(item);
+                        for (size_t i = 1, count = bs->shape().size(); i < count; ++i)
+                        {
+                            if (Geo::distance_square(point, bs->shape()[i - 1], bs->shape()[i]) <= catch_distance * catch_distance)
+                            {
+                                bool state = cb->is_selected;
+                                cb->is_selected = true;
+                                return std::make_tuple(cb, state);
+                            }
+                        }
+                        bs = nullptr;
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            cb = nullptr;
+            break;
+        case Geo::Type::POLYLINE:
+            p = dynamic_cast<Geo::Polyline *>(*it);
+            for (size_t i = 1, count = p->size(); i < count; ++i)
+            {
+                if (Geo::distance_square(point, (*p)[i - 1], (*p)[i]) <= catch_distance * catch_distance)
+                {
+                    bool state = p->is_selected;
+                    p->is_selected = true;
+                    return std::make_tuple(p, state);
+                }
+            }
+            p = nullptr;
+            break;
+        case Geo::Type::BEZIER:
+            b = dynamic_cast<Geo::Bezier *>(*it);
+            if (b->is_selected)
+            {
+                for (const Geo::Point &inner_point : *b)
+                {
+                    if (Geo::distance_square(point, inner_point) <= catch_distance * catch_distance * 2.25)
+                    {
+                        return std::make_tuple(b, true);
+                    }
+                }
+            }
+            for (size_t i = 1, count = b->shape().size(); i < count; ++i)
+            {
+                if (Geo::distance_square(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance * catch_distance)
+                {
+                    bool state = b->is_selected;
+                    b->is_selected = true;
+                    return std::make_tuple(b, state);
+                }
+            }
+            b = nullptr;
+            break;
+        case Geo::Type::BSPLINE:
+            bs = dynamic_cast<Geo::BSpline *>(*it);
+            if (bs->is_selected)
+            {
+                for (const Geo::Point &inner_point : bs->path_points)
+                {
+                    if (Geo::distance_square(point, inner_point) <= catch_distance * catch_distance * 2.25)
+                    {
+                        return std::make_tuple(bs, true);
+                    }
+                }
+            }
+            for (size_t i = 1, count = bs->shape().size(); i < count; ++i)
+            {
+                if (Geo::distance_square(point, bs->shape()[i - 1], bs->shape()[i]) <= catch_distance * catch_distance)
+                {
+                    bool state = bs->is_selected;
+                    bs->is_selected = true;
+                    return std::make_tuple(bs, state);
+                }
+            }
+            bs = nullptr;
+            break;
+        default:
+            break;
+        }
+    }
+
+    return std::make_tuple(nullptr, false);
+}
+
 std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
 {
     std::vector<Geo::Geometry *> result;
@@ -571,6 +799,11 @@ void Editer::reset_selected_mark(const bool value)
     }
 }
 
+const std::vector<Geo::Geometry *> &Editer::paste_table() const
+{
+    return _paste_table;
+}
+
 void Editer::undo()
 {
     _backup.undo();
@@ -662,11 +895,11 @@ void Editer::set_group_name(const size_t index, const QString &name)
 }
 
 
-void Editer::append_points()
+int Editer::append_points()
 {
     if (_point_cache.empty())
     {
-        return;
+        return 0;
     }
     if (_graph == nullptr)
     {
@@ -679,14 +912,16 @@ void Editer::append_points()
     if (_point_cache.size() < 4)
     {
         _point_cache.clear();
-        return;
+        return 0;
     }
 
+    int value = 1;
     if (_point_cache.size() > 3 && Geo::distance(_point_cache.front(), _point_cache.back()) <= 8 / _view_ratio) // Container
     {
         _point_cache.pop_back();
         _point_cache.pop_back();
         _graph->append(new Geo::Polygon(_point_cache.cbegin(), _point_cache.cend()), _current_group);
+        value = 2;
     }
     else
     {
@@ -699,6 +934,7 @@ void Editer::append_points()
     _graph->modified = true;
     _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
         _current_group, _graph->container_group(_current_group).size(), true));
+    return value;
 }
 
 void Editer::append(const Geo::Circle &circle)
@@ -835,154 +1071,145 @@ void Editer::append_text(const double x, const double y)
 
 void Editer::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1, const bool change_shape)
 {
-    const double catch_distance = GlobalSetting::setting().catch_distance;
+    const double catch_distance = std::max(GlobalSetting::setting().catch_distance, std::pow(GlobalSetting::setting().catch_distance, 2));
     GlobalSetting::setting().translated_points = true;
     switch (points->type())
     {
     case Geo::Type::POLYGON:
+        if (Geo::Polygon *temp = dynamic_cast<Geo::Polygon *>(points); change_shape && !points->shape_fixed)
         {
-            Geo::Polygon *temp = dynamic_cast<Geo::Polygon *>(points);
-            if (change_shape && !points->shape_fixed)
+            size_t count = 0, index = SIZE_MAX;
+            double distance, min_distance = DBL_MAX;
+            for (Geo::Point &point : *temp)
             {
-                size_t count = 0, index = SIZE_MAX;
-                double distance, min_distance = DBL_MAX;
-                for (Geo::Point &point : *temp)
+                distance = std::min(Geo::distance_square(x0, y0, point.x, point.y), Geo::distance_square(x1, y1, point.x, point.y));
+                if (distance <= catch_distance * catch_distance && distance < min_distance)
                 {
-                    distance = std::min(Geo::distance_square(x0, y0, point.x, point.y), Geo::distance_square(x1, y1, point.x, point.y));
-                    if (distance <= catch_distance * catch_distance && distance < min_distance)
-                    {
-                        index = count;
-                        min_distance = distance;
-                    }
-                    ++count;
+                    index = count;
+                    min_distance = distance;
                 }
-                if (index < SIZE_MAX)
+                ++count;
+            }
+            if (index < SIZE_MAX)
+            {
+                if (_edited_shape.empty())
                 {
-                    if (_edited_shape.empty())
+                    for (const Geo::Point &point : *temp)
                     {
-                        for (const Geo::Point &point : *temp)
-                        {
-                            _edited_shape.emplace_back(point.x, point.y);
-                        }
+                        _edited_shape.emplace_back(point.x, point.y);
                     }
+                }
 
-                    Geo::Point &point = (*temp)[index];
-                    if (temp->size() == 5)
-                    {
-                        if ((*temp)[0].y == (*temp)[1].y && (*temp)[2].y == (*temp)[3].y
-                            && (*temp)[0].x == (*temp)[3].x && (*temp)[2].x == (*temp)[1].x)
-                        {
-                            point.translate(x1 - x0, y1 - y0);
-                            if (index % 2 == 0)
-                            {
-                                (*temp)[index == 0 ? 3 : 1].x = point.x;
-                                (*temp)[index + 1].y = point.y;
-                            }
-                            else
-                            {
-                                (*temp)[index - 1].y = point.y;
-                                (*temp)[index + 1].x = point.x;
-                                if (index == 3)
-                                {
-                                    temp->front().x = temp->back().x;
-                                }
-                            }
-                        }
-                        else if ((*temp)[0].x == (*temp)[1].x && (*temp)[2].x == (*temp)[3].x
-                            && (*temp)[0].y == (*temp)[3].y && (*temp)[2].y == (*temp)[1].y)
-                        {
-                            point.translate(x1 - x0, y1 - y0);
-                            if (index % 2 == 0)
-                            {
-                                (*temp)[index == 0 ? 3 : 1].y = point.y;
-                                (*temp)[index + 1].x = point.x;                                
-                            }
-                            else
-                            {
-                                (*temp)[index - 1].x = point.x;
-                                (*temp)[index + 1].y = point.y;
-                                if (index == 3)
-                                {
-                                    temp->front().y = temp->back().y;
-                                }
-                            }
-                        }
-                    }
-                    else
+                Geo::Point &point = (*temp)[index];
+                if (temp->size() == 5)
+                {
+                    if ((*temp)[0].y == (*temp)[1].y && (*temp)[2].y == (*temp)[3].y
+                        && (*temp)[0].x == (*temp)[3].x && (*temp)[2].x == (*temp)[1].x)
                     {
                         point.translate(x1 - x0, y1 - y0);
+                        if (index % 2 == 0)
+                        {
+                            (*temp)[index == 0 ? 3 : 1].x = point.x;
+                            (*temp)[index + 1].y = point.y;
+                        }
+                        else
+                        {
+                            (*temp)[index - 1].y = point.y;
+                            (*temp)[index + 1].x = point.x;
+                            if (index == 3)
+                            {
+                                temp->front().x = temp->back().x;
+                            }
+                        }
                     }
-                    temp->back() = temp->front();
-                    _graph->modified = true;
-                    return;
+                    else if ((*temp)[0].x == (*temp)[1].x && (*temp)[2].x == (*temp)[3].x
+                        && (*temp)[0].y == (*temp)[3].y && (*temp)[2].y == (*temp)[1].y)
+                    {
+                        point.translate(x1 - x0, y1 - y0);
+                        if (index % 2 == 0)
+                        {
+                            (*temp)[index == 0 ? 3 : 1].y = point.y;
+                            (*temp)[index + 1].x = point.x;                                
+                        }
+                        else
+                        {
+                            (*temp)[index - 1].x = point.x;
+                            (*temp)[index + 1].y = point.y;
+                            if (index == 3)
+                            {
+                                temp->front().y = temp->back().y;
+                            }
+                        }
+                    }
                 }
+                else
+                {
+                    point.translate(x1 - x0, y1 - y0);
+                }
+                temp->back() = temp->front();
+                _graph->modified = true;
+                return;
             }
-            else
-            {
-                temp->translate(x1 - x0, y1 - y0);
-            }
+        }
+        else
+        {
+            temp->translate(x1 - x0, y1 - y0);
         }
         break;
     case Geo::Type::CIRCLE:
+        if (Geo::Circle *temp = dynamic_cast<Geo::Circle *>(points); change_shape && !points->shape_fixed)
         {
-            Geo::Circle *temp = dynamic_cast<Geo::Circle *>(points);
-            if (change_shape && !points->shape_fixed)
+            if (std::abs(temp->radius - Geo::distance(*temp, Geo::Point(x0, y0))) <= catch_distance ||
+                std::abs(temp->radius - Geo::distance(*temp, Geo::Point(x1, y1))) <= catch_distance)
             {
-                if (std::abs(temp->radius - Geo::distance(*temp, Geo::Point(x0, y0))) <= catch_distance ||
-                    std::abs(temp->radius - Geo::distance(*temp, Geo::Point(x1, y1))) <= catch_distance)
+                if (_edited_shape.empty())
                 {
-                    if (_edited_shape.empty())
-                    {
-                        _edited_shape.emplace_back(temp->x, temp->y);
-                        _edited_shape.emplace_back(temp->radius, 0);
-                    }
-                    temp->radius = Geo::distance(*temp, Geo::Point(x1, y1));
-                    temp->update_shape(Geo::Circle::default_down_sampling_value);
+                    _edited_shape.emplace_back(temp->x, temp->y);
+                    _edited_shape.emplace_back(temp->radius, 0);
                 }
+                temp->radius = Geo::distance(*temp, Geo::Point(x1, y1));
+                temp->update_shape(Geo::Circle::default_down_sampling_value);
             }
-            else
-            {
-                temp->translate(x1 - x0, y1 - y0);
-            }
+        }
+        else
+        {
+            temp->translate(x1 - x0, y1 - y0);
         }
         break;
     case Geo::Type::ELLIPSE:
+        if (Geo::Ellipse *temp = dynamic_cast<Geo::Ellipse *>(points); change_shape && !points->shape_fixed)
         {
-            Geo::Ellipse *temp = dynamic_cast<Geo::Ellipse *>(points);
-            if (change_shape && !points->shape_fixed)
+            const Geo::Point point0(x0, y0), point1(x1, y1);
+            if (Geo::distance(temp->a0(), point0) <= catch_distance || Geo::distance(temp->a0(), point1) <= catch_distance
+                || Geo::distance(temp->a1(), point0) <= catch_distance || Geo::distance(temp->a1(), point1) <= catch_distance)
             {
-                const Geo::Point point0(x0, y0), point1(x1, y1);
-                if (Geo::distance(temp->a0(), point0) <= catch_distance || Geo::distance(temp->a0(), point1) <= catch_distance
-                    || Geo::distance(temp->a1(), point0) <= catch_distance || Geo::distance(temp->a1(), point1) <= catch_distance)
+                if (_edited_shape.empty())
                 {
-                    if (_edited_shape.empty())
-                    {
-                        _edited_shape.emplace_back(temp->a0().x, temp->a0().y);
-                        _edited_shape.emplace_back(temp->a1().x, temp->a1().y);
-                        _edited_shape.emplace_back(temp->b0().x, temp->b0().y);
-                        _edited_shape.emplace_back(temp->b1().x, temp->b1().y);
-                    }
-                    temp->set_lengtha(Geo::distance(point1, temp->center()));
-                    temp->update_shape(Geo::Ellipse::default_down_sampling_value);
+                    _edited_shape.emplace_back(temp->a0().x, temp->a0().y);
+                    _edited_shape.emplace_back(temp->a1().x, temp->a1().y);
+                    _edited_shape.emplace_back(temp->b0().x, temp->b0().y);
+                    _edited_shape.emplace_back(temp->b1().x, temp->b1().y);
                 }
-                else if (Geo::distance(temp->b0(), point0) <= catch_distance || Geo::distance(temp->b0(), point1) <= catch_distance
-                    || Geo::distance(temp->b1(), point0) <= catch_distance || Geo::distance(temp->b1(), point1) <= catch_distance)
-                {
-                    if (_edited_shape.empty())
-                    {
-                        _edited_shape.emplace_back(temp->a0().x, temp->a0().y);
-                        _edited_shape.emplace_back(temp->a1().x, temp->a1().y);
-                        _edited_shape.emplace_back(temp->b0().x, temp->b0().y);
-                        _edited_shape.emplace_back(temp->b1().x, temp->b1().y);
-                    }
-                    temp->set_lengthb(Geo::distance(point1, temp->center()));
-                    temp->update_shape(Geo::Ellipse::default_down_sampling_value);
-                }
+                temp->set_lengtha(Geo::distance(point1, temp->center()));
+                temp->update_shape(Geo::Ellipse::default_down_sampling_value);
             }
-            else
+            else if (Geo::distance(temp->b0(), point0) <= catch_distance || Geo::distance(temp->b0(), point1) <= catch_distance
+                || Geo::distance(temp->b1(), point0) <= catch_distance || Geo::distance(temp->b1(), point1) <= catch_distance)
             {
-                temp->translate(x1 - x0, y1 - y0);
+                if (_edited_shape.empty())
+                {
+                    _edited_shape.emplace_back(temp->a0().x, temp->a0().y);
+                    _edited_shape.emplace_back(temp->a1().x, temp->a1().y);
+                    _edited_shape.emplace_back(temp->b0().x, temp->b0().y);
+                    _edited_shape.emplace_back(temp->b1().x, temp->b1().y);
+                }
+                temp->set_lengthb(Geo::distance(point1, temp->center()));
+                temp->update_shape(Geo::Ellipse::default_down_sampling_value);
             }
+        }
+        else
+        {
+            temp->translate(x1 - x0, y1 - y0);
         }
         break;
     case Geo::Type::TEXT:
@@ -990,164 +1217,161 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         points->translate(x1 - x0, y1 - y0);
         break;
     case Geo::Type::POLYLINE:
+        if (Geo::Polyline *temp = dynamic_cast<Geo::Polyline *>(points); change_shape && !points->shape_fixed)
         {
-            Geo::Polyline *temp = dynamic_cast<Geo::Polyline *>(points);
-            if (change_shape && !points->shape_fixed)
+            size_t count = 0, index = SIZE_MAX;
+            double distance, min_distance = DBL_MAX;
+            for (Geo::Point &point : *temp)
             {
-                size_t count = 0, index = SIZE_MAX;
-                double distance, min_distance = DBL_MAX;
-                for (Geo::Point &point : *temp)
+                distance = std::min(Geo::distance_square(x0, y0, point.x, point.y), Geo::distance_square(x1, y1, point.x, point.y));
+                if (distance <= catch_distance * catch_distance && distance < min_distance)
                 {
-                    distance = std::min(Geo::distance_square(x0, y0, point.x, point.y), Geo::distance_square(x1, y1, point.x, point.y));
-                    if (distance <= catch_distance * catch_distance && distance < min_distance)
-                    {
-                        index = count;
-                        min_distance = distance;
-                    }
-                    ++count;
+                    index = count;
+                    min_distance = distance;
                 }
-                if (index < SIZE_MAX)
+                ++count;
+            }
+            if (index < SIZE_MAX)
+            {
+                if (_edited_shape.empty())
                 {
-                    if (_edited_shape.empty())
+                    for (const Geo::Point &point : *temp)
                     {
-                        for (const Geo::Point &point : *temp)
-                        {
-                            _edited_shape.emplace_back(point.x, point.y);
-                        }
+                        _edited_shape.emplace_back(point.x, point.y);
                     }
+                }
 
-                    (*temp)[index].translate(x1 - x0, y1 - y0);
-                    _graph->modified = true;
-                    return;
-                }
+                (*temp)[index].translate(x1 - x0, y1 - y0);
+                _graph->modified = true;
+                return;
             }
-            else
-            {
-                temp->translate(x1 - x0, y1 - y0);
-            }
+        }
+        else
+        {
+            temp->translate(x1 - x0, y1 - y0);
         }
         break;
     case Geo::Type::BEZIER:
+        if ( Geo::Bezier *temp = dynamic_cast<Geo::Bezier *>(points); change_shape && !temp->shape_fixed)
         {
-            Geo::Bezier *temp = dynamic_cast<Geo::Bezier *>(points);
-            if (temp->is_selected)
+            size_t count = temp->size(), index = SIZE_MAX;
+            double distance, min_distance = DBL_MAX;
+            for (size_t i = 0; i < count; ++i)
             {
-                size_t count = temp->size(), index = SIZE_MAX;
-                double distance, min_distance = DBL_MAX;
-                for (size_t i = 0; i < count; ++i)
+                distance = std::min(Geo::distance_square(x0, y0, (*temp)[i].x, (*temp)[i].y), Geo::distance_square(x1, y1, (*temp)[i].x, (*temp)[i].y));
+                if (distance <= catch_distance * catch_distance && distance < min_distance)
                 {
-                    distance = std::min(Geo::distance_square(x0, y0, (*temp)[i].x, (*temp)[i].y), Geo::distance_square(x1, y1, (*temp)[i].x, (*temp)[i].y));
-                    if (distance <= catch_distance * catch_distance && distance < min_distance)
-                    {
-                        index = i;
-                        min_distance = distance;
-                    }
-                }
-                if (index < SIZE_MAX)
-                {
-                    if (_edited_shape.empty())
-                    {
-                        for (const Geo::Point &point : *temp)
-                        {
-                            _edited_shape.emplace_back(point.x, point.y);
-                        }
-                    }
-
-                    (*temp)[index].translate(x1 - x0, y1 - y0);
-                    if (index > 2 && index % temp->order() == 1)
-                    {
-                        (*temp)[index - 2] = (*temp)[index - 1] + ((*temp)[index - 1] - (*temp)[index]).normalize() * Geo::distance((*temp)[index - 2], (*temp)[index - 1]);
-                        if (temp->order() == 2)
-                        {
-                            for (int j = index; j + 2 < count; j += 2)
-                            {
-                                (*temp)[j + 2] = (*temp)[j + 1] + ((*temp)[j + 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j + 1], (*temp)[j + 2]);
-                            }
-                            for (int j = index - 2; j > 2; j -= 2)
-                            {
-                                (*temp)[j - 2] = (*temp)[j - 1] + ((*temp)[j - 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j - 2], (*temp)[j - 1]);
-                            }
-                        }
-                    }
-                    else if (index + 2 < temp->size() && index % temp->order() == temp->order() - 1)
-                    {
-                        (*temp)[index + 2] = (*temp)[index + 1] + ((*temp)[index + 1] - (*temp)[index]).normalize() * Geo::distance((*temp)[index + 1], (*temp)[index + 2]);
-                        if (temp->order() == 2)
-                        {
-                            for (int j = index + 2; j + 2 < count; j += 2)
-                            {
-                                (*temp)[j + 2] = (*temp)[j + 1] + ((*temp)[j + 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j + 1], (*temp)[j + 2]);
-                            }
-                            for (int j = index; j > 2; j -= 2)
-                            {
-                                (*temp)[j - 2] = (*temp)[j - 1] + ((*temp)[j - 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j - 2], (*temp)[j - 1]);
-                            }
-                        }
-                    }
-                    else if (index % temp->order() == 0 && index > 0 && index < count - 1)
-                    {
-                        (*temp)[index - 1].translate(x1 - x0, y1 - y0);
-                        (*temp)[index + 1].translate(x1 - x0, y1 - y0);
-                        if (temp->order() == 2)
-                        {
-                            for (int j = index + 1; j + 2 < count; j += 2)
-                            {
-                                (*temp)[j + 2] = (*temp)[j + 1] + ((*temp)[j + 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j + 1], (*temp)[j + 2]);
-                            }
-                            for (int j = index - 1; j > 2; j -= 2)
-                            {
-                                (*temp)[j - 2] = (*temp)[j - 1] + ((*temp)[j - 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j - 2], (*temp)[j - 1]);
-                            }
-                        }
-                    }
-                    temp->update_shape();
-                    _graph->modified = true;
-                    return;
+                    index = i;
+                    min_distance = distance;
                 }
             }
-            points->translate(x1 - x0, y1 - y0);
+            if (index < SIZE_MAX)
+            {
+                if (_edited_shape.empty())
+                {
+                    for (const Geo::Point &point : *temp)
+                    {
+                        _edited_shape.emplace_back(point.x, point.y);
+                    }
+                }
+
+                (*temp)[index].translate(x1 - x0, y1 - y0);
+                if (index > 2 && index % temp->order() == 1)
+                {
+                    (*temp)[index - 2] = (*temp)[index - 1] + ((*temp)[index - 1] - (*temp)[index]).normalize() * Geo::distance((*temp)[index - 2], (*temp)[index - 1]);
+                    if (temp->order() == 2)
+                    {
+                        for (int j = index; j + 2 < count; j += 2)
+                        {
+                            (*temp)[j + 2] = (*temp)[j + 1] + ((*temp)[j + 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j + 1], (*temp)[j + 2]);
+                        }
+                        for (int j = index - 2; j > 2; j -= 2)
+                        {
+                            (*temp)[j - 2] = (*temp)[j - 1] + ((*temp)[j - 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j - 2], (*temp)[j - 1]);
+                        }
+                    }
+                }
+                else if (index + 2 < temp->size() && index % temp->order() == temp->order() - 1)
+                {
+                    (*temp)[index + 2] = (*temp)[index + 1] + ((*temp)[index + 1] - (*temp)[index]).normalize() * Geo::distance((*temp)[index + 1], (*temp)[index + 2]);
+                    if (temp->order() == 2)
+                    {
+                        for (int j = index + 2; j + 2 < count; j += 2)
+                        {
+                            (*temp)[j + 2] = (*temp)[j + 1] + ((*temp)[j + 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j + 1], (*temp)[j + 2]);
+                        }
+                        for (int j = index; j > 2; j -= 2)
+                        {
+                            (*temp)[j - 2] = (*temp)[j - 1] + ((*temp)[j - 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j - 2], (*temp)[j - 1]);
+                        }
+                    }
+                }
+                else if (index % temp->order() == 0 && index > 0 && index < count - 1)
+                {
+                    (*temp)[index - 1].translate(x1 - x0, y1 - y0);
+                    (*temp)[index + 1].translate(x1 - x0, y1 - y0);
+                    if (temp->order() == 2)
+                    {
+                        for (int j = index + 1; j + 2 < count; j += 2)
+                        {
+                            (*temp)[j + 2] = (*temp)[j + 1] + ((*temp)[j + 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j + 1], (*temp)[j + 2]);
+                        }
+                        for (int j = index - 1; j > 2; j -= 2)
+                        {
+                            (*temp)[j - 2] = (*temp)[j - 1] + ((*temp)[j - 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j - 2], (*temp)[j - 1]);
+                        }
+                    }
+                }
+                temp->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
+                _graph->modified = true;
+                return;
+            }
+        }
+        else
+        {
+            temp->translate(x1 - x0, y1 - y0);
         }
         break;
     case Geo::Type::BSPLINE:
+        if (Geo::BSpline *temp = dynamic_cast<Geo::BSpline *>(points); change_shape && !temp->shape_fixed)
         {
-            Geo::BSpline *temp = dynamic_cast<Geo::BSpline *>(points);
-            if (temp->is_selected)
+            size_t count = temp->path_points.size(), index = SIZE_MAX;
+            double distance, min_distance = DBL_MAX;
+            for (size_t i = 0; i < count; ++i)
             {
-                size_t count = temp->path_points.size(), index = SIZE_MAX;
-                double distance, min_distance = DBL_MAX;
-                for (size_t i = 0; i < count; ++i)
+                distance = std::min(Geo::distance_square(x0, y0, temp->path_points[i].x, temp->path_points[i].y),
+                    Geo::distance_square(x1, y1, temp->path_points[i].x, temp->path_points[i].y));
+                if (distance <= catch_distance * catch_distance && distance < min_distance)
                 {
-                    distance = std::min(Geo::distance_square(x0, y0, temp->path_points[i].x, temp->path_points[i].y),
-                        Geo::distance_square(x1, y1, temp->path_points[i].x, temp->path_points[i].y));
-                    if (distance <= catch_distance * catch_distance && distance < min_distance)
-                    {
-                        index = i;
-                        min_distance = distance;
-                    }
-                }
-                if (index < SIZE_MAX)
-                {
-                    if (_edited_shape.empty())
-                    {
-                        _edited_shape.emplace_back(temp->path_points.size(), temp->control_points.size());
-                        for (const Geo::Point &point : temp->path_points)
-                        {
-                            _edited_shape.emplace_back(point.x, point.y);
-                        }
-                        for (const Geo::Point &point : temp->control_points)
-                        {
-                            _edited_shape.emplace_back(point.x, point.y);
-                        }
-                    }
-
-                    temp->path_points[index].translate(x1 - x0, y1 - y0);
-                    temp->update_control_points();
-                    temp->update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
-                    _graph->modified = true;
-                    return;
+                    index = i;
+                    min_distance = distance;
                 }
             }
-            points->translate(x1 - x0, y1 - y0);
+            if (index < SIZE_MAX)
+            {
+                if (_edited_shape.empty())
+                {
+                    _edited_shape.emplace_back(temp->path_points.size(), temp->control_points.size());
+                    for (const Geo::Point &point : temp->path_points)
+                    {
+                        _edited_shape.emplace_back(point.x, point.y);
+                    }
+                    for (const Geo::Point &point : temp->control_points)
+                    {
+                        _edited_shape.emplace_back(point.x, point.y);
+                    }
+                }
+
+                temp->path_points[index].translate(x1 - x0, y1 - y0);
+                temp->update_control_points();
+                temp->update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
+                _graph->modified = true;
+                return;
+            }
+        }
+        else
+        {
+            temp->translate(x1 - x0, y1 - y0);
         }
         break;
     default:

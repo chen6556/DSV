@@ -90,6 +90,8 @@ private slots:
 
     void combinate();
 
+    void split();
+
     void rotate();
 
     void flip_x();

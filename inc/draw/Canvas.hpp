@@ -1,5 +1,6 @@
 #pragma once
-
+#include <set>
+#include <unordered_map>
 #include <QOpenGLWidget>
 #include <QPaintEvent>
 #include <QLabel>
@@ -31,11 +32,16 @@ private:
     QTextEdit _input_line;
 
     unsigned int _shader_program, _VAO;
-    unsigned int _VBO[7]; //0:points 1:origin and select rect 2:cache 3:text 4:reflines 5:catched point 6:printable points
-    unsigned int _IBO[4]; //0:polyline 1:polygon 2:selected 3:text
+    unsigned int _base_VBO[4]; // 0:origin and select rect 1:cache 2:reflines 3:catched points
+    unsigned int _shape_VBO[7]; // 0:polyline 1:polygon 2:circle 3:curve 4:text 5:circle printable points 6:curve printable points
+    unsigned int _shape_IBO[4]; // 0:polyline 1:polygon 2:circle 3:curve
+    unsigned int _brush_IBO[3]; // 0:polygon 1:circle 2:text
+    unsigned int _selected_IBO[4]; // 0:polyline 1:polygon 2:circle 3:curve
     int _uniforms[5]; // w, h, vec0, vec1, color
-    size_t _points_count = 0, _printable_points_count = 0;
-    size_t _indexs_count[4] = {0, 0, 0, 0}; //0:polyline 1:polygon 2:selected 3:text
+    unsigned int _point_count[4] = {0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve
+    unsigned int _shape_index_count[4] = {0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve
+    unsigned int _brush_index_count[3] = {0, 0, 0}; // 0:polygon brush 1:circle brush 2:text brush
+    unsigned int _selected_index_count[4] = {0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve
     double *_cache = nullptr;
     size_t _cache_len = 513, _cache_count = 0;
     double _refline_points[30];
@@ -51,7 +57,7 @@ private:
     int _canvas_width = 0, _canvas_height = 0;
     size_t _curve_order = 3; // 曲线次数
 
-    // 0:可移动视图, 1:可绘图, 2:正在绘图, 3:测量, 4:可移动单个object, 5:选中一个obj, 6:正在移动obj, 7:显示坐标原点, 8:显示捕捉点
+    // 0:可移动视图 1:可绘图 2:正在绘图 3:测量 4:可移动单个object 5:选中一个obj 6:正在移动obj 7:显示坐标原点 8:显示捕捉点
     bool _bool_flags[9] = {false, false, false, false, false, false, false, true, false};
 
     // First point and second point
@@ -221,12 +227,27 @@ public:
 
 
     // 直接更新所有VBO,点数量可能发生变化
-    void refresh_vbo();
+    void refresh_vbo(const bool refresh_ibo);
 
-    std::tuple<unsigned int*, size_t> refresh_polygon_ibo();
+    void refresh_vbo(const Geo::Type type, const bool refresh_ibo);
 
-    // 更新被选中或所有VBO,点数量可能发生变化
-    void refresh_vbo(const bool unitary);
+    void refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ibo);
+
+    std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_polyline_vbo();
+
+    std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_polygon_vbo();
+
+    std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_circle_vbo();
+
+    std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_curve_vbo();
+
+    std::tuple<unsigned int*, unsigned int> refresh_polygon_brush_ibo();
+
+    std::tuple<unsigned int*, unsigned int> refresh_circle_brush_ibo();
+
+    std::tuple<double *, unsigned int> refresh_circle_printable_points();
+
+    std::tuple<double *, unsigned int> refresh_curve_printable_points();
 
     void refresh_cache_vbo(const unsigned int count);
 
@@ -251,12 +272,7 @@ public:
     // 数量发生变化时更新IBO数组
     void refresh_brush_ibo();
 
-    // 数量不发生变化时更新部分IBO数组
-    void refresh_brush_ibo(const unsigned int index, const unsigned int offset, const std::vector<size_t> &values);
-
-    std::tuple<double*, size_t, unsigned int*, size_t> refresh_text_vbo();
-
-    void refresh_text_vbo(const bool unitary);
+    std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_text_vbo();
 
 
     bool refresh_catached_points(const double x, const double y, const double distance, std::vector<const Geo::Geometry *> &catched_objects, const bool skip_selected, const bool current_group_only = true) const;
@@ -265,4 +281,9 @@ public:
 
 
     size_t points_count() const;
+
+private:
+    void refresh_polygon_brush_ibo_subfunc(size_t start, size_t end, std::unordered_map<const Geo::Polygon *, std::vector<size_t>> *result);
+
+    void refresh_circle_brush_ibo_subfunc(size_t start, size_t end, std::unordered_map<const Geo::Geometry *, std::vector<size_t>> *result);
 };

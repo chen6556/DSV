@@ -2661,6 +2661,22 @@ QComboBox QAbstractItemView::item:selected
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>split_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>split()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>91</x>
+     <y>347</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>503</x>
+     <y>349</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -2693,5 +2709,6 @@ QComboBox QAbstractItemView::item:selected
   <slot>polygon_xor()</slot>
   <slot>trim()</slot>
   <slot>extend()</slot>
+  <slot>split()</slot>
  </slots>
 </ui>

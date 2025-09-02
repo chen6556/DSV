@@ -185,6 +185,16 @@ const size_t Graph::size() const
     return _container_groups.size();
 }
 
+const size_t Graph::count(const Geo::Type type, const bool include_combinated) const
+{
+    size_t num = 0;
+    for (const ContainerGroup &group : _container_groups)
+    {
+        num += group.count(type, include_combinated);
+    }
+    return num;
+}
+
 void Graph::clear()
 {
     _container_groups.clear();
