@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1008</width>
-    <height>700</height>
+    <width>1000</width>
+    <height>720</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -533,6 +533,9 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                   <width>0</width>
                   <height>32</height>
                  </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
                  <string>Bezier</string>
@@ -1187,6 +1190,9 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                   <height>32</height>
                  </size>
                 </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
                 <property name="toolTip">
                  <string>Fillet</string>
                 </property>
@@ -1374,7 +1380,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
              <x>0</x>
              <y>0</y>
              <width>120</width>
-             <height>628</height>
+             <height>648</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1894,7 +1900,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1008</width>
+     <width>1000</width>
      <height>33</height>
     </rect>
    </property>
