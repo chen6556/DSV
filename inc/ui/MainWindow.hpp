@@ -40,6 +40,8 @@ private:
     void init();
 
 protected:
+    void mousePressEvent(QMouseEvent *event);
+
     void keyPressEvent(QKeyEvent *event);
 
     void closeEvent(QCloseEvent *event);

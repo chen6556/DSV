@@ -127,6 +127,36 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 
 
+void MainWindow::mousePressEvent(QMouseEvent *event)
+{
+    switch (event->button())
+    {
+    case Qt::MouseButton::BackButton:
+        {
+            const size_t layers_count = _editer.groups_count();
+            _editer.undo();
+            if (_editer.groups_count() != layers_count)
+            {
+                if (_editer.groups_count() == 0)
+                {
+                    _editer.append_group();
+                }
+                _editer.set_current_group(std::min(_editer.current_group(), _editer.groups_count() - 1));
+                _layers_manager->update_layers();
+                _layers_cbx->setModel(_layers_manager->model());
+            }
+            ui->canvas->refresh_vbo(true);
+            ui->canvas->refresh_selected_ibo();
+            ui->canvas->refresh_cache_vbo(0);
+            ui->canvas->update();
+        }
+        break;
+    default:
+        break;
+    }
+
+    return QMainWindow::mousePressEvent(event);
+}
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
