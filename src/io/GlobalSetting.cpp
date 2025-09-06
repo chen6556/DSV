@@ -20,7 +20,7 @@ void GlobalSetting::load_setting()
     const QJsonObject values = QJsonDocument::fromJson(file.readAll(), &jerr).object();
     file.close();
 
-    if (values.contains("auto_aliging"))
+    if (values.contains("auto_aligning"))
     {
         this->auto_aligning = values.value("auto_aligning").toBool();
     }
