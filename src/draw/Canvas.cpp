@@ -3459,79 +3459,41 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_c
 
 std::tuple<unsigned int*, unsigned int> Canvas::refresh_polygon_brush_ibo()
 {
-    std::unordered_map<const Geo::Polygon *, std::vector<size_t>> earcuts;
-    {
-        size_t end = 0;
-        for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
-        {
-            end += group.count(Geo::Type::POLYGON, true);
-        }
-        std::vector<std::unordered_map<const Geo::Polygon *, std::vector<size_t>> *> maps;
-        std::vector<std::future<void>> threads;
-        for (size_t i = 0, step = end / std::thread::hardware_concurrency() + 1; i < end; i += step)
-        {
-            maps.push_back(new std::unordered_map<const Geo::Polygon *, std::vector<size_t>>());
-            threads.emplace_back(std::async(std::launch::async, &Canvas::refresh_polygon_brush_ibo_subfunc, this, i, i + step, maps.back()));
-        }
-        for (std::future<void> &thread : threads)
-        {
-            thread.wait();
-        }
-        for (std::unordered_map<const Geo::Polygon *, std::vector<size_t>> *m : maps)
-        {
-            if (!m->empty())
-            {
-                earcuts.merge(*m);
-            }
-            delete m;
-        }
-    }
-
     unsigned int index_len = 512, index_count = 0, data_count = 0;
     unsigned int *indexs = new unsigned int[index_len];
-    Geo::Polygon *polygon = nullptr;
-
+    const Geo::Polygon *polygon = nullptr;
     for (ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
         if (!group.visible())
         {
             continue;
         }
-
         for (Geo::Geometry *geo : group)
         {
             switch (geo->type())
             {
             case Geo::Type::POLYGON:
-                polygon = dynamic_cast<Geo::Polygon *>(geo);
-                polygon->IBO_index = index_count;
+                polygon = static_cast<const Geo::Polygon *>(geo);
+                while (index_count + polygon->triangle_indices.size() > index_len)
                 {
-                    // const std::vector<size_t> index(Geo::ear_cut_to_indexs(*polygon));
-                    const std::vector<size_t> index(earcuts.at(polygon));
-                    while (index_count + index.size() > index_len)
-                    {
-                        index_len *= 2;
-                        unsigned int *temp = new unsigned int[index_len];
-                        std::move(indexs, indexs + index_count, temp);
-                        delete []indexs;
-                        indexs = temp;
-                    }
-                    for (size_t i : index)
-                    {
-                        indexs[index_count++] = data_count + i;
-                    }
+                    index_len *= 2;
+                    unsigned int *temp = new unsigned int[index_len];
+                    std::move(indexs, indexs + index_count, temp);
+                    delete []indexs;
+                    indexs = temp;
+                }
+                for (const unsigned int i : polygon->triangle_indices)
+                {
+                    indexs[index_count++] = data_count + i;
                 }
                 data_count += polygon->size();
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *dynamic_cast<Combination *>(geo))
+                for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
                 {
-                    if (polygon = dynamic_cast<Geo::Polygon *>(item))
+                    if (polygon = dynamic_cast<const Geo::Polygon *>(item))
                     {
-                        polygon->IBO_index = index_count;
-                        // const std::vector<size_t> index(Geo::ear_cut_to_indexs(*polygon));
-                        const std::vector<size_t> index(earcuts.at(polygon));
-                        while (index_count + index.size() > index_len)
+                        while (index_count + polygon->triangle_indices.size() > index_len)
                         {
                             index_len *= 2;
                             unsigned int *temp = new unsigned int[index_len];
@@ -3539,7 +3501,7 @@ std::tuple<unsigned int*, unsigned int> Canvas::refresh_polygon_brush_ibo()
                             delete []indexs;
                             indexs = temp;
                         }
-                        for (size_t i : index)
+                        for (const unsigned int i : polygon->triangle_indices)
                         {
                             indexs[index_count++] = data_count + i;
                         }
@@ -3559,36 +3521,10 @@ std::tuple<unsigned int*, unsigned int> Canvas::refresh_polygon_brush_ibo()
 
 std::tuple<unsigned int*, unsigned int> Canvas::refresh_circle_brush_ibo()
 {
-    std::unordered_map<const Geo::Geometry *, std::vector<size_t>> earcuts;
-    {
-        size_t end = 0;
-        for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
-        {
-            end += group.count(Geo::Type::ELLIPSE, true);
-            end += group.count(Geo::Type::CIRCLE, true);
-        }
-        std::vector<std::unordered_map<const Geo::Geometry *, std::vector<size_t>> *> maps;
-        std::vector<std::future<void>> threads;
-        for (size_t i = 0, step = end / std::thread::hardware_concurrency() + 1; i < end; i += step)
-        {
-            maps.push_back(new std::unordered_map<const Geo::Geometry *, std::vector<size_t>>());
-            threads.emplace_back(std::async(std::launch::async, &Canvas::refresh_circle_brush_ibo_subfunc, this, i, i + step, maps.back()));
-        }
-        for (std::future<void> &thread : threads)
-        {
-            thread.wait();
-        }
-        for (std::unordered_map<const Geo::Geometry *, std::vector<size_t>> *m : maps)
-        {
-            earcuts.merge(*m);
-            delete m;
-        }
-    }
-
     unsigned int index_len = 512, index_count = 0, data_count = 0;
     unsigned int *indexs = new unsigned int[index_len];
-    Geo::Circle *circle = nullptr;
-    Geo::Ellipse *ellipse = nullptr;
+    const Geo::Circle *circle = nullptr;
+    const Geo::Ellipse *ellipse = nullptr;
 
     for (ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
@@ -3596,97 +3532,76 @@ std::tuple<unsigned int*, unsigned int> Canvas::refresh_circle_brush_ibo()
         {
             continue;
         }
-
         for (Geo::Geometry *geo : group)
         {
             switch (geo->type())
             {
             case Geo::Type::CIRCLE:
-                circle = static_cast<Geo::Circle *>(geo);
-                circle->IBO_index = index_count;
+                circle = static_cast<const Geo::Circle *>(geo);
+                while (index_count + circle->triangle_indices.size() > index_len)
                 {
-                    // const std::vector<size_t> index(Geo::ear_cut_to_indexs(circle->shape()));
-                    const std::vector<size_t> index(earcuts.at(geo));
-                    while (index_count + index.size() > index_len)
-                    {
-                        index_len *= 2;
-                        unsigned int *temp = new unsigned int[index_len];
-                        std::move(indexs, indexs + index_count, temp);
-                        delete []indexs;
-                        indexs = temp;
-                    }
-                    for (size_t i : index)
-                    {
-                        indexs[index_count++] = data_count + i;
-                    }
+                    index_len *= 2;
+                    unsigned int *temp = new unsigned int[index_len];
+                    std::move(indexs, indexs + index_count, temp);
+                    delete []indexs;
+                    indexs = temp;
+                }
+                for (const unsigned int i : circle->triangle_indices)
+                {
+                    indexs[index_count++] = data_count + i;
                 }
                 data_count += circle->shape().size();
                 break;
             case Geo::Type::ELLIPSE:
-                ellipse = static_cast<Geo::Ellipse *>(geo);
-                ellipse->IBO_index = index_count;
+                ellipse = static_cast<const Geo::Ellipse *>(geo);
+                while (index_count + ellipse->triangle_indices.size() > index_len)
                 {
-                    // const std::vector<size_t> index(Geo::ear_cut_to_indexs(ellipse->shape()));
-                    const std::vector<size_t> index(earcuts.at(geo));
-                    while (index_count + index.size() > index_len)
-                    {
-                        index_len *= 2;
-                        unsigned int *temp = new unsigned int[index_len];
-                        std::move(indexs, indexs + index_count, temp);
-                        delete []indexs;
-                        indexs = temp;
-                    }
-                    for (size_t i : index)
-                    {
-                        indexs[index_count++] = data_count + i;
-                    }
+                    index_len *= 2;
+                    unsigned int *temp = new unsigned int[index_len];
+                    std::move(indexs, indexs + index_count, temp);
+                    delete []indexs;
+                    indexs = temp;
+                }
+                for (const unsigned int i : ellipse->triangle_indices)
+                {
+                    indexs[index_count++] = data_count + i;
                 }
                 data_count += ellipse->shape().size();
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *static_cast<Combination *>(geo))
+                for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
                 {
                     switch (item->type())
                     {
                     case Geo::Type::CIRCLE:
-                        circle = static_cast<Geo::Circle *>(item);
-                        circle->IBO_index = index_count;
+                        circle = static_cast<const Geo::Circle *>(item);
+                        while (index_count + circle->triangle_indices.size() > index_len)
                         {
-                            // const std::vector<size_t> index(Geo::ear_cut_to_indexs(circle->shape()));
-                            const std::vector<size_t> index(earcuts.at(item));
-                            while (index_count + index.size() > index_len)
-                            {
-                                index_len *= 2;
-                                unsigned int *temp = new unsigned int[index_len];
-                                std::move(indexs, indexs + index_count, temp);
-                                delete []indexs;
-                                indexs = temp;
-                            }
-                            for (size_t i : index)
-                            {
-                                indexs[index_count++] = data_count + i;
-                            }
+                            index_len *= 2;
+                            unsigned int *temp = new unsigned int[index_len];
+                            std::move(indexs, indexs + index_count, temp);
+                            delete []indexs;
+                            indexs = temp;
+                        }
+                        for (const unsigned int i : circle->triangle_indices)
+                        {
+                            indexs[index_count++] = data_count + i;
                         }
                         data_count += circle->shape().size();
                         break;
                     case Geo::Type::ELLIPSE:
-                        ellipse = static_cast<Geo::Ellipse *>(item);
-                        ellipse->IBO_index = index_count;
+                        ellipse = static_cast<const Geo::Ellipse *>(item);
+                        while (index_count + ellipse->triangle_indices.size() > index_len)
                         {
-                            // const std::vector<size_t> index(Geo::ear_cut_to_indexs(ellipse->shape()));
-                            const std::vector<size_t> index(earcuts.at(item));
-                            while (index_count + index.size() > index_len)
-                            {
-                                index_len *= 2;
-                                unsigned int *temp = new unsigned int[index_len];
-                                std::move(indexs, indexs + index_count, temp);
-                                delete []indexs;
-                                indexs = temp;
-                            }
-                            for (size_t i : index)
-                            {
-                                indexs[index_count++] = data_count + i;
-                            }
+                            index_len *= 2;
+                            unsigned int *temp = new unsigned int[index_len];
+                            std::move(indexs, indexs + index_count, temp);
+                            delete []indexs;
+                            indexs = temp;
+                        }
+                        for (const unsigned int i : ellipse->triangle_indices)
+                        {
+                            indexs[index_count++] = data_count + i;
                         }
                         data_count += ellipse->shape().size();
                         break;
@@ -4856,7 +4771,7 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_t
                             data[data_count++] = 0.5;
                         }
 
-                        const std::vector<size_t> index(Geo::ear_cut_to_indexs(points));
+                        const std::vector<unsigned int> index(Geo::ear_cut_to_indexs(points));
                         while (index_count + index.size() >= index_len)
                         {
                             index_len *= 2;
@@ -4865,7 +4780,7 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_t
                             delete []indexs;
                             indexs = temp;
                         }
-                        for (size_t i : index)
+                        for (const unsigned int i : index)
                         {
                             indexs[index_count++] = offset + i;
                         }
@@ -4902,7 +4817,7 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_t
                     data[data_count++] = 0.5;
                 }
 
-                const std::vector<size_t> index(Geo::ear_cut_to_indexs(points));
+                const std::vector<unsigned int> index(Geo::ear_cut_to_indexs(points));
                 while (index_count + index.size() >= index_len)
                 {
                     index_len *= 2;
@@ -4911,7 +4826,7 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_t
                     delete []indexs;
                     indexs = temp;
                 }
-                for (size_t i : index)
+                for (const unsigned int i : index)
                 {
                     indexs[index_count++] = offset + i;
                 }
@@ -5518,153 +5433,4 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
     }
 
     return true;
-}
-
-
-void Canvas::refresh_polygon_brush_ibo_subfunc(size_t start, size_t end, std::unordered_map<const Geo::Polygon *, std::vector<size_t>> *result)
-{
-    size_t index = 0;
-    for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
-    {
-        if (!group.visible())
-        {
-            continue;
-        }
-
-        for (const Geo::Geometry *geo : group)
-        {
-            switch (geo->type())
-            {
-            case Geo::Type::POLYGON:
-                if (index < start)
-                {
-                    ++index;
-                }
-                else if (const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(geo); index < end)
-                {
-                    result->insert_or_assign(polygon, Geo::ear_cut_to_indexs(*polygon));
-                    ++index;
-                }
-                else
-                {
-                    return;
-                }
-                break;
-            case Geo::Type::COMBINATION:
-                for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
-                {
-                    if (const Geo::Polygon *polygon = dynamic_cast<const Geo::Polygon *>(item))
-                    {
-                        if (index < start)
-                        {
-                            ++index;
-                        }
-                        else if (index < end)
-                        {
-                            result->insert_or_assign(polygon, Geo::ear_cut_to_indexs(*polygon));
-                            ++index;
-                        }
-                        else
-                        {
-                            return;
-                        }
-                    }
-                }
-                break;
-            default:
-                break;
-            }
-        }
-    }
-}
-
-void Canvas::refresh_circle_brush_ibo_subfunc(size_t start, size_t end, std::unordered_map<const Geo::Geometry *, std::vector<size_t>> *result)
-{
-    size_t index = 0;
-    for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
-    {
-        if (!group.visible())
-        {
-            continue;
-        }
-
-        for (const Geo::Geometry *geo : group)
-        {
-            switch (geo->type())
-            {
-            case Geo::Type::CIRCLE:
-                if (index < start)
-                {
-                    ++index;
-                }
-                else if (index < end)
-                {
-                    result->insert_or_assign(geo, Geo::ear_cut_to_indexs(static_cast<const Geo::Circle *>(geo)->shape()));
-                    ++index;
-                }
-                else
-                {
-                    return;
-                }
-                break;
-            case Geo::Type::ELLIPSE:
-                if (index < start)
-                {
-                    ++index;
-                }
-                else if (index < end)
-                {
-                    result->insert_or_assign(geo, Geo::ear_cut_to_indexs(static_cast<const Geo::Ellipse *>(geo)->shape()));
-                    ++index;
-                }
-                else
-                {
-                    return;
-                }
-                break;
-            case Geo::Type::COMBINATION:
-                for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
-                {
-                    switch (item->type())
-                    {
-                    case Geo::Type::CIRCLE:
-                        if (index < start)
-                        {
-                            ++index;
-                        }
-                        else if (index < end)
-                        {
-                            result->insert_or_assign(item, Geo::ear_cut_to_indexs(static_cast<const Geo::Circle *>(item)->shape()));
-                            ++index;
-                        }
-                        else
-                        {
-                            return;
-                        }
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        if (index < start)
-                        {
-                            ++index;
-                        }
-                        else if (index < end)
-                        {
-                            result->insert_or_assign(item, Geo::ear_cut_to_indexs(static_cast<const Geo::Ellipse *>(item)->shape()));
-                            ++index;
-                        }
-                        else
-                        {
-                            return;
-                        }
-                        break;
-                    default:
-                        break;
-                    }
-                }
-                break;
-            default:
-                break;
-            }
-        }
-    }
 }

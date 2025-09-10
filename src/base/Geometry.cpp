@@ -815,7 +815,7 @@ AABBRect::AABBRect(const Point &point0, const Point &point1)
 }
 
 AABBRect::AABBRect(const AABBRect &rect)
-    : Geometry(rect), _points(rect._points)
+    : Geometry(rect), ClosedShape(rect), _points(rect._points)
 {}
 
 const Type AABBRect::type() const
@@ -874,6 +874,7 @@ AABBRect &AABBRect::operator=(const AABBRect &rect)
     if (this != &rect)
     {
         Geometry::operator=(rect);
+        ClosedShape::operator=(rect);
         _points = rect._points;
     }
     return *this;
@@ -1116,7 +1117,7 @@ const Point &AABBRect::operator[](const size_t index) const
 // Polygon
 
 Polygon::Polygon(const Polygon &polygon)
-    : Polyline(polygon)
+    : Polyline(polygon), ClosedShape(polygon)
 {}
 
 Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
@@ -1127,6 +1128,7 @@ Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::c
     {
         _points.emplace_back(_points.front());
     }
+    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 Polygon::Polygon(const std::initializer_list<Point>& points)
@@ -1137,6 +1139,7 @@ Polygon::Polygon(const std::initializer_list<Point>& points)
     {
         _points.emplace_back(_points.front());
     }
+    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 Polygon::Polygon(const Polyline &polyline)
@@ -1146,17 +1149,21 @@ Polygon::Polygon(const Polyline &polyline)
     {
         _points.emplace_back(_points.front());
     }
+    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 Polygon::Polygon(const AABBRect& rect)
     : Polyline(rect.cbegin(), rect.cend())
-{}
+{
+    triangle_indices = Geo::ear_cut_to_indexs(*this);
+}
 
 Polygon &Polygon::operator=(const Polygon &polygon)
 {
     if (this != &polygon)
     {
         Polyline::operator=(polygon);
+        ClosedShape::operator=(polygon);
     }
     return *this;
 }
@@ -1164,6 +1171,12 @@ Polygon &Polygon::operator=(const Polygon &polygon)
 const Type Polygon::type() const
 {
     return Type::POLYGON;
+}
+
+void Polygon::clear()
+{
+    Polyline::clear();
+    triangle_indices.clear();
 }
 
 Polygon *Polygon::clone() const
@@ -1197,6 +1210,7 @@ void Polygon::reorder_points(const bool cw)
             std::reverse(_points.begin(), _points.end());
         }
     }
+    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 bool Polygon::is_cw() const
@@ -1232,6 +1246,7 @@ void Polygon::append(const Point &point)
             _points.emplace_back(_points.front());
         }
     }
+    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 void Polygon::append(const Polyline &polyline)
@@ -1256,6 +1271,7 @@ void Polygon::append(const Polyline &polyline)
             _points.emplace_back(_points.front());
         }
     }
+    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 void Polygon::append(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
@@ -1280,6 +1296,7 @@ void Polygon::append(std::vector<Point>::const_iterator begin, std::vector<Point
             _points.emplace_back(_points.front());
         }
     }
+    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 void Polygon::insert(const size_t index, const Point &point)
@@ -1289,6 +1306,7 @@ void Polygon::insert(const size_t index, const Point &point)
     {
         _points.back() = _points.front();
     }
+    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 void Polygon::insert(const size_t index, const Polyline &polyline)
@@ -1298,6 +1316,7 @@ void Polygon::insert(const size_t index, const Polyline &polyline)
     {
         _points.back() = _points.front();
     }
+    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 void Polygon::insert(const size_t index, std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
@@ -1307,6 +1326,7 @@ void Polygon::insert(const size_t index, std::vector<Point>::const_iterator begi
     {
         _points.back() = _points.front();
     }
+    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 void Polygon::remove(const size_t index)
@@ -1320,6 +1340,7 @@ void Polygon::remove(const size_t index)
     {
         _points.front() = _points.back();
     }
+    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 void Polygon::remove(const size_t index, const size_t count)
@@ -1336,6 +1357,7 @@ void Polygon::remove(const size_t index, const size_t count)
             front() = back();
         }
     }
+    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 Point Polygon::pop(const size_t index)
@@ -1349,6 +1371,7 @@ Point Polygon::pop(const size_t index)
     {
         _points.front() = _points.back();
     }
+    triangle_indices = Geo::ear_cut_to_indexs(*this);
     return point;
 }
 
@@ -1530,7 +1553,7 @@ Triangle::Triangle(const double x0, const double y0, const double x1, const doub
 }
 
 Triangle::Triangle(const Triangle &triangle)
-    : Geometry(triangle)
+    : Geometry(triangle), ClosedShape(triangle)
 {
     _vecs[0] = triangle._vecs[0];
     _vecs[1] = triangle._vecs[1];
@@ -1643,6 +1666,7 @@ Triangle &Triangle::operator=(const Triangle &triangle)
     if (this != &triangle)
     {
         Geometry::operator=(triangle);
+        ClosedShape::operator=(triangle);
         _vecs[0] = triangle._vecs[0];
         _vecs[1] = triangle._vecs[1];
         _vecs[2] = triangle._vecs[2];
@@ -1805,7 +1829,7 @@ Circle::Circle(const Point &point, const double r)
 }
 
 Circle::Circle(const Circle &circle)
-    : Point(circle), radius(circle.radius), _shape(circle._shape)
+    : Point(circle), ClosedShape(circle), radius(circle.radius), _shape(circle._shape)
 {}
 
 Circle &Circle::operator=(const Circle &circle)
@@ -1813,6 +1837,7 @@ Circle &Circle::operator=(const Circle &circle)
     if (this != &circle)
     {
         Point::operator=(circle);
+        ClosedShape::operator=(circle);
         radius = circle.radius;
         _shape = circle._shape;
     }
@@ -1842,6 +1867,7 @@ const bool Circle::empty() const
 void Circle::clear()
 {
     radius = 0;
+    triangle_indices.clear();
     Point::clear();
 }
 
@@ -1940,6 +1966,7 @@ Circle Circle::operator-(const Point &point) const
 void Circle::update_shape(const double down_sampling_value)
 {
     _shape = Geo::circle_to_polygon(x, y, radius, down_sampling_value);
+    triangle_indices = Geo::ear_cut_to_indexs(_shape);
 }
 
 const Polygon &Circle::shape() const
@@ -2363,7 +2390,7 @@ Ellipse::Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point 
 }
 
 Ellipse::Ellipse(const Ellipse &ellipse)
-    : Geometry(ellipse), _shape(ellipse._shape)
+    : Geometry(ellipse), ClosedShape(ellipse), _shape(ellipse._shape)
 {
     _a[0] = ellipse._a[0];
     _a[1] = ellipse._a[1];
@@ -2376,6 +2403,7 @@ Ellipse &Ellipse::operator=(const Ellipse &ellipse)
     if (this != &ellipse)
     {
         Geometry::operator=(ellipse);
+        ClosedShape::operator=(ellipse);
         _a[0] = ellipse._a[0];
         _a[1] = ellipse._a[1];
         _b[0] = ellipse._b[0];
@@ -2413,6 +2441,7 @@ void Ellipse::clear()
     _a[1].clear();
     _b[0].clear();
     _b[1].clear();
+    triangle_indices.clear();
 }
 
 Ellipse *Ellipse::clone() const
@@ -2672,6 +2701,7 @@ void Ellipse::update_shape(const double down_sampling_value)
 {
     const Geo::Point point = center();
     _shape = Geo::ellipse_to_polygon(point.x, point.y, lengtha(), lengthb(), angle(), down_sampling_value);
+    triangle_indices = Geo::ear_cut_to_indexs(_shape);
 }
 
 const Polygon &Ellipse::shape() const

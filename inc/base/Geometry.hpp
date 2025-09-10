@@ -166,7 +166,18 @@ namespace Geo
     class ClosedShape
     {   
     public:
-        unsigned long long IBO_index = 0;
+        unsigned int IBO_index = 0;
+        std::vector<unsigned int> triangle_indices;
+
+        ClosedShape() = default;
+
+        ClosedShape(const ClosedShape &other) = default;
+
+        ClosedShape &operator=(const ClosedShape &other) = default;
+
+        ClosedShape(ClosedShape &&other) noexcept = default;
+
+        ClosedShape &operator=(ClosedShape &&other) noexcept = default;
     };
 
     class Polyline : public Geometry
@@ -405,6 +416,8 @@ namespace Geo
         Polygon &operator=(const Polygon &polygon);
 
         const Type type() const override;
+
+        void clear() override;
 
         Polygon *clone() const override;
 

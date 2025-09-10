@@ -315,7 +315,7 @@ namespace Geo
 
     Polygon ellipse_to_polygon(const Ellipse &ellipse, const double down_sampling_value = 0.02);
 
-    std::vector<size_t> ear_cut_to_indexs(const Polygon &polygon);
+    std::vector<unsigned int> ear_cut_to_indexs(const Polygon &polygon);
 
     std::vector<MarkedPoint> ear_cut_to_coords(const Polygon &polygon);
 

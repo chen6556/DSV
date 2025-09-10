@@ -83,6 +83,6 @@ install(
 )
 
 install(
-  FILES src/resource/DSV.ico
+  FILES res/resource/DSV.ico
   DESTINATION share/icons/hicolor/128x128/apps
 )

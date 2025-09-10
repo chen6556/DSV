@@ -279,8 +279,4 @@ public:
 
     bool refresh_catchline_points(const std::vector<const Geo::Geometry *> &objects, const double distance, Geo::Point &pos);
 
-private:
-    void refresh_polygon_brush_ibo_subfunc(size_t start, size_t end, std::unordered_map<const Geo::Polygon *, std::vector<size_t>> *result);
-
-    void refresh_circle_brush_ibo_subfunc(size_t start, size_t end, std::unordered_map<const Geo::Geometry *, std::vector<size_t>> *result);
 };

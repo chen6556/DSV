@@ -3072,7 +3072,7 @@ Geo::Polygon Geo::ellipse_to_polygon(const Ellipse &ellipse, const double down_s
 }
 
 
-std::vector<size_t> Geo::ear_cut_to_indexs(const Geo::Polygon &polygon)
+std::vector<unsigned int> Geo::ear_cut_to_indexs(const Geo::Polygon &polygon)
 {
     std::vector<std::vector<std::array<double, 2>>> points;
     points.emplace_back();
@@ -3080,13 +3080,13 @@ std::vector<size_t> Geo::ear_cut_to_indexs(const Geo::Polygon &polygon)
     {
         points.front().emplace_back(std::array<double, 2>({point.x, point.y}));
     }
-    return mapbox::earcut<size_t>(points);
+    return mapbox::earcut<unsigned int>(points);
 }
 
 std::vector<Geo::MarkedPoint> Geo::ear_cut_to_coords(const Geo::Polygon &polygon)
 {
     std::vector<MarkedPoint> result;
-    for (size_t i : Geo::ear_cut_to_indexs(polygon))
+    for (const unsigned int i : Geo::ear_cut_to_indexs(polygon))
     {
         result.emplace_back(polygon[i].x, polygon[i].y);
     }
@@ -3096,7 +3096,7 @@ std::vector<Geo::MarkedPoint> Geo::ear_cut_to_coords(const Geo::Polygon &polygon
 std::vector<Geo::Point> Geo::ear_cut_to_points(const Geo::Polygon &polygon)
 {
     std::vector<Point> result;
-    for (size_t i : Geo::ear_cut_to_indexs(polygon))
+    for (const unsigned int i : Geo::ear_cut_to_indexs(polygon))
     {
         result.emplace_back(polygon[i]);
     }
@@ -3105,7 +3105,7 @@ std::vector<Geo::Point> Geo::ear_cut_to_points(const Geo::Polygon &polygon)
 
 std::vector<Geo::Triangle> Geo::ear_cut_to_triangles(const Geo::Polygon &polygon)
 {
-    std::vector<size_t> indexs;
+    std::vector<unsigned int> indexs;
     if (polygon.is_cw())
     {
         for (size_t i = 0, count = polygon.size() - 1; i < count; ++i)
