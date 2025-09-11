@@ -5,7 +5,6 @@
 
 int main(int argc, char *argv[])
 {
-    QApplication::setAttribute(Qt::ApplicationAttribute::AA_ShareOpenGLContexts, true);
     QApplication a(argc, argv);
     a.setStyle("Fusion");
 

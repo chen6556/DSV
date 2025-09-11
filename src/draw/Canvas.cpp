@@ -34,7 +34,7 @@ void Canvas::init()
     format.setStencilBufferSize(8);
     format.setSamples(4);
     format.setProfile(QSurfaceFormat::CoreProfile);
-    format.setVersion(4, 6);
+    format.setVersion(3, 3);
     setFormat(format);
 
     _cache = new double[_cache_len];
