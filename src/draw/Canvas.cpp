@@ -60,11 +60,11 @@ void Canvas::bind_editer(Editer *editer)
 
 void Canvas::initializeGL()
 {
-    qInfo() << "OpenGL version:" << (const char *)::glGetString(GL_VERSION);
+    // qInfo() << "OpenGL version:" << (const char *)::glGetString(GL_VERSION);
     if (!initializeOpenGLFunctions()) {
         qWarning("Cannot initialize OpenGL functions");
-        qDebug() << "OpenGL version:" << QString((const char *)::glGetString(GL_VERSION));
-        qDebug() << "GL error:" << (int)::glGetError();
+        // qDebug() << "OpenGL version:" << QString((const char *)::glGetString(GL_VERSION));
+        // qDebug() << "GL error:" << (int)::glGetError();
 #ifdef __APPLE__
         qDebug() << "Only Apple can do!";
 #endif
@@ -108,14 +108,14 @@ void Canvas::initializeGL()
     const bool show_control_points = _editer->selected_count() == 1;
 
     glUseProgram(_shader_program);
-    glUniform3d(_uniforms[2], 1.0, 0.0, 0.0); // vec0
-    glUniform3d(_uniforms[3], 0.0, -1.0, 0.0); // vec1
+    glUniform3f(_uniforms[2], 1.0, 0.0, 0.0); // vec0
+    glUniform3f(_uniforms[3], 0.0, -1.0, 0.0); // vec1
 
     glGenVertexArrays(1, &_VAO);
     glGenBuffers(5, _VBO);
 
     glBindVertexArray(_VAO);
-    glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+    glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(double) * 3, NULL);
 
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[4]); // reflines
     glBufferData(GL_ARRAY_BUFFER, 30 * sizeof(double), _refline_points, GL_DYNAMIC_DRAW);
@@ -125,10 +125,10 @@ void Canvas::initializeGL()
 
     double data[24] = {-10, 0, 0, 10, 0, 0, 0, -10, 0, 0, 10, 0};
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]); // origin and select rect
-    glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(double), data, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(double), data, GL_STREAM_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
-    glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+    glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(double) * 3, NULL);
     glEnableVertexAttribArray(0);
 
     glGenBuffers(4, _IBO);
@@ -142,7 +142,7 @@ void Canvas::resizeGL(int w, int h)
     glViewport(0, 0, w, h);
 
     _canvas_ctm[7] += (h - _canvas_height);
-    glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
+    glUniform3f(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
     _view_ctm[7] += (h - _canvas_height) / _ratio;
     _canvas_width = w, _canvas_height = h;
 
@@ -150,39 +150,39 @@ void Canvas::resizeGL(int w, int h)
     _visible_area.transform(_view_ctm[0], _view_ctm[3], _view_ctm[6], _view_ctm[1], _view_ctm[4], _view_ctm[7]);    
 }
 
-void checkGlError() {
-    int glError = glGetError();
-    if (glError)
-    {
-        switch (glError)
-        {
-        case GL_INVALID_ENUM:
-            qWarning("GL error: GL_INVALID_ENUM");
-            break;
-        case GL_INVALID_VALUE:
-            qWarning("GL error: GL_INVALID_VALUE");
-            break;
-        case GL_INVALID_OPERATION:
-            qWarning("GL error: GL_INVALID_OPERATION");
-            break;
-        case GL_STACK_OVERFLOW:
-            qWarning("GL error: GL_STACK_OVERFLOW");
-            break;
-        case GL_STACK_UNDERFLOW:
-            qWarning("GL error: GL_STACK_UNDERFLOW");
-            break;
-        case GL_INVALID_FRAMEBUFFER_OPERATION:
-            qWarning("GL error: GL_INVALID_FRAMEBUFFER_OPERATION");
-            break;
-        case GL_OUT_OF_MEMORY:
-            qWarning("GL error: GL_OUT_OF_MEMORY");
-            break;
-        default:
-            qWarning("GL error: %d", glError);
-            break;
-        }
-    }
-}
+// void checkGlError() {
+//     int glError = glGetError();
+//     if (glError)
+//     {
+//         switch (glError)
+//         {
+//         case GL_INVALID_ENUM:
+//             qWarning("GL error: GL_INVALID_ENUM");
+//             break;
+//         case GL_INVALID_VALUE:
+//             qWarning("GL error: GL_INVALID_VALUE");
+//             break;
+//         case GL_INVALID_OPERATION:
+//             qWarning("GL error: GL_INVALID_OPERATION");
+//             break;
+//         case GL_STACK_OVERFLOW:
+//             qWarning("GL error: GL_STACK_OVERFLOW");
+//             break;
+//         case GL_STACK_UNDERFLOW:
+//             qWarning("GL error: GL_STACK_UNDERFLOW");
+//             break;
+//         case GL_INVALID_FRAMEBUFFER_OPERATION:
+//             qWarning("GL error: GL_INVALID_FRAMEBUFFER_OPERATION");
+//             break;
+//         case GL_OUT_OF_MEMORY:
+//             qWarning("GL error: GL_OUT_OF_MEMORY");
+//             break;
+//         default:
+//             qWarning("GL error: %d", glError);
+//             break;
+//         }
+//     }
+// }
 
 void Canvas::paintGL()
 {
@@ -267,7 +267,7 @@ void Canvas::paintGL()
     if (_indexs_count[0] > 0) // polyline
     {
         glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
-        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(double) * 3, NULL);
         glEnableVertexAttribArray(0);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[0]); // polyline
@@ -285,7 +285,7 @@ void Canvas::paintGL()
     if (_editer->point_cache().empty() && _cache_count > 0) // cache
     {
         glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(double) * 3, NULL);
         glEnableVertexAttribArray(0);
 
         glUniform4f(_uniforms[4], 1.0f, 0.549f, 0.0f, 1.0f); // color
@@ -296,7 +296,7 @@ void Canvas::paintGL()
     else if (_measure_flags[0])
     {
         glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(double) * 3, NULL);
         glEnableVertexAttribArray(0);
 
         glBufferSubData(GL_ARRAY_BUFFER, 0, 6 * sizeof(double), _cache);
@@ -309,7 +309,7 @@ void Canvas::paintGL()
     if (_indexs_count[3] > 0) // text
     {
         glBindBuffer(GL_ARRAY_BUFFER, _VBO[3]); // text
-        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(double) * 3, NULL);
         glEnableVertexAttribArray(0);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _IBO[3]); // text
@@ -344,7 +344,7 @@ void Canvas::paintGL()
             _refline_points[i++] = 0.51;
         }
         glBindBuffer(GL_ARRAY_BUFFER, _VBO[4]); // reflines
-        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(double) * 3, NULL);
         glEnableVertexAttribArray(0);
         glBufferSubData(GL_ARRAY_BUFFER, 0, i * sizeof(double), _refline_points);
 
@@ -355,7 +355,7 @@ void Canvas::paintGL()
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[0]); // points
-    glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+    glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(double) * 3, NULL);
     glEnableVertexAttribArray(0);
     if (_indexs_count[1] > 0) // polygon
     {
@@ -370,11 +370,11 @@ void Canvas::paintGL()
         glDrawArrays(GL_POINTS, 0, _points_count);
     }
 
-    checkGlError();
+    // checkGlError();
     if (!_editer->point_cache().empty())
     {
         glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(double) * 3, NULL);
         glEnableVertexAttribArray(0);
 
         if (_tool_flags[0] != Tool::CURVE)
@@ -400,25 +400,25 @@ void Canvas::paintGL()
             _cache[i * 3 + 1] = _AABBRect_cache[i].y;
             _cache[i * 3 + 2] = 0;
         }
-        checkGlError();
+        // checkGlError();
 
         glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
         glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), _cache);
-        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(double) * 3, NULL);
         glEnableVertexAttribArray(0);
-        checkGlError();
+        // checkGlError();
 
         glUniform4f(_uniforms[4], 0.831372f, 0.843137f, 0.850980f, 0.078431f); // color 绘制填充色
 
-        checkGlError();
+        // checkGlError();
         glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
-        checkGlError();
+        // checkGlError();
 
         glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线
 
-        checkGlError();
+        // checkGlError();
         glDrawArrays(GL_LINE_LOOP, 0, 4);
-        checkGlError();
+        // checkGlError();
     }
     else if (!_circle_cache.empty())
     {
@@ -442,7 +442,7 @@ void Canvas::paintGL()
             }
 
             glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-            glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+            glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(double) * 3, NULL);
             glEnableVertexAttribArray(0);
             glBufferData(GL_ARRAY_BUFFER, _cache_len * sizeof(double), _cache, GL_STREAM_DRAW);
         }
@@ -457,7 +457,7 @@ void Canvas::paintGL()
             }
             
             glBindBuffer(GL_ARRAY_BUFFER, _VBO[2]); // cache
-            glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+            glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(double) * 3, NULL);
             glEnableVertexAttribArray(0);
             glBufferSubData(GL_ARRAY_BUFFER, 0, _cache_count * sizeof(double), _cache);
         }
@@ -469,19 +469,19 @@ void Canvas::paintGL()
         glDrawArrays(GL_LINE_LOOP, 0, _cache_count / 3);
         _cache_count = 0;
     }
-    checkGlError();
+    // checkGlError();
 
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]); // origin and select rect
-    glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+    glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(double) * 3, NULL);
     glEnableVertexAttribArray(0);
-    checkGlError();
+    // checkGlError();
 
     if (_bool_flags[7]) // origin
     {
         glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 画原点
         glDrawArrays(GL_LINES, 0, 4);
     }
-    checkGlError();
+    // checkGlError();
 
     if (!_select_rect.empty())
     {
@@ -492,18 +492,18 @@ void Canvas::paintGL()
             data[i * 3 + 1] = _select_rect[i].y;
             data[i * 3 + 2] = 0;
         }
-        
+
         glBufferSubData(GL_ARRAY_BUFFER, 12 * sizeof(double), 12 * sizeof(double), data);
-        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glVertexAttribPointer(0, 3, GL_DOUBLE, GL_FALSE, sizeof(double) * 3, (void *)(12 * sizeof(double)));
         glEnableVertexAttribArray(0);
 
         glUniform4f(_uniforms[4], 0.0f, 0.47f, 0.843f, 0.1f); // color
-        glDrawArrays(GL_TRIANGLE_FAN, 4, 4);
+        glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
         glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 0.549f); // color
-        glDrawArrays(GL_LINE_LOOP, 4, 4);
+        glDrawArrays(GL_LINE_LOOP, 0, 4);
     }
-    checkGlError();
+    // checkGlError();
 }
 
 void Canvas::mousePressEvent(QMouseEvent *event)
@@ -1180,8 +1180,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         _view_ctm[6] -= (real_x1 - real_x0), _view_ctm[7] -= (real_y1 - real_y0);
         _visible_area.translate(real_x0 - real_x1, real_y0 - real_y1);
         makeCurrent();
-        glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
-        glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
+        glUniform3f(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
+        glUniform3f(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
         doneCurrent();
         update();
     }
@@ -1507,8 +1507,8 @@ void Canvas::wheelEvent(QWheelEvent *event)
         update();
     }
     makeCurrent();
-    glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
-    glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
+    glUniform3f(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
+    glUniform3f(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
     double data[12] = {-10 / _ratio, 0, 0, 10 / _ratio, 0, 0, 0, -10 / _ratio, 0, 0, 10 / _ratio, 0};
     glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]); // origin and select rect
     glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), data);
@@ -1663,8 +1663,8 @@ void Canvas::show_overview()
         x1 * _view_ctm[1] + y1 * _view_ctm[4] + _view_ctm[7]);
 
     makeCurrent();
-    glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
-    glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
+    glUniform3f(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
+    glUniform3f(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
     {
         double data[12] = {-10, 0, 0, 10, 0, 0, 0, -10, 0, 0, 10, 0};
         glBindBuffer(GL_ARRAY_BUFFER, _VBO[1]); // origin and select rect
