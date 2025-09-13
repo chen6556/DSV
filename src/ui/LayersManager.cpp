@@ -1,5 +1,6 @@
 #include "ui/LayersManager.hpp"
 #include "./ui_LayersManager.h"
+#include "ui/WinUITool.hpp"
 
 
 LayersManager::LayersManager(QWidget *parent)
@@ -192,4 +193,12 @@ void LayersManager::update_layers()
 QStringListModel *LayersManager::model()
 {
     return _layers_model;
+}
+
+int LayersManager::exec()
+{
+#ifdef _WIN64
+    WinUITool::set_caption_color(winId(), 0x3C3C3D);
+#endif
+    return QDialog::exec();
 }

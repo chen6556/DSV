@@ -24,6 +24,10 @@
   <property name="windowTitle">
    <string>Setting</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="../../res/Icons.qrc">
+    <normaloff>:/DSV2.ico</normaloff>:/DSV2.ico</iconset>
+  </property>
   <property name="styleSheet">
    <string notr="true">QDialog{background-color: rgb(50, 50, 51);
 color: rgb(230, 230, 230);}
@@ -641,7 +645,9 @@ QPushButton:pressed
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../../res/Icons.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>

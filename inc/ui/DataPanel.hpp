@@ -21,4 +21,6 @@ public:
     ~DataPanel();
 
     void load_draw_data(const Graph *graph);
+
+    int exec() override;
 };

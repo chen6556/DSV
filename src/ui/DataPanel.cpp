@@ -1,5 +1,6 @@
 #include "ui/DataPanel.hpp"
 #include "./ui_DataPanel.h"
+#include "ui/WinUITool.hpp"
 
 
 DataPanel::DataPanel(QWidget *parent)
@@ -107,4 +108,12 @@ void DataPanel::load_draw_data(const Graph *graph)
     ui->width_label->setText(QString::number(rect.width()));
     ui->height_label->setText(QString::number(rect.height()));
     ui->area_label->setText(QString::number(rect.area(), 'f', 4));
+}
+
+int DataPanel::exec()
+{
+#ifdef _WIN64
+    WinUITool::set_caption_color(winId(), 0x3C3C3D);
+#endif
+    return QDialog::exec();
 }

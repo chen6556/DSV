@@ -62,5 +62,7 @@ public:
     void update_layers();
 
     QStringListModel *model();
+
+    int exec() override;
 };
 

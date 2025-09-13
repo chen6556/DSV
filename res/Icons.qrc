@@ -1,3 +1,4 @@
+<!DOCTYPE RCC>
 <RCC>
   <qresource prefix="/">
     <file>icons/angle_btn.png</file>
@@ -29,5 +30,8 @@
     <file>icons/rectangle_btn.png</file>
     <file>icons/measure_btn.png</file>
     <file>icons/circle_btn.png</file>
+    <file>icons/attention.svg</file>
+    <file>icons/help.svg</file>
+    <file>icons/info.svg</file>
   </qresource>
 </RCC>

@@ -1,11 +1,12 @@
 #include <QFileDialog>
-#include <QMessageBox>
 #include <QAbstractItemView>
 #include <QListView>
 #include <QMimeData>
 
 #include "ui/MainWindow.hpp"
 #include "./ui_MainWindow.h"
+#include "ui/WinUITool.hpp"
+#include "ui/MessageBox.hpp"
 #include "io/File.hpp"
 #include "io/PLTParser.hpp"
 #include "io/RS274DParser.hpp"
@@ -103,19 +104,23 @@ void MainWindow::init()
     _layers_cbx->setModel(_layers_manager->model());
     QObject::connect(_layers_cbx, &QComboBox::currentIndexChanged,
         [this](int index) { _editer.set_current_group(_editer.groups_count() - 1 - index); });
+
+#ifdef _WIN64
+    WinUITool::set_caption_color(winId(), 0x3C3C3D);
+#endif
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (GlobalSetting::setting().graph->modified)
     {
-        switch (QMessageBox::question(this, "File is modified", "Save or not?", QMessageBox::StandardButton::Yes,
-            QMessageBox::StandardButton::No, QMessageBox::StandardButton::Cancel))
+        switch (MessageBox::question(this, "File is modified", "Save or not?", QDialogButtonBox::StandardButton::Yes |
+            QDialogButtonBox::StandardButton::No | QDialogButtonBox::StandardButton::Cancel))
         {
-        case QMessageBox::StandardButton::Yes:
+        case QDialogButtonBox::StandardButton::Yes:
             save_file();
             break;
-        case QMessageBox::StandardButton::Cancel:
+        case QDialogButtonBox::StandardButton::Cancel:
             return event->ignore();
         default:
             break;
@@ -318,7 +323,7 @@ void MainWindow::open_file()
 
 void MainWindow::close_file()
 {
-    if (GlobalSetting::setting().graph->modified && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
+    if (GlobalSetting::setting().graph->modified && MessageBox::question(this, "File is modified", "Save or not?") == QDialogButtonBox::StandardButton::Yes)
     {
         save_file();
     }
@@ -1110,7 +1115,7 @@ void MainWindow::open_file(const QString &path)
     {
         return;
     }
-    else if (GlobalSetting::setting().graph->modified && QMessageBox::question(this, "File is modified", "Save or not?") == QMessageBox::Yes)
+    else if (GlobalSetting::setting().graph->modified && MessageBox::question(this, "File is modified", "Save or not?") == QDialogButtonBox::StandardButton::Yes)
     {
         save_file();
     }

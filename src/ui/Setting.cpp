@@ -1,6 +1,7 @@
 #include <QListView>
 #include "ui/Setting.hpp"
 #include "./ui_Setting.h"
+#include "ui/WinUITool.hpp"
 #include "io/GlobalSetting.hpp"
 
 
@@ -36,6 +37,10 @@ void Setting::init()
     ui->multiple_select->setChecked(GlobalSetting::setting().multiple_select);
     ui->show_points->setChecked(GlobalSetting::setting().show_points);
     ui->ignroe_M19->setChecked(GlobalSetting::setting().ignore_M19);
+
+#ifdef _WIN64
+    WinUITool::set_caption_color(winId(), 0x3C3C3D);
+#endif
 }
 
 void Setting::accept()
