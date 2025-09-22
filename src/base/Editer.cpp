@@ -4353,6 +4353,7 @@ void Editer::auto_layering()
     }
 
     std::vector<Geo::Geometry *> all_containers, all_polylines;
+    std::unordered_map<const Geo::Geometry *, Geo::AABBRect> rects;
     for (ContainerGroup &group : _graph->container_groups())
     {
         while (!group.empty())
@@ -4367,6 +4368,7 @@ void Editer::auto_layering()
                 break;
             default:
                 all_containers.emplace_back(group.pop_back());
+                rects.insert_or_assign(all_containers.back(), all_containers.back()->bounding_rect());
                 break;
             }
         }
@@ -4383,8 +4385,8 @@ void Editer::auto_layering()
         return;
     }
 
-    std::sort(all_containers.begin(), all_containers.end(), [](const Geo::Geometry *a, const Geo::Geometry *b)
-              { return a->bounding_rect().area() > b->bounding_rect().area(); });
+    std::sort(all_containers.begin(), all_containers.end(), [&](const Geo::Geometry *a, const Geo::Geometry *b)
+        { return rects[a].area() > rects[b].area(); });
     _graph->append_group();
     for (size_t i = 0, count = all_containers.size(); _graph->back().empty() && i < count; ++i)
     {
@@ -4392,139 +4394,135 @@ void Editer::auto_layering()
         all_containers.erase(all_containers.begin() + i);
     }
 
-    bool flag;
-    Geo::Polygon *polygon = nullptr;
-    Geo::Circle *circle = nullptr;
-    Geo::Ellipse *ellipse = nullptr;
-    std::vector<Geo::Geometry *>::iterator it;
     while (!all_containers.empty())
     {
+        std::unordered_map<const Geo::Geometry *, Geo::AABBRect> current_rects;
         for (size_t i = 0, count = all_containers.size(); i < count; ++i)
         {
-            flag = true;
+            bool flag = true;
             switch (all_containers[i]->type())
             {
             case Geo::Type::POLYGON:
-                polygon = static_cast<Geo::Polygon *>(all_containers[i]);
-                for (Geo::Geometry *geo : _graph->back())
                 {
-                    switch (geo->type())
+                    const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(all_containers[i]);
+                    const Geo::AABBRect &rect = rects[polygon];
+                    for (Geo::Geometry *geo : _graph->back())
                     {
-                    case Geo::Type::POLYGON:
-                        if (Geo::is_intersected(*polygon, *static_cast<Geo::Polygon *>(geo)))
+                        switch (geo->type())
                         {
-                            flag = false;
+                        case Geo::Type::POLYGON:
+                            if (Geo::is_intersected(rect, current_rects[geo]) &&
+                                Geo::NoAABBTest::is_intersected(*polygon, *static_cast<Geo::Polygon *>(geo)))
+                            {
+                                flag = false;
+                            }
+                            break;
+                        case Geo::Type::CIRCLE:
+                            if (Geo::is_intersected(*polygon, *static_cast<Geo::Circle *>(geo)))
+                            {
+                                flag = false;
+                            }
+                            break;
+                        case Geo::Type::ELLIPSE:
+                            if (Geo::is_intersected(*polygon, *static_cast<Geo::Ellipse *>(geo)))
+                            {
+                                flag = false;
+                            }
+                            break;
+                        default:
+                            break;
                         }
-                        break;
-                    case Geo::Type::CIRCLE:
-                        if (Geo::is_inside(*static_cast<Geo::Circle *>(geo), *polygon))
+                        if (!flag)
                         {
-                            flag = false;
+                            break;
                         }
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        if (Geo::is_intersected(*polygon, *static_cast<Geo::Ellipse *>(geo)))
-                        {
-                            flag = false;
-                        }
-                        break;
-                    default:
-                        break;
                     }
-                    if (!flag)
-                    {
-                        break;
-                    }
-                }
-                if (flag)
-                {
-                    _graph->back().append(polygon);
-                    all_containers.erase(all_containers.begin() + i--);
-                    --count;
                 }
                 break;
             case Geo::Type::CIRCLE:
-                circle = static_cast<Geo::Circle *>(all_containers[i]);
-                for (Geo::Geometry *geo : _graph->back())
                 {
-                    switch (geo->type())
+                    const Geo::Circle *circle = static_cast<const Geo::Circle *>(all_containers[i]);
+                    for (Geo::Geometry *geo : _graph->back())
                     {
-                    case Geo::Type::POLYGON:
-                        if (Geo::is_inside(*circle, *static_cast<Geo::Polygon *>(geo)))
+                        switch (geo->type())
                         {
-                            flag = false;
+                        case Geo::Type::POLYGON:
+                            if (Geo::is_inside(*circle, *static_cast<Geo::Polygon *>(geo)))
+                            {
+                                flag = false;
+                            }
+                            break;
+                        case Geo::Type::CIRCLE:
+                            if (Geo::is_intersected(*circle, *static_cast<Geo::Circle *>(geo)))
+                            {
+                                flag = false;
+                            }
+                            break;
+                        case Geo::Type::ELLIPSE:
+                            if (Geo::is_inside(*circle, *static_cast<Geo::Ellipse *>(geo)))
+                            {
+                                flag = false;
+                            }
+                            break;
+                        default:
+                            break;
                         }
-                        break;
-                    case Geo::Type::CIRCLE:
-                        if (Geo::is_intersected(*circle, *static_cast<Geo::Circle *>(geo)))
+                        if (!flag)
                         {
-                            flag = false;
+                            break;
                         }
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        if (Geo::is_inside(*circle, *static_cast<Geo::Ellipse *>(geo)))
-                        {
-                            flag = false;
-                        }
-                        break;
-                    default:
-                        break;
                     }
-                    if (!flag)
-                    {
-                        break;
-                    }
-                }
-                if (flag)
-                {
-                    _graph->back().append(circle);
-                    all_containers.erase(all_containers.begin() + i--);
-                    --count;
                 }
                 break;
             case Geo::Type::ELLIPSE:
-                ellipse = static_cast<Geo::Ellipse *>(all_containers[i]);
-                for (Geo::Geometry *geo : _graph->back())
                 {
-                    switch (geo->type())
+                    const Geo::Ellipse *ellipse = static_cast<const Geo::Ellipse *>(all_containers[i]);
+                    for (Geo::Geometry *geo : _graph->back())
                     {
-                    case Geo::Type::POLYGON:
-                        if (Geo::is_intersected(*static_cast<Geo::Polygon *>(geo), *ellipse))
+                        switch (geo->type())
                         {
-                            flag = false;
+                        case Geo::Type::POLYGON:
+                            if (Geo::is_intersected(*static_cast<Geo::Polygon *>(geo), *ellipse))
+                            {
+                                flag = false;
+                            }
+                            break;
+                        case Geo::Type::CIRCLE:
+                            if (Geo::Point point0, point1, point2, point3;
+                                Geo::is_intersected(*static_cast<Geo::Circle *>(geo), *ellipse, point0, point1, point2, point3))
+                            {
+                                flag = false;
+                            }
+                            break;
+                        case Geo::Type::ELLIPSE:
+                            if (Geo::Point point0, point1, point2, point3;
+                                Geo::is_intersected(*ellipse, *static_cast<Geo::Ellipse *>(geo), point0, point1, point2, point3))
+                            {
+                                flag = false;
+                            }
+                            break;
+                        default:
+                            break;
                         }
-                        break;
-                    case Geo::Type::CIRCLE:
-                        if (Geo::Point point0, point1, point2, point3;
-                            Geo::is_intersected(*static_cast<Geo::Circle *>(geo), *ellipse, point0, point1, point2, point3))
+                        if (!flag)
                         {
-                            flag = false;
-                        }
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        if (Geo::Point point0, point1, point2, point3;
-                            Geo::is_intersected(*ellipse, *static_cast<Geo::Ellipse *>(geo), point0, point1, point2, point3))
-                        {
-                            flag = false;
-                        }
-                        break;
-                    default:
-                        break;
+                            break;
+                        } 
                     }
-                    if (!flag)
-                    {
-                        break;
-                    }
-                }
-                if (flag)
-                {
-                    _graph->back().append(circle);
-                    all_containers.erase(all_containers.begin() + i--);
-                    --count;
-                }
+                }  
                 break;
             default:
                 break;
+            }
+            if (flag)
+            {
+                if (dynamic_cast<const Geo::Polygon *>(all_containers[i]) != nullptr)
+                {
+                    current_rects.insert_or_assign(all_containers[i], rects[all_containers[i]]);
+                }
+                _graph->back().append(all_containers[i]);
+                all_containers.erase(all_containers.begin() + i--);
+                --count;
             }
         }
         _graph->append_group();

@@ -2382,6 +2382,165 @@ bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *
 }
 
 
+bool Geo::NoAABBTest::is_inside(const Geo::Point &point, const Geo::Polygon &polygon, const bool coincide)
+{
+    if (coincide)
+    {
+        for (size_t i = 1, len = polygon.size(); i < len; ++i)
+        {
+            if (Geo::is_inside(point, polygon[i-1], polygon[i]))
+            {
+                return true;
+            }
+        }
+    }
+    else
+    {
+        for (size_t i = 1, len = polygon.size(); i < len; ++i)
+        {
+            if (Geo::is_inside(point, polygon[i-1], polygon[i]))
+            {
+                return false;
+            }
+        }
+    }
+
+    double x = (-DBL_MAX);
+    std::vector<Geo::MarkedPoint> points;
+    for (const Geo::Point &p : polygon)
+    {
+        x = std::max(x, p.x);
+        points.emplace_back(p.x, p.y);
+    }
+
+    Geo::Point temp, end(x + 80, point.y); // 找到交点并计算其几何数
+    for (size_t i = 1, count = points.size(); i < count; ++i)
+    {
+        if (!Geo::is_parallel(point, end, points[i], points[i - 1]) &&
+            Geo::is_intersected(point, end, points[i], points[i - 1], temp))
+        {
+            points.insert(points.begin() + i++, MarkedPoint(temp.x, temp.y, false));
+            ++count;
+            if (Geo::cross(temp, end, points[i], points[i - 2]) >= 0)
+            {
+                points[i - 1].value = -1;
+            }
+            else
+            {
+                points[i - 1].value = 1;
+            }
+        }
+    }
+
+    if (points.size() == polygon.size()) // 无交点
+    {
+        return false;
+    }
+
+    // 去除重复交点
+    for (size_t count, j, i = points.size() - 1; i > 0; --i)
+    {
+        count = points[i].original ? 0 : 1;
+        for (j = i; j > 0; --j)
+        {
+            if (std::abs(points[i].x - points[j - 1].x) > Geo::EPSILON || 
+                std::abs(points[i].y - points[j - 1].y) > Geo::EPSILON)
+            {
+                break;
+            }
+            if (!points[j - 1].original)
+            {
+                ++count;
+            }
+        }
+        if (count < 2)
+        {
+            continue;
+        }
+
+        int value = 0;
+        for (size_t k = i; k > j; --k)
+        {
+            if (!points[k].original)
+            {
+                value += points[k].value;
+            }
+        }
+        if (!points[j].original)
+        {
+            value += points[j].value;
+        }
+        if (value == 0)
+        {
+            for (size_t k = i; k > j; --k)
+            {
+                if (!points[k].original)
+                {
+                    points.erase(points.begin() + k);
+                }
+            }
+            if (!points[j].original)
+            {
+                points.erase(points.begin() + j);
+            }
+        }
+        else
+        {
+            bool flag = false;
+            for (size_t k = i; k > j; --k)
+            {
+                flag = (flag || points[k].original);
+                points.erase(points.begin() + k);
+            }
+            points[j].value = value;
+            points[j].original = (flag || points[j].original);
+        }
+        i = j > 0 ? j : 1;
+    }
+
+    // 处理重边上的交点
+    for (size_t i = 0, j = 1, count = points.size(); j < count; i = j)
+    {
+        while (i < count && points[i].value == 0)
+        {
+            ++i;
+        }
+        j = i + 1;
+        while (j < count && points[j].value == 0)
+        {
+            ++j;
+        }
+        if (j >= count)
+        {
+            break;
+        }
+        if (polygon.index(points[i]) == SIZE_MAX || polygon.index(points[j]) == SIZE_MAX)
+        {
+            continue;
+        }
+
+        if (points[i].value > 0 && points[j].value > 0)
+        {
+            points.erase(points.begin() + j);
+            --count;
+        }
+        else if (points[i].value < 0 && points[j].value < 0)
+        {
+            points.erase(points.begin() + i);
+            --count;
+        }
+        else
+        {
+            points.erase(points.begin() + j--);
+            points.erase(points.begin() + i);
+            --count;
+            --count;
+        }
+    }
+
+    return std::count_if(points.begin(), points.end(), [](const Geo::MarkedPoint &p) { return p.value != 0; }) % 2 == 1;
+}
+
 bool Geo::NoAABBTest::is_intersected(const Geo::Polyline &polyline0, const Geo::Polyline &polyline1)
 {
     Geo::Point point;
@@ -2409,7 +2568,7 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Polyline &polyline, const Geo::P
             {
                 return true;
             }
-            else if (inside && Geo::is_inside(polyline[i-1], polygon))
+            else if (inside && Geo::NoAABBTest::is_inside(polyline[i-1], polygon))
             {
                 return true;
             }
@@ -2417,7 +2576,7 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Polyline &polyline, const Geo::P
     }
     if (inside)
     {
-        return Geo::is_inside(polyline.back(), polygon);
+        return Geo::NoAABBTest::is_inside(polyline.back(), polygon);
     }
     else
     {
@@ -2442,14 +2601,14 @@ bool Geo::NoAABBTest::is_intersected(const Geo::Polygon &polygon0, const Geo::Po
     {
         for (const Geo::Point &point : polygon0)
         {
-            if (Geo::is_inside(point, polygon1, true))
+            if (Geo::NoAABBTest::is_inside(point, polygon1, true))
             {
                 return true;
             }
         }
         for (const Geo::Point &point : polygon1)
         {
-            if (Geo::is_inside(point, polygon0, true))
+            if (Geo::NoAABBTest::is_inside(point, polygon0, true))
             {
                 return true;
             }
@@ -2481,7 +2640,7 @@ bool Geo::NoAABBTest::is_intersected(const Geo::AABBRect &rect, const Geo::Polyg
     }
     for (size_t i = 0; i < 4; ++i)
     {
-        if (Geo::is_inside(rect[i], polygon))
+        if (Geo::NoAABBTest::is_inside(rect[i], polygon))
         {
             return true;
         }

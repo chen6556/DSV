@@ -178,6 +178,9 @@ namespace Geo
 
     namespace NoAABBTest
     {
+        // 判断点是否在多边形内,coincide决定是否包含点在多边形上的情况
+        bool is_inside(const Point &point, const Polygon &polygon, const bool coincide = false);
+
         // 判断两多段线是否相交
         bool is_intersected(const Polyline &polyline0, const Polyline &polyline1);
 
