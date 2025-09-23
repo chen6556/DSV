@@ -3834,8 +3834,8 @@ void Editer::auto_combinate()
         return;
     }
 
-    std::vector<Geo::Geometry *> all_containers;
-    std::vector<Geo::Geometry *> all_polylines;
+    std::vector<Geo::Geometry *> all_containers, all_polylines;
+    std::unordered_map<const Geo::Geometry *, double> areas, lengths;
     for (ContainerGroup &group : _graph->container_groups())
     {
         while (!group.empty())
@@ -3845,10 +3845,23 @@ void Editer::auto_combinate()
             case Geo::Type::POLYLINE:
             case Geo::Type::BEZIER:
             case Geo::Type::BSPLINE:
+            case Geo::Type::TEXT:
+                lengths.insert_or_assign(group.back(), group.back()->length());
                 all_polylines.push_back(group.pop_back());
                 break;
-            default:
+            case Geo::Type::POLYGON:
+                areas.insert_or_assign(group.back(), static_cast<const Geo::Polygon *>(group.back())->area());
                 all_containers.push_back(group.pop_back());
+                break;
+            case Geo::Type::CIRCLE:
+                areas.insert_or_assign(group.back(), static_cast<const Geo::Circle *>(group.back())->area());
+                all_containers.push_back(group.pop_back());
+                break;
+            case Geo::Type::ELLIPSE:
+                areas.insert_or_assign(group.back(), static_cast<const Geo::Ellipse *>(group.back())->area());
+                all_containers.push_back(group.pop_back());
+                break;
+            default:
                 break;
             }
         }
@@ -3865,483 +3878,325 @@ void Editer::auto_combinate()
         return;
     }
 
-    std::sort(all_containers.begin(), all_containers.end(), [](const Geo::Geometry *a, const Geo::Geometry *b)
-        {
-            double area0, area1;
-            switch (a->type())
-            {
-            case Geo::Type::POLYGON:
-                area0 = static_cast<const Geo::Polygon *>(a)->area();
-                break;
-            case Geo::Type::CIRCLE:
-                area0 = static_cast<const Geo::Circle *>(a)->area();
-                break;
-            case Geo::Type::ELLIPSE:
-                area0 = static_cast<const Geo::Ellipse *>(a)->area();
-                break;
-            default:
-                break;
-            }
-            switch (b->type())
-            {
-            case Geo::Type::POLYGON:
-                area1 = static_cast<const Geo::Polygon *>(b)->area();
-                break;
-            case Geo::Type::CIRCLE:
-                area1 = static_cast<const Geo::Circle *>(b)->area();
-                break;
-            case Geo::Type::ELLIPSE:
-                area1 = static_cast<const Geo::Ellipse *>(b)->area();
-                break;
-            default:
-                break;
-            }
-            return area0 > area1;
-        });
-    _graph->append_group();
-    for (size_t i = 0, count = all_containers.size(); _graph->back().empty() && i < count; ++i)
+    std::sort(all_containers.begin(), all_containers.end(), [&](const Geo::Geometry *a, const Geo::Geometry *b)
+        { return areas[a] > areas[b]; });
+    std::sort(all_polylines.begin(), all_polylines.end(), [&](const Geo::Geometry *a, const Geo::Geometry *b)
+        { return lengths[a] > lengths[b]; });
+
+    std::unordered_map<const Geo::Geometry *, Geo::AABBRect> container_rects, polyline_rects;
+    for (const Geo::Geometry *object : all_containers)
     {
-        _graph->back().append(all_containers[i]);
-        all_containers.erase(all_containers.begin() + i);
+        container_rects.insert_or_assign(object, object->bounding_rect());
+    }
+    for (const Geo::Geometry *object : all_polylines)
+    {
+        polyline_rects.insert_or_assign(object, object->bounding_rect());
     }
 
-    bool flag;
-    Geo::Polygon *polygon = nullptr;
-    Geo::Circle *circle = nullptr;
-    Geo::Ellipse *ellipse = nullptr;
+    _graph->append_group();
     for (size_t i = 0, count = all_containers.size(); i < count; ++i)
     {
-        flag = true;
+        std::vector<Geo::Geometry *> objects({all_containers[i]});
         switch (all_containers[i]->type())
         {
         case Geo::Type::POLYGON:
-            polygon = static_cast<Geo::Polygon *>(all_containers[i]);
-            for (Geo::Geometry *geo : _graph->back())
             {
-                switch (geo->type())
+                Geo::Polygon *polygon = static_cast<Geo::Polygon *>(all_containers[i]);
+                const Geo::AABBRect &rect = container_rects[polygon];
+                for (size_t j = i + 1; j < count; ++j)
                 {
-                case Geo::Type::POLYGON:
-                    if (Geo::is_intersected(*polygon, *static_cast<Geo::Polygon *>(geo)))
+                    if (!Geo::is_intersected(rect, container_rects[all_containers[j]]))
                     {
-                        flag = false;
+                        continue;
                     }
-                    break;
-                case Geo::Type::CIRCLE:
-                    if (Geo::is_inside(*static_cast<Geo::Circle *>(geo), *polygon))
+                    switch (all_containers[j]->type())
                     {
-                        flag = false;
+                    case Geo::Type::POLYGON:
+                        if (Geo::NoAABBTest::is_intersected(*polygon, *static_cast<Geo::Polygon *>(all_containers[j])))
+                        {
+                            objects.push_back(all_containers[j]);
+                            all_containers.erase(all_containers.begin() + j--);
+                            --count;
+                        }
+                        break;
+                    case Geo::Type::CIRCLE:
+                        if (Geo::is_intersected(*polygon, *static_cast<Geo::Circle *>(all_containers[j])))
+                        {
+                            objects.push_back(all_containers[j]);
+                            all_containers.erase(all_containers.begin() + j--);
+                            --count;
+                        }
+                        break;
+                    case Geo::Type::ELLIPSE:
+                        if (Geo::is_intersected(*polygon, *static_cast<Geo::Ellipse *>(all_containers[j])))
+                        {
+                            objects.push_back(all_containers[j]);
+                            all_containers.erase(all_containers.begin() + j--);
+                            --count;
+                        }
+                        break;
+                    default:
+                        break;
                     }
-                    break;
-                case Geo::Type::ELLIPSE:
-                    if (Geo::is_intersected(*polygon, *static_cast<Geo::Ellipse *>(geo)))
-                    {
-                        flag = false;
-                    }
-                    break;
-                default:
-                    break;
                 }
-                if (!flag)
-                {
-                    break;
-                }
-            }
-            if (flag)
-            {
-                _graph->back().append(polygon);
-                all_containers.erase(all_containers.begin() + i--);
-                --count;
             }
             break;
         case Geo::Type::CIRCLE:
-            circle = static_cast<Geo::Circle *>(all_containers[i]);
-            for (Geo::Geometry *geo : _graph->back())
             {
-                switch (geo->type())
+                Geo::Circle *circle = static_cast<Geo::Circle *>(all_containers[i]);
+                const Geo::AABBRect &rect = container_rects[circle];
+                for (size_t j = i + 1; j < count; ++j)
                 {
-                case Geo::Type::POLYGON:
-                    if (Geo::is_inside(*circle, *static_cast<Geo::Polygon *>(geo)))
+                    if (!Geo::is_intersected(rect, container_rects[all_containers[j]]))
                     {
-                        flag = false;
+                        continue;
                     }
-                    break;
-                case Geo::Type::CIRCLE:
-                    if (Geo::is_intersected(*circle, *static_cast<Geo::Circle *>(geo)))
+                    switch (all_containers[j]->type())
                     {
-                        flag = false;
+                    case Geo::Type::POLYGON:
+                        if (Geo::is_inside(*circle, *static_cast<Geo::Polygon *>(all_containers[j])))
+                        {
+                            objects.push_back(all_containers[j]);
+                            all_containers.erase(all_containers.begin() + j--);
+                            --count;
+                        }
+                        break;
+                    case Geo::Type::CIRCLE:
+                        if (Geo::is_inside(*circle, *static_cast<Geo::Circle *>(all_containers[j])))
+                        {
+                            objects.push_back(all_containers[j]);
+                            all_containers.erase(all_containers.begin() + j--);
+                            --count;
+                        }
+                        break;
+                    case Geo::Type::ELLIPSE:
+                        if (Geo::Point point0, point1, point2, point3; Geo::is_intersected(*circle,
+                            *static_cast<Geo::Ellipse *>(all_containers[j]), point0, point1, point2, point3))
+                        {
+                            objects.push_back(all_containers[j]);
+                            all_containers.erase(all_containers.begin() + j--);
+                            --count;
+                        }
+                        break;
+                    default:
+                        break;
                     }
-                    break;
-                case Geo::Type::ELLIPSE:
-                    if (Geo::Point point0, point1, point2, point3; Geo::is_intersected(*circle,
-                        *static_cast<Geo::Ellipse *>(geo), point0, point1, point2, point3))
-                    {
-                        flag = false;
-                    }
-                    break;
-                default:
-                    break;
                 }
-                if (!flag)
-                {
-                    break;
-                }
-            }
-            if (flag)
-            {
-                _graph->back().append(circle);
-                all_containers.erase(all_containers.begin() + i--);
-                --count;
             }
             break;
         case Geo::Type::ELLIPSE:
-            ellipse = static_cast<Geo::Ellipse *>(all_containers[i]);
-            for (Geo::Geometry *geo : _graph->back())
             {
-                switch (geo->type())
+                Geo::Ellipse *ellipse = static_cast<Geo::Ellipse *>(all_containers[i]);
+                const Geo::AABBRect &rect = container_rects[ellipse];
+                for (size_t j = i + 1; j < count; ++j)
                 {
-                case Geo::Type::POLYGON:
-                    if (Geo::is_intersected(*static_cast<Geo::Polygon *>(geo), *ellipse))
+                    if (!Geo::is_intersected(rect, container_rects[all_containers[j]]))
                     {
-                        flag = false;
+                        continue;
                     }
-                    break;
-                case Geo::Type::CIRCLE:
-                    if (Geo::Point point0, point1, point2, point3;
-                        Geo::is_intersected(*static_cast<Geo::Circle *>(geo), *ellipse, point0, point1, point2, point3))
+                    switch (all_containers[j]->type())
                     {
-                        flag = false;
+                    case Geo::Type::POLYGON:
+                        if (Geo::is_intersected(*static_cast<Geo::Polygon *>(all_containers[j]), *ellipse))
+                        {
+                            objects.push_back(all_containers[j]);
+                            all_containers.erase(all_containers.begin() + j--);
+                            --count;
+                        }
+                        break;
+                    case Geo::Type::CIRCLE:
+                        if (Geo::Point point0, point1, point2, point3; Geo::is_intersected(
+                            *static_cast<Geo::Circle *>(all_containers[j]), *ellipse, point0, point1, point2, point3))
+                        {
+                            objects.push_back(all_containers[j]);
+                            all_containers.erase(all_containers.begin() + j--);
+                            --count;
+                        }
+                        break;
+                    case Geo::Type::ELLIPSE:
+                        if (Geo::Point point0, point1, point2, point3; Geo::is_intersected(*ellipse,
+                            *static_cast<Geo::Ellipse *>(all_containers[j]), point0, point1, point2, point3))
+                        {
+                            objects.push_back(all_containers[j]);
+                            all_containers.erase(all_containers.begin() + j--);
+                            --count;
+                        }
+                        break;
+                    default:
+                        break;
                     }
-                    break;
-                case Geo::Type::ELLIPSE:
-                    if (Geo::Point point0, point1, point2, point3; Geo::is_intersected(*ellipse,
-                        *static_cast<Geo::Ellipse *>(geo), point0, point1, point2, point3))
-                    {
-                        flag = false;
-                    }
-                    break;
-                default:
-                    break;
                 }
-                if (!flag)
-                {
-                    break;
-                }
-            }
-            if (flag)
-            {
-                _graph->back().append(circle);
-                all_containers.erase(all_containers.begin() + i--);
-                --count;
             }
             break;
         default:
             break;
         }
-    }
-    for (std::vector<Geo::Geometry *>::iterator it = _graph->back().begin(); it != _graph->back().end(); ++it)
-    {
-        polygon = static_cast<Geo::Polygon *>(*it);
-        (*it) = new Combination({polygon});
-    }
 
-    for (Geo::Geometry *item0 : all_containers)
-    {
-        switch (item0->type())
+        std::unordered_map<const Geo::Geometry *, Geo::AABBRect> current_rects;
+        for (Geo::Geometry *object : objects)
         {
-        case Geo::Type::POLYGON:
-            polygon = static_cast<Geo::Polygon *>(item0);
-            for (Geo::Geometry *combination : _graph->back())
-            {
-                flag = false;
-                for (Geo::Geometry *item1 : *static_cast<Combination *>(combination))
-                {
-                    if (dynamic_cast<Geo::Polygon *>(item1) != nullptr)
-                    {
-                        if (Geo::is_intersected(*polygon, *static_cast<Geo::Polygon *>(item1)))
-                        {
-                            static_cast<Combination *>(combination)->append(polygon);
-                            static_cast<Combination *>(combination)->update_border();
-                            flag = true;
-                            break;
-                        }
-                    }
-                    else if (dynamic_cast<Geo::Circle *>(item1) != nullptr)
-                    {
-                        if (Geo::is_intersected(*polygon, *static_cast<Geo::Circle *>(item1)))
-                        {
-                            static_cast<Combination *>(combination)->append(polygon);
-                            static_cast<Combination *>(combination)->update_border();
-                            flag = true;
-                            break;
-                        }
-                    }
-                    else if (dynamic_cast<Geo::Ellipse *>(item1) != nullptr)
-                    {
-                        if (Geo::is_intersected(*polygon, *static_cast<Geo::Ellipse *>(item1)))
-                        {
-                            static_cast<Combination *>(combination)->append(polygon);
-                            static_cast<Combination *>(combination)->update_border();
-                            flag = true;
-                            break;
-                        }
-                    }
-                }
-                if (flag)
-                {
-                    break;
-                }
-            }
-            break;
-        case Geo::Type::CIRCLE:
-            circle = static_cast<Geo::Circle *>(item0);
-            for (Geo::Geometry *combination : _graph->back())
-            {
-                flag = false;
-                for (Geo::Geometry *item1 : *static_cast<Combination *>(combination))
-                {
-                    if (dynamic_cast<Geo::Polygon *>(item1) != nullptr)
-                    {
-                        if (Geo::is_inside(*circle, *static_cast<Geo::Polygon *>(item1)))
-                        {
-                            static_cast<Combination *>(combination)->append(circle);
-                            static_cast<Combination *>(combination)->update_border();
-                            flag = true;
-                            break;
-                        }
-                    }
-                    else if (dynamic_cast<Geo::Circle *>(item1) != nullptr)
-                    {
-                        if (Geo::is_inside(*circle, *static_cast<Geo::Circle *>(item1)))
-                        {
-                            static_cast<Combination *>(combination)->append(circle);
-                            static_cast<Combination *>(combination)->update_border();
-                            flag = true;
-                            break;
-                        }
-                    }
-                    else if (dynamic_cast<Geo::Ellipse *>(item1) != nullptr)
-                    {
-                        if (Geo::Point point0, point1, point2, point3; Geo::is_intersected(*circle,
-                            *static_cast<Geo::Ellipse *>(item1), point0, point1, point2, point3))
-                        {
-                            static_cast<Combination *>(combination)->append(circle);
-                            static_cast<Combination *>(combination)->update_border();
-                            flag = true;
-                            break;
-                        }
-                    }
-                }
-                if (flag)
-                {
-                    break;
-                }
-            }
-            break;
-        case Geo::Type::ELLIPSE:
-            ellipse = static_cast<Geo::Ellipse *>(item0);
-            for (Geo::Geometry *combination : _graph->back())
-            {
-                flag = false;
-                for (Geo::Geometry *item1 : *static_cast<Combination *>(combination))
-                {
-                    if (dynamic_cast<Geo::Polygon *>(item1) != nullptr)
-                    {
-                        if (Geo::is_intersected(*static_cast<Geo::Polygon *>(item1), *ellipse))
-                        {
-                            static_cast<Combination *>(combination)->append(ellipse);
-                            static_cast<Combination *>(combination)->update_border();
-                            flag = true;
-                            break;
-                        }
-                    }
-                    else if (dynamic_cast<Geo::Circle *>(item1) != nullptr)
-                    {
-                        if (Geo::Point point0, point1, point2, point3;
-                            Geo::is_intersected(*static_cast<Geo::Circle *>(item1), *ellipse, point0, point1, point2, point3))
-                        {
-                            static_cast<Combination *>(combination)->append(ellipse);
-                            static_cast<Combination *>(combination)->update_border();
-                            flag = true;
-                            break;
-                        }
-                    }
-                    else if (dynamic_cast<Geo::Ellipse *>(item1) != nullptr)
-                    {
-                        if (Geo::Point point0, point1, point2, point3; Geo::is_intersected(*ellipse,
-                            *static_cast<Geo::Ellipse *>(item1), point0, point1, point2, point3))
-                        {
-                            static_cast<Combination *>(combination)->append(ellipse);
-                            static_cast<Combination *>(combination)->update_border();
-                            flag = true;
-                            break;
-                        }
-                    }
-                }
-                if (flag)
-                {
-                    break;
-                }
-            }
-            break;
+            current_rects.insert_or_assign(object, container_rects[object]);
         }
-    }
 
-    std::vector<bool> flags(all_polylines.size(), false);
-    size_t index = 0;
-    for (Geo::Geometry *line: all_polylines)
-    {
-        if (dynamic_cast<Geo::Polyline *>(line) != nullptr)
+        for (size_t j = 0, object_count = objects.size(); j < object_count; ++j)
         {
-            Geo::Polyline *polyline = static_cast<Geo::Polyline *>(line);
-            for (Geo::Geometry *combination : _graph->back())
+            const Geo::AABBRect &rect = current_rects[objects[j]];
+            for (size_t k = 0, polyline_count = all_polylines.size(); k < polyline_count; ++k)
             {
-                for (Geo::Geometry *item : *static_cast<Combination *>(combination))
+                if (!Geo::is_intersected(rect, polyline_rects[all_polylines[k]]))
                 {
-                    if (dynamic_cast<Geo::Polygon *>(item) != nullptr)
-                    {
-                        if (Geo::is_intersected(*polyline, *static_cast<Geo::Polygon *>(item)))
-                        {
-                            static_cast<Combination *>(combination)->append(polyline);
-                            static_cast<Combination *>(combination)->update_border();
-                            flags[index] = true;
-                            break;
-                        }
-                    }
-                    else if (dynamic_cast<Geo::Circle *>(item) != nullptr)
-                    {
-                        if (Geo::is_intersected(*polyline, *static_cast<Geo::Circle *>(item)))
-                        {
-                            static_cast<Combination *>(combination)->append(polyline);
-                            static_cast<Combination *>(combination)->update_border();
-                            flags[index] = true;
-                            break;
-                        }
-                    }
-                    else if (dynamic_cast<Geo::Ellipse *>(item) != nullptr)
-                    {
-                        if (Geo::is_intersected(*polyline, *static_cast<Geo::Ellipse *>(item)))
-                        {
-                            static_cast<Combination *>(combination)->append(polyline);
-                            static_cast<Combination *>(combination)->update_border();
-                            flags[index] = true;
-                            break;
-                        }
-                    }
+                    continue;
                 }
-                if (flags[index])
+                switch (objects[j]->type())
                 {
+                case Geo::Type::POLYGON:
+                    switch (all_polylines[k]->type())
+                    {
+                    case Geo::Type::POLYLINE:
+                        if (Geo::NoAABBTest::is_intersected(*static_cast<Geo::Polyline *>(all_polylines[k]),
+                                *static_cast<Geo::Polygon *>(objects[j])))
+                        {
+                            objects.push_back(all_polylines[k]);
+                            all_polylines.erase(all_polylines.begin() + k--);
+                            --polyline_count;
+                        }
+                        break;
+                    case Geo::Type::BEZIER:
+                        if (Geo::NoAABBTest::is_intersected(static_cast<Geo::Bezier *>(all_polylines[k])->shape(),
+                                *static_cast<Geo::Polygon *>(objects[j])))
+                        {
+                            objects.push_back(all_polylines[k]);
+                            all_polylines.erase(all_polylines.begin() + k--);
+                            --polyline_count;
+                        }
+                        break;
+                    case Geo::Type::BSPLINE:
+                        if (Geo::NoAABBTest::is_intersected(static_cast<Geo::BSpline *>(all_polylines[k])->shape(),
+                                *static_cast<Geo::Polygon *>(objects[j])))
+                        {
+                            objects.push_back(all_polylines[k]);
+                            all_polylines.erase(all_polylines.begin() + k--);
+                            --polyline_count;
+                        }
+                        break;
+                    case Geo::Type::TEXT:
+                        if (Geo::NoAABBTest::is_intersected(*static_cast<Geo::AABBRect *>(all_polylines[k]),
+                                *static_cast<Geo::Polygon *>(objects[j])))
+                        {
+                            objects.push_back(all_polylines[k]);
+                            all_polylines.erase(all_polylines.begin() + k--);
+                            --polyline_count;
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+                    break;
+                case Geo::Type::CIRCLE:
+                    switch (all_polylines[k]->type())
+                    {
+                    case Geo::Type::POLYLINE:
+                        if (Geo::is_intersected(*static_cast<Geo::Polyline *>(all_polylines[k]),
+                                *static_cast<Geo::Circle *>(objects[j])))
+                        {
+                            objects.push_back(all_polylines[k]);
+                            all_polylines.erase(all_polylines.begin() + k--);
+                            --polyline_count;
+                        }
+                        break;
+                    case Geo::Type::BEZIER:
+                        if (Geo::is_intersected(static_cast<Geo::Bezier *>(all_polylines[k])->shape(),
+                                *static_cast<Geo::Circle *>(objects[j])))
+                        {
+                            objects.push_back(all_polylines[k]);
+                            all_polylines.erase(all_polylines.begin() + k--);
+                            --polyline_count;
+                        }
+                        break;
+                    case Geo::Type::BSPLINE:
+                        if (Geo::is_intersected(static_cast<Geo::BSpline *>(all_polylines[k])->shape(),
+                                *static_cast<Geo::Circle *>(objects[j])))
+                        {
+                            objects.push_back(all_polylines[k]);
+                            all_polylines.erase(all_polylines.begin() + k--);
+                            --polyline_count;
+                        }
+                        break;
+                    case Geo::Type::TEXT:
+                        if (Geo::is_intersected(*static_cast<Geo::AABBRect *>(all_polylines[k]),
+                                *static_cast<Geo::Circle *>(objects[j])))
+                        {
+                            objects.push_back(all_polylines[k]);
+                            all_polylines.erase(all_polylines.begin() + k--);
+                            --polyline_count;
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+                    break;
+                case Geo::Type::ELLIPSE:
+                    switch (all_polylines[k]->type())
+                    {
+                    case Geo::Type::POLYLINE:
+                        if (Geo::is_intersected(*static_cast<Geo::Polyline *>(all_polylines[k]),
+                                *static_cast<Geo::Ellipse *>(objects[j])))
+                        {
+                            objects.push_back(all_polylines[k]);
+                            all_polylines.erase(all_polylines.begin() + k--);
+                            --polyline_count;
+                        }
+                        break;
+                    case Geo::Type::BEZIER:
+                        if (Geo::is_intersected(static_cast<Geo::Bezier *>(all_polylines[k])->shape(),
+                                *static_cast<Geo::Ellipse *>(objects[j])))
+                        {
+                            objects.push_back(all_polylines[k]);
+                            all_polylines.erase(all_polylines.begin() + k--);
+                            --polyline_count;
+                        }
+                        break;
+                    case Geo::Type::BSPLINE:
+                        if (Geo::is_intersected(static_cast<Geo::Bezier *>(all_polylines[k])->shape(),
+                                *static_cast<Geo::Ellipse *>(objects[j])))
+                        {
+                            objects.push_back(all_polylines[k]);
+                            all_polylines.erase(all_polylines.begin() + k--);
+                            --polyline_count;
+                        }
+                        break;
+                    case Geo::Type::TEXT:
+                        if (Geo::is_intersected(*static_cast<Geo::AABBRect *>(all_polylines[k]),
+                                *static_cast<Geo::Circle *>(objects[j])))
+                        {
+                            objects.push_back(all_polylines[k]);
+                            all_polylines.erase(all_polylines.begin() + k--);
+                            --polyline_count;
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+                    break;
+                default:
                     break;
                 }
             }
         }
-        else if (dynamic_cast<Geo::Bezier *>(line) != nullptr)
-        {
-            Geo::Bezier *bezier = static_cast<Geo::Bezier *>(line);
-            for (Geo::Geometry *combination : _graph->back())
-            {
-                for (Geo::Geometry *item : *static_cast<Combination *>(combination))
-                {
-                    if (dynamic_cast<Geo::Polygon *>(item) != nullptr)
-                    {
-                        if (Geo::is_intersected(bezier->shape(), *static_cast<Geo::Polygon *>(item)))
-                        {
-                            static_cast<Combination *>(combination)->append(bezier);
-                            static_cast<Combination *>(combination)->update_border();
-                            flags[index] = true;
-                            break;
-                        }
-                    }
-                    else if (dynamic_cast<Geo::Circle *>(item) != nullptr)
-                    {
-                        if (Geo::is_intersected(bezier->shape(), *static_cast<Geo::Circle *>(item)))
-                        {
-                            static_cast<Combination *>(combination)->append(bezier);
-                            static_cast<Combination *>(combination)->update_border();
-                            flags[index] = true;
-                            break;
-                        }
-                    }
-                    else if (dynamic_cast<Geo::Ellipse *>(item) != nullptr)
-                    {
-                        if (Geo::is_intersected(bezier->shape(), *static_cast<Geo::Ellipse *>(item)))
-                        {
-                            static_cast<Combination *>(combination)->append(bezier);
-                            static_cast<Combination *>(combination)->update_border();
-                            flags[index] = true;
-                            break;
-                        }
-                    }
-                }
-                if (flags[index])
-                {
-                    break;
-                }
-            }
-        }
-        else if (dynamic_cast<Geo::BSpline *>(line) != nullptr)
-        {
-            Geo::BSpline *bspline = static_cast<Geo::BSpline *>(line);
-            for (Geo::Geometry *combination : _graph->back())
-            {
-                for (Geo::Geometry *item : *static_cast<Combination *>(combination))
-                {
-                    if (dynamic_cast<Geo::Polygon *>(item) != nullptr)
-                    {
-                        if (Geo::is_intersected(bspline->shape(), *static_cast<Geo::Polygon *>(item)))
-                        {
-                            static_cast<Combination *>(combination)->append(bspline);
-                            static_cast<Combination *>(combination)->update_border();
-                            flags[index] = true;
-                            break;
-                        }
-                    }
-                    else if (dynamic_cast<Geo::Circle *>(item) != nullptr)
-                    {
-                        if (Geo::is_intersected(bspline->shape(), *static_cast<Geo::Circle *>(item)))
-                        {
-                            static_cast<Combination *>(combination)->append(bspline);
-                            static_cast<Combination *>(combination)->update_border();
-                            flags[index] = true;
-                            break;
-                        }
-                    }
-                    else if (dynamic_cast<Geo::Ellipse *>(item) != nullptr)
-                    {
-                        if (Geo::is_intersected(bspline->shape(), *static_cast<Geo::Ellipse *>(item)))
-                        {
-                            static_cast<Combination *>(combination)->append(bspline);
-                            static_cast<Combination *>(combination)->update_border();
-                            flags[index] = true;
-                            break;
-                        }
-                    }
-                }
-                if (flags[index])
-                {
-                    break;
-                }
-            }
-        }
-        ++index;
-    }
 
-    for (std::vector<Geo::Geometry *>::iterator it = _graph->back().begin(); it != _graph->back().end(); ++it)
-    {
-        if (dynamic_cast<Combination *>(*it) != nullptr &&
-            static_cast<Combination *>(*it)->size() == 1)
+        if (objects.size() > 1)
         {
-            Combination *combination = static_cast<Combination *>(*it);
-            *it = combination->pop_back();
-            delete combination;
+            _graph->back().append(new Combination(objects.begin(), objects.end()));
+        }
+        else
+        {
+            _graph->back().append(all_containers[i]);
         }
     }
 
-    for (size_t i = 0, count = flags.size(); i < count; ++i)
+    for (Geo::Geometry *polyline : all_polylines)
     {
-        if (!flags[i])
-        {
-            _graph->back().append(all_polylines[i]);
-        }
+        _graph->back().append(polyline);
     }
 }
 
