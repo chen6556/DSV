@@ -267,6 +267,8 @@ public:
 
     void refresh_selected_ibo(const Geo::Geometry *object);
 
+    void refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects);
+
     void refresh_selected_vbo();
 
     // 数量发生变化时更新IBO数组

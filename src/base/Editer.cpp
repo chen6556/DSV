@@ -747,20 +747,40 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
     return result;
 }
 
-std::vector<Geo::Geometry *> Editer::selected() const
+std::vector<Geo::Geometry *> Editer::selected(const bool visible_only) const
 {
     std::vector<Geo::Geometry *> result;
     if (_graph == nullptr)
     {
         return result;
     }
-    for (ContainerGroup &group : _graph->container_groups())
+    if (visible_only)
     {
-        for (Geo::Geometry *object : group)
+        for (ContainerGroup &group : _graph->container_groups())
         {
-            if (object->is_selected)
+            if (!group.visible())
             {
-                result.push_back(object);
+                continue;
+            }
+            for (Geo::Geometry *object : group)
+            {
+                if (object->is_selected)
+                {
+                    result.push_back(object);
+                }
+            }
+        }
+    }
+    else
+    {
+        for (ContainerGroup &group : _graph->container_groups())
+        {
+            for (Geo::Geometry *object : group)
+            {
+                if (object->is_selected)
+                {
+                    result.push_back(object);
+                }
             }
         }
     }

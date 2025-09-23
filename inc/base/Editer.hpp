@@ -63,7 +63,7 @@ public:
 
     std::tuple<Geo::Geometry *, bool> select_with_state(const Geo::Point &point, const bool reset_others = true);
 
-    std::vector<Geo::Geometry *> selected() const;
+    std::vector<Geo::Geometry *> selected(const bool visible_only = true) const;
 
     const size_t selected_count() const;
 
