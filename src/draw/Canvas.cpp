@@ -928,8 +928,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     switch (_clicked_obj->type())
                     {
                     case Geo::Type::TEXT:
-                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const Text*>(_clicked_obj)->center().x) +
-                            "Y:" + QString::number(dynamic_cast<const Text*>(_clicked_obj)->center().y));
+                        _info_labels[1]->setText("X:" + QString::number(static_cast<const Text*>(_clicked_obj)->center().x) +
+                            "Y:" + QString::number(static_cast<const Text*>(_clicked_obj)->center().y));
                         break;
                     case Geo::Type::POLYGON:
                         {
@@ -937,32 +937,32 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                             _info_labels[1]->setText("X:" + QString::number(center.x) +
                                 " Y:" + QString::number(center.y) +
                                 " Length:" + QString::number(_clicked_obj->length()) +
-                                " Area:" + QString::number(dynamic_cast<const Geo::Polygon *>(_clicked_obj)->area()));
+                                " Area:" + QString::number(static_cast<const Geo::Polygon *>(_clicked_obj)->area()));
                         }
                         break;
                     case Geo::Type::CIRCLE:
-                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const Geo::Circle *>(_clicked_obj)->x) +
-                            " Y:" + QString::number(dynamic_cast<const Geo::Circle *>(_clicked_obj)->y) +
-                            " Radius:" + QString::number(dynamic_cast<const Geo::Circle *>(_clicked_obj)->radius));
+                        _info_labels[1]->setText("X:" + QString::number(static_cast<const Geo::Circle *>(_clicked_obj)->x) +
+                            " Y:" + QString::number(static_cast<const Geo::Circle *>(_clicked_obj)->y) +
+                            " Radius:" + QString::number(static_cast<const Geo::Circle *>(_clicked_obj)->radius));
                         break;
                     case Geo::Type::POLYLINE:
-                        _info_labels[1]->setText("Length:" + QString::number(dynamic_cast<const Geo::Polyline*>(_clicked_obj)->length()));
+                        _info_labels[1]->setText("Length:" + QString::number(static_cast<const Geo::Polyline*>(_clicked_obj)->length()));
                         break;
                     case Geo::Type::ELLIPSE:
-                        _info_labels[1]->setText("X:" + QString::number(dynamic_cast<const Geo::Ellipse*>(_clicked_obj)->center().x)
-                            + " Y:" + QString::number(dynamic_cast<const Geo::Ellipse*>(_clicked_obj)->center().y)
-                            + " Angle:" + QString::number(dynamic_cast<const Geo::Ellipse*>(_clicked_obj)->angle())
-                            + " A:" + QString::number(dynamic_cast<const Geo::Ellipse*>(_clicked_obj)->lengtha())
-                            + " B:" + QString::number(dynamic_cast<const Geo::Ellipse*>(_clicked_obj)->lengthb())
-                            + " Length:" + QString::number(dynamic_cast<const Geo::Ellipse*>(_clicked_obj)->length())
-                            + " Area:" + QString::number(dynamic_cast<const Geo::Ellipse*>(_clicked_obj)->area()));
+                        _info_labels[1]->setText("X:" + QString::number(static_cast<const Geo::Ellipse*>(_clicked_obj)->center().x)
+                            + " Y:" + QString::number(static_cast<const Geo::Ellipse*>(_clicked_obj)->center().y)
+                            + " Angle:" + QString::number(static_cast<const Geo::Ellipse*>(_clicked_obj)->angle())
+                            + " A:" + QString::number(static_cast<const Geo::Ellipse*>(_clicked_obj)->lengtha())
+                            + " B:" + QString::number(static_cast<const Geo::Ellipse*>(_clicked_obj)->lengthb())
+                            + " Length:" + QString::number(static_cast<const Geo::Ellipse*>(_clicked_obj)->length())
+                            + " Area:" + QString::number(static_cast<const Geo::Ellipse*>(_clicked_obj)->area()));
                         break;
                     case Geo::Type::BEZIER:
-                        _info_labels[1]->setText("Order:" + QString::number(dynamic_cast<const Geo::Bezier*>(_clicked_obj)->order()) +
-                            " Length:" + QString::number(dynamic_cast<const Geo::Bezier*>(_clicked_obj)->length()));
+                        _info_labels[1]->setText("Order:" + QString::number(static_cast<const Geo::Bezier*>(_clicked_obj)->order()) +
+                            " Length:" + QString::number(static_cast<const Geo::Bezier*>(_clicked_obj)->length()));
                         break;
                     case Geo::Type::BSPLINE:
-                        _info_labels[1]->setText("Length:" + QString::number(dynamic_cast<const Geo::BSpline*>(_clicked_obj)->length()));
+                        _info_labels[1]->setText("Length:" + QString::number(static_cast<const Geo::BSpline*>(_clicked_obj)->length()));
                         break;
                     default:
                         break;
@@ -1354,7 +1354,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     break;
                 case Geo::Type::BEZIER:
                     _cache_count = 0;
-                    for (const Geo::Point &point : *dynamic_cast<Geo::Bezier *>(selected_objects.back()))
+                    for (const Geo::Point &point : *static_cast<Geo::Bezier *>(selected_objects.back()))
                     {
                         _cache[_cache_count++] = point.x;
                         _cache[_cache_count++] = point.y;
@@ -1364,7 +1364,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     break;
                 case Geo::Type::BSPLINE:
                     _cache_count = 0;
-                    for (const Geo::Point &point : dynamic_cast<Geo::BSpline *>(selected_objects.back())->path_points)
+                    for (const Geo::Point &point : static_cast<Geo::BSpline *>(selected_objects.back())->path_points)
                     {
                         _cache[_cache_count++] = point.x;
                         _cache[_cache_count++] = point.y;
@@ -3683,7 +3683,7 @@ std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
                 data[data_count++] = 0.5;
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *dynamic_cast<Combination *>(geo))
+                for (Geo::Geometry *item : *static_cast<Combination *>(geo))
                 {
                     if (data_count + 15 > data_len)
                     {
@@ -3696,7 +3696,7 @@ std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
                     switch (item->type())
                     {
                     case Geo::Type::CIRCLE:
-                        circle = dynamic_cast<Geo::Circle *>(item);
+                        circle = static_cast<Geo::Circle *>(item);
                         data[data_count++] = circle->x;
                         data[data_count++] = circle->y;
                         data[data_count++] = 0.5;
@@ -3714,7 +3714,7 @@ std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
                         data[data_count++] = 0.5;
                         break;
                     case Geo::Type::ELLIPSE:
-                        ellipse = dynamic_cast<Geo::Ellipse *>(item);
+                        ellipse = static_cast<Geo::Ellipse *>(item);
                         data[data_count++] = (ellipse->a0().x + ellipse->a1().x + ellipse->b0().x + ellipse->b1().x) / 4;
                         data[data_count++] = (ellipse->a0().y + ellipse->a1().y + ellipse->b0().y + ellipse->b1().y) / 4;
                         data[data_count++] = 0.5;
@@ -4098,7 +4098,7 @@ void Canvas::refresh_selected_ibo()
                 switch (geo->type())
                 {
                 case Geo::Type::BEZIER:
-                    for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(geo))
+                    for (const Geo::Point &point : *static_cast<const Geo::Bezier *>(geo))
                     {
                         _cache[_cache_count++] = point.x;
                         _cache[_cache_count++] = point.y;
@@ -4107,7 +4107,7 @@ void Canvas::refresh_selected_ibo()
                     }
                     break;
                 case Geo::Type::BSPLINE:
-                    for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(geo)->path_points)
+                    for (const Geo::Point &point : static_cast<const Geo::BSpline *>(geo)->path_points)
                     {
                         _cache[_cache_count++] = point.x;
                         _cache[_cache_count++] = point.y;
@@ -4120,7 +4120,7 @@ void Canvas::refresh_selected_ibo()
             }
             break;
         case Geo::Type::COMBINATION:
-            for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+            for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
             {
                 switch (item->type())
                 {
@@ -4594,7 +4594,7 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
                 switch (geo->type())
                 {
                 case Geo::Type::BEZIER:
-                    for (const Geo::Point &point : *dynamic_cast<const Geo::Bezier *>(geo))
+                    for (const Geo::Point &point : *static_cast<const Geo::Bezier *>(geo))
                     {
                         _cache[_cache_count++] = point.x;
                         _cache[_cache_count++] = point.y;
@@ -4603,7 +4603,7 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
                     }
                     break;
                 case Geo::Type::BSPLINE:
-                    for (const Geo::Point &point : dynamic_cast<const Geo::BSpline *>(geo)->path_points)
+                    for (const Geo::Point &point : static_cast<const Geo::BSpline *>(geo)->path_points)
                     {
                         _cache[_cache_count++] = point.x;
                         _cache[_cache_count++] = point.y;
@@ -4616,7 +4616,7 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
             }
             break;
         case Geo::Type::COMBINATION:
-            for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+            for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
             {
                 switch (item->type())
                 {
@@ -4990,7 +4990,7 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_t
             switch (geo->type())
             {
             case Geo::Type::TEXT:
-                text = dynamic_cast<Text *>(geo);
+                text = static_cast<Text *>(geo);
                 if (text->text().isEmpty())
                 {
                     continue;
@@ -5007,7 +5007,7 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_t
                 text->text_index = data_count;
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                for (Geo::Geometry *item : *static_cast<const Combination *>(geo))
                 {
                     if (text = dynamic_cast<Text *>(item); text != nullptr)
                     {
@@ -5145,16 +5145,16 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
             case Geo::Type::POLYGON:
                 if (Geo::is_intersected(rect, geo->bounding_rect()))
                 {
-                    if (Geo::distance(pos, *dynamic_cast<const Geo::Polygon *>(geo)) * _ratio < distance)
+                    if (Geo::distance(pos, *static_cast<const Geo::Polygon *>(geo)) * _ratio < distance)
                     {
                         catched_objects.push_back(geo);
                     }
                 }
                 break;
             case Geo::Type::CIRCLE:
-                if (Geo::distance(pos, *dynamic_cast<const Geo::Circle *>(geo)) * _ratio < distance ||
-                    std::abs(Geo::distance(pos, *dynamic_cast<const Geo::Circle *>(geo))
-                        - dynamic_cast<const Geo::Circle *>(geo)->radius) * _ratio < distance)
+                if (Geo::distance(pos, *static_cast<const Geo::Circle *>(geo)) * _ratio < distance ||
+                    std::abs(Geo::distance(pos, *static_cast<const Geo::Circle *>(geo))
+                        - static_cast<const Geo::Circle *>(geo)->radius) * _ratio < distance)
                 {
                     catched_objects.push_back(geo);
                 }
@@ -5162,7 +5162,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
             case Geo::Type::ELLIPSE:
                 if (Geo::is_intersected(rect, geo->bounding_rect()))
                 {
-                    const Geo::Ellipse *e = dynamic_cast<const Geo::Ellipse *>(geo);
+                    const Geo::Ellipse *e = static_cast<const Geo::Ellipse *>(geo);
                     if (Geo::distance(pos, e->center()) * _ratio < distance || Geo::distance(pos, *e) * _ratio < distance)
                     {
                         catched_objects.push_back(geo);
@@ -5172,7 +5172,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
             case Geo::Type::POLYLINE:
                 if (Geo::is_intersected(rect, geo->bounding_rect()))
                 {
-                    if (Geo::distance(pos, *dynamic_cast<const Geo::Polyline *>(geo)) * _ratio < distance)
+                    if (Geo::distance(pos, *static_cast<const Geo::Polyline *>(geo)) * _ratio < distance)
                     {
                         catched_objects.push_back(geo);
                     }
@@ -5181,7 +5181,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
             case Geo::Type::BSPLINE:
                 if (Geo::is_intersected(rect, geo->bounding_rect()))
                 {
-                    if (Geo::distance(pos, dynamic_cast<const Geo::BSpline *>(geo)->shape()) * _ratio < distance)
+                    if (Geo::distance(pos, static_cast<const Geo::BSpline *>(geo)->shape()) * _ratio < distance)
                     {
                         catched_objects.push_back(geo);
                     }
@@ -5190,8 +5190,8 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
             case Geo::Type::BEZIER:
                 if (Geo::is_intersected(rect, geo->bounding_rect()))
                 {
-                    if (Geo::distance(pos, dynamic_cast<const Geo::Bezier *>(geo)->front()) * _ratio < distance
-                        || Geo::distance(pos, dynamic_cast<const Geo::Bezier *>(geo)->back()) * _ratio < distance)
+                    if (Geo::distance(pos, static_cast<const Geo::Bezier *>(geo)->front()) * _ratio < distance
+                        || Geo::distance(pos, static_cast<const Geo::Bezier *>(geo)->back()) * _ratio < distance)
                     {
                         catched_objects.push_back(geo);
                     }
@@ -5222,16 +5222,16 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                 case Geo::Type::POLYGON:
                     if (Geo::is_intersected(rect, geo->bounding_rect()))
                     {
-                        if (Geo::distance(pos, *dynamic_cast<const Geo::Polygon *>(geo)) * _ratio < distance)
+                        if (Geo::distance(pos, *static_cast<const Geo::Polygon *>(geo)) * _ratio < distance)
                         {
                             catched_objects.push_back(geo);
                         }
                     }
                     break;
                 case Geo::Type::CIRCLE:
-                    if (Geo::distance(pos, *dynamic_cast<const Geo::Circle *>(geo)) * _ratio < distance ||
-                        std::abs(Geo::distance(pos, *dynamic_cast<const Geo::Circle *>(geo))
-                            - dynamic_cast<const Geo::Circle *>(geo)->radius) * _ratio < distance)
+                    if (Geo::distance(pos, *static_cast<const Geo::Circle *>(geo)) * _ratio < distance ||
+                        std::abs(Geo::distance(pos, *static_cast<const Geo::Circle *>(geo))
+                            - static_cast<const Geo::Circle *>(geo)->radius) * _ratio < distance)
                     {
                         catched_objects.push_back(geo);
                     }
@@ -5239,7 +5239,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                 case Geo::Type::ELLIPSE:
                     if (Geo::is_intersected(rect, geo->bounding_rect()))
                     {
-                        const Geo::Ellipse *e = dynamic_cast<const Geo::Ellipse *>(geo);
+                        const Geo::Ellipse *e = static_cast<const Geo::Ellipse *>(geo);
                         if (Geo::distance(pos, e->center()) * _ratio < distance || Geo::distance(pos, *e) * _ratio < distance)
                         {
                             catched_objects.push_back(geo);
@@ -5249,7 +5249,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                 case Geo::Type::POLYLINE:
                     if (Geo::is_intersected(rect, geo->bounding_rect()))
                     {
-                        if (Geo::distance(pos, *dynamic_cast<const Geo::Polyline *>(geo)) * _ratio < distance)
+                        if (Geo::distance(pos, *static_cast<const Geo::Polyline *>(geo)) * _ratio < distance)
                         {
                             catched_objects.push_back(geo);
                         }
@@ -5281,7 +5281,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
         {
         case Geo::Type::POLYLINE:
             {
-                const Geo::Polyline &polyline = *dynamic_cast<const Geo::Polyline *>(object);
+                const Geo::Polyline &polyline = *static_cast<const Geo::Polyline *>(object);
                 if (_catch_types[0])
                 {
                     dis[0] = Geo::distance(pos, polyline.front());
@@ -5336,7 +5336,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
             break;
         case Geo::Type::POLYGON:
             {
-                const Geo::Polygon &polygon = *dynamic_cast<const Geo::Polygon *>(object);
+                const Geo::Polygon &polygon = *static_cast<const Geo::Polygon *>(object);
                 if (_catch_types[0])
                 {
                     dis[0] = Geo::distance(pos, polygon.front());
@@ -5369,7 +5369,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
             break;
         case Geo::Type::CIRCLE:
             {
-                const Geo::Circle *c = dynamic_cast<const Geo::Circle *>(object);
+                const Geo::Circle *c = static_cast<const Geo::Circle *>(object);
                 if (_catch_types[0])
                 {
                     if (const double d = Geo::distance(pos.x, pos.y, c->x, c->y); d < dis[0])
@@ -5425,7 +5425,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
             break;
         case Geo::Type::ELLIPSE:
             {
-                const Geo::Ellipse *e = dynamic_cast<const Geo::Ellipse *>(object);
+                const Geo::Ellipse *e = static_cast<const Geo::Ellipse *>(object);
                 if (_catch_types[0])
                 {
                     if (const double d = Geo::distance(pos, e->center()); d < dis[0])
@@ -5477,7 +5477,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
             break;
         case Geo::Type::BSPLINE:
             {
-                const Geo::BSpline &bspline = *dynamic_cast<const Geo::BSpline *>(object);
+                const Geo::BSpline &bspline = *static_cast<const Geo::BSpline *>(object);
                 if (_catch_types[0])
                 {
                     dis[0] = Geo::distance(pos, bspline.path_points.front());
@@ -5495,7 +5495,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
             break;
         case Geo::Type::BEZIER:
             {
-                const Geo::Bezier &bezier = *dynamic_cast<const Geo::Bezier *>(object);
+                const Geo::Bezier &bezier = *static_cast<const Geo::Bezier *>(object);
                 if (_catch_types[0])
                 {
                     if (double dis0 = Geo::distance(pos, bezier.front()),

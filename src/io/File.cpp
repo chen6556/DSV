@@ -32,13 +32,13 @@ void File::write_dsv(const std::string &path, const Graph *graph)
             switch (geo->type())
             {
             case Geo::Type::TEXT:
-                text = dynamic_cast<const Text *>(geo);
+                text = static_cast<const Text *>(geo);
                 output << "TEXT<" << text->text().toStdString() << '>' << std::endl;
                 output << text->center().x << ',' << text->center().y << std::endl;
                 text = nullptr;
                 break;
             case Geo::Type::POLYGON:
-                polygon = dynamic_cast<const Geo::Polygon *>(geo);
+                polygon = static_cast<const Geo::Polygon *>(geo);
                 output << "POLYGON" << std::endl;
                 for (const Geo::Point &point : *polygon)
                 {
@@ -49,7 +49,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 polygon = nullptr;
                 break;
             case Geo::Type::CIRCLE:
-                circle = dynamic_cast<const Geo::Circle *>(geo);
+                circle = static_cast<const Geo::Circle *>(geo);
                 output << "CIRCLE" << std::endl;
                 output << circle->x << ',';
                 output << circle->y << ',';
@@ -58,7 +58,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 circle = nullptr;
                 break;
             case Geo::Type::ELLIPSE:
-                ellipse = dynamic_cast<const Geo::Ellipse *>(geo);
+                ellipse = static_cast<const Geo::Ellipse *>(geo);
                 output << "ELLIPSE" << std::endl;
                 output << ellipse->a0().x << ',' << ellipse->a0().y << ',';
                 output << ellipse->a1().x << ',' << ellipse->a1().y << ',';
@@ -68,18 +68,18 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 break;
             case Geo::Type::COMBINATION:
                 output << "COMBINATION" << std::endl;
-                for (const Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
                 {
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        text = dynamic_cast<const Text *>(item);
+                        text = static_cast<const Text *>(item);
                         output << "TEXT<" << text->text().toStdString() << '>' << std::endl;
                         output << text->center().x << ',' << text->center().y;
                         text = nullptr;
                         break;
                     case Geo::Type::POLYGON:
-                        polygon = dynamic_cast<const Geo::Polygon *>(item);
+                        polygon = static_cast<const Geo::Polygon *>(item);
                         output << "POLYGON" << std::endl;
                         for (const Geo::Point &point : *polygon)
                         {
@@ -90,7 +90,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         polygon = nullptr;
                         break;
                     case Geo::Type::CIRCLE:
-                        circle = dynamic_cast<const Geo::Circle *>(item);
+                        circle = static_cast<const Geo::Circle *>(item);
                         output << "CIRCLE" << std::endl;
                         output << circle->x << ',';
                         output << circle->y << ',';
@@ -99,7 +99,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         circle = nullptr;
                         break;
                     case Geo::Type::ELLIPSE:
-                        ellipse = dynamic_cast<const Geo::Ellipse *>(item);
+                        ellipse = static_cast<const Geo::Ellipse *>(item);
                         output << "ELLIPSE" << std::endl;
                         output << ellipse->a0().x << ',' << ellipse->a0().y << ',';
                         output << ellipse->a1().x << ',' << ellipse->a1().y << ',';
@@ -108,7 +108,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         ellipse = nullptr;
                         break;
                     case Geo::Type::POLYLINE:
-                        polyline = dynamic_cast<const Geo::Polyline *>(item);
+                        polyline = static_cast<const Geo::Polyline *>(item);
                         if (polyline->empty())
                         {
                             continue;
@@ -123,7 +123,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         polyline = nullptr;
                         break;
                     case Geo::Type::BEZIER:
-                        bezier = dynamic_cast<const Geo::Bezier *>(item);
+                        bezier = static_cast<const Geo::Bezier *>(item);
                         if (bezier->empty())
                         {
                             continue;
@@ -138,7 +138,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         bezier = nullptr;
                         break;
                     case Geo::Type::BSPLINE:
-                        bspline = dynamic_cast<const Geo::BSpline *>(item);
+                        bspline = static_cast<const Geo::BSpline *>(item);
                         if (bspline->empty())
                         {
                             continue;
@@ -159,7 +159,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 }
                 break;
             case Geo::Type::POLYLINE:
-                polyline = dynamic_cast<const Geo::Polyline *>(geo);
+                polyline = static_cast<const Geo::Polyline *>(geo);
                 if (polyline->empty())
                 {
                     continue;
@@ -174,7 +174,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 polyline = nullptr;
                 break;
             case Geo::Type::BEZIER:
-                bezier = dynamic_cast<const Geo::Bezier *>(geo);
+                bezier = static_cast<const Geo::Bezier *>(geo);
                 if (bezier->empty())
                 {
                     continue;
@@ -189,7 +189,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 bezier = nullptr;
                 break;
             case Geo::Type::BSPLINE:
-                bspline = dynamic_cast<const Geo::BSpline *>(geo);
+                bspline = static_cast<const Geo::BSpline *>(geo);
                 if (bspline->empty())
                 {
                     continue;
@@ -234,13 +234,13 @@ void File::write_plt(const std::string &path, const Graph *graph)
             switch (geo->type())
             {
             case Geo::Type::TEXT:
-                text = dynamic_cast<const Text *>(geo);
+                text = static_cast<const Text *>(geo);
                 output << "PU" << text->center().x * x_ratio << ',' << text->center().y * y_ratio << ";PD";
                 output << ";LB" << QString(text->text()).remove(';').toStdString() << ';' << std::endl;
                 text = nullptr;
                 break;
             case Geo::Type::POLYGON:
-                polygon = dynamic_cast<const Geo::Polygon *>(geo);
+                polygon = static_cast<const Geo::Polygon *>(geo);
                 output << "PU" << polygon->front().x * x_ratio << ',' << polygon->front().y * y_ratio << ";PD";
                 for (const Geo::Point &point : *polygon)
                 {
@@ -251,14 +251,14 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 polygon = nullptr;
                 break;
             case Geo::Type::CIRCLE:
-                circle = dynamic_cast<const Geo::Circle *>(geo);
+                circle = static_cast<const Geo::Circle *>(geo);
                 output << "PU" << circle->x * x_ratio << ',' << circle->y * y_ratio << ';';
                 output << "CI" << circle->radius * x_ratio << ';';
                 output << std::endl;
                 circle = nullptr;
                 break;
             case Geo::Type::ELLIPSE:
-                ellipse = dynamic_cast<const Geo::Ellipse *>(geo);
+                ellipse = static_cast<const Geo::Ellipse *>(geo);
                 {
                     const Geo::Polygon &points = ellipse->shape();
                     output << "PU" << points.front().x * x_ratio << ',' << points.front().y * y_ratio << ";PD";
@@ -273,18 +273,18 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 break;
             case Geo::Type::COMBINATION:
                 output << "Block;" << std::endl;
-                for (Geo::Geometry *item : *dynamic_cast<const Combination *>(geo))
+                for (Geo::Geometry *item : *static_cast<const Combination *>(geo))
                 {
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        text = dynamic_cast<const Text *>(geo);
+                        text = static_cast<const Text *>(geo);
                         output << "PU" << text->center().x * x_ratio << ',' << text->center().y * y_ratio << ";PD";
                         output << ";LB" << QString(text->text()).remove(';').toStdString() << ';' << std::endl;
                         text = nullptr;
                         break;
                     case Geo::Type::POLYGON:
-                        polygon = dynamic_cast<const Geo::Polygon *>(item);
+                        polygon = static_cast<const Geo::Polygon *>(item);
                         output << "PU" << polygon->front().x * x_ratio << ',' << polygon->front().y * y_ratio << ";PD";
                         for (const Geo::Point &point : *polygon)
                         {
@@ -295,14 +295,14 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         polygon = nullptr;
                         break;
                     case Geo::Type::CIRCLE:
-                        circle = dynamic_cast<const Geo::Circle *>(item);
+                        circle = static_cast<const Geo::Circle *>(item);
                         output << "PU" << circle->x * x_ratio << ',' << circle->y * y_ratio << ';';
                         output << "CI" << circle->radius * x_ratio << ';';
                         output << std::endl;
                         circle = nullptr;
                         break;
                     case Geo::Type::ELLIPSE:
-                        ellipse = dynamic_cast<const Geo::Ellipse *>(item);
+                        ellipse = static_cast<const Geo::Ellipse *>(item);
                         {
                             const Geo::Polygon &points = ellipse->shape();
                             output << "PU" << points.front().x * x_ratio << ',' << points.front().y * y_ratio << ";PD";
@@ -316,7 +316,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         ellipse = nullptr;
                         break;
                     case Geo::Type::POLYLINE:
-                        polyline = dynamic_cast<const Geo::Polyline *>(item);
+                        polyline = static_cast<const Geo::Polyline *>(item);
                         if (polyline->empty())
                         {
                             break;
@@ -331,7 +331,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         polyline = nullptr;
                         break;
                     case Geo::Type::BEZIER:
-                        bezier = dynamic_cast<const Geo::Bezier *>(item);
+                        bezier = static_cast<const Geo::Bezier *>(item);
                         if (bezier->empty())
                         {
                             break;
@@ -357,7 +357,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         bezier = nullptr;
                         break;
                     case Geo::Type::BSPLINE:
-                        bspline = dynamic_cast<const Geo::BSpline *>(item);
+                        bspline = static_cast<const Geo::BSpline *>(item);
                         if (bspline->empty())
                         {
                             break;
@@ -378,7 +378,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 output << "BlockEnd;" << std::endl;
                 break;
             case Geo::Type::POLYLINE:
-                polyline = dynamic_cast<const Geo::Polyline *>(geo);
+                polyline = static_cast<const Geo::Polyline *>(geo);
                 if (polyline->empty())
                 {
                     break;
@@ -393,7 +393,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 polyline = nullptr;
                 break;
             case Geo::Type::BEZIER:
-                bezier = dynamic_cast<const Geo::Bezier *>(geo);
+                bezier = static_cast<const Geo::Bezier *>(geo);
                 if (bezier->empty())
                 {
                     break;
@@ -419,7 +419,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 bezier = nullptr;
                 break;
             case Geo::Type::BSPLINE:
-                bspline = dynamic_cast<const Geo::BSpline *>(geo);
+                bspline = static_cast<const Geo::BSpline *>(geo);
                 if (bspline->empty())
                 {
                     break;

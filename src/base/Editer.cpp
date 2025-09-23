@@ -162,15 +162,15 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
         switch ((*it)->type())
         {
         case Geo::Type::TEXT:
-            t = dynamic_cast<Text *>(*it);
-            if (Geo::is_inside(point, *dynamic_cast<const Geo::AABBRect *>(t), true))
+            t = static_cast<Text *>(*it);
+            if (Geo::is_inside(point, *static_cast<const Geo::AABBRect *>(t), true))
             {
                 t->is_selected = true;
                 return t;
             }
             break;
         case Geo::Type::POLYGON:
-            polygon = dynamic_cast<Geo::Polygon *>(*it);
+            polygon = static_cast<Geo::Polygon *>(*it);
             if (Geo::is_inside(point, *polygon, true))
             {
                 polygon->is_selected = true;
@@ -187,7 +187,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             polygon = nullptr;
             break;
         case Geo::Type::CIRCLE:
-            circle = dynamic_cast<Geo::Circle *>(*it);
+            circle = static_cast<Geo::Circle *>(*it);
             if (Geo::distance_square(point, *circle) <= std::pow(catch_distance + circle->radius, 2))
             {
                 circle->is_selected = true;
@@ -196,7 +196,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             circle = nullptr;
             break;
         case Geo::Type::ELLIPSE:
-            ellipse = dynamic_cast<Geo::Ellipse *>(*it);
+            ellipse = static_cast<Geo::Ellipse *>(*it);
             if (Geo::distance(ellipse->c0(), point) + Geo::distance(ellipse->c1(), point)
                     <= catch_distance + std::max(ellipse->lengtha(), ellipse->lengthb()) * 2)
             {
@@ -206,7 +206,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             ellipse = nullptr;
             break;
         case Geo::Type::COMBINATION:
-            cb = dynamic_cast<Combination *>(*it);
+            cb = static_cast<Combination *>(*it);
             if (Geo::is_inside(point, cb->border(), true))
             {
                 for (Geo::Geometry *item : *cb)
@@ -214,35 +214,35 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        if (Geo::is_inside(point, *dynamic_cast<const Geo::AABBRect *>(item), true))
+                        if (Geo::is_inside(point, *static_cast<const Geo::AABBRect *>(item), true))
                         {
                             cb->is_selected = true;
                             return cb;
                         }
                         break;
                     case Geo::Type::POLYGON:
-                        if (Geo::is_inside(point, *dynamic_cast<Geo::Polygon *>(item), true))
+                        if (Geo::is_inside(point, *static_cast<Geo::Polygon *>(item), true))
                         {
                             cb->is_selected = true;
                             return cb;
                         }
                         break;
                     case Geo::Type::CIRCLE:
-                        if (Geo::is_inside(point, *dynamic_cast<Geo::Circle *>(item), true))
+                        if (Geo::is_inside(point, *static_cast<Geo::Circle *>(item), true))
                         {
                             cb->is_selected = true;
                             return cb;
                         }
                         break;
                     case Geo::Type::ELLIPSE:
-                        if (Geo::is_inside(point, *dynamic_cast<Geo::Ellipse *>(item), true))
+                        if (Geo::is_inside(point, *static_cast<Geo::Ellipse *>(item), true))
                         {
                             cb->is_selected = true;
                             return cb;
                         }
                         break;
                     case Geo::Type::POLYLINE:
-                        p = dynamic_cast<Geo::Polyline *>(item);
+                        p = static_cast<Geo::Polyline *>(item);
                         for (size_t i = 1, count = p->size(); i < count; ++i)
                         {
                             if (Geo::distance_square(point, (*p)[i - 1], (*p)[i]) <= catch_distance * catch_distance)
@@ -254,7 +254,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         p = nullptr;
                         break;
                     case Geo::Type::BEZIER:
-                        b = dynamic_cast<Geo::Bezier *>(item);
+                        b = static_cast<Geo::Bezier *>(item);
                         for (size_t i = 1, count = b->shape().size(); i < count; ++i)
                         {
                             if (Geo::distance_square(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance * catch_distance)
@@ -266,7 +266,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         b = nullptr;
                         break;
                     case Geo::Type::BSPLINE:
-                        bs = dynamic_cast<Geo::BSpline *>(item);
+                        bs = static_cast<Geo::BSpline *>(item);
                         for (size_t i = 1, count = bs->shape().size(); i < count; ++i)
                         {
                             if (Geo::distance_square(point, bs->shape()[i - 1], bs->shape()[i]) <= catch_distance * catch_distance)
@@ -285,7 +285,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             cb = nullptr;
             break;
         case Geo::Type::POLYLINE:
-            p = dynamic_cast<Geo::Polyline *>(*it);
+            p = static_cast<Geo::Polyline *>(*it);
             for (size_t i = 1, count = p->size(); i < count; ++i)
             {
                 if (Geo::distance_square(point, (*p)[i - 1], (*p)[i]) <= catch_distance * catch_distance)
@@ -297,7 +297,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             p = nullptr;
             break;
         case Geo::Type::BEZIER:
-            b = dynamic_cast<Geo::Bezier *>(*it);
+            b = static_cast<Geo::Bezier *>(*it);
             if (b->is_selected)
             {
                 for (const Geo::Point &inner_point : *b)
@@ -319,7 +319,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             b = nullptr;
             break;
         case Geo::Type::BSPLINE:
-            bs = dynamic_cast<Geo::BSpline *>(*it);
+            bs = static_cast<Geo::BSpline *>(*it);
             if (bs->is_selected)
             {
                 for (const Geo::Point &inner_point : bs->path_points)
@@ -380,8 +380,8 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
         switch ((*it)->type())
         {
         case Geo::Type::TEXT:
-            t = dynamic_cast<Text *>(*it);
-            if (Geo::is_inside(point, *dynamic_cast<const Geo::AABBRect *>(t), true))
+            t = static_cast<Text *>(*it);
+            if (Geo::is_inside(point, *static_cast<const Geo::AABBRect *>(t), true))
             {
                 bool state = t->is_selected;
                 t->is_selected = true;
@@ -389,7 +389,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
             }
             break;
         case Geo::Type::POLYGON:
-            polygon = dynamic_cast<Geo::Polygon *>(*it);
+            polygon = static_cast<Geo::Polygon *>(*it);
             if (Geo::is_inside(point, *polygon, true))
             {
                 bool state = polygon->is_selected;
@@ -408,7 +408,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
             polygon = nullptr;
             break;
         case Geo::Type::CIRCLE:
-            circle = dynamic_cast<Geo::Circle *>(*it);
+            circle = static_cast<Geo::Circle *>(*it);
             if (Geo::distance_square(point, *circle) <= std::pow(catch_distance + circle->radius, 2))
             {
                 bool state = circle->is_selected;
@@ -418,7 +418,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
             circle = nullptr;
             break;
         case Geo::Type::ELLIPSE:
-            ellipse = dynamic_cast<Geo::Ellipse *>(*it);
+            ellipse = static_cast<Geo::Ellipse *>(*it);
             if (Geo::distance(ellipse->c0(), point) + Geo::distance(ellipse->c1(), point)
                     <= catch_distance + std::max(ellipse->lengtha(), ellipse->lengthb()) * 2)
             {
@@ -429,7 +429,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
             ellipse = nullptr;
             break;
         case Geo::Type::COMBINATION:
-            cb = dynamic_cast<Combination *>(*it);
+            cb = static_cast<Combination *>(*it);
             if (Geo::is_inside(point, cb->border(), true))
             {
                 for (Geo::Geometry *item : *cb)
@@ -437,7 +437,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        if (Geo::is_inside(point, *dynamic_cast<const Geo::AABBRect *>(item), true))
+                        if (Geo::is_inside(point, *static_cast<const Geo::AABBRect *>(item), true))
                         {
                             bool state = cb->is_selected;
                             cb->is_selected = true;
@@ -445,7 +445,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
                         }
                         break;
                     case Geo::Type::POLYGON:
-                        if (Geo::is_inside(point, *dynamic_cast<Geo::Polygon *>(item), true))
+                        if (Geo::is_inside(point, *static_cast<Geo::Polygon *>(item), true))
                         {
                             bool state = cb->is_selected;
                             cb->is_selected = true;
@@ -453,7 +453,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
                         }
                         break;
                     case Geo::Type::CIRCLE:
-                        if (Geo::is_inside(point, *dynamic_cast<Geo::Circle *>(item), true))
+                        if (Geo::is_inside(point, *static_cast<Geo::Circle *>(item), true))
                         {
                             bool state = cb->is_selected;
                             cb->is_selected = true;
@@ -461,7 +461,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
                         }
                         break;
                     case Geo::Type::ELLIPSE:
-                        if (Geo::is_inside(point, *dynamic_cast<Geo::Ellipse *>(item), true))
+                        if (Geo::is_inside(point, *static_cast<Geo::Ellipse *>(item), true))
                         {
                             bool state = cb->is_selected;
                             cb->is_selected = true;
@@ -469,7 +469,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
                         }
                         break;
                     case Geo::Type::POLYLINE:
-                        p = dynamic_cast<Geo::Polyline *>(item);
+                        p = static_cast<Geo::Polyline *>(item);
                         for (size_t i = 1, count = p->size(); i < count; ++i)
                         {
                             if (Geo::distance_square(point, (*p)[i - 1], (*p)[i]) <= catch_distance * catch_distance)
@@ -482,7 +482,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
                         p = nullptr;
                         break;
                     case Geo::Type::BEZIER:
-                        b = dynamic_cast<Geo::Bezier *>(item);
+                        b = static_cast<Geo::Bezier *>(item);
                         for (size_t i = 1, count = b->shape().size(); i < count; ++i)
                         {
                             if (Geo::distance_square(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance * catch_distance)
@@ -495,7 +495,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
                         b = nullptr;
                         break;
                     case Geo::Type::BSPLINE:
-                        bs = dynamic_cast<Geo::BSpline *>(item);
+                        bs = static_cast<Geo::BSpline *>(item);
                         for (size_t i = 1, count = bs->shape().size(); i < count; ++i)
                         {
                             if (Geo::distance_square(point, bs->shape()[i - 1], bs->shape()[i]) <= catch_distance * catch_distance)
@@ -515,7 +515,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
             cb = nullptr;
             break;
         case Geo::Type::POLYLINE:
-            p = dynamic_cast<Geo::Polyline *>(*it);
+            p = static_cast<Geo::Polyline *>(*it);
             for (size_t i = 1, count = p->size(); i < count; ++i)
             {
                 if (Geo::distance_square(point, (*p)[i - 1], (*p)[i]) <= catch_distance * catch_distance)
@@ -528,7 +528,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
             p = nullptr;
             break;
         case Geo::Type::BEZIER:
-            b = dynamic_cast<Geo::Bezier *>(*it);
+            b = static_cast<Geo::Bezier *>(*it);
             if (b->is_selected)
             {
                 for (const Geo::Point &inner_point : *b)
@@ -551,7 +551,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
             b = nullptr;
             break;
         case Geo::Type::BSPLINE:
-            bs = dynamic_cast<Geo::BSpline *>(*it);
+            bs = static_cast<Geo::BSpline *>(*it);
             if (bs->is_selected)
             {
                 for (const Geo::Point &inner_point : bs->path_points)
@@ -594,7 +594,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
         switch (container->type())
         {
         case Geo::Type::TEXT:
-            if (Geo::is_intersected(*dynamic_cast<const Geo::AABBRect *>(container), rect))
+            if (Geo::is_intersected(*static_cast<const Geo::AABBRect *>(container), rect))
             {
                 container->is_selected = true;
                 result.push_back(container);
@@ -605,7 +605,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
             }
             break;
         case Geo::Type::POLYGON:
-            if (Geo::is_intersected(rect, *dynamic_cast<Geo::Polygon *>(container)))
+            if (Geo::is_intersected(rect, *static_cast<Geo::Polygon *>(container)))
             {
                 container->is_selected = true;
                 result.push_back(container);
@@ -616,7 +616,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
             }
             break;
         case Geo::Type::CIRCLE:
-            if (Geo::is_intersected(rect, *dynamic_cast<Geo::Circle *>(container)))
+            if (Geo::is_intersected(rect, *static_cast<Geo::Circle *>(container)))
             {
                 container->is_selected = true;
                 result.push_back(container);
@@ -627,7 +627,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
             }
             break;
         case Geo::Type::ELLIPSE:
-            if (Geo::is_intersected(rect, *dynamic_cast<Geo::Ellipse *>(container)))
+            if (Geo::is_intersected(rect, *static_cast<Geo::Ellipse *>(container)))
             {
                 container->is_selected = true;
                 result.push_back(container);
@@ -638,51 +638,51 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
             }
             break;
         case Geo::Type::COMBINATION:
-            if (Geo::is_intersected(rect, dynamic_cast<Combination *>(container)->border(), true))
+            if (Geo::is_intersected(rect, static_cast<Combination *>(container)->border(), true))
             {
                 bool end = false;
-                for (Geo::Geometry *item : *dynamic_cast<Combination *>(container))
+                for (Geo::Geometry *item : *static_cast<Combination *>(container))
                 {
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        if (Geo::is_intersected(*dynamic_cast<const Geo::AABBRect *>(item), rect))
+                        if (Geo::is_intersected(*static_cast<const Geo::AABBRect *>(item), rect))
                         {
                             end = true;
                         }
                         break;
                     case Geo::Type::POLYGON:
-                        if (Geo::is_intersected(rect, *dynamic_cast<Geo::Polygon *>(item)))
+                        if (Geo::is_intersected(rect, *static_cast<Geo::Polygon *>(item)))
                         {
                             end = true;
                         }
                         break;
                     case Geo::Type::CIRCLE:
-                        if (Geo::is_intersected(rect, *dynamic_cast<Geo::Circle *>(item)))
+                        if (Geo::is_intersected(rect, *static_cast<Geo::Circle *>(item)))
                         {
                             end = true;
                         }
                         break;
                     case Geo::Type::ELLIPSE:
-                        if (Geo::is_intersected(rect, *dynamic_cast<Geo::Ellipse *>(item)))
+                        if (Geo::is_intersected(rect, *static_cast<Geo::Ellipse *>(item)))
                         {
                             end = true;
                         }
                         break;
                     case Geo::Type::POLYLINE:
-                        if (Geo::is_intersected(rect, *dynamic_cast<Geo::Polyline *>(item)))
+                        if (Geo::is_intersected(rect, *static_cast<Geo::Polyline *>(item)))
                         {
                             end = true;
                         }
                         break;
                     case Geo::Type::BEZIER:
-                        if (Geo::is_intersected(rect, dynamic_cast<Geo::Bezier *>(item)->shape()))
+                        if (Geo::is_intersected(rect, static_cast<Geo::Bezier *>(item)->shape()))
                         {
                             end = true;
                         }
                         break;
                     case Geo::Type::BSPLINE:
-                        if (Geo::is_intersected(rect, dynamic_cast<Geo::BSpline *>(item)->shape()))
+                        if (Geo::is_intersected(rect, static_cast<Geo::BSpline *>(item)->shape()))
                         {
                             end = true;
                         }
@@ -707,7 +707,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
             }
             break;
         case Geo::Type::POLYLINE:
-            if (Geo::is_intersected(rect, *dynamic_cast<Geo::Polyline *>(container)))
+            if (Geo::is_intersected(rect, *static_cast<Geo::Polyline *>(container)))
             {
                 container->is_selected = true;
                 result.push_back(container);
@@ -718,7 +718,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
             }
             break;
         case Geo::Type::BEZIER:
-            if (Geo::is_intersected(rect, dynamic_cast<Geo::Bezier *>(container)->shape()))
+            if (Geo::is_intersected(rect, static_cast<Geo::Bezier *>(container)->shape()))
             {
                 container->is_selected = true;
                 result.push_back(container);
@@ -729,7 +729,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
             }
             break;
         case Geo::Type::BSPLINE:
-            if (Geo::is_intersected(rect, dynamic_cast<Geo::BSpline *>(container)->shape()))
+            if (Geo::is_intersected(rect, static_cast<Geo::BSpline *>(container)->shape()))
             {
                 container->is_selected = true;
                 result.push_back(container);
@@ -1096,7 +1096,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     switch (points->type())
     {
     case Geo::Type::POLYGON:
-        if (Geo::Polygon *temp = dynamic_cast<Geo::Polygon *>(points); change_shape && !points->shape_fixed)
+        if (Geo::Polygon *temp = static_cast<Geo::Polygon *>(points); change_shape && !points->shape_fixed)
         {
             size_t count = 0, index = SIZE_MAX;
             double distance, min_distance = DBL_MAX;
@@ -1178,7 +1178,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         }
         break;
     case Geo::Type::CIRCLE:
-        if (Geo::Circle *temp = dynamic_cast<Geo::Circle *>(points); change_shape && !points->shape_fixed)
+        if (Geo::Circle *temp = static_cast<Geo::Circle *>(points); change_shape && !points->shape_fixed)
         {
             if (std::abs(temp->radius - Geo::distance(*temp, Geo::Point(x0, y0))) <= catch_distance ||
                 std::abs(temp->radius - Geo::distance(*temp, Geo::Point(x1, y1))) <= catch_distance)
@@ -1198,7 +1198,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         }
         break;
     case Geo::Type::ELLIPSE:
-        if (Geo::Ellipse *temp = dynamic_cast<Geo::Ellipse *>(points); change_shape && !points->shape_fixed)
+        if (Geo::Ellipse *temp = static_cast<Geo::Ellipse *>(points); change_shape && !points->shape_fixed)
         {
             const Geo::Point point0(x0, y0), point1(x1, y1);
             if (Geo::distance(temp->a0(), point0) <= catch_distance || Geo::distance(temp->a0(), point1) <= catch_distance
@@ -1238,7 +1238,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         points->translate(x1 - x0, y1 - y0);
         break;
     case Geo::Type::POLYLINE:
-        if (Geo::Polyline *temp = dynamic_cast<Geo::Polyline *>(points); change_shape && !points->shape_fixed)
+        if (Geo::Polyline *temp = static_cast<Geo::Polyline *>(points); change_shape && !points->shape_fixed)
         {
             size_t count = 0, index = SIZE_MAX;
             double distance, min_distance = DBL_MAX;
@@ -1273,7 +1273,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         }
         break;
     case Geo::Type::BEZIER:
-        if ( Geo::Bezier *temp = dynamic_cast<Geo::Bezier *>(points); change_shape && !temp->shape_fixed)
+        if ( Geo::Bezier *temp = static_cast<Geo::Bezier *>(points); change_shape && !temp->shape_fixed)
         {
             size_t count = temp->size(), index = SIZE_MAX;
             double distance, min_distance = DBL_MAX;
@@ -1354,7 +1354,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         }
         break;
     case Geo::Type::BSPLINE:
-        if (Geo::BSpline *temp = dynamic_cast<Geo::BSpline *>(points); change_shape && !temp->shape_fixed)
+        if (Geo::BSpline *temp = static_cast<Geo::BSpline *>(points); change_shape && !temp->shape_fixed)
         {
             size_t count = temp->path_points.size(), index = SIZE_MAX;
             double distance, min_distance = DBL_MAX;
@@ -1542,12 +1542,12 @@ bool Editer::connect(std::vector<Geo::Geometry *> objects, const double connect_
         {
         case Geo::Type::POLYLINE:
         case Geo::Type::BEZIER:
-            front_i = dynamic_cast<Geo::Polyline *>(polylines[i])->front();
-            back_i = dynamic_cast<Geo::Polyline *>(polylines[i])->back();
+            front_i = static_cast<Geo::Polyline *>(polylines[i])->front();
+            back_i = static_cast<Geo::Polyline *>(polylines[i])->back();
             break;
         case Geo::Type::BSPLINE:
-            front_i = dynamic_cast<Geo::BSpline *>(polylines[i])->front();
-            back_i = dynamic_cast<Geo::BSpline *>(polylines[i])->back();
+            front_i = static_cast<Geo::BSpline *>(polylines[i])->front();
+            back_i = static_cast<Geo::BSpline *>(polylines[i])->back();
             break;
         default:
             break;
@@ -1559,12 +1559,12 @@ bool Editer::connect(std::vector<Geo::Geometry *> objects, const double connect_
             {
             case Geo::Type::POLYLINE:
             case Geo::Type::BEZIER:
-                front_j = dynamic_cast<Geo::Polyline *>(polylines[j])->front();
-                back_j = dynamic_cast<Geo::Polyline *>(polylines[j])->back();
+                front_j = static_cast<Geo::Polyline *>(polylines[j])->front();
+                back_j = static_cast<Geo::Polyline *>(polylines[j])->back();
                 break;
             case Geo::Type::BSPLINE:
-                front_j = dynamic_cast<Geo::BSpline *>(polylines[j])->front();
-                back_j = dynamic_cast<Geo::BSpline *>(polylines[j])->back();
+                front_j = static_cast<Geo::BSpline *>(polylines[j])->front();
+                back_j = static_cast<Geo::BSpline *>(polylines[j])->back();
                 break;
             default:
                 break;
@@ -1767,12 +1767,12 @@ bool Editer::connect(std::vector<Geo::Geometry *> objects, const double connect_
         {
         case Geo::Type::POLYLINE:
         case Geo::Type::BEZIER:
-            front_i = dynamic_cast<Geo::Polyline *>(polylines[i])->front();
-            back_i = dynamic_cast<Geo::Polyline *>(polylines[i])->back();
+            front_i = static_cast<Geo::Polyline *>(polylines[i])->front();
+            back_i = static_cast<Geo::Polyline *>(polylines[i])->back();
             break;
         case Geo::Type::BSPLINE:
-            front_i = dynamic_cast<Geo::BSpline *>(polylines[i])->front();
-            back_i = dynamic_cast<Geo::BSpline *>(polylines[i])->back();
+            front_i = static_cast<Geo::BSpline *>(polylines[i])->front();
+            back_i = static_cast<Geo::BSpline *>(polylines[i])->back();
             break;
         default:
             break;
@@ -1924,11 +1924,11 @@ bool Editer::close_polyline(std::vector<Geo::Geometry *> objects)
         switch (object->type())
         {
         case Geo::Type::POLYLINE:
-            if (dynamic_cast<Geo::Polyline *>(object)->size() < 3)
+            if (static_cast<Geo::Polyline *>(object)->size() < 3)
             {
                 continue;
             }
-            shape = new Geo::Polygon(*dynamic_cast<Geo::Polyline *>(object));
+            shape = new Geo::Polygon(*static_cast<Geo::Polyline *>(object));
             shape->is_selected = true;
             index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
             add_items.emplace_back(shape, _current_group, index);
@@ -1936,11 +1936,11 @@ bool Editer::close_polyline(std::vector<Geo::Geometry *> objects)
             group.insert(index, shape);
             break;
         case Geo::Type::BEZIER:
-            if (dynamic_cast<Geo::Bezier *>(object)->shape().size() < 3)
+            if (static_cast<Geo::Bezier *>(object)->shape().size() < 3)
             {
                 continue;
             }
-            shape = new Geo::Polygon(dynamic_cast<Geo::Bezier *>(object)->shape());
+            shape = new Geo::Polygon(static_cast<Geo::Bezier *>(object)->shape());
             shape->is_selected = true;
             index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
             add_items.emplace_back(shape, _current_group, index);
@@ -1948,11 +1948,11 @@ bool Editer::close_polyline(std::vector<Geo::Geometry *> objects)
             group.insert(index, shape);
             break;
         case Geo::Type::BSPLINE:
-            if (dynamic_cast<Geo::BSpline *>(object)->shape().size() < 3)
+            if (static_cast<Geo::BSpline *>(object)->shape().size() < 3)
             {
                 continue;
             }
-            shape = new Geo::Polygon(dynamic_cast<Geo::BSpline *>(object)->shape());
+            shape = new Geo::Polygon(static_cast<Geo::BSpline *>(object)->shape());
             shape->is_selected = true;
             index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
             add_items.emplace_back(shape, _current_group, index);
@@ -2006,7 +2006,7 @@ bool Editer::combinate(std::vector<Geo::Geometry *> objects)
         {
             std::vector<Geo::Geometry *>::iterator it = std::find(group.begin(), group.end(), object);
             size_t index = std::distance(group.begin(), it);
-            temp = dynamic_cast<Combination *>(group.pop(it));
+            temp = static_cast<Combination *>(group.pop(it));
             items.emplace_back(temp, index, std::vector<Geo::Geometry *>(temp->begin(), temp->end()));
             combination->append(temp);
         }
@@ -2070,8 +2070,8 @@ bool Editer::mirror(std::vector<Geo::Geometry *> objects, const Geo::Geometry *l
         return false;
     }
 
-    const Geo::Point &point0 = dynamic_cast<const Geo::Polyline *>(line)->front();
-    const Geo::Point &point1 = dynamic_cast<const Geo::Polyline *>(line)->back();
+    const Geo::Point &point0 = static_cast<const Geo::Polyline *>(line)->front();
+    const Geo::Point &point1 = static_cast<const Geo::Polyline *>(line)->back();
     const double a = point0.y - point1.y;
     const double b = point1.x - point0.x;
     const double c = point0.x * point1.y - point1.x * point0.y;
@@ -2120,7 +2120,7 @@ bool Editer::offset(std::vector<Geo::Geometry *> objects, const double distance,
         switch (object->type())
         {
         case Geo::Type::POLYGON:
-            polygon = dynamic_cast<Geo::Polygon *>(object);
+            polygon = static_cast<Geo::Polygon *>(object);
             if (std::vector<Geo::Polygon> result; Geo::offset(*polygon, result, distance, join_type, end_type))
             {
                 for (const Geo::Polygon &shape0 : result)
@@ -2131,7 +2131,7 @@ bool Editer::offset(std::vector<Geo::Geometry *> objects, const double distance,
             }
             break;
         case Geo::Type::CIRCLE:
-            circle = dynamic_cast<Geo::Circle *>(object);
+            circle = static_cast<Geo::Circle *>(object);
             if (distance >= 0 || -distance < circle->radius)
             {
                 _graph->append(new Geo::Circle(circle->x, circle->y, circle->radius + distance), _current_group);
@@ -2139,7 +2139,7 @@ bool Editer::offset(std::vector<Geo::Geometry *> objects, const double distance,
             }
             break;
         case Geo::Type::ELLIPSE:
-            ellipse = dynamic_cast<Geo::Ellipse *>(object);
+            ellipse = static_cast<Geo::Ellipse *>(object);
             if (distance >= 0 || -distance < std::min(ellipse->lengtha(), ellipse->lengthb()))
             {
                 _graph->append(new Geo::Ellipse(ellipse->center(), ellipse->lengtha() + distance,
@@ -2150,7 +2150,7 @@ bool Editer::offset(std::vector<Geo::Geometry *> objects, const double distance,
             }
             break;
         case Geo::Type::POLYLINE:
-            if (Geo::Polyline shape1; Geo::offset(*dynamic_cast<const Geo::Polyline *>(object), shape1, distance))
+            if (Geo::Polyline shape1; Geo::offset(*static_cast<const Geo::Polyline *>(object), shape1, distance))
             {
                 _graph->append(shape1.clone(), _current_group);
                 items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
@@ -3572,13 +3572,13 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
             switch (geo->type())
             {
             case Geo::Type::POLYGON:
-                temp = Geo::distance(center, *dynamic_cast<Geo::Polygon *>(geo));
+                temp = Geo::distance(center, *static_cast<Geo::Polygon *>(geo));
                 break;
             case Geo::Type::CIRCLE:
-                temp = Geo::distance(center, *dynamic_cast<Geo::Circle *>(geo));
+                temp = Geo::distance(center, *static_cast<Geo::Circle *>(geo));
                 break;
             case Geo::Type::ELLIPSE:
-                temp = Geo::distance(center, *dynamic_cast<Geo::Ellipse *>(geo));
+                temp = Geo::distance(center, *static_cast<Geo::Ellipse *>(geo));
                 break;
             default:
                 break;
@@ -3606,13 +3606,13 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
                 switch (geo->type())
                 {
                 case Geo::Type::POLYGON:
-                    temp = Geo::distance(center, *dynamic_cast<Geo::Polygon *>(geo));
+                    temp = Geo::distance(center, *static_cast<Geo::Polygon *>(geo));
                     break;
                 case Geo::Type::CIRCLE:
-                    temp = Geo::distance(center, *dynamic_cast<Geo::Circle *>(geo));
+                    temp = Geo::distance(center, *static_cast<Geo::Circle *>(geo));
                     break;
                 case Geo::Type::ELLIPSE:
-                    temp = Geo::distance(center, *dynamic_cast<Geo::Ellipse *>(geo));
+                    temp = Geo::distance(center, *static_cast<Geo::Ellipse *>(geo));
                     break;
                 default:
                     break;
@@ -3671,13 +3671,13 @@ bool Editer::auto_aligning(Geo::Geometry *points, const double x, const double y
             switch (geo->type())
             {
             case Geo::Type::POLYGON:
-                temp = Geo::distance(anchor, *dynamic_cast<Geo::Polygon *>(geo));
+                temp = Geo::distance(anchor, *static_cast<Geo::Polygon *>(geo));
                 break;
             case Geo::Type::CIRCLE:
-                temp = Geo::distance(anchor, *dynamic_cast<Geo::Circle *>(geo));
+                temp = Geo::distance(anchor, *static_cast<Geo::Circle *>(geo));
                 break;
             case Geo::Type::ELLIPSE:
-                temp = Geo::distance(anchor, *dynamic_cast<Geo::Ellipse *>(geo));
+                temp = Geo::distance(anchor, *static_cast<Geo::Ellipse *>(geo));
                 break;
             default:
                 break;
@@ -3705,13 +3705,13 @@ bool Editer::auto_aligning(Geo::Geometry *points, const double x, const double y
                 switch (geo->type())
                 {
                 case Geo::Type::POLYGON:
-                    temp = Geo::distance(anchor, *dynamic_cast<Geo::Polygon *>(geo));
+                    temp = Geo::distance(anchor, *static_cast<Geo::Polygon *>(geo));
                     break;
                 case Geo::Type::CIRCLE:
-                    temp = Geo::distance(anchor, *dynamic_cast<Geo::Circle *>(geo));
+                    temp = Geo::distance(anchor, *static_cast<Geo::Circle *>(geo));
                     break;
                 case Geo::Type::ELLIPSE:
-                    temp = Geo::distance(anchor, *dynamic_cast<Geo::Ellipse *>(geo));
+                    temp = Geo::distance(anchor, *static_cast<Geo::Ellipse *>(geo));
                     break;
                 default:
                     break;
@@ -3771,13 +3771,13 @@ bool Editer::auto_aligning(Geo::Point &coord, std::list<QLineF> &reflines, const
             switch (geo->type())
             {
             case Geo::Type::POLYGON:
-                temp = Geo::distance(anchor, *dynamic_cast<Geo::Polygon *>(geo));
+                temp = Geo::distance(anchor, *static_cast<Geo::Polygon *>(geo));
                 break;
             case Geo::Type::CIRCLE:
-                temp = Geo::distance(anchor, *dynamic_cast<Geo::Circle *>(geo));
+                temp = Geo::distance(anchor, *static_cast<Geo::Circle *>(geo));
                 break;
             case Geo::Type::ELLIPSE:
-                temp = Geo::distance(anchor, *dynamic_cast<Geo::Ellipse *>(geo));
+                temp = Geo::distance(anchor, *static_cast<Geo::Ellipse *>(geo));
                 break;
             default:
                 break;
@@ -3805,13 +3805,13 @@ bool Editer::auto_aligning(Geo::Point &coord, std::list<QLineF> &reflines, const
                 switch (geo->type())
                 {
                 case Geo::Type::POLYGON:
-                    temp = Geo::distance(anchor, *dynamic_cast<Geo::Polygon *>(geo));
+                    temp = Geo::distance(anchor, *static_cast<Geo::Polygon *>(geo));
                     break;
                 case Geo::Type::CIRCLE:
-                    temp = Geo::distance(anchor, *dynamic_cast<Geo::Circle *>(geo));
+                    temp = Geo::distance(anchor, *static_cast<Geo::Circle *>(geo));
                     break;
                 case Geo::Type::ELLIPSE:
-                    temp = Geo::distance(anchor, *dynamic_cast<Geo::Ellipse *>(geo));
+                    temp = Geo::distance(anchor, *static_cast<Geo::Ellipse *>(geo));
                     break;
                 default:
                     break;
