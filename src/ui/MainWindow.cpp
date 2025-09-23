@@ -1207,6 +1207,7 @@ void MainWindow::open_file(const QString &path)
     GlobalSetting::setting().graph->modified = false;
 
     ui->canvas->refresh_vbo(true);
+    ui->canvas->clear_cache();
     _info_labels[2]->setText(path);
     _layers_manager->update_layers();
     _layers_cbx->setModel(_layers_manager->model());

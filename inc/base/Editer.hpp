@@ -182,4 +182,7 @@ public:
 	void auto_layering();
 
     void auto_connect();
+
+private:
+    void select_subfunc(const Geo::AABBRect &rect, const size_t start, const size_t end, std::vector<Geo::Geometry *> *result);
 };
