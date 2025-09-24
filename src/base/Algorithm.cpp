@@ -639,7 +639,97 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
         }
 
         // 去除重复交点
-        for (size_t count, j, i = points.size() - 1; i > 0; --i)
+        {
+            const size_t i = points.size() - 1;
+            size_t j0, j1;
+            size_t count = points[i].original ? 0 : 1;
+            for (j0 = i; j0 > 0; --j0)
+            {
+                if (std::abs(points[i].x - points[j0 - 1].x) > Geo::EPSILON || 
+                    std::abs(points[i].y - points[j0 - 1].y) > Geo::EPSILON)
+                {
+                    break;
+                }
+                if (!points[j0 - 1].original)
+                {
+                    ++count;
+                }
+            }
+            for (j1 = 0; j1 < i; ++j1)
+            {
+                if (std::abs(points[i].x - points[j1].x) > Geo::EPSILON || 
+                    std::abs(points[i].y - points[j1].y) > Geo::EPSILON)
+                {
+                    break;
+                }
+                if (!points[j1].original)
+                {
+                    ++count;
+                }
+            }
+            if (count >= 2)
+            {
+                int value = 0;
+                for (size_t k = i; k > j0; --k)
+                {
+                    if (!points[k].original)
+                    {
+                        value += points[k].value;
+                    }
+                }
+                if (!points[j0].original)
+                {
+                    value += points[j0].value;
+                }
+                for (size_t k = 0; k <= j1; ++k)
+                {
+                    if (!points[k].original)
+                    {
+                        value += points[k].value;
+                    }
+                }
+                if (value == 0)
+                {
+                    for (size_t k = i; k > j0; --k)
+                    {
+                        if (!points[k].original)
+                        {
+                            points.erase(points.begin() + k);
+                        }
+                    }
+                    if (!points[j0].original)
+                    {
+                        points.erase(points.begin() + j0);
+                    }
+                    for (size_t k = 0; k <= j1; ++k)
+                    {
+                        if (!points[k].original)
+                        {
+                            points.erase(points.begin() + k);
+                        }
+                    }
+                }
+                else
+                {
+                    bool flag = false;
+                    for (size_t k = i; k > j0; --k)
+                    {
+                        flag = (flag || points[k].original);
+                        points.erase(points.begin() + k);
+                    }
+                    flag = (flag || points[j0].original);
+                    points.erase(points.begin() + j0);
+                    for (size_t k = j1; k > 0; --k)
+                    {
+                        flag = (flag || points[k].original);
+                        points.erase(points.begin() + k);
+                    }
+                    points[0].value = value;
+                    points[0].original = (flag || points[j0].original);
+                }
+            }
+        }
+        for (size_t count, j, i = points.size() - 2; i > 0; --i)
         {
             count = points[i].original ? 0 : 1;
             for (j = i; j > 0; --j)
@@ -2438,7 +2528,97 @@ bool Geo::NoAABBTest::is_inside(const Geo::Point &point, const Geo::Polygon &pol
     }
 
     // 去除重复交点
-    for (size_t count, j, i = points.size() - 1; i > 0; --i)
+    {
+        const size_t i = points.size() - 1;
+        size_t j0, j1;
+        size_t count = points[i].original ? 0 : 1;
+        for (j0 = i; j0 > 0; --j0)
+        {
+            if (std::abs(points[i].x - points[j0 - 1].x) > Geo::EPSILON || 
+                std::abs(points[i].y - points[j0 - 1].y) > Geo::EPSILON)
+            {
+                break;
+            }
+            if (!points[j0 - 1].original)
+            {
+                ++count;
+            }
+        }
+        for (j1 = 0; j1 < i; ++j1)
+        {
+            if (std::abs(points[i].x - points[j1].x) > Geo::EPSILON || 
+                std::abs(points[i].y - points[j1].y) > Geo::EPSILON)
+            {
+                break;
+            }
+            if (!points[j1].original)
+            {
+                ++count;
+            }
+        }
+        if (count >= 2)
+        {
+            int value = 0;
+            for (size_t k = i; k > j0; --k)
+            {
+                if (!points[k].original)
+                {
+                    value += points[k].value;
+                }
+            }
+            if (!points[j0].original)
+            {
+                value += points[j0].value;
+            }
+            for (size_t k = 0; k <= j1; ++k)
+            {
+                if (!points[k].original)
+                {
+                    value += points[k].value;
+                }
+            }
+            if (value == 0)
+            {
+                for (size_t k = i; k > j0; --k)
+                {
+                    if (!points[k].original)
+                    {
+                        points.erase(points.begin() + k);
+                    }
+                }
+                if (!points[j0].original)
+                {
+                    points.erase(points.begin() + j0);
+                }
+                for (size_t k = 0; k <= j1; ++k)
+                {
+                    if (!points[k].original)
+                    {
+                        points.erase(points.begin() + k);
+                    }
+                }
+            }
+            else
+            {
+                bool flag = false;
+                for (size_t k = i; k > j0; --k)
+                {
+                    flag = (flag || points[k].original);
+                    points.erase(points.begin() + k);
+                }
+                flag = (flag || points[j0].original);
+                points.erase(points.begin() + j0);
+                for (size_t k = j1; k > 0; --k)
+                {
+                    flag = (flag || points[k].original);
+                    points.erase(points.begin() + k);
+                }
+                points[0].value = value;
+                points[0].original = (flag || points[j0].original);
+            }
+        }
+    }
+    for (size_t count, j, i = points.size() - 2; i > 0; --i)
     {
         count = points[i].original ? 0 : 1;
         for (j = i; j > 0; --j)
