@@ -3842,7 +3842,7 @@ void Editer::auto_combinate()
                                 current_rect += container_rects[all_containers[j]];
                                 current_rects.emplace_back(container_rects[all_containers[j]]);
                                 all_containers.erase(all_containers.begin() + j);
-                                j = i + 1;
+                                j = i;
                                 --count;
                                 k = object_count - 1;
                             }
@@ -3853,7 +3853,8 @@ void Editer::auto_combinate()
                                 objects.push_back(all_containers[j]);
                                 current_rect += container_rects[all_containers[j]];
                                 current_rects.emplace_back(container_rects[all_containers[j]]);
-                                all_containers.erase(all_containers.begin() + j--);
+                                all_containers.erase(all_containers.begin() + j);
+                                j = i;
                                 --count;
                                 k = object_count - 1;
                             }
@@ -3864,7 +3865,8 @@ void Editer::auto_combinate()
                                 objects.push_back(all_containers[j]);
                                 current_rect += container_rects[all_containers[j]];
                                 current_rects.emplace_back(container_rects[all_containers[j]]);
-                                all_containers.erase(all_containers.begin() + j--);
+                                all_containers.erase(all_containers.begin() + j);
+                                j = i;
                                 --count;
                                 k = object_count - 1;
                             }
@@ -3885,7 +3887,8 @@ void Editer::auto_combinate()
                                 objects.push_back(all_containers[j]);
                                 current_rect += container_rects[all_containers[j]];
                                 current_rects.emplace_back(container_rects[all_containers[j]]);
-                                all_containers.erase(all_containers.begin() + j--);
+                                all_containers.erase(all_containers.begin() + j);
+                                j = i;
                                 --count;
                                 k = object_count - 1;
                             }
@@ -3896,7 +3899,8 @@ void Editer::auto_combinate()
                                 objects.push_back(all_containers[j]);
                                 current_rect += container_rects[all_containers[j]];
                                 current_rects.emplace_back(container_rects[all_containers[j]]);
-                                all_containers.erase(all_containers.begin() + j--);
+                                all_containers.erase(all_containers.begin() + j);
+                                j = i;
                                 --count;
                                 k = object_count - 1;
                             }
@@ -3908,7 +3912,8 @@ void Editer::auto_combinate()
                                 objects.push_back(all_containers[j]);
                                 current_rect += container_rects[all_containers[j]];
                                 current_rects.emplace_back(container_rects[all_containers[j]]);
-                                all_containers.erase(all_containers.begin() + j--);
+                                all_containers.erase(all_containers.begin() + j);
+                                j = i;
                                 --count;
                                 k = object_count - 1;
                             }
@@ -3929,7 +3934,8 @@ void Editer::auto_combinate()
                                 objects.push_back(all_containers[j]);
                                 current_rect += container_rects[all_containers[j]];
                                 current_rects.emplace_back(container_rects[all_containers[j]]);
-                                all_containers.erase(all_containers.begin() + j--);
+                                all_containers.erase(all_containers.begin() + j);
+                                j = i;
                                 --count;
                                 k = object_count - 1;
                             }
@@ -3941,7 +3947,8 @@ void Editer::auto_combinate()
                                 objects.push_back(all_containers[j]);
                                 current_rect += container_rects[all_containers[j]];
                                 current_rects.emplace_back(container_rects[all_containers[j]]);
-                                all_containers.erase(all_containers.begin() + j--);
+                                all_containers.erase(all_containers.begin() + j);
+                                j = i;
                                 --count;
                                 k = object_count - 1;
                             }
@@ -3953,7 +3960,8 @@ void Editer::auto_combinate()
                                 objects.push_back(all_containers[j]);
                                 current_rect += container_rects[all_containers[j]];
                                 current_rects.emplace_back(container_rects[all_containers[j]]);
-                                all_containers.erase(all_containers.begin() + j--);
+                                all_containers.erase(all_containers.begin() + j);
+                                j = i;
                                 --count;
                                 k = object_count - 1;
                             }
@@ -4182,18 +4190,34 @@ void Editer::auto_layering()
         return;
     }
 
-    std::sort(all_containers.begin(), all_containers.end(), [&](const Geo::Geometry *a, const Geo::Geometry *b)
-        { return rects[a].area() > rects[b].area(); });
-    _graph->append_group();
-    for (size_t i = 0, count = all_containers.size(); _graph->back().empty() && i < count; ++i)
     {
-        _graph->back().append(all_containers[i]);
-        all_containers.erase(all_containers.begin() + i);
+        std::unordered_map<const Geo::Geometry *, double> areas;
+        for (const Geo::Geometry *object : all_containers)
+        {
+            switch (object->type())
+            {
+            case Geo::Type::POLYGON:
+                areas.insert_or_assign(object, static_cast<const Geo::Polygon *>(object)->area());
+                break;
+            case Geo::Type::CIRCLE:
+                areas.insert_or_assign(object, static_cast<const Geo::Circle *>(object)->area());
+                break;
+            case Geo::Type::ELLIPSE:
+                areas.insert_or_assign(object, static_cast<const Geo::Ellipse *>(object)->area());
+                break;
+            }
+        }
+        std::sort(all_containers.begin(), all_containers.end(), [&](const Geo::Geometry *a, const Geo::Geometry *b)
+            { return areas[a] > areas[b]; });
     }
 
+    _graph->append_group();
     while (!all_containers.empty())
     {
+        _graph->back().append(all_containers.front());
+        all_containers.erase(all_containers.begin());
         std::unordered_map<const Geo::Geometry *, Geo::AABBRect> current_rects;
+        current_rects.insert_or_assign(_graph->back().front(), rects[_graph->back().front()]);
         for (size_t i = 0, count = all_containers.size(); i < count; ++i)
         {
             bool flag = true;
@@ -4325,7 +4349,6 @@ void Editer::auto_layering()
         _graph->append_group();
     }
 
-    _graph->append_group();
     for (Geo::Geometry *geo : all_polylines)
     {
         _graph->back().append(geo);
