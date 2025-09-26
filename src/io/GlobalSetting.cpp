@@ -32,6 +32,10 @@ void GlobalSetting::load_setting()
     {
         this->auto_layering = values.value("auto_layering").toBool();
     }
+    if (values.contains("auto_combinate"))
+    {
+        this->auto_combinate = values.value("auto_combinate").toBool();
+    }
     if (values.contains("auto_save"))
     {
         this->auto_save = values.value("auto_save").toBool();
@@ -124,6 +128,7 @@ void GlobalSetting::save_setting()
     values.insert("auto_aligning", this->auto_aligning);
     values.insert("auto_connect", this->auto_connect);
     values.insert("auto_layering", this->auto_layering);
+    values.insert("auto_combinate", this->auto_combinate);
     values.insert("auto_save", this->auto_save);
     values.insert("backup_times", this->backup_times);
     values.insert("catch_distance", this->catch_distance);

@@ -625,6 +625,7 @@ void MainWindow::load_settings()
     _editer.set_backup_count(GlobalSetting::setting().backup_times);
     ui->auto_save->setChecked(GlobalSetting::setting().auto_save);
     ui->auto_layering->setChecked(GlobalSetting::setting().auto_layering);
+    ui->auto_combinate->setChecked(GlobalSetting::setting().auto_combinate);
     ui->auto_connect->setChecked(GlobalSetting::setting().auto_connect);
     ui->auto_aligning->setChecked(GlobalSetting::setting().auto_aligning);
     ui->remember_file_type->setChecked(GlobalSetting::setting().remember_file_type);
@@ -668,6 +669,7 @@ void MainWindow::save_settings()
 {
     GlobalSetting::setting().auto_save = ui->auto_save->isChecked();
     GlobalSetting::setting().auto_layering = ui->auto_layering->isChecked();
+    GlobalSetting::setting().auto_combinate = ui->auto_combinate->isChecked();
     GlobalSetting::setting().auto_connect = ui->auto_connect->isChecked();
     GlobalSetting::setting().auto_aligning = ui->auto_aligning->isChecked();
     GlobalSetting::setting().remember_file_type = ui->remember_file_type->isChecked();
@@ -1204,6 +1206,10 @@ void MainWindow::open_file(const QString &path)
     {
         _editer.auto_layering();
     }
+    else if (ui->auto_combinate->isChecked())
+    {
+        _editer.auto_combinate();
+    }
     GlobalSetting::setting().graph->modified = false;
 
     ui->canvas->refresh_vbo(true);
@@ -1260,6 +1266,10 @@ void MainWindow::append_file(const QString &path)
     if (ui->auto_layering->isChecked())
     {
         _editer.auto_layering();
+    }
+    else if (ui->auto_combinate->isChecked())
+    {
+        _editer.auto_combinate();
     }
     Geo::AABBRect rect0(graph->bounding_rect()), rect1(g->bounding_rect());
     g->translate(rect0.right() + 10 - rect1.left(), rect0.bottom() - rect1.bottom());

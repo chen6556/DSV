@@ -1086,6 +1086,12 @@ AABBRect AABBRect::operator-(const Point &point) const
                     _points[2].x - point.x, _points[2].y - point.y);
 }
 
+AABBRect AABBRect::operator+(const AABBRect &rect) const
+{
+    return AABBRect(std::min(left(), rect.left()), std::max(top(), rect.top()),
+        std::max(right(), rect.right()), std::min(bottom(), rect.bottom()));
+}
+
 void AABBRect::operator+=(const Point &point)
 {
     for (Point &p : _points)
@@ -1099,6 +1105,37 @@ void AABBRect::operator-=(const Point &point)
     for (Point &p : _points)
     {
         p -= point;
+    }
+}
+
+void AABBRect::operator+=(const AABBRect &rect)
+{
+    if (rect.empty())
+    {
+        return;
+    }
+    if (_points.empty())
+    {
+        _points.assign(rect._points.begin(), rect._points.end());
+    }
+    else
+    {
+        if (_points[0].x > rect[0].x)
+        {
+            _points[0].x = _points[3].x = _points[4].x = rect[0].x;
+        }
+        if (_points[0].y < rect[0].y)
+        {
+            _points[0].y = _points[1].y = _points[4].y = rect[0].y;
+        }
+        if (_points[2].x < rect[2].x)
+        {
+            _points[1].x = _points[2].x = rect[2].x;
+        }
+        if (_points[2].y > rect[2].y)
+        {
+            _points[2].y = _points[3].y = rect[2].y;
+        }
     }
 }
 

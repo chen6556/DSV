@@ -21,6 +21,7 @@ public:
     bool auto_aligning = false;
     bool auto_connect = false;
     bool auto_layering = false;
+    bool auto_combinate = false;
     bool auto_save = false;
 
     bool catch_center = false;

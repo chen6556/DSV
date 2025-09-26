@@ -389,9 +389,13 @@ namespace Geo
 
         AABBRect operator-(const Point &point) const;
 
+        AABBRect operator+(const AABBRect &rect) const;
+
         void operator+=(const Point &point);
 
         void operator-=(const Point &point);
+
+        void operator+=(const AABBRect &rect);
 
         const Point center() const;
 

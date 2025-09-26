@@ -1,4 +1,5 @@
 #include <thread>
+
 #include "base/Editer.hpp"
 #include "io/GlobalSetting.hpp"
 
@@ -3810,196 +3811,215 @@ void Editer::auto_combinate()
     _graph->append_group();
     for (size_t i = 0, count = all_containers.size(); i < count; ++i)
     {
+        Geo::AABBRect current_rect = container_rects[all_containers[i]];
+        std::vector<Geo::AABBRect> current_rects({current_rect});
         std::vector<Geo::Geometry *> objects({all_containers[i]});
-        switch (all_containers[i]->type())
+        for (size_t j = i + 1; j < count; ++j)
         {
-        case Geo::Type::POLYGON:
+            if (!Geo::is_intersected(current_rect, container_rects[all_containers[j]]))
             {
-                Geo::Polygon *polygon = static_cast<Geo::Polygon *>(all_containers[i]);
-                const Geo::AABBRect &rect = container_rects[polygon];
-                for (size_t j = i + 1; j < count; ++j)
-                {
-                    if (!Geo::is_intersected(rect, container_rects[all_containers[j]]))
-                    {
-                        continue;
-                    }
-                    switch (all_containers[j]->type())
-                    {
-                    case Geo::Type::POLYGON:
-                        if (Geo::NoAABBTest::is_intersected(*polygon, *static_cast<Geo::Polygon *>(all_containers[j])))
-                        {
-                            objects.push_back(all_containers[j]);
-                            all_containers.erase(all_containers.begin() + j--);
-                            --count;
-                        }
-                        break;
-                    case Geo::Type::CIRCLE:
-                        if (Geo::is_intersected(*polygon, *static_cast<Geo::Circle *>(all_containers[j])))
-                        {
-                            objects.push_back(all_containers[j]);
-                            all_containers.erase(all_containers.begin() + j--);
-                            --count;
-                        }
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        if (Geo::is_intersected(*polygon, *static_cast<Geo::Ellipse *>(all_containers[j])))
-                        {
-                            objects.push_back(all_containers[j]);
-                            all_containers.erase(all_containers.begin() + j--);
-                            --count;
-                        }
-                        break;
-                    default:
-                        break;
-                    }
-                }
+                continue;
             }
-            break;
-        case Geo::Type::CIRCLE:
-            {
-                Geo::Circle *circle = static_cast<Geo::Circle *>(all_containers[i]);
-                const Geo::AABBRect &rect = container_rects[circle];
-                for (size_t j = i + 1; j < count; ++j)
-                {
-                    if (!Geo::is_intersected(rect, container_rects[all_containers[j]]))
-                    {
-                        continue;
-                    }
-                    switch (all_containers[j]->type())
-                    {
-                    case Geo::Type::POLYGON:
-                        if (Geo::is_inside(*circle, *static_cast<Geo::Polygon *>(all_containers[j])))
-                        {
-                            objects.push_back(all_containers[j]);
-                            all_containers.erase(all_containers.begin() + j--);
-                            --count;
-                        }
-                        break;
-                    case Geo::Type::CIRCLE:
-                        if (Geo::is_inside(*circle, *static_cast<Geo::Circle *>(all_containers[j])))
-                        {
-                            objects.push_back(all_containers[j]);
-                            all_containers.erase(all_containers.begin() + j--);
-                            --count;
-                        }
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        if (Geo::Point point0, point1, point2, point3; Geo::is_intersected(*circle,
-                            *static_cast<Geo::Ellipse *>(all_containers[j]), point0, point1, point2, point3))
-                        {
-                            objects.push_back(all_containers[j]);
-                            all_containers.erase(all_containers.begin() + j--);
-                            --count;
-                        }
-                        break;
-                    default:
-                        break;
-                    }
-                }
-            }
-            break;
-        case Geo::Type::ELLIPSE:
-            {
-                Geo::Ellipse *ellipse = static_cast<Geo::Ellipse *>(all_containers[i]);
-                const Geo::AABBRect &rect = container_rects[ellipse];
-                for (size_t j = i + 1; j < count; ++j)
-                {
-                    if (!Geo::is_intersected(rect, container_rects[all_containers[j]]))
-                    {
-                        continue;
-                    }
-                    switch (all_containers[j]->type())
-                    {
-                    case Geo::Type::POLYGON:
-                        if (Geo::is_intersected(*static_cast<Geo::Polygon *>(all_containers[j]), *ellipse))
-                        {
-                            objects.push_back(all_containers[j]);
-                            all_containers.erase(all_containers.begin() + j--);
-                            --count;
-                        }
-                        break;
-                    case Geo::Type::CIRCLE:
-                        if (Geo::Point point0, point1, point2, point3; Geo::is_intersected(
-                            *static_cast<Geo::Circle *>(all_containers[j]), *ellipse, point0, point1, point2, point3))
-                        {
-                            objects.push_back(all_containers[j]);
-                            all_containers.erase(all_containers.begin() + j--);
-                            --count;
-                        }
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        if (Geo::Point point0, point1, point2, point3; Geo::is_intersected(*ellipse,
-                            *static_cast<Geo::Ellipse *>(all_containers[j]), point0, point1, point2, point3))
-                        {
-                            objects.push_back(all_containers[j]);
-                            all_containers.erase(all_containers.begin() + j--);
-                            --count;
-                        }
-                        break;
-                    default:
-                        break;
-                    }
-                }
-            }
-            break;
-        default:
-            break;
-        }
 
-        std::unordered_map<const Geo::Geometry *, Geo::AABBRect> current_rects;
-        for (Geo::Geometry *object : objects)
-        {
-            current_rects.insert_or_assign(object, container_rects[object]);
-        }
-
-        for (size_t j = 0, object_count = objects.size(); j < object_count; ++j)
-        {
-            const Geo::AABBRect &rect = current_rects[objects[j]];
-            for (size_t k = 0, polyline_count = all_polylines.size(); k < polyline_count; ++k)
+            const Geo::AABBRect &container_rect = container_rects[all_containers[j]];
+            for (size_t k = 0, object_count = objects.size(); k < object_count; ++k)
             {
-                if (!Geo::is_intersected(rect, polyline_rects[all_polylines[k]]))
+                if (!Geo::is_intersected(current_rects[k], container_rect))
                 {
                     continue;
                 }
+                switch (objects[k]->type())
+                {
+                case Geo::Type::POLYGON:
+                    {
+                        Geo::Polygon *polygon = static_cast<Geo::Polygon *>(objects[k]);
+                        switch (all_containers[j]->type())
+                        {
+                        case Geo::Type::POLYGON:
+                            if (Geo::NoAABBTest::is_intersected(*polygon, *static_cast<Geo::Polygon *>(all_containers[j])))
+                            {
+                                objects.push_back(all_containers[j]);
+                                current_rect += container_rects[all_containers[j]];
+                                current_rects.emplace_back(container_rects[all_containers[j]]);
+                                all_containers.erase(all_containers.begin() + j);
+                                j = i + 1;
+                                --count;
+                                k = object_count - 1;
+                            }
+                            break;
+                        case Geo::Type::CIRCLE:
+                            if (Geo::is_intersected(*polygon, *static_cast<Geo::Circle *>(all_containers[j])))
+                            {
+                                objects.push_back(all_containers[j]);
+                                current_rect += container_rects[all_containers[j]];
+                                current_rects.emplace_back(container_rects[all_containers[j]]);
+                                all_containers.erase(all_containers.begin() + j--);
+                                --count;
+                                k = object_count - 1;
+                            }
+                            break;
+                        case Geo::Type::ELLIPSE:
+                            if (Geo::is_intersected(*polygon, *static_cast<Geo::Ellipse *>(all_containers[j])))
+                            {
+                                objects.push_back(all_containers[j]);
+                                current_rect += container_rects[all_containers[j]];
+                                current_rects.emplace_back(container_rects[all_containers[j]]);
+                                all_containers.erase(all_containers.begin() + j--);
+                                --count;
+                                k = object_count - 1;
+                            }
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                    break;
+                case Geo::Type::CIRCLE:
+                    {
+                        Geo::Circle *circle = static_cast<Geo::Circle *>(objects[k]);
+                        switch (all_containers[j]->type())
+                        {
+                        case Geo::Type::POLYGON:
+                            if (Geo::is_inside(*circle, *static_cast<Geo::Polygon *>(all_containers[j])))
+                            {
+                                objects.push_back(all_containers[j]);
+                                current_rect += container_rects[all_containers[j]];
+                                current_rects.emplace_back(container_rects[all_containers[j]]);
+                                all_containers.erase(all_containers.begin() + j--);
+                                --count;
+                                k = object_count - 1;
+                            }
+                            break;
+                        case Geo::Type::CIRCLE:
+                            if (Geo::is_inside(*circle, *static_cast<Geo::Circle *>(all_containers[j])))
+                            {
+                                objects.push_back(all_containers[j]);
+                                current_rect += container_rects[all_containers[j]];
+                                current_rects.emplace_back(container_rects[all_containers[j]]);
+                                all_containers.erase(all_containers.begin() + j--);
+                                --count;
+                                k = object_count - 1;
+                            }
+                            break;
+                        case Geo::Type::ELLIPSE:
+                            if (Geo::Point point0, point1, point2, point3; Geo::is_intersected(*circle,
+                                *static_cast<Geo::Ellipse *>(all_containers[j]), point0, point1, point2, point3))
+                            {
+                                objects.push_back(all_containers[j]);
+                                current_rect += container_rects[all_containers[j]];
+                                current_rects.emplace_back(container_rects[all_containers[j]]);
+                                all_containers.erase(all_containers.begin() + j--);
+                                --count;
+                                k = object_count - 1;
+                            }
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                    break;
+                case Geo::Type::ELLIPSE:
+                    {
+                        Geo::Ellipse *ellipse = static_cast<Geo::Ellipse *>(objects[k]);
+                        switch (all_containers[j]->type())
+                        {
+                        case Geo::Type::POLYGON:
+                            if (Geo::is_intersected(*static_cast<Geo::Polygon *>(all_containers[j]), *ellipse))
+                            {
+                                objects.push_back(all_containers[j]);
+                                current_rect += container_rects[all_containers[j]];
+                                current_rects.emplace_back(container_rects[all_containers[j]]);
+                                all_containers.erase(all_containers.begin() + j--);
+                                --count;
+                                k = object_count - 1;
+                            }
+                            break;
+                        case Geo::Type::CIRCLE:
+                            if (Geo::Point point0, point1, point2, point3; Geo::is_intersected(
+                                *static_cast<Geo::Circle *>(all_containers[j]), *ellipse, point0, point1, point2, point3))
+                            {
+                                objects.push_back(all_containers[j]);
+                                current_rect += container_rects[all_containers[j]];
+                                current_rects.emplace_back(container_rects[all_containers[j]]);
+                                all_containers.erase(all_containers.begin() + j--);
+                                --count;
+                                k = object_count - 1;
+                            }
+                            break;
+                        case Geo::Type::ELLIPSE:
+                            if (Geo::Point point0, point1, point2, point3; Geo::is_intersected(*ellipse,
+                                *static_cast<Geo::Ellipse *>(all_containers[j]), point0, point1, point2, point3))
+                            {
+                                objects.push_back(all_containers[j]);
+                                current_rect += container_rects[all_containers[j]];
+                                current_rects.emplace_back(container_rects[all_containers[j]]);
+                                all_containers.erase(all_containers.begin() + j--);
+                                --count;
+                                k = object_count - 1;
+                            }
+                            break;
+                        default:
+                            break;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+
+        for (size_t k = 0, polyline_count = all_polylines.size(), object_count = objects.size(); k < polyline_count; ++k)
+        {
+            if (!Geo::is_intersected(current_rect, polyline_rects[all_polylines[k]]))
+            {
+                continue;
+            }
+            for (size_t j = 0; j < object_count; ++j)
+            {
                 switch (objects[j]->type())
                 {
                 case Geo::Type::POLYGON:
                     switch (all_polylines[k]->type())
                     {
                     case Geo::Type::POLYLINE:
-                        if (Geo::NoAABBTest::is_intersected(*static_cast<Geo::Polyline *>(all_polylines[k]),
+                        if (Geo::is_intersected(*static_cast<Geo::Polyline *>(all_polylines[k]),
                                 *static_cast<Geo::Polygon *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
                             --polyline_count;
+                            j = object_count - 1;
                         }
                         break;
                     case Geo::Type::BEZIER:
-                        if (Geo::NoAABBTest::is_intersected(static_cast<Geo::Bezier *>(all_polylines[k])->shape(),
+                        if (Geo::is_intersected(static_cast<Geo::Bezier *>(all_polylines[k])->shape(),
                                 *static_cast<Geo::Polygon *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
                             --polyline_count;
+                            j = object_count - 1;
                         }
                         break;
                     case Geo::Type::BSPLINE:
-                        if (Geo::NoAABBTest::is_intersected(static_cast<Geo::BSpline *>(all_polylines[k])->shape(),
+                        if (Geo::is_intersected(static_cast<Geo::BSpline *>(all_polylines[k])->shape(),
                                 *static_cast<Geo::Polygon *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
                             --polyline_count;
+                            j = object_count - 1;
                         }
                         break;
                     case Geo::Type::TEXT:
-                        if (Geo::NoAABBTest::is_intersected(*static_cast<Geo::AABBRect *>(all_polylines[k]),
+                        if (Geo::is_intersected(*static_cast<Geo::AABBRect *>(all_polylines[k]),
                                 *static_cast<Geo::Polygon *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
                             --polyline_count;
+                            j = object_count - 1;
                         }
                         break;
                     default:
@@ -4016,6 +4036,7 @@ void Editer::auto_combinate()
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
                             --polyline_count;
+                            j = object_count - 1;
                         }
                         break;
                     case Geo::Type::BEZIER:
@@ -4025,6 +4046,7 @@ void Editer::auto_combinate()
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
                             --polyline_count;
+                            j = object_count - 1;
                         }
                         break;
                     case Geo::Type::BSPLINE:
@@ -4034,6 +4056,7 @@ void Editer::auto_combinate()
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
                             --polyline_count;
+                            j = object_count - 1;
                         }
                         break;
                     case Geo::Type::TEXT:
@@ -4043,6 +4066,7 @@ void Editer::auto_combinate()
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
                             --polyline_count;
+                            j = object_count - 1;
                         }
                         break;
                     default:
@@ -4059,6 +4083,7 @@ void Editer::auto_combinate()
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
                             --polyline_count;
+                            j = object_count - 1;
                         }
                         break;
                     case Geo::Type::BEZIER:
@@ -4068,6 +4093,7 @@ void Editer::auto_combinate()
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
                             --polyline_count;
+                            j = object_count - 1;
                         }
                         break;
                     case Geo::Type::BSPLINE:
@@ -4077,6 +4103,7 @@ void Editer::auto_combinate()
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
                             --polyline_count;
+                            j = object_count - 1;
                         }
                         break;
                     case Geo::Type::TEXT:
@@ -4086,6 +4113,7 @@ void Editer::auto_combinate()
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
                             --polyline_count;
+                            j = object_count - 1;
                         }
                         break;
                     default:
@@ -4320,68 +4348,287 @@ void Editer::auto_connect()
         return;
     }
 
-    Geo::Polyline *polyline0 = nullptr, *polyline1 = nullptr;
-    Geo::Bezier *bezier0 = nullptr, *bezier1 = nullptr;
-    Geo::BSpline *bspline0 = nullptr, *bspline1 = nullptr;
+    std::unordered_map<Geo::Geometry *, size_t> object_order;
+    std::unordered_map<int, std::vector<Geo::Geometry *>> distance_object_map0, distance_object_map1; // front distance, back distance
+    {
+        size_t index = 0;
+        for (Geo::Geometry *object : _graph->container_group())
+        {
+            switch (object->type())
+            {
+            case Geo::Type::POLYLINE:
+                {
+                    Geo::Polyline *polyline = static_cast<Geo::Polyline *>(object);
+                    double distance0 = std::hypot(polyline->front().x, polyline->front().y);
+                    double distance1 = std::hypot(polyline->back().x, polyline->back().y);
+                    object_order.insert_or_assign(polyline, index++);
+                    if (distance_object_map0.find(distance0) == distance_object_map0.end())
+                    {
+                        distance_object_map0.insert_or_assign(distance0, std::vector<Geo::Geometry *>{polyline});
+                    }
+                    else
+                    {
+                        distance_object_map0[distance0].push_back(polyline);
+                    }
+                    if (distance_object_map1.find(distance1) == distance_object_map1.end())
+                    {
+                        distance_object_map1.insert_or_assign(distance1, std::vector<Geo::Geometry *>{polyline});
+                    }
+                    else
+                    {
+                        distance_object_map1[distance1].push_back(polyline);
+                    }
+                }
+                break;
+            case Geo::Type::BEZIER:
+                {
+                    Geo::Bezier *bezier = static_cast<Geo::Bezier *>(object);
+                    double distance0 = std::hypot(bezier->front().x, bezier->front().y);
+                    double distance1 = std::hypot(bezier->back().x, bezier->back().y);
+                    object_order.insert_or_assign(bezier, index++);
+                    if (distance_object_map0.find(distance0) == distance_object_map0.end())
+                    {
+                        distance_object_map0.insert_or_assign(distance0, std::vector<Geo::Geometry *>{bezier});
+                    }
+                    else
+                    {
+                        distance_object_map0[distance0].push_back(bezier);
+                    }
+                    if (distance_object_map1.find(distance1) == distance_object_map1.end())
+                    {
+                        distance_object_map1.insert_or_assign(distance1, std::vector<Geo::Geometry *>{bezier});
+                    }
+                    else
+                    {
+                        distance_object_map1[distance1].push_back(bezier);
+                    }
+                }
+                break;
+            case Geo::Type::BSPLINE:
+                {
+                    Geo::BSpline *bspline = static_cast<Geo::BSpline *>(object);
+                    double distance0 = std::hypot(bspline->front().x, bspline->front().y);
+                    double distance1 = std::hypot(bspline->back().x, bspline->back().y);
+                    object_order.insert_or_assign(bspline, index++);
+                    if (distance_object_map0.find(distance0) == distance_object_map0.end())
+                    {
+                        distance_object_map0.insert_or_assign(distance0, std::vector<Geo::Geometry *>{bspline});
+                    }
+                    else
+                    {
+                        distance_object_map0[distance0].push_back(bspline);
+                    }
+                    if (distance_object_map1.find(distance1) == distance_object_map1.end())
+                    {
+                        distance_object_map1.insert_or_assign(distance1, std::vector<Geo::Geometry *>{bspline});
+                    }
+                    else
+                    {
+                        distance_object_map1[distance1].push_back(bspline);
+                    }
+                }
+                break;
+            default:
+                break;
+            }
+        }
+    }
+
     for (size_t i = 0, count = _graph->container_group().size(); i < count; ++i)
     {
+        Geo::Polyline *polyline0 = nullptr;
+        Geo::Bezier *bezier0 = nullptr;
+        Geo::BSpline *bspline0 = nullptr;
         Geo::Point front_i, back_i;
-        switch (_graph->container_group()[i]->type())
+        Geo::Geometry *object_i = _graph->container_group()[i];
+        switch (object_i->type())
         {
         case Geo::Type::POLYLINE:
-            polyline0 = static_cast<Geo::Polyline *>(_graph->container_group()[i]);
+            polyline0 = static_cast<Geo::Polyline *>(object_i);
             front_i = polyline0->front();
             back_i = polyline0->back();
-            bezier0 = nullptr;
-            bspline0 = nullptr;
             break;
         case Geo::Type::BEZIER:
-            bezier0 = static_cast<Geo::Bezier *>(_graph->container_group()[i]);
+            bezier0 = static_cast<Geo::Bezier *>(object_i);
             front_i = bezier0->front();
             back_i = bezier0->back();
-            polyline0 = nullptr;
-            bspline0 = nullptr;
             break;
         case Geo::Type::BSPLINE:
-            bspline0 = static_cast<Geo::BSpline *>(_graph->container_group()[i]);
+            bspline0 = static_cast<Geo::BSpline *>(object_i);
             front_i = bspline0->front();
             back_i = bspline0->back();
-            polyline0 = nullptr;
-            bezier0 = nullptr;
             break;
         default:
             continue;
         }
-
-        for (size_t j = i + 1; j < count; ++j)
         {
+            const double distance0 = std::hypot(front_i.x, front_i.y), distance1 = std::hypot(back_i.x, back_i.y);
+            distance_object_map0[distance0].erase(std::find(distance_object_map0[distance0].begin(),
+                distance_object_map0[distance0].end(), object_i));
+            distance_object_map1[distance1].erase(std::find(distance_object_map1[distance1].begin(),
+                distance_object_map1[distance1].end(), object_i));
+        }
+
+        while (true)
+        {
+            Geo::Geometry *object_j = nullptr;
+            size_t j = SIZE_MAX;
+            Geo::Polyline *polyline1 = nullptr;
+            Geo::Bezier *bezier1 = nullptr;
+            Geo::BSpline *bspline1 = nullptr;
             Geo::Point front_j, back_j;
-            switch (_graph->container_group()[j]->type())
+
+            {
+                const double distance0 = std::hypot(front_i.x, front_i.y);
+                const double distance1 = std::hypot(back_i.x, back_i.y);
+
+                if (distance_object_map0.find(distance0) != distance_object_map0.end())
+                {
+                    for (Geo::Geometry *object : distance_object_map0[distance0])
+                    {
+                        switch (object->type())
+                        {
+                        case Geo::Type::POLYLINE:
+                            polyline1 = static_cast<Geo::Polyline *>(object);
+                            front_j = polyline1->front();
+                            break;
+                        case Geo::Type::BEZIER:
+                            bezier1 = static_cast<Geo::Bezier *>(object);
+                            front_j = bezier1->front();
+                            break;
+                        case Geo::Type::BSPLINE:
+                            bspline1 = static_cast<Geo::BSpline *>(object);
+                            front_j = bspline1->front();
+                            break;
+                        }
+                        if (front_i == front_j && object_order[object] < j)
+                        {
+                            object_j = object;
+                            j = object_order[object_j];
+                        }
+                    }
+                }
+
+                if (distance_object_map1.find(distance0) != distance_object_map1.end())
+                {
+                    for (Geo::Geometry *object : distance_object_map1[distance0])
+                    {
+                        switch (object->type())
+                        {
+                        case Geo::Type::POLYLINE:
+                            polyline1 = static_cast<Geo::Polyline *>(object);
+                            back_j = polyline1->back();
+                            break;
+                        case Geo::Type::BEZIER:
+                            bezier1 = static_cast<Geo::Bezier *>(object);
+                            back_j = bezier1->back();
+                            break;
+                        case Geo::Type::BSPLINE:
+                            bspline1 = static_cast<Geo::BSpline *>(object);
+                            back_j = bspline1->back();
+                            break;
+                        }
+                        if (front_i == back_j && object_order[object] < j)
+                        {
+                            object_j = object;
+                            j = object_order[object_j];
+                        }
+                    }
+                }
+
+                if (distance_object_map0.find(distance1) != distance_object_map0.end())
+                {
+                    for (Geo::Geometry *object : distance_object_map0[distance1])
+                    {
+                        switch (object->type())
+                        {
+                        case Geo::Type::POLYLINE:
+                            polyline1 = static_cast<Geo::Polyline *>(object);
+                            front_j = polyline1->front();
+                            break;
+                        case Geo::Type::BEZIER:
+                            bezier1 = static_cast<Geo::Bezier *>(object);
+                            front_j = bezier1->front();
+                            break;
+                        case Geo::Type::BSPLINE:
+                            bspline1 = static_cast<Geo::BSpline *>(object);
+                            front_j = bspline1->front();
+                            break;
+                        }
+                        if (back_i == front_j && object_order[object] < j)
+                        {
+                            object_j = object;
+                            j = object_order[object_j];
+                        }
+                    }
+                }
+
+                if (distance_object_map1.find(distance1) != distance_object_map1.end())
+                {
+                    for (Geo::Geometry *object : distance_object_map1[distance1])
+                    {
+                        switch (object->type())
+                        {
+                        case Geo::Type::POLYLINE:
+                            polyline1 = static_cast<Geo::Polyline *>(object);
+                            back_j = polyline1->back();
+                            break;
+                        case Geo::Type::BEZIER:
+                            bezier1 = static_cast<Geo::Bezier *>(object);
+                            back_j = bezier1->back();
+                            break;
+                        case Geo::Type::BSPLINE:
+                            bspline1 = static_cast<Geo::BSpline *>(object);
+                            back_j = bspline1->back();
+                            break;
+                        }
+                        if (back_i == back_j && object_order[object] < j)
+                        {
+                            object_j = object;
+                            j = object_order[object_j];
+                        }
+                    }
+                }
+            }
+
+            if (object_j == nullptr)
+            {
+                break;
+            }
+
+            polyline1 = nullptr;
+            bezier1 = nullptr;
+            bspline1 = nullptr;
+            switch (object_j->type())
             {
             case Geo::Type::POLYLINE:
-                polyline1 = static_cast<Geo::Polyline *>(_graph->container_group()[j]);
+                polyline1 = static_cast<Geo::Polyline *>(object_j);
                 front_j = polyline1->front();
                 back_j = polyline1->back();
-                bezier1 = nullptr;
-                bspline1 = nullptr;
                 break;
             case Geo::Type::BEZIER:
-                bezier1 = static_cast<Geo::Bezier *>(_graph->container_group()[j]);
+                bezier1 = static_cast<Geo::Bezier *>(object_j);
                 front_j = bezier1->front();
                 back_j = bezier1->back();
-                polyline1 = nullptr;
-                bspline1 = nullptr;
                 break;
             case Geo::Type::BSPLINE:
-                bspline1 = static_cast<Geo::BSpline *>(_graph->container_group()[j]);
+                bspline1 = static_cast<Geo::BSpline *>(object_j);
                 front_j = bspline1->front();
                 back_j = bspline1->back();
-                polyline1 = nullptr;
-                bezier1 = nullptr;
                 break;
-            default:
-                continue;
             }
+
+            if (const double distance = std::hypot(front_j.x, front_j.y); distance_object_map0.find(distance) != distance_object_map0.end())
+            {
+                distance_object_map0[distance].erase(std::find(distance_object_map0[distance].begin(),
+                    distance_object_map0[distance].end(), object_j));
+            }
+            if (const double distance = std::hypot(back_j.x, back_j.y); distance_object_map1.find(distance) != distance_object_map1.end())
+            {
+                distance_object_map1[distance].erase(std::find(distance_object_map1[distance].begin(),
+                    distance_object_map1[distance].end(), object_j));
+            }
+            j = std::distance(_graph->container_group().begin(), std::find(_graph->container_group().begin(), _graph->container_group().end(), object_j));
 
             if (front_i == front_j)
             {
@@ -4412,6 +4659,7 @@ void Editer::auto_connect()
                 {
                     polyline0->insert(0, bspline1->shape().rbegin(), bspline1->shape().rend());
                 }
+                front_i = polyline0->front();
                 _graph->container_group().remove(j--);
                 --count;
             }
@@ -4444,6 +4692,7 @@ void Editer::auto_connect()
                 {
                     polyline0->insert(0, bspline1->shape().begin(), bspline1->shape().end());
                 }
+                front_i = polyline0->front();
                 _graph->container_group().remove(j--);
                 --count;
             }
@@ -4476,6 +4725,7 @@ void Editer::auto_connect()
                 {
                     polyline0->append(bspline1->shape().begin(), bspline1->shape().end());
                 }
+                back_i = polyline0->back();
                 _graph->container_group().remove(j--);
                 --count;
             }
@@ -4508,15 +4758,17 @@ void Editer::auto_connect()
                 {
                     polyline0->append(bspline1->shape().rbegin(), bspline1->shape().rend());
                 }
+                back_i = polyline0->back();
                 _graph->container_group().remove(j--);
                 --count;
             }
-        }
 
-        if (polyline0->front() == polyline0->back())
-        {
-            _graph->container_group().insert(i, new Geo::Polygon(polyline0->begin(), polyline0->end()));
-            _graph->container_group().remove(i + 1);
+            if (front_i == back_i)
+            {
+                _graph->container_group().insert(i, new Geo::Polygon(polyline0->begin(), polyline0->end()));
+                _graph->container_group().remove(i + 1);
+                break;
+            }
         }
     }
 }

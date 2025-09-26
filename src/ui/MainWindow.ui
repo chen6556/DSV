@@ -1377,10 +1377,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>0</x>
+             <x>-13</x>
              <y>0</y>
-             <width>120</width>
-             <height>648</height>
+             <width>107</width>
+             <height>414</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -1950,6 +1950,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
     <addaction name="show_cmd_line"/>
     <addaction name="show_origin"/>
     <addaction name="auto_layering"/>
+    <addaction name="auto_combinate"/>
     <addaction name="auto_connect"/>
     <addaction name="remember_file_type"/>
     <addaction name="auto_aligning"/>
@@ -2181,6 +2182,14 @@ QComboBox QAbstractItemView::item:selected
    </property>
    <property name="text">
     <string>Intersection</string>
+   </property>
+  </action>
+  <action name="auto_combinate">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Auto combinate</string>
    </property>
   </action>
  </widget>
