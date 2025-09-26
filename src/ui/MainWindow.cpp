@@ -237,6 +237,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         {
             ui->canvas->cut();
             ui->canvas->update();
+            ui->canvas->clear_cache();
         }
         break;
     case Qt::Key_V:
