@@ -313,6 +313,10 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
 void MainWindow::open_file()
 {
+    if (GlobalSetting::setting().graph->modified && MessageBox::question(this, "File is modified", "Save or not?") == QDialogButtonBox::StandardButton::Yes)
+    {
+        save_file();
+    }
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
@@ -1118,11 +1122,6 @@ void MainWindow::open_file(const QString &path)
     {
         return;
     }
-    else if (GlobalSetting::setting().graph->modified && MessageBox::question(this, "File is modified", "Save or not?") == QDialogButtonBox::StandardButton::Yes)
-    {
-        save_file();
-    }
-
     GlobalSetting::setting().file_path = path;
 
     _editer.delete_graph();
