@@ -676,9 +676,9 @@ namespace Geo
 
         Bezier(const Bezier &bezier);
 
-        Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const size_t n);
+        Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const size_t n, const bool is_path_points);
 
-        Bezier(const std::initializer_list<Point> &points, const size_t n);
+        Bezier(const std::initializer_list<Point> &points, const size_t n, const bool is_path_points);
 
         const Type type() const override;
 
@@ -686,6 +686,8 @@ namespace Geo
         size_t order() const;
 
         const Polyline &shape() const;
+
+        void update_control_points();
 
         void update_shape(const double step = 0.01, const double down_sampling_value = 0.02);
 

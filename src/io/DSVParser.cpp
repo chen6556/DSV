@@ -101,14 +101,14 @@ void Importer::store_bezier()
     if (_is_combination)
     {
         dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
-            new Geo::Bezier(_points.cbegin(), _points.cend(), _parameters.back()));
+            new Geo::Bezier(_points.cbegin(), _points.cend(), _parameters.back(), false));
         dynamic_cast<Geo::Bezier *>(dynamic_cast<Combination *>(_graph->container_groups().back().back())
             ->back())->update_shape();
     }
     else
     {
         _graph->container_groups().back().append(
-            new Geo::Bezier(_points.cbegin(), _points.cend(), _parameters.back()));
+            new Geo::Bezier(_points.cbegin(), _points.cend(), _parameters.back(), false));
         dynamic_cast<Geo::Bezier *>(_graph->container_groups().back().back())->update_shape();
     }
     _points.clear();

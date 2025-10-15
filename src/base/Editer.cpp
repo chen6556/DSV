@@ -914,6 +914,10 @@ void Editer::append(const Geo::AABBRect &rect)
 
 void Editer::append_bezier(const size_t order)
 {
+    if (_point_cache.size() < 5)
+    {
+        return _point_cache.clear();
+    }
     if (_graph == nullptr)
     {
         _graph = new Graph;
@@ -921,16 +925,9 @@ void Editer::append_bezier(const size_t order)
         _graph->append_group();
         _backup.set_graph(_graph);
     }
-    if (_point_cache.size() < order + 2)
-    {
-        return _point_cache.clear();
-    }
     _point_cache.pop_back();
-    while ((_point_cache.size() - 1) % order > 0)
-    {
-        _point_cache.pop_back();
-    }
-    _graph->append(new Geo::Bezier(_point_cache.begin(), _point_cache.end(), order), _current_group);
+    _point_cache.pop_back();
+    _graph->append(new Geo::Bezier(_point_cache.begin(), _point_cache.end(), order, true), _current_group);
     _point_cache.clear();
 
     _graph->modified = true;
@@ -1820,7 +1817,7 @@ bool Editer::offset(std::vector<Geo::Geometry *> objects, const double distance,
                 shape1.front() = (path_points.front() + (path_points[1] - path_points[0]).vertical().normalize() * distance);
                 shape1.back() = (path_points.back() + (path_points.back() - path_points[path_points.size() - 2]).vertical().normalize() * distance);
 
-                _graph->append(new Geo::Bezier(shape1.begin(), shape1.end(), bezier->order()), _current_group);
+                _graph->append(new Geo::Bezier(shape1.begin(), shape1.end(), bezier->order(), true), _current_group);
                 items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
             }
             break;

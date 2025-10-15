@@ -2197,17 +2197,25 @@ Bezier::Bezier(const Bezier &bezier)
     _shape.shape_fixed = true;
 }
 
-Bezier::Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const size_t n)
+Bezier::Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const size_t n, const bool is_path_points)
     : Polyline(begin, end), _order(n)
 {
     _shape.shape_fixed = true;
+    if (is_path_points)
+    {
+        update_control_points();
+    }
     update_shape(Bezier::default_step, Bezier::default_down_sampling_value);
 }
 
-Bezier::Bezier(const std::initializer_list<Point> &points, const size_t n)
+Bezier::Bezier(const std::initializer_list<Point> &points, const size_t n, const bool is_path_points)
     : Polyline(points), _order(n)
 {
     _shape.shape_fixed = true;
+    if (is_path_points)
+    {
+        update_control_points();
+    }
     update_shape(Bezier::default_step, Bezier::default_down_sampling_value);
 }
 
@@ -2226,29 +2234,103 @@ const Polyline &Bezier::shape() const
     return _shape;
 }
 
+void Bezier::update_control_points()
+{
+    std::vector<Geo::Point> paths(_points);
+    _points.erase(_points.begin() + 1, _points.end());
+    Geo::Point mid0((paths[1] + paths[2]) / 2), mid1((paths[0] + paths[1]) / 2);
+    _points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
+    switch (_order)
+    {
+    case 2:
+        for (size_t i = 1, count = paths.size() - 1; i < count; ++i)
+        {
+            mid1 = paths[i] - _points.back();
+            const double dis = Geo::distance(_points.back(), paths[i]) / 2;
+            _points.emplace_back(paths[i]);
+            _points.emplace_back(paths[i] + mid1.normalize() * dis);
+        }
+        break;
+    case 3:
+        for (size_t i = 1, count = paths.size() - 1; i < count; ++i)
+        {
+            mid0 = mid1;
+            mid1 = (paths[i] + paths[i + 1]) / 2;
+            _points.emplace_back(paths[i] + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) / 2);
+            _points.emplace_back(paths[i]);
+            _points.emplace_back(paths[i] + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
+        }
+        _points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
+        break;
+    default:
+        {
+            const size_t step = _order - 4;
+            for (size_t i = 1, count = paths.size() - 1; i < count; ++i)
+            {
+                mid0 = mid1;
+                mid1 = (paths[i] + paths[i + 1]) / 2;
+                const Geo::Point point = paths[i] + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) / 2;
+                const Geo::Vector vec = (point - _points.back()).normalize()
+                    * Geo::distance(_points.back(), point) / (step + 1);
+                for (size_t j = 1; j <= step; ++j)
+                {
+                    _points.emplace_back(_points.back() + vec);
+                }
+                _points.emplace_back(point);
+                _points.emplace_back(paths[i]);
+                _points.emplace_back(paths[i] + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
+            }
+            mid0 = mid1;
+            mid1 = (paths.front() + paths.back()) / 2;
+            const Geo::Point point = paths.back() + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) / 2;
+            const Geo::Vector vec = (point - _points.back()).normalize()
+                * Geo::distance(_points.back(), point) / (step + 1);
+            for (size_t j = 1; j <= step; ++j)
+            {
+                _points.emplace_back(_points.back() + vec);
+            }
+            _points.emplace_back(point);
+        }
+        break;
+    }
+    _points.emplace_back(paths.back());
+}
+
 void Bezier::update_shape(const double step, const double down_sampling_value)
 {
     assert(0 < step && step < 1);
     _shape.clear();
-    std::vector<int> temp(1, 1), nums(_order + 1, 1);
-    for (size_t i = 1; i <= _order; ++i)
+    std::vector<int> nums(_order + 1, 1);
+    switch (_order)
     {
-        for (size_t j = 1; j < i; ++j)
+    case 2:
+        nums[1] = 2;
+        break;
+    case 3:
+        nums[1] = nums[2] = 3;
+        break;
+    default:
         {
-            nums[j] = temp[j - 1] + temp[j];
+            std::vector<int> temp(1, 1);
+            for (size_t i = 1; i <= _order; ++i)
+            {
+                for (size_t j = 1; j < i; ++j)
+                {
+                    nums[j] = temp[j - 1] + temp[j];
+                }
+                temp.assign(nums.begin(), nums.begin() + i + 1);
+            }
         }
-        temp.assign(nums.begin(), nums.begin() + i + 1);
+        break;
     }
 
-    double t = 0;
-    Point point;
     for (size_t i = 0, end = _points.size() - _order; i < end; i += _order)
     {
         _shape.append(_points[i]);
-        t = 0;
+        double t = 0;
         while (t <= 1)
         {
-            point.clear();
+            Geo::Point point;
             for (size_t j = 0; j <= _order; ++j)
             {
                 point += (_points[j + i] * (nums[j] * std::pow(1 - t, _order - j) * std::pow(t, j))); 

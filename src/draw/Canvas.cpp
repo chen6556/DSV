@@ -1274,34 +1274,17 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             break;
         case Tool::Bezier:
-            if (_editer->point_cache().size() > _curve_order && (_editer->point_cache().size() - 2) % _curve_order == 0) 
-            {
-                const size_t count = _editer->point_cache().size();
-                if (_editer->point_cache()[count - 2].x == _editer->point_cache()[count - 3].x)
-                {
-                    _editer->point_cache().back().x = _editer->point_cache()[count - 2].x;
-                    _editer->point_cache().back().y = real_y1;
-                }
-                else
-                {
-                    _editer->point_cache().back().x = real_x1;
-                    _editer->point_cache().back().y = (_editer->point_cache()[count - 3].y - _editer->point_cache()[count - 2].y) /
-                        (_editer->point_cache()[count - 3].x - _editer->point_cache()[count - 2].x) * 
-                        (_mouse_pos_1.x() - _editer->point_cache()[count - 2].x) + _editer->point_cache()[count - 2].y;
-                }
-            }
-            else
-            {
-                _editer->point_cache().back() = Geo::Point(real_x1, real_y1);
-            }
-            _cache[_cache_count - 3] = _editer->point_cache().back().x;
-            _cache[_cache_count - 2] = _editer->point_cache().back().y;
+            _editer->point_cache().back().x = real_x1;
+            _editer->point_cache().back().y = real_y1;
+            _cache[_cache_count - 3] = real_x1;
+            _cache[_cache_count - 2] = real_y1;
             refresh_cache_vbo(3);
             break;
         case Tool::BSpline:
-            _editer->point_cache().back() = Geo::Point(real_x1, real_y1);
-            _cache[_cache_count - 3] = _editer->point_cache().back().x;
-            _cache[_cache_count - 2] = _editer->point_cache().back().y;
+            _editer->point_cache().back().x = real_x1;
+            _editer->point_cache().back().y = real_y1;
+            _cache[_cache_count - 3] = real_x1;
+            _cache[_cache_count - 2] = real_y1;
             refresh_cache_vbo(3);
             break;
         default:
