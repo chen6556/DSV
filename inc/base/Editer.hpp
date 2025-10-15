@@ -157,7 +157,9 @@ public:
 
     void down(Geo::Geometry *item);
 
-	void rotate(std::vector<Geo::Geometry *> objects, const double angle, const bool unitary, const bool all_layers);
+	void rotate(std::vector<Geo::Geometry *> objects, const double rad, const bool unitary, const bool all_layers);
+
+    void rotate(std::vector<Geo::Geometry *> objects, const double x, const double y, const double rad);
 
     // true:X false:Y
     void flip(std::vector<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers);

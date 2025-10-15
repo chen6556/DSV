@@ -63,6 +63,7 @@ void MainWindow::init()
     QObject::connect(ui->bezier_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Bezier); });
     QObject::connect(ui->curve_spb, &QSpinBox::valueChanged, ui->canvas, &Canvas::set_curve_order);
     QObject::connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Text); });
+    // QObject::connect(ui->rotate_btn, &QPushButton::clicked, [this]() { ui->canvas->set_operation(Canvas::Operation::Rotate); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
     QObject::connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::setting().auto_aligning = ui->auto_aligning->isChecked(); });
@@ -801,37 +802,8 @@ void MainWindow::split()
 
 void MainWindow::rotate()
 {
-    std::vector<Geo::Geometry *> objects = _editer.selected();
-    _editer.rotate(objects, ui->rotate_angle->value(), QApplication::keyboardModifiers() != Qt::ControlModifier, ui->to_all_layers->isChecked());
-    std::set<Geo::Type> types;
-    for (const Geo::Geometry *object : objects)
-    {
-        if (const Combination *combination = dynamic_cast<const Combination *>(object))
-        {
-            for (const Geo::Geometry *item : *combination)
-            {
-                types.insert(item->type());
-            }
-        }
-        else
-        {
-            types.insert(object->type());
-        }
-    }
-    if (types.empty())
-    {
-        ui->canvas->refresh_vbo(false);
-    }
-    else
-    {
-        ui->canvas->refresh_vbo(types, false);
-    }
-    if (objects.size() == 1)
-    {
-        ui->canvas->refresh_selected_ibo(objects.front());
-        ui->canvas->refresh_cache_vbo(0);
-    }
-    ui->canvas->update();
+    ui->canvas->rotate(ui->rotate_angle->value() * Geo::PI / 180,
+        QApplication::keyboardModifiers() != Qt::ControlModifier, ui->to_all_layers->isChecked());
 }
 
 void MainWindow::flip_x()

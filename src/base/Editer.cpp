@@ -2509,9 +2509,8 @@ void Editer::down(Geo::Geometry *item)
     }
 }
 
-void Editer::rotate(std::vector<Geo::Geometry *> objects, const double angle, const bool unitary, const bool all_layers)
+void Editer::rotate(std::vector<Geo::Geometry *> objects, const double rad, const bool unitary, const bool all_layers)
 {
-    const double rad = angle * Geo::PI / 180;
     Geo::Point coord;
     if (objects.empty())
     {
@@ -2600,6 +2599,16 @@ void Editer::rotate(std::vector<Geo::Geometry *> objects, const double angle, co
 
     _graph->modified = true;
     _backup.push_command(new UndoStack::RotateCommand(objects, coord.x, coord.y, rad, unitary));
+}
+
+void Editer::rotate(std::vector<Geo::Geometry *> objects, const double x, const double y, const double rad)
+{
+    for (Geo::Geometry *geo : objects)
+    {
+        geo->rotate(x, y, rad);
+    }
+    _graph->modified = true;
+    _backup.push_command(new UndoStack::RotateCommand(objects, x, y, rad, false));
 }
 
 void Editer::flip(std::vector<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers)

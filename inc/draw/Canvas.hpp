@@ -180,6 +180,8 @@ public:
 
     void paste(const double x, const double y);
 
+    void rotate(const double rad, const bool unitary, const bool to_all_layers);
+
     void polyline_cmd(const double x, const double y);
 
     void polyline_cmd();

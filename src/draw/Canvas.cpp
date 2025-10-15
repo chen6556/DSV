@@ -575,25 +575,39 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 update();
                 return QOpenGLWidget::mousePressEvent(event);
             case Operation::NoOperation:
-                if (event->modifiers() == Qt::AltModifier)
+                break;
+            case Operation::Rotate:
+                switch (_measure_angle_flag)
                 {
-                    double left = DBL_MAX, top = -DBL_MAX, right = -DBL_MAX, bottom = DBL_MAX;
-                    for (Geo::Geometry *obj : _editer->selected())
+                case 0:
+                    _stored_coord.x = _cache[6] = _cache[3] = _cache[0] = real_x1;
+                    _stored_coord.y = _cache[7] = _cache[4] = _cache[1] = real_y1;
+                    _cache[8] = _cache[5] = _cache[2] = 0.51;
+                    _measure_angle_flag = 1;
+                    break;
+                case 1:
+                    _cache[0] = real_x1;
+                    _cache[1] = real_y1;
+                    _measure_angle_flag = 2;
+                    break;
+                case 2:
+                    if (std::vector<Geo::Geometry *> objects = _editer->selected(); !objects.empty())
                     {
-                        Geo::AABBRect rect = obj->bounding_rect();
-                        left = std::min(left, rect.left());
-                        top = std::max(top, rect.top());
-                        right = std::max(right, rect.right());
-                        bottom = std::min(bottom, rect.bottom());
+                        const double angle = Geo::angle(Geo::Point(_cache[0], _cache[1]),
+                            _stored_coord, Geo::Point(real_x1, real_y1));
+                        for (Geo::Geometry *obj : objects)
+                        {
+                            obj->rotate(_stored_coord.x, _stored_coord.y, angle);
+                        }
+                        _measure_angle_flag = 0;
+                        refresh_selected_vbo();
+                        update();
                     }
-                    _stored_coord.x = (left + right) / 2;
-                    _stored_coord.y = (top + bottom) / 2;
-                    _refline_points[0] = 0;
-                    _operation = Operation::Rotate;
-                    emit operation_changed(Operation::Rotate);
-                    setCursor(Qt::CursorShape::ClosedHandCursor);
-                    return QOpenGLWidget::mousePressEvent(event);
+                    break;
+                default:
+                    break;
                 }
+                return QOpenGLWidget::mousePressEvent(event);
                 break;
             default:
                 break;
@@ -1078,11 +1092,13 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
             switch (_operation)
             {
             case Operation::Rotate:
-                _operation = Operation::NoOperation;
-                _editer->push_backup_command(new UndoStack::RotateCommand(_editer->selected(),
-                    _stored_coord.x, _stored_coord.y, Geo::degree_to_rad(_refline_points[0]), true));
-                emit operation_changed(Operation::NoOperation);
-                setCursor(Qt::CursorShape::CrossCursor);
+                if (_measure_angle_flag == 0)
+                {
+                    _operation = Operation::NoOperation;
+                    _editer->push_backup_command(new UndoStack::RotateCommand(_editer->selected(),
+                        _stored_coord.x, _stored_coord.y, Geo::degree_to_rad(_refline_points[0]), true));
+                    emit operation_changed(Operation::NoOperation);
+                }
                 break;
             default:
                 break;
@@ -1298,35 +1314,18 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     {
         if (_operation == Operation::Rotate)
         {
-            if (std::vector<Geo::Geometry *> objects = _editer->selected(); !objects.empty())
+            if (_measure_angle_flag > 0)
             {
-                double angle = Geo::angle(Geo::Point(real_x0, real_y0), _stored_coord, Geo::Point(real_x1, real_y1));
-                angle = Geo::rad_to_degree(angle);
-                if (angle > 0.2 && angle < 1) // 提高灵敏度,直接四舍五入会导致难以转动小角度
+                if (_measure_angle_flag == 1)
                 {
-                    angle = 1;
+                    _cache[0] = real_x1;
+                    _cache[1] = real_y1;
                 }
-                else if (angle < -0.2 && angle > -1)
+                else
                 {
-                    angle = -1;
+                    _cache[6] = real_x1;
+                    _cache[7] = real_y1;
                 }
-                angle = Geo::degree_to_rad(std::round(angle));
-                for (Geo::Geometry *obj : objects)
-                {
-                    obj->rotate(_stored_coord.x, _stored_coord.y, angle);
-                }
-                angle = _refline_points[0] + Geo::rad_to_degree(angle);
-                if (angle > 360)
-                {
-                    angle -= 360;
-                }
-                else if (angle < -360)
-                {
-                    angle += 360;
-                }
-                _refline_points[0] = angle;
-                _info_labels[1]->setText(QString("%1°").arg(angle));
-                refresh_selected_vbo();
             }
         }
         else if (is_obj_moveable())
@@ -2045,6 +2044,63 @@ void Canvas::paste(const double x, const double y)
         refresh_vbo(types, true);
         refresh_selected_ibo();
         update();
+    }
+}
+
+void Canvas::rotate(const double rad, const bool unitary, const bool to_all_layers)
+{
+    if (_operation == Operation::Rotate)
+    {
+        if (std::vector<Geo::Geometry *> objects = _editer->selected(); !objects.empty())
+        {
+            if (_last_point == _stored_coord)
+            {
+                _editer->rotate(objects, rad, unitary, to_all_layers);
+            }
+            else
+            {
+                _editer->rotate(objects, _stored_coord.x, _stored_coord.y, rad);
+            }
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : objects)
+            {
+                if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                {
+                    for (const Geo::Geometry *item : *combination)
+                    {
+                        types.insert(item->type());
+                    }
+                }
+                else
+                {
+                    types.insert(object->type());
+                }
+            }
+            if (types.empty())
+            {
+                refresh_vbo(false);
+            }
+            else
+            {
+                refresh_vbo(types, false);
+            }
+            if (objects.size() == 1)
+            {
+                refresh_selected_ibo(objects.front());
+                refresh_cache_vbo(0);
+            }
+            update();
+        }
+        _measure_angle_flag = 0;
+        _operation = Operation::NoOperation;
+        emit operation_changed(Operation::NoOperation);
+    }
+    else
+    {
+        _stored_coord.x = _stored_coord.y = _last_point.x = _last_point.y = 0;
+        _operation = Operation::Rotate;
+        _object_cache.clear();
+        emit operation_changed(Operation::Rotate);
     }
 }
 
