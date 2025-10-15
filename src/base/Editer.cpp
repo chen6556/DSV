@@ -1409,21 +1409,15 @@ bool Editer::connect(std::vector<Geo::Geometry *> objects, const double connect_
         return false;
     }
 
-    std::vector<Geo::Geometry *> polylines;
+    std::vector<Geo::Polyline *> polylines;
     std::vector<size_t> indexs;
     ContainerGroup &group = _graph->container_group(_current_group);
     for (Geo::Geometry *object : objects)
     {
-        switch (object->type())
+        if (Geo::Polyline *polyline = dynamic_cast<Geo::Polyline *>(object))
         {
-        case Geo::Type::POLYLINE:
-        case Geo::Type::BEZIER:
-        case Geo::Type::BSPLINE:
-            polylines.push_back(object);
-            indexs.push_back(std::distance(group.begin(), std::find(group.begin(), group.end(), object)));
-            break;
-        default:
-            break;
+            polylines.push_back(polyline);
+            indexs.push_back(std::distance(group.begin(), std::find(group.begin(), group.end(), polyline)));
         }
     }
     std::vector<bool> merged(polylines.size(), false);
@@ -1432,77 +1426,17 @@ bool Editer::connect(std::vector<Geo::Geometry *> objects, const double connect_
     size_t index = 0;
     for (size_t i = 0, count = indexs.size(); i < count; ++i)
     {
-        Geo::Point front_i, back_i;
-        switch (polylines[i]->type())
-        {
-        case Geo::Type::POLYLINE:
-        case Geo::Type::BEZIER:
-            front_i = static_cast<Geo::Polyline *>(polylines[i])->front();
-            back_i = static_cast<Geo::Polyline *>(polylines[i])->back();
-            break;
-        case Geo::Type::BSPLINE:
-            front_i = static_cast<Geo::BSpline *>(polylines[i])->front();
-            back_i = static_cast<Geo::BSpline *>(polylines[i])->back();
-            break;
-        default:
-            break;
-        }
+        const Geo::Point front_i = polylines[i]->front();
+        const Geo::Point back_i = polylines[i]->back();
         for (size_t j = i + 1; j < count; ++j)
         {
-            Geo::Point front_j, back_j;
-            switch (polylines[j]->type())
-            {
-            case Geo::Type::POLYLINE:
-            case Geo::Type::BEZIER:
-                front_j = static_cast<Geo::Polyline *>(polylines[j])->front();
-                back_j = static_cast<Geo::Polyline *>(polylines[j])->back();
-                break;
-            case Geo::Type::BSPLINE:
-                front_j = static_cast<Geo::BSpline *>(polylines[j])->front();
-                back_j = static_cast<Geo::BSpline *>(polylines[j])->back();
-                break;
-            default:
-                break;
-            }
+            const Geo::Point front_j = polylines[j]->front();
+            const Geo::Point back_j = polylines[j]->back();
             if (Geo::distance_square(front_i, front_j) < connect_distance * connect_distance)
             {
-                polyline = new Geo::Polyline();
-                switch (polylines[i]->type())
-                {
-                case Geo::Type::POLYLINE:
-                    polyline->append(static_cast<Geo::Polyline *>(polylines[i])->begin(),
-                        static_cast<Geo::Polyline *>(polylines[i])->end());
-                    break;
-                case Geo::Type::BEZIER:
-                    polyline->append(static_cast<Geo::Bezier *>(polylines[i])->shape().begin(),
-                        static_cast<Geo::Bezier *>(polylines[i])->shape().end());
-                    break;
-                case Geo::Type::BSPLINE:
-                    polyline->append(static_cast<Geo::BSpline *>(polylines[i])->shape().begin(),
-                        static_cast<Geo::BSpline *>(polylines[i])->shape().end());
-                    break;
-                default:
-                    break;
-                }
+                polyline = new Geo::Polyline(polylines[i]->begin(), polylines[i]->end());
                 std::reverse(polyline->begin(), polyline->end());
-
-                switch (polylines[j]->type())
-                {
-                case Geo::Type::POLYLINE:
-                    polyline->append(static_cast<Geo::Polyline *>(polylines[j])->begin(),
-                        static_cast<Geo::Polyline *>(polylines[j])->end());
-                    break;
-                case Geo::Type::BEZIER:
-                    polyline->append(static_cast<Geo::Bezier *>(polylines[j])->shape().begin(),
-                        static_cast<Geo::Bezier *>(polylines[j])->shape().end());
-                    break;
-                case Geo::Type::BSPLINE:
-                    polyline->append(static_cast<Geo::BSpline *>(polylines[j])->shape().begin(),
-                        static_cast<Geo::BSpline*>(polylines[j])->shape().end());
-                    break;
-                default:
-                    break;
-                }
+                polyline->append(polylines[j]->begin(), polylines[j]->end());
 
                 merged[i] = merged[j] = true;
                 index = i;
@@ -1511,42 +1445,8 @@ bool Editer::connect(std::vector<Geo::Geometry *> objects, const double connect_
             }
             else if (Geo::distance_square(front_i, back_j) < connect_distance * connect_distance)
             {
-                polyline = new Geo::Polyline();
-                switch (polylines[j]->type())
-                {
-                case Geo::Type::POLYLINE:
-                    polyline->append(static_cast<Geo::Polyline *>(polylines[j])->begin(),
-                        static_cast<Geo::Polyline *>(polylines[j])->end());
-                    break;
-                case Geo::Type::BEZIER:
-                    polyline->append(static_cast<Geo::Bezier *>(polylines[j])->shape().begin(),
-                        static_cast<Geo::Bezier *>(polylines[j])->shape().end());
-                    break;
-                case Geo::Type::BSPLINE:
-                    polyline->append(static_cast<Geo::BSpline *>(polylines[j])->shape().begin(),
-                        static_cast<Geo::BSpline *>(polylines[j])->shape().end());
-                    break;
-                default:
-                    break;
-                }
-
-                switch (polylines[i]->type())
-                {
-                case Geo::Type::POLYLINE:
-                    polyline->append(static_cast<Geo::Polyline *>(polylines[i])->begin(),
-                        static_cast<Geo::Polyline *>(polylines[i])->end());
-                    break;
-                case Geo::Type::BEZIER:
-                    polyline->append(static_cast<Geo::Bezier *>(polylines[i])->shape().begin(),
-                        static_cast<Geo::Bezier *>(polylines[i])->shape().end());
-                    break;
-                case Geo::Type::BSPLINE:
-                    polyline->append(static_cast<Geo::BSpline *>(polylines[i])->shape().begin(),
-                        static_cast<Geo::BSpline *>(polylines[i])->shape().end());
-                    break;
-                default:
-                    break;
-                }
+                polyline = new Geo::Polyline(polylines[j]->begin(), polylines[j]->end());
+                polyline->append(polylines[i]->begin(), polylines[i]->end());
 
                 merged[i] = merged[j] = true;
                 index = i;
@@ -1555,42 +1455,8 @@ bool Editer::connect(std::vector<Geo::Geometry *> objects, const double connect_
             }
             else if (Geo::distance_square(back_i, front_j) < connect_distance * connect_distance )
             {
-                polyline = new Geo::Polyline();
-                switch (polylines[i]->type())
-                {
-                case Geo::Type::POLYLINE:
-                    polyline->append(static_cast<Geo::Polyline *>(polylines[i])->begin(),
-                        static_cast<Geo::Polyline *>(polylines[i])->end());
-                    break;
-                case Geo::Type::BEZIER:
-                    polyline->append(static_cast<Geo::Bezier *>(polylines[i])->shape().begin(),
-                        static_cast<Geo::Bezier *>(polylines[i])->shape().end());
-                    break;
-                case Geo::Type::BSPLINE:
-                    polyline->append(static_cast<Geo::BSpline *>(polylines[i])->shape().begin(),
-                        static_cast<Geo::BSpline *>(polylines[i])->shape().end());
-                    break;
-                default:
-                    break;
-                }
-
-                switch (polylines[j]->type())
-                {
-                case Geo::Type::POLYLINE:
-                    polyline->append(static_cast<Geo::Polyline *>(polylines[j])->begin(),
-                        static_cast<Geo::Polyline *>(polylines[j])->end());
-                    break;
-                case Geo::Type::BEZIER:
-                    polyline->append(static_cast<Geo::Bezier *>(polylines[j])->shape().begin(),
-                        static_cast<Geo::Bezier *>(polylines[j])->shape().end());
-                    break;
-                case Geo::Type::BSPLINE:
-                    polyline->append(static_cast<Geo::BSpline *>(polylines[j])->shape().begin(),
-                        static_cast<Geo::BSpline *>(polylines[j])->shape().end());
-                    break;
-                default:
-                    break;
-                }
+                polyline = new Geo::Polyline(polylines[i]->begin(), polylines[i]->end());
+                polyline->append(polylines[j]->begin(), polylines[j]->end());
 
                 merged[i] = merged[j] = true;
                 index = i;
@@ -1599,42 +1465,8 @@ bool Editer::connect(std::vector<Geo::Geometry *> objects, const double connect_
             }
             else if (Geo::distance_square(back_i, back_j) < connect_distance * connect_distance)
             {
-                polyline = new Geo::Polyline();
-                switch (polylines[i]->type())
-                {
-                case Geo::Type::POLYLINE:
-                    polyline->append(static_cast<Geo::Polyline *>(polylines[i])->begin(),
-                        static_cast<Geo::Polyline *>(polylines[i])->end());
-                    break;
-                case Geo::Type::BEZIER:
-                    polyline->append(static_cast<Geo::Bezier *>(polylines[i])->shape().begin(),
-                        static_cast<Geo::Bezier *>(polylines[i])->shape().end());
-                    break;
-                case Geo::Type::BSPLINE:
-                    polyline->append(static_cast<Geo::BSpline *>(polylines[i])->shape().begin(),
-                        static_cast<Geo::BSpline *>(polylines[i])->shape().end());
-                    break;
-                default:
-                    break;
-                }
-
-                switch (polylines[j]->type())
-                {
-                case Geo::Type::POLYLINE:
-                    polyline->append(static_cast<Geo::Polyline *>(polylines[j])->rbegin(),
-                        static_cast<Geo::Polyline *>(polylines[j])->rend());
-                    break;
-                case Geo::Type::BEZIER:
-                    polyline->append(static_cast<Geo::Bezier *>(polylines[j])->shape().rbegin(),
-                        static_cast<Geo::Bezier *>(polylines[j])->shape().rend());
-                    break;
-                case Geo::Type::BSPLINE:
-                    polyline->append(static_cast<Geo::BSpline *>(polylines[j])->shape().rbegin(),
-                        static_cast<Geo::BSpline *>(polylines[j])->shape().rend());
-                    break;
-                default:
-                    break;
-                }
+                polyline = new Geo::Polyline(polylines[i]->begin(), polylines[i]->end());
+                polyline->append(polylines[j]->rbegin(), polylines[j]->rend());
 
                 merged[i] = merged[j] = true;
                 index = i;
@@ -1657,110 +1489,29 @@ bool Editer::connect(std::vector<Geo::Geometry *> objects, const double connect_
             continue;
         }
 
-        Geo::Point front_i, back_i;
-        switch (polylines[i]->type())
-        {
-        case Geo::Type::POLYLINE:
-        case Geo::Type::BEZIER:
-            front_i = static_cast<Geo::Polyline *>(polylines[i])->front();
-            back_i = static_cast<Geo::Polyline *>(polylines[i])->back();
-            break;
-        case Geo::Type::BSPLINE:
-            front_i = static_cast<Geo::BSpline *>(polylines[i])->front();
-            back_i = static_cast<Geo::BSpline *>(polylines[i])->back();
-            break;
-        default:
-            break;
-        }
+        Geo::Point front_i = polylines[i]->front();
+        Geo::Point back_i = polylines[i]->back();
         if (Geo::distance_square(polyline->front(), front_i) < connect_distance * connect_distance)
         {
-            switch (polylines[i]->type())
-            {
-            case Geo::Type::POLYLINE:
-                polyline->insert(0, static_cast<Geo::Polyline *>(polylines[i])->rbegin(),
-                    static_cast<Geo::Polyline *>(polylines[i])->rend());
-                break;
-            case Geo::Type::BEZIER:
-                polyline->insert(0, static_cast<Geo::Bezier *>(polylines[i])->shape().rbegin(),
-                    static_cast<Geo::Bezier *>(polylines[i])->shape().rend());
-                break;
-            case Geo::Type::BSPLINE:
-                polyline->insert(0, static_cast<Geo::BSpline *>(polylines[i])->shape().rbegin(),
-                    static_cast<Geo::BSpline *>(polylines[i])->shape().rend());
-                break;
-            default:
-                break;
-            }
-
+            polyline->insert(0, polylines[i]->rbegin(), polylines[i]->rend());
             merged[i] = true;
             i = 0;
         }
         else if (Geo::distance_square(polyline->front(), back_i) < connect_distance * connect_distance)
         {
-            switch (polylines[i]->type())
-            {
-            case Geo::Type::POLYLINE:
-                polyline->insert(0, static_cast<Geo::Polyline *>(polylines[i])->begin(),
-                    static_cast<Geo::Polyline *>(polylines[i])->end());
-                break;
-            case Geo::Type::BEZIER:
-                polyline->insert(0, static_cast<Geo::Bezier *>(polylines[i])->shape().begin(),
-                    static_cast<Geo::Bezier *>(polylines[i])->shape().end());
-                break;
-            case Geo::Type::BSPLINE:
-                polyline->insert(0, static_cast<Geo::BSpline *>(polylines[i])->shape().begin(),
-                    static_cast<Geo::BSpline *>(polylines[i])->shape().end());
-                break;
-            default:
-                break;
-            }
-
+            polyline->insert(0, polylines[i]->begin(), polylines[i]->end());
             merged[i] = true;
             i = 0;
         }
         else if (Geo::distance_square(polyline->back(), front_i) < connect_distance * connect_distance)
         {
-            switch (polylines[i]->type())
-            {
-            case Geo::Type::POLYLINE:
-                polyline->append(static_cast<Geo::Polyline *>(polylines[i])->begin(),
-                    static_cast<Geo::Polyline *>(polylines[i])->end());
-                break;
-            case Geo::Type::BEZIER:
-                polyline->append(static_cast<Geo::Bezier *>(polylines[i])->shape().begin(),
-                    static_cast<Geo::Bezier *>(polylines[i])->shape().end());
-                break;
-            case Geo::Type::BSPLINE:
-                polyline->append(static_cast<Geo::BSpline *>(polylines[i])->shape().begin(),
-                        static_cast<Geo::BSpline *>(polylines[i])->shape().end());
-                break;
-            default:
-                break;
-            }
-
+            polyline->append(polylines[i]->begin(), polylines[i]->end());
             merged[i] = true;
             i = 0;
         }
         else if (Geo::distance_square(polyline->back(), back_i) < connect_distance * connect_distance)
         {
-            switch (polylines[i]->type())
-            {
-            case Geo::Type::POLYLINE:
-                polyline->append(static_cast<Geo::Polyline *>(polylines[i])->rbegin(),
-                    static_cast<Geo::Polyline *>(polylines[i])->rend());
-                break;
-            case Geo::Type::BEZIER:
-                polyline->append(static_cast<Geo::Bezier *>(polylines[i])->shape().rbegin(),
-                    static_cast<Geo::Bezier *>(polylines[i])->shape().rend());
-                break;
-            case Geo::Type::BSPLINE:
-                polyline->append(static_cast<Geo::BSpline *>(polylines[i])->shape().rbegin(),
-                    static_cast<Geo::BSpline *>(polylines[i])->shape().rend());
-                break;
-            default:
-                break;
-            }
-
+            polyline->append(polylines[i]->rbegin(), polylines[i]->rend());
             merged[i] = true;
             i = 0;
         }
@@ -1816,46 +1567,15 @@ bool Editer::close_polyline(std::vector<Geo::Geometry *> objects)
     size_t index;
     for (Geo::Geometry *object : objects)
     {
-        switch (object->type())
+        if (const Geo::Polyline *polyline = dynamic_cast<const Geo::Polyline *>(object);
+            polyline != nullptr && polyline->size() >= 3)
         {
-        case Geo::Type::POLYLINE:
-            if (static_cast<Geo::Polyline *>(object)->size() < 3)
-            {
-                continue;
-            }
-            shape = new Geo::Polygon(*static_cast<Geo::Polyline *>(object));
+            shape = new Geo::Polygon(*polyline);
             shape->is_selected = true;
             index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
             add_items.emplace_back(shape, _current_group, index);
             remove_items.emplace_back(group.pop(index), _current_group, index);
             group.insert(index, shape);
-            break;
-        case Geo::Type::BEZIER:
-            if (static_cast<Geo::Bezier *>(object)->shape().size() < 3)
-            {
-                continue;
-            }
-            shape = new Geo::Polygon(static_cast<Geo::Bezier *>(object)->shape());
-            shape->is_selected = true;
-            index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
-            add_items.emplace_back(shape, _current_group, index);
-            remove_items.emplace_back(group.pop(index), _current_group, index);
-            group.insert(index, shape);
-            break;
-        case Geo::Type::BSPLINE:
-            if (static_cast<Geo::BSpline *>(object)->shape().size() < 3)
-            {
-                continue;
-            }
-            shape = new Geo::Polygon(static_cast<Geo::BSpline *>(object)->shape());
-            shape->is_selected = true;
-            index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
-            add_items.emplace_back(shape, _current_group, index);
-            remove_items.emplace_back(group.pop(index), _current_group, index);
-            group.insert(index, shape);
-            break;
-        default:
-            break;
         }
     }
 
@@ -4433,88 +4153,33 @@ void Editer::auto_connect()
         return;
     }
 
-    std::unordered_map<Geo::Geometry *, size_t> object_order;
-    std::unordered_map<int, std::vector<Geo::Geometry *>> distance_object_map0, distance_object_map1; // front distance, back distance
+    std::unordered_map<Geo::Polyline *, size_t> object_order;
+    std::unordered_map<int, std::vector<Geo::Polyline *>> distance_object_map0, distance_object_map1; // front distance, back distance
     {
         size_t index = 0;
         for (Geo::Geometry *object : _graph->container_group())
         {
-            switch (object->type())
+            if (Geo::Polyline *polyline = dynamic_cast<Geo::Polyline *>(object))
             {
-            case Geo::Type::POLYLINE:
+                double distance0 = std::hypot(polyline->front().x, polyline->front().y);
+                double distance1 = std::hypot(polyline->back().x, polyline->back().y);
+                object_order.insert_or_assign(polyline, index++);
+                if (distance_object_map0.find(distance0) == distance_object_map0.end())
                 {
-                    Geo::Polyline *polyline = static_cast<Geo::Polyline *>(object);
-                    double distance0 = std::hypot(polyline->front().x, polyline->front().y);
-                    double distance1 = std::hypot(polyline->back().x, polyline->back().y);
-                    object_order.insert_or_assign(polyline, index++);
-                    if (distance_object_map0.find(distance0) == distance_object_map0.end())
-                    {
-                        distance_object_map0.insert_or_assign(distance0, std::vector<Geo::Geometry *>{polyline});
-                    }
-                    else
-                    {
-                        distance_object_map0[distance0].push_back(polyline);
-                    }
-                    if (distance_object_map1.find(distance1) == distance_object_map1.end())
-                    {
-                        distance_object_map1.insert_or_assign(distance1, std::vector<Geo::Geometry *>{polyline});
-                    }
-                    else
-                    {
-                        distance_object_map1[distance1].push_back(polyline);
-                    }
+                    distance_object_map0.insert_or_assign(distance0, std::vector<Geo::Polyline *>{polyline});
                 }
-                break;
-            case Geo::Type::BEZIER:
+                else
                 {
-                    Geo::Bezier *bezier = static_cast<Geo::Bezier *>(object);
-                    double distance0 = std::hypot(bezier->front().x, bezier->front().y);
-                    double distance1 = std::hypot(bezier->back().x, bezier->back().y);
-                    object_order.insert_or_assign(bezier, index++);
-                    if (distance_object_map0.find(distance0) == distance_object_map0.end())
-                    {
-                        distance_object_map0.insert_or_assign(distance0, std::vector<Geo::Geometry *>{bezier});
-                    }
-                    else
-                    {
-                        distance_object_map0[distance0].push_back(bezier);
-                    }
-                    if (distance_object_map1.find(distance1) == distance_object_map1.end())
-                    {
-                        distance_object_map1.insert_or_assign(distance1, std::vector<Geo::Geometry *>{bezier});
-                    }
-                    else
-                    {
-                        distance_object_map1[distance1].push_back(bezier);
-                    }
+                    distance_object_map0[distance0].push_back(polyline);
                 }
-                break;
-            case Geo::Type::BSPLINE:
+                if (distance_object_map1.find(distance1) == distance_object_map1.end())
                 {
-                    Geo::BSpline *bspline = static_cast<Geo::BSpline *>(object);
-                    double distance0 = std::hypot(bspline->front().x, bspline->front().y);
-                    double distance1 = std::hypot(bspline->back().x, bspline->back().y);
-                    object_order.insert_or_assign(bspline, index++);
-                    if (distance_object_map0.find(distance0) == distance_object_map0.end())
-                    {
-                        distance_object_map0.insert_or_assign(distance0, std::vector<Geo::Geometry *>{bspline});
-                    }
-                    else
-                    {
-                        distance_object_map0[distance0].push_back(bspline);
-                    }
-                    if (distance_object_map1.find(distance1) == distance_object_map1.end())
-                    {
-                        distance_object_map1.insert_or_assign(distance1, std::vector<Geo::Geometry *>{bspline});
-                    }
-                    else
-                    {
-                        distance_object_map1[distance1].push_back(bspline);
-                    }
+                    distance_object_map1.insert_or_assign(distance1, std::vector<Geo::Polyline *>{polyline});
                 }
-                break;
-            default:
-                break;
+                else
+                {
+                    distance_object_map1[distance1].push_back(polyline);
+                }
             }
         }
     }
@@ -4522,70 +4187,41 @@ void Editer::auto_connect()
     for (size_t i = 0, count = _graph->container_group().size(); i < count; ++i)
     {
         Geo::Polyline *polyline0 = nullptr;
-        Geo::Bezier *bezier0 = nullptr;
-        Geo::BSpline *bspline0 = nullptr;
         Geo::Point front_i, back_i;
-        Geo::Geometry *object_i = _graph->container_group()[i];
-        switch (object_i->type())
+        if (polyline0 = dynamic_cast<Geo::Polyline *>(_graph->container_group()[i]))
         {
-        case Geo::Type::POLYLINE:
-            polyline0 = static_cast<Geo::Polyline *>(object_i);
             front_i = polyline0->front();
             back_i = polyline0->back();
-            break;
-        case Geo::Type::BEZIER:
-            bezier0 = static_cast<Geo::Bezier *>(object_i);
-            front_i = bezier0->front();
-            back_i = bezier0->back();
-            break;
-        case Geo::Type::BSPLINE:
-            bspline0 = static_cast<Geo::BSpline *>(object_i);
-            front_i = bspline0->front();
-            back_i = bspline0->back();
-            break;
-        default:
+        }
+        else
+        {
             continue;
         }
         {
             const double distance0 = std::hypot(front_i.x, front_i.y), distance1 = std::hypot(back_i.x, back_i.y);
             distance_object_map0[distance0].erase(std::find(distance_object_map0[distance0].begin(),
-                distance_object_map0[distance0].end(), object_i));
+                distance_object_map0[distance0].end(), polyline0));
             distance_object_map1[distance1].erase(std::find(distance_object_map1[distance1].begin(),
-                distance_object_map1[distance1].end(), object_i));
+                distance_object_map1[distance1].end(), polyline0));
         }
 
         while (true)
         {
-            Geo::Geometry *object_j = nullptr;
             size_t j = SIZE_MAX;
             Geo::Polyline *polyline1 = nullptr;
-            Geo::Bezier *bezier1 = nullptr;
-            Geo::BSpline *bspline1 = nullptr;
             Geo::Point front_j, back_j;
 
             {
                 const double distance0 = std::hypot(front_i.x, front_i.y);
                 const double distance1 = std::hypot(back_i.x, back_i.y);
+                Geo::Polyline *object_j = nullptr;
 
                 if (distance_object_map0.find(distance0) != distance_object_map0.end())
                 {
-                    for (Geo::Geometry *object : distance_object_map0[distance0])
+                    for (Geo::Polyline *object : distance_object_map0[distance0])
                     {
-                        switch (object->type())
-                        {
-                        case Geo::Type::POLYLINE:
-                            polyline1 = static_cast<Geo::Polyline *>(object);
-                            front_j = polyline1->front();
-                            break;
-                        case Geo::Type::BEZIER:
-                            bezier1 = static_cast<Geo::Bezier *>(object);
-                            front_j = bezier1->front();
-                            break;
-                        case Geo::Type::BSPLINE:
-                            bspline1 = static_cast<Geo::BSpline *>(object);
-                            front_j = bspline1->front();
-                            break;
-                        }
+                        polyline1 = object;
+                        front_j = polyline1->front();
                         if (front_i == front_j && object_order[object] < j)
                         {
                             object_j = object;
@@ -4596,23 +4232,10 @@ void Editer::auto_connect()
 
                 if (distance_object_map1.find(distance0) != distance_object_map1.end())
                 {
-                    for (Geo::Geometry *object : distance_object_map1[distance0])
+                    for (Geo::Polyline *object : distance_object_map1[distance0])
                     {
-                        switch (object->type())
-                        {
-                        case Geo::Type::POLYLINE:
-                            polyline1 = static_cast<Geo::Polyline *>(object);
-                            back_j = polyline1->back();
-                            break;
-                        case Geo::Type::BEZIER:
-                            bezier1 = static_cast<Geo::Bezier *>(object);
-                            back_j = bezier1->back();
-                            break;
-                        case Geo::Type::BSPLINE:
-                            bspline1 = static_cast<Geo::BSpline *>(object);
-                            back_j = bspline1->back();
-                            break;
-                        }
+                        polyline1 = object;
+                        back_j = polyline1->back();
                         if (front_i == back_j && object_order[object] < j)
                         {
                             object_j = object;
@@ -4623,23 +4246,10 @@ void Editer::auto_connect()
 
                 if (distance_object_map0.find(distance1) != distance_object_map0.end())
                 {
-                    for (Geo::Geometry *object : distance_object_map0[distance1])
+                    for (Geo::Polyline *object : distance_object_map0[distance1])
                     {
-                        switch (object->type())
-                        {
-                        case Geo::Type::POLYLINE:
-                            polyline1 = static_cast<Geo::Polyline *>(object);
-                            front_j = polyline1->front();
-                            break;
-                        case Geo::Type::BEZIER:
-                            bezier1 = static_cast<Geo::Bezier *>(object);
-                            front_j = bezier1->front();
-                            break;
-                        case Geo::Type::BSPLINE:
-                            bspline1 = static_cast<Geo::BSpline *>(object);
-                            front_j = bspline1->front();
-                            break;
-                        }
+                        polyline1 = static_cast<Geo::Polyline *>(object);
+                        front_j = polyline1->front();
                         if (back_i == front_j && object_order[object] < j)
                         {
                             object_j = object;
@@ -4650,23 +4260,10 @@ void Editer::auto_connect()
 
                 if (distance_object_map1.find(distance1) != distance_object_map1.end())
                 {
-                    for (Geo::Geometry *object : distance_object_map1[distance1])
+                    for (Geo::Polyline *object : distance_object_map1[distance1])
                     {
-                        switch (object->type())
-                        {
-                        case Geo::Type::POLYLINE:
-                            polyline1 = static_cast<Geo::Polyline *>(object);
-                            back_j = polyline1->back();
-                            break;
-                        case Geo::Type::BEZIER:
-                            bezier1 = static_cast<Geo::Bezier *>(object);
-                            back_j = bezier1->back();
-                            break;
-                        case Geo::Type::BSPLINE:
-                            bspline1 = static_cast<Geo::BSpline *>(object);
-                            back_j = bspline1->back();
-                            break;
-                        }
+                        polyline1 = object;
+                        back_j = polyline1->back();
                         if (back_i == back_j && object_order[object] < j)
                         {
                             object_j = object;
@@ -4674,175 +4271,54 @@ void Editer::auto_connect()
                         }
                     }
                 }
+
+                polyline1 = object_j;
             }
 
-            if (object_j == nullptr)
+            if (polyline1 == nullptr)
             {
                 break;
             }
 
-            polyline1 = nullptr;
-            bezier1 = nullptr;
-            bspline1 = nullptr;
-            switch (object_j->type())
-            {
-            case Geo::Type::POLYLINE:
-                polyline1 = static_cast<Geo::Polyline *>(object_j);
-                front_j = polyline1->front();
-                back_j = polyline1->back();
-                break;
-            case Geo::Type::BEZIER:
-                bezier1 = static_cast<Geo::Bezier *>(object_j);
-                front_j = bezier1->front();
-                back_j = bezier1->back();
-                break;
-            case Geo::Type::BSPLINE:
-                bspline1 = static_cast<Geo::BSpline *>(object_j);
-                front_j = bspline1->front();
-                back_j = bspline1->back();
-                break;
-            }
+            front_j = polyline1->front();
+            back_j = polyline1->back();
 
             if (const double distance = std::hypot(front_j.x, front_j.y); distance_object_map0.find(distance) != distance_object_map0.end())
             {
                 distance_object_map0[distance].erase(std::find(distance_object_map0[distance].begin(),
-                    distance_object_map0[distance].end(), object_j));
+                    distance_object_map0[distance].end(), polyline1));
             }
             if (const double distance = std::hypot(back_j.x, back_j.y); distance_object_map1.find(distance) != distance_object_map1.end())
             {
                 distance_object_map1[distance].erase(std::find(distance_object_map1[distance].begin(),
-                    distance_object_map1[distance].end(), object_j));
+                    distance_object_map1[distance].end(), polyline1));
             }
-            j = std::distance(_graph->container_group().begin(), std::find(_graph->container_group().begin(), _graph->container_group().end(), object_j));
+            j = std::distance(_graph->container_group().begin(), std::find(_graph->container_group().begin(), _graph->container_group().end(), polyline1));
 
             if (front_i == front_j)
             {
-                if (polyline0 == nullptr)
-                {
-                    if (bezier0 != nullptr)
-                    {
-                        polyline0 = new Geo::Polyline(bezier0->shape().begin(), bezier0->shape().end());
-                        bezier0 = nullptr;
-                    }
-                    else if (bspline0 != nullptr)
-                    {
-                        polyline0 = new Geo::Polyline(bspline0->shape().begin(), bspline0->shape().end());
-                        bspline0 = nullptr;
-                    }
-                    _graph->container_group().insert(i, polyline0);
-                    _graph->container_group().remove(i + 1);
-                }
-                if (polyline1 != nullptr)
-                {
-                    polyline0->insert(0, polyline1->rbegin(), polyline1->rend());
-                }
-                else if (bezier1 != nullptr)
-                {
-                    polyline0->insert(0, bezier1->shape().rbegin(), bezier1->shape().rend());
-                }
-                else if (bspline1 != nullptr)
-                {
-                    polyline0->insert(0, bspline1->shape().rbegin(), bspline1->shape().rend());
-                }
+                polyline0->insert(0, polyline1->rbegin(), polyline1->rend());
                 front_i = polyline0->front();
                 _graph->container_group().remove(j--);
                 --count;
             }
             else if (front_i == back_j)
             {
-                if (polyline0 == nullptr)
-                {
-                    if (bezier0 != nullptr)
-                    {
-                        polyline0 = new Geo::Polyline(bezier0->shape().begin(), bezier0->shape().end());
-                        bezier0 = nullptr;
-                    }
-                    else if (bspline0 != nullptr)
-                    {
-                        polyline0 = new Geo::Polyline(bspline0->shape().begin(), bspline0->shape().end());
-                        bspline0 = nullptr;
-                    }
-                    _graph->container_group().insert(i, polyline0);
-                    _graph->container_group().remove(i + 1);
-                }
-                if (polyline1 != nullptr)
-                {
-                    polyline0->insert(0, polyline1->begin(), polyline1->end());
-                }
-                else if (bezier1 != nullptr)
-                {
-                    polyline0->insert(0, bezier1->shape().begin(), bezier1->shape().end());
-                }
-                else if (bspline1 != nullptr)
-                {
-                    polyline0->insert(0, bspline1->shape().begin(), bspline1->shape().end());
-                }
+                polyline0->insert(0, polyline1->begin(), polyline1->end());
                 front_i = polyline0->front();
                 _graph->container_group().remove(j--);
                 --count;
             }
             else if (back_i == front_j)
             {
-                if (polyline0 == nullptr)
-                {
-                    if (bezier0 != nullptr)
-                    {
-                        polyline0 = new Geo::Polyline(bezier0->shape().begin(), bezier0->shape().end());
-                        bezier0 = nullptr;
-                    }
-                    else if (bspline0 != nullptr)
-                    {
-                        polyline0 = new Geo::Polyline(bspline0->shape().begin(), bspline0->shape().end());
-                        bspline0 = nullptr;
-                    }
-                    _graph->container_group().insert(i, polyline0);
-                    _graph->container_group().remove(i + 1);
-                }
-                if (polyline1 != nullptr)
-                {
-                    polyline0->append(polyline1->begin(), polyline1->end());
-                }
-                else if (bezier1 != nullptr)
-                {
-                    polyline0->append(bezier1->shape().begin(), bezier1->shape().end());
-                }
-                else if (bspline1 != nullptr)
-                {
-                    polyline0->append(bspline1->shape().begin(), bspline1->shape().end());
-                }
+                polyline0->append(polyline1->begin(), polyline1->end());
                 back_i = polyline0->back();
                 _graph->container_group().remove(j--);
                 --count;
             }
             else if (back_i == back_j)
             {
-                if (polyline0 == nullptr)
-                {
-                    if (bezier0 != nullptr)
-                    {
-                        polyline0 = new Geo::Polyline(bezier0->shape().begin(), bezier0->shape().end());
-                        bezier0 = nullptr;
-                    }
-                    else if (bspline0 != nullptr)
-                    {
-                        polyline0 = new Geo::Polyline(bspline0->shape().begin(), bspline0->shape().end());
-                        bspline0 = nullptr;
-                    }
-                    _graph->container_group().insert(i, polyline0);
-                    _graph->container_group().remove(i + 1);
-                }
-                if (polyline1 != nullptr)
-                {
-                    polyline0->append(polyline1->rbegin(), polyline1->rend());
-                }
-                else if (bezier1 != nullptr)
-                {
-                    polyline0->append(bezier1->shape().rbegin(), bezier1->shape().rend());
-                }
-                else if (bspline1 != nullptr)
-                {
-                    polyline0->append(bspline1->shape().rbegin(), bspline1->shape().rend());
-                }
+                polyline0->append(polyline1->rbegin(), polyline1->rend());
                 back_i = polyline0->back();
                 _graph->container_group().remove(j--);
                 --count;
