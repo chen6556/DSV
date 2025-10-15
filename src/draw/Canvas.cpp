@@ -1409,6 +1409,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             if (std::vector<Geo::Geometry *> objects = _editer->select(_select_rect); !objects.empty())
             {
                 refresh_selected_ibo(objects);
+                _cache_count = 0; // 框选时不显示BSpline路径线和Bezier控制线
             }
             _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.x)))
                 .append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.y))).c_str());
