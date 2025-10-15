@@ -492,7 +492,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             case Tool::BSpline:
                 if (is_painting())
                 {
-                    _editer->point_cache().emplace_back(Geo::Point(real_x1, real_y1));
+                    _editer->point_cache().emplace_back(real_x1, real_y1);
                     _cache[_cache_count++] = real_x1;
                     _cache[_cache_count++] = real_y1;
                     _cache[_cache_count++] = 0;
@@ -501,8 +501,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 }
                 else
                 {
-                    _editer->point_cache().emplace_back(Geo::Point(real_x1, real_y1));
-                    _editer->point_cache().emplace_back(Geo::Point(real_x1, real_y1));
+                    _editer->point_cache().emplace_back(real_x1, real_y1);
+                    _editer->point_cache().emplace_back(real_x1, real_y1);
                     _bool_flags[2] = true; // painting
                     _cache_count = 6;
                     _cache[0] = _cache[3] = real_x1;
