@@ -28,7 +28,7 @@ void Importer::store_polygon()
     {
         if (_is_combination)
         {
-            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Geo::Polygon(_points.cbegin(), _points.cend()));
+            static_cast<Combination *>(_graph->container_groups().back().back())->append(new Geo::Polygon(_points.cbegin(), _points.cend()));
         }
         else
         {
@@ -39,7 +39,7 @@ void Importer::store_polygon()
     {
         if (_is_combination)
         {
-            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Geo::Polygon(_points.cbegin(), _points.cend()));
+            static_cast<Combination *>(_graph->container_groups().back().back())->append(new Geo::Polygon(_points.cbegin(), _points.cend()));
         }
         else
         {
@@ -54,7 +54,7 @@ void Importer::store_circle()
 {
     if (_is_combination)
     {
-        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
+        static_cast<Combination *>(_graph->container_groups().back().back())->append(
             new Geo::Circle(_points.back().x, _points.back().y, _parameters.back()));
     }
     else
@@ -70,7 +70,7 @@ void Importer::store_ellipse()
 {
     if (_is_combination)
     {
-        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
+        static_cast<Combination *>(_graph->container_groups().back().back())->append(
             new Geo::Ellipse(_points[0], _points[1], _points[2], _points[3]));
     }
     else
@@ -86,7 +86,7 @@ void Importer::store_polyline()
 {
     if (_is_combination)
     {
-        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Geo::Polyline(_points.cbegin(), _points.cend()));
+        static_cast<Combination *>(_graph->container_groups().back().back())->append(new Geo::Polyline(_points.cbegin(), _points.cend()));
     }
     else
     {
@@ -100,16 +100,16 @@ void Importer::store_bezier()
 {
     if (_is_combination)
     {
-        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
+        static_cast<Combination *>(_graph->container_groups().back().back())->append(
             new Geo::Bezier(_points.cbegin(), _points.cend(), _parameters.back(), false));
-        dynamic_cast<Geo::Bezier *>(dynamic_cast<Combination *>(_graph->container_groups().back().back())
+        static_cast<Geo::Bezier *>(static_cast<Combination *>(_graph->container_groups().back().back())
             ->back())->update_shape();
     }
     else
     {
         _graph->container_groups().back().append(
             new Geo::Bezier(_points.cbegin(), _points.cend(), _parameters.back(), false));
-        dynamic_cast<Geo::Bezier *>(_graph->container_groups().back().back())->update_shape();
+        static_cast<Geo::Bezier *>(_graph->container_groups().back().back())->update_shape();
     }
     _points.clear();
     _parameters.pop_back();
@@ -125,12 +125,12 @@ void Importer::store_bspline()
     {
         if (_parameters.front() == 2)
         {
-            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
+            static_cast<Combination *>(_graph->container_groups().back().back())->append(
                 new Geo::QuadBSpline(_points.cbegin(), _points.cend(), true));
         }
         else
         {
-            dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(
+            static_cast<Combination *>(_graph->container_groups().back().back())->append(
                 new Geo::CubicBSpline(_points.cbegin(), _points.cend(), true));
         }
     }
@@ -155,7 +155,7 @@ void Importer::store_text()
 {
     if (_is_combination)
     {
-        dynamic_cast<Combination *>(_graph->container_groups().back().back())->append(new Text(_points.back().x, _points.back().y, 12, QString::fromStdString(_text)));
+        static_cast<Combination *>(_graph->container_groups().back().back())->append(new Text(_points.back().x, _points.back().y, 12, QString::fromStdString(_text)));
     }
     else
     {
@@ -173,7 +173,7 @@ void Importer::begin_combination()
 
 void Importer::end_combination()
 {
-    dynamic_cast<Combination *>(_graph->container_groups().back().back())->update_border();
+    static_cast<Combination *>(_graph->container_groups().back().back())->update_border();
     _is_combination = false;
 }
 

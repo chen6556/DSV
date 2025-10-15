@@ -794,7 +794,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         switch (_clicked_obj->type())
                         {
                         case Geo::Type::POLYGON:
-                            for (const Geo::Point &p : *dynamic_cast<Geo::Polygon *>(_clicked_obj))
+                            for (const Geo::Point &p : *static_cast<Geo::Polygon *>(_clicked_obj))
                             {
                                 if (Geo::distance(p.x, p.y, real_x1, real_y1) < dis)
                                 {
@@ -810,7 +810,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                             }
                             break;
                         case Geo::Type::POLYLINE:
-                            for (const Geo::Point &p : *dynamic_cast<Geo::Polyline *>(_clicked_obj))
+                            for (const Geo::Point &p : *static_cast<Geo::Polyline *>(_clicked_obj))
                             {
                                 if (Geo::distance(p.x, p.y, real_x1, real_y1) < dis)
                                 {
@@ -832,13 +832,22 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         return QOpenGLWidget::mousePressEvent(event);
                     }
                 case Operation::Trim:
-                    if (Geo::Polyline *polyline = dynamic_cast<Geo::Polyline *>(_clicked_obj))
+                    switch (_clicked_obj->type())
                     {
-                        _editer->trim(polyline, real_x1, real_y1);
+                    case Geo::Type::POLYLINE:
+                        _editer->trim(static_cast<Geo::Polyline *>(_clicked_obj), real_x1, real_y1);
                         refresh_vbo(Geo::Type::POLYLINE, true);
                         refresh_selected_ibo();
                         update();
                         return QOpenGLWidget::mousePressEvent(event);
+                    case Geo::Type::POLYGON:
+                        _editer->trim(static_cast<Geo::Polygon *>(_clicked_obj), real_x1, real_y1);
+                        refresh_vbo({Geo::Type::POLYGON, Geo::Type::POLYLINE}, true);
+                        refresh_selected_ibo();
+                        update();
+                        return QOpenGLWidget::mousePressEvent(event);
+                    default:
+                        break;
                     }
                     break;
                 case Operation::Extend:
