@@ -380,9 +380,9 @@ void Canvas::paintGL()
         glBufferSubData(GL_ARRAY_BUFFER, 0, 24 * sizeof(double), _catchline_points);
 
         glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 0.649f); // color
-
+        glLineWidth(2.8f);
         glDrawArrays(GL_LINES, 0, 8);
-
+        glLineWidth(1.4f);
         glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 0.549f); // color
     }
 
