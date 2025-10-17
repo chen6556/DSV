@@ -5239,8 +5239,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
             case Geo::Type::BEZIER:
                 if (Geo::is_intersected(rect, geo->bounding_rect()))
                 {
-                    if (Geo::distance(pos, static_cast<const Geo::Bezier *>(geo)->front()) * _ratio < distance
-                        || Geo::distance(pos, static_cast<const Geo::Bezier *>(geo)->back()) * _ratio < distance)
+                    if (Geo::distance(pos, static_cast<const Geo::Bezier *>(geo)->shape()) < distance)
                     {
                         catched_objects.push_back(geo);
                     }
