@@ -23,6 +23,9 @@ namespace Geo
     // [数值解]点到贝塞尔曲线距离,计算点到每一段曲线的距离,取最近距离
     double distance(const Point &point, const Bezier &bezier);
 
+    // [数值解]点到B样条曲线的距离
+    double distance(const Point &point, const BSpline &bspline, const bool is_cubic);
+
     // 点到多边形距离,计算点到每一段有限长线段的距离,取最近距离
     double distance(const Point &point, const Polygon &polygon);
 
@@ -115,6 +118,9 @@ namespace Geo
 
     // 计算贝塞尔曲线与直线的交点
     int is_intersected(const Point &point0, const Point &point1, const Bezier &bezier, std::vector<Point> &intersections, const bool infinite = false);
+
+    // 计算B样条曲线与直线的交点
+    int is_intersected(const Point &point0, const Point &point1, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections, const bool infinite = false);
 
     // 判断两个AABB矩形是否相交,inside决定完全在AABB矩形内部是否算相交
     bool is_intersected(const AABBRect &rect0, const AABBRect &rect1, const bool inside = true);
@@ -221,6 +227,9 @@ namespace Geo
     // 找到Polyline与Bezier在pos附近的交点
     bool find_intersections(const Polyline &polyline, const Bezier &bezier, const Point &pos, const double distance, std::vector<Point> &intersections);
 
+    // 找到Polyline与BSpline在pos附近的交点
+    bool find_intersections(const Polyline &polyline, const BSpline &bspline, const bool is_cubic, const Point &pos, const double distance, std::vector<Point> &intersections);
+
     // 找到Polyline与Cirlce在pos附近的交点
     bool find_intersections(const Polyline &polyline, const Circle &circle, const Point &pos, const double distance, std::vector<Point> &intersections);
 
@@ -281,8 +290,11 @@ namespace Geo
     // 计算多边形到一点的最近点
     int closest_point(const Polygon &polygon, const Point &point, std::vector<Point> &output);
 
-    // 计算贝塞尔曲线到一点的最近点
+    // [数值解]计算贝塞尔曲线到一点的最近点
     int closest_point(const Bezier &bezier, const Point &point, std::vector<Point> &output);
+
+    // [数值解]计算B样条曲线到一点的最近点
+    int closest_point(const BSpline &bspline, const bool is_cubic, const Point &point, std::vector<Point> &output);
 
     // 计算圆外一点与圆的切点
     bool tangency_point(const Point &point, const Circle &circle, Point &output0, Point &output1);

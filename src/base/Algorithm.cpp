@@ -264,7 +264,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
             }
         }
 
-        step = 1e-3, lower = 0, upper = 1;
+        step = 1e-3, lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
         min_dis[0] = min_dis[1] = DBL_MAX;
         while (true)
         {
@@ -281,7 +281,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
                     t = x;
                 }
             }
-            if (std::abs(min_dis[0] - min_dis[1]) < 1e-4)
+            if (std::abs(min_dis[0] - min_dis[1]) < 1e-8)
             {
                 break;
             }
@@ -298,6 +298,143 @@ double Geo::distance(const Point &point, const Bezier &bezier)
         }
     
         result = std::min(min_dis[0], min_dis[1]);
+    }
+    return result;
+}
+
+double Geo::distance(const Point &point, const BSpline &bspline, const bool is_cubic)
+{
+    const std::vector<double> &knots = bspline.knots();
+    const size_t npts = bspline.control_points.size();
+    const size_t nplusc = npts + (is_cubic ? 4 : 3);
+    const size_t p1 = std::max(npts * 8.0, bspline.shape().length() / Geo::BSpline::default_step);
+
+    double t = knots[0];
+    double step = (knots[nplusc - 1] - t) / (p1 - 1);
+    std::vector<double> temp;
+    double min_dis[2] = {DBL_MAX, DBL_MAX};
+    while (t <= knots[nplusc - 1])
+    {
+        std::vector<double> nbasis;
+        if (is_cubic)
+        {
+            Geo::CubicBSpline::rbasis(t, npts, knots, nbasis);
+        }
+        else
+        {
+            Geo::QuadBSpline::rbasis(t, npts, knots, nbasis);
+        }
+
+        Geo::Point coord;
+        for (size_t i = 0; i < npts; ++i)
+        {
+            coord += bspline.control_points[i] * nbasis[i];
+        }
+        if (double dis = Geo::distance(coord, point); dis < min_dis[0])
+        {
+            temp.clear();
+            min_dis[0] = dis;
+            temp.push_back(t);
+        }
+        else if (dis == min_dis[0])
+        {
+            temp.push_back(t);
+        }
+        t += step;
+    }
+
+    double result = DBL_MAX;
+    for (double v : temp)
+    {
+        step = 1e-3;
+        double lower = knots[0], upper = knots[nplusc - 1];
+        min_dis[0] = min_dis[1] = DBL_MAX;
+        while (true)
+        {
+            for (double x = lower; x <= upper; x += step)
+            {
+                std::vector<double> nbasis;
+                if (is_cubic)
+                {
+                    Geo::CubicBSpline::rbasis(x, npts, knots, nbasis);
+                }
+                else
+                {
+                    Geo::QuadBSpline::rbasis(x, npts, knots, nbasis);
+                }
+                Geo::Point coord;
+                for (size_t i = 0; i < npts; ++i)
+                {
+                    coord += bspline.control_points[i] * nbasis[i];
+                }
+                if (double dis = Geo::distance(point, coord); dis < min_dis[1])
+                {
+                    min_dis[1] = dis;
+                    v = x;
+                }
+            }
+            if (std::abs(min_dis[0] - min_dis[1]) < 1e-4 || step < 1e-11)
+            {
+                break;
+            }
+            else
+            {
+                lower = std::max(0.0, v - step);
+                upper = std::min(1.0, v + step);
+                step = (upper - lower) / 100;
+            }
+            if (min_dis[0] > min_dis[1])
+            {
+                min_dis[0] = min_dis[1];
+            }
+        }
+
+        step = 1e-3, lower = std::max(knots[0], t - 0.1), upper = std::min(knots[nplusc - 1], t + 0.1);
+        min_dis[0] = min_dis[1] = DBL_MAX;
+        while (true)
+        {
+            for (double x = lower; x <= upper; x += step)
+            {
+                std::vector<double> nbasis;
+                if (is_cubic)
+                {
+                    Geo::CubicBSpline::rbasis(x, npts, knots, nbasis);
+                }
+                else
+                {
+                    Geo::QuadBSpline::rbasis(x, npts, knots, nbasis);
+                }
+                Geo::Point coord;
+                for (size_t i = 0; i < npts; ++i)
+                {
+                    coord += bspline.control_points[i] * nbasis[i];
+                }
+                if (double dis = Geo::distance(coord, point); dis < min_dis[1])
+                {
+                    min_dis[1] = dis;
+                    v = x;
+                }
+            }
+            if (std::abs(min_dis[0] - min_dis[1]) < 1e-8)
+            {
+                break;
+            }
+            else
+            {
+                lower = std::max(0.0, v - step);
+                upper = std::min(1.0, v + step);
+                step = (upper - lower) / 100;
+            }
+            if (min_dis[0] > min_dis[1])
+            {
+                min_dis[0] = min_dis[1];
+            }
+        }
+
+        if (result > std::min(min_dis[0], min_dis[1]))
+        {
+            result = std::min(min_dis[0], min_dis[1]);
+        }
     }
     return result;
 }
@@ -1550,67 +1687,76 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
         for (Geo::Point &point : temp)
         {
             t = 0;
+            double step = 1e-3, lower = 0, upper = 1;
+            double min_dis[2] = {0.0, DBL_MAX};
+            while (true)
             {
-                double step = 1e-3;
-                double lower = 0, upper = 1;
-                double min_dis = DBL_MAX;
-                while (true)
+                for (double x = lower; x <= upper; x += step)
                 {
-                    for (double x = lower; x <= upper; x += step)
+                    Geo::Point coord;
+                    for (size_t j = 0; j <= order; ++j)
                     {
-                        Geo::Point coord;
-                        for (size_t j = 0; j <= order; ++j)
-                        {
-                            coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j))); 
-                        }
-                        if (double dis = Geo::distance(point, coord); dis < min_dis)
-                        {
-                            min_dis = dis;
-                            t = x;
-                        }
+                        coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j))); 
                     }
-                    if (min_dis < 1e-4 || step < 1e-11)
+                    if (double dis = Geo::distance(point, coord); dis < min_dis[1])
                     {
-                        break;
+                        min_dis[1] = dis;
+                        t = x;
                     }
-                    else
-                    {
-                        lower = std::max(0.0, t - step);
-                        upper = std::min(1.0, t + step);
-                        step = (upper - lower) / 100;
-                    }
+                }
+                if (min_dis[1] < 1e-4 || step < 1e-11)
+                {
+                    break;
+                }
+                else
+                {
+                    lower = std::max(0.0, t - step);
+                    upper = std::min(1.0, t + step);
+                    step = (upper - lower) / 100;
                 }
             }
 
+            lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
+            step = (upper - lower) / 100;
+            min_dis[0] = 0, min_dis[1] = DBL_MAX;
+            while (true)
             {
-                double step = 1e-3;
-                double lower = 0, upper = 1;
-                double min_dis = DBL_MAX;
-                while (true)
+                size_t flag = 0;
+                for (double x = lower, dis0 = 0; x <= upper; x += step)
                 {
-                    for (double x = lower; x <= upper; x += step)
+                    Geo::Point coord;
+                    for (size_t j = 0; j <= order; ++j)
                     {
-                        Geo::Point coord;
-                        for (size_t j = 0; j <= order; ++j)
-                        {
-                            coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j))); 
-                        }
-                        if (double dis = Geo::distance(coord, point0, point1) * 1e8; dis < min_dis)
-                        {
-                            min_dis = dis;
-                            t = x;
-                        }
+                        coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                     }
-                    if (min_dis < 2e-5)
+                    if (const double dis = Geo::distance(coord, point0, point1) * 1e8; dis < min_dis[1])
                     {
-                        break;
+                        min_dis[1] = dis;
+                        t = x;
                     }
                     else
                     {
-                        lower = std::max(0.0, t - step);
-                        upper = std::min(1.0, t + step);
-                        step = (upper - lower) / 100;
+                        if (dis == dis0 && ++flag == 10) // 连续10次相等就退出循环
+                        {
+                            break;
+                        }
+                        else
+                        {
+                            flag = 0;
+                        }
+                        dis0 = dis;
                     }
+                }
+                if (min_dis[1] < 2e-5 || min_dis[0] == min_dis[1])
+                {
+                    break;
+                }
+                else
+                {
+                    lower = std::max(0.0, t - step);
+                    upper = std::min(1.0, t + step);
+                    step = (upper - lower) / 100;
+                    min_dis[0] = min_dis[1];
                 }
             }
 
@@ -1619,8 +1765,8 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
             {
                 point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
-            bool r = Geo::is_inside(point, point0, point1);
-            if (std::find(result.begin(), result.end(), point) == result.end())
+            if (std::find(result.begin(), result.end(), point) == result.end()
+                && Geo::is_inside(point, point0, point1, infinite))
             {
                 result.emplace_back(point);
             }
@@ -1628,6 +1774,175 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
     }
 
     intersections.insert(intersections.end(), result.begin(), result.end());
+    return result.size();
+}
+
+int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections, const bool infinite)
+{
+    const std::vector<double> &knots = bspline.knots();
+    const size_t npts = bspline.control_points.size();
+    const size_t nplusc = npts + (is_cubic ? 4 : 3);
+    const size_t p1 = std::max(npts * 8.0, bspline.shape().length() / Geo::BSpline::default_step);
+
+    double t = knots[0];
+    const double init_step = (knots[nplusc - 1] - t) / (p1 - 1);
+    std::vector<double> temp;
+    double min_dis[2] = {1, 1};
+    while (t <= knots[nplusc - 1])
+    {
+        std::vector<double> nbasis;
+        if (is_cubic)
+        {
+            Geo::CubicBSpline::rbasis(t, npts, knots, nbasis);
+        }
+        else
+        {
+            Geo::QuadBSpline::rbasis(t, npts, knots, nbasis);
+        }
+        Geo::Point coord;
+        for (size_t i = 0; i < npts; ++i)
+        {
+            coord += bspline.control_points[i] * nbasis[i];
+        }
+        const double dis = Geo::distance(coord, point0, point1, infinite);
+        if (min_dis[0] > min_dis[1] && dis > min_dis[1])
+        {
+            temp.push_back(t - init_step);
+        }
+        min_dis[0] = min_dis[1];
+        min_dis[1] = dis;
+        t += init_step;
+    }
+
+    std::vector<std::tuple<double, Geo::Point>> result;
+    for (size_t n = 0, count = temp.size(); n < count; ++n)
+    {
+        t = temp[n];
+        double lower = std::max(n > 0 ? temp[n - 1] : knots[0], t - init_step);
+        double upper = std::min(n < count - 1 ? temp[n + 1] : knots[nplusc - 1], t + init_step);
+        double step = (upper - lower) / 1000;
+        min_dis[0] = min_dis[1] = 1;
+        while (true)
+        {
+            for (double x = lower; x <= upper; x += step)
+            {
+                std::vector<double> nbasis;
+                if (is_cubic)
+                {
+                    Geo::CubicBSpline::rbasis(x, npts, knots, nbasis);
+                }
+                else
+                {
+                    Geo::QuadBSpline::rbasis(x, npts, knots, nbasis);
+                }
+                Geo::Point coord;
+                for (size_t i = 0; i < npts; ++i)
+                {
+                    coord += bspline.control_points[i] * nbasis[i];
+                }
+                if (double dis = Geo::distance(coord, point0, point1, infinite); dis < min_dis[1])
+                {
+                    min_dis[1] = dis;
+                    t = x;
+                }
+            }
+            if (std::abs(min_dis[0] - min_dis[1]) < 1e-4)
+            {
+                break;
+            }
+            else
+            {
+                lower = std::max(0.0, t - step);
+                upper = std::min(1.0, t + step);
+                step = (upper - lower) / 1000;
+            }
+            if (min_dis[0] > min_dis[1])
+            {
+                min_dis[0] = min_dis[1];
+            }
+        }
+
+        if (min_dis[0] > 1e-3 && min_dis[1] > 1e-3)
+        {
+            continue;
+        }
+
+        min_dis[0] = 0, min_dis[1] = DBL_MAX;
+        step = (upper - lower) / 100;
+        while (true)
+        {
+            for (double x = lower, dis0 = 0, dis1 = 1; x <= upper && dis0 != dis1 ; x += step)
+            {
+                std::vector<double> nbasis;
+                if (is_cubic)
+                {
+                    Geo::CubicBSpline::rbasis(x, npts, knots, nbasis);
+                }
+                else
+                {
+                    Geo::QuadBSpline::rbasis(x, npts, knots, nbasis);
+                }
+                Geo::Point coord;
+                for (size_t i = 0; i < npts; ++i)
+                {
+                    coord += bspline.control_points[i] * nbasis[i];
+                }
+                if (dis1 = Geo::distance(coord, point0, point1, infinite) * 1e8; dis1 < min_dis[1])
+                {
+                    min_dis[1] = dis1;
+                    t = x;
+                    dis0 = dis1;
+                }
+            }
+            if (min_dis[1] < 2e-5 || min_dis[0] == min_dis[1])
+            {
+                break;
+            }
+            else
+            {
+                lower = std::max(0.0, t - step);
+                upper = std::min(1.0, t + step);
+                step = (upper - lower) / 100;
+                min_dis[0] = min_dis[1];
+            }
+        }
+
+        std::vector<double> nbasis;
+        if (is_cubic)
+        {
+            Geo::CubicBSpline::rbasis(t, npts, knots, nbasis);
+        }
+        else
+        {
+            Geo::QuadBSpline::rbasis(t, npts, knots, nbasis);
+        }
+        Geo::Point coord;
+        for (size_t i = 0; i < npts; ++i)
+        {
+            coord += bspline.control_points[i] * nbasis[i];
+        }
+        bool r = Geo::is_inside(coord, point0, point1, infinite);
+        result.emplace_back(std::min(min_dis[0], min_dis[1]), coord);
+    }
+
+    // for (size_t i = result.size() - 1; i > 0; --i)
+    // {
+    //     if (Geo::is_inside(std::get<1>(result[i]), point0, point1, infinite))
+    //     {
+    //         result.erase(result.begin() + i);
+    //     }
+    // }
+    // if (Geo::is_inside(std::get<1>(result.front()), point0, point1, infinite))
+    // {
+    //     result.erase(result.begin());
+    // }
+    for (const auto &[dis, coord] : result)
+    {
+        if (std::find(intersections.begin(), intersections.end(), coord) == intersections.end())
+        {
+            intersections.emplace_back(coord);
+        }
+    }
     return result.size();
 }
 
@@ -2397,6 +2712,30 @@ bool Geo::find_intersections(const Geo::Polyline &polyline, const Geo::Bezier &b
     return intersections.size() > size;
 }
 
+bool Geo::find_intersections(const Geo::Polyline &polyline, const Geo::BSpline &bspline, const bool is_cubic, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
+{
+    const size_t size = intersections.size();
+    for (size_t i = 1, count = polyline.size(); i < count; ++i)
+    {
+        if (Geo::distance(pos, polyline[i - 1], polyline[i], false) > distance)
+        {
+            continue;
+        }
+
+        std::vector<Geo::Point> temp;
+        Geo::is_intersected(polyline[i - 1], polyline[i], bspline, is_cubic, temp, false);
+        for (const Geo::Point &point : temp)
+        {
+            if (Geo::distance(point, pos) <= distance && std::find(intersections.begin(),
+                intersections.end(), point) == intersections.end())
+            {
+                intersections.emplace_back(point);
+            }
+        }
+    }
+    return intersections.size() > size;
+}
+
 bool Geo::find_intersections(const Geo::Polyline &polyline, const Geo::Circle &circle, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
 {
     std::vector<size_t> index;
@@ -2711,6 +3050,9 @@ bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *
         case Geo::Type::BEZIER:
             return Geo::find_intersections(*static_cast<const Geo::Polyline *>(object0),
                 *static_cast<const Geo::Bezier *>(object1), pos, distance, intersections);
+        case Geo::Type::BSPLINE:
+            return Geo::find_intersections(*static_cast<const Geo::Polyline *>(object0), *static_cast<const Geo::BSpline *>(object1),
+                dynamic_cast<const Geo::CubicBSpline *>(object1), pos, distance, intersections);
         default:
             break;
         }
@@ -2778,6 +3120,15 @@ bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *
         case Geo::Type::POLYLINE:
             return Geo::find_intersections(*static_cast<const Geo::Polyline *>(object1),
                 *static_cast<const Geo::Bezier *>(object0), pos, distance, intersections);
+        default:
+            break;
+        }
+    case Geo::Type::BSPLINE:
+        switch (object1->type())
+        {
+        case Geo::Type::POLYLINE:
+            return Geo::find_intersections(*static_cast<const Geo::Polyline *>(object1), *static_cast<const Geo::BSpline *>(object0),
+                dynamic_cast<const Geo::CubicBSpline *>(object0), pos, distance, intersections);
         default:
             break;
         }
@@ -3583,7 +3934,7 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
             }
         }
 
-        step = 1e-3, lower = 0, upper = 1;
+        step = 1e-3, lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
         min_dis[0] = min_dis[1] = DBL_MAX;
         while (true)
         {
@@ -3638,6 +3989,172 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
         }
     }
     output.insert(output.end(), result.begin(), result.end());
+    return result.size();
+}
+
+int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point &point, std::vector<Point> &output)
+{
+    const std::vector<double> &knots = bspline.knots();
+    const size_t npts = bspline.control_points.size();
+    const size_t nplusc = npts + (is_cubic ? 4 : 3);
+    const size_t p1 = std::max(npts * 8.0, bspline.shape().length() / Geo::BSpline::default_step);
+
+    double t = knots[0];
+    double step = (knots[nplusc - 1] - t) / (p1 - 1);
+    std::vector<double> temp;
+    double min_dis[2] = {DBL_MAX, DBL_MAX};
+    while (t <= knots[nplusc - 1])
+    {
+        std::vector<double> nbasis;
+        if (is_cubic)
+        {
+            Geo::CubicBSpline::rbasis(t, npts, knots, nbasis);
+        }
+        else
+        {
+            Geo::QuadBSpline::rbasis(t, npts, knots, nbasis);
+        }
+
+        Geo::Point coord;
+        for (size_t i = 0; i < npts; ++i)
+        {
+            coord += bspline.control_points[i] * nbasis[i];
+        }
+        if (double dis = Geo::distance(coord, point); dis < min_dis[0])
+        {
+            temp.clear();
+            min_dis[0] = dis;
+            temp.push_back(t);
+        }
+        else if (dis == min_dis[0])
+        {
+            temp.push_back(t);
+        }
+        t += step;
+    }
+
+    std::vector<std::tuple<double, Geo::Point>> result;
+    for (double v : temp)
+    {
+        step = 1e-3;
+        double lower = knots[0], upper = knots[nplusc - 1];
+        min_dis[0] = min_dis[1] = DBL_MAX;
+        while (true)
+        {
+            for (double x = lower; x <= upper; x += step)
+            {
+                std::vector<double> nbasis;
+                if (is_cubic)
+                {
+                    Geo::CubicBSpline::rbasis(x, npts, knots, nbasis);
+                }
+                else
+                {
+                    Geo::QuadBSpline::rbasis(x, npts, knots, nbasis);
+                }
+                Geo::Point coord;
+                for (size_t i = 0; i < npts; ++i)
+                {
+                    coord += bspline.control_points[i] * nbasis[i];
+                }
+                if (double dis = Geo::distance(point, coord); dis < min_dis[1])
+                {
+                    min_dis[1] = dis;
+                    v = x;
+                }
+            }
+            if (std::abs(min_dis[0] - min_dis[1]) < 1e-4 || step < 1e-11)
+            {
+                break;
+            }
+            else
+            {
+                lower = std::max(0.0, v - step);
+                upper = std::min(1.0, v + step);
+                step = (upper - lower) / 100;
+            }
+            if (min_dis[0] > min_dis[1])
+            {
+                min_dis[0] = min_dis[1];
+            }
+        }
+
+        step = 1e-3, lower = std::max(knots[0], t - 0.1), upper = std::min(knots[nplusc - 1], t + 0.1);
+        min_dis[0] = min_dis[1] = DBL_MAX;
+        while (true)
+        {
+            for (double x = lower; x <= upper; x += step)
+            {
+                std::vector<double> nbasis;
+                if (is_cubic)
+                {
+                    Geo::CubicBSpline::rbasis(x, npts, knots, nbasis);
+                }
+                else
+                {
+                    Geo::QuadBSpline::rbasis(x, npts, knots, nbasis);
+                }
+                Geo::Point coord;
+                for (size_t i = 0; i < npts; ++i)
+                {
+                    coord += bspline.control_points[i] * nbasis[i];
+                }
+                if (double dis = Geo::distance(coord, point); dis < min_dis[1])
+                {
+                    min_dis[1] = dis;
+                    v = x;
+                }
+            }
+            if (std::abs(min_dis[0] - min_dis[1]) < 1e-8)
+            {
+                break;
+            }
+            else
+            {
+                lower = std::max(0.0, v - step);
+                upper = std::min(1.0, v + step);
+                step = (upper - lower) / 100;
+            }
+            if (min_dis[0] > min_dis[1])
+            {
+                min_dis[0] = min_dis[1];
+            }
+        }
+
+        std::vector<double> nbasis;
+        if (is_cubic)
+        {
+            Geo::CubicBSpline::rbasis(v, npts, knots, nbasis);
+        }
+        else
+        {
+            Geo::QuadBSpline::rbasis(v, npts, knots, nbasis);
+        }
+        Geo::Point coord;
+        for (size_t i = 0; i < npts; ++i)
+        {
+            coord += bspline.control_points[i] * nbasis[i];
+        }
+        result.emplace_back(std::min(min_dis[0], min_dis[1]), coord);
+    }
+
+    std::sort(result.begin(), result.end(), [](const auto &a, const auto &b)
+        { return std::get<0>(a) < std::get<0>(b); });
+    while (result.size() > 1)
+    {
+        if (std::get<0>(result.back()) > std::get<0>(result.front()))
+        {
+            result.pop_back();
+        }
+        else
+        {
+            break;
+        }
+    }
+    for (const auto &[dis, coord] : result)
+    {
+        output.emplace_back(coord);
+    }
     return result.size();
 }
 
