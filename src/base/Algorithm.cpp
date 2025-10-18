@@ -66,7 +66,7 @@ double Geo::distance(const Point &point, const Line &line, const bool infinite)
                 c = line.back().x * line.front().y - line.front().x * line.back().y;
     if (infinite)
     {
-        return std::abs(a * point.x + b * point.y + c) / std::sqrt(a * a + b * b);
+        return std::abs(a * point.x + b * point.y + c) / std::hypot(a, b);
     }
     else
     {
@@ -77,7 +77,7 @@ double Geo::distance(const Point &point, const Line &line, const bool infinite)
 
         if ((x >= line.front().x && x <= line.back().x) || (x <= line.front().x && x >= line.back().x))
         {
-            return std::abs(a * point.x + b * point.y + c) / std::sqrt(a * a + b * b);
+            return std::abs(a * point.x + b * point.y + c) / std::hypot(a, b);
         }
         else
         {
@@ -132,7 +132,7 @@ double Geo::distance(const Point &point, const Point &start, const Point &end, c
                 c = end.x * start.y - start.x * end.y;
     if (infinite)
     {
-        return std::abs(a * point.x + b * point.y + c) / std::sqrt(a * a + b * b);
+        return std::abs(a * point.x + b * point.y + c) / std::hypot(a, b);
     }
     else
     {
@@ -143,7 +143,7 @@ double Geo::distance(const Point &point, const Point &start, const Point &end, c
 
         if ((x >= start.x && x <= end.x) || (x <= start.x && x >= end.x))
         {
-            return std::abs(a * point.x + b * point.y + c) / std::sqrt(a * a + b * b);
+            return std::abs(a * point.x + b * point.y + c) / std::hypot(a, b);
         }
         else
         {
@@ -820,7 +820,7 @@ double Geo::distance_square(const Point &point, const Polygon &polygon)
 
 bool Geo::is_inside(const Geo::Point &point, const Geo::Line &line, const bool infinite)
 {
-    if (std::abs(Geo::cross(line.back() - line.front(), point - line.front())) < Geo::EPSILON)
+    if (std::abs(Geo::cross((line.back() - line.front()).normalize(), (point - line.front()).normalize())) < Geo::EPSILON)
     {
         return infinite || Geo::distance(point, line.front()) + Geo::distance(point, line.back()) < line.length() + Geo::EPSILON;
     }
@@ -832,7 +832,7 @@ bool Geo::is_inside(const Geo::Point &point, const Geo::Line &line, const bool i
 
 bool Geo::is_inside(const Geo::Point &point, const Geo::Point &start, const Geo::Point &end, const bool infinite)
 {
-    if (const double value = std::abs(Geo::cross(end - start, point - start)); value < Geo::EPSILON)
+    if (std::abs(Geo::cross((end - start).normalize(), (point - start).normalize())) < Geo::EPSILON)
     {
         return infinite || Geo::distance(point, start) + Geo::distance(point, end) < Geo::distance(start, end) + Geo::EPSILON;
     }
@@ -1688,7 +1688,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
         {
             t = 0;
             double step = 1e-3, lower = 0, upper = 1;
-            double min_dis[2] = {0.0, DBL_MAX};
+            double min_dis = DBL_MAX;
             while (true)
             {
                 for (double x = lower; x <= upper; x += step)
@@ -1698,13 +1698,13 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
                     {
                         coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j))); 
                     }
-                    if (double dis = Geo::distance(point, coord); dis < min_dis[1])
+                    if (double dis = Geo::distance(point, coord); dis < min_dis)
                     {
-                        min_dis[1] = dis;
+                        min_dis = dis;
                         t = x;
                     }
                 }
-                if (min_dis[1] < 1e-4 || step < 1e-11)
+                if (min_dis < 1e-4 || step < 1e-11)
                 {
                     break;
                 }
@@ -1718,8 +1718,8 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
 
             lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
             step = (upper - lower) / 100;
-            min_dis[0] = 0, min_dis[1] = DBL_MAX;
-            while (true)
+            min_dis = DBL_MAX;
+            while ((upper - lower) * 1e16 > 1)
             {
                 int flag = 0;
                 for (double x = lower, dis0 = 0; x <= upper; x += step)
@@ -1729,10 +1729,15 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
                     {
                         coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                     }
-                    if (const double dis = Geo::distance(coord, point0, point1) * 1e8; dis < min_dis[1])
+                    if (const double dis = Geo::distance(coord, point0, point1) * 1e9; dis < min_dis)
                     {
-                        min_dis[1] = dis;
+                        min_dis = dis;
                         t = x;
+                    }
+                    else if (dis == min_dis) // 需要扩大搜索范围
+                    {
+                        flag = -1;
+                        break;
                     }
                     else
                     {
@@ -1750,16 +1755,27 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
                         dis0 = dis;
                     }
                 }
-                if (min_dis[1] < 2e-5 || min_dis[0] == min_dis[1])
+                if (min_dis < 2e-5)
                 {
                     break;
                 }
+                else if (flag == -1) // 需要扩大搜索范围
+                {
+                    if (t - lower < upper - t)
+                    {
+                        lower = std::max(0.0, lower - step * 2);
+                    }
+                    else
+                    {
+                        upper = std::min(1.0, upper + step * 2);
+                    }
+                    step = (upper - lower) / 100;
+                }
                 else
                 {
-                    lower = std::max(0.0, t - step);
-                    upper = std::min(1.0, t + step);
+                    lower = std::max(0.0, t - step * 2);
+                    upper = std::min(1.0, t + step * 2);
                     step = (upper - lower) / 100;
-                    min_dis[0] = min_dis[1];
                 }
             }
 
@@ -1874,7 +1890,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
 
         min_dis[0] = 0, min_dis[1] = DBL_MAX;
         step = (upper - lower) / 100;
-        while (true)
+        while ((upper - lower) * 1e16 > 1)
         {
             int flag = 0;
             for (double x = lower, dis0 = 0; x <= upper; x += step)
@@ -1900,7 +1916,8 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
                 }
                 else if (dis == min_dis[1])
                 {
-                    t = x;
+                    flag = -1; // 需要扩大搜索范围
+                    break;
                 }
                 else
                 {
@@ -1918,16 +1935,27 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
                     dis0 = dis;
                 }
             }
-            if (min_dis[1] < 2e-5 || min_dis[0] == min_dis[1])
+            if (min_dis[1] < 2e-5)
             {
                 break;
             }
+            else if (flag == -1) // 需要扩大搜索范围
+            {
+                if (t - lower < upper - t)
+                {
+                    lower = std::max(min_lower, lower - step * 2);
+                }
+                else
+                {
+                    upper = std::min(max_upper, upper + step * 2);
+                }
+                step = (upper - lower) / 100;
+            }
             else
             {
-                lower = std::max(min_lower, t - step);
-                upper = std::min(max_upper, t + step);
+                lower = std::max(min_lower, t - step * 2);
+                upper = std::min(max_upper, t + step * 2);
                 step = (upper - lower) / 100;
-                min_dis[0] = min_dis[1];
             }
         }
 
@@ -1945,8 +1973,10 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
         {
             coord += bspline.control_points[i] * nbasis[i];
         }
-        bool r = Geo::is_inside(coord, point0, point1, infinite);
-        result.emplace_back(std::min(min_dis[0], min_dis[1]), coord);
+        if (Geo::is_inside(coord, point0, point1, infinite))
+        {
+            result.emplace_back(std::min(min_dis[0], min_dis[1]), coord);
+        }
     }
 
     for (const auto &[dis, coord] : result)
@@ -4371,7 +4401,7 @@ bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &po
     }
 
     Geo::Vector vp = ((point0 - point1).normalize() + (point2 - point1).normalize()).normalize();
-    Geo::Point center = point1 + vp * std::sqrt(len * len + radius * radius);
+    Geo::Point center = point1 + vp * std::hypot(len, radius);
     Geo::Point foot0, foot1;
     Geo::foot_point(point0, point1, center, foot0, true);
     Geo::foot_point(point2, point1, center, foot1, true);
