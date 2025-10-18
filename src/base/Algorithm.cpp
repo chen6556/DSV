@@ -1674,6 +1674,11 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
         polyline.append(bezier[i + order]);
         Geo::down_sampling(polyline, Geo::Bezier::default_down_sampling_value);
 
+        if (!Geo::is_intersected(polyline.bounding_rect(), point0, point1))
+        {
+            continue;
+        }
+
         std::vector<Geo::Point> temp;
         for (size_t j = 1, count = polyline.size(); j < count; ++j)
         {
@@ -1833,7 +1838,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
         t += init_step;
     }
 
-    std::vector<std::tuple<double, Geo::Point>> result;
+    std::vector<Geo::Point> result;
     for (size_t n = 0, count = temp.size(); n < count; ++n)
     {
         t = temp[n];
@@ -1973,19 +1978,14 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
         {
             coord += bspline.control_points[i] * nbasis[i];
         }
-        if (Geo::is_inside(coord, point0, point1, infinite))
+        if (std::find(result.begin(), result.end(), coord) == result.end()
+            && Geo::is_inside(coord, point0, point1, infinite))
         {
-            result.emplace_back(std::min(min_dis[0], min_dis[1]), coord);
+            result.emplace_back(coord);
         }
     }
 
-    for (const auto &[dis, coord] : result)
-    {
-        if (std::find(intersections.begin(), intersections.end(), coord) == intersections.end())
-        {
-            intersections.emplace_back(coord);
-        }
-    }
+    intersections.insert(intersections.end(), result.begin(), result.end());
     return result.size();
 }
 
