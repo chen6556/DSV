@@ -2521,6 +2521,196 @@ int Geo::is_intersected(const Circle &circle, const Ellipse &ellipse, Point &poi
     return points.size();
 }
 
+int Geo::is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vector<Point> &intersections)
+{
+    const size_t order0 = bezier0.order(), order1 = bezier1.order();
+    std::vector<int> nums0(order0 + 1, 1), nums1(order1 + 1, 1);
+    switch (order0)
+    {
+    case 2:
+        nums0[1] = 2;
+        break;
+    case 3:
+        nums0[1] = nums0[2] = 3;
+        break;
+    default:
+        {
+            std::vector<int> temp(1, 1);
+            for (size_t i = 1; i <= order0; ++i)
+            {
+                for (size_t j = 1; j < i; ++j)
+                {
+                    nums0[j] = temp[j - 1] + temp[j];
+                }
+                temp.assign(nums0.begin(), nums0.begin() + i + 1);
+            }
+        }
+        break;
+    }
+    switch (order1)
+    {
+    case 2:
+        nums1[1] = 2;
+        break;
+    case 3:
+        nums1[1] = nums1[2] = 3;
+        break;
+    default:
+        {
+            std::vector<int> temp(1, 1);
+            for (size_t i = 1; i <= order1; ++i)
+            {
+                for (size_t j = 1; j < i; ++j)
+                {
+                    nums1[j] = temp[j - 1] + temp[j];
+                }
+                temp.assign(nums1.begin(), nums1.begin() + i + 1);
+            }
+        }
+        break;
+    }
+
+    const size_t count = intersections.size();
+    std::vector<Geo::Polyline> shapes;
+    for (size_t p = 0, end0 = bezier0.size() - order0; p < end0; p += order0)
+    {
+        Geo::Polyline polyline0;
+        for (double t = 0; t <= 1; t += Geo::Bezier::default_step)
+        {
+            Geo::Point point;
+            for (size_t j = 0; j <= order0; ++j)
+            {
+                point += (bezier0[j + p] * (nums0[j] * std::pow(1 - t, order0 - j) * std::pow(t, j))); 
+            }
+            polyline0.append(point);
+        }
+        polyline0.append(bezier0[p + order0]);
+        Geo::down_sampling(polyline0, Geo::Bezier::default_down_sampling_value);
+
+        for (size_t q = 0, end1 = bezier1.size() - order1; q < end1; q += order1)
+        {
+            Geo::Polyline polyline1;
+            if (q % order1 < shapes.size())
+            {
+                polyline1 = shapes[q % order1];
+            }
+            else
+            {
+                for (double t = 0; t <= 1; t += Geo::Bezier::default_step)
+                {
+                    Geo::Point point;
+                    for (size_t j = 0; j <= order1; ++j)
+                    {
+                        point += (bezier1[j + q] * (nums1[j] * std::pow(1 - t, order1 - j) * std::pow(t, j))); 
+                    }
+                    polyline1.append(point);
+                }
+                polyline1.append(bezier1[q + order1]);
+                Geo::down_sampling(polyline1, Geo::Bezier::default_down_sampling_value);
+            }
+
+            if (!Geo::is_intersected(polyline0.bounding_rect(), polyline1.bounding_rect(), true))
+            {
+                continue;
+            }
+
+            for (size_t a = 1, count0 = polyline0.size(); a < count0; ++a)
+            {
+                for (size_t b = 1, count1 = polyline1.size(); b < count1; ++b)
+                {
+                    Geo::Point point;
+                    if (!Geo::is_intersected(polyline0[a - 1], polyline0[a],
+                        polyline1[b - 1], polyline1[b], point, false))
+                    {
+                        continue;
+                    }
+
+                    double step = 1e-3, lower0 = 0, upper0 = 1;
+                    double min_dis = DBL_MAX, t0 = 0;
+                    while (min_dis > 1e-8 && step > 1e-16)
+                    {
+                        for (double x = lower0; x <= upper0; x += step)
+                        {
+                            Geo::Point coord;
+                            for (size_t j = 0; j <= order0; ++j)
+                            {
+                                coord += (bezier0[j + p] * (nums0[j] * std::pow(1 - x, order0 - j) * std::pow(x, j))); 
+                            }
+                            if (double dis = Geo::distance(point, coord); dis < min_dis)
+                            {
+                                min_dis = dis;
+                                t0 = x;
+                            }
+                        }
+                        lower0 = std::max(0.0, t0 - step);
+                        upper0 = std::min(1.0, t0 + step);
+                        step = (upper0 - lower0) / 100;
+                    }
+
+                    double lower1 = 0, upper1 = 1, t1 = 0;
+                    step = 1e-3, min_dis = DBL_MAX;
+                    while (min_dis > 1e-8 && step > 1e-16)
+                    {
+                        for (double x = lower1; x <= upper1; x += step)
+                        {
+                            Geo::Point coord;
+                            for (size_t j = 0; j <= order1; ++j)
+                            {
+                                coord += (bezier1[j + q] * (nums1[j] * std::pow(1 - x, order1 - j) * std::pow(x, j))); 
+                            }
+                            if (double dis = Geo::distance(point, coord); dis < min_dis)
+                            {
+                                min_dis = dis;
+                                t0 = x;
+                            }
+                        }
+                        lower1 = std::max(0.0, t1 - step);
+                        upper1 = std::min(1.0, t1 + step);
+                        step = (upper1 - lower1) / 100;
+                    }
+
+                    Math::BezierPatameter params[2];
+                    params[0].order = order0;
+                    params[0].values = nums0.data();
+                    double *points0 = new double[order0 * 2 + 2];
+                    params[0].points = points0;
+                    for (size_t k = 0; k <= order0; ++k)
+                    {
+                        points0[k * 2] = bezier0[k + p].x;
+                        points0[k * 2 + 1] = bezier0[k + p].y;
+                    }
+                    params[1].order = order1;
+                    params[1].values = nums1.data();
+                    double *points1 = new double[order1 * 2 + 2];
+                    params[1].points = points1;
+                    for (size_t k = 0; k <= order1; ++k)
+                    {
+                        points1[k * 2] = bezier1[k + q].x;
+                        points1[k * 2 + 1] = bezier1[k + q].y;
+                    }
+                    std::tuple<double, double> res = Math::solve_bezier_bezier_intersection(params, t0, t1);
+                    t0 = std::get<0>(res), t1 = std::get<1>(res);
+                    delete[] points0;
+                    delete[] points1;
+
+                    Geo::Point point0, point1;
+                    for (size_t j = 0; j <= order0; ++j)
+                    {
+                        point0 += (bezier0[j + p] * (nums0[j] * std::pow(1 - t0, order0 - j) * std::pow(t0, j))); 
+                    }
+                    for (size_t j = 0; j <= order1; ++j)
+                    {
+                        point1 += (bezier1[j + q] * (nums1[j] * std::pow(1 - t1, order1 - j) * std::pow(t1, j))); 
+                    }
+                    intersections.emplace_back((point0 + point1) / 2);
+                }
+            }
+        }
+    }
+
+    return intersections.size() - count;
+}
+
 bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const Point &point1)
 {
     if (Geo::is_inside(point0, rect) || Geo::is_inside(point1, rect))
@@ -3189,6 +3379,25 @@ bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *
         case Geo::Type::POLYLINE:
             return Geo::find_intersections(*static_cast<const Geo::Polyline *>(object1),
                 *static_cast<const Geo::Bezier *>(object0), pos, distance, intersections);
+        case Geo::Type::BEZIER:
+            if (std::vector<Geo::Point> temp; Geo::is_intersected(*static_cast<const Geo::Bezier *>(object0),
+                *static_cast<const Geo::Bezier *>(object1), temp))
+            {
+                const size_t count = intersections.size();
+                for (const Geo::Point &point : temp)
+                {
+                    if (std::find(intersections.begin(), intersections.end(), point) == 
+                        intersections.end() && Geo::distance(point, pos) < distance)
+                    {
+                        intersections.emplace_back(point);
+                    }
+                }
+                return intersections.size() > count;
+            }
+            else
+            {
+                return false;
+            }
         default:
             break;
         }

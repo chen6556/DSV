@@ -32,4 +32,20 @@ namespace Math
     void mul(const double *mat0, const size_t m0, const size_t n0, const double *mat1, const size_t n1, double *output);
 
     void solve(const double *mat, const size_t n, const double *b, double *output);
+
+
+    struct BezierPatameter
+    {
+        int order = 3;
+        double *points = nullptr;
+        int *values = nullptr;
+    };
+
+    int bezier_bezier_f(const gsl_vector *v, void *params, gsl_vector *f);
+    
+    int bezier_bezier_df(const gsl_vector *v, void *params, gsl_matrix *j);
+
+    int bezier_bezier_fdf(const gsl_vector *x, void *params, gsl_vector *f, gsl_matrix *j);
+
+    std::tuple<double, double> solve_bezier_bezier_intersection(BezierPatameter param[2], const double init_t0, const double init_t1);
 };
