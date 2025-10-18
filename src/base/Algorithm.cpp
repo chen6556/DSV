@@ -297,7 +297,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
             }
         }
     
-        result = std::min(min_dis[0], min_dis[1]);
+        result = std::min(result, std::min(min_dis[0], min_dis[1]));
     }
     return result;
 }
@@ -310,7 +310,7 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
     const size_t p1 = std::max(npts * 8.0, bspline.shape().length() / Geo::BSpline::default_step);
 
     double t = knots[0];
-    double step = (knots[nplusc - 1] - t) / (p1 - 1);
+    const double init_step = (knots[nplusc - 1] - t) / (p1 - 1);
     std::vector<double> temp;
     double min_dis[2] = {DBL_MAX, DBL_MAX};
     while (t <= knots[nplusc - 1])
@@ -340,14 +340,18 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
         {
             temp.push_back(t);
         }
-        t += step;
+        t += init_step;
     }
 
     double result = DBL_MAX;
-    for (double v : temp)
+    for (size_t n = 0, count = temp.size(); n < count; ++n)
     {
-        step = 1e-3;
-        double lower = knots[0], upper = knots[nplusc - 1];
+        t = temp[n];
+        const double min_lower = n > 0 ? temp[n - 1] : knots[0];
+        const double max_upper = n < count - 1 ? temp[n + 1] : knots[nplusc - 1];
+        double lower = std::max(min_lower, t - init_step);
+        double upper = std::min(max_upper, t + init_step);
+        double step = (upper - lower) / 1000;
         min_dis[0] = min_dis[1] = DBL_MAX;
         while (true)
         {
@@ -370,7 +374,7 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
                 if (double dis = Geo::distance(point, coord); dis < min_dis[1])
                 {
                     min_dis[1] = dis;
-                    v = x;
+                    t = x;
                 }
             }
             if (std::abs(min_dis[0] - min_dis[1]) < 1e-4 || step < 1e-11)
@@ -379,8 +383,8 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
             }
             else
             {
-                lower = std::max(0.0, v - step);
-                upper = std::min(1.0, v + step);
+                lower = std::max(min_lower, t - step);
+                upper = std::min(max_upper, t + step);
                 step = (upper - lower) / 100;
             }
             if (min_dis[0] > min_dis[1])
@@ -389,11 +393,12 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
             }
         }
 
-        step = 1e-3, lower = std::max(knots[0], t - 0.1), upper = std::min(knots[nplusc - 1], t + 0.1);
         min_dis[0] = min_dis[1] = DBL_MAX;
-        while (true)
+        step = (upper - lower) / 100;
+        while ((upper - lower) * 1e16 > 1)
         {
-            for (double x = lower; x <= upper; x += step)
+            int flag = 0;
+            for (double x = lower, dis0 = 0; x <= upper; x += step)
             {
                 std::vector<double> nbasis;
                 if (is_cubic)
@@ -412,29 +417,50 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
                 if (double dis = Geo::distance(coord, point); dis < min_dis[1])
                 {
                     min_dis[1] = dis;
-                    v = x;
+                    t = x;
+                }
+                else if (dis == min_dis[1])
+                {
+                    flag = -1; // 需要扩大搜索范围
+                    break;
+                }
+                else
+                {
+                    if (dis0 == dis)
+                    {
+                        if (++flag == 10)
+                        {
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        flag = 0;
+                    }
+                    dis0 = dis;
                 }
             }
-            if (std::abs(min_dis[0] - min_dis[1]) < 1e-8)
+            if (flag == -1) // 需要扩大搜索范围
             {
-                break;
+                if (t - lower < upper - t)
+                {
+                    lower = std::max(min_lower, lower - step * 2);
+                }
+                else
+                {
+                    upper = std::min(max_upper, upper + step * 2);
+                }
+                step = (upper - lower) / 100;
             }
             else
             {
-                lower = std::max(0.0, v - step);
-                upper = std::min(1.0, v + step);
+                lower = std::max(min_lower, t - step * 2);
+                upper = std::min(max_upper, t + step * 2);
                 step = (upper - lower) / 100;
-            }
-            if (min_dis[0] > min_dis[1])
-            {
-                min_dis[0] = min_dis[1];
             }
         }
 
-        if (result > std::min(min_dis[0], min_dis[1]))
-        {
-            result = std::min(min_dis[0], min_dis[1]);
-        }
+        result = std::min(result, std::min(min_dis[0], min_dis[1]));
     }
     return result;
 }
