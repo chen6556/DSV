@@ -136,35 +136,6 @@ int Math::bezier_bezier_f(const gsl_vector *v, void *params, gsl_vector *f)
     return GSL_SUCCESS;
 }
 
-std::tuple<double, double> Math::solve_bezier_bezier_intersection(BezierParameter param[2], const double init_t0, const double init_t1)
-{
-    const size_t n = 2; // 方程组未知数的个数
-    gsl_multiroot_function f = {&Math::bezier_bezier_f, n, param};
-
-    gsl_vector *x = gsl_vector_alloc(n);
-    gsl_vector_set(x, 0, init_t0);
-	gsl_vector_set(x, 1, init_t1);
-
-    const gsl_multiroot_fsolver_type *t = gsl_multiroot_fsolver_dnewton;
-    gsl_multiroot_fsolver *s = gsl_multiroot_fsolver_alloc(t, n);
-    gsl_multiroot_fsolver_set(s, &f, x);
-
-    int status = GSL_CONTINUE;
-    size_t count = 0;
-    while (status == GSL_CONTINUE && count++ < Math::MAX_ITERATION) //这个循环迭代解方程，最多迭代Math::MAX_ITERATION次
-	{
-        status = gsl_multiroot_fsolver_iterate(s);
-		status = gsl_multiroot_test_residual(s->f, Math::EPSILON); //判断解是否是真实解
-	}
-
-    std::tuple<double, double> res = std::make_tuple(gsl_vector_get(s->x, 0), gsl_vector_get(s->x, 1));
-
-    gsl_multiroot_fsolver_free(s);
-	gsl_vector_free(x);
-
-    return res;
-}
-
 void Math::rbasis(const bool is_cubic, const double t, const size_t npts, const double *x, double *output)
 {
     const size_t nplusc = npts + (is_cubic ? 4 : 3);
@@ -246,35 +217,6 @@ int Math::bspline_bspline_f(const gsl_vector *v, void *params, gsl_vector *f)
     return GSL_SUCCESS;
 }
 
-std::tuple<double, double> Math::solve_bspline_bspline_intersection(BSplineParameter param[2], const double init_t0, const double init_t1)
-{
-    const size_t n = 2; // 方程组未知数的个数
-    gsl_multiroot_function f = {&Math::bspline_bspline_f, n, param};
-
-    gsl_vector *x = gsl_vector_alloc(n);
-    gsl_vector_set(x, 0, init_t0);
-	gsl_vector_set(x, 1, init_t1);
-
-    const gsl_multiroot_fsolver_type *t = gsl_multiroot_fsolver_dnewton;
-    gsl_multiroot_fsolver *s = gsl_multiroot_fsolver_alloc(t, n);
-    gsl_multiroot_fsolver_set(s, &f, x);
-
-    int status = GSL_CONTINUE;
-    size_t count = 0;
-    while (status == GSL_CONTINUE && count++ < Math::MAX_ITERATION) //这个循环迭代解方程，最多迭代Math::MAX_ITERATION次
-	{
-        status = gsl_multiroot_fsolver_iterate(s);
-		status = gsl_multiroot_test_residual(s->f, Math::EPSILON); //判断解是否是真实解
-	}
-
-    std::tuple<double, double> res = std::make_tuple(gsl_vector_get(s->x, 0), gsl_vector_get(s->x, 1));
-
-    gsl_multiroot_fsolver_free(s);
-	gsl_vector_free(x);
-
-    return res;
-}
-
 int Math::bezier_bspline_f(const gsl_vector *v, void *params, gsl_vector *f)
 {
     BezierBSplineParameter *curve = static_cast<BezierBSplineParameter *>(params);
@@ -300,10 +242,24 @@ int Math::bezier_bspline_f(const gsl_vector *v, void *params, gsl_vector *f)
     return GSL_SUCCESS;
 }
 
-std::tuple<double, double> Math::solve_bezier_bspline_intersection(BezierBSplineParameter &param, const double init_t0, const double init_t1)
+std::tuple<double, double> Math::solve_curve_intersection(void *param, const CurveIntersectType type, const double init_t0, const double init_t1)
 {
     const size_t n = 2; // 方程组未知数的个数
-    gsl_multiroot_function f = {&Math::bezier_bspline_f, n, &param};
+    gsl_multiroot_function f;
+    switch (type)
+    {
+    case CurveIntersectType::BezierBezier:
+        f.f = &Math::bezier_bezier_f;
+        break;
+    case CurveIntersectType::BSplineBSpline:
+        f.f = &Math::bspline_bspline_f;
+        break;
+    case CurveIntersectType::BezierBSpline:
+        f.f = &Math::bezier_bspline_f;
+        break;
+    }
+    f.n = n;
+    f.params = param;
 
     gsl_vector *x = gsl_vector_alloc(n);
     gsl_vector_set(x, 0, init_t0);

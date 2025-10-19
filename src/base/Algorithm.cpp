@@ -2688,7 +2688,7 @@ int Geo::is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vecto
                         points1[k * 2] = bezier1[k + q].x;
                         points1[k * 2 + 1] = bezier1[k + q].y;
                     }
-                    std::tuple<double, double> res = Math::solve_bezier_bezier_intersection(params, t0, t1);
+                    std::tuple<double, double> res = Math::solve_curve_intersection(params, Math::CurveIntersectType::BezierBezier, t0, t1);
                     t0 = std::get<0>(res), t1 = std::get<1>(res);
                     delete[] points0;
                     delete[] points1;
@@ -2893,7 +2893,7 @@ int Geo::is_intersected(const BSpline &bspline0, const bool is_cubic0, const BSp
     params[1].values = knots1.data();
     for (size_t i = 0, count = values0.size(); i < count; ++i)
     {
-        auto [t0, t1] = Math::solve_bspline_bspline_intersection(params, values0[i], values1[i]);
+        auto [t0, t1] = Math::solve_curve_intersection(params, Math::CurveIntersectType::BSplineBSpline, values0[i], values1[i]);
         std::vector<double> nbasis0;
         if (is_cubic0)
         {
@@ -3084,7 +3084,8 @@ int Geo::is_intersected(const Bezier &bezier, const BSpline &bspline, const bool
             bezier_points.push_back(bezier[j + k].y);
         }
         param.bezier.points = bezier_points.data();
-        auto [t0, t1] = Math::solve_bezier_bspline_intersection(param, std::get<1>(bezier_values[i]), bspline_values[i]);
+        auto [t0, t1] = Math::solve_curve_intersection(&param, Math::CurveIntersectType::BezierBSpline,
+            std::get<1>(bezier_values[i]), bspline_values[i]);
         Geo::Point point0;
         for (size_t j = 0, k = std::get<0>(bezier_values[i]); j <= order; ++j)
         {

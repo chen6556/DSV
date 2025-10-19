@@ -43,9 +43,6 @@ namespace Math
 
     int bezier_bezier_f(const gsl_vector *v, void *params, gsl_vector *f);
 
-    std::tuple<double, double> solve_bezier_bezier_intersection(BezierParameter param[2], const double init_t0, const double init_t1);
-
-
     struct BSplineParameter
     {
         bool is_cubic = true;
@@ -58,9 +55,6 @@ namespace Math
 
     int bspline_bspline_f(const gsl_vector *v, void *params, gsl_vector *f);
 
-    std::tuple<double, double> solve_bspline_bspline_intersection(BSplineParameter param[2], const double init_t0, const double init_t1);
-
-
     struct BezierBSplineParameter
     {
         BezierParameter bezier;
@@ -69,5 +63,10 @@ namespace Math
 
     int bezier_bspline_f(const gsl_vector *v, void *params, gsl_vector *f);
 
-    std::tuple<double, double> solve_bezier_bspline_intersection(BezierBSplineParameter &param, const double init_t0, const double init_t1);
+    enum class CurveIntersectType
+    {
+        BezierBezier, BSplineBSpline, BezierBSpline
+    };
+
+    std::tuple<double, double> solve_curve_intersection(void *param, const CurveIntersectType type, const double init_t0, const double init_t1);
 };
