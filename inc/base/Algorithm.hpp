@@ -233,10 +233,10 @@ namespace Geo
     // 找到Polyline与Polygon在pos附近的交点
     bool find_intersections(const Polyline &polyline, const Polygon &polygon, const Point &pos, const double distance, std::vector<Point> &intersections);
 
-    // 找到Polyline与Bezier在pos附近的交点
+    // [数值解]找到Polyline与Bezier在pos附近的交点
     bool find_intersections(const Polyline &polyline, const Bezier &bezier, const Point &pos, const double distance, std::vector<Point> &intersections);
 
-    // 找到Polyline与BSpline在pos附近的交点
+    // [数值解]找到Polyline与BSpline在pos附近的交点
     bool find_intersections(const Polyline &polyline, const BSpline &bspline, const bool is_cubic, const Point &pos, const double distance, std::vector<Point> &intersections);
 
     // 找到Polyline与Cirlce在pos附近的交点
@@ -247,6 +247,12 @@ namespace Geo
 
     // 找到Polygon与Polygon在pos附近的交点
     bool find_intersections(const Polygon &polygon0, const Polygon &polygon1, const Point &pos, const double distance, std::vector<Point> &intersections);
+
+    // [数值解]找到Polygon与Bezier在pos附近的交点
+    bool find_intersections(const Polygon &polygon, const Bezier &bezier, const Point &pos, const double distance, std::vector<Point> &intersections);
+
+    // [数值解]找到Polygon与BSpline在pos附近的交点
+    bool find_intersections(const Polygon &polygon, const BSpline &bspline, const bool is_cubic, const Point &pos, const double distance, std::vector<Point> &intersections);
 
     // 找到Polygon与Cirlce在pos附近的交点
     bool find_intersections(const Polygon &polygon, const Circle &circle, const Point &pos, const double distance, std::vector<Point> &intersections);

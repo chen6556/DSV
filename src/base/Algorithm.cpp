@@ -3504,6 +3504,54 @@ bool Geo::find_intersections(const Geo::Polygon &polygon0, const Geo::Polygon &p
     return intersections.size() > count;
 }
 
+bool Geo::find_intersections(const Geo::Polygon &polygon, const Geo::Bezier &bezier, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
+{
+    const size_t size = intersections.size();
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        if (Geo::distance(pos, polygon[i - 1], polygon[i], false) > distance)
+        {
+            continue;
+        }
+
+        std::vector<Geo::Point> temp;
+        Geo::is_intersected(polygon[i - 1], polygon[i], bezier, temp, false);
+        for (const Geo::Point &point : temp)
+        {
+            if (Geo::distance(point, pos) <= distance && std::find(intersections.begin(),
+                intersections.end(), point) == intersections.end())
+            {
+                intersections.emplace_back(point);
+            }
+        }
+    }
+    return intersections.size() > size;
+}
+
+bool Geo::find_intersections(const Geo::Polygon &polygon, const Geo::BSpline &bspline, const bool is_cubic, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
+{
+    const size_t size = intersections.size();
+    for (size_t i = 1, count = polygon.size(); i < count; ++i)
+    {
+        if (Geo::distance(pos, polygon[i - 1], polygon[i], false) > distance)
+        {
+            continue;
+        }
+
+        std::vector<Geo::Point> temp;
+        Geo::is_intersected(polygon[i - 1], polygon[i], bspline, is_cubic, temp, false);
+        for (const Geo::Point &point : temp)
+        {
+            if (Geo::distance(point, pos) <= distance && std::find(intersections.begin(),
+                intersections.end(), point) == intersections.end())
+            {
+                intersections.emplace_back(point);
+            }
+        }
+    }
+    return intersections.size() > size;
+}
+
 bool Geo::find_intersections(const Geo::Polygon &polygon, const Geo::Circle &circle, const Geo::Point &pos, const double distance, std::vector<Geo::Point> &intersections)
 {
     std::vector<size_t> index;
@@ -3735,6 +3783,12 @@ bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *
         case Geo::Type::ELLIPSE:
             return Geo::find_intersections(*static_cast<const Geo::Polygon *>(object0),
                 *static_cast<const Geo::Ellipse *>(object1), pos, distance, intersections);
+        case Geo::Type::BEZIER:
+            return Geo::find_intersections(*static_cast<const Geo::Polygon *>(object0),
+                *static_cast<const Geo::Bezier *>(object1), pos, distance, intersections);
+        case Geo::Type::BSPLINE:
+            return Geo::find_intersections(*static_cast<const Geo::Polygon *>(object0), *static_cast<const Geo::BSpline *>(object1),
+                dynamic_cast<const Geo::CubicBSpline *>(object1), pos, distance, intersections);
         default:
             break;
         }
