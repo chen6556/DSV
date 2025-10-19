@@ -167,6 +167,9 @@ namespace Geo
     // [数值解]计算椭圆与贝塞尔曲线交点
     int is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vector<Point> &intersections);
 
+    // [数值解]计算椭圆与B样条曲线交点
+    int is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections);
+
     // [数值解]计算两贝塞尔曲线交点
     int is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vector<Point> &intersections);
 
