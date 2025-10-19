@@ -116,10 +116,10 @@ namespace Geo
     // 判断线段是否与椭圆相交并尝试获取交点,返回交点数量
     int is_intersected(const Point &point0, const Point &point1, const Ellipse &ellipse, Point &output0, Point &output1, const bool infinite = false);
 
-    // 计算贝塞尔曲线与直线的交点
+    // [数值解]计算贝塞尔曲线与直线的交点
     int is_intersected(const Point &point0, const Point &point1, const Bezier &bezier, std::vector<Point> &intersections, const bool infinite = false);
 
-    // 计算B样条曲线与直线的交点
+    // [数值解]计算B样条曲线与直线的交点
     int is_intersected(const Point &point0, const Point &point1, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections, const bool infinite = false);
 
     // 判断两个AABB矩形是否相交,inside决定完全在AABB矩形内部是否算相交
@@ -163,6 +163,9 @@ namespace Geo
 
     // [数值解]计算两B样条曲线交点
     int is_intersected(const BSpline &bspline0, const bool is_cubic0, const BSpline &bspline1, const bool is_cubic1, std::vector<Point> &intersections);
+
+    // [数值解]计算贝塞尔曲线与B样条曲线交点
+    int is_intersected(const Bezier &bezier, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections);
 
     // 判断AABB矩形是否与有限长线段相交,线段完全在AABB矩形内也算相交
     bool is_intersected(const AABBRect &rect, const Point &point0, const Point &point1);
