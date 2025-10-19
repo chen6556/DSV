@@ -1720,7 +1720,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
             t = 0;
             double step = 1e-3, lower = 0, upper = 1;
             double min_dis = DBL_MAX;
-            while (true)
+            while (min_dis > 1e-4 && step > 1e-12)
             {
                 for (double x = lower; x <= upper; x += step)
                 {
@@ -1735,16 +1735,9 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
                         t = x;
                     }
                 }
-                if (min_dis < 1e-4 || step < 1e-11)
-                {
-                    break;
-                }
-                else
-                {
-                    lower = std::max(0.0, t - step);
-                    upper = std::min(1.0, t + step);
-                    step = (upper - lower) / 100;
-                }
+                lower = std::max(0.0, t - step);
+                upper = std::min(1.0, t + step);
+                step = (upper - lower) / 100;
             }
 
             lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
@@ -1873,8 +1866,8 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
         double lower = std::max(min_lower, t - init_step);
         double upper = std::min(max_upper, t + init_step);
         double step = (upper - lower) / 1000;
-        min_dis[0] = min_dis[1] = 1;
-        while (true)
+        min_dis[0] = DBL_MAX, min_dis[1] = 1;
+        while (std::abs(min_dis[0] - min_dis[1]) > 1e-4)
         {
             for (double x = lower; x <= upper; x += step)
             {
@@ -1898,16 +1891,9 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
                     t = x;
                 }
             }
-            if (std::abs(min_dis[0] - min_dis[1]) < 1e-4)
-            {
-                break;
-            }
-            else
-            {
-                lower = std::max(min_lower, t - step);
-                upper = std::min(max_upper, t + step);
-                step = (upper - lower) / 100;
-            }
+            lower = std::max(min_lower, t - step);
+            upper = std::min(max_upper, t + step);
+            step = (upper - lower) / 100;
             if (min_dis[0] > min_dis[1])
             {
                 min_dis[0] = min_dis[1];
@@ -2596,7 +2582,7 @@ int Geo::is_intersected(const Circle &circle, const Bezier &bezier, std::vector<
             t = 0;
             double step = 1e-3, lower = 0, upper = 1;
             double min_dis = DBL_MAX;
-            while (true)
+            while (min_dis > 1e-4 && step > 1e-12)
             {
                 for (double x = lower; x <= upper; x += step)
                 {
@@ -2611,16 +2597,9 @@ int Geo::is_intersected(const Circle &circle, const Bezier &bezier, std::vector<
                         t = x;
                     }
                 }
-                if (min_dis < 1e-4 || step < 1e-11)
-                {
-                    break;
-                }
-                else
-                {
-                    lower = std::max(0.0, t - step);
-                    upper = std::min(1.0, t + step);
-                    step = (upper - lower) / 100;
-                }
+                lower = std::max(0.0, t - step);
+                upper = std::min(1.0, t + step);
+                step = (upper - lower) / 100;
             }
 
             lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
@@ -2776,7 +2755,7 @@ int Geo::is_intersected(const Circle &circle, const BSpline &bspline, const bool
         double lower = std::max(min_lower, t - 2e-3);
         double upper = std::min(max_upper, t + 2e-3);
         double step = (upper - lower) / 1000;
-        while (true)
+        while (min_dis > 1e-4 && step > 1e-12)
         {
             for (double x = lower; x <= upper; x += step)
             {
@@ -2800,16 +2779,9 @@ int Geo::is_intersected(const Circle &circle, const BSpline &bspline, const bool
                     t = x;
                 }
             }
-            if (min_dis < 1e-4 || step < 1e-12)
-            {
-                break;
-            }
-            else
-            {
-                lower = std::max(0.0, t - step);
-                upper = std::min(1.0, t + step);
-                step = (upper - lower) / 100;
-            }
+            lower = std::max(0.0, t - step);
+            upper = std::min(1.0, t + step);
+            step = (upper - lower) / 100;
         }
 
         if (min_dis > 0.1)
@@ -2990,7 +2962,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vecto
             t = 0;
             double step = 1e-3, lower = 0, upper = 1;
             double min_dis = DBL_MAX;
-            while (true)
+            while (min_dis > 1e-4 && step > 1e-12)
             {
                 for (double x = lower; x <= upper; x += step)
                 {
@@ -3005,16 +2977,9 @@ int Geo::is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vecto
                         t = x;
                     }
                 }
-                if (min_dis < 1e-4 || step < 1e-11)
-                {
-                    break;
-                }
-                else
-                {
-                    lower = std::max(0.0, t - step);
-                    upper = std::min(1.0, t + step);
-                    step = (upper - lower) / 100;
-                }
+                lower = std::max(0.0, t - step);
+                upper = std::min(1.0, t + step);
+                step = (upper - lower) / 100;
             }
 
             lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
@@ -3170,7 +3135,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bo
         double lower = std::max(min_lower, t - 2e-3);
         double upper = std::min(max_upper, t + 2e-3);
         double step = (upper - lower) / 1000;
-        while (true)
+        while (min_dis > 1e-4 && step > 1e-12)
         {
             for (double x = lower; x <= upper; x += step)
             {
@@ -3194,16 +3159,9 @@ int Geo::is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bo
                     t = x;
                 }
             }
-            if (min_dis < 1e-4 || step < 1e-12)
-            {
-                break;
-            }
-            else
-            {
-                lower = std::max(0.0, t - step);
-                upper = std::min(1.0, t + step);
-                step = (upper - lower) / 100;
-            }
+            lower = std::max(0.0, t - step);
+            upper = std::min(1.0, t + step);
+            step = (upper - lower) / 100;
         }
 
         if (min_dis > 0.1)
@@ -4597,6 +4555,7 @@ bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *
         default:
             break;
         }
+        break;
     case Geo::Type::BSPLINE:
         switch (object1->type())
         {
@@ -4686,6 +4645,7 @@ bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *
         default:
             break;
         }
+        break;
     default:
         break;
     }
