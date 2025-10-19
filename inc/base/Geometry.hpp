@@ -882,7 +882,7 @@ namespace Geo
 
         static void knot(const size_t num, std::vector<double> &output);
 
-        static void rbasis(const double t, const int npts, const std::vector<double> &x, std::vector<double> &output);
+        static void rbasis(const double t, const size_t npts, const std::vector<double> &x, std::vector<double> &output);
 
         static void rbspline(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p);
 
@@ -904,7 +904,7 @@ namespace Geo
 
         void update_control_points() override;
 
-        static void rbasis(const double t, const int npts, const std::vector<double> &x, std::vector<double> &output);
+        static void rbasis(const double t, const size_t npts, const std::vector<double> &x, std::vector<double> &output);
 
         static void rbspline(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p);
 

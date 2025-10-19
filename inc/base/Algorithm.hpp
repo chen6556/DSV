@@ -161,6 +161,9 @@ namespace Geo
     // [数值解]计算两贝塞尔曲线交点
     int is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vector<Point> &intersections);
 
+    // [数值解]计算两B样条曲线交点
+    int is_intersected(const BSpline &bspline0, const bool is_cubic0, const BSpline &bspline1, const bool is_cubic1, std::vector<Point> &intersections);
+
     // 判断AABB矩形是否与有限长线段相交,线段完全在AABB矩形内也算相交
     bool is_intersected(const AABBRect &rect, const Point &point0, const Point &point1);
 

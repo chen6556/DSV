@@ -3197,12 +3197,12 @@ void QuadBSpline::knot(const size_t num, std::vector<double> &output)  // 从Lib
 	std::fill(output.begin() + num + 1, output.end(), output[num]);
 }
 
-void QuadBSpline::rbasis(const double t, const int npts, const std::vector<double> &x, std::vector<double> &output)  // 从LibreCAD抄的
+void QuadBSpline::rbasis(const double t, const size_t npts, const std::vector<double> &x, std::vector<double> &output)  // 从LibreCAD抄的
 {
-    const int nplusc = npts + 3;
+    const size_t nplusc = npts + 3;
     std::vector<double> temp(nplusc, 0);
     // calculate the first order nonrational basis functions n[i]
-    for (int i = 0; i< nplusc - 1; ++i)
+    for (size_t i = 0; i< nplusc - 1; ++i)
     {
         if ((t >= x[i]) && (t < x[i+1]))
         {
@@ -3214,7 +3214,7 @@ void QuadBSpline::rbasis(const double t, const int npts, const std::vector<doubl
 
     for (int k = 2; k <= 3; ++k)
     {
-        for (int i = 0; i < nplusc - k; ++i)
+        for (size_t i = 0; i < nplusc - k; ++i)
         {
             // if the lower order basis function is zero skip the calculation
             if (temp[i] != 0)
@@ -3237,7 +3237,7 @@ void QuadBSpline::rbasis(const double t, const int npts, const std::vector<doubl
 
     // calculate sum for denominator of rational basis functions
     double sum = 0;
-    for (int i = 0; i < npts; ++i)
+    for (size_t i = 0; i < npts; ++i)
     {
         sum += temp[i];
     }
@@ -3246,7 +3246,7 @@ void QuadBSpline::rbasis(const double t, const int npts, const std::vector<doubl
     // form rational basis functions and put in r vector
     if (sum != 0)
     {
-        for (int i = 0; i < npts; ++i)
+        for (size_t i = 0; i < npts; ++i)
         {
             output[i] = temp[i] / sum;
         }
@@ -3505,12 +3505,12 @@ void CubicBSpline::update_control_points()
     delete[] y;
 }
 
-void CubicBSpline::rbasis(const double t, const int npts, const std::vector<double> &x, std::vector<double> &output)
+void CubicBSpline::rbasis(const double t, const size_t npts, const std::vector<double> &x, std::vector<double> &output)
 {
-    const int nplusc = npts + 4;
+    const size_t nplusc = npts + 4;
     std::vector<double> temp(nplusc, 0);
     // calculate the first order nonrational basis functions n[i]
-    for (int i = 0; i< nplusc - 1; ++i)
+    for (size_t i = 0; i< nplusc - 1; ++i)
     {
         if ((t >= x[i]) && (t < x[i+1]))
         {
@@ -3522,7 +3522,7 @@ void CubicBSpline::rbasis(const double t, const int npts, const std::vector<doub
 
     for (int k = 2; k <= 4; ++k)
     {
-        for (int i = 0; i < nplusc - k; ++i)
+        for (size_t i = 0; i < nplusc - k; ++i)
         {
             // if the lower order basis function is zero skip the calculation
             if (temp[i] != 0)
@@ -3545,7 +3545,7 @@ void CubicBSpline::rbasis(const double t, const int npts, const std::vector<doub
 
     // calculate sum for denominator of rational basis functions
     double sum = 0;
-    for (int i = 0; i < npts; ++i)
+    for (size_t i = 0; i < npts; ++i)
     {
         sum += temp[i];
     }
@@ -3554,7 +3554,7 @@ void CubicBSpline::rbasis(const double t, const int npts, const std::vector<doub
     // form rational basis functions and put in r vector
     if (sum != 0)
     {
-        for (int i = 0; i < npts; ++i)
+        for (size_t i = 0; i < npts; ++i)
         {
             output[i] = temp[i] / sum;
         }

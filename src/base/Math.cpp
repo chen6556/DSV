@@ -136,62 +136,15 @@ int Math::bezier_bezier_f(const gsl_vector *v, void *params, gsl_vector *f)
     return GSL_SUCCESS;
 }
 
-int Math::bezier_bezier_df(const gsl_vector *v, void *params, gsl_matrix *j)
-{
-    BezierPatameter *bezier = static_cast<BezierPatameter *>(params);
-    const double t0 = gsl_vector_get(v, 0), t1 = gsl_vector_get(v, 1);
-    double dcoord0[2], dcoord1[2];
-    dcoord0[0] = -(bezier[0].points[0] * bezier[0].values[0] * std::pow(1 - t0, bezier[0].order - 1) *  bezier[0].order);
-    dcoord0[1] = -(bezier[0].points[1] * bezier[0].values[0] * std::pow(1 - t0, bezier[0].order - 1) *  bezier[0].order);
-    for (int i = 1; i < bezier[0].order; ++i)
-    {
-        dcoord0[0] += (bezier[0].points[i * 2] * bezier[0].values[i]) * ((i - bezier[0].order) * std::pow(1 - t0, bezier[0].order - i - 1)
-            * std::pow(t0, i) + std::pow(1 - t0, bezier[0].order - i) * i * std::pow(t0, i - 1));
-        dcoord0[1] += (bezier[0].points[i * 2 + 1] * bezier[0].values[i]) * ((i - bezier[0].order) * std::pow(1 - t0, bezier[0].order - i - 1)
-            * std::pow(t0, i) + std::pow(1 - t0, bezier[0].order - i) * i * std::pow(t0, i - 1));
-    }
-    dcoord0[0] += (bezier[0].points[bezier[0].order * 2] * bezier[0].values[bezier[0].order] * std::pow(t0, bezier[0].order - 1) * bezier[0].order);
-    dcoord0[1] += (bezier[0].points[bezier[0].order * 2 + 1] * bezier[0].values[bezier[0].order] * std::pow(t0, bezier[0].order - 1) * bezier[0].order);
-
-    dcoord1[0] = -(bezier[1].points[0] * bezier[1].values[0] * std::pow(1 - t1, bezier[1].order - 1) * bezier[1].order);
-    dcoord1[1] = -(bezier[1].points[1] * bezier[1].values[0] * std::pow(1 - t1, bezier[1].order - 1) * bezier[1].order);
-    for (int i = 1; i < bezier[1].order; ++i)
-    {
-        dcoord1[0] += (bezier[1].points[i * 2] * bezier[1].values[i]) * ((i - bezier[1].order) * std::pow(1 - t1, bezier[1].order - i - 1)
-            * std::pow(t1, i) + (std::pow(1 - t1, bezier[1].order - i) * i * std::pow(t1, i - 1)));
-        dcoord1[1] += (bezier[1].points[i * 2 + 1] * bezier[1].values[i]) * ((i - bezier[1].order) * std::pow(1 - t1, bezier[1].order - i - 1)
-            * std::pow(t1, i) + (std::pow(1 - t1, bezier[1].order - i) * i * std::pow(t1, i - 1)));
-    }
-    dcoord1[0] += (bezier[1].points[bezier[1].order * 2] * bezier[1].values[bezier[1].order] * std::pow(t1, bezier[1].order - 1) * bezier[1].order);
-    dcoord1[1] += (bezier[1].points[bezier[1].order * 2 + 1] * bezier[1].values[bezier[1].order] * std::pow(t1, bezier[1].order - 1) * bezier[1].order);
-
-    gsl_matrix_set(j, 0, 0, dcoord0[0]);
-    gsl_matrix_set(j, 1, 0, dcoord0[1]);
-    gsl_matrix_set(j, 0, 1, -dcoord1[0]);
-    gsl_matrix_set(j, 1, 1, -dcoord1[1]);
-    return GSL_SUCCESS;
-}
-
-int Math::bezier_bezier_fdf(const gsl_vector *x, void *params, gsl_vector *f, gsl_matrix *j)
-{
-    Math::bezier_bezier_f(x, params, f);
-    Math::bezier_bezier_df(x, params, j);
-    return GSL_SUCCESS;
-}
-
 std::tuple<double, double> Math::solve_bezier_bezier_intersection(BezierPatameter param[2], const double init_t0, const double init_t1)
 {
     const size_t n = 2; // 方程组未知数的个数
-    // gsl_multiroot_function_fdf f = {&Math::bezier_bezier_f, &Math::bezier_bezier_df, &Math::bezier_bezier_fdf, n, param};
     gsl_multiroot_function f = {&Math::bezier_bezier_f, n, param};
 
     gsl_vector *x = gsl_vector_alloc(n);
     gsl_vector_set(x, 0, init_t0);
 	gsl_vector_set(x, 1, init_t1);
 
-    // const gsl_multiroot_fdfsolver_type *t = gsl_multiroot_fdfsolver_gnewton;
-	// gsl_multiroot_fdfsolver *s = gsl_multiroot_fdfsolver_alloc(t, n);
-    // gsl_multiroot_fdfsolver_set(s, &f, x);
     const gsl_multiroot_fsolver_type *t = gsl_multiroot_fsolver_dnewton;
     gsl_multiroot_fsolver *s = gsl_multiroot_fsolver_alloc(t, n);
     gsl_multiroot_fsolver_set(s, &f, x);
@@ -200,14 +153,122 @@ std::tuple<double, double> Math::solve_bezier_bezier_intersection(BezierPatamete
     size_t count = 0;
     while (status == GSL_CONTINUE && count++ < Math::MAX_ITERATION) //这个循环迭代解方程，最多迭代Math::MAX_ITERATION次
 	{
-		// status = gsl_multiroot_fdfsolver_iterate(s);
         status = gsl_multiroot_fsolver_iterate(s);
 		status = gsl_multiroot_test_residual(s->f, Math::EPSILON); //判断解是否是真实解
 	}
 
     std::tuple<double, double> res = std::make_tuple(gsl_vector_get(s->x, 0), gsl_vector_get(s->x, 1));
 
-    // gsl_multiroot_fdfsolver_free(s);
+    gsl_multiroot_fsolver_free(s);
+	gsl_vector_free(x);
+
+    return res;
+}
+
+void Math::rbasis(const bool is_cubic, const double t, const size_t npts, const double *x, double *output)
+{
+    const size_t nplusc = npts + (is_cubic ? 4 : 3);
+    double *temp = new double[nplusc];
+    std::fill_n(temp, nplusc, 0);
+    for (size_t i = 0; i< nplusc - 1; ++i)
+    {
+        if ((t >= x[i]) && (t < x[i+1]))
+        {
+            temp[i] = 1;
+        }
+    }
+
+    for (int k = 2, n = is_cubic ? 4 : 3; k <= n; ++k)
+    {
+        for (size_t i = 0; i < nplusc - k; ++i)
+        {
+            if (temp[i] != 0)
+            {
+                temp[i] = ((t - x[i]) * temp[i]) / (x[i + k - 1] - x[i]);
+            }
+            if (temp[i + 1] != 0)
+            {
+                temp[i] += ((x[i + k] - t) * temp[i + 1]) / (x[i + k] - x[i + 1]);
+            }
+        }
+    }
+
+    if (t >= x[nplusc - 1])
+    {
+        temp[npts-1] = 1;
+    }
+
+    double sum = 0;
+    for (size_t i = 0; i < npts; ++i)
+    {
+        sum += temp[i];
+    }
+
+    std::fill_n(output, npts, 0);
+    if (sum != 0)
+    {
+        for (size_t i = 0; i < npts; ++i)
+        {
+            output[i] = temp[i] / sum;
+        }
+    }
+
+    delete[] temp;
+}
+
+int Math::bspline_bspline_f(const gsl_vector *v, void *params, gsl_vector *f)
+{
+    BSplinePatameter *bspline = static_cast<BSplinePatameter *>(params);
+    const double t0 = gsl_vector_get(v, 0), t1 = gsl_vector_get(v, 1);
+    double coord0[2] = {0, 0}, coord1[2] = {0, 0};
+    {
+        double *nbasis = new double[bspline[0].npts];
+        rbasis(bspline[0].is_cubic, t0, bspline[0].npts, bspline[0].values, nbasis);
+        for (size_t i = 0; i < bspline[0].npts; ++i)
+        {
+            coord0[0] += bspline[0].points[i * 2] * nbasis[i];
+            coord0[1] += bspline[0].points[i * 2 + 1] * nbasis[i];
+        }
+        delete[] nbasis;
+    }
+    {
+        double *nbasis = new double[bspline[1].npts];
+        rbasis(bspline[1].is_cubic, t1, bspline[1].npts, bspline[1].values, nbasis);
+        for (size_t i = 0; i < bspline[1].npts; ++i)
+        {
+            coord1[0] += bspline[1].points[i * 2] * nbasis[i];
+            coord1[1] += bspline[1].points[i * 2 + 1] * nbasis[i];
+        }
+        delete[] nbasis;
+    }
+    gsl_vector_set(f, 0, coord0[0] - coord1[0]);
+    gsl_vector_set(f, 1, coord0[1] - coord1[1]);
+    return GSL_SUCCESS;
+}
+
+std::tuple<double, double> Math::solve_bspline_bspline_intersection(BSplinePatameter param[2], const double init_t0, const double init_t1)
+{
+    const size_t n = 2; // 方程组未知数的个数
+    gsl_multiroot_function f = {&Math::bspline_bspline_f, n, param};
+
+    gsl_vector *x = gsl_vector_alloc(n);
+    gsl_vector_set(x, 0, init_t0);
+	gsl_vector_set(x, 1, init_t1);
+
+    const gsl_multiroot_fsolver_type *t = gsl_multiroot_fsolver_dnewton;
+    gsl_multiroot_fsolver *s = gsl_multiroot_fsolver_alloc(t, n);
+    gsl_multiroot_fsolver_set(s, &f, x);
+
+    int status = GSL_CONTINUE;
+    size_t count = 0;
+    while (status == GSL_CONTINUE && count++ < Math::MAX_ITERATION) //这个循环迭代解方程，最多迭代Math::MAX_ITERATION次
+	{
+        status = gsl_multiroot_fsolver_iterate(s);
+		status = gsl_multiroot_test_residual(s->f, Math::EPSILON); //判断解是否是真实解
+	}
+
+    std::tuple<double, double> res = std::make_tuple(gsl_vector_get(s->x, 0), gsl_vector_get(s->x, 1));
+
     gsl_multiroot_fsolver_free(s);
 	gsl_vector_free(x);
 

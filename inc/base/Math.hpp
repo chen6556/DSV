@@ -37,15 +37,26 @@ namespace Math
     struct BezierPatameter
     {
         int order = 3;
-        double *points = nullptr;
-        int *values = nullptr;
+        const double *points = nullptr;
+        const int *values = nullptr;
     };
 
     int bezier_bezier_f(const gsl_vector *v, void *params, gsl_vector *f);
-    
-    int bezier_bezier_df(const gsl_vector *v, void *params, gsl_matrix *j);
-
-    int bezier_bezier_fdf(const gsl_vector *x, void *params, gsl_vector *f, gsl_matrix *j);
 
     std::tuple<double, double> solve_bezier_bezier_intersection(BezierPatameter param[2], const double init_t0, const double init_t1);
+
+
+    struct BSplinePatameter
+    {
+        bool is_cubic = true;
+        size_t npts = 4;
+        const double *points = nullptr;
+        const double *values = nullptr;
+    };
+
+    void rbasis(const bool is_cubic, const double t, const size_t npts, const double *x, double *output);
+
+    int bspline_bspline_f(const gsl_vector *v, void *params, gsl_vector *f);
+
+    std::tuple<double, double> solve_bspline_bspline_intersection(BSplinePatameter param[2], const double init_t0, const double init_t1);
 };
