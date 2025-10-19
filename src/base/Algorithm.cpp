@@ -395,7 +395,7 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
 
         min_dis[0] = min_dis[1] = DBL_MAX;
         step = (upper - lower) / 100;
-        while ((upper - lower) * 1e16 > 1)
+        while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
             for (double x = lower, dis0 = 0; x <= upper; x += step)
@@ -1750,7 +1750,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
             lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
             step = (upper - lower) / 100;
             min_dis = DBL_MAX;
-            while ((upper - lower) * 1e16 > 1)
+            while ((upper - lower) * 1e15 > 1)
             {
                 int flag = 0;
                 for (double x = lower, dis0 = 0; x <= upper; x += step)
@@ -1921,7 +1921,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
 
         min_dis[0] = 0, min_dis[1] = DBL_MAX;
         step = (upper - lower) / 100;
-        while ((upper - lower) * 1e16 > 1)
+        while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
             for (double x = lower, dis0 = 0; x <= upper; x += step)
@@ -2626,7 +2626,7 @@ int Geo::is_intersected(const Circle &circle, const Bezier &bezier, std::vector<
             lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
             step = (upper - lower) / 100;
             min_dis = DBL_MAX;
-            while ((upper - lower) * 1e16 > 1)
+            while ((upper - lower) * 1e15 > 1)
             {
                 int flag = 0;
                 for (double x = lower, dis0 = 0; x <= upper; x += step)
@@ -2991,7 +2991,7 @@ int Geo::is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vecto
 
                     double step = 1e-3, lower0 = 0, upper0 = 1;
                     double min_dis = DBL_MAX, t0 = 0;
-                    while (min_dis > 1e-8 && step > 1e-16)
+                    while (min_dis > 1e-8 && step > 1e-15)
                     {
                         for (double x = lower0; x <= upper0; x += step)
                         {
@@ -3013,7 +3013,7 @@ int Geo::is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vecto
 
                     double lower1 = 0, upper1 = 1, t1 = 0;
                     step = 1e-3, min_dis = DBL_MAX;
-                    while (min_dis > 1e-8 && step > 1e-16)
+                    while (min_dis > 1e-8 && step > 1e-15)
                     {
                         for (double x = lower1; x <= upper1; x += step)
                         {
@@ -3132,7 +3132,7 @@ int Geo::is_intersected(const BSpline &bspline0, const bool is_cubic0, const BSp
             t = values0[i];
             double lower = std::max(knots0[0], t - init_step * 2), upper = std::min(knots0[nplusc0 - 1], t + init_step * 2);
             double step = (upper - lower) / 100, min_dis = DBL_MAX, t0 = DBL_MAX;
-            while (std::abs(t0 - t) > 1e-16 && step > 1e-16 && upper - lower > 1e-16)
+            while (std::abs(t0 - t) > 1e-15 && step > 1e-15 && upper - lower > 1e-15)
             {
                 t = t0;
                 for (double x = lower; x <= upper; x += step)
@@ -3200,7 +3200,7 @@ int Geo::is_intersected(const BSpline &bspline0, const bool is_cubic0, const BSp
             t = values1[i];
             double lower = std::max(knots1[0], t - init_step * 2), upper = std::min(knots1[nplusc1 - 1], t + init_step * 2);
             double step = (upper - lower) / 100, min_dis = DBL_MAX, t0 = DBL_MAX;
-            while (std::abs(t0 - t) > 1e-16 && step > 1e-16 && upper - lower > 1e-16)
+            while (std::abs(t0 - t) > 1e-15 && step > 1e-15 && upper - lower > 1e-15)
             {
                 t = t0;
                 for (double x = lower; x <= upper; x += step)
@@ -3365,7 +3365,7 @@ int Geo::is_intersected(const Bezier &bezier, const BSpline &bspline, const bool
             double t = std::get<1>(bezier_values[k]);
             double lower = std::max(0.0, t - 2e-4), upper = std::min(1.0, t + 2e-4);
             double step = (upper - lower) / 100, min_dis = DBL_MAX;
-            while (min_dis > 1e-8 && step > 1e-16)
+            while (min_dis > 1e-8 && step > 1e-15)
             {
                 for (double x = lower; x <= upper; x += step)
                 {
