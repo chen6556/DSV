@@ -233,7 +233,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
         double t = 0;
         double step = 1e-3, lower = 0, upper = 1;
         double min_dis[2] = {DBL_MAX, DBL_MAX};
-        while (true)
+        do
         {
             for (double x = lower; x <= upper; x += step)
             {
@@ -248,25 +248,19 @@ double Geo::distance(const Point &point, const Bezier &bezier)
                     t = x;
                 }
             }
-            if (std::abs(min_dis[0] - min_dis[1]) < 1e-4 || step < 1e-11)
-            {
-                break;
-            }
-            else
-            {
-                lower = std::max(0.0, t - step);
-                upper = std::min(1.0, t + step);
-                step = (upper - lower) / 100;
-            }
+            lower = std::max(0.0, t - step);
+            upper = std::min(1.0, t + step);
+            step = (upper - lower) / 100;
             if (min_dis[0] > min_dis[1])
             {
                 min_dis[0] = min_dis[1];
             }
         }
+        while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
         step = 1e-3, lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
         min_dis[0] = min_dis[1] = DBL_MAX;
-        while (true)
+        do
         {
             for (double x = lower; x <= upper; x += step)
             {
@@ -281,21 +275,15 @@ double Geo::distance(const Point &point, const Bezier &bezier)
                     t = x;
                 }
             }
-            if (std::abs(min_dis[0] - min_dis[1]) < 1e-8)
-            {
-                break;
-            }
-            else
-            {
-                lower = std::max(0.0, t - step);
-                upper = std::min(1.0, t + step);
-                step = (upper - lower) / 100;
-            }
+            lower = std::max(0.0, t - step);
+            upper = std::min(1.0, t + step);
+            step = (upper - lower) / 100;
             if (min_dis[0] > min_dis[1])
             {
                 min_dis[0] = min_dis[1];
             }
         }
+        while (std::abs(min_dis[0] - min_dis[1]) > 1e-8);
     
         result = std::min(result, std::min(min_dis[0], min_dis[1]));
     }
@@ -353,7 +341,7 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
         double upper = std::min(max_upper, t + init_step);
         double step = (upper - lower) / 1000;
         min_dis[0] = min_dis[1] = DBL_MAX;
-        while (true)
+        do
         {
             for (double x = lower; x <= upper; x += step)
             {
@@ -377,21 +365,15 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
                     t = x;
                 }
             }
-            if (std::abs(min_dis[0] - min_dis[1]) < 1e-4 || step < 1e-11)
-            {
-                break;
-            }
-            else
-            {
-                lower = std::max(min_lower, t - step);
-                upper = std::min(max_upper, t + step);
-                step = (upper - lower) / 100;
-            }
+            lower = std::max(min_lower, t - step);
+            upper = std::min(max_upper, t + step);
+            step = (upper - lower) / 100;
             if (min_dis[0] > min_dis[1])
             {
                 min_dis[0] = min_dis[1];
             }
         }
+        while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
         min_dis[0] = min_dis[1] = DBL_MAX;
         step = (upper - lower) / 100;
@@ -5417,7 +5399,7 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
         double t = 0;
         double step = 1e-3, lower = 0, upper = 1;
         double min_dis[2] = {DBL_MAX, DBL_MAX};
-        while (true)
+        do
         {
             for (double x = lower; x <= upper; x += step)
             {
@@ -5432,25 +5414,19 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
                     t = x;
                 }
             }
-            if (std::abs(min_dis[0] - min_dis[1]) < 1e-4 || step < 1e-11)
-            {
-                break;
-            }
-            else
-            {
-                lower = std::max(0.0, t - step);
-                upper = std::min(1.0, t + step);
-                step = (upper - lower) / 100;
-            }
+            lower = std::max(0.0, t - step);
+            upper = std::min(1.0, t + step);
+            step = (upper - lower) / 100;
             if (min_dis[0] > min_dis[1])
             {
                 min_dis[0] = min_dis[1];
             }
         }
+        while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
         step = 1e-3, lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
         min_dis[0] = min_dis[1] = DBL_MAX;
-        while (true)
+        do
         {
             for (double x = lower; x <= upper; x += step)
             {
@@ -5465,21 +5441,15 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
                     t = x;
                 }
             }
-            if (std::abs(min_dis[0] - min_dis[1]) < 1e-8)
-            {
-                break;
-            }
-            else
-            {
-                lower = std::max(0.0, t - step);
-                upper = std::min(1.0, t + step);
-                step = (upper - lower) / 100;
-            }
+            lower = std::max(0.0, t - step);
+            upper = std::min(1.0, t + step);
+            step = (upper - lower) / 100;
             if (min_dis[0] > min_dis[1])
             {
                 min_dis[0] = min_dis[1];
             }
         }
+        while (std::abs(min_dis[0] - min_dis[1]) > 1e-8);
 
         Geo::Point coord;
         for (size_t j = 0; j <= order; ++j)
@@ -5553,7 +5523,7 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
         step = 1e-3;
         double lower = knots[0], upper = knots[nplusc - 1];
         min_dis[0] = min_dis[1] = DBL_MAX;
-        while (true)
+        do
         {
             for (double x = lower; x <= upper; x += step)
             {
@@ -5577,25 +5547,19 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
                     v = x;
                 }
             }
-            if (std::abs(min_dis[0] - min_dis[1]) < 1e-4 || step < 1e-11)
-            {
-                break;
-            }
-            else
-            {
-                lower = std::max(0.0, v - step);
-                upper = std::min(1.0, v + step);
-                step = (upper - lower) / 100;
-            }
+            lower = std::max(0.0, v - step);
+            upper = std::min(1.0, v + step);
+            step = (upper - lower) / 100;
             if (min_dis[0] > min_dis[1])
             {
                 min_dis[0] = min_dis[1];
             }
         }
+        while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
         step = 1e-3, lower = std::max(knots[0], t - 0.1), upper = std::min(knots[nplusc - 1], t + 0.1);
         min_dis[0] = min_dis[1] = DBL_MAX;
-        while (true)
+        do
         {
             for (double x = lower; x <= upper; x += step)
             {
@@ -5619,21 +5583,15 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
                     v = x;
                 }
             }
-            if (std::abs(min_dis[0] - min_dis[1]) < 1e-8)
-            {
-                break;
-            }
-            else
-            {
-                lower = std::max(0.0, v - step);
-                upper = std::min(1.0, v + step);
-                step = (upper - lower) / 100;
-            }
+            lower = std::max(0.0, v - step);
+            upper = std::min(1.0, v + step);
+            step = (upper - lower) / 100;
             if (min_dis[0] > min_dis[1])
             {
                 min_dis[0] = min_dis[1];
             }
         }
+        while (std::abs(min_dis[0] - min_dis[1]) > 1e-8);
 
         std::vector<double> nbasis;
         if (is_cubic)
