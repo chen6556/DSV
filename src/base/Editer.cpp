@@ -2700,11 +2700,14 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
             if (const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(object);
                 Geo::is_intersected(bezier->bounding_rect(), head, tail))
             {
-                for (size_t i = 1, count = bezier->shape().size(); i < count; ++i)
+                if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier, points))
                 {
-                    if (Geo::Point point; Geo::is_intersected(bezier->shape()[i - 1], bezier->shape()[i], head, tail, point))
+                    for (const Geo::Point &point : points)
                     {
-                        intersections.emplace_back(point);
+                        if (Geo::Point coord; Geo::foot_point(head, tail, point, coord, false))
+                        {
+                            intersections.emplace_back(coord);
+                        }
                     }
                 }
             }
@@ -2713,11 +2716,15 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
             if (const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
                 Geo::is_intersected(bspline->bounding_rect(), head, tail))
             {
-                for (size_t i = 1, count = bspline->shape().size(); i < count; ++i)
+                if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail,
+                    *bspline, dynamic_cast<const Geo::CubicBSpline *>(bspline), points))
                 {
-                    if (Geo::Point point; Geo::is_intersected(bspline->shape()[i - 1], bspline->shape()[i], head, tail, point))
+                    for (const Geo::Point &point : points)
                     {
-                        intersections.emplace_back(point);
+                        if (Geo::Point coord; Geo::foot_point(head, tail, point, coord, false))
+                        {
+                            intersections.emplace_back(coord);
+                        }
                     }
                 }
             }
@@ -2998,11 +3005,14 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
             if (const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(object);
                 Geo::is_intersected(bezier->bounding_rect(), head, tail))
             {
-                for (size_t i = 1, count = bezier->shape().size(); i < count; ++i)
+                if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier, points))
                 {
-                    if (Geo::Point point; Geo::is_intersected(bezier->shape()[i - 1], bezier->shape()[i], head, tail, point))
+                    for (const Geo::Point &point : points)
                     {
-                        intersections.emplace_back(point);
+                        if (Geo::Point coord; Geo::foot_point(head, tail, point, coord, false))
+                        {
+                            intersections.emplace_back(coord);
+                        }
                     }
                 }
             }
@@ -3011,11 +3021,15 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
             if (const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
                 Geo::is_intersected(bspline->bounding_rect(), head, tail))
             {
-                for (size_t i = 1, count = bspline->shape().size(); i < count; ++i)
+                if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail,
+                    *bspline, dynamic_cast<const Geo::CubicBSpline *>(bspline), points))
                 {
-                    if (Geo::Point point; Geo::is_intersected(bspline->shape()[i - 1], bspline->shape()[i], head, tail, point))
+                    for (const Geo::Point &point : points)
                     {
-                        intersections.emplace_back(point);
+                        if (Geo::Point coord; Geo::foot_point(head, tail, point, coord, false))
+                        {
+                            intersections.emplace_back(coord);
+                        }
                     }
                 }
             }
@@ -3309,12 +3323,14 @@ void Editer::extend(Geo::Polyline *polyline, const double x, const double y)
             if (const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(object);
                 Geo::is_intersected(bezier->bounding_rect(), head, tail))
             {
-                for (size_t i = 1, count = bezier->shape().size(); i < count; ++i)
+                if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier, points))
                 {
-                    if (Geo::Point point; Geo::is_intersected(head, tail,
-                        bezier->shape()[i - 1], bezier->shape()[i], point))
+                    for (const Geo::Point &point : points)
                     {
-                        intersections.emplace_back(point);
+                        if (Geo::Point coord; Geo::foot_point(head, tail, point, coord, false))
+                        {
+                            intersections.emplace_back(coord);
+                        }
                     }
                 }
             }
@@ -3323,12 +3339,15 @@ void Editer::extend(Geo::Polyline *polyline, const double x, const double y)
             if (const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
                 Geo::is_intersected(bspline->bounding_rect(), head, tail))
             {
-                for (size_t i = 1, count = bspline->shape().size(); i < count; ++i)
+                if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail,
+                    *bspline, dynamic_cast<const Geo::CubicBSpline *>(bspline), points))
                 {
-                    if (Geo::Point point; Geo::is_intersected(head, tail,
-                        bspline->shape()[i - 1], bspline->shape()[i], point))
+                    for (const Geo::Point &point : points)
                     {
-                        intersections.emplace_back(point);
+                        if (Geo::Point coord; Geo::foot_point(head, tail, point, coord, false))
+                        {
+                            intersections.emplace_back(coord);
+                        }
                     }
                 }
             }
