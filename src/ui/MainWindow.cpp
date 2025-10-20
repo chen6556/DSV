@@ -778,7 +778,7 @@ void MainWindow::combinate()
     }
 }
 
-void MainWindow::split()
+void MainWindow::detach()
 {
     std::vector<Geo::Geometry *> objects = _editer.selected();
     std::set<Geo::Type> types;
@@ -794,7 +794,7 @@ void MainWindow::split()
     }
     if (!types.empty())
     {
-        _editer.split(objects);
+        _editer.detach(objects);
         ui->canvas->refresh_vbo(types, true);
         ui->canvas->refresh_selected_ibo();
     }

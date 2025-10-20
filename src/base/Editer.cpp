@@ -1643,7 +1643,7 @@ bool Editer::combinate(std::vector<Geo::Geometry *> objects)
     return true;
 }
 
-bool Editer::split(std::vector<Geo::Geometry *> objects)
+bool Editer::detach(std::vector<Geo::Geometry *> objects)
 {
     if (_graph == nullptr || objects.empty())
     {

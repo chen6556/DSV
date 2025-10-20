@@ -127,7 +127,7 @@ public:
 
     bool combinate(std::vector<Geo::Geometry *> objects);
 
-    bool split(std::vector<Geo::Geometry *> objects);
+    bool detach(std::vector<Geo::Geometry *> objects);
 
     bool mirror(std::vector<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy);
 

@@ -92,7 +92,7 @@ private slots:
 
     void combinate();
 
-    void split();
+    void detach();
 
     void rotate();
 

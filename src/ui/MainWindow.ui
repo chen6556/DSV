@@ -676,7 +676,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                </widget>
               </item>
               <item row="5" column="0">
-               <widget class="QPushButton" name="split_btn">
+               <widget class="QPushButton" name="detach_btn">
                 <property name="minimumSize">
                  <size>
                   <width>0</width>
@@ -692,11 +692,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Split</string>
+                 <string>Detach</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/split_btn.png</normaloff>:/icons/split_btn.png</iconset>
+                  <normaloff>:/icons/detach_btn.png</normaloff>:/icons/detach_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -2705,10 +2705,10 @@ QComboBox QAbstractItemView::item:selected
    </hints>
   </connection>
   <connection>
-   <sender>split_btn</sender>
+   <sender>detach_btn</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
-   <slot>split()</slot>
+   <slot>detach()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>91</x>
@@ -2752,6 +2752,6 @@ QComboBox QAbstractItemView::item:selected
   <slot>polygon_xor()</slot>
   <slot>trim()</slot>
   <slot>extend()</slot>
-  <slot>split()</slot>
+  <slot>detach()</slot>
  </slots>
 </ui>
