@@ -851,10 +851,21 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     }
                     break;
                 case Operation::Extend:
-                    if (Geo::Polyline *polyline = dynamic_cast<Geo::Polyline *>(_clicked_obj))
+                    if (Geo::Polyline *polyline = dynamic_cast<Geo::Polyline *>(_clicked_obj);
+                        polyline != nullptr && polyline->type() == Geo::Type::POLYLINE)
                     {
                         _editer->extend(polyline, real_x1, real_y1);
                         refresh_vbo(Geo::Type::POLYLINE, true);
+                        refresh_selected_ibo();
+                        update();
+                        return QOpenGLWidget::mousePressEvent(event);
+                    }
+                    break;
+                case Operation::Split:
+                    if (_editer->split(_clicked_obj, Geo::Point(real_x1, real_y1)))
+                    {
+                        refresh_vbo(_clicked_obj->type(), true);
+                        _clicked_obj = nullptr;
                         refresh_selected_ibo();
                         update();
                         return QOpenGLWidget::mousePressEvent(event);

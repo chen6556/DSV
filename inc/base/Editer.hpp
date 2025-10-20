@@ -149,6 +149,8 @@ public:
 
     bool fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius);
 
+    bool split(Geo::Geometry *object, const Geo::Point &pos);
+
     bool line_array(std::vector<Geo::Geometry *> objects, int x, int y, double x_space, double y_space);
 
     bool ring_array(std::vector<Geo::Geometry *> objects, const double x, const double y, const int n);

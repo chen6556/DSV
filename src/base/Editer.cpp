@@ -2168,6 +2168,63 @@ bool Editer::fillet(Geo::Polyline *polyline, const Geo::Point &point, const doub
     }
 }
 
+bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
+{
+    switch (object->type())
+    {
+    case Geo::Type::POLYLINE:
+        {
+            Geo::Polyline *polyline = static_cast<Geo::Polyline *>(object);
+            std::vector<Geo::Point> coords;
+            Geo::closest_point(*polyline, pos, coords);
+            if (Geo::Polyline polyline0, polyline1; Geo::split(*polyline, coords.front(), polyline0, polyline1))
+            {
+                std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
+                size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                    std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), object));
+                remove.emplace_back(object, _current_group, index);
+                _graph->container_group(_current_group).pop(index);
+                _graph->container_group(_current_group).insert(index, new Geo::Polyline(polyline1));
+                _graph->container_group(_current_group).insert(index, new Geo::Polyline(polyline0));
+                append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                append.emplace_back(_graph->container_group(_current_group)[index + 1], _current_group, index + 1);
+                _backup.push_command(new UndoStack::ObjectCommand(append, remove));
+                return true;
+            }
+        }
+        break;
+    case Geo::Type::BEZIER:
+        {
+            Geo::Bezier *bezier = static_cast<Geo::Bezier *>(object);
+            std::vector<Geo::Point> coords;
+            Geo::closest_point(*bezier, pos, coords);
+            if (Geo::Bezier bezier0(bezier->order()), bezier1(bezier->order());
+                Geo::split(*bezier, coords.front(), bezier0, bezier1))
+            {
+                std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
+                size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                    std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), object));
+                remove.emplace_back(object, _current_group, index);
+                _graph->container_group(_current_group).pop(index);
+                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                append.emplace_back(_graph->container_group(_current_group)[index + 1], _current_group, index + 1);
+                _backup.push_command(new UndoStack::ObjectCommand(append, remove));
+                return true;
+            }
+        }
+        break;
+    case Geo::Type::BSPLINE:
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
 bool Editer::line_array(std::vector<Geo::Geometry *> objects, int x, int y, double x_space, double y_space)
 {
     if (objects.empty() || x == 0 || y == 0 || (x == 1 && y == 1))
