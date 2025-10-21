@@ -377,7 +377,7 @@ void Polyline::append(const Point &point)
 
 void Polyline::append(const Polyline &polyline)
 {
-    if (_points.empty() ||  _points.back() != polyline._points.front())
+    if (_points.empty() || polyline.empty() ||  _points.back() != polyline._points.front())
     {
         _points.insert(_points.cend(), polyline._points.cbegin(), polyline._points.cend());
     }

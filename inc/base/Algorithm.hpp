@@ -116,11 +116,13 @@ namespace Geo
     // 判断线段是否与椭圆相交并尝试获取交点,返回交点数量
     int is_intersected(const Point &point0, const Point &point1, const Ellipse &ellipse, Point &output0, Point &output1, const bool infinite = false);
 
-    // [数值解]计算贝塞尔曲线与直线的交点
-    int is_intersected(const Point &point0, const Point &point1, const Bezier &bezier, std::vector<Point> &intersections, const bool infinite = false);
+    // [数值解]计算贝塞尔曲线与直线的交点,<index, t, x, y>
+    int is_intersected(const Point &point0, const Point &point1, const Bezier &bezier, std::vector<Point> &intersections,
+        const bool infinite = false, std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
 
-    // [数值解]计算B样条曲线与直线的交点
-    int is_intersected(const Point &point0, const Point &point1, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections, const bool infinite = false);
+    // [数值解]计算B样条曲线与直线的交点,<t, x, y>
+    int is_intersected(const Point &point0, const Point &point1, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections,
+        const bool infinite = false, std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
 
     // 判断两个AABB矩形是否相交,inside决定完全在AABB矩形内部是否算相交
     bool is_intersected(const AABBRect &rect0, const AABBRect &rect1, const bool inside = true);
@@ -158,26 +160,29 @@ namespace Geo
     // 计算圆与椭圆的交点
     int is_intersected(const Circle &circle, const Ellipse &ellipse, Point &point0, Point &point1, Point &point2, Point &point3);
 
-    // [数值解]计算圆与贝塞尔曲线交点
-    int is_intersected(const Circle &circle, const Bezier &bezier, std::vector<Point> &intersections);
+    // [数值解]计算圆与贝塞尔曲线交点,<index, t, x, y>
+    int is_intersected(const Circle &circle, const Bezier &bezier, std::vector<Point> &intersections, std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
 
-    // [数值解]计算圆与B样条曲线交点
-    int is_intersected(const Circle &circle, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections);
+    // [数值解]计算圆与B样条曲线交点,<t, x, y>
+    int is_intersected(const Circle &circle, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections, std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
 
-    // [数值解]计算椭圆与贝塞尔曲线交点
-    int is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vector<Point> &intersections);
+    // [数值解]计算椭圆与贝塞尔曲线交点,<index, t, x, y>
+    int is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vector<Point> &intersections, std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
 
-    // [数值解]计算椭圆与B样条曲线交点
-    int is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections);
+    // [数值解]计算椭圆与B样条曲线交点,<t, x, y>
+    int is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections, std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
 
-    // [数值解]计算两贝塞尔曲线交点
-    int is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vector<Point> &intersections);
+    // [数值解]计算两贝塞尔曲线交点,<index, t, x, y>,<,<index, t, x, y>>
+    int is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vector<Point> &intersections, std::vector<std::tuple<size_t, double, double, double>> *tvalues0 = nullptr,
+        std::vector<std::tuple<size_t, double, double, double>> *tvalues1 = nullptr);
 
-    // [数值解]计算两B样条曲线交点
-    int is_intersected(const BSpline &bspline0, const bool is_cubic0, const BSpline &bspline1, const bool is_cubic1, std::vector<Point> &intersections);
+    // [数值解]计算两B样条曲线交点,<index, t, x, y>,,<t, x, y>
+    int is_intersected(const BSpline &bspline0, const bool is_cubic0, const BSpline &bspline1, const bool is_cubic1, std::vector<Point> &intersections,
+        std::vector<std::tuple<double, double, double>> *tvalues0 = nullptr, std::vector<std::tuple<double, double, double>> *tvalues1 = nullptr);
 
-    // [数值解]计算贝塞尔曲线与B样条曲线交点
-    int is_intersected(const Bezier &bezier, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections);
+    // [数值解]计算贝塞尔曲线与B样条曲线交点,,<index, t, x, y>,<t, x, y>
+    int is_intersected(const Bezier &bezier, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections,
+        std::vector<std::tuple<size_t, double, double, double>> *tvalues0 = nullptr, std::vector<std::tuple<double, double, double>> *tvalues1 = nullptr);
 
     // 判断AABB矩形是否与有限长线段相交,线段完全在AABB矩形内也算相交
     bool is_intersected(const AABBRect &rect, const Point &point0, const Point &point1);

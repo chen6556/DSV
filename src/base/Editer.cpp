@@ -3353,6 +3353,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
     }
 
     std::vector<Geo::Point> intersections;
+    std::vector<std::tuple<size_t, double, double, double>> tvalues; // index, t, x, y
     // 找到自身交点
     const Geo::Bezier anchor_bezier(bezier->begin() + anchor_index, bezier->begin() + anchor_index + order + 1, order, false);
     for (size_t i = 0, end = bezier->size() - order; i < end; i += order)
@@ -3363,7 +3364,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         }
         Geo::Bezier temp_bezier(bezier->begin() + i, bezier->begin() + i + order + 1, order, false);
         std::vector<Geo::Point> temp;
-        Geo::is_intersected(anchor_bezier, temp_bezier, temp);
+        Geo::is_intersected(anchor_bezier, temp_bezier, temp, &tvalues);
         for (const Geo::Point &point : temp)
         {
             if (std::find(intersections.begin(), intersections.end(), point) == intersections.end()
@@ -3383,7 +3384,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
                 const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
                 for (size_t i = 1, count = polygon->size(); i < count; ++i)
                 {
-                    Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], anchor_bezier, temp);
+                    Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], anchor_bezier, temp, &tvalues);
                 }
             }
             break;
@@ -3392,25 +3393,25 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
                 const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
                 for (size_t i = 1, count = polyline->size(); i < count; ++i)
                 {
-                    Geo::is_intersected((*polyline)[i - 1], (*polyline)[i], anchor_bezier, temp);
+                    Geo::is_intersected((*polyline)[i - 1], (*polyline)[i], anchor_bezier, temp, &tvalues);
                 }
             }
             break;
         case Geo::Type::CIRCLE:
-            Geo::is_intersected(*static_cast<const Geo::Circle *>(object), anchor_bezier, temp);
+            Geo::is_intersected(*static_cast<const Geo::Circle *>(object), anchor_bezier, temp, &tvalues);
             break;
         case Geo::Type::ELLIPSE:
-            Geo::is_intersected(*static_cast<const Geo::Ellipse *>(object), anchor_bezier, temp);
+            Geo::is_intersected(*static_cast<const Geo::Ellipse *>(object), anchor_bezier, temp, &tvalues);
             break;
         case Geo::Type::BEZIER:
             if (object != bezier)
             {
-                Geo::is_intersected(anchor_bezier, *static_cast<const Geo::Bezier *>(object), temp);
+                Geo::is_intersected(anchor_bezier, *static_cast<const Geo::Bezier *>(object), temp, &tvalues);
             }
             break;
         case Geo::Type::BSPLINE:
             Geo::is_intersected(anchor_bezier, *static_cast<const Geo::BSpline *>(object),
-                dynamic_cast<const Geo::CubicBSpline *>(object), temp);
+                dynamic_cast<const Geo::CubicBSpline *>(object), temp, &tvalues);
             break;
         default:
             break;
@@ -3430,85 +3431,35 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         return;
     }
 
-    std::vector<double> intersections_t;
-    for (const Geo::Point &point : intersections)
+    std::sort(tvalues.begin(), tvalues.end(), [](const auto &a, const auto &b) { return std::get<1>(a) < std::get<1>(b); });
+    double left_t = std::get<1>(tvalues.front()), right_t = std::get<1>(tvalues.back());
+    Geo::Point point_left(std::get<2>(tvalues.front()), std::get<3>(tvalues.front()));
+    Geo::Point point_right(std::get<2>(tvalues.back()), std::get<3>(tvalues.back()));
+    for (size_t i = 1, count = tvalues.size() - 1; i < count; ++i)
     {
-        double t = 0;
-        double step = 1e-3, lower = 0, upper = 1;
-        double min_dis[2] = {DBL_MAX, DBL_MAX};
-        do
+        if (std::get<1>(tvalues[i - 1]) < anchor_t && anchor_t < std::get<1>(tvalues[i]))
         {
-            for (double x = lower; x <= upper; x += step)
-            {
-                Geo::Point coord;
-                for (size_t i = 0; i <= order; ++i)
-                {
-                    coord += (anchor_bezier[i] * (nums[i] * std::pow(1 - x, order - i) * std::pow(x, i))); 
-                }
-                if (double dis = Geo::distance(point, coord); dis < min_dis[1])
-                {
-                    min_dis[1] = dis;
-                    t = x;
-                }
-            }
-            lower = std::max(0.0, t - step);
-            upper = std::min(1.0, t + step);
-            step = (upper - lower) / 100;
-            if (min_dis[0] > min_dis[1])
-            {
-                min_dis[0] = min_dis[1];
-            }
-        }
-        while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
-
-        step = 1e-3, lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
-        min_dis[0] = min_dis[1] = DBL_MAX;
-        do
-        {
-            for (double x = lower; x <= upper; x += step)
-            {
-                Geo::Point coord;
-                for (size_t i = 0; i <= order; ++i)
-                {
-                    coord += (anchor_bezier[i] * (nums[i] * std::pow(1 - x, order - i) * std::pow(x, i))); 
-                }
-                if (double dis = Geo::distance(coord, point); dis < min_dis[1])
-                {
-                    min_dis[1] = dis;
-                    t = x;
-                }
-            }
-            lower = std::max(0.0, t - step);
-            upper = std::min(1.0, t + step);
-            step = (upper - lower) / 100;
-            if (min_dis[0] > min_dis[1])
-            {
-                min_dis[0] = min_dis[1];
-            }
-        }
-        while (std::abs(min_dis[0] - min_dis[1]) > 1e-8);
-
-        intersections_t.push_back(t);
-    }
-
-    std::sort(intersections_t.begin(), intersections_t.end());
-    double left_t = intersections_t.front(), right_t = intersections_t.back();
-    for (size_t i = 1, count = intersections_t.size() - 1; i < count; ++i)
-    {
-        if (intersections_t[i - 1] < anchor_t && anchor_t < intersections_t[i])
-        {
-            left_t = intersections_t[i - 1];
-            right_t = intersections_t[i];
+            left_t = std::get<1>(tvalues[i - 1]);
+            point_left.x = std::get<2>(tvalues[i - 1]);
+            point_left.y = std::get<3>(tvalues[i - 1]);
+            right_t = std::get<1>(tvalues[i]);
+            point_right.x = std::get<2>(tvalues[i]);
+            point_right.y = std::get<3>(tvalues[i]);
             break;
         }
     }
 
-    Geo::Point point_left, point_right;
-    for (size_t i = 0; i <= order; ++i)
+    if (left_t == 0)
     {
-        point_left += (anchor_bezier[i] * (nums[i] * std::pow(1 - left_t, order - i) * std::pow(left_t, i)));
-        point_right += (anchor_bezier[i] * (nums[i] * std::pow(1 - right_t, order - i) * std::pow(right_t, i)));
+        left_t = right_t;
+        point_left = point_right;
     }
+    else if (right_t == 1)
+    {
+        right_t = left_t;
+        point_right = point_left;
+    }
+
     if (left_t == right_t)
     {
         Geo::Bezier bezier_left(order), bezier_right(order);
@@ -3526,6 +3477,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         {
             bezier0 = new Geo::Bezier(bezier->begin(), bezier->begin() + anchor_index + 1, order, false);
             bezier0->append(bezier_left);
+            bezier0->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
             bezier1 = new Geo::Bezier(bezier->begin() + anchor_index + order, bezier->end(), order, false);
         }
         if (bezier0->size() <= order)
