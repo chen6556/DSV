@@ -3509,7 +3509,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
     }
 
     double left_t = std::get<1>(tvalues.front()), right_t = std::get<1>(tvalues.back());
-    for (size_t i = 1, count = tvalues.size() - 1; i < count; ++i)
+    for (size_t i = 1, count = tvalues.size(); i < count; ++i)
     {
         if (std::get<1>(tvalues[i - 1]) < anchor_t && anchor_t < std::get<1>(tvalues[i]))
         {

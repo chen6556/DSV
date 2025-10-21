@@ -3505,7 +3505,6 @@ int Geo::is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vecto
     }
 
     const size_t count = intersections.size();
-    std::vector<Geo::Polyline> shapes;
     for (size_t p = 0, end0 = bezier0.size() - order0; p < end0; p += order0)
     {
         Geo::Polyline polyline0;
@@ -3524,24 +3523,17 @@ int Geo::is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vecto
         for (size_t q = 0, end1 = bezier1.size() - order1; q < end1; q += order1)
         {
             Geo::Polyline polyline1;
-            if (q % order1 < shapes.size())
+            for (double t = 0; t <= 1; t += Geo::Bezier::default_step)
             {
-                polyline1 = shapes[q % order1];
-            }
-            else
-            {
-                for (double t = 0; t <= 1; t += Geo::Bezier::default_step)
+                Geo::Point point;
+                for (size_t j = 0; j <= order1; ++j)
                 {
-                    Geo::Point point;
-                    for (size_t j = 0; j <= order1; ++j)
-                    {
-                        point += (bezier1[j + q] * (nums1[j] * std::pow(1 - t, order1 - j) * std::pow(t, j))); 
-                    }
-                    polyline1.append(point);
+                    point += (bezier1[j + q] * (nums1[j] * std::pow(1 - t, order1 - j) * std::pow(t, j))); 
                 }
-                polyline1.append(bezier1[q + order1]);
-                Geo::down_sampling(polyline1, Geo::Bezier::default_down_sampling_value);
+                polyline1.append(point);
             }
+            polyline1.append(bezier1[q + order1]);
+            Geo::down_sampling(polyline1, Geo::Bezier::default_down_sampling_value);
 
             if (!Geo::is_intersected(polyline0.bounding_rect(), polyline1.bounding_rect(), true))
             {
@@ -3597,7 +3589,7 @@ int Geo::is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vecto
                             if (double dis = Geo::distance(point, coord); dis < min_dis)
                             {
                                 min_dis = dis;
-                                t0 = x;
+                                t1 = x;
                             }
                         }
                         lower1 = std::max(0.0, t1 - step);
