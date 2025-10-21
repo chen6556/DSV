@@ -3294,8 +3294,9 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         double min_dis[2] = {DBL_MAX, DBL_MAX};
         do
         {
-            for (double x = lower; x <= upper; x += step)
+            for (double x = lower; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
@@ -3317,32 +3318,69 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         }
         while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
-        step = 1e-3, lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
+        lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
+        step = (upper - lower) / 100; 
         min_dis[0] = min_dis[1] = DBL_MAX;
-        do
+        while ((upper - lower) * 1e15 > 1)
         {
-            for (double x = lower; x <= upper; x += step)
+            int flag = 0;
+            for (double x = lower, dis0 = 0; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
-                    coord += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j))); 
+                    coord += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
-                if (double dis = Geo::distance(coord, anchor); dis < min_dis[1])
+                if (const double dis = Geo::distance(coord, anchor) * 1e9; dis < min_dis[1])
                 {
                     min_dis[1] = dis;
                     t = x;
                 }
+                else if (dis == min_dis[1]) // 需要扩大搜索范围
+                {
+                    flag = -1;
+                    break;
+                }
+                else
+                {
+                    if (dis == dis0)
+                    {
+                        if (++flag == 10)
+                        {
+                            break; // 连续10次相等就退出循环
+                        }
+                    }
+                    else
+                    {
+                        flag = 0;
+                    }
+                    dis0 = dis;
+                }
             }
-            lower = std::max(0.0, t - step);
-            upper = std::min(1.0, t + step);
-            step = (upper - lower) / 100;
-            if (min_dis[0] > min_dis[1])
+            if (min_dis[1] < 2e-5)
             {
-                min_dis[0] = min_dis[1];
+                break;
+            }
+            else if (flag == -1) // 需要扩大搜索范围
+            {
+                if (t - lower < upper - t)
+                {
+                    lower = std::max(0.0, lower - step * 2);
+                }
+                else
+                {
+                    upper = std::min(1.0, upper + step * 2);
+                }
+                step = (upper - lower) / 100;
+            }
+            else
+            {
+                lower = std::max(0.0, t - step * 2);
+                upper = std::min(1.0, t + step * 2);
+                step = (upper - lower) / 100;
             }
         }
-        while (std::abs(min_dis[0] - min_dis[1]) > 1e-8);
 
         anchor.clear();
         for (size_t j = 0; j <= order; ++j)
@@ -3426,44 +3464,65 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         }
     }
 
-    if (intersections.empty())
+    std::sort(tvalues.begin(), tvalues.end(), [](const auto &a, const auto &b) { return std::get<1>(a) < std::get<1>(b); });
+    while (!tvalues.empty() && std::get<1>(tvalues.back()) == 1)
     {
-        return;
+        tvalues.pop_back();
+    }
+    while (!tvalues.empty() && std::get<1>(tvalues.front()) == 0)
+    {
+        tvalues.erase(tvalues.begin());
     }
 
-    std::sort(tvalues.begin(), tvalues.end(), [](const auto &a, const auto &b) { return std::get<1>(a) < std::get<1>(b); });
+    if (tvalues.empty())
+    {
+        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+        for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
+        {
+            if (_graph->container_group(_current_group)[i] == bezier)
+            {
+                remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                Geo::Bezier *bezier0 = new Geo::Bezier(bezier->begin(), bezier->begin() + anchor_index + 1, order, false);
+                Geo::Bezier *bezier1 = new Geo::Bezier(bezier->begin() + anchor_index + order, bezier->end(), order, false);
+                if (bezier0->size() > order)
+                {
+                    _graph->container_group(_current_group).insert(i, bezier0);
+                    add_items.emplace_back(bezier0, _current_group, i++);
+                }
+                else
+                {
+                    delete bezier0;
+                }
+                if (bezier1->size() > order)
+                {
+                    _graph->container_group(_current_group).insert(i, bezier1);
+                    add_items.emplace_back(bezier1, _current_group, i);
+                }
+                else
+                {
+                    delete bezier1;
+                }
+                break;
+            }
+        }
+        return _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+    }
+
     double left_t = std::get<1>(tvalues.front()), right_t = std::get<1>(tvalues.back());
-    Geo::Point point_left(std::get<2>(tvalues.front()), std::get<3>(tvalues.front()));
-    Geo::Point point_right(std::get<2>(tvalues.back()), std::get<3>(tvalues.back()));
     for (size_t i = 1, count = tvalues.size() - 1; i < count; ++i)
     {
         if (std::get<1>(tvalues[i - 1]) < anchor_t && anchor_t < std::get<1>(tvalues[i]))
         {
             left_t = std::get<1>(tvalues[i - 1]);
-            point_left.x = std::get<2>(tvalues[i - 1]);
-            point_left.y = std::get<3>(tvalues[i - 1]);
             right_t = std::get<1>(tvalues[i]);
-            point_right.x = std::get<2>(tvalues[i]);
-            point_right.y = std::get<3>(tvalues[i]);
             break;
         }
-    }
-
-    if (left_t == 0)
-    {
-        left_t = right_t;
-        point_left = point_right;
-    }
-    else if (right_t == 1)
-    {
-        right_t = left_t;
-        point_right = point_left;
     }
 
     if (left_t == right_t)
     {
         Geo::Bezier bezier_left(order), bezier_right(order);
-        Geo::split(anchor_bezier, point_left, bezier_left, bezier_right);
+        Geo::split(anchor_bezier, 0, left_t, bezier_left, bezier_right);
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
         Geo::Bezier *bezier0 = nullptr, *bezier1 = nullptr;
         if (anchor_t < left_t)
@@ -3515,7 +3574,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         if (anchor_t < left_t)
         {
             Geo::Bezier bezier_left(order), bezier_right(order);
-            Geo::split(anchor_bezier, point_left, bezier_left, bezier_right);
+            Geo::split(anchor_bezier, 0, left_t, bezier_left, bezier_right);
             std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
             for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
             {
@@ -3552,7 +3611,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         else if (anchor_t > right_t)
         {
             Geo::Bezier bezier_left(order), bezier_right(order);
-            Geo::split(anchor_bezier, point_right, bezier_left, bezier_right);
+            Geo::split(anchor_bezier, 0, right_t, bezier_left, bezier_right);
             std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
             for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
             {
@@ -3589,8 +3648,8 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         else
         {
             Geo::Bezier bezier_left(order), bezier_right(order), temp_bezier(order);
-            Geo::split(anchor_bezier, point_left, bezier_left, temp_bezier);
-            Geo::split(anchor_bezier, point_right, temp_bezier, bezier_right);
+            Geo::split(anchor_bezier, 0, left_t, bezier_left, temp_bezier);
+            Geo::split(anchor_bezier, 0, right_t, temp_bezier, bezier_right);
             std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
             for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
             {

@@ -235,8 +235,9 @@ double Geo::distance(const Point &point, const Bezier &bezier)
         double min_dis[2] = {DBL_MAX, DBL_MAX};
         do
         {
-            for (double x = lower; x <= upper; x += step)
+            for (double x = lower; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
@@ -258,33 +259,70 @@ double Geo::distance(const Point &point, const Bezier &bezier)
         }
         while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
-        step = 1e-3, lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
+        lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
+        step = (upper - lower) / 100;
         min_dis[0] = min_dis[1] = DBL_MAX;
-        do
+        while ((upper - lower) * 1e15 > 1)
         {
-            for (double x = lower; x <= upper; x += step)
+            int flag = 0;
+            for (double x = lower, dis0 = 0; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j))); 
+                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
-                if (double dis = Geo::distance(coord, point); dis < min_dis[1])
+                if (const double dis = Geo::distance(coord, point) * 1e9; dis < min_dis[1])
                 {
                     min_dis[1] = dis;
                     t = x;
                 }
+                else if (dis == min_dis[1]) // 需要扩大搜索范围
+                {
+                    flag = -1;
+                    break;
+                }
+                else
+                {
+                    if (dis == dis0)
+                    {
+                        if (++flag == 10)
+                        {
+                            break; // 连续10次相等就退出循环
+                        }
+                    }
+                    else
+                    {
+                        flag = 0;
+                    }
+                    dis0 = dis;
+                }
             }
-            lower = std::max(0.0, t - step);
-            upper = std::min(1.0, t + step);
-            step = (upper - lower) / 100;
-            if (min_dis[0] > min_dis[1])
+            if (min_dis[1] < 2e-5)
             {
-                min_dis[0] = min_dis[1];
+                break;
+            }
+            else if (flag == -1) // 需要扩大搜索范围
+            {
+                if (t - lower < upper - t)
+                {
+                    lower = std::max(0.0, lower - step * 2);
+                }
+                else
+                {
+                    upper = std::min(1.0, upper + step * 2);
+                }
+                step = (upper - lower) / 100;
+            }
+            else
+            {
+                lower = std::max(0.0, t - step * 2);
+                upper = std::min(1.0, t + step * 2);
+                step = (upper - lower) / 100;
             }
         }
-        while (std::abs(min_dis[0] - min_dis[1]) > 1e-8);
-    
+
         result = std::min(result, std::min(min_dis[0], min_dis[1]));
     }
     return result;
@@ -343,8 +381,9 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
         min_dis[0] = min_dis[1] = DBL_MAX;
         do
         {
-            for (double x = lower; x <= upper; x += step)
+            for (double x = lower; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 std::vector<double> nbasis;
                 if (is_cubic)
                 {
@@ -380,8 +419,9 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
-            for (double x = lower, dis0 = 0; x <= upper; x += step)
+            for (double x = lower, dis0 = 0; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 std::vector<double> nbasis;
                 if (is_cubic)
                 {
@@ -1516,6 +1556,22 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Circle &
     {
         return Geo::distance_square(circle, point0, point1, true) < std::pow(circle.radius, 2) ? 2 : 1;
     }
+    if (Geo::distance(output0, point0) < Geo::EPSILON)
+    {
+        output0 = point0;
+    }
+    else if (Geo::distance(output0, point1) < Geo::EPSILON)
+    {
+        output0 = point1;
+    }
+    if (Geo::distance(output1, point0) < Geo::EPSILON)
+    {
+        output1 = point0;
+    }
+    else if (Geo::distance(output1, point1) < Geo::EPSILON)
+    {
+        output1 = point1;
+    }
     if (Geo::is_inside(output0, point0, point1))
     {
         if (Geo::is_inside(output1, point0, point1))
@@ -1705,8 +1761,9 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
             double min_dis = DBL_MAX;
             while (min_dis > 1e-4 && step > 1e-12)
             {
-                for (double x = lower; x <= upper; x += step)
+                for (double x = lower; x < upper + step; x += step)
                 {
+                    x = x < upper ? x : upper;
                     Geo::Point coord;
                     for (size_t j = 0; j <= order; ++j)
                     {
@@ -1729,8 +1786,9 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
             while ((upper - lower) * 1e15 > 1)
             {
                 int flag = 0;
-                for (double x = lower, dis0 = 0; x <= upper; x += step)
+                for (double x = lower, dis0 = 0; x < upper + step; x += step)
                 {
+                    x = x < upper ? x : upper;
                     Geo::Point coord;
                     for (size_t j = 0; j <= order; ++j)
                     {
@@ -1876,8 +1934,9 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
         min_dis[0] = DBL_MAX, min_dis[1] = 1;
         while (std::abs(min_dis[0] - min_dis[1]) > 1e-4)
         {
-            for (double x = lower; x <= upper; x += step)
+            for (double x = lower; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 std::vector<double> nbasis;
                 if (is_cubic)
                 {
@@ -1917,8 +1976,9 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
-            for (double x = lower, dis0 = 0; x <= upper; x += step)
+            for (double x = lower, dis0 = 0; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 std::vector<double> nbasis;
                 if (is_cubic)
                 {
@@ -2563,7 +2623,7 @@ int Geo::is_intersected(const Circle &circle, const Bezier &bezier, std::vector<
         }
         break;
     }
-    
+
     const size_t size = intersections.size();
     std::vector<Geo::Point> result;
     for (size_t i = 0, end = bezier.size() - order; i < end; i += order)
@@ -2614,8 +2674,9 @@ int Geo::is_intersected(const Circle &circle, const Bezier &bezier, std::vector<
             double min_dis = DBL_MAX;
             while (min_dis > 1e-4 && step > 1e-12)
             {
-                for (double x = lower; x <= upper; x += step)
+                for (double x = lower; x < upper + step; x += step)
                 {
+                    x = x < upper ? x : upper;
                     Geo::Point coord;
                     for (size_t j = 0; j <= order; ++j)
                     {
@@ -2638,8 +2699,9 @@ int Geo::is_intersected(const Circle &circle, const Bezier &bezier, std::vector<
             while ((upper - lower) * 1e15 > 1)
             {
                 int flag = 0;
-                for (double x = lower, dis0 = 0; x <= upper; x += step)
+                for (double x = lower, dis0 = 0; x < upper + step; x += step)
                 {
+                    x = x < upper ? x : upper;
                     Geo::Point coord;
                     for (size_t j = 0; j <= order; ++j)
                     {
@@ -2730,6 +2792,7 @@ int Geo::is_intersected(const Circle &circle, const Bezier &bezier, std::vector<
         }
     }
 
+
     intersections.insert(intersections.end(), result.begin(), result.end());
     return intersections.size() - size;
 }
@@ -2809,8 +2872,9 @@ int Geo::is_intersected(const Circle &circle, const BSpline &bspline, const bool
         double step = (upper - lower) / 1000;
         while (min_dis > 1e-4 && step > 1e-12)
         {
-            for (double x = lower; x <= upper; x += step)
+            for (double x = lower; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 std::vector<double> nbasis;
                 if (is_cubic)
                 {
@@ -2848,8 +2912,9 @@ int Geo::is_intersected(const Circle &circle, const BSpline &bspline, const bool
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
-            for (double x = lower, dis0 = 0; x <= upper; x += step)
+            for (double x = lower, dis0 = 0; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 std::vector<double> nbasis;
                 if (is_cubic)
                 {
@@ -3038,8 +3103,9 @@ int Geo::is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vecto
             double min_dis = DBL_MAX;
             while (min_dis > 1e-4 && step > 1e-12)
             {
-                for (double x = lower; x <= upper; x += step)
+                for (double x = lower; x < upper + step; x += step)
                 {
+                    x = x < upper ? x : upper;
                     Geo::Point coord;
                     for (size_t j = 0; j <= order; ++j)
                     {
@@ -3062,8 +3128,9 @@ int Geo::is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vecto
             while ((upper - lower) * 1e22 > 1)
             {
                 int flag = 0;
-                for (double x = lower, dis0 = 0; x <= upper; x += step)
+                for (double x = lower, dis0 = 0; x < upper + step; x += step)
                 {
+                    x = x < upper ? x : upper;
                     Geo::Point coord;
                     for (size_t j = 0; j <= order; ++j)
                     {
@@ -3233,8 +3300,9 @@ int Geo::is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bo
         double step = (upper - lower) / 1000;
         while (min_dis > 1e-4 && step > 1e-12)
         {
-            for (double x = lower; x <= upper; x += step)
+            for (double x = lower; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 std::vector<double> nbasis;
                 if (is_cubic)
                 {
@@ -3272,8 +3340,9 @@ int Geo::is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bo
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
-            for (double x = lower, dis0 = 0; x <= upper; x += step)
+            for (double x = lower, dis0 = 0; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 std::vector<double> nbasis;
                 if (is_cubic)
                 {
@@ -3494,8 +3563,9 @@ int Geo::is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vecto
                     double min_dis = DBL_MAX, t0 = 0;
                     while (min_dis > 1e-8 && step > 1e-15)
                     {
-                        for (double x = lower0; x <= upper0; x += step)
+                        for (double x = lower0; x < upper0 + step; x += step)
                         {
+                            x = x < upper0 ? x : upper0;
                             Geo::Point coord;
                             for (size_t j = 0; j <= order0; ++j)
                             {
@@ -3516,8 +3586,9 @@ int Geo::is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vecto
                     step = 1e-3, min_dis = DBL_MAX;
                     while (min_dis > 1e-8 && step > 1e-15)
                     {
-                        for (double x = lower1; x <= upper1; x += step)
+                        for (double x = lower1; x < upper1 + step; x += step)
                         {
+                            x = x < upper1 ? x : upper1;
                             Geo::Point coord;
                             for (size_t j = 0; j <= order1; ++j)
                             {
@@ -3710,8 +3781,9 @@ int Geo::is_intersected(const BSpline &bspline0, const bool is_cubic0, const BSp
             while (std::abs(t0 - t) > 1e-15 && step > 1e-15 && upper - lower > 1e-15)
             {
                 t = t0;
-                for (double x = lower; x <= upper; x += step)
+                for (double x = lower; x < upper + step; x += step)
                 {
+                    x = x < upper ? x : upper;
                     std::vector<double> nbasis;
                     if (is_cubic0)
                     {
@@ -3778,8 +3850,9 @@ int Geo::is_intersected(const BSpline &bspline0, const bool is_cubic0, const BSp
             while (std::abs(t0 - t) > 1e-15 && step > 1e-15 && upper - lower > 1e-15)
             {
                 t = t0;
-                for (double x = lower; x <= upper; x += step)
+                for (double x = lower; x < upper + step; x += step)
                 {
+                    x = x < upper ? x : upper;
                     std::vector<double> nbasis;
                     if (is_cubic1)
                     {
@@ -4012,8 +4085,9 @@ int Geo::is_intersected(const Bezier &bezier, const BSpline &bspline, const bool
             double step = (upper - lower) / 100, min_dis = DBL_MAX;
             while (min_dis > 1e-8 && step > 1e-15)
             {
-                for (double x = lower; x <= upper; x += step)
+                for (double x = lower; x < upper + step; x += step)
                 {
+                    x = x < upper ? x : upper;
                     Geo::Point coord;
                     for (size_t j = 0; j <= order; ++j)
                     {
@@ -5751,8 +5825,9 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
         double min_dis[2] = {DBL_MAX, DBL_MAX};
         do
         {
-            for (double x = lower; x <= upper; x += step)
+            for (double x = lower; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
@@ -5776,30 +5851,67 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
 
         step = 1e-3, lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
         min_dis[0] = min_dis[1] = DBL_MAX;
-        do
+        step = (upper - lower) / 100;
+        while ((upper - lower) * 1e15 > 1)
         {
-            for (double x = lower; x <= upper; x += step)
+            int flag = 0;
+            for (double x = lower, dis0 = 0; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j))); 
+                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
-                if (double dis = Geo::distance(coord, point); dis < min_dis[1])
+                if (const double dis = Geo::distance(coord, point) * 1e9; dis < min_dis[1])
                 {
                     min_dis[1] = dis;
                     t = x;
                 }
+                else if (dis == min_dis[1]) // 需要扩大搜索范围
+                {
+                    flag = -1;
+                    break;
+                }
+                else
+                {
+                    if (dis == dis0)
+                    {
+                        if (++flag == 10)
+                        {
+                            break; // 连续10次相等就退出循环
+                        }
+                    }
+                    else
+                    {
+                        flag = 0;
+                    }
+                    dis0 = dis;
+                }
             }
-            lower = std::max(0.0, t - step);
-            upper = std::min(1.0, t + step);
-            step = (upper - lower) / 100;
-            if (min_dis[0] > min_dis[1])
+            if (min_dis[1] < 2e-5)
             {
-                min_dis[0] = min_dis[1];
+                break;
+            }
+            else if (flag == -1) // 需要扩大搜索范围
+            {
+                if (t - lower < upper - t)
+                {
+                    lower = std::max(0.0, lower - step * 2);
+                }
+                else
+                {
+                    upper = std::min(1.0, upper + step * 2);
+                }
+                step = (upper - lower) / 100;
+            }
+            else
+            {
+                lower = std::max(0.0, t - step * 2);
+                upper = std::min(1.0, t + step * 2);
+                step = (upper - lower) / 100;
             }
         }
-        while (std::abs(min_dis[0] - min_dis[1]) > 1e-8);
 
         Geo::Point coord;
         for (size_t j = 0; j <= order; ++j)
@@ -5875,8 +5987,9 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
         min_dis[0] = min_dis[1] = DBL_MAX;
         do
         {
-            for (double x = lower; x <= upper; x += step)
+            for (double x = lower; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 std::vector<double> nbasis;
                 if (is_cubic)
                 {
@@ -5909,10 +6022,12 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
 
         step = 1e-3, lower = std::max(knots[0], t - 0.1), upper = std::min(knots[nplusc - 1], t + 0.1);
         min_dis[0] = min_dis[1] = DBL_MAX;
-        do
+        while ((upper - lower) * 1e15 > 1)
         {
-            for (double x = lower; x <= upper; x += step)
+            int flag = 0;
+            for (double x = lower, dis0 = 0; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 std::vector<double> nbasis;
                 if (is_cubic)
                 {
@@ -5927,21 +6042,55 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
                 {
                     coord += bspline.control_points[i] * nbasis[i];
                 }
-                if (double dis = Geo::distance(coord, point); dis < min_dis[1])
+                if (const double dis = Geo::distance(coord, point) * 1e9; dis < min_dis[1])
                 {
                     min_dis[1] = dis;
-                    v = x;
+                    t = x;
+                }
+                else if (dis == min_dis[1]) // 需要扩大搜索范围
+                {
+                    flag = -1;
+                    break;
+                }
+                else
+                {
+                    if (dis == dis0)
+                    {
+                        if (++flag == 10)
+                        {
+                            break; // 连续10次相等就退出循环
+                        }
+                    }
+                    else
+                    {
+                        flag = 0;
+                    }
+                    dis0 = dis;
                 }
             }
-            lower = std::max(0.0, v - step);
-            upper = std::min(1.0, v + step);
-            step = (upper - lower) / 100;
-            if (min_dis[0] > min_dis[1])
+            if (min_dis[1] < 2e-5)
             {
-                min_dis[0] = min_dis[1];
+                break;
+            }
+            else if (flag == -1) // 需要扩大搜索范围
+            {
+                if (t - lower < upper - t)
+                {
+                    lower = std::max(0.0, lower - step * 2);
+                }
+                else
+                {
+                    upper = std::min(1.0, upper + step * 2);
+                }
+                step = (upper - lower) / 100;
+            }
+            else
+            {
+                lower = std::max(0.0, t - step * 2);
+                upper = std::min(1.0, t + step * 2);
+                step = (upper - lower) / 100;
             }
         }
-        while (std::abs(min_dis[0] - min_dis[1]) > 1e-8);
 
         std::vector<double> nbasis;
         if (is_cubic)
@@ -6136,8 +6285,9 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
         double min_dis[2] = {DBL_MAX, DBL_MAX};
         do
         {
-            for (double x = lower; x <= upper; x += step)
+            for (double x = lower; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
@@ -6159,32 +6309,69 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
         }
         while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
-        step = 1e-3, lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
+        lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
+        step = (upper - lower) / 100; 
         min_dis[0] = min_dis[1] = DBL_MAX;
-        do
+        while ((upper - lower) * 1e15 > 1)
         {
-            for (double x = lower; x <= upper; x += step)
+            int flag = 0;
+            for (double x = lower, dis0 = 0; x < upper + step; x += step)
             {
+                x = x < upper ? x : upper;
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j))); 
+                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
-                if (double dis = Geo::distance(coord, pos); dis < min_dis[1])
+                if (const double dis = Geo::distance(coord, pos) * 1e9; dis < min_dis[1])
                 {
                     min_dis[1] = dis;
                     t = x;
                 }
+                else if (dis == min_dis[1]) // 需要扩大搜索范围
+                {
+                    flag = -1;
+                    break;
+                }
+                else
+                {
+                    if (dis == dis0)
+                    {
+                        if (++flag == 10)
+                        {
+                            break; // 连续10次相等就退出循环
+                        }
+                    }
+                    else
+                    {
+                        flag = 0;
+                    }
+                    dis0 = dis;
+                }
             }
-            lower = std::max(0.0, t - step);
-            upper = std::min(1.0, t + step);
-            step = (upper - lower) / 100;
-            if (min_dis[0] > min_dis[1])
+            if (min_dis[1] < 2e-5)
             {
-                min_dis[0] = min_dis[1];
+                break;
+            }
+            else if (flag == -1) // 需要扩大搜索范围
+            {
+                if (t - lower < upper - t)
+                {
+                    lower = std::max(0.0, lower - step * 2);
+                }
+                else
+                {
+                    upper = std::min(1.0, upper + step * 2);
+                }
+                step = (upper - lower) / 100;
+            }
+            else
+            {
+                lower = std::max(0.0, t - step * 2);
+                upper = std::min(1.0, t + step * 2);
+                step = (upper - lower) / 100;
             }
         }
-        while (std::abs(min_dis[0] - min_dis[1]) > 1e-8);
 
         if (const double d = std::min(min_dis[0], min_dis[1]); d < result_dis)
         {
@@ -6199,7 +6386,7 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
         }
     }
 
-    if (result_dis * 10 > Geo::EPSILON)
+    if (result_dis > Geo::EPSILON * 1e9)
     {
         return false;
     }
@@ -6229,6 +6416,71 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
     output0.append(result_points0.begin(), result_points0.end());
     output1.append(result_points1.begin(), result_points1.end());
     output1.append(bezier.begin() + result_i + order, bezier.end());
+    output0.update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
+    output1.update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
+    return output0.size() > 1 && output1.size() > 1;
+}
+
+bool Geo::split(const Bezier &bezier, const size_t i, const double t, Bezier &output0, Bezier &output1)
+{
+    const size_t order = bezier.order();
+    if (output0.order() != order || output1.order() != order || (i == 0 && t == 0)
+        || (i == (bezier.size() / (order + 1) -1) && t == 1))
+    {
+        return false;
+    }
+
+    std::vector<int> nums(order + 1, 1);
+    switch (order)
+    {
+    case 2:
+        nums[1] = 2;
+        break;
+    case 3:
+        nums[1] = nums[2] = 3;
+        break;
+    default:
+        {
+            std::vector<int> temp(1, 1);
+            for (size_t i = 1; i <= order; ++i)
+            {
+                for (size_t j = 1; j < i; ++j)
+                {
+                    nums[j] = temp[j - 1] + temp[j];
+                }
+                temp.assign(nums.begin(), nums.begin() + i + 1);
+            }
+        }
+        break;
+    }
+
+    output0.clear(), output1.clear();
+    std::vector<Geo::Point> control_points;
+    Geo::Point pos;
+    for (size_t j = 0; j <= order; ++j)
+    {
+        control_points.emplace_back(bezier[j + i]);
+        pos += (control_points.back() * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j))); 
+    }
+    std::vector<Geo::Point> temp_points, result_points0, result_points1;
+    for (size_t k = 0; k < order; ++k)
+    {
+        for (size_t j = 1, count = control_points.size(); j < count; ++j)
+        {
+            temp_points.emplace_back(control_points[j - 1] + (control_points[j] - control_points[j - 1]) * t);
+        }
+        result_points0.emplace_back(temp_points.front());
+        result_points1.emplace_back(temp_points.back());
+        control_points.assign(temp_points.begin(), temp_points.end());
+        temp_points.clear();
+    }
+    result_points0.back() = result_points1.back() = pos;
+    std::reverse(result_points1.begin(), result_points1.end());
+
+    output0.append(bezier.begin(), bezier.begin() + i + 1);
+    output0.append(result_points0.begin(), result_points0.end());
+    output1.append(result_points1.begin(), result_points1.end());
+    output1.append(bezier.begin() + i + order, bezier.end());
     output0.update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
     output1.update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
     return output0.size() > 1 && output1.size() > 1;
