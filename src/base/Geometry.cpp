@@ -2300,6 +2300,10 @@ void Bezier::update_shape(const double step, const double down_sampling_value)
 {
     assert(0 < step && step < 1);
     _shape.clear();
+    if (_points.size() <= _order)
+    {
+        return;
+    }
     std::vector<int> nums(_order + 1, 1);
     switch (_order)
     {
@@ -2338,41 +2342,6 @@ void Bezier::update_shape(const double step, const double down_sampling_value)
             _shape.append(point);
             t += step;
         }
-    }
-    _shape.append(_points.back());
-    Geo::down_sampling(_shape, down_sampling_value);
-}
-
-void Bezier::append_shape(const double step, const double down_sampling_value)
-{
-    assert(0 < step && step < 1);
-    if ((_points.size() - 1) % _order > 0)
-    {
-        return;
-    }
-
-    std::vector<int> temp(1, 1), nums(_order + 1, 1);
-    for (size_t i = 1; i <= _order; ++i)
-    {
-        for (size_t j = 1; j < i; ++j)
-        {
-            nums[j] = temp[j - 1] + temp[j]; 
-        }
-        temp.assign(nums.begin(), nums.begin() + i + 1);
-    }
-
-    double t = 0;
-    Point point;
-    const size_t i = _points.size() - _order - 1;
-    while (t <= 1)
-    {
-        point.clear();
-        for (size_t j = 0; j <= _order; ++j)
-        {
-            point += (_points[j + i] * (nums[j] * std::pow(1 - t, _order - j) * std::pow(t, j))); 
-        }
-        _shape.append(point);
-        t += step;
     }
     _shape.append(_points.back());
     Geo::down_sampling(_shape, down_sampling_value);

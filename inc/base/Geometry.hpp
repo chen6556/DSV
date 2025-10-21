@@ -691,8 +691,6 @@ namespace Geo
 
         void update_shape(const double step = 0.01, const double down_sampling_value = 0.02);
 
-        void append_shape(const double step = 0.01, const double down_sampling_value = 0.02);
-
         const double length() const override;
 
         void clear() override;

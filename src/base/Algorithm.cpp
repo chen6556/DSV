@@ -191,7 +191,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
 
     // index, points, distance
     std::vector<std::tuple<size_t, std::vector<Geo::Point>, double>> temp;
-    for (size_t i = order, end = bezier.size() - order; i < end; i += order)
+    for (size_t i = 0, end = bezier.size() - order; i < end; i += order)
     {
         Geo::Polyline polyline;
         polyline.append(bezier[i]);
@@ -3421,6 +3421,11 @@ int Geo::is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vecto
                     delete[] points0;
                     delete[] points1;
 
+                    if (t0 < 0 || t0 > 1 || t1 < 0 || t1 > 1)
+                    {
+                        continue;
+                    }
+
                     Geo::Point point0, point1;
                     for (size_t j = 0; j <= order0; ++j)
                     {
@@ -3433,6 +3438,20 @@ int Geo::is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vecto
                     intersections.emplace_back((point0 + point1) / 2);
                 }
             }
+        }
+    }
+    if (bezier0.front() == bezier1.front() || bezier0.front() == bezier1.back())
+    {
+        if (std::find(intersections.begin(), intersections.end(), bezier0.front()) == intersections.end())
+        {
+            intersections.emplace_back(bezier0.front());
+        }
+    }
+    else if (bezier0.back() == bezier1.front() || bezier0.back() == bezier1.back())
+    {
+        if (std::find(intersections.begin(), intersections.end(), bezier0.back()) == intersections.end())
+        {
+            intersections.emplace_back(bezier0.back());
         }
     }
 
@@ -5357,7 +5376,7 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
 
     // index, points, distance
     std::vector<std::tuple<size_t, std::vector<Geo::Point>, double>> temp;
-    for (size_t i = order, end = bezier.size() - order; i < end; i += order)
+    for (size_t i = 0, end = bezier.size() - order; i < end; i += order)
     {
         Geo::Polyline polyline;
         polyline.append(bezier[i]);
@@ -5740,7 +5759,7 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
 
     // index, points, distance
     std::vector<std::tuple<size_t, std::vector<Geo::Point>, double>> temp;
-    for (size_t i = order, end = bezier.size() - order; i < end; i += order)
+    for (size_t i = 0, end = bezier.size() - order; i < end; i += order)
     {
         Geo::Polyline polyline;
         polyline.append(bezier[i]);
@@ -5875,8 +5894,7 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
     result_points0.back() = result_points1.back() = result_pos;
     std::reverse(result_points1.begin(), result_points1.end());
 
-    output0.append(bezier.begin(), bezier.begin() + result_i);
-    output0.append(bezier[result_i]);
+    output0.append(bezier.begin(), bezier.begin() + result_i + 1);
     output0.append(result_points0.begin(), result_points0.end());
     output1.append(result_points1.begin(), result_points1.end());
     output1.append(bezier.begin() + result_i + order, bezier.end());

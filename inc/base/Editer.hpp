@@ -170,6 +170,8 @@ public:
 
     void trim(Geo::Polygon *polygon, const double x, const double y);
 
+    void trim(Geo::Bezier *bezier, const double x, const double y);
+
     void extend(Geo::Polyline *polyline, const double x, const double y);
 
 

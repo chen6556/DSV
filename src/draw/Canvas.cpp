@@ -846,6 +846,12 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         refresh_selected_ibo();
                         update();
                         return QOpenGLWidget::mousePressEvent(event);
+                    case Geo::Type::BEZIER:
+                        _editer->trim(static_cast<Geo::Bezier *>(_clicked_obj), real_x1, real_y1);
+                        refresh_vbo(Geo::Type::BEZIER, true);
+                        refresh_selected_ibo();
+                        update();
+                        return QOpenGLWidget::mousePressEvent(event);
                     default:
                         break;
                     }

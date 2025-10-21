@@ -1,5 +1,6 @@
 #include <thread>
 
+#include "base/Math.hpp"
 #include "base/Editer.hpp"
 #include "io/GlobalSetting.hpp"
 
@@ -3228,6 +3229,438 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
         }
     }
     _graph->modified = true;
+}
+
+void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
+{
+    const size_t order = bezier->order();
+    std::vector<int> nums(order + 1, 1);
+    switch (order)
+    {
+    case 2:
+        nums[1] = 2;
+        break;
+    case 3:
+        nums[1] = nums[2] = 3;
+        break;
+    default:
+        {
+            std::vector<int> temp(1, 1);
+            for (size_t i = 1; i <= order; ++i)
+            {
+                for (size_t j = 1; j < i; ++j)
+                {
+                    nums[j] = temp[j - 1] + temp[j];
+                }
+                temp.assign(nums.begin(), nums.begin() + i + 1);
+            }
+        }
+        break;
+    }
+    Geo::Point anchor(x, y);
+    double anchor_t = 0;
+    size_t anchor_index = 0;
+
+    {
+        std::vector<std::tuple<size_t, double>> temp;
+        for (size_t i = 0, end = bezier->size() - order; i < end; i += order)
+        {
+            Geo::Polyline polyline;
+            polyline.append((*bezier)[i]);
+            double t = 0;
+            while (t <= 1)
+            {
+                Geo::Point point;
+                for (size_t j = 0; j <= order; ++j)
+                {
+                    point += ((*bezier)[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j))); 
+                }
+                polyline.append(point);
+                t += Geo::Bezier::default_step;
+            }
+            polyline.append((*bezier)[i + order]);
+            Geo::down_sampling(polyline, Geo::Bezier::default_down_sampling_value);
+
+            std::vector<Geo::Point> points;
+            Geo::closest_point(polyline, anchor, points);
+            temp.emplace_back(i, Geo::distance(anchor, points.front()));
+        }
+        std::sort(temp.begin(), temp.end(), [](const auto &a, const auto &b)
+            { return std::get<1>(a) < std::get<1>(b); });
+        anchor_index = std::get<0>(temp.front());
+
+        double t = 0;
+        double step = 1e-3, lower = 0, upper = 1;
+        double min_dis[2] = {DBL_MAX, DBL_MAX};
+        do
+        {
+            for (double x = lower; x <= upper; x += step)
+            {
+                Geo::Point coord;
+                for (size_t j = 0; j <= order; ++j)
+                {
+                    coord += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j))); 
+                }
+                if (double dis = Geo::distance(anchor, coord); dis < min_dis[1])
+                {
+                    min_dis[1] = dis;
+                    t = x;
+                }
+            }
+            lower = std::max(0.0, t - step);
+            upper = std::min(1.0, t + step);
+            step = (upper - lower) / 100;
+            if (min_dis[0] > min_dis[1])
+            {
+                min_dis[0] = min_dis[1];
+            }
+        }
+        while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
+
+        step = 1e-3, lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
+        min_dis[0] = min_dis[1] = DBL_MAX;
+        do
+        {
+            for (double x = lower; x <= upper; x += step)
+            {
+                Geo::Point coord;
+                for (size_t j = 0; j <= order; ++j)
+                {
+                    coord += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j))); 
+                }
+                if (double dis = Geo::distance(coord, anchor); dis < min_dis[1])
+                {
+                    min_dis[1] = dis;
+                    t = x;
+                }
+            }
+            lower = std::max(0.0, t - step);
+            upper = std::min(1.0, t + step);
+            step = (upper - lower) / 100;
+            if (min_dis[0] > min_dis[1])
+            {
+                min_dis[0] = min_dis[1];
+            }
+        }
+        while (std::abs(min_dis[0] - min_dis[1]) > 1e-8);
+
+        anchor.clear();
+        for (size_t j = 0; j <= order; ++j)
+        {
+            anchor += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j))); 
+        }
+        anchor_t = t;
+    }
+
+    std::vector<Geo::Point> intersections;
+    // 找到自身交点
+    const Geo::Bezier anchor_bezier(bezier->begin() + anchor_index, bezier->begin() + anchor_index + order + 1, order, false);
+    for (size_t i = 0, end = bezier->size() - order; i < end; i += order)
+    {
+        if (i == anchor_index)
+        {
+            continue;
+        }
+        Geo::Bezier temp_bezier(bezier->begin() + i, bezier->begin() + i + order + 1, order, false);
+        std::vector<Geo::Point> temp;
+        Geo::is_intersected(anchor_bezier, temp_bezier, temp);
+        for (const Geo::Point &point : temp)
+        {
+            if (std::find(intersections.begin(), intersections.end(), point) == intersections.end()
+                && point != anchor_bezier.front() && point != anchor_bezier.back())
+            {
+                intersections.emplace_back(point);
+            }
+        }
+    }
+    for (const Geo::Geometry *object : _graph->container_group(_current_group))
+    {
+        std::vector<Geo::Point> temp;
+        switch (object->type())
+        {
+        case Geo::Type::POLYGON:
+            {
+                const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
+                for (size_t i = 1, count = polygon->size(); i < count; ++i)
+                {
+                    Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], anchor_bezier, temp);
+                }
+            }
+            break;
+        case Geo::Type::POLYLINE:
+            {
+                const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
+                for (size_t i = 1, count = polyline->size(); i < count; ++i)
+                {
+                    Geo::is_intersected((*polyline)[i - 1], (*polyline)[i], anchor_bezier, temp);
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            Geo::is_intersected(*static_cast<const Geo::Circle *>(object), anchor_bezier, temp);
+            break;
+        case Geo::Type::ELLIPSE:
+            Geo::is_intersected(*static_cast<const Geo::Ellipse *>(object), anchor_bezier, temp);
+            break;
+        case Geo::Type::BEZIER:
+            if (object != bezier)
+            {
+                Geo::is_intersected(anchor_bezier, *static_cast<const Geo::Bezier *>(object), temp);
+            }
+            break;
+        case Geo::Type::BSPLINE:
+            Geo::is_intersected(anchor_bezier, *static_cast<const Geo::BSpline *>(object),
+                dynamic_cast<const Geo::CubicBSpline *>(object), temp);
+            break;
+        default:
+            break;
+        }
+        for (const Geo::Point &point : temp)
+        {
+            if (std::find(intersections.begin(), intersections.end(), point) == intersections.end()
+                && point != anchor_bezier.front() && point != anchor_bezier.back())
+            {
+                intersections.emplace_back(point);
+            }
+        }
+    }
+
+    if (intersections.empty())
+    {
+        return;
+    }
+
+    std::vector<double> intersections_t;
+    for (const Geo::Point &point : intersections)
+    {
+        double t = 0;
+        double step = 1e-3, lower = 0, upper = 1;
+        double min_dis[2] = {DBL_MAX, DBL_MAX};
+        do
+        {
+            for (double x = lower; x <= upper; x += step)
+            {
+                Geo::Point coord;
+                for (size_t i = 0; i <= order; ++i)
+                {
+                    coord += (anchor_bezier[i] * (nums[i] * std::pow(1 - x, order - i) * std::pow(x, i))); 
+                }
+                if (double dis = Geo::distance(point, coord); dis < min_dis[1])
+                {
+                    min_dis[1] = dis;
+                    t = x;
+                }
+            }
+            lower = std::max(0.0, t - step);
+            upper = std::min(1.0, t + step);
+            step = (upper - lower) / 100;
+            if (min_dis[0] > min_dis[1])
+            {
+                min_dis[0] = min_dis[1];
+            }
+        }
+        while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
+
+        step = 1e-3, lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
+        min_dis[0] = min_dis[1] = DBL_MAX;
+        do
+        {
+            for (double x = lower; x <= upper; x += step)
+            {
+                Geo::Point coord;
+                for (size_t i = 0; i <= order; ++i)
+                {
+                    coord += (anchor_bezier[i] * (nums[i] * std::pow(1 - x, order - i) * std::pow(x, i))); 
+                }
+                if (double dis = Geo::distance(coord, point); dis < min_dis[1])
+                {
+                    min_dis[1] = dis;
+                    t = x;
+                }
+            }
+            lower = std::max(0.0, t - step);
+            upper = std::min(1.0, t + step);
+            step = (upper - lower) / 100;
+            if (min_dis[0] > min_dis[1])
+            {
+                min_dis[0] = min_dis[1];
+            }
+        }
+        while (std::abs(min_dis[0] - min_dis[1]) > 1e-8);
+
+        intersections_t.push_back(t);
+    }
+
+    std::sort(intersections_t.begin(), intersections_t.end());
+    double left_t = intersections_t.front(), right_t = intersections_t.back();
+    for (size_t i = 1, count = intersections_t.size() - 1; i < count; ++i)
+    {
+        if (intersections_t[i - 1] < anchor_t && anchor_t < intersections_t[i])
+        {
+            left_t = intersections_t[i - 1];
+            right_t = intersections_t[i];
+            break;
+        }
+    }
+
+    Geo::Point point_left, point_right;
+    for (size_t i = 0; i <= order; ++i)
+    {
+        point_left += (anchor_bezier[i] * (nums[i] * std::pow(1 - left_t, order - i) * std::pow(left_t, i)));
+        point_right += (anchor_bezier[i] * (nums[i] * std::pow(1 - right_t, order - i) * std::pow(right_t, i)));
+    }
+    if (left_t == right_t)
+    {
+        Geo::Bezier bezier_left(order), bezier_right(order);
+        Geo::split(anchor_bezier, point_left, bezier_left, bezier_right);
+        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+        Geo::Bezier *bezier0 = nullptr, *bezier1 = nullptr;
+        if (anchor_t < left_t)
+        {
+            bezier0 = new Geo::Bezier(bezier->begin(), bezier->begin() + anchor_index + 1, order, false);
+            bezier1 = new Geo::Bezier(bezier_right);
+            bezier1->append(bezier->begin() + anchor_index + order, bezier->end());
+            bezier1->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
+        }
+        else
+        {
+            bezier0 = new Geo::Bezier(bezier->begin(), bezier->begin() + anchor_index + 1, order, false);
+            bezier0->append(bezier_left);
+            bezier1 = new Geo::Bezier(bezier->begin() + anchor_index + order, bezier->end(), order, false);
+        }
+        if (bezier0->size() <= order)
+        {
+            delete bezier0;
+            bezier0 = nullptr;
+        }
+        if (bezier1->size() <= order)
+        {
+            delete bezier1;
+            bezier1 = nullptr;
+        }
+        for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
+        {
+            if (_graph->container_group(_current_group)[i] == bezier)
+            {
+                remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                if (bezier0 != nullptr)
+                {
+                    _graph->container_group(_current_group).insert(i, bezier0);
+                    add_items.emplace_back(bezier0, _current_group, i++);
+                }
+                if (bezier1 != nullptr)
+                {
+                    _graph->container_group(_current_group).insert(i, bezier1);
+                    add_items.emplace_back(bezier1, _current_group, i);
+                }
+                break;
+            }
+        }
+        _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+    }
+    else
+    {
+        if (anchor_t < left_t)
+        {
+            Geo::Bezier bezier_left(order), bezier_right(order);
+            Geo::split(anchor_bezier, point_left, bezier_left, bezier_right);
+            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
+            {
+                if (_graph->container_group(_current_group)[i] == bezier)
+                {
+                    remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    Geo::Bezier *bezier0 = new Geo::Bezier(bezier->begin(), bezier->begin() + anchor_index + 1, order, false);
+                    Geo::Bezier *bezier1 = new Geo::Bezier(bezier_right);
+                    bezier1->append(bezier->begin() + anchor_index + order, bezier->end());
+                    bezier1->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
+                    if (bezier0->size() > order)
+                    {
+                        _graph->container_group(_current_group).insert(i, bezier0);
+                        add_items.emplace_back(bezier0, _current_group, i++);
+                    }
+                    else
+                    {
+                        delete bezier0;
+                    }
+                    if (bezier1->size() > order)
+                    {
+                        _graph->container_group(_current_group).insert(i, bezier1);
+                        add_items.emplace_back(bezier1, _current_group, i);
+                    }
+                    else
+                    {
+                        delete bezier1;
+                    }
+                    break;
+                }
+            }
+            _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+        }
+        else if (anchor_t > right_t)
+        {
+            Geo::Bezier bezier_left(order), bezier_right(order);
+            Geo::split(anchor_bezier, point_right, bezier_left, bezier_right);
+            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
+            {
+                if (_graph->container_group(_current_group)[i] == bezier)
+                {
+                    remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    Geo::Bezier *bezier0 = new Geo::Bezier(bezier->begin(), bezier->begin() + anchor_index + 1, order, false);
+                    bezier0->append(bezier_left);
+                    bezier0->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
+                    Geo::Bezier *bezier1 = new Geo::Bezier(bezier->begin() + anchor_index + order, bezier->end(), order, false);
+                    if (bezier0->size() > order)
+                    {
+                        _graph->container_group(_current_group).insert(i, bezier0);
+                        add_items.emplace_back(bezier0, _current_group, i++);
+                    }
+                    else
+                    {
+                        delete bezier0;
+                    }
+                    if (bezier1->size() > order)
+                    {
+                        _graph->container_group(_current_group).insert(i, bezier1);
+                        add_items.emplace_back(bezier1, _current_group, i);
+                    }
+                    else
+                    {
+                        delete bezier1;
+                    }
+                    break;
+                }
+            }
+            _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+        }
+        else
+        {
+            Geo::Bezier bezier_left(order), bezier_right(order), temp_bezier(order);
+            Geo::split(anchor_bezier, point_left, bezier_left, temp_bezier);
+            Geo::split(anchor_bezier, point_right, temp_bezier, bezier_right);
+            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
+            {
+                if (_graph->container_group(_current_group)[i] == bezier)
+                {
+                    remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    Geo::Bezier *bezier0 = new Geo::Bezier(bezier->begin(), bezier->begin() + anchor_index + 1, order, false);
+                    bezier0->append(bezier_left);
+                    bezier0->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
+                    Geo::Bezier *bezier1 = new Geo::Bezier(bezier_right);
+                    bezier1->append(bezier->begin() + anchor_index + order, bezier->end());
+                    bezier1->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
+                    _graph->container_group(_current_group).insert(i, bezier1);
+                    _graph->container_group(_current_group).insert(i, bezier0);
+                    add_items.emplace_back(bezier0, _current_group, i);
+                    add_items.emplace_back(bezier1, _current_group, i + 1);
+                    break;
+                }
+            }
+            _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+        }
+    }
 }
 
 void Editer::extend(Geo::Polyline *polyline, const double x, const double y)
