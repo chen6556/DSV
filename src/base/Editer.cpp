@@ -3407,11 +3407,10 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         anchor_t = t;
     }
 
-    std::vector<Geo::Point> intersections;
     std::vector<std::tuple<size_t, double, double, double>> tvalues; // index, t, x, y
     // 找到自身交点
     const Geo::Bezier anchor_bezier(bezier->begin() + anchor_index, bezier->begin() + anchor_index + order + 1, order, false);
-    for (size_t i = 0, end = bezier->size() - order; i < end; i += order)
+    /*for (size_t i = 0, end = bezier->size() - order; i < end; i += order)
     {
         if (i == anchor_index)
         {
@@ -3420,15 +3419,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         Geo::Bezier temp_bezier(bezier->begin() + i, bezier->begin() + i + order + 1, order, false);
         std::vector<Geo::Point> temp;
         Geo::is_intersected(anchor_bezier, temp_bezier, temp, &tvalues);
-        for (const Geo::Point &point : temp)
-        {
-            if (std::find(intersections.begin(), intersections.end(), point) == intersections.end()
-                && point != anchor_bezier.front() && point != anchor_bezier.back())
-            {
-                intersections.emplace_back(point);
-            }
-        }
-    }
+    }*/
     for (const Geo::Geometry *object : _graph->container_group(_current_group))
     {
         std::vector<Geo::Point> temp;
@@ -3439,7 +3430,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
                 const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
                 for (size_t i = 1, count = polygon->size(); i < count; ++i)
                 {
-                    Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], anchor_bezier, temp, &tvalues);
+                    Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], anchor_bezier, temp, false, &tvalues);
                 }
             }
             break;
@@ -3448,7 +3439,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
                 const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
                 for (size_t i = 1, count = polyline->size(); i < count; ++i)
                 {
-                    Geo::is_intersected((*polyline)[i - 1], (*polyline)[i], anchor_bezier, temp, &tvalues);
+                    Geo::is_intersected((*polyline)[i - 1], (*polyline)[i], anchor_bezier, temp, false, &tvalues);
                 }
             }
             break;
@@ -3470,14 +3461,6 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
             break;
         default:
             break;
-        }
-        for (const Geo::Point &point : temp)
-        {
-            if (std::find(intersections.begin(), intersections.end(), point) == intersections.end()
-                && point != anchor_bezier.front() && point != anchor_bezier.back())
-            {
-                intersections.emplace_back(point);
-            }
         }
     }
 
