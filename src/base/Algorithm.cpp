@@ -262,6 +262,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
         lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
         step = (upper - lower) / 100;
         min_dis[0] = min_dis[1] = DBL_MAX;
+        bool is_limit = false;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -305,26 +306,28 @@ double Geo::distance(const Point &point, const Bezier &bezier)
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (t - lower < upper - t)
+                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
                 {
                     if (lower == 0)
                     {
                         upper = std::max(0.0, upper - step * 2);
                     }
-                    else
+                    else if (upper == 1)
                     {
-                        lower = std::max(0.0, lower - step * 2);
+                        lower = std::min(1.0, lower + step * 2);
                     }
                 }
                 else
                 {
-                    if (upper == 1)
+                    if (t - lower < upper - t)
                     {
-                        lower = std::min(1.0, lower + step * 2);
+                        lower = std::max(0.0, lower - step * 2);
+                        is_limit = (lower == 0);
                     }
                     else
                     {
                         upper = std::min(1.0, upper + step * 2);
+                        is_limit = (upper == 1);
                     }
                 }
                 step = (upper - lower) / 100;
@@ -430,6 +433,7 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
 
         min_dis[0] = min_dis[1] = DBL_MAX;
         step = (upper - lower) / 100;
+        bool is_limit = false;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -478,26 +482,28 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
             }
             if (flag == -1) // 需要扩大搜索范围
             {
-                if (t - lower < upper - t)
+                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
                 {
                     if (lower == min_lower)
                     {
                         upper = std::max(min_lower, upper - step * 2);
                     }
-                    else
+                    else if (upper == max_upper)
                     {
-                        lower = std::max(min_lower, lower - step * 2);
+                        lower = std::min(max_upper, lower + step * 2);
                     }
                 }
                 else
                 {
-                    if (upper == max_upper)
+                    if (t - lower < upper - t)
                     {
-                        lower = std::min(max_upper, lower + step * 2);
+                        lower = std::max(min_lower, lower - step * 2);
+                        is_limit = (lower == min_lower);
                     }
                     else
                     {
                         upper = std::min(max_upper, upper + step * 2);
+                        is_limit = (upper == max_upper);
                     }
                 }
                 step = (upper - lower) / 100;
@@ -1811,6 +1817,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
             lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
             step = (upper - lower) / 100;
             min_dis = DBL_MAX;
+            bool is_limit = false;
             while ((upper - lower) * 1e15 > 1)
             {
                 int flag = 0;
@@ -1854,26 +1861,28 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
                 }
                 else if (flag == -1) // 需要扩大搜索范围
                 {
-                    if (t - lower < upper - t)
+                    if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
                     {
                         if (lower == 0)
                         {
                             upper = std::max(0.0, upper - step * 2);
                         }
-                        else
+                        else if (upper == 1)
                         {
-                            lower = std::max(0.0, lower - step * 2);
+                            lower = std::min(1.0, lower + step * 2);
                         }
                     }
                     else
                     {
-                        if (upper == 1)
+                        if (t - lower < upper - t)
                         {
-                            lower = std::min(1.0, lower + step * 2);
+                            lower = std::max(0.0, lower - step * 2);
+                            is_limit = (lower == 0);
                         }
                         else
                         {
                             upper = std::min(1.0, upper + step * 2);
+                            is_limit = (upper == 1);
                         }
                     }
                     step = (upper - lower) / 100;
@@ -2015,6 +2024,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
 
         min_dis[0] = 0, min_dis[1] = DBL_MAX;
         step = (upper - lower) / 100;
+        bool is_limit = false;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -2067,26 +2077,28 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (t - lower < upper - t)
+                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
                 {
                     if (lower == min_lower)
                     {
                         upper = std::max(min_lower, upper - step * 2);
                     }
-                    else
+                    else if (upper == max_upper)
                     {
-                        lower = std::max(min_lower, lower - step * 2);
+                        lower = std::min(max_upper, lower + step * 2);
                     }
                 }
                 else
                 {
-                    if (upper == max_upper)
+                    if (t - lower < upper - t)
                     {
-                        lower = std::min(max_upper, lower + step * 2);
+                        lower = std::max(min_lower, lower - step * 2);
+                        is_limit = (lower == min_lower);
                     }
                     else
                     {
                         upper = std::min(max_upper, upper + step * 2);
+                        is_limit = (upper == max_upper);
                     }
                 }
                 step = (upper - lower) / 100;
@@ -2752,6 +2764,7 @@ int Geo::is_intersected(const Circle &circle, const Bezier &bezier, std::vector<
             lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
             step = (upper - lower) / 100;
             min_dis = DBL_MAX;
+            bool is_limit = false;
             while ((upper - lower) * 1e15 > 1)
             {
                 int flag = 0;
@@ -2795,26 +2808,28 @@ int Geo::is_intersected(const Circle &circle, const Bezier &bezier, std::vector<
                 }
                 else if (flag == -1) // 需要扩大搜索范围
                 {
-                    if (t - lower < upper - t)
+                    if (is_limit)
                     {
                         if (lower == 0)
                         {
                             upper = std::max(0.0, upper - step * 2);
                         }
-                        else
+                        else if (upper == 1)
                         {
-                            lower = std::max(0.0, lower - step * 2);
+                            lower = std::min(1.0, lower + step * 2);
                         }
                     }
                     else
                     {
-                        if (upper == 1)
+                        if (t - lower < upper - t)
                         {
-                            lower = std::min(1.0, lower + step * 2);
+                            lower = std::max(0.0, lower - step * 2);
+                            is_limit = (lower == 0);
                         }
                         else
                         {
                             upper = std::min(1.0, upper + step * 2);
+                            is_limit = (upper == 1);
                         }
                     }
                     step = (upper - lower) / 100;
@@ -2979,6 +2994,7 @@ int Geo::is_intersected(const Circle &circle, const BSpline &bspline, const bool
         upper = std::min(max_upper, t + 1e-4);
         step = (upper - lower) / 100;
         min_dis = DBL_MAX;
+        bool is_limit = false;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -3031,26 +3047,28 @@ int Geo::is_intersected(const Circle &circle, const BSpline &bspline, const bool
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (t - lower < upper - t)
+                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
                 {
                     if (lower == min_lower)
                     {
                         upper = std::max(min_lower, upper - step * 2);
                     }
-                    else
+                    else if (upper == max_upper)
                     {
-                        lower = std::max(min_lower, lower - step * 2);
+                        lower = std::min(max_upper, lower + step * 2);
                     }
                 }
                 else
                 {
-                    if (upper == max_upper)
+                    if (t - lower < upper - t)
                     {
-                        lower = std::min(max_upper, lower + step * 2);
+                        lower = std::max(min_lower, lower - step * 2);
+                        is_limit = (lower == min_lower);
                     }
                     else
                     {
                         upper = std::min(max_upper, upper + step * 2);
+                        is_limit = (upper == max_upper);
                     }
                 }
                 step = (upper - lower) / 100;
@@ -3209,6 +3227,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vecto
             lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
             step = (upper - lower) / 100;
             min_dis = DBL_MAX;
+            bool is_limit = false;
             while ((upper - lower) * 1e15 > 1)
             {
                 int flag = 0;
@@ -3252,26 +3271,28 @@ int Geo::is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vecto
                 }
                 else if (flag == -1) // 需要扩大搜索范围
                 {
-                    if (t - lower < upper - t)
+                    if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
                     {
                         if (lower == 0)
                         {
                             upper = std::max(0.0, upper - step * 2);
                         }
-                        else
+                        else if (upper == 1)
                         {
-                            lower = std::max(0.0, lower - step * 2);
+                            lower = std::min(1.0, lower + step * 2);
                         }
                     }
                     else
                     {
-                        if (upper == 1)
+                        if (t - lower < upper - t)
                         {
-                            lower = std::min(1.0, lower + step * 2);
+                            lower = std::max(0.0, lower - step * 2);
+                            is_limit = (lower == 0);
                         }
                         else
                         {
                             upper = std::min(1.0, upper + step * 2);
+                            is_limit = (upper == 1);
                         }
                     }
                     step = (upper - lower) / 100;
@@ -3435,6 +3456,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bo
         upper = std::min(max_upper, t + 1e-4);
         step = (upper - lower) / 100;
         min_dis = DBL_MAX;
+        bool is_limit = false;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -3487,26 +3509,28 @@ int Geo::is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bo
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (t - lower < upper - t)
+                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
                 {
                     if (lower == min_lower)
                     {
                         upper = std::max(min_lower, upper - step * 2);
                     }
-                    else
+                    else if (upper == max_upper)
                     {
-                        lower = std::max(min_lower, lower - step * 2);
+                        lower = std::min(max_upper, lower + step * 2);
                     }
                 }
                 else
                 {
-                    if (upper == max_upper)
+                    if (t - lower < upper - t)
                     {
-                        lower = std::min(max_upper, lower + step * 2);
+                        lower = std::max(min_lower, lower - step * 2);
+                        is_limit = (lower == min_lower);
                     }
                     else
                     {
                         upper = std::min(max_upper, upper + step * 2);
+                        is_limit = (upper == max_upper);
                     }
                 }
                 step = (upper - lower) / 100;
@@ -5956,6 +5980,7 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
         step = 1e-3, lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
         min_dis[0] = min_dis[1] = DBL_MAX;
         step = (upper - lower) / 100;
+        bool is_limit = false;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -5999,26 +6024,28 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (t - lower < upper - t)
+                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
                 {
                     if (lower == 0)
                     {
                         upper = std::max(0.0, upper - step * 2);
                     }
-                    else
+                    else if (upper == 1)
                     {
-                        lower = std::max(0.0, lower - step * 2);
+                        lower = std::min(1.0, lower + step * 2);
                     }
                 }
                 else
                 {
-                    if (upper == 1)
+                    if (t - lower < upper - t)
                     {
-                        lower = std::min(1.0, lower + step * 2);
+                        lower = std::max(0.0, lower - step * 2);
+                        is_limit = (lower == 0);
                     }
                     else
                     {
                         upper = std::min(1.0, upper + step * 2);
+                        is_limit = (upper == 1);
                     }
                 }
                 step = (upper - lower) / 100;
@@ -6140,6 +6167,7 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
 
         step = 1e-3, lower = std::max(knots[0], t - 0.1), upper = std::min(knots[nplusc - 1], t + 0.1);
         min_dis[0] = min_dis[1] = DBL_MAX;
+        bool is_limit = false;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -6192,26 +6220,28 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (t - lower < upper - t)
+                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
                 {
                     if (lower == 0)
                     {
                         upper = std::max(0.0, upper - step * 2);
                     }
-                    else
+                    else if (upper == 1)
                     {
-                        lower = std::max(0.0, lower - step * 2);
+                        lower = std::min(1.0, lower + step * 2);
                     }
                 }
                 else
                 {
-                    if (upper == 1)
+                    if (t - lower < upper - t)
                     {
-                        lower = std::min(1.0, lower + step * 2);
+                        lower = std::max(0.0, lower - step * 2);
+                        is_limit = (lower == 0);
                     }
                     else
                     {
                         upper = std::min(1.0, upper + step * 2);
+                        is_limit = (upper == 1);
                     }
                 }
                 step = (upper - lower) / 100;
@@ -6444,6 +6474,7 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
         lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
         step = (upper - lower) / 100; 
         min_dis[0] = min_dis[1] = DBL_MAX;
+        bool is_limit = false;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -6487,26 +6518,28 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (t - lower < upper - t)
+                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
                 {
                     if (lower == 0)
                     {
                         upper = std::max(0.0, upper - step * 2);
                     }
-                    else
+                    else if (upper == 1)
                     {
-                        lower = std::max(0.0, lower - step * 2);
+                        lower = std::min(1.0, lower + step * 2);
                     }
                 }
                 else
                 {
-                    if (upper == 1)
+                    if (t - lower < upper - t)
                     {
-                        lower = std::min(1.0, lower + step * 2);
+                        lower = std::max(0.0, lower - step * 2);
+                        is_limit = (lower == 0);
                     }
                     else
                     {
                         upper = std::min(1.0, upper + step * 2);
+                        is_limit = (upper == 1);
                     }
                 }
                 step = (upper - lower) / 100;

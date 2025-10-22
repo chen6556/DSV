@@ -3321,6 +3321,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
         step = (upper - lower) / 100; 
         min_dis[0] = min_dis[1] = DBL_MAX;
+        bool is_limit = false;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -3364,13 +3365,29 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (t - lower < upper - t)
+                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
                 {
-                    lower = std::max(0.0, lower - step * 2);
+                    if (lower == 0)
+                    {
+                        upper = std::max(0.0, upper - step * 2);
+                    }
+                    else if (upper == 1)
+                    {
+                        lower = std::min(1.0, lower + step * 2);
+                    }
                 }
                 else
                 {
-                    upper = std::min(1.0, upper + step * 2);
+                    if (t - lower < upper - t)
+                    {
+                        lower = std::max(0.0, lower - step * 2);
+                        is_limit = (lower == 0);
+                    }
+                    else
+                    {
+                        upper = std::min(1.0, upper + step * 2);
+                        is_limit = (upper == 1);
+                    }
                 }
                 step = (upper - lower) / 100;
             }
