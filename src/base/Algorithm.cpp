@@ -307,11 +307,25 @@ double Geo::distance(const Point &point, const Bezier &bezier)
             {
                 if (t - lower < upper - t)
                 {
-                    lower = std::max(0.0, lower - step * 2);
+                    if (lower == 0)
+                    {
+                        upper = std::max(0.0, upper - step * 2);
+                    }
+                    else
+                    {
+                        lower = std::max(0.0, lower - step * 2);
+                    }
                 }
                 else
                 {
-                    upper = std::min(1.0, upper + step * 2);
+                    if (upper == 1)
+                    {
+                        lower = std::min(1.0, lower + step * 2);
+                    }
+                    else
+                    {
+                        upper = std::min(1.0, upper + step * 2);
+                    }
                 }
                 step = (upper - lower) / 100;
             }
@@ -466,11 +480,25 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
             {
                 if (t - lower < upper - t)
                 {
-                    lower = std::max(min_lower, lower - step * 2);
+                    if (lower == min_lower)
+                    {
+                        upper = std::max(min_lower, upper - step * 2);
+                    }
+                    else
+                    {
+                        lower = std::max(min_lower, lower - step * 2);
+                    }
                 }
                 else
                 {
-                    upper = std::min(max_upper, upper + step * 2);
+                    if (upper == max_upper)
+                    {
+                        lower = std::min(max_upper, lower + step * 2);
+                    }
+                    else
+                    {
+                        upper = std::min(max_upper, upper + step * 2);
+                    }
                 }
                 step = (upper - lower) / 100;
             }
@@ -1828,11 +1856,25 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
                 {
                     if (t - lower < upper - t)
                     {
-                        lower = std::max(0.0, lower - step * 2);
+                        if (lower == 0)
+                        {
+                            upper = std::max(0.0, upper - step * 2);
+                        }
+                        else
+                        {
+                            lower = std::max(0.0, lower - step * 2);
+                        }
                     }
                     else
                     {
-                        upper = std::min(1.0, upper + step * 2);
+                        if (upper == 1)
+                        {
+                            lower = std::min(1.0, lower + step * 2);
+                        }
+                        else
+                        {
+                            upper = std::min(1.0, upper + step * 2);
+                        }
                     }
                     step = (upper - lower) / 100;
                 }
@@ -2027,11 +2069,25 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
             {
                 if (t - lower < upper - t)
                 {
-                    lower = std::max(min_lower, lower - step * 2);
+                    if (lower == min_lower)
+                    {
+                        upper = std::max(min_lower, upper - step * 2);
+                    }
+                    else
+                    {
+                        lower = std::max(min_lower, lower - step * 2);
+                    }
                 }
                 else
                 {
-                    upper = std::min(max_upper, upper + step * 2);
+                    if (upper == max_upper)
+                    {
+                        lower = std::min(max_upper, lower + step * 2);
+                    }
+                    else
+                    {
+                        upper = std::min(max_upper, upper + step * 2);
+                    }
                 }
                 step = (upper - lower) / 100;
             }
@@ -2741,11 +2797,25 @@ int Geo::is_intersected(const Circle &circle, const Bezier &bezier, std::vector<
                 {
                     if (t - lower < upper - t)
                     {
-                        lower = std::max(0.0, lower - step * 2);
+                        if (lower == 0)
+                        {
+                            upper = std::max(0.0, upper - step * 2);
+                        }
+                        else
+                        {
+                            lower = std::max(0.0, lower - step * 2);
+                        }
                     }
                     else
                     {
-                        upper = std::min(1.0, upper + step * 2);
+                        if (upper == 1)
+                        {
+                            lower = std::min(1.0, lower + step * 2);
+                        }
+                        else
+                        {
+                            upper = std::min(1.0, upper + step * 2);
+                        }
                     }
                     step = (upper - lower) / 100;
                 }
@@ -2797,7 +2867,7 @@ int Geo::is_intersected(const Circle &circle, const Bezier &bezier, std::vector<
     return intersections.size() - size;
 }
 
-int Geo::is_intersected(const Circle &circle, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections, std::vector<std::tuple<double, double, double>> *tvalues)
+int Geo::is_intersected(const Circle &circle, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections, std::vector<std::tuple<double, double, double>> *tvalues) 
 {
     std::vector<Geo::Point> temp_points;
     for (size_t i = 1, count = bspline.shape().size(); i < count; ++i)
@@ -2963,11 +3033,25 @@ int Geo::is_intersected(const Circle &circle, const BSpline &bspline, const bool
             {
                 if (t - lower < upper - t)
                 {
-                    lower = std::max(min_lower, lower - step * 2);
+                    if (lower == min_lower)
+                    {
+                        upper = std::max(min_lower, upper - step * 2);
+                    }
+                    else
+                    {
+                        lower = std::max(min_lower, lower - step * 2);
+                    }
                 }
                 else
                 {
-                    upper = std::min(max_upper, upper + step * 2);
+                    if (upper == max_upper)
+                    {
+                        lower = std::min(max_upper, lower + step * 2);
+                    }
+                    else
+                    {
+                        upper = std::min(max_upper, upper + step * 2);
+                    }
                 }
                 step = (upper - lower) / 100;
             }
@@ -3125,7 +3209,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vecto
             lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
             step = (upper - lower) / 100;
             min_dis = DBL_MAX;
-            while ((upper - lower) * 1e22 > 1)
+            while ((upper - lower) * 1e15 > 1)
             {
                 int flag = 0;
                 for (double x = lower, dis0 = 0; x < upper + step; x += step)
@@ -3170,11 +3254,25 @@ int Geo::is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vecto
                 {
                     if (t - lower < upper - t)
                     {
-                        lower = std::max(0.0, lower - step * 2);
+                        if (lower == 0)
+                        {
+                            upper = std::max(0.0, upper - step * 2);
+                        }
+                        else
+                        {
+                            lower = std::max(0.0, lower - step * 2);
+                        }
                     }
                     else
                     {
-                        upper = std::min(1.0, upper + step * 2);
+                        if (upper == 1)
+                        {
+                            lower = std::min(1.0, lower + step * 2);
+                        }
+                        else
+                        {
+                            upper = std::min(1.0, upper + step * 2);
+                        }
                     }
                     step = (upper - lower) / 100;
                 }
@@ -3192,7 +3290,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vecto
                 point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             if (std::find(result.begin(), result.end(), point) == result.end()
-                && Geo::distance(point, ellipse) / 10 < Geo::EPSILON)
+                && Geo::distance(point, ellipse) < Geo::EPSILON * 20)
             {
                 result.emplace_back(point);
                 if (tvalues != nullptr)
@@ -3391,11 +3489,25 @@ int Geo::is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bo
             {
                 if (t - lower < upper - t)
                 {
-                    lower = std::max(min_lower, lower - step * 2);
+                    if (lower == min_lower)
+                    {
+                        upper = std::max(min_lower, upper - step * 2);
+                    }
+                    else
+                    {
+                        lower = std::max(min_lower, lower - step * 2);
+                    }
                 }
                 else
                 {
-                    upper = std::min(max_upper, upper + step * 2);
+                    if (upper == max_upper)
+                    {
+                        lower = std::min(max_upper, lower + step * 2);
+                    }
+                    else
+                    {
+                        upper = std::min(max_upper, upper + step * 2);
+                    }
                 }
                 step = (upper - lower) / 100;
             }
@@ -3422,7 +3534,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bo
             point += bspline.control_points[i] * nbasis[i];
         }
         if (std::find(result.begin(), result.end(), point) == result.end()
-            && Geo::distance(point, ellipse) / 10 < Geo::EPSILON)
+            && Geo::distance(point, ellipse) < Geo::EPSILON * 20)
         {
             result.emplace_back(point);
             if (tvalues != nullptr)
@@ -5889,11 +6001,25 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
             {
                 if (t - lower < upper - t)
                 {
-                    lower = std::max(0.0, lower - step * 2);
+                    if (lower == 0)
+                    {
+                        upper = std::max(0.0, upper - step * 2);
+                    }
+                    else
+                    {
+                        lower = std::max(0.0, lower - step * 2);
+                    }
                 }
                 else
                 {
-                    upper = std::min(1.0, upper + step * 2);
+                    if (upper == 1)
+                    {
+                        lower = std::min(1.0, lower + step * 2);
+                    }
+                    else
+                    {
+                        upper = std::min(1.0, upper + step * 2);
+                    }
                 }
                 step = (upper - lower) / 100;
             }
@@ -6068,11 +6194,25 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
             {
                 if (t - lower < upper - t)
                 {
-                    lower = std::max(0.0, lower - step * 2);
+                    if (lower == 0)
+                    {
+                        upper = std::max(0.0, upper - step * 2);
+                    }
+                    else
+                    {
+                        lower = std::max(0.0, lower - step * 2);
+                    }
                 }
                 else
                 {
-                    upper = std::min(1.0, upper + step * 2);
+                    if (upper == 1)
+                    {
+                        lower = std::min(1.0, lower + step * 2);
+                    }
+                    else
+                    {
+                        upper = std::min(1.0, upper + step * 2);
+                    }
                 }
                 step = (upper - lower) / 100;
             }
@@ -6349,11 +6489,25 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
             {
                 if (t - lower < upper - t)
                 {
-                    lower = std::max(0.0, lower - step * 2);
+                    if (lower == 0)
+                    {
+                        upper = std::max(0.0, upper - step * 2);
+                    }
+                    else
+                    {
+                        lower = std::max(0.0, lower - step * 2);
+                    }
                 }
                 else
                 {
-                    upper = std::min(1.0, upper + step * 2);
+                    if (upper == 1)
+                    {
+                        lower = std::min(1.0, lower + step * 2);
+                    }
+                    else
+                    {
+                        upper = std::min(1.0, upper + step * 2);
+                    }
                 }
                 step = (upper - lower) / 100;
             }
