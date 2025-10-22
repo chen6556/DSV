@@ -606,8 +606,11 @@ void MainWindow::refresh_settings()
     if (_setting->update_curve_vbo())
     {
         const double value = GlobalSetting::setting().down_sampling;
-        Geo::BSpline::default_down_sampling_value = Geo::Bezier::default_down_sampling_value = value;
-        GlobalSetting::setting().graph->update_curve_shape(0.2, value);
+        Geo::BSpline::default_down_sampling_value = Geo::Bezier::default_down_sampling_value =
+            Geo::Circle::default_down_sampling_value = Geo::Ellipse::default_down_sampling_value = value;
+        const double step = GlobalSetting::setting().sampling_step;
+        Geo::BSpline::default_step = step * 2, Geo::Bezier::default_step = step;
+        GlobalSetting::setting().graph->update_curve_shape(step, value);
         ui->canvas->refresh_vbo(true);
     }
     if (_setting->update_text_vbo())

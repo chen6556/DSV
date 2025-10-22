@@ -26,6 +26,7 @@ void Setting::init()
     ui->catch_distance->setValue(GlobalSetting::setting().catch_distance);
     ui->backup_times->setValue(GlobalSetting::setting().backup_times);
     ui->text_size->setValue(GlobalSetting::setting().text_size);
+    ui->sampling_step->setValue(GlobalSetting::setting().sampling_step);
     ui->down_sampling->setValue(GlobalSetting::setting().down_sampling);
     ui->offset_join_type->setCurrentIndex(GlobalSetting::setting().offset_join_type);
     ui->offset_end_type->setCurrentIndex(GlobalSetting::setting().offset_end_type);
@@ -48,6 +49,7 @@ void Setting::accept()
     GlobalSetting::setting().catch_distance = ui->catch_distance->value();
     GlobalSetting::setting().backup_times = ui->backup_times->value();
     GlobalSetting::setting().text_size = ui->text_size->value();
+    GlobalSetting::setting().sampling_step = ui->sampling_step->value();
     GlobalSetting::setting().down_sampling = ui->down_sampling->value();
     GlobalSetting::setting().offset_join_type = ui->offset_join_type->currentIndex();
     GlobalSetting::setting().offset_end_type = ui->offset_end_type->currentIndex();

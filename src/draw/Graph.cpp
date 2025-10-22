@@ -490,6 +490,12 @@ void Graph::update_curve_shape(const double step, const double down_sampling_val
             case Geo::Type::BSPLINE:
                 static_cast<Geo::BSpline *>(object)->update_shape(step, down_sampling_value);
                 break;
+            case Geo::Type::CIRCLE:
+                static_cast<Geo::Circle *>(object)->update_shape(down_sampling_value);
+                break;
+            case Geo::Type::ELLIPSE:
+                static_cast<Geo::Ellipse *>(object)->update_shape(down_sampling_value);
+                break;
             default:
                 break;
             }
