@@ -3321,7 +3321,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vecto
             }
         }
     }
-    if (Geo::distance(bezier.front(), ellipse) < Geo::EPSILON
+    if (Geo::distance(bezier.front(), ellipse) < Geo::EPSILON * 20
         && std::find(result.begin(), result.end(), bezier.front()) == result.end())
     {
         result.emplace_back(bezier.front());
@@ -3330,7 +3330,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vecto
             tvalues->emplace_back(0, 0, bezier.front().x, bezier.front().y);
         }
     }
-    if (Geo::distance(bezier.back(), ellipse) < Geo::EPSILON
+    if (Geo::distance(bezier.back(), ellipse) < Geo::EPSILON * 20
         && std::find(result.begin(), result.end(), bezier.back()) == result.end())
     {
         result.emplace_back(bezier.back());
@@ -3567,7 +3567,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bo
             }
         }
     }
-    if (Geo::distance(bspline.front(), ellipse) < Geo::EPSILON
+    if (Geo::distance(bspline.front(), ellipse) < Geo::EPSILON * 20
         && std::find(result.begin(), result.end(), bspline.front()) == result.end())
     {
         result.emplace_back(bspline.front());
@@ -3576,7 +3576,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bo
             tvalues->emplace_back(0, bspline.front().x, bspline.front().y);
         }
     }
-    if (Geo::distance(bspline.back(), ellipse) < Geo::EPSILON
+    if (Geo::distance(bspline.back(), ellipse) < Geo::EPSILON * 20
         && std::find(result.begin(), result.end(), bspline.back()) == result.end())
     {
         result.emplace_back(bspline.back());
