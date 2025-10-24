@@ -172,6 +172,8 @@ public:
 
     void trim(Geo::Bezier *bezier, const double x, const double y);
 
+    void trim(Geo::BSpline *bspline, const double x, const double y);
+
     void extend(Geo::Polyline *polyline, const double x, const double y);
 
 

@@ -2219,6 +2219,49 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
         }
         break;
     case Geo::Type::BSPLINE:
+        {
+            Geo::CubicBSpline *cubicbspline = dynamic_cast<Geo::CubicBSpline *>(object);
+            Geo::QuadBSpline *quadbspline = dynamic_cast<Geo::QuadBSpline *>(object);
+            const bool is_cubic = cubicbspline;
+            std::vector<Geo::Point> coords;
+            Geo::closest_point(*static_cast<Geo::BSpline *>(object), is_cubic, pos, coords);
+            if (is_cubic)
+            {
+                if (Geo::CubicBSpline bspline0(*cubicbspline), bspline1(*cubicbspline);
+                    Geo::split(*static_cast<Geo::BSpline *>(object), is_cubic, coords.front(), bspline0, bspline1))
+                {
+                    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
+                    size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                        std::find(_graph->container_group(_current_group).begin(),
+                            _graph->container_group(_current_group).end(), object));
+                    remove.emplace_back(_graph->container_group(_current_group).pop(index), _current_group, index);
+                    _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline1));
+                    _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline0));
+                    append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                    append.emplace_back(_graph->container_group(_current_group)[index + 1], _current_group, index + 1);
+                    _backup.push_command(new UndoStack::ObjectCommand(append, remove));
+                    return true;
+                }
+            }
+            else
+            {
+                if (Geo::QuadBSpline bspline0(*quadbspline), bspline1(*quadbspline);
+                    Geo::split(*static_cast<Geo::BSpline *>(object), is_cubic, coords.front(), bspline0, bspline1))
+                {
+                    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
+                    size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                        std::find(_graph->container_group(_current_group).begin(),
+                            _graph->container_group(_current_group).end(), object));
+                    remove.emplace_back(_graph->container_group(_current_group).pop(index), _current_group, index);
+                    _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline1));
+                    _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline0));
+                    append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                    append.emplace_back(_graph->container_group(_current_group)[index + 1], _current_group, index + 1);
+                    _backup.push_command(new UndoStack::ObjectCommand(append, remove));
+                    return true;
+                }
+            }
+        }
         break;
     default:
         break;
@@ -3321,7 +3364,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
         step = (upper - lower) / 100; 
         min_dis[0] = min_dis[1] = DBL_MAX;
-        bool is_limit = false;
+        std::vector<double> stored_t;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -3365,29 +3408,26 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
+                if (t - lower < upper - t)
                 {
-                    if (lower == 0)
+                    lower = std::max(0.0, lower - step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        upper = std::max(0.0, upper - step * 2);
-                    }
-                    else if (upper == 1)
-                    {
-                        lower = std::min(1.0, lower + step * 2);
+                        lower += (upper - lower) / 4;
                     }
                 }
                 else
                 {
-                    if (t - lower < upper - t)
+                    upper = std::min(1.0, upper + step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        lower = std::max(0.0, lower - step * 2);
-                        is_limit = (lower == 0);
+                        upper += (upper - lower) / 4;
                     }
-                    else
-                    {
-                        upper = std::min(1.0, upper + step * 2);
-                        is_limit = (upper == 1);
-                    }
+                }
+                stored_t.push_back(t);
+                if (stored_t.size() > 4)
+                {
+                    stored_t.erase(stored_t.begin(), stored_t.end() - 4);
                 }
                 step = (upper - lower) / 100;
             }
@@ -3671,6 +3711,235 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
             }
             _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
         }
+    }
+}
+
+void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
+{
+    const bool is_cubic = dynamic_cast<const Geo::CubicBSpline *>(bspline) != nullptr;
+    const std::vector<double> &knots = bspline->knots();
+    const size_t npts = bspline->control_points.size();
+    const size_t nplusc = npts + (is_cubic ? 4 : 3);
+    const size_t p1 = std::max(npts * 8.0, bspline->shape().length() / Geo::BSpline::default_step);
+    Geo::Point anchor(x, y);
+
+    double t = knots[0];
+    {
+        double step = (knots[nplusc - 1] - t) / (p1 - 1);
+        std::vector<double> temp;
+        double min_dis[2] = {DBL_MAX, DBL_MAX};
+        while (t <= knots[nplusc - 1])
+        {
+            std::vector<double> nbasis;
+            if (is_cubic)
+            {
+                Geo::CubicBSpline::rbasis(t, npts, knots, nbasis);
+            }
+            else
+            {
+                Geo::QuadBSpline::rbasis(t, npts, knots, nbasis);
+            }
+
+            Geo::Point coord;
+            for (size_t i = 0; i < npts; ++i)
+            {
+                coord += bspline->control_points[i] * nbasis[i];
+            }
+            if (double dis = Geo::distance(coord, anchor); dis < min_dis[0])
+            {
+                temp.clear();
+                min_dis[0] = dis;
+                temp.push_back(t);
+            }
+            else if (dis == min_dis[0])
+            {
+                temp.push_back(t);
+            }
+            t += step;
+        }
+
+        std::vector<std::tuple<double, double, Geo::Point>> result; // dis, t, point
+        for (double v : temp)
+        {
+            step = 1e-3;
+            double lower = knots[0], upper = knots[nplusc - 1];
+            min_dis[0] = min_dis[1] = DBL_MAX;
+            do
+            {
+                for (double x = lower; x < upper + step; x += step)
+                {
+                    x = x < upper ? x : upper;
+                    std::vector<double> nbasis;
+                    if (is_cubic)
+                    {
+                        Geo::CubicBSpline::rbasis(x, npts, knots, nbasis);
+                    }
+                    else
+                    {
+                        Geo::QuadBSpline::rbasis(x, npts, knots, nbasis);
+                    }
+                    Geo::Point coord;
+                    for (size_t i = 0; i < npts; ++i)
+                    {
+                        coord += bspline->control_points[i] * nbasis[i];
+                    }
+                    if (double dis = Geo::distance(anchor, coord); dis < min_dis[1])
+                    {
+                        min_dis[1] = dis;
+                        v = x;
+                    }
+                }
+                lower = std::max(0.0, v - step);
+                upper = std::min(1.0, v + step);
+                step = (upper - lower) / 100;
+                if (min_dis[0] > min_dis[1])
+                {
+                    min_dis[0] = min_dis[1];
+                }
+            }
+            while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
+
+            step = 1e-3, lower = std::max(knots[0], t - 0.1), upper = std::min(knots[nplusc - 1], t + 0.1);
+            min_dis[0] = min_dis[1] = DBL_MAX;
+            std::vector<double> stored_t;
+            while ((upper - lower) * 1e15 > 1)
+            {
+                int flag = 0;
+                for (double x = lower, dis0 = 0; x < upper + step; x += step)
+                {
+                    x = x < upper ? x : upper;
+                    std::vector<double> nbasis;
+                    if (is_cubic)
+                    {
+                        Geo::CubicBSpline::rbasis(x, npts, knots, nbasis);
+                    }
+                    else
+                    {
+                        Geo::QuadBSpline::rbasis(x, npts, knots, nbasis);
+                    }
+                    Geo::Point coord;
+                    for (size_t i = 0; i < npts; ++i)
+                    {
+                        coord += bspline->control_points[i] * nbasis[i];
+                    }
+                    if (const double dis = Geo::distance(coord, anchor) * 1e9; dis < min_dis[1])
+                    {
+                        min_dis[1] = dis;
+                        t = x;
+                    }
+                    else if (dis == min_dis[1]) // 需要扩大搜索范围
+                    {
+                        flag = -1;
+                        break;
+                    }
+                    else
+                    {
+                        if (dis == dis0)
+                        {
+                            if (++flag == 10)
+                            {
+                                break; // 连续10次相等就退出循环
+                            }
+                        }
+                        else
+                        {
+                            flag = 0;
+                        }
+                        dis0 = dis;
+                    }
+                }
+                if (min_dis[1] < 2e-5)
+                {
+                    break;
+                }
+                else if (flag == -1) // 需要扩大搜索范围
+                {
+                    if (t - lower < upper - t)
+                    {
+                        lower = std::max(0.0, lower - step * 2);
+                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
+                        {
+                            stored_t.clear();
+                            lower += (upper - lower) / 4;
+                        }
+                    }
+                    else
+                    {
+                        upper = std::min(1.0, upper + step * 2);
+                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
+                        {
+                            stored_t.clear();
+                            upper -= (upper - lower) / 4;
+                        }
+                    }
+                    stored_t.push_back(t);
+                    if (stored_t.size() > 4)
+                    {
+                        stored_t.erase(stored_t.begin(), stored_t.end() - 4);
+                    }
+                    step = (upper - lower) / 100;
+                }
+                else
+                {
+                    lower = std::max(0.0, t - step * 2);
+                    upper = std::min(1.0, t + step * 2);
+                    step = (upper - lower) / 100;
+                }
+            }
+
+            std::vector<double> nbasis;
+            if (is_cubic)
+            {
+                Geo::CubicBSpline::rbasis(v, npts, knots, nbasis);
+            }
+            else
+            {
+                Geo::QuadBSpline::rbasis(v, npts, knots, nbasis);
+            }
+            Geo::Point coord;
+            for (size_t i = 0; i < npts; ++i)
+            {
+                coord += bspline->control_points[i] * nbasis[i];
+            }
+            result.emplace_back(std::min(min_dis[0], min_dis[1]), v, coord);
+        }
+
+        std::sort(result.begin(), result.end(), [](const auto &a, const auto &b)
+            { return std::get<0>(a) < std::get<0>(b); });
+        t = std::get<1>(result.front());
+        anchor = std::get<2>(result.front());
+    }
+
+    if (is_cubic)
+    {
+        Geo::CubicBSpline bspline0(*static_cast<Geo::CubicBSpline *>(bspline)), bspline1(*static_cast<Geo::CubicBSpline *>(bspline));
+        Geo::split(*bspline, is_cubic, t, bspline0, bspline1);
+        bspline0.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
+        bspline1.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
+
+        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+        for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
+        {
+            if (_graph->container_group(_current_group)[i] == bspline)
+            {
+                remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                Geo::CubicBSpline *bsp0 = new Geo::CubicBSpline(bspline0);
+                Geo::CubicBSpline *bsp1 = new Geo::CubicBSpline(bspline1);
+                _graph->container_group(_current_group).insert(i, bsp1);
+                _graph->container_group(_current_group).insert(i, bsp0);
+                add_items.emplace_back(bsp0, _current_group, i);
+                add_items.emplace_back(bsp1, _current_group, i + 1);
+                break;
+            }
+        }
+        _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+    }
+    else
+    {
+        Geo::QuadBSpline bspline0(*static_cast<Geo::QuadBSpline *>(bspline)), bspline1(*static_cast<Geo::QuadBSpline *>(bspline));
+        Geo::split(*bspline, is_cubic, t, bspline0, bspline1);
+        bspline0.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
+        bspline1.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
     }
 }
 

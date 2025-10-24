@@ -262,7 +262,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
         lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
         step = (upper - lower) / 100;
         min_dis[0] = min_dis[1] = DBL_MAX;
-        bool is_limit = false;
+        std::vector<double> stored_t;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -306,29 +306,28 @@ double Geo::distance(const Point &point, const Bezier &bezier)
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
+                if (t - lower < upper - t)
                 {
-                    if (lower == 0)
+                    lower = std::max(0.0, lower - step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        upper = std::max(0.0, upper - step * 2);
-                    }
-                    else if (upper == 1)
-                    {
-                        lower = std::min(1.0, lower + step * 2);
+                        stored_t.clear();
+                        lower += (upper - lower) / 4;
                     }
                 }
                 else
                 {
-                    if (t - lower < upper - t)
+                    upper = std::min(1.0, upper + step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        lower = std::max(0.0, lower - step * 2);
-                        is_limit = (lower == 0);
+                        stored_t.clear();
+                        upper -= (upper - lower) / 4;
                     }
-                    else
-                    {
-                        upper = std::min(1.0, upper + step * 2);
-                        is_limit = (upper == 1);
-                    }
+                }
+                stored_t.push_back(t);
+                if (stored_t.size() > 4)
+                {
+                    stored_t.erase(stored_t.begin(), stored_t.end() - 4);
                 }
                 step = (upper - lower) / 100;
             }
@@ -433,7 +432,7 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
 
         min_dis[0] = min_dis[1] = DBL_MAX;
         step = (upper - lower) / 100;
-        bool is_limit = false;
+        std::vector<double> stored_t;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -482,29 +481,28 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
             }
             if (flag == -1) // 需要扩大搜索范围
             {
-                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
+                if (t - lower < upper - t)
                 {
-                    if (lower == min_lower)
+                    lower = std::max(min_lower, lower - step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        upper = std::max(min_lower, upper - step * 2);
-                    }
-                    else if (upper == max_upper)
-                    {
-                        lower = std::min(max_upper, lower + step * 2);
+                        stored_t.clear();
+                        lower += (upper - lower) / 4;
                     }
                 }
                 else
                 {
-                    if (t - lower < upper - t)
+                    upper = std::min(max_upper, upper + step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        lower = std::max(min_lower, lower - step * 2);
-                        is_limit = (lower == min_lower);
+                        stored_t.clear();
+                        upper -= (upper - lower) / 4;
                     }
-                    else
-                    {
-                        upper = std::min(max_upper, upper + step * 2);
-                        is_limit = (upper == max_upper);
-                    }
+                }
+                stored_t.push_back(t);
+                if (stored_t.size() > 4)
+                {
+                    stored_t.erase(stored_t.begin(), stored_t.end() - 4);
                 }
                 step = (upper - lower) / 100;
             }
@@ -1817,7 +1815,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
             lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
             step = (upper - lower) / 100;
             min_dis = DBL_MAX;
-            bool is_limit = false;
+            std::vector<double> stored_t;
             while ((upper - lower) * 1e15 > 1)
             {
                 int flag = 0;
@@ -1861,29 +1859,28 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
                 }
                 else if (flag == -1) // 需要扩大搜索范围
                 {
-                    if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
+                    if (t - lower < upper - t)
                     {
-                        if (lower == 0)
+                        lower = std::max(0.0, lower - step * 2);
+                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                         {
-                            upper = std::max(0.0, upper - step * 2);
-                        }
-                        else if (upper == 1)
-                        {
-                            lower = std::min(1.0, lower + step * 2);
+                            stored_t.clear();
+                            lower += (upper - lower) / 4;
                         }
                     }
                     else
                     {
-                        if (t - lower < upper - t)
+                        upper = std::min(1.0, upper + step * 2);
+                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                         {
-                            lower = std::max(0.0, lower - step * 2);
-                            is_limit = (lower == 0);
+                            stored_t.clear();
+                            upper -= (upper - lower) / 4;
                         }
-                        else
-                        {
-                            upper = std::min(1.0, upper + step * 2);
-                            is_limit = (upper == 1);
-                        }
+                    }
+                    stored_t.push_back(t);
+                    if (stored_t.size() > 4)
+                    {
+                        stored_t.erase(stored_t.begin(), stored_t.end() - 4);
                     }
                     step = (upper - lower) / 100;
                 }
@@ -2024,7 +2021,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
 
         min_dis[0] = 0, min_dis[1] = DBL_MAX;
         step = (upper - lower) / 100;
-        bool is_limit = false;
+        std::vector<double> stored_t;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -2077,29 +2074,28 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
+                if (t - lower < upper - t)
                 {
-                    if (lower == min_lower)
+                    lower = std::max(min_lower, lower - step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        upper = std::max(min_lower, upper - step * 2);
-                    }
-                    else if (upper == max_upper)
-                    {
-                        lower = std::min(max_upper, lower + step * 2);
+                        stored_t.clear();
+                        lower += (upper - lower) / 4;
                     }
                 }
                 else
                 {
-                    if (t - lower < upper - t)
+                    upper = std::min(max_upper, upper + step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        lower = std::max(min_lower, lower - step * 2);
-                        is_limit = (lower == min_lower);
+                        stored_t.clear();
+                        upper -= (upper - lower) / 4;
                     }
-                    else
-                    {
-                        upper = std::min(max_upper, upper + step * 2);
-                        is_limit = (upper == max_upper);
-                    }
+                }
+                stored_t.push_back(t);
+                if (stored_t.size() > 4)
+                {
+                    stored_t.erase(stored_t.begin(), stored_t.end() - 4);
                 }
                 step = (upper - lower) / 100;
             }
@@ -2764,7 +2760,7 @@ int Geo::is_intersected(const Circle &circle, const Bezier &bezier, std::vector<
             lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
             step = (upper - lower) / 100;
             min_dis = DBL_MAX;
-            bool is_limit = false;
+            std::vector<double> stored_t;
             while ((upper - lower) * 1e15 > 1)
             {
                 int flag = 0;
@@ -2808,29 +2804,28 @@ int Geo::is_intersected(const Circle &circle, const Bezier &bezier, std::vector<
                 }
                 else if (flag == -1) // 需要扩大搜索范围
                 {
-                    if (is_limit)
+                    if (t - lower < upper - t)
                     {
-                        if (lower == 0)
+                        lower = std::max(0.0, lower - step * 2);
+                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                         {
-                            upper = std::max(0.0, upper - step * 2);
-                        }
-                        else if (upper == 1)
-                        {
-                            lower = std::min(1.0, lower + step * 2);
+                            stored_t.clear();
+                            lower += (upper - lower) / 4;
                         }
                     }
                     else
                     {
-                        if (t - lower < upper - t)
+                        upper = std::min(1.0, upper + step * 2);
+                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                         {
-                            lower = std::max(0.0, lower - step * 2);
-                            is_limit = (lower == 0);
+                            stored_t.clear();
+                            upper -= (upper - lower) / 4;
                         }
-                        else
-                        {
-                            upper = std::min(1.0, upper + step * 2);
-                            is_limit = (upper == 1);
-                        }
+                    }
+                    stored_t.push_back(t);
+                    if (stored_t.size() > 4)
+                    {
+                        stored_t.erase(stored_t.begin(), stored_t.end() - 4);
                     }
                     step = (upper - lower) / 100;
                 }
@@ -2994,7 +2989,7 @@ int Geo::is_intersected(const Circle &circle, const BSpline &bspline, const bool
         upper = std::min(max_upper, t + 1e-4);
         step = (upper - lower) / 100;
         min_dis = DBL_MAX;
-        bool is_limit = false;
+        std::vector<double> stored_t;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -3047,29 +3042,28 @@ int Geo::is_intersected(const Circle &circle, const BSpline &bspline, const bool
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
+                if (t - lower < upper - t)
                 {
-                    if (lower == min_lower)
+                    lower = std::max(min_lower, lower - step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        upper = std::max(min_lower, upper - step * 2);
-                    }
-                    else if (upper == max_upper)
-                    {
-                        lower = std::min(max_upper, lower + step * 2);
+                        stored_t.clear();
+                        lower += (upper - lower) / 4;
                     }
                 }
                 else
                 {
-                    if (t - lower < upper - t)
+                    upper = std::min(max_upper, upper + step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        lower = std::max(min_lower, lower - step * 2);
-                        is_limit = (lower == min_lower);
+                        stored_t.clear();
+                        upper -= (upper - lower) / 4;
                     }
-                    else
-                    {
-                        upper = std::min(max_upper, upper + step * 2);
-                        is_limit = (upper == max_upper);
-                    }
+                }
+                stored_t.push_back(t);
+                if (stored_t.size() > 4)
+                {
+                    stored_t.erase(stored_t.begin(), stored_t.end() - 4);
                 }
                 step = (upper - lower) / 100;
             }
@@ -3227,7 +3221,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vecto
             lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
             step = (upper - lower) / 100;
             min_dis = DBL_MAX;
-            bool is_limit = false;
+            std::vector<double> stored_t;
             while ((upper - lower) * 1e15 > 1)
             {
                 int flag = 0;
@@ -3271,29 +3265,28 @@ int Geo::is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vecto
                 }
                 else if (flag == -1) // 需要扩大搜索范围
                 {
-                    if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
+                    if (t - lower < upper - t)
                     {
-                        if (lower == 0)
+                        lower = std::max(0.0, lower - step * 2);
+                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                         {
-                            upper = std::max(0.0, upper - step * 2);
-                        }
-                        else if (upper == 1)
-                        {
-                            lower = std::min(1.0, lower + step * 2);
+                            stored_t.clear();
+                            lower += (upper - lower) / 4;
                         }
                     }
                     else
                     {
-                        if (t - lower < upper - t)
+                        upper = std::min(1.0, upper + step * 2);
+                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                         {
-                            lower = std::max(0.0, lower - step * 2);
-                            is_limit = (lower == 0);
+                            stored_t.clear();
+                            upper -= (upper - lower) / 4;
                         }
-                        else
-                        {
-                            upper = std::min(1.0, upper + step * 2);
-                            is_limit = (upper == 1);
-                        }
+                    }
+                    stored_t.push_back(t);
+                    if (stored_t.size() > 4)
+                    {
+                        stored_t.erase(stored_t.begin(), stored_t.end() - 4);
                     }
                     step = (upper - lower) / 100;
                 }
@@ -3456,7 +3449,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bo
         upper = std::min(max_upper, t + 1e-4);
         step = (upper - lower) / 100;
         min_dis = DBL_MAX;
-        bool is_limit = false;
+        std::vector<double> stored_t;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -3509,29 +3502,28 @@ int Geo::is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bo
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
+                if (t - lower < upper - t)
                 {
-                    if (lower == min_lower)
+                    lower = std::max(min_lower, lower - step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        upper = std::max(min_lower, upper - step * 2);
-                    }
-                    else if (upper == max_upper)
-                    {
-                        lower = std::min(max_upper, lower + step * 2);
+                        stored_t.clear();
+                        lower += (upper - lower) / 4;
                     }
                 }
                 else
                 {
-                    if (t - lower < upper - t)
+                    upper = std::min(max_upper, upper + step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        lower = std::max(min_lower, lower - step * 2);
-                        is_limit = (lower == min_lower);
+                        stored_t.clear();
+                        upper -= (upper - lower) / 4;
                     }
-                    else
-                    {
-                        upper = std::min(max_upper, upper + step * 2);
-                        is_limit = (upper == max_upper);
-                    }
+                }
+                stored_t.push_back(t);
+                if (stored_t.size() > 4)
+                {
+                    stored_t.erase(stored_t.begin(), stored_t.end() - 4);
                 }
                 step = (upper - lower) / 100;
             }
@@ -5980,7 +5972,7 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
         step = 1e-3, lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
         min_dis[0] = min_dis[1] = DBL_MAX;
         step = (upper - lower) / 100;
-        bool is_limit = false;
+        std::vector<double> stored_t;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -6024,30 +6016,25 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
+                if (t - lower < upper - t)
                 {
-                    if (lower == 0)
+                    lower = std::max(0.0, lower - step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        upper = std::max(0.0, upper - step * 2);
-                    }
-                    else if (upper == 1)
-                    {
-                        lower = std::min(1.0, lower + step * 2);
+                        stored_t.clear();
+                        lower += (upper - lower) / 4;
                     }
                 }
                 else
                 {
-                    if (t - lower < upper - t)
+                    upper = std::min(1.0, upper + step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        lower = std::max(0.0, lower - step * 2);
-                        is_limit = (lower == 0);
-                    }
-                    else
-                    {
-                        upper = std::min(1.0, upper + step * 2);
-                        is_limit = (upper == 1);
+                        stored_t.clear();
+                        upper -= (upper - lower) / 4;
                     }
                 }
+                stored_t.push_back(t);
                 step = (upper - lower) / 100;
             }
             else
@@ -6167,7 +6154,7 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
 
         step = 1e-3, lower = std::max(knots[0], t - 0.1), upper = std::min(knots[nplusc - 1], t + 0.1);
         min_dis[0] = min_dis[1] = DBL_MAX;
-        bool is_limit = false;
+        std::vector<double> stored_t;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -6220,29 +6207,28 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
+                if (t - lower < upper - t)
                 {
-                    if (lower == 0)
+                    lower = std::max(0.0, lower - step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        upper = std::max(0.0, upper - step * 2);
-                    }
-                    else if (upper == 1)
-                    {
-                        lower = std::min(1.0, lower + step * 2);
+                        stored_t.clear();
+                        lower += (upper - lower) / 4;
                     }
                 }
                 else
                 {
-                    if (t - lower < upper - t)
+                    upper = std::min(1.0, upper + step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        lower = std::max(0.0, lower - step * 2);
-                        is_limit = (lower == 0);
+                        stored_t.clear();
+                        upper -= (upper - lower) / 4;
                     }
-                    else
-                    {
-                        upper = std::min(1.0, upper + step * 2);
-                        is_limit = (upper == 1);
-                    }
+                }
+                stored_t.push_back(t);
+                if (stored_t.size() > 4)
+                {
+                    stored_t.erase(stored_t.begin(), stored_t.end() - 4);
                 }
                 step = (upper - lower) / 100;
             }
@@ -6474,7 +6460,7 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
         lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
         step = (upper - lower) / 100; 
         min_dis[0] = min_dis[1] = DBL_MAX;
-        bool is_limit = false;
+        std::vector<double> stored_t;
         while ((upper - lower) * 1e15 > 1)
         {
             int flag = 0;
@@ -6518,29 +6504,28 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
             }
             else if (flag == -1) // 需要扩大搜索范围
             {
-                if (is_limit) // 已经扩大搜索范围到边界极限,强制缩小搜索范围迫使收敛
+                if (t - lower < upper - t)
                 {
-                    if (lower == 0)
+                    lower = std::max(0.0, lower - step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        upper = std::max(0.0, upper - step * 2);
-                    }
-                    else if (upper == 1)
-                    {
-                        lower = std::min(1.0, lower + step * 2);
+                        stored_t.clear();
+                        lower += (upper - lower) / 4;
                     }
                 }
                 else
                 {
-                    if (t - lower < upper - t)
+                    upper = std::min(1.0, upper + step * 2);
+                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
                     {
-                        lower = std::max(0.0, lower - step * 2);
-                        is_limit = (lower == 0);
+                        stored_t.clear();
+                        upper -= (upper - lower) / 4;
                     }
-                    else
-                    {
-                        upper = std::min(1.0, upper + step * 2);
-                        is_limit = (upper == 1);
-                    }
+                }
+                stored_t.push_back(t);
+                if (stored_t.size() > 4)
+                {
+                    stored_t.erase(stored_t.begin(), stored_t.end() - 4);
                 }
                 step = (upper - lower) / 100;
             }
@@ -6663,6 +6648,411 @@ bool Geo::split(const Bezier &bezier, const size_t i, const double t, Bezier &ou
     output0.update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
     output1.update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
     return output0.size() > 1 && output1.size() > 1;
+}
+
+bool Geo::split(const BSpline &bspline, const bool is_cubic, const Point &pos, BSpline &output0, BSpline &output1)
+{
+    if (is_cubic && (dynamic_cast<const Geo::CubicBSpline *>(&output0) == nullptr
+        || dynamic_cast<const Geo::CubicBSpline *>(&output1) == nullptr))
+    {
+        return false;
+    }
+    else if (!is_cubic && (dynamic_cast<const Geo::QuadBSpline *>(&output0) == nullptr
+        || dynamic_cast<const Geo::QuadBSpline *>(&output1) == nullptr))
+    {
+        return false;
+    }
+
+    std::vector<double> knots = bspline.knots();
+    const Geo::Polyline &shape = bspline.shape();
+    const size_t p = is_cubic ? 3 : 2;
+    const size_t npts = bspline.control_points.size();
+    const size_t nplusc = npts + (is_cubic ? 4 : 3);
+    const size_t p1 = std::max(npts * 8.0, bspline.shape().length() / Geo::BSpline::default_step);
+    Geo::Point anchor;
+    double t = knots[0];
+    {
+        double step = (knots[nplusc - 1] - t) / (p1 - 1);
+        std::vector<double> temp;
+        double min_dis[2] = {DBL_MAX, DBL_MAX};
+        while (t <= knots[nplusc - 1])
+        {
+            std::vector<double> nbasis;
+            if (is_cubic)
+            {
+                Geo::CubicBSpline::rbasis(t, npts, knots, nbasis);
+            }
+            else
+            {
+                Geo::QuadBSpline::rbasis(t, npts, knots, nbasis);
+            }
+
+            Geo::Point coord;
+            for (size_t i = 0; i < npts; ++i)
+            {
+                coord += bspline.control_points[i] * nbasis[i];
+            }
+            if (double dis = Geo::distance(coord, pos); dis < min_dis[0])
+            {
+                temp.clear();
+                min_dis[0] = dis;
+                temp.push_back(t);
+            }
+            else if (dis == min_dis[0])
+            {
+                temp.push_back(t);
+            }
+            t += step;
+        }
+
+        std::vector<std::tuple<double, double, Geo::Point>> result; // dis, t, point
+        for (double v : temp)
+        {
+            step = 1e-3;
+            double lower = knots[0], upper = knots[nplusc - 1];
+            min_dis[0] = min_dis[1] = DBL_MAX;
+            do
+            {
+                for (double x = lower; x < upper + step; x += step)
+                {
+                    x = x < upper ? x : upper;
+                    std::vector<double> nbasis;
+                    if (is_cubic)
+                    {
+                        Geo::CubicBSpline::rbasis(x, npts, knots, nbasis);
+                    }
+                    else
+                    {
+                        Geo::QuadBSpline::rbasis(x, npts, knots, nbasis);
+                    }
+                    Geo::Point coord;
+                    for (size_t i = 0; i < npts; ++i)
+                    {
+                        coord += bspline.control_points[i] * nbasis[i];
+                    }
+                    if (double dis = Geo::distance(pos, coord); dis < min_dis[1])
+                    {
+                        min_dis[1] = dis;
+                        v = x;
+                    }
+                }
+                lower = std::max(0.0, v - step);
+                upper = std::min(1.0, v + step);
+                step = (upper - lower) / 100;
+                if (min_dis[0] > min_dis[1])
+                {
+                    min_dis[0] = min_dis[1];
+                }
+            }
+            while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
+
+            step = 1e-3, lower = std::max(knots[0], t - 0.1), upper = std::min(knots[nplusc - 1], t + 0.1);
+            min_dis[0] = min_dis[1] = DBL_MAX;
+            std::vector<double> stored_t;
+            while ((upper - lower) * 1e15 > 1)
+            {
+                int flag = 0;
+                for (double x = lower, dis0 = 0; x < upper + step; x += step)
+                {
+                    x = x < upper ? x : upper;
+                    std::vector<double> nbasis;
+                    if (is_cubic)
+                    {
+                        Geo::CubicBSpline::rbasis(x, npts, knots, nbasis);
+                    }
+                    else
+                    {
+                        Geo::QuadBSpline::rbasis(x, npts, knots, nbasis);
+                    }
+                    Geo::Point coord;
+                    for (size_t i = 0; i < npts; ++i)
+                    {
+                        coord += bspline.control_points[i] * nbasis[i];
+                    }
+                    if (const double dis = Geo::distance(coord, pos) * 1e9; dis < min_dis[1])
+                    {
+                        min_dis[1] = dis;
+                        t = x;
+                    }
+                    else if (dis == min_dis[1]) // 需要扩大搜索范围
+                    {
+                        flag = -1;
+                        break;
+                    }
+                    else
+                    {
+                        if (dis == dis0)
+                        {
+                            if (++flag == 10)
+                            {
+                                break; // 连续10次相等就退出循环
+                            }
+                        }
+                        else
+                        {
+                            flag = 0;
+                        }
+                        dis0 = dis;
+                    }
+                }
+                if (min_dis[1] < 2e-5)
+                {
+                    break;
+                }
+                else if (flag == -1) // 需要扩大搜索范围
+                {
+                    if (t - lower < upper - t)
+                    {
+                        lower = std::max(0.0, lower - step * 2);
+                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
+                        {
+                            stored_t.clear();
+                            lower += (upper - lower) / 4;
+                        }
+                    }
+                    else
+                    {
+                        upper = std::min(1.0, upper + step * 2);
+                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
+                        {
+                            stored_t.clear();
+                            upper -= (upper - lower) / 4;
+                        }
+                    }
+                    stored_t.push_back(t);
+                    if (stored_t.size() > 4)
+                    {
+                        stored_t.erase(stored_t.begin(), stored_t.end() - 4);
+                    }
+                    step = (upper - lower) / 100;
+                }
+                else
+                {
+                    lower = std::max(0.0, t - step * 2);
+                    upper = std::min(1.0, t + step * 2);
+                    step = (upper - lower) / 100;
+                }
+            }
+
+            std::vector<double> nbasis;
+            if (is_cubic)
+            {
+                Geo::CubicBSpline::rbasis(v, npts, knots, nbasis);
+            }
+            else
+            {
+                Geo::QuadBSpline::rbasis(v, npts, knots, nbasis);
+            }
+            Geo::Point coord;
+            for (size_t i = 0; i < npts; ++i)
+            {
+                coord += bspline.control_points[i] * nbasis[i];
+            }
+            result.emplace_back(std::min(min_dis[0], min_dis[1]), v, coord);
+        }
+
+        std::sort(result.begin(), result.end(), [](const auto &a, const auto &b)
+            { return std::get<0>(a) < std::get<0>(b); });
+        t = std::get<1>(result.front());
+        anchor = std::get<2>(result.front());
+    }
+
+    size_t k = 0, anchor_index = 1;
+    for (size_t i = 1, count = knots.size(); i < count; ++i)
+    {
+        if (knots[i - 1] <= t && t <= knots[i])
+        {
+            k = --i;
+            break;
+        }
+    }
+
+    std::vector<Geo::Point> path_points(bspline.path_points);
+    {
+        std::vector<double> lenghts({0});
+        for (size_t i = 1, count = shape.size(); i < count; ++i)
+        {
+            lenghts.push_back(lenghts.back() + Geo::distance(shape[i - 1], shape[i]));
+        }
+        std::vector<double> distances;
+        for (const Geo::Point &point : path_points)
+        {
+            size_t index = 0;
+            double min_dis = DBL_MAX;
+            for (size_t i = 0, count = shape.size(); i < count; ++i)
+            {
+                if (const double dis = Geo::distance(shape[i], point); dis < min_dis)
+                {
+                    min_dis;
+                    index = i;
+                }
+            }
+            distances.push_back(lenghts[index]);
+        }
+        double anchor_dis = 0, min_dis = DBL_MAX;
+        size_t index = 0;
+        for (size_t i = 0, count = shape.size(); i < count; ++i)
+        {
+            if (const double dis = Geo::distance(shape[i], anchor); dis < min_dis)
+            {
+                min_dis;
+                index = i;
+            }
+        }
+        anchor_dis = lenghts[index];
+        for (size_t i = 1, count = path_points.size(); i < count; ++i)
+        {
+            if (distances[i - 1] <= anchor_dis && anchor_dis <= distances[i])
+            {
+                anchor_index = i;
+                path_points.insert(path_points.begin() + i, p, anchor);
+                break;
+            }
+        }
+    }
+
+    std::vector<Geo::Point> control_points(bspline.control_points);
+    for (size_t n = 0; n < p; ++n)
+    {
+        std::vector<Geo::Point> array(p);
+        for (size_t i = k, j = p - 1; i > k - p; --i, --j)
+        {
+            double alpha = (t - knots[i]);
+            double dev =  (knots[i + p] - knots[i]);
+            alpha = (dev == 0) ? 0 : alpha / dev;
+            array[j] = control_points[i - 1] * (1 - alpha) + control_points[i] * alpha;
+        }
+        for (size_t i = k - p + 1, j = 0; i < k; ++i, ++j)
+        {
+            control_points[i] = array[j];
+        }
+        control_points.insert(control_points.begin() + k, array[p - 1]);
+        knots.insert(knots.begin() + k + 1, t);
+    }
+
+    if (is_cubic)
+    {
+        {
+            std::vector<double> temp_knots(knots.begin(), knots.begin() + k + 2);
+            temp_knots.insert(temp_knots.end(), 3, 1);
+            output0 = Geo::CubicBSpline(control_points.begin(), control_points.begin() + k + 1, temp_knots, false);
+            output0.path_points.assign(path_points.begin(), path_points.begin() + anchor_index + 1);
+        }
+        {
+            std::vector<double> temp_knots(knots.begin() + k + 1, knots.end());
+            temp_knots.insert(temp_knots.begin(), 3, 0);
+            output1 = Geo::CubicBSpline(control_points.begin() + k, control_points.end(), temp_knots, false);
+            output1.path_points.assign(path_points.begin() + anchor_index, path_points.end());
+        }
+        output0.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
+        output1.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
+    }
+    else
+    {
+        Geo::QuadBSpline bspline0(*static_cast<const Geo::QuadBSpline *>(&bspline)), bspline1(*static_cast<const Geo::QuadBSpline *>(&bspline));
+        Geo::split(bspline, is_cubic, t, bspline0, bspline1);
+        bspline0.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
+        bspline1.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
+    }
+    return output0.shape().size() > 1 || output1.shape().size() > 1;
+}
+
+bool Geo::split(const BSpline &bspline, const bool is_cubic, const double t, BSpline &output0, BSpline &output1)
+{
+    if (t == 0 || t == 1)
+    {
+        return false;
+    }
+    else if (is_cubic && (dynamic_cast<const Geo::CubicBSpline *>(&output0) == nullptr
+        || dynamic_cast<const Geo::CubicBSpline *>(&output1) == nullptr))
+    {
+        return false;
+    }
+    else if (!is_cubic && (dynamic_cast<const Geo::QuadBSpline *>(&output0) == nullptr
+        || dynamic_cast<const Geo::QuadBSpline *>(&output1) == nullptr))
+    {
+        return false;
+    }
+
+    std::vector<double> knots = bspline.knots();
+    const size_t p = is_cubic ? 3 : 2;
+    const size_t npts = bspline.control_points.size();
+    std::vector<double> nbasis;
+    if (is_cubic)
+    {
+        Geo::CubicBSpline::rbasis(t, npts, knots, nbasis);
+    }
+    else
+    {
+        Geo::QuadBSpline::rbasis(t, npts, knots, nbasis);
+    }
+    Geo::Point coord;
+    for (size_t i = 0; i < npts; ++i)
+    {
+        coord += bspline.control_points[i] * nbasis[i];
+    }
+
+    size_t k = 0;
+    for (size_t i = 1, count = knots.size(); i < count; ++i)
+    {
+        if (knots[i - 1] <= t && t <= knots[i])
+        {
+            k = --i;
+            break;
+        }
+    }
+
+    std::vector<Geo::Point> array(p);
+    std::vector<Geo::Point> control_points(bspline.control_points);
+    for (size_t i = k, j = p - 1; i > k - p; --i, --j)
+	{
+		double alpha = (t - knots[i]);
+		double dev =  (knots[i + p] - knots[i]);
+		alpha = (dev == 0) ? 0 : alpha / dev;
+		array[j] = control_points[i - 1] * (1 - alpha) + control_points[i] * alpha;
+	}
+    for (size_t i = k - p + 1, j = 0; i < k; ++i, ++j)
+	{
+		control_points[i] = array[j];
+	}
+    control_points.insert(control_points.begin() + k, array[p - 1]);
+    knots.insert(knots.begin() + k + 1, t);
+
+    std::vector<double> knots_left(knots.begin(), knots.begin() + k + 2);
+    std::vector<double> knots_right(knots.begin() + k + 1, knots.end());
+    knots_left.insert(knots_left.end(), p + 1, t);
+    knots_right.insert(knots_right.begin(), p + 1, t);
+    
+    // for (size_t i = k - p; i <= k; ++i)
+    // {
+    //     const double alpha = (t - knots[i]) / (knots[i + p + 1] - knots[i]);
+    //     control_points.insert(control_points.begin() + i + 1,
+    //         control_points[i + 1] * alpha + control_points[i] * (1 - alpha));
+    // }
+
+    if (is_cubic)
+    {
+        output0 = Geo::CubicBSpline(control_points.begin(), control_points.end(), knots, false);
+        // std::vector<Geo::Point> cpoints(control_points.begin(), control_points.begin() + k + 2);
+        // cpoints.emplace_back(coord);
+        // output0 = Geo::CubicBSpline(cpoints.begin(), cpoints.end(), knots_left, false);
+        // cpoints.clear();
+        // cpoints.emplace_back(coord);
+        // cpoints.insert(cpoints.end(), control_points.begin() + k + 1, control_points.end());
+        // output1 = Geo::CubicBSpline(cpoints.begin(), cpoints.end(), knots_right, false);
+    }
+    else
+    {
+        std::vector<Geo::Point> cpoints(control_points.begin(), control_points.begin() + k + 2);
+        cpoints.emplace_back(coord);
+        output0 = Geo::QuadBSpline(cpoints.begin(), cpoints.end(), knots_left, false);
+        cpoints.clear();
+        cpoints.emplace_back(coord);
+        cpoints.insert(cpoints.end(), control_points.begin() + k + 1, control_points.end());
+        output1 = Geo::QuadBSpline(cpoints.begin(), cpoints.end(), knots_right, false);
+    }
+
+    return output0.shape().size() > 1 || output1.shape().size() > 1;
 }
 
 

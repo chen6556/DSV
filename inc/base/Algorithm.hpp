@@ -325,6 +325,12 @@ namespace Geo
     // 将Bezier从i段t值处处拆分为两段Bezier
     bool split(const Bezier &bezier, const size_t i, const double t, Bezier &output0, Bezier &output1);
 
+    // 将BSpline曲线从pos处拆分为两段BSpline
+    bool split(const BSpline &bspline, const bool is_cubic, const Point &pos, BSpline &output0, BSpline &output1);
+
+    // 将BSpline曲线从t值处拆分为两段BSpline
+    bool split(const BSpline &bspline, const bool is_cubic, const double t, BSpline &output0, BSpline &output1);
+
     // 计算直线的旋转角度(弧度制,-PI-PI)
     double angle(const Point &start, const Point &end);
 

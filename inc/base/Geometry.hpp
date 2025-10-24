@@ -830,6 +830,8 @@ namespace Geo
 
         virtual void update_shape(const double step, const double down_sampling_value) = 0;
 
+        virtual void insert(const double t) = 0;
+
         const Polyline &shape() const;
 
         const double length() const override;
@@ -887,6 +889,8 @@ namespace Geo
         void update_shape(const double step, const double down_sampling_value) override;
 
         QuadBSpline *clone() const override;
+
+        void insert(const double t) override;
     };
 
     class CubicBSpline : public BSpline
@@ -911,5 +915,7 @@ namespace Geo
         void update_shape(const double step, const double down_sampling_value) override;
 
         CubicBSpline *clone() const override;
+
+        void insert(const double t) override;
     };
 };

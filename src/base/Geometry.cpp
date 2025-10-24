@@ -2808,7 +2808,8 @@ BSpline::BSpline()
 }
 
 BSpline::BSpline(const BSpline &bspline)
-    : Geometry(bspline), _shape(bspline._shape), control_points(bspline.control_points), path_points(bspline.path_points)
+    : Geometry(bspline), _shape(bspline._shape), control_points(bspline.control_points),
+    path_points(bspline.path_points), _knots(bspline._knots)
 {
     _shape.shape_fixed = true;
 }
@@ -2821,6 +2822,7 @@ BSpline &BSpline::operator=(const BSpline &bspline)
         _shape = bspline._shape;
         control_points = bspline.control_points;
         path_points = bspline.path_points;
+        _knots = bspline._knots;
     }
     return *this;
 }
@@ -3275,6 +3277,92 @@ QuadBSpline *QuadBSpline::clone() const
     return new QuadBSpline(*this);
 }
 
+void QuadBSpline::insert(const double t)
+{
+    // if (std::find(_knots.begin(), _knots.end(), t) != _knots.end())
+    // {
+    //     return;
+    // }
+    size_t k = 0;
+    for (size_t i = 1, count = _knots.size(); i < count; ++i)
+    {
+        if (_knots[i - 1] <= t && t <= _knots[i])
+        {
+            k = --i;
+            break;
+        }
+    }
+
+    const size_t npts = control_points.size();
+    std::vector<double> nbasis;
+    rbasis(t, npts, _knots, nbasis);
+    Geo::Point anchor;
+    for (size_t i = 0; i < npts; ++i)
+    {
+        anchor += control_points[i] * nbasis[i];
+    }
+
+    Geo::Point array[2];
+    for (size_t i = k, j = 1; i > k - 2; --i, --j)
+	{
+		double alpha = (t - _knots[i]);
+		double dev =  (_knots[i + 2] - _knots[i]);
+		alpha = (dev == 0) ? 0 : alpha / dev;
+		array[j] = control_points[i - 1] * (1 - alpha) + control_points[i] * alpha;
+	}
+    for (size_t i = k - 1, j = 0; i < k; ++i, ++j)
+	{
+		control_points[i] = array[j];
+	}
+    control_points.insert(control_points.begin() + k, array[1]);
+    _knots.insert(_knots.begin() + k + 1, t);
+
+    std::vector<double> lenghts({0});
+    for (size_t i = 1, count = _shape.size(); i < count; ++i)
+    {
+        lenghts.push_back(lenghts.back() + Geo::distance(_shape[i - 1], _shape[i]));
+    }
+    std::vector<double> distances;
+    for (const Geo::Point &point : path_points)
+    {
+        size_t index = 0;
+        double min_dis = DBL_MAX;
+        for (size_t i = 0, count = _shape.size(); i < count; ++i)
+        {
+            if (const double dis = Geo::distance(_shape[i], point); dis < min_dis)
+            {
+                min_dis = dis;
+                index = i;
+            }
+        }
+        distances.push_back(lenghts[index]);
+    }
+
+    double anchor_dis = 0;
+    {
+        size_t index = 0;
+        double min_dis = DBL_MAX;
+        for (size_t i = 0, count = _shape.size(); i < count; ++i)
+        {
+            if (const double dis = Geo::distance(_shape[i], anchor); dis < min_dis)
+            {
+                min_dis = dis;
+                index = i;
+            }
+        }
+        anchor_dis = lenghts[index];
+    }
+
+    for (size_t i = 1, count = path_points.size(); i < count; ++i)
+    {
+        if (distances[i - 1] <= anchor_dis && anchor_dis <= distances[i])
+        {
+            path_points.insert(path_points.begin() + i, anchor);
+            break;
+        }
+    }
+}
+
 
 // CubicBSpline
 CubicBSpline::CubicBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const bool is_path_points)
@@ -3589,4 +3677,90 @@ void CubicBSpline::update_shape(const double step, const double down_sampling_va
 CubicBSpline *CubicBSpline::clone() const
 {
     return new CubicBSpline(*this);
+}
+
+void CubicBSpline::insert(const double t)
+{
+    // if (std::find(_knots.begin(), _knots.end(), t) != _knots.end())
+    // {
+    //     return;
+    // }
+    size_t k = 0;
+    for (size_t i = 1, count = _knots.size(); i < count; ++i)
+    {
+        if (_knots[i - 1] <= t && t <= _knots[i])
+        {
+            k = --i;
+            break;
+        }
+    }
+
+    const size_t npts = control_points.size();
+    std::vector<double> nbasis;
+    rbasis(t, npts, _knots, nbasis);
+    Geo::Point anchor;
+    for (size_t i = 0; i < npts; ++i)
+    {
+        anchor += control_points[i] * nbasis[i];
+    }
+
+    Geo::Point array[3];
+    for (size_t i = k, j = 2; i > k - 3; --i, --j)
+	{
+		double alpha = (t - _knots[i]);
+		double dev =  (_knots[i + 3] - _knots[i]);
+		alpha = (dev == 0) ? 0 : alpha / dev;
+		array[j] = control_points[i - 1] * (1 - alpha) + control_points[i] * alpha;
+	}
+    for (size_t i = k - 2, j = 0; i < k; ++i, ++j)
+	{
+		control_points[i] = array[j];
+	}
+    control_points.insert(control_points.begin() + k, array[2]);
+    _knots.insert(_knots.begin() + k + 1, t);
+
+    std::vector<double> lenghts({0});
+    for (size_t i = 1, count = _shape.size(); i < count; ++i)
+    {
+        lenghts.push_back(lenghts.back() + Geo::distance(_shape[i - 1], _shape[i]));
+    }
+    std::vector<double> distances;
+    for (const Geo::Point &point : path_points)
+    {
+        size_t index = 0;
+        double min_dis = DBL_MAX;
+        for (size_t i = 0, count = _shape.size(); i < count; ++i)
+        {
+            if (const double dis = Geo::distance(_shape[i], point); dis < min_dis)
+            {
+                min_dis = dis;
+                index = i;
+            }
+        }
+        distances.push_back(lenghts[index]);
+    }
+
+    double anchor_dis = 0;
+    {
+        size_t index = 0;
+        double min_dis = DBL_MAX;
+        for (size_t i = 0, count = _shape.size(); i < count; ++i)
+        {
+            if (const double dis = Geo::distance(_shape[i], anchor); dis < min_dis)
+            {
+                min_dis = dis;
+                index = i;
+            }
+        }
+        anchor_dis = lenghts[index];
+    }
+
+    for (size_t i = 1, count = path_points.size(); i < count; ++i)
+    {
+        if (distances[i - 1] <= anchor_dis && anchor_dis <= distances[i])
+        {
+            path_points.insert(path_points.begin() + i, anchor);
+            break;
+        }
+    }
 }
