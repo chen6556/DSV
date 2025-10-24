@@ -1,9 +1,20 @@
 #include <algorithm>
+#include <iostream>
 #include <cmath>
 #include "base/Math.hpp"
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_cblas.h>
 
+
+void Math::error_handle(const char *reason, const char *file, int line, int gsl_errno)
+{
+    std::cerr << file << " line: " << line << " error: " << reason << std::endl;
+}
+
+void Math::init()
+{
+    gsl_set_error_handler(&Math::error_handle);
+}
 
 int Math::ellipse_ellipse_f(const gsl_vector *x, void *params, gsl_vector *f)
 {

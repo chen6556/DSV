@@ -852,6 +852,12 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         refresh_selected_ibo();
                         update();
                         return QOpenGLWidget::mousePressEvent(event);
+                    case Geo::Type::BSPLINE:
+                        _editer->trim(static_cast<Geo::BSpline *>(_clicked_obj), real_x1, real_y1);
+                        refresh_vbo(Geo::Type::BSPLINE, true);
+                        refresh_selected_ibo();
+                        update();
+                        return QOpenGLWidget::mousePressEvent(event);
                     default:
                         break;
                     }

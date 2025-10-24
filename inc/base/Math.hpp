@@ -9,6 +9,10 @@ namespace Math
     static const double EPSILON = 1e-10;
     static const size_t MAX_ITERATION = 1000;
 
+    void error_handle(const char *reason, const char *file, int line, int gsl_errno);
+
+    void init();
+
     struct EllipseParameter
     {
         double a[2] = {0};

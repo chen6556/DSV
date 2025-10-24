@@ -47,6 +47,7 @@ void Editer::init()
         _backup.clear();
         _backup.set_graph(_graph);
     }
+    Math::init();
 }
 
 void Editer::load_graph(Graph *graph, const QString &path)
@@ -3723,21 +3724,21 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
     const size_t p1 = std::max(npts * 8.0, bspline->shape().length() / Geo::BSpline::default_step);
     Geo::Point anchor(x, y);
 
-    double t = knots[0];
+    double anchor_t = knots[0];
     {
-        double step = (knots[nplusc - 1] - t) / (p1 - 1);
+        double step = (knots[nplusc - 1] - anchor_t) / (p1 - 1);
         std::vector<double> temp;
         double min_dis[2] = {DBL_MAX, DBL_MAX};
-        while (t <= knots[nplusc - 1])
+        while (anchor_t <= knots[nplusc - 1])
         {
             std::vector<double> nbasis;
             if (is_cubic)
             {
-                Geo::CubicBSpline::rbasis(t, npts, knots, nbasis);
+                Geo::CubicBSpline::rbasis(anchor_t, npts, knots, nbasis);
             }
             else
             {
-                Geo::QuadBSpline::rbasis(t, npts, knots, nbasis);
+                Geo::QuadBSpline::rbasis(anchor_t, npts, knots, nbasis);
             }
 
             Geo::Point coord;
@@ -3749,13 +3750,13 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
             {
                 temp.clear();
                 min_dis[0] = dis;
-                temp.push_back(t);
+                temp.push_back(anchor_t);
             }
             else if (dis == min_dis[0])
             {
-                temp.push_back(t);
+                temp.push_back(anchor_t);
             }
-            t += step;
+            anchor_t += step;
         }
 
         std::vector<std::tuple<double, double, Geo::Point>> result; // dis, t, point
@@ -3799,7 +3800,7 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
             }
             while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
-            step = 1e-3, lower = std::max(knots[0], t - 0.1), upper = std::min(knots[nplusc - 1], t + 0.1);
+            step = 1e-3, lower = std::max(knots[0], anchor_t - 0.1), upper = std::min(knots[nplusc - 1], anchor_t + 0.1);
             min_dis[0] = min_dis[1] = DBL_MAX;
             std::vector<double> stored_t;
             while ((upper - lower) * 1e15 > 1)
@@ -3825,7 +3826,7 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
                     if (const double dis = Geo::distance(coord, anchor) * 1e9; dis < min_dis[1])
                     {
                         min_dis[1] = dis;
-                        t = x;
+                        anchor_t = x;
                     }
                     else if (dis == min_dis[1]) // 需要扩大搜索范围
                     {
@@ -3854,7 +3855,7 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
                 }
                 else if (flag == -1) // 需要扩大搜索范围
                 {
-                    if (t - lower < upper - t)
+                    if (anchor_t - lower < upper - anchor_t)
                     {
                         lower = std::max(0.0, lower - step * 2);
                         if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
@@ -3872,7 +3873,7 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
                             upper -= (upper - lower) / 4;
                         }
                     }
-                    stored_t.push_back(t);
+                    stored_t.push_back(anchor_t);
                     if (stored_t.size() > 4)
                     {
                         stored_t.erase(stored_t.begin(), stored_t.end() - 4);
@@ -3881,8 +3882,8 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
                 }
                 else
                 {
-                    lower = std::max(0.0, t - step * 2);
-                    upper = std::min(1.0, t + step * 2);
+                    lower = std::max(0.0, anchor_t - step * 2);
+                    upper = std::min(1.0, anchor_t + step * 2);
                     step = (upper - lower) / 100;
                 }
             }
@@ -3906,29 +3907,112 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
 
         std::sort(result.begin(), result.end(), [](const auto &a, const auto &b)
             { return std::get<0>(a) < std::get<0>(b); });
-        t = std::get<1>(result.front());
+        anchor_t = std::get<1>(result.front());
         anchor = std::get<2>(result.front());
     }
 
-    if (is_cubic)
+    std::vector<std::tuple<double, double, double>> tvalues; // t, x, y
+    for (const Geo::Geometry *object : _graph->container_group(_current_group))
     {
-        Geo::CubicBSpline bspline0(*static_cast<Geo::CubicBSpline *>(bspline)), bspline1(*static_cast<Geo::CubicBSpline *>(bspline));
-        Geo::split(*bspline, is_cubic, t, bspline0, bspline1);
-        bspline0.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
-        bspline1.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
+        std::vector<Geo::Point> temp;
+        switch (object->type())
+        {
+        case Geo::Type::POLYGON:
+            {
+                const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
+                for (size_t i = 1, count = polygon->size(); i < count; ++i)
+                {
+                    Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], *bspline, is_cubic, temp, false, &tvalues);
+                }
+            }
+            break;
+        case Geo::Type::POLYLINE:
+            {
+                const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
+                for (size_t i = 1, count = polyline->size(); i < count; ++i)
+                {
+                    Geo::is_intersected((*polyline)[i - 1], (*polyline)[i], *bspline, is_cubic, temp, false, &tvalues);
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            Geo::is_intersected(*static_cast<const Geo::Circle *>(object), *bspline, is_cubic, temp, &tvalues);
+            break;
+        case Geo::Type::ELLIPSE:
+            Geo::is_intersected(*static_cast<const Geo::Ellipse *>(object), *bspline, is_cubic, temp, &tvalues);
+            break;
+        case Geo::Type::BEZIER:
+            Geo::is_intersected(*static_cast<const Geo::Bezier *>(object), *bspline, is_cubic, temp, nullptr, &tvalues);
+            break;
+        case Geo::Type::BSPLINE:
+            if (object != bspline)
+            {
+                Geo::is_intersected(*bspline, is_cubic, *static_cast<const Geo::BSpline *>(object),
+                    dynamic_cast<const Geo::CubicBSpline *>(object), temp, &tvalues, nullptr);
+            }
+            break;
+        default:
+            break;
+        }
+    }
 
+    std::sort(tvalues.begin(), tvalues.end(), [](const auto &a, const auto &b) { return std::get<0>(a) < std::get<0>(b); });
+    while (!tvalues.empty() && std::get<0>(tvalues.back()) == 1)
+    {
+        tvalues.pop_back();
+    }
+    while (!tvalues.empty() && std::get<0>(tvalues.front()) == 0)
+    {
+        tvalues.erase(tvalues.begin());
+    }
+    double left_t = std::get<0>(tvalues.front()), right_t = std::get<0>(tvalues.back());
+    for (size_t i = 1, count = tvalues.size(); i < count; ++i)
+    {
+        if (std::get<0>(tvalues[i - 1]) <= anchor_t && anchor_t <= std::get<0>(tvalues[i]))
+        {
+            left_t = std::get<0>(tvalues[i - 1]);
+            right_t = std::get<0>(tvalues[i]);
+            break;
+        }
+    }
+
+    if (left_t == right_t)
+    {
+        Geo::BSpline *result = nullptr;
+        if (is_cubic)
+        {
+            Geo::CubicBSpline bspline_left(*static_cast<const Geo::CubicBSpline *>(bspline)),
+                bspline_right(*static_cast<const Geo::CubicBSpline *>(bspline));
+            if (Geo::split(*bspline, true, left_t, bspline_left, bspline_right))
+            {
+                result = new Geo::CubicBSpline(anchor_t < left_t ? bspline_right : bspline_left);
+            }
+            else
+            {
+                return;
+            }
+        }
+        else
+        {
+            Geo::QuadBSpline bspline_left(*static_cast<const Geo::QuadBSpline *>(bspline)),
+                bspline_right(*static_cast<const Geo::QuadBSpline *>(bspline));
+            if (Geo::split(*bspline, false, left_t, bspline_left, bspline_right))
+            {
+                result = new Geo::QuadBSpline(anchor_t < left_t ? bspline_right : bspline_left);
+            }
+            else
+            {
+                return;
+            }
+        }
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
         for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
         {
             if (_graph->container_group(_current_group)[i] == bspline)
             {
                 remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
-                Geo::CubicBSpline *bsp0 = new Geo::CubicBSpline(bspline0);
-                Geo::CubicBSpline *bsp1 = new Geo::CubicBSpline(bspline1);
-                _graph->container_group(_current_group).insert(i, bsp1);
-                _graph->container_group(_current_group).insert(i, bsp0);
-                add_items.emplace_back(bsp0, _current_group, i);
-                add_items.emplace_back(bsp1, _current_group, i + 1);
+                _graph->container_group(_current_group).insert(i, result);
+                add_items.emplace_back(result, _current_group, i);
                 break;
             }
         }
@@ -3936,11 +4020,129 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
     }
     else
     {
-        Geo::QuadBSpline bspline0(*static_cast<Geo::QuadBSpline *>(bspline)), bspline1(*static_cast<Geo::QuadBSpline *>(bspline));
-        Geo::split(*bspline, is_cubic, t, bspline0, bspline1);
-        bspline0.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
-        bspline1.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
-    }
+        if (anchor_t < left_t)
+        {
+            Geo::BSpline *result = nullptr;
+            if (is_cubic)
+            {
+                Geo::CubicBSpline bspline_left(*static_cast<const Geo::CubicBSpline *>(bspline)),
+                    bspline_right(*static_cast<const Geo::CubicBSpline *>(bspline));
+                if (Geo::split(*bspline, true, left_t, bspline_left, bspline_right))
+                {
+                    result = new Geo::CubicBSpline(bspline_right);
+                }
+                else
+                {
+                    return;
+                }
+            }
+            else
+            {
+                Geo::QuadBSpline bspline_left(*static_cast<const Geo::QuadBSpline *>(bspline)),
+                    bspline_right(*static_cast<const Geo::QuadBSpline *>(bspline));
+                if (Geo::split(*bspline, false, left_t, bspline_left, bspline_right))
+                {
+                    result = new Geo::QuadBSpline(bspline_right);
+                }
+                else
+                {
+                    return;
+                }
+            }
+            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
+            {
+                if (_graph->container_group(_current_group)[i] == bspline)
+                {
+                    remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _graph->container_group(_current_group).insert(i, result);
+                    add_items.emplace_back(result, _current_group, i++);
+                    break;
+                }
+            }
+            _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+        }
+        else if (anchor_t > right_t)
+        {
+            Geo::BSpline *result = nullptr;
+            if (is_cubic)
+            {
+                Geo::CubicBSpline bspline_left(*static_cast<const Geo::CubicBSpline *>(bspline)),
+                    bspline_right(*static_cast<const Geo::CubicBSpline *>(bspline));
+                Geo::split(*bspline, true, right_t, bspline_left, bspline_right);
+                result = new Geo::CubicBSpline(bspline_left);
+            }
+            else
+            {
+                Geo::QuadBSpline bspline_left(*static_cast<const Geo::QuadBSpline *>(bspline)),
+                    bspline_right(*static_cast<const Geo::QuadBSpline *>(bspline));
+                Geo::split(*bspline, false, left_t, bspline_left, bspline_right);
+                result = new Geo::QuadBSpline(bspline_left);
+            }
+            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
+            {
+                if (_graph->container_group(_current_group)[i] == bspline)
+                {
+                    remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _graph->container_group(_current_group).insert(i, result);
+                    add_items.emplace_back(result, _current_group, i++);
+                    break;
+                }
+            }
+            _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+        }
+        else
+        {
+            Geo::BSpline *result_left = nullptr, *result_right = nullptr;
+            if (is_cubic)
+            {
+                Geo::CubicBSpline bspline_left(*static_cast<const Geo::CubicBSpline *>(bspline)),
+                    bspline_right(*static_cast<const Geo::CubicBSpline *>(bspline)),
+                    temp_bspline(*static_cast<const Geo::CubicBSpline *>(bspline));
+                if (Geo::split(*bspline, true, left_t, bspline_left, temp_bspline)
+                    && Geo::split(*bspline, true, right_t, temp_bspline, bspline_right))
+                {
+                    result_left = new Geo::CubicBSpline(bspline_left);
+                    result_right = new Geo::CubicBSpline(bspline_right);
+                }
+                else
+                {
+                    return;
+                }
+            }
+            else
+            {
+                Geo::QuadBSpline bspline_left(*static_cast<const Geo::QuadBSpline *>(bspline)),
+                    bspline_right(*static_cast<const Geo::QuadBSpline *>(bspline)),
+                    temp_bspline(*static_cast<const Geo::QuadBSpline *>(bspline));
+                if (Geo::split(*bspline, false, left_t, bspline_left, temp_bspline)
+                    && Geo::split(*bspline, false, right_t, temp_bspline, bspline_right))
+                {
+                    result_left = new Geo::QuadBSpline(bspline_left);
+                    result_right = new Geo::QuadBSpline(bspline_right);
+                }
+                else
+                {
+                    return;
+                }
+            }
+            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
+            {
+                if (_graph->container_group(_current_group)[i] == bspline)
+                {
+                    remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _graph->container_group(_current_group).insert(i, result_right);
+                    _graph->container_group(_current_group).insert(i, result_left);
+                    add_items.emplace_back(result_left, _current_group, i);
+                    add_items.emplace_back(result_right, _current_group, i + 1);
+                    break;
+                }
+            }
+            _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+        }
+    } 
 }
 
 void Editer::extend(Geo::Polyline *polyline, const double x, const double y)

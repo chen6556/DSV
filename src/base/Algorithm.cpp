@@ -1971,6 +1971,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
     }
 
     std::vector<Geo::Point> result;
+    std::vector<std::tuple<double, double, double>> temp_tvalues;
     for (size_t n = 0, count = temp.size(); n < count; ++n)
     {
         t = temp[n];
