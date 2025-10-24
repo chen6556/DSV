@@ -6664,14 +6664,13 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const Point &pos, B
     }
 
     std::vector<double> knots = bspline.knots();
-    const Geo::Polyline &shape = bspline.shape();
     const size_t p = is_cubic ? 3 : 2;
-    const size_t npts = bspline.control_points.size();
-    const size_t nplusc = npts + (is_cubic ? 4 : 3);
-    const size_t p1 = std::max(npts * 8.0, bspline.shape().length() / Geo::BSpline::default_step);
     Geo::Point anchor;
     double t = knots[0];
     {
+        const size_t npts = bspline.control_points.size();
+        const size_t nplusc = npts + (is_cubic ? 4 : 3);
+        const size_t p1 = std::max(npts * 8.0, bspline.shape().length() / Geo::BSpline::default_step);
         double step = (knots[nplusc - 1] - t) / (p1 - 1);
         std::vector<double> temp;
         double min_dis[2] = {DBL_MAX, DBL_MAX};
@@ -6869,6 +6868,7 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const Point &pos, B
 
     std::vector<Geo::Point> path_points(bspline.path_points);
     {
+        const Geo::Polyline &shape = bspline.shape();
         std::vector<double> lenghts({0});
         for (size_t i = 1, count = shape.size(); i < count; ++i)
         {
@@ -6883,7 +6883,7 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const Point &pos, B
             {
                 if (const double dis = Geo::distance(shape[i], point); dis < min_dis)
                 {
-                    min_dis;
+                    min_dis = dis;
                     index = i;
                 }
             }
@@ -6895,7 +6895,7 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const Point &pos, B
         {
             if (const double dis = Geo::distance(shape[i], anchor); dis < min_dis)
             {
-                min_dis;
+                min_dis = dis;
                 index = i;
             }
         }
@@ -6929,30 +6929,53 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const Point &pos, B
         control_points.insert(control_points.begin() + k, array[p - 1]);
         knots.insert(knots.begin() + k + 1, t);
     }
+    knots.insert(knots.begin() + k + 1, t);
 
     if (is_cubic)
     {
         {
-            std::vector<double> temp_knots(knots.begin(), knots.begin() + k + 2);
-            temp_knots.insert(temp_knots.end(), 3, 1);
+            std::vector<double> temp_knots(knots.begin(), knots.begin() + k + 5);
+            const double value = temp_knots.back();
+            for (size_t i = 0, npts = temp_knots.size(); i < npts; ++i)
+            {
+                temp_knots[i] /= value;
+            }
             output0 = Geo::CubicBSpline(control_points.begin(), control_points.begin() + k + 1, temp_knots, false);
             output0.path_points.assign(path_points.begin(), path_points.begin() + anchor_index + 1);
         }
         {
             std::vector<double> temp_knots(knots.begin() + k + 1, knots.end());
-            temp_knots.insert(temp_knots.begin(), 3, 0);
+            const double left = temp_knots.front(), value = temp_knots.back() - temp_knots.front();
+            for (size_t i = 0, npts = temp_knots.size(); i < npts; ++i)
+            {
+                temp_knots[i] = (temp_knots[i] - left) / value;
+            }
             output1 = Geo::CubicBSpline(control_points.begin() + k, control_points.end(), temp_knots, false);
             output1.path_points.assign(path_points.begin() + anchor_index, path_points.end());
         }
-        output0.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
-        output1.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
     }
     else
     {
-        Geo::QuadBSpline bspline0(*static_cast<const Geo::QuadBSpline *>(&bspline)), bspline1(*static_cast<const Geo::QuadBSpline *>(&bspline));
-        Geo::split(bspline, is_cubic, t, bspline0, bspline1);
-        bspline0.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
-        bspline1.update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
+        {
+            std::vector<double> temp_knots(knots.begin(), knots.begin() + k + 4);
+            const double value = temp_knots.back();
+            for (size_t i = 0, npts = temp_knots.size(); i < npts; ++i)
+            {
+                temp_knots[i] /= value;
+            }
+            output0 = Geo::QuadBSpline(control_points.begin(), control_points.begin() + k + 1, temp_knots, false);
+            output0.path_points.assign(path_points.begin(), path_points.begin() + anchor_index + 1);
+        }
+        {
+            std::vector<double> temp_knots(knots.begin() + k + 1, knots.end());
+            const double left = temp_knots.front(), value = temp_knots.back() - temp_knots.front();
+            for (size_t i = 0, npts = temp_knots.size(); i < npts; ++i)
+            {
+                temp_knots[i] = (temp_knots[i] - left) / value;
+            }
+            output1 = Geo::QuadBSpline(control_points.begin() + k, control_points.end(), temp_knots, false);
+            output1.path_points.assign(path_points.begin() + anchor_index, path_points.end());
+        }
     }
     return output0.shape().size() > 1 || output1.shape().size() > 1;
 }
@@ -6976,23 +6999,24 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const double t, BSp
 
     std::vector<double> knots = bspline.knots();
     const size_t p = is_cubic ? 3 : 2;
-    const size_t npts = bspline.control_points.size();
     std::vector<double> nbasis;
-    if (is_cubic)
+    Geo::Point anchor;
     {
-        Geo::CubicBSpline::rbasis(t, npts, knots, nbasis);
+        const size_t npts = bspline.control_points.size();
+        if (is_cubic)
+        {
+            Geo::CubicBSpline::rbasis(t, npts, knots, nbasis);
+        }
+        else
+        {
+            Geo::QuadBSpline::rbasis(t, npts, knots, nbasis);
+        }
+        for (size_t i = 0; i < npts; ++i)
+        {
+            anchor += bspline.control_points[i] * nbasis[i];
+        }
     }
-    else
-    {
-        Geo::QuadBSpline::rbasis(t, npts, knots, nbasis);
-    }
-    Geo::Point coord;
-    for (size_t i = 0; i < npts; ++i)
-    {
-        coord += bspline.control_points[i] * nbasis[i];
-    }
-
-    size_t k = 0;
+    size_t k = 0, anchor_index = 1;
     for (size_t i = 1, count = knots.size(); i < count; ++i)
     {
         if (knots[i - 1] <= t && t <= knots[i])
@@ -7002,56 +7026,117 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const double t, BSp
         }
     }
 
-    std::vector<Geo::Point> array(p);
-    std::vector<Geo::Point> control_points(bspline.control_points);
-    for (size_t i = k, j = p - 1; i > k - p; --i, --j)
-	{
-		double alpha = (t - knots[i]);
-		double dev =  (knots[i + p] - knots[i]);
-		alpha = (dev == 0) ? 0 : alpha / dev;
-		array[j] = control_points[i - 1] * (1 - alpha) + control_points[i] * alpha;
-	}
-    for (size_t i = k - p + 1, j = 0; i < k; ++i, ++j)
-	{
-		control_points[i] = array[j];
-	}
-    control_points.insert(control_points.begin() + k, array[p - 1]);
-    knots.insert(knots.begin() + k + 1, t);
+    std::vector<Geo::Point> path_points(bspline.path_points);
+    {
+        const Geo::Polyline &shape = bspline.shape();
+        std::vector<double> lenghts({0});
+        for (size_t i = 1, count = shape.size(); i < count; ++i)
+        {
+            lenghts.push_back(lenghts.back() + Geo::distance(shape[i - 1], shape[i]));
+        }
+        std::vector<double> distances;
+        for (const Geo::Point &point : path_points)
+        {
+            size_t index = 0;
+            double min_dis = DBL_MAX;
+            for (size_t i = 0, count = shape.size(); i < count; ++i)
+            {
+                if (const double dis = Geo::distance(shape[i], point); dis < min_dis)
+                {
+                    min_dis = dis;
+                    index = i;
+                }
+            }
+            distances.push_back(lenghts[index]);
+        }
+        double anchor_dis = 0, min_dis = DBL_MAX;
+        size_t index = 0;
+        for (size_t i = 0, count = shape.size(); i < count; ++i)
+        {
+            if (const double dis = Geo::distance(shape[i], anchor); dis < min_dis)
+            {
+                min_dis = dis;
+                index = i;
+            }
+        }
+        anchor_dis = lenghts[index];
+        for (size_t i = 1, count = path_points.size(); i < count; ++i)
+        {
+            if (distances[i - 1] <= anchor_dis && anchor_dis <= distances[i])
+            {
+                anchor_index = i;
+                path_points.insert(path_points.begin() + i, p, anchor);
+                break;
+            }
+        }
+    }
 
-    std::vector<double> knots_left(knots.begin(), knots.begin() + k + 2);
-    std::vector<double> knots_right(knots.begin() + k + 1, knots.end());
-    knots_left.insert(knots_left.end(), p + 1, t);
-    knots_right.insert(knots_right.begin(), p + 1, t);
-    
-    // for (size_t i = k - p; i <= k; ++i)
-    // {
-    //     const double alpha = (t - knots[i]) / (knots[i + p + 1] - knots[i]);
-    //     control_points.insert(control_points.begin() + i + 1,
-    //         control_points[i + 1] * alpha + control_points[i] * (1 - alpha));
-    // }
+    std::vector<Geo::Point> control_points(bspline.control_points);
+    for (size_t n = 0; n < p; ++n)
+    {
+        std::vector<Geo::Point> array(p);
+        for (size_t i = k, j = p - 1; i > k - p; --i, --j)
+        {
+            double alpha = (t - knots[i]);
+            double dev =  (knots[i + p] - knots[i]);
+            alpha = (dev == 0) ? 0 : alpha / dev;
+            array[j] = control_points[i - 1] * (1 - alpha) + control_points[i] * alpha;
+        }
+        for (size_t i = k - p + 1, j = 0; i < k; ++i, ++j)
+        {
+            control_points[i] = array[j];
+        }
+        control_points.insert(control_points.begin() + k, array[p - 1]);
+        knots.insert(knots.begin() + k + 1, t);
+    }
+    knots.insert(knots.begin() + k + 1, t);
 
     if (is_cubic)
     {
-        output0 = Geo::CubicBSpline(control_points.begin(), control_points.end(), knots, false);
-        // std::vector<Geo::Point> cpoints(control_points.begin(), control_points.begin() + k + 2);
-        // cpoints.emplace_back(coord);
-        // output0 = Geo::CubicBSpline(cpoints.begin(), cpoints.end(), knots_left, false);
-        // cpoints.clear();
-        // cpoints.emplace_back(coord);
-        // cpoints.insert(cpoints.end(), control_points.begin() + k + 1, control_points.end());
-        // output1 = Geo::CubicBSpline(cpoints.begin(), cpoints.end(), knots_right, false);
+        {
+            std::vector<double> temp_knots(knots.begin(), knots.begin() + k + 5);
+            const double value = temp_knots.back();
+            for (size_t i = 0, npts = temp_knots.size(); i < npts; ++i)
+            {
+                temp_knots[i] /= value;
+            }
+            output0 = Geo::CubicBSpline(control_points.begin(), control_points.begin() + k + 1, temp_knots, false);
+            output0.path_points.assign(path_points.begin(), path_points.begin() + anchor_index + 1);
+        }
+        {
+            std::vector<double> temp_knots(knots.begin() + k + 1, knots.end());
+            const double left = temp_knots.front(), value = temp_knots.back() - temp_knots.front();
+            for (size_t i = 0, npts = temp_knots.size(); i < npts; ++i)
+            {
+                temp_knots[i] = (temp_knots[i] - left) / value;
+            }
+            output1 = Geo::CubicBSpline(control_points.begin() + k, control_points.end(), temp_knots, false);
+            output1.path_points.assign(path_points.begin() + anchor_index, path_points.end());
+        }
     }
     else
     {
-        std::vector<Geo::Point> cpoints(control_points.begin(), control_points.begin() + k + 2);
-        cpoints.emplace_back(coord);
-        output0 = Geo::QuadBSpline(cpoints.begin(), cpoints.end(), knots_left, false);
-        cpoints.clear();
-        cpoints.emplace_back(coord);
-        cpoints.insert(cpoints.end(), control_points.begin() + k + 1, control_points.end());
-        output1 = Geo::QuadBSpline(cpoints.begin(), cpoints.end(), knots_right, false);
+        {
+            std::vector<double> temp_knots(knots.begin(), knots.begin() + k + 4);
+            const double value = temp_knots.back();
+            for (size_t i = 0, npts = temp_knots.size(); i < npts; ++i)
+            {
+                temp_knots[i] /= value;
+            }
+            output0 = Geo::QuadBSpline(control_points.begin(), control_points.begin() + k + 1, temp_knots, false);
+            output0.path_points.assign(path_points.begin(), path_points.begin() + anchor_index + 1);
+        }
+        {
+            std::vector<double> temp_knots(knots.begin() + k + 1, knots.end());
+            const double left = temp_knots.front(), value = temp_knots.back() - temp_knots.front();
+            for (size_t i = 0, npts = temp_knots.size(); i < npts; ++i)
+            {
+                temp_knots[i] = (temp_knots[i] - left) / value;
+            }
+            output1 = Geo::QuadBSpline(control_points.begin() + k, control_points.end(), temp_knots, false);
+            output1.path_points.assign(path_points.begin() + anchor_index, path_points.end());
+        }
     }
-
     return output0.shape().size() > 1 || output1.shape().size() > 1;
 }
 
