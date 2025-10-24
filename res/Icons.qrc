@@ -1,6 +1,6 @@
-<!DOCTYPE RCC>
 <RCC>
   <qresource prefix="/">
+    <file>icons/split_btn.png</file>
     <file>icons/angle_btn.png</file>
     <file>icons/extend_btn.png</file>
     <file>icons/trim_btn.png</file>

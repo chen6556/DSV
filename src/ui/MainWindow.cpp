@@ -561,6 +561,9 @@ void MainWindow::refresh_tool_label(const Canvas::Operation operation)
     case Canvas::Operation::Trim:
         ui->current_tool->setText("Trim");
         break;
+    case Canvas::Operation::Split:
+        ui->current_tool->setText("Split");
+        break;
     case Canvas::Operation::Extend:
         ui->current_tool->setText("Extend");
         break;
@@ -1073,6 +1076,11 @@ void MainWindow::fillet()
 void MainWindow::trim()
 {
     ui->canvas->set_operation(Canvas::Operation::Trim);
+}
+
+void MainWindow::split()
+{
+    ui->canvas->set_operation(Canvas::Operation::Split);
 }
 
 void MainWindow::extend()

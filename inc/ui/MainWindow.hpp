@@ -127,6 +127,8 @@ private slots:
 
     void trim();
 
+    void split();
+
     void extend();
 
 
