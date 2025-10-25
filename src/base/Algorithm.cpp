@@ -531,31 +531,6 @@ double Geo::distance(const Point &point, const Polygon &polygon)
 
 double Geo::distance(const Point &point, const Ellipse &ellipse)
 {
-    // Approximate the distance between a point and an ellipse using Rosin distance.
-    /*const double ae2 = Geo::distance_square(ellipse.a0(), ellipse.a1()) / 4;
-    const double be2 = Geo::distance_square(ellipse.b0(), ellipse.b1()) / 4;
-    if (ae2 == be2)
-    {
-        return Geo::distance(point, ellipse.center()) - std::sqrt(ae2);
-    }
-    const double angle = -ellipse.angle();
-    const double x = point.x - ellipse.center().x;
-    const double y = point.y - ellipse.center().y;
-    const double xp = x * std::cos(angle) - y * std::sin(angle);
-    const double yp = x * std::sin(angle) + y * std::cos(angle);
-    const double fe2 = std::abs(ae2 - be2);
-    const double X = xp * xp, Y = yp * yp;
-    const double delta = (X + Y + fe2) * (X + Y + fe2) - 4 * X * fe2;
-    const double A = (X + Y + fe2 - std::sqrt(delta)) / 2;
-    const double ah = std::sqrt(A);
-    const double bh2 = fe2 - A;
-    const double term = A * be2 + ae2 * bh2;
-    const double xi = ah * std::sqrt(ae2 * (be2 + bh2) / term);
-    const double yi = ellipse.lengthb() * std::sqrt(bh2 * (ae2 - A) / term);
-    const double d[4] = {Geo::distance(xp, yp, xi, yi), Geo::distance(xp, yp, xi, -yi),
-        Geo::distance(xp, yp, -xi, yi), Geo::distance(xp, yp, -xi, -yi)};
-    return *std::min_element(d, d + 4);*/
-
     const Geo::Point center = ellipse.center();
     const Geo::Point coord = Geo::to_coord(point, center.x, center.y, Geo::angle(ellipse.a0(), ellipse.a1()));
     const double a = ellipse.lengtha(), b = ellipse.lengthb();
@@ -563,7 +538,7 @@ double Geo::distance(const Point &point, const Ellipse &ellipse)
         degree1 = Geo::angle(Geo::Point(0, 0), coord) + Geo::PI / 2;
     double m0 = (degree1 - degree0) / 3 + degree0, m1 = degree1 - (degree1 - degree0) / 3;
     double x0, y0, x1, y1;
-    while (degree0 + Geo::EPSILON < degree1)
+    while (degree1 * 1e15 - degree0 * 1e15 > 1)
     {
         m0 = (degree1 - degree0) / 3 + degree0, m1 = degree1 - (degree1 - degree0) / 3;
         x0 = a * std::cos(m0), y0 = b * std::sin(m0);

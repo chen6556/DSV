@@ -2871,6 +2871,7 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
             }
             _backup.push_command(new UndoStack::ChangeShapeCommand(polyline, shape));
             polyline->front() = point1;
+            polyline->is_selected = false;
         }
         else
         {
@@ -2904,6 +2905,7 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
             }
             _backup.push_command(new UndoStack::ChangeShapeCommand(polyline, shape));
             polyline->back() = point0;
+            polyline->is_selected = false;
         }
         else
         {
