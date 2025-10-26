@@ -68,6 +68,10 @@ void GlobalSetting::load_setting()
     {
         this->catch_intersection = values.value("catch_intersection").toBool();
     }
+    if (values.contains("sampling_step"))
+    {
+        this->sampling_step = values.value("sampling_step").toDouble();
+    }
     if (values.contains("down_sampling"))
     {
         this->down_sampling = values.value("down_sampling").toDouble();
@@ -137,6 +141,7 @@ void GlobalSetting::save_setting()
     values.insert("catch_tangency", this->catch_tangency);
     values.insert("catch_vertex", this->catch_vertex);
     values.insert("catch_intersection", this->catch_intersection);
+    values.insert("sampling_step", this->sampling_step);
     values.insert("down_sampling", this->down_sampling);
     values.insert("file_path", this->file_path);
     values.insert("file_type", this->file_type);

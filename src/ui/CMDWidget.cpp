@@ -29,7 +29,7 @@ void CMDWidget::init()
     _cmd_list << QString() << "OPEN" << "APPEND" << "SAVE" << "EXIT" << "MAIN"
         << "LENGTH" << "ANGLE"
         << "CIRCLE" << "ELLIPSE" << "POLYLINE" << "RECTANGLE" << "BSPLINE" << "BEZIER" << "TEXT"
-        << "CONNECT" << "CLOSE" << "COMBINATE" << "SPLIT"
+        << "CONNECT" << "CLOSE" << "COMBINATE" << "DETACH"
         << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "POINTMIRROR"
         << "ARRAY" << "LINEARRAY" << "RINGARRAY"
         << "UNION" << "INTERSECTION" << "DIFFERENCE" << "XOR"
@@ -41,7 +41,7 @@ void CMDWidget::init()
         {"CIRCLE",CMD::Circle_CMD}, {"ELLIPSE",CMD::Ellipse_CMD},
         {"POLYLINE",CMD::Polyline_CMD}, {"RECTANGLE",CMD::Rectangle_CMD},
         {"BSPLINE",CMD::BSpline_CMD}, {"BEZIER",CMD::Bezier_CMD}, {"TEXT",CMD::Text_CMD}, {"CONNECT",CMD::Connect_CMD},
-        {"COMBINATE",CMD::Combinate_CMD}, {"CLOSE",CMD::Close_CMD}, {"SPLIT",CMD::Split_CMD},
+        {"COMBINATE",CMD::Combinate_CMD}, {"CLOSE",CMD::Close_CMD}, {"DETACH",CMD::Detach_CMD},
         {"ROTATE",CMD::Rotate_CMD}, {"FLIPX",CMD::FlipX_CMD}, {"FLIPY",CMD::FlipY_CMD},
         {"TRIM",CMD::Trim_CMD}, {"EXTEND",CMD::Extend_CMD}, {"MIRROR",CMD::Mirror_CMD},
         {"ARRAY",CMD::Array_CMD}, {"LINEARRAY",CMD::LineArray_CMD}, {"RINGARRAY",CMD::RingArray_CMD},
@@ -306,7 +306,7 @@ bool CMDWidget::work()
         }
         _current_cmd = CMD::Error_CMD;
         break;
-    case CMD::Split_CMD:
+    case CMD::Detach_CMD:
         {
             std::vector<Geo::Geometry *> objects = _editer->selected();
             std::set<Geo::Type> types;
@@ -322,7 +322,7 @@ bool CMDWidget::work()
             }
             if (!types.empty())
             {
-                _editer->split(objects);
+                _editer->detach(objects);
                 _canvas->refresh_vbo(types, true);
                 _canvas->refresh_selected_ibo();
                 _canvas->update();

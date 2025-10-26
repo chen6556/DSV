@@ -62,7 +62,7 @@ const bool Point::operator!=(const Point &point) const
 
 Point &Point::normalize()
 {
-    const double len = std::sqrt(x * x + y * y);
+    const double len = std::hypot(x, y);
     x /= len;
     y /= len;
     return *this;
@@ -70,7 +70,7 @@ Point &Point::normalize()
 
 Point Point::normalized() const
 {
-    const double len = std::sqrt(x * x + y * y);
+    const double len = std::hypot(x, y);
     return Point(x / len, y / len);
 }
 
@@ -377,7 +377,7 @@ void Polyline::append(const Point &point)
 
 void Polyline::append(const Polyline &polyline)
 {
-    if (_points.empty() ||  _points.back() != polyline._points.front())
+    if (_points.empty() || polyline.empty() ||  _points.back() != polyline._points.front())
     {
         _points.insert(_points.cend(), polyline._points.cbegin(), polyline._points.cend());
     }
@@ -2300,6 +2300,10 @@ void Bezier::update_shape(const double step, const double down_sampling_value)
 {
     assert(0 < step && step < 1);
     _shape.clear();
+    if (_points.size() <= _order)
+    {
+        return;
+    }
     std::vector<int> nums(_order + 1, 1);
     switch (_order)
     {
@@ -2338,41 +2342,6 @@ void Bezier::update_shape(const double step, const double down_sampling_value)
             _shape.append(point);
             t += step;
         }
-    }
-    _shape.append(_points.back());
-    Geo::down_sampling(_shape, down_sampling_value);
-}
-
-void Bezier::append_shape(const double step, const double down_sampling_value)
-{
-    assert(0 < step && step < 1);
-    if ((_points.size() - 1) % _order > 0)
-    {
-        return;
-    }
-
-    std::vector<int> temp(1, 1), nums(_order + 1, 1);
-    for (size_t i = 1; i <= _order; ++i)
-    {
-        for (size_t j = 1; j < i; ++j)
-        {
-            nums[j] = temp[j - 1] + temp[j]; 
-        }
-        temp.assign(nums.begin(), nums.begin() + i + 1);
-    }
-
-    double t = 0;
-    Point point;
-    const size_t i = _points.size() - _order - 1;
-    while (t <= 1)
-    {
-        point.clear();
-        for (size_t j = 0; j <= _order; ++j)
-        {
-            point += (_points[j + i] * (nums[j] * std::pow(1 - t, _order - j) * std::pow(t, j))); 
-        }
-        _shape.append(point);
-        t += step;
     }
     _shape.append(_points.back());
     Geo::down_sampling(_shape, down_sampling_value);
@@ -2839,7 +2808,8 @@ BSpline::BSpline()
 }
 
 BSpline::BSpline(const BSpline &bspline)
-    : Geometry(bspline), _shape(bspline._shape), control_points(bspline.control_points), path_points(bspline.path_points)
+    : Geometry(bspline), _shape(bspline._shape), control_points(bspline.control_points),
+    path_points(bspline.path_points), _knots(bspline._knots)
 {
     _shape.shape_fixed = true;
 }
@@ -2852,6 +2822,7 @@ BSpline &BSpline::operator=(const BSpline &bspline)
         _shape = bspline._shape;
         control_points = bspline.control_points;
         path_points = bspline.path_points;
+        _knots = bspline._knots;
     }
     return *this;
 }
@@ -3197,12 +3168,12 @@ void QuadBSpline::knot(const size_t num, std::vector<double> &output)  // 从Lib
 	std::fill(output.begin() + num + 1, output.end(), output[num]);
 }
 
-void QuadBSpline::rbasis(const double t, const int npts, const std::vector<double> &x, std::vector<double> &output)  // 从LibreCAD抄的
+void QuadBSpline::rbasis(const double t, const size_t npts, const std::vector<double> &x, std::vector<double> &output)  // 从LibreCAD抄的
 {
-    const int nplusc = npts + 3;
+    const size_t nplusc = npts + 3;
     std::vector<double> temp(nplusc, 0);
     // calculate the first order nonrational basis functions n[i]
-    for (int i = 0; i< nplusc - 1; ++i)
+    for (size_t i = 0; i< nplusc - 1; ++i)
     {
         if ((t >= x[i]) && (t < x[i+1]))
         {
@@ -3214,7 +3185,7 @@ void QuadBSpline::rbasis(const double t, const int npts, const std::vector<doubl
 
     for (int k = 2; k <= 3; ++k)
     {
-        for (int i = 0; i < nplusc - k; ++i)
+        for (size_t i = 0; i < nplusc - k; ++i)
         {
             // if the lower order basis function is zero skip the calculation
             if (temp[i] != 0)
@@ -3237,7 +3208,7 @@ void QuadBSpline::rbasis(const double t, const int npts, const std::vector<doubl
 
     // calculate sum for denominator of rational basis functions
     double sum = 0;
-    for (int i = 0; i < npts; ++i)
+    for (size_t i = 0; i < npts; ++i)
     {
         sum += temp[i];
     }
@@ -3246,7 +3217,7 @@ void QuadBSpline::rbasis(const double t, const int npts, const std::vector<doubl
     // form rational basis functions and put in r vector
     if (sum != 0)
     {
-        for (int i = 0; i < npts; ++i)
+        for (size_t i = 0; i < npts; ++i)
         {
             output[i] = temp[i] / sum;
         }
@@ -3304,6 +3275,92 @@ void QuadBSpline::update_shape(const double step, const double down_sampling_val
 QuadBSpline *QuadBSpline::clone() const
 {
     return new QuadBSpline(*this);
+}
+
+void QuadBSpline::insert(const double t)
+{
+    // if (std::find(_knots.begin(), _knots.end(), t) != _knots.end())
+    // {
+    //     return;
+    // }
+    size_t k = 0;
+    for (size_t i = 1, count = _knots.size(); i < count; ++i)
+    {
+        if (_knots[i - 1] <= t && t <= _knots[i])
+        {
+            k = --i;
+            break;
+        }
+    }
+
+    const size_t npts = control_points.size();
+    std::vector<double> nbasis;
+    rbasis(t, npts, _knots, nbasis);
+    Geo::Point anchor;
+    for (size_t i = 0; i < npts; ++i)
+    {
+        anchor += control_points[i] * nbasis[i];
+    }
+
+    Geo::Point array[2];
+    for (size_t i = k, j = 1; i > k - 2; --i, --j)
+	{
+		double alpha = (t - _knots[i]);
+		double dev =  (_knots[i + 2] - _knots[i]);
+		alpha = (dev == 0) ? 0 : alpha / dev;
+		array[j] = control_points[i - 1] * (1 - alpha) + control_points[i] * alpha;
+	}
+    for (size_t i = k - 1, j = 0; i < k; ++i, ++j)
+	{
+		control_points[i] = array[j];
+	}
+    control_points.insert(control_points.begin() + k, array[1]);
+    _knots.insert(_knots.begin() + k + 1, t);
+
+    std::vector<double> lenghts({0});
+    for (size_t i = 1, count = _shape.size(); i < count; ++i)
+    {
+        lenghts.push_back(lenghts.back() + Geo::distance(_shape[i - 1], _shape[i]));
+    }
+    std::vector<double> distances;
+    for (const Geo::Point &point : path_points)
+    {
+        size_t index = 0;
+        double min_dis = DBL_MAX;
+        for (size_t i = 0, count = _shape.size(); i < count; ++i)
+        {
+            if (const double dis = Geo::distance(_shape[i], point); dis < min_dis)
+            {
+                min_dis = dis;
+                index = i;
+            }
+        }
+        distances.push_back(lenghts[index]);
+    }
+
+    double anchor_dis = 0;
+    {
+        size_t index = 0;
+        double min_dis = DBL_MAX;
+        for (size_t i = 0, count = _shape.size(); i < count; ++i)
+        {
+            if (const double dis = Geo::distance(_shape[i], anchor); dis < min_dis)
+            {
+                min_dis = dis;
+                index = i;
+            }
+        }
+        anchor_dis = lenghts[index];
+    }
+
+    for (size_t i = 1, count = path_points.size(); i < count; ++i)
+    {
+        if (distances[i - 1] <= anchor_dis && anchor_dis <= distances[i])
+        {
+            path_points.insert(path_points.begin() + i, anchor);
+            break;
+        }
+    }
 }
 
 
@@ -3505,12 +3562,12 @@ void CubicBSpline::update_control_points()
     delete[] y;
 }
 
-void CubicBSpline::rbasis(const double t, const int npts, const std::vector<double> &x, std::vector<double> &output)
+void CubicBSpline::rbasis(const double t, const size_t npts, const std::vector<double> &x, std::vector<double> &output)
 {
-    const int nplusc = npts + 4;
+    const size_t nplusc = npts + 4;
     std::vector<double> temp(nplusc, 0);
     // calculate the first order nonrational basis functions n[i]
-    for (int i = 0; i< nplusc - 1; ++i)
+    for (size_t i = 0; i< nplusc - 1; ++i)
     {
         if ((t >= x[i]) && (t < x[i+1]))
         {
@@ -3522,7 +3579,7 @@ void CubicBSpline::rbasis(const double t, const int npts, const std::vector<doub
 
     for (int k = 2; k <= 4; ++k)
     {
-        for (int i = 0; i < nplusc - k; ++i)
+        for (size_t i = 0; i < nplusc - k; ++i)
         {
             // if the lower order basis function is zero skip the calculation
             if (temp[i] != 0)
@@ -3545,7 +3602,7 @@ void CubicBSpline::rbasis(const double t, const int npts, const std::vector<doub
 
     // calculate sum for denominator of rational basis functions
     double sum = 0;
-    for (int i = 0; i < npts; ++i)
+    for (size_t i = 0; i < npts; ++i)
     {
         sum += temp[i];
     }
@@ -3554,7 +3611,7 @@ void CubicBSpline::rbasis(const double t, const int npts, const std::vector<doub
     // form rational basis functions and put in r vector
     if (sum != 0)
     {
-        for (int i = 0; i < npts; ++i)
+        for (size_t i = 0; i < npts; ++i)
         {
             output[i] = temp[i] / sum;
         }
@@ -3620,4 +3677,90 @@ void CubicBSpline::update_shape(const double step, const double down_sampling_va
 CubicBSpline *CubicBSpline::clone() const
 {
     return new CubicBSpline(*this);
+}
+
+void CubicBSpline::insert(const double t)
+{
+    // if (std::find(_knots.begin(), _knots.end(), t) != _knots.end())
+    // {
+    //     return;
+    // }
+    size_t k = 0;
+    for (size_t i = 1, count = _knots.size(); i < count; ++i)
+    {
+        if (_knots[i - 1] <= t && t <= _knots[i])
+        {
+            k = --i;
+            break;
+        }
+    }
+
+    const size_t npts = control_points.size();
+    std::vector<double> nbasis;
+    rbasis(t, npts, _knots, nbasis);
+    Geo::Point anchor;
+    for (size_t i = 0; i < npts; ++i)
+    {
+        anchor += control_points[i] * nbasis[i];
+    }
+
+    Geo::Point array[3];
+    for (size_t i = k, j = 2; i > k - 3; --i, --j)
+	{
+		double alpha = (t - _knots[i]);
+		double dev =  (_knots[i + 3] - _knots[i]);
+		alpha = (dev == 0) ? 0 : alpha / dev;
+		array[j] = control_points[i - 1] * (1 - alpha) + control_points[i] * alpha;
+	}
+    for (size_t i = k - 2, j = 0; i < k; ++i, ++j)
+	{
+		control_points[i] = array[j];
+	}
+    control_points.insert(control_points.begin() + k, array[2]);
+    _knots.insert(_knots.begin() + k + 1, t);
+
+    std::vector<double> lenghts({0});
+    for (size_t i = 1, count = _shape.size(); i < count; ++i)
+    {
+        lenghts.push_back(lenghts.back() + Geo::distance(_shape[i - 1], _shape[i]));
+    }
+    std::vector<double> distances;
+    for (const Geo::Point &point : path_points)
+    {
+        size_t index = 0;
+        double min_dis = DBL_MAX;
+        for (size_t i = 0, count = _shape.size(); i < count; ++i)
+        {
+            if (const double dis = Geo::distance(_shape[i], point); dis < min_dis)
+            {
+                min_dis = dis;
+                index = i;
+            }
+        }
+        distances.push_back(lenghts[index]);
+    }
+
+    double anchor_dis = 0;
+    {
+        size_t index = 0;
+        double min_dis = DBL_MAX;
+        for (size_t i = 0, count = _shape.size(); i < count; ++i)
+        {
+            if (const double dis = Geo::distance(_shape[i], anchor); dis < min_dis)
+            {
+                min_dis = dis;
+                index = i;
+            }
+        }
+        anchor_dis = lenghts[index];
+    }
+
+    for (size_t i = 1, count = path_points.size(); i < count; ++i)
+    {
+        if (distances[i - 1] <= anchor_dis && anchor_dis <= distances[i])
+        {
+            path_points.insert(path_points.begin() + i, anchor);
+            break;
+        }
+    }
 }

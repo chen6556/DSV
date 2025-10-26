@@ -9,6 +9,10 @@ namespace Math
     static const double EPSILON = 1e-10;
     static const size_t MAX_ITERATION = 1000;
 
+    void error_handle(const char *reason, const char *file, int line, int gsl_errno);
+
+    void init();
+
     struct EllipseParameter
     {
         double a[2] = {0};
@@ -32,4 +36,41 @@ namespace Math
     void mul(const double *mat0, const size_t m0, const size_t n0, const double *mat1, const size_t n1, double *output);
 
     void solve(const double *mat, const size_t n, const double *b, double *output);
+
+
+    struct BezierParameter
+    {
+        int order = 3;
+        const double *points = nullptr;
+        const int *values = nullptr;
+    };
+
+    int bezier_bezier_f(const gsl_vector *v, void *params, gsl_vector *f);
+
+    struct BSplineParameter
+    {
+        bool is_cubic = true;
+        size_t npts = 4;
+        const double *points = nullptr;
+        const double *values = nullptr;
+    };
+
+    void rbasis(const bool is_cubic, const double t, const size_t npts, const double *x, double *output);
+
+    int bspline_bspline_f(const gsl_vector *v, void *params, gsl_vector *f);
+
+    struct BezierBSplineParameter
+    {
+        BezierParameter bezier;
+        BSplineParameter bspline;
+    };
+
+    int bezier_bspline_f(const gsl_vector *v, void *params, gsl_vector *f);
+
+    enum class CurveIntersectType
+    {
+        BezierBezier, BSplineBSpline, BezierBSpline
+    };
+
+    std::tuple<double, double> solve_curve_intersection(void *param, const CurveIntersectType type, const double init_t0, const double init_t1);
 };

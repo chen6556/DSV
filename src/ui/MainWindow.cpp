@@ -561,6 +561,9 @@ void MainWindow::refresh_tool_label(const Canvas::Operation operation)
     case Canvas::Operation::Trim:
         ui->current_tool->setText("Trim");
         break;
+    case Canvas::Operation::Split:
+        ui->current_tool->setText("Split");
+        break;
     case Canvas::Operation::Extend:
         ui->current_tool->setText("Extend");
         break;
@@ -606,8 +609,11 @@ void MainWindow::refresh_settings()
     if (_setting->update_curve_vbo())
     {
         const double value = GlobalSetting::setting().down_sampling;
-        Geo::BSpline::default_down_sampling_value = Geo::Bezier::default_down_sampling_value = value;
-        GlobalSetting::setting().graph->update_curve_shape(0.2, value);
+        Geo::BSpline::default_down_sampling_value = Geo::Bezier::default_down_sampling_value =
+            Geo::Circle::default_down_sampling_value = Geo::Ellipse::default_down_sampling_value = value;
+        const double step = GlobalSetting::setting().sampling_step;
+        Geo::BSpline::default_step = step * 2, Geo::Bezier::default_step = step;
+        GlobalSetting::setting().graph->update_curve_shape(step, value);
         ui->canvas->refresh_vbo(true);
     }
     if (_setting->update_text_vbo())
@@ -778,7 +784,7 @@ void MainWindow::combinate()
     }
 }
 
-void MainWindow::split()
+void MainWindow::detach()
 {
     std::vector<Geo::Geometry *> objects = _editer.selected();
     std::set<Geo::Type> types;
@@ -794,7 +800,7 @@ void MainWindow::split()
     }
     if (!types.empty())
     {
-        _editer.split(objects);
+        _editer.detach(objects);
         ui->canvas->refresh_vbo(types, true);
         ui->canvas->refresh_selected_ibo();
     }
@@ -1070,6 +1076,11 @@ void MainWindow::fillet()
 void MainWindow::trim()
 {
     ui->canvas->set_operation(Canvas::Operation::Trim);
+}
+
+void MainWindow::split()
+{
+    ui->canvas->set_operation(Canvas::Operation::Split);
 }
 
 void MainWindow::extend()

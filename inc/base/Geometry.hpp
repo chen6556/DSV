@@ -691,8 +691,6 @@ namespace Geo
 
         void update_shape(const double step = 0.01, const double down_sampling_value = 0.02);
 
-        void append_shape(const double step = 0.01, const double down_sampling_value = 0.02);
-
         const double length() const override;
 
         void clear() override;
@@ -832,6 +830,8 @@ namespace Geo
 
         virtual void update_shape(const double step, const double down_sampling_value) = 0;
 
+        virtual void insert(const double t) = 0;
+
         const Polyline &shape() const;
 
         const double length() const override;
@@ -882,13 +882,15 @@ namespace Geo
 
         static void knot(const size_t num, std::vector<double> &output);
 
-        static void rbasis(const double t, const int npts, const std::vector<double> &x, std::vector<double> &output);
+        static void rbasis(const double t, const size_t npts, const std::vector<double> &x, std::vector<double> &output);
 
         static void rbspline(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p);
 
         void update_shape(const double step, const double down_sampling_value) override;
 
         QuadBSpline *clone() const override;
+
+        void insert(const double t) override;
     };
 
     class CubicBSpline : public BSpline
@@ -904,7 +906,7 @@ namespace Geo
 
         void update_control_points() override;
 
-        static void rbasis(const double t, const int npts, const std::vector<double> &x, std::vector<double> &output);
+        static void rbasis(const double t, const size_t npts, const std::vector<double> &x, std::vector<double> &output);
 
         static void rbspline(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p);
 
@@ -913,5 +915,7 @@ namespace Geo
         void update_shape(const double step, const double down_sampling_value) override;
 
         CubicBSpline *clone() const override;
+
+        void insert(const double t) override;
     };
 };

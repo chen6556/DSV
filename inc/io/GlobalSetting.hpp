@@ -44,6 +44,7 @@ public:
     int offset_end_type = 0;
 
     double catch_distance = 2.0;
+    double sampling_step = 0.01;
     double down_sampling = 0.02;
 
     QString file_path = "/";

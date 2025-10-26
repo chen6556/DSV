@@ -60,8 +60,8 @@ void Importer::store_arc()
 {
     const Geo::Point center(_parameters[0], _parameters[1]);
     Geo::Vector dir(_last_coord.x - _parameters[0], _last_coord.y - _parameters[1]);
-    const double radius = std::sqrt(std::pow(_parameters[0] - _last_coord.x, 2) + 
-        std::pow(_parameters[1] - _last_coord.y, 2));
+    const double radius = std::hypot(_parameters[0] - _last_coord.x,
+        _parameters[1] - _last_coord.y);
 
     double angle = Geo::degree_to_rad(_parameters[2]);
     double step = radius > 3000 ? Geo::PI / 360 : Geo::PI / 180;

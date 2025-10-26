@@ -380,9 +380,9 @@ void Canvas::paintGL()
         glBufferSubData(GL_ARRAY_BUFFER, 0, 24 * sizeof(double), _catchline_points);
 
         glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 0.649f); // color
-
+        glLineWidth(2.8f);
         glDrawArrays(GL_LINES, 0, 8);
-
+        glLineWidth(1.4f);
         glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 0.549f); // color
     }
 
@@ -846,15 +846,38 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         refresh_selected_ibo();
                         update();
                         return QOpenGLWidget::mousePressEvent(event);
+                    case Geo::Type::BEZIER:
+                        _editer->trim(static_cast<Geo::Bezier *>(_clicked_obj), real_x1, real_y1);
+                        refresh_vbo(Geo::Type::BEZIER, true);
+                        refresh_selected_ibo();
+                        update();
+                        return QOpenGLWidget::mousePressEvent(event);
+                    case Geo::Type::BSPLINE:
+                        _editer->trim(static_cast<Geo::BSpline *>(_clicked_obj), real_x1, real_y1);
+                        refresh_vbo(Geo::Type::BSPLINE, true);
+                        refresh_selected_ibo();
+                        update();
+                        return QOpenGLWidget::mousePressEvent(event);
                     default:
                         break;
                     }
                     break;
                 case Operation::Extend:
-                    if (Geo::Polyline *polyline = dynamic_cast<Geo::Polyline *>(_clicked_obj))
+                    if (Geo::Polyline *polyline = dynamic_cast<Geo::Polyline *>(_clicked_obj);
+                        polyline != nullptr && polyline->type() == Geo::Type::POLYLINE)
                     {
                         _editer->extend(polyline, real_x1, real_y1);
                         refresh_vbo(Geo::Type::POLYLINE, true);
+                        refresh_selected_ibo();
+                        update();
+                        return QOpenGLWidget::mousePressEvent(event);
+                    }
+                    break;
+                case Operation::Split:
+                    if (_editer->split(_clicked_obj, Geo::Point(real_x1, real_y1)))
+                    {
+                        refresh_vbo(_clicked_obj->type(), true);
+                        _clicked_obj = nullptr;
                         refresh_selected_ibo();
                         update();
                         return QOpenGLWidget::mousePressEvent(event);
@@ -5239,8 +5262,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
             case Geo::Type::BEZIER:
                 if (Geo::is_intersected(rect, geo->bounding_rect()))
                 {
-                    if (Geo::distance(pos, static_cast<const Geo::Bezier *>(geo)->front()) * _ratio < distance
-                        || Geo::distance(pos, static_cast<const Geo::Bezier *>(geo)->back()) * _ratio < distance)
+                    if (Geo::distance(pos, static_cast<const Geo::Bezier *>(geo)->shape()) < distance)
                     {
                         catched_objects.push_back(geo);
                     }

@@ -127,7 +127,7 @@ public:
 
     bool combinate(std::vector<Geo::Geometry *> objects);
 
-    bool split(std::vector<Geo::Geometry *> objects);
+    bool detach(std::vector<Geo::Geometry *> objects);
 
     bool mirror(std::vector<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy);
 
@@ -149,6 +149,8 @@ public:
 
     bool fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius);
 
+    bool split(Geo::Geometry *object, const Geo::Point &pos);
+
     bool line_array(std::vector<Geo::Geometry *> objects, int x, int y, double x_space, double y_space);
 
     bool ring_array(std::vector<Geo::Geometry *> objects, const double x, const double y, const int n);
@@ -167,6 +169,10 @@ public:
     void trim(Geo::Polyline *polyline, const double x, const double y);
 
     void trim(Geo::Polygon *polygon, const double x, const double y);
+
+    void trim(Geo::Bezier *bezier, const double x, const double y);
+
+    void trim(Geo::BSpline *bspline, const double x, const double y);
 
     void extend(Geo::Polyline *polyline, const double x, const double y);
 

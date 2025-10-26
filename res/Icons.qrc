@@ -1,6 +1,6 @@
-<!DOCTYPE RCC>
 <RCC>
   <qresource prefix="/">
+    <file>icons/split_btn.png</file>
     <file>icons/angle_btn.png</file>
     <file>icons/extend_btn.png</file>
     <file>icons/trim_btn.png</file>
@@ -20,7 +20,6 @@
     <file>icons/difference_btn.png</file>
     <file>icons/intersection_btn.png</file>
     <file>icons/union_btn.png</file>
-    <file>icons/split_btn.png</file>
     <file>icons/combinate_btn.png</file>
     <file>icons/connect_btn.png</file>
     <file>icons/close_btn.png</file>
@@ -33,5 +32,6 @@
     <file>icons/attention.svg</file>
     <file>icons/help.svg</file>
     <file>icons/info.svg</file>
+    <file>icons/detach_btn.png</file>
   </qresource>
 </RCC>
