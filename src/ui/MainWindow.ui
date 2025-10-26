@@ -1559,10 +1559,10 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>0</x>
+             <x>-13</x>
              <y>0</y>
-             <width>120</width>
-             <height>648</height>
+             <width>107</width>
+             <height>414</height>
             </rect>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -2627,6 +2627,278 @@ QComboBox QAbstractItemView::item:selected
     <hint type="destinationlabel">
      <x>503</x>
      <y>350</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>xor_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>polygon_xor()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>37</x>
+     <y>580</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>union_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>polygon_union()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>90</x>
+     <y>546</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>trim_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>trim()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>37</x>
+     <y>410</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>split_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>split()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>37</x>
+     <y>444</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rotate_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>rotate()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>37</x>
+     <y>478</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>offset_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>offset()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>37</x>
+     <y>648</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>mirror_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>mirror()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>90</x>
+     <y>444</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>intersection_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>polygon_intersection()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>37</x>
+     <y>546</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>flipy_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>flip_y()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>90</x>
+     <y>512</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>flipx_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>flip_x()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>37</x>
+     <y>512</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>fillet_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>fillet()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>37</x>
+     <y>682</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>extend_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>extend()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>90</x>
+     <y>410</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>difference_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>polygon_difference()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>90</x>
+     <y>580</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>detach_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>detach()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>90</x>
+     <y>335</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>connect_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>connect_polylines()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>37</x>
+     <y>301</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>combinate_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>combinate()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>37</x>
+     <y>335</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>close_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close_polyline()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>90</x>
+     <y>301</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
     </hint>
    </hints>
   </connection>
