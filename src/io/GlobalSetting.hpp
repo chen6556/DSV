@@ -1,5 +1,5 @@
 #pragma once
-#include "./ui_MainWindow.h"
+#include "../ui/ui_MainWindow.h"
 
 
 class GlobalSetting

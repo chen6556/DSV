@@ -36,14 +36,14 @@ include_directories(libs)
 add_subdirectory(libs)
 
 add_subdirectory(src)
-include_directories(inc)
-file(GLOB _UI_HEADS inc/ui/*hpp)
+include_directories(src)
+file(GLOB _UI_HEADS src/ui/*hpp)
 
 qt_add_executable(DSV
     MANUAL_FINALIZATION
     src/main.cpp
     ${_UI_HEADS}
-    inc/draw/Canvas.hpp
+    src/draw/Canvas.hpp
 
     ${_DRAW_SOURCES}
     ${_BASE_SOURCES}
