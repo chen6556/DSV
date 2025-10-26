@@ -175,11 +175,6 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             break;
         case Geo::Type::POLYGON:
             polygon = static_cast<Geo::Polygon *>(*it);
-            if (Geo::is_inside(point, *polygon, true))
-            {
-                polygon->is_selected = true;
-                return polygon;
-            }
             for (size_t i = 1, count = polygon->size(); i < count; ++i)
             {
                 if (Geo::distance_square(point, (*polygon)[i], (*polygon)[i - 1]) <= catch_distance * catch_distance)
@@ -192,7 +187,8 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             break;
         case Geo::Type::CIRCLE:
             circle = static_cast<Geo::Circle *>(*it);
-            if (Geo::distance_square(point, *circle) <= std::pow(catch_distance + circle->radius, 2))
+            if (std::abs(Geo::distance(point, *circle) - circle->radius) <= catch_distance
+                || Geo::distance(point, *circle) <= catch_distance)
             {
                 circle->is_selected = true;
                 return circle;
@@ -201,8 +197,9 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             break;
         case Geo::Type::ELLIPSE:
             ellipse = static_cast<Geo::Ellipse *>(*it);
-            if (Geo::distance(ellipse->c0(), point) + Geo::distance(ellipse->c1(), point)
-                    <= catch_distance + std::max(ellipse->lengtha(), ellipse->lengthb()) * 2)
+            if (std::abs(Geo::distance(ellipse->c0(), point) + Geo::distance(ellipse->c1(), point)
+                - std::max(ellipse->lengtha(), ellipse->lengthb()) * 2) <= catch_distance
+                || Geo::distance_square(point, (ellipse->c0() + ellipse->c1()) / 2) <= catch_distance)
             {
                 ellipse->is_selected = true;
                 return ellipse;
@@ -225,25 +222,37 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         }
                         break;
                     case Geo::Type::POLYGON:
-                        if (Geo::is_inside(point, *static_cast<Geo::Polygon *>(item), true))
+                        polygon = static_cast<Geo::Polygon *>(item);
+                        for (size_t i = 1, count = polygon->size(); i < count; ++i)
                         {
-                            cb->is_selected = true;
-                            return cb;
+                            if (Geo::distance_square(point, (*polygon)[i], (*polygon)[i - 1]) <= catch_distance * catch_distance)
+                            {
+                                cb->is_selected = true;
+                                return cb;
+                            }
                         }
+                        polygon = nullptr;
                         break;
                     case Geo::Type::CIRCLE:
-                        if (Geo::is_inside(point, *static_cast<Geo::Circle *>(item), true))
+                        circle = static_cast<Geo::Circle *>(item);
+                        if (std::abs(Geo::distance(point, *circle) - circle->radius) <= catch_distance
+                            || Geo::distance(point, *circle) <= catch_distance)
                         {
                             cb->is_selected = true;
                             return cb;
                         }
+                        circle = nullptr;
                         break;
                     case Geo::Type::ELLIPSE:
-                        if (Geo::is_inside(point, *static_cast<Geo::Ellipse *>(item), true))
+                        ellipse = static_cast<Geo::Ellipse *>(item);
+                        if (std::abs(Geo::distance(ellipse->c0(), point) + Geo::distance(ellipse->c1(), point)
+                            - std::max(ellipse->lengtha(), ellipse->lengthb()) * 2) <= catch_distance
+                            || Geo::distance(point, (ellipse->c0() + ellipse->c1()) / 2) <= catch_distance)
                         {
                             cb->is_selected = true;
                             return cb;
                         }
+                        ellipse = nullptr;
                         break;
                     case Geo::Type::POLYLINE:
                         p = static_cast<Geo::Polyline *>(item);

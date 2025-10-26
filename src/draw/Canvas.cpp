@@ -56,7 +56,7 @@ void Canvas::initializeGL()
     glPointSize(9.6f); // 点大小
     glLineWidth(1.4f); // 线宽
     glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
-    glEnable(GL_BLEND);
+    // glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_MULTISAMPLE); // 抗锯齿
     glEnable(GL_POINT_SMOOTH);
@@ -95,7 +95,8 @@ void Canvas::initializeGL()
     glCreateBuffers(4, _base_VBO);
     glCreateBuffers(7, _shape_VBO);
     glCreateBuffers(4, _shape_IBO);
-    glCreateBuffers(3, _brush_IBO);
+    // glCreateBuffers(3, _brush_IBO);
+    glCreateBuffers(1, &_text_brush_IBO);
     glCreateBuffers(4, _selected_IBO);
 
     glBindVertexArray(_VAO);
@@ -168,10 +169,6 @@ void Canvas::paintGL()
             glUniform4f(_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
             glDrawElements(GL_LINE_STRIP, _selected_index_count[1], GL_UNSIGNED_INT, NULL);
         }
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _brush_IBO[0]); // polygon
-        glUniform4f(_uniforms[4], 0.831372f, 0.843137f, 0.850980f, 0.078431f); // color 绘制填充色
-        glDrawElements(GL_TRIANGLES, _brush_index_count[0], GL_UNSIGNED_INT, NULL);
     }
 
     if (_shape_index_count[2] > 0) // circle
@@ -190,10 +187,6 @@ void Canvas::paintGL()
             glUniform4f(_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
             glDrawElements(GL_LINE_STRIP, _selected_index_count[2], GL_UNSIGNED_INT, NULL);
         }
-
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _brush_IBO[1]); // circle
-        glUniform4f(_uniforms[4], 0.831372f, 0.843137f, 0.850980f, 0.078431f); // color 绘制填充色
-        glDrawElements(GL_TRIANGLES, _brush_index_count[1], GL_UNSIGNED_INT, NULL);
     }
 
     if (_shape_index_count[3] > 0) // curve
@@ -220,7 +213,7 @@ void Canvas::paintGL()
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _brush_IBO[2]); // text
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _text_brush_IBO); // text
         glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color
 
         glEnable(GL_STENCIL_TEST); //开启模板测试
@@ -339,9 +332,6 @@ void Canvas::paintGL()
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        glUniform4f(_uniforms[4], 0.831372f, 0.843137f, 0.850980f, 0.078431f); // color 绘制填充色
-        glDrawArrays(GL_POLYGON, 0, 4);
-
         glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线
         glDrawArrays(GL_LINE_LOOP, 0, 4);
     }
@@ -350,9 +340,6 @@ void Canvas::paintGL()
         glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[1]); // cache
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
-
-        glUniform4f(_uniforms[4], 0.831372f, 0.843137f, 0.850980f, 0.078431f); // color 绘制填充色
-        glDrawArrays(GL_TRIANGLE_FAN, 0, _cache_count / 3);
 
         glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线
         glDrawArrays(GL_LINE_LOOP, 0, _cache_count / 3);
@@ -363,9 +350,6 @@ void Canvas::paintGL()
         glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[1]); // cache
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
-
-        glUniform4f(_uniforms[4], 0.831372f, 0.843137f, 0.850980f, 0.078431f); // color 绘制填充色
-        glDrawArrays(GL_TRIANGLE_FAN, 0, _cache_count / 3);
 
         glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线
         glDrawArrays(GL_LINE_LOOP, 0, _cache_count / 3);
@@ -1350,22 +1334,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             if (selected_objects.size() == 1)
             {
                 _editer->translate_points(selected_objects.back(), real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier);
-                std::future<std::tuple<unsigned int*, unsigned int>> brush_ibo;
                 switch (selected_objects.back()->type())
                 {
-                case Geo::Type::POLYGON:
-                    if (event->modifiers() == Qt::ControlModifier)
-                    {
-                        brush_ibo = std::async(std::launch::async, &Canvas::refresh_polygon_brush_ibo, this);
-                    }
-                    break;
-                case Geo::Type::CIRCLE:
-                case Geo::Type::ELLIPSE:
-                    if (event->modifiers() == Qt::ControlModifier)
-                    {
-                        brush_ibo = std::async(std::launch::async, &Canvas::refresh_circle_brush_ibo, this);
-                    }
-                    break;
                 case Geo::Type::BEZIER:
                     _cache_count = 0;
                     for (const Geo::Point &point : *static_cast<Geo::Bezier *>(selected_objects.back()))
@@ -1393,19 +1363,6 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 if (event->modifiers() == Qt::ControlModifier)
                 {
                     refresh_selected_ibo(selected_objects.back());
-                }
-                if (brush_ibo.valid())
-                {
-                    brush_ibo.wait();
-                    auto [brush_indexs, brush_count] = brush_ibo.get();
-                    if (brush_count > 0)
-                    {
-                        makeCurrent();
-                        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _brush_IBO[selected_objects.back()->type() == Geo::Type::POLYGON ? 0 : 1]);
-                        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * brush_count, brush_indexs, GL_DYNAMIC_DRAW);
-                        doneCurrent();
-                    }
-                    delete []brush_indexs;
                 }
             }
             else
@@ -2500,12 +2457,6 @@ void Canvas::check_cache()
 
 void Canvas::refresh_vbo(const bool refresh_ibo)
 {
-    std::future<std::tuple<unsigned int*, unsigned int>> polygon_brush_ibo, circle_brush_ibo;
-    if (refresh_ibo)
-    {
-        polygon_brush_ibo = std::async(std::launch::async, &Canvas::refresh_polygon_brush_ibo, this);
-        circle_brush_ibo = std::async(std::launch::async, &Canvas::refresh_circle_brush_ibo, this);
-    }
     std::future<std::tuple<double*, unsigned int, unsigned int*, unsigned int>>
         polyline_vbo = std::async(std::launch::async, &Canvas::refresh_polyline_vbo, this),
         polygon_vbo = std::async(std::launch::async, &Canvas::refresh_polygon_vbo, this),
@@ -2606,34 +2557,12 @@ void Canvas::refresh_vbo(const bool refresh_ibo)
         {
             glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[4]); // text
             glBufferData(GL_ARRAY_BUFFER, sizeof(double) * text_data_count, text_data, GL_DYNAMIC_DRAW);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _brush_IBO[2]); // text
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _text_brush_IBO); // text
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * text_index_count, text_indexs, GL_DYNAMIC_DRAW);
         }
         delete []text_data;
         delete []text_indexs;
     }
-
-    if (refresh_ibo)
-    {
-        circle_brush_ibo.wait();
-        auto [circle_brush_indexs, circle_brush_index_count] = circle_brush_ibo.get();
-        if (circle_brush_index_count > 0)
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _brush_IBO[1]); // circle brush
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * circle_brush_index_count, circle_brush_indexs, GL_DYNAMIC_DRAW);
-        }
-        delete []circle_brush_indexs;
-
-        polygon_brush_ibo.wait();
-        auto [polygon_brush_indexs, polygon_brush_index_count] = polygon_brush_ibo.get();
-        if (polygon_brush_index_count > 0)
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _brush_IBO[0]); // polygon brush
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_brush_index_count, polygon_brush_indexs, GL_DYNAMIC_DRAW);
-        }
-        delete []polygon_brush_indexs;
-    }
-
     doneCurrent();
 }
 
@@ -2660,7 +2589,6 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
     case Geo::Type::POLYGON:
         if (refresh_ibo)
         {
-            std::future<std::tuple<unsigned int*, unsigned int>> brush_ibo = std::async(std::launch::async, &Canvas::refresh_polygon_brush_ibo, this);
             auto [data, data_count, indexs, index_count] = refresh_polygon_vbo();
             if (data_count > 0)
             {
@@ -2673,16 +2601,6 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
             }
             delete []data;
             delete []indexs;
-            brush_ibo.wait();
-            auto [brush_data, brush_data_count] = brush_ibo.get();
-            if (brush_data_count > 0)
-            {
-                makeCurrent();
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _brush_IBO[0]);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * brush_data_count, brush_data, GL_DYNAMIC_DRAW);
-                doneCurrent();
-            }
-            delete []brush_data;
         }
         else
         {
@@ -2704,7 +2622,6 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
     case Geo::Type::ELLIPSE:
         if (refresh_ibo)
         {
-            std::future<std::tuple<unsigned int*, unsigned int>> brush_ibo = std::async(std::launch::async, &Canvas::refresh_circle_brush_ibo, this);
             std::future<std::tuple<double*, unsigned int>> point;
             if (GlobalSetting::setting().show_points)
             {
@@ -2735,16 +2652,6 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
                 }
                 delete []point_data;
             }
-            brush_ibo.wait();
-            auto [brush_data, brush_data_count] = brush_ibo.get();
-            if (brush_data_count > 0)
-            {
-                makeCurrent();
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _brush_IBO[1]);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * brush_data_count, brush_data, GL_DYNAMIC_DRAW);
-                doneCurrent();
-            }
-            delete []brush_data;
         }
         else
         {
@@ -2824,7 +2731,7 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
                 makeCurrent();
                 glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[4]); // text
                 glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _brush_IBO[2]); // text
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _text_brush_IBO); // text
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
                 doneCurrent();
             }
@@ -2849,7 +2756,6 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
         return refresh_vbo(refresh_ibo);
     }
 
-    std::future<std::tuple<unsigned int*, unsigned int>> polygon_brush_ibo, circle_brush_ibo;
     std::future<std::tuple<double*, unsigned int, unsigned int*, unsigned int>>
         polyline_vbo, polygon_vbo, circle_vbo, curve_vbo;
     std::future<std::tuple<double*, unsigned int, unsigned int*, unsigned int>> text_vbo;
@@ -2861,10 +2767,6 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
     }
     if (types.find(Geo::Type::POLYGON) != types.end())
     {
-        if (refresh_ibo)
-        {
-            polygon_brush_ibo = std::async(std::launch::async, &Canvas::refresh_polygon_brush_ibo, this);
-        }
         polygon_vbo = std::async(std::launch::async, &Canvas::refresh_polygon_vbo, this);
     }
     if (GlobalSetting::setting().show_text && types.find(Geo::Type::TEXT) != types.end())
@@ -2878,10 +2780,6 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
     }
     if (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end())
     {
-        if (refresh_ibo)
-        {
-            circle_brush_ibo = std::async(std::launch::async, &Canvas::refresh_circle_brush_ibo, this);
-        }
         circle_vbo = std::async(std::launch::async, &Canvas::refresh_circle_vbo, this);
     }
     if (types.find(Geo::Type::BEZIER) != types.end() || types.find(Geo::Type::BSPLINE) != types.end())
@@ -2995,35 +2893,11 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
         {
             glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[4]); // text
             glBufferData(GL_ARRAY_BUFFER, sizeof(double) * text_data_count, text_data, GL_DYNAMIC_DRAW);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _brush_IBO[2]); // text
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _text_brush_IBO); // text
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * text_index_count, text_indexs, GL_DYNAMIC_DRAW);
         }
         delete []text_data;
         delete []text_indexs;
-    }
-
-    if (circle_brush_ibo.valid())
-    {
-        circle_brush_ibo.wait();
-        auto [circle_brush_indexs, circle_brush_index_count] = circle_brush_ibo.get();
-        if (circle_brush_index_count > 0)
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _brush_IBO[1]); // circle brush
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * circle_brush_index_count, circle_brush_indexs, GL_DYNAMIC_DRAW);
-        }
-        delete []circle_brush_indexs;
-    }
-
-    if (polygon_brush_ibo.valid())
-    {
-        polygon_brush_ibo.wait();
-        auto [polygon_brush_indexs, polygon_brush_index_count] = polygon_brush_ibo.get();
-        if (polygon_brush_index_count > 0)
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _brush_IBO[0]); // polygon brush
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_brush_index_count, polygon_brush_indexs, GL_DYNAMIC_DRAW);
-        }
-        delete []polygon_brush_indexs;
     }
 
     doneCurrent();
@@ -5004,32 +4878,6 @@ void Canvas::refresh_selected_vbo()
         delete []indexs;
     }
     doneCurrent();
-}
-
-void Canvas::refresh_brush_ibo()
-{
-    std::future<std::tuple<unsigned int*, unsigned int>>
-        polygon_brush_ibo = std::async(std::launch::async, &Canvas::refresh_polygon_brush_ibo, this),
-        circle_brush_ibo = std::async(std::launch::async, &Canvas::refresh_circle_brush_ibo, this);
-
-    makeCurrent();
-    circle_brush_ibo.wait();
-    auto [circle_brush_indexs, circle_brush_count] = circle_brush_ibo.get();
-    if (circle_brush_count > 0)
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _brush_IBO[1]); // circle
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * circle_brush_count, circle_brush_indexs, GL_DYNAMIC_DRAW);
-    }
-    polygon_brush_ibo.wait();
-    auto [polygon_brush_indexs, polygon_brush_count] = polygon_brush_ibo.get();
-    if (polygon_brush_count > 0)
-    {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _brush_IBO[0]); // polygon
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_brush_count, polygon_brush_indexs, GL_DYNAMIC_DRAW);
-    }
-    doneCurrent();
-    delete []circle_brush_indexs;
-    delete []polygon_brush_indexs;
 }
 
 std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_text_vbo()

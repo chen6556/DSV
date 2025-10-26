@@ -4430,13 +4430,13 @@ bool Geo::is_intersected(const AABBRect &rect, const Polygon &polygon)
             return true;
         }
     }
-    for (size_t i = 0; i < 4; ++i)
-    {
-        if (Geo::is_inside(rect[i], polygon))
-        {
-            return true;
-        }
-    }
+    // for (size_t i = 0; i < 4; ++i)
+    // {
+    //     if (Geo::is_inside(rect[i], polygon))
+    //     {
+    //         return true;
+    //     }
+    // }
     return false;
 }
 

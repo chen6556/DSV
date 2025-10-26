@@ -35,7 +35,7 @@ private:
     unsigned int _base_VBO[4]; // 0:origin and select rect 1:cache 2:reflines 3:catched points
     unsigned int _shape_VBO[7]; // 0:polyline 1:polygon 2:circle 3:curve 4:text 5:circle printable points 6:curve printable points
     unsigned int _shape_IBO[4]; // 0:polyline 1:polygon 2:circle 3:curve
-    unsigned int _brush_IBO[3]; // 0:polygon 1:circle 2:text
+    unsigned int _text_brush_IBO;
     unsigned int _selected_IBO[4]; // 0:polyline 1:polygon 2:circle 3:curve
     int _uniforms[5]; // w, h, vec0, vec1, color
     unsigned int _point_count[4] = {0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve
@@ -272,9 +272,6 @@ public:
     void refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects);
 
     void refresh_selected_vbo();
-
-    // 数量发生变化时更新IBO数组
-    void refresh_brush_ibo();
 
     std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_text_vbo();
 
