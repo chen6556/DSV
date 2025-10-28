@@ -1165,7 +1165,6 @@ Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::c
     {
         _points.emplace_back(_points.front());
     }
-    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 Polygon::Polygon(const std::initializer_list<Point>& points)
@@ -1176,7 +1175,6 @@ Polygon::Polygon(const std::initializer_list<Point>& points)
     {
         _points.emplace_back(_points.front());
     }
-    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 Polygon::Polygon(const Polyline &polyline)
@@ -1186,14 +1184,11 @@ Polygon::Polygon(const Polyline &polyline)
     {
         _points.emplace_back(_points.front());
     }
-    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 Polygon::Polygon(const AABBRect& rect)
     : Polyline(rect.cbegin(), rect.cend())
-{
-    triangle_indices = Geo::ear_cut_to_indexs(*this);
-}
+{}
 
 Polygon &Polygon::operator=(const Polygon &polygon)
 {
@@ -1208,12 +1203,6 @@ Polygon &Polygon::operator=(const Polygon &polygon)
 const Type Polygon::type() const
 {
     return Type::POLYGON;
-}
-
-void Polygon::clear()
-{
-    Polyline::clear();
-    triangle_indices.clear();
 }
 
 Polygon *Polygon::clone() const
@@ -1247,7 +1236,6 @@ void Polygon::reorder_points(const bool cw)
             std::reverse(_points.begin(), _points.end());
         }
     }
-    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 bool Polygon::is_cw() const
@@ -1283,7 +1271,6 @@ void Polygon::append(const Point &point)
             _points.emplace_back(_points.front());
         }
     }
-    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 void Polygon::append(const Polyline &polyline)
@@ -1308,7 +1295,6 @@ void Polygon::append(const Polyline &polyline)
             _points.emplace_back(_points.front());
         }
     }
-    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 void Polygon::append(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
@@ -1333,7 +1319,6 @@ void Polygon::append(std::vector<Point>::const_iterator begin, std::vector<Point
             _points.emplace_back(_points.front());
         }
     }
-    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 void Polygon::insert(const size_t index, const Point &point)
@@ -1343,7 +1328,6 @@ void Polygon::insert(const size_t index, const Point &point)
     {
         _points.back() = _points.front();
     }
-    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 void Polygon::insert(const size_t index, const Polyline &polyline)
@@ -1353,7 +1337,6 @@ void Polygon::insert(const size_t index, const Polyline &polyline)
     {
         _points.back() = _points.front();
     }
-    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 void Polygon::insert(const size_t index, std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
@@ -1363,7 +1346,6 @@ void Polygon::insert(const size_t index, std::vector<Point>::const_iterator begi
     {
         _points.back() = _points.front();
     }
-    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 void Polygon::remove(const size_t index)
@@ -1377,7 +1359,6 @@ void Polygon::remove(const size_t index)
     {
         _points.front() = _points.back();
     }
-    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 void Polygon::remove(const size_t index, const size_t count)
@@ -1394,7 +1375,6 @@ void Polygon::remove(const size_t index, const size_t count)
             front() = back();
         }
     }
-    triangle_indices = Geo::ear_cut_to_indexs(*this);
 }
 
 Point Polygon::pop(const size_t index)
@@ -1408,7 +1388,6 @@ Point Polygon::pop(const size_t index)
     {
         _points.front() = _points.back();
     }
-    triangle_indices = Geo::ear_cut_to_indexs(*this);
     return point;
 }
 
@@ -1865,6 +1844,32 @@ Circle::Circle(const Point &point, const double r)
     update_shape(Geo::Circle::default_down_sampling_value);
 }
 
+Circle::Circle(const double x0, const double y0, const double x1, const double y1)
+    : Point((x0 + x1) / 2, (y0 + y1) / 2), radius(std::hypot(x0 - x1, y0 - y1) / 2)
+{
+    update_shape(Geo::Circle::default_down_sampling_value);
+}
+
+Circle::Circle(const Point &point0, const Point point1)
+    : Circle(point0.x, point0.y, point1.x, point1.y)
+{}
+
+Circle::Circle(const double x0, const double y0, const double x1, const double y1, const double x2, const double y2)
+{
+    const double a = x0 - x1, b = y0 - y1, c = x0 - x2, d = y0 - y2;
+    const double e = (x0 * x0 - x1 * x1 + y0 * y0 - y1 * y1) / 2;
+    const double f = (x0 * x0 - x2 * x2 + y0 * y0 - y2 * y2) / 2;
+    const double t = b * c - a * d;
+    assert(t != 0);
+    x = (b * f - d * e) / t, y = (c * e - a * f) / t;
+    radius = (std::hypot(x - x0, y - y0) + std::hypot(x - x1, y - y1) + std::hypot(x - x2, y - y2)) / 3;
+    update_shape(Geo::Circle::default_down_sampling_value);
+}
+
+Circle::Circle(const Point &point0, const Point point1, const Point point2)
+    : Circle(point0.x, point0.y, point1.x, point1.y, point2.x, point2.y)
+{}
+
 Circle::Circle(const Circle &circle)
     : Point(circle), ClosedShape(circle), radius(circle.radius), _shape(circle._shape)
 {}
@@ -1904,7 +1909,6 @@ const bool Circle::empty() const
 void Circle::clear()
 {
     radius = 0;
-    triangle_indices.clear();
     Point::clear();
 }
 
@@ -2003,7 +2007,6 @@ Circle Circle::operator-(const Point &point) const
 void Circle::update_shape(const double down_sampling_value)
 {
     _shape = Geo::circle_to_polygon(x, y, radius, down_sampling_value);
-    triangle_indices = Geo::ear_cut_to_indexs(_shape);
 }
 
 const Polygon &Circle::shape() const
@@ -2529,7 +2532,6 @@ void Ellipse::clear()
     _a[1].clear();
     _b[0].clear();
     _b[1].clear();
-    triangle_indices.clear();
 }
 
 Ellipse *Ellipse::clone() const
@@ -2789,7 +2791,6 @@ void Ellipse::update_shape(const double down_sampling_value)
 {
     const Geo::Point point = center();
     _shape = Geo::ellipse_to_polygon(point.x, point.y, lengtha(), lengthb(), angle(), down_sampling_value);
-    triangle_indices = Geo::ear_cut_to_indexs(_shape);
 }
 
 const Polygon &Ellipse::shape() const

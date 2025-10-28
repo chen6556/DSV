@@ -28,6 +28,7 @@ MainWindow::~MainWindow()
 {
     save_settings();
     delete ui;
+    delete _actiongroup;
     _editer.delete_graph();
     for (size_t i = 0; i < 3; ++i)
     {
@@ -44,6 +45,8 @@ MainWindow::~MainWindow()
 void MainWindow::init()
 {
     GlobalSetting::setting().ui = ui;
+    _actiongroup = new ActionGroup(ui, std::bind(&MainWindow::actiongroup_callback,
+        this, std::placeholders::_1, std::placeholders::_2));
 
     _editer.load_graph(new Graph());
     ui->canvas->bind_editer(&_editer);
@@ -55,7 +58,7 @@ void MainWindow::init()
     _clock.start(5000);
     QObject::connect(ui->measure_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Measure); });
     QObject::connect(ui->angle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Angle); });
-    QObject::connect(ui->circle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Circle); });
+    // QObject::connect(ui->circle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Circle); });
     QObject::connect(ui->ellipse_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Ellipse); });
     QObject::connect(ui->line_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Polyline); });
     QObject::connect(ui->rect_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Rect); });
@@ -511,7 +514,9 @@ void MainWindow::refresh_tool_label(const Canvas::Tool tool)
     case Canvas::Tool::Angle:
         ui->current_tool->setText("Angle");
         break;
-    case Canvas::Tool::Circle:
+    case Canvas::Tool::Circle0:
+    case Canvas::Tool::Circle1:
+    case Canvas::Tool::Circle2:
         ui->current_tool->setText("Circle");
         break;
     case Canvas::Tool::Ellipse:
@@ -1268,3 +1273,29 @@ void MainWindow::append_file(const QString &path)
     ui->canvas->update();
 }
 
+void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const int index)
+{
+    switch (menu)
+    {
+    case ActionGroup::MenuType::LineMenu:
+        /* code */
+        break;
+    case ActionGroup::MenuType::CircleMenu:
+        switch (index)
+        {
+        case 0: // Center-Radius
+            ui->canvas->use_tool(Canvas::Tool::Circle0);
+            break;
+        case 1: // 2-Point
+            ui->canvas->use_tool(Canvas::Tool::Circle1);
+            break;
+        case 2: // 3-Point
+            ui->canvas->use_tool(Canvas::Tool::Circle2);
+            break;
+        default:
+            break;
+        }
+    default:
+        break;
+    }
+}

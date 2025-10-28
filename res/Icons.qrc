@@ -1,5 +1,7 @@
+<!DOCTYPE RCC>
 <RCC>
   <qresource prefix="/">
+    <file>icons/button_arrow.png</file>
     <file>icons/split_btn.png</file>
     <file>icons/angle_btn.png</file>
     <file>icons/extend_btn.png</file>
@@ -28,10 +30,12 @@
     <file>icons/polyline_btn.png</file>
     <file>icons/rectangle_btn.png</file>
     <file>icons/measure_btn.png</file>
-    <file>icons/circle_btn.png</file>
     <file>icons/attention.svg</file>
     <file>icons/help.svg</file>
     <file>icons/info.svg</file>
     <file>icons/detach_btn.png</file>
+    <file>icons/circle/circle_btn.png</file>
+    <file>icons/circle/3p_circle_btn.png</file>
+    <file>icons/circle/2p_circle_btn.png</file>
   </qresource>
 </RCC>

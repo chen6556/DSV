@@ -871,7 +871,7 @@ void CMDWidget::circle()
     switch (_parameters.size())
     {
     case 0:
-        _canvas->use_tool(Canvas::Tool::Circle);
+        _canvas->use_tool(Canvas::Tool::Circle0);
         _parameters.emplace_back(0);
         ui->parameter_label->setText("X: Y:");
         break;

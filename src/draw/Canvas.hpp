@@ -17,7 +17,21 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
     Q_OBJECT
 
 public:
-    enum class Tool {NoTool, Measure, Angle, Circle, Polyline, Rect, BSpline, Bezier, Text, Ellipse};
+    enum class Tool
+        {
+            NoTool,
+            Measure, 
+            Angle, 
+            Circle0, // Center-Radius
+            Circle1, // 2-Point
+            Circle2, // 3-Point
+            Polyline, 
+            Rect, 
+            BSpline, 
+            Bezier, 
+            Text, 
+            Ellipse
+        };
     enum class Operation {NoOperation, Mirror, RingArray, PolygonDifference, Fillet, Rotate, Trim, Extend, Split};
     enum class CatchedPointType {Vertex, Center, Foot, Tangency, Intersection};
 
@@ -69,8 +83,8 @@ private:
 
     QPointF _mouse_pos_0, _mouse_pos_1;
     Geo::Point _mouse_press_pos, _mouse_release_pos;
-    Geo::Point _stored_coord;
-    Geo::Point _last_point;
+    Geo::Point _last_point, _stored_coord;
+    std::vector<Geo::Point> _points_cache;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
     Geo::Geometry *_pressed_obj = nullptr;
     std::vector<Geo::Geometry *> _object_cache;
@@ -242,10 +256,6 @@ public:
     std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_circle_vbo();
 
     std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_curve_vbo();
-
-    std::tuple<unsigned int*, unsigned int> refresh_polygon_brush_ibo();
-
-    std::tuple<unsigned int*, unsigned int> refresh_circle_brush_ibo();
 
     std::tuple<double *, unsigned int> refresh_circle_printable_points();
 

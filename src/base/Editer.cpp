@@ -1070,7 +1070,6 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                     point.translate(x1 - x0, y1 - y0);
                 }
                 temp->back() = temp->front();
-                temp->triangle_indices = Geo::ear_cut_to_indexs(*temp);
                 _graph->modified = true;
                 return;
             }

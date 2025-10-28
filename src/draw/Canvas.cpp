@@ -415,9 +415,11 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         {
             switch (_tool_flags[0])
             {
-            case Tool::Circle:
+            case Tool::Circle0:
+            case Tool::Circle1:
                 if (!is_painting()) // not painting
                 {
+                    _points_cache.emplace_back(real_x1, real_y1);
                     _circle_cache = Geo::Circle(real_x1, real_y1, 10);
                     refresh_circle_cache_vbo();
                 }
@@ -433,6 +435,32 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     refresh_vbo(Geo::Type::CIRCLE, true);
                 }
                 _bool_flags[2] = !_bool_flags[2]; // painting
+                break;
+            case Tool::Circle2:
+                switch (_points_cache.size())
+                {
+                case 1:
+                    _points_cache.emplace_back(real_x1, real_y1);
+                    break;
+                case 2:
+                    _points_cache.clear();
+                    _circle_cache.update_shape(Geo::Circle::default_down_sampling_value);
+                    _editer->append(_circle_cache);
+                    _circle_cache.clear();
+                    _tool_flags[1] = _tool_flags[0];
+                    _tool_flags[0] = Tool::NoTool;
+                    _bool_flags[1] = _bool_flags[2] = false; // moveable
+                    emit tool_changed(_tool_flags[0]);
+                    refresh_vbo(Geo::Type::CIRCLE, true);
+                    break;
+                default:
+                    _points_cache.clear();
+                    _points_cache.emplace_back(real_x1, real_y1);
+                    _circle_cache = Geo::Circle(real_x1, real_y1, 10);
+                    refresh_circle_cache_vbo();
+                    _bool_flags[2] = true;
+                    break;
+                }
                 break;
             case Tool::Ellipse:
                 if (!is_painting()) // not painting
@@ -1205,11 +1233,45 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     {
         switch (_tool_flags[0])
         {
-        case Tool::Circle:
+        case Tool::Circle0:
             _circle_cache.radius = Geo::distance(real_x1, real_y1, _circle_cache.x, _circle_cache.y);
             _circle_cache.update_shape(Geo::Circle::default_down_sampling_value);
             refresh_circle_cache_vbo();
             _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius)).c_str());
+            break;
+        case Tool::Circle1:
+            _circle_cache.x = (real_x1 + _points_cache.back().x) / 2, _circle_cache.y = (real_y1 + _points_cache.back().y) / 2;
+            _circle_cache.radius = std::hypot(real_x1 - _points_cache.back().x, real_y1 - _points_cache.back().y) / 2;
+            _circle_cache.update_shape(Geo::Circle::default_down_sampling_value);
+            refresh_circle_cache_vbo();
+            _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius)).c_str());
+            break;
+        case Tool::Circle2:
+            if (_points_cache.size() == 1)
+            {
+                _circle_cache.x = (real_x1 + _points_cache.back().x) / 2, _circle_cache.y = (real_y1 + _points_cache.back().y) / 2;
+                _circle_cache.radius = std::hypot(real_x1 - _points_cache.back().x, real_y1 - _points_cache.back().y) / 2;
+                _circle_cache.update_shape(Geo::Circle::default_down_sampling_value);
+                refresh_circle_cache_vbo();
+                _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius)).c_str());
+            }
+            else
+            {
+                const double x0 = _points_cache.front().x, y0 = _points_cache.front().y;
+                const double x1 = real_x1, y1 = real_y1;
+                const double x2 = _points_cache.back().x, y2 = _points_cache.back().y;
+                const double a = x0 - x1, b = y0 - y1, c = x0 - x2, d = y0 - y2;
+                const double e = (x0 * x0 - x1 * x1 + y0 * y0 - y1 * y1) / 2;
+                const double f = (x0 * x0 - x2 * x2 + y0 * y0 - y2 * y2) / 2;
+                const double t = b * c - a * d;
+                _circle_cache.x = (b * f - d * e) / t, _circle_cache.y = (c * e - a * f) / t;
+                _circle_cache.radius = (std::hypot(_circle_cache.x - x0, _circle_cache.y - y0)
+                    + std::hypot(_circle_cache.x - x1, _circle_cache.y - y1)
+                    + std::hypot(_circle_cache.x - x2, _circle_cache.y - y2)) / 3;
+                _circle_cache.update_shape(Geo::Circle::default_down_sampling_value);
+                refresh_circle_cache_vbo();
+                _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius)).c_str());
+            }
             break;
         case Tool::Ellipse:
             if (_last_point == _stored_coord)
@@ -1503,7 +1565,9 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
             _bool_flags[2] = false; // painting
             switch (_tool_flags[0])
             {
-            case Tool::Circle:
+            case Tool::Circle0:
+            case Tool::Circle1:
+            case Tool::Circle2:
                 _circle_cache.clear();
                 break;
             case Tool::Polyline:
@@ -3401,169 +3465,6 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_c
 
     _shape_index_count[3] = index_count;
     return std::make_tuple(data, data_count, indexs, index_count);
-}
-
-std::tuple<unsigned int*, unsigned int> Canvas::refresh_polygon_brush_ibo()
-{
-    unsigned int index_len = 512, index_count = 0, data_count = 0;
-    unsigned int *indexs = new unsigned int[index_len];
-    const Geo::Polygon *polygon = nullptr;
-    for (ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
-    {
-        if (!group.visible())
-        {
-            continue;
-        }
-        for (Geo::Geometry *geo : group)
-        {
-            switch (geo->type())
-            {
-            case Geo::Type::POLYGON:
-                polygon = static_cast<const Geo::Polygon *>(geo);
-                while (index_count + polygon->triangle_indices.size() > index_len)
-                {
-                    index_len *= 2;
-                    unsigned int *temp = new unsigned int[index_len];
-                    std::move(indexs, indexs + index_count, temp);
-                    delete []indexs;
-                    indexs = temp;
-                }
-                for (const unsigned int i : polygon->triangle_indices)
-                {
-                    indexs[index_count++] = data_count + i;
-                }
-                data_count += polygon->size();
-                break;
-            case Geo::Type::COMBINATION:
-                for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
-                {
-                    if (polygon = dynamic_cast<const Geo::Polygon *>(item))
-                    {
-                        while (index_count + polygon->triangle_indices.size() > index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::move(indexs, indexs + index_count, temp);
-                            delete []indexs;
-                            indexs = temp;
-                        }
-                        for (const unsigned int i : polygon->triangle_indices)
-                        {
-                            indexs[index_count++] = data_count + i;
-                        }
-                        data_count += polygon->size();
-                    }
-                }
-                break;
-            default:
-                break;
-            }
-        }
-    }
-
-    _brush_index_count[0] = index_count;
-    return std::make_tuple(indexs, index_count);
-}
-
-std::tuple<unsigned int*, unsigned int> Canvas::refresh_circle_brush_ibo()
-{
-    unsigned int index_len = 512, index_count = 0, data_count = 0;
-    unsigned int *indexs = new unsigned int[index_len];
-    const Geo::Circle *circle = nullptr;
-    const Geo::Ellipse *ellipse = nullptr;
-
-    for (ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
-    {
-        if (!group.visible())
-        {
-            continue;
-        }
-        for (Geo::Geometry *geo : group)
-        {
-            switch (geo->type())
-            {
-            case Geo::Type::CIRCLE:
-                circle = static_cast<const Geo::Circle *>(geo);
-                while (index_count + circle->triangle_indices.size() > index_len)
-                {
-                    index_len *= 2;
-                    unsigned int *temp = new unsigned int[index_len];
-                    std::move(indexs, indexs + index_count, temp);
-                    delete []indexs;
-                    indexs = temp;
-                }
-                for (const unsigned int i : circle->triangle_indices)
-                {
-                    indexs[index_count++] = data_count + i;
-                }
-                data_count += circle->shape().size();
-                break;
-            case Geo::Type::ELLIPSE:
-                ellipse = static_cast<const Geo::Ellipse *>(geo);
-                while (index_count + ellipse->triangle_indices.size() > index_len)
-                {
-                    index_len *= 2;
-                    unsigned int *temp = new unsigned int[index_len];
-                    std::move(indexs, indexs + index_count, temp);
-                    delete []indexs;
-                    indexs = temp;
-                }
-                for (const unsigned int i : ellipse->triangle_indices)
-                {
-                    indexs[index_count++] = data_count + i;
-                }
-                data_count += ellipse->shape().size();
-                break;
-            case Geo::Type::COMBINATION:
-                for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
-                {
-                    switch (item->type())
-                    {
-                    case Geo::Type::CIRCLE:
-                        circle = static_cast<const Geo::Circle *>(item);
-                        while (index_count + circle->triangle_indices.size() > index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::move(indexs, indexs + index_count, temp);
-                            delete []indexs;
-                            indexs = temp;
-                        }
-                        for (const unsigned int i : circle->triangle_indices)
-                        {
-                            indexs[index_count++] = data_count + i;
-                        }
-                        data_count += circle->shape().size();
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        ellipse = static_cast<const Geo::Ellipse *>(item);
-                        while (index_count + ellipse->triangle_indices.size() > index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::move(indexs, indexs + index_count, temp);
-                            delete []indexs;
-                            indexs = temp;
-                        }
-                        for (const unsigned int i : ellipse->triangle_indices)
-                        {
-                            indexs[index_count++] = data_count + i;
-                        }
-                        data_count += ellipse->shape().size();
-                        break;
-                    default:
-                        break;
-                    }
-                }
-                break;
-            default:
-                break;
-            }
-        }
-    }
-
-    _brush_index_count[1] = index_count;
-    return std::make_tuple(indexs, index_count);
 }
 
 std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()

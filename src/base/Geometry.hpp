@@ -167,7 +167,6 @@ namespace Geo
     {   
     public:
         unsigned int IBO_index = 0;
-        std::vector<unsigned int> triangle_indices;
 
         ClosedShape() = default;
 
@@ -421,8 +420,6 @@ namespace Geo
 
         const Type type() const override;
 
-        void clear() override;
-
         Polygon *clone() const override;
 
         void reorder_points(const bool cw = true);
@@ -561,6 +558,14 @@ namespace Geo
         Circle(const double x, const double y, const double r);
 
         Circle(const Point &point, const double r);
+
+        Circle(const double x0, const double y0, const double x1, const double y1);
+
+        Circle(const Point &point0, const Point point1);
+
+        Circle(const double x0, const double y0, const double x1, const double y1, const double x2, const double y2);
+
+        Circle(const Point &point0, const Point point1, const Point point2);
 
         Circle(const Circle &circle);
 

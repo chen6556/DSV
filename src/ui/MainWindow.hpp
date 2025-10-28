@@ -11,6 +11,7 @@
 #include "ui/Setting.hpp"
 #include "ui/CMDWidget.hpp"
 #include "ui/DataPanel.hpp"
+#include "ui/ActionGroup.hpp"
 
 
 QT_BEGIN_NAMESPACE
@@ -34,6 +35,7 @@ private:
     QComboBox *_layers_cbx = nullptr;
     LayersManager *_layers_manager = nullptr;
     QToolButton *_layers_btn = nullptr;
+    ActionGroup *_actiongroup = nullptr;
     QString _file_type = "All Files: (*.*)";
 
 private:
@@ -139,6 +141,8 @@ private:
     void open_file(const QString &path);
 
     void append_file(const QString &path);
+
+    void actiongroup_callback(const ActionGroup::MenuType menu, const int index);
 
 public:
     MainWindow(QWidget *parent = nullptr);
