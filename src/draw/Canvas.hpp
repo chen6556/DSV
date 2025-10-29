@@ -10,6 +10,7 @@
 #include <QOpenGLFunctions_4_5_Core>
 
 #include "base/Editer.hpp"
+#include "draw/CanvasOperation.hpp"
 
 
 class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
@@ -17,21 +18,6 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
     Q_OBJECT
 
 public:
-    enum class Tool
-        {
-            NoTool,
-            Measure, 
-            Angle, 
-            Circle0, // Center-Radius
-            Circle1, // 2-Point
-            Circle2, // 3-Point
-            Polyline, 
-            Rect, 
-            BSpline, 
-            Bezier, 
-            Text, 
-            Ellipse
-        };
     enum class Operation {NoOperation, Mirror, RingArray, PolygonDifference, Fillet, Rotate, Trim, Extend, Split};
     enum class CatchedPointType {Vertex, Center, Foot, Tangency, Intersection};
 
@@ -78,8 +64,9 @@ private:
     int _measure_angle_flag = 0;
 
     // 0:current_tool, 1:last_tool
-    Tool _tool_flags[2] = {Tool::NoTool, Tool::NoTool};
+    CanvasOperations::Tool _tool_flags[2] = {CanvasOperations::Tool::NoTool, CanvasOperations::Tool::NoTool};
     Operation _operation = Operation::NoOperation;
+    CanvasOperations::CanvasOperation _canvasoperation;
 
     QPointF _mouse_pos_0, _mouse_pos_1;
     Geo::Point _mouse_press_pos, _mouse_release_pos;
@@ -114,7 +101,7 @@ protected:
 
 public:
 signals:
-    void tool_changed(const Tool);
+    void tool_changed(const CanvasOperations::Tool);
 
     void operation_changed(const Operation);
 
@@ -125,7 +112,7 @@ public:
 
     void bind_editer(Editer *editer);
 
-    void use_tool(const Tool tool);
+    void use_tool(const CanvasOperations::Tool tool);
 
     void set_operation(const Operation operation);
 

@@ -56,16 +56,16 @@ void MainWindow::init()
     QObject::connect(_cmd_widget, &CMDWidget::cmd_changed, this, &MainWindow::refresh_cmd);
 
     _clock.start(5000);
-    QObject::connect(ui->measure_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Measure); });
-    QObject::connect(ui->angle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Angle); });
-    // QObject::connect(ui->circle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Circle); });
-    QObject::connect(ui->ellipse_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Ellipse); });
-    QObject::connect(ui->line_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Polyline); });
-    QObject::connect(ui->rect_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Rect); });
-    QObject::connect(ui->bspline_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::BSpline); });
-    QObject::connect(ui->bezier_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Bezier); });
+    QObject::connect(ui->measure_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Measure); });
+    QObject::connect(ui->angle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Angle); });
+    // QObject::connect(ui->circle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Circle); });
+    QObject::connect(ui->ellipse_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Ellipse); });
+    QObject::connect(ui->line_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Polyline); });
+    QObject::connect(ui->rect_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Rect); });
+    QObject::connect(ui->bspline_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::BSpline); });
+    QObject::connect(ui->bezier_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Bezier); });
     QObject::connect(ui->curve_spb, &QSpinBox::valueChanged, ui->canvas, &Canvas::set_curve_order);
-    QObject::connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(Canvas::Tool::Text); });
+    QObject::connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Text); });
     // QObject::connect(ui->rotate_btn, &QPushButton::clicked, [this]() { ui->canvas->set_operation(Canvas::Operation::Rotate); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
@@ -504,37 +504,37 @@ void MainWindow::set_catch(QAction *action)
     }
 }
 
-void MainWindow::refresh_tool_label(const Canvas::Tool tool)
+void MainWindow::refresh_tool_label(const CanvasOperations::Tool tool)
 {
     switch (tool)
     {
-    case Canvas::Tool::Measure:
+    case CanvasOperations::Tool::Measure:
         ui->current_tool->setText("Length");
         break;
-    case Canvas::Tool::Angle:
+    case CanvasOperations::Tool::Angle:
         ui->current_tool->setText("Angle");
         break;
-    case Canvas::Tool::Circle0:
-    case Canvas::Tool::Circle1:
-    case Canvas::Tool::Circle2:
+    case CanvasOperations::Tool::Circle0:
+    case CanvasOperations::Tool::Circle1:
+    case CanvasOperations::Tool::Circle2:
         ui->current_tool->setText("Circle");
         break;
-    case Canvas::Tool::Ellipse:
+    case CanvasOperations::Tool::Ellipse:
         ui->current_tool->setText("Ellipse");
         break;
-    case Canvas::Tool::Polyline:
+    case CanvasOperations::Tool::Polyline:
         ui->current_tool->setText("Polyline");
         break;
-    case Canvas::Tool::Rect:
+    case CanvasOperations::Tool::Rect:
         ui->current_tool->setText("Rectangle");
         break;
-    case Canvas::Tool::BSpline:
+    case CanvasOperations::Tool::BSpline:
         ui->current_tool->setText("BSpline");
         break;
-    case Canvas::Tool::Bezier:
+    case CanvasOperations::Tool::Bezier:
         ui->current_tool->setText("Bezier");
         break;
-    case Canvas::Tool::Text:
+    case CanvasOperations::Tool::Text:
         ui->current_tool->setText("Text");
         break;
     default:
@@ -1284,13 +1284,13 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
         switch (index)
         {
         case 0: // Center-Radius
-            ui->canvas->use_tool(Canvas::Tool::Circle0);
+            ui->canvas->use_tool(CanvasOperations::Tool::Circle0);
             break;
         case 1: // 2-Point
-            ui->canvas->use_tool(Canvas::Tool::Circle1);
+            ui->canvas->use_tool(CanvasOperations::Tool::Circle1);
             break;
         case 2: // 3-Point
-            ui->canvas->use_tool(Canvas::Tool::Circle2);
+            ui->canvas->use_tool(CanvasOperations::Tool::Circle2);
             break;
         default:
             break;

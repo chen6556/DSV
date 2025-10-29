@@ -51,7 +51,7 @@ private:
     void init();
 
 private slots:
-    void refresh_tool(const Canvas::Tool tool);
+    void refresh_tool(const CanvasOperations::Tool tool);
 
 protected:
     void mousePressEvent(QMouseEvent *event);

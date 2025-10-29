@@ -22,10 +22,10 @@ Canvas::~Canvas()
 }
 
 
-
-
 void Canvas::init()
 {
+    _canvasoperation.init(_view_ctm);
+
     _cache = new double[_cache_len];
     _input_line.hide();
     _select_rect.clear();
@@ -246,18 +246,6 @@ void Canvas::paintGL()
             glDrawArrays(GL_POINTS, 0, _cache_count / 3);
         }
     }
-    else if (_measure_angle_flag > 0)
-    {
-        glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[1]); // cache
-        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
-        glEnableVertexAttribArray(0);
-
-        glBufferSubData(GL_ARRAY_BUFFER, 0, 9 * sizeof(double), _cache);
-        glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
-        glLineWidth(2.0f);
-        glDrawArrays(GL_LINE_STRIP, 0, 3);
-        glLineWidth(1.4f);
-    }
 
     if (!_reflines.empty()) // reflines
     {
@@ -304,13 +292,32 @@ void Canvas::paintGL()
         }
     }
 
+    if (_canvasoperation.shape_count > 0)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[1]); // cache
+        glBufferData(GL_ARRAY_BUFFER, _canvasoperation.shape_count * sizeof(double), _canvasoperation.shape, GL_STREAM_DRAW);
+        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glEnableVertexAttribArray(0);
+        glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线
+        glDrawArrays(GL_LINE_LOOP, 0, _canvasoperation.shape_count / 3);
+    }
+    if (_canvasoperation.tool_lines_count > 0)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[1]); // cache
+        glBufferData(GL_ARRAY_BUFFER, _canvasoperation.tool_lines_count * sizeof(double), _canvasoperation.tool_lines, GL_STREAM_DRAW);
+        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glEnableVertexAttribArray(0);
+        glUniform4f(_uniforms[4], 1.0f, 0.549f, 0.0f, 1.0f); // color
+        glDrawArrays(GL_LINES, 0, _canvasoperation.tool_lines_count / 3);
+    }
+
     if (!_editer->point_cache().empty())
     {
         glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[1]); // cache
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        if (_tool_flags[0] == Tool::BSpline || _tool_flags[0] == Tool::Bezier)
+        if (_tool_flags[0] == CanvasOperations::Tool::BSpline || _tool_flags[0] == CanvasOperations::Tool::Bezier)
         {
             glUniform4f(_uniforms[4], 1.0f, 0.549f, 0.0f, 1.0f); // color
         }
@@ -319,7 +326,7 @@ void Canvas::paintGL()
             glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color
         }
         glDrawArrays(GL_LINE_STRIP, 0, _cache_count / 3);
-        if (_tool_flags[0] == Tool::BSpline || _tool_flags[0] == Tool::Bezier
+        if (_tool_flags[0] == CanvasOperations::Tool::BSpline || _tool_flags[0] == CanvasOperations::Tool::Bezier
             || GlobalSetting::setting().show_points)
         {
             glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
@@ -415,8 +422,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         {
             switch (_tool_flags[0])
             {
-            case Tool::Circle0:
-            case Tool::Circle1:
+            case CanvasOperations::Tool::Circle0:
+            case CanvasOperations::Tool::Circle1:
                 if (!is_painting()) // not painting
                 {
                     _points_cache.emplace_back(real_x1, real_y1);
@@ -429,14 +436,14 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _editer->append(_circle_cache);
                     _circle_cache.clear();
                     _tool_flags[1] = _tool_flags[0];
-                    _tool_flags[0] = Tool::NoTool;
+                    _tool_flags[0] = CanvasOperations::Tool::NoTool;
                     _bool_flags[1] = false; // moveable
                     emit tool_changed(_tool_flags[0]);
                     refresh_vbo(Geo::Type::CIRCLE, true);
                 }
                 _bool_flags[2] = !_bool_flags[2]; // painting
                 break;
-            case Tool::Circle2:
+            case CanvasOperations::Tool::Circle2:
                 switch (_points_cache.size())
                 {
                 case 1:
@@ -448,7 +455,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _editer->append(_circle_cache);
                     _circle_cache.clear();
                     _tool_flags[1] = _tool_flags[0];
-                    _tool_flags[0] = Tool::NoTool;
+                    _tool_flags[0] = CanvasOperations::Tool::NoTool;
                     _bool_flags[1] = _bool_flags[2] = false; // moveable
                     emit tool_changed(_tool_flags[0]);
                     refresh_vbo(Geo::Type::CIRCLE, true);
@@ -462,7 +469,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     break;
                 }
                 break;
-            case Tool::Ellipse:
+            case CanvasOperations::Tool::Ellipse:
                 if (!is_painting()) // not painting
                 {
                     _ellipse_cache = Geo::Ellipse(real_x1, real_y1, 10, 10);
@@ -492,7 +499,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         _ellipse_cache.clear();
                         _points_cache.clear();
                         _tool_flags[1] = _tool_flags[0];
-                        _tool_flags[0] = Tool::NoTool;
+                        _tool_flags[0] = CanvasOperations::Tool::NoTool;
                         _bool_flags[1] = false; // moveable
                         emit tool_changed(_tool_flags[0]);
                         refresh_vbo(Geo::Type::ELLIPSE, true);
@@ -500,9 +507,9 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     }
                 }
                 break;
-            case Tool::Polyline:
-            case Tool::Bezier:
-            case Tool::BSpline:
+            case CanvasOperations::Tool::Polyline:
+            case CanvasOperations::Tool::Bezier:
+            case CanvasOperations::Tool::BSpline:
                 if (is_painting())
                 {
                     _editer->point_cache().emplace_back(real_x1, real_y1);
@@ -525,7 +532,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     refresh_cache_vbo(0);
                 }
                 break;
-            case Tool::Rect:
+            case CanvasOperations::Tool::Rect:
                 _points_cache.clear();
                 if (!is_painting())
                 {
@@ -538,16 +545,16 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     _editer->append(_AABBRect_cache);
                     _AABBRect_cache.clear();
                     _tool_flags[1] = _tool_flags[0];
-                    _tool_flags[0] = Tool::NoTool;
+                    _tool_flags[0] = CanvasOperations::Tool::NoTool;
                     _bool_flags[1] = false; // paintable
                     emit tool_changed(_tool_flags[0]);
                     refresh_vbo(Geo::Type::POLYGON, true);
                 }
                 _bool_flags[2] = !_bool_flags[2]; // painting
                 break;
-            case Tool::Text:
+            case CanvasOperations::Tool::Text:
                 _editer->append_text(real_x1, real_y1);
-                _tool_flags[0] = Tool::NoTool;
+                _tool_flags[0] = CanvasOperations::Tool::NoTool;
                 _bool_flags[1] = _bool_flags[2] = false;
                 emit tool_changed(_tool_flags[0]);
                 refresh_vbo(Geo::Type::TEXT, true);
@@ -583,7 +590,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     refresh_vbo(types, true);
                     refresh_selected_ibo();
                 }
-                emit tool_changed(Tool::NoTool);
+                emit tool_changed(CanvasOperations::Tool::NoTool);
                 _object_cache.clear();
                 update();
                 return QOpenGLWidget::mousePressEvent(event);
@@ -643,94 +650,24 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 {
                 case Operation::Mirror:
                     _operation = Operation::NoOperation;
-                    emit tool_changed(Tool::NoTool);
+                    emit tool_changed(CanvasOperations::Tool::NoTool);
                     _object_cache.clear();
                     break;
                 case Operation::PolygonDifference:
                     _operation = Operation::NoOperation;
-                    emit tool_changed(Tool::NoTool);
+                    emit tool_changed(CanvasOperations::Tool::NoTool);
                     _object_cache.clear();
                     break;
                 default:
                     break;
                 }
 
-                switch (_tool_flags[0])
+                if (CanvasOperations::CanvasOperation *op = _canvasoperation[_tool_flags[0]];
+                    op != nullptr && op->mouse_press(event))
                 {
-                case Tool::Measure:
-                    if (_measure_angle_flag == 0 || _measure_angle_flag == 2)
-                    {
-                        Geo::Point coord(real_x1, real_y1);
-                        catch_point(real_x1, real_y1, coord, 12.0 / _ratio);
-                        _cache[2] = _cache[5] = _cache[8] = 0.51;
-                        _cache[0] = _cache[3] = _cache[6] = coord.x;
-                        _cache[1] = _cache[4] = _cache[7] = coord.y;
-                        _measure_angle_flag = 1;
-                    }
-                    else
-                    {
-                        Geo::Point coord(real_x1, real_y1);
-                        catch_point(real_x1, real_y1, coord, 12.0 / _ratio);
-                        _cache[3] = _cache[6] = coord.x;
-                        _cache[4] = _cache[7] = coord.y;
-                        _info_labels[1]->setText("Length:" +
-                            QString::number(Geo::distance(_cache[0], _cache[1],
-                                _cache[3], _cache[4])));
-                        _measure_angle_flag = 2;
-                    }
+                    _info_labels[1]->setText(_canvasoperation.info);
                     update();
                     return QOpenGLWidget::mousePressEvent(event);
-                case Tool::Angle:
-                    switch (_measure_angle_flag)
-                    {
-                    case 1:
-                        _measure_angle_flag = 2;
-                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
-                        {
-                            _cache[3] = _cache[6] = coord.x;
-                            _cache[4] = _cache[7] = coord.y;
-                        }
-                        else
-                        {
-                            _cache[3] = _cache[6] = real_x1;
-                            _cache[4] = _cache[7] = real_y1;
-                        }
-                        break;
-                    case 2:
-                        _measure_angle_flag = 3;
-                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
-                        {
-                            _cache[6] = coord.x;
-                            _cache[7] = coord.y;
-                        }
-                        else
-                        {
-                            _cache[6] = real_x1;
-                            _cache[7] = real_y1;
-                        }
-                        _info_labels[1]->setText(QString("Angle: %1°").arg(
-                            std::abs(Geo::rad_to_degree(Geo::angle(Geo::Point(_cache[0], _cache[1]),
-                            Geo::Point(_cache[3], _cache[4]), Geo::Point(_cache[6], _cache[7]))))));
-                        break;
-                    default:
-                        _measure_angle_flag = 1;
-                        _cache[2] = _cache[5] = _cache[8] = 0.51;
-                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
-                        {
-                            _cache[0] = _cache[3] = _cache[6] = coord.x;
-                            _cache[1] = _cache[4] = _cache[7] = coord.y;
-                        }
-                        else
-                        {
-                            _cache[0] = _cache[3] = _cache[6] = real_x1;
-                            _cache[1] = _cache[4] = _cache[7] = real_y1;
-                        }
-                        break;
-                    }
-                    update();
-                    return QOpenGLWidget::mousePressEvent(event);
-                default:
-                    break;
                 }
 
                 if (_input_line.isVisible() && _last_clicked_obj != nullptr)
@@ -787,7 +724,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     }
                     _object_cache.clear();
                     _operation = Operation::NoOperation;
-                    emit tool_changed(Tool::NoTool);
+                    emit tool_changed(CanvasOperations::Tool::NoTool);
                     update();
                     return QOpenGLWidget::mousePressEvent(event);
                 case Operation::PolygonDifference:
@@ -798,7 +735,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         refresh_selected_ibo();
                     }
                     _object_cache.clear();
-                    emit tool_changed(Tool::NoTool);
+                    emit tool_changed(CanvasOperations::Tool::NoTool);
                     _operation = Operation::NoOperation;
                     update();
                     return QOpenGLWidget::mousePressEvent(event);
@@ -903,135 +840,18 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     break;
                 }
 
-                switch (_tool_flags[0])
-                {
-                case Tool::Measure:
-                    if (_measure_angle_flag == 0 || _measure_angle_flag == 2)
-                    {
-                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
-                        {
-                            _measure_angle_flag = 1;
-                            _cache[2] = _cache[5] = _cache[8] = 0.51;
-                            _cache[0] = _cache[3] = _cache[6] = coord.x;
-                            _cache[1] = _cache[4] = _cache[7] = coord.y;
-                            update();
-                            return QOpenGLWidget::mousePressEvent(event);
-                        }
-                    }
-                    else
-                    {
-                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
-                        {
-                            _measure_angle_flag = 2;
-                            _cache[3] = _cache[6] = coord.x;
-                            _cache[4] = _cache[7] = coord.y;
-                            _info_labels[1]->setText("Length:" +
-                                QString::number(Geo::distance(_cache[0], _cache[1],
-                                    _cache[3], _cache[4])));
-                            update();
-                            return QOpenGLWidget::mousePressEvent(event);
-                        }
-                    }
-                    break;
-                case Tool::Angle:
-                    switch (_measure_angle_flag)
-                    {
-                    case 1:
-                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
-                        {
-                            _measure_angle_flag = 2;
-                            _cache[3] = _cache[6] = coord.x;
-                            _cache[4] = _cache[7] = coord.y;
-                            update();
-                            return QOpenGLWidget::mousePressEvent(event);
-                        }
-                        break;
-                    case 2:
-                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
-                        {
-                            _measure_angle_flag = 3;
-                            _cache[6] = coord.x;
-                            _cache[7] = coord.y;
-                            _info_labels[1]->setText(QString("Angle: %1°").arg(
-                                std::abs(Geo::rad_to_degree(Geo::angle(Geo::Point(_cache[0], _cache[1]),
-                                Geo::Point(_cache[3], _cache[4]), Geo::Point(_cache[6], _cache[7]))))));
-                            update();
-                            return QOpenGLWidget::mousePressEvent(event);
-                        }
-                        break;
-                    default:
-                        if (Geo::Point coord(real_x1, real_y1); catch_point(real_x1, real_y1, coord, 12.0 / _ratio))
-                        {
-                            _measure_angle_flag = 1;
-                            _cache[2] = _cache[5] = _cache[8] = 0.51;
-                            _cache[0] = _cache[3] = _cache[6] = coord.x;
-                            _cache[1] = _cache[4] = _cache[7] = coord.y;
-                            update();
-                            return QOpenGLWidget::mousePressEvent(event);
-                        }
-                        break;
-                    }
-                    break;
-                default:
-                    break;
-                }
-
                 refresh_selected_ibo();
                 refresh_cache_vbo(0);
 
                 _bool_flags[4] = true; // is obj moveable
                 _bool_flags[5] = true; // is obj selected
 
-                switch (_tool_flags[0])
+                if (CanvasOperations::CanvasOperation *op = _canvasoperation[_tool_flags[0]];
+                    op != nullptr && op->mouse_press(event))
                 {
-                case Tool::Measure:
-                    _measure_angle_flag = 0;
-                    switch (_clicked_obj->type())
-                    {
-                    case Geo::Type::TEXT:
-                        _info_labels[1]->setText("X:" + QString::number(static_cast<const Text*>(_clicked_obj)->center().x) +
-                            "Y:" + QString::number(static_cast<const Text*>(_clicked_obj)->center().y));
-                        break;
-                    case Geo::Type::POLYGON:
-                        {
-                            const Geo::Point center = _clicked_obj->bounding_rect().center();
-                            _info_labels[1]->setText("X:" + QString::number(center.x) +
-                                " Y:" + QString::number(center.y) +
-                                " Length:" + QString::number(_clicked_obj->length()) +
-                                " Area:" + QString::number(static_cast<const Geo::Polygon *>(_clicked_obj)->area()));
-                        }
-                        break;
-                    case Geo::Type::CIRCLE:
-                        _info_labels[1]->setText("X:" + QString::number(static_cast<const Geo::Circle *>(_clicked_obj)->x) +
-                            " Y:" + QString::number(static_cast<const Geo::Circle *>(_clicked_obj)->y) +
-                            " Radius:" + QString::number(static_cast<const Geo::Circle *>(_clicked_obj)->radius));
-                        break;
-                    case Geo::Type::POLYLINE:
-                        _info_labels[1]->setText("Length:" + QString::number(static_cast<const Geo::Polyline*>(_clicked_obj)->length()));
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        _info_labels[1]->setText("X:" + QString::number(static_cast<const Geo::Ellipse*>(_clicked_obj)->center().x)
-                            + " Y:" + QString::number(static_cast<const Geo::Ellipse*>(_clicked_obj)->center().y)
-                            + " Angle:" + QString::number(static_cast<const Geo::Ellipse*>(_clicked_obj)->angle())
-                            + " A:" + QString::number(static_cast<const Geo::Ellipse*>(_clicked_obj)->lengtha())
-                            + " B:" + QString::number(static_cast<const Geo::Ellipse*>(_clicked_obj)->lengthb())
-                            + " Length:" + QString::number(static_cast<const Geo::Ellipse*>(_clicked_obj)->length())
-                            + " Area:" + QString::number(static_cast<const Geo::Ellipse*>(_clicked_obj)->area()));
-                        break;
-                    case Geo::Type::BEZIER:
-                        _info_labels[1]->setText("Order:" + QString::number(static_cast<const Geo::Bezier*>(_clicked_obj)->order()) +
-                            " Length:" + QString::number(static_cast<const Geo::Bezier*>(_clicked_obj)->length()));
-                        break;
-                    case Geo::Type::BSPLINE:
-                        _info_labels[1]->setText("Length:" + QString::number(static_cast<const Geo::BSpline*>(_clicked_obj)->length()));
-                        break;
-                    default:
-                        break;
-                    }
+                    _info_labels[1]->setText(_canvasoperation.info);
                     update();
                     return QOpenGLWidget::mousePressEvent(event);
-                default:
-                    break;
                 }
 
                 Geo::Point coord;
@@ -1092,7 +912,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     }
                 }
             }
-            use_tool(Tool::NoTool);
+            use_tool(CanvasOperations::Tool::NoTool);
         }
         break;
     case Qt::MiddleButton:
@@ -1126,7 +946,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         else
         {
             _select_rect.clear();
-            if (_tool_flags[0] != Tool::Measure && _tool_flags[0] != Tool::Angle)
+            if (_tool_flags[0] != CanvasOperations::Tool::Measure && _tool_flags[0] != CanvasOperations::Tool::Angle)
             {
                 _info_labels[1]->clear();
             }
@@ -1236,20 +1056,20 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     {
         switch (_tool_flags[0])
         {
-        case Tool::Circle0:
+        case CanvasOperations::Tool::Circle0:
             _circle_cache.radius = Geo::distance(real_x1, real_y1, _circle_cache.x, _circle_cache.y);
             _circle_cache.update_shape(Geo::Circle::default_down_sampling_value);
             refresh_circle_cache_vbo();
             _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius)).c_str());
             break;
-        case Tool::Circle1:
+        case CanvasOperations::Tool::Circle1:
             _circle_cache.x = (real_x1 + _points_cache.back().x) / 2, _circle_cache.y = (real_y1 + _points_cache.back().y) / 2;
             _circle_cache.radius = std::hypot(real_x1 - _points_cache.back().x, real_y1 - _points_cache.back().y) / 2;
             _circle_cache.update_shape(Geo::Circle::default_down_sampling_value);
             refresh_circle_cache_vbo();
             _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius)).c_str());
             break;
-        case Tool::Circle2:
+        case CanvasOperations::Tool::Circle2:
             if (_points_cache.size() == 1)
             {
                 _circle_cache.x = (real_x1 + _points_cache.back().x) / 2, _circle_cache.y = (real_y1 + _points_cache.back().y) / 2;
@@ -1276,7 +1096,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 _info_labels[1]->setText(std::string("Radius:").append(std::to_string(_circle_cache.radius)).c_str());
             }
             break;
-        case Tool::Ellipse:
+        case CanvasOperations::Tool::Ellipse:
             if (_points_cache.size() == 1)
             {
                 const double radius = Geo::distance(real_x1, real_y1, _points_cache.front().x, _points_cache.front().y);
@@ -1290,7 +1110,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             _ellipse_cache.update_shape(Geo::Ellipse::default_down_sampling_value);
             refresh_ellipse_cache_vbo();
             break;
-        case Tool::Polyline:
+        case CanvasOperations::Tool::Polyline:
             if (event->modifiers() == Qt::ControlModifier)
             {
                 const Geo::Point &coord =_editer->point_cache().at(_editer->point_cache().size() - 2);
@@ -1316,7 +1136,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             _info_labels[1]->setText(std::string("Length:").append(std::to_string(
                 Geo::distance(_editer->point_cache().back(), _editer->point_cache()[_editer->point_cache().size() - 2]))).c_str());
             break;
-        case Tool::Rect:
+        case CanvasOperations::Tool::Rect:
             if (event->modifiers() == Qt::ControlModifier)
             {
                 const double width = std::max(std::abs(real_x1 - _points_cache.front().x), std::abs(real_y1 - _points_cache.front().y));
@@ -1358,14 +1178,14 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     .append(" Height:").append(std::to_string(std::abs(real_y1 - _points_cache.front().y))).c_str());
             }
             break;
-        case Tool::Bezier:
+        case CanvasOperations::Tool::Bezier:
             _editer->point_cache().back().x = real_x1;
             _editer->point_cache().back().y = real_y1;
             _cache[_cache_count - 3] = real_x1;
             _cache[_cache_count - 2] = real_y1;
             refresh_cache_vbo(3);
             break;
-        case Tool::BSpline:
+        case CanvasOperations::Tool::BSpline:
             _editer->point_cache().back().x = real_x1;
             _editer->point_cache().back().y = real_y1;
             _cache[_cache_count - 3] = real_x1;
@@ -1472,29 +1292,12 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _points_cache.back().x)))
                 .append(" Height:").append(std::to_string(std::abs(real_y1 - _points_cache.back().y))).c_str());
         }
-        else if (_measure_angle_flag > 0)
+        if (CanvasOperations::CanvasOperation *op = _canvasoperation[_tool_flags[0]];
+            op != nullptr && op->mouse_move(event))
         {
-            switch (_measure_angle_flag)
-            {
-            case 1:
-                _cache[3] = _cache[6] = real_x1;
-                _cache[4] = _cache[7] = real_y1;
-                if (_tool_flags[0] == Tool::Measure)
-                {
-                    _info_labels[1]->setText("Length:" + QString::number(
-                        Geo::distance(_cache[0], _cache[1], real_x1, real_y1)));
-                }
-                break;
-            case 2:
-                if (_tool_flags[0] == Tool::Angle)
-                {
-                    _cache[6] = real_x1;
-                    _cache[7] = real_y1;
-                }
-                break;
-            default:
-                break;
-            }
+            _info_labels[1]->setText(_canvasoperation.info);
+            update();
+            return QOpenGLWidget::mouseMoveEvent(event);
         }
         update();
     }
@@ -1572,12 +1375,12 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
             _bool_flags[2] = false; // painting
             switch (_tool_flags[0])
             {
-            case Tool::Circle0:
-            case Tool::Circle1:
-            case Tool::Circle2:
+            case CanvasOperations::Tool::Circle0:
+            case CanvasOperations::Tool::Circle1:
+            case CanvasOperations::Tool::Circle2:
                 _circle_cache.clear();
                 break;
-            case Tool::Polyline:
+            case CanvasOperations::Tool::Polyline:
                 switch (_editer->append_points())
                 {
                 case 1:
@@ -1591,15 +1394,15 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                 }
                 _cache_count = 0;
                 break;
-            case Tool::Rect:
+            case CanvasOperations::Tool::Rect:
                 _AABBRect_cache.clear();
                 break;
-            case Tool::Bezier:
+            case CanvasOperations::Tool::Bezier:
                 _editer->append_bezier(_curve_order);
                 refresh_vbo(Geo::Type::BEZIER, true);
                 _cache_count = 0;
                 break;
-            case Tool::BSpline:
+            case CanvasOperations::Tool::BSpline:
                 _editer->append_bspline(_curve_order);
                 refresh_vbo(Geo::Type::BSPLINE, true);
                 _cache_count = 0;
@@ -1608,7 +1411,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
                 break;
             }
             _tool_flags[1] = _tool_flags[0];
-            _tool_flags[0] = Tool::NoTool;
+            _tool_flags[0] = CanvasOperations::Tool::NoTool;
             emit tool_changed(_tool_flags[0]);
             update();
         }
@@ -1719,11 +1522,12 @@ void Canvas::show_overview()
 
 
 
-void Canvas::use_tool(const Tool tool)
+void Canvas::use_tool(const CanvasOperations::Tool tool)
 {
     _tool_flags[1] = _tool_flags[0];
     _tool_flags[0] = tool;
-    _bool_flags[1] = (tool != Tool::NoTool && tool != Tool::Measure && tool != Tool::Angle); // paintable
+    _bool_flags[1] = (tool != CanvasOperations::Tool::NoTool
+        && tool != CanvasOperations::Tool::Measure && tool != CanvasOperations::Tool::Angle); // paintable
     _bool_flags[2] = false; // painting
 
     _editer->point_cache().clear();
@@ -1966,7 +1770,7 @@ void Canvas::cancel_painting()
     _bool_flags[1] = false; // paintable
     _bool_flags[2] = false; // painting
     _tool_flags[1] = _tool_flags[0];
-    _tool_flags[0] = Tool::NoTool;
+    _tool_flags[0] = CanvasOperations::Tool::NoTool;
 
     _editer->point_cache().clear();
     _circle_cache.clear();
@@ -1993,8 +1797,8 @@ void Canvas::use_last_tool()
     _tool_flags[0] = _tool_flags[1];
     _measure_angle_flag = 0;
     _info_labels[1]->clear();
-    _bool_flags[1] = (_tool_flags[0] != Tool::Measure && _tool_flags[0] != Tool::Angle); // paintable
-    if (_tool_flags[0] == Tool::NoTool)
+    _bool_flags[1] = (_tool_flags[0] != CanvasOperations::Tool::Measure && _tool_flags[0] != CanvasOperations::Tool::Angle); // paintable
+    if (_tool_flags[0] == CanvasOperations::Tool::NoTool)
     {
         cancel_painting();
     }
@@ -2190,7 +1994,7 @@ void Canvas::polyline_cmd()
     _bool_flags[2] = false; // painting
     switch (_tool_flags[0])
     {
-    case Tool::Polyline:
+    case CanvasOperations::Tool::Polyline:
         switch (_editer->append_points())
         {
         case 1:
@@ -2203,11 +2007,11 @@ void Canvas::polyline_cmd()
             break;
         }
         break;
-    case Tool::BSpline:
+    case CanvasOperations::Tool::BSpline:
         _editer->append_bspline(_curve_order);
         refresh_vbo(Geo::Type::BSPLINE, true);
         break;
-    case Tool::Bezier:
+    case CanvasOperations::Tool::Bezier:
         _editer->append_bezier(_curve_order);
         refresh_vbo(Geo::Type::BEZIER, true);
         break;
@@ -2216,7 +2020,7 @@ void Canvas::polyline_cmd()
     }
     _cache_count = 0;
     _tool_flags[1] = _tool_flags[0];
-    _tool_flags[0] = Tool::NoTool;
+    _tool_flags[0] = CanvasOperations::Tool::NoTool;
     emit tool_changed(_tool_flags[0]);
     update();
 }
@@ -2230,7 +2034,7 @@ void Canvas::rect_cmd(const double x, const double y)
         _AABBRect_cache.clear();
         _points_cache.clear();
         _tool_flags[1] = _tool_flags[0];
-        _tool_flags[0] = Tool::NoTool;
+        _tool_flags[0] = CanvasOperations::Tool::NoTool;
         _bool_flags[1] = false; // paintable
         emit tool_changed(_tool_flags[0]);
         refresh_vbo(Geo::Type::POLYGON, true);
@@ -2255,7 +2059,7 @@ void Canvas::rect_cmd()
         _editer->append(_AABBRect_cache);
         _AABBRect_cache.clear();
         _tool_flags[1] = _tool_flags[0];
-        _tool_flags[0] = Tool::NoTool;
+        _tool_flags[0] = CanvasOperations::Tool::NoTool;
         _bool_flags[1] = false; // paintable
         emit tool_changed(_tool_flags[0]);
         refresh_vbo(Geo::Type::POLYGON, true);
@@ -2305,7 +2109,7 @@ void Canvas::circle_cmd(const double x, const double y, const double r)
     }
     _circle_cache.clear();
     _tool_flags[1] = _tool_flags[0];
-    _tool_flags[0] = Tool::NoTool;
+    _tool_flags[0] = CanvasOperations::Tool::NoTool;
     _bool_flags[1] = false; // moveable
     emit tool_changed(_tool_flags[0]);
     refresh_vbo(Geo::Type::CIRCLE, true);
@@ -2364,7 +2168,7 @@ void Canvas::ellipse_cmd(const double x, const double y, const double rad, const
     _ellipse_cache.clear();
     _points_cache.clear();
     _tool_flags[1] = _tool_flags[0];
-    _tool_flags[0] = Tool::NoTool;
+    _tool_flags[0] = CanvasOperations::Tool::NoTool;
     _bool_flags[1] = false; // moveable
     emit tool_changed(_tool_flags[0]);
     refresh_vbo(Geo::Type::ELLIPSE, true);
@@ -2375,7 +2179,7 @@ void Canvas::ellipse_cmd(const double x, const double y, const double rad, const
 void Canvas::text_cmd(const double x, const double y)
 {
     _editer->append_text(x, y);
-    _tool_flags[0] = Tool::NoTool;
+    _tool_flags[0] = CanvasOperations::Tool::NoTool;
     _bool_flags[1] = _bool_flags[2] = false;
     emit tool_changed(_tool_flags[0]);
     refresh_vbo(Geo::Type::TEXT, true);

@@ -69,7 +69,7 @@ private slots:
 
     void set_catch(QAction *action);
 
-    void refresh_tool_label(const Canvas::Tool tool);
+    void refresh_tool_label(const CanvasOperations::Tool tool);
 
     void refresh_tool_label(const Canvas::Operation operation);
 

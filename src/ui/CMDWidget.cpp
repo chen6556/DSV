@@ -63,11 +63,11 @@ void CMDWidget::init()
 }
 
 
-void CMDWidget::refresh_tool(const Canvas::Tool tool)
+void CMDWidget::refresh_tool(const CanvasOperations::Tool tool)
 {
     switch (tool)
     {
-    case Canvas::Tool::NoTool:
+    case CanvasOperations::Tool::NoTool:
         clear();
         break;
     default:
@@ -205,10 +205,10 @@ bool CMDWidget::work()
         break;
 
     case CMD::Length_CMD:
-        _canvas->use_tool(Canvas::Tool::Measure);
+        _canvas->use_tool(CanvasOperations::Tool::Measure);
         break;
     case CMD::Angle_CMD:
-        _canvas->use_tool(Canvas::Tool::Angle);
+        _canvas->use_tool(CanvasOperations::Tool::Angle);
         break;
     case CMD::Polyline_CMD:
         ui->cmd_label->setText("Polyline");
@@ -593,7 +593,7 @@ bool CMDWidget::get_cmd()
     else
     {
         _canvas->set_operation(Canvas::Operation::NoOperation);
-        _canvas->use_tool(Canvas::Tool::NoTool);
+        _canvas->use_tool(CanvasOperations::Tool::NoTool);
         _current_cmd = result->second;
         return true;
     }
@@ -688,7 +688,7 @@ void CMDWidget::polyline()
     switch (_parameters.size())
     {
     case 0:
-        _canvas->use_tool(Canvas::Tool::Polyline);
+        _canvas->use_tool(CanvasOperations::Tool::Polyline);
         _parameters.emplace_back(0);
         ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
         _last_x = _last_y = 0;
@@ -728,7 +728,7 @@ void CMDWidget::bspline()
     switch (_parameters.size())
     {
     case 0:
-        _canvas->use_tool(Canvas::Tool::BSpline);
+        _canvas->use_tool(CanvasOperations::Tool::BSpline);
         _parameters.emplace_back(0);
         ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
         _last_x = _last_y = 0;
@@ -768,7 +768,7 @@ void CMDWidget::bezier()
     switch (_parameters.size())
     {
     case 0:
-        _canvas->use_tool(Canvas::Tool::Bezier);
+        _canvas->use_tool(CanvasOperations::Tool::Bezier);
         _parameters.emplace_back(0);
         ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
         _last_x = _last_y = 0;
@@ -808,7 +808,7 @@ void CMDWidget::text()
     switch (_parameters.size())
     {
     case 0:
-        _canvas->use_tool(Canvas::Tool::Text);
+        _canvas->use_tool(CanvasOperations::Tool::Text);
         ui->parameter_label->setText("X: Y:");
         break;
     case 1:
@@ -828,7 +828,7 @@ void CMDWidget::rectangle()
     switch (_parameters.size())
     {
     case 0:
-        _canvas->use_tool(Canvas::Tool::Rect);
+        _canvas->use_tool(CanvasOperations::Tool::Rect);
         _parameters.emplace_back(0);
         ui->parameter_label->setText("X: Y:");
         break;
@@ -871,7 +871,7 @@ void CMDWidget::circle()
     switch (_parameters.size())
     {
     case 0:
-        _canvas->use_tool(Canvas::Tool::Circle0);
+        _canvas->use_tool(CanvasOperations::Tool::Circle0);
         _parameters.emplace_back(0);
         ui->parameter_label->setText("X: Y:");
         break;
@@ -906,7 +906,7 @@ void CMDWidget::ellipse()
     switch (_parameters.size())
     {
     case 0:
-        _canvas->use_tool(Canvas::Tool::Ellipse);
+        _canvas->use_tool(CanvasOperations::Tool::Ellipse);
         _parameters.emplace_back(0);
         ui->parameter_label->setText("X: Y:");
         break;
@@ -1225,7 +1225,7 @@ void CMDWidget::ring_array()
         _parameters.clear();
         ui->parameter_label->clear();
         ui->cmd_label->clear();
-        emit _canvas->tool_changed(Canvas::Tool::NoTool);
+        emit _canvas->tool_changed(CanvasOperations::Tool::NoTool);
         _current_cmd = CMD::Error_CMD;
         break;
     default:
