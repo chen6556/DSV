@@ -467,29 +467,30 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 {
                     _ellipse_cache = Geo::Ellipse(real_x1, real_y1, 10, 10);
                     refresh_ellipse_cache_vbo();
-                    _last_point.x = _stored_coord.x = real_x1;
-                    _last_point.y = _stored_coord.y = real_y1;
+                    _points_cache.clear();
+                    _points_cache.emplace_back(real_x1, real_y1);
                     _bool_flags[2] = true; // painting
                 }
                 else
                 {
-                    if (_last_point == _stored_coord)
+                    if (_points_cache.size() == 1)
                     {
-                        _ellipse_cache.set_lengtha(Geo::distance(real_x1, real_y1, _stored_coord.x, _stored_coord.y));
+                        _ellipse_cache.set_lengtha(Geo::distance(real_x1, real_y1, _points_cache.back().x, _points_cache.back().y));
                         if (event->modifiers() != Qt::ControlModifier)
                         {
-                            _ellipse_cache.rotate(_stored_coord.x, _stored_coord.y, Geo::angle(_mouse_press_pos, _stored_coord));
+                            _ellipse_cache.rotate(_points_cache.back().x, _points_cache.back().y, Geo::angle(_mouse_press_pos, _points_cache.back()));
                         }
                         _ellipse_cache.update_shape(Geo::Ellipse::default_down_sampling_value);
                         refresh_ellipse_cache_vbo();
-                        _last_point.x += 1;
+                        _points_cache.emplace_back(real_x1, real_y1);
                     }
                     else
                     {
-                        _ellipse_cache.set_lengthb(Geo::distance(real_x1, real_y1, _stored_coord.x, _stored_coord.y));
+                        _ellipse_cache.set_lengthb(Geo::distance(real_x1, real_y1, _points_cache.front().x, _points_cache.front().y));
                         _ellipse_cache.update_shape(Geo::Ellipse::default_down_sampling_value);
                         _editer->append(_ellipse_cache);
                         _ellipse_cache.clear();
+                        _points_cache.clear();
                         _tool_flags[1] = _tool_flags[0];
                         _tool_flags[0] = Tool::NoTool;
                         _bool_flags[1] = false; // moveable
@@ -1274,15 +1275,15 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             break;
         case Tool::Ellipse:
-            if (_last_point == _stored_coord)
+            if (_points_cache.size() == 1)
             {
-                const double radius = Geo::distance(real_x1, real_y1, _stored_coord.x, _stored_coord.y);
+                const double radius = Geo::distance(real_x1, real_y1, _points_cache.front().x, _points_cache.front().y);
                 _ellipse_cache.set_lengtha(radius);
                 _ellipse_cache.set_lengthb(radius);
             }
             else
             {
-                _ellipse_cache.set_lengthb(Geo::distance(real_x1, real_y1, _stored_coord.x, _stored_coord.y));
+                _ellipse_cache.set_lengthb(Geo::distance(real_x1, real_y1, _points_cache.front().x, _points_cache.front().y));
             }
             _ellipse_cache.update_shape(Geo::Ellipse::default_down_sampling_value);
             refresh_ellipse_cache_vbo();
@@ -2320,8 +2321,8 @@ void Canvas::ellipse_cmd(const double x, const double y)
     }
     _ellipse_cache.update_shape(Geo::Ellipse::default_down_sampling_value);
     refresh_ellipse_cache_vbo();
-    _stored_coord.x = _last_point.x = x;
-    _stored_coord.y = _last_point.y = y;
+    _points_cache.clear();
+    _points_cache.emplace_back(x, y);
     _bool_flags[2] = true; // painting
     update();
 }
@@ -2336,9 +2337,7 @@ void Canvas::ellipse_cmd(const double x, const double y, const double rad, const
     _ellipse_cache.rotate(_ellipse_cache.center().x, _ellipse_cache.center().y, rad);
     _ellipse_cache.update_shape(Geo::Ellipse::default_down_sampling_value);
     refresh_ellipse_cache_vbo();
-    _last_point.x = x + 1;
-    _stored_coord.x = x;
-    _stored_coord.y = y;
+    _points_cache.emplace_back(_ellipse_cache.a0());
     update();
 }
 
@@ -2352,6 +2351,7 @@ void Canvas::ellipse_cmd(const double x, const double y, const double rad, const
     _ellipse_cache.update_shape(Geo::Ellipse::default_down_sampling_value);
     _editer->append(_ellipse_cache);
     _ellipse_cache.clear();
+    _points_cache.clear();
     _tool_flags[1] = _tool_flags[0];
     _tool_flags[0] = Tool::NoTool;
     _bool_flags[1] = false; // moveable
