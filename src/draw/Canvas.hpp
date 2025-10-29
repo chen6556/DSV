@@ -83,7 +83,6 @@ private:
 
     QPointF _mouse_pos_0, _mouse_pos_1;
     Geo::Point _mouse_press_pos, _mouse_release_pos;
-    Geo::Point _last_point;
     std::vector<Geo::Point> _points_cache;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
     Geo::Geometry *_pressed_obj = nullptr;

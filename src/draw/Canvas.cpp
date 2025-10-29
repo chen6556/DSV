@@ -526,10 +526,10 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 }
                 break;
             case Tool::Rect:
+                _points_cache.clear();
                 if (!is_painting())
                 {
-                    _last_point.x = real_x1;
-                    _last_point.y = real_y1;
+                    _points_cache.emplace_back(real_x1, real_y1);
                     _AABBRect_cache = Geo::AABBRect(real_x1, real_y1, real_x1 + 2, real_y1 + 2);
                     refresh_AABBRect_cache_vbo();
                 }
@@ -635,8 +635,8 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 std::fill_n(_selected_index_count, 4, 0);
                 _cache_count = 0;
                 _select_rect = Geo::AABBRect(real_x1, real_y1, real_x1, real_y1);
-                _last_point.x = real_x1;
-                _last_point.y = real_y1;
+                _points_cache.clear();
+                _points_cache.emplace_back(real_x1, real_y1);
                 _bool_flags[5] = false; // is obj selected
 
                 switch (_operation)
@@ -1126,7 +1126,6 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         else
         {
             _select_rect.clear();
-            _last_point.clear();
             if (_tool_flags[0] != Tool::Measure && _tool_flags[0] != Tool::Angle)
             {
                 _info_labels[1]->clear();
@@ -1320,27 +1319,31 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         case Tool::Rect:
             if (event->modifiers() == Qt::ControlModifier)
             {
-                const double width = std::max(std::abs(real_x1 - _last_point.x), std::abs(real_y1 - _last_point.y));
-                if (real_x1 > _last_point.x)
+                const double width = std::max(std::abs(real_x1 - _points_cache.front().x), std::abs(real_y1 - _points_cache.front().y));
+                if (real_x1 > _points_cache.front().x)
                 {
-                    if (real_y1 > _last_point.y)
+                    if (real_y1 > _points_cache.front().y)
                     {
-                        _AABBRect_cache = Geo::AABBRect(_last_point.x, _last_point.y, _last_point.x + width, _last_point.y + width);
+                        _AABBRect_cache = Geo::AABBRect(_points_cache.front().x, _points_cache.front().y,
+                            _points_cache.front().x + width, _points_cache.front().y + width);
                     }
                     else
                     {
-                        _AABBRect_cache = Geo::AABBRect(_last_point.x, _last_point.y - width, _last_point.x + width, _last_point.y);
+                        _AABBRect_cache = Geo::AABBRect(_points_cache.front().x, _points_cache.front().y - width,
+                            _points_cache.front().x + width, _points_cache.front().y);
                     }
                 }
                 else
                 {
-                    if (real_y1 > _last_point.y)
+                    if (real_y1 > _points_cache.front().y)
                     {
-                        _AABBRect_cache = Geo::AABBRect(_last_point.x - width, _last_point.y, _last_point.x, _last_point.y + width);
+                        _AABBRect_cache = Geo::AABBRect(_points_cache.front().x - width, _points_cache.front().y,
+                            _points_cache.front().x, _points_cache.front().y + width);
                     }
                     else
                     {
-                        _AABBRect_cache = Geo::AABBRect(_last_point.x - width, _last_point.y - width, _last_point.x, _last_point.y);
+                        _AABBRect_cache = Geo::AABBRect(_points_cache.front().x - width, _points_cache.front().y - width,
+                            _points_cache.front().x, _points_cache.front().y);
                     }
                 }
                 refresh_AABBRect_cache_vbo();
@@ -1349,10 +1352,10 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             else
             {
-                _AABBRect_cache = Geo::AABBRect(_last_point.x, _last_point.y, real_x1, real_y1);
+                _AABBRect_cache = Geo::AABBRect(_points_cache.front().x, _points_cache.front().y, real_x1, real_y1);
                 refresh_AABBRect_cache_vbo();
-                _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.x)))
-                    .append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.y))).c_str());
+                _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _points_cache.front().x)))
+                    .append(" Height:").append(std::to_string(std::abs(real_y1 - _points_cache.front().y))).c_str());
             }
             break;
         case Tool::Bezier:
@@ -1459,15 +1462,15 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         }
         else if (!_select_rect.empty())
         {
-            _select_rect = Geo::AABBRect(_last_point.x, _last_point.y, real_x1, real_y1);
+            _select_rect = Geo::AABBRect(_points_cache.back().x, _points_cache.back().y, real_x1, real_y1);
             refresh_select_rect_vbo();
             if (std::vector<Geo::Geometry *> objects = _editer->select(_select_rect); !objects.empty())
             {
                 refresh_selected_ibo(objects);
                 _cache_count = 0; // 框选时不显示BSpline路径线和Bezier控制线
             }
-            _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _last_point.x)))
-                .append(" Height:").append(std::to_string(std::abs(real_y1 - _last_point.y))).c_str());
+            _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _points_cache.back().x)))
+                .append(" Height:").append(std::to_string(std::abs(real_y1 - _points_cache.back().y))).c_str());
         }
         else if (_measure_angle_flag > 0)
         {
@@ -1640,7 +1643,6 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
 
 void Canvas::show_overview()
 {
-    _last_point = center();
     _editer->set_view_ratio(1.0);
     _bool_flags[8] = false;
 
@@ -2223,9 +2225,10 @@ void Canvas::rect_cmd(const double x, const double y)
 {
     if (is_painting())
     {
-        _editer->append(Geo::AABBRect(_last_point.x, _last_point.y,
-            _last_point.x + x, _last_point.y + y));
+        _editer->append(Geo::AABBRect(_points_cache.back().x, _points_cache.back().y,
+            _points_cache.back().x + x, _points_cache.back().y + y));
         _AABBRect_cache.clear();
+        _points_cache.clear();
         _tool_flags[1] = _tool_flags[0];
         _tool_flags[0] = Tool::NoTool;
         _bool_flags[1] = false; // paintable
@@ -2234,8 +2237,8 @@ void Canvas::rect_cmd(const double x, const double y)
     }
     else
     {
-        _last_point.x = x;
-        _last_point.y = y;
+        _points_cache.clear();
+        _points_cache.emplace_back(x, y);
         _AABBRect_cache = Geo::AABBRect(x, y,
             _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6],
             _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
@@ -2246,6 +2249,7 @@ void Canvas::rect_cmd(const double x, const double y)
 
 void Canvas::rect_cmd()
 {
+    _points_cache.clear();
     if (is_painting())
     {
         _editer->append(_AABBRect_cache);
@@ -2258,10 +2262,10 @@ void Canvas::rect_cmd()
     }
     else
     {
-        _last_point.x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
-        _last_point.y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
-        _AABBRect_cache = Geo::AABBRect(_last_point.x, _last_point.y,
-            _last_point.x + 2, _last_point.y + 2);
+        _points_cache.emplace_back(_mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6],
+            _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
+        _AABBRect_cache = Geo::AABBRect(_points_cache.back().x, _points_cache.back().y,
+            _points_cache.back().x + 2, _points_cache.back().y + 2);
         refresh_AABBRect_cache_vbo();
     }
     _bool_flags[2] = !_bool_flags[2]; // painting
