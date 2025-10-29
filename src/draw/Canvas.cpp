@@ -2009,15 +2009,15 @@ void Canvas::set_info_labels(QLabel **labels)
 
 void Canvas::copy()
 {
-    _stored_coord.x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
-    _stored_coord.y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
+    _points_cache.emplace_back(_mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6],
+        _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
     _editer->copy_selected();
 }
 
 void Canvas::cut()
 {
-    _stored_coord.x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
-    _stored_coord.y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
+    _points_cache.emplace_back(_mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6],
+        _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
     _editer->cut_selected();
     std::set<Geo::Type> types;
     for (const Geo::Geometry *object : _editer->paste_table())
@@ -2041,7 +2041,7 @@ void Canvas::paste()
 {
     const double x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
     const double y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
-    if (_editer->paste(x - _stored_coord.x, y - _stored_coord.y))
+    if (!_points_cache.empty() && _editer->paste(x - _points_cache.back().x, y - _points_cache.back().y))
     {
         std::set<Geo::Type> types;
         for (const Geo::Geometry *object : _editer->paste_table())
@@ -2062,11 +2062,12 @@ void Canvas::paste()
         refresh_selected_ibo();
         update();
     }
+    _points_cache.clear();
 }
 
 void Canvas::paste(const double x, const double y)
 {
-    if (_editer->paste(x - _stored_coord.x, y - _stored_coord.y))
+    if (!_points_cache.empty() && _editer->paste(x - _points_cache.back().x, y - _points_cache.back().y))
     {
         std::set<Geo::Type> types;
         for (const Geo::Geometry *object : _editer->paste_table())
@@ -2087,6 +2088,7 @@ void Canvas::paste(const double x, const double y)
         refresh_selected_ibo();
         update();
     }
+    _points_cache.clear();
 }
 
 void Canvas::rotate(const double rad, const bool unitary, const bool to_all_layers)
