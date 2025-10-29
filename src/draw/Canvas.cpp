@@ -593,8 +593,10 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 switch (_measure_angle_flag)
                 {
                 case 0:
-                    _stored_coord.x = _cache[6] = _cache[3] = _cache[0] = real_x1;
-                    _stored_coord.y = _cache[7] = _cache[4] = _cache[1] = real_y1;
+                    _points_cache.clear();
+                    _points_cache.emplace_back(real_x1, real_y1);
+                    _cache[6] = _cache[3] = _cache[0] = real_x1;
+                    _cache[7] = _cache[4] = _cache[1] = real_y1;
                     _cache[8] = _cache[5] = _cache[2] = 0.51;
                     _measure_angle_flag = 1;
                     break;
@@ -607,10 +609,10 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     if (std::vector<Geo::Geometry *> objects = _editer->selected(); !objects.empty())
                     {
                         const double angle = Geo::angle(Geo::Point(_cache[0], _cache[1]),
-                            _stored_coord, Geo::Point(real_x1, real_y1));
+                            _points_cache.back(), Geo::Point(real_x1, real_y1));
                         for (Geo::Geometry *obj : objects)
                         {
-                            obj->rotate(_stored_coord.x, _stored_coord.y, angle);
+                            obj->rotate(_points_cache.back().x, _points_cache.back().y, angle);
                         }
                         _measure_angle_flag = 0;
                         refresh_selected_vbo();
@@ -1137,11 +1139,12 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
             switch (_operation)
             {
             case Operation::Rotate:
-                if (_measure_angle_flag == 0)
+                if (_measure_angle_flag == 0 && !_points_cache.empty())
                 {
                     _operation = Operation::NoOperation;
                     _editer->push_backup_command(new UndoStack::RotateCommand(_editer->selected(),
-                        _stored_coord.x, _stored_coord.y, Geo::degree_to_rad(_refline_points[0]), true));
+                        _points_cache.back().x, _points_cache.back().y, Geo::degree_to_rad(_refline_points[0]), true));
+                    _points_cache.clear();
                     emit operation_changed(Operation::NoOperation);
                 }
                 break;
@@ -1744,6 +1747,7 @@ void Canvas::set_operation(const Operation operation)
         break;
     default:
         _object_cache.clear();
+        _points_cache.clear();
         break;
     }
     emit operation_changed(operation);
@@ -2091,13 +2095,14 @@ void Canvas::rotate(const double rad, const bool unitary, const bool to_all_laye
     {
         if (std::vector<Geo::Geometry *> objects = _editer->selected(); !objects.empty())
         {
-            if (_last_point == _stored_coord)
+            if (_points_cache.empty())
             {
                 _editer->rotate(objects, rad, unitary, to_all_layers);
             }
             else
             {
-                _editer->rotate(objects, _stored_coord.x, _stored_coord.y, rad);
+                _editer->rotate(objects, _points_cache.back().x, _points_cache.back().y, rad);
+                _points_cache.clear();
             }
             std::set<Geo::Type> types;
             for (const Geo::Geometry *object : objects)
@@ -2135,7 +2140,7 @@ void Canvas::rotate(const double rad, const bool unitary, const bool to_all_laye
     }
     else
     {
-        _stored_coord.x = _stored_coord.y = _last_point.x = _last_point.y = 0;
+        _points_cache.clear();
         _operation = Operation::Rotate;
         _object_cache.clear();
         emit operation_changed(Operation::Rotate);
