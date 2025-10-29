@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 
-#include "draw/Graph.hpp"
+#include "base/Graph.hpp"
 
 
 namespace UndoStack

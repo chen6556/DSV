@@ -1,4 +1,4 @@
-#include "draw/Graph.hpp"
+#include "base/Graph.hpp"
 
 
 Graph::Graph(const Graph &graph)

@@ -2,7 +2,7 @@
 
 #include <QDialog>
 
-#include "draw/Graph.hpp"
+#include "base/Graph.hpp"
 
 
 QT_BEGIN_NAMESPACE
