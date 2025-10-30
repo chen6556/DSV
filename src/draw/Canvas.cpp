@@ -92,7 +92,7 @@ void Canvas::initializeGL()
     glUniform3d(_uniforms[3], 0.0, -1.0, 0.0); // vec1
 
     glCreateVertexArrays(1, &_VAO);
-    glCreateBuffers(4, _base_VBO);
+    glCreateBuffers(5, _base_VBO);
     glCreateBuffers(7, _shape_VBO);
     glCreateBuffers(4, _shape_IBO);
     // glCreateBuffers(3, _brush_IBO);
@@ -244,6 +244,19 @@ void Canvas::paintGL()
         glLineWidth(1.4f);
     }
 
+    if (_cache_count > 0) // cache
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[1]); // cache
+        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glEnableVertexAttribArray(0);
+
+        glUniform4f(_uniforms[4], 1.0f, 0.549f, 0.0f, 1.0f); // color
+        glDrawArrays(GL_LINE_STRIP, 0, _cache_count / 3);
+
+        glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
+        glDrawArrays(GL_POINTS, 0, _cache_count / 3);
+    }
+
     if (GlobalSetting::setting().show_points)
     {
         glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
@@ -279,7 +292,7 @@ void Canvas::paintGL()
 
     if (_canvasoperation.shape_count > 0)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[1]); // cache
+        glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[4]); // operation
         glBufferData(GL_ARRAY_BUFFER, _canvasoperation.shape_count * sizeof(double), _canvasoperation.shape, GL_STREAM_DRAW);
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
@@ -288,7 +301,7 @@ void Canvas::paintGL()
     }
     if (_canvasoperation.tool_lines_count > 0)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[1]); // cache
+        glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[4]); // operation
         glBufferData(GL_ARRAY_BUFFER, _canvasoperation.tool_lines_count * sizeof(double), _canvasoperation.tool_lines, GL_STREAM_DRAW);
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);

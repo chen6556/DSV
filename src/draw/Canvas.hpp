@@ -30,7 +30,7 @@ private:
     QTextEdit _input_line;
 
     unsigned int _shader_program, _VAO;
-    unsigned int _base_VBO[4]; // 0:origin and select rect 1:cache 2:reflines 3:catched points
+    unsigned int _base_VBO[5]; // 0:origin and select rect 1:cache 2:reflines 3:catched points 4:operation
     unsigned int _shape_VBO[7]; // 0:polyline 1:polygon 2:circle 3:curve 4:text 5:circle printable points 6:curve printable points
     unsigned int _shape_IBO[4]; // 0:polyline 1:polygon 2:circle 3:curve
     unsigned int _text_brush_IBO;
