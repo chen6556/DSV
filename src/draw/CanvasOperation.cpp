@@ -911,10 +911,16 @@ bool EllipseOperation::mouse_press(QMouseEvent *event)
             tool_lines_count = 12;
             break;
         case 2:
-            _parameters[3] = Geo::angle(Geo::Point(_parameters[0], _parameters[1]), Geo::Point(real_pos[0], real_pos[1]));
-            _index = shape_count = tool_lines_count = 0;
-            finish = true;
-            info.clear();
+            {
+                _parameters[3] = Geo::distance(Geo::Point(real_pos[0], real_pos[1]),
+                    Geo::Point(tool_lines[3], tool_lines[4]), Geo::Point(tool_lines[0], tool_lines[1]), true);
+                Geo::Ellipse *ellipse = new Geo::Ellipse(_parameters[0], _parameters[1], _parameters[2], _parameters[3]);
+                ellipse->rotate(_parameters[0], _parameters[1], _parameters[4]);
+                add_geometry(ellipse);
+                _index = shape_count = tool_lines_count = 0;
+                finish = true;
+                info.clear();
+            }
             break;
         default:
             break;
@@ -957,11 +963,12 @@ bool EllipseOperation::mouse_move(QMouseEvent *event)
         break;
     case 2:
         {
-            _parameters[3] = Geo::angle(Geo::Point(_parameters[0], _parameters[1]), Geo::Point(real_pos[0], real_pos[1]));
-            tool_lines[6] = real_pos[0], tool_lines[7] = real_pos[1];
-            tool_lines[9] = _parameters[0] * 2 - real_pos[0], tool_lines[10] = _parameters[1] * 2 - real_pos[1];
+            _parameters[3] = Geo::distance(Geo::Point(real_pos[0], real_pos[1]),
+                Geo::Point(tool_lines[3], tool_lines[4]), Geo::Point(tool_lines[0], tool_lines[1]), true);
             Geo::Ellipse ellipse(_parameters[0], _parameters[1], _parameters[2], _parameters[3]);
             ellipse.rotate(_parameters[0], _parameters[1], _parameters[4]);
+            tool_lines[6] = ellipse.b0().x, tool_lines[7] = ellipse.b0().y;
+            tool_lines[9] = ellipse.b1().x, tool_lines[10] = ellipse.b1().y;
             const Geo::Polyline &path = ellipse.shape();
             shape_count = 0;
             while (shape_len < path.size() * 3)
