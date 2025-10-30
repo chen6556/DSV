@@ -992,6 +992,14 @@ void Editer::append_text(const double x, const double y)
         _current_group, _graph->container_group(_current_group).size(), true));
 }
 
+void Editer::append(Geo::Geometry *object)
+{
+    _graph->append(object, _current_group);
+    _graph->modified = true;
+    _backup.push_command(new UndoStack::ObjectCommand(object, 
+        _current_group, _graph->container_group(_current_group).size(), true));
+}
+
 void Editer::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1, const bool change_shape)
 {
     const double catch_distance = std::max(GlobalSetting::setting().catch_distance, std::pow(GlobalSetting::setting().catch_distance, 2));

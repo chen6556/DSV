@@ -22,9 +22,7 @@ public:
     enum class CatchedPointType {Vertex, Center, Foot, Tangency, Intersection};
 
 private:
-    Geo::Circle _circle_cache;
-    Geo::Ellipse _ellipse_cache;
-    Geo::AABBRect _AABBRect_cache, _select_rect, _visible_area;
+    Geo::AABBRect _select_rect, _visible_area;
     std::list<QLineF> _reflines;
     std::vector<const Geo::Geometry *> _catched_objects;
     Editer *_editer = nullptr;
@@ -172,6 +170,8 @@ public:
 
     void set_info_labels(QLabel **labels);
 
+    void add_geometry(Geo::Geometry *object);
+
     void copy();
 
     void cut();
@@ -181,26 +181,6 @@ public:
     void paste(const double x, const double y);
 
     void rotate(const double rad, const bool unitary, const bool to_all_layers);
-
-    void polyline_cmd(const double x, const double y);
-
-    void polyline_cmd();
-
-    void rect_cmd(const double x, const double y);
-
-    void rect_cmd();
-
-    void circle_cmd(const double x, const double y);
-
-    void circle_cmd(const double x, const double y, const double r);
-
-    void ellipse_cmd(const double x, const double y);
-
-    void ellipse_cmd(const double x, const double y, const double rad, const double a);
-
-    void ellipse_cmd(const double x, const double y, const double rad,  const double a, const double b);
-
-    void text_cmd(const double x, const double y);
 
 
     bool is_visible(const Geo::Point &point) const;
@@ -249,13 +229,7 @@ public:
 
     void refresh_cache_vbo(const unsigned int count);
 
-    void refresh_AABBRect_cache_vbo();
-
     void refresh_reflines_vbo();
-
-    void refresh_circle_cache_vbo();
-
-    void refresh_ellipse_cache_vbo();
 
     void refresh_select_rect_vbo();
 

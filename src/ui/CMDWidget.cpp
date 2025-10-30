@@ -698,7 +698,7 @@ void CMDWidget::polyline()
         ui->parameter_label->clear();
         _editer->point_cache().back() = _editer->point_cache()[_editer->point_cache().size() - 2];
         _editer->point_cache().emplace_back(_editer->point_cache().back());
-        _canvas->polyline_cmd();
+        // _canvas->polyline_cmd();
         break;
     case 2:
         ui->parameter_label->setText((_relative ? "Relative X:" : "Absolute X:") + QString::number(_parameters[1]) + " Y:");
@@ -707,13 +707,13 @@ void CMDWidget::polyline()
         ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
         if (_relative)
         {
-            _canvas->polyline_cmd(_parameters[1] + _last_x, _parameters[2] + _last_y);
+            // _canvas->polyline_cmd(_parameters[1] + _last_x, _parameters[2] + _last_y);
             _last_x += _parameters[1];
             _last_y += _parameters[2];
         }
         else
         {
-            _canvas->polyline_cmd(_parameters[1], _parameters[2]);
+            // _canvas->polyline_cmd(_parameters[1], _parameters[2]);
         }
         _parameters.pop_back();
         _parameters.pop_back();
@@ -738,7 +738,7 @@ void CMDWidget::bspline()
         ui->parameter_label->clear();
         _editer->point_cache().back() = _editer->point_cache()[_editer->point_cache().size() - 2];
         _editer->point_cache().emplace_back(_editer->point_cache().back());
-        _canvas->polyline_cmd();
+        // _canvas->polyline_cmd();
         break;
     case 2:
         ui->parameter_label->setText((_relative ? "Relative X:" : "Absolute X:") + QString::number(_parameters[1]) + " Y:");
@@ -747,13 +747,13 @@ void CMDWidget::bspline()
         ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
         if (_relative)
         {
-            _canvas->polyline_cmd(_parameters[1] + _last_x, _parameters[2] + _last_y);
+            // _canvas->polyline_cmd(_parameters[1] + _last_x, _parameters[2] + _last_y);
             _last_x += _parameters[1];
             _last_y += _parameters[2];
         }
         else
         {
-            _canvas->polyline_cmd(_parameters[1], _parameters[2]);
+            // _canvas->polyline_cmd(_parameters[1], _parameters[2]);
         }
         _parameters.pop_back();
         _parameters.pop_back();
@@ -778,7 +778,7 @@ void CMDWidget::bezier()
         ui->parameter_label->clear();
         _editer->point_cache().back() = _editer->point_cache()[_editer->point_cache().size() - 2];
         _editer->point_cache().emplace_back(_editer->point_cache().back());
-        _canvas->polyline_cmd();
+        // _canvas->polyline_cmd();
         break;
     case 2:
         ui->parameter_label->setText((_relative ? "Relative X:" : "Absolute X:") + QString::number(_parameters[1]) + " Y:");
@@ -787,13 +787,13 @@ void CMDWidget::bezier()
         ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
         if (_relative)
         {
-            _canvas->polyline_cmd(_parameters[1] + _last_x, _parameters[2] + _last_y);
+            // _canvas->polyline_cmd(_parameters[1] + _last_x, _parameters[2] + _last_y);
             _last_x += _parameters[1];
             _last_y += _parameters[2];
         }
         else
         {
-            _canvas->polyline_cmd(_parameters[1], _parameters[2]);
+            // _canvas->polyline_cmd(_parameters[1], _parameters[2]);
         }
         _parameters.pop_back();
         _parameters.pop_back();
@@ -815,7 +815,7 @@ void CMDWidget::text()
         ui->parameter_label->setText("X:" + QString::number(_parameters[0]) + " Y:");
         break;
     case 2:
-        _canvas->text_cmd(_parameters[0], _parameters[1]);
+        // _canvas->text_cmd(_parameters[0], _parameters[1]);
         clear();
         break;
     default:
@@ -833,7 +833,7 @@ void CMDWidget::rectangle()
         ui->parameter_label->setText("X: Y:");
         break;
     case 1:
-        _canvas->rect_cmd();
+        // _canvas->rect_cmd();
         _parameters.emplace_back(0);
         _parameters.emplace_back(0);
         _parameters.emplace_back(0);
@@ -846,18 +846,18 @@ void CMDWidget::rectangle()
         ui->parameter_label->setText("X:" + QString::number(_parameters[1])
             + " Y:" + QString::number(_parameters[2]) + " W: H:");
         _parameters.emplace_back(0);
-        _canvas->rect_cmd(_parameters[1], _parameters[2]);
+        // _canvas->rect_cmd(_parameters[1], _parameters[2]);
         _canvas->update();
         break;
     case 4:
-        _canvas->rect_cmd();
+        // _canvas->rect_cmd();
         clear();
         break;
     case 5:
         ui->parameter_label->setText("W:" + QString::number(_parameters[4]) + " H:");
         break;
     case 6:
-        _canvas->rect_cmd(_parameters[4], _parameters[5]);
+        // _canvas->rect_cmd(_parameters[4], _parameters[5]);
         _canvas->update();
         clear();
         break;
@@ -880,7 +880,7 @@ void CMDWidget::circle()
             const Geo::Point coord(_canvas->mouse_position());
             _parameters.emplace_back(coord.x);
             _parameters.emplace_back(coord.y);
-            _canvas->circle_cmd(_parameters[1], _parameters[2]);
+            // _canvas->circle_cmd(_parameters[1], _parameters[2]);
             ui->parameter_label->setText("X:" + QString::number(_parameters[1])
                 + " Y:" + QString::number(_parameters[2]) + " R:");
         }
@@ -891,10 +891,10 @@ void CMDWidget::circle()
     case 3:
         ui->parameter_label->setText("X:" + QString::number(_parameters[1])
             + " Y:" + QString::number(_parameters[2]) + " R:");
-        _canvas->circle_cmd(_parameters[1], _parameters[2]);
+        // _canvas->circle_cmd(_parameters[1], _parameters[2]);
         break;
     case 4:
-        _canvas->circle_cmd(_parameters[1], _parameters[2], _parameters[3]);
+        // _canvas->circle_cmd(_parameters[1], _parameters[2], _parameters[3]);
         break;
     default:
         break;
@@ -917,7 +917,7 @@ void CMDWidget::ellipse()
             _parameters.emplace_back(0);
             ui->parameter_label->setText("X:" + QString::number(_parameters[1])
             + " Y:" + QString::number(_parameters[2]) + " angle:");
-            _canvas->ellipse_cmd(_parameters[1], _parameters[2]);
+            // _canvas->ellipse_cmd(_parameters[1], _parameters[2]);
         }
         break;
     case 2:
@@ -927,7 +927,7 @@ void CMDWidget::ellipse()
         _parameters.emplace_back(0);
         ui->parameter_label->setText("X:" + QString::number(_parameters[1])
             + " Y:" + QString::number(_parameters[2]) + " angle:");
-        _canvas->ellipse_cmd(_parameters[1], _parameters[2]);
+        // _canvas->ellipse_cmd(_parameters[1], _parameters[2]);
         break;
     case 4:
         {
@@ -937,7 +937,7 @@ void CMDWidget::ellipse()
             _parameters.emplace_back(0);
             _parameters.emplace_back(Geo::distance(coord, center));
             _parameters.emplace_back(0);
-            _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6]);
+            // _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6]);
             ui->parameter_label->setText("X:" + QString::number(_parameters[1])
                 + " Y:" + QString::number(_parameters[2]) + " angle:" + QString::number(_parameters[4])
                 + " a:" + QString::number(_parameters[6]) + " b:");
@@ -959,7 +959,7 @@ void CMDWidget::ellipse()
             ui->parameter_label->setText("X:" + QString::number(_parameters[1])
                 + " Y:" + QString::number(_parameters[2]) + " angle:" + QString::number(_parameters[4])
                 + " a:" + QString::number(_parameters[6]) + " b:");
-            _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6]);
+            // _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6]);
         }
         break;
     case 7:
@@ -968,15 +968,15 @@ void CMDWidget::ellipse()
             ui->parameter_label->setText("X:" + QString::number(_parameters[1])
                 + " Y:" + QString::number(_parameters[2]) + " angle:" + QString::number(_parameters[4])
                 + " a:" + QString::number(_parameters[6]) + " b:");
-            _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6]);
+            // _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6]);
         }
         break;
     case 8:
-        _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6], 
-            Geo::distance(_canvas->mouse_position(), Geo::Point(_parameters[1], _parameters[2])));
+        // _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6], 
+            // Geo::distance(_canvas->mouse_position(), Geo::Point(_parameters[1], _parameters[2])));
         break;
     case 9:
-        _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6], _parameters[8]);
+        // _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6], _parameters[8]);
         break;
     default:
         break;

@@ -19,13 +19,14 @@ namespace CanvasOperations
         BSpline, 
         Bezier, 
         Text, 
-        Ellipse
+        Ellipse,
+
+        End
     };
 
     class CanvasOperation
     {
     public:
-        static const double *matrix;
         static double *shape;
         static double *tool_lines;
         static unsigned int shape_len;
@@ -34,13 +35,16 @@ namespace CanvasOperations
         static unsigned int tool_lines_count;
         static float tool_line_width;
         static double real_pos[2];
+        static double view_ratio;
+        static bool finish;
         static QString info;
+        static std::function<void(Geo::Geometry *)> add_geometry;
 
     private:
-        CanvasOperation *operations[3] = {nullptr};
+        CanvasOperation *operations[static_cast<int>(Tool::End)] = {nullptr};
     
     public:
-        void init(const double *mat);
+        void init(std::function<void(Geo::Geometry *)> func);
 
         void clear();
 
@@ -48,7 +52,9 @@ namespace CanvasOperations
 
         CanvasOperation *operator[](const Tool tool);
 
-        static void calc_real_pos(const double x, const double y);
+        static void check_shape_size();
+
+        static void check_tool_lines_size();
 
         virtual bool mouse_press(QMouseEvent *event);
 
@@ -57,8 +63,6 @@ namespace CanvasOperations
         virtual bool mouse_move(QMouseEvent *event);
 
         virtual bool mouse_double_click(QMouseEvent *event);
-
-        virtual Geo::Geometry *geometry();
 
         virtual void reset();
     };
@@ -94,6 +98,51 @@ namespace CanvasOperations
     };
 
 
+    class Circle0Operation : public CanvasOperation
+    {
+    private:
+        double _parameters[3]; // x, y, r
+        bool _set_center = true;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+    };
+
+
+    class Circle1Operation : public CanvasOperation
+    {
+    private:
+        double _parameters[4]; // x0, y0, x1, y1
+        bool _set_first_point = true;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+    };
+
+
+    class Circle2Operation : public CanvasOperation
+    {
+    private:
+        double _parameters[6]; // x0, y0, x1, y1, x2, y2
+        int _index = 0;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+    };
+
+
     class PolythingOperation : public CanvasOperation
     {
     private:
@@ -105,6 +154,77 @@ namespace CanvasOperations
         bool mouse_move(QMouseEvent *event) override;
 
         bool mouse_double_click(QMouseEvent *event) override;
+
+        void reset() override;
+    };
+
+
+    class RectOperation : public CanvasOperation
+    {
+    private:
+        double _parameters[4];
+        bool _set_first_point = true;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+    };
+
+
+    class BSplineOperation : public CanvasOperation
+    {
+    private:
+        std::vector<Geo::Point> _points;
+        int _order = 3;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        bool mouse_double_click(QMouseEvent *event) override;
+
+        void reset() override;
+    };
+
+
+    class BezierOperation : public CanvasOperation
+    {
+    private:
+        std::vector<Geo::Point> _points;
+        int _order = 3;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        bool mouse_double_click(QMouseEvent *event) override;
+
+        void reset() override;
+    };
+
+
+    class TextOperation : public CanvasOperation
+    {
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+    };
+
+
+    class EllipseOperation : public CanvasOperation
+    {
+    private:
+        double _parameters[5]; // x, y, a, b, angle
+        int _index = 0;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
 
         void reset() override;
     };
