@@ -1,14 +1,16 @@
 #pragma once
+#include <set>
 #include <QString>
 #include <QMouseEvent>
 #include "base/Geometry.hpp"
+#include "base/Editer.hpp"
 
 
 namespace CanvasOperations
 {
     enum class Tool
     {
-        NoTool,
+        Select, 
         Measure, 
         Angle, 
         Circle0, // Center-Radius
@@ -20,6 +22,15 @@ namespace CanvasOperations
         Bezier, 
         Text, 
         Ellipse,
+ 
+        Mirror, 
+        RingArray, 
+        PolygonDifference, 
+        Fillet, 
+        Rotate, 
+        Trim, 
+        Extend, 
+        Split, 
 
         End
     };
@@ -34,17 +45,28 @@ namespace CanvasOperations
         static unsigned int tool_lines_len;
         static unsigned int tool_lines_count;
         static float tool_line_width;
+        static float tool_line_color[4];
         static double real_pos[2];
         static double view_ratio;
         static bool finish;
         static QString info;
+
+        static Editer *editer;
         static std::function<void(Geo::Geometry *)> add_geometry;
+        static std::function<void(const bool)> refresh_vbo_0;
+        static std::function<void(const Geo::Type, const bool)> refresh_vbo_1;
+        static std::function<void(const std::set<Geo::Type> &, const bool)> refresh_vbo_2;
+        static std::function<void(void)> refresh_selected_ibo_0;
+        static std::function<void(const Geo::Geometry *)> refresh_selected_ibo_1;
+        static std::function<void(const std::vector<Geo::Geometry *> &)> refresh_selected_ibo_2;
+        static std::function<void(void)> refresh_selected_vbo;
+        static std::function<void(const double,const double,const double,const double)> refresh_select_rect;
 
     private:
         CanvasOperation *operations[static_cast<int>(Tool::End)] = {nullptr};
     
     public:
-        void init(std::function<void(Geo::Geometry *)> func);
+        void init();
 
         void clear();
 
@@ -65,6 +87,21 @@ namespace CanvasOperations
         virtual bool mouse_double_click(QMouseEvent *event);
 
         virtual void reset();
+    };
+
+
+    class SelectOperation : public CanvasOperation
+    {
+    private:
+        double _pos[2];
+        bool _select = false;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_release(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
     };
 
 
@@ -228,4 +265,7 @@ namespace CanvasOperations
 
         void reset() override;
     };
+
+
+    
 }

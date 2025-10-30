@@ -67,7 +67,7 @@ public:
 
     const size_t selected_count() const;
 
-    std::vector<Geo::Geometry *> select(const Geo::AABBRect &rect);
+    std::vector<Geo::Geometry *> select(const Geo::AABBRect &rect, const bool reset_others = true);
 
     void reset_selected_mark(const bool value = false);
 

@@ -22,7 +22,7 @@ public:
     enum class CatchedPointType {Vertex, Center, Foot, Tangency, Intersection};
 
 private:
-    Geo::AABBRect _select_rect, _visible_area;
+    Geo::AABBRect _visible_area;
     std::list<QLineF> _reflines;
     std::vector<const Geo::Geometry *> _catched_objects;
     Editer *_editer = nullptr;
@@ -41,7 +41,7 @@ private:
     unsigned int _brush_index_count[3] = {0, 0, 0}; // 0:polygon brush 1:circle brush 2:text brush
     unsigned int _selected_index_count[4] = {0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve
     double *_cache = nullptr;
-    size_t _cache_len = 513, _cache_count = 0;
+    unsigned int _cache_len = 513, _cache_count = 0;
     double _refline_points[30];
     double _catchline_points[24];
     
@@ -53,16 +53,17 @@ private:
     double _view_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
     double _ratio = 1; // 缩放系数
     int _canvas_width = 0, _canvas_height = 0;
-    size_t _curve_order = 3; // 曲线次数
+    int _curve_order = 3; // 曲线次数
 
     // 0:可移动视图 1:可绘图 2:正在绘图 3:测量 4:可移动单个object 5:选中一个obj 6:正在移动obj 7:显示坐标原点 8:显示捕捉点
     bool _bool_flags[9] = {false, false, false, false, false, false, false, true, false};
 
     // Head, (vector,) tail
     int _measure_angle_flag = 0;
+    double _select_rect[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     // 0:current_tool, 1:last_tool
-    CanvasOperations::Tool _tool_flags[2] = {CanvasOperations::Tool::NoTool, CanvasOperations::Tool::NoTool};
+    CanvasOperations::Tool _tool_flags[2] = {CanvasOperations::Tool::Select, CanvasOperations::Tool::Select};
     Operation _operation = Operation::NoOperation;
     CanvasOperations::CanvasOperation _canvasoperation;
 
@@ -79,6 +80,8 @@ private:
 
 private:
     void init();
+
+    void bind_operations_callback();
 
 protected:
     void initializeGL();
@@ -231,7 +234,7 @@ public:
 
     void refresh_reflines_vbo();
 
-    void refresh_select_rect_vbo();
+    void refresh_select_rect(const double x0, const double y0, const double x1, const double y1);
 
     void clear_cache();
 

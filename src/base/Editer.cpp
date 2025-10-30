@@ -594,12 +594,17 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
     return std::make_tuple(nullptr, false);
 }
 
-std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
+std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const bool reset_others)
 {
     std::vector<Geo::Geometry *> result;
     if (rect.empty() || _graph == nullptr || _graph->empty())
     {
         return result;
+    }
+
+    if (reset_others)
+    {
+        reset_selected_mark();
     }
 
     if (const size_t count = _graph->container_group(_current_group).size(); count < 2000)
@@ -5670,6 +5675,11 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
     for (size_t i = start; i < end; ++i)
     {
         Geo::Geometry *container = _graph->container_group(_current_group)[i];
+        if (container->is_selected)
+        {
+            result->push_back(container);
+            continue;
+        }
         switch (container->type())
         {
         case Geo::Type::TEXT:
@@ -5678,20 +5688,12 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
                 container->is_selected = true;
                 result->push_back(container);
             }
-            else
-            {
-                container->is_selected = false;
-            }
             break;
         case Geo::Type::POLYGON:
             if (Geo::is_intersected(rect, *static_cast<Geo::Polygon *>(container)))
             {
                 container->is_selected = true;
                 result->push_back(container);
-            }
-            else
-            {
-                container->is_selected = false;
             }
             break;
         case Geo::Type::CIRCLE:
@@ -5700,20 +5702,12 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
                 container->is_selected = true;
                 result->push_back(container);
             }
-            else
-            {
-                container->is_selected = false;
-            }
             break;
         case Geo::Type::ELLIPSE:
             if (Geo::is_intersected(rect, *static_cast<Geo::Ellipse *>(container)))
             {
                 container->is_selected = true;
                 result->push_back(container);
-            }
-            else
-            {
-                container->is_selected = false;
             }
             break;
         case Geo::Type::COMBINATION:
@@ -5779,10 +5773,6 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
                     container->is_selected = true;
                     result->push_back(container);
                 }
-                else
-                {
-                    container->is_selected = false;
-                }
             }
             break;
         case Geo::Type::POLYLINE:
@@ -5790,11 +5780,7 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
             {
                 container->is_selected = true;
                 result->push_back(container);
-            }
-            else
-            {
-                container->is_selected = false;
-            }
+            } 
             break;
         case Geo::Type::BEZIER:
             if (Geo::is_intersected(rect, static_cast<Geo::Bezier *>(container)->shape()))
@@ -5802,20 +5788,12 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
                 container->is_selected = true;
                 result->push_back(container);
             }
-            else
-            {
-                container->is_selected = false;
-            }
             break;
         case Geo::Type::BSPLINE:
             if (Geo::is_intersected(rect, static_cast<Geo::BSpline *>(container)->shape()))
             {
                 container->is_selected = true;
                 result->push_back(container);
-            }
-            else
-            {
-                container->is_selected = false;
             }
             break;
         default:

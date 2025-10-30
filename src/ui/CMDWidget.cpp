@@ -67,7 +67,7 @@ void CMDWidget::refresh_tool(const CanvasOperations::Tool tool)
 {
     switch (tool)
     {
-    case CanvasOperations::Tool::NoTool:
+    case CanvasOperations::Tool::Select:
         clear();
         break;
     default:
@@ -593,7 +593,7 @@ bool CMDWidget::get_cmd()
     else
     {
         _canvas->set_operation(Canvas::Operation::NoOperation);
-        _canvas->use_tool(CanvasOperations::Tool::NoTool);
+        _canvas->use_tool(CanvasOperations::Tool::Select);
         _current_cmd = result->second;
         return true;
     }
@@ -1225,7 +1225,7 @@ void CMDWidget::ring_array()
         _parameters.clear();
         ui->parameter_label->clear();
         ui->cmd_label->clear();
-        emit _canvas->tool_changed(CanvasOperations::Tool::NoTool);
+        emit _canvas->tool_changed(CanvasOperations::Tool::Select);
         _current_cmd = CMD::Error_CMD;
         break;
     default:

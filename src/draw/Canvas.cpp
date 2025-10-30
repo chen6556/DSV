@@ -24,11 +24,10 @@ Canvas::~Canvas()
 
 void Canvas::init()
 {
-    _canvasoperation.init(std::bind(&Canvas::add_geometry, this, std::placeholders::_1));
+    bind_operations_callback();
 
     _cache = new double[_cache_len];
     _input_line.hide();
-    _select_rect.clear();
 
     _menu = new QMenu(this);
     _up = new QAction("Up");
@@ -37,9 +36,38 @@ void Canvas::init()
     _menu->addAction(_down);
 }
 
+void Canvas::bind_operations_callback()
+{
+    _canvasoperation.init();
+    CanvasOperations::CanvasOperation::add_geometry =
+        std::bind(&Canvas::add_geometry, this, std::placeholders::_1);
+    CanvasOperations::CanvasOperation::refresh_vbo_0 =
+        std::bind(static_cast<void(Canvas::*)(const bool)>(&Canvas::refresh_vbo), this, std::placeholders::_1);
+    CanvasOperations::CanvasOperation::refresh_vbo_1 =
+        std::bind(static_cast<void(Canvas::*)(const Geo::Type, const bool)>(&Canvas::refresh_vbo),
+            this, std::placeholders::_1, std::placeholders::_2);
+    CanvasOperations::CanvasOperation::refresh_vbo_2 =
+        std::bind(static_cast<void(Canvas::*)(const std::set<Geo::Type> &, const bool)>(&Canvas::refresh_vbo),
+            this, std::placeholders::_1, std::placeholders::_2);
+    CanvasOperations::CanvasOperation::refresh_selected_ibo_0 =
+        std::bind(static_cast<void(Canvas::*)(void)>(&Canvas::refresh_selected_ibo), this);
+    CanvasOperations::CanvasOperation::refresh_selected_ibo_1 =
+        std::bind(static_cast<void(Canvas::*)(const Geo::Geometry *)>(&Canvas::refresh_selected_ibo),
+            this, std::placeholders::_1);
+    CanvasOperations::CanvasOperation::refresh_selected_ibo_2 =
+        std::bind(static_cast<void(Canvas::*)(const std::vector<Geo::Geometry *> &)>(&Canvas::refresh_selected_ibo),
+            this, std::placeholders::_1);
+    CanvasOperations::CanvasOperation::refresh_selected_vbo =
+        std::bind(&Canvas::refresh_selected_vbo, this);
+    CanvasOperations::CanvasOperation::refresh_select_rect =
+        std::bind(&Canvas::refresh_select_rect, this, std::placeholders::_1, std::placeholders::_2,
+            std::placeholders::_3, std::placeholders::_4);
+}
+
 void Canvas::bind_editer(Editer *editer)
 {
     _editer = editer;
+    CanvasOperations::CanvasOperation::editer = editer;
 }
 
 
@@ -305,7 +333,8 @@ void Canvas::paintGL()
         glBufferData(GL_ARRAY_BUFFER, _canvasoperation.tool_lines_count * sizeof(double), _canvasoperation.tool_lines, GL_STREAM_DRAW);
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
-        glUniform4f(_uniforms[4], 1.0f, 0.549f, 0.0f, 1.0f); // color
+        glUniform4f(_uniforms[4], _canvasoperation.tool_line_color[0], _canvasoperation.tool_line_color[1],
+            _canvasoperation.tool_line_color[2], _canvasoperation.tool_line_color[3]); // color
         glDrawArrays(GL_LINES, 0, _canvasoperation.tool_lines_count / 3);
     }
 
@@ -323,7 +352,7 @@ void Canvas::paintGL()
         glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 0.549f); // color
     }
 
-    if (_bool_flags[7] || (!_select_rect.empty() && _select_rect[0] != _select_rect[2]))
+    if (_bool_flags[7] || _select_rect[0] != _select_rect[6] || _select_rect[1] != _select_rect[7])
     {
         glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[0]); // origin and select rect
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
@@ -335,8 +364,10 @@ void Canvas::paintGL()
             glDrawArrays(GL_LINES, 0, 4);
         }
 
-        if (!_select_rect.empty() && _select_rect[0] != _select_rect[2])
+        if (_select_rect[0] != _select_rect[6] || _select_rect[1] != _select_rect[7])
         {
+            glBufferSubData(GL_ARRAY_BUFFER, 12 * sizeof(double), 12 * sizeof(double), _select_rect);
+
             glUniform4f(_uniforms[4], 0.0f, 0.47f, 0.843f, 0.1f); // color
             glDrawArrays(GL_POLYGON, 4, 4);
 
@@ -370,7 +401,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         _info_labels[1]->setText(_canvasoperation.info);
         if (_canvasoperation.finish)
         {
-            use_tool(CanvasOperations::Tool::NoTool);
+            use_tool(CanvasOperations::Tool::Select);
         }
         update();
         return QOpenGLWidget::mousePressEvent(event);
@@ -404,7 +435,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     refresh_vbo(types, true);
                     refresh_selected_ibo();
                 }
-                emit tool_changed(CanvasOperations::Tool::NoTool);
+                emit tool_changed(CanvasOperations::Tool::Select);
                 _object_cache.clear();
                 update();
                 return QOpenGLWidget::mousePressEvent(event);
@@ -455,7 +486,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 _editer->reset_selected_mark();
                 std::fill_n(_selected_index_count, 4, 0);
                 _cache_count = 0;
-                _select_rect = Geo::AABBRect(real_x1, real_y1, real_x1, real_y1);
+                // _select_rect = Geo::AABBRect(real_x1, real_y1, real_x1, real_y1);
                 _points_cache.clear();
                 _points_cache.emplace_back(real_x1, real_y1);
                 _bool_flags[5] = false; // is obj selected
@@ -464,24 +495,16 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 {
                 case Operation::Mirror:
                     _operation = Operation::NoOperation;
-                    emit tool_changed(CanvasOperations::Tool::NoTool);
+                    emit tool_changed(CanvasOperations::Tool::Select);
                     _object_cache.clear();
                     break;
                 case Operation::PolygonDifference:
                     _operation = Operation::NoOperation;
-                    emit tool_changed(CanvasOperations::Tool::NoTool);
+                    emit tool_changed(CanvasOperations::Tool::Select);
                     _object_cache.clear();
                     break;
                 default:
                     break;
-                }
-
-                if (CanvasOperations::CanvasOperation *op = _canvasoperation[_tool_flags[0]];
-                    op != nullptr && op->mouse_press(event))
-                {
-                    _info_labels[1]->setText(_canvasoperation.info);
-                    update();
-                    return QOpenGLWidget::mousePressEvent(event);
                 }
 
                 if (_input_line.isVisible() && _last_clicked_obj != nullptr)
@@ -538,7 +561,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     }
                     _object_cache.clear();
                     _operation = Operation::NoOperation;
-                    emit tool_changed(CanvasOperations::Tool::NoTool);
+                    emit tool_changed(CanvasOperations::Tool::Select);
                     update();
                     return QOpenGLWidget::mousePressEvent(event);
                 case Operation::PolygonDifference:
@@ -549,7 +572,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                         refresh_selected_ibo();
                     }
                     _object_cache.clear();
-                    emit tool_changed(CanvasOperations::Tool::NoTool);
+                    emit tool_changed(CanvasOperations::Tool::Select);
                     _operation = Operation::NoOperation;
                     update();
                     return QOpenGLWidget::mousePressEvent(event);
@@ -680,7 +703,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         }
         break;
     case Qt::RightButton:
-        if (_tool_flags[0] == CanvasOperations::Tool::NoTool)
+        if (_tool_flags[0] == CanvasOperations::Tool::Select)
         {
             _operation = Operation::NoOperation;
             _object_cache.clear();
@@ -712,7 +735,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                     }
                 }
             }
-            use_tool(CanvasOperations::Tool::NoTool);
+            use_tool(CanvasOperations::Tool::Select);
         }
         else
         {
@@ -753,7 +776,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         _info_labels[1]->setText(_canvasoperation.info);
         if (_canvasoperation.finish)
         {
-            use_tool(CanvasOperations::Tool::NoTool);
+            use_tool(CanvasOperations::Tool::Select);
         }
         update();
         return QOpenGLWidget::mouseReleaseEvent(event);
@@ -764,7 +787,6 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
     case Qt::LeftButton:
         _bool_flags[4] = false; // is obj moveable
         {
-            _select_rect.clear();
             if (_tool_flags[0] != CanvasOperations::Tool::Measure && _tool_flags[0] != CanvasOperations::Tool::Angle)
             {
                 _info_labels[1]->clear();
@@ -879,7 +901,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         _info_labels[1]->setText(_canvasoperation.info);
         if (_canvasoperation.finish)
         {
-            use_tool(CanvasOperations::Tool::NoTool);
+            use_tool(CanvasOperations::Tool::Select);
         }
         update();
         return QOpenGLWidget::mouseMoveEvent(event);
@@ -966,18 +988,18 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
             }
             _info_labels[1]->clear();
         }
-        else if (!_select_rect.empty())
-        {
-            _select_rect = Geo::AABBRect(_points_cache.back().x, _points_cache.back().y, real_x1, real_y1);
-            refresh_select_rect_vbo();
-            if (std::vector<Geo::Geometry *> objects = _editer->select(_select_rect); !objects.empty())
-            {
-                refresh_selected_ibo(objects);
-                _cache_count = 0; // 框选时不显示BSpline路径线和Bezier控制线
-            }
-            _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _points_cache.back().x)))
-                .append(" Height:").append(std::to_string(std::abs(real_y1 - _points_cache.back().y))).c_str());
-        }
+        // else if (!_select_rect.empty())
+        // {
+        //     _select_rect = Geo::AABBRect(_points_cache.back().x, _points_cache.back().y, real_x1, real_y1);
+        //     refresh_select_rect_vbo();
+        //     if (std::vector<Geo::Geometry *> objects = _editer->select(_select_rect); !objects.empty())
+        //     {
+        //         refresh_selected_ibo(objects);
+        //         _cache_count = 0; // 框选时不显示BSpline路径线和Bezier控制线
+        //     }
+        //     _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _points_cache.back().x)))
+        //         .append(" Height:").append(std::to_string(std::abs(real_y1 - _points_cache.back().y))).c_str());
+        // }
         if (CanvasOperations::CanvasOperation *op = _canvasoperation[_tool_flags[0]];
             op != nullptr && op->mouse_move(event))
         {
@@ -1062,7 +1084,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
     {
         if (_canvasoperation.finish)
         {
-            use_tool(CanvasOperations::Tool::NoTool);
+            use_tool(CanvasOperations::Tool::Select);
         }
         update();
         return QOpenGLWidget::mouseDoubleClickEvent(event);
@@ -1182,12 +1204,12 @@ void Canvas::use_tool(const CanvasOperations::Tool tool)
 {
     _tool_flags[1] = _tool_flags[0];
     _tool_flags[0] = tool;
-    _bool_flags[1] = (tool != CanvasOperations::Tool::NoTool
+    _bool_flags[1] = (tool != CanvasOperations::Tool::Select
         && tool != CanvasOperations::Tool::Measure && tool != CanvasOperations::Tool::Angle); // paintable
     _bool_flags[2] = false; // painting
 
     _canvasoperation.clear();
-    _canvasoperation.finish = tool == CanvasOperations::Tool::NoTool;
+    _canvasoperation.finish = tool == CanvasOperations::Tool::Select;
     _cache_count = 0;
 
     _measure_angle_flag = 0;
@@ -1395,7 +1417,7 @@ void Canvas::cancel_painting()
     _bool_flags[1] = false; // paintable
     _bool_flags[2] = false; // painting
     _tool_flags[1] = _tool_flags[0];
-    _tool_flags[0] = CanvasOperations::Tool::NoTool;
+    _tool_flags[0] = CanvasOperations::Tool::Select;
 
     _editer->point_cache().clear();
     _canvasoperation.clear();
@@ -1422,8 +1444,8 @@ void Canvas::use_last_tool()
     _info_labels[1]->clear();
     _bool_flags[1] = (_tool_flags[0] != CanvasOperations::Tool::Measure && _tool_flags[0] != CanvasOperations::Tool::Angle); // paintable
     _canvasoperation.clear();
-    _canvasoperation.finish = _tool_flags[0] == CanvasOperations::Tool::NoTool;
-    if (_tool_flags[0] == CanvasOperations::Tool::NoTool)
+    _canvasoperation.finish = _tool_flags[0] == CanvasOperations::Tool::Select;
+    if (_tool_flags[0] == CanvasOperations::Tool::Select)
     {
         cancel_painting();
     }
@@ -2924,20 +2946,12 @@ void Canvas::refresh_reflines_vbo()
     doneCurrent();
 }
 
-void Canvas::refresh_select_rect_vbo()
+void Canvas::refresh_select_rect(const double x0, const double y0, const double x1, const double y1)
 {
-    double data[12];
-    for (int i = 0; i < 4; ++i)
-    {
-        data[i * 3] = _select_rect[i].x;
-        data[i * 3 + 1] = _select_rect[i].y;
-        data[i * 3 + 2] = 0;
-    }
-
-    makeCurrent();
-    glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[0]); // origin and select rect
-    glBufferSubData(GL_ARRAY_BUFFER, 12 * sizeof(double), 12 * sizeof(double), data);
-    doneCurrent();
+    _select_rect[0] = x0, _select_rect[1] = y0;
+    _select_rect[3] = x1, _select_rect[4] = y0;
+    _select_rect[6] = x1, _select_rect[7] = y1;
+    _select_rect[9] = x0, _select_rect[10] = y1;
 }
 
 void Canvas::clear_cache()

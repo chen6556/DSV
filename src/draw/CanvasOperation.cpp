@@ -13,18 +13,28 @@ unsigned int CanvasOperation::shape_count = 0;
 unsigned int CanvasOperation::tool_lines_len = 63;
 unsigned int CanvasOperation::tool_lines_count = 0;
 float CanvasOperation::tool_line_width = 1.4f;
+float CanvasOperation::tool_line_color[4] = {1.0f, 0.549f, 0.0f, 1.0f};
 double CanvasOperation::real_pos[2];
 double CanvasOperation::view_ratio = 1;
 bool CanvasOperation::finish = false;
 QString CanvasOperation::info;
+Editer *CanvasOperation::editer = nullptr;
 std::function<void(Geo::Geometry *)> CanvasOperation::add_geometry;
+std::function<void(const bool)> CanvasOperation::refresh_vbo_0;
+std::function<void(const Geo::Type, const bool)> CanvasOperation::refresh_vbo_1;
+std::function<void(const std::set<Geo::Type> &, const bool)> CanvasOperation::refresh_vbo_2;
+std::function<void(void)> CanvasOperation::refresh_selected_ibo_0;
+std::function<void(const Geo::Geometry *)> CanvasOperation::refresh_selected_ibo_1;
+std::function<void(const std::vector<Geo::Geometry *> &)> CanvasOperation::refresh_selected_ibo_2;
+std::function<void(void)> CanvasOperation::refresh_selected_vbo;
+std::function<void(const double,const double,const double,const double)> CanvasOperation::refresh_select_rect;
 
-void CanvasOperation::init(std::function<void(Geo::Geometry *)> func)
+void CanvasOperation::init()
 {
-    add_geometry = func;
     std::fill_n(shape, shape_len, 0);
     std::fill_n(tool_lines, tool_lines_len, 0);
 
+    operations[static_cast<int>(Tool::Select)] = new SelectOperation();
     operations[static_cast<int>(Tool::Measure)] = new MeasureOperation();
     operations[static_cast<int>(Tool::Angle)] = new AngleOperation();
     operations[static_cast<int>(Tool::Circle0)] = new Circle0Operation();
@@ -109,6 +119,58 @@ bool CanvasOperation::mouse_double_click(QMouseEvent *event)
 }
 
 void CanvasOperation::reset() {}
+
+
+bool SelectOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        _select = true;
+        _pos[0] = real_pos[0], _pos[1] = real_pos[1];
+        if (const Geo::Geometry * object = editer->select(_pos[0], _pos[1],
+            event->modifiers() != Qt::KeyboardModifier::ControlModifier); object == nullptr)
+        {
+            if (event->modifiers() != Qt::KeyboardModifier::ControlModifier)
+            {
+                editer->reset_selected_mark();
+            }
+        }
+        refresh_selected_ibo_0();
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool SelectOperation::mouse_release(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        refresh_select_rect(0, 0, 0, 0);
+        _select = false;
+    }
+    return false;
+}
+
+bool SelectOperation::mouse_move(QMouseEvent *event)
+{
+    if (_select)
+    {
+        refresh_select_rect(_pos[0], _pos[1], real_pos[0], real_pos[1]);
+        if (std::vector<Geo::Geometry *> objects = editer->select(Geo::AABBRect(_pos[0], _pos[1], real_pos[0], real_pos[1]),
+            event->modifiers() != Qt::KeyboardModifier::ControlModifier); !objects.empty())
+        {
+            refresh_selected_ibo_2(objects);
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
 
 
 bool MeasureOperation::mouse_press(QMouseEvent *event)
