@@ -667,14 +667,17 @@ bool BSplineOperation::mouse_press(QMouseEvent *event)
         {
             _order = GlobalSetting::setting().ui->curve_spb->value();
             _points.emplace_back(real_pos[0], real_pos[1]);
-            tool_lines[0] = real_pos[0];
-            tool_lines[1] = real_pos[1];
-            tool_lines_count = 3;
+            tool_lines_count = 0;
         }
+        tool_lines[tool_lines_count++] = _points.back().x;
+        tool_lines[tool_lines_count++] = _points.back().y;
+        ++tool_lines_count;
+        check_tool_lines_size();
         _points.emplace_back(real_pos[0], real_pos[1]);
         tool_lines[tool_lines_count++] = real_pos[0];
         tool_lines[tool_lines_count++] = real_pos[1];
         ++tool_lines_count;
+        check_tool_lines_size();
 
         if (_points.size() > 2)
         {
@@ -744,8 +747,9 @@ bool BSplineOperation::mouse_double_click(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
-        if (_points.size() > 3)
+        if (_points.size() > 4)
         {
+            _points.pop_back();
             _points.pop_back();
             if (_order == 3)
             {
@@ -781,16 +785,19 @@ bool BezierOperation::mouse_press(QMouseEvent *event)
         {
             _order = GlobalSetting::setting().ui->curve_spb->value();
             _points.emplace_back(real_pos[0], real_pos[1]);
-            tool_lines[0] = real_pos[0];
-            tool_lines[1] = real_pos[1];
-            tool_lines_count = 3;
+            tool_lines_count = 0;
         }
+        tool_lines[tool_lines_count++] = _points.back().x;
+        tool_lines[tool_lines_count++] = _points.back().y;
+        ++tool_lines_count;
+        check_tool_lines_size();
         _points.emplace_back(real_pos[0], real_pos[1]);
         tool_lines[tool_lines_count++] = real_pos[0];
         tool_lines[tool_lines_count++] = real_pos[1];
         ++tool_lines_count;
+        check_tool_lines_size();
 
-        if (_points.size() > 2)
+        if (_points.size() > 3)
         {
             shape_count = 0;
             const Geo::Polyline path = Geo::Bezier(_points.begin(), _points.end(), _order, true).shape();
@@ -827,7 +834,7 @@ bool BezierOperation::mouse_move(QMouseEvent *event)
         tool_lines[tool_lines_count - 3] = real_pos[0];
         tool_lines[tool_lines_count - 2] = real_pos[1];
         _points.back().x = real_pos[0], _points.back().y = real_pos[1];
-        if (_points.size() > 2)
+        if (_points.size() > 3)
         {
             shape_count = 0;
             const Geo::Polyline path = Geo::Bezier(_points.begin(), _points.end(), _order, true).shape();
@@ -855,8 +862,9 @@ bool BezierOperation::mouse_double_click(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
-        if (_points.size() > 3)
+        if (_points.size() > 4)
         {
+            _points.pop_back();
             _points.pop_back();
             add_geometry(new Geo::Bezier(_points.begin(), _points.end(), _order, true));
         }
