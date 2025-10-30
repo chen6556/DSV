@@ -581,7 +581,7 @@ bool RectOperation::mouse_press(QMouseEvent *event)
         {
             _parameters[2] = real_pos[0], _parameters[3] = real_pos[1];
             add_geometry(new Geo::Polygon(Geo::AABBRect(_parameters[0],
-                _parameters[1], _parameters[3], _parameters[4])));
+                _parameters[1], _parameters[2], _parameters[3])));
             shape_count = 0;
             finish = true;
             info.clear();
@@ -645,7 +645,7 @@ bool RectOperation::mouse_move(QMouseEvent *event)
         shape[0] = _parameters[0], shape[1] = _parameters[1];
         shape[3] = _parameters[2], shape[4] = _parameters[1];
         shape[6] = _parameters[2], shape[7] = _parameters[3];
-        shape[9] = _parameters[0], shape[10] = _parameters[1];
+        shape[9] = _parameters[0], shape[10] = _parameters[3];
         shape[12] = _parameters[0], shape[13] = _parameters[1];
         info = QString("Width:%1 Height:%2").arg(std::abs(_parameters[0]
             - _parameters[2])).arg(std::abs(_parameters[1] - _parameters[3]));
