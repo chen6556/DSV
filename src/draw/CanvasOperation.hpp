@@ -296,4 +296,11 @@ namespace CanvasOperations
     public:
         bool mouse_press(QMouseEvent *event) override;
     };
+
+
+    class RingArrayOperation : public CanvasOperation
+    {
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+    };
 }

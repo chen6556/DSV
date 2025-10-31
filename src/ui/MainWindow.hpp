@@ -111,8 +111,6 @@ private slots:
 
     void line_array();
 
-    void ring_array();
-
 
     void polygon_union();
 

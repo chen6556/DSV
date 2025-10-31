@@ -375,6 +375,10 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_press(event))
     {
         _info_labels[1]->setText(CanvasOperations::CanvasOperation::info);
+        if (CanvasOperations::CanvasOperation::tool[0] == CanvasOperations::Tool::Select)
+        {
+            emit tool_changed(CanvasOperations::Tool::Select);
+        }
         update();
         return QOpenGLWidget::mousePressEvent(event);
     }
@@ -387,26 +391,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             {
             case Operation::RingArray:
                 _operation = Operation::NoOperation;
-                if (_editer->ring_array(_object_cache, real_x1, real_y1, GlobalSetting::setting().ui->array_item->value()))
-                {
-                    std::set<Geo::Type> types;
-                    for (const Geo::Geometry *object : _object_cache)
-                    {
-                        if (const Combination *combination = dynamic_cast<const Combination *>(object))
-                        {
-                            for (const Geo::Geometry *item : *combination)
-                            {
-                                types.insert(item->type());
-                            }
-                        }
-                        else
-                        {
-                            types.insert(object->type());
-                        }
-                    }
-                    refresh_vbo(types, true);
-                    refresh_selected_ibo();
-                }
+                
                 emit tool_changed(CanvasOperations::Tool::Select);
                 _object_cache.clear();
                 update();
@@ -711,6 +696,10 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_release(event))
     {
         _info_labels[1]->setText(CanvasOperations::CanvasOperation::info);
+        if (CanvasOperations::CanvasOperation::tool[0] == CanvasOperations::Tool::Select)
+        {
+            emit tool_changed(CanvasOperations::Tool::Select);
+        }
         update();
         return QOpenGLWidget::mouseReleaseEvent(event);
     }
@@ -818,6 +807,10 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_move(event))
     {
         _info_labels[1]->setText(CanvasOperations::CanvasOperation::info);
+        if (CanvasOperations::CanvasOperation::tool[0] == CanvasOperations::Tool::Select)
+        {
+            emit tool_changed(CanvasOperations::Tool::Select);
+        }
         update();
         return QOpenGLWidget::mouseMoveEvent(event);
     }
@@ -838,12 +831,6 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                     _cache[7] = real_y1;
                 }
             }
-        }
-        else if (is_obj_moveable())
-        {
-            _bool_flags[6] = true; // is moving obj
-            
-            _info_labels[1]->clear();
         }
         update();
     }
@@ -921,6 +908,10 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
         CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_double_click(event))
     {
         update();
+        if (CanvasOperations::CanvasOperation::tool[0] == CanvasOperations::Tool::Select)
+        {
+            emit tool_changed(CanvasOperations::Tool::Select);
+        }
         return QOpenGLWidget::mouseDoubleClickEvent(event);
     }
 

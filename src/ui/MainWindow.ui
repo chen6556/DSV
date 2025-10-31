@@ -2545,22 +2545,6 @@ QComboBox QAbstractItemView::item:selected
    </hints>
   </connection>
   <connection>
-   <sender>ring_array_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>ring_array()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>474</x>
-     <y>370</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>479</x>
-     <y>299</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>close_file</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
@@ -2943,7 +2927,6 @@ QComboBox QAbstractItemView::item:selected
   <slot>to_main_page()</slot>
   <slot>to_array_page()</slot>
   <slot>line_array()</slot>
-  <slot>ring_array()</slot>
   <slot>close_file()</slot>
   <slot>show_data_panel()</slot>
   <slot>offset()</slot>
