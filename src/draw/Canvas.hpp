@@ -52,8 +52,6 @@ private:
 
     // 0:可移动视图 1:显示坐标原点 2:显示捕捉点
     bool _bool_flags[3] = {false, true, false};
-
-    // Head, (vector,) tail
     double _select_rect[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     QPointF _mouse_pos_0, _mouse_pos_1;
