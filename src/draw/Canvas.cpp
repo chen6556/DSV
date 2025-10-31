@@ -465,11 +465,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
                 switch (_operation)
                 {
-                case Operation::Mirror:
-                    _operation = Operation::NoOperation;
-                    emit tool_changed(CanvasOperations::Tool::Select);
-                    _object_cache.clear();
-                    break;
                 case Operation::PolygonDifference:
                     _operation = Operation::NoOperation;
                     emit tool_changed(CanvasOperations::Tool::Select);
@@ -505,32 +500,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
                 switch (_operation)
                 {
-                case Operation::Mirror:
-                    if (_editer->mirror(_object_cache, _clicked_obj, event->modifiers() == Qt::ControlModifier))
-                    {
-                        std::set<Geo::Type> types;
-                        for (const Geo::Geometry *object : _object_cache)
-                        {
-                            if (const Combination *combination = dynamic_cast<const Combination *>(object))
-                            {
-                                for (const Geo::Geometry *item : *combination)
-                                {
-                                    types.insert(item->type());
-                                }
-                            }
-                            else
-                            {
-                                types.insert(object->type());
-                            }
-                        }
-                        refresh_vbo(types, true);
-                        refresh_selected_ibo();
-                    }
-                    _object_cache.clear();
-                    _operation = Operation::NoOperation;
-                    emit tool_changed(CanvasOperations::Tool::Select);
-                    update();
-                    return QOpenGLWidget::mousePressEvent(event);
                 case Operation::PolygonDifference:
                     if (_editer->polygon_difference(dynamic_cast<Geo::Polygon *>(_last_clicked_obj), 
                         dynamic_cast<const Geo::Polygon *>(_clicked_obj)))

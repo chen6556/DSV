@@ -102,8 +102,6 @@ private slots:
 
     void flip_y();
 
-    void mirror();
-
     void scale();
 
     void offset();

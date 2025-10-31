@@ -60,7 +60,6 @@ namespace CanvasOperations
         static Canvas *canvas;
 
     protected:
-        static std::vector<Geo::Geometry *> selected_objects;
         static Geo::Geometry *clicked_object;
 
     private:
@@ -292,5 +291,9 @@ namespace CanvasOperations
     };
 
 
-
+    class MirrorOperation : public CanvasOperation
+    {
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+    };
 }

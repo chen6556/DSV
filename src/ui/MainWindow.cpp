@@ -66,6 +66,7 @@ void MainWindow::init()
     QObject::connect(ui->bezier_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Bezier); });
     QObject::connect(ui->curve_spb, &QSpinBox::valueChanged, ui->canvas, &Canvas::set_curve_order);
     QObject::connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Text); });
+    QObject::connect(ui->mirror_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Mirror); });
     // QObject::connect(ui->rotate_btn, &QPushButton::clicked, [this]() { ui->canvas->set_operation(Canvas::Operation::Rotate); });
     QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
@@ -537,6 +538,9 @@ void MainWindow::refresh_tool_label(const CanvasOperations::Tool tool)
     case CanvasOperations::Tool::Text:
         ui->current_tool->setText("Text");
         break;
+    case CanvasOperations::Tool::Mirror:
+        ui->current_tool->setText("Mirror");
+        break;
     default:
         ui->current_tool->clear();
         ui->array_tool->clear();
@@ -885,12 +889,6 @@ void MainWindow::flip_y()
         ui->canvas->refresh_cache_vbo(0);
     }
     ui->canvas->update();
-}
-
-void MainWindow::mirror()
-{
-    ui->current_tool->setText("Mirror");
-    ui->canvas->set_operation(Canvas::Operation::Mirror);
 }
 
 void MainWindow::scale()

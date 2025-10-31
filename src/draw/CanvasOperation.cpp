@@ -24,7 +24,6 @@ QString CanvasOperation::info;
 Editer *CanvasOperation::editer = nullptr;
 Canvas *CanvasOperation::canvas = nullptr;
 
-std::vector<Geo::Geometry *> CanvasOperation::selected_objects;
 Geo::Geometry *CanvasOperation::clicked_object = nullptr;
 
 
@@ -53,6 +52,7 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::Bezier)] = new BezierOperation();
     operations[static_cast<int>(Tool::Text)] = new TextOperation();
     operations[static_cast<int>(Tool::Ellipse)] = new EllipseOperation();
+    operations[static_cast<int>(Tool::Mirror)] = new MirrorOperation();
 }
 
 void CanvasOperation::clear()
@@ -68,7 +68,7 @@ void CanvasOperation::clear()
     shape_count = tool_lines_count = 0;
     tool[0] = Tool::Select;
     info.clear();
-    selected_objects.clear();
+    // selected_objects.clear();
     clicked_object = nullptr;
 }
 
@@ -181,12 +181,11 @@ bool SelectOperation::mouse_press(QMouseEvent *event)
             if (event->modifiers() != Qt::KeyboardModifier::ControlModifier)
             {
                 editer->reset_selected_mark();
-                selected_objects.clear();
             }
         }
         else
         {
-            if (selected_objects = editer->selected(); selected_objects.size() == 1)
+            if (std::vector<Geo::Geometry *> selected_objects = editer->selected(); selected_objects.size() == 1)
             {
                 switch (clicked_object->type())
                 {
@@ -270,7 +269,8 @@ bool SelectOperation::mouse_move(QMouseEvent *event)
     if (_select)
     {
         canvas->refresh_select_rect(_pos[0], _pos[1], real_pos[0], real_pos[1]);
-        if (selected_objects = editer->select(Geo::AABBRect(_pos[0], _pos[1], real_pos[0], real_pos[1]),
+        if (std::vector<Geo::Geometry *> selected_objects = editer->select(
+            Geo::AABBRect(_pos[0], _pos[1], real_pos[0], real_pos[1]),
             event->modifiers() != Qt::KeyboardModifier::ControlModifier); !selected_objects.empty())
         {
             canvas->refresh_selected_ibo(selected_objects);
@@ -295,10 +295,9 @@ bool MoveOperation::mouse_release(QMouseEvent *event)
     if (event->button() == Qt::MouseButton::LeftButton)
     {
         tool[0] = Tool::Select;
-        if (!selected_objects.empty() && GlobalSetting::setting().translated_points
+        if (std::vector<Geo::Geometry *> selected_objects = editer->selected(); !selected_objects.empty()
             && (press_pos[0] != release_pos[0] || press_pos[1] != release_pos[1]))
         {
-            GlobalSetting::setting().translated_points = false;
             if (editer->edited_shape().empty())
             {
                 editer->push_backup_command(new UndoStack::TranslateCommand(selected_objects,
@@ -317,7 +316,7 @@ bool MoveOperation::mouse_release(QMouseEvent *event)
 bool MoveOperation::mouse_move(QMouseEvent *event)
 {
     tool_lines_count = 0;
-    if (selected_objects.size() <= 1 && clicked_object != nullptr)
+    if (std::vector<Geo::Geometry *> selected_objects = editer->selected(); selected_objects.size() <= 1 && clicked_object != nullptr)
     {
         editer->translate_points(clicked_object, real_pos[2], real_pos[3], real_pos[0], real_pos[1], event->modifiers() == Qt::ControlModifier);
         switch (clicked_object->type())
@@ -1238,7 +1237,45 @@ void EllipseOperation::reset()
 }
 
 
-
+bool MirrorOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        std::vector<Geo::Geometry *> selected_objects = editer->selected();
+        if (clicked_object = editer->select(real_pos[0], real_pos[1], false); !selected_objects.empty() && clicked_object != nullptr
+            && editer->mirror(selected_objects, clicked_object, event->modifiers() == Qt::ControlModifier))
+        {
+            clicked_object->is_selected = false;
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : selected_objects)
+            {
+                if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                {
+                    for (const Geo::Geometry *item : *combination)
+                    {
+                        types.insert(item->type());
+                    }
+                }
+                else
+                {
+                    types.insert(object->type());
+                }
+            }
+            canvas->refresh_vbo(types, true);
+            canvas->refresh_selected_ibo();
+            tool[0] = Tool::Select;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
+}
 
 
 
