@@ -873,15 +873,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         else if (is_obj_moveable())
         {
             _bool_flags[6] = true; // is moving obj
-            if (event->modifiers() != Qt::ControlModifier && GlobalSetting::setting().auto_aligning)
-            {
-                _reflines.clear();
-                if (_editer->auto_aligning(_pressed_obj, real_x1, real_y1, _reflines, true))
-                {
-                    refresh_selected_vbo();
-                    refresh_reflines_vbo();
-                }
-            }
+            
             _info_labels[1]->clear();
         }
         update();
@@ -2842,7 +2834,6 @@ void Canvas::refresh_selected_ibo()
     unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
     unsigned int *circle_indexs = new unsigned int[circle_index_len];
     unsigned int *curve_indexs = new unsigned int[curve_index_len];
-    size_t count = 0;
     for (const Geo::Geometry *geo : _editer->selected())
     {
         switch (geo->type())
@@ -3050,41 +3041,33 @@ void Canvas::refresh_selected_ibo()
         }
     }
 
-    if (count > 1)
-    {
-        _cache_count = 0;
-    }
-
     _selected_index_count[0] = polyline_index_count;
     _selected_index_count[1] = polygon_index_count;
     _selected_index_count[2] = circle_index_count;
     _selected_index_count[3] = curve_index_count;
 
-    if (count > 0)
+    makeCurrent();
+    if (polyline_index_count > 0)
     {
-        makeCurrent();
-        if (polyline_index_count > 0)
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[0]);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_index_count * sizeof(unsigned int), polyline_indexs, GL_DYNAMIC_DRAW);
-        }
-        if (polygon_index_count > 0)
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[1]);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_index_count * sizeof(unsigned int), polygon_indexs, GL_DYNAMIC_DRAW);
-        }
-        if (circle_index_count > 0)
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[2]);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_index_count * sizeof(unsigned int), circle_indexs, GL_DYNAMIC_DRAW);
-        }
-        if (curve_index_count > 0)
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[3]);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_index_count * sizeof(unsigned int), curve_indexs, GL_DYNAMIC_DRAW);
-        }
-        doneCurrent();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[0]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_index_count * sizeof(unsigned int), polyline_indexs, GL_DYNAMIC_DRAW);
     }
+    if (polygon_index_count > 0)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[1]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_index_count * sizeof(unsigned int), polygon_indexs, GL_DYNAMIC_DRAW);
+    }
+    if (circle_index_count > 0)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[2]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_index_count * sizeof(unsigned int), circle_indexs, GL_DYNAMIC_DRAW);
+    }
+    if (curve_index_count > 0)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[3]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_index_count * sizeof(unsigned int), curve_indexs, GL_DYNAMIC_DRAW);
+    }
+    doneCurrent();
     
     delete []polyline_indexs;
     delete []polygon_indexs;

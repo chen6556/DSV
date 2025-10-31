@@ -224,6 +224,25 @@ bool SelectOperation::mouse_press(QMouseEvent *event)
                     break;
                 }
             }
+            if (event->modifiers() != Qt::ControlModifier && GlobalSetting::setting().auto_aligning)
+            {
+                std::list<QLineF> reflines;
+                if (editer->auto_aligning(clicked_object, real_pos[0], real_pos[1], reflines, true))
+                {
+                    canvas->refresh_selected_vbo();
+                    canvas->refresh_reflines_vbo();
+                }
+                check_tool_lines_size(reflines.size() * 6);
+                for (const QLineF &line : reflines)
+                {
+                    tool_lines[tool_lines_count++] = line.x1();
+                    tool_lines[tool_lines_count++] = line.y1();
+                    ++tool_lines_count;
+                    tool_lines[tool_lines_count++] = line.x2();
+                    tool_lines[tool_lines_count++] = line.y2();
+                    ++tool_lines_count;
+                }
+            }
             tool[0] = Tool::Move;
             _select = false;
         }
@@ -342,6 +361,25 @@ bool MoveOperation::mouse_move(QMouseEvent *event)
         if (event->modifiers() == Qt::ControlModifier)
         {
             canvas->refresh_selected_ibo(clicked_object);
+        }
+        if (event->modifiers() != Qt::ControlModifier && GlobalSetting::setting().auto_aligning)
+        {
+            std::list<QLineF> reflines;
+            if (editer->auto_aligning(clicked_object, real_pos[0], real_pos[1], reflines, true))
+            {
+                canvas->refresh_selected_vbo();
+                canvas->refresh_reflines_vbo();
+            }
+            check_tool_lines_size(reflines.size() * 6);
+            for (const QLineF &line : reflines)
+            {
+                tool_lines[tool_lines_count++] = line.x1();
+                tool_lines[tool_lines_count++] = line.y1();
+                ++tool_lines_count;
+                tool_lines[tool_lines_count++] = line.x2();
+                tool_lines[tool_lines_count++] = line.y2();
+                ++tool_lines_count;
+            }
         }
     }
     else
