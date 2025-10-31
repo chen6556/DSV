@@ -63,7 +63,6 @@ void MainWindow::init()
     connect(ui->rect_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Rect); });
     connect(ui->bspline_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::BSpline); });
     connect(ui->bezier_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Bezier); });
-    connect(ui->curve_spb, &QSpinBox::valueChanged, ui->canvas, &Canvas::set_curve_order);
     connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Text); });
     connect(ui->mirror_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Mirror); });
     connect(ui->ring_array_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::RingArray); });
@@ -347,7 +346,7 @@ void MainWindow::close_file()
 
 void MainWindow::save_file()
 {
-    if (GlobalSetting::setting().graph == nullptr || ui->canvas->empty())
+    if (ui->canvas->empty())
     {
         return;
     }
@@ -438,7 +437,7 @@ void MainWindow::auto_save()
 
 void MainWindow::saveas_file()
 {
-    if (GlobalSetting::setting().graph == nullptr || ui->canvas->empty())
+    if (ui->canvas->empty())
     {
         return;
     }

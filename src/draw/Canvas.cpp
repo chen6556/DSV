@@ -673,11 +673,6 @@ void Canvas::hide_origin()
     _bool_flags[1] = false;
 }
 
-bool Canvas::origin_visible() const
-{
-    return _bool_flags[1];
-}
-
 const bool Canvas::is_view_moveable() const
 {
     return _bool_flags[0];
@@ -698,11 +693,6 @@ void Canvas::set_cursor_catch(const CatchedPointType type, const bool value)
     _catch_types[static_cast<int>(type)] = value;
 }
 
-const bool Canvas::is_catching(const CatchedPointType type) const
-{
-    return _catch_types[static_cast<int>(type)];
-}
-
 const size_t Canvas::current_group() const
 {
     return _editer->current_group();
@@ -719,22 +709,6 @@ const size_t Canvas::groups_count() const
     return _editer->groups_count();
 }
 
-void Canvas::set_curve_order(const size_t order)
-{
-    _curve_order = order;
-}
-
-const size_t Canvas::curve_order() const
-{
-    return _curve_order;
-}
-
-
-
-double Canvas::ratio() const
-{
-    return _ratio;
-}
 
 Geo::Point Canvas::center() const
 {
@@ -982,68 +956,6 @@ void Canvas::paste(const double x, const double y)
         update();
     }
     _points_cache.clear();
-}
-
-
-bool Canvas::is_visible(const Geo::Point &point) const
-{
-    return point.x > _visible_area.left() && point.x < _visible_area.right()
-        && point.y > _visible_area.bottom() && point.y < _visible_area.top();
-}
-
-bool Canvas::is_visible(const Geo::Polyline &polyline) const
-{
-    if (!Geo::is_intersected(_visible_area, polyline.bounding_rect()))
-    {
-        return false;
-    }
-    if (is_visible(polyline.front()))
-    {
-        return true;
-    }
-    const Geo::Point center(_visible_area.center());
-    const double len = std::pow(std::min(_visible_area.width(), _visible_area.height()), 2);
-    for (size_t i = 1, count = polyline.size(); i < count; ++i)
-    {
-        if (is_visible(polyline[i]) || Geo::distance_square(center, polyline[i - 1], polyline[i]) < len)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool Canvas::is_visible(const Geo::Polygon &polygon) const
-{
-    if (!Geo::is_intersected(_visible_area, polygon.bounding_rect()))
-    {
-        return false;
-    }
-    const Geo::Point center(_visible_area.center());
-    const double len = std::pow(std::min(_visible_area.width(), _visible_area.height()), 2);
-    for (size_t i = 1, count = polygon.size(); i < count; ++i)
-    {
-        if (is_visible(polygon[i - 1]) || Geo::distance_square(center, polygon[i - 1], polygon[i]) < len)
-        {
-            return true;
-        }
-    }
-    for (const Geo::Point &point : _visible_area)
-    {
-        if (Geo::is_inside(point, polygon))
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-bool Canvas::is_visible(const Geo::Circle &circle) const
-{
-    return circle.x > _visible_area.left() - circle.radius &&
-        circle.x < _visible_area.right() + circle.radius &&
-        circle.y > _visible_area.bottom() - circle.radius &&
-        circle.y < _visible_area.top() + circle.radius;
 }
 
 

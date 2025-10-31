@@ -48,7 +48,6 @@ private:
     double _view_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
     double _ratio = 1; // 缩放系数
     int _canvas_width = 0, _canvas_height = 0;
-    int _curve_order = 3; // 曲线次数
 
     // 0:可移动视图 1:显示坐标原点 2:显示捕捉点
     bool _bool_flags[3] = {false, true, false};
@@ -102,8 +101,6 @@ public:
 
     void show_overview();
 
-    bool origin_visible() const;
-
     const bool is_view_moveable() const;
 
     const bool is_typing() const;
@@ -112,19 +109,11 @@ public:
 
     void set_cursor_catch(const CatchedPointType type, const bool value);
 
-    const bool is_catching(const CatchedPointType type) const;
-
     const size_t current_group() const;
 
     void set_current_group(const size_t index);
 
     const size_t groups_count() const;
-
-    void set_curve_order(const size_t order);
-
-    const size_t curve_order() const;
-
-    double ratio() const;
 
     Geo::Point center() const;
 
@@ -155,15 +144,6 @@ public:
     void paste();
 
     void paste(const double x, const double y);
-
-
-    bool is_visible(const Geo::Point &point) const;
-
-    bool is_visible(const Geo::Polyline &polyline) const;
-
-    bool is_visible(const Geo::Polygon &polygon) const;
-
-    bool is_visible(const Geo::Circle &circle) const;
 
 
     Geo::Point real_coord_to_view_coord(const Geo::Point &input) const;
