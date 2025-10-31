@@ -441,17 +441,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 _points_cache.emplace_back(real_x1, real_y1);
                 _bool_flags[5] = false; // is obj selected
 
-                switch (_operation)
-                {
-                case Operation::PolygonDifference:
-                    _operation = Operation::NoOperation;
-                    emit tool_changed(CanvasOperations::Tool::Select);
-                    _object_cache.clear();
-                    break;
-                default:
-                    break;
-                }
-
                 if (_input_line.isVisible() && _last_clicked_obj != nullptr)
                 {
                     QString text;
@@ -1307,59 +1296,6 @@ void Canvas::paste(const double x, const double y)
         update();
     }
     _points_cache.clear();
-}
-
-void Canvas::rotate(const double rad, const bool unitary, const bool to_all_layers)
-{
-    if (CanvasOperations::CanvasOperation::tool[0] == CanvasOperations::Tool::Rotate)
-    {
-        if (std::vector<Geo::Geometry *> objects = _editer->selected(); !objects.empty())
-        {
-            if (CanvasOperations::CanvasOperation::tool_lines_count == 0)
-            {
-                _editer->rotate(objects, rad, unitary, to_all_layers);
-            }
-            else
-            {
-                _editer->rotate(objects, CanvasOperations::CanvasOperation::tool_lines[3],
-                    CanvasOperations::CanvasOperation::tool_lines[4], rad);
-            }
-            std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : objects)
-            {
-                if (const Combination *combination = dynamic_cast<const Combination *>(object))
-                {
-                    for (const Geo::Geometry *item : *combination)
-                    {
-                        types.insert(item->type());
-                    }
-                }
-                else
-                {
-                    types.insert(object->type());
-                }
-            }
-            if (types.empty())
-            {
-                refresh_vbo(false);
-            }
-            else
-            {
-                refresh_vbo(types, false);
-            }
-            if (objects.size() == 1)
-            {
-                refresh_selected_ibo(objects.front());
-                refresh_cache_vbo(0);
-            }
-            update();
-        }
-        use_tool(CanvasOperations::Tool::Select);
-    }
-    else
-    {
-        use_tool(CanvasOperations::Tool::Rotate);
-    }
 }
 
 

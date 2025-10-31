@@ -69,6 +69,7 @@ void MainWindow::init()
     connect(ui->ring_array_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::RingArray); });
     connect(ui->difference_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::PolygonDifference); });
     connect(ui->fillet_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Fillet); });
+    connect(ui->trim_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Trim); });
     connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
     connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::setting().auto_aligning = ui->auto_aligning->isChecked(); });
@@ -550,6 +551,9 @@ void MainWindow::refresh_tool_label(const CanvasOperations::Tool tool)
         break;
     case CanvasOperations::Tool::Rotate:
         ui->current_tool->setText("Rotate");
+        break;
+    case CanvasOperations::Tool::Trim:
+        ui->current_tool->setText("Trim");
         break;
     default:
         ui->current_tool->clear();
@@ -1116,11 +1120,6 @@ void MainWindow::polygon_xor()
 }
 
 
-
-void MainWindow::trim()
-{
-    ui->canvas->set_operation(Canvas::Operation::Trim);
-}
 
 void MainWindow::split()
 {

@@ -57,6 +57,7 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::PolygonDifference)] = new PolygonDifferenceOperation();
     operations[static_cast<int>(Tool::Fillet)] = new FilletOperation();
     operations[static_cast<int>(Tool::Rotate)] = new RotateOperation();
+    operations[static_cast<int>(Tool::Trim)] = new TrimOperation();
 }
 
 void CanvasOperation::clear()
@@ -1477,3 +1478,63 @@ void RotateOperation::reset()
 {
     _index = 0;
 }
+
+
+bool TrimOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        if (clicked_object = editer->select(real_pos[0], real_pos[1], true))
+        {
+            bool result = false;
+            switch (clicked_object->type())
+            {
+            case Geo::Type::POLYLINE:
+                editer->trim(static_cast<Geo::Polyline *>(clicked_object), real_pos[0], real_pos[1]);
+                canvas->refresh_vbo(Geo::Type::POLYLINE, true);
+                canvas->refresh_selected_ibo();
+                result = true;
+                break;
+            case Geo::Type::POLYGON:
+                editer->trim(static_cast<Geo::Polygon *>(clicked_object), real_pos[0], real_pos[1]);
+                canvas->refresh_vbo({Geo::Type::POLYGON, Geo::Type::POLYLINE}, true);
+                canvas->refresh_selected_ibo();
+                result = true;
+                break;
+            case Geo::Type::BEZIER:
+                editer->trim(static_cast<Geo::Bezier *>(clicked_object), real_pos[0], real_pos[1]);
+                canvas->refresh_vbo(Geo::Type::BEZIER, true);
+                canvas->refresh_selected_ibo();
+                result = true;
+                break;
+            case Geo::Type::BSPLINE:
+                editer->trim(static_cast<Geo::BSpline *>(clicked_object), real_pos[0], real_pos[1]);
+                canvas->refresh_vbo(Geo::Type::BSPLINE, true);
+                canvas->refresh_selected_ibo();
+                result = true;
+                break;
+            default:
+                break;
+            }
+            return result;
+        }
+        return false;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

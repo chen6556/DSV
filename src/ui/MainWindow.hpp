@@ -119,8 +119,6 @@ private slots:
     void polygon_xor();
 
 
-    void trim();
-
     void split();
 
     void extend();

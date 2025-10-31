@@ -178,8 +178,6 @@ public:
 
     void paste(const double x, const double y);
 
-    void rotate(const double rad, const bool unitary, const bool to_all_layers);
-
 
     bool is_visible(const Geo::Point &point) const;
 

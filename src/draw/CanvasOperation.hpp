@@ -335,4 +335,11 @@ namespace CanvasOperations
 
         void reset() override;
     };
+
+
+    class TrimOperation : public CanvasOperation
+    {
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+    };
 }
