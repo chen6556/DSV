@@ -69,7 +69,6 @@ void MainWindow::init()
     connect(ui->ring_array_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::RingArray); });
     connect(ui->difference_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::PolygonDifference); });
     connect(ui->fillet_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Fillet); });
-    // QObject::connect(ui->rotate_btn, &QPushButton::clicked, [this]() { ui->canvas->set_operation(Canvas::Operation::Rotate); });
     connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
     connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::setting().auto_aligning = ui->auto_aligning->isChecked(); });
@@ -549,6 +548,9 @@ void MainWindow::refresh_tool_label(const CanvasOperations::Tool tool)
     case CanvasOperations::Tool::Fillet:
         ui->current_tool->setText("Fillet");
         break;
+    case CanvasOperations::Tool::Rotate:
+        ui->current_tool->setText("Rotate");
+        break;
     default:
         ui->current_tool->clear();
         ui->array_tool->clear();
@@ -825,8 +827,57 @@ void MainWindow::detach()
 
 void MainWindow::rotate()
 {
-    ui->canvas->rotate(ui->rotate_angle->value() * Geo::PI / 180,
-        QApplication::keyboardModifiers() != Qt::ControlModifier, ui->to_all_layers->isChecked());
+    if (CanvasOperations::CanvasOperation::tool[0] == CanvasOperations::Tool::Rotate)
+    {
+        if (std::vector<Geo::Geometry *> objects = _editer.selected(); !objects.empty())
+        {
+            const double rad = ui->rotate_angle->value() * Geo::PI / 180;
+            const bool unitary = QApplication::keyboardModifiers() != Qt::ControlModifier;
+            if (CanvasOperations::CanvasOperation::tool_lines_count == 0)
+            {
+                _editer.rotate(objects, rad, unitary, ui->to_all_layers->isChecked());
+            }
+            else
+            {
+                _editer.rotate(objects, CanvasOperations::CanvasOperation::tool_lines[3],
+                    CanvasOperations::CanvasOperation::tool_lines[4], rad);
+            }
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : objects)
+            {
+                if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                {
+                    for (const Geo::Geometry *item : *combination)
+                    {
+                        types.insert(item->type());
+                    }
+                }
+                else
+                {
+                    types.insert(object->type());
+                }
+            }
+            if (types.empty())
+            {
+                ui->canvas->refresh_vbo(false);
+            }
+            else
+            {
+                ui->canvas->refresh_vbo(types, false);
+            }
+            if (objects.size() == 1)
+            {
+                ui->canvas->refresh_selected_ibo(objects.front());
+                ui->canvas->refresh_cache_vbo(0);
+            }
+            ui->canvas->update();
+        }
+        ui->canvas->use_tool(CanvasOperations::Tool::Select);
+    }
+    else
+    {
+        ui->canvas->use_tool(CanvasOperations::Tool::Rotate);
+    }
 }
 
 void MainWindow::flip_x()

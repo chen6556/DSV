@@ -56,6 +56,7 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::RingArray)] = new RingArrayOperation();
     operations[static_cast<int>(Tool::PolygonDifference)] = new PolygonDifferenceOperation();
     operations[static_cast<int>(Tool::Fillet)] = new FilletOperation();
+    operations[static_cast<int>(Tool::Rotate)] = new RotateOperation();
 }
 
 void CanvasOperation::clear()
@@ -1409,3 +1410,70 @@ bool FilletOperation::mouse_press(QMouseEvent *event)
 }
 
 
+bool RotateOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index++)
+        {
+        case 0:
+            _pos[1].x = tool_lines[3] = tool_lines[9] = real_pos[0];
+            _pos[1].y = tool_lines[4] = tool_lines[10] = real_pos[1];
+            tool_lines_count = 6;
+            info.clear();
+            break;
+        case 1:
+            _pos[0].x = tool_lines[0] = tool_lines[6] = real_pos[0];
+            _pos[0].y = tool_lines[1] = tool_lines[7] = real_pos[1];
+            tool_lines_count = 12;
+            break;
+        case 2:
+            _pos[2].x = tool_lines[6] = real_pos[0];
+            _pos[2].y = tool_lines[7] = real_pos[1];
+            _index = 0;
+            if (std::vector<Geo::Geometry *> objects = editer->selected(); !objects.empty())
+            {
+                const double angle = Geo::angle(_pos[0], _pos[1], _pos[2]);
+                for (Geo::Geometry *obj : objects)
+                {
+                    obj->rotate(_pos[1].x, _pos[1].y, angle);
+                }
+                canvas->refresh_selected_vbo();
+            }
+            tool_lines_count = 0;
+            tool[0] = Tool::Select;
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool RotateOperation::mouse_move(QMouseEvent *event)
+{
+    switch (_index)
+    {
+    case 1:
+        tool_lines[0] = real_pos[0];
+        tool_lines[1] = real_pos[1];
+        break;
+    case 2:
+        _pos[2].x = tool_lines[6] = real_pos[0];
+        _pos[2].y = tool_lines[7] = real_pos[1];
+        info = QString("Angle:%1°").arg(Geo::rad_to_degree(Geo::angle(_pos[0], _pos[1], _pos[2])));
+        break;
+    default:
+        return false;
+    }
+    return true;
+}
+
+void RotateOperation::reset()
+{
+    _index = 0;
+}

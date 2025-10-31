@@ -320,4 +320,19 @@ namespace CanvasOperations
     public:
         bool mouse_press(QMouseEvent *event) override;
     };
+
+
+    class RotateOperation : public CanvasOperation
+    {
+    private:
+        Geo::Point _pos[3];
+        int _index = 0;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+    };
 }

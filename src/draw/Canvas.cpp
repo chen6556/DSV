@@ -478,50 +478,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
                 switch (_operation)
                 {
-                case Operation::Fillet:
-                    {
-                        double dis = DBL_MAX;
-                        Geo::Point point;
-                        switch (_clicked_obj->type())
-                        {
-                        case Geo::Type::POLYGON:
-                            for (const Geo::Point &p : *static_cast<Geo::Polygon *>(_clicked_obj))
-                            {
-                                if (Geo::distance(p.x, p.y, real_x1, real_y1) < dis)
-                                {
-                                    dis = Geo::distance(p.x, p.y, real_x1, real_y1);
-                                    point = p;
-                                }
-                            }
-                            if (_editer->fillet(dynamic_cast<Geo::Polygon *>(_clicked_obj),
-                                point, GlobalSetting::setting().ui->fillet_sbx->value()))
-                            {
-                                refresh_vbo(Geo::Type::POLYGON, true);
-                                refresh_selected_ibo();
-                            }
-                            break;
-                        case Geo::Type::POLYLINE:
-                            for (const Geo::Point &p : *static_cast<Geo::Polyline *>(_clicked_obj))
-                            {
-                                if (Geo::distance(p.x, p.y, real_x1, real_y1) < dis)
-                                {
-                                    dis = Geo::distance(p.x, p.y, real_x1, real_y1);
-                                    point = p;
-                                }
-                            }
-                            if (_editer->fillet(dynamic_cast<Geo::Polyline *>(_clicked_obj),
-                                point, GlobalSetting::setting().ui->fillet_sbx->value()))
-                            {
-                                refresh_vbo(Geo::Type::POLYLINE, true);
-                                refresh_selected_ibo();
-                            }
-                            break;
-                        default:
-                            break;
-                        }
-                        update();
-                        return QOpenGLWidget::mousePressEvent(event);
-                    }
                 case Operation::Trim:
                     switch (_clicked_obj->type())
                     {
@@ -1355,18 +1311,18 @@ void Canvas::paste(const double x, const double y)
 
 void Canvas::rotate(const double rad, const bool unitary, const bool to_all_layers)
 {
-    if (_operation == Operation::Rotate)
+    if (CanvasOperations::CanvasOperation::tool[0] == CanvasOperations::Tool::Rotate)
     {
         if (std::vector<Geo::Geometry *> objects = _editer->selected(); !objects.empty())
         {
-            if (_points_cache.empty())
+            if (CanvasOperations::CanvasOperation::tool_lines_count == 0)
             {
                 _editer->rotate(objects, rad, unitary, to_all_layers);
             }
             else
             {
-                _editer->rotate(objects, _points_cache.back().x, _points_cache.back().y, rad);
-                _points_cache.clear();
+                _editer->rotate(objects, CanvasOperations::CanvasOperation::tool_lines[3],
+                    CanvasOperations::CanvasOperation::tool_lines[4], rad);
             }
             std::set<Geo::Type> types;
             for (const Geo::Geometry *object : objects)
@@ -1398,16 +1354,11 @@ void Canvas::rotate(const double rad, const bool unitary, const bool to_all_laye
             }
             update();
         }
-        _measure_angle_flag = 0;
-        _operation = Operation::NoOperation;
-        emit operation_changed(Operation::NoOperation);
+        use_tool(CanvasOperations::Tool::Select);
     }
     else
     {
-        _points_cache.clear();
-        _operation = Operation::Rotate;
-        _object_cache.clear();
-        emit operation_changed(Operation::Rotate);
+        use_tool(CanvasOperations::Tool::Rotate);
     }
 }
 

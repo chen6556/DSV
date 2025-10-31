@@ -2816,6 +2816,22 @@ QComboBox QAbstractItemView::item:selected
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>rotate_btn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>rotate()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>37</x>
+     <y>478</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -2842,5 +2858,6 @@ QComboBox QAbstractItemView::item:selected
   <slot>set_catch(QAction*)</slot>
   <slot>polygon_xor()</slot>
   <slot>detach()</slot>
+  <slot>rotate()</slot>
  </slots>
 </ui>
