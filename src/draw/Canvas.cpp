@@ -389,13 +389,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         {
             switch (_operation)
             {
-            case Operation::RingArray:
-                _operation = Operation::NoOperation;
-                
-                emit tool_changed(CanvasOperations::Tool::Select);
-                _object_cache.clear();
-                update();
-                return QOpenGLWidget::mousePressEvent(event);
             case Operation::NoOperation:
                 break;
             case Operation::Rotate:
@@ -485,18 +478,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
                 switch (_operation)
                 {
-                case Operation::PolygonDifference:
-                    if (_editer->polygon_difference(dynamic_cast<Geo::Polygon *>(_last_clicked_obj), 
-                        dynamic_cast<const Geo::Polygon *>(_clicked_obj)))
-                    {
-                        refresh_vbo(Geo::Type::POLYGON, true);
-                        refresh_selected_ibo();
-                    }
-                    _object_cache.clear();
-                    emit tool_changed(CanvasOperations::Tool::Select);
-                    _operation = Operation::NoOperation;
-                    update();
-                    return QOpenGLWidget::mousePressEvent(event);
                 case Operation::Fillet:
                     {
                         double dis = DBL_MAX;
@@ -1028,8 +1009,7 @@ void Canvas::show_overview()
 void Canvas::use_tool(const CanvasOperations::Tool tool)
 {
     CanvasOperations::CanvasOperation::operation().clear();
-    CanvasOperations::CanvasOperation::tool[1] = CanvasOperations::CanvasOperation::tool[0];
-    CanvasOperations::CanvasOperation::tool[0] = tool;
+    CanvasOperations::CanvasOperation::tool[1] = CanvasOperations::CanvasOperation::tool[0] = tool;
     _bool_flags[1] = (tool != CanvasOperations::Tool::Select
         && tool != CanvasOperations::Tool::Measure && tool != CanvasOperations::Tool::Angle); // paintable
     _bool_flags[2] = false; // painting
@@ -1240,7 +1220,6 @@ void Canvas::cancel_painting()
 {
     _bool_flags[1] = false; // paintable
     _bool_flags[2] = false; // painting
-    CanvasOperations::CanvasOperation::tool[1] = CanvasOperations::CanvasOperation::tool[0];
 
     _editer->point_cache().clear();
     CanvasOperations::CanvasOperation::operation().clear();

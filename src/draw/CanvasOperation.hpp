@@ -313,4 +313,11 @@ namespace CanvasOperations
     public:
         bool mouse_press(QMouseEvent *event) override;
     };
+
+
+    class FilletOperation : public CanvasOperation
+    {
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+    };
 }

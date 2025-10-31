@@ -68,6 +68,7 @@ void MainWindow::init()
     connect(ui->mirror_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Mirror); });
     connect(ui->ring_array_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::RingArray); });
     connect(ui->difference_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::PolygonDifference); });
+    connect(ui->fillet_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Fillet); });
     // QObject::connect(ui->rotate_btn, &QPushButton::clicked, [this]() { ui->canvas->set_operation(Canvas::Operation::Rotate); });
     connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
@@ -544,6 +545,9 @@ void MainWindow::refresh_tool_label(const CanvasOperations::Tool tool)
         break;
     case CanvasOperations::Tool::RingArray:
         ui->current_tool->setText("Ring Array");
+        break;
+    case CanvasOperations::Tool::Fillet:
+        ui->current_tool->setText("Fillet");
         break;
     default:
         ui->current_tool->clear();
@@ -1061,11 +1065,6 @@ void MainWindow::polygon_xor()
 }
 
 
-
-void MainWindow::fillet()
-{
-    ui->canvas->set_operation(Canvas::Operation::Fillet);
-}
 
 void MainWindow::trim()
 {

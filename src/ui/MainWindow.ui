@@ -2673,54 +2673,6 @@ QComboBox QAbstractItemView::item:selected
    </hints>
   </connection>
   <connection>
-   <sender>trim_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>trim()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>37</x>
-     <y>410</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>split_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>split()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>37</x>
-     <y>444</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>rotate_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>rotate()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>37</x>
-     <y>478</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>offset_btn</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
@@ -2777,38 +2729,6 @@ QComboBox QAbstractItemView::item:selected
     <hint type="sourcelabel">
      <x>37</x>
      <y>512</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>fillet_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>fillet()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>37</x>
-     <y>682</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>extend_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>extend()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>90</x>
-     <y>410</y>
     </hint>
     <hint type="destinationlabel">
      <x>499</x>
@@ -2902,7 +2822,6 @@ QComboBox QAbstractItemView::item:selected
   <slot>save_file()</slot>
   <slot>saveas_file()</slot>
   <slot>auto_save()</slot>
-  <slot>rotate()</slot>
   <slot>flip_x()</slot>
   <slot>flip_y()</slot>
   <slot>connect_polylines()</slot>
@@ -2919,13 +2838,9 @@ QComboBox QAbstractItemView::item:selected
   <slot>scale()</slot>
   <slot>append_file()</slot>
   <slot>refresh_tool_label(CanvasOperations::Tool)</slot>
-  <slot>fillet()</slot>
   <slot>refresh_tool_label(Canvas::Operation)</slot>
   <slot>set_catch(QAction*)</slot>
   <slot>polygon_xor()</slot>
-  <slot>trim()</slot>
-  <slot>extend()</slot>
   <slot>detach()</slot>
-  <slot>split()</slot>
  </slots>
 </ui>
