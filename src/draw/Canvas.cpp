@@ -387,49 +387,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
     {
     case Qt::LeftButton:
         {
-            switch (_operation)
-            {
-            case Operation::NoOperation:
-                break;
-            case Operation::Rotate:
-                switch (_measure_angle_flag)
-                {
-                case 0:
-                    _points_cache.clear();
-                    _points_cache.emplace_back(real_x1, real_y1);
-                    _cache[6] = _cache[3] = _cache[0] = real_x1;
-                    _cache[7] = _cache[4] = _cache[1] = real_y1;
-                    _cache[8] = _cache[5] = _cache[2] = 0.51;
-                    _measure_angle_flag = 1;
-                    break;
-                case 1:
-                    _cache[0] = real_x1;
-                    _cache[1] = real_y1;
-                    _measure_angle_flag = 2;
-                    break;
-                case 2:
-                    if (std::vector<Geo::Geometry *> objects = _editer->selected(); !objects.empty())
-                    {
-                        const double angle = Geo::angle(Geo::Point(_cache[0], _cache[1]),
-                            _points_cache.back(), Geo::Point(real_x1, real_y1));
-                        for (Geo::Geometry *obj : objects)
-                        {
-                            obj->rotate(_points_cache.back().x, _points_cache.back().y, angle);
-                        }
-                        _measure_angle_flag = 0;
-                        refresh_selected_vbo();
-                        update();
-                    }
-                    break;
-                default:
-                    break;
-                }
-                return QOpenGLWidget::mousePressEvent(event);
-                break;
-            default:
-                break;
-            }
-
             const bool reset = !(GlobalSetting::setting().multiple_select || event->modifiers() == Qt::ControlModifier);
             if (_clicked_obj = _editer->select(Geo::Point(real_x1, real_y1), reset); _clicked_obj == nullptr)
             {
@@ -463,31 +420,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             }
             else
             {
-                _pressed_obj = _clicked_obj;
-
-                switch (_operation)
-                {
-                case Operation::Split:
-                    if (_editer->split(_clicked_obj, Geo::Point(real_x1, real_y1)))
-                    {
-                        refresh_vbo(_clicked_obj->type(), true);
-                        _clicked_obj = nullptr;
-                        refresh_selected_ibo();
-                        update();
-                        return QOpenGLWidget::mousePressEvent(event);
-                    }
-                    break;
-                default:
-                    _operation = Operation::NoOperation;
-                    break;
-                }
-
-                refresh_selected_ibo();
-                refresh_cache_vbo(0);
-
-                _bool_flags[4] = true; // is obj moveable
-                _bool_flags[5] = true; // is obj selected
-
                 Geo::Point coord;
                 if (catch_cursor(real_x1, real_y1, coord, _catch_distance, false))
                 {
@@ -602,24 +534,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
             _last_clicked_obj = _clicked_obj;
             _pressed_obj = nullptr;
             update();
-
-            switch (_operation)
-            {
-            case Operation::Rotate:
-                if (_measure_angle_flag == 0 && !_points_cache.empty())
-                {
-                    _operation = Operation::NoOperation;
-                    _editer->push_backup_command(new UndoStack::RotateCommand(_editer->selected(),
-                        _points_cache.back().x, _points_cache.back().y, Geo::degree_to_rad(_refline_points[0]), true));
-                    _points_cache.clear();
-                    emit operation_changed(Operation::NoOperation);
-                }
-                break;
-            default:
-                break;
-            }
         }
-        _reflines.clear();
         break;
     case Qt::RightButton:
         break;
@@ -697,26 +612,6 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         }
         update();
         return QOpenGLWidget::mouseMoveEvent(event);
-    }
-    else
-    {
-        if (_operation == Operation::Rotate)
-        {
-            if (_measure_angle_flag > 0)
-            {
-                if (_measure_angle_flag == 1)
-                {
-                    _cache[0] = real_x1;
-                    _cache[1] = real_y1;
-                }
-                else
-                {
-                    _cache[6] = real_x1;
-                    _cache[7] = real_y1;
-                }
-            }
-        }
-        update();
     }
 
     QOpenGLWidget::mouseMoveEvent(event);

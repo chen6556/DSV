@@ -59,6 +59,7 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::Rotate)] = new RotateOperation();
     operations[static_cast<int>(Tool::Trim)] = new TrimOperation();
     operations[static_cast<int>(Tool::Extend)] = new ExtendOperation();
+    operations[static_cast<int>(Tool::Split)] = new SplitOperation();
 }
 
 void CanvasOperation::clear()
@@ -1554,8 +1555,24 @@ bool ExtendOperation::mouse_press(QMouseEvent *event)
 }
 
 
-
-
+bool SplitOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        if (clicked_object = editer->select(real_pos[0], real_pos[1], true);
+            clicked_object != nullptr && editer->split(clicked_object, Geo::Point(real_pos[0], real_pos[1])))
+        {
+            canvas->refresh_vbo(clicked_object->type(), true);
+            canvas->refresh_selected_ibo();
+            return true;
+        }
+        return false;
+    }
+    else
+    {
+        return false;
+    }
+}
 
 
 
