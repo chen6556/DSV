@@ -24,7 +24,8 @@ Canvas::~Canvas()
 
 void Canvas::init()
 {
-    bind_operations_callback();
+    CanvasOperations::CanvasOperation::operation().init();
+    CanvasOperations::CanvasOperation::canvas = this;
 
     _cache = new double[_cache_len];
     _input_line.hide();
@@ -34,34 +35,6 @@ void Canvas::init()
     _down = new QAction("Down");
     _menu->addAction(_up);
     _menu->addAction(_down);
-}
-
-void Canvas::bind_operations_callback()
-{
-    _canvasoperation.init();
-    CanvasOperations::CanvasOperation::add_geometry =
-        std::bind(&Canvas::add_geometry, this, std::placeholders::_1);
-    CanvasOperations::CanvasOperation::refresh_vbo_0 =
-        std::bind(static_cast<void(Canvas::*)(const bool)>(&Canvas::refresh_vbo), this, std::placeholders::_1);
-    CanvasOperations::CanvasOperation::refresh_vbo_1 =
-        std::bind(static_cast<void(Canvas::*)(const Geo::Type, const bool)>(&Canvas::refresh_vbo),
-            this, std::placeholders::_1, std::placeholders::_2);
-    CanvasOperations::CanvasOperation::refresh_vbo_2 =
-        std::bind(static_cast<void(Canvas::*)(const std::set<Geo::Type> &, const bool)>(&Canvas::refresh_vbo),
-            this, std::placeholders::_1, std::placeholders::_2);
-    CanvasOperations::CanvasOperation::refresh_selected_ibo_0 =
-        std::bind(static_cast<void(Canvas::*)(void)>(&Canvas::refresh_selected_ibo), this);
-    CanvasOperations::CanvasOperation::refresh_selected_ibo_1 =
-        std::bind(static_cast<void(Canvas::*)(const Geo::Geometry *)>(&Canvas::refresh_selected_ibo),
-            this, std::placeholders::_1);
-    CanvasOperations::CanvasOperation::refresh_selected_ibo_2 =
-        std::bind(static_cast<void(Canvas::*)(const std::vector<Geo::Geometry *> &)>(&Canvas::refresh_selected_ibo),
-            this, std::placeholders::_1);
-    CanvasOperations::CanvasOperation::refresh_selected_vbo =
-        std::bind(&Canvas::refresh_selected_vbo, this);
-    CanvasOperations::CanvasOperation::refresh_select_rect =
-        std::bind(&Canvas::refresh_select_rect, this, std::placeholders::_1, std::placeholders::_2,
-            std::placeholders::_3, std::placeholders::_4);
 }
 
 void Canvas::bind_editer(Editer *editer)
@@ -318,24 +291,26 @@ void Canvas::paintGL()
         }
     }
 
-    if (_canvasoperation.shape_count > 0)
+    if (CanvasOperations::CanvasOperation::shape_count > 0)
     {
         glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[4]); // operation
-        glBufferData(GL_ARRAY_BUFFER, _canvasoperation.shape_count * sizeof(double), _canvasoperation.shape, GL_STREAM_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, CanvasOperations::CanvasOperation::shape_count * sizeof(double),
+            CanvasOperations::CanvasOperation::shape, GL_STREAM_DRAW);
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
         glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线
-        glDrawArrays(GL_LINE_STRIP, 0, _canvasoperation.shape_count / 3);
+        glDrawArrays(GL_LINE_STRIP, 0, CanvasOperations::CanvasOperation::shape_count / 3);
     }
-    if (_canvasoperation.tool_lines_count > 0)
+    if (CanvasOperations::CanvasOperation::tool_lines_count > 0)
     {
         glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[4]); // operation
-        glBufferData(GL_ARRAY_BUFFER, _canvasoperation.tool_lines_count * sizeof(double), _canvasoperation.tool_lines, GL_STREAM_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, CanvasOperations::CanvasOperation::tool_lines_count * sizeof(double),
+            CanvasOperations::CanvasOperation::tool_lines, GL_STREAM_DRAW);
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
-        glUniform4f(_uniforms[4], _canvasoperation.tool_line_color[0], _canvasoperation.tool_line_color[1],
-            _canvasoperation.tool_line_color[2], _canvasoperation.tool_line_color[3]); // color
-        glDrawArrays(GL_LINES, 0, _canvasoperation.tool_lines_count / 3);
+        glUniform4f(_uniforms[4], CanvasOperations::CanvasOperation::tool_line_color[0], CanvasOperations::CanvasOperation::tool_line_color[1],
+            CanvasOperations::CanvasOperation::tool_line_color[2], CanvasOperations::CanvasOperation::tool_line_color[3]); // color
+        glDrawArrays(GL_LINES, 0, CanvasOperations::CanvasOperation::tool_lines_count / 3);
     }
 
     if (_bool_flags[8]) // catched point
@@ -394,12 +369,12 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         _mouse_pos_1.setY(coord.y);
         QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
     }
-    _canvasoperation.real_pos[0] = real_x1, _canvasoperation.real_pos[1] = real_y1;
-    if (CanvasOperations::CanvasOperation *op = _canvasoperation[_tool_flags[0]];
-        op != nullptr && op->mouse_press(event))
+    CanvasOperations::CanvasOperation::real_pos[0] = real_x1, CanvasOperations::CanvasOperation::real_pos[1] = real_y1;
+    if (CanvasOperations::CanvasOperation *op = CanvasOperations::CanvasOperation::operation()[
+        CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_press(event))
     {
-        _info_labels[1]->setText(_canvasoperation.info);
-        if (_canvasoperation.finish)
+        _info_labels[1]->setText(CanvasOperations::CanvasOperation::info);
+        if (CanvasOperations::CanvasOperation::finish)
         {
             use_tool(CanvasOperations::Tool::Select);
         }
@@ -703,7 +678,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         }
         break;
     case Qt::RightButton:
-        if (_tool_flags[0] == CanvasOperations::Tool::Select)
+        if (CanvasOperations::CanvasOperation::tool[0] == CanvasOperations::Tool::Select)
         {
             _operation = Operation::NoOperation;
             _object_cache.clear();
@@ -769,12 +744,12 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         _mouse_pos_1.setY(coord.y);
         QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
     }
-    _canvasoperation.real_pos[0] = _mouse_release_pos.x, _canvasoperation.real_pos[1] = _mouse_release_pos.y;
-    if (CanvasOperations::CanvasOperation *op = _canvasoperation[_tool_flags[0]];
-        op != nullptr && op->mouse_release(event))
+    CanvasOperations::CanvasOperation::real_pos[0] = _mouse_release_pos.x, CanvasOperations::CanvasOperation::real_pos[1] = _mouse_release_pos.y;
+    if (CanvasOperations::CanvasOperation *op = CanvasOperations::CanvasOperation::operation()[
+        CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_release(event))
     {
-        _info_labels[1]->setText(_canvasoperation.info);
-        if (_canvasoperation.finish)
+        _info_labels[1]->setText(CanvasOperations::CanvasOperation::info);
+        if (CanvasOperations::CanvasOperation::finish)
         {
             use_tool(CanvasOperations::Tool::Select);
         }
@@ -787,7 +762,8 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
     case Qt::LeftButton:
         _bool_flags[4] = false; // is obj moveable
         {
-            if (_tool_flags[0] != CanvasOperations::Tool::Measure && _tool_flags[0] != CanvasOperations::Tool::Angle)
+            if (CanvasOperations::CanvasOperation::tool[0] != CanvasOperations::Tool::Measure
+                && CanvasOperations::CanvasOperation::tool[0] != CanvasOperations::Tool::Angle)
             {
                 _info_labels[1]->clear();
             }
@@ -894,12 +870,12 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         update();
     }
 
-    _canvasoperation.real_pos[0] = real_x1, _canvasoperation.real_pos[1] = real_y1;
-    if (CanvasOperations::CanvasOperation *op = _canvasoperation[_tool_flags[0]];
-        op != nullptr && op->mouse_move(event))
+    CanvasOperations::CanvasOperation::real_pos[0] = real_x1, CanvasOperations::CanvasOperation::real_pos[1] = real_y1;
+    if (CanvasOperations::CanvasOperation *op = CanvasOperations::CanvasOperation::operation()[
+        CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_move(event))
     {
-        _info_labels[1]->setText(_canvasoperation.info);
-        if (_canvasoperation.finish)
+        _info_labels[1]->setText(CanvasOperations::CanvasOperation::info);
+        if (CanvasOperations::CanvasOperation::finish)
         {
             use_tool(CanvasOperations::Tool::Select);
         }
@@ -1000,10 +976,10 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         //     _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _points_cache.back().x)))
         //         .append(" Height:").append(std::to_string(std::abs(real_y1 - _points_cache.back().y))).c_str());
         // }
-        if (CanvasOperations::CanvasOperation *op = _canvasoperation[_tool_flags[0]];
-            op != nullptr && op->mouse_move(event))
+        if (CanvasOperations::CanvasOperation *op = CanvasOperations::CanvasOperation::operation()[
+            CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_move(event))
         {
-            _info_labels[1]->setText(_canvasoperation.info);
+            _info_labels[1]->setText(CanvasOperations::CanvasOperation::info);
             update();
             return QOpenGLWidget::mouseMoveEvent(event);
         }
@@ -1063,7 +1039,7 @@ void Canvas::wheelEvent(QWheelEvent *event)
     glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), data);
     doneCurrent();
     _editer->set_view_ratio(_ratio);
-    _canvasoperation.view_ratio = _ratio;
+    CanvasOperations::CanvasOperation::view_ratio = _ratio;
 
     _reflines.clear();
     if (_editer->auto_aligning(_pressed_obj, _reflines))
@@ -1077,12 +1053,12 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
     _mouse_pos_1 = event->position();
     double real_x1 = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
     double real_y1 = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
-    _canvasoperation.real_pos[0] = real_x1, _canvasoperation.real_pos[1] = real_y1;
+    CanvasOperations::CanvasOperation::real_pos[0] = real_x1, CanvasOperations::CanvasOperation::real_pos[1] = real_y1;
 
-    if (CanvasOperations::CanvasOperation *op = _canvasoperation[_tool_flags[0]];
-        op != nullptr && op->mouse_double_click(event))
+    if (CanvasOperations::CanvasOperation *op = CanvasOperations::CanvasOperation::operation()[
+        CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_double_click(event))
     {
-        if (_canvasoperation.finish)
+        if (CanvasOperations::CanvasOperation::finish)
         {
             use_tool(CanvasOperations::Tool::Select);
         }
@@ -1158,7 +1134,7 @@ void Canvas::show_overview()
     _ratio = _ratio * 0.98;
 
     _editer->set_view_ratio(_ratio);
-    _canvasoperation.view_ratio = _ratio;
+    CanvasOperations::CanvasOperation::view_ratio = _ratio;
 
     // 置于控件中间
     double x_offset = (_canvas_width - bounding_area.width() * _ratio) / 2 - bounding_area.left() * _ratio;
@@ -1202,20 +1178,20 @@ void Canvas::show_overview()
 
 void Canvas::use_tool(const CanvasOperations::Tool tool)
 {
-    _tool_flags[1] = _tool_flags[0];
-    _tool_flags[0] = tool;
+    CanvasOperations::CanvasOperation::tool[1] = CanvasOperations::CanvasOperation::tool[0];
+    CanvasOperations::CanvasOperation::tool[0] = tool;
     _bool_flags[1] = (tool != CanvasOperations::Tool::Select
         && tool != CanvasOperations::Tool::Measure && tool != CanvasOperations::Tool::Angle); // paintable
     _bool_flags[2] = false; // painting
 
-    _canvasoperation.clear();
-    _canvasoperation.finish = tool == CanvasOperations::Tool::Select;
+    CanvasOperations::CanvasOperation::operation().clear();
+    CanvasOperations::CanvasOperation::finish = tool == CanvasOperations::Tool::Select;
     _cache_count = 0;
 
     _measure_angle_flag = 0;
     _info_labels[1]->clear();
 
-    emit tool_changed(_tool_flags[0]);
+    emit tool_changed(CanvasOperations::CanvasOperation::tool[0]);
     update();
 }
 
@@ -1231,7 +1207,7 @@ void Canvas::set_operation(const Operation operation)
     default:
         _object_cache.clear();
         _points_cache.clear();
-        _canvasoperation.clear();
+        CanvasOperations::CanvasOperation::operation().clear();
         break;
     }
     emit operation_changed(operation);
@@ -1416,11 +1392,11 @@ void Canvas::cancel_painting()
 {
     _bool_flags[1] = false; // paintable
     _bool_flags[2] = false; // painting
-    _tool_flags[1] = _tool_flags[0];
-    _tool_flags[0] = CanvasOperations::Tool::Select;
+    CanvasOperations::CanvasOperation::tool[1] = CanvasOperations::CanvasOperation::tool[0];
+    CanvasOperations::CanvasOperation::tool[0] = CanvasOperations::Tool::Select;
 
     _editer->point_cache().clear();
-    _canvasoperation.clear();
+    CanvasOperations::CanvasOperation::operation().clear();
     _cache_count = 0;
 
     _measure_angle_flag = 0;
@@ -1429,7 +1405,7 @@ void Canvas::cancel_painting()
     _operation = Operation::NoOperation;
     _object_cache.clear();
 
-    emit tool_changed(_tool_flags[0]);
+    emit tool_changed(CanvasOperations::CanvasOperation::tool[0]);
     update();
 }
 
@@ -1439,19 +1415,20 @@ void Canvas::use_last_tool()
     {
         return;
     }
-    _tool_flags[0] = _tool_flags[1];
+    CanvasOperations::CanvasOperation::tool[0] = CanvasOperations::CanvasOperation::tool[1];
     _measure_angle_flag = 0;
     _info_labels[1]->clear();
-    _bool_flags[1] = (_tool_flags[0] != CanvasOperations::Tool::Measure && _tool_flags[0] != CanvasOperations::Tool::Angle); // paintable
-    _canvasoperation.clear();
-    _canvasoperation.finish = _tool_flags[0] == CanvasOperations::Tool::Select;
-    if (_tool_flags[0] == CanvasOperations::Tool::Select)
+    _bool_flags[1] = (CanvasOperations::CanvasOperation::tool[0] != CanvasOperations::Tool::Measure
+        && CanvasOperations::CanvasOperation::tool[0] != CanvasOperations::Tool::Angle); // paintable
+    CanvasOperations::CanvasOperation::operation().clear();
+    CanvasOperations::CanvasOperation::finish = CanvasOperations::CanvasOperation::tool[0] == CanvasOperations::Tool::Select;
+    if (CanvasOperations::CanvasOperation::tool[0] == CanvasOperations::Tool::Select)
     {
         cancel_painting();
     }
     else
     {
-        emit tool_changed(_tool_flags[0]);
+        emit tool_changed(CanvasOperations::CanvasOperation::tool[0]);
     }
 }
 

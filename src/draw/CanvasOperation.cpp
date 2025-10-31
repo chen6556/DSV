@@ -1,5 +1,6 @@
 #include "draw/CanvasOperation.hpp"
 #include "base/Algorithm.hpp"
+#include "draw/Canvas.hpp"
 #include "io/GlobalSetting.hpp"
 
 
@@ -15,24 +16,25 @@ unsigned int CanvasOperation::tool_lines_count = 0;
 float CanvasOperation::tool_line_width = 1.4f;
 float CanvasOperation::tool_line_color[4] = {1.0f, 0.549f, 0.0f, 1.0f};
 double CanvasOperation::real_pos[2];
+Tool CanvasOperation::tool[2] = {Tool::Select, Tool::Select};
 double CanvasOperation::view_ratio = 1;
 bool CanvasOperation::finish = false;
 QString CanvasOperation::info;
 Editer *CanvasOperation::editer = nullptr;
-std::function<void(Geo::Geometry *)> CanvasOperation::add_geometry;
-std::function<void(const bool)> CanvasOperation::refresh_vbo_0;
-std::function<void(const Geo::Type, const bool)> CanvasOperation::refresh_vbo_1;
-std::function<void(const std::set<Geo::Type> &, const bool)> CanvasOperation::refresh_vbo_2;
-std::function<void(void)> CanvasOperation::refresh_selected_ibo_0;
-std::function<void(const Geo::Geometry *)> CanvasOperation::refresh_selected_ibo_1;
-std::function<void(const std::vector<Geo::Geometry *> &)> CanvasOperation::refresh_selected_ibo_2;
-std::function<void(void)> CanvasOperation::refresh_selected_vbo;
-std::function<void(const double,const double,const double,const double)> CanvasOperation::refresh_select_rect;
+Canvas *CanvasOperation::canvas = nullptr;
+
+
+CanvasOperation &CanvasOperation::operation()
+{
+    static CanvasOperation op;
+    return op;
+}
 
 void CanvasOperation::init()
 {
     std::fill_n(shape, shape_len, 0);
     std::fill_n(tool_lines, tool_lines_len, 0);
+    std::fill_n(operations, static_cast<int>(Tool::End), nullptr);
 
     operations[static_cast<int>(Tool::Select)] = new SelectOperation();
     operations[static_cast<int>(Tool::Measure)] = new MeasureOperation();
@@ -50,8 +52,12 @@ void CanvasOperation::init()
 
 void CanvasOperation::clear()
 {
-    for (int i = 1; i < 3; ++i)
+    for (int i = 0, count = static_cast<int>(Tool::End); i < count; ++i)
     {
+        if (operations[i] == nullptr)
+        {
+            continue;
+        }
         operations[i]->reset();
     }
     shape_count = tool_lines_count = 0;
@@ -61,7 +67,7 @@ void CanvasOperation::clear()
 
 CanvasOperation::~CanvasOperation()
 {
-    for (int i = 1, count = static_cast<int>(Tool::End); i < count; ++i)
+    for (int i = 0, count = static_cast<int>(Tool::End); i < count; ++i)
     {
         delete operations[i];
     }
@@ -135,7 +141,7 @@ bool SelectOperation::mouse_press(QMouseEvent *event)
                 editer->reset_selected_mark();
             }
         }
-        refresh_selected_ibo_0();
+        canvas->refresh_selected_ibo();
         return true;
     }
     else
@@ -148,7 +154,7 @@ bool SelectOperation::mouse_release(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
-        refresh_select_rect(0, 0, 0, 0);
+        canvas->refresh_select_rect(0, 0, 0, 0);
         _select = false;
     }
     return false;
@@ -158,11 +164,11 @@ bool SelectOperation::mouse_move(QMouseEvent *event)
 {
     if (_select)
     {
-        refresh_select_rect(_pos[0], _pos[1], real_pos[0], real_pos[1]);
+        canvas->refresh_select_rect(_pos[0], _pos[1], real_pos[0], real_pos[1]);
         if (std::vector<Geo::Geometry *> objects = editer->select(Geo::AABBRect(_pos[0], _pos[1], real_pos[0], real_pos[1]),
             event->modifiers() != Qt::KeyboardModifier::ControlModifier); !objects.empty())
         {
-            refresh_selected_ibo_2(objects);
+            canvas->refresh_selected_ibo(objects);
         }
         return true;
     }
@@ -313,7 +319,7 @@ bool Circle0Operation::mouse_press(QMouseEvent *event)
         else
         {
             _parameters[2] = Geo::distance(_parameters[0], _parameters[1], real_pos[0], real_pos[1]);
-            add_geometry(new Geo::Circle(_parameters[0], _parameters[1], _parameters[2]));
+            canvas->add_geometry(new Geo::Circle(_parameters[0], _parameters[1], _parameters[2]));
             info.clear();
             finish = true;
             shape_count = tool_lines_count = 0;
@@ -379,7 +385,7 @@ bool Circle1Operation::mouse_press(QMouseEvent *event)
         else
         {
             _parameters[2] = real_pos[0], _parameters[3] = real_pos[1];
-            add_geometry(new Geo::Circle(_parameters[0], _parameters[1], _parameters[2], _parameters[3]));
+            canvas->add_geometry(new Geo::Circle(_parameters[0], _parameters[1], _parameters[2], _parameters[3]));
             shape_count = tool_lines_count = 0;
             finish = true;
             info.clear();
@@ -454,7 +460,7 @@ bool Circle2Operation::mouse_press(QMouseEvent *event)
             break;
         case 2:
             _parameters[4] = real_pos[0], _parameters[5] = real_pos[1];
-            add_geometry(new Geo::Circle(_parameters[0], _parameters[1], _parameters[2],
+            canvas->add_geometry(new Geo::Circle(_parameters[0], _parameters[1], _parameters[2],
                 _parameters[3], _parameters[4], _parameters[5]));
             _index = shape_count = tool_lines_count = 0;
             finish = true;
@@ -602,12 +608,12 @@ bool PolythingOperation::mouse_double_click(QMouseEvent *event)
         if (_points.size() > 3 && Geo::distance(_points.front(), _points.back()) <= 8 / view_ratio)
         {
             _points.back() = _points.front();
-            add_geometry(new Geo::Polygon(_points.begin(), _points.end()));
+            canvas->add_geometry(new Geo::Polygon(_points.begin(), _points.end()));
         }
         else
         {
             _points.pop_back();
-            add_geometry(new Geo::Polyline(_points.begin(), _points.end()));
+            canvas->add_geometry(new Geo::Polyline(_points.begin(), _points.end()));
         }
         _points.clear();
         finish = true;
@@ -642,7 +648,7 @@ bool RectOperation::mouse_press(QMouseEvent *event)
         else
         {
             _parameters[2] = real_pos[0], _parameters[3] = real_pos[1];
-            add_geometry(new Geo::Polygon(Geo::AABBRect(_parameters[0],
+            canvas->add_geometry(new Geo::Polygon(Geo::AABBRect(_parameters[0],
                 _parameters[1], _parameters[2], _parameters[3])));
             shape_count = 0;
             finish = true;
@@ -815,11 +821,11 @@ bool BSplineOperation::mouse_double_click(QMouseEvent *event)
             _points.pop_back();
             if (_order == 3)
             {
-                add_geometry(new Geo::CubicBSpline(_points.begin(), _points.end(), true));
+                canvas->add_geometry(new Geo::CubicBSpline(_points.begin(), _points.end(), true));
             }
             else
             {
-                add_geometry(new Geo::QuadBSpline(_points.begin(), _points.end(), true));
+                canvas->add_geometry(new Geo::QuadBSpline(_points.begin(), _points.end(), true));
             }
         }
         finish = true;
@@ -928,7 +934,7 @@ bool BezierOperation::mouse_double_click(QMouseEvent *event)
         {
             _points.pop_back();
             _points.pop_back();
-            add_geometry(new Geo::Bezier(_points.begin(), _points.end(), _order, true));
+            canvas->add_geometry(new Geo::Bezier(_points.begin(), _points.end(), _order, true));
         }
         finish = true;
         _points.clear();
@@ -952,7 +958,7 @@ bool TextOperation::mouse_press(QMouseEvent *event)
     if (event->button() == Qt::MouseButton::LeftButton)
     {
         finish = true;
-        add_geometry(new Text(real_pos[0], real_pos[1], GlobalSetting::setting().text_size));
+        canvas->add_geometry(new Text(real_pos[0], real_pos[1], GlobalSetting::setting().text_size));
         return true;
     }
     else
@@ -986,7 +992,7 @@ bool EllipseOperation::mouse_press(QMouseEvent *event)
                     Geo::Point(tool_lines[3], tool_lines[4]), Geo::Point(tool_lines[0], tool_lines[1]), true);
                 Geo::Ellipse *ellipse = new Geo::Ellipse(_parameters[0], _parameters[1], _parameters[2], _parameters[3]);
                 ellipse->rotate(_parameters[0], _parameters[1], _parameters[4]);
-                add_geometry(ellipse);
+                canvas->add_geometry(ellipse);
                 _index = shape_count = tool_lines_count = 0;
                 finish = true;
                 info.clear();

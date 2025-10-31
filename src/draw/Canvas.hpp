@@ -62,10 +62,7 @@ private:
     int _measure_angle_flag = 0;
     double _select_rect[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-    // 0:current_tool, 1:last_tool
-    CanvasOperations::Tool _tool_flags[2] = {CanvasOperations::Tool::Select, CanvasOperations::Tool::Select};
     Operation _operation = Operation::NoOperation;
-    CanvasOperations::CanvasOperation _canvasoperation;
 
     QPointF _mouse_pos_0, _mouse_pos_1;
     Geo::Point _mouse_press_pos, _mouse_release_pos;
@@ -80,8 +77,6 @@ private:
 
 private:
     void init();
-
-    void bind_operations_callback();
 
 protected:
     void initializeGL();
