@@ -370,14 +370,11 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
     }
     CanvasOperations::CanvasOperation::real_pos[0] = real_x1, CanvasOperations::CanvasOperation::real_pos[1] = real_y1;
+    CanvasOperations::CanvasOperation::press_pos[0] = real_x1, CanvasOperations::CanvasOperation::press_pos[1] = real_y1;
     if (CanvasOperations::CanvasOperation *op = CanvasOperations::CanvasOperation::operation()[
         CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_press(event))
     {
         _info_labels[1]->setText(CanvasOperations::CanvasOperation::info);
-        if (CanvasOperations::CanvasOperation::finish)
-        {
-            use_tool(CanvasOperations::Tool::Select);
-        }
         update();
         return QOpenGLWidget::mousePressEvent(event);
     }
@@ -505,11 +502,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
             else
             {
                 _pressed_obj = _clicked_obj;
-                if (reset)
-                {
-                    _editer->reset_selected_mark();
-                    _clicked_obj->is_selected = true;
-                }
 
                 switch (_operation)
                 {
@@ -745,14 +737,11 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
     }
     CanvasOperations::CanvasOperation::real_pos[0] = _mouse_release_pos.x, CanvasOperations::CanvasOperation::real_pos[1] = _mouse_release_pos.y;
+    CanvasOperations::CanvasOperation::release_pos[0] = _mouse_press_pos.x, CanvasOperations::CanvasOperation::release_pos[1] = _mouse_press_pos.y;
     if (CanvasOperations::CanvasOperation *op = CanvasOperations::CanvasOperation::operation()[
         CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_release(event))
     {
         _info_labels[1]->setText(CanvasOperations::CanvasOperation::info);
-        if (CanvasOperations::CanvasOperation::finish)
-        {
-            use_tool(CanvasOperations::Tool::Select);
-        }
         update();
         return QOpenGLWidget::mouseReleaseEvent(event);
     }
@@ -786,22 +775,6 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
                 break;
             default:
                 break;
-            }
-
-            if (const std::vector<Geo::Geometry *> &objects = _editer->selected(); 
-                !objects.empty() && GlobalSetting::setting().translated_points && _mouse_press_pos != _mouse_release_pos)
-            {
-                GlobalSetting::setting().translated_points = false;
-                if (_editer->edited_shape().empty())
-                {
-                    _editer->push_backup_command(new UndoStack::TranslateCommand(objects,
-                        _mouse_release_pos.x - _mouse_press_pos.x, _mouse_release_pos.y - _mouse_press_pos.y));
-                }
-                else
-                {
-                    _editer->push_backup_command(new UndoStack::ChangeShapeCommand(objects.front(), _editer->edited_shape()));
-                    _editer->edited_shape().clear();
-                }
             }
         }
         _reflines.clear();
@@ -871,14 +844,11 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     }
 
     CanvasOperations::CanvasOperation::real_pos[0] = real_x1, CanvasOperations::CanvasOperation::real_pos[1] = real_y1;
+    CanvasOperations::CanvasOperation::real_pos[2] = real_x0, CanvasOperations::CanvasOperation::real_pos[3] = real_y0;
     if (CanvasOperations::CanvasOperation *op = CanvasOperations::CanvasOperation::operation()[
         CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_move(event))
     {
         _info_labels[1]->setText(CanvasOperations::CanvasOperation::info);
-        if (CanvasOperations::CanvasOperation::finish)
-        {
-            use_tool(CanvasOperations::Tool::Select);
-        }
         update();
         return QOpenGLWidget::mouseMoveEvent(event);
     }
@@ -903,56 +873,6 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         else if (is_obj_moveable())
         {
             _bool_flags[6] = true; // is moving obj
-            const std::vector<Geo::Geometry *> selected_objects = _editer->selected();
-            if (selected_objects.size() == 1)
-            {
-                _editer->translate_points(selected_objects.back(), real_x0, real_y0, real_x1, real_y1, event->modifiers() == Qt::ControlModifier);
-                switch (selected_objects.back()->type())
-                {
-                case Geo::Type::BEZIER:
-                    _cache_count = 0;
-                    for (const Geo::Point &point : *static_cast<Geo::Bezier *>(selected_objects.back()))
-                    {
-                        _cache[_cache_count++] = point.x;
-                        _cache[_cache_count++] = point.y;
-                        _cache[_cache_count++] = 0.5;
-                    }
-                    refresh_cache_vbo(0);
-                    break;
-                case Geo::Type::BSPLINE:
-                    _cache_count = 0;
-                    for (const Geo::Point &point : static_cast<Geo::BSpline *>(selected_objects.back())->path_points)
-                    {
-                        _cache[_cache_count++] = point.x;
-                        _cache[_cache_count++] = point.y;
-                        _cache[_cache_count++] = 0.5;
-                    }
-                    refresh_cache_vbo(0);
-                    break;
-                default:
-                    break;
-                }
-                refresh_vbo(selected_objects.back()->type(), event->modifiers() == Qt::ControlModifier);
-                if (event->modifiers() == Qt::ControlModifier)
-                {
-                    refresh_selected_ibo(selected_objects.back());
-                }
-            }
-            else
-            {
-                std::set<Geo::Type> types;
-                for (Geo::Geometry *obj : selected_objects)
-                {
-                    _editer->translate_points(obj, real_x0, real_y0, real_x1, real_y1, false);
-                    types.insert(obj->type());
-                }
-                refresh_vbo(types, false);
-                // refresh_brush_ibo();
-            }
-            if (GlobalSetting::setting().show_text)
-            {
-                refresh_text_vbo();
-            }
             if (event->modifiers() != Qt::ControlModifier && GlobalSetting::setting().auto_aligning)
             {
                 _reflines.clear();
@@ -963,25 +883,6 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
                 }
             }
             _info_labels[1]->clear();
-        }
-        // else if (!_select_rect.empty())
-        // {
-        //     _select_rect = Geo::AABBRect(_points_cache.back().x, _points_cache.back().y, real_x1, real_y1);
-        //     refresh_select_rect_vbo();
-        //     if (std::vector<Geo::Geometry *> objects = _editer->select(_select_rect); !objects.empty())
-        //     {
-        //         refresh_selected_ibo(objects);
-        //         _cache_count = 0; // 框选时不显示BSpline路径线和Bezier控制线
-        //     }
-        //     _info_labels[1]->setText(std::string("Width:").append(std::to_string(std::abs(real_x1 - _points_cache.back().x)))
-        //         .append(" Height:").append(std::to_string(std::abs(real_y1 - _points_cache.back().y))).c_str());
-        // }
-        if (CanvasOperations::CanvasOperation *op = CanvasOperations::CanvasOperation::operation()[
-            CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_move(event))
-        {
-            _info_labels[1]->setText(CanvasOperations::CanvasOperation::info);
-            update();
-            return QOpenGLWidget::mouseMoveEvent(event);
         }
         update();
     }
@@ -1058,10 +959,6 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
     if (CanvasOperations::CanvasOperation *op = CanvasOperations::CanvasOperation::operation()[
         CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_double_click(event))
     {
-        if (CanvasOperations::CanvasOperation::finish)
-        {
-            use_tool(CanvasOperations::Tool::Select);
-        }
         update();
         return QOpenGLWidget::mouseDoubleClickEvent(event);
     }
@@ -1178,14 +1075,13 @@ void Canvas::show_overview()
 
 void Canvas::use_tool(const CanvasOperations::Tool tool)
 {
+    CanvasOperations::CanvasOperation::operation().clear();
     CanvasOperations::CanvasOperation::tool[1] = CanvasOperations::CanvasOperation::tool[0];
     CanvasOperations::CanvasOperation::tool[0] = tool;
     _bool_flags[1] = (tool != CanvasOperations::Tool::Select
         && tool != CanvasOperations::Tool::Measure && tool != CanvasOperations::Tool::Angle); // paintable
     _bool_flags[2] = false; // painting
 
-    CanvasOperations::CanvasOperation::operation().clear();
-    CanvasOperations::CanvasOperation::finish = tool == CanvasOperations::Tool::Select;
     _cache_count = 0;
 
     _measure_angle_flag = 0;
@@ -1393,7 +1289,6 @@ void Canvas::cancel_painting()
     _bool_flags[1] = false; // paintable
     _bool_flags[2] = false; // painting
     CanvasOperations::CanvasOperation::tool[1] = CanvasOperations::CanvasOperation::tool[0];
-    CanvasOperations::CanvasOperation::tool[0] = CanvasOperations::Tool::Select;
 
     _editer->point_cache().clear();
     CanvasOperations::CanvasOperation::operation().clear();
@@ -1415,13 +1310,12 @@ void Canvas::use_last_tool()
     {
         return;
     }
+    CanvasOperations::CanvasOperation::operation().clear();
     CanvasOperations::CanvasOperation::tool[0] = CanvasOperations::CanvasOperation::tool[1];
     _measure_angle_flag = 0;
     _info_labels[1]->clear();
     _bool_flags[1] = (CanvasOperations::CanvasOperation::tool[0] != CanvasOperations::Tool::Measure
         && CanvasOperations::CanvasOperation::tool[0] != CanvasOperations::Tool::Angle); // paintable
-    CanvasOperations::CanvasOperation::operation().clear();
-    CanvasOperations::CanvasOperation::finish = CanvasOperations::CanvasOperation::tool[0] == CanvasOperations::Tool::Select;
     if (CanvasOperations::CanvasOperation::tool[0] == CanvasOperations::Tool::Select)
     {
         cancel_painting();
@@ -2951,7 +2845,6 @@ void Canvas::refresh_selected_ibo()
     size_t count = 0;
     for (const Geo::Geometry *geo : _editer->selected())
     {
-        ++count;
         switch (geo->type())
         {
         case Geo::Type::POLYLINE:
@@ -3046,32 +2939,6 @@ void Canvas::refresh_selected_ibo()
                 std::move(curve_indexs, curve_indexs + curve_index_count, temp);
                 delete []curve_indexs;
                 curve_indexs = temp;
-            }
-            if (count == 1)
-            {
-                _cache_count = 0;
-                switch (geo->type())
-                {
-                case Geo::Type::BEZIER:
-                    for (const Geo::Point &point : *static_cast<const Geo::Bezier *>(geo))
-                    {
-                        _cache[_cache_count++] = point.x;
-                        _cache[_cache_count++] = point.y;
-                        _cache[_cache_count++] = 0.5;
-                        check_cache();
-                    }
-                    break;
-                case Geo::Type::BSPLINE:
-                    for (const Geo::Point &point : static_cast<const Geo::BSpline *>(geo)->path_points)
-                    {
-                        _cache[_cache_count++] = point.x;
-                        _cache[_cache_count++] = point.y;
-                        _cache[_cache_count++] = 0.5;
-                        check_cache();
-                    }
-                default:
-                    break;
-                }
             }
             break;
         case Geo::Type::COMBINATION:
@@ -3400,23 +3267,9 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
             _selected_index_count[2] = index_count;
             break;
         case Geo::Type::BEZIER:
-            for (const Geo::Point &point : *static_cast<const Geo::Bezier *>(object))
-            {
-                _cache[_cache_count++] = point.x;
-                _cache[_cache_count++] = point.y;
-                _cache[_cache_count++] = 0.5;
-                check_cache();
-            }
             _selected_index_count[3] = index_count;
             break;
         case Geo::Type::BSPLINE:
-            for (const Geo::Point &point : static_cast<const Geo::BSpline *>(object)->path_points)
-            {
-                _cache[_cache_count++] = point.x;
-                _cache[_cache_count++] = point.y;
-                _cache[_cache_count++] = 0.5;
-                check_cache();
-            }
             _selected_index_count[3] = index_count;
             break;
         default:
@@ -3436,6 +3289,11 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
 void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
 {
     _cache_count = 0;
+    if (objects.empty())
+    {
+        return;
+    }
+
     unsigned int polyline_index_len = 512, polyline_index_count = 0;
     unsigned int polygon_index_len = 512, polygon_index_count = 0;
     unsigned int circle_index_len = 512, circle_index_count = 0;
@@ -3444,10 +3302,8 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
     unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
     unsigned int *circle_indexs = new unsigned int[circle_index_len];
     unsigned int *curve_indexs = new unsigned int[curve_index_len];
-    size_t count = 0;
     for (const Geo::Geometry *geo : objects)
     {
-        ++count;
         switch (geo->type())
         {
         case Geo::Type::POLYLINE:
@@ -3542,32 +3398,6 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
                 std::move(curve_indexs, curve_indexs + curve_index_count, temp);
                 delete []curve_indexs;
                 curve_indexs = temp;
-            }
-            if (count == 1)
-            {
-                _cache_count = 0;
-                switch (geo->type())
-                {
-                case Geo::Type::BEZIER:
-                    for (const Geo::Point &point : *static_cast<const Geo::Bezier *>(geo))
-                    {
-                        _cache[_cache_count++] = point.x;
-                        _cache[_cache_count++] = point.y;
-                        _cache[_cache_count++] = 0.5;
-                        check_cache();
-                    }
-                    break;
-                case Geo::Type::BSPLINE:
-                    for (const Geo::Point &point : static_cast<const Geo::BSpline *>(geo)->path_points)
-                    {
-                        _cache[_cache_count++] = point.x;
-                        _cache[_cache_count++] = point.y;
-                        _cache[_cache_count++] = 0.5;
-                        check_cache();
-                    }
-                default:
-                    break;
-                }
             }
             break;
         case Geo::Type::COMBINATION:
@@ -3679,41 +3509,33 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
         }
     }
 
-    if (count > 1)
-    {
-        _cache_count = 0;
-    }
-
     _selected_index_count[0] = polyline_index_count;
     _selected_index_count[1] = polygon_index_count;
     _selected_index_count[2] = circle_index_count;
     _selected_index_count[3] = curve_index_count;
 
-    if (count > 0)
+    makeCurrent();
+    if (polyline_index_count > 0)
     {
-        makeCurrent();
-        if (polyline_index_count > 0)
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[0]);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_index_count * sizeof(unsigned int), polyline_indexs, GL_DYNAMIC_DRAW);
-        }
-        if (polygon_index_count > 0)
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[1]);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_index_count * sizeof(unsigned int), polygon_indexs, GL_DYNAMIC_DRAW);
-        }
-        if (circle_index_count > 0)
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[2]);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_index_count * sizeof(unsigned int), circle_indexs, GL_DYNAMIC_DRAW);
-        }
-        if (curve_index_count > 0)
-        {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[3]);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_index_count * sizeof(unsigned int), curve_indexs, GL_DYNAMIC_DRAW);
-        }
-        doneCurrent();
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[0]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_index_count * sizeof(unsigned int), polyline_indexs, GL_DYNAMIC_DRAW);
     }
+    if (polygon_index_count > 0)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[1]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_index_count * sizeof(unsigned int), polygon_indexs, GL_DYNAMIC_DRAW);
+    }
+    if (circle_index_count > 0)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[2]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_index_count * sizeof(unsigned int), circle_indexs, GL_DYNAMIC_DRAW);
+    }
+    if (curve_index_count > 0)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[3]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_index_count * sizeof(unsigned int), curve_indexs, GL_DYNAMIC_DRAW);
+    }
+    doneCurrent();
     
     delete []polyline_indexs;
     delete []polygon_indexs;

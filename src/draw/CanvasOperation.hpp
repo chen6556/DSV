@@ -13,6 +13,7 @@ namespace CanvasOperations
     enum class Tool
     {
         Select, 
+        Move, 
         Measure, 
         Angle, 
         Circle0, // Center-Radius
@@ -48,14 +49,19 @@ namespace CanvasOperations
         static unsigned int tool_lines_count;
         static float tool_line_width;
         static float tool_line_color[4];
-        static double real_pos[2];
+        static double real_pos[4]; // current(x,y), last(x,y)
+        static double press_pos[2];
+        static double release_pos[2];
         static Tool tool[2]; // current, last
         static double view_ratio;
-        static bool finish;
         static QString info;
 
         static Editer *editer;
         static Canvas *canvas;
+
+    protected:
+        static std::vector<Geo::Geometry *> selected_objects;
+        static Geo::Geometry *clicked_object;
 
     private:
         CanvasOperation *operations[static_cast<int>(Tool::End)] = {nullptr};
@@ -80,7 +86,11 @@ namespace CanvasOperations
 
         static void check_shape_size();
 
+        static void check_shape_size(const size_t count);
+
         static void check_tool_lines_size();
+
+        static void check_tool_lines_size(const size_t count);
 
         virtual bool mouse_press(QMouseEvent *event);
 
@@ -103,6 +113,17 @@ namespace CanvasOperations
     public:
         bool mouse_press(QMouseEvent *event) override;
 
+        bool mouse_release(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+    };
+
+
+    class MoveOperation : public CanvasOperation
+    {
+    public:
         bool mouse_release(QMouseEvent *event) override;
 
         bool mouse_move(QMouseEvent *event) override;
@@ -271,5 +292,5 @@ namespace CanvasOperations
     };
 
 
-    
+
 }

@@ -15,13 +15,17 @@ unsigned int CanvasOperation::tool_lines_len = 63;
 unsigned int CanvasOperation::tool_lines_count = 0;
 float CanvasOperation::tool_line_width = 1.4f;
 float CanvasOperation::tool_line_color[4] = {1.0f, 0.549f, 0.0f, 1.0f};
-double CanvasOperation::real_pos[2];
+double CanvasOperation::real_pos[4];
+double CanvasOperation::press_pos[2];
+double CanvasOperation::release_pos[2];
 Tool CanvasOperation::tool[2] = {Tool::Select, Tool::Select};
 double CanvasOperation::view_ratio = 1;
-bool CanvasOperation::finish = false;
 QString CanvasOperation::info;
 Editer *CanvasOperation::editer = nullptr;
 Canvas *CanvasOperation::canvas = nullptr;
+
+std::vector<Geo::Geometry *> CanvasOperation::selected_objects;
+Geo::Geometry *CanvasOperation::clicked_object = nullptr;
 
 
 CanvasOperation &CanvasOperation::operation()
@@ -37,6 +41,7 @@ void CanvasOperation::init()
     std::fill_n(operations, static_cast<int>(Tool::End), nullptr);
 
     operations[static_cast<int>(Tool::Select)] = new SelectOperation();
+    operations[static_cast<int>(Tool::Move)] = new MoveOperation();
     operations[static_cast<int>(Tool::Measure)] = new MeasureOperation();
     operations[static_cast<int>(Tool::Angle)] = new AngleOperation();
     operations[static_cast<int>(Tool::Circle0)] = new Circle0Operation();
@@ -61,8 +66,10 @@ void CanvasOperation::clear()
         operations[i]->reset();
     }
     shape_count = tool_lines_count = 0;
-    finish = false;
+    tool[0] = Tool::Select;
     info.clear();
+    selected_objects.clear();
+    clicked_object = nullptr;
 }
 
 CanvasOperation::~CanvasOperation()
@@ -91,6 +98,23 @@ void CanvasOperation::check_shape_size()
     }
 }
 
+void CanvasOperation::check_shape_size(const size_t count)
+{
+    if (shape_len >= count)
+    {
+        return;
+    }
+    while (shape_len < count)
+    {
+        shape_len *= 2;
+    }
+    double *temp = new double[shape_len];
+    std::fill_n(temp, shape_len, 0);
+    std::memmove(temp, shape, sizeof(double) * shape_count);
+    delete[] shape;
+    shape = temp;
+}
+
 void CanvasOperation::check_tool_lines_size()
 {
     if (tool_lines_count == tool_lines_len)
@@ -102,6 +126,23 @@ void CanvasOperation::check_tool_lines_size()
         delete[] tool_lines;
         tool_lines = temp;
     }
+}
+
+void CanvasOperation::check_tool_lines_size(const size_t count)
+{
+    if (tool_lines_len >= count)
+    {
+        return;
+    }
+    while (tool_lines_len < count)
+    {
+        tool_lines_len *= 2;
+    }
+    double *temp = new double[tool_lines_len];
+    std::fill_n(temp, tool_lines_len, 0);
+    std::memmove(temp, tool_lines, sizeof(double) * tool_lines_count);
+    delete[] tool_lines;
+    tool_lines = temp;
 }
 
 bool CanvasOperation::mouse_press(QMouseEvent *event)
@@ -133,13 +174,58 @@ bool SelectOperation::mouse_press(QMouseEvent *event)
     {
         _select = true;
         _pos[0] = real_pos[0], _pos[1] = real_pos[1];
-        if (const Geo::Geometry * object = editer->select(_pos[0], _pos[1],
-            event->modifiers() != Qt::KeyboardModifier::ControlModifier); object == nullptr)
+        tool_lines_count = 0;
+        if (clicked_object = editer->select(_pos[0], _pos[1],
+            event->modifiers() != Qt::KeyboardModifier::ControlModifier); clicked_object == nullptr)
         {
             if (event->modifiers() != Qt::KeyboardModifier::ControlModifier)
             {
                 editer->reset_selected_mark();
+                selected_objects.clear();
             }
+        }
+        else
+        {
+            if (selected_objects = editer->selected(); selected_objects.size() == 1)
+            {
+                switch (clicked_object->type())
+                {
+                case Geo::Type::BEZIER:
+                    {
+                        const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(clicked_object);
+                        check_tool_lines_size(bezier->size() * 6);
+                        for (size_t i = 1, count = bezier->size(); i < count; ++i)
+                        {
+                            tool_lines[tool_lines_count++] = (*bezier)[i - 1].x;
+                            tool_lines[tool_lines_count++] = (*bezier)[i - 1].y;
+                            ++tool_lines_count;
+                            tool_lines[tool_lines_count++] = (*bezier)[i].x;
+                            tool_lines[tool_lines_count++] = (*bezier)[i].y;
+                            ++tool_lines_count;
+                        }
+                    }
+                    break;
+                case Geo::Type::BSPLINE:
+                    {
+                        const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(clicked_object);
+                        check_tool_lines_size(bspline->path_points.size() * 6);
+                        for (size_t i = 1, count = bspline->path_points.size(); i < count; ++i)
+                        {
+                            tool_lines[tool_lines_count++] = bspline->path_points[i - 1].x;
+                            tool_lines[tool_lines_count++] = bspline->path_points[i - 1].y;
+                            ++tool_lines_count;
+                            tool_lines[tool_lines_count++] = bspline->path_points[i].x;
+                            tool_lines[tool_lines_count++] = bspline->path_points[i].y;
+                            ++tool_lines_count;
+                        }
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+            tool[0] = Tool::Move;
+            _select = false;
         }
         canvas->refresh_selected_ibo();
         return true;
@@ -165,17 +251,114 @@ bool SelectOperation::mouse_move(QMouseEvent *event)
     if (_select)
     {
         canvas->refresh_select_rect(_pos[0], _pos[1], real_pos[0], real_pos[1]);
-        if (std::vector<Geo::Geometry *> objects = editer->select(Geo::AABBRect(_pos[0], _pos[1], real_pos[0], real_pos[1]),
-            event->modifiers() != Qt::KeyboardModifier::ControlModifier); !objects.empty())
+        if (selected_objects = editer->select(Geo::AABBRect(_pos[0], _pos[1], real_pos[0], real_pos[1]),
+            event->modifiers() != Qt::KeyboardModifier::ControlModifier); !selected_objects.empty())
         {
-            canvas->refresh_selected_ibo(objects);
+            canvas->refresh_selected_ibo(selected_objects);
         }
+        tool_lines_count = 0;
         return true;
     }
     else
     {
         return false;
     }
+}
+
+void SelectOperation::reset()
+{
+    _select = false;
+}
+
+
+bool MoveOperation::mouse_release(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        tool[0] = Tool::Select;
+        if (!selected_objects.empty() && GlobalSetting::setting().translated_points
+            && (press_pos[0] != release_pos[0] || press_pos[1] != release_pos[1]))
+        {
+            GlobalSetting::setting().translated_points = false;
+            if (editer->edited_shape().empty())
+            {
+                editer->push_backup_command(new UndoStack::TranslateCommand(selected_objects,
+                    release_pos[0] - press_pos[0], release_pos[1] - press_pos[1]));
+            }
+            else
+            {
+                editer->push_backup_command(new UndoStack::ChangeShapeCommand(selected_objects.front(), editer->edited_shape()));
+                editer->edited_shape().clear();
+            }
+        }
+    }
+    return false;
+}
+
+bool MoveOperation::mouse_move(QMouseEvent *event)
+{
+    tool_lines_count = 0;
+    if (selected_objects.size() <= 1 && clicked_object != nullptr)
+    {
+        editer->translate_points(clicked_object, real_pos[2], real_pos[3], real_pos[0], real_pos[1], event->modifiers() == Qt::ControlModifier);
+        switch (clicked_object->type())
+        {
+        case Geo::Type::BEZIER:
+            {
+                const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(clicked_object);
+                check_tool_lines_size(bezier->size() * 6);
+                for (size_t i = 1, count = bezier->size(); i < count; ++i)
+                {
+                    tool_lines[tool_lines_count++] = (*bezier)[i - 1].x;
+                    tool_lines[tool_lines_count++] = (*bezier)[i - 1].y;
+                    ++tool_lines_count;
+                    tool_lines[tool_lines_count++] = (*bezier)[i].x;
+                    tool_lines[tool_lines_count++] = (*bezier)[i].y;
+                    ++tool_lines_count;
+                }
+                canvas->refresh_cache_vbo(0);
+            }
+            break;
+        case Geo::Type::BSPLINE:
+            {
+                const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(clicked_object);
+                check_tool_lines_size(bspline->path_points.size() * 6);
+                for (size_t i = 1, count = bspline->path_points.size(); i < count; ++i)
+                {
+                    tool_lines[tool_lines_count++] = bspline->path_points[i - 1].x;
+                    tool_lines[tool_lines_count++] = bspline->path_points[i - 1].y;
+                    ++tool_lines_count;
+                    tool_lines[tool_lines_count++] = bspline->path_points[i].x;
+                    tool_lines[tool_lines_count++] = bspline->path_points[i].y;
+                    ++tool_lines_count;
+                }
+                canvas->refresh_cache_vbo(0);
+            }
+            break;
+        default:
+            break;
+        }
+        canvas->refresh_vbo(clicked_object->type(), event->modifiers() == Qt::ControlModifier);
+        if (event->modifiers() == Qt::ControlModifier)
+        {
+            canvas->refresh_selected_ibo(clicked_object);
+        }
+    }
+    else
+    {
+        std::set<Geo::Type> types;
+        for (Geo::Geometry *object : selected_objects)
+        {
+            editer->translate_points(object, real_pos[2], real_pos[3], real_pos[0], real_pos[1], false);
+            types.insert(object->type());
+        }
+        canvas->refresh_vbo(types, false);
+    }
+    if (GlobalSetting::setting().show_text)
+    {
+        canvas->refresh_text_vbo();
+    }
+    return true;
 }
 
 
@@ -297,14 +480,8 @@ bool Circle0Operation::mouse_press(QMouseEvent *event)
             _parameters[2] = 10;
             const Geo::Polygon points = Geo::circle_to_polygon(_parameters[0],
                 _parameters[1], _parameters[2], Geo::Circle::default_down_sampling_value);
-            while (shape_len < points.size() * 3)
-            {
-                shape_len *= 2;
-            }
-            delete[] shape;
-            shape = new double[shape_len];
-            std::fill_n(shape, shape_len, 0);
             shape_count = 0;
+            check_shape_size(points.size() * 3);
             for (const Geo::Point &point : points)
             {
                 shape[shape_count++] = point.x;
@@ -321,7 +498,7 @@ bool Circle0Operation::mouse_press(QMouseEvent *event)
             _parameters[2] = Geo::distance(_parameters[0], _parameters[1], real_pos[0], real_pos[1]);
             canvas->add_geometry(new Geo::Circle(_parameters[0], _parameters[1], _parameters[2]));
             info.clear();
-            finish = true;
+            tool[0] = Tool::Select;
             shape_count = tool_lines_count = 0;
         }
         _set_center = !_set_center;
@@ -344,15 +521,9 @@ bool Circle0Operation::mouse_move(QMouseEvent *event)
         tool_lines[3] = real_pos[0], tool_lines[4] = real_pos[1];
         _parameters[2] = Geo::distance(_parameters[0], _parameters[1], real_pos[0], real_pos[1]); 
         const Geo::Polygon points = Geo::circle_to_polygon(_parameters[0],
-                    _parameters[1], _parameters[2], Geo::Circle::default_down_sampling_value);     
-        while (shape_len < points.size() * 3)
-        {
-            shape_len *= 2;
-        }
-        delete[] shape;
-        shape = new double[shape_len];
-        std::fill_n(shape, shape_len, 0);
+            _parameters[1], _parameters[2], Geo::Circle::default_down_sampling_value);
         shape_count = 0;
+        check_shape_size(points.size() * 3);
         for (const Geo::Point &point : points)
         {
             shape[shape_count++] = point.x;
@@ -387,7 +558,7 @@ bool Circle1Operation::mouse_press(QMouseEvent *event)
             _parameters[2] = real_pos[0], _parameters[3] = real_pos[1];
             canvas->add_geometry(new Geo::Circle(_parameters[0], _parameters[1], _parameters[2], _parameters[3]));
             shape_count = tool_lines_count = 0;
-            finish = true;
+            tool[0] = Tool::Select;
             info.clear();
         }
         _set_first_point = !_set_first_point;
@@ -412,14 +583,8 @@ bool Circle1Operation::mouse_move(QMouseEvent *event)
         const double r = std::hypot(_parameters[0] - _parameters[2], _parameters[1] - _parameters[3]) / 2;
         const Geo::Polygon points = Geo::circle_to_polygon((_parameters[0] + _parameters[2]) / 2,
             (_parameters[1] + _parameters[3]) / 2, r, Geo::Circle::default_down_sampling_value);
-        while (shape_len < points.size() * 3)
-        {
-            shape_len *= 2;
-        }
-        delete[] shape;
-        shape = new double[shape_len];
-        std::fill_n(shape, shape_len, 0);
         shape_count = 0;
+        check_shape_size(points.size() * 3);
         for (const Geo::Point &point : points)
         {
             shape[shape_count++] = point.x;
@@ -463,7 +628,7 @@ bool Circle2Operation::mouse_press(QMouseEvent *event)
             canvas->add_geometry(new Geo::Circle(_parameters[0], _parameters[1], _parameters[2],
                 _parameters[3], _parameters[4], _parameters[5]));
             _index = shape_count = tool_lines_count = 0;
-            finish = true;
+            tool[0] = Tool::Select;
             info.clear();
             break;
         default:
@@ -497,14 +662,8 @@ bool Circle2Operation::mouse_move(QMouseEvent *event)
                 _parameters[5] = tool_lines[10] = real_pos[1];
                 const Geo::Polygon points = Geo::circle_to_polygon(Geo::Circle(_parameters[0], _parameters[1], _parameters[2],
                     _parameters[3], _parameters[4], _parameters[5]), Geo::Circle::default_down_sampling_value);
-                while (shape_len < points.size() * 3)
-                {
-                    shape_len *= 2;
-                }
-                delete[] shape;
-                shape = new double[shape_len];
-                std::fill_n(shape, shape_len, 0);
                 shape_count = 0;
+                check_shape_size(points.size() * 3);
                 for (const Geo::Point &point : points)
                 {
                     shape[shape_count++] = point.x;
@@ -616,7 +775,7 @@ bool PolythingOperation::mouse_double_click(QMouseEvent *event)
             canvas->add_geometry(new Geo::Polyline(_points.begin(), _points.end()));
         }
         _points.clear();
-        finish = true;
+        tool[0] = Tool::Select;
         info.clear();
         shape_count = 0;
         return true;
@@ -651,7 +810,7 @@ bool RectOperation::mouse_press(QMouseEvent *event)
             canvas->add_geometry(new Geo::Polygon(Geo::AABBRect(_parameters[0],
                 _parameters[1], _parameters[2], _parameters[3])));
             shape_count = 0;
-            finish = true;
+            tool[0] = Tool::Select;
             info.clear();
         }
         _set_first_point = !_set_first_point;
@@ -752,13 +911,7 @@ bool BSplineOperation::mouse_press(QMouseEvent *event)
             shape_count = 0;
             const Geo::Polyline path = _order == 3 ? Geo::CubicBSpline(_points.begin(), _points.end(),
                 true).shape() : Geo::QuadBSpline(_points.begin(), _points.end(), true).shape();
-            while (shape_len < path.size() * 3)
-            {
-                shape_len *= 2;
-            }
-            delete[] shape;
-            shape = new double[shape_len];
-            std::fill_n(shape, shape_len, 0);
+            check_shape_size(path.size() * 3);
             for (const Geo::Point &point : path)
             {
                 shape[shape_count++] = point.x;
@@ -791,13 +944,7 @@ bool BSplineOperation::mouse_move(QMouseEvent *event)
             shape_count = 0;
             const Geo::Polyline path = _order == 3 ? Geo::CubicBSpline(_points.begin(), _points.end(),
                 true).shape() : Geo::QuadBSpline(_points.begin(), _points.end(), true).shape();
-            while (shape_len < path.size() * 3)
-            {
-                shape_len *= 2;
-            }
-            delete[] shape;
-            shape = new double[shape_len];
-            std::fill_n(shape, shape_len, 0);
+            check_shape_size(path.size() * 3);
             for (const Geo::Point &point : path)
             {
                 shape[shape_count++] = point.x;
@@ -828,7 +975,8 @@ bool BSplineOperation::mouse_double_click(QMouseEvent *event)
                 canvas->add_geometry(new Geo::QuadBSpline(_points.begin(), _points.end(), true));
             }
         }
-        finish = true;
+        tool[0] = Tool::Select;
+        shape_count = tool_lines_count = 0;
         _points.clear();
         info.clear();
         return true;
@@ -869,13 +1017,7 @@ bool BezierOperation::mouse_press(QMouseEvent *event)
         {
             shape_count = 0;
             const Geo::Polyline path = Geo::Bezier(_points.begin(), _points.end(), _order, true).shape();
-            while (shape_len < path.size() * 3)
-            {
-                shape_len *= 2;
-            }
-            delete[] shape;
-            shape = new double[shape_len];
-            std::fill_n(shape, shape_len, 0);
+            check_shape_size(path.size() * 3);
             for (const Geo::Point &point : path)
             {
                 shape[shape_count++] = point.x;
@@ -906,13 +1048,7 @@ bool BezierOperation::mouse_move(QMouseEvent *event)
         {
             shape_count = 0;
             const Geo::Polyline path = Geo::Bezier(_points.begin(), _points.end(), _order, true).shape();
-            while (shape_len < path.size() * 3)
-            {
-                shape_len *= 2;
-            }
-            delete[] shape;
-            shape = new double[shape_len];
-            std::fill_n(shape, shape_len, 0);
+            check_shape_size(path.size() * 3);
             for (const Geo::Point &point : path)
             {
                 shape[shape_count++] = point.x;
@@ -936,7 +1072,8 @@ bool BezierOperation::mouse_double_click(QMouseEvent *event)
             _points.pop_back();
             canvas->add_geometry(new Geo::Bezier(_points.begin(), _points.end(), _order, true));
         }
-        finish = true;
+        tool[0] = Tool::Select;
+        shape_count = tool_lines_count = 0;
         _points.clear();
         info.clear();
         return true;
@@ -957,7 +1094,7 @@ bool TextOperation::mouse_press(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
-        finish = true;
+        tool[0] = Tool::Select;
         canvas->add_geometry(new Text(real_pos[0], real_pos[1], GlobalSetting::setting().text_size));
         return true;
     }
@@ -994,7 +1131,7 @@ bool EllipseOperation::mouse_press(QMouseEvent *event)
                 ellipse->rotate(_parameters[0], _parameters[1], _parameters[4]);
                 canvas->add_geometry(ellipse);
                 _index = shape_count = tool_lines_count = 0;
-                finish = true;
+                tool[0] = Tool::Select;
                 info.clear();
             }
             break;
@@ -1021,13 +1158,7 @@ bool EllipseOperation::mouse_move(QMouseEvent *event)
             tool_lines[3] = _parameters[0] * 2 - real_pos[0], tool_lines[4] = _parameters[1] * 2 - real_pos[1];
             const Geo::Polyline path = Geo::Circle(_parameters[0], _parameters[1], _parameters[2]).shape();
             shape_count = 0;
-            while (shape_len < path.size() * 3)
-            {
-                shape_len *= 2;
-            }
-            delete[] shape;
-            shape = new double[shape_len];
-            std::fill_n(shape, shape_len, 0);
+            check_shape_size(path.size() * 3);
             for (const Geo::Point &point : path)
             {
                 shape[shape_count++] = point.x;
@@ -1047,13 +1178,7 @@ bool EllipseOperation::mouse_move(QMouseEvent *event)
             tool_lines[9] = ellipse.b1().x, tool_lines[10] = ellipse.b1().y;
             const Geo::Polyline &path = ellipse.shape();
             shape_count = 0;
-            while (shape_len < path.size() * 3)
-            {
-                shape_len *= 2;
-            }
-            delete[] shape;
-            shape = new double[shape_len];
-            std::fill_n(shape, shape_len, 0);
+            check_shape_size(path.size() * 3);
             for (const Geo::Point &point : path)
             {
                 shape[shape_count++] = point.x;
