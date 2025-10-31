@@ -303,4 +303,14 @@ namespace CanvasOperations
     public:
         bool mouse_press(QMouseEvent *event) override;
     };
+
+
+    class PolygonDifferenceOperation : public CanvasOperation
+    {
+    private:
+        Geo::Polygon *polygon = nullptr;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+    };
 }

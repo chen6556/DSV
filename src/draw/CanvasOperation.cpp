@@ -54,6 +54,7 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::Ellipse)] = new EllipseOperation();
     operations[static_cast<int>(Tool::Mirror)] = new MirrorOperation();
     operations[static_cast<int>(Tool::RingArray)] = new RingArrayOperation();
+    operations[static_cast<int>(Tool::PolygonDifference)] = new PolygonDifferenceOperation();
 }
 
 void CanvasOperation::clear()
@@ -1330,7 +1331,36 @@ bool RingArrayOperation::mouse_press(QMouseEvent *event)
 }
 
 
-
+bool PolygonDifferenceOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        if (clicked_object = editer->select(real_pos[0], real_pos[1], true);
+            clicked_object->type() == Geo::Type::POLYGON)
+        {
+            if (polygon == nullptr)
+            {
+                polygon = static_cast<Geo::Polygon *>(clicked_object);
+            }
+            else if (polygon != clicked_object && clicked_object->type() == Geo::Type::POLYGON)
+            {
+                if (editer->polygon_difference(polygon, static_cast<const Geo::Polygon *>(clicked_object)))
+                {
+                    canvas->refresh_vbo(Geo::Type::POLYGON, true);
+                    canvas->refresh_selected_ibo();
+                    tool[1] = tool[0];
+                    tool[0] = Tool::Select;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+    else
+    {
+        return false;
+    }
+}
 
 
 

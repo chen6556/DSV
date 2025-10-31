@@ -2817,22 +2817,6 @@ QComboBox QAbstractItemView::item:selected
    </hints>
   </connection>
   <connection>
-   <sender>difference_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>polygon_difference()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>90</x>
-     <y>580</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>detach_btn</sender>
    <signal>clicked()</signal>
    <receiver>MainWindow</receiver>
@@ -2932,7 +2916,6 @@ QComboBox QAbstractItemView::item:selected
   <slot>offset()</slot>
   <slot>polygon_union()</slot>
   <slot>polygon_intersection()</slot>
-  <slot>polygon_difference()</slot>
   <slot>scale()</slot>
   <slot>append_file()</slot>
   <slot>refresh_tool_label(CanvasOperations::Tool)</slot>

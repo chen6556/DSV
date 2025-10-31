@@ -53,30 +53,30 @@ void MainWindow::init()
 
     _cmd_widget = new CMDWidget(&_editer, ui->canvas, this);
     _cmd_widget->show();
-    QObject::connect(_cmd_widget, &CMDWidget::cmd_changed, this, &MainWindow::refresh_cmd);
+    connect(_cmd_widget, &CMDWidget::cmd_changed, this, &MainWindow::refresh_cmd);
 
     _clock.start(5000);
-    QObject::connect(ui->measure_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Measure); });
-    QObject::connect(ui->angle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Angle); });
-    // QObject::connect(ui->circle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Circle); });
-    QObject::connect(ui->ellipse_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Ellipse); });
-    QObject::connect(ui->line_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Polyline); });
-    QObject::connect(ui->rect_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Rect); });
-    QObject::connect(ui->bspline_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::BSpline); });
-    QObject::connect(ui->bezier_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Bezier); });
-    QObject::connect(ui->curve_spb, &QSpinBox::valueChanged, ui->canvas, &Canvas::set_curve_order);
-    QObject::connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Text); });
-    QObject::connect(ui->mirror_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Mirror); });
-    QObject::connect(ui->ring_array_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::RingArray); });
+    connect(ui->measure_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Measure); });
+    connect(ui->angle_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Angle); });
+    connect(ui->ellipse_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Ellipse); });
+    connect(ui->line_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Polyline); });
+    connect(ui->rect_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Rect); });
+    connect(ui->bspline_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::BSpline); });
+    connect(ui->bezier_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Bezier); });
+    connect(ui->curve_spb, &QSpinBox::valueChanged, ui->canvas, &Canvas::set_curve_order);
+    connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Text); });
+    connect(ui->mirror_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Mirror); });
+    connect(ui->ring_array_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::RingArray); });
+    connect(ui->difference_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::PolygonDifference); });
     // QObject::connect(ui->rotate_btn, &QPushButton::clicked, [this]() { ui->canvas->set_operation(Canvas::Operation::Rotate); });
-    QObject::connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
+    connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
-    QObject::connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::setting().auto_aligning = ui->auto_aligning->isChecked(); });
-    QObject::connect(ui->actionadvanced, &QAction::triggered, _setting, &Setting::exec);
-    QObject::connect(ui->show_origin, &QAction::triggered, [this]() { ui->show_origin->isChecked() ? ui->canvas->show_origin() : ui->canvas->hide_origin(); });
-    QObject::connect(ui->show_cmd_line, &QAction::triggered, [this]() { ui->show_cmd_line->isChecked() ? _cmd_widget->show() : _cmd_widget->hide(); });
+    connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::setting().auto_aligning = ui->auto_aligning->isChecked(); });
+    connect(ui->actionadvanced, &QAction::triggered, _setting, &Setting::exec);
+    connect(ui->show_origin, &QAction::triggered, [this]() { ui->show_origin->isChecked() ? ui->canvas->show_origin() : ui->canvas->hide_origin(); });
+    connect(ui->show_cmd_line, &QAction::triggered, [this]() { ui->show_cmd_line->isChecked() ? _cmd_widget->show() : _cmd_widget->hide(); });
 
-    QObject::connect(_setting, &Setting::accepted, this, &MainWindow::refresh_settings);
+    connect(_setting, &Setting::accepted, this, &MainWindow::refresh_settings);
 
     for (size_t i = 0; i < 3; ++i)
     {
@@ -93,14 +93,14 @@ void MainWindow::init()
     _layers_manager = new LayersManager(this);
     _layers_manager->bind_editer(&_editer);
     _layers_manager->update_layers();
-    QObject::connect(_layers_manager, &LayersManager::accepted, this, &MainWindow::hide_layers_manager);
+    connect(_layers_manager, &LayersManager::accepted, this, &MainWindow::hide_layers_manager);
 
     _layers_btn = new QToolButton(this);
     _layers_btn->setText("Layers");
     _layers_btn->setMinimumHeight(22);
     _layers_btn->setFocusPolicy(Qt::FocusPolicy::NoFocus);
     ui->statusBar->addPermanentWidget(_layers_btn);
-    QObject::connect(_layers_btn, &QToolButton::clicked, this, &MainWindow::show_layers_manager);
+    connect(_layers_btn, &QToolButton::clicked, this, &MainWindow::show_layers_manager);
 
     _layers_cbx = new QComboBox(this);
     _layers_cbx->setFocusPolicy(Qt::FocusPolicy::NoFocus);
@@ -108,7 +108,7 @@ void MainWindow::init()
     _layers_cbx->view()->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     ui->statusBar->addPermanentWidget(_layers_cbx);
     _layers_cbx->setModel(_layers_manager->model());
-    QObject::connect(_layers_cbx, &QComboBox::currentIndexChanged,
+    connect(_layers_cbx, &QComboBox::currentIndexChanged,
         [this](int index) { _editer.set_current_group(_editer.groups_count() - 1 - index); });
 
 #ifdef _WIN64
@@ -1030,12 +1030,6 @@ void MainWindow::polygon_intersection()
         ui->canvas->refresh_selected_ibo();
         ui->canvas->update();
     }
-}
-
-void MainWindow::polygon_difference()
-{
-    ui->current_tool->setText("Difference");
-    ui->canvas->set_operation(Canvas::Operation::PolygonDifference);
 }
 
 void MainWindow::polygon_xor()
