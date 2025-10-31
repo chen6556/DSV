@@ -187,6 +187,7 @@ bool SelectOperation::mouse_press(QMouseEvent *event)
             {
                 editer->reset_selected_mark();
             }
+            canvas->hide_text_edit();
         }
         else
         {
@@ -252,6 +253,26 @@ bool SelectOperation::mouse_press(QMouseEvent *event)
         canvas->refresh_selected_ibo();
         return true;
     }
+    else if (event->button() == Qt::MouseButton::RightButton)
+    {
+        if (clicked_object = editer->select(real_pos[0], real_pos[1], false))
+        {
+            if (event->modifiers() == Qt::KeyboardModifier::ControlModifier)
+            {
+                clicked_object->is_selected = false;
+                canvas->refresh_selected_ibo();
+            }
+            else
+            {
+                canvas->show_menu(clicked_object);
+            }
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
     else
     {
         return false;
@@ -281,6 +302,27 @@ bool SelectOperation::mouse_move(QMouseEvent *event)
         }
         tool_lines_count = 0;
         return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool SelectOperation::mouse_double_click(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        if (clicked_object = editer->select(real_pos[0], real_pos[1], false);
+            clicked_object != nullptr && clicked_object->type() == Geo::Type::TEXT)
+        {
+            canvas->show_text_edit(static_cast<Text *>(clicked_object));
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
     else
     {

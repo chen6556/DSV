@@ -57,7 +57,7 @@ private:
     QPointF _mouse_pos_0, _mouse_pos_1;
     Geo::Point _mouse_press_pos, _mouse_release_pos;
     std::vector<Geo::Point> _points_cache;
-    Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
+    Text *_edited_text = nullptr;
 
     QMenu *_menu = nullptr;
     QAction *_up = nullptr;
@@ -141,6 +141,12 @@ public:
     void set_info_labels(QLabel **labels);
 
     void add_geometry(Geo::Geometry *object);
+
+    void show_menu(Geo::Geometry *object);
+
+    void show_text_edit(Text *text);
+
+    void hide_text_edit();
 
     void copy();
 

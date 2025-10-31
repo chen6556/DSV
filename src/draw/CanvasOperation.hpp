@@ -113,6 +113,8 @@ namespace CanvasOperations
 
         bool mouse_move(QMouseEvent *event) override;
 
+        bool mouse_double_click(QMouseEvent *event) override;
+
         void reset() override;
     };
 

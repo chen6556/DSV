@@ -351,71 +351,9 @@ void Canvas::mousePressEvent(QMouseEvent *event)
     switch (event->button())
     {
     case Qt::LeftButton:
-        {
-            const bool reset = !(GlobalSetting::setting().multiple_select || event->modifiers() == Qt::ControlModifier);
-            if (CanvasOperations::CanvasOperation::clicked_object == nullptr)
-            {
-                _editer->reset_selected_mark();
-                std::fill_n(_selected_index_count, 4, 0);
-                _points_cache.clear();
-                _points_cache.emplace_back(real_x1, real_y1);
-                _bool_flags[5] = false; // is obj selected
-
-                if (_input_line.isVisible() && _last_clicked_obj != nullptr)
-                {
-                    QString text;
-                    if (dynamic_cast<Text *>(_last_clicked_obj) != nullptr)
-                    {
-                        text = static_cast<Text *>(_last_clicked_obj)->text();
-                        static_cast<Text *>(_last_clicked_obj)->set_text(_input_line.toPlainText(),
-                            GlobalSetting::setting().text_size);
-                    }
-
-                    if (text != _input_line.toPlainText())
-                    {
-                        _editer->push_backup_command(new UndoStack::TextChangedCommand(_last_clicked_obj, text));
-                    }
-
-                    refresh_text_vbo();
-                    _input_line.clear();
-                    _input_line.hide();
-                }
-            }
-        }
         break;
     case Qt::RightButton:
-        if (CanvasOperations::CanvasOperation::tool[0] == CanvasOperations::Tool::Select)
-        {
-            if (event->modifiers() == Qt::ControlModifier)
-            {
-                if (_clicked_obj = _editer->select(real_x1, real_y1, false); _clicked_obj != nullptr)
-                {
-                    _clicked_obj->is_selected = false;
-                    refresh_selected_ibo();
-                }
-            }
-            else
-            {
-                if (_clicked_obj = _editer->select(real_x1, real_y1, true); _clicked_obj != nullptr)
-                {
-                    refresh_selected_ibo(_clicked_obj);
-                    const QAction *a = _menu->exec(QCursor::pos());
-                    if (a == _up)
-                    {
-                        _editer->up(_clicked_obj);
-                        refresh_vbo(_clicked_obj->type(), true);
-                        refresh_selected_ibo();
-                    }
-                    else if (a == _down)
-                    {
-                        _editer->down(_clicked_obj);
-                        refresh_vbo(_clicked_obj->type(), true);
-                        refresh_selected_ibo();
-                    }
-                }
-            }
-        }
-        else
+        if (CanvasOperations::CanvasOperation::tool[0] != CanvasOperations::Tool::Select)
         {
             cancel_painting();
             _editer->reset_selected_mark();
@@ -616,18 +554,6 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
     switch (event->button())
     {
     case Qt::LeftButton:
-        if (dynamic_cast<Text *>(_last_clicked_obj) != nullptr)
-        {
-            Geo::AABBRect rect(_last_clicked_obj->bounding_rect());
-            rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
-            _input_line.setMaximumSize(std::max(100.0, rect.width()), std::max(100.0, rect.height()));
-            _input_line.move(rect.center().x - _input_line.rect().center().x(),
-                                rect.center().y - _input_line.rect().center().y());
-            _input_line.setFocus();
-            _input_line.setText(dynamic_cast<Text *>(_last_clicked_obj)->text());
-            _input_line.moveCursor(QTextCursor::End);
-            _input_line.show();
-        }
         break;
     case Qt::RightButton:
         break;
@@ -923,6 +849,54 @@ void Canvas::add_geometry(Geo::Geometry *object)
     _editer->append(object);
     refresh_vbo(object->type(), true);
     update();
+}
+
+void Canvas::show_menu(Geo::Geometry *object)
+{
+    refresh_selected_ibo(object);
+    if (const QAction *a = _menu->exec(QCursor::pos()); a == _up)
+    {
+        _editer->up(object);
+        refresh_vbo(object->type(), true);
+        refresh_selected_ibo();
+    }
+    else if (a == _down)
+    {
+        _editer->down(object);
+        refresh_vbo(object->type(), true);
+        refresh_selected_ibo();
+    }
+}
+
+void Canvas::show_text_edit(Text *text)
+{
+    _edited_text = text;
+    Geo::AABBRect rect(text->bounding_rect());
+    rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
+    _input_line.setMaximumSize(std::max(100.0, rect.width()), std::max(100.0, rect.height()));
+    _input_line.move(rect.center().x - _input_line.rect().center().x(),
+        rect.center().y - _input_line.rect().center().y());
+    _input_line.setFocus();
+    _input_line.setText(text->text());
+    _input_line.moveCursor(QTextCursor::End);
+    _input_line.show();
+}
+
+void Canvas::hide_text_edit()
+{
+    if (_input_line.isVisible() && _edited_text != nullptr)
+    {
+        if (const QString text = _edited_text->text(); text != _input_line.toPlainText())
+        {
+            _edited_text->set_text(_input_line.toPlainText(), GlobalSetting::setting().text_size);
+            _editer->push_backup_command(new UndoStack::TextChangedCommand(_edited_text, text));
+            refresh_vbo(Geo::Type::TEXT, false);
+            update();
+        }
+        _edited_text = nullptr;
+        _input_line.clear();
+        _input_line.hide();
+    }
 }
 
 void Canvas::copy()
