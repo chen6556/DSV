@@ -159,7 +159,6 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
             }
             ui->canvas->refresh_vbo(true);
             ui->canvas->refresh_selected_ibo();
-            ui->canvas->refresh_cache_vbo(0);
             ui->canvas->update();
         }
         break;
@@ -182,7 +181,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         ui->canvas->cancel_painting();
         _editer.reset_selected_mark();
         ui->canvas->refresh_selected_ibo();
-        ui->canvas->refresh_cache_vbo(0);
         _cmd_widget->clear();
         break;
     case Qt::Key_Space:
@@ -213,7 +211,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             {
                 _editer.remove_selected();
                 ui->canvas->refresh_vbo(types, true);
-                ui->canvas->clear_cache();
                 ui->canvas->update();
             }
         }
@@ -223,7 +220,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         {
             _editer.reset_selected_mark(true);
             ui->canvas->refresh_selected_ibo();
-            ui->canvas->refresh_cache_vbo(0);
             ui->canvas->update();
         }
         break;
@@ -244,7 +240,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         {
             ui->canvas->cut();
             ui->canvas->update();
-            ui->canvas->clear_cache();
         }
         break;
     case Qt::Key_V:
@@ -255,7 +250,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         }
         break;
     case Qt::Key_Z:
-        if (event->modifiers() == Qt::ControlModifier && !ui->canvas->is_painting())
+        if (event->modifiers() == Qt::ControlModifier)
         {
             const size_t layers_count = _editer.groups_count();
             _editer.undo();
@@ -271,7 +266,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             }
             ui->canvas->refresh_vbo(true);
             ui->canvas->refresh_selected_ibo();
-            ui->canvas->refresh_cache_vbo(0);
             ui->canvas->update();
         }
         break;
@@ -568,40 +562,6 @@ void MainWindow::refresh_tool_label(const CanvasOperations::Tool tool)
     }
 }
 
-void MainWindow::refresh_tool_label(const Canvas::Operation operation)
-{
-    switch (operation)
-    {
-    case Canvas::Operation::Mirror:
-        ui->current_tool->setText("Mirror");
-        break;
-    case Canvas::Operation::PolygonDifference:
-        ui->current_tool->setText("Difference");
-        break;
-    case Canvas::Operation::RingArray:
-        ui->current_tool->setText("Ring Array");
-        break;
-    case Canvas::Operation::Fillet:
-        ui->current_tool->setText("Fillet");
-        break;
-    case Canvas::Operation::Rotate:
-        ui->current_tool->setText("Rotate");
-        break;
-    case Canvas::Operation::Trim:
-        ui->current_tool->setText("Trim");
-        break;
-    case Canvas::Operation::Split:
-        ui->current_tool->setText("Split");
-        break;
-    case Canvas::Operation::Extend:
-        ui->current_tool->setText("Extend");
-        break;
-    default:
-        ui->current_tool->clear();
-        break;
-    }
-}
-
 void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
 {
     switch (cmd)
@@ -619,7 +579,7 @@ void MainWindow::refresh_cmd(const CMDWidget::CMD cmd)
         return ui->tool_widget->setCurrentIndex(0);
     case CMDWidget::CMD::Mirror_CMD:
         ui->current_tool->setText("Mirror");
-        return ui->canvas->set_operation(Canvas::Operation::Mirror);
+        return ui->canvas->use_tool(CanvasOperations::Tool::Mirror);
     case CMDWidget::CMD::Array_CMD:
         return ui->tool_widget->setCurrentIndex(1);
     case CMDWidget::CMD::RingArray_CMD:
@@ -876,7 +836,6 @@ void MainWindow::rotate()
             if (objects.size() == 1)
             {
                 ui->canvas->refresh_selected_ibo(objects.front());
-                ui->canvas->refresh_cache_vbo(0);
             }
             ui->canvas->update();
         }
@@ -918,7 +877,6 @@ void MainWindow::flip_x()
     if (objects.size() == 1)
     {
         ui->canvas->refresh_selected_ibo(objects.front());
-        ui->canvas->refresh_cache_vbo(0);
     }
     ui->canvas->update();
 }
@@ -953,7 +911,6 @@ void MainWindow::flip_y()
     if (objects.size() == 1)
     {
         ui->canvas->refresh_selected_ibo(objects.front());
-        ui->canvas->refresh_cache_vbo(0);
     }
     ui->canvas->update();
 }
@@ -982,7 +939,6 @@ void MainWindow::scale()
         if (objects.size() == 1)
         {
             ui->canvas->refresh_selected_ibo(objects.front());
-            ui->canvas->refresh_cache_vbo(0);
         }
         ui->canvas->update();
     }
@@ -1227,7 +1183,6 @@ void MainWindow::open_file(const QString &path)
     GlobalSetting::setting().graph->modified = false;
 
     ui->canvas->refresh_vbo(true);
-    ui->canvas->clear_cache();
     _info_labels[2]->setText(path);
     _layers_manager->update_layers();
     _layers_cbx->setModel(_layers_manager->model());

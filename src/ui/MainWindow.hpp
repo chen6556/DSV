@@ -71,8 +71,6 @@ private slots:
 
     void refresh_tool_label(const CanvasOperations::Tool tool);
 
-    void refresh_tool_label(const Canvas::Operation operation);
-
     void refresh_cmd(const CMDWidget::CMD cmd);
 
     void refresh_settings();

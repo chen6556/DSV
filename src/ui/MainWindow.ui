@@ -2424,7 +2424,6 @@ QComboBox QAbstractItemView::item:selected
    <header>draw/Canvas.hpp</header>
    <slots>
     <signal>tool_changed(CanvasOperations::Tool)</signal>
-    <signal>operation_changed(Canvas::Operation)</signal>
    </slots>
   </customwidget>
  </customwidgets>
@@ -2605,22 +2604,6 @@ QComboBox QAbstractItemView::item:selected
     <hint type="destinationlabel">
      <x>562</x>
      <y>350</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>canvas</sender>
-   <signal>operation_changed(Canvas::Operation)</signal>
-   <receiver>MainWindow</receiver>
-   <slot>refresh_tool_label(Canvas::Operation)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>562</x>
-     <y>350</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>503</x>
-     <y>349</y>
     </hint>
    </hints>
   </connection>
@@ -2854,7 +2837,6 @@ QComboBox QAbstractItemView::item:selected
   <slot>scale()</slot>
   <slot>append_file()</slot>
   <slot>refresh_tool_label(CanvasOperations::Tool)</slot>
-  <slot>refresh_tool_label(Canvas::Operation)</slot>
   <slot>set_catch(QAction*)</slot>
   <slot>polygon_xor()</slot>
   <slot>detach()</slot>

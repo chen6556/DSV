@@ -18,19 +18,17 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
     Q_OBJECT
 
 public:
-    enum class Operation {NoOperation, Mirror, RingArray, PolygonDifference, Fillet, Rotate, Trim, Extend, Split};
     enum class CatchedPointType {Vertex, Center, Foot, Tangency, Intersection};
 
 private:
     Geo::AABBRect _visible_area;
-    std::list<QLineF> _reflines;
     std::vector<const Geo::Geometry *> _catched_objects;
     Editer *_editer = nullptr;
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
 
     unsigned int _shader_program, _VAO;
-    unsigned int _base_VBO[5]; // 0:origin and select rect 1:cache 2:reflines 3:catched points 4:operation
+    unsigned int _base_VBO[4]; // 0:origin and select rect 1:catched points 2:operation shape 3:operation tool lines
     unsigned int _shape_VBO[7]; // 0:polyline 1:polygon 2:circle 3:curve 4:text 5:circle printable points 6:curve printable points
     unsigned int _shape_IBO[4]; // 0:polyline 1:polygon 2:circle 3:curve
     unsigned int _text_brush_IBO;
@@ -40,9 +38,6 @@ private:
     unsigned int _shape_index_count[4] = {0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve
     unsigned int _brush_index_count[3] = {0, 0, 0}; // 0:polygon brush 1:circle brush 2:text brush
     unsigned int _selected_index_count[4] = {0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve
-    double *_cache = nullptr;
-    unsigned int _cache_len = 513, _cache_count = 0;
-    double _refline_points[30];
     double _catchline_points[24];
     
     double _catch_distance = 0;
@@ -55,21 +50,16 @@ private:
     int _canvas_width = 0, _canvas_height = 0;
     int _curve_order = 3; // 曲线次数
 
-    // 0:可移动视图 1:可绘图 2:正在绘图 3:测量 4:可移动单个object 5:选中一个obj 6:正在移动obj 7:显示坐标原点 8:显示捕捉点
-    bool _bool_flags[9] = {false, false, false, false, false, false, false, true, false};
+    // 0:可移动视图 1:显示坐标原点 2:显示捕捉点
+    bool _bool_flags[3] = {false, true, false};
 
     // Head, (vector,) tail
-    int _measure_angle_flag = 0;
     double _select_rect[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-
-    Operation _operation = Operation::NoOperation;
 
     QPointF _mouse_pos_0, _mouse_pos_1;
     Geo::Point _mouse_press_pos, _mouse_release_pos;
     std::vector<Geo::Point> _points_cache;
     Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
-    Geo::Geometry *_pressed_obj = nullptr;
-    std::vector<Geo::Geometry *> _object_cache;
 
     QMenu *_menu = nullptr;
     QAction *_up = nullptr;
@@ -99,8 +89,6 @@ public:
 signals:
     void tool_changed(const CanvasOperations::Tool);
 
-    void operation_changed(const Operation);
-
 public:
     Canvas(QWidget *parent = nullptr);
 
@@ -109,8 +97,6 @@ public:
     void bind_editer(Editer *editer);
 
     void use_tool(const CanvasOperations::Tool tool);
-
-    void set_operation(const Operation operation);
 
     void show_origin();
 
@@ -122,19 +108,7 @@ public:
 
     const bool is_view_moveable() const;
 
-    const bool is_paintable() const;
-
-    const bool is_painting() const;
-
     const bool is_typing() const;
-
-    const bool is_measureing() const;
-
-    const bool is_obj_moveable() const;
-
-    const bool is_obj_selected() const;
-
-    const bool is_moving_obj() const;
 
     void set_catch_distance(const double value);
 
@@ -201,9 +175,6 @@ public:
     bool catch_point(const double x, const double y, Geo::Point &coord, const double distance);
 
 
-    void check_cache();
-
-
     // 直接更新所有VBO,点数量可能发生变化
     void refresh_vbo(const bool refresh_ibo);
 
@@ -223,13 +194,7 @@ public:
 
     std::tuple<double *, unsigned int> refresh_curve_printable_points();
 
-    void refresh_cache_vbo(const unsigned int count);
-
-    void refresh_reflines_vbo();
-
     void refresh_select_rect(const double x0, const double y0, const double x1, const double y1);
-
-    void clear_cache();
 
     void refresh_selected_ibo();
 

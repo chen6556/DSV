@@ -55,11 +55,8 @@ namespace CanvasOperations
         static Tool tool[2]; // current, last
         static double view_ratio;
         static QString info;
-
         static Editer *editer;
         static Canvas *canvas;
-
-    protected:
         static Geo::Geometry *clicked_object;
 
     private:

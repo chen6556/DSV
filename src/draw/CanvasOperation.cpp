@@ -23,7 +23,6 @@ double CanvasOperation::view_ratio = 1;
 QString CanvasOperation::info;
 Editer *CanvasOperation::editer = nullptr;
 Canvas *CanvasOperation::canvas = nullptr;
-
 Geo::Geometry *CanvasOperation::clicked_object = nullptr;
 
 
@@ -235,7 +234,6 @@ bool SelectOperation::mouse_press(QMouseEvent *event)
                 if (editer->auto_aligning(clicked_object, real_pos[0], real_pos[1], reflines, true))
                 {
                     canvas->refresh_selected_vbo();
-                    canvas->refresh_reflines_vbo();
                 }
                 check_tool_lines_size(reflines.size() * 6);
                 for (const QLineF &line : reflines)
@@ -340,7 +338,6 @@ bool MoveOperation::mouse_move(QMouseEvent *event)
                     tool_lines[tool_lines_count++] = (*bezier)[i].y;
                     ++tool_lines_count;
                 }
-                canvas->refresh_cache_vbo(0);
             }
             break;
         case Geo::Type::BSPLINE:
@@ -356,7 +353,6 @@ bool MoveOperation::mouse_move(QMouseEvent *event)
                     tool_lines[tool_lines_count++] = bspline->path_points[i].y;
                     ++tool_lines_count;
                 }
-                canvas->refresh_cache_vbo(0);
             }
             break;
         default:
@@ -373,7 +369,6 @@ bool MoveOperation::mouse_move(QMouseEvent *event)
             if (editer->auto_aligning(clicked_object, real_pos[0], real_pos[1], reflines, true))
             {
                 canvas->refresh_selected_vbo();
-                canvas->refresh_reflines_vbo();
             }
             check_tool_lines_size(reflines.size() * 6);
             for (const QLineF &line : reflines)

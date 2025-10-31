@@ -408,10 +408,10 @@ bool CMDWidget::work()
         fillet();
         break;
     case CMD::Trim_CMD:
-        _canvas->set_operation(Canvas::Operation::Trim);
+        _canvas->use_tool(CanvasOperations::Tool::Trim);
         break;
     case CMD::Extend_CMD:
-        _canvas->set_operation(Canvas::Operation::Extend);
+        _canvas->use_tool(CanvasOperations::Tool::Extend);
         break;
 
     case CMD::Mirror_CMD:
@@ -486,7 +486,7 @@ bool CMDWidget::work()
         _current_cmd = CMD::Error_CMD;
         break;
     case CMD::Difference_CMD:
-        _canvas->set_operation(Canvas::Operation::PolygonDifference);
+        _canvas->use_tool(CanvasOperations::Tool::PolygonDifference);
         emit cmd_changed(_current_cmd);
         _current_cmd = CMD::Error_CMD;
         ui->cmd_label->setText("Difference");
@@ -566,7 +566,6 @@ bool CMDWidget::work()
         paste();
         break;
     case CMD::Undo_CMD:
-        if (!_canvas->is_painting())
         {
             _editer->undo();
             _canvas->refresh_vbo(true);
@@ -592,7 +591,6 @@ bool CMDWidget::get_cmd()
     }
     else
     {
-        _canvas->set_operation(Canvas::Operation::NoOperation);
         _canvas->use_tool(CanvasOperations::Tool::Select);
         _current_cmd = result->second;
         return true;
@@ -1110,13 +1108,13 @@ void CMDWidget::fillet()
     switch (_parameters.size())
     {
     case 0:
-        GlobalSetting::setting().ui->canvas->set_operation(Canvas::Operation::Fillet);
+        GlobalSetting::setting().ui->canvas->use_tool(CanvasOperations::Tool::Fillet);
         ui->cmd_label->setText("Fillet Radius: " + QString::number(GlobalSetting::setting().ui->fillet_sbx->value()));
         _parameters.push_back(0);
         break;
     case 1:
         clear();
-        GlobalSetting::setting().ui->canvas->set_operation(Canvas::Operation::NoOperation);
+        GlobalSetting::setting().ui->canvas->use_tool(CanvasOperations::Tool::Select);
         break;
     case 2:
         ui->cmd_label->setText("Fillet Radius: " + QString::number(_parameters.back()));
