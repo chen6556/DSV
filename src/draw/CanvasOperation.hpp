@@ -308,10 +308,12 @@ namespace CanvasOperations
     class PolygonDifferenceOperation : public CanvasOperation
     {
     private:
-        Geo::Polygon *polygon = nullptr;
+        Geo::Polygon *_polygon = nullptr;
 
     public:
         bool mouse_press(QMouseEvent *event) override;
+
+        void reset() override;
     };
 
 
@@ -338,6 +340,13 @@ namespace CanvasOperations
 
 
     class TrimOperation : public CanvasOperation
+    {
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+    };
+
+
+    class ExtendOperation : public CanvasOperation
     {
     public:
         bool mouse_press(QMouseEvent *event) override;

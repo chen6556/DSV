@@ -70,6 +70,8 @@ void MainWindow::init()
     connect(ui->difference_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::PolygonDifference); });
     connect(ui->fillet_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Fillet); });
     connect(ui->trim_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Trim); });
+    connect(ui->extend_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Extend); });
+    connect(ui->split_btn, &QPushButton::clicked, [this]() { ui->canvas->use_tool(CanvasOperations::Tool::Split); });
     connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
     connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::setting().auto_aligning = ui->auto_aligning->isChecked(); });
@@ -135,8 +137,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
     QMainWindow::closeEvent(event);
 }
-
-
 
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
@@ -555,6 +555,12 @@ void MainWindow::refresh_tool_label(const CanvasOperations::Tool tool)
     case CanvasOperations::Tool::Trim:
         ui->current_tool->setText("Trim");
         break;
+    case CanvasOperations::Tool::Extend:
+        ui->current_tool->setText("Extend");
+        break;
+    case CanvasOperations::Tool::Split:
+        ui->current_tool->setText("Split");
+        break;
     default:
         ui->current_tool->clear();
         ui->array_tool->clear();
@@ -740,8 +746,6 @@ void MainWindow::to_main_page()
 {
     ui->tool_widget->setCurrentIndex(0);
 }
-
-
 
 
 void MainWindow::connect_polylines()
@@ -1001,7 +1005,6 @@ void MainWindow::offset()
 }
 
 
-
 void MainWindow::to_array_page()
 {
     ui->tool_widget->setCurrentIndex(1);
@@ -1120,26 +1123,11 @@ void MainWindow::polygon_xor()
 }
 
 
-
-void MainWindow::split()
-{
-    ui->canvas->set_operation(Canvas::Operation::Split);
-}
-
-void MainWindow::extend()
-{
-    ui->canvas->set_operation(Canvas::Operation::Extend);
-}
-
-
-
-
 void MainWindow::show_data_panel()
 {
     _panel->load_draw_data(GlobalSetting::setting().graph);
     _panel->exec();
 }
-
 
 
 void MainWindow::open_file(const QString &path)

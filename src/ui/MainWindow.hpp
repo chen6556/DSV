@@ -119,12 +119,6 @@ private slots:
     void polygon_xor();
 
 
-    void split();
-
-    void extend();
-
-
-
     void show_data_panel();
 
 private:

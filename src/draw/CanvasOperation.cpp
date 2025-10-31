@@ -58,6 +58,7 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::Fillet)] = new FilletOperation();
     operations[static_cast<int>(Tool::Rotate)] = new RotateOperation();
     operations[static_cast<int>(Tool::Trim)] = new TrimOperation();
+    operations[static_cast<int>(Tool::Extend)] = new ExtendOperation();
 }
 
 void CanvasOperation::clear()
@@ -1286,7 +1287,7 @@ bool RingArrayOperation::mouse_press(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
-        if (std::vector<Geo::Geometry *> selected_objects = editer->selected();
+        if (std::vector<Geo::Geometry *> selected_objects = editer->selected(); !selected_objects.empty() &&
             editer->ring_array(selected_objects, real_pos[0], real_pos[1], GlobalSetting::setting().ui->array_item->value()))
         {
             std::set<Geo::Type> types;
@@ -1326,15 +1327,15 @@ bool PolygonDifferenceOperation::mouse_press(QMouseEvent *event)
     if (event->button() == Qt::MouseButton::LeftButton)
     {
         if (clicked_object = editer->select(real_pos[0], real_pos[1], true);
-            clicked_object->type() == Geo::Type::POLYGON)
+            clicked_object != nullptr && clicked_object->type() == Geo::Type::POLYGON)
         {
-            if (polygon == nullptr)
+            if (_polygon == nullptr)
             {
-                polygon = static_cast<Geo::Polygon *>(clicked_object);
+                _polygon = static_cast<Geo::Polygon *>(clicked_object);
             }
-            else if (polygon != clicked_object && clicked_object->type() == Geo::Type::POLYGON)
+            else if (_polygon != clicked_object && clicked_object->type() == Geo::Type::POLYGON)
             {
-                if (editer->polygon_difference(polygon, static_cast<const Geo::Polygon *>(clicked_object)))
+                if (editer->polygon_difference(_polygon, static_cast<const Geo::Polygon *>(clicked_object)))
                 {
                     canvas->refresh_vbo(Geo::Type::POLYGON, true);
                     canvas->refresh_selected_ibo();
@@ -1349,6 +1350,11 @@ bool PolygonDifferenceOperation::mouse_press(QMouseEvent *event)
     {
         return false;
     }
+}
+
+void PolygonDifferenceOperation::reset()
+{
+    _polygon = nullptr;
 }
 
 
@@ -1527,8 +1533,25 @@ bool TrimOperation::mouse_press(QMouseEvent *event)
 }
 
 
-
-
+bool ExtendOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        if (clicked_object = editer->select(real_pos[0], real_pos[1], true);
+            clicked_object != nullptr && clicked_object->type() == Geo::Type::POLYLINE)
+        {
+            editer->extend(static_cast<Geo::Polyline *>(clicked_object), real_pos[0], real_pos[1]);
+            canvas->refresh_vbo(Geo::Type::POLYLINE, true);
+            canvas->refresh_selected_ibo();
+            return true;
+        }
+        return false;
+    }
+    else
+    {
+        return false;
+    }
+}
 
 
 

@@ -467,48 +467,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
                 switch (_operation)
                 {
-                case Operation::Trim:
-                    switch (_clicked_obj->type())
-                    {
-                    case Geo::Type::POLYLINE:
-                        _editer->trim(static_cast<Geo::Polyline *>(_clicked_obj), real_x1, real_y1);
-                        refresh_vbo(Geo::Type::POLYLINE, true);
-                        refresh_selected_ibo();
-                        update();
-                        return QOpenGLWidget::mousePressEvent(event);
-                    case Geo::Type::POLYGON:
-                        _editer->trim(static_cast<Geo::Polygon *>(_clicked_obj), real_x1, real_y1);
-                        refresh_vbo({Geo::Type::POLYGON, Geo::Type::POLYLINE}, true);
-                        refresh_selected_ibo();
-                        update();
-                        return QOpenGLWidget::mousePressEvent(event);
-                    case Geo::Type::BEZIER:
-                        _editer->trim(static_cast<Geo::Bezier *>(_clicked_obj), real_x1, real_y1);
-                        refresh_vbo(Geo::Type::BEZIER, true);
-                        refresh_selected_ibo();
-                        update();
-                        return QOpenGLWidget::mousePressEvent(event);
-                    case Geo::Type::BSPLINE:
-                        _editer->trim(static_cast<Geo::BSpline *>(_clicked_obj), real_x1, real_y1);
-                        refresh_vbo(Geo::Type::BSPLINE, true);
-                        refresh_selected_ibo();
-                        update();
-                        return QOpenGLWidget::mousePressEvent(event);
-                    default:
-                        break;
-                    }
-                    break;
-                case Operation::Extend:
-                    if (Geo::Polyline *polyline = dynamic_cast<Geo::Polyline *>(_clicked_obj);
-                        polyline != nullptr && polyline->type() == Geo::Type::POLYLINE)
-                    {
-                        _editer->extend(polyline, real_x1, real_y1);
-                        refresh_vbo(Geo::Type::POLYLINE, true);
-                        refresh_selected_ibo();
-                        update();
-                        return QOpenGLWidget::mousePressEvent(event);
-                    }
-                    break;
                 case Operation::Split:
                     if (_editer->split(_clicked_obj, Geo::Point(real_x1, real_y1)))
                     {
