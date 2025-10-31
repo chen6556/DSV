@@ -901,6 +901,7 @@ void Canvas::hide_text_edit()
 
 void Canvas::copy()
 {
+    _points_cache.clear();
     _points_cache.emplace_back(_mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6],
         _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
     _editer->copy_selected();
@@ -908,6 +909,7 @@ void Canvas::copy()
 
 void Canvas::cut()
 {
+    _points_cache.clear();
     _points_cache.emplace_back(_mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6],
         _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
     _editer->cut_selected();
@@ -954,7 +956,6 @@ void Canvas::paste()
         refresh_selected_ibo();
         update();
     }
-    _points_cache.clear();
 }
 
 void Canvas::paste(const double x, const double y)
