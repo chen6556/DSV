@@ -1430,10 +1430,6 @@ bool BSplineOperation::mouse_press(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
-        if (_order == 0)
-        {
-            return false;
-        }
         if (_points.empty())
         {
             _points.emplace_back(real_pos[0], real_pos[1]);
@@ -1473,7 +1469,7 @@ bool BSplineOperation::mouse_press(QMouseEvent *event)
 
 bool BSplineOperation::mouse_move(QMouseEvent *event)
 {
-    if (_points.empty() || _order == 0)
+    if (_points.empty())
     {
         return false;
     }
@@ -1523,10 +1519,6 @@ bool BSplineOperation::mouse_double_click(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
-        if (_order == 0)
-        {
-            return false;
-        }
         if (_points.size() > 4)
         {
             _points.pop_back();
@@ -1555,7 +1547,6 @@ bool BSplineOperation::mouse_double_click(QMouseEvent *event)
 void BSplineOperation::reset()
 {
     _points.clear();
-    _order = 0;
 }
 
 bool BSplineOperation::read_parameters(const double *params, const int count)
@@ -1580,7 +1571,7 @@ bool BSplineOperation::read_parameters(const double *params, const int count)
         info.clear();
         return true;
     }
-    else if (count == 1 && _order == 0)
+    else if (count == 1 && _points.empty())
     {
         if (params[0] == 3 || params[0] == 2)
         {
@@ -1648,20 +1639,21 @@ bool BSplineOperation::read_parameters(const double *params, const int count)
 
 QString BSplineOperation::cmd_tips() const
 {
-    if (_order > 0)
+    if (_order == 3)
     {
-        return _points.empty() ? "(x, y):" :
-            (_param_type == ParamType::LengthAngle ? "(length, angle):" : "(x, y):");
+        return _points.empty() ? "order:3 (x, y):" :
+            (_param_type == ParamType::LengthAngle ? "order:3 (length, angle):" : "order:3 (x, y):");
     }
     else
     {
-        return "order: 3 or 2";
+        return _points.empty() ? "order:2 (x, y):" :
+            (_param_type == ParamType::LengthAngle ? "order:2 (length, angle):" : "order:2 (x, y):");
     }
 }
 
 void BSplineOperation::switch_parameters_type()
 {
-    if (_points.empty() || _order == 0)
+    if (_points.empty())
     {
         return;
     }
@@ -1683,10 +1675,6 @@ bool BezierOperation::mouse_press(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
-        if (_order == 0)
-        {
-            return false;
-        }
         if (_points.empty())
         {
             _points.emplace_back(real_pos[0], real_pos[1]);
@@ -1724,7 +1712,7 @@ bool BezierOperation::mouse_press(QMouseEvent *event)
 
 bool BezierOperation::mouse_move(QMouseEvent *event)
 {
-    if (_points.empty() || _order == 0)
+    if (_points.empty())
     {
         return false;
     }
@@ -1773,10 +1761,6 @@ bool BezierOperation::mouse_double_click(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
-        if (_order == 0)
-        {
-            return false;
-        }
         if (_points.size() > 4)
         {
             _points.pop_back();
@@ -1798,7 +1782,6 @@ bool BezierOperation::mouse_double_click(QMouseEvent *event)
 void BezierOperation::reset()
 {
     _points.clear();
-    _order = 0;
 }
 
 bool BezierOperation::read_parameters(const double *params, const int count)
@@ -1816,7 +1799,7 @@ bool BezierOperation::read_parameters(const double *params, const int count)
         info.clear();
         return true;
     }
-    else if (count == 1 && _order == 0)
+    else if (count == 1 && _points.empty())
     {
         if (params[0] == 3 || params[0] == 2)
         {
@@ -1883,14 +1866,15 @@ bool BezierOperation::read_parameters(const double *params, const int count)
 
 QString BezierOperation::cmd_tips() const
 {
-    if (_order > 0)
+    if (_order == 3)
     {
-        return _points.empty() ? "(x, y):" :
-            (_param_type == ParamType::LengthAngle ? "(length, angle):" : "(x, y):");
+        return _points.empty() ? "order:3 (x, y):" :
+            (_param_type == ParamType::LengthAngle ? "order:3 (length, angle):" : "order:3 (x, y):");
     }
     else
     {
-        return "order: 3 or 2";
+        return _points.empty() ? "order:2 (x, y):" :
+            (_param_type == ParamType::LengthAngle ? "order:2 (length, angle):" : "order:2 (x, y):");
     }
 }
 
