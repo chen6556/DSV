@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <QString>
 #include "libdxfrw/libdxfrw.h"
-#include "draw/Graph.hpp"
+#include "base/Graph.hpp"
 
 
 class Bulge

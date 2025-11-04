@@ -6,9 +6,9 @@
 #include "base/Algorithm.hpp"
 
 
-CMDWidget::CMDWidget(Editer *editer, Canvas *canvas, QWidget *parent)
-    : QWidget(parent), _parent(parent), ui(new Ui::CMDWidget),
-    _editer(editer), _canvas(canvas)
+
+CMDWidget::CMDWidget(QWidget *parent)
+    : QWidget(parent), _parent(parent), ui(new Ui::CMDWidget)
 {
     ui->setupUi(this);
 
@@ -23,29 +23,28 @@ CMDWidget::~CMDWidget()
 
 void CMDWidget::init()
 {
-    ui->cmd->setValidator(new QRegularExpressionValidator(QRegularExpression("([A-Za-z]+)|(-?[0-9]+(.[0-9]+)?)$")));
+    ui->cmd->setValidator(new QRegularExpressionValidator(QRegularExpression("([A-Za-z]+)|((-?[0-9]+(.[0-9]+)?,?)+)$")));
     ui->cmd->installEventFilter(this);
 
-    _cmd_list << QString() << "OPEN" << "APPEND" << "SAVE" << "EXIT" << "MAIN"
-        << "LENGTH" << "ANGLE"
-        << "CIRCLE" << "ELLIPSE" << "POLYLINE" << "RECTANGLE" << "BSPLINE" << "BEZIER" << "TEXT"
-        << "CONNECT" << "CLOSE" << "COMBINATE" << "DETACH"
-        << "ROTATE" << "FLIPX" << "FLIPY" << "MIRROR" << "POINTMIRROR"
-        << "ARRAY" << "LINEARRAY" << "RINGARRAY"
-        << "UNION" << "INTERSECTION" << "DIFFERENCE" << "XOR"
-        << "OFFSET" << "SCALE" << "FILLET" << "TRIM" << "EXTEND" << "ABSOLUTE" << "RELATIVE"
-        << "DELETE" << "COPY" << "CUT" << "PASTE" << "UNDO" << "ALL";
+    _cmd_list << QString() << "ALL" << "ANGLE" << "ARRAY" << "BEZIER" << "BSPLINE"
+        << "CCIRCLE" << "CHAMFER" << "CLOSE" << "COMBINATE" << "CONNECT" << "COPY"
+        << "CUT" << "DCIRCLE" << "DELETE" << "DETACH" << "DIFFERENCE" << "ELLIPSE"
+        << "EXTEND" << "FILLET" << "FLIPX" << "FLIPY" << "GETPOINT"
+        << "INTERSECTION" << "LENGTH" << "LINEARRAY" << "MAIN" << "MIRROR"
+        << "OFFSET" << "PASTE" << "PCIRCLE" << "POLYLINE" << "RECTANGLE"
+        << "RINGARRAY" << "ROTATE" << "SCALE" << "SAVE" << "SPLIT" << "TEXT"
+        << "TRIM" << "UNDO" << "UNION" << "XOR";
 
-    _cmd_dict = {{"OPEN",CMD::Open_CMD}, {"APPEND",CMD::Append_CMD}, {"SAVE",CMD::Save_CMD}, {"EXIT",CMD::Exit_CMD},
-        {"LENGTH",CMD::Length_CMD}, {"ANGLE",CMD::Angle_CMD}, {"MAIN",CMD::Main_CMD},
-        {"CIRCLE",CMD::Circle_CMD}, {"ELLIPSE",CMD::Ellipse_CMD},
+    _cmd_dict = {{"LENGTH",CMD::Length_CMD}, {"ANGLE",CMD::Angle_CMD}, {"MAIN",CMD::Main_CMD},
+        {"CCIRCLE",CMD::CCircle_CMD}, {"DCIRCLE",CMD::DCircle_CMD}, {"PCIRCLE",CMD::PCircle_CMD}, {"ELLIPSE",CMD::Ellipse_CMD},
         {"POLYLINE",CMD::Polyline_CMD}, {"RECTANGLE",CMD::Rectangle_CMD},
-        {"BSPLINE",CMD::BSpline_CMD}, {"BEZIER",CMD::Bezier_CMD}, {"TEXT",CMD::Text_CMD}, {"CONNECT",CMD::Connect_CMD},
+        {"BSPLINE",CMD::BSpline_CMD}, {"BEZIER",CMD::Bezier_CMD}, {"CONNECT",CMD::Connect_CMD},
         {"COMBINATE",CMD::Combinate_CMD}, {"CLOSE",CMD::Close_CMD}, {"DETACH",CMD::Detach_CMD},
         {"ROTATE",CMD::Rotate_CMD}, {"FLIPX",CMD::FlipX_CMD}, {"FLIPY",CMD::FlipY_CMD},
-        {"TRIM",CMD::Trim_CMD}, {"EXTEND",CMD::Extend_CMD}, {"MIRROR",CMD::Mirror_CMD},
+        {"TEXT",CMD::Text_CMD}, {"TRIM",CMD::Trim_CMD}, {"EXTEND",CMD::Extend_CMD}, {"MIRROR",CMD::Mirror_CMD},
         {"ARRAY",CMD::Array_CMD}, {"LINEARRAY",CMD::LineArray_CMD}, {"RINGARRAY",CMD::RingArray_CMD},
-        {"OFFSET",CMD::Offset_CMD}, {"SCALE", CMD::Scale_CMD}, {"FILLET",CMD::Fillet_CMD},
+        {"OFFSET",CMD::Offset_CMD}, {"SCALE", CMD::Scale_CMD},
+        {"FILLET",CMD::Fillet_CMD}, {"CHAMFER", CMD::Chamfer_CMD}, {"SPLIT",CMD::Split_CMD},
         {"UNION",CMD::Union_CMD}, {"INTERSECTION",CMD::Intersection_CMD}, {"DIFFERENCE",CMD::Difference_CMD},
         {"XOR",CMD::XOR_CMD},
         {"DELETE",CMD::Delete_CMD}, {"COPY",CMD::Copy_CMD}, {"CUT",CMD::Cut_CMD}, {"PASTE",CMD::Paste_CMD},
@@ -53,24 +52,87 @@ void CMDWidget::init()
 
     _setting_dict = {{"RELATIVE", SETTING::Relative_SETTING}, {"ABSOLUTE", SETTING::Absolute_SETTING}};
 
+    _cmd_tool_dict = {{CMD::Length_CMD, CanvasOperations::Tool::Measure}, {CMD::Angle_CMD, CanvasOperations::Tool::Angle},
+        {CMD::Polyline_CMD, CanvasOperations::Tool::Polyline}, {CMD::Rectangle_CMD, CanvasOperations::Tool::Rect},
+        {CMD::RingArray_CMD, CanvasOperations::Tool::RingArray}, {CMD::Rotate_CMD, CanvasOperations::Tool::Rotate},
+        {CMD::Text_CMD, CanvasOperations::Tool::Text},
+        {CMD::Bezier_CMD, CanvasOperations::Tool::Bezier}, {CMD::BSpline_CMD, CanvasOperations::Tool::BSpline},
+        {CMD::CCircle_CMD, CanvasOperations::Tool::Circle0},{CMD::DCircle_CMD, CanvasOperations::Tool::Circle1},
+        {CMD::PCircle_CMD, CanvasOperations::Tool::Circle2}, {CMD::Ellipse_CMD, CanvasOperations::Tool::Ellipse},
+        {CMD::Mirror_CMD, CanvasOperations::Tool::Mirror}, {CMD::Trim_CMD, CanvasOperations::Tool::Trim},
+        {CMD::Extend_CMD, CanvasOperations::Tool::Extend}, {CMD::Fillet_CMD, CanvasOperations::Tool::Fillet},
+        {CMD::Chamfer_CMD, CanvasOperations::Tool::Chamfer}, {CMD::Split_CMD, CanvasOperations::Tool::Split},
+        {CMD::Difference_CMD, CanvasOperations::Tool::PolygonDifference}};
+
+    _tool_cmd_dict = {{CanvasOperations::Tool::Measure, CMD::Length_CMD}, {CanvasOperations::Tool::Angle, CMD::Angle_CMD},
+        {CanvasOperations::Tool::Polyline, CMD::Polyline_CMD}, {CanvasOperations::Tool::Rect, CMD::Rectangle_CMD},
+        {CanvasOperations::Tool::BSpline, CMD::BSpline_CMD}, {CanvasOperations::Tool::Bezier, CMD::Bezier_CMD},
+        {CanvasOperations::Tool::Text, CMD::Text_CMD},
+        {CanvasOperations::Tool::Circle0, CMD::CCircle_CMD},{CanvasOperations::Tool::Circle1, CMD::DCircle_CMD},
+        {CanvasOperations::Tool::Circle2, CMD::PCircle_CMD}, {CanvasOperations::Tool::Ellipse, CMD::Ellipse_CMD},
+        {CanvasOperations::Tool::Mirror, CMD::Mirror_CMD}, {CanvasOperations::Tool::Extend, CMD::Extend_CMD},
+        {CanvasOperations::Tool::Trim, CMD::Trim_CMD}, {CanvasOperations::Tool::Split, CMD::Split_CMD},
+        {CanvasOperations::Tool::Fillet, CMD::Fillet_CMD}, {CanvasOperations::Tool::Chamfer, CMD::Chamfer_CMD},
+        {CanvasOperations::Tool::PolygonDifference, CMD::Difference_CMD}, {CanvasOperations::Tool::Rotate, CMD::Rotate_CMD},
+        {CanvasOperations::Tool::RingArray, CMD::RingArray_CMD}};
+
+    _cmd_tips_dict = {{CMD::Angle_CMD, "Angle"}, {CMD::Bezier_CMD, "Bezier"}, {CMD::BSpline_CMD, "BSpline"},
+        {CMD::CCircle_CMD, "Center-Radius Circle"}, {CMD::Combinate_CMD, "Combinate"},
+        {CMD::Connect_CMD, "Connect"}, {CMD::Copy_CMD, "Copy"}, {CMD::Cut_CMD, "Cut"},
+        {CMD::DCircle_CMD, "2-Point Circle"}, {CMD::Detach_CMD, "Detach"}, {CMD::Difference_CMD, "Difference"},
+        {CMD::Ellipse_CMD, "Ellipse"}, {CMD::Extend_CMD, "Extend"}, {CMD::Fillet_CMD, "Fillet"},
+        {CMD::Chamfer_CMD, "Chamfer"},
+        {CMD::FlipX_CMD, "Flip X"}, {CMD::FlipY_CMD, "Flip Y"}, {CMD::Intersection_CMD, "Intersection"},
+        {CMD::Length_CMD, "Length"}, {CMD::LineArray_CMD, "Line Array"}, {CMD::Mirror_CMD, "Mirror"},
+        {CMD::Offset_CMD, "Offset"}, {CMD::Paste_CMD, "Paste"}, {CMD::PCircle_CMD, "3-Point Circle"},
+        {CMD::Polyline_CMD, "Polyline"}, {CMD::Rectangle_CMD, "Rectangle"}, {CMD::RingArray_CMD, "Ring Array"},
+        {CMD::Rotate_CMD, "Rotate"}, {CMD::Scale_CMD, "Scale"}, {CMD::Split_CMD, "Split"},
+        {CMD::Text_CMD, "Text"}, {CMD::Trim_CMD, "Trim"}, {CMD::Union_CMD, "Union"}, {CMD::XOR_CMD, "XOR"}};
+
+    _direct_cmd_list = {CMD::Error_CMD, CMD::Main_CMD,
+        CMD::Connect_CMD, CMD::Close_CMD, CMD::Combinate_CMD, CMD::Detach_CMD, CMD::FlipX_CMD, CMD::FlipY_CMD,
+        CMD::LineArray_CMD, CMD::Array_CMD, CMD::Offset_CMD, CMD::Scale_CMD,
+        CMD::Union_CMD, CMD::Intersection_CMD, CMD::XOR_CMD,
+        CMD::Delete_CMD, CMD::Copy_CMD, CMD::Cut_CMD, CMD::Paste_CMD, CMD::Undo_CMD, CMD::SelectAll_CMD};
+
     _completer = new QCompleter(_cmd_list, this);
     _completer->setCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
     _completer->setFilterMode(Qt::MatchFlag::MatchContains);
     _completer->setCompletionMode(QCompleter::CompletionMode::InlineCompletion);
     ui->cmd->setCompleter(_completer);
 
-    QObject::connect(_canvas, &Canvas::tool_changed, this, &CMDWidget::refresh_tool);
+    connect(CanvasOperations::CanvasOperation::canvas, &Canvas::tool_changed, this, &CMDWidget::refresh_tool);
+    connect(CanvasOperations::CanvasOperation::canvas, &Canvas::refresh_cmd_parameters_label,
+        [this]() { ui->parameter_label->setText(CanvasOperations::CanvasOperation::operation()[
+            CanvasOperations::CanvasOperation::tool[0]]->cmd_tips()); });
 }
 
 
-void CMDWidget::refresh_tool(const Canvas::Tool tool)
+void CMDWidget::refresh_tool(const CanvasOperations::Tool tool)
 {
     switch (tool)
     {
-    case Canvas::Tool::NoTool:
+    case CanvasOperations::Tool::Select:
         clear();
         break;
     default:
+        if (auto it = _tool_cmd_dict.find(tool); it != _tool_cmd_dict.end())
+        {
+            if (_parameters.empty() && _current_cmd == CMD::Error_CMD)
+            {
+                _parameters.push_back(0);
+            }
+            _current_cmd = it->second;
+            ui->parameter_label->setText(CanvasOperations::CanvasOperation::operation()[tool]->cmd_tips());
+            if (auto it2 = _cmd_tips_dict.find(it->second); it2 != _cmd_tips_dict.end())
+            {
+                ui->cmd_label->setText(it2->second);
+            }
+            else
+            {
+                ui->cmd_label->clear();
+            }
+        }
         break;
     }
 }
@@ -107,23 +169,38 @@ void CMDWidget::mouseMoveEvent(QMouseEvent *event)
 
 bool CMDWidget::eventFilter(QObject *target, QEvent *event)
 {
-    if (event->type() == QEvent::Type::KeyPress &&
-        dynamic_cast<QKeyEvent *>(event)->key() == Qt::Key_Space)
+    if (event->type() == QEvent::Type::KeyPress)
     {
-        if (!ui->cmd->text().isEmpty())
+        switch (static_cast<QKeyEvent *>(event)->key())
         {
-            if (get_setting())
+        case Qt::Key::Key_Space:
+            if (ui->cmd->text().isEmpty() && _current_cmd == CMD::Error_CMD)
             {
-                return QWidget::eventFilter(target, event);
+                _current_cmd = _last_cmd;
             }
-
-            if (!get_parameter())
+            else
             {
-                ui->cmd->setText(_completer->currentCompletion());
-                get_cmd();
+                if (get_setting())
+                {
+                    return QWidget::eventFilter(target, event);
+                }
+                else if (!get_parameter())
+                {
+                    ui->cmd->setText(_completer->currentCompletion());
+                    get_cmd();
+                }
             }
+            work();
+            return true;
+        case Qt::Key::Key_Tab:
+            CanvasOperations::CanvasOperation::operation()[
+                CanvasOperations::CanvasOperation::tool[0]]->switch_parameters_type();
+            ui->parameter_label->setText(CanvasOperations::CanvasOperation::operation()[
+                CanvasOperations::CanvasOperation::tool[0]]->cmd_tips());
+            return true;
+        default:
+            break;
         }
-        work();
     }
 
     return QWidget::eventFilter(target, event);
@@ -135,6 +212,7 @@ void CMDWidget::clear()
     ui->cmd->clear();
     ui->cmd_label->clear();
     ui->parameter_label->clear();
+    ui->absolute_label->clear();
     _current_cmd = CMD::Error_CMD;
     _completer->setCurrentRow(0);
     _parameters.clear();
@@ -142,8 +220,7 @@ void CMDWidget::clear()
 
 CMDWidget::CMD CMDWidget::cmd() const
 {
-    std::map<QString, CMDWidget::CMD>::const_iterator result = _cmd_dict.find(ui->cmd->text().toUpper());
-    if (result == _cmd_dict.end())
+    if (auto result = _cmd_dict.find(ui->cmd->text().toUpper()); result == _cmd_dict.end())
     {
         return CMD::Error_CMD;
     }
@@ -158,20 +235,15 @@ bool CMDWidget::empty() const
     return ui->cmd->text().isEmpty() && _current_cmd == CMD::Error_CMD;
 }
 
-std::vector<double> &CMDWidget::parameters()
-{
-    return _parameters;
-}
-
-const std::vector<double> &CMDWidget::parameters() const
-{
-    return _parameters;
-}
-
 void CMDWidget::activate(const char key)
 {
     ui->cmd->setText(QString(key));
     ui->cmd->setFocus();
+}
+
+void CMDWidget::work_last_cmd()
+{
+    work(_last_cmd);
 }
 
 void CMDWidget::show()
@@ -193,408 +265,135 @@ bool CMDWidget::work()
 {
     ui->cmd->clear();
     _completer->setCurrentRow(0);
-    switch (_current_cmd)
+    if (std::find(_direct_cmd_list.begin(), _direct_cmd_list.end(), _current_cmd) != _direct_cmd_list.end())
     {
-    case CMD::Open_CMD:
-    case CMD::Append_CMD:
-    case CMD::Save_CMD:
-    case CMD::Exit_CMD:
-    case CMD::Main_CMD:
-        emit cmd_changed(_current_cmd);
-        _current_cmd = CMD::Error_CMD;
-        break;
-
-    case CMD::Length_CMD:
-        _canvas->use_tool(Canvas::Tool::Measure);
-        break;
-    case CMD::Angle_CMD:
-        _canvas->use_tool(Canvas::Tool::Angle);
-        break;
-    case CMD::Polyline_CMD:
-        ui->cmd_label->setText("Polyline");
-        polyline();
-        break;
-    case CMD::Rectangle_CMD:
-        ui->cmd_label->setText("Rectangle");
-        rectangle();
-        break;
-    case CMD::Circle_CMD:
-        ui->cmd_label->setText("Circle");
-        circle();
-        break;
-    case CMD::Ellipse_CMD:
-        ui->cmd_label->setText("Ellipse");
-        ellipse();
-        break;
-    case CMD::BSpline_CMD:
-        ui->cmd_label->setText("BSpline");
-        bspline();
-        break;
-    case CMD::Bezier_CMD:
-        ui->cmd_label->setText("Bezier");
-        bezier();
-        break;
-    case CMD::Text_CMD:
-        ui->cmd_label->setText("Text");
-        text();
-        break;
-
-    case CMD::Connect_CMD:
+        switch (_current_cmd)
         {
-            std::vector<Geo::Geometry *> objects = _editer->selected();
-            std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : objects)
-            {
-                if (Geo::Type type = object->type(); type == Geo::Type::POLYLINE
-                    || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE)
-                {
-                    types.insert(type);
-                }
-            }
-            if (_editer->connect(objects, GlobalSetting::setting().catch_distance))
-            {
-                _canvas->refresh_vbo(types, true);
-                _canvas->refresh_selected_ibo();
-                _canvas->update();
-            }
+        case CMD::Main_CMD:
+        case CMD::Array_CMD:
+            emit cmd_changed(_current_cmd);
+            _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::Connect_CMD:
+            connect_polyline();
+            _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::Close_CMD:
+            close_polyline();
+            _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::Combinate_CMD:
+            combinate();
+            _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::Detach_CMD:
+            detach();
+            _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::FlipX_CMD:
+            flip_x();
+            _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::FlipY_CMD:
+            flip_y();
+            _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::Scale_CMD:
+            scale();
+            break;
+        case CMD::Offset_CMD:
+            offset();
+            break;
+        case CMD::Union_CMD:
+            polygon_union();
+            _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::Intersection_CMD:
+            polygon_intersection();
+            _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::XOR_CMD:
+            polygon_xor();
+            _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::LineArray_CMD:
+            line_array();
+            break;
+        case CMD::SelectAll_CMD:
+            CanvasOperations::CanvasOperation::editer->reset_selected_mark(true);
+            CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
+            CanvasOperations::CanvasOperation::canvas->update();
+            _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::Delete_CMD:
+            delete_selected_objects();
+            _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::Copy_CMD:
+            CanvasOperations::CanvasOperation::canvas->copy();
+            _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::Cut_CMD:
+            CanvasOperations::CanvasOperation::canvas->cut();
+            CanvasOperations::CanvasOperation::canvas->update();
+            _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::Paste_CMD:
+            paste();
+            break;
+        case CMD::Undo_CMD:
+            CanvasOperations::CanvasOperation::editer->undo();
+            CanvasOperations::CanvasOperation::canvas->refresh_vbo(true);
+            CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
+            CanvasOperations::CanvasOperation::canvas->update();
+            _current_cmd = CMD::Error_CMD;
+            break;
+        default:
+            clear();
+            return false;
         }
-        _current_cmd = CMD::Error_CMD;
-        break;
-    case CMD::Close_CMD:
+    }
+    else
+    {
+        if (_parameters.empty())
         {
-            std::vector<Geo::Geometry *> objects = _editer->selected();
-            std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : objects)
-            {
-                if (Geo::Type type = object->type(); type == Geo::Type::POLYLINE
-                    || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE)
-                {
-                    types.insert(type);
-                }
-            }
-            types.insert(Geo::Type::POLYGON);
-            if ( _editer->close_polyline(objects))
-            {
-                _canvas->refresh_vbo(types, true);
-                _canvas->refresh_selected_ibo();
-                _canvas->update();
-            }
+            ui->absolute_label->setText(CanvasOperations::CanvasOperation::absolute_coord ? "Absolute" : "Relative");
+            CanvasOperations::CanvasOperation::canvas->use_tool(_cmd_tool_dict[_current_cmd]);
+            _parameters.push_back(0);
         }
-        _current_cmd = CMD::Error_CMD;
-        break;
-    case CMD::Combinate_CMD:
-        if (std::vector<Geo::Geometry *> objects = _editer->selected(); _editer->combinate(objects))
+        else
         {
-            std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : objects)
-            {
-                if (const Combination *combination = dynamic_cast<const Combination *>(object))
-                {
-                    for (const Geo::Geometry *item : *combination)
-                    {
-                        types.insert(item->type());
-                    }
-                }
-                else
-                {
-                    types.insert(object->type());
-                }
-            }
-            _canvas->refresh_vbo(types, true);
-            _canvas->refresh_selected_ibo();
-            _canvas->update();
+            read_parameters(_parameters.size() - 1);
         }
-        _current_cmd = CMD::Error_CMD;
-        break;
-    case CMD::Detach_CMD:
-        {
-            std::vector<Geo::Geometry *> objects = _editer->selected();
-            std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : objects)
-            {
-                if (const Combination *combination = dynamic_cast<const Combination *>(object))
-                {
-                    for (const Geo::Geometry *item : *combination)
-                    {
-                        types.insert(item->type());
-                    }
-                }
-            }
-            if (!types.empty())
-            {
-                _editer->detach(objects);
-                _canvas->refresh_vbo(types, true);
-                _canvas->refresh_selected_ibo();
-                _canvas->update();
-            }
-        }
-        _current_cmd = CMD::Error_CMD;
-        break;
-    case CMD::Rotate_CMD:
-        ui->cmd_label->setText("Rotate");
-        rotate();
-        break;
-    case CMD::FlipX_CMD:
-        {
-            std::vector<Geo::Geometry *> objects = _editer->selected();
-            std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : objects)
-            {
-                if (const Combination *combination = dynamic_cast<const Combination *>(object))
-                {
-                    for (const Geo::Geometry *item : *combination)
-                    {
-                        types.insert(item->type());
-                    }
-                }
-                else
-                {
-                    types.insert(object->type());
-                }
-            }
-            _editer->flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
-            if (types.empty())
-            {
-                _canvas->refresh_vbo(false);
-            }
-            else
-            {
-                _canvas->refresh_vbo(types, false);
-            }
-            _canvas->update();
-        }
-        _current_cmd = CMD::Error_CMD;
-        break;
-    case CMD::FlipY_CMD:
-        {
-            std::vector<Geo::Geometry *> objects = _editer->selected();
-            std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : objects)
-            {
-                if (const Combination *combination = dynamic_cast<const Combination *>(object))
-                {
-                    for (const Geo::Geometry *item : *combination)
-                    {
-                        types.insert(item->type());
-                    }
-                }
-                else
-                {
-                    types.insert(object->type());
-                }
-            }
-            _editer->flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
-            if (types.empty())
-            {
-                _canvas->refresh_vbo(false);
-            }
-            else
-            {
-                _canvas->refresh_vbo(types, false);
-            }
-            _canvas->update();
-        }
-        _current_cmd = CMD::Error_CMD;
-        break;
-    case CMD::Scale_CMD:
-        ui->cmd_label->setText("Scale");
-        scale();
-        break;
-    case CMD::Offset_CMD:
-        ui->cmd_label->setText("Offset");
-        offset();
-        break;
-    case CMD::Fillet_CMD:
-        fillet();
-        break;
-    case CMD::Trim_CMD:
-        _canvas->set_operation(Canvas::Operation::Trim);
-        break;
-    case CMD::Extend_CMD:
-        _canvas->set_operation(Canvas::Operation::Extend);
-        break;
-
-    case CMD::Mirror_CMD:
-    case CMD::Array_CMD:
-        emit cmd_changed(_current_cmd);
-        _current_cmd = CMD::Error_CMD;
-        break;
-
-    case CMD::LineArray_CMD:
-        ui->cmd_label->setText("Line Array");
-        line_array();
-        break;
-    case CMD::RingArray_CMD:
-        ui->cmd_label->setText("Ring Array");
-        ring_array();
-        break;
-
-    case CMD::Union_CMD:
-        {
-            Geo::Polygon *polygon0 = nullptr, *polygon1 = nullptr;
-            for (Geo::Geometry *object : _editer->selected())
-            {
-                if (object->type() == Geo::Type::POLYGON)
-                {
-                    if (polygon0 == nullptr)
-                    {
-                        polygon0 = dynamic_cast<Geo::Polygon *>(object);
-                    }
-                    else
-                    {
-                        polygon1 = dynamic_cast<Geo::Polygon *>(object);
-                        break;
-                    }
-                }
-            }
-
-            if (_editer->polygon_union(polygon0, polygon1))
-            {
-                _canvas->refresh_vbo(Geo::Type::POLYGON, true);
-                _canvas->refresh_selected_ibo();
-                _canvas->update();
-            }
-        }
-        _current_cmd = CMD::Error_CMD;
-        break;
-    case CMD::Intersection_CMD:
-        {
-            Geo::Polygon *polygon0 = nullptr, *polygon1 = nullptr;
-            for (Geo::Geometry *object : _editer->selected())
-            {
-                if (object->type() == Geo::Type::POLYGON)
-                {
-                    if (polygon0 == nullptr)
-                    {
-                        polygon0 = dynamic_cast<Geo::Polygon *>(object);
-                    }
-                    else
-                    {
-                        polygon1 = dynamic_cast<Geo::Polygon *>(object);
-                        break;
-                    }
-                }
-            }
-
-            if (_editer->polygon_intersection(polygon0, polygon1))
-            {
-                _canvas->refresh_vbo(Geo::Type::POLYGON, true);
-                _canvas->refresh_selected_ibo();
-                _canvas->update();
-            }
-        }
-        _current_cmd = CMD::Error_CMD;
-        break;
-    case CMD::Difference_CMD:
-        _canvas->set_operation(Canvas::Operation::PolygonDifference);
-        emit cmd_changed(_current_cmd);
-        _current_cmd = CMD::Error_CMD;
-        ui->cmd_label->setText("Difference");
-        break;
-    case CMD::XOR_CMD:
-        {
-            Geo::Polygon *polygon0 = nullptr, *polygon1 = nullptr;
-            for (Geo::Geometry *object : _editer->selected())
-            {
-                if (object->type() == Geo::Type::POLYGON)
-                {
-                    if (polygon0 == nullptr)
-                    {
-                        polygon0 = dynamic_cast<Geo::Polygon *>(object);
-                    }
-                    else
-                    {
-                        polygon1 = dynamic_cast<Geo::Polygon *>(object);
-                        break;
-                    }
-                }
-            }
-
-            if (_editer->polygon_xor(polygon0, polygon1))
-            {
-                _canvas->refresh_vbo(Geo::Type::POLYGON, true);
-                _canvas->refresh_selected_ibo();
-                _canvas->update();
-            }
-        }
-        _current_cmd = CMD::Error_CMD;
-        break;
-
-    case CMD::SelectAll_CMD:
-        _editer->reset_selected_mark(true);
-        _canvas->refresh_selected_ibo();
-        _canvas->update();
-        _current_cmd = CMD::Error_CMD;
-        break;
-    case CMD::Delete_CMD:
-        {
-            std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : _editer->selected())
-            {
-                if (const Combination *combination = dynamic_cast<const Combination *>(object))
-                {
-                    for (const Geo::Geometry *item : *combination)
-                    {
-                        types.insert(item->type());
-                    }
-                }
-                else
-                {
-                    types.insert(object->type());
-                }
-            }
-            if (!types.empty())
-            {
-                _editer->remove_selected();
-                _canvas->refresh_vbo(types, true);
-                _canvas->update();
-            }
-        }
-        _current_cmd = CMD::Error_CMD;
-        break;
-    case CMD::Copy_CMD:
-        _canvas->copy();
-        _current_cmd = CMD::Error_CMD;
-        break;
-    case CMD::Cut_CMD:
-        _canvas->cut();
-        _canvas->update();
-        _current_cmd = CMD::Error_CMD;
-        break;
-    case CMD::Paste_CMD:
-        ui->cmd_label->setText("Paste");
-        paste();
-        break;
-    case CMD::Undo_CMD:
-        if (!_canvas->is_painting())
-        {
-            _editer->undo();
-            _canvas->refresh_vbo(true);
-            _canvas->refresh_selected_ibo();
-            _canvas->update();
-        }
-        _current_cmd = CMD::Error_CMD;
-        break;
-
-    default:
-        clear();
-        return false;
+    }
+    if (CanvasOperations::CanvasOperation::tool[0] != CanvasOperations::Tool::Select)
+    {
+        ui->parameter_label->setText(CanvasOperations::CanvasOperation::operation()[
+            CanvasOperations::CanvasOperation::tool[0]]->cmd_tips());
     }
     return true;
 }
 
+bool CMDWidget::work(const CMD cmd)
+{
+    if (_current_cmd != CMD::Error_CMD)
+    {
+        clear();
+    }
+    _last_cmd = _current_cmd = cmd;
+    return work();
+}
+
 bool CMDWidget::get_cmd()
 {
-    std::map<QString, CMDWidget::CMD>::const_iterator result = _cmd_dict.find(ui->cmd->text().toUpper());
-    if (result == _cmd_dict.end())
+    if (auto result = _cmd_dict.find(ui->cmd->text().toUpper()); result == _cmd_dict.end())
     {
         return false;
     }
     else
     {
-        _canvas->set_operation(Canvas::Operation::NoOperation);
-        _canvas->use_tool(Canvas::Tool::NoTool);
-        _current_cmd = result->second;
+        CanvasOperations::CanvasOperation::canvas->use_tool(CanvasOperations::Tool::Select);
+        _last_cmd = _current_cmd = result->second;
         return true;
     }
 }
@@ -607,56 +406,78 @@ bool CMDWidget::get_parameter()
     }
     else
     {
-        bool is_num = false;
-        const double value = ui->cmd->text().toDouble(&is_num);
-        if (is_num)
+        bool result = false;
+        for (const QString &str : ui->cmd->text().split(','))
         {
-            _parameters.emplace_back(value);
+            bool is_num = false;
+            const double value = str.toDouble(&is_num);
+            result = result || is_num;
+            if (is_num)
+            {
+                _parameters.push_back(value);
+            }
         }
-        return is_num;
+        return result;
     }
 }
 
 bool CMDWidget::get_setting()
 {
-    std::map<QString, CMDWidget::SETTING>::const_iterator result = _setting_dict.find(ui->cmd->text().toUpper());
-    if (result == _setting_dict.cend())
+    if (auto result = _setting_dict.find(ui->cmd->text().toUpper()); result == _setting_dict.cend())
     {
         return false;
     }
-
-    switch (result->second)
+    else
     {
-    case SETTING::Relative_SETTING:
-    case SETTING::Absolute_SETTING:
-        if (_parameters.size() < 2)
+        switch (result->second)
         {
-            _relative = (result->second == SETTING::Relative_SETTING);
-            if (_current_cmd == CMD::Polyline_CMD || _current_cmd == CMD::BSpline_CMD || _current_cmd == CMD::BSpline_CMD)
-            {
-                ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
-            }
-            if (_relative)
-            {
-                if (_editer->point_cache().empty())
-                {
-                    _last_x = _last_y = 0;
-                }
-                else
-                {
-                    _last_x = _editer->point_cache()[_editer->point_cache().size() - 2].x;
-                    _last_y = _editer->point_cache()[_editer->point_cache().size() - 2].y;
-                }
-            }
+        case SETTING::Relative_SETTING:
+            CanvasOperations::CanvasOperation::absolute_coord = false;
+            ui->absolute_label->setText("Relative");
+            break;
+        case SETTING::Absolute_SETTING:
+            CanvasOperations::CanvasOperation::absolute_coord = true;
+            ui->absolute_label->setText("Absolute");
+            break;
+        default:
+            break;
         }
-        break;
-    default:
-        break;
+        ui->cmd->clear();
+        return true;
     }
-    ui->cmd->clear();
-    return true;
 }
 
+
+void CMDWidget::read_parameters(const int count)
+{
+    if (_parameters.size() <= 1)
+    {
+        if (CanvasOperations::CanvasOperation::operation()[CanvasOperations::CanvasOperation::tool[0]]->read_parameters(nullptr, 0))
+        {
+            CanvasOperations::CanvasOperation::canvas->update();
+        }
+    }
+    else
+    {
+        if (_parameters.size() >= count + 1)
+        {
+            double *params = new double[count];
+            for (int i = 0; i < count; ++i)
+            {
+                params[i] = _parameters[i + 1];
+            }
+            CanvasOperations::CanvasOperation::operation()[CanvasOperations::CanvasOperation::tool[0]]->read_parameters(params, count);
+            delete[] params;
+            CanvasOperations::CanvasOperation::canvas->update();
+        }
+        _parameters.erase(_parameters.begin() + 1, _parameters.end());
+    }
+
+    if (CanvasOperations::CanvasOperation::tool[0] == CanvasOperations::Tool::Select)
+    {
+        CanvasOperations::CanvasOperation::canvas->use_tool(CanvasOperations::Tool::Select);
+    }
+}
 
 void CMDWidget::paste()
 {
@@ -664,370 +485,133 @@ void CMDWidget::paste()
     {
     case 0:
         _parameters.emplace_back(0);
+        ui->cmd_label->setText("Paste");
+        ui->parameter_label->setText("(x, y):");
         break;
     case 1:
-        _canvas->paste();
-        _canvas->update();
+        CanvasOperations::CanvasOperation::canvas->paste();
+        CanvasOperations::CanvasOperation::canvas->update();
         clear();
         break;
     case 2:
-        ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
+        _parameters.pop_back();
         break;
-    case 3:
-        _canvas->paste(_parameters[1], _parameters[2]);
-        _canvas->update();
+    default:
+        CanvasOperations::CanvasOperation::canvas->paste(_parameters[1], _parameters[2]);
+        CanvasOperations::CanvasOperation::canvas->update();
         clear();
         break;
-    default:
-        break;
     }
 }
 
-void CMDWidget::polyline()
+void CMDWidget::delete_selected_objects()
 {
-    switch (_parameters.size())
+    std::set<Geo::Type> types;
+    for (const Geo::Geometry *object : CanvasOperations::CanvasOperation::editer->selected())
     {
-    case 0:
-        _canvas->use_tool(Canvas::Tool::Polyline);
-        _parameters.emplace_back(0);
-        ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
-        _last_x = _last_y = 0;
-        break;
-    case 1:
-        _parameters.clear();
-        ui->parameter_label->clear();
-        _editer->point_cache().back() = _editer->point_cache()[_editer->point_cache().size() - 2];
-        _editer->point_cache().emplace_back(_editer->point_cache().back());
-        _canvas->polyline_cmd();
-        break;
-    case 2:
-        ui->parameter_label->setText((_relative ? "Relative X:" : "Absolute X:") + QString::number(_parameters[1]) + " Y:");
-        break;
-    case 3:
-        ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
-        if (_relative)
+        if (const Combination *combination = dynamic_cast<const Combination *>(object))
         {
-            _canvas->polyline_cmd(_parameters[1] + _last_x, _parameters[2] + _last_y);
-            _last_x += _parameters[1];
-            _last_y += _parameters[2];
-        }
-        else
-        {
-            _canvas->polyline_cmd(_parameters[1], _parameters[2]);
-        }
-        _parameters.pop_back();
-        _parameters.pop_back();
-        break;
-    default:
-        break;
-    }
-}
-
-void CMDWidget::bspline()
-{
-    switch (_parameters.size())
-    {
-    case 0:
-        _canvas->use_tool(Canvas::Tool::BSpline);
-        _parameters.emplace_back(0);
-        ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
-        _last_x = _last_y = 0;
-        break;
-    case 1:
-        _parameters.clear();
-        ui->parameter_label->clear();
-        _editer->point_cache().back() = _editer->point_cache()[_editer->point_cache().size() - 2];
-        _editer->point_cache().emplace_back(_editer->point_cache().back());
-        _canvas->polyline_cmd();
-        break;
-    case 2:
-        ui->parameter_label->setText((_relative ? "Relative X:" : "Absolute X:") + QString::number(_parameters[1]) + " Y:");
-        break;
-    case 3:
-        ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
-        if (_relative)
-        {
-            _canvas->polyline_cmd(_parameters[1] + _last_x, _parameters[2] + _last_y);
-            _last_x += _parameters[1];
-            _last_y += _parameters[2];
-        }
-        else
-        {
-            _canvas->polyline_cmd(_parameters[1], _parameters[2]);
-        }
-        _parameters.pop_back();
-        _parameters.pop_back();
-        break;
-    default:
-        break;
-    }
-}
-
-void CMDWidget::bezier()
-{
-    switch (_parameters.size())
-    {
-    case 0:
-        _canvas->use_tool(Canvas::Tool::Bezier);
-        _parameters.emplace_back(0);
-        ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
-        _last_x = _last_y = 0;
-        break;
-    case 1:
-        _parameters.clear();
-        ui->parameter_label->clear();
-        _editer->point_cache().back() = _editer->point_cache()[_editer->point_cache().size() - 2];
-        _editer->point_cache().emplace_back(_editer->point_cache().back());
-        _canvas->polyline_cmd();
-        break;
-    case 2:
-        ui->parameter_label->setText((_relative ? "Relative X:" : "Absolute X:") + QString::number(_parameters[1]) + " Y:");
-        break;
-    case 3:
-        ui->parameter_label->setText(_relative ? "Relative X: Y:" : "Absolute X: Y:");
-        if (_relative)
-        {
-            _canvas->polyline_cmd(_parameters[1] + _last_x, _parameters[2] + _last_y);
-            _last_x += _parameters[1];
-            _last_y += _parameters[2];
-        }
-        else
-        {
-            _canvas->polyline_cmd(_parameters[1], _parameters[2]);
-        }
-        _parameters.pop_back();
-        _parameters.pop_back();
-        break;
-    default:
-        break;
-    }
-}
-
-void CMDWidget::text()
-{
-    switch (_parameters.size())
-    {
-    case 0:
-        _canvas->use_tool(Canvas::Tool::Text);
-        ui->parameter_label->setText("X: Y:");
-        break;
-    case 1:
-        ui->parameter_label->setText("X:" + QString::number(_parameters[0]) + " Y:");
-        break;
-    case 2:
-        _canvas->text_cmd(_parameters[0], _parameters[1]);
-        clear();
-        break;
-    default:
-        break;
-    }
-}
-
-void CMDWidget::rectangle()
-{
-    switch (_parameters.size())
-    {
-    case 0:
-        _canvas->use_tool(Canvas::Tool::Rect);
-        _parameters.emplace_back(0);
-        ui->parameter_label->setText("X: Y:");
-        break;
-    case 1:
-        _canvas->rect_cmd();
-        _parameters.emplace_back(0);
-        _parameters.emplace_back(0);
-        _parameters.emplace_back(0);
-        ui->parameter_label->setText("W: H:");
-        break;
-    case 2:
-        ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
-        break;
-    case 3:
-        ui->parameter_label->setText("X:" + QString::number(_parameters[1])
-            + " Y:" + QString::number(_parameters[2]) + " W: H:");
-        _parameters.emplace_back(0);
-        _canvas->rect_cmd(_parameters[1], _parameters[2]);
-        _canvas->update();
-        break;
-    case 4:
-        _canvas->rect_cmd();
-        clear();
-        break;
-    case 5:
-        ui->parameter_label->setText("W:" + QString::number(_parameters[4]) + " H:");
-        break;
-    case 6:
-        _canvas->rect_cmd(_parameters[4], _parameters[5]);
-        _canvas->update();
-        clear();
-        break;
-    default:
-        break;
-    }
-}
-
-void CMDWidget::circle()
-{
-    switch (_parameters.size())
-    {
-    case 0:
-        _canvas->use_tool(Canvas::Tool::Circle0);
-        _parameters.emplace_back(0);
-        ui->parameter_label->setText("X: Y:");
-        break;
-    case 1:
-        {
-            const Geo::Point coord(_canvas->mouse_position());
-            _parameters.emplace_back(coord.x);
-            _parameters.emplace_back(coord.y);
-            _canvas->circle_cmd(_parameters[1], _parameters[2]);
-            ui->parameter_label->setText("X:" + QString::number(_parameters[1])
-                + " Y:" + QString::number(_parameters[2]) + " R:");
-        }
-        break;
-    case 2:
-        ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
-        break;
-    case 3:
-        ui->parameter_label->setText("X:" + QString::number(_parameters[1])
-            + " Y:" + QString::number(_parameters[2]) + " R:");
-        _canvas->circle_cmd(_parameters[1], _parameters[2]);
-        break;
-    case 4:
-        _canvas->circle_cmd(_parameters[1], _parameters[2], _parameters[3]);
-        break;
-    default:
-        break;
-    }
-}
-
-void CMDWidget::ellipse()
-{
-    switch (_parameters.size())
-    {
-    case 0:
-        _canvas->use_tool(Canvas::Tool::Ellipse);
-        _parameters.emplace_back(0);
-        ui->parameter_label->setText("X: Y:");
-        break;
-    case 1:
-        {
-            _parameters.emplace_back(_canvas->mouse_position().x);
-            _parameters.emplace_back(_canvas->mouse_position().y);
-            _parameters.emplace_back(0);
-            ui->parameter_label->setText("X:" + QString::number(_parameters[1])
-            + " Y:" + QString::number(_parameters[2]) + " angle:");
-            _canvas->ellipse_cmd(_parameters[1], _parameters[2]);
-        }
-        break;
-    case 2:
-        ui->parameter_label->setText("X:" + QString::number(_parameters[1]) + " Y:");
-        break;
-    case 3:
-        _parameters.emplace_back(0);
-        ui->parameter_label->setText("X:" + QString::number(_parameters[1])
-            + " Y:" + QString::number(_parameters[2]) + " angle:");
-        _canvas->ellipse_cmd(_parameters[1], _parameters[2]);
-        break;
-    case 4:
-        {
-            const Geo::Point coord(_canvas->mouse_position());
-            const Geo::Point center(_parameters[1], _parameters[2]);
-            _parameters.emplace_back(Geo::angle(center, coord));
-            _parameters.emplace_back(0);
-            _parameters.emplace_back(Geo::distance(coord, center));
-            _parameters.emplace_back(0);
-            _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6]);
-            ui->parameter_label->setText("X:" + QString::number(_parameters[1])
-                + " Y:" + QString::number(_parameters[2]) + " angle:" + QString::number(_parameters[4])
-                + " a:" + QString::number(_parameters[6]) + " b:");
-        }
-        break;
-    case 5:
-        {
-            ui->parameter_label->setText("X:" + QString::number(_parameters[1])
-                + " Y:" + QString::number(_parameters[2]) + " angle:" + QString::number(_parameters[4]) + " a:");
-            _parameters.emplace_back(0);
-        }
-        break;
-    case 6:
-        {
-            const Geo::Point coord(_canvas->mouse_position());
-            const Geo::Point center(_parameters[1], _parameters[2]);
-            _parameters.emplace_back(Geo::distance(coord, center));
-            _parameters.emplace_back(0);
-            ui->parameter_label->setText("X:" + QString::number(_parameters[1])
-                + " Y:" + QString::number(_parameters[2]) + " angle:" + QString::number(_parameters[4])
-                + " a:" + QString::number(_parameters[6]) + " b:");
-            _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6]);
-        }
-        break;
-    case 7:
-        {
-            _parameters.emplace_back(0);
-            ui->parameter_label->setText("X:" + QString::number(_parameters[1])
-                + " Y:" + QString::number(_parameters[2]) + " angle:" + QString::number(_parameters[4])
-                + " a:" + QString::number(_parameters[6]) + " b:");
-            _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6]);
-        }
-        break;
-    case 8:
-        _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6], 
-            Geo::distance(_canvas->mouse_position(), Geo::Point(_parameters[1], _parameters[2])));
-        break;
-    case 9:
-        _canvas->ellipse_cmd(_parameters[1], _parameters[2], _parameters[4], _parameters[6], _parameters[8]);
-        break;
-    default:
-        break;
-    }
-}
-
-void CMDWidget::rotate()
-{
-    switch (_parameters.size())
-    {
-    case 0:
-        _parameters.emplace_back(0);
-        ui->parameter_label->setText("Degree:");
-        break;
-    case 1:
-        clear();
-        break;
-    case 2:
-        {
-            std::vector<Geo::Geometry *> objects = _editer->selected();
-            std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : objects)
+            for (const Geo::Geometry *item : *combination)
             {
-                if (const Combination *combination = dynamic_cast<const Combination *>(object))
-                {
-                    for (const Geo::Geometry *item : *combination)
-                    {
-                        types.insert(item->type());
-                    }
-                }
-                else
-                {
-                    types.insert(object->type());
-                }
+                types.insert(item->type());
             }
-            GlobalSetting::setting().ui->rotate_angle->setValue(_parameters[1]);
-            _editer->rotate(objects, _parameters[1], QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
-            if (types.empty())
+        }
+        else
+        {
+            types.insert(object->type());
+        }
+    }
+    if (!types.empty())
+    {
+        CanvasOperations::CanvasOperation::editer->remove_selected();
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+        CanvasOperations::CanvasOperation::canvas->update();
+    }
+}
+
+void CMDWidget::connect_polyline()
+{
+    std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
+    std::set<Geo::Type> types;
+    for (const Geo::Geometry *object : objects)
+    {
+        if (Geo::Type type = object->type(); type == Geo::Type::POLYLINE
+            || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE)
+        {
+            types.insert(type);
+        }
+    }
+    if (CanvasOperations::CanvasOperation::editer->connect(objects, GlobalSetting::setting().catch_distance))
+    {
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
+    }
+}
+
+void CMDWidget::close_polyline()
+{
+    std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
+    std::set<Geo::Type> types;
+    for (const Geo::Geometry *object : objects)
+    {
+        if (Geo::Type type = object->type(); type == Geo::Type::POLYLINE
+            || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE)
+        {
+            types.insert(type);
+        }
+    }
+    types.insert(Geo::Type::POLYGON);
+    if (CanvasOperations::CanvasOperation::editer->close_polyline(objects))
+    {
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
+    }
+}
+
+void CMDWidget::combinate()
+{
+    if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
+        CanvasOperations::CanvasOperation::editer->combinate(objects))
+    {
+        std::set<Geo::Type> types;
+        for (const Geo::Geometry *object : objects)
+        {
+            if (const Combination *combination = dynamic_cast<const Combination *>(object))
             {
-                _canvas->refresh_vbo(false);
+                for (const Geo::Geometry *item : *combination)
+                {
+                    types.insert(item->type());
+                }
             }
             else
             {
-                _canvas->refresh_vbo(types, false);
+                types.insert(object->type());
             }
-            _parameters.pop_back();
-            _canvas->update();
         }
-        break;
-    default:
-        break;
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
+    }
+}
+
+void CMDWidget::detach()
+{
+    std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
+    std::set<Geo::Type> types;
+    for (const Geo::Geometry *object : objects)
+    {
+        if (const Combination *combination = dynamic_cast<const Combination *>(object))
+        {
+            for (const Geo::Geometry *item : *combination)
+            {
+                types.insert(item->type());
+            }
+        }
+    }
+    if (!types.empty())
+    {
+        CanvasOperations::CanvasOperation::editer->detach(objects);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
     }
 }
 
@@ -1037,38 +621,51 @@ void CMDWidget::scale()
     {
     case 0:
         _parameters.emplace_back(0);
-        ui->parameter_label->setText("Rate:");
+        ui->cmd_label->setText("Scale");
+        ui->parameter_label->setText("ratio:");
         break;
     case 1:
         clear();
         break;
-    case 2:
+    default:
+        if (_parameters.back() > 0)
         {
-            GlobalSetting::setting().ui->scale_sbx->setValue(_parameters.back());
-            std::vector<Geo::Geometry *> objects = _editer->selected();
-            std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : objects)
+            if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
+                CanvasOperations::CanvasOperation::editer->scale(objects,
+                QApplication::keyboardModifiers() != Qt::KeyboardModifier::ControlModifier, _parameters.back()))
             {
-                if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                std::set<Geo::Type> types;
+                for (const Geo::Geometry *object : objects)
                 {
-                    for (const Geo::Geometry *item : *combination)
+                    if (const Combination *combination = dynamic_cast<const Combination *>(object))
                     {
-                        types.insert(item->type());
+                        for (const Geo::Geometry *item : *combination)
+                        {
+                            types.insert(item->type());
+                        }
+                    }
+                    else
+                    {
+                        types.insert(object->type());
                     }
                 }
-                else
+                CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, false);
+                if (objects.size() == 1)
                 {
-                    types.insert(object->type());
+                    CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo(objects.front());
                 }
+                CanvasOperations::CanvasOperation::canvas->update();
+                clear();
             }
-            _editer->scale(objects, QApplication::keyboardModifiers() != Qt::ControlModifier, _parameters.back());
-            _canvas->refresh_vbo(types, false);
-            _canvas->refresh_selected_ibo();
-            _parameters.pop_back();
-            _canvas->update();
+            else
+            {
+                _parameters.pop_back();
+            }
         }
-        break;
-    default:
+        else
+        {
+            _parameters.pop_back();
+        }
         break;
     }
 }
@@ -1079,51 +676,38 @@ void CMDWidget::offset()
     {
     case 0:
         _parameters.emplace_back(0);
-        ui->parameter_label->setText("Distance:");
+        ui->cmd_label->setText("Offset");
+        ui->parameter_label->setText("distance:");
         break;
     case 1:
         clear();
         break;
-    case 2:
+    default:
+        if (_parameters.back() != 0)
         {
-            std::vector<Geo::Geometry *> objects = _editer->selected();
-            std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : objects)
+            if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
+                CanvasOperations::CanvasOperation::editer->offset(objects, _parameters.back(),
+                static_cast<Geo::Offset::JoinType>(GlobalSetting::setting().offset_join_type),
+                static_cast<Geo::Offset::EndType>(GlobalSetting::setting().offset_end_type)))
             {
-                types.insert(object->type());
+                std::set<Geo::Type> types;
+                for (const Geo::Geometry *object : objects)
+                {
+                    types.insert(object->type());
+                }
+                CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+                CanvasOperations::CanvasOperation::canvas->update();
+                clear();
             }
-            GlobalSetting::setting().ui->offset_sbx->setValue(_parameters.back());
-            _editer->offset(objects, _parameters.back());
-            _canvas->refresh_vbo(types, true);
-            _canvas->refresh_selected_ibo();
-            _canvas->update();
-            clear();
+            else
+            {
+                _parameters.pop_back();
+            }
         }
-        break;
-    default:
-        break;
-    }
-}
-
-void CMDWidget::fillet()
-{
-    switch (_parameters.size())
-    {
-    case 0:
-        GlobalSetting::setting().ui->canvas->set_operation(Canvas::Operation::Fillet);
-        ui->cmd_label->setText("Fillet Radius: " + QString::number(GlobalSetting::setting().ui->fillet_sbx->value()));
-        _parameters.push_back(0);
-        break;
-    case 1:
-        clear();
-        GlobalSetting::setting().ui->canvas->set_operation(Canvas::Operation::NoOperation);
-        break;
-    case 2:
-        ui->cmd_label->setText("Fillet Radius: " + QString::number(_parameters.back()));
-        GlobalSetting::setting().ui->fillet_sbx->setValue(_parameters.back());
-        _parameters.pop_back();
-        break;
-    default:
+        else
+        {
+            _parameters.pop_back();
+        }
         break;
     }
 }
@@ -1133,26 +717,15 @@ void CMDWidget::line_array()
     switch (_parameters.size())
     {
     case 0:
-        ui->parameter_label->setText("X Items:");
+        _parameters.emplace_back(0);
+        ui->cmd_label->setText("Line Array");
+        ui->parameter_label->setText("(X-count, Y-count, X-space, Y-space):");
         break;
     case 1:
-        ui->parameter_label->setText("X Items:" + QString::number(_parameters[0]) + " Y Items:");
-        GlobalSetting::setting().ui->array_x_item->setValue(_parameters[0]);
-        break;
-    case 2:
-        ui->parameter_label->setText("X Items:" + QString::number(_parameters[0]) + " Y Items:"
-            + QString::number(_parameters[1]) + " X Space:");
-        GlobalSetting::setting().ui->array_x_space->setValue(_parameters[1]);
-        break;
-    case 3:
-        ui->parameter_label->setText("X Items:" + QString::number(_parameters[0]) + " Y Items:"
-            + QString::number(_parameters[1]) + " X Space:" +  QString::number(_parameters[2]) + " Y Space:");
-        GlobalSetting::setting().ui->array_y_item->setValue(_parameters[2]);
-        break;
-    case 4:
-        GlobalSetting::setting().ui->array_y_space->setValue(_parameters[3]);
-        if (std::vector<Geo::Geometry *> objects = _editer->selected();
-            _editer->line_array(objects, _parameters[0], _parameters[1], _parameters[2], _parameters[3]))
+        if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
+            CanvasOperations::CanvasOperation::editer->line_array(objects,
+            GlobalSetting::setting().ui->array_x_item->value(), GlobalSetting::setting().ui->array_y_item->value(),
+            GlobalSetting::setting().ui->array_x_space->value(), GlobalSetting::setting().ui->array_y_space->value()))
         {
             std::set<Geo::Type> types;
             for (const Geo::Geometry *object : objects)
@@ -1169,67 +742,198 @@ void CMDWidget::line_array()
                     types.insert(object->type());
                 }
             }
-            _canvas->refresh_vbo(types, true);
-            _canvas->refresh_selected_ibo();
-            _canvas->update();
+            CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+            CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
+            CanvasOperations::CanvasOperation::canvas->update();
         }
-        _parameters.clear();
-        ui->parameter_label->clear();
-        ui->cmd_label->clear();
-        _current_cmd = CMD::Error_CMD;
+        clear();
         break;
     default:
+        if (_parameters.size() >= 5 && std::abs(_parameters[1]) >= 1 && std::abs(_parameters[2]) >= 1)
+        {
+            if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
+                CanvasOperations::CanvasOperation::editer->line_array(objects, _parameters[1],
+                _parameters[2], _parameters[3], _parameters[4]))
+            {
+                std::set<Geo::Type> types;
+                for (const Geo::Geometry *object : objects)
+                {
+                    if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                    {
+                        for (const Geo::Geometry *item : *combination)
+                        {
+                            types.insert(item->type());
+                        }
+                    }
+                    else
+                    {
+                        types.insert(object->type());
+                    }
+                }
+                CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+                CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
+                CanvasOperations::CanvasOperation::canvas->update();
+            }
+            clear();
+        }
+        else
+        {
+            _parameters.erase(_parameters.begin() + 1, _parameters.end());
+        }
         break;
     }
 }
 
-void CMDWidget::ring_array()
+void CMDWidget::flip_x()
 {
-    switch (_parameters.size())
+    std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
+    CanvasOperations::CanvasOperation::editer->flip(objects, true,
+        QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
+    std::set<Geo::Type> types;
+    for (const Geo::Geometry *object : objects)
     {
-    case 0:
-        emit cmd_changed(CMD::RingArray_CMD);
-        ui->parameter_label->setText("Center X:");
-        break;
-    case 1:
-        ui->parameter_label->setText("Center X:"+ QString::number(_parameters[0]) + " Y:");
-        break;
-    case 2:
-        ui->parameter_label->setText("Center X:" + QString::number(_parameters[0]) + " Y:"
-            + QString::number(_parameters[1]) + " Items:");
-        break;
-    case 3:
-        GlobalSetting::setting().ui->array_item->setValue(_parameters[2]);
-        if (std::vector<Geo::Geometry *> objects = _editer->selected();
-            _editer->ring_array(objects, _parameters[0], _parameters[1], _parameters[2]))
+        if (const Combination *combination = dynamic_cast<const Combination *>(object))
         {
-            std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : objects)
+            for (const Geo::Geometry *item : *combination)
             {
-                if (const Combination *combination = dynamic_cast<const Combination *>(object))
-                {
-                    for (const Geo::Geometry *item : *combination)
-                    {
-                        types.insert(item->type());
-                    }
-                }
-                else
-                {
-                    types.insert(object->type());
-                }
+                types.insert(item->type());
             }
-            _canvas->refresh_vbo(types, true);
-            _canvas->refresh_selected_ibo();
-            _canvas->update();
         }
-        _parameters.clear();
-        ui->parameter_label->clear();
-        ui->cmd_label->clear();
-        emit _canvas->tool_changed(Canvas::Tool::NoTool);
-        _current_cmd = CMD::Error_CMD;
-        break;
-    default:
-        break;
+        else
+        {
+            types.insert(object->type());
+        }
+    }
+    if (types.empty())
+    {
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(false);
+    }
+    else
+    {
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, false);
+    }
+    if (objects.size() == 1)
+    {
+        CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo(objects.front());
+    }
+    CanvasOperations::CanvasOperation::canvas->update();
+}
+
+void CMDWidget::flip_y()
+{
+    std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
+    CanvasOperations::CanvasOperation::editer->flip(objects, false,
+        QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
+    std::set<Geo::Type> types;
+    for (const Geo::Geometry *object : objects)
+    {
+        if (const Combination *combination = dynamic_cast<const Combination *>(object))
+        {
+            for (const Geo::Geometry *item : *combination)
+            {
+                types.insert(item->type());
+            }
+        }
+        else
+        {
+            types.insert(object->type());
+        }
+    }
+    if (types.empty())
+    {
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(false);
+    }
+    else
+    {
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, false);
+    }
+    if (objects.size() == 1)
+    {
+        CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo(objects.front());
+    }
+    CanvasOperations::CanvasOperation::canvas->update();
+}
+
+void CMDWidget::polygon_intersection()
+{
+    Geo::Polygon *polygon0 = nullptr, *polygon1 = nullptr;
+    for (Geo::Geometry *object : CanvasOperations::CanvasOperation::editer->selected())
+    {
+        if (dynamic_cast<Geo::Polygon *>(object) == nullptr)
+        {
+            continue;
+        }
+        if (polygon0 == nullptr)
+        {
+            polygon0 = dynamic_cast<Geo::Polygon *>(object);
+        }
+        else
+        {
+            polygon1 = dynamic_cast<Geo::Polygon *>(object);
+            break;
+        }
+    }
+
+    if (CanvasOperations::CanvasOperation::editer->polygon_intersection(polygon0, polygon1))
+    {
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(Geo::Type::POLYGON, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
+        CanvasOperations::CanvasOperation::canvas->update();
     }
 }
 
+void CMDWidget::polygon_union()
+{
+    Geo::Polygon *polygon0 = nullptr, *polygon1 = nullptr;
+    for (Geo::Geometry *object : CanvasOperations::CanvasOperation::editer->selected())
+    {
+        if (dynamic_cast<Geo::Polygon *>(object) == nullptr)
+        {
+            continue;
+        }
+        if (polygon0 == nullptr)
+        {
+            polygon0 = dynamic_cast<Geo::Polygon *>(object);
+        }
+        else
+        {
+            polygon1 = dynamic_cast<Geo::Polygon *>(object);
+            break;
+        }
+    }
+
+    if (CanvasOperations::CanvasOperation::editer->polygon_union(polygon0, polygon1))
+    {
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(Geo::Type::POLYGON, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
+        CanvasOperations::CanvasOperation::canvas->update();
+    }
+}
+
+void CMDWidget::polygon_xor()
+{
+    Geo::Polygon *polygon0 = nullptr, *polygon1 = nullptr;
+    for (Geo::Geometry *object : CanvasOperations::CanvasOperation::editer->selected())
+    {
+        if (dynamic_cast<Geo::Polygon *>(object) == nullptr)
+        {
+            continue;
+        }
+        if (polygon0 == nullptr)
+        {
+            polygon0 = dynamic_cast<Geo::Polygon *>(object);
+        }
+        else
+        {
+            polygon1 = dynamic_cast<Geo::Polygon *>(object);
+            break;
+        }
+    }
+
+    if (CanvasOperations::CanvasOperation::editer->polygon_xor(polygon0, polygon1))
+    {
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(Geo::Type::POLYGON, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
+        CanvasOperations::CanvasOperation::canvas->update();
+    }
+}

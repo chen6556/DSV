@@ -37,5 +37,6 @@
     <file>icons/circle/circle_btn.png</file>
     <file>icons/circle/3p_circle_btn.png</file>
     <file>icons/circle/2p_circle_btn.png</file>
+    <file>icons/chamfer_btn.png</file>
   </qresource>
 </RCC>

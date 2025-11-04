@@ -41,6 +41,8 @@ private:
 private:
     void init();
 
+    void connect_btn_to_cmd();
+
 protected:
     void mousePressEvent(QMouseEvent *event);
 
@@ -69,10 +71,6 @@ private slots:
 
     void set_catch(QAction *action);
 
-    void refresh_tool_label(const Canvas::Tool tool);
-
-    void refresh_tool_label(const Canvas::Operation operation);
-
     void refresh_cmd(const CMDWidget::CMD cmd);
 
     void refresh_settings();
@@ -87,53 +85,7 @@ private slots:
 
     void to_main_page();
 
-
-    void connect_polylines();
-
-    void close_polyline();
-
-    void combinate();
-
-    void detach();
-
-    void rotate();
-
-    void flip_x();
-
-    void flip_y();
-
-    void mirror();
-
-    void scale();
-
-    void offset();
-
-
     void to_array_page();
-
-    void line_array();
-
-    void ring_array();
-
-
-    void polygon_union();
-
-    void polygon_intersection();
-
-    void polygon_difference();
-
-    void polygon_xor();
-
-
-    void fillet();
-
-    void trim();
-
-    void split();
-
-    void extend();
-
-
 
     void show_data_panel();
 

@@ -22,6 +22,9 @@
     <height>60</height>
    </size>
   </property>
+  <property name="focusPolicy">
+   <enum>Qt::FocusPolicy::StrongFocus</enum>
+  </property>
   <property name="contextMenuPolicy">
    <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
   </property>
@@ -49,12 +52,21 @@ color:rgb(230, 230, 230);</string>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
      <item>
       <widget class="QLabel" name="cmd_label">
-       <property name="maximumSize">
-        <size>
-         <width>100</width>
-         <height>16777215</height>
-        </size>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
        </property>
+       <property name="styleSheet">
+        <string notr="true">margin-right:10px;</string>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="parameter_label">
        <property name="font">
         <font>
          <pointsize>10</pointsize>
@@ -66,7 +78,12 @@ color:rgb(230, 230, 230);</string>
       </widget>
      </item>
      <item>
-      <widget class="QLabel" name="parameter_label">
+      <widget class="QLabel" name="absolute_label">
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
        <property name="text">
         <string/>
        </property>

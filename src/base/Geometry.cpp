@@ -2428,48 +2428,24 @@ double Ellipse::default_down_sampling_value = 0.02;
 Ellipse::Ellipse(const double x, const double y, const double a, const double b)
 {
     assert(a > 0 && b > 0);
-    if (a >= b)
-    {
-        _a[0].x = x - a;
-        _a[1].x = x + a;
-        _a[0].y = _a[1].y = y;
-        _b[0].y = y + b;
-        _b[1].y = y - b;
-        _b[0].x = _b[1].x = x;
-    }
-    else
-    {
-        _a[0].x = x - b;
-        _a[1].x = x + b;
-        _a[0].y = _a[1].y = y;
-        _b[0].y = y + a;
-        _b[1].y = y - a;
-        _b[0].x = _b[1].x = x;
-    }
+    _a[0].x = x - a;
+    _a[1].x = x + a;
+    _a[0].y = _a[1].y = y;
+    _b[0].y = y + b;
+    _b[1].y = y - b;
+    _b[0].x = _b[1].x = x;
     update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
 Ellipse::Ellipse(const Point &point, const double a, const double b)
 {
     assert(a > 0 && b > 0);
-    if (a >= b)
-    {
-        _a[0].x = point.x - a;
-        _a[1].x = point.x + a;
-        _a[0].y = _a[1].y = point.y;
-        _b[0].y = point.y + b;
-        _b[1].y = point.y - b;
-        _b[0].x = _b[1].x = point.x;
-    }
-    else
-    {
-        _a[0].x = point.x - b;
-        _a[1].x = point.x + b;
-        _a[0].y = _a[1].y = point.y;
-        _b[0].y = point.y + a;
-        _b[1].y = point.y - a;
-        _b[0].x = _b[1].x = point.x;
-    }
+    _a[0].x = point.x - a;
+    _a[1].x = point.x + a;
+    _a[0].y = _a[1].y = point.y;
+    _b[0].y = point.y + b;
+    _b[1].y = point.y - b;
+    _b[0].x = _b[1].x = point.x;
     update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 

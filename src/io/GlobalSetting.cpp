@@ -104,10 +104,6 @@ void GlobalSetting::load_setting()
     {
         this->remember_file_type = values.value("remember_file_type").toBool();
     }
-    if (values.contains("show_cmd_line"))
-    {
-        this->show_cmd_line = values.value("show_cmd_line").toBool();
-    }
     if (values.contains("show_origin"))
     {
         this->show_origin = values.value("show_origin").toBool();
@@ -150,7 +146,6 @@ void GlobalSetting::save_setting()
     values.insert("offset_end_type", this->offset_end_type);
     values.insert("offset_join_type", this->offset_join_type);
     values.insert("remember_file_type", this->remember_file_type);
-    values.insert("show_cmd_line", this->show_cmd_line);
     values.insert("show_origin", this->show_origin);
     values.insert("show_points", this->show_points);
     values.insert("show_text", this->show_text);

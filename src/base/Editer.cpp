@@ -594,12 +594,17 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
     return std::make_tuple(nullptr, false);
 }
 
-std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect)
+std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const bool reset_others)
 {
     std::vector<Geo::Geometry *> result;
     if (rect.empty() || _graph == nullptr || _graph->empty())
     {
         return result;
+    }
+
+    if (reset_others)
+    {
+        reset_selected_mark();
     }
 
     if (const size_t count = _graph->container_group(_current_group).size(); count < 2000)
@@ -989,6 +994,14 @@ void Editer::append_text(const double x, const double y)
 
     _graph->modified = true;
     _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
+        _current_group, _graph->container_group(_current_group).size(), true));
+}
+
+void Editer::append(Geo::Geometry *object)
+{
+    _graph->append(object, _current_group);
+    _graph->modified = true;
+    _backup.push_command(new UndoStack::ObjectCommand(object, 
         _current_group, _graph->container_group(_current_group).size(), true));
 }
 
@@ -2110,6 +2123,10 @@ bool Editer::polygon_xor(Geo::Polygon *shape0, Geo::Polygon *shape1)
 
 bool Editer::fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius)
 {
+    if (radius <= 0)
+    {
+        return false;
+    }
     Geo::Polygon &polygon = *shape;
     std::vector<Geo::Point>::const_iterator it = std::find(polygon.begin(), polygon.end(), point);
     if (it == polygon.end())
@@ -2145,7 +2162,7 @@ bool Editer::fillet(Geo::Polygon *shape, const Geo::Point &point, const double r
 
 bool Editer::fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius)
 {
-    if (point == polyline->front() || point == polyline->back())
+    if (radius <= 0 || point == polyline->front() || point == polyline->back())
     {
         return false;
     }
@@ -2170,6 +2187,117 @@ bool Editer::fillet(Geo::Polyline *polyline, const Geo::Point &point, const doub
 
         _graph->modified = true;
 
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Editer::chamfer(Geo::Polygon *shape, const Geo::Point &point, const double distance)
+{
+    if (distance <= 0)
+    {
+        return false;
+    }
+    Geo::Polygon &polygon = *shape;
+    std::vector<Geo::Point>::const_iterator it = std::find(polygon.begin(), polygon.end(), point);
+    if (it == polygon.end())
+    {
+        return false;
+    }
+    const size_t index1 = std::distance(polygon.cbegin(), it);
+    const size_t index0 = index1 > 0 ? index1 - 1 : polygon.size() - 2;
+    const size_t index2 = index1 + 1;
+
+    if (Geo::distance(polygon[index1], polygon[index0]) >= distance &&
+        Geo::distance(polygon[index1], polygon[index2]) >= distance)
+    {
+        std::vector<std::tuple<double, double>> tuple_shape;
+        for (const Geo::Point &point : polygon)
+        {
+            tuple_shape.emplace_back(point.x, point.y);
+        }
+        _backup.push_command(new UndoStack::ChangeShapeCommand(shape, tuple_shape));
+
+        if (Geo::distance(polygon[index1], polygon[index2]) > distance)
+        {
+            if (index1 > 0)
+            {
+                Geo::Point temp = polygon[index1] + (polygon[index2] - polygon[index1]).normalize() * distance;
+                polygon.insert(index2, temp);
+            }
+            else
+            {
+                polygon.front() = polygon[index1] + (polygon[index2] - polygon[index1]).normalize() * distance;
+            }
+        }
+
+        if (Geo::distance(polygon[index1], polygon[index0]) > distance)
+        {
+            if (index1 > 0)
+            {
+                polygon[index1] += (polygon[index0] - polygon[index1]).normalize() * distance;
+            }
+            else
+            {
+                polygon.insert(index0 + 1, polygon.back() + (polygon[index0] - polygon.back()).normalize() * distance);
+                polygon.back() = polygon.front();
+            }
+        }
+        else
+        {
+            polygon.remove(index1);
+        }
+
+        _graph->modified = true;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Editer::chamfer(Geo::Polyline *polyline, const Geo::Point &point, const double distance)
+{
+    if (distance <= 0 || point == polyline->front() || point == polyline->back())
+    {
+        return false;
+    }
+    std::vector<Geo::Point>::const_iterator it = std::find(polyline->begin(), polyline->end(), point);
+    if (it == polyline->end())
+    {
+        return false;
+    }
+    const size_t index = std::distance(polyline->cbegin(), it);
+    if (Geo::distance((*polyline)[index - 1], (*polyline)[index]) >= distance
+        && Geo::distance((*polyline)[index + 1], (*polyline)[index]) >= distance)
+    {
+        std::vector<std::tuple<double, double>> tuple_shape;
+        for (const Geo::Point &point : *polyline)
+        {
+            tuple_shape.emplace_back(point.x, point.y);
+        }
+        _backup.push_command(new UndoStack::ChangeShapeCommand(polyline, tuple_shape));
+
+        if (Geo::distance((*polyline)[index + 1], (*polyline)[index]) > distance)
+        {
+            Geo::Point temp = (*polyline)[index] + ((*polyline)[index + 1] - (*polyline)[index]).normalize() * distance;
+            polyline->insert(index + 1, temp);
+        }
+
+        if (Geo::distance((*polyline)[index - 1], (*polyline)[index]) > distance)
+        {
+            (*polyline)[index] += ((*polyline)[index - 1] - (*polyline)[index]).normalize() * distance;
+        }
+        else
+        {
+            polyline->remove(index);
+        }
+
+        _graph->modified = true;
         return true;
     }
     else
@@ -5662,6 +5790,11 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
     for (size_t i = start; i < end; ++i)
     {
         Geo::Geometry *container = _graph->container_group(_current_group)[i];
+        if (container->is_selected)
+        {
+            result->push_back(container);
+            continue;
+        }
         switch (container->type())
         {
         case Geo::Type::TEXT:
@@ -5670,20 +5803,12 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
                 container->is_selected = true;
                 result->push_back(container);
             }
-            else
-            {
-                container->is_selected = false;
-            }
             break;
         case Geo::Type::POLYGON:
             if (Geo::is_intersected(rect, *static_cast<Geo::Polygon *>(container)))
             {
                 container->is_selected = true;
                 result->push_back(container);
-            }
-            else
-            {
-                container->is_selected = false;
             }
             break;
         case Geo::Type::CIRCLE:
@@ -5692,20 +5817,12 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
                 container->is_selected = true;
                 result->push_back(container);
             }
-            else
-            {
-                container->is_selected = false;
-            }
             break;
         case Geo::Type::ELLIPSE:
             if (Geo::is_intersected(rect, *static_cast<Geo::Ellipse *>(container)))
             {
                 container->is_selected = true;
                 result->push_back(container);
-            }
-            else
-            {
-                container->is_selected = false;
             }
             break;
         case Geo::Type::COMBINATION:
@@ -5771,10 +5888,6 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
                     container->is_selected = true;
                     result->push_back(container);
                 }
-                else
-                {
-                    container->is_selected = false;
-                }
             }
             break;
         case Geo::Type::POLYLINE:
@@ -5782,11 +5895,7 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
             {
                 container->is_selected = true;
                 result->push_back(container);
-            }
-            else
-            {
-                container->is_selected = false;
-            }
+            } 
             break;
         case Geo::Type::BEZIER:
             if (Geo::is_intersected(rect, static_cast<Geo::Bezier *>(container)->shape()))
@@ -5794,20 +5903,12 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
                 container->is_selected = true;
                 result->push_back(container);
             }
-            else
-            {
-                container->is_selected = false;
-            }
             break;
         case Geo::Type::BSPLINE:
             if (Geo::is_intersected(rect, static_cast<Geo::BSpline *>(container)->shape()))
             {
                 container->is_selected = true;
                 result->push_back(container);
-            }
-            else
-            {
-                container->is_selected = false;
             }
             break;
         default:

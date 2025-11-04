@@ -207,6 +207,11 @@ QMenu::item:pressed,
 QMenu::item::selected
 {
 	background-color:rgb(0,  85, 127);
+}
+
+QScrollArea
+{
+	padding-top: 16px;
 }</string>
       </property>
       <property name="currentIndex">
@@ -260,8 +265,8 @@ QMenu::item::selected
             <rect>
              <x>0</x>
              <y>0</y>
-             <width>114</width>
-             <height>702</height>
+             <width>120</width>
+             <height>632</height>
             </rect>
            </property>
            <property name="maximumSize">
@@ -280,27 +285,6 @@ QMenu::item::selected
             <property name="rightMargin">
              <number>3</number>
             </property>
-            <item>
-             <widget class="QLabel" name="current_tool">
-              <property name="maximumSize">
-               <size>
-                <width>120</width>
-                <height>16</height>
-               </size>
-              </property>
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">background-color: none</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignmentFlag::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
             <item>
              <widget class="QPushButton" name="view_btn">
               <property name="minimumSize">
@@ -406,7 +390,115 @@ QMenu::item::selected
                <number>2</number>
               </property>
               <item row="3" column="1">
-               <widget class="QSpinBox" name="curve_spb">
+               <widget class="QToolButton" name="close_btn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Close</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/close_btn.png</normaloff>:/icons/close_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="0" column="0">
+               <widget class="QToolButton" name="line_btn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>54</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Polyline</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/polyline_btn.png</normaloff>:/icons/polyline_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="1" column="0">
+               <widget class="QToolButton" name="circle_btn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Center-Radius Circle</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/circle/circle_btn.png</normaloff>:/icons/circle/circle_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="popupMode">
+                 <enum>QToolButton::ToolButtonPopupMode::MenuButtonPopup</enum>
+                </property>
+                <property name="autoRaise">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QToolButton" name="text_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
                   <horstretch>0</horstretch>
@@ -424,26 +516,84 @@ QMenu::item::selected
                   <pointsize>12</pointsize>
                  </font>
                 </property>
-                <property name="contextMenuPolicy">
-                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Curve Order</string>
+                 <string>Text</string>
                 </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
+                <property name="text">
+                 <string>Text</string>
                 </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QToolButton" name="curve_btn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
                 </property>
-                <property name="minimum">
-                 <number>2</number>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
                 </property>
-                <property name="maximum">
-                 <number>3</number>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
-                <property name="value">
-                 <number>3</number>
+                <property name="toolTip">
+                 <string>BSpline</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/curve_btn.png</normaloff>:/icons/curve_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="popupMode">
+                 <enum>QToolButton::ToolButtonPopupMode::MenuButtonPopup</enum>
+                </property>
+                <property name="autoRaise">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="0">
+               <widget class="QToolButton" name="combinate_btn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Combinate</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/combinate_btn.png</normaloff>:/icons/combinate_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
                 </property>
                </widget>
               </item>
@@ -459,6 +609,12 @@ QMenu::item::selected
                  <size>
                   <width>0</width>
                   <height>32</height>
+                 </size>
+                </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>54</width>
+                  <height>16777215</height>
                  </size>
                 </property>
                 <property name="focusPolicy">
@@ -479,7 +635,7 @@ QMenu::item::selected
                 </property>
                </widget>
               </item>
-              <item row="5" column="1">
+              <item row="4" column="1">
                <widget class="QToolButton" name="detach_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -548,244 +704,7 @@ QMenu::item::selected
                 </property>
                </widget>
               </item>
-              <item row="2" column="1">
-               <widget class="QToolButton" name="text_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>51</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Text</string>
-                </property>
-                <property name="text">
-                 <string>Text</string>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="1">
-               <widget class="QToolButton" name="close_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Close</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/close_btn.png</normaloff>:/icons/close_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0">
-               <widget class="QToolButton" name="line_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Polyline</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/polyline_btn.png</normaloff>:/icons/polyline_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QToolButton" name="circle_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Circle</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/circle/circle_btn.png</normaloff>:/icons/circle/circle_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="popupMode">
-                 <enum>QToolButton::ToolButtonPopupMode::MenuButtonPopup</enum>
-                </property>
-                <property name="autoRaise">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="0">
-               <widget class="QToolButton" name="bspline_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>BSpline</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/curve_btn.png</normaloff>:/icons/curve_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
               <item row="3" column="0">
-               <widget class="QToolButton" name="bezier_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Bezier</string>
-                </property>
-                <property name="text">
-                 <string/>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/bezier_btn.png</normaloff>:/icons/bezier_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="5" column="0">
-               <widget class="QToolButton" name="combinate_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Combinate</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/combinate_btn.png</normaloff>:/icons/combinate_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="4" column="0">
                <widget class="QToolButton" name="connect_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -872,6 +791,12 @@ QMenu::item::selected
                   <height>32</height>
                  </size>
                 </property>
+                <property name="maximumSize">
+                 <size>
+                  <width>54</width>
+                  <height>16777215</height>
+                 </size>
+                </property>
                 <property name="focusPolicy">
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
@@ -890,8 +815,8 @@ QMenu::item::selected
                 </property>
                </widget>
               </item>
-              <item row="3" column="1">
-               <widget class="QToolButton" name="flipy_btn">
+              <item row="8" column="1">
+               <widget class="QToolButton" name="difference_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -908,11 +833,11 @@ QMenu::item::selected
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Flip Y</string>
+                 <string>Difference</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/flipy_btn.png</normaloff>:/icons/flipy_btn.png</iconset>
+                  <normaloff>:/icons/difference_btn.png</normaloff>:/icons/difference_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -922,8 +847,8 @@ QMenu::item::selected
                 </property>
                </widget>
               </item>
-              <item row="6" column="1">
-               <widget class="QToolButton" name="union_btn">
+              <item row="5" column="0">
+               <widget class="QToolButton" name="offset_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -940,11 +865,11 @@ QMenu::item::selected
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Union</string>
+                 <string>Offset</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/union_btn.png</normaloff>:/icons/union_btn.png</iconset>
+                  <normaloff>:/icons/offset_btn.png</normaloff>:/icons/offset_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -954,10 +879,10 @@ QMenu::item::selected
                 </property>
                </widget>
               </item>
-              <item row="9" column="1">
-               <widget class="QDoubleSpinBox" name="offset_sbx">
+              <item row="3" column="0">
+               <widget class="QToolButton" name="rotate_btn">
                 <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
                   <verstretch>0</verstretch>
                  </sizepolicy>
@@ -968,88 +893,24 @@ QMenu::item::selected
                   <height>32</height>
                  </size>
                 </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>51</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="contextMenuPolicy">
-                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Offset Distance</string>
+                 <string>Rotate</string>
                 </property>
-                <property name="frame">
-                 <bool>false</bool>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/rotate_btn.png</normaloff>:/icons/rotate_btn.png</iconset>
                 </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-                </property>
-                <property name="minimum">
-                 <double>-100000000.000000000000000</double>
-                </property>
-                <property name="maximum">
-                 <double>100000000.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="2" column="1">
-               <widget class="QSpinBox" name="rotate_angle">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
+                <property name="iconSize">
                  <size>
-                  <width>0</width>
-                  <height>32</height>
+                  <width>24</width>
+                  <height>24</height>
                  </size>
                 </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>51</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="contextMenuPolicy">
-                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Rotate Degree</string>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-                </property>
-                <property name="suffix">
-                 <string>°</string>
-                </property>
-                <property name="minimum">
-                 <number>-360</number>
-                </property>
-                <property name="maximum">
-                 <number>360</number>
+                <property name="autoRepeat">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -1086,7 +947,7 @@ QMenu::item::selected
                </widget>
               </item>
               <item row="7" column="1">
-               <widget class="QToolButton" name="difference_btn">
+               <widget class="QToolButton" name="union_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1103,11 +964,11 @@ QMenu::item::selected
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Difference</string>
+                 <string>Union</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/difference_btn.png</normaloff>:/icons/difference_btn.png</iconset>
+                  <normaloff>:/icons/union_btn.png</normaloff>:/icons/union_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -1117,104 +978,8 @@ QMenu::item::selected
                 </property>
                </widget>
               </item>
-              <item row="8" column="1">
-               <widget class="QDoubleSpinBox" name="scale_sbx">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>51</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="contextMenuPolicy">
-                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Scale Rate</string>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-                </property>
-                <property name="maximum">
-                 <double>100000000.000000000000000</double>
-                </property>
-                <property name="singleStep">
-                 <double>0.100000000000000</double>
-                </property>
-                <property name="value">
-                 <double>1.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="10" column="1">
-               <widget class="QDoubleSpinBox" name="fillet_sbx">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>51</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>12</pointsize>
-                 </font>
-                </property>
-                <property name="contextMenuPolicy">
-                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Fillet Radius</string>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-                </property>
-                <property name="maximum">
-                 <double>100000000.000000000000000</double>
-                </property>
-               </widget>
-              </item>
-              <item row="0" column="0">
-               <widget class="QToolButton" name="trim_btn">
+              <item row="8" column="0">
+               <widget class="QToolButton" name="xor_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1231,11 +996,43 @@ QMenu::item::selected
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Trim</string>
+                 <string>XOR</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/trim_btn.png</normaloff>:/icons/trim_btn.png</iconset>
+                  <normaloff>:/icons/xor_btn.png</normaloff>:/icons/xor_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0">
+               <widget class="QToolButton" name="intersection_btn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Intersection</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/intersection_btn.png</normaloff>:/icons/intersection_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -1277,8 +1074,8 @@ QMenu::item::selected
                 </property>
                </widget>
               </item>
-              <item row="2" column="0">
-               <widget class="QToolButton" name="rotate_btn">
+              <item row="0" column="0">
+               <widget class="QToolButton" name="trim_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1291,50 +1088,21 @@ QMenu::item::selected
                   <height>32</height>
                  </size>
                 </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Rotate</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/rotate_btn.png</normaloff>:/icons/rotate_btn.png</iconset>
-                </property>
-                <property name="iconSize">
+                <property name="maximumSize">
                  <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="autoRepeat">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="0">
-               <widget class="QToolButton" name="flipx_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
+                  <width>54</width>
+                  <height>16777215</height>
                  </size>
                 </property>
                 <property name="focusPolicy">
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Flip X</string>
+                 <string>Trim</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/flipx_btn.png</normaloff>:/icons/flipx_btn.png</iconset>
+                  <normaloff>:/icons/trim_btn.png</normaloff>:/icons/trim_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -1344,135 +1112,7 @@ QMenu::item::selected
                 </property>
                </widget>
               </item>
-              <item row="6" column="0">
-               <widget class="QToolButton" name="intersection_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Intersection</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/intersection_btn.png</normaloff>:/icons/intersection_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="7" column="0">
-               <widget class="QToolButton" name="xor_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>XOR</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/xor_btn.png</normaloff>:/icons/xor_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="9" column="0">
-               <widget class="QToolButton" name="offset_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Offset</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/offset_btn.png</normaloff>:/icons/offset_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="10" column="0">
-               <widget class="QToolButton" name="fillet_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Fillet</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/fillet_btn.png</normaloff>:/icons/fillet_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="8" column="0">
+              <item row="3" column="1">
                <widget class="QToolButton" name="scale_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -1504,6 +1144,108 @@ QMenu::item::selected
                 </property>
                 <property name="autoRepeat">
                  <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="5" column="1">
+               <widget class="QToolButton" name="fillet_btn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Fillet</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/fillet_btn.png</normaloff>:/icons/fillet_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="popupMode">
+                 <enum>QToolButton::ToolButtonPopupMode::MenuButtonPopup</enum>
+                </property>
+                <property name="autoRaise">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="0">
+               <widget class="QToolButton" name="flipx_btn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Flip X</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/flipx_btn.png</normaloff>:/icons/flipx_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
+               <widget class="QToolButton" name="flipy_btn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Flip Y</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/flipy_btn.png</normaloff>:/icons/flipy_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
                 </property>
                </widget>
               </item>
@@ -1601,7 +1343,7 @@ QMenu::item::selected
              <x>-13</x>
              <y>0</y>
              <width>107</width>
-             <height>414</height>
+             <height>360</height>
             </rect>
            </property>
            <property name="layoutDirection">
@@ -1614,24 +1356,6 @@ QMenu::item::selected
             <property name="rightMargin">
              <number>3</number>
             </property>
-            <item>
-             <widget class="QLabel" name="array_tool">
-              <property name="font">
-               <font>
-                <pointsize>10</pointsize>
-               </font>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">background-color:none</string>
-              </property>
-              <property name="text">
-               <string/>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignmentFlag::AlignCenter</set>
-              </property>
-             </widget>
-            </item>
             <item>
              <widget class="QPushButton" name="back_btn_0">
               <property name="minimumSize">
@@ -1988,76 +1712,6 @@ QMenu::item::selected
              </widget>
             </item>
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayout_7">
-              <item>
-               <widget class="QLabel" name="label_6">
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>Items:</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QSpinBox" name="array_item">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>40</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="contextMenuPolicy">
-                 <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
-                </property>
-                <property name="frame">
-                 <bool>false</bool>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignmentFlag::AlignCenter</set>
-                </property>
-                <property name="buttonSymbols">
-                 <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-                </property>
-                <property name="maximum">
-                 <number>720</number>
-                </property>
-                <property name="value">
-                 <number>4</number>
-                </property>
-               </widget>
-              </item>
-             </layout>
-            </item>
-            <item>
              <widget class="QPushButton" name="ring_array_btn">
               <property name="minimumSize">
                <size>
@@ -2171,7 +1825,6 @@ QMenu::item::selected
     <property name="title">
      <string>Settings</string>
     </property>
-    <addaction name="show_cmd_line"/>
     <addaction name="show_origin"/>
     <addaction name="auto_layering"/>
     <addaction name="auto_combinate"/>
@@ -2334,14 +1987,6 @@ QComboBox QAbstractItemView::item:selected
     <string>Show origin</string>
    </property>
   </action>
-  <action name="show_cmd_line">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Show CMD line</string>
-   </property>
-  </action>
   <action name="close_file">
    <property name="text">
     <string>Close</string>
@@ -2422,10 +2067,6 @@ QComboBox QAbstractItemView::item:selected
    <class>Canvas</class>
    <extends>QOpenGLWidget</extends>
    <header>draw/Canvas.hpp</header>
-   <slots>
-    <signal>tool_changed(Canvas::Tool)</signal>
-    <signal>operation_changed(Canvas::Operation)</signal>
-   </slots>
   </customwidget>
  </customwidgets>
  <resources>
@@ -2529,38 +2170,6 @@ QComboBox QAbstractItemView::item:selected
    </hints>
   </connection>
   <connection>
-   <sender>line_array_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>line_array()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>474</x>
-     <y>252</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>479</x>
-     <y>299</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>ring_array_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>ring_array()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>474</x>
-     <y>370</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>479</x>
-     <y>299</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>close_file</sender>
    <signal>triggered()</signal>
    <receiver>MainWindow</receiver>
@@ -2609,22 +2218,6 @@ QComboBox QAbstractItemView::item:selected
    </hints>
   </connection>
   <connection>
-   <sender>canvas</sender>
-   <signal>tool_changed(Canvas::Tool)</signal>
-   <receiver>MainWindow</receiver>
-   <slot>refresh_tool_label(Canvas::Tool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>562</x>
-     <y>350</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>503</x>
-     <y>349</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>view_btn</sender>
    <signal>clicked()</signal>
    <receiver>canvas</receiver>
@@ -2637,22 +2230,6 @@ QComboBox QAbstractItemView::item:selected
     <hint type="destinationlabel">
      <x>562</x>
      <y>350</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>canvas</sender>
-   <signal>operation_changed(Canvas::Operation)</signal>
-   <receiver>MainWindow</receiver>
-   <slot>refresh_tool_label(Canvas::Operation)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>562</x>
-     <y>350</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>503</x>
-     <y>349</y>
     </hint>
    </hints>
   </connection>
@@ -2672,311 +2249,17 @@ QComboBox QAbstractItemView::item:selected
     </hint>
    </hints>
   </connection>
-  <connection>
-   <sender>xor_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>polygon_xor()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>37</x>
-     <y>580</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>union_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>polygon_union()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>90</x>
-     <y>546</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>trim_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>trim()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>37</x>
-     <y>410</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>split_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>split()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>37</x>
-     <y>444</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>rotate_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>rotate()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>37</x>
-     <y>478</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>offset_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>offset()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>37</x>
-     <y>648</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>mirror_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>mirror()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>90</x>
-     <y>444</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>intersection_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>polygon_intersection()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>37</x>
-     <y>546</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>flipy_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>flip_y()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>90</x>
-     <y>512</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>flipx_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>flip_x()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>37</x>
-     <y>512</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>fillet_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>fillet()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>37</x>
-     <y>682</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>extend_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>extend()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>90</x>
-     <y>410</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>difference_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>polygon_difference()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>90</x>
-     <y>580</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>detach_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>detach()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>90</x>
-     <y>335</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>connect_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>connect_polylines()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>37</x>
-     <y>301</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>combinate_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>combinate()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>37</x>
-     <y>335</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>close_btn</sender>
-   <signal>clicked()</signal>
-   <receiver>MainWindow</receiver>
-   <slot>close_polyline()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>90</x>
-     <y>301</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>499</x>
-     <y>360</y>
-    </hint>
-   </hints>
-  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
   <slot>save_file()</slot>
   <slot>saveas_file()</slot>
   <slot>auto_save()</slot>
-  <slot>rotate()</slot>
-  <slot>flip_x()</slot>
-  <slot>flip_y()</slot>
-  <slot>mirror()</slot>
-  <slot>connect_polylines()</slot>
-  <slot>combinate()</slot>
-  <slot>close_polyline()</slot>
   <slot>to_main_page()</slot>
   <slot>to_array_page()</slot>
-  <slot>line_array()</slot>
-  <slot>ring_array()</slot>
   <slot>close_file()</slot>
   <slot>show_data_panel()</slot>
-  <slot>offset()</slot>
-  <slot>polygon_union()</slot>
-  <slot>polygon_intersection()</slot>
-  <slot>polygon_difference()</slot>
-  <slot>scale()</slot>
   <slot>append_file()</slot>
-  <slot>refresh_tool_label(Canvas::Tool)</slot>
-  <slot>fillet()</slot>
-  <slot>refresh_tool_label(Canvas::Operation)</slot>
   <slot>set_catch(QAction*)</slot>
-  <slot>polygon_xor()</slot>
-  <slot>trim()</slot>
-  <slot>extend()</slot>
-  <slot>detach()</slot>
-  <slot>split()</slot>
  </slots>
 </ui>

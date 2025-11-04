@@ -67,7 +67,7 @@ public:
 
     const size_t selected_count() const;
 
-    std::vector<Geo::Geometry *> select(const Geo::AABBRect &rect);
+    std::vector<Geo::Geometry *> select(const Geo::AABBRect &rect, const bool reset_others = true);
 
     void reset_selected_mark(const bool value = false);
 
@@ -111,6 +111,8 @@ public:
 
     void append_text(const double x, const double y);
 
+    void append(Geo::Geometry *object);
+
     void translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1, const bool change_shape = true);
 
     bool remove_selected();
@@ -148,6 +150,10 @@ public:
     bool fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius);
 
     bool fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius);
+
+    bool chamfer(Geo::Polygon *shape, const Geo::Point &point, const double distance);
+
+    bool chamfer(Geo::Polyline *polyline, const Geo::Point &point, const double distance);
 
     bool split(Geo::Geometry *object, const Geo::Point &pos);
 

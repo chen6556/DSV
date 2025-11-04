@@ -3,9 +3,7 @@
 #include <QWidget>
 #include <QMouseEvent>
 #include <QCompleter>
-
-#include "base/Editer.hpp"
-#include "draw/Canvas.hpp"
+#include "draw/CanvasOperation.hpp"
 
 
 QT_BEGIN_NAMESPACE
@@ -18,14 +16,13 @@ class CMDWidget : public QWidget
     Q_OBJECT
 
 public:
-    enum class CMD {Error_CMD, Open_CMD, Append_CMD, Save_CMD, Exit_CMD, Main_CMD,
-        Length_CMD, Angle_CMD,
-        Polyline_CMD, Circle_CMD, Ellipse_CMD, Rectangle_CMD, BSpline_CMD, Bezier_CMD, Text_CMD,
+    enum class CMD {Error_CMD, Main_CMD, Array_CMD,
+        Delete_CMD, Copy_CMD, Cut_CMD, Paste_CMD, Undo_CMD, SelectAll_CMD,
+        Length_CMD, Angle_CMD, Polyline_CMD, CCircle_CMD, DCircle_CMD, PCircle_CMD,
+        Ellipse_CMD, Rectangle_CMD, BSpline_CMD, Bezier_CMD, Text_CMD,
         Connect_CMD, Close_CMD, Combinate_CMD, Detach_CMD, Rotate_CMD, FlipX_CMD, FlipY_CMD,
-        Mirror_CMD, Array_CMD, LineArray_CMD, RingArray_CMD,
-        Offset_CMD, Scale_CMD, Fillet_CMD, Trim_CMD, Extend_CMD,
-        Union_CMD, Intersection_CMD, Difference_CMD, XOR_CMD,
-        Delete_CMD, Copy_CMD, Cut_CMD, Paste_CMD, Undo_CMD, SelectAll_CMD};
+        Mirror_CMD, Offset_CMD, Scale_CMD, Fillet_CMD, Chamfer_CMD, Trim_CMD, Extend_CMD, Split_CMD,
+        Union_CMD, Intersection_CMD, Difference_CMD, XOR_CMD, LineArray_CMD, RingArray_CMD};
 
     enum class SETTING {Absolute_SETTING, Relative_SETTING};
 
@@ -36,22 +33,22 @@ private:
     QWidget *_parent = nullptr;
     QStringList _cmd_list;
     QCompleter *_completer = nullptr;
-    std::map<QString, CMD> _cmd_dict;
-    std::map<QString, SETTING> _setting_dict;
+    std::unordered_map<QString, CMD> _cmd_dict;
+    std::unordered_map<QString, SETTING> _setting_dict;
+    std::unordered_map<CMD, CanvasOperations::Tool> _cmd_tool_dict;
+    std::unordered_map<CanvasOperations::Tool, CMD> _tool_cmd_dict;
+    std::unordered_map<CMD, QString> _cmd_tips_dict;
+    std::vector<CMD> _direct_cmd_list;
 
+    CMD _last_cmd = CMD::Error_CMD;
     CMD _current_cmd = CMD::Error_CMD;
     std::vector<double> _parameters;
-    bool _relative = false;
-    double _last_x, _last_y;
-
-    Editer *_editer = nullptr;
-    Canvas *_canvas = nullptr;
 
 private:
     void init();
 
 private slots:
-    void refresh_tool(const Canvas::Tool tool);
+    void refresh_tool(const CanvasOperations::Tool tool);
 
 protected:
     void mousePressEvent(QMouseEvent *event);
@@ -65,7 +62,7 @@ signals:
     void cmd_changed(const CMD);
 
 public:
-    CMDWidget(Editer *editer, Canvas *canvas, QWidget *parent);
+    CMDWidget(QWidget *parent);
     ~CMDWidget();
 
     void clear();
@@ -74,11 +71,9 @@ public:
 
     bool empty() const;
 
-    std::vector<double> &parameters();
-
-    const std::vector<double> &parameters() const;
-
     void activate(const char key);
+
+    void work_last_cmd();
 
     void show();
 
@@ -87,6 +82,8 @@ public:
 
     bool work();
 
+    bool work(const CMD cmd);
+
     bool get_cmd();
 
     bool get_parameter();
@@ -94,32 +91,33 @@ public:
     bool get_setting();
 
 
+    void read_parameters(const int count);
+
     void paste();
 
-    void polyline();
+    void delete_selected_objects();
 
-    void bspline();
+    void connect_polyline();
 
-    void bezier();
+    void close_polyline();
 
-    void text();
+    void combinate();
 
-    void rectangle();
-
-    void circle();
-
-    void ellipse();
-
-    void rotate();
+    void detach();
 
     void scale();
 
     void offset();
 
-    void fillet();
-
     void line_array();
 
-    void ring_array();
+    void flip_x();
 
+    void flip_y();
+
+    void polygon_intersection();
+
+    void polygon_union();
+
+    void polygon_xor();
 };

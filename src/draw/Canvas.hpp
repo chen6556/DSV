@@ -10,6 +10,7 @@
 #include <QOpenGLFunctions_4_5_Core>
 
 #include "base/Editer.hpp"
+#include "draw/CanvasOperation.hpp"
 
 
 class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
@@ -17,36 +18,17 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
     Q_OBJECT
 
 public:
-    enum class Tool
-        {
-            NoTool,
-            Measure, 
-            Angle, 
-            Circle0, // Center-Radius
-            Circle1, // 2-Point
-            Circle2, // 3-Point
-            Polyline, 
-            Rect, 
-            BSpline, 
-            Bezier, 
-            Text, 
-            Ellipse
-        };
-    enum class Operation {NoOperation, Mirror, RingArray, PolygonDifference, Fillet, Rotate, Trim, Extend, Split};
     enum class CatchedPointType {Vertex, Center, Foot, Tangency, Intersection};
 
 private:
-    Geo::Circle _circle_cache;
-    Geo::Ellipse _ellipse_cache;
-    Geo::AABBRect _AABBRect_cache, _select_rect, _visible_area;
-    std::list<QLineF> _reflines;
+    Geo::AABBRect _visible_area;
     std::vector<const Geo::Geometry *> _catched_objects;
     Editer *_editer = nullptr;
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
 
     unsigned int _shader_program, _VAO;
-    unsigned int _base_VBO[4]; // 0:origin and select rect 1:cache 2:reflines 3:catched points
+    unsigned int _base_VBO[4]; // 0:origin and select rect 1:catched points 2:operation shape 3:operation tool lines
     unsigned int _shape_VBO[7]; // 0:polyline 1:polygon 2:circle 3:curve 4:text 5:circle printable points 6:curve printable points
     unsigned int _shape_IBO[4]; // 0:polyline 1:polygon 2:circle 3:curve
     unsigned int _text_brush_IBO;
@@ -56,9 +38,6 @@ private:
     unsigned int _shape_index_count[4] = {0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve
     unsigned int _brush_index_count[3] = {0, 0, 0}; // 0:polygon brush 1:circle brush 2:text brush
     unsigned int _selected_index_count[4] = {0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve
-    double *_cache = nullptr;
-    size_t _cache_len = 513, _cache_count = 0;
-    double _refline_points[30];
     double _catchline_points[24];
     
     double _catch_distance = 0;
@@ -69,24 +48,15 @@ private:
     double _view_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
     double _ratio = 1; // 缩放系数
     int _canvas_width = 0, _canvas_height = 0;
-    size_t _curve_order = 3; // 曲线次数
 
-    // 0:可移动视图 1:可绘图 2:正在绘图 3:测量 4:可移动单个object 5:选中一个obj 6:正在移动obj 7:显示坐标原点 8:显示捕捉点
-    bool _bool_flags[9] = {false, false, false, false, false, false, false, true, false};
-
-    // Head, (vector,) tail
-    int _measure_angle_flag = 0;
-
-    // 0:current_tool, 1:last_tool
-    Tool _tool_flags[2] = {Tool::NoTool, Tool::NoTool};
-    Operation _operation = Operation::NoOperation;
+    // 0:可移动视图 1:显示坐标原点 2:显示捕捉点
+    bool _bool_flags[3] = {false, true, false};
+    double _select_rect[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     QPointF _mouse_pos_0, _mouse_pos_1;
     Geo::Point _mouse_press_pos, _mouse_release_pos;
     std::vector<Geo::Point> _points_cache;
-    Geo::Geometry *_clicked_obj = nullptr, *_last_clicked_obj = nullptr;
-    Geo::Geometry *_pressed_obj = nullptr;
-    std::vector<Geo::Geometry *> _object_cache;
+    Text *_edited_text = nullptr;
 
     QMenu *_menu = nullptr;
     QAction *_up = nullptr;
@@ -114,9 +84,9 @@ protected:
 
 public:
 signals:
-    void tool_changed(const Tool);
+    void tool_changed(const CanvasOperations::Tool);
 
-    void operation_changed(const Operation);
+    void refresh_cmd_parameters_label();
 
 public:
     Canvas(QWidget *parent = nullptr);
@@ -125,9 +95,7 @@ public:
 
     void bind_editer(Editer *editer);
 
-    void use_tool(const Tool tool);
-
-    void set_operation(const Operation operation);
+    void use_tool(const CanvasOperations::Tool tool);
 
     void show_origin();
 
@@ -135,41 +103,17 @@ public:
 
     void show_overview();
 
-    bool origin_visible() const;
-
-    const bool is_view_moveable() const;
-
-    const bool is_paintable() const;
-
-    const bool is_painting() const;
-
     const bool is_typing() const;
-
-    const bool is_measureing() const;
-
-    const bool is_obj_moveable() const;
-
-    const bool is_obj_selected() const;
-
-    const bool is_moving_obj() const;
 
     void set_catch_distance(const double value);
 
     void set_cursor_catch(const CatchedPointType type, const bool value);
-
-    const bool is_catching(const CatchedPointType type) const;
 
     const size_t current_group() const;
 
     void set_current_group(const size_t index);
 
     const size_t groups_count() const;
-
-    void set_curve_order(const size_t order);
-
-    const size_t curve_order() const;
-
-    double ratio() const;
 
     Geo::Point center() const;
 
@@ -181,9 +125,15 @@ public:
 
     void cancel_painting();
 
-    void use_last_tool();
-
     void set_info_labels(QLabel **labels);
+
+    void add_geometry(Geo::Geometry *object);
+
+    void show_menu(Geo::Geometry *object);
+
+    void show_text_edit(Text *text);
+
+    void hide_text_edit();
 
     void copy();
 
@@ -192,37 +142,6 @@ public:
     void paste();
 
     void paste(const double x, const double y);
-
-    void rotate(const double rad, const bool unitary, const bool to_all_layers);
-
-    void polyline_cmd(const double x, const double y);
-
-    void polyline_cmd();
-
-    void rect_cmd(const double x, const double y);
-
-    void rect_cmd();
-
-    void circle_cmd(const double x, const double y);
-
-    void circle_cmd(const double x, const double y, const double r);
-
-    void ellipse_cmd(const double x, const double y);
-
-    void ellipse_cmd(const double x, const double y, const double rad, const double a);
-
-    void ellipse_cmd(const double x, const double y, const double rad,  const double a, const double b);
-
-    void text_cmd(const double x, const double y);
-
-
-    bool is_visible(const Geo::Point &point) const;
-
-    bool is_visible(const Geo::Polyline &polyline) const;
-
-    bool is_visible(const Geo::Polygon &polygon) const;
-
-    bool is_visible(const Geo::Circle &circle) const;
 
 
     Geo::Point real_coord_to_view_coord(const Geo::Point &input) const;
@@ -236,9 +155,6 @@ public:
     bool catch_cursor(const double x, const double y, Geo::Point &coord, const double distance, const bool skip_selected);
 
     bool catch_point(const double x, const double y, Geo::Point &coord, const double distance);
-
-
-    void check_cache();
 
 
     // 直接更新所有VBO,点数量可能发生变化
@@ -260,19 +176,7 @@ public:
 
     std::tuple<double *, unsigned int> refresh_curve_printable_points();
 
-    void refresh_cache_vbo(const unsigned int count);
-
-    void refresh_AABBRect_cache_vbo();
-
-    void refresh_reflines_vbo();
-
-    void refresh_circle_cache_vbo();
-
-    void refresh_ellipse_cache_vbo();
-
-    void refresh_select_rect_vbo();
-
-    void clear_cache();
+    void refresh_select_rect(const double x0, const double y0, const double x1, const double y1);
 
     void refresh_selected_ibo();
 
