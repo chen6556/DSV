@@ -20,7 +20,9 @@ namespace CanvasOperations
         Circle1, // 2-Point
         Circle2, // 3-Point
         Polyline, 
-        Rect, 
+        Rectangle,
+        Polygon0,
+        Polygon1, 
         BSpline, 
         Bezier, 
         Text, 
@@ -255,11 +257,51 @@ namespace CanvasOperations
     };
 
 
-    class RectOperation : public CanvasOperation
+    class RectangleOperation : public CanvasOperation
     {
     private:
         double _parameters[4];
         bool _set_first_point = true;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+
+        bool read_parameters(const double *params, const int count) override;
+
+        QString cmd_tips() const override;
+    };
+
+
+    class CircumscribedPolygonOperation : public CanvasOperation
+    {
+    private:
+        double _parameters[4]; // x, y, r, angle
+        int _n = 5;
+        bool _set_n = true, _set_center = true;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+
+        bool read_parameters(const double *params, const int count) override;
+
+        QString cmd_tips() const override;
+    };
+
+
+    class InscribedPolygonOperation : public CanvasOperation
+    {
+    private:
+        double _parameters[4]; // x, y, r, angle
+        int _n = 5;
+        bool _set_n = true, _set_center = true;
 
     public:
         bool mouse_press(QMouseEvent *event) override;

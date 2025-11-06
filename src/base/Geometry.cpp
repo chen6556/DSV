@@ -1190,6 +1190,33 @@ Polygon::Polygon(const AABBRect& rect)
     : Polyline(rect.cbegin(), rect.cend())
 {}
 
+Polygon::Polygon(const double x, const double y, const double radius, const int n, const double rad, const bool circumscribed)
+{
+    assert(n >= 3 && radius > 0);
+    const Geo::Point anchor(x, y);
+    const double step = 2 * Geo::PI / n;
+    Geo::Vector vec;
+    if (circumscribed)
+    {
+        vec.x = radius * std::cos(rad);
+        vec.y = radius * std::sin(rad);
+    }
+    else
+    {
+        vec.x = radius / std::cos(Geo::PI / n) * std::cos(Geo::PI / n + rad);
+        vec.y = radius / std::cos(Geo::PI / n) * std::sin(Geo::PI / n + rad);
+    }
+    for (double angle = 0; angle <= 2 * Geo::PI; angle += step)
+    {
+        _points.emplace_back(anchor + vec);
+        vec.rotate(0, 0, step);
+    }
+    if (_points.front() != _points.back())
+    {
+        _points.emplace_back(_points.front());
+    }
+}
+
 Polygon &Polygon::operator=(const Polygon &polygon)
 {
     if (this != &polygon)

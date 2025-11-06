@@ -53,6 +53,7 @@ void MainWindow::init()
 
     _cmd_widget = new CMDWidget(this);
     _cmd_widget->show();
+    ui->canvas->installEventFilter(_cmd_widget);
     connect(_cmd_widget, &CMDWidget::cmd_changed, this, &MainWindow::refresh_cmd);
 
     _clock.start(5000);
@@ -109,7 +110,6 @@ void MainWindow::connect_btn_to_cmd()
     connect(ui->angle_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Angle_CMD); });
 
     connect(ui->line_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Polyline_CMD); });
-    connect(ui->rect_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Rectangle_CMD); });
     connect(ui->ellipse_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Ellipse_CMD); });
     connect(ui->text_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Text_CMD); });
     connect(ui->connect_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Connect_CMD); });
@@ -225,6 +225,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             {
                 _editer.remove_selected();
                 ui->canvas->refresh_vbo(types, true);
+                ui->canvas->refresh_selected_ibo();
                 ui->canvas->update();
             }
         }
@@ -826,8 +827,21 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
 {
     switch (menu)
     {
-    case ActionGroup::MenuType::LineMenu:
-        /* code */
+    case ActionGroup::MenuType::PolygonMenu:
+        switch (index)
+        {
+        case 0: // rectangle
+            _cmd_widget->work(CMDWidget::CMD::Rectangle_CMD);
+            break;
+        case 1: // circumscribed polygon
+            _cmd_widget->work(CMDWidget::CMD::CPolygon_CMD);
+            break;
+        case 2: // inscribed polygon
+            _cmd_widget->work(CMDWidget::CMD::IPolygon_CMD);
+            break;
+        default:
+            break;
+        }
         break;
     case ActionGroup::MenuType::CircleMenu:
         switch (index)

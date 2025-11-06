@@ -416,6 +416,8 @@ namespace Geo
 
         Polygon(const AABBRect &rect);
 
+        Polygon(const double x, const double y, const double radius, const int n, const double rad, const bool circumscribed);
+
         Polygon &operator=(const Polygon &polygon);
 
         const Type type() const override;

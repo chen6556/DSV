@@ -28,7 +28,6 @@
     <file>DSV2.ico</file>
     <file>icons/curve_btn.png</file>
     <file>icons/polyline_btn.png</file>
-    <file>icons/rectangle_btn.png</file>
     <file>icons/measure_btn.png</file>
     <file>icons/attention.svg</file>
     <file>icons/help.svg</file>
@@ -38,5 +37,8 @@
     <file>icons/circle/3p_circle_btn.png</file>
     <file>icons/circle/2p_circle_btn.png</file>
     <file>icons/chamfer_btn.png</file>
+    <file>icons/polygon/rectangle_btn.png</file>
+    <file>icons/polygon/polygon_circumscribed_btn.png</file>
+    <file>icons/polygon/polygon_inscribed_btn.png</file>
   </qresource>
 </RCC>

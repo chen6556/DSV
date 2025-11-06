@@ -28,9 +28,9 @@ void CMDWidget::init()
 
     _cmd_list << QString() << "ALL" << "ANGLE" << "ARRAY" << "BEZIER" << "BSPLINE"
         << "CCIRCLE" << "CHAMFER" << "CLOSE" << "COMBINATE" << "CONNECT" << "COPY"
-        << "CUT" << "DCIRCLE" << "DELETE" << "DETACH" << "DIFFERENCE" << "ELLIPSE"
+        << "CPOLYGON" << "CUT" << "DCIRCLE" << "DELETE" << "DETACH" << "DIFFERENCE" << "ELLIPSE"
         << "EXTEND" << "FILLET" << "FLIPX" << "FLIPY" << "GETPOINT"
-        << "INTERSECTION" << "LENGTH" << "LINEARRAY" << "MAIN" << "MIRROR"
+        << "IPOLYGON" << "INTERSECTION" << "LENGTH" << "LINEARRAY" << "MAIN" << "MIRROR"
         << "OFFSET" << "PASTE" << "PCIRCLE" << "POLYLINE" << "RECTANGLE"
         << "RINGARRAY" << "ROTATE" << "SCALE" << "SAVE" << "SPLIT" << "TEXT"
         << "TRIM" << "UNDO" << "UNION" << "XOR";
@@ -38,6 +38,7 @@ void CMDWidget::init()
     _cmd_dict = {{"LENGTH",CMD::Length_CMD}, {"ANGLE",CMD::Angle_CMD}, {"MAIN",CMD::Main_CMD},
         {"CCIRCLE",CMD::CCircle_CMD}, {"DCIRCLE",CMD::DCircle_CMD}, {"PCIRCLE",CMD::PCircle_CMD}, {"ELLIPSE",CMD::Ellipse_CMD},
         {"POLYLINE",CMD::Polyline_CMD}, {"RECTANGLE",CMD::Rectangle_CMD},
+        {"CPOLYGON",CMD::CPolygon_CMD}, {"IPOLYGON",CMD::IPolygon_CMD},
         {"BSPLINE",CMD::BSpline_CMD}, {"BEZIER",CMD::Bezier_CMD}, {"CONNECT",CMD::Connect_CMD},
         {"COMBINATE",CMD::Combinate_CMD}, {"CLOSE",CMD::Close_CMD}, {"DETACH",CMD::Detach_CMD},
         {"ROTATE",CMD::Rotate_CMD}, {"FLIPX",CMD::FlipX_CMD}, {"FLIPY",CMD::FlipY_CMD},
@@ -53,7 +54,8 @@ void CMDWidget::init()
     _setting_dict = {{"RELATIVE", SETTING::Relative_SETTING}, {"ABSOLUTE", SETTING::Absolute_SETTING}};
 
     _cmd_tool_dict = {{CMD::Length_CMD, CanvasOperations::Tool::Measure}, {CMD::Angle_CMD, CanvasOperations::Tool::Angle},
-        {CMD::Polyline_CMD, CanvasOperations::Tool::Polyline}, {CMD::Rectangle_CMD, CanvasOperations::Tool::Rect},
+        {CMD::Polyline_CMD, CanvasOperations::Tool::Polyline}, {CMD::Rectangle_CMD, CanvasOperations::Tool::Rectangle},
+        {CMD::CPolygon_CMD, CanvasOperations::Tool::Polygon0}, {CMD::IPolygon_CMD, CanvasOperations::Tool::Polygon1},
         {CMD::RingArray_CMD, CanvasOperations::Tool::RingArray}, {CMD::Rotate_CMD, CanvasOperations::Tool::Rotate},
         {CMD::Text_CMD, CanvasOperations::Tool::Text},
         {CMD::Bezier_CMD, CanvasOperations::Tool::Bezier}, {CMD::BSpline_CMD, CanvasOperations::Tool::BSpline},
@@ -65,7 +67,8 @@ void CMDWidget::init()
         {CMD::Difference_CMD, CanvasOperations::Tool::PolygonDifference}};
 
     _tool_cmd_dict = {{CanvasOperations::Tool::Measure, CMD::Length_CMD}, {CanvasOperations::Tool::Angle, CMD::Angle_CMD},
-        {CanvasOperations::Tool::Polyline, CMD::Polyline_CMD}, {CanvasOperations::Tool::Rect, CMD::Rectangle_CMD},
+        {CanvasOperations::Tool::Polyline, CMD::Polyline_CMD}, {CanvasOperations::Tool::Rectangle, CMD::Rectangle_CMD},
+        {CanvasOperations::Tool::Polygon0, CMD::CPolygon_CMD}, {CanvasOperations::Tool::Polygon1, CMD::IPolygon_CMD},
         {CanvasOperations::Tool::BSpline, CMD::BSpline_CMD}, {CanvasOperations::Tool::Bezier, CMD::Bezier_CMD},
         {CanvasOperations::Tool::Text, CMD::Text_CMD},
         {CanvasOperations::Tool::Circle0, CMD::CCircle_CMD},{CanvasOperations::Tool::Circle1, CMD::DCircle_CMD},
@@ -86,6 +89,7 @@ void CMDWidget::init()
         {CMD::Length_CMD, "Length"}, {CMD::LineArray_CMD, "Line Array"}, {CMD::Mirror_CMD, "Mirror"},
         {CMD::Offset_CMD, "Offset"}, {CMD::Paste_CMD, "Paste"}, {CMD::PCircle_CMD, "3-Point Circle"},
         {CMD::Polyline_CMD, "Polyline"}, {CMD::Rectangle_CMD, "Rectangle"}, {CMD::RingArray_CMD, "Ring Array"},
+        {CMD::CPolygon_CMD, "Polygon Circumscribed"}, {CMD::IPolygon_CMD, "Polygon Inscribed"},
         {CMD::Rotate_CMD, "Rotate"}, {CMD::Scale_CMD, "Scale"}, {CMD::Split_CMD, "Split"},
         {CMD::Text_CMD, "Text"}, {CMD::Trim_CMD, "Trim"}, {CMD::Union_CMD, "Union"}, {CMD::XOR_CMD, "XOR"}};
 
@@ -171,35 +175,39 @@ bool CMDWidget::eventFilter(QObject *target, QEvent *event)
 {
     if (event->type() == QEvent::Type::KeyPress)
     {
-        switch (static_cast<QKeyEvent *>(event)->key())
+        if (QKeyEvent *kevent = static_cast<QKeyEvent *>(event);
+            kevent->modifiers() == Qt::KeyboardModifier::NoModifier)
         {
-        case Qt::Key::Key_Space:
-            if (ui->cmd->text().isEmpty() && _current_cmd == CMD::Error_CMD)
+            switch (kevent->key())
             {
-                _current_cmd = _last_cmd;
-            }
-            else
-            {
-                if (get_setting())
+            case Qt::Key::Key_Space:
+                if (ui->cmd->text().isEmpty() && _current_cmd == CMD::Error_CMD)
                 {
-                    return QWidget::eventFilter(target, event);
+                    _current_cmd = _last_cmd;
                 }
-                else if (!get_parameter())
+                else
                 {
-                    ui->cmd->setText(_completer->currentCompletion());
-                    get_cmd();
+                    if (get_setting())
+                    {
+                        return QWidget::eventFilter(target, event);
+                    }
+                    else if (!get_parameter())
+                    {
+                        ui->cmd->setText(_completer->currentCompletion());
+                        get_cmd();
+                    }
                 }
+                work();
+                return true;
+            case Qt::Key::Key_Tab:
+                CanvasOperations::CanvasOperation::operation()[
+                    CanvasOperations::CanvasOperation::tool[0]]->switch_parameters_type();
+                ui->parameter_label->setText(CanvasOperations::CanvasOperation::operation()[
+                    CanvasOperations::CanvasOperation::tool[0]]->cmd_tips());
+                return true;
+            default:
+                break;
             }
-            work();
-            return true;
-        case Qt::Key::Key_Tab:
-            CanvasOperations::CanvasOperation::operation()[
-                CanvasOperations::CanvasOperation::tool[0]]->switch_parameters_type();
-            ui->parameter_label->setText(CanvasOperations::CanvasOperation::operation()[
-                CanvasOperations::CanvasOperation::tool[0]]->cmd_tips());
-            return true;
-        default:
-            break;
         }
     }
 
@@ -525,6 +533,7 @@ void CMDWidget::delete_selected_objects()
     {
         CanvasOperations::CanvasOperation::editer->remove_selected();
         CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
         CanvasOperations::CanvasOperation::canvas->update();
     }
 }

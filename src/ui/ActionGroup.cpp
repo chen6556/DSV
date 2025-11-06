@@ -9,18 +9,36 @@ ActionGroup::ActionGroup(Ui::MainWindow *ui_, std::function<void(const MenuType,
 
 void ActionGroup::init()
 {
-    // init_line_menu();
+    init_polygon_menu();
     init_circle_menu();
     init_curve_menu();
     init_fillet_menu();
 }
 
-void ActionGroup::init_line_menu()
+void ActionGroup::init_polygon_menu()
 {
-    _line_menu = new QMenu(ui->line_btn);
-    _line_menu->connect(_line_menu, &QMenu::triggered, [this](QAction *action)
-        { _callback(MenuType::LineMenu, _line_menu->actions().indexOf(action)); });
-    ui->line_btn->setMenu(_line_menu);
+    _polygon_menu = new QMenu(ui->rect_btn);
+    _polygon_menu->connect(_polygon_menu, &QMenu::triggered, [this](QAction *action)
+        {
+            _callback(MenuType::PolygonMenu, _polygon_menu->actions().indexOf(action));
+            ui->rect_btn->setIcon(action->icon());
+            ui->rect_btn->setToolTip(action->text());
+            ui->rect_btn->setDefaultAction(action);
+        });
+    ui->rect_btn->setMenu(_polygon_menu);
+
+    QAction *rectangle = new QAction(QIcon(":/icons/polygon/rectangle_btn.png"),
+        "Rectangle", ui->rect_btn);
+    _polygon_menu->addAction(rectangle);
+    ui->rect_btn->setDefaultAction(rectangle);
+
+    QAction *circumscribed = new QAction(QIcon(":/icons/polygon/"
+        "polygon_circumscribed_btn.png"), "Polygon Circumscribed", ui->rect_btn);
+    _polygon_menu->addAction(circumscribed);
+
+    QAction *inscribed = new QAction(QIcon(":/icons/polygon/"
+        "polygon_inscribed_btn.png"), "Polygon Inscribed", ui->rect_btn);
+    _polygon_menu->addAction(inscribed);
 }
 
 void ActionGroup::init_circle_menu()

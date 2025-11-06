@@ -46,7 +46,9 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::Circle1)] = new Circle1Operation();
     operations[static_cast<int>(Tool::Circle2)] = new Circle2Operation();
     operations[static_cast<int>(Tool::Polyline)] = new PolythingOperation();
-    operations[static_cast<int>(Tool::Rect)] = new RectOperation();
+    operations[static_cast<int>(Tool::Rectangle)] = new RectangleOperation();
+    operations[static_cast<int>(Tool::Polygon0)] = new CircumscribedPolygonOperation();
+    operations[static_cast<int>(Tool::Polygon1)] = new InscribedPolygonOperation();
     operations[static_cast<int>(Tool::BSpline)] = new BSplineOperation();
     operations[static_cast<int>(Tool::Bezier)] = new BezierOperation();
     operations[static_cast<int>(Tool::Text)] = new TextOperation();
@@ -917,47 +919,40 @@ bool Circle2Operation::mouse_press(QMouseEvent *event)
 
 bool Circle2Operation::mouse_move(QMouseEvent *event)
 {
-    if (event->button() == Qt::MouseButton::LeftButton)
+    switch (_index)
     {
-        switch (_index)
+    case 1:
+        _parameters[2] = real_pos[0];
+        _parameters[3] = real_pos[1];
+        tool_lines[3] = tool_lines[6] = real_pos[0];
+        tool_lines[4] = tool_lines[7] = real_pos[1];
+        info = QString("Length:%1").arg(Geo::distance(_parameters[0],
+            _parameters[1], _parameters[2], _parameters[3]));
+        return true;
+    case 2:
         {
-        case 1:
-            _parameters[2] = real_pos[0];
-            _parameters[3] = real_pos[1];
-            tool_lines[3] = tool_lines[6] = real_pos[0];
-            tool_lines[4] = tool_lines[7] = real_pos[1];
-            info = QString("Length:%1").arg(Geo::distance(_parameters[0],
-                _parameters[1], _parameters[2], _parameters[3]));
-            break;
-        case 2:
+            _parameters[4] = tool_lines[9] = real_pos[0];
+            _parameters[5] = tool_lines[10] = real_pos[1];
+            const Geo::Polygon points = Geo::circle_to_polygon(Geo::Circle(_parameters[0], _parameters[1], _parameters[2],
+                _parameters[3], _parameters[4], _parameters[5]), Geo::Circle::default_down_sampling_value);
+            shape_count = 0;
+            check_shape_size(points.size() * 3);
+            for (const Geo::Point &point : points)
             {
-                _parameters[4] = tool_lines[9] = real_pos[0];
-                _parameters[5] = tool_lines[10] = real_pos[1];
-                const Geo::Polygon points = Geo::circle_to_polygon(Geo::Circle(_parameters[0], _parameters[1], _parameters[2],
-                    _parameters[3], _parameters[4], _parameters[5]), Geo::Circle::default_down_sampling_value);
-                shape_count = 0;
-                check_shape_size(points.size() * 3);
-                for (const Geo::Point &point : points)
-                {
-                    shape[shape_count++] = point.x;
-                    shape[shape_count++] = point.y;
-                    ++shape_count;
-                }
-                info = QString("Length:%1 Angle:%2°").arg(Geo::distance(_parameters[2],
-                    _parameters[3], _parameters[4], _parameters[5])).arg(Geo::rad_to_degree(
-                        Geo::angle(Geo::Point(_parameters[0], _parameters[1]),
-                        Geo::Point(_parameters[2], _parameters[3]), Geo::Point(_parameters[4], _parameters[5]))));
+                shape[shape_count++] = point.x;
+                shape[shape_count++] = point.y;
+                ++shape_count;
             }
-            break;
-        default:
-            break;
+            info = QString("Length:%1 Angle:%2°").arg(Geo::distance(_parameters[2],
+                _parameters[3], _parameters[4], _parameters[5])).arg(Geo::rad_to_degree(
+                    Geo::angle(Geo::Point(_parameters[0], _parameters[1]),
+                    Geo::Point(_parameters[2], _parameters[3]), Geo::Point(_parameters[4], _parameters[5]))));
         }
         return true;
+    default:
+        break;
     }
-    else
-    {
-        return false;
-    }
+    return false;
 }
 
 void Circle2Operation::reset()
@@ -1285,7 +1280,7 @@ void PolythingOperation::switch_parameters_type()
 }
 
 
-bool RectOperation::mouse_press(QMouseEvent *event)
+bool RectangleOperation::mouse_press(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
@@ -1315,7 +1310,7 @@ bool RectOperation::mouse_press(QMouseEvent *event)
     }
 }
 
-bool RectOperation::mouse_move(QMouseEvent *event)
+bool RectangleOperation::mouse_move(QMouseEvent *event)
 {
     if (_set_first_point)
     {
@@ -1373,12 +1368,12 @@ bool RectOperation::mouse_move(QMouseEvent *event)
     }
 }
 
-void RectOperation::reset()
+void RectangleOperation::reset()
 {
     _set_first_point = true;
 }
 
-bool RectOperation::read_parameters(const double *params, const int count)
+bool RectangleOperation::read_parameters(const double *params, const int count)
 {
     if (count >= 2)
     {
@@ -1420,9 +1415,309 @@ bool RectOperation::read_parameters(const double *params, const int count)
     return false;
 }
 
-QString RectOperation::cmd_tips() const
+QString RectangleOperation::cmd_tips() const
 {
     return "(x, y):";
+}
+
+
+bool CircumscribedPolygonOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        if (_set_center)
+        {
+            _parameters[0] = real_pos[0];
+            _parameters[1] = real_pos[1];
+            _parameters[2] = 10;
+            const Geo::Polygon points(_parameters[0], _parameters[1], 10, _n, 0, true);
+            shape_count = 0;
+            check_shape_size(points.size() * 3);
+            for (const Geo::Point &point : points)
+            {
+                shape[shape_count++] = point.x;
+                shape[shape_count++] = point.y;
+                ++shape_count;
+            }
+
+            tool_lines[0] = tool_lines[3] = real_pos[0];
+            tool_lines[1] = tool_lines[4] = real_pos[1];
+            tool_lines_count = 6;
+        }
+        else
+        {
+            _parameters[2] = Geo::distance(_parameters[0], _parameters[1], real_pos[0], real_pos[1]);
+            _parameters[3] = Geo::angle(Geo::Point(_parameters[0], _parameters[1]), Geo::Point(real_pos[0], real_pos[1]));
+            canvas->add_geometry(new Geo::Polygon(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], true));
+            info.clear();
+            tool[0] = Tool::Select;
+            shape_count = tool_lines_count = 0;
+            _set_n = _set_center = true;
+        }
+        _set_center = !_set_center;
+        _set_n = !_set_n;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool CircumscribedPolygonOperation::mouse_move(QMouseEvent *event)
+{
+    if (_set_center)
+    {
+        return false;
+    }
+    else
+    {
+        tool_lines[3] = real_pos[0], tool_lines[4] = real_pos[1];
+        _parameters[2] = Geo::distance(_parameters[0], _parameters[1], real_pos[0], real_pos[1]);
+        _parameters[3] = Geo::angle(Geo::Point(_parameters[0], _parameters[1]), Geo::Point(real_pos[0], real_pos[1]));
+        const Geo::Polygon points(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], true);
+        shape_count = 0;
+        check_shape_size(points.size() * 3);
+        for (const Geo::Point &point : points)
+        {
+            shape[shape_count++] = point.x;
+            shape[shape_count++] = point.y;
+            ++shape_count;
+        }
+        info = QString("Radius:%1 Angle:%2°").arg(_parameters[2]).arg(Geo::rad_to_degree(_parameters[3]));
+        return true;
+    }
+}
+
+void CircumscribedPolygonOperation::reset()
+{
+    _set_n = _set_center = true;
+}
+
+bool CircumscribedPolygonOperation::read_parameters(const double *params, const int count)
+{
+    if (_set_n && count <= 1)
+    {
+        if (count == 1)
+        {
+            if (params[0] >= 3)
+            {
+                _n = params[0];
+            }
+            else
+            {
+                return false;
+            }
+        }
+        _set_n = false;
+        return true;
+    }
+    else
+    {
+        if (_set_center)
+        {
+            if (count >= 2)
+            {
+                _parameters[0] = params[0];
+                _parameters[1] = params[1];
+                _parameters[2] = 10;
+                _parameters[3] = 0;
+                const Geo::Polygon points(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], true);
+                shape_count = 0;
+                check_shape_size(points.size() * 3);
+                for (const Geo::Point &point : points)
+                {
+                    shape[shape_count++] = point.x;
+                    shape[shape_count++] = point.y;
+                    ++shape_count;
+                }
+                tool_lines[0] = tool_lines[3] = params[0];
+                tool_lines[1] = tool_lines[4] = params[1];
+                tool_lines_count = 6;
+                _set_n = _set_center = false;
+                return true;
+            }
+        }
+        else
+        {
+            if (count == 1 && params[0] > 0)
+            {
+                _parameters[2] = params[0];
+                canvas->add_geometry(new Geo::Polygon(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], true));
+                info.clear();
+                tool[0] = Tool::Select;
+                shape_count = tool_lines_count = 0;
+                _set_n = _set_center = true;
+                return true;
+            }
+            else if (count >= 2 && params[0] > 0)
+            {
+                _parameters[2] = params[0], _parameters[3] = params[1];
+                canvas->add_geometry(new Geo::Polygon(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], true));
+                info.clear();
+                tool[0] = Tool::Select;
+                shape_count = tool_lines_count = 0;
+                _set_n = _set_center = true;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+QString CircumscribedPolygonOperation::cmd_tips() const
+{
+    return _set_center ? QString("n:%1 (x, y):").arg(_n) : QString("n:%1 (radius, angle):").arg(_n);
+}
+
+
+bool InscribedPolygonOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        if (_set_center)
+        {
+            _parameters[0] = real_pos[0];
+            _parameters[1] = real_pos[1];
+            _parameters[2] = 10;
+            const Geo::Polygon points(_parameters[0], _parameters[1], 10, _n, 0, true);
+            shape_count = 0;
+            check_shape_size(points.size() * 3);
+            for (const Geo::Point &point : points)
+            {
+                shape[shape_count++] = point.x;
+                shape[shape_count++] = point.y;
+                ++shape_count;
+            }
+
+            tool_lines[0] = tool_lines[3] = real_pos[0];
+            tool_lines[1] = tool_lines[4] = real_pos[1];
+            tool_lines_count = 6;
+        }
+        else
+        {
+            _parameters[2] = Geo::distance(_parameters[0], _parameters[1], real_pos[0], real_pos[1]);
+            _parameters[3] = Geo::angle(Geo::Point(_parameters[0], _parameters[1]), Geo::Point(real_pos[0], real_pos[1]));
+            canvas->add_geometry(new Geo::Polygon(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], false));
+            info.clear();
+            tool[0] = Tool::Select;
+            shape_count = tool_lines_count = 0;
+            _set_n = _set_center = true;
+        }
+        _set_center = !_set_center;
+        _set_n = !_set_n;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool InscribedPolygonOperation::mouse_move(QMouseEvent *event)
+{
+    if (_set_center)
+    {
+        return false;
+    }
+    else
+    {
+        tool_lines[3] = real_pos[0], tool_lines[4] = real_pos[1];
+        _parameters[2] = Geo::distance(_parameters[0], _parameters[1], real_pos[0], real_pos[1]);
+        _parameters[3] = Geo::angle(Geo::Point(_parameters[0], _parameters[1]), Geo::Point(real_pos[0], real_pos[1]));
+        const Geo::Polygon points(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], false);
+        shape_count = 0;
+        check_shape_size(points.size() * 3);
+        for (const Geo::Point &point : points)
+        {
+            shape[shape_count++] = point.x;
+            shape[shape_count++] = point.y;
+            ++shape_count;
+        }
+        info = QString("Radius:%1 Angle:%2°").arg(_parameters[2]).arg(Geo::rad_to_degree(_parameters[3]));
+        return true;
+    }
+}
+
+void InscribedPolygonOperation::reset()
+{
+    _set_n = _set_center = true;
+}
+
+bool InscribedPolygonOperation::read_parameters(const double *params, const int count)
+{
+    if (_set_n && count <= 1)
+    {
+        if (count == 1)
+        {
+            if (params[0] >= 3)
+            {
+                _n = params[0];
+            }
+            else
+            {
+                return false;
+            }
+        }
+        _set_n = false;
+        return true;
+    }
+    else
+    {
+        if (_set_center)
+        {
+            if (count >= 2)
+            {
+                _parameters[0] = params[0];
+                _parameters[1] = params[1];
+                _parameters[2] = 10;
+                _parameters[3] = 0;
+                const Geo::Polygon points(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], false);
+                shape_count = 0;
+                check_shape_size(points.size() * 3);
+                for (const Geo::Point &point : points)
+                {
+                    shape[shape_count++] = point.x;
+                    shape[shape_count++] = point.y;
+                    ++shape_count;
+                }
+                tool_lines[0] = tool_lines[3] = params[0];
+                tool_lines[1] = tool_lines[4] = params[1];
+                tool_lines_count = 6;
+                _set_n = _set_center = false;
+                return true;
+            }
+        }
+        else
+        {
+            if (count == 1 && params[0] > 0)
+            {
+                _parameters[2] = params[0];
+                canvas->add_geometry(new Geo::Polygon(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], false));
+                info.clear();
+                tool[0] = Tool::Select;
+                shape_count = tool_lines_count = 0;
+                _set_n = _set_center = true;
+                return true;
+            }
+            else if (count >= 2 && params[0] > 0)
+            {
+                _parameters[2] = params[0], _parameters[3] = params[1];
+                canvas->add_geometry(new Geo::Polygon(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], false));
+                info.clear();
+                tool[0] = Tool::Select;
+                shape_count = tool_lines_count = 0;
+                _set_n = _set_center = true;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+QString InscribedPolygonOperation::cmd_tips() const
+{
+    return _set_center ? QString("n:%1 (x, y):").arg(_n) : QString("n:%1 (radius, angle):").arg(_n);
 }
 
 
