@@ -4588,7 +4588,14 @@ bool Geo::is_intersected(const AABBRect &rect, const Polyline &polyline)
     {
         return false;
     }
-    
+
+    for (const Geo::Point &point : polyline)
+    {
+        if (Geo::is_inside(point, rect))
+        {
+            return true;
+        }
+    }
     for (size_t i = 1, count = polyline.size(); i < count; ++i)
     {
         if (Geo::is_intersected(rect, polyline[i - 1], polyline[i]))
@@ -4605,7 +4612,14 @@ bool Geo::is_intersected(const AABBRect &rect, const Polygon &polygon)
     {
         return false;
     }
-    
+
+    for (const Geo::Point &point : polygon)
+    {
+        if (Geo::is_inside(point, rect))
+        {
+            return true;
+        }
+    }
     for (size_t i = 1, count = polygon.size(); i < count; ++i)
     {
         if (Geo::is_intersected(rect, polygon[i - 1], polygon[i]))
@@ -4613,13 +4627,6 @@ bool Geo::is_intersected(const AABBRect &rect, const Polygon &polygon)
             return true;
         }
     }
-    // for (size_t i = 0; i < 4; ++i)
-    // {
-    //     if (Geo::is_inside(rect[i], polygon))
-    //     {
-    //         return true;
-    //     }
-    // }
     return false;
 }
 
@@ -4630,21 +4637,10 @@ bool Geo::is_intersected(const AABBRect &rect, const Circle &circle)
         return false;
     }
 
-    if (Geo::is_inside(circle, rect, true))
-    {
-        return true;
-    }
-    for (const Geo::Point &point : rect)
-    {
-        if (Geo::is_inside(point, circle, true))
-        {
-            return true;
-        }
-    }
-    const double length = circle.radius * circle.radius;
+    Geo::Point point0, point1;
     for (size_t i = 1; i < 5; ++i)
     {
-        if (Geo::distance_square(circle, rect[i-1], rect[i]) <= length)
+        if (Geo::is_intersected(rect[i-1], rect[i], circle, point0, point1))
         {
             return true;
         }
@@ -4659,18 +4655,10 @@ bool Geo::is_intersected(const AABBRect &rect, const Ellipse &ellipse)
         return false;
     }
 
-    if (Geo::is_inside(ellipse.center(), rect)
-        || Geo::is_inside(ellipse.a0(), rect) || Geo::is_inside(ellipse.a1(), rect)
+    if (Geo::is_inside(ellipse.a0(), rect) || Geo::is_inside(ellipse.a1(), rect)
         || Geo::is_inside(ellipse.b0(), rect) || Geo::is_inside(ellipse.b1(), rect))
     {
         return true;
-    }
-    for (const Geo::Point &point : rect)
-    {
-        if (Geo::is_inside(point, ellipse, true))
-        {
-            return true;
-        }
     }
     Geo::Point point0, point1;
     for (int i = 0; i < 4; ++i)

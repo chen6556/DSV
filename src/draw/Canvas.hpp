@@ -186,6 +186,8 @@ public:
 
     void refresh_selected_vbo();
 
+    void clear_selected_ibo();
+
     std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_text_vbo();
 
 

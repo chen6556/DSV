@@ -3107,6 +3107,11 @@ void Canvas::refresh_selected_vbo()
     doneCurrent();
 }
 
+void Canvas::clear_selected_ibo()
+{
+    std::fill_n(_selected_index_count, 4, 0);
+}
+
 std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_text_vbo()
 {
     QPainterPath path;

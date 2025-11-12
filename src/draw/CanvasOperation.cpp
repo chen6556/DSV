@@ -345,6 +345,10 @@ bool SelectOperation::mouse_move(QMouseEvent *event)
         {
             canvas->refresh_selected_ibo(selected_objects);
         }
+        else
+        {
+            canvas->clear_selected_ibo();
+        }
         tool_lines_count = 0;
         return true;
     }
