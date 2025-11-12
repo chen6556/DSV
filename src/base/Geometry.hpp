@@ -11,7 +11,7 @@ namespace Geo
     const static double EPSILON = 1e-10;
 
     enum class Type {GEOMETRY, POINT, POLYLINE, AABBRECT, POLYGON, TRIANGLE, CIRCLE, LINE, BEZIER,
-        ELLIPSE, BSPLINE, TEXT, CONTAINERGROUP, COMBINATION, GRAPH};
+        ELLIPSE, BSPLINE, ARC, TEXT, CONTAINERGROUP, COMBINATION, GRAPH};
 
     class AABBRect;
 
@@ -924,5 +924,68 @@ namespace Geo
         CubicBSpline *clone() const override;
 
         void insert(const double t) override;
+    };
+
+    class Arc : public Geometry
+    {
+    public:
+        double x = 0, y = 0, radius = 0;
+        Point control_points[3];
+
+        enum class ParameterType { StartCenterAngle, StartEndAngle, StartEndRadius };
+
+    private:
+        Polyline _shape;
+
+    public:
+        Arc() {}
+
+        Arc(const double x0, const double y0, const double x1, const double y1, const double x2, const double y2);
+
+        Arc(const Point &point0, const Point &point1, const Point &point2);
+
+        Arc(const double x0, const double y0, const double x1, const double y1, const double param, const ParameterType type, const bool counterclockwise);
+
+        Arc(const Point &point0, const Point &point1, const double param, const ParameterType type, const bool counterclockwise);
+
+        Arc(const double x, const double y, const double radius, const double start_angle, const double end_angle, const bool counterclockwise);
+
+        Arc(const Arc &arc);
+
+        Arc &operator=(const Arc &arc);
+
+        const Type type() const override;
+
+        const double area() const;
+
+        const double length() const override;
+
+        const bool empty() const override;
+
+        void clear() override;
+
+        Arc *clone() const override;
+
+        void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
+
+        void transform(const double mat[6]) override;
+
+        void translate(const double tx, const double ty) override;
+
+        void scale(const double x, const double y, const double k) override;
+
+        void rotate(const double x, const double y, const double rad) override;
+
+        Polygon convex_hull() const override;
+
+        AABBRect bounding_rect() const override;
+
+        Polygon mini_bounding_rect() const override;
+
+        void update_shape(const double down_sampling_value);
+
+        const Polyline &shape() const;
+
+        bool is_cw() const;
     };
 };

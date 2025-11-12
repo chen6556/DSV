@@ -41,6 +41,8 @@ public:
 
     void store_text();
 
+    void store_arc();
+
     void begin_combination();
 
     void end_combination();

@@ -422,7 +422,7 @@ QScrollArea
                </widget>
               </item>
               <item row="0" column="0">
-               <widget class="QToolButton" name="line_btn">
+               <widget class="QToolButton" name="polyline_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -449,13 +449,19 @@ QScrollArea
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/polyline_btn.png</normaloff>:/icons/polyline_btn.png</iconset>
+                  <normaloff>:/icons/polygon/polyline_btn.png</normaloff>:/icons/polygon/polyline_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
                   <width>24</width>
                   <height>24</height>
                  </size>
+                </property>
+                <property name="popupMode">
+                 <enum>QToolButton::ToolButtonPopupMode::MenuButtonPopup</enum>
+                </property>
+                <property name="autoRaise">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -598,7 +604,7 @@ QScrollArea
                </widget>
               </item>
               <item row="0" column="1">
-               <widget class="QToolButton" name="rect_btn">
+               <widget class="QToolButton" name="arc_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -621,11 +627,11 @@ QScrollArea
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Rectangle</string>
+                 <string>Arc</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/polygon/rectangle_btn.png</normaloff>:/icons/polygon/rectangle_btn.png</iconset>
+                  <normaloff>:/icons/arc/3p_arc_btn.png</normaloff>:/icons/arc/3p_arc_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>

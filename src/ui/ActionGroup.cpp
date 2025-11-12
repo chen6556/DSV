@@ -10,6 +10,7 @@ ActionGroup::ActionGroup(Ui::MainWindow *ui_, std::function<void(const MenuType,
 void ActionGroup::init()
 {
     init_polygon_menu();
+    init_arc_menu();
     init_circle_menu();
     init_curve_menu();
     init_fillet_menu();
@@ -17,28 +18,62 @@ void ActionGroup::init()
 
 void ActionGroup::init_polygon_menu()
 {
-    _polygon_menu = new QMenu(ui->rect_btn);
+    _polygon_menu = new QMenu(ui->polyline_btn);
     _polygon_menu->connect(_polygon_menu, &QMenu::triggered, [this](QAction *action)
         {
             _callback(MenuType::PolygonMenu, _polygon_menu->actions().indexOf(action));
-            ui->rect_btn->setIcon(action->icon());
-            ui->rect_btn->setToolTip(action->text());
-            ui->rect_btn->setDefaultAction(action);
+            ui->polyline_btn->setIcon(action->icon());
+            ui->polyline_btn->setToolTip(action->text());
+            ui->polyline_btn->setDefaultAction(action);
         });
-    ui->rect_btn->setMenu(_polygon_menu);
+    ui->polyline_btn->setMenu(_polygon_menu);
+
+    QAction *polyline = new QAction(QIcon(":/icons/polygon/polyline_btn.png"),
+        "Polyline", ui->polyline_btn);
+    _polygon_menu->addAction(polyline);
+    ui->polyline_btn->setDefaultAction(polyline);
 
     QAction *rectangle = new QAction(QIcon(":/icons/polygon/rectangle_btn.png"),
-        "Rectangle", ui->rect_btn);
+        "Rectangle", ui->polyline_btn);
     _polygon_menu->addAction(rectangle);
-    ui->rect_btn->setDefaultAction(rectangle);
 
     QAction *circumscribed = new QAction(QIcon(":/icons/polygon/"
-        "polygon_circumscribed_btn.png"), "Polygon Circumscribed", ui->rect_btn);
+        "polygon_circumscribed_btn.png"), "Polygon Circumscribed", ui->polyline_btn);
     _polygon_menu->addAction(circumscribed);
 
     QAction *inscribed = new QAction(QIcon(":/icons/polygon/"
-        "polygon_inscribed_btn.png"), "Polygon Inscribed", ui->rect_btn);
+        "polygon_inscribed_btn.png"), "Polygon Inscribed", ui->polyline_btn);
     _polygon_menu->addAction(inscribed);
+}
+
+void ActionGroup::init_arc_menu()
+{
+    _arc_menu = new QMenu(ui->arc_btn);
+    _arc_menu->connect(_arc_menu, &QMenu::triggered, [this](QAction *action)
+        {
+            _callback(MenuType::ArcMenu, _arc_menu->actions().indexOf(action));
+            ui->arc_btn->setIcon(action->icon());
+            ui->arc_btn->setToolTip(action->text());
+            ui->arc_btn->setDefaultAction(action);
+        });
+    ui->arc_btn->setMenu(_arc_menu);
+
+    QAction *arc_3p = new QAction(QIcon(":/icons/arc/3p_arc_btn.png"),
+        "3-Point Arc", ui->arc_btn);
+    _arc_menu->addAction(arc_3p);
+    ui->arc_btn->setDefaultAction(arc_3p);
+
+    QAction *start_center_angle_arc = new QAction(QIcon(":/icons/arc/sca_arc_btn.png"),
+        "Start-Center-Angle Arc", ui->arc_btn);
+    _arc_menu->addAction(start_center_angle_arc);
+
+    QAction *start_end_angle_arc = new QAction(QIcon(":/icons/arc/sea_arc_btn.png"),
+        "Start-End-Angle Arc", ui->arc_btn);
+    _arc_menu->addAction(start_end_angle_arc);
+    
+    QAction *start_end_radius_arc = new QAction(QIcon(":/icons/arc/ser_arc_btn.png"),
+        "Start-End-Radius Arc", ui->arc_btn);
+    _arc_menu->addAction(start_end_radius_arc);
 }
 
 void ActionGroup::init_circle_menu()

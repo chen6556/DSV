@@ -254,6 +254,8 @@ private:
 
     void write_text(const Text *text);
 
+    void write_arc(const Geo::Arc *arc);
+
 public:
     void check_block();
 

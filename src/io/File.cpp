@@ -14,6 +14,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
     const Geo::Polyline *polyline = nullptr;
     const Geo::Bezier *bezier = nullptr;
     const Geo::BSpline *bspline = nullptr;
+    const Geo::Arc *arc = nullptr;
 
     std::ofstream output(path);
     for (const ContainerGroup &group : graph->container_groups())
@@ -152,6 +153,21 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         output << std::endl;
                         bspline = nullptr;
                         break;
+                    case Geo::Type::ARC:
+                        arc = static_cast<const Geo::Arc *>(item);
+                        if (arc->empty())
+                        {
+                            continue;
+                        }
+                        output << "ARC" << std::endl;
+                        for (const Geo::Point &point : arc->control_points)
+                        {
+                            output << point.x << ',' << point.y << ',';
+                        }
+                        output.seekp(-1, std::ios_base::cur);
+                        output << std::endl;
+                        arc = nullptr;
+                        break;
                     default:
                         break;
                     }
@@ -203,6 +219,21 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 output << std::endl;
                 bspline = nullptr;
                 break;
+            case Geo::Type::ARC:
+                arc = static_cast<const Geo::Arc *>(geo);
+                if (arc->empty())
+                {
+                    continue;
+                }
+                output << "ARC" << std::endl;
+                for (const Geo::Point &point : arc->control_points)
+                {
+                    output << point.x << ',' << point.y << ',';
+                }
+                output.seekp(-1, std::ios_base::cur);
+                output << std::endl;
+                arc = nullptr;
+                break;
             default:
                 break;
             }
@@ -223,6 +254,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
     const Geo::Polyline *polyline = nullptr;
     const Geo::Bezier *bezier = nullptr;
     const Geo::BSpline *bspline = nullptr;
+    const Geo::Arc *arc = nullptr;
     const double x_ratio = 40, y_ratio = 40;
 
     std::ofstream output(path);
@@ -371,6 +403,17 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         output << ';' << std::endl;
                         bspline = nullptr;
                         break;
+                    case Geo::Type::ARC:
+                        arc = static_cast<const Geo::Arc *>(item);
+                        if (arc->empty())
+                        {
+                            break;
+                        }
+                        output << "PU" << arc->control_points[0].x * x_ratio << ',' << arc->control_points[0].y * y_ratio << ";AT";
+                        output << arc->control_points[1].x * x_ratio << ',' << arc->control_points[1].y * y_ratio << ',';
+                        output << arc->control_points[2].x * x_ratio << ',' << arc->control_points[2].y * y_ratio << ';' << std::endl;
+                        arc = nullptr;
+                        break;
                     default:
                         break;
                     }
@@ -432,6 +475,17 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 output.seekp(-1, std::ios::cur);
                 output << ';' << std::endl;
                 bspline = nullptr;
+                break;
+            case Geo::Type::ARC:
+                arc = static_cast<const Geo::Arc *>(geo);
+                if (arc->empty())
+                {
+                    break;
+                }
+                output << "PU" << arc->control_points[0].x * x_ratio << ',' << arc->control_points[0].y * y_ratio << ";AT";
+                output << arc->control_points[1].x * x_ratio << ',' << arc->control_points[1].y * y_ratio << ',';
+                output << arc->control_points[2].x * x_ratio << ',' << arc->control_points[2].y * y_ratio << ';' << std::endl;
+                arc = nullptr;
                 break;
             default:
                 break;

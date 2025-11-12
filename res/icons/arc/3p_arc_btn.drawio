@@ -1,0 +1,20 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.2.7 Chrome/138.0.7204.251 Electron/37.7.1 Safari/537.36" version="28.2.7">
+  <diagram name="第 1 页" id="VX8x2q7U5yT6BQhmhuAg">
+    <mxGraphModel dx="97" dy="63" grid="1" gridSize="1.1810999999999998" guides="0" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="48" pageHeight="48" background="#464647" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="rLk5c5KiQaoVdKF3JNa8-5" value="" style="curved=1;endArrow=oval;html=1;rounded=0;endFill=1;startArrow=oval;startFill=1;edgeStyle=orthogonalEdgeStyle;strokeWidth=1.9685;startSize=3.937;endSize=3.1496;movable=0;resizable=0;rotatable=0;deletable=0;editable=0;locked=1;connectable=0;strokeColor=#E6E6E6;" parent="1" edge="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="38" y="5" as="sourcePoint" />
+            <mxPoint x="5" y="38" as="targetPoint" />
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="rLk5c5KiQaoVdKF3JNa8-7" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;strokeColor=none;fillColor=#E6E6E6;strokeWidth=1.9685;" parent="1" vertex="1">
+          <mxGeometry x="9.449999999999996" y="10.629999999999997" width="5.9055" height="5.91" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

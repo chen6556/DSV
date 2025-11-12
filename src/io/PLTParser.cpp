@@ -59,39 +59,16 @@ void Importer::store_points()
 void Importer::store_arc()
 {
     const Geo::Point center(_parameters[0], _parameters[1]);
-    Geo::Vector dir(_last_coord.x - _parameters[0], _last_coord.y - _parameters[1]);
+    const Geo::Vector dir(_last_coord.x - _parameters[0], _last_coord.y - _parameters[1]);
     const double radius = std::hypot(_parameters[0] - _last_coord.x,
         _parameters[1] - _last_coord.y);
+    const double angle = Geo::degree_to_rad(_parameters[2]);
 
-    double angle = Geo::degree_to_rad(_parameters[2]);
-    double step = radius > 3000 ? Geo::PI / 360 : Geo::PI / 180;
-    if (angle >= 0)
-    {
-        dir.rotate(0, 0, step);
-        angle -= step;
-        while (angle > 0)
-        {
-            _points.emplace_back(center + dir);
-            angle -= step;
-            dir.rotate(0, 0, step);
-        }
-    }
-    else
-    {
-        dir.rotate(0, 0, -step);
-        angle += step;
-        while (angle < 0)
-        {
-            _points.emplace_back(center + dir);
-            angle += step;
-            dir.rotate(0, 0, -step);
-        }
-    }
-    dir.x = _last_coord.x - _parameters[0], dir.y = _last_coord.y - _parameters[1];
-    dir.rotate(0, 0, Geo::degree_to_rad(_parameters[2]));
-    _points.emplace_back(center + dir);
-    _last_coord = _points.back();
+    Geo::Arc *arc = new Geo::Arc(center + dir, center, std::abs(angle),
+        Geo::Arc::ParameterType::StartCenterAngle, angle > 0);
+    _graph->container_groups().back().append(arc);
 
+    _last_coord = arc->control_points[2];
     _parameters.clear();
 }
 
@@ -427,6 +404,21 @@ void Importer::ar()
     store_arc();
 }
 
+void Importer::at()
+{
+    _parameters[0] *= _x_ratio;
+    _parameters[1] *= _y_ratio;
+    _parameters[2] *= _x_ratio;
+    _parameters[3] *= _y_ratio;
+
+    Geo::Arc *arc = new Geo::Arc(_last_coord.x, _last_coord.y,
+        _parameters[0], _parameters[1], _parameters[2], _parameters[3]);
+    _graph->container_groups().back().append(arc);
+
+    _last_coord = arc->control_points[2];
+    _parameters.clear();
+}
+
 void Importer::ea()
 {
     if (_parameters.size() >= 2)
@@ -575,6 +567,7 @@ static Action<void> bz_a(&importer, &Importer::bz);
 static Action<void> ci_a(&importer, &Importer::ci);
 static Action<void> aa_a(&importer, &Importer::aa);
 static Action<void> ar_a(&importer, &Importer::ar);
+static Action<void> at_a(&importer, &Importer::at);
 static Action<void> ea_a(&importer, &Importer::ea);
 static Action<void> er_a(&importer, &Importer::er);
 static Action<int> pm_int_a(&importer, &Importer::pm);
@@ -607,6 +600,7 @@ static Parser<bool> bz = str_p("BZ") >> list_p(parameter, separator)[bz_a] >> *e
 static Parser<bool> ci = (str_p("CI") >> parameter >> !(separator >> parameter))[ci_a] >> *end;
 static Parser<bool> aa = (str_p("AA") >> list_p(parameter, separator))[aa_a] >> *end;
 static Parser<bool> ar = (str_p("AR") >> list_p(parameter, separator))[ar_a] >> *end;
+static Parser<bool> at = (str_p("AT") >> list_p(parameter, separator))[at_a] >> *end;
 static Parser<bool> ea = (str_p("EA") >> list_p(parameter, separator))[ea_a] >> *end;
 static Parser<bool> er = (str_p("ER") >> list_p(parameter, separator))[er_a] >> *end;
 static Parser<bool> pm = ((str_p("PM") >> digit_p()[pm_int_a]) | str_p("PM")[pm_void_a]) >> *end;
@@ -615,7 +609,7 @@ static Parser<std::string> ep = str_p("EP")[ep_a] >> *end;
 static Parser<std::string> unkown_cmds = confix_p(alphaa_p() | ch_p(28), +end)[unkown_a];
 static Parser<char> text_end = ch_p('\x3') | ch_p('\x4') | end;
 static Parser<std::string> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], text_end) >> !separator >> *end;
-static Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | br | bz | ci | aa | ar | ea | er | pm | ep | in | ip | sc | df | ro | unkown_cmds;
+static Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | br | bz | ci | aa | ar | at | ea | er | pm | ep | in | ip | sc | df | ro | unkown_cmds;
 
 static Parser<std::string> dci = confix_p(ch_p(27), end);
 static Parser<bool> plt = (*(all_cmds | dci))[end_a];

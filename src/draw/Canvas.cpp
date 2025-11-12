@@ -1170,6 +1170,7 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
         break;
     case Geo::Type::CIRCLE:
     case Geo::Type::ELLIPSE:
+    case Geo::Type::ARC:
         if (refresh_ibo)
         {
             std::future<std::tuple<double*, unsigned int>> point;
@@ -1328,7 +1329,8 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
     {
         _brush_index_count[2] = 0;
     }
-    if (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end())
+    if (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end()
+        || types.find(Geo::Type::ARC) != types.end())
     {
         circle_vbo = std::async(std::launch::async, &Canvas::refresh_circle_vbo, this);
     }
@@ -1338,7 +1340,8 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
     }
     if (GlobalSetting::setting().show_points)
     {
-        if (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end())
+        if (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end()
+            || types.find(Geo::Type::ARC) != types.end())
         {
             circle_printable_points = std::async(std::launch::async, &Canvas::refresh_circle_printable_points, this);
         }
@@ -1351,7 +1354,8 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
     makeCurrent();
     if (GlobalSetting::setting().show_points)
     {
-        if (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end())
+        if (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end()
+            || types.find(Geo::Type::ARC) != types.end())
         {
             circle_printable_points.wait();
             auto [circle_data, circle_data_count] = circle_printable_points.get();
@@ -1650,6 +1654,7 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_c
 
     Geo::Circle *circle = nullptr;
     Geo::Ellipse *ellipse = nullptr;
+    Geo::Arc *arc = nullptr;
     for (ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
         if (!group.visible())
@@ -1724,6 +1729,35 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_c
                         indexs[index_count++] = UINT_MAX;
                         ellipse->point_count = ellipse->shape().size();
                         break;
+                    case Geo::Type::ARC:
+                        arc = static_cast<Geo::Arc *>(item);
+                        arc->point_index = data_count / 3;
+                        while (data_count + arc->shape().size() * 3 > data_len)
+                        {
+                            data_len *= 2;
+                            double *temp = new double[data_len];
+                            std::move(data, data + data_count, temp);
+                            delete []data;
+                            data = temp;
+                        }
+                        while (index_count + arc->shape().size() >= index_len)
+                        {
+                            index_len *= 2;
+                            unsigned int *temp = new unsigned int[index_len];
+                            std::move(indexs, indexs + index_count, temp);
+                            delete []indexs;
+                            indexs = temp;
+                        }
+                        for (const Geo::Point &point : arc->shape())
+                        {
+                            indexs[index_count++] = data_count / 3;
+                            data[data_count++] = point.x;
+                            data[data_count++] = point.y;
+                            data[data_count++] = 0.5;
+                        }
+                        indexs[index_count++] = UINT_MAX;
+                        arc->point_count = arc->shape().size();
+                        break;
                     default:
                         break;
                     }
@@ -1786,6 +1820,35 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_c
                 }
                 indexs[index_count++] = UINT_MAX;
                 ellipse->point_count = ellipse->shape().size();
+                break;
+            case Geo::Type::ARC:
+                arc = static_cast<Geo::Arc *>(geo);
+                arc->point_index = data_count / 3;
+                while (data_count + arc->shape().size() * 3 > data_len)
+                {
+                    data_len *= 2;
+                    double *temp = new double[data_len];
+                    std::move(data, data + data_count, temp);
+                    delete []data;
+                    data = temp;
+                }
+                while (index_count + arc->shape().size() >= index_len)
+                {
+                    index_len *= 2;
+                    unsigned int *temp = new unsigned int[index_len];
+                    std::move(indexs, indexs + index_count, temp);
+                    delete []indexs;
+                    indexs = temp;
+                }
+                for (const Geo::Point &point : arc->shape())
+                {
+                    indexs[index_count++] = data_count / 3;
+                    data[data_count++] = point.x;
+                    data[data_count++] = point.y;
+                    data[data_count++] = 0.5;
+                }
+                indexs[index_count++] = UINT_MAX;
+                arc->point_count = arc->shape().size();
                 break;
             default:
                 break;
@@ -1967,7 +2030,7 @@ std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
             continue;
         }
 
-        for (Geo::Geometry *geo : group)
+        for (const Geo::Geometry *geo : group)
         {
             if (data_count + 15 > data_len)
             {
@@ -1980,7 +2043,7 @@ std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
             switch (geo->type())
             {
             case Geo::Type::CIRCLE:
-                circle = static_cast<Geo::Circle *>(geo);
+                circle = static_cast<const Geo::Circle *>(geo);
                 data[data_count++] = circle->x;
                 data[data_count++] = circle->y;
                 data[data_count++] = 0.5;
@@ -1998,7 +2061,7 @@ std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
                 data[data_count++] = 0.5;
                 break;
             case Geo::Type::ELLIPSE:
-                ellipse = static_cast<Geo::Ellipse *>(geo);
+                ellipse = static_cast<const Geo::Ellipse *>(geo);
                 data[data_count++] = (ellipse->a0().x + ellipse->a1().x + ellipse->b0().x + ellipse->b1().x) / 4;
                 data[data_count++] = (ellipse->a0().y + ellipse->a1().y + ellipse->b0().y + ellipse->b1().y) / 4;
                 data[data_count++] = 0.5;
@@ -2015,8 +2078,16 @@ std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
                 data[data_count++] = ellipse->b1().y;
                 data[data_count++] = 0.5;
                 break;
+            case Geo::Type::ARC:
+                for (const Geo::Point &point : static_cast<const Geo::Arc *>(geo)->control_points)
+                {
+                    data[data_count++] = point.x;
+                    data[data_count++] = point.y;
+                    data[data_count++] = 0.5;
+                }
+                break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *static_cast<Combination *>(geo))
+                for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
                 {
                     if (data_count + 15 > data_len)
                     {
@@ -2029,7 +2100,7 @@ std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
                     switch (item->type())
                     {
                     case Geo::Type::CIRCLE:
-                        circle = static_cast<Geo::Circle *>(item);
+                        circle = static_cast<const Geo::Circle *>(item);
                         data[data_count++] = circle->x;
                         data[data_count++] = circle->y;
                         data[data_count++] = 0.5;
@@ -2047,7 +2118,7 @@ std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
                         data[data_count++] = 0.5;
                         break;
                     case Geo::Type::ELLIPSE:
-                        ellipse = static_cast<Geo::Ellipse *>(item);
+                        ellipse = static_cast<const Geo::Ellipse *>(item);
                         data[data_count++] = (ellipse->a0().x + ellipse->a1().x + ellipse->b0().x + ellipse->b1().x) / 4;
                         data[data_count++] = (ellipse->a0().y + ellipse->a1().y + ellipse->b0().y + ellipse->b1().y) / 4;
                         data[data_count++] = 0.5;
@@ -2063,6 +2134,14 @@ std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
                         data[data_count++] = ellipse->b1().x;
                         data[data_count++] = ellipse->b1().y;
                         data[data_count++] = 0.5;
+                        break;
+                    case Geo::Type::ARC:
+                        for (const Geo::Point &point : static_cast<const Geo::Arc *>(item)->control_points)
+                        {
+                            data[data_count++] = point.x;
+                            data[data_count++] = point.y;
+                            data[data_count++] = 0.5;
+                        }
                         break;
                     default:
                         break;
@@ -2214,6 +2293,7 @@ void Canvas::refresh_selected_ibo()
             break;
         case Geo::Type::CIRCLE:
         case Geo::Type::ELLIPSE:
+        case Geo::Type::ARC:
             while (circle_index_count + geo->point_count >= circle_index_len)
             {
                 circle_index_len *= 2;
@@ -2313,6 +2393,7 @@ void Canvas::refresh_selected_ibo()
                     break;
                 case Geo::Type::CIRCLE:
                 case Geo::Type::ELLIPSE:
+                case Geo::Type::ARC:
                     while (circle_index_count + item->point_count >= circle_index_len)
                     {
                         circle_index_len *= 2;
@@ -2467,6 +2548,7 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
                 break;
             case Geo::Type::CIRCLE:
             case Geo::Type::ELLIPSE:
+            case Geo::Type::ARC:
                 while (circle_index_count + item->point_count >= circle_index_len)
                 {
                     circle_index_len *= 2;
@@ -2573,6 +2655,7 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
             break;
         case Geo::Type::CIRCLE:
         case Geo::Type::ELLIPSE:
+        case Geo::Type::ARC:
             IBO_index = _selected_IBO[2];
             _selected_index_count[2] = index_count;
             break;
@@ -2663,6 +2746,7 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
             break;
         case Geo::Type::CIRCLE:
         case Geo::Type::ELLIPSE:
+        case Geo::Type::ARC:
             while (circle_index_count + geo->point_count >= circle_index_len)
             {
                 circle_index_len *= 2;
@@ -2762,6 +2846,7 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
                     break;
                 case Geo::Type::CIRCLE:
                 case Geo::Type::ELLIPSE:
+                case Geo::Type::ARC:
                     while (circle_index_count + item->point_count >= circle_index_len)
                     {
                         circle_index_len *= 2;
@@ -2882,6 +2967,7 @@ void Canvas::refresh_selected_vbo()
                     break;
                 case Geo::Type::CIRCLE:
                 case Geo::Type::ELLIPSE:
+                case Geo::Type::ARC:
                     if (!refresh[2])
                     {
                         circle_vbo = std::async(std::launch::async, &Canvas::refresh_circle_vbo, this);
@@ -2926,6 +3012,7 @@ void Canvas::refresh_selected_vbo()
                             break;
                         case Geo::Type::CIRCLE:
                         case Geo::Type::ELLIPSE:
+                        case Geo::Type::ARC:
                             if (!refresh[2])
                             {
                                 circle_vbo = std::async(std::launch::async, &Canvas::refresh_circle_vbo, this);
@@ -3256,6 +3343,12 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                     }
                 }
                 break;
+            case Geo::Type::ARC:
+                if (Geo::is_intersected(rect, *static_cast<const Geo::Arc *>(geo)))
+                {
+                    catched_objects.push_back(geo);
+                }
+                break;
             default:
                 break;
             }
@@ -3312,6 +3405,12 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                         {
                             catched_objects.push_back(geo);
                         }
+                    }
+                    break;
+                case Geo::Type::ARC:
+                    if (Geo::is_intersected(rect, *static_cast<const Geo::Arc *>(geo)))
+                    {
+                        catched_objects.push_back(geo);
                     }
                     break;
                 default:
@@ -3559,6 +3658,24 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                     {
                         dis[0] = dis1;
                         result[0] = bezier.back();
+                    }
+                }
+            }
+            break;
+        case Geo::Type::ARC:
+            {
+                const Geo::Arc *arc = static_cast<const Geo::Arc *>(object);
+                if (_catch_types[0])
+                {
+                    dis[0] = Geo::distance(pos, arc->control_points[0]);
+                    result[0] = arc->control_points[0];
+                }
+                for (int i = 1; i < 3; ++i)
+                {
+                    if (double d = Geo::distance(pos, arc->control_points[i]); d < dis[0])
+                    {
+                        dis[0] = d;
+                        result[0] = arc->control_points[i];
                     }
                 }
             }

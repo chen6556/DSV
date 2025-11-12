@@ -158,6 +158,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
     Geo::Polyline *p = nullptr;
     Geo::Bezier *b = nullptr;
     Geo::BSpline *bs = nullptr;
+    Geo::Arc *arc = nullptr;
     Combination *cb = nullptr;
     for (std::vector<Geo::Geometry *>::reverse_iterator it = _graph->container_group(_current_group).rbegin(),
                                                         end = _graph->container_group(_current_group).rend();
@@ -290,6 +291,15 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         }
                         bs = nullptr;
                         break;
+                    case Geo::Type::ARC:
+                        arc = static_cast<Geo::Arc *>(item);
+                        if (Geo::distance(point, *arc) <= catch_distance)
+                        {
+                            cb->is_selected = true;
+                            return cb;
+                        }
+                        arc = nullptr;
+                        break;
                     default:
                         break;
                     }
@@ -352,6 +362,15 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                 }
             }
             bs = nullptr;
+            break;
+        case Geo::Type::ARC:
+            arc = static_cast<Geo::Arc *>(*it);
+            if (Geo::distance(point, *arc) <= catch_distance)
+            {
+                arc->is_selected = true;
+                return arc;
+            }
+            arc = nullptr;
             break;
         default:
             break;
@@ -826,176 +845,176 @@ void Editer::set_group_name(const size_t index, const QString &name)
 }
 
 
-int Editer::append_points()
-{
-    if (_point_cache.empty())
-    {
-        return 0;
-    }
-    if (_graph == nullptr)
-    {
-        _graph = new Graph;
-        GlobalSetting::setting().graph = _graph;
-        _graph->append_group();
-        _backup.set_graph(_graph);
-    }
+// int Editer::append_points()
+// {
+//     if (_point_cache.empty())
+//     {
+//         return 0;
+//     }
+//     if (_graph == nullptr)
+//     {
+//         _graph = new Graph;
+//         GlobalSetting::setting().graph = _graph;
+//         _graph->append_group();
+//         _backup.set_graph(_graph);
+//     }
 
-    if (_point_cache.size() < 4)
-    {
-        _point_cache.clear();
-        return 0;
-    }
+//     if (_point_cache.size() < 4)
+//     {
+//         _point_cache.clear();
+//         return 0;
+//     }
 
-    int value = 1;
-    if (_point_cache.size() > 3 && Geo::distance(_point_cache.front(), _point_cache.back()) <= 8 / _view_ratio) // Container
-    {
-        _point_cache.pop_back();
-        _point_cache.pop_back();
-        _graph->append(new Geo::Polygon(_point_cache.cbegin(), _point_cache.cend()), _current_group);
-        value = 2;
-    }
-    else
-    {
-        _point_cache.pop_back();
-        _point_cache.pop_back();
-        _graph->append(new Geo::Polyline(_point_cache.cbegin(), _point_cache.cend()), _current_group);
-    }
-    _point_cache.clear();
+//     int value = 1;
+//     if (_point_cache.size() > 3 && Geo::distance(_point_cache.front(), _point_cache.back()) <= 8 / _view_ratio) // Container
+//     {
+//         _point_cache.pop_back();
+//         _point_cache.pop_back();
+//         _graph->append(new Geo::Polygon(_point_cache.cbegin(), _point_cache.cend()), _current_group);
+//         value = 2;
+//     }
+//     else
+//     {
+//         _point_cache.pop_back();
+//         _point_cache.pop_back();
+//         _graph->append(new Geo::Polyline(_point_cache.cbegin(), _point_cache.cend()), _current_group);
+//     }
+//     _point_cache.clear();
 
-    _graph->modified = true;
-    _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
-        _current_group, _graph->container_group(_current_group).size(), true));
-    return value;
-}
+//     _graph->modified = true;
+//     _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
+//         _current_group, _graph->container_group(_current_group).size(), true));
+//     return value;
+// }
 
-void Editer::append(const Geo::Circle &circle)
-{
-    if (circle.empty())
-    {
-        return;
-    }
-    if (_graph == nullptr)
-    {
-        _graph = new Graph;
-        GlobalSetting::setting().graph = _graph;
-        _graph->append_group();
-        _backup.set_graph(_graph);
-    }
-    _graph->append(new Geo::Circle(circle), _current_group);
+// void Editer::append(const Geo::Circle &circle)
+// {
+//     if (circle.empty())
+//     {
+//         return;
+//     }
+//     if (_graph == nullptr)
+//     {
+//         _graph = new Graph;
+//         GlobalSetting::setting().graph = _graph;
+//         _graph->append_group();
+//         _backup.set_graph(_graph);
+//     }
+//     _graph->append(new Geo::Circle(circle), _current_group);
 
-    _graph->modified = true;
-    _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
-        _current_group, _graph->container_group(_current_group).size(), true));
-}
+//     _graph->modified = true;
+//     _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
+//         _current_group, _graph->container_group(_current_group).size(), true));
+// }
 
-void Editer::append(const Geo::Ellipse &ellipse)
-{
-    if (ellipse.empty())
-    {
-        return;
-    }
-    if (_graph == nullptr)
-    {
-        _graph = new Graph;
-        GlobalSetting::setting().graph = _graph;
-        _graph->append_group();
-        _backup.set_graph(_graph);
-    }
-    _graph->append(new Geo::Ellipse(ellipse), _current_group);
+// void Editer::append(const Geo::Ellipse &ellipse)
+// {
+//     if (ellipse.empty())
+//     {
+//         return;
+//     }
+//     if (_graph == nullptr)
+//     {
+//         _graph = new Graph;
+//         GlobalSetting::setting().graph = _graph;
+//         _graph->append_group();
+//         _backup.set_graph(_graph);
+//     }
+//     _graph->append(new Geo::Ellipse(ellipse), _current_group);
 
-    _graph->modified = true;
-    _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
-        _current_group, _graph->container_group(_current_group).size(), true));
-}
+//     _graph->modified = true;
+//     _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
+//         _current_group, _graph->container_group(_current_group).size(), true));
+// }
 
-void Editer::append(const Geo::AABBRect &rect)
-{
-    if (rect.empty())
-    {
-        return;
-    }
-    if (_graph == nullptr)
-    {
-        _graph = new Graph;
-        GlobalSetting::setting().graph = _graph;
-        _graph->append_group();
-        _backup.set_graph(_graph);
-    }
-    _graph->append(new Geo::Polygon(rect), _current_group);
+// void Editer::append(const Geo::AABBRect &rect)
+// {
+//     if (rect.empty())
+//     {
+//         return;
+//     }
+//     if (_graph == nullptr)
+//     {
+//         _graph = new Graph;
+//         GlobalSetting::setting().graph = _graph;
+//         _graph->append_group();
+//         _backup.set_graph(_graph);
+//     }
+//     _graph->append(new Geo::Polygon(rect), _current_group);
 
-    _graph->modified = true;
-    _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
-        _current_group, _graph->container_group(_current_group).size(), true));
-}
+//     _graph->modified = true;
+//     _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
+//         _current_group, _graph->container_group(_current_group).size(), true));
+// }
 
-void Editer::append_bezier(const size_t order)
-{
-    if (_point_cache.size() < 5)
-    {
-        return _point_cache.clear();
-    }
-    if (_graph == nullptr)
-    {
-        _graph = new Graph;
-        GlobalSetting::setting().graph = _graph;
-        _graph->append_group();
-        _backup.set_graph(_graph);
-    }
-    _point_cache.pop_back();
-    _point_cache.pop_back();
-    _graph->append(new Geo::Bezier(_point_cache.begin(), _point_cache.end(), order, true), _current_group);
-    _point_cache.clear();
+// void Editer::append_bezier(const size_t order)
+// {
+//     if (_point_cache.size() < 5)
+//     {
+//         return _point_cache.clear();
+//     }
+//     if (_graph == nullptr)
+//     {
+//         _graph = new Graph;
+//         GlobalSetting::setting().graph = _graph;
+//         _graph->append_group();
+//         _backup.set_graph(_graph);
+//     }
+//     _point_cache.pop_back();
+//     _point_cache.pop_back();
+//     _graph->append(new Geo::Bezier(_point_cache.begin(), _point_cache.end(), order, true), _current_group);
+//     _point_cache.clear();
 
-    _graph->modified = true;
-    _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
-        _current_group, _graph->container_group(_current_group).size(), true));
-}
+//     _graph->modified = true;
+//     _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
+//         _current_group, _graph->container_group(_current_group).size(), true));
+// }
 
-void Editer::append_bspline(const size_t k)
-{
-    if (_graph == nullptr)
-    {
-        _graph = new Graph;
-        GlobalSetting::setting().graph = _graph;
-        _graph->append_group();
-        _backup.set_graph(_graph);
-    }
-    if (_point_cache.size() < 4)
-    {
-        return _point_cache.clear();
-    }
-    _point_cache.pop_back();
-    _point_cache.pop_back();
-    if (k == 2)
-    {
-        _graph->append(new Geo::QuadBSpline(_point_cache.begin(), _point_cache.end(), true), _current_group);
-    }
-    else
-    {
-        _graph->append(new Geo::CubicBSpline(_point_cache.begin(), _point_cache.end(), true), _current_group);
-    }
-    _point_cache.clear();
+// void Editer::append_bspline(const size_t k)
+// {
+//     if (_graph == nullptr)
+//     {
+//         _graph = new Graph;
+//         GlobalSetting::setting().graph = _graph;
+//         _graph->append_group();
+//         _backup.set_graph(_graph);
+//     }
+//     if (_point_cache.size() < 4)
+//     {
+//         return _point_cache.clear();
+//     }
+//     _point_cache.pop_back();
+//     _point_cache.pop_back();
+//     if (k == 2)
+//     {
+//         _graph->append(new Geo::QuadBSpline(_point_cache.begin(), _point_cache.end(), true), _current_group);
+//     }
+//     else
+//     {
+//         _graph->append(new Geo::CubicBSpline(_point_cache.begin(), _point_cache.end(), true), _current_group);
+//     }
+//     _point_cache.clear();
 
-    _graph->modified = true;
-    _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
-        _current_group, _graph->container_group(_current_group).size(), true));
-}
+//     _graph->modified = true;
+//     _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
+//         _current_group, _graph->container_group(_current_group).size(), true));
+// }
 
-void Editer::append_text(const double x, const double y)
-{
-    if (_graph == nullptr)
-    {
-        _graph = new Graph;
-        GlobalSetting::setting().graph = _graph;
-        _graph->append_group();
-        _backup.set_graph(_graph);
-    }
-    _graph->append(new Text(x, y, GlobalSetting::setting().text_size), _current_group);
+// void Editer::append_text(const double x, const double y)
+// {
+//     if (_graph == nullptr)
+//     {
+//         _graph = new Graph;
+//         GlobalSetting::setting().graph = _graph;
+//         _graph->append_group();
+//         _backup.set_graph(_graph);
+//     }
+//     _graph->append(new Text(x, y, GlobalSetting::setting().text_size), _current_group);
 
-    _graph->modified = true;
-    _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
-        _current_group, _graph->container_group(_current_group).size(), true));
-}
+//     _graph->modified = true;
+//     _backup.push_command(new UndoStack::ObjectCommand(_graph->container_group(_current_group).back(), 
+//         _current_group, _graph->container_group(_current_group).size(), true));
+// }
 
 void Editer::append(Geo::Geometry *object)
 {
@@ -1150,6 +1169,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         break;
     case Geo::Type::TEXT:
     case Geo::Type::COMBINATION:
+    case Geo::Type::ARC:
         points->translate(x1 - x0, y1 - y0);
         break;
     case Geo::Type::POLYLINE:
@@ -1754,6 +1774,7 @@ bool Editer::offset(std::vector<Geo::Geometry *> objects, const double distance,
     Geo::Ellipse *ellipse = nullptr;
     Geo::BSpline *bspline = nullptr;
     Geo::Bezier *bezier = nullptr;
+    Geo::Arc *arc = nullptr;
     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> items;
     size_t index = count;
     for (Geo::Geometry *object : objects)
@@ -1845,6 +1866,16 @@ bool Editer::offset(std::vector<Geo::Geometry *> objects, const double distance,
                 shape1.back() = (path_points.back() + (path_points.back() - path_points[path_points.size() - 2]).vertical().normalize() * distance);
 
                 _graph->append(new Geo::Bezier(shape1.begin(), shape1.end(), bezier->order(), true), _current_group);
+                items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
+            }
+            break;
+        case Geo::Type::ARC:
+            arc = static_cast<Geo::Arc *>(object);
+            if (distance >= 0 || -distance < arc->radius)
+            {
+                const Geo::Point center(arc->x, arc->y);
+                _graph->append(new Geo::Arc(arc->x, arc->y, arc->radius + distance, Geo::angle(center, arc->control_points[0]),
+                    Geo::angle(center, arc->control_points[2]), !arc->is_cw()), _current_group);
                 items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
             }
             break;
@@ -2400,6 +2431,29 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
             }
         }
         break;
+    case Geo::Type::ARC:
+        {
+            Geo::Arc *arc = static_cast<Geo::Arc *>(object);
+            Geo::Arc arc0, arc1;
+            Geo::Point point0, point1;
+            if (Geo::is_intersected(pos, Geo::Point(arc->x, arc->y), *arc, point0, point1) 
+                && Geo::split(*arc, point0, arc0, arc1))
+            {
+                std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
+                size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                    std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), object));
+                remove.emplace_back(object, _current_group, index);
+                _graph->container_group(_current_group).pop(index);
+                _graph->container_group(_current_group).insert(index, new Geo::Arc(arc1));
+                _graph->container_group(_current_group).insert(index, new Geo::Arc(arc0));
+                append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                append.emplace_back(_graph->container_group(_current_group)[index + 1], _current_group, index + 1);
+                _backup.push_command(new UndoStack::ObjectCommand(append, remove));
+                return true;
+            }
+        }
+        break;
     default:
         break;
     }
@@ -2910,6 +2964,21 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
                 }
             }
             break;
+        case Geo::Type::ARC:
+            {
+                Geo::Point point0, point1;
+                switch (Geo::is_intersected(head, tail, *static_cast<const Geo::Arc *>(object), point0, point1))
+                {
+                case 2:
+                    intersections.emplace_back(point1);
+                case 1:
+                    intersections.emplace_back(point0);
+                    break;
+                default:
+                    break;
+                }
+            }
+            break;
         default:
             break;
         }
@@ -3214,6 +3283,21 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
                             intersections.emplace_back(coord);
                         }
                     }
+                }
+            }
+            break;
+        case Geo::Type::ARC:
+            {
+                Geo::Point point0, point1;
+                switch (Geo::is_intersected(head, tail, *static_cast<const Geo::Arc *>(object), point0, point1))
+                {
+                case 2:
+                    intersections.emplace_back(point1);
+                case 1:
+                    intersections.emplace_back(point0);
+                    break;
+                default:
+                    break;
                 }
             }
             break;
@@ -3605,14 +3689,6 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         switch (object->type())
         {
         case Geo::Type::POLYGON:
-            {
-                const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
-                for (size_t i = 1, count = polygon->size(); i < count; ++i)
-                {
-                    Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], anchor_bezier, temp, false, &tvalues);
-                }
-            }
-            break;
         case Geo::Type::POLYLINE:
             {
                 const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
@@ -3637,6 +3713,9 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         case Geo::Type::BSPLINE:
             Geo::is_intersected(anchor_bezier, *static_cast<const Geo::BSpline *>(object),
                 dynamic_cast<const Geo::CubicBSpline *>(object), temp, &tvalues);
+            break;
+        case Geo::Type::ARC:
+            Geo::is_intersected(*static_cast<const Geo::Arc *>(object), anchor_bezier, temp, &tvalues);
             break;
         default:
             break;
@@ -4056,14 +4135,6 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
         switch (object->type())
         {
         case Geo::Type::POLYGON:
-            {
-                const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
-                for (size_t i = 1, count = polygon->size(); i < count; ++i)
-                {
-                    Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], *bspline, is_cubic, temp, false, &tvalues);
-                }
-            }
-            break;
         case Geo::Type::POLYLINE:
             {
                 const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
@@ -4088,6 +4159,9 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
                 Geo::is_intersected(*bspline, is_cubic, *static_cast<const Geo::BSpline *>(object),
                     dynamic_cast<const Geo::CubicBSpline *>(object), temp, &tvalues, nullptr);
             }
+            break;
+        case Geo::Type::ARC:
+            Geo::is_intersected(*static_cast<const Geo::Arc *>(object), *bspline, is_cubic, temp, &tvalues);
             break;
         default:
             break;
@@ -4283,6 +4357,344 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
     } 
 }
 
+void Editer::trim(Geo::Circle *circle, const double x, const double y)
+{
+    std::vector<Geo::Point> intersections;
+    for (const Geo::Geometry *object : _graph->container_group(_current_group))
+    {
+        std::vector<Geo::Point> temp;
+        switch (object->type())
+        {
+        case Geo::Type::POLYGON:
+        case Geo::Type::POLYLINE:
+            {
+                const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
+                Geo::Point point0, point1;
+                for (size_t i = 1, count = polyline->size(); i < count; ++i)
+                {
+                    switch (Geo::is_intersected((*polyline)[i - 1], (*polyline)[i], *circle, point0, point1))
+                    {
+                    case 2:
+                        intersections.emplace_back(point1);
+                    case 1:
+                        intersections.emplace_back(point0);
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            {
+                Geo::Point point0, point1;
+                switch (Geo::is_intersected(*static_cast<const Geo::Circle *>(object), *circle, point0, point1))
+                {
+                case 2:
+                    intersections.emplace_back(point1);
+                case 1:
+                    intersections.emplace_back(point0);
+                    break;
+                default:
+                    break;
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            {
+                Geo::Point point0, point1, point2, point3;
+                switch (Geo::is_intersected(*circle, *static_cast<const Geo::Ellipse *>(object), point0, point1, point2, point3))
+                {
+                case 4:
+                    intersections.emplace_back(point3);
+                case 3:
+                    intersections.emplace_back(point2);
+                case 2:
+                    intersections.emplace_back(point1);
+                case 1:
+                    intersections.emplace_back(point0);
+                    break;
+                default:
+                    break;
+                }
+            }
+            break;
+        case Geo::Type::BEZIER:
+            Geo::is_intersected(*circle, *static_cast<const Geo::Bezier *>(object), intersections, nullptr);
+            break;
+        case Geo::Type::BSPLINE:
+            Geo::is_intersected(*circle, *static_cast<const Geo::BSpline *>(object),
+                dynamic_cast<const Geo::CubicBSpline *>(object), intersections, nullptr);
+            break;
+        case Geo::Type::ARC:
+            {
+                Geo::Point point0, point1;
+                switch (Geo::is_intersected(*circle, *static_cast<const Geo::Arc *>(object), point0, point1))
+                {
+                case 2:
+                    intersections.emplace_back(point1);
+                case 1:
+                    intersections.emplace_back(point0);
+                    break;
+                default:
+                    break;
+                }
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (intersections.size() < 2)
+    {
+        return;
+    }
+
+    Geo::Point anchor(x, y);
+    double angle0 = -7, angle1 = 7;
+    size_t index0 = 0, index1 = intersections.size() - 1;
+    for (size_t i = 0, count = intersections.size(); i < count; ++i)
+    {
+        const double value = Geo::angle(anchor, *circle, intersections[i]);
+        if (value < 0 && value > angle0)
+        {
+            angle0 = value;
+            index0 = i;
+        }
+        if (value > 0 && value < angle1)
+        {
+            angle1 = value;
+            index1 = i;
+        }
+    }
+
+    angle0 = Geo::angle(*circle, intersections[index0]);
+    angle1 = Geo::angle(*circle, intersections[index1]);
+    anchor = *circle + (anchor - *circle).normalize() * circle->radius;
+    Geo::Arc *arc = new Geo::Arc(circle->x, circle->y, circle->radius, angle0, angle1,
+        (anchor.x - intersections[index0].x) * (intersections[index1].y - anchor.y) <
+        (anchor.y - intersections[index0].y) * (intersections[index1].x - anchor.x));
+
+    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
+    {
+        if (_graph->container_group(_current_group)[i] == circle)
+        {
+            remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+            _graph->container_group(_current_group).insert(i, arc);
+            add_items.emplace_back(arc, _current_group, i);
+            break;
+        }
+    }
+    _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+}
+
+void Editer::trim(Geo::Arc *arc, const double x, const double y)
+{
+    std::vector<Geo::Point> intersections;
+    for (const Geo::Geometry *object : _graph->container_group(_current_group))
+    {
+        std::vector<Geo::Point> temp;
+        switch (object->type())
+        {
+        case Geo::Type::POLYGON:
+        case Geo::Type::POLYLINE:
+            {
+                const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
+                Geo::Point point0, point1;
+                for (size_t i = 1, count = polyline->size(); i < count; ++i)
+                {
+                    switch (Geo::is_intersected((*polyline)[i - 1], (*polyline)[i], *arc, point0, point1))
+                    {
+                    case 2:
+                        intersections.emplace_back(point1);
+                    case 1:
+                        intersections.emplace_back(point0);
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            {
+                Geo::Point point0, point1;
+                switch (Geo::is_intersected(*static_cast<const Geo::Circle *>(object), *arc, point0, point1))
+                {
+                case 2:
+                    intersections.emplace_back(point1);
+                case 1:
+                    intersections.emplace_back(point0);
+                    break;
+                default:
+                    break;
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            {
+                Geo::Point point0, point1, point2, point3;
+                switch (Geo::is_intersected(*static_cast<const Geo::Ellipse *>(object), *arc, point0, point1, point2, point3))
+                {
+                case 4:
+                    intersections.emplace_back(point3);
+                case 3:
+                    intersections.emplace_back(point2);
+                case 2:
+                    intersections.emplace_back(point1);
+                case 1:
+                    intersections.emplace_back(point0);
+                    break;
+                default:
+                    break;
+                }
+            }
+            break;
+        case Geo::Type::BEZIER:
+            Geo::is_intersected(*arc, *static_cast<const Geo::Bezier *>(object), intersections, nullptr);
+            break;
+        case Geo::Type::BSPLINE:
+            Geo::is_intersected(*arc, *static_cast<const Geo::BSpline *>(object),
+                dynamic_cast<const Geo::CubicBSpline *>(object), intersections, nullptr);
+            break;
+        case Geo::Type::ARC:
+            if (arc != object)
+            {
+                Geo::Point point0, point1;
+                switch (Geo::is_intersected(*arc, *static_cast<const Geo::Arc *>(object), point0, point1))
+                {
+                case 2:
+                    intersections.emplace_back(point1);
+                case 1:
+                    intersections.emplace_back(point0);
+                    break;
+                default:
+                    break;
+                }
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    for (size_t i = 0, count = intersections.size(); i < count; ++i)
+    {
+        if (Geo::distance(intersections[i], arc->control_points[0]) < Geo::EPSILON ||
+            Geo::distance(intersections[i], arc->control_points[2]) < Geo::EPSILON)
+        {
+            --count;
+            intersections.erase(intersections.begin() + i--);
+        }
+    }
+
+    if (intersections.empty())
+    {
+        return;
+    }
+
+    Geo::Point anchor(x, y), center(arc->x, arc->y);
+    double anchor_angle = Geo::angle(arc->control_points[0], center, anchor);
+    if (arc->is_cw()) // 计算圆弧起点沿圆弧方向转动到修剪点所转过的角度
+    {
+        if (anchor_angle > 0)
+        {
+            anchor_angle -= Geo::PI * 2;
+        }
+    }
+    else
+    {
+        if (anchor_angle < 0)
+        {
+            anchor_angle += Geo::PI * 2;
+        }
+    }
+    double angle0 = 0, angle1 = 7;
+    size_t index0 = SIZE_MAX, index1 = SIZE_MAX;
+    for (size_t i = 0, count = intersections.size(); i < count; ++i)
+    {
+        double value = Geo::angle(arc->control_points[0], center, intersections[i]);
+        if (arc->is_cw()) // 计算圆弧起点沿圆弧方向转动到交点所转过的角度
+        {
+            if (value > 0)
+            {
+                value -= Geo::PI * 2;
+            }
+        }
+        else
+        {
+            if (value < 0)
+            {
+                value += Geo::PI * 2;
+            }
+        }
+        if (std::abs(value) > std::abs(angle0) && std::abs(value) < std::abs(anchor_angle))
+        { // 转过角度小于修剪点转过角度的最大值
+            angle0 = value;
+            index0 = i;
+        }
+        if (std::abs(value) < std::abs(angle1) && std::abs(value) > std::abs(anchor_angle))
+        { // 转过角度大于修剪点转过角度的最小值
+            angle1 = value;
+            index1 = i;
+        }
+    }
+    // 使位置分布为control_points[0],intersections[index0],intersections[index1],control_points[2]
+    anchor = center + (anchor - center).normalize() * arc->radius;
+    Geo::Arc *arc0 = nullptr, *arc1 = nullptr;
+    if (index0 < SIZE_MAX && index1 < SIZE_MAX)
+    {
+        angle0 = Geo::angle(center, intersections[index0]);
+        angle1 = Geo::angle(center, intersections[index1]);
+        const double angle2 = Geo::angle(center, arc->control_points[0]);
+        const double angle3 = Geo::angle(center, arc->control_points[2]);
+        arc0 = new Geo::Arc(arc->x, arc->y, arc->radius, angle2, angle0, !arc->is_cw());
+        arc1 = new Geo::Arc(arc->x, arc->y, arc->radius, angle1, angle3, !arc->is_cw());
+    }
+    else
+    {
+        if (index0 < SIZE_MAX)
+        {
+            angle0 = Geo::angle(center, intersections[index0]);
+            arc0 = new Geo::Arc(arc->x, arc->y, arc->radius,
+                Geo::angle(center, arc->control_points[0]), angle0, !arc->is_cw());
+        }
+        if (index1 < SIZE_MAX)
+        {
+            angle1 = Geo::angle(center, intersections[index1]);
+            arc1 = new Geo::Arc(arc->x, arc->y, arc->radius, angle1,
+                Geo::angle(center, arc->control_points[2]), !arc->is_cw());
+        }
+    }
+
+    if (arc0 == nullptr && arc1 == nullptr)
+    {
+        return;
+    }
+    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
+    {
+        if (_graph->container_group(_current_group)[i] == arc)
+        {
+            remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+            if (arc0 != nullptr)
+            {
+                _graph->container_group(_current_group).insert(i, arc0);
+                add_items.emplace_back(arc0, _current_group, i++);
+            }
+            if (arc1 != nullptr)
+            {
+                _graph->container_group(_current_group).insert(i, arc1);
+                add_items.emplace_back(arc1, _current_group, i);
+            }
+            break;
+        }
+    }
+    _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+}
+
 void Editer::extend(Geo::Polyline *polyline, const double x, const double y)
 {
     Geo::Point head, tail;
@@ -4402,6 +4814,21 @@ void Editer::extend(Geo::Polyline *polyline, const double x, const double y)
                             intersections.emplace_back(coord);
                         }
                     }
+                }
+            }
+            break;
+        case Geo::Type::ARC:
+            {
+                Geo::Point point0, point1;
+                switch (Geo::is_intersected(head, tail, *static_cast<const Geo::Arc *>(object), point0, point1))
+                {
+                case 2:
+                    intersections.emplace_back(point1);
+                case 1:
+                    intersections.emplace_back(point0);
+                    break;
+                default:
+                    break;
                 }
             }
             break;
@@ -4991,6 +5418,7 @@ void Editer::auto_combinate()
             case Geo::Type::BEZIER:
             case Geo::Type::BSPLINE:
             case Geo::Type::TEXT:
+            case Geo::Type::ARC:
                 lengths.insert_or_assign(group.back(), group.back()->length());
                 all_polylines.push_back(group.pop_back());
                 break;
@@ -5399,6 +5827,7 @@ void Editer::auto_layering()
             case Geo::Type::POLYLINE:
             case Geo::Type::BEZIER:
             case Geo::Type::BSPLINE:
+            case Geo::Type::ARC:
                 all_polylines.emplace_back(group.pop_back());
                 break;
             default:
@@ -5875,6 +6304,12 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
                             end = true;
                         }
                         break;
+                    case Geo::Type::ARC:
+                        if (Geo::is_intersected(rect, *static_cast<Geo::Arc *>(item)))
+                        {
+                            end = true;
+                        }
+                        break;
                     default:
                         break;
                     }
@@ -5906,6 +6341,13 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
             break;
         case Geo::Type::BSPLINE:
             if (Geo::is_intersected(rect, static_cast<Geo::BSpline *>(container)->shape()))
+            {
+                container->is_selected = true;
+                result->push_back(container);
+            }
+            break;
+        case Geo::Type::ARC:
+            if (Geo::is_intersected(rect, *static_cast<Geo::Arc *>(container)))
             {
                 container->is_selected = true;
                 result->push_back(container);

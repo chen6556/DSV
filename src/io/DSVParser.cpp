@@ -28,7 +28,8 @@ void Importer::store_polygon()
     {
         if (_is_combination)
         {
-            static_cast<Combination *>(_graph->container_groups().back().back())->append(new Geo::Polygon(_points.cbegin(), _points.cend()));
+            static_cast<Combination *>(_graph->container_groups().back().back())->append(
+                new Geo::Polygon(_points.cbegin(), _points.cend()));
         }
         else
         {
@@ -39,7 +40,8 @@ void Importer::store_polygon()
     {
         if (_is_combination)
         {
-            static_cast<Combination *>(_graph->container_groups().back().back())->append(new Geo::Polygon(_points.cbegin(), _points.cend()));
+            static_cast<Combination *>(_graph->container_groups().back().back())->append(
+                new Geo::Polygon(_points.cbegin(), _points.cend()));
         }
         else
         {
@@ -86,7 +88,8 @@ void Importer::store_polyline()
 {
     if (_is_combination)
     {
-        static_cast<Combination *>(_graph->container_groups().back().back())->append(new Geo::Polyline(_points.cbegin(), _points.cend()));
+        static_cast<Combination *>(_graph->container_groups().back().back())->append(
+            new Geo::Polyline(_points.cbegin(), _points.cend()));
     }
     else
     {
@@ -155,12 +158,27 @@ void Importer::store_text()
 {
     if (_is_combination)
     {
-        static_cast<Combination *>(_graph->container_groups().back().back())->append(new Text(_points.back().x, _points.back().y, 12, QString::fromStdString(_text)));
+        static_cast<Combination *>(_graph->container_groups().back().back())->append(
+            new Text(_points.back().x, _points.back().y, 12, QString::fromStdString(_text)));
     }
     else
     {
-        _graph->container_groups().back().append(new Text(_points.back().x,
-                                                          _points.back().y, 12, QString::fromStdString(_text)));
+        _graph->container_groups().back().append(
+            new Text(_points.back().x, _points.back().y, 12, QString::fromStdString(_text)));
+    }
+    _points.clear();
+}
+
+void Importer::store_arc()
+{
+    if (_is_combination)
+    {
+        static_cast<Combination *>(_graph->container_groups().back().back())->append(
+            new Geo::Arc(_points[0], _points[1], _points[2]));
+    }
+    else
+    {
+        _graph->container_groups().back().append(new Geo::Arc(_points[0], _points[1], _points[2]));
     }
     _points.clear();
 }
@@ -219,6 +237,7 @@ static Action<void> bezier_a(&importer, &Importer::store_bezier);
 static Action<void> bspline_a(&importer, &Importer::store_bspline);
 static Action<void> text_a(&importer, &Importer::store_text);
 static Action<std::string> str_a(&importer, &Importer::store_text);
+static Action<void> arc_a(&importer, &Importer::store_arc);
 static Action<void> begin_combination_a(&importer, &Importer::begin_combination);
 static Action<void> end_combination_a(&importer, &Importer::end_combination);
 static Action<void> group_a(&importer, &Importer::store_group);
@@ -236,10 +255,11 @@ static Parser<bool> polyline = str_p("POLYLINE") >> !eol_p() >> list_p(coord, se
 static Parser<bool> bezier = str_p("BEZIER") >> !eol_p() >> parameter >> separator >> list_p(coord, separator) >> !eol_p() >> end[bezier_a];
 static Parser<bool> bspline = str_p("BSPLINE") >> !eol_p() >> parameter >> separator >> list_p(coord, separator) >> !eol_p() >> end[bspline_a];
 static Parser<bool> text = str_p("TEXT") >> str >> !eol_p() >> coord >> !eol_p() >> end[text_a];
+static Parser<bool> arc = str_p("ARC") >> !eol_p() >> coord >> separator >> coord >> separator >> coord >> !eol_p() >> end[arc_a];
 static Parser<bool> combination = str_p("COMBINATION")[begin_combination_a] >> !eol_p() >>
                            +(polygon | polyline | circle | ellipse | text | bezier) >> end[end_combination_a];
 static Parser<bool> group = str_p("GROUP") >> str[group_a] >> !eol_p() >>
-                     *(polygon | polyline | circle | ellipse | text | combination | bezier | bspline) >> str_p("END") >> !eol_p();
+                    *(polygon | polyline | circle | ellipse | text | arc | combination | bezier | bspline) >> str_p("END") >> !eol_p();
 static Parser<bool> dsv = +group;
 
 

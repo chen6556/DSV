@@ -20,6 +20,10 @@ namespace CanvasOperations
         Circle1, // 2-Point
         Circle2, // 3-Point
         Polyline, 
+        Arc0, // 3-Point
+        Arc1, // Start-Center-End
+        Arc2, // Start-End-Angle
+        Arc3, // Start-End-Radius
         Rectangle,
         Polygon0,
         Polygon1, 
@@ -257,6 +261,94 @@ namespace CanvasOperations
     };
 
 
+    class Arc0Operation : public CanvasOperation
+    {
+    private:
+        double _parameters[6];
+        int _index = 0;
+        ParamType _param_type = ParamType::LengthAngle;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+
+        bool read_parameters(const double *params, const int count) override;
+
+        QString cmd_tips() const override;
+
+        void switch_parameters_type() override;
+    };
+
+
+    class Arc1Operation : public CanvasOperation
+    {
+    private:
+        double _parameters[5];
+        int _index = 0;
+        ParamType _param_type = ParamType::LengthAngle;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+
+        bool read_parameters(const double *params, const int count) override;
+
+        QString cmd_tips() const override;
+
+        void switch_parameters_type() override;    
+    };
+
+
+    class Arc2Operation : public CanvasOperation
+    {
+    private:
+        double _parameters[5];
+        int _index = 0;
+        ParamType _param_type = ParamType::LengthAngle;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+
+        bool read_parameters(const double *params, const int count) override;
+
+        QString cmd_tips() const override;
+
+        void switch_parameters_type() override;
+    };
+
+
+    class Arc3Operation : public CanvasOperation
+    {
+    private:
+        double _parameters[5];
+        int _index = 0;
+        ParamType _param_type = ParamType::LengthAngle;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+
+        bool read_parameters(const double *params, const int count) override;
+
+        QString cmd_tips() const override;
+
+        void switch_parameters_type() override;
+    };
+
+
     class RectangleOperation : public CanvasOperation
     {
     private:
@@ -417,13 +509,8 @@ namespace CanvasOperations
 
     class PolygonDifferenceOperation : public CanvasOperation
     {
-    private:
-        Geo::Polygon *_polygon = nullptr;
-
     public:
         bool mouse_press(QMouseEvent *event) override;
-
-        void reset() override;
     };
 
 

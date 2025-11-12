@@ -1,6 +1,7 @@
 <!DOCTYPE RCC>
 <RCC>
   <qresource prefix="/">
+    <file>icons/arc/3p_arc_btn.png</file>
     <file>icons/button_arrow.png</file>
     <file>icons/split_btn.png</file>
     <file>icons/angle_btn.png</file>
@@ -27,7 +28,6 @@
     <file>icons/close_btn.png</file>
     <file>DSV2.ico</file>
     <file>icons/curve_btn.png</file>
-    <file>icons/polyline_btn.png</file>
     <file>icons/measure_btn.png</file>
     <file>icons/attention.svg</file>
     <file>icons/help.svg</file>
@@ -40,5 +40,9 @@
     <file>icons/polygon/rectangle_btn.png</file>
     <file>icons/polygon/polygon_circumscribed_btn.png</file>
     <file>icons/polygon/polygon_inscribed_btn.png</file>
+    <file>icons/polygon/polyline_btn.png</file>
+    <file>icons/arc/sca_arc_btn.png</file>
+    <file>icons/arc/sea_arc_btn.png</file>
+    <file>icons/arc/ser_arc_btn.png</file>
   </qresource>
 </RCC>

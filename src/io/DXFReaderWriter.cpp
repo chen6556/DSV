@@ -292,29 +292,29 @@ void DXFReaderWriter::addArc(const DRW_Arc &data)
         {
             if (group.name.toStdString() == data.layer)
             {
-                Geo::Polyline *polyline = new Geo::Polyline(Geo::arc_to_polyline(Geo::Point(data.basePoint.x, data.basePoint.y), 
-                    data.radious, data.staangle, data.endangle, !data.isccw, Geo::Circle::default_down_sampling_value));
-                group.append(polyline);
-                _object_map[polyline] = data.handle;
-                _handle_map[data.handle] = polyline;
+                Geo::Arc *arc = new Geo::Arc(data.basePoint.x, data.basePoint.y, data.radious,
+                    data.staangle, data.endangle, static_cast<bool>(data.isccw));
+                group.append(arc);
+                _object_map[arc] = data.handle;
+                _handle_map[data.handle] = arc;
                 return;
             }
         }
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
-        Geo::Polyline *polyline = new Geo::Polyline(Geo::arc_to_polyline(Geo::Point(data.basePoint.x,
-            data.basePoint.y), data.radious, data.staangle, data.endangle, !data.isccw, Geo::Circle::default_down_sampling_value));
-        _graph->container_groups().back().append(polyline);
-        _object_map[polyline] = data.handle;
-        _handle_map[data.handle] = polyline;
+        Geo::Arc *arc = new Geo::Arc(data.basePoint.x, data.basePoint.y, data.radious,
+            data.staangle, data.endangle, static_cast<bool>(data.isccw));
+        _graph->container_groups().back().append(arc);
+        _object_map[arc] = data.handle;
+        _handle_map[data.handle] = arc;
     }
     else
     {
-        Geo::Polyline *polyline = new Geo::Polyline(Geo::arc_to_polyline(Geo::Point(data.basePoint.x, data.basePoint.y),
-            data.radious, data.staangle, data.endangle, !data.isccw, Geo::Circle::default_down_sampling_value));
-        _combination->append(polyline);
-        _object_map[polyline] = data.handle;
-        _handle_map[data.handle] = polyline;
+        Geo::Arc *arc = new Geo::Arc(data.basePoint.x, data.basePoint.y, data.radious,
+            data.staangle, data.endangle, static_cast<bool>(data.isccw));
+        _combination->append(arc);
+        _object_map[arc] = data.handle;
+        _handle_map[data.handle] = arc;
     }
 }
 
@@ -1022,6 +1022,9 @@ void DXFReaderWriter::write_geometry_object(const Geo::Geometry *object)
     case Geo::Type::ELLIPSE:
         write_ellipse(static_cast<const Geo::Ellipse *>(object));
         break;
+    case Geo::Type::ARC:
+        write_arc(static_cast<const Geo::Arc *>(object));
+        break;
     case Geo::Type::LINE:
         write_line(static_cast<const Geo::Line *>(object));
         break;
@@ -1168,6 +1171,28 @@ void DXFReaderWriter::write_text(const Text *text)
     t.alignH = DRW_Text::HAlign::HCenter;
     t.alignV = DRW_Text::VAlign::VMiddle;
     _dxfrw->writeText(&t);
+}
+
+void DXFReaderWriter::write_arc(const Geo::Arc *arc)
+{
+    DRW_Arc a;
+    a.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    a.lineType = "CONTINUOUS";
+    a.basePoint.x = arc->x;
+    a.basePoint.y = arc->y;
+    a.radious = arc->radius;
+    a.isccw = !arc->is_cw();
+    if (a.isccw)
+    {
+        a.staangle = Geo::angle(Geo::Point(arc->x, arc->y), arc->control_points[0]);
+        a.endangle = Geo::angle(Geo::Point(arc->x, arc->y), arc->control_points[2]);
+    }
+    else
+    {
+        a.staangle = Geo::angle(Geo::Point(arc->x, arc->y), arc->control_points[2]);
+        a.endangle = Geo::angle(Geo::Point(arc->x, arc->y), arc->control_points[0]);
+    }
+    _dxfrw->writeArc(&a);
 }
 
 void DXFReaderWriter::check_block()

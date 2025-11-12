@@ -46,6 +46,10 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::Circle1)] = new Circle1Operation();
     operations[static_cast<int>(Tool::Circle2)] = new Circle2Operation();
     operations[static_cast<int>(Tool::Polyline)] = new PolythingOperation();
+    operations[static_cast<int>(Tool::Arc0)] = new Arc0Operation();
+    operations[static_cast<int>(Tool::Arc1)] = new Arc1Operation();
+    operations[static_cast<int>(Tool::Arc2)] = new Arc2Operation();
+    operations[static_cast<int>(Tool::Arc3)] = new Arc3Operation();
     operations[static_cast<int>(Tool::Rectangle)] = new RectangleOperation();
     operations[static_cast<int>(Tool::Polygon0)] = new CircumscribedPolygonOperation();
     operations[static_cast<int>(Tool::Polygon1)] = new InscribedPolygonOperation();
@@ -1015,7 +1019,7 @@ bool Circle2Operation::read_parameters(const double *params, const int count)
         }
         break;
     case 2:
-        if (count >= 0)
+        if (count >= 2)
         {
             if (_param_type == ParamType::LengthAngle)
             {
@@ -1280,6 +1284,708 @@ void PolythingOperation::switch_parameters_type()
 }
 
 
+bool Arc0Operation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index++)
+        {
+        case 0:
+            _parameters[0] = real_pos[0];
+            _parameters[1] = real_pos[1];
+            tool_lines[0] = tool_lines[3] = tool_lines[6] = real_pos[0];
+            tool_lines[1] = tool_lines[4] = tool_lines[7] = real_pos[1];
+            tool_lines_count = 6;
+            break;
+        case 1:
+            _parameters[2] = real_pos[0];
+            _parameters[3] = real_pos[1];
+            tool_lines[3] = tool_lines[6] = tool_lines[9] = real_pos[0];
+            tool_lines[4] = tool_lines[7] = tool_lines[10] = real_pos[1];
+            tool_lines_count = 12;
+            break;
+        case 2:
+            _parameters[4] = real_pos[0], _parameters[5] = real_pos[1];
+            canvas->add_geometry(new Geo::Arc(_parameters[0], _parameters[1],
+                _parameters[2], _parameters[3], _parameters[4], _parameters[5]));
+            _index = shape_count = tool_lines_count = 0;
+            tool[0] = Tool::Select;
+            info.clear();
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Arc0Operation::mouse_move(QMouseEvent *event)
+{
+    switch (_index)
+    {
+    case 1:
+        _parameters[2] = real_pos[0];
+        _parameters[3] = real_pos[1];
+        tool_lines[3] = tool_lines[6] = real_pos[0];
+        tool_lines[4] = tool_lines[7] = real_pos[1];
+        info = QString("Length:%1").arg(Geo::distance(_parameters[0],
+            _parameters[1], _parameters[2], _parameters[3]));
+        return true;
+    case 2:
+        {
+            _parameters[4] = tool_lines[9] = real_pos[0];
+            _parameters[5] = tool_lines[10] = real_pos[1];
+            const Geo::Polyline points = Geo::Arc(_parameters[0], _parameters[1],
+                _parameters[2], _parameters[3], _parameters[4], _parameters[5]).shape();
+            shape_count = 0;
+            check_shape_size(points.size() * 3);
+            for (const Geo::Point &point : points)
+            {
+                shape[shape_count++] = point.x;
+                shape[shape_count++] = point.y;
+                ++shape_count;
+            }
+            info = QString("Length:%1 Angle:%2°").arg(Geo::distance(_parameters[2],
+                _parameters[3], _parameters[4], _parameters[5])).arg(Geo::rad_to_degree(
+                    Geo::angle(Geo::Point(_parameters[0], _parameters[1]),
+                    Geo::Point(_parameters[2], _parameters[3]), Geo::Point(_parameters[4], _parameters[5]))));
+        }
+        return true;
+    default:
+        break;
+    }
+    return false;
+}
+
+void Arc0Operation::reset()
+{
+    _index = 0;
+}
+
+bool Arc0Operation::read_parameters(const double *params, const int count)
+{
+    switch (_index)
+    {
+    case 0:
+        if (count >= 2)
+        {
+            _parameters[0] = params[0];
+            _parameters[1] = params[1];
+            tool_lines[0] = tool_lines[3] = tool_lines[6] = params[0];
+            tool_lines[1] = tool_lines[4] = tool_lines[7] = params[1];
+            tool_lines_count = 6;
+            _index++;
+            return true;
+        }
+        break;
+    case 1:
+        if (count >= 2)
+        {
+            if (_param_type == ParamType::LengthAngle)
+            {
+                if (params[0] <= 0)
+                {
+                    return false;
+                }
+                _parameters[2] = _parameters[0] + std::cos(Geo::rad_to_degree(params[1])) * params[0];
+                _parameters[3] = _parameters[1] + std::sin(Geo::rad_to_degree(params[1])) * params[0];
+            }
+            else
+            {
+                if (absolute_coord)
+                {
+                    if (params[0] == _parameters[0] && params[1] == _parameters[1])
+                    {
+                        return false;
+                    }
+                    _parameters[2] = params[0], _parameters[3] = params[1];
+                }
+                else
+                {
+                    if (params[0] == 0 && params[1] == 0)
+                    {
+                        return false;
+                    }
+                    _parameters[2] = _parameters[0] + params[0], _parameters[3] = _parameters[1] + params[1];
+                }
+            }
+            tool_lines[3] = tool_lines[6] = tool_lines[9] = _parameters[2];
+            tool_lines[4] = tool_lines[7] = tool_lines[10] = _parameters[3];
+            tool_lines_count = 12;
+            _index++;
+            return true;
+        }
+        break;
+    case 2:
+        if (count >= 2)
+        {
+            if (_param_type == ParamType::LengthAngle)
+            {
+                if (params[0] <= 0)
+                {
+                    return false;
+                }
+                _parameters[4] = _parameters[2] + std::cos(Geo::rad_to_degree(params[1])) * params[0];
+                _parameters[5] = _parameters[3] + std::sin(Geo::rad_to_degree(params[1])) * params[0];
+            }
+            else
+            {
+                if (absolute_coord)
+                {
+                    if ((params[0] == _parameters[0] && params[1] == _parameters[1])
+                        || (params[0] == _parameters[2] && params[1] == _parameters[3]))
+                    {
+                        return false;
+                    }
+                    _parameters[4] = params[0], _parameters[5] = params[1];
+                }
+                else
+                {
+                    if ((params[0] == 0 && params[1] == 0) || (_parameters[2] + params[0] == _parameters[0]
+                        && _parameters[3] + params[1] == _parameters[1]))
+                    {
+                        return false;
+                    }
+                    _parameters[4] = _parameters[2] + params[0], _parameters[5] = _parameters[3] + params[1];
+                }
+            }
+            canvas->add_geometry(new Geo::Arc(_parameters[0], _parameters[1],
+                _parameters[2], _parameters[3], _parameters[4], _parameters[5]));
+            _index = shape_count = tool_lines_count = 0;
+            tool[0] = Tool::Select;
+            info.clear();
+            return true;
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+QString Arc0Operation::cmd_tips() const
+{
+    return _index == 0 ? "(x, y):" :
+        (_param_type == ParamType::LengthAngle ? "(length, angle):" : "(x, y):");
+}
+
+void Arc0Operation::switch_parameters_type()
+{
+    if (_index == 0)
+    {
+        return;
+    }
+    else
+    {
+        if (_param_type == ParamType::LengthAngle)
+        {
+            _param_type = ParamType::Coord;
+        }
+        else
+        {
+            _param_type = ParamType::LengthAngle;
+        }
+    }
+}
+
+
+bool Arc1Operation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index++)
+        {
+        case 0:
+            _parameters[0] = real_pos[0];
+            _parameters[1] = real_pos[1];
+            tool_lines[0] = tool_lines[3] = tool_lines[6] = real_pos[0];
+            tool_lines[1] = tool_lines[4] = tool_lines[7] = real_pos[1];
+            tool_lines_count = 6;
+            break;
+        case 1:
+            _parameters[2] = real_pos[0];
+            _parameters[3] = real_pos[1];
+            tool_lines[3] = tool_lines[6] = tool_lines[9] = real_pos[0];
+            tool_lines[4] = tool_lines[7] = tool_lines[10] = real_pos[1];
+            tool_lines_count = 12;
+            break;
+        case 2:
+            _parameters[4] = Geo::angle(Geo::Point(_parameters[0], _parameters[1]),
+                Geo::Point(_parameters[2], _parameters[3]), Geo::Point(real_pos[0], real_pos[1]));
+            canvas->add_geometry(new Geo::Arc(_parameters[0], _parameters[1], _parameters[2],
+                _parameters[3], _parameters[4], Geo::Arc::ParameterType::StartCenterAngle,
+                event->modifiers() != Qt::KeyboardModifier::ControlModifier));
+            _index = shape_count = tool_lines_count = 0;
+            tool[0] = Tool::Select;
+            info.clear();
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Arc1Operation::mouse_move(QMouseEvent *event)
+{
+    switch (_index)
+    {
+    case 1:
+        _parameters[2] = real_pos[0];
+        _parameters[3] = real_pos[1];
+        tool_lines[3] = tool_lines[6] = real_pos[0];
+        tool_lines[4] = tool_lines[7] = real_pos[1];
+        info = QString("Length:%1").arg(Geo::distance(_parameters[0],
+            _parameters[1], _parameters[2], _parameters[3]));
+        return true;
+    case 2:
+        {
+            tool_lines[9] = real_pos[0], tool_lines[10] = real_pos[1];
+            _parameters[4] = Geo::angle(Geo::Point(_parameters[0], _parameters[1]),
+                Geo::Point(_parameters[2], _parameters[3]), Geo::Point(real_pos[0], real_pos[1]));
+            const Geo::Polyline points = Geo::Arc(_parameters[0], _parameters[1], _parameters[2], 
+                _parameters[3], _parameters[4], Geo::Arc::ParameterType::StartCenterAngle,
+                event->modifiers() != Qt::KeyboardModifier::ControlModifier).shape();
+            shape_count = 0;
+            check_shape_size(points.size() * 3);
+            for (const Geo::Point &point : points)
+            {
+                shape[shape_count++] = point.x;
+                shape[shape_count++] = point.y;
+                ++shape_count;
+            }
+            info = QString("Angle:%1°").arg(Geo::rad_to_degree(_parameters[4]));
+        }
+        return true;
+    default:
+        break;
+    }
+    return false;
+}
+
+void Arc1Operation::reset()
+{
+    _index = 0;
+}
+
+bool Arc1Operation::read_parameters(const double *params, const int count)
+{
+    switch (_index)
+    {
+    case 0:
+        if (count >= 2)
+        {
+            _parameters[0] = params[0];
+            _parameters[1] = params[1];
+            tool_lines[0] = tool_lines[3] = tool_lines[6] = params[0];
+            tool_lines[1] = tool_lines[4] = tool_lines[7] = params[1];
+            tool_lines_count = 6;
+            _index++;
+            return true;
+        }
+        break;
+    case 1:
+        if (count >= 2)
+        {
+            if (_param_type == ParamType::LengthAngle)
+            {
+                if (params[0] <= 0)
+                {
+                    return false;
+                }
+                _parameters[2] = _parameters[0] + std::cos(Geo::rad_to_degree(params[1])) * params[0];
+                _parameters[3] = _parameters[1] + std::sin(Geo::rad_to_degree(params[1])) * params[0];
+            }
+            else
+            {
+                if (absolute_coord)
+                {
+                    if (params[0] == _parameters[0] && params[1] == _parameters[1])
+                    {
+                        return false;
+                    }
+                    _parameters[2] = params[0], _parameters[3] = params[1];
+                }
+                else
+                {
+                    if (params[0] == 0 && params[1] == 0)
+                    {
+                        return false;
+                    }
+                    _parameters[2] = _parameters[0] + params[0], _parameters[3] = _parameters[1] + params[1];
+                }
+            }
+            tool_lines[3] = tool_lines[6] = tool_lines[9] = _parameters[2];
+            tool_lines[4] = tool_lines[7] = tool_lines[10] = _parameters[3];
+            tool_lines_count = 12;
+            _index++;
+            return true;
+        }
+        break;
+    case 2:
+        if (count >= 1 && params[0] != 0)
+        {
+            _parameters[4] = std::abs(Geo::degree_to_rad(params[0]));
+            canvas->add_geometry(new Geo::Arc(_parameters[0], _parameters[1], _parameters[2],
+                _parameters[3], _parameters[4], Geo::Arc::ParameterType::StartCenterAngle, params[0] > 0));
+            _index = shape_count = tool_lines_count = 0;
+            tool[0] = Tool::Select;
+            info.clear();
+            return true;
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+QString Arc1Operation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "(x, y):";
+    case 1:
+        return _param_type == ParamType::LengthAngle ? "(length, angle):" : "(x, y):";
+    default:
+        return "angle:";
+    }
+}
+
+void Arc1Operation::switch_parameters_type()
+{
+    if (_index == 0 || _index == 2)
+    {
+        return;
+    }
+    else
+    {
+        if (_param_type == ParamType::LengthAngle)
+        {
+            _param_type = ParamType::Coord;
+        }
+        else
+        {
+            _param_type = ParamType::LengthAngle;
+        }
+    }
+}
+
+
+bool Arc2Operation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index++)
+        {
+        case 0:
+            _parameters[0] = real_pos[0];
+            _parameters[1] = real_pos[1];
+            tool_lines[0] = tool_lines[3] = tool_lines[6] = real_pos[0];
+            tool_lines[1] = tool_lines[4] = tool_lines[7] = real_pos[1];
+            tool_lines_count = 6;
+            break;
+        case 1:
+            _parameters[2] = real_pos[0];
+            _parameters[3] = real_pos[1];
+            tool_lines[3] = tool_lines[6] = tool_lines[9] = real_pos[0];
+            tool_lines[4] = tool_lines[7] = tool_lines[10] = real_pos[1];
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Arc2Operation::mouse_move(QMouseEvent *event)
+{
+    if (_index == 1)
+    {
+        _parameters[2] = real_pos[0];
+        _parameters[3] = real_pos[1];
+        tool_lines[3] = tool_lines[6] = real_pos[0];
+        tool_lines[4] = tool_lines[7] = real_pos[1];
+        info = QString("Length:%1").arg(Geo::distance(_parameters[0],
+            _parameters[1], _parameters[2], _parameters[3]));
+        return true;
+    }
+    return false;
+}
+
+void Arc2Operation::reset()
+{
+    _index = 0;
+}
+
+bool Arc2Operation::read_parameters(const double *params, const int count)
+{
+    switch (_index)
+    {
+    case 0:
+        if (count >= 2)
+        {
+            _parameters[0] = params[0];
+            _parameters[1] = params[1];
+            tool_lines[0] = tool_lines[3] = tool_lines[6] = params[0];
+            tool_lines[1] = tool_lines[4] = tool_lines[7] = params[1];
+            tool_lines_count = 6;
+            _index++;
+            return true;
+        }
+        break;
+    case 1:
+        if (count >= 2)
+        {
+            if (_param_type == ParamType::LengthAngle)
+            {
+                if (params[0] <= 0)
+                {
+                    return false;
+                }
+                _parameters[2] = _parameters[0] + std::cos(Geo::rad_to_degree(params[1])) * params[0];
+                _parameters[3] = _parameters[1] + std::sin(Geo::rad_to_degree(params[1])) * params[0];
+            }
+            else
+            {
+                if (absolute_coord)
+                {
+                    if (params[0] == _parameters[0] && params[1] == _parameters[1])
+                    {
+                        return false;
+                    }
+                    _parameters[2] = params[0], _parameters[3] = params[1];
+                }
+                else
+                {
+                    if (params[0] == 0 && params[1] == 0)
+                    {
+                        return false;
+                    }
+                    _parameters[2] = _parameters[0] + params[0], _parameters[3] = _parameters[1] + params[1];
+                }
+            }
+            tool_lines[3] = tool_lines[6] = tool_lines[9] = _parameters[2];
+            tool_lines[4] = tool_lines[7] = tool_lines[10] = _parameters[3];
+            tool_lines_count = 12;
+            _index++;
+            return true;
+        }
+        break;
+    case 2:
+        if (count >= 1 && params[0] != 0)
+        {
+            _parameters[4] = std::abs(Geo::degree_to_rad(params[0]));
+            canvas->add_geometry(new Geo::Arc(_parameters[0], _parameters[1], _parameters[2],
+                _parameters[3], _parameters[4], Geo::Arc::ParameterType::StartEndAngle, params[0] > 0));
+            _index = shape_count = tool_lines_count = 0;
+            tool[0] = Tool::Select;
+            info.clear();
+            return true;
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+QString Arc2Operation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "(x, y):";
+    case 1:
+        return _param_type == ParamType::LengthAngle
+            ? "(length, angle):" : "(x, y):";
+    default:
+        return "angle:";
+    }
+}
+
+void Arc2Operation::switch_parameters_type()
+{
+    if (_index == 1)
+    {
+        if (_param_type == ParamType::LengthAngle)
+        {
+            _param_type = ParamType::Coord;
+        }
+        else
+        {
+            _param_type = ParamType::LengthAngle;
+        }
+    }
+}
+
+
+bool Arc3Operation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index++)
+        {
+        case 0:
+            _parameters[0] = real_pos[0];
+            _parameters[1] = real_pos[1];
+            tool_lines[0] = tool_lines[3] = tool_lines[6] = real_pos[0];
+            tool_lines[1] = tool_lines[4] = tool_lines[7] = real_pos[1];
+            tool_lines_count = 6;
+            break;
+        case 1:
+            _parameters[2] = real_pos[0];
+            _parameters[3] = real_pos[1];
+            tool_lines[3] = tool_lines[6] = tool_lines[9] = real_pos[0];
+            tool_lines[4] = tool_lines[7] = tool_lines[10] = real_pos[1];
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool Arc3Operation::mouse_move(QMouseEvent *event)
+{
+    if (_index == 1)
+    {
+        _parameters[2] = real_pos[0];
+        _parameters[3] = real_pos[1];
+        tool_lines[3] = tool_lines[6] = real_pos[0];
+        tool_lines[4] = tool_lines[7] = real_pos[1];
+        info = QString("Length:%1").arg(Geo::distance(_parameters[0],
+            _parameters[1], _parameters[2], _parameters[3]));
+        return true;
+    }
+    return false;
+}
+
+void Arc3Operation::reset()
+{
+    _index = 0;
+}
+
+bool Arc3Operation::read_parameters(const double *params, const int count)
+{
+    switch (_index)
+    {
+    case 0:
+        if (count >= 2)
+        {
+            _parameters[0] = params[0];
+            _parameters[1] = params[1];
+            tool_lines[0] = tool_lines[3] = tool_lines[6] = params[0];
+            tool_lines[1] = tool_lines[4] = tool_lines[7] = params[1];
+            tool_lines_count = 6;
+            _index++;
+            return true;
+        }
+        break;
+    case 1:
+        if (count >= 2)
+        {
+            if (_param_type == ParamType::LengthAngle)
+            {
+                if (params[0] <= 0)
+                {
+                    return false;
+                }
+                _parameters[2] = _parameters[0] + std::cos(Geo::rad_to_degree(params[1])) * params[0];
+                _parameters[3] = _parameters[1] + std::sin(Geo::rad_to_degree(params[1])) * params[0];
+            }
+            else
+            {
+                if (absolute_coord)
+                {
+                    if (params[0] == _parameters[0] && params[1] == _parameters[1])
+                    {
+                        return false;
+                    }
+                    _parameters[2] = params[0], _parameters[3] = params[1];
+                }
+                else
+                {
+                    if (params[0] == 0 && params[1] == 0)
+                    {
+                        return false;
+                    }
+                    _parameters[2] = _parameters[0] + params[0], _parameters[3] = _parameters[1] + params[1];
+                }
+            }
+            tool_lines[3] = tool_lines[6] = tool_lines[9] = _parameters[2];
+            tool_lines[4] = tool_lines[7] = tool_lines[10] = _parameters[3];
+            tool_lines_count = 12;
+            _index++;
+            return true;
+        }
+        break;
+    case 2:
+        if (count >= 1 && std::abs(params[0]) * 2 >= std::hypot(
+            _parameters[0] - _parameters[2], _parameters[1] - _parameters[3]))
+        {
+            _parameters[4] = std::abs(params[0]);
+            canvas->add_geometry(new Geo::Arc(_parameters[0], _parameters[1], _parameters[2],
+                _parameters[3], _parameters[4], Geo::Arc::ParameterType::StartEndRadius, params[0] > 0));
+            _index = shape_count = tool_lines_count = 0;
+            tool[0] = Tool::Select;
+            info.clear();
+            return true;
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+QString Arc3Operation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "(x, y):";
+    case 1:
+        return _param_type == ParamType::LengthAngle
+            ? "(length, angle):" : "(x, y):";
+    default:
+        return "length:";
+    }
+}
+
+void Arc3Operation::switch_parameters_type()
+{
+    if (_index == 1)
+    {
+        if (_param_type == ParamType::LengthAngle)
+        {
+            _param_type = ParamType::Coord;
+        }
+        else
+        {
+            _param_type = ParamType::LengthAngle;
+        }
+    }
+}
+
+
 bool RectangleOperation::mouse_press(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
@@ -1294,7 +2000,41 @@ bool RectangleOperation::mouse_press(QMouseEvent *event)
         }
         else
         {
-            _parameters[2] = real_pos[0], _parameters[3] = real_pos[1];
+            if (event->modifiers() == Qt::ControlModifier)
+            {
+                const double width = std::max(std::abs(real_pos[0] - _parameters[0]), std::abs(real_pos[1] - _parameters[1]));
+                if (real_pos[0] > _parameters[0])
+                {
+                    if (real_pos[1] > _parameters[1])
+                    {
+                        _parameters[2] = _parameters[0] + width;
+                        _parameters[3] = _parameters[1] + width;
+                    }
+                    else
+                    {
+                        _parameters[2] = _parameters[0] + width;
+                        _parameters[3] = _parameters[1] - width;
+                    }
+                }
+                else
+                {
+                    if (real_pos[1] > _parameters[1])
+                    {
+                        _parameters[2] = _parameters[0] - width;
+                        _parameters[3] = _parameters[1] + width;
+                    }
+                    else
+                    {
+                        _parameters[2] = _parameters[0] - width;
+                        _parameters[3] = _parameters[1] - width;
+                    }
+                }
+            }
+            else
+            {
+                _parameters[2] = real_pos[0];
+                _parameters[3] = real_pos[1];
+            }
             canvas->add_geometry(new Geo::Polygon(Geo::AABBRect(_parameters[0],
                 _parameters[1], _parameters[2], _parameters[3])));
             shape_count = 0;
@@ -1331,24 +2071,20 @@ bool RectangleOperation::mouse_move(QMouseEvent *event)
                 else
                 {
                     _parameters[2] = _parameters[0] + width;
-                    _parameters[3] = _parameters[1];
-                    _parameters[1] -= width;
+                    _parameters[3] = _parameters[1] - width;
                 }
             }
             else
             {
                 if (real_pos[1] > _parameters[1])
                 {
-                    _parameters[2] = _parameters[0];
+                    _parameters[2] = _parameters[0] - width;
                     _parameters[3] = _parameters[1] + width;
-                    _parameters[0] -= width;
                 }
                 else
                 {
-                    _parameters[2] = _parameters[0];
-                    _parameters[3] = _parameters[1];
-                    _parameters[0] -= width;
-                    _parameters[1] -= width;
+                    _parameters[2] = _parameters[0] - width;
+                    _parameters[3] = _parameters[1] - width;
                 }
             }
         }
@@ -2532,36 +3268,28 @@ bool PolygonDifferenceOperation::mouse_press(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
+        std::vector<Geo::Geometry *> objects = editer->selected();
         if (clicked_object = editer->select(real_pos[0], real_pos[1], true);
             clicked_object != nullptr && clicked_object->type() == Geo::Type::POLYGON)
         {
-            if (_polygon == nullptr)
+            Geo::Polygon *polygon = static_cast<Geo::Polygon *>(clicked_object);
+            std::vector<Geo::Geometry *>::iterator it = std::find_if(objects.begin(), objects.end(),
+                [=](const Geo::Geometry *object) { return object != polygon && object->type() == Geo::Type::POLYGON; });
+            if (it != objects.end() && editer->polygon_difference(static_cast<Geo::Polygon *>(*it), polygon))
             {
-                _polygon = static_cast<Geo::Polygon *>(clicked_object);
+                canvas->refresh_vbo(Geo::Type::POLYGON, true);
                 canvas->refresh_selected_ibo();
-            }
-            else if (_polygon != clicked_object && clicked_object->type() == Geo::Type::POLYGON)
-            {
-                if (editer->polygon_difference(_polygon, static_cast<const Geo::Polygon *>(clicked_object)))
-                {
-                    canvas->refresh_vbo(Geo::Type::POLYGON, true);
-                    canvas->refresh_selected_ibo();
-                    tool[0] = Tool::Select;
-                    return true;
-                }
+                tool[0] = Tool::Select;
+                return true;
             }
         }
+        tool[0] = Tool::Select;
         return false;
     }
     else
     {
         return false;
     }
-}
-
-void PolygonDifferenceOperation::reset()
-{
-    _polygon = nullptr;
 }
 
 
@@ -2919,6 +3647,18 @@ bool TrimOperation::mouse_press(QMouseEvent *event)
             case Geo::Type::BSPLINE:
                 editer->trim(static_cast<Geo::BSpline *>(clicked_object), real_pos[0], real_pos[1]);
                 canvas->refresh_vbo(Geo::Type::BSPLINE, true);
+                canvas->refresh_selected_ibo();
+                result = true;
+                break;
+            case Geo::Type::CIRCLE:
+                editer->trim(static_cast<Geo::Circle *>(clicked_object), real_pos[0], real_pos[1]);
+                canvas->refresh_vbo(Geo::Type::CIRCLE, true);
+                canvas->refresh_selected_ibo();
+                result = true;
+                break;
+            case Geo::Type::ARC:
+                editer->trim(static_cast<Geo::Arc *>(clicked_object), real_pos[0], real_pos[1]);
+                canvas->refresh_vbo(Geo::Type::ARC, true);
                 canvas->refresh_selected_ibo();
                 result = true;
                 break;
