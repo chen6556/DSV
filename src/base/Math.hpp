@@ -6,7 +6,7 @@
 
 namespace Math
 {
-    static const double EPSILON = 1e-10;
+    static const double EPSILON = 1e-12;
     static const size_t MAX_ITERATION = 1000;
 
     void error_handle(const char *reason, const char *file, int line, int gsl_errno);
