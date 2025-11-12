@@ -12,9 +12,6 @@ namespace Geo
     double distance(const Point &point0, const Point &point1);
 
     // 点到直线距离,如果为有限长线段且垂足不在线段上,则计算点到线段端点距离
-    double distance(const Point &point, const Line &line, const bool infinite = false);
-
-    // 点到直线距离,如果为有限长线段且垂足不在线段上,则计算点到线段端点距离
     double distance(const Point &point, const Point &start, const Point &end, const bool infinite = false);
 
     // 点到多段线距离,计算点到每一段有限长线段的距离,取最近距离
@@ -45,9 +42,6 @@ namespace Geo
     double distance_square(const Point &point0, const Point &point1);
 
     // 点到直线距离的平方,如果为有限长线段且垂足不在线段上,则计算点到线段端点距离的平方
-    double distance_square(const Point &point, const Line &line, const bool infinite = false);
-
-    // 点到直线距离的平方,如果为有限长线段且垂足不在线段上,则计算点到线段端点距离的平方
     double distance_square(const Point &point, const Point &start, const Point &end, const bool infinite = false);
 
     // 点到多段线距离的平方,计算点到每一段有限长线段的距离,取最近距离的平方
@@ -55,9 +49,6 @@ namespace Geo
 
     // 点到多边形距离的平方,计算点到每一段有限长线段的距离,取最近距离的平方
     double distance_square(const Point &point, const Polygon &polygon);
-
-    // 判断点是否在有限长线段或直线上
-    bool is_inside(const Point &point, const Line &line, const bool infinite = false);
 
     // 判断点是否在有限长线段或直线上
     bool is_inside(const Point &point, const Point &start, const Point &end, const bool infinite = false);
@@ -95,9 +86,6 @@ namespace Geo
     // 判断两直线是否平行
     bool is_parallel(const Point &point0, const Point &point1, const Point &point2, const Point &point3);
 
-    // 判断两直线是否平行
-    bool is_parallel(const Line &line0, const Line &line1);
-
     // 判断两线段是否有重合,仅有一个端点重合不算两线段重合
     bool is_coincide(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
 
@@ -107,14 +95,8 @@ namespace Geo
     // 判断一个有限长线段是否是另一个有限长线段的一部分
     bool is_part(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
 
-    // 判断一个有限长线段是否是另一个有限长线段的一部分
-    bool is_part(const Line &line0, const Line &line1);
-
     // 判断两线段是否相交并尝试获取交点,共线相交时仅在一个端点相交时获取交点
     bool is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite = false);
-
-    // 判断两线段是否相交并尝试获取交点,共线相交时仅在一个端点相交时获取交点
-    bool is_intersected(const Line &line0, const Line &line1, Point &output, const bool infinite = true);
 
     // 判断线段是否与圆相交并尝试获取交点,返回交点数量
     int is_intersected(const Point &point0, const Point &point1, const Circle &circle, Point &output0, Point &output1, const bool infinite = false);
@@ -214,9 +196,6 @@ namespace Geo
     // 判断AABB矩形是否与有限长线段相交,线段完全在AABB矩形内也算相交
     bool is_intersected(const AABBRect &rect, const Point &point0, const Point &point1);
 
-    // 判断AABB矩形是否与有限长线段相交,线段完全在AABB矩形内也算相交
-    bool is_intersected(const AABBRect &rect, const Line &line);
-
     // 判断AABB矩形是否与多段线相交,多段线完全在AABB矩形内也算相交
     bool is_intersected(const AABBRect &rect, const Polyline &polyline);
 
@@ -234,9 +213,6 @@ namespace Geo
 
     // 判断有限长线段是否与三角形相交,线段完全在三角形内不算相交
     bool is_intersected(const Point &start, const Point &end, const Triangle &triangle, Point &output0, Point &output1);
-
-    // 判断有限长线段是否与三角形相交,线段完全在三角形内不算相交
-    bool is_intersected(const Line &line, const Triangle &triangle, Point &output0, Point &output1);
 
     // 判断两Geometry Object是否相交
     bool is_intersected(const Geometry *object0, const Geometry *object1);
@@ -328,9 +304,6 @@ namespace Geo
     // 计算线段或直线外一点的垂足
     bool foot_point(const Point &start, const Point &end, const Point &point, Point &foot, const bool infinite = false);
 
-    // 计算线段或直线外一点的垂足
-    bool foot_point(const Line &line, const Point &point, Point &foot, const bool infinite = false);
-
     // 计算多段线到一点的最近点
     int closest_point(const Polyline &polyline, const Point &point, std::vector<Point> &output);
 
@@ -375,9 +348,6 @@ namespace Geo
 
     // 计算两直线角夹角(弧度制,-PI-PI)
     double angle(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
-
-    // 计算两直线角夹角(弧度制,-PI-PI)
-    double angle(const Line &line0, const Line &line1);
 
     // 弧度转为-PI-PI
     double rad_to_PI(double value);

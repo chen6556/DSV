@@ -113,12 +113,6 @@ bool Collision::DirectMode::select(const Geo::Point &pos, std::vector<Geo::Geome
                 objects.push_back(object);
             }
             break;
-        case Geo::Type::LINE:
-            if (Geo::is_inside(pos, *static_cast<Geo::Line *>(object)))
-            {
-                objects.push_back(object);
-            }
-            break;
         case Geo::Type::BEZIER:
             if (Geo::is_inside(pos, static_cast<Geo::Bezier *>(object)->shape()))
             {
@@ -165,12 +159,6 @@ bool Collision::DirectMode::select(const Geo::AABBRect &rect, std::vector<Geo::G
             break;
         case Geo::Type::CIRCLE:
             if (Geo::is_intersected(rect, *static_cast<Geo::Circle *>(object)))
-            {
-                objects.push_back(object);
-            }
-            break;
-        case Geo::Type::LINE:
-            if (Geo::is_intersected(rect, *static_cast<Geo::Line *>(object)))
             {
                 objects.push_back(object);
             }
@@ -313,12 +301,6 @@ bool Collision::GridNode::select(const Geo::Point &pos, std::vector<Geo::Geometr
                 objects.push_back(object);
             }
             break;
-        case Geo::Type::LINE:
-            if (Geo::is_inside(pos, *static_cast<Geo::Line *>(object)))
-            {
-                objects.push_back(object);
-            }
-            break;
         case Geo::Type::BEZIER:
             if (Geo::is_inside(pos, static_cast<Geo::Bezier *>(object)->shape()))
             {
@@ -365,12 +347,6 @@ bool Collision::GridNode::select(const Geo::AABBRect &rect, std::vector<Geo::Geo
             break;
         case Geo::Type::CIRCLE:
             if (Geo::is_intersected(rect, *static_cast<Geo::Circle *>(object)))
-            {
-                objects.push_back(object);
-            }
-            break;
-        case Geo::Type::LINE:
-            if (Geo::is_intersected(rect, *static_cast<Geo::Line *>(object)))
             {
                 objects.push_back(object);
             }

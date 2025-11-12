@@ -246,8 +246,6 @@ private:
 
     void write_ellipse(const Geo::Ellipse *ellipse);
 
-    void write_line(const Geo::Line *line);
-
     void write_polygon(const Geo::Polygon *polygon);
 
     void write_polyline(const Geo::Polyline *polyline);

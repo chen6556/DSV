@@ -20,72 +20,6 @@ double Geo::distance(const Point &point0, const Point &point1)
     return std::hypot(point0.x - point1.x, point0.y - point1.y);
 }
 
-double Geo::distance(const Point &point, const Line &line, const bool infinite)
-{
-    if (line.front().x == line.back().x)
-    {
-        if (infinite)
-        {
-            return std::abs(point.x - line.front().x);
-        }
-        else
-        {
-            if ((point.y >= line.front().y && point.y <= line.back().y) ||
-                (point.y <= line.front().y && point.y >= line.back().y))
-            {
-                return std::abs(point.x - line.front().x);
-            }
-            else
-            {
-                return std::min(Geo::distance(point, line.front()), Geo::distance(point, line.back()));
-            }
-        }
-    }
-    else if (line.front().y == line.back().y)
-    {
-        if (infinite)
-        {
-            return std::abs(point.y - line.front().y);
-        }
-        else
-        {
-            if ((point.x >= line.front().x && point.x <= line.back().x) ||
-                (point.x <= line.front().x && point.x >= line.back().x))
-            {
-                return std::abs(point.y - line.front().y);
-            }
-            else
-            {
-                return std::min(Geo::distance(point, line.front()), Geo::distance(point, line.back()));
-            }
-        }
-    }
-    
-    const double a = line.back().y - line.front().y, 
-                b = line.front().x - line.back().x,
-                c = line.back().x * line.front().y - line.front().x * line.back().y;
-    if (infinite)
-    {
-        return std::abs(a * point.x + b * point.y + c) / std::hypot(a, b);
-    }
-    else
-    {
-        const double k = ((point.x - line.front().x) * (line.back().x - line.front().x) +
-            (point.y - line.front().y) * (line.back().y - line.front().y)) /
-            (std::pow(line.back().x - line.front().x, 2) + std::pow(line.back().y - line.front().y, 2)); 
-        const double x = line.front().x + k * (line.back().x - line.front().x);
-
-        if ((x >= line.front().x && x <= line.back().x) || (x <= line.front().x && x >= line.back().x))
-        {
-            return std::abs(a * point.x + b * point.y + c) / std::hypot(a, b);
-        }
-        else
-        {
-            return std::min(Geo::distance(point, line.front()), Geo::distance(point, line.back()));
-        }
-    }
-}
-
 double Geo::distance(const Point &point, const Point &start, const Point &end, const bool infinite)
 {
     if (start.x == end.x)
@@ -753,72 +687,6 @@ double Geo::distance_square(const Point &point0, const Point &point1)
         + (point0.y - point1.y) * (point0.y - point1.y);
 }
 
-double Geo::distance_square(const Point &point, const Line &line, const bool infinite)
-{
-    if (line.front().x == line.back().x)
-    {
-        if (infinite)
-        {
-            return std::pow(point.x - line.front().x, 2);
-        }
-        else
-        {
-            if ((point.y >= line.front().y && point.y <= line.back().y) ||
-                (point.y <= line.front().y && point.y >= line.back().y))
-            {
-                return std::pow(point.x - line.front().x, 2);
-            }
-            else
-            {
-                return std::min(Geo::distance_square(point, line.front()), Geo::distance_square(point, line.back()));
-            }
-        }
-    }
-    else if (line.front().y == line.back().y)
-    {
-        if (infinite)
-        {
-            return std::pow(point.y - line.front().y, 2);
-        }
-        else
-        {
-            if ((point.x >= line.front().x && point.x <= line.back().x) ||
-                (point.x <= line.front().x && point.x >= line.back().x))
-            {
-                return std::pow(point.y - line.front().y, 2);
-            }
-            else
-            {
-                return std::min(Geo::distance_square(point, line.front()), Geo::distance_square(point, line.back()));
-            }
-        }
-    }
-    
-    const double a = line.back().y - line.front().y, 
-                b = line.front().x - line.back().x,
-                c = line.back().x * line.front().y - line.front().x * line.back().y;
-    if (infinite)
-    {
-        return std::pow(a * point.x + b * point.y + c, 2) / (a * a + b * b);
-    }
-    else
-    {
-        const double k = ((point.x - line.front().x) * (line.back().x - line.front().x) +
-            (point.y - line.front().y) * (line.back().y - line.front().y)) /
-            (std::pow(line.back().x - line.front().x, 2) + std::pow(line.back().y - line.front().y, 2)); 
-        const double x = line.front().x + k * (line.back().x - line.front().x);
-
-        if ((x >= line.front().x && x <= line.back().x) || (x <= line.front().x && x >= line.back().x))
-        {
-            return std::pow(a * point.x + b * point.y + c, 2) / (a * a + b * b);
-        }
-        else
-        {
-            return std::min(Geo::distance_square(point, line.front()), Geo::distance_square(point, line.back()));
-        }
-    }
-}
-
 double Geo::distance_square(const Point &point, const Point &start, const Point &end, const bool infinite)
 {
     if (start.x == end.x)
@@ -905,18 +773,6 @@ double Geo::distance_square(const Point &point, const Polygon &polygon)
     return dis;
 }
 
-
-bool Geo::is_inside(const Geo::Point &point, const Geo::Line &line, const bool infinite)
-{
-    if (std::abs(Geo::cross((line.back() - line.front()).normalize(), (point - line.front()).normalize())) < Geo::EPSILON)
-    {
-        return infinite || Geo::distance(point, line.front()) + Geo::distance(point, line.back()) < line.length() + Geo::EPSILON;
-    }
-    else
-    {
-        return false;
-    }
-}
 
 bool Geo::is_inside(const Geo::Point &point, const Geo::Point &start, const Geo::Point &end, const bool infinite)
 {
@@ -1338,11 +1194,6 @@ bool Geo::is_parallel(const Point &point0, const Point &point1, const Point &poi
     }
 }
 
-bool Geo::is_parallel(const Line &line0, const Line &line1)
-{
-    return Geo::is_parallel(line0.front(), line0.back(), line1.front(), line1.back());
-}
-
 
 bool Geo::is_coincide(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
 {
@@ -1462,11 +1313,6 @@ bool Geo::is_part(const Point &start0, const Point &end0, const Point &start1, c
     {
         return false;
     }
-}
-
-bool Geo::is_part(const Line &line0, const Line &line1)
-{
-    return Geo::is_part(line0.front(), line0.back(), line1.front(), line1.back());
 }
 
 
@@ -1603,11 +1449,6 @@ bool Geo::is_intersected(const Point &point0, const Point &point1, const Point &
         return left - 5e-14 <= output.x && output.x <= right + 5e-14
             && bottom - 5e-14 <= output.y && output.y <= top + 5e-14;
     }
-}
-
-bool Geo::is_intersected(const Line &line0, const Line &line1, Point &output, const bool infinite)
-{
-    return Geo::is_intersected(line0.front(), line0.back(), line1.front(), line1.back(), output, infinite);
 }
 
 int Geo::is_intersected(const Point &point0, const Point &point1, const Circle &circle, Point &output0, Point &output1, const bool infinite)
@@ -4741,11 +4582,6 @@ bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const Point 
     }
 }
 
-bool Geo::is_intersected(const AABBRect &rect, const Line &line)
-{
-    return Geo::is_intersected(rect, line.front(), line.back());
-}
-
 bool Geo::is_intersected(const AABBRect &rect, const Polyline &polyline)
 {
     if (polyline.empty() || !Geo::is_intersected(rect, polyline.bounding_rect()))
@@ -4885,11 +4721,6 @@ bool Geo::is_intersected(const Point &start, const Point &end, const Triangle &t
         Geo::is_intersected(start, end, triangle[1], triangle[2], output1) ||
         Geo::is_intersected(start, end, triangle[0], triangle[1], output1);
     return a || b;
-}
-
-bool Geo::is_intersected(const Line &line, const Triangle &triangle, Point &output0, Point &output1)
-{
-    return Geo::is_intersected(line.front(), line.back(), triangle, output0, output1);
 }
 
 bool Geo::is_intersected(const Geometry *object0, const Geometry *object1)
@@ -6414,11 +6245,6 @@ bool Geo::foot_point(const Point &start, const Point &end, const Point &point, P
     }
 }
 
-bool Geo::foot_point(const Line &line, const Point &point, Point &foot, const bool infinite)
-{
-    return Geo::foot_point(line.front(), line.back(), point, foot, infinite);
-}
-
 
 int Geo::closest_point(const Polyline &polyline, const Point &point, std::vector<Point> &output)
 {
@@ -7812,21 +7638,6 @@ double Geo::angle(const Point &point0, const Point &point1, const Point &point2)
 double Geo::angle(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
 {
     const Geo::Point vec0 = end0 - start0, vec1 = end1 - start1;
-    double value = vec0 * vec1 / (vec0.length() * vec1.length());
-    if (value > 1)
-    {
-        value = 1;
-    }
-    else if (value < -1)
-    {
-        value = -1;
-    }
-    return vec0.cross(vec1) > 0 ? std::acos(value) : -std::acos(value);
-}
-
-double Geo::angle(const Line &line0, const Line &line1)
-{
-    const Geo::Point vec0 = line0.back() - line0.front(), vec1 = line1.back() - line1.front();
     double value = vec0 * vec1 / (vec0.length() * vec1.length());
     if (value > 1)
     {

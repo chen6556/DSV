@@ -1025,9 +1025,6 @@ void DXFReaderWriter::write_geometry_object(const Geo::Geometry *object)
     case Geo::Type::ARC:
         write_arc(static_cast<const Geo::Arc *>(object));
         break;
-    case Geo::Type::LINE:
-        write_line(static_cast<const Geo::Line *>(object));
-        break;
     case Geo::Type::POINT:
         break;
     case Geo::Type::POLYGON:
@@ -1111,18 +1108,6 @@ void DXFReaderWriter::write_ellipse(const Geo::Ellipse *ellipse)
     el.staparam = 0;
     el.endparam = Geo::PI * 2;
     _dxfrw->writeEllipse(&el);
-}
-
-void DXFReaderWriter::write_line(const Geo::Line *line)
-{
-    DRW_Line l;
-    l.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
-    l.lineType = "CONTINUOUS";
-    l.basePoint.x = line->front().x;
-    l.basePoint.y = line->front().y;
-    l.secPoint.x = line->back().x;
-    l.secPoint.y = line->back().y;
-    _dxfrw->writeLine(&l);
 }
 
 void DXFReaderWriter::write_polygon(const Geo::Polygon *polygon)

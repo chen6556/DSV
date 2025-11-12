@@ -97,20 +97,6 @@ public:
     void set_group_name(const size_t index, const QString &name);
 
 
-    // int append_points(); // 0:None 1:Polyline 2:Polygon
-
-    // void append(const Geo::Circle &circle);
-
-    // void append(const Geo::Ellipse &ellipse);
-
-    // void append(const Geo::AABBRect &rect);
-
-    // void append_bezier(const size_t order);
-
-    // void append_bspline(const size_t k);
-
-    // void append_text(const double x, const double y);
-
     void append(Geo::Geometry *object);
 
     void translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1, const bool change_shape = true);

@@ -10,7 +10,7 @@ namespace Geo
     const static double PI = 3.14159265358979323846;
     const static double EPSILON = 1e-10;
 
-    enum class Type {GEOMETRY, POINT, POLYLINE, AABBRECT, POLYGON, TRIANGLE, CIRCLE, LINE, BEZIER,
+    enum class Type {GEOMETRY, POINT, POLYLINE, AABBRECT, POLYGON, TRIANGLE, CIRCLE, BEZIER,
         ELLIPSE, BSPLINE, ARC, TEXT, CONTAINERGROUP, COMBINATION, GRAPH};
 
     class AABBRect;
@@ -606,66 +606,6 @@ namespace Geo
         void update_shape(const double down_sampling_value);
 
         const Polygon &shape() const;
-    };
-
-    class Line : public Geometry
-    {
-    private:
-        Point _start_point;
-        Point _end_point;
-
-    public:
-        Line() {};
-
-        Line(const double x0, const double y0, const double x1, const double y1);
-
-        Line(const Point &start, const Point &end);
-
-        Line(const Line &line);
-
-        const Type type() const override;
-
-        Line &operator=(const Line &line);
-
-        Line operator+(const Point &point);
-
-        Line operator-(const Point &point);
-
-        void operator+=(const Point &point);
-
-        void operator-=(const Point &point);
-
-        const double length() const override;
-
-        const bool empty() const override;
-
-        void clear() override;
-
-        Line *clone() const override;
-
-        void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
-
-        void transform(const double mat[6]) override;
-
-        void translate(const double tx, const double ty) override;
-
-        void rotate(const double x, const double y, const double rad) override; // 弧度制
-
-        void scale(const double x, const double y, const double k) override;
-
-        Polygon convex_hull() const override;
-
-        AABBRect bounding_rect() const override;
-
-        Polygon mini_bounding_rect() const override;
-
-        Point &front();
-
-        const Point &front() const;
-
-        Point &back();
-
-        const Point &back() const;
     };
 
     class Bezier : public Polyline
