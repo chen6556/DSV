@@ -65,7 +65,7 @@ std::tuple<double, double> Math::solve_ellipse_ellipse_intersection(EllipseParam
     gsl_multiroot_fdfsolver_set(s, &f, x);
 
     int status = GSL_CONTINUE;
-    size_t count = 0;
+    int count = 0;
     while (status == GSL_CONTINUE && count++ < Math::MAX_ITERATION) //这个循环迭代解方程，最多迭代Math::MAX_ITERATION次
 	{
 		status = gsl_multiroot_fdfsolver_iterate(s);
@@ -281,7 +281,7 @@ std::tuple<double, double> Math::solve_curve_intersection(void *param, const Cur
     gsl_multiroot_fsolver_set(s, &f, x);
 
     int status = GSL_CONTINUE;
-    size_t count = 0;
+    int count = 0;
     while (status == GSL_CONTINUE && count++ < Math::MAX_ITERATION) //这个循环迭代解方程，最多迭代Math::MAX_ITERATION次
 	{
         status = gsl_multiroot_fsolver_iterate(s);
