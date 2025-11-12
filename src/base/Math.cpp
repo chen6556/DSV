@@ -13,7 +13,12 @@ void Math::error_handle(const char *reason, const char *file, int line, int gsl_
 
 void Math::init()
 {
-    gsl_set_error_handler(&Math::error_handle);
+    static bool flag = true;
+    if (flag)
+    {
+        gsl_set_error_handler(&Math::error_handle);
+        flag = false;
+    }
 }
 
 int Math::ellipse_ellipse_f(const gsl_vector *x, void *params, gsl_vector *f)
