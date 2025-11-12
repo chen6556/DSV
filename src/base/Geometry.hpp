@@ -163,22 +163,6 @@ namespace Geo
 
     using Vector = Point;
 
-    class ClosedShape
-    {   
-    public:
-        unsigned int IBO_index = 0;
-
-        ClosedShape() = default;
-
-        ClosedShape(const ClosedShape &other) = default;
-
-        ClosedShape &operator=(const ClosedShape &other) = default;
-
-        ClosedShape(ClosedShape &&other) noexcept = default;
-
-        ClosedShape &operator=(ClosedShape &&other) noexcept = default;
-    };
-
     class Polyline : public Geometry
     {
     protected:
@@ -298,7 +282,7 @@ namespace Geo
         Polygon mini_bounding_rect() const override;
     };
 
-    class AABBRect : public Geometry, public ClosedShape
+    class AABBRect : public Geometry
     {
     private:
         std::vector<Point> _points;
@@ -401,7 +385,7 @@ namespace Geo
         const Point &operator[](const size_t index) const;
     };
 
-    class Polygon : public Polyline, public ClosedShape
+    class Polygon : public Polyline
     {
     public:
         Polygon() {};
@@ -474,7 +458,7 @@ namespace Geo
         Point average_point() const;
     };
 
-    class Triangle : public Geometry, public ClosedShape
+    class Triangle : public Geometry
     {
     private:
         Point _vecs[3] = {Point()};
@@ -545,7 +529,7 @@ namespace Geo
         double inner_circle_radius() const;
     };
 
-    class Circle : public Point, public ClosedShape
+    class Circle : public Point
     {
     public:
         double radius = 0;
@@ -663,7 +647,7 @@ namespace Geo
         Polygon mini_bounding_rect() const override;
     };
 
-    class Ellipse : public Geometry, public ClosedShape
+    class Ellipse : public Geometry
     {
     public:
         static double default_down_sampling_value;

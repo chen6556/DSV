@@ -815,7 +815,7 @@ AABBRect::AABBRect(const Point &point0, const Point &point1)
 }
 
 AABBRect::AABBRect(const AABBRect &rect)
-    : Geometry(rect), ClosedShape(rect), _points(rect._points)
+    : Geometry(rect), _points(rect._points)
 {}
 
 const Type AABBRect::type() const
@@ -874,7 +874,6 @@ AABBRect &AABBRect::operator=(const AABBRect &rect)
     if (this != &rect)
     {
         Geometry::operator=(rect);
-        ClosedShape::operator=(rect);
         _points = rect._points;
     }
     return *this;
@@ -1154,7 +1153,7 @@ const Point &AABBRect::operator[](const size_t index) const
 // Polygon
 
 Polygon::Polygon(const Polygon &polygon)
-    : Polyline(polygon), ClosedShape(polygon)
+    : Polyline(polygon)
 {}
 
 Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
@@ -1222,7 +1221,6 @@ Polygon &Polygon::operator=(const Polygon &polygon)
     if (this != &polygon)
     {
         Polyline::operator=(polygon);
-        ClosedShape::operator=(polygon);
     }
     return *this;
 }
@@ -1596,7 +1594,7 @@ Triangle::Triangle(const double x0, const double y0, const double x1, const doub
 }
 
 Triangle::Triangle(const Triangle &triangle)
-    : Geometry(triangle), ClosedShape(triangle)
+    : Geometry(triangle)
 {
     _vecs[0] = triangle._vecs[0];
     _vecs[1] = triangle._vecs[1];
@@ -1709,7 +1707,6 @@ Triangle &Triangle::operator=(const Triangle &triangle)
     if (this != &triangle)
     {
         Geometry::operator=(triangle);
-        ClosedShape::operator=(triangle);
         _vecs[0] = triangle._vecs[0];
         _vecs[1] = triangle._vecs[1];
         _vecs[2] = triangle._vecs[2];
@@ -1898,7 +1895,7 @@ Circle::Circle(const Point &point0, const Point point1, const Point point2)
 {}
 
 Circle::Circle(const Circle &circle)
-    : Point(circle), ClosedShape(circle), radius(circle.radius), _shape(circle._shape)
+    : Point(circle), radius(circle.radius), _shape(circle._shape)
 {}
 
 Circle &Circle::operator=(const Circle &circle)
@@ -1906,7 +1903,6 @@ Circle &Circle::operator=(const Circle &circle)
     if (this != &circle)
     {
         Point::operator=(circle);
-        ClosedShape::operator=(circle);
         radius = circle.radius;
         _shape = circle._shape;
     }
@@ -2325,7 +2321,7 @@ Ellipse::Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point 
 }
 
 Ellipse::Ellipse(const Ellipse &ellipse)
-    : Geometry(ellipse), ClosedShape(ellipse), _shape(ellipse._shape)
+    : Geometry(ellipse), _shape(ellipse._shape)
 {
     _a[0] = ellipse._a[0];
     _a[1] = ellipse._a[1];
@@ -2338,7 +2334,6 @@ Ellipse &Ellipse::operator=(const Ellipse &ellipse)
     if (this != &ellipse)
     {
         Geometry::operator=(ellipse);
-        ClosedShape::operator=(ellipse);
         _a[0] = ellipse._a[0];
         _a[1] = ellipse._a[1];
         _b[0] = ellipse._b[0];
