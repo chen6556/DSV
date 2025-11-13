@@ -2753,7 +2753,7 @@ const Polyline &Ellipse::shape() const
 
 bool Ellipse::is_arc() const
 {
-    return _arc_angle[0] != _arc_angle[1];
+    return _arc_angle[0] != _arc_angle[1] && std::abs(_arc_angle[1] - _arc_angle[0]) < Geo::PI * 2;
 }
 
 

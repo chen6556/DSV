@@ -366,8 +366,8 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
             if (group.name.toStdString() == data.layer)
             {
                 const double a = std::hypot(data.secPoint.x, data.secPoint.y);
-                group.append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y, a, a * data.ratio,
-                    data.staparam + Geo::PI, data.endparam + Geo::PI));
+                group.append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y,
+                    a, a * data.ratio, data.staparam, data.endparam));
                 group.back()->translate(-data.basePoint.x, -data.basePoint.y);
                 const double s = data.secPoint.y / a, c = data.secPoint.x / a;
                 group.back()->transform(c, -s, 0, s, c, 0);
@@ -380,8 +380,8 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
         const double a = std::hypot(data.secPoint.x, data.secPoint.y);
-        _graph->container_groups().back().append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y,
-            a, a * data.ratio, data.staparam + Geo::PI, data.endparam + Geo::PI));
+        _graph->container_groups().back().append(new Geo::Ellipse(data.basePoint.x,
+            data.basePoint.y, a, a * data.ratio, data.staparam, data.endparam));
         _graph->container_groups().back().back()->translate(-data.basePoint.x, -data.basePoint.y);
         const double s = data.secPoint.y / a, c = data.secPoint.x / a;
         _graph->container_groups().back().back()->transform(c, -s, 0, s, c, 0);
@@ -392,8 +392,8 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
     else
     {
         const double a = std::hypot(data.secPoint.x, data.secPoint.y);
-        _combination->append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y, a, a * data.ratio,
-            data.staparam + Geo::PI, data.endparam + Geo::PI));
+        _combination->append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y,
+            a, a * data.ratio, data.staparam, data.endparam));
         _combination->back()->translate(-data.basePoint.x, -data.basePoint.y);
         const double s = data.secPoint.y / a, c = data.secPoint.x / a;
         _combination->back()->transform(c, -s, 0, s, c, 0);

@@ -7872,11 +7872,10 @@ Geo::Polygon Geo::ellipse_to_polygon(const Ellipse &ellipse, const double down_s
 }
 
 Geo::Polyline Geo::ellipse_to_polyline(const double x, const double y, const double a, const double b,
-    const double rad, double start_angle, double end_angle, const double down_sampling_value)
+    const double rad, const double start_angle, double end_angle, const double down_sampling_value)
 {
     const double step = std::asin(1 / std::max(a, b));
-    double degree = start_angle + rad;
-    end_angle += rad;
+    double degree = start_angle;
     if (end_angle < degree)
     {
         end_angle += Geo::PI * 2;
