@@ -1109,12 +1109,11 @@ void DXFReaderWriter::write_ellipse(const Geo::Ellipse *ellipse)
     el.lineType = "CONTINUOUS";
     el.basePoint.x = ellipse->center().x;
     el.basePoint.y = ellipse->center().y;
-    const double angle = ellipse->angle();
-    el.secPoint.x = ellipse->lengtha() * std::cos(angle);
-    el.secPoint.y = ellipse->lengtha() * std::sin(angle);
+    el.secPoint.x = ellipse->a1().x - el.basePoint.x;
+    el.secPoint.y = ellipse->a1().y - el.basePoint.y;
     el.ratio = ellipse->lengthb() / ellipse->lengtha();
-    el.staparam = 0;
-    el.endparam = Geo::PI * 2;
+    el.staparam = ellipse->arc_angle0();
+    el.endparam = ellipse->arc_angle1();
     _dxfrw->writeEllipse(&el);
 }
 
