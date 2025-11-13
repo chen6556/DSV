@@ -3776,26 +3776,42 @@ const Type Arc::type() const
 
 const double Arc::area() const
 {
-    if (Geo::distance(control_points[1], control_points[0], control_points[2], true) <= radius)
+    double angle = Geo::angle(control_points[0], Geo::Point(x, y), control_points[2]);
+    if (is_cw())
     {
-        return radius * radius * std::abs(Geo::angle(control_points[0], Geo::Point(x, y), control_points[2])) / 2;
+        if (angle > 0)
+        {
+            angle -= Geo::PI * 2;
+        }
     }
     else
     {
-        return radius * radius * (std::abs(Geo::angle(control_points[0], Geo::Point(x, y), control_points[2])) + Geo::PI) / 2;
+        if (angle < 0)
+        {
+            angle += Geo::PI * 2;
+        }
     }
+    return radius * radius * std::abs(angle) / 2;
 }
 
 const double Arc::length() const
 {
-    if (Geo::distance(control_points[1], control_points[0], control_points[2], true) <= radius)
+    double angle = Geo::angle(control_points[0], Geo::Point(x, y), control_points[2]);
+    if (is_cw())
     {
-        return radius * std::abs(Geo::angle(control_points[0], Geo::Point(x, y), control_points[2]));
+        if (angle > 0)
+        {
+            angle -= Geo::PI * 2;
+        }
     }
     else
     {
-        return radius * (std::abs(Geo::angle(control_points[0], Geo::Point(x, y), control_points[2])) + Geo::PI);
+        if (angle < 0)
+        {
+            angle += Geo::PI * 2;
+        }
     }
+    return radius * std::abs(angle);
 }
 
 const bool Arc::empty() const
