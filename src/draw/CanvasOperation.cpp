@@ -3503,10 +3503,7 @@ bool RotateOperation::mouse_press(QMouseEvent *event)
             if (std::vector<Geo::Geometry *> objects = editer->selected(); !objects.empty())
             {
                 const double angle = Geo::angle(_pos[0], _pos[1], _pos[2]);
-                for (Geo::Geometry *obj : objects)
-                {
-                    obj->rotate(_pos[1].x, _pos[1].y, angle);
-                }
+                editer->rotate(objects, _pos[1].x, _pos[1].y, angle);
                 canvas->refresh_selected_vbo();
             }
             tool_lines_count = 0;
@@ -3601,10 +3598,7 @@ bool RotateOperation::read_parameters(const double *params, const int count)
             if (std::vector<Geo::Geometry *> objects = editer->selected(); !objects.empty())
             {
                 const double angle = Geo::degree_to_rad(params[0]);
-                for (Geo::Geometry *obj : objects)
-                {
-                    obj->rotate(_pos[1].x, _pos[1].y, angle);
-                }
+                editer->rotate(objects, _pos[1].x, _pos[1].y, angle);
                 canvas->refresh_selected_vbo();
             }
             tool_lines_count = 0;

@@ -2301,6 +2301,20 @@ Ellipse::Ellipse(const double x, const double y, const double a, const double b)
     update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
+Ellipse::Ellipse(const double x, const double y, const double a, const double b, const double start, const double end)
+{
+    assert(a > 0 && b > 0);
+    _a[0].x = x - a;
+    _a[1].x = x + a;
+    _a[0].y = _a[1].y = y;
+    _b[0].y = y + b;
+    _b[1].y = y - b;
+    _b[0].x = _b[1].x = x;
+    _arc_angle[0] = start;
+    _arc_angle[1] = end;
+    update_shape(Geo::Ellipse::default_down_sampling_value);
+}
+
 Ellipse::Ellipse(const Point &point, const double a, const double b)
 {
     assert(a > 0 && b > 0);
@@ -2313,10 +2327,32 @@ Ellipse::Ellipse(const Point &point, const double a, const double b)
     update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
+Ellipse::Ellipse(const Point &point, const double a, const double b, const double start, const double end)
+{
+    assert(a > 0 && b > 0);
+    _a[0].x = point.x - a;
+    _a[1].x = point.x + a;
+    _a[0].y = _a[1].y = point.y;
+    _b[0].y = point.y + b;
+    _b[1].y = point.y - b;
+    _b[0].x = _b[1].x = point.x;
+    _arc_angle[0] = start;
+    _arc_angle[1] = end;
+    update_shape(Geo::Ellipse::default_down_sampling_value);
+}
+
 Ellipse::Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point &b1)
 {
     _a[0] = a0, _a[1] = a1;
     _b[0] = b0, _b[1] = b1;
+    update_shape(Geo::Ellipse::default_down_sampling_value);
+}
+
+Ellipse::Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point &b1, const double start, const double end)
+{
+    _a[0] = a0, _a[1] = a1;
+    _b[0] = b0, _b[1] = b1;
+    _arc_angle[0] = start, _arc_angle[1] = end;
     update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
@@ -2327,6 +2363,8 @@ Ellipse::Ellipse(const Ellipse &ellipse)
     _a[1] = ellipse._a[1];
     _b[0] = ellipse._b[0];
     _b[1] = ellipse._b[1];
+    _arc_angle[0] = ellipse._arc_angle[0];
+    _arc_angle[1] = ellipse._arc_angle[1];
 }
 
 Ellipse &Ellipse::operator=(const Ellipse &ellipse)
@@ -2338,6 +2376,8 @@ Ellipse &Ellipse::operator=(const Ellipse &ellipse)
         _a[1] = ellipse._a[1];
         _b[0] = ellipse._b[0];
         _b[1] = ellipse._b[1];
+        _arc_angle[0] = ellipse._arc_angle[0];
+        _arc_angle[1] = ellipse._arc_angle[1];
         _shape = ellipse._shape;
     }
     return *this;
@@ -2493,8 +2533,9 @@ double Ellipse::lengthb() const
 
 double Ellipse::angle() const
 {
-    double value = Geo::angle(_a[0], _a[1]);
-    return value >= 0 ? value : value + Geo::PI;
+    return Geo::angle(_a[0], _a[1]);
+    // double value = Geo::angle(_a[0], _a[1]);
+    // return value >= 0 ? value : value + Geo::PI;
 }
 
 Geo::Point Ellipse::center() const
@@ -2558,20 +2599,21 @@ void Ellipse::set_center(const double x, const double y)
     translate(x - anchor.x, y - anchor.y);
 }
 
-void Ellipse::reset_parameter(const Geo::Point &a0, const Geo::Point &a1, const Geo::Point &b0, const Geo::Point &b1)
+void Ellipse::reset_parameter(const Geo::Point &a0, const Geo::Point &a1, const Geo::Point &b0,
+    const Geo::Point &b1, const double start_anlge, const double end_angle)
 {
-    _a[0] = a0;
-    _a[1] = a1;
-    _b[0] = b0;
-    _b[1] = b1;
+    _a[0] = a0, _a[1] = a1;
+    _b[0] = b0, _b[1] = b1;
+    _arc_angle[0] = start_anlge, _arc_angle[1] = end_angle;
 }
 
-void Ellipse::reset_parameter(const double parameters[8])
+void Ellipse::reset_parameter(const double parameters[10])
 {
     _a[0].x = parameters[0], _a[0].y = parameters[1];
     _a[1].y = parameters[2], _a[1].y = parameters[3];
     _b[0].x = parameters[4], _b[0].y = parameters[5];
     _b[1].x = parameters[6], _b[1].y = parameters[7];
+    _arc_angle[0] = parameters[8], _arc_angle[1] = parameters[9];
 }
 
 const Point &Ellipse::a0() const
@@ -2626,15 +2668,37 @@ Point Ellipse::c1() const
     }
 }
 
+double Ellipse::arc_angle0() const
+{
+    return _arc_angle[0];
+}
+
+double Ellipse::arc_angle1() const
+{
+    return _arc_angle[1];
+}
+
 void Ellipse::update_shape(const double down_sampling_value)
 {
     const Geo::Point point = center();
-    _shape = Geo::ellipse_to_polygon(point.x, point.y, lengtha(), lengthb(), angle(), down_sampling_value);
+    if (_arc_angle[0] == _arc_angle[1])
+    {
+        _shape = Geo::ellipse_to_polygon(point.x, point.y, lengtha(), lengthb(), angle(), down_sampling_value);
+    }
+    else
+    {
+        _shape = Geo::ellipse_to_polyline(point.x, point.y, lengtha(), lengthb(), angle(), arc_angle0(), arc_angle1(), down_sampling_value);
+    }
 }
 
-const Polygon &Ellipse::shape() const
+const Polyline &Ellipse::shape() const
 {
     return _shape;
+}
+
+bool Ellipse::is_arc() const
+{
+    return _arc_angle[0] != _arc_angle[1];
 }
 
 

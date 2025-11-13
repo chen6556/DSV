@@ -653,17 +653,25 @@ namespace Geo
         static double default_down_sampling_value;
 
     private:
-        Point _a[2], _b[2];
-        Polygon _shape;
+        // a[1]点绕中心点旋转角度,总是从arc_angle[0]逆时针旋转到arc_anlge[1]
+        double _arc_angle[2] = {0, 0};
+        Point _a[2], _b[2], _point[2];
+        Polyline _shape;
 
     public:
         Ellipse() {};
 
         Ellipse(const double x, const double y, const double a, const double b);
 
+        Ellipse(const double x, const double y, const double a, const double b, const double start, const double end);
+
         Ellipse(const Point &point, const double a, const double b);
 
+        Ellipse(const Point &point, const double a, const double b, const double start, const double end);
+
         Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point &b1);
+
+        Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point &b1, const double start, const double end);
 
         Ellipse(const Ellipse &ellipse);
 
@@ -715,10 +723,11 @@ namespace Geo
 
         void set_center(const double x, const double y);
 
-        void reset_parameter(const Geo::Point &a0, const Geo::Point &a1, const Geo::Point &b0, const Geo::Point &b1);
+        void reset_parameter(const Geo::Point &a0, const Geo::Point &a1, const Geo::Point &b0,
+            const Geo::Point &b1, const double start_angle, const double end_angle);
 
-        // a0x, a0y, a1x, a1y, b0x, b0y, b1x, b1y
-        void reset_parameter(const double parameters[8]);
+        // a0x, a0y, a1x, a1y, b0x, b0y, b1x, b1y, start_angle, end_angle
+        void reset_parameter(const double parameters[10]);
 
         const Point &a0() const;
 
@@ -732,9 +741,17 @@ namespace Geo
 
         Point c1() const;
 
+        // a[1]点绕中心点旋转角度,总是从arc_angle[0]逆时针旋转到arc_anlge[1]
+        double arc_angle0() const;
+
+        // a[1]点绕中心点旋转角度,总是从arc_angle[0]逆时针旋转到arc_anlge[1]
+        double arc_angle1() const;
+
         void update_shape(const double down_sampling_value);
 
-        const Polygon &shape() const;
+        const Polyline &shape() const;
+
+        bool is_arc() const;
     };
 
     class BSpline : public Geometry

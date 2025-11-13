@@ -7871,6 +7871,43 @@ Geo::Polygon Geo::ellipse_to_polygon(const Ellipse &ellipse, const double down_s
     return Geo::ellipse_to_polygon(ellipse.center().x, ellipse.center().y, ellipse.lengtha(), ellipse.lengthb(), ellipse.angle(), down_sampling_value);
 }
 
+Geo::Polyline Geo::ellipse_to_polyline(const double x, const double y, const double a, const double b,
+    const double rad, double start_angle, double end_angle, const double down_sampling_value)
+{
+    const double step = std::asin(1 / std::max(a, b));
+    double degree = start_angle + rad;
+    end_angle += rad;
+    if (end_angle < degree)
+    {
+        end_angle += Geo::PI * 2;
+    }
+    std::vector<Geo::Point> points;
+    while (degree < end_angle)
+    {
+        points.emplace_back(x + a * std::cos(rad) * std::cos(degree) - b * std::sin(rad) * std::sin(degree),
+            y + a * std::sin(rad) * std::cos(degree) + b * std::cos(rad) * std::sin(degree));
+        degree += step;
+    }
+    points.emplace_back(x + a * std::cos(rad) * std::cos(end_angle) - b * std::sin(rad) * std::sin(end_angle),
+        y + a * std::sin(rad) * std::cos(end_angle) + b * std::cos(rad) * std::sin(end_angle));
+    if (points.size() >= 2)
+    {
+        Geo::Polyline shape(points.cbegin(), points.cend());
+        Geo::down_sampling(shape, down_sampling_value);
+        return shape;
+    }
+    else
+    {
+        return Geo::Polyline();
+    }
+}
+
+Geo::Polyline Geo::ellipse_to_polyline(const Ellipse &ellipse, const double down_sampling_value)
+{
+    return Geo::ellipse_to_polyline(ellipse.center().x, ellipse.center().y, ellipse.lengtha(),
+        ellipse.lengthb(), ellipse.angle(), ellipse.arc_angle0(), ellipse.arc_angle1(), down_sampling_value);
+}
+
 
 std::vector<unsigned int> Geo::ear_cut_to_indexs(const Geo::Polygon &polygon)
 {

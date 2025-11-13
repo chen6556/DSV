@@ -232,8 +232,9 @@ void ChangeShapeCommand::undo(Graph *graph)
     case Geo::Type::ELLIPSE:
         {
             Geo::Ellipse *ellipse = static_cast<Geo::Ellipse *>(_object);
-            const double parameter[8] = {std::get<0>(_shape[0]), std::get<1>(_shape[0]), std::get<0>(_shape[1]), std::get<1>(_shape[1]),
-                std::get<0>(_shape[2]), std::get<1>(_shape[2]), std::get<0>(_shape[3]), std::get<1>(_shape[3])};
+            const double parameter[10] = {std::get<0>(_shape[0]), std::get<1>(_shape[0]), std::get<0>(_shape[1]), std::get<1>(_shape[1]),
+                std::get<0>(_shape[2]), std::get<1>(_shape[2]), std::get<0>(_shape[3]), std::get<1>(_shape[3]),
+                std::get<0>(_shape[4]), std::get<1>(_shape[4])};
             ellipse->reset_parameter(parameter);
             ellipse->update_shape(Geo::Ellipse::default_down_sampling_value);
         }
@@ -245,29 +246,17 @@ void ChangeShapeCommand::undo(Graph *graph)
 
 
 // RotateCommand
-RotateCommand::RotateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad, const bool unitary)
-    : _items(objects), _x(x), _y(y), _rad(rad), _unitary(unitary) {}
+RotateCommand::RotateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad)
+    : _items(objects), _x(x), _y(y), _rad(rad) {}
 
 RotateCommand::RotateCommand(Geo::Geometry *object, const double x, const double y, const double rad)
-    : _items({object}), _x(x), _y(y), _rad(rad), _unitary(true) {}
+    : _items({object}), _x(x), _y(y), _rad(rad) {}
 
 void RotateCommand::undo(Graph *graph)
 {
-    if (_unitary)
+    for (Geo::Geometry *object : _items)
     {
-        for (Geo::Geometry *object : _items)
-        {
-            object->rotate(_x, _y, -_rad);
-        }
-    }
-    else
-    {
-        Geo::Point coord;
-        for (Geo::Geometry *object : _items)
-        {
-            coord = object->bounding_rect().center();
-            object->rotate(coord.x, coord.y, -_rad);
-        }
+        object->rotate(_x, _y, -_rad);
     }
 }
 

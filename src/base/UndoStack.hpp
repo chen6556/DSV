@@ -109,10 +109,9 @@ namespace UndoStack
     private:
         std::vector<Geo::Geometry *> _items;
         double _x, _y, _rad;
-        bool _unitary;
 
     public:
-        RotateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad, const bool unitary);
+        RotateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad);
 
         RotateCommand(Geo::Geometry *object, const double x, const double y, const double rad);
 

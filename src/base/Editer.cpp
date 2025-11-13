@@ -973,6 +973,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                     _edited_shape.emplace_back(temp->a1().x, temp->a1().y);
                     _edited_shape.emplace_back(temp->b0().x, temp->b0().y);
                     _edited_shape.emplace_back(temp->b1().x, temp->b1().y);
+                    _edited_shape.emplace_back(temp->arc_angle0(), temp->arc_angle1());
                 }
                 temp->set_lengtha(Geo::distance(point1, temp->center()));
                 temp->update_shape(Geo::Ellipse::default_down_sampling_value);
@@ -986,6 +987,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                     _edited_shape.emplace_back(temp->a1().x, temp->a1().y);
                     _edited_shape.emplace_back(temp->b0().x, temp->b0().y);
                     _edited_shape.emplace_back(temp->b1().x, temp->b1().y);
+                    _edited_shape.emplace_back(temp->arc_angle0(), temp->arc_angle1());
                 }
                 temp->set_lengthb(Geo::distance(point1, temp->center()));
                 temp->update_shape(Geo::Ellipse::default_down_sampling_value);
@@ -2404,98 +2406,6 @@ void Editer::down(Geo::Geometry *item)
     }
 }
 
-void Editer::rotate(std::vector<Geo::Geometry *> objects, const double rad, const bool unitary, const bool all_layers)
-{
-    Geo::Point coord;
-    if (objects.empty())
-    {
-        if (unitary)
-        {
-            if (all_layers)
-            {
-                coord = _graph->bounding_rect().center();
-                for (ContainerGroup &group : _graph->container_groups())
-                {
-                    for (Geo::Geometry *geo : group)
-                    {
-                        geo->rotate(coord.x, coord.y, rad);
-                    }
-                    objects.insert(objects.end(), group.begin(), group.end());
-                }
-            }
-            else
-            {
-                coord = _graph->container_group(_current_group).bounding_rect().center();
-                for (Geo::Geometry *geo : _graph->container_group(_current_group))
-                {
-                    geo->rotate(coord.x, coord.y, rad);
-                }
-                objects.assign(_graph->container_group(_current_group).begin(), 
-                    _graph->container_group(_current_group).end());
-            }
-        }
-        else
-        {
-            if (all_layers)
-            {
-                for (ContainerGroup &group : _graph->container_groups())
-                {
-                    for (Geo::Geometry *geo : group)
-                    {
-                        coord = geo->bounding_rect().center();
-                        geo->rotate(coord.x, coord.y, rad);
-                    }
-                    objects.insert(objects.end(), group.begin(), group.end());
-                }
-            }
-            else
-            {
-                for (Geo::Geometry *geo : _graph->container_group(_current_group))
-                {
-                    coord = geo->bounding_rect().center();
-                    geo->rotate(coord.x, coord.y, rad);
-                }
-                objects.assign(_graph->container_group(_current_group).begin(), 
-                    _graph->container_group(_current_group).end());
-            }
-        }
-    }
-    else
-    {
-        if (unitary)
-        {
-            Geo::AABBRect rect;
-            double left = DBL_MAX, top = -DBL_MAX, right = -DBL_MAX, bottom = DBL_MAX;
-            for (Geo::Geometry *geo : objects)
-            {
-                rect = geo->bounding_rect();
-                left = std::min(left, rect.left());
-                top = std::max(top, rect.top());
-                right = std::max(right, rect.right());
-                bottom = std::min(bottom, rect.bottom());
-            }
-            coord.x = (left + right) / 2;
-            coord.y = (top + bottom) / 2;
-
-            for (Geo::Geometry *geo : objects)
-            {
-                geo->rotate(coord.x, coord.y, rad);
-            }
-        }
-        else
-        {
-            for (Geo::Geometry *geo : objects)
-            {
-                coord = geo->bounding_rect().center();
-                geo->rotate(coord.x, coord.y, rad);
-            }
-        }
-    }
-
-    _graph->modified = true;
-    _backup.push_command(new UndoStack::RotateCommand(objects, coord.x, coord.y, rad, unitary));
-}
-
 void Editer::rotate(std::vector<Geo::Geometry *> objects, const double x, const double y, const double rad)
 {
     for (Geo::Geometry *geo : objects)
@@ -2503,7 +2413,7 @@ void Editer::rotate(std::vector<Geo::Geometry *> objects, const double x, const 
         geo->rotate(x, y, rad);
     }
     _graph->modified = true;
-    _backup.push_command(new UndoStack::RotateCommand(objects, x, y, rad, false));
+    _backup.push_command(new UndoStack::RotateCommand(objects, x, y, rad));
 }
 
 void Editer::flip(std::vector<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers)

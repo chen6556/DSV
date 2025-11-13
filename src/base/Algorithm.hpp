@@ -385,6 +385,12 @@ namespace Geo
 
     Polygon ellipse_to_polygon(const Ellipse &ellipse, const double down_sampling_value = 0.02);
 
+    // start_angle:a[1]点绕中心点旋转角度 end_angle:a[1]点绕中心点旋转角度
+    Polyline ellipse_to_polyline(const double x, const double y, const double a, const double b, const double rad, 
+        double start_angle, double end_angle, const double down_sampling_value = 0.02);
+
+    Polyline ellipse_to_polyline(const Ellipse &ellipse, const double down_sampling_value = 0.02);
+
     std::vector<unsigned int> ear_cut_to_indexs(const Polygon &polygon);
 
     std::vector<MarkedPoint> ear_cut_to_coords(const Polygon &polygon);
