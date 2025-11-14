@@ -2318,7 +2318,7 @@ Ellipse::Ellipse(const double x, const double y, const double a, const double b,
         {
             _arc_angle[i] -= Geo::PI * 2;
         }
-        while (_arc_angle[i] < -Geo::PI * 2)
+        while (_arc_angle[i] < 0)
         {
             _arc_angle[i] += Geo::PI * 2;
         }
@@ -2355,7 +2355,7 @@ Ellipse::Ellipse(const Point &point, const double a, const double b, const doubl
         {
             _arc_angle[i] -= Geo::PI * 2;
         }
-        while (_arc_angle[i] < -Geo::PI * 2)
+        while (_arc_angle[i] < 0)
         {
             _arc_angle[i] += Geo::PI * 2;
         }
@@ -2381,7 +2381,7 @@ Ellipse::Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point 
         {
             _arc_angle[i] -= Geo::PI * 2;
         }
-        while (_arc_angle[i] < -Geo::PI * 2)
+        while (_arc_angle[i] < 0)
         {
             _arc_angle[i] += Geo::PI * 2;
         }
@@ -2644,7 +2644,7 @@ void Ellipse::reset_parameter(const Geo::Point &a0, const Geo::Point &a1, const 
         {
             _arc_angle[i] -= Geo::PI * 2;
         }
-        while (_arc_angle[i] < -Geo::PI * 2)
+        while (_arc_angle[i] < 0)
         {
             _arc_angle[i] += Geo::PI * 2;
         }
@@ -2664,7 +2664,7 @@ void Ellipse::reset_parameter(const double parameters[10])
         {
             _arc_angle[i] -= Geo::PI * 2;
         }
-        while (_arc_angle[i] < -Geo::PI * 2)
+        while (_arc_angle[i] < 0)
         {
             _arc_angle[i] += Geo::PI * 2;
         }

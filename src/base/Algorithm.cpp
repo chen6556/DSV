@@ -490,13 +490,13 @@ double Geo::distance(const Point &point, const Ellipse &ellipse)
     {
         double angle0 = Geo::rad_to_2PI(ellipse.arc_angle0());
         double angle1 = Geo::rad_to_2PI(ellipse.arc_angle1());
-        if (angle1 < angle0)
+        angle0 = angle0 < angle1 ? angle1 - angle0 : Geo::PI * 2 - angle0 + angle1;
+        angle1 = Geo::angle(ellipse.arc_point0(), center, point);
+        if (angle1 < 0)
         {
             angle1 += Geo::PI * 2;
         }
-        const double angle = Geo::rad_to_2PI(Geo::angle(center, point));
-        const double angle2 = angle + Geo::PI * 2;
-        if ((angle0 <= angle && angle <= angle1) || (angle0 <= angle2 && angle2 <= angle1))
+        if (angle1 <= angle0)
         {
             return std::min(Geo::distance(x0, y0, coord.x, coord.y), Geo::distance(x1, y1, coord.x, coord.y));
         }
@@ -514,34 +514,39 @@ double Geo::distance(const Point &point, const Ellipse &ellipse)
 double Geo::distance(const Point &point, const Arc &arc)
 {
     const Geo::Point center(arc.x, arc.y);
-    double angle0 = Geo::rad_to_2PI(Geo::angle(center, arc.control_points[0]));
-    double angle1 = Geo::rad_to_2PI(Geo::angle(center, arc.control_points[2]));
-    const double angle = Geo::rad_to_2PI(Geo::angle(center, point));
-    const double angle2 = angle + Geo::PI * 2;
+    double angle0 = Geo::angle(arc.control_points[0], center, arc.control_points[2]);
+    double angle1 = Geo::angle(arc.control_points[0], center, point);
     if (arc.is_cw())
     {
-        if (angle0 < angle1)
+        if (angle0 > 0)
         {
-            angle0 += Geo::PI * 2;
+            angle0 -= Geo::PI * 2;
         }
-        if ((angle1 <= angle && angle <= angle0) || (angle1 <= angle2 && angle2 <= angle0))
+        if (angle1 > 0)
         {
-            return std::abs(Geo::distance(point, center) - arc.radius);
+            angle1 -= Geo::PI * 2;
         }
     }
     else
     {
-        if (angle1 < angle0)
+        if (angle0 < 0)
+        {
+            angle0 += Geo::PI * 2;
+        }
+        if (angle1 < 0)
         {
             angle1 += Geo::PI * 2;
         }
-        if ((angle0 <= angle && angle <= angle1) || (angle0 <= angle2 && angle2 <= angle1))
-        {
-            return std::abs(Geo::distance(point, center) - arc.radius);
-        }
     }
-    return std::min(Geo::distance(point, arc.control_points[0]),
-        Geo::distance(point, arc.control_points[2]));
+    if (std::abs(angle1) <= std::abs(angle0))
+    {
+        return std::abs(Geo::distance(point, center) - arc.radius);
+    }
+    else
+    {
+        return std::min(Geo::distance(point, arc.control_points[0]),
+            Geo::distance(point, arc.control_points[2]));
+    }
 }
 
 double Geo::distance(const Geo::Point &start0, const Geo::Point &end0, const Geo::Point &start1, const Geo::Point &end1, Geo::Point &point0, Geo::Point &point1)
@@ -1197,26 +1202,31 @@ bool Geo::is_inside(const Point &point, const Arc &arc)
         return false;
     }
     const Geo::Point center(arc.x, arc.y); 
-    double angle0 = Geo::rad_to_2PI(Geo::angle(center, arc.control_points[0]));
-    double angle1 = Geo::rad_to_2PI(Geo::angle(center, arc.control_points[2]));
-    const double angle = Geo::angle(center, point);
-    const double angle2 = angle + Geo::PI * 2;
+    double angle0 = Geo::angle(arc.control_points[0], center, arc.control_points[2]);
+    double angle1 = Geo::angle(arc.control_points[0], center, point);
     if (arc.is_cw())
     {
-        if (angle0 < angle1)
+        if (angle0 > 0)
         {
-            angle0 += Geo::PI *  2;
+            angle0 -= Geo::PI * 2;
         }
-        return (angle1 <= angle && angle <= angle0) || (angle1 <= angle2 && angle2 <= angle0);
+        if (angle1 > 0)
+        {
+            angle1 -= Geo::PI * 2;
+        }
     }
     else
     {
-        if (angle1 < angle0)
+        if (angle0 < 0)
+        {
+            angle0 += Geo::PI * 2;
+        }
+        if (angle1 < 0)
         {
             angle1 += Geo::PI * 2;
         }
-        return (angle0 <= angle && angle <= angle1) || (angle0 <= angle2 && angle2 <= angle1);
     }
+    return std::abs(angle1) <= std::abs(angle0);
 }
 
 bool Geo::is_inside(const Triangle &triangle0, const Triangle &triangle1)

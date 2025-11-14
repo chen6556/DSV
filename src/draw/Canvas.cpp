@@ -3601,30 +3601,46 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                 const Geo::Ellipse *e = static_cast<const Geo::Ellipse *>(object);
                 if (_catch_types[0])
                 {
-                    if (const double d = Geo::distance(pos, e->center()); d < dis[0])
+                    if (e->is_arc())
                     {
-                        dis[0] = d;
-                        result[0] = e->center();
+                        if (const double d = Geo::distance(pos, e->shape().front()); d < dis[0])
+                        {
+                            dis[0] = d;
+                            result[0] = e->shape().front();
+                        }
+                        if (const double d = Geo::distance(pos, e->shape().back()); d < dis[0])
+                        {
+                            dis[0] = d;
+                            result[0] = e->shape().back();
+                        }
                     }
-                    if (const double d = Geo::distance(pos, e->a0()); d < dis[0])
+                    else
                     {
-                        dis[0] = d;
-                        result[0] = e->a0();
-                    }
-                    if (const double d = Geo::distance(pos, e->a1()); d < dis[0])
-                    {
-                        dis[0] = d;
-                        result[0] = e->a1();
-                    }
-                    if (const double d = Geo::distance(pos, e->b0()); d < dis[0])
-                    {
-                        dis[0] = d;
-                        result[0] = e->b0();
-                    }
-                    if (const double d = Geo::distance(pos, e->b1()); d < dis[0])
-                    {
-                        dis[0] = d;
-                        result[0] = e->b1();
+                        if (const double d = Geo::distance(pos, e->center()); d < dis[0])
+                        {
+                            dis[0] = d;
+                            result[0] = e->center();
+                        }
+                        if (const double d = Geo::distance(pos, e->a0()); d < dis[0])
+                        {
+                            dis[0] = d;
+                            result[0] = e->a0();
+                        }
+                        if (const double d = Geo::distance(pos, e->a1()); d < dis[0])
+                        {
+                            dis[0] = d;
+                            result[0] = e->a1();
+                        }
+                        if (const double d = Geo::distance(pos, e->b0()); d < dis[0])
+                        {
+                            dis[0] = d;
+                            result[0] = e->b0();
+                        }
+                        if (const double d = Geo::distance(pos, e->b1()); d < dis[0])
+                        {
+                            dis[0] = d;
+                            result[0] = e->b1();
+                        }
                     }
                 }
                 if (Geo::Point output0, output1; _catch_types[3] && Geo::tangency_point(_mouse_press_pos, *e, output0, output1))
