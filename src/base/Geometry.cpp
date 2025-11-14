@@ -2752,13 +2752,13 @@ Geo::Point Ellipse::arc_point1() const
 void Ellipse::update_shape(const double down_sampling_value)
 {
     const Geo::Point point = center();
-    if (_arc_angle[0] == _arc_angle[1])
+    if (_arc_angle[0] == _arc_angle[1] || _arc_angle[1] - _arc_angle[0] == Geo::PI * 2)
     {
         _shape = Geo::ellipse_to_polygon(point.x, point.y, lengtha(), lengthb(), angle(), down_sampling_value);
     }
     else
     {
-        _shape = Geo::ellipse_to_polyline(point.x, point.y, lengtha(), lengthb(), angle(), arc_angle0(), arc_angle1(), down_sampling_value);
+        _shape = Geo::ellipse_to_polyline(point.x, point.y, lengtha(), lengthb(), angle(), _arc_angle[0], _arc_angle[1], down_sampling_value);
     }
 }
 

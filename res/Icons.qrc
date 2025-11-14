@@ -11,7 +11,6 @@
     <file>icons/bezier_btn.png</file>
     <file>icons/fillet_btn.png</file>
     <file>icons/DSV_logo.png</file>
-    <file>icons/ellipse_btn.png</file>
     <file>icons/ring_array_btn.png</file>
     <file>icons/line_array_btn.png</file>
     <file>icons/offset_btn.png</file>
@@ -44,5 +43,7 @@
     <file>icons/arc/sca_arc_btn.png</file>
     <file>icons/arc/sea_arc_btn.png</file>
     <file>icons/arc/ser_arc_btn.png</file>
+    <file>icons/ellipse/ellipse_btn.png</file>
+    <file>icons/ellipse/ellipse_arc_btn.png</file>
   </qresource>
 </RCC>

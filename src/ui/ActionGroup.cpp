@@ -12,6 +12,7 @@ void ActionGroup::init()
     init_polygon_menu();
     init_arc_menu();
     init_circle_menu();
+    init_ellipse_menu();
     init_curve_menu();
     init_fillet_menu();
 }
@@ -100,6 +101,28 @@ void ActionGroup::init_circle_menu()
     QAction *circle_3p = new QAction(QIcon(":/icons/circle/3p_circle_btn.png"),
         "3-Point", ui->circle_btn);
     _circle_menu->addAction(circle_3p);
+}
+
+void ActionGroup::init_ellipse_menu()
+{
+    _ellipse_menu = new QMenu(ui->ellipse_btn);
+    _ellipse_menu->connect(_ellipse_menu, &QMenu::triggered, [this](QAction *action)
+        {
+            _callback(MenuType::EllipseMenu, _ellipse_menu->actions().indexOf(action));
+            ui->ellipse_btn->setIcon(action->icon());
+            ui->ellipse_btn->setToolTip(action->text());
+            ui->ellipse_btn->setDefaultAction(action);
+        });
+    ui->ellipse_btn->setMenu(_ellipse_menu);
+
+    QAction *ellipse = new QAction(QIcon(":/icons/ellipse/ellipse_btn.png"),
+        "Ellipse", ui->ellipse_btn);
+    _ellipse_menu->addAction(ellipse);
+    ui->ellipse_btn->setDefaultAction(ellipse);
+
+    QAction *arc = new QAction(QIcon(":/icons/ellipse/ellipse_arc_btn.png"),
+        "Ellipse Arc", ui->ellipse_btn);
+    _ellipse_menu->addAction(arc);
 }
 
 void ActionGroup::init_curve_menu()
