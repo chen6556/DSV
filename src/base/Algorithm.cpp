@@ -8072,7 +8072,7 @@ Geo::Polyline Geo::ellipse_to_polyline(const double x, const double y, const dou
 Geo::Polyline Geo::ellipse_to_polyline(const Ellipse &ellipse, const double down_sampling_value)
 {
     return Geo::ellipse_to_polyline(ellipse.center().x, ellipse.center().y, ellipse.lengtha(),
-        ellipse.lengthb(), ellipse.angle(), ellipse.arc_angle0(), ellipse.arc_angle1(), down_sampling_value);
+        ellipse.lengthb(), ellipse.angle(), ellipse.arc_param0(), ellipse.arc_param1(), down_sampling_value);
 }
 
 

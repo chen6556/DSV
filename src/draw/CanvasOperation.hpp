@@ -490,7 +490,7 @@ namespace CanvasOperations
     class Ellipse1Operation : public CanvasOperation
     {
     private:
-        double _parameters[9]; // x, y, a, b, angle, start, end, a1x, a1y
+        double _parameters[7]; // x, y, a, b, angle, start, end
         int _index = 0;
 
     public:

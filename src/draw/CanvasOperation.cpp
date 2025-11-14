@@ -3174,7 +3174,7 @@ bool Ellipse1Operation::mouse_press(QMouseEvent *event)
                 }
                 _parameters[2] = Geo::distance(_parameters[0], _parameters[1], x, y);
                 _parameters[4] = Geo::angle(Geo::Point(_parameters[0], _parameters[1]), Geo::Point(x, y));
-                tool_lines[0] = _parameters[7] = x, tool_lines[1] = _parameters[8] = y;
+                tool_lines[0] = x, tool_lines[1] = y;
                 tool_lines[3] = _parameters[0] * 2 - x, tool_lines[4] = _parameters[1] * 2 - y;
                 tool_lines[6] = tool_lines[9] = tool_lines[0], tool_lines[7] = tool_lines[10] = tool_lines[1];
                 tool_lines_count = 12;
@@ -3190,20 +3190,18 @@ bool Ellipse1Operation::mouse_press(QMouseEvent *event)
             break;
         case 3:
             {
-                const double angle = Geo::angle(Geo::Point(_parameters[0], _parameters[1]),
-                    Geo::Point(real_pos[0], real_pos[1]));
-                _parameters[5] = angle;
+                _parameters[5] = Geo::angle(Geo::Point(_parameters[0], _parameters[1]),
+                    Geo::Point(real_pos[0], real_pos[1])) - _parameters[4];
                 tool_lines[9] = real_pos[0], tool_lines[10] = real_pos[1];
                 tool_lines_count = 12;
             }
             break;
         case 4:
             {
-                _parameters[6] = Geo::angle(Geo::Point(_parameters[7], _parameters[8]),
-                    Geo::Point(_parameters[0], _parameters[1]),
-                    Geo::Point(real_pos[0], real_pos[1]));
+                _parameters[6] = Geo::angle(Geo::Point(_parameters[0], _parameters[1]),
+                    Geo::Point(real_pos[0], real_pos[1])) - _parameters[4];
                 Geo::Ellipse *ellipse = new Geo::Ellipse(_parameters[0], _parameters[1],
-                    _parameters[2], _parameters[3], _parameters[5], _parameters[6]);
+                    _parameters[2], _parameters[3], _parameters[5], _parameters[6], false);
                 ellipse->rotate(_parameters[0], _parameters[1], _parameters[4]);
                 canvas->add_geometry(ellipse);
                 _index = shape_count = tool_lines_count = 0;
@@ -3278,16 +3276,16 @@ bool Ellipse1Operation::mouse_move(QMouseEvent *event)
         break;
     case 3:
         tool_lines[3] = real_pos[0], tool_lines[4] = real_pos[1];
+        info = QString("angle: %1°").arg(Geo::rad_to_degree(Geo::angle(Geo::Point(_parameters[0],
+            _parameters[1]), Geo::Point(real_pos[0], real_pos[1])) - _parameters[4]));
         break;
     case 4:
         {
-            const double angle = Geo::angle(Geo::Point(_parameters[7], _parameters[8]),
-                Geo::Point(_parameters[0], _parameters[1]),
-                Geo::Point(real_pos[0], real_pos[1]));
-            _parameters[6] = angle;
-            qDebug() << Geo::rad_to_degree(angle);
+            _parameters[6] = Geo::angle(Geo::Point(_parameters[0], _parameters[1]),
+                Geo::Point(real_pos[0], real_pos[1])) - _parameters[4];
+            info = QString("angle: %1°").arg(Geo::rad_to_degree(_parameters[6]));
             Geo::Ellipse ellipse(_parameters[0], _parameters[1], _parameters[2],
-                _parameters[3], _parameters[5], _parameters[6]);
+                _parameters[3], _parameters[5], _parameters[6], false);
             ellipse.rotate(_parameters[0], _parameters[1], _parameters[4]);
             tool_lines[9] = real_pos[0], tool_lines[10] = real_pos[1];
             const Geo::Polyline &path = ellipse.shape();
@@ -3343,8 +3341,23 @@ bool Ellipse1Operation::read_parameters(const double *params, const int count)
         if (count >= 1 && params[0] > 0)
         {
             _parameters[3] = params[0];
-            tool_lines[0] = _parameters[0];
-            tool_lines[1] = _parameters[1];
+            Geo::Ellipse ellipse(_parameters[0], _parameters[1], _parameters[2], _parameters[3]);
+            ellipse.rotate(_parameters[0], _parameters[1], _parameters[4]);
+            tool_lines[6] = ellipse.b0().x, tool_lines[7] = ellipse.b0().y;
+            tool_lines[9] = ellipse.b1().x, tool_lines[10] = ellipse.b1().y;
+            const Geo::Polyline &path = ellipse.shape();
+            shape_count = 0;
+            check_shape_size(path.size() * 3);
+            for (const Geo::Point &point : path)
+            {
+                shape[shape_count++] = point.x;
+                shape[shape_count++] = point.y;
+                ++shape_count;
+            }
+            info = QString("x:%1 y:%2 a:%3 b:%4").arg(_parameters[0]).arg(_parameters[1]).arg(_parameters[2]).arg(_parameters[3]);
+            tool_lines[0] = tool_lines[6] = _parameters[0];
+            tool_lines[1] = tool_lines[7] = _parameters[1];
+            tool_lines[3] = real_pos[0], tool_lines[4] = real_pos[1];
             tool_lines_count = 6;
             _index++;
         }
@@ -3353,11 +3366,10 @@ bool Ellipse1Operation::read_parameters(const double *params, const int count)
         if (count >= 1)
         {
             _parameters[5] = Geo::degree_to_rad(params[0]);
-            tool_lines[3] = _parameters[0] + _parameters[2] * std::cos(_parameters[4]) * std::cos(_parameters[5])
-                - _parameters[3] * std::sin(_parameters[4]) * std::sin(_parameters[5]);
-            tool_lines[4] = _parameters[1] + _parameters[2] * std::sin(_parameters[4]) * std::cos(_parameters[5])
-                + _parameters[3] * std::cos(_parameters[4]) * std::sin(_parameters[5]);
-            _parameters[5] = Geo::rad_to_2PI(_parameters[5] - _parameters[4]);
+            tool_lines[3] = std::max(_parameters[2], _parameters[3])
+                * std::cos(_parameters[4] + _parameters[5]) + _parameters[0];
+            tool_lines[4] = std::max(_parameters[2], _parameters[3])
+                * std::sin(_parameters[4] + _parameters[5]) + _parameters[1];
             tool_lines_count = 12;
             _index++;
             return true;
@@ -3368,7 +3380,7 @@ bool Ellipse1Operation::read_parameters(const double *params, const int count)
         {
             _parameters[6] = Geo::degree_to_rad(params[0]);
             Geo::Ellipse *ellipse = new Geo::Ellipse(_parameters[0], _parameters[1],
-                _parameters[2], _parameters[3], _parameters[5], _parameters[6]);
+                _parameters[2], _parameters[3], _parameters[5], _parameters[6], false);
             ellipse->rotate(_parameters[0], _parameters[1], _parameters[4]);
             canvas->add_geometry(ellipse);
             _index = shape_count = tool_lines_count = 0;

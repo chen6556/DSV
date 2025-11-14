@@ -385,7 +385,7 @@ namespace Geo
 
     Polygon ellipse_to_polygon(const Ellipse &ellipse, const double down_sampling_value = 0.02);
 
-    // start_angle:a[1]点绕中心点旋转角度 end_angle:a[1]点绕中心点旋转角度
+    // start_angle:参数方程中参数的起点 end_angle:参数方程中参数的终点
     Polyline ellipse_to_polyline(const double x, const double y, const double a, const double b, const double rad, 
         const double start_angle, double end_angle, const double down_sampling_value = 0.02);
 
