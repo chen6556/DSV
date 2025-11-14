@@ -2728,9 +2728,25 @@ double Ellipse::arc_angle0() const
     return _arc_angle[0];
 }
 
+Geo::Point Ellipse::arc_point0() const
+{
+    const Geo::Point anchor = center();
+    const double a = lengtha(), b = lengthb(), rad = angle();
+    return Geo::Point(anchor.x + a * std::cos(rad) * std::cos(_arc_angle[0]) - b * std::sin(rad) * std::sin(_arc_angle[0]),
+        anchor.y + a * std::sin(rad) * std::cos(_arc_angle[0]) + b * std::cos(rad) * std::sin(_arc_angle[0]));
+}
+
 double Ellipse::arc_angle1() const
 {
     return _arc_angle[1];
+}
+
+Geo::Point Ellipse::arc_point1() const
+{
+    const Geo::Point anchor = center();
+    const double a = lengtha(), b = lengthb(), rad = angle();
+    return Geo::Point(anchor.x + a * std::cos(rad) * std::cos(_arc_angle[1]) - b * std::sin(rad) * std::sin(_arc_angle[1]),
+        anchor.y + a * std::sin(rad) * std::cos(_arc_angle[1]) + b * std::cos(rad) * std::sin(_arc_angle[1]));
 }
 
 void Ellipse::update_shape(const double down_sampling_value)

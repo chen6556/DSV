@@ -744,8 +744,12 @@ namespace Geo
         // a[1]点绕中心点旋转角度,总是从arc_angle[0]逆时针旋转到arc_anlge[1]
         double arc_angle0() const;
 
+        Geo::Point arc_point0() const;
+
         // a[1]点绕中心点旋转角度,总是从arc_angle[0]逆时针旋转到arc_anlge[1]
         double arc_angle1() const;
+
+        Geo::Point arc_point1() const;
 
         void update_shape(const double down_sampling_value);
 
