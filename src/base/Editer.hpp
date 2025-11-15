@@ -168,6 +168,8 @@ public:
 
     void trim(Geo::Arc *arc, const double x, const double y);
 
+    void trim(Geo::Ellipse *ellipse, const double x, const double y);
+
     void extend(Geo::Polyline *polyline, const double x, const double y);
 
 

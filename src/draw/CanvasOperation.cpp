@@ -3918,6 +3918,12 @@ bool TrimOperation::mouse_press(QMouseEvent *event)
                 canvas->refresh_selected_ibo();
                 result = true;
                 break;
+            case Geo::Type::ELLIPSE:
+                editer->trim(static_cast<Geo::Ellipse *>(clicked_object), real_pos[0], real_pos[1]);
+                canvas->refresh_vbo(Geo::Type::ELLIPSE, true);
+                canvas->refresh_selected_ibo();
+                result = true;
+                break;
             case Geo::Type::ARC:
                 editer->trim(static_cast<Geo::Arc *>(clicked_object), real_pos[0], real_pos[1]);
                 canvas->refresh_vbo(Geo::Type::ARC, true);
