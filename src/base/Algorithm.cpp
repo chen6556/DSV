@@ -805,16 +805,7 @@ double Geo::distance_square(const Point &point, const Polygon &polygon)
 
 bool Geo::is_inside(const Geo::Point &point, const Geo::Point &start, const Geo::Point &end, const bool infinite)
 {
-    if (std::abs(Geo::cross((end - start).normalize(), (point - start).normalize())) < Geo::EPSILON)
-    {
-        const double v0 = Geo::distance(point, start) + Geo::distance(point, end);
-        const double v1 = Geo::distance(start, end);
-        return infinite || Geo::distance(point, start) + Geo::distance(point, end) < Geo::distance(start, end) + Geo::EPSILON;
-    }
-    else
-    {
-        return Geo::distance(point, start) < Geo::EPSILON || Geo::distance(point, end) < Geo::EPSILON;
-    }
+    return Geo::distance(point, start, end, infinite) <= Geo::EPSILON;
 }
 
 bool Geo::is_inside(const Point &point, const Polyline &polyline)
