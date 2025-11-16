@@ -1857,14 +1857,14 @@ double Circle::default_down_sampling_value = 0.02;
 Circle::Circle(const double x, const double y, const double r)
     : Point(x, y), radius(r)
 {
-    assert(r > 0);
+    assert(r >= 0);
     update_shape(Geo::Circle::default_down_sampling_value);
 }
 
 Circle::Circle(const Point &point, const double r)
     : Point(point), radius(r)
 {
-    assert(r > 0);
+    assert(r >= 0);
     update_shape(Geo::Circle::default_down_sampling_value);
 }
 
@@ -2291,7 +2291,7 @@ double Ellipse::default_down_sampling_value = 0.02;
 
 Ellipse::Ellipse(const double x, const double y, const double a, const double b)
 {
-    assert(a > 0 && b > 0);
+    assert(a >= 0 && b >= 0);
     _a[0].x = x - a;
     _a[1].x = x + a;
     _a[0].y = _a[1].y = y;
@@ -2303,7 +2303,7 @@ Ellipse::Ellipse(const double x, const double y, const double a, const double b)
 
 Ellipse::Ellipse(const double x, const double y, const double a, const double b, const double start, const double end, const bool is_param)
 {
-    assert(a > 0 && b > 0);
+    assert(a >= 0 && b >= 0);
     _a[0].x = x - a;
     _a[1].x = x + a;
     _a[0].y = _a[1].y = y;
@@ -2316,7 +2316,7 @@ Ellipse::Ellipse(const double x, const double y, const double a, const double b,
 
 Ellipse::Ellipse(const Point &point, const double a, const double b)
 {
-    assert(a > 0 && b > 0);
+    assert(a >= 0 && b >= 0);
     _a[0].x = point.x - a;
     _a[1].x = point.x + a;
     _a[0].y = _a[1].y = point.y;
@@ -2328,7 +2328,7 @@ Ellipse::Ellipse(const Point &point, const double a, const double b)
 
 Ellipse::Ellipse(const Point &point, const double a, const double b, const double start, const double end, const bool is_param)
 {
-    assert(a > 0 && b > 0);
+    assert(a >= 0 && b >= 0);
     _a[0].x = point.x - a;
     _a[1].x = point.x + a;
     _a[0].y = _a[1].y = point.y;
