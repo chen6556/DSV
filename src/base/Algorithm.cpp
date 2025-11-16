@@ -807,11 +807,13 @@ bool Geo::is_inside(const Geo::Point &point, const Geo::Point &start, const Geo:
 {
     if (std::abs(Geo::cross((end - start).normalize(), (point - start).normalize())) < Geo::EPSILON)
     {
+        const double v0 = Geo::distance(point, start) + Geo::distance(point, end);
+        const double v1 = Geo::distance(start, end);
         return infinite || Geo::distance(point, start) + Geo::distance(point, end) < Geo::distance(start, end) + Geo::EPSILON;
     }
     else
     {
-        return false;
+        return Geo::distance(point, start) < Geo::EPSILON || Geo::distance(point, end) < Geo::EPSILON;
     }
 }
 
@@ -1577,6 +1579,8 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Ellipse 
     const double a0 = Geo::distance_square(ellipse.a0(), ellipse.a1()) / 4;
     const double b0 = Geo::distance_square(ellipse.b0(), ellipse.b1()) / 4;
 
+    const double value = std::pow(a1, 2) * a0 + std::pow(b1, 2) * b0 - std::pow(c1, 2);
+    const double value2 = std::pow(b1, 2);
     if (std::pow(a1, 2) * a0 + std::pow(b1, 2) * b0 > std::pow(c1, 2))
     {
         const double t0 = a0 * std::pow(a1, 2) + b0 * std::pow(b1, 2);
@@ -1613,9 +1617,9 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Ellipse 
         }
         else
         {
-            if (Geo::is_inside(output0, point2, point3))
+            if (Geo::is_inside(output0, point2, point3, false))
             {
-                if (Geo::is_inside(output1, point2, point3))
+                if (Geo::is_inside(output1, point2, point3, false))
                 {
                     const Geo::Point coord = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
                     output0 = Geo::to_coord(output0, coord.x, coord.y, -angle);
@@ -1652,7 +1656,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Ellipse 
             }
             else
             {
-                if (Geo::is_inside(output1, point2, point3))
+                if (Geo::is_inside(output1, point2, point3, false))
                 {
                     const Geo::Point coord = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
                     output0 = Geo::to_coord(output1, coord.x, coord.y, -angle);

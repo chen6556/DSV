@@ -4559,7 +4559,7 @@ void Editer::trim(Geo::Ellipse *ellipse, const double x, const double y)
         }
     }
 
-    if (intersections.empty())
+    if (intersections.empty() || (!ellipse->is_arc() && intersections.size() < 2))
     {
         return;
     }
