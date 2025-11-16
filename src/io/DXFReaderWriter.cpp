@@ -1112,8 +1112,8 @@ void DXFReaderWriter::write_ellipse(const Geo::Ellipse *ellipse)
     el.secPoint.x = ellipse->a1().x - el.basePoint.x;
     el.secPoint.y = ellipse->a1().y - el.basePoint.y;
     el.ratio = ellipse->lengthb() / ellipse->lengtha();
-    el.staparam = ellipse->arc_angle0();
-    el.endparam = ellipse->arc_angle1();
+    el.staparam = ellipse->arc_param0();
+    el.endparam = ellipse->arc_param1();
     _dxfrw->writeEllipse(&el);
 }
 
