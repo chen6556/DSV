@@ -8031,7 +8031,8 @@ bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &po
 
 Geo::Polygon Geo::circle_to_polygon(const double x, const double y, const double r, const double down_sampling_value)
 {
-    const double step = std::min(std::asin(1 / r), Geo::PI / 16);
+    const double v = std::asin(1 / r);
+    const double step = std::isnan(v) ? Geo::PI / 32 : std::min(v, Geo::PI / 64);
     double degree = 0;
     std::vector<Geo::Point> points;
     while (degree < Geo::PI * 2)
@@ -8053,7 +8054,8 @@ Geo::Polygon Geo::circle_to_polygon(const double x, const double y, const double
 
 Geo::Polyline Geo::arc_to_polyline(const Geo::Point &center, const double radius, double start_angle, double end_angle, const bool is_cw, const double down_sampling_value)
 {
-    const double step = std::min(std::asin(1 / radius), Geo::PI / 16);
+    const double v = std::asin(1 / radius);
+    const double step = std::isnan(v) ? Geo::PI / 32 : std::min(v, Geo::PI / 32);
     std::vector<Geo::Point> points;
     if (is_cw)
     {
@@ -8109,7 +8111,8 @@ Geo::Polygon Geo::circle_to_polygon(const Circle &circle, const double down_samp
 
 Geo::Polygon Geo::ellipse_to_polygon(const double x, const double y, const double a, const double b, const double rad, const double down_sampling_value)
 {
-    const double step = std::asin(1 / std::max(a, b));
+    const double v = std::asin(1 / std::max(a, b));
+    const double step = std::isnan(v) ? Geo::PI / 32 : std::min(v, Geo::PI / 32);
     double degree = 0;
     std::vector<Geo::Point> points;
     while (degree < Geo::PI * 2)
@@ -8138,7 +8141,8 @@ Geo::Polygon Geo::ellipse_to_polygon(const Ellipse &ellipse, const double down_s
 Geo::Polyline Geo::ellipse_to_polyline(const double x, const double y, const double a, const double b,
     const double rad, const double start_angle, double end_angle, const double down_sampling_value)
 {
-    const double step = std::asin(1 / std::max(a, b));
+    const double v = std::asin(1 / std::max(a, b));
+    const double step = std::isnan(v) ? Geo::PI / 32 : std::min(v, Geo::PI / 32);
     double degree = start_angle;
     if (end_angle < degree)
     {
