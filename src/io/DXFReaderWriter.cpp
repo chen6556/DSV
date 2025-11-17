@@ -366,9 +366,12 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
             if (group.name.toStdString() == data.layer)
             {
                 const double a = std::hypot(data.secPoint.x, data.secPoint.y);
-                group.append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y, a, a * data.ratio));
-                group.back()->rotate(data.basePoint.x, data.basePoint.y,
-                    data.secPoint.x >= 0 ? std::sin(data.secPoint.y / a) : -std::sin(data.secPoint.y / a));
+                group.append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y,
+                    a, a * data.ratio, data.staparam, data.endparam, true));
+                group.back()->translate(-data.basePoint.x, -data.basePoint.y);
+                const double s = data.secPoint.y / a, c = data.secPoint.x / a;
+                group.back()->transform(c, -s, 0, s, c, 0);
+                group.back()->translate(data.basePoint.x, data.basePoint.y);
                 _object_map[group.back()] = data.handle;
                 _handle_map[data.handle] = group.back();
                 return;
@@ -377,19 +380,24 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
         const double a = std::hypot(data.secPoint.x, data.secPoint.y);
-        _graph->container_groups().back().append(new Geo::Ellipse(
-            data.basePoint.x, data.basePoint.y, a, a * data.ratio));
-        _graph->container_groups().back().back()->rotate(data.basePoint.x, data.basePoint.y,
-                data.secPoint.x >= 0 ? std::sin(data.secPoint.y / a) : -std::sin(data.secPoint.y / a));
+        _graph->container_groups().back().append(new Geo::Ellipse(data.basePoint.x,
+            data.basePoint.y, a, a * data.ratio, data.staparam, data.endparam, true));
+        _graph->container_groups().back().back()->translate(-data.basePoint.x, -data.basePoint.y);
+        const double s = data.secPoint.y / a, c = data.secPoint.x / a;
+        _graph->container_groups().back().back()->transform(c, -s, 0, s, c, 0);
+        _graph->container_groups().back().back()->translate(data.basePoint.x, data.basePoint.y);
         _object_map[_graph->container_groups().back().back()] = data.handle;
         _handle_map[data.handle] = _graph->container_groups().back().back();
     }
     else
     {
         const double a = std::hypot(data.secPoint.x, data.secPoint.y);
-        _combination->append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y, a, a * data.ratio));
-        _combination->back()->rotate(data.basePoint.x, data.basePoint.y,
-            data.secPoint.x >= 0 ? std::sin(data.secPoint.y / a) : -std::sin(data.secPoint.y / a));
+        _combination->append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y,
+            a, a * data.ratio, data.staparam, data.endparam, true));
+        _combination->back()->translate(-data.basePoint.x, -data.basePoint.y);
+        const double s = data.secPoint.y / a, c = data.secPoint.x / a;
+        _combination->back()->transform(c, -s, 0, s, c, 0);
+        _combination->back()->translate(data.basePoint.x, data.basePoint.y);
         _object_map[_combination->back()] = data.handle;
         _handle_map[data.handle] = _combination->back();
     }
@@ -1101,12 +1109,11 @@ void DXFReaderWriter::write_ellipse(const Geo::Ellipse *ellipse)
     el.lineType = "CONTINUOUS";
     el.basePoint.x = ellipse->center().x;
     el.basePoint.y = ellipse->center().y;
-    const double angle = ellipse->angle();
-    el.secPoint.x = ellipse->lengtha() * std::cos(angle);
-    el.secPoint.y = ellipse->lengtha() * std::sin(angle);
+    el.secPoint.x = ellipse->a1().x - el.basePoint.x;
+    el.secPoint.y = ellipse->a1().y - el.basePoint.y;
     el.ratio = ellipse->lengthb() / ellipse->lengtha();
-    el.staparam = 0;
-    el.endparam = Geo::PI * 2;
+    el.staparam = ellipse->arc_param0();
+    el.endparam = ellipse->arc_param1();
     _dxfrw->writeEllipse(&el);
 }
 

@@ -28,7 +28,8 @@ void CMDWidget::init()
 
     _cmd_list << QString() << "ALL" << "ANGLE" << "ARRAY" << "BEZIER" << "BSPLINE"
         << "CCIRCLE" << "CHAMFER" << "CLOSE" << "COMBINATE" << "CONNECT" << "COPY"
-        << "CPOLYGON" << "CUT" << "DCIRCLE" << "DELETE" << "DETACH" << "DIFFERENCE" << "ELLIPSE"
+        << "CPOLYGON" << "CUT" << "DCIRCLE" << "DELETE" << "DETACH" << "DIFFERENCE"
+        << "ELLIPSE" << "ELLIPSEARC"
         << "EXTEND" << "FILLET" << "FLIPX" << "FLIPY" << "GETPOINT"
         << "IPOLYGON" << "INTERSECTION" << "LENGTH" << "LINEARRAY" << "MAIN" << "MIRROR"
         << "OFFSET" << "PASTE" << "PARC" << "PCIRCLE" << "POLYLINE" << "RECTANGLE"
@@ -38,7 +39,8 @@ void CMDWidget::init()
 
     _cmd_dict = {{"LENGTH",CMD::Length_CMD}, {"ANGLE",CMD::Angle_CMD}, {"MAIN",CMD::Main_CMD},
         {"CCIRCLE",CMD::CCircle_CMD}, {"DCIRCLE",CMD::DCircle_CMD}, {"PCIRCLE",CMD::PCircle_CMD},
-        {"ELLIPSE",CMD::Ellipse_CMD}, {"POLYLINE",CMD::Polyline_CMD}, {"RECTANGLE",CMD::Rectangle_CMD},
+        {"ELLIPSE",CMD::Ellipse_CMD}, {"ELLIPSEARC",CMD::EllipseArc_CMD},
+        {"POLYLINE",CMD::Polyline_CMD}, {"RECTANGLE",CMD::Rectangle_CMD},
         {"PARC",CMD::PArc_CMD}, {"SCAARC",CMD::SCAArc_CMD}, {"SEAARC",CMD::SEAArc_CMD}, {"SERARC",CMD::SERArc_CMD},
         {"CPOLYGON",CMD::CPolygon_CMD}, {"IPOLYGON",CMD::IPolygon_CMD},
         {"BSPLINE",CMD::BSpline_CMD}, {"BEZIER",CMD::Bezier_CMD}, {"CONNECT",CMD::Connect_CMD},
@@ -64,7 +66,8 @@ void CMDWidget::init()
         {CMD::SERArc_CMD, CanvasOperations::Tool::Arc3},
         {CMD::Bezier_CMD, CanvasOperations::Tool::Bezier}, {CMD::BSpline_CMD, CanvasOperations::Tool::BSpline},
         {CMD::CCircle_CMD, CanvasOperations::Tool::Circle0},{CMD::DCircle_CMD, CanvasOperations::Tool::Circle1},
-        {CMD::PCircle_CMD, CanvasOperations::Tool::Circle2}, {CMD::Ellipse_CMD, CanvasOperations::Tool::Ellipse},
+        {CMD::PCircle_CMD, CanvasOperations::Tool::Circle2}, {CMD::Ellipse_CMD, CanvasOperations::Tool::Ellipse0},
+        {CMD::EllipseArc_CMD, CanvasOperations::Tool::Ellipse1},
         {CMD::Mirror_CMD, CanvasOperations::Tool::Mirror}, {CMD::Trim_CMD, CanvasOperations::Tool::Trim},
         {CMD::Extend_CMD, CanvasOperations::Tool::Extend}, {CMD::Fillet_CMD, CanvasOperations::Tool::Fillet},
         {CMD::Chamfer_CMD, CanvasOperations::Tool::Chamfer}, {CMD::Split_CMD, CanvasOperations::Tool::Split},
@@ -78,7 +81,8 @@ void CMDWidget::init()
         {CanvasOperations::Tool::Arc1, CMD::SCAArc_CMD}, {CanvasOperations::Tool::Arc2, CMD::SEAArc_CMD},
         {CanvasOperations::Tool::Arc3, CMD::SERArc_CMD},
         {CanvasOperations::Tool::Circle0, CMD::CCircle_CMD},{CanvasOperations::Tool::Circle1, CMD::DCircle_CMD},
-        {CanvasOperations::Tool::Circle2, CMD::PCircle_CMD}, {CanvasOperations::Tool::Ellipse, CMD::Ellipse_CMD},
+        {CanvasOperations::Tool::Circle2, CMD::PCircle_CMD}, {CanvasOperations::Tool::Ellipse0, CMD::Ellipse_CMD},
+        {CanvasOperations::Tool::Ellipse1, CMD::EllipseArc_CMD},
         {CanvasOperations::Tool::Mirror, CMD::Mirror_CMD}, {CanvasOperations::Tool::Extend, CMD::Extend_CMD},
         {CanvasOperations::Tool::Trim, CMD::Trim_CMD}, {CanvasOperations::Tool::Split, CMD::Split_CMD},
         {CanvasOperations::Tool::Fillet, CMD::Fillet_CMD}, {CanvasOperations::Tool::Chamfer, CMD::Chamfer_CMD},
@@ -89,7 +93,8 @@ void CMDWidget::init()
         {CMD::CCircle_CMD, "Center-Radius Circle"}, {CMD::Combinate_CMD, "Combinate"},
         {CMD::Connect_CMD, "Connect"}, {CMD::Copy_CMD, "Copy"}, {CMD::Cut_CMD, "Cut"},
         {CMD::DCircle_CMD, "2-Point Circle"}, {CMD::Detach_CMD, "Detach"}, {CMD::Difference_CMD, "Difference"},
-        {CMD::Ellipse_CMD, "Ellipse"}, {CMD::Extend_CMD, "Extend"}, {CMD::Fillet_CMD, "Fillet"},
+        {CMD::Ellipse_CMD, "Ellipse"}, {CMD::EllipseArc_CMD, "Ellipse Arc"},
+        {CMD::Extend_CMD, "Extend"}, {CMD::Fillet_CMD, "Fillet"},
         {CMD::Chamfer_CMD, "Chamfer"}, {CMD::PArc_CMD, "3-Point Arc"}, {CMD::SCAArc_CMD, "Start-Center-Angle Arc"},
         {CMD::SEAArc_CMD, "Start-End-Angle Arc"}, {CMD::SERArc_CMD, "Start-End-Radius Arc"},
         {CMD::FlipX_CMD, "Flip X"}, {CMD::FlipY_CMD, "Flip Y"}, {CMD::Intersection_CMD, "Intersection"},

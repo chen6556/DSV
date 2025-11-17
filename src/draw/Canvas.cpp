@@ -2062,21 +2062,35 @@ std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
                 break;
             case Geo::Type::ELLIPSE:
                 ellipse = static_cast<const Geo::Ellipse *>(geo);
-                data[data_count++] = (ellipse->a0().x + ellipse->a1().x + ellipse->b0().x + ellipse->b1().x) / 4;
-                data[data_count++] = (ellipse->a0().y + ellipse->a1().y + ellipse->b0().y + ellipse->b1().y) / 4;
-                data[data_count++] = 0.5;
-                data[data_count++] = ellipse->a0().x;
-                data[data_count++] = ellipse->a0().y;
-                data[data_count++] = 0.5;
-                data[data_count++] = ellipse->a1().x;
-                data[data_count++] = ellipse->a1().y;
-                data[data_count++] = 0.5;
-                data[data_count++] = ellipse->b0().x;
-                data[data_count++] = ellipse->b0().y;
-                data[data_count++] = 0.5;
-                data[data_count++] = ellipse->b1().x;
-                data[data_count++] = ellipse->b1().y;
-                data[data_count++] = 0.5;
+                if (ellipse->is_arc())
+                {
+                    const Geo::Point point0(ellipse->arc_point0());
+                    data[data_count++] = point0.x;
+                    data[data_count++] = point0.y;
+                    data[data_count++] = 0.5;
+                    const Geo::Point point1(ellipse->arc_point1());
+                    data[data_count++] = point1.x;
+                    data[data_count++] = point1.y;
+                    data[data_count++] = 0.5;
+                }
+                else
+                {
+                    data[data_count++] = (ellipse->a0().x + ellipse->a1().x + ellipse->b0().x + ellipse->b1().x) / 4;
+                    data[data_count++] = (ellipse->a0().y + ellipse->a1().y + ellipse->b0().y + ellipse->b1().y) / 4;
+                    data[data_count++] = 0.5;
+                    data[data_count++] = ellipse->a0().x;
+                    data[data_count++] = ellipse->a0().y;
+                    data[data_count++] = 0.5;
+                    data[data_count++] = ellipse->a1().x;
+                    data[data_count++] = ellipse->a1().y;
+                    data[data_count++] = 0.5;
+                    data[data_count++] = ellipse->b0().x;
+                    data[data_count++] = ellipse->b0().y;
+                    data[data_count++] = 0.5;
+                    data[data_count++] = ellipse->b1().x;
+                    data[data_count++] = ellipse->b1().y;
+                    data[data_count++] = 0.5;
+                }
                 break;
             case Geo::Type::ARC:
                 for (const Geo::Point &point : static_cast<const Geo::Arc *>(geo)->control_points)
@@ -3587,30 +3601,46 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                 const Geo::Ellipse *e = static_cast<const Geo::Ellipse *>(object);
                 if (_catch_types[0])
                 {
-                    if (const double d = Geo::distance(pos, e->center()); d < dis[0])
+                    if (e->is_arc())
                     {
-                        dis[0] = d;
-                        result[0] = e->center();
+                        if (const double d = Geo::distance(pos, e->shape().front()); d < dis[0])
+                        {
+                            dis[0] = d;
+                            result[0] = e->shape().front();
+                        }
+                        if (const double d = Geo::distance(pos, e->shape().back()); d < dis[0])
+                        {
+                            dis[0] = d;
+                            result[0] = e->shape().back();
+                        }
                     }
-                    if (const double d = Geo::distance(pos, e->a0()); d < dis[0])
+                    else
                     {
-                        dis[0] = d;
-                        result[0] = e->a0();
-                    }
-                    if (const double d = Geo::distance(pos, e->a1()); d < dis[0])
-                    {
-                        dis[0] = d;
-                        result[0] = e->a1();
-                    }
-                    if (const double d = Geo::distance(pos, e->b0()); d < dis[0])
-                    {
-                        dis[0] = d;
-                        result[0] = e->b0();
-                    }
-                    if (const double d = Geo::distance(pos, e->b1()); d < dis[0])
-                    {
-                        dis[0] = d;
-                        result[0] = e->b1();
+                        if (const double d = Geo::distance(pos, e->center()); d < dis[0])
+                        {
+                            dis[0] = d;
+                            result[0] = e->center();
+                        }
+                        if (const double d = Geo::distance(pos, e->a0()); d < dis[0])
+                        {
+                            dis[0] = d;
+                            result[0] = e->a0();
+                        }
+                        if (const double d = Geo::distance(pos, e->a1()); d < dis[0])
+                        {
+                            dis[0] = d;
+                            result[0] = e->a1();
+                        }
+                        if (const double d = Geo::distance(pos, e->b0()); d < dis[0])
+                        {
+                            dis[0] = d;
+                            result[0] = e->b0();
+                        }
+                        if (const double d = Geo::distance(pos, e->b1()); d < dis[0])
+                        {
+                            dis[0] = d;
+                            result[0] = e->b1();
+                        }
                     }
                 }
                 if (Geo::Point output0, output1; _catch_types[3] && Geo::tangency_point(_mouse_press_pos, *e, output0, output1))

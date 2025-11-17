@@ -30,7 +30,8 @@ namespace CanvasOperations
         BSpline, 
         Bezier, 
         Text, 
-        Ellipse,
+        Ellipse0, // Ellipse
+        Ellipse1, // Ellipse Arc
  
         Mirror, 
         RingArray, 
@@ -467,10 +468,29 @@ namespace CanvasOperations
     };
 
 
-    class EllipseOperation : public CanvasOperation
+    class Ellipse0Operation : public CanvasOperation
     {
     private:
         double _parameters[5]; // x, y, a, b, angle
+        int _index = 0;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+
+        bool read_parameters(const double *params, const int count) override;
+
+        QString cmd_tips() const override;
+    };
+
+
+    class Ellipse1Operation : public CanvasOperation
+    {
+    private:
+        double _parameters[7]; // x, y, a, b, angle, start, end
         int _index = 0;
 
     public:

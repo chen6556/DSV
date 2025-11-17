@@ -881,7 +881,7 @@ AABBRect &AABBRect::operator=(const AABBRect &rect)
 
 const bool AABBRect::empty() const
 {
-    return _points.empty();
+    return _points.size() < 5;
 }
 
 const double AABBRect::length() const
@@ -1159,8 +1159,7 @@ Polygon::Polygon(const Polygon &polygon)
 Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
     : Polyline(begin, end)
 {
-    assert(size() >= 3);
-    if (_points.back() != _points.front())
+    if (!_points.empty() && _points.back() != _points.front())
     {
         _points.emplace_back(_points.front());
     }
@@ -1169,8 +1168,7 @@ Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::c
 Polygon::Polygon(const std::initializer_list<Point>& points)
     : Polyline(points)
 {
-    assert(size() > 2);
-    if (_points.back() != _points.front())
+    if (!_points.empty() && _points.back() != _points.front())
     {
         _points.emplace_back(_points.front());
     }
@@ -1179,7 +1177,7 @@ Polygon::Polygon(const std::initializer_list<Point>& points)
 Polygon::Polygon(const Polyline &polyline)
     : Polyline(polyline)
 {
-    if (_points.back() != _points.front())
+    if (!_points.empty() && _points.back() != _points.front())
     {
         _points.emplace_back(_points.front());
     }
@@ -1191,7 +1189,11 @@ Polygon::Polygon(const AABBRect& rect)
 
 Polygon::Polygon(const double x, const double y, const double radius, const int n, const double rad, const bool circumscribed)
 {
-    assert(n >= 3 && radius > 0);
+    assert(n >= 3 && radius >= 0);
+    if (radius == 0)
+    {
+        return;
+    }
     const Geo::Point anchor(x, y);
     const double step = 2 * Geo::PI / n;
     Geo::Vector vec;
@@ -1857,14 +1859,14 @@ double Circle::default_down_sampling_value = 0.02;
 Circle::Circle(const double x, const double y, const double r)
     : Point(x, y), radius(r)
 {
-    assert(r > 0);
+    assert(r >= 0);
     update_shape(Geo::Circle::default_down_sampling_value);
 }
 
 Circle::Circle(const Point &point, const double r)
     : Point(point), radius(r)
 {
-    assert(r > 0);
+    assert(r >= 0);
     update_shape(Geo::Circle::default_down_sampling_value);
 }
 
@@ -2291,7 +2293,7 @@ double Ellipse::default_down_sampling_value = 0.02;
 
 Ellipse::Ellipse(const double x, const double y, const double a, const double b)
 {
-    assert(a > 0 && b > 0);
+    assert(a >= 0 && b >= 0);
     _a[0].x = x - a;
     _a[1].x = x + a;
     _a[0].y = _a[1].y = y;
@@ -2301,15 +2303,41 @@ Ellipse::Ellipse(const double x, const double y, const double a, const double b)
     update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
+Ellipse::Ellipse(const double x, const double y, const double a, const double b, const double start, const double end, const bool is_param)
+{
+    assert(a >= 0 && b >= 0);
+    _a[0].x = x - a;
+    _a[1].x = x + a;
+    _a[0].y = _a[1].y = y;
+    _b[0].y = y + b;
+    _b[1].y = y - b;
+    _b[0].x = _b[1].x = x;
+    update_angle_param(start, end, is_param);
+    update_shape(Geo::Ellipse::default_down_sampling_value);
+}
+
 Ellipse::Ellipse(const Point &point, const double a, const double b)
 {
-    assert(a > 0 && b > 0);
+    assert(a >= 0 && b >= 0);
     _a[0].x = point.x - a;
     _a[1].x = point.x + a;
     _a[0].y = _a[1].y = point.y;
     _b[0].y = point.y + b;
     _b[1].y = point.y - b;
     _b[0].x = _b[1].x = point.x;
+    update_shape(Geo::Ellipse::default_down_sampling_value);
+}
+
+Ellipse::Ellipse(const Point &point, const double a, const double b, const double start, const double end, const bool is_param)
+{
+    assert(a >= 0 && b >= 0);
+    _a[0].x = point.x - a;
+    _a[1].x = point.x + a;
+    _a[0].y = _a[1].y = point.y;
+    _b[0].y = point.y + b;
+    _b[1].y = point.y - b;
+    _b[0].x = _b[1].x = point.x;
+    update_angle_param(start, end, is_param);
     update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
@@ -2320,6 +2348,14 @@ Ellipse::Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point 
     update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
+Ellipse::Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point &b1, const double start, const double end, const bool is_param)
+{
+    _a[0] = a0, _a[1] = a1;
+    _b[0] = b0, _b[1] = b1;
+    update_angle_param(start, end, is_param);
+    update_shape(Geo::Ellipse::default_down_sampling_value);
+}
+
 Ellipse::Ellipse(const Ellipse &ellipse)
     : Geometry(ellipse), _shape(ellipse._shape)
 {
@@ -2327,6 +2363,10 @@ Ellipse::Ellipse(const Ellipse &ellipse)
     _a[1] = ellipse._a[1];
     _b[0] = ellipse._b[0];
     _b[1] = ellipse._b[1];
+    _arc_angle[0] = ellipse._arc_angle[0];
+    _arc_angle[1] = ellipse._arc_angle[1];
+    _arc_param[0] = ellipse._arc_param[0];
+    _arc_param[1] = ellipse._arc_param[1];
 }
 
 Ellipse &Ellipse::operator=(const Ellipse &ellipse)
@@ -2338,9 +2378,93 @@ Ellipse &Ellipse::operator=(const Ellipse &ellipse)
         _a[1] = ellipse._a[1];
         _b[0] = ellipse._b[0];
         _b[1] = ellipse._b[1];
+        _arc_angle[0] = ellipse._arc_angle[0];
+        _arc_angle[1] = ellipse._arc_angle[1];
+        _arc_param[0] = ellipse._arc_param[0];
+        _arc_param[1] = ellipse._arc_param[1];
         _shape = ellipse._shape;
     }
     return *this;
+}
+
+double Ellipse::angle_to_param(double angle) const
+{
+    angle = Geo::rad_to_2PI(angle);
+    if (angle <= Geo::PI / 2)
+    {
+        return angle == Geo::PI / 2 ? Geo::PI / 2 : std::atan(std::tan(angle) * lengtha() / lengthb());
+    }
+    else if (angle <= Geo::PI)
+    {
+        return angle == Geo::PI ? Geo::PI : std::atan(std::tan(angle) * lengtha() / lengthb()) + Geo::PI;
+    }
+    else if (angle <= Geo::PI * 3 / 2)
+    {
+        return angle == Geo::PI * 3 / 2 ? Geo::PI * 3 / 2 : std::atan(std::tan(angle) * lengtha() / lengthb()) + Geo::PI;
+    }
+    else
+    {
+        return angle == Geo::PI * 2 ? Geo::PI * 2 : std::atan(std::tan(angle) * lengtha() / lengthb()) + Geo::PI * 2;
+    }
+}
+
+double Ellipse::param_to_angle(double param) const
+{
+    param = Geo::rad_to_2PI(param);
+    if (param <= Geo::PI / 2)
+    {
+        return param == Geo::PI / 2 ? Geo::PI / 2 : std::atan(std::tan(param) * lengthb() / lengtha());
+    }
+    else if (param <= Geo::PI)
+    {
+        return param == Geo::PI ? Geo::PI : std::atan(std::tan(param) * lengthb() / lengtha()) + Geo::PI;
+    }
+    else if (param <= Geo::PI * 3 / 2)
+    {
+        return param == Geo::PI * 3 / 2 ? Geo::PI * 3 / 2 : std::atan(std::tan(param) * lengthb() / lengtha()) + Geo::PI;
+    }
+    else
+    {
+        return param == Geo::PI * 2 ? Geo::PI * 2 : std::atan(std::tan(param) * lengthb() / lengtha()) + Geo::PI * 2;
+    }
+}
+
+void Ellipse::update_angle_param(const double start, const double end, const bool is_param)
+{
+    if (is_param)
+    {
+        _arc_param[0] = start, _arc_param[1] = end;
+        for (int i = 0; i < 2; ++i)
+        {
+            while (_arc_param[i] > Geo::PI * 2)
+            {
+                _arc_param[i] -= Geo::PI * 2;
+            }
+            while (_arc_param[i] < 0)
+            {
+                _arc_param[i] += Geo::PI * 2;
+            }
+        }
+        _arc_angle[0] = param_to_angle(_arc_param[0]);
+        _arc_angle[1] = param_to_angle(_arc_param[1]);
+    }
+    else
+    {
+        _arc_angle[0] = start, _arc_angle[1] = end;
+        for (int i = 0; i < 2; ++i)
+        {
+            while (_arc_angle[i] > Geo::PI * 2)
+            {
+                _arc_angle[i] -= Geo::PI * 2;
+            }
+            while (_arc_angle[i] < 0)
+            {
+                _arc_angle[i] += Geo::PI * 2;
+            }
+        }
+        _arc_param[0] = angle_to_param(_arc_angle[0]);
+        _arc_param[1] = angle_to_param(_arc_angle[1]);
+    }
 }
 
 const Type Ellipse::type() const
@@ -2493,8 +2617,7 @@ double Ellipse::lengthb() const
 
 double Ellipse::angle() const
 {
-    double value = Geo::angle(_a[0], _a[1]);
-    return value >= 0 ? value : value + Geo::PI;
+    return Geo::angle(_a[0], _a[1]);
 }
 
 Geo::Point Ellipse::center() const
@@ -2558,20 +2681,47 @@ void Ellipse::set_center(const double x, const double y)
     translate(x - anchor.x, y - anchor.y);
 }
 
-void Ellipse::reset_parameter(const Geo::Point &a0, const Geo::Point &a1, const Geo::Point &b0, const Geo::Point &b1)
+void Ellipse::reset_parameter(const Geo::Point &a0, const Geo::Point &a1, const Geo::Point &b0,
+    const Geo::Point &b1, const double start_anlge, const double end_angle)
 {
-    _a[0] = a0;
-    _a[1] = a1;
-    _b[0] = b0;
-    _b[1] = b1;
+    _a[0] = a0, _a[1] = a1;
+    _b[0] = b0, _b[1] = b1;
+    _arc_angle[0] = start_anlge, _arc_angle[1] = end_angle;
+    for (int i = 0; i < 2; ++i)
+    {
+        while (_arc_angle[i] > Geo::PI * 2)
+        {
+            _arc_angle[i] -= Geo::PI * 2;
+        }
+        while (_arc_angle[i] < 0)
+        {
+            _arc_angle[i] += Geo::PI * 2;
+        }
+    }
+    _arc_param[0] = angle_to_param(_arc_angle[0]);
+    _arc_param[1] = angle_to_param(_arc_angle[1]);
 }
 
-void Ellipse::reset_parameter(const double parameters[8])
+void Ellipse::reset_parameter(const double parameters[10])
 {
     _a[0].x = parameters[0], _a[0].y = parameters[1];
     _a[1].y = parameters[2], _a[1].y = parameters[3];
     _b[0].x = parameters[4], _b[0].y = parameters[5];
     _b[1].x = parameters[6], _b[1].y = parameters[7];
+    _arc_angle[0] = parameters[8], _arc_angle[1] = parameters[9];
+    for (int i = 0; i < 2; ++i)
+    {
+        while (_arc_angle[i] > Geo::PI * 2)
+        {
+            _arc_angle[i] -= Geo::PI * 2;
+        }
+        while (_arc_angle[i] < 0)
+        {
+            _arc_angle[i] += Geo::PI * 2;
+        }
+    }
+    _arc_param[0] = angle_to_param(_arc_angle[0]);
+    _arc_param[1] = angle_to_param(_arc_angle[1]);
 }
 
 const Point &Ellipse::a0() const
@@ -2626,15 +2776,63 @@ Point Ellipse::c1() const
     }
 }
 
+double Ellipse::arc_angle0() const
+{
+    return _arc_angle[0];
+}
+
+Geo::Point Ellipse::arc_point0() const
+{
+    const Geo::Point anchor = center();
+    const double a = lengtha(), b = lengthb(), rad = angle();
+    return Geo::Point(anchor.x + a * std::cos(rad) * std::cos(_arc_param[0]) - b * std::sin(rad) * std::sin(_arc_param[0]),
+        anchor.y + a * std::sin(rad) * std::cos(_arc_param[0]) + b * std::cos(rad) * std::sin(_arc_param[0]));
+}
+
+double Ellipse::arc_angle1() const
+{
+    return _arc_angle[1];
+}
+
+Geo::Point Ellipse::arc_point1() const
+{
+    const Geo::Point anchor = center();
+    const double a = lengtha(), b = lengthb(), rad = angle();
+    return Geo::Point(anchor.x + a * std::cos(rad) * std::cos(_arc_param[1]) - b * std::sin(rad) * std::sin(_arc_param[1]),
+        anchor.y + a * std::sin(rad) * std::cos(_arc_param[1]) + b * std::cos(rad) * std::sin(_arc_param[1]));
+}
+
+double Ellipse::arc_param0() const
+{
+    return _arc_param[0];
+}
+
+double Ellipse::arc_param1() const
+{
+    return _arc_param[1];
+}
+
 void Ellipse::update_shape(const double down_sampling_value)
 {
     const Geo::Point point = center();
-    _shape = Geo::ellipse_to_polygon(point.x, point.y, lengtha(), lengthb(), angle(), down_sampling_value);
+    if (_arc_angle[0] == _arc_angle[1] || _arc_angle[1] - _arc_angle[0] == Geo::PI * 2)
+    {
+        _shape = Geo::ellipse_to_polygon(point.x, point.y, lengtha(), lengthb(), angle(), down_sampling_value);
+    }
+    else
+    {
+        _shape = Geo::ellipse_to_polyline(point.x, point.y, lengtha(), lengthb(), angle(), _arc_param[0], _arc_param[1], down_sampling_value);
+    }
 }
 
-const Polygon &Ellipse::shape() const
+const Polyline &Ellipse::shape() const
 {
     return _shape;
+}
+
+bool Ellipse::is_arc() const
+{
+    return _arc_angle[0] != _arc_angle[1] && std::abs(_arc_angle[1] - _arc_angle[0]) < Geo::PI * 2;
 }
 
 
@@ -3800,7 +3998,7 @@ const double Arc::length() const
 
 const bool Arc::empty() const
 {
-    return radius == 0;
+    return radius == 0 || control_points[0] == control_points[2];
 }
 
 void Arc::clear()

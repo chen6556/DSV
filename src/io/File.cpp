@@ -64,7 +64,8 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 output << ellipse->a0().x << ',' << ellipse->a0().y << ',';
                 output << ellipse->a1().x << ',' << ellipse->a1().y << ',';
                 output << ellipse->b0().x << ',' << ellipse->b0().y << ',';
-                output << ellipse->b1().x << ',' << ellipse->b1().y << std::endl;
+                output << ellipse->b1().x << ',' << ellipse->b1().y << ',';
+                output << ellipse->arc_angle0() << ',' << ellipse->arc_angle1() << std::endl;
                 ellipse = nullptr;
                 break;
             case Geo::Type::COMBINATION:
@@ -292,7 +293,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
             case Geo::Type::ELLIPSE:
                 ellipse = static_cast<const Geo::Ellipse *>(geo);
                 {
-                    const Geo::Polygon &points = ellipse->shape();
+                    const Geo::Polyline &points = ellipse->shape();
                     output << "PU" << points.front().x * x_ratio << ',' << points.front().y * y_ratio << ";PD";
                     for (const Geo::Point &point : points)
                     {

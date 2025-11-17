@@ -151,8 +151,6 @@ public:
 
     void down(Geo::Geometry *item);
 
-	void rotate(std::vector<Geo::Geometry *> objects, const double rad, const bool unitary, const bool all_layers);
-
     void rotate(std::vector<Geo::Geometry *> objects, const double x, const double y, const double rad);
 
     // true:X false:Y
@@ -169,6 +167,8 @@ public:
     void trim(Geo::Circle *circle, const double x, const double y);
 
     void trim(Geo::Arc *arc, const double x, const double y);
+
+    void trim(Geo::Ellipse *ellipse, const double x, const double y);
 
     void extend(Geo::Polyline *polyline, const double x, const double y);
 

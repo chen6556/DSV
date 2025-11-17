@@ -310,6 +310,9 @@ namespace Geo
     // 计算多边形到一点的最近点
     int closest_point(const Polygon &polygon, const Point &point, std::vector<Point> &output);
 
+    // 计算椭圆到一点的最近点
+    int closest_point(const Ellipse &ellipse, const Point &point, std::vector<Point> &output);
+
     // [数值解]计算贝塞尔曲线到一点的最近点
     int closest_point(const Bezier &bezier, const Point &point, std::vector<Point> &output);
 
@@ -384,6 +387,12 @@ namespace Geo
     Polygon ellipse_to_polygon(const double x, const double y, const double a, const double b, const double rad, const double down_sampling_value = 0.02);
 
     Polygon ellipse_to_polygon(const Ellipse &ellipse, const double down_sampling_value = 0.02);
+
+    // start_angle:参数方程中参数的起点 end_angle:参数方程中参数的终点
+    Polyline ellipse_to_polyline(const double x, const double y, const double a, const double b, const double rad, 
+        const double start_angle, double end_angle, const double down_sampling_value = 0.02);
+
+    Polyline ellipse_to_polyline(const Ellipse &ellipse, const double down_sampling_value = 0.02);
 
     std::vector<unsigned int> ear_cut_to_indexs(const Polygon &polygon);
 
