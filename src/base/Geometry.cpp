@@ -881,7 +881,7 @@ AABBRect &AABBRect::operator=(const AABBRect &rect)
 
 const bool AABBRect::empty() const
 {
-    return _points.empty();
+    return _points.size() < 5;
 }
 
 const double AABBRect::length() const
@@ -1159,8 +1159,7 @@ Polygon::Polygon(const Polygon &polygon)
 Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
     : Polyline(begin, end)
 {
-    assert(size() >= 3);
-    if (_points.back() != _points.front())
+    if (!_points.empty() && _points.back() != _points.front())
     {
         _points.emplace_back(_points.front());
     }
@@ -1169,8 +1168,7 @@ Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::c
 Polygon::Polygon(const std::initializer_list<Point>& points)
     : Polyline(points)
 {
-    assert(size() > 2);
-    if (_points.back() != _points.front())
+    if (!_points.empty() && _points.back() != _points.front())
     {
         _points.emplace_back(_points.front());
     }
@@ -1179,7 +1177,7 @@ Polygon::Polygon(const std::initializer_list<Point>& points)
 Polygon::Polygon(const Polyline &polyline)
     : Polyline(polyline)
 {
-    if (_points.back() != _points.front())
+    if (!_points.empty() && _points.back() != _points.front())
     {
         _points.emplace_back(_points.front());
     }
@@ -1191,7 +1189,11 @@ Polygon::Polygon(const AABBRect& rect)
 
 Polygon::Polygon(const double x, const double y, const double radius, const int n, const double rad, const bool circumscribed)
 {
-    assert(n >= 3 && radius > 0);
+    assert(n >= 3 && radius >= 0);
+    if (radius == 0)
+    {
+        return;
+    }
     const Geo::Point anchor(x, y);
     const double step = 2 * Geo::PI / n;
     Geo::Vector vec;
@@ -3998,7 +4000,7 @@ const double Arc::length() const
 
 const bool Arc::empty() const
 {
-    return radius == 0;
+    return radius == 0 || control_points[0] == control_points[2];
 }
 
 void Arc::clear()

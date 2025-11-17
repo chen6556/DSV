@@ -858,6 +858,10 @@ void Editer::set_group_name(const size_t index, const QString &name)
 
 void Editer::append(Geo::Geometry *object)
 {
+    if (object->empty())
+    {
+        return;
+    }
     _graph->append(object, _current_group);
     _graph->modified = true;
     _backup.push_command(new UndoStack::ObjectCommand(object, 
