@@ -300,3 +300,19 @@ std::tuple<double, double> Math::solve_curve_intersection(void *param, const Cur
 
     return res;
 }
+
+int Math::ellipse_foot_f(const gsl_vector *v, void *params, gsl_vector *f)
+{
+    EllipseFootParameter *foot = static_cast<EllipseFootParameter *>(params);
+    const double t = gsl_vector_get(v, 0);
+    gsl_vector_set(f, 0, foot->a * std::cos(t) + foot->b * std::sin(t) + foot->c * std::sin(t) * std::cos(t));
+    return GSL_SUCCESS;
+}
+
+int Math::ellipse_foot_df(const gsl_vector *v, void *params, gsl_matrix *j)
+{
+    EllipseFootParameter *foot = static_cast<EllipseFootParameter *>(params);
+    const double t = gsl_vector_get(v, 0);
+    gsl_matrix_set(j, 0, 0, -std::sin(t) * (foot->c + std::sin(t)) + foot->b * std::cos(t) + foot->c * std::cos(t) * std::cos(t));
+    return GSL_SUCCESS;
+}

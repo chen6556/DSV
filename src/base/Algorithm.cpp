@@ -6548,6 +6548,32 @@ bool Geo::foot_point(const Point &start, const Point &end, const Point &point, P
     }
 }
 
+bool Geo::fool_point(const Circle &circle, const Point &point, Point &output)
+{
+    if (Geo::distance(point, circle) <= circle.radius)
+    {
+        return false;
+    }
+    Geo::Point temp;
+    Geo::is_intersected(point, circle, circle, output, temp);
+    return true;
+}
+
+bool Geo::foot_point(const Ellipse &ellipse, const Point &point, Point &output0, Point &output1)
+{
+    if (Geo::is_inside(point, ellipse, true))
+    {
+        return false;
+    }
+    const Geo::Point center = ellipse.center();
+    const double angle = Geo::angle(ellipse.a0(), ellipse.a1());
+    Geo::Point coord = Geo::to_coord(point, center.x, center.y, angle);
+    const double a = Geo::distance(ellipse.a0(), ellipse.a1()) / 2;
+    const double b = Geo::distance(ellipse.b0(), ellipse.b1()) / 2;
+    const double aa = Geo::distance_square(ellipse.a0(), ellipse.a1()) / 4;
+    const double bb = Geo::distance_square(ellipse.b0(), ellipse.b1()) / 4;
+}
+
 
 int Geo::closest_point(const Polyline &polyline, const Point &point, std::vector<Point> &output)
 {

@@ -304,6 +304,12 @@ namespace Geo
     // 计算线段或直线外一点的垂足
     bool foot_point(const Point &start, const Point &end, const Point &point, Point &foot, const bool infinite = false);
 
+    // 计算圆外一点到圆的垂足
+    bool fool_point(const Circle &circle, const Point &point, Point &output);
+
+    // 计算椭圆外一点到椭圆的垂足
+    bool foot_point(const Ellipse &ellipse, const Point &point, Point &output0, Point &output1);
+
     // 计算多段线到一点的最近点
     int closest_point(const Polyline &polyline, const Point &point, std::vector<Point> &output);
 
