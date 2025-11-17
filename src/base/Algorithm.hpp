@@ -310,6 +310,9 @@ namespace Geo
     // 计算多边形到一点的最近点
     int closest_point(const Polygon &polygon, const Point &point, std::vector<Point> &output);
 
+    // 计算椭圆到一点的最近点
+    int closest_point(const Ellipse &ellipse, const Point &point, std::vector<Point> &output);
+
     // [数值解]计算贝塞尔曲线到一点的最近点
     int closest_point(const Bezier &bezier, const Point &point, std::vector<Point> &output);
 

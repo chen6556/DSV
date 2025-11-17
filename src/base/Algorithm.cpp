@@ -465,57 +465,108 @@ double Geo::distance(const Point &point, const Polygon &polygon)
 
 double Geo::distance(const Point &point, const Ellipse &ellipse)
 {
-    const Geo::Point center = ellipse.center();
-    const Geo::Point coord = Geo::to_coord(point, center.x, center.y, Geo::angle(ellipse.a0(), ellipse.a1()));
-    const double a = ellipse.lengtha(), b = ellipse.lengthb();
-    double degree0 = Geo::angle(Geo::Point(0, 0), coord) - Geo::PI / 2,
-        degree1 = Geo::angle(Geo::Point(0, 0), coord) + Geo::PI / 2;
-    double last_degree0 = degree0 - 1, last_degree1 = degree1 - 1;
-    double m0 = (degree1 - degree0) / 3 + degree0, m1 = degree1 - (degree1 - degree0) / 3;
-    double x0, y0, x1, y1;
-    while (degree1 * 1e16 - degree0 * 1e16 > 1 && (last_degree0 != degree0 || last_degree1 != degree1))
+    if (const Geo::Point center = ellipse.center(); point == ellipse.center())
     {
-        last_degree0 = degree0, last_degree1 = degree1;
-        m0 = (degree1 - degree0) / 3 + degree0, m1 = degree1 - (degree1 - degree0) / 3;
-        x0 = a * std::cos(m0), y0 = b * std::sin(m0);
-        x1 = a * std::cos(m1), y1 = b * std::sin(m1);
-        if (Geo::distance_square(x0, y0, coord.x, coord.y) > Geo::distance_square(x1, y1, coord.x, coord.y))
+        if (ellipse.is_arc())
         {
-            degree0 = m0;
+            const Geo::Point start(ellipse.arc_point0()), end(ellipse.arc_point1());
+            double angles[4] = { Geo::angle(start, center, ellipse.a0()),
+                Geo::angle(start, center, ellipse.a1()),
+                Geo::angle(start, center, ellipse.b0()),
+                Geo::angle(start, center, ellipse.b1()) };
+            bool mask[2] = { false, false }; // a, b
+            for (int i = 0; i < 4; ++i)
+            {
+                if (angles[i] < 0)
+                {
+                    angles[i] += Geo::PI * 2;
+                }
+                if (ellipse.arc_angle0() <= angles[i] && angles[i] <= ellipse.arc_angle1())
+                {
+                    mask[i < 2 ? 0 : 1] = true; // 判断椭圆弧是否经过轴端点
+                }
+            }
+            if (mask[0] && mask[1]) // 椭圆弧经过a轴和b轴端点
+            {
+                return std::min(ellipse.lengtha(), ellipse.lengthb());
+            }
+            else if (mask[0]) // 椭圆弧经过a轴端点
+            {
+                return std::min(ellipse.lengtha(), std::min(Geo::distance(point, ellipse.arc_point0()),
+                    Geo::distance(point, ellipse.arc_point1())));
+            }
+            else if (mask[1]) // 椭圆弧经过b轴端点
+            {
+                return std::min(ellipse.lengthb(), std::min(Geo::distance(point, ellipse.arc_point0()),
+                    Geo::distance(point, ellipse.arc_point1())));
+            }
+            else // 椭圆弧不经过轴端点
+            {
+                return std::min(Geo::distance(point, ellipse.arc_point0()), Geo::distance(point, ellipse.arc_point1()));
+            }
         }
         else
         {
-            degree1 = m1;
-        }
-    }
-    if (ellipse.is_arc())
-    {
-        double angle0 = Geo::rad_to_2PI(ellipse.arc_angle0());
-        double angle1 = Geo::rad_to_2PI(ellipse.arc_angle1());
-        angle0 = angle0 < angle1 ? angle1 - angle0 : Geo::PI * 2 - angle0 + angle1;
-        angle1 = Geo::angle(ellipse.arc_point0(), center, point);
-        if (angle1 < 0)
-        {
-            angle1 += Geo::PI * 2;
-        }
-        if (angle1 <= angle0)
-        {
-            return std::min(Geo::distance(x0, y0, coord.x, coord.y), Geo::distance(x1, y1, coord.x, coord.y));
-        }
-        else
-        {
-            return std::min(Geo::distance(point, ellipse.arc_point0()), Geo::distance(point, ellipse.arc_point1()));
+            return std::min(ellipse.lengtha(), ellipse.lengthb());
         }
     }
     else
     {
-        return std::min(Geo::distance(x0, y0, coord.x, coord.y), Geo::distance(x1, y1, coord.x, coord.y));
+        const Geo::Point coord = Geo::to_coord(point, center.x, center.y, Geo::angle(ellipse.a0(), ellipse.a1()));
+        const double a = ellipse.lengtha(), b = ellipse.lengthb();
+        double degree0 = Geo::angle(Geo::Point(0, 0), coord) - Geo::PI / 2,
+            degree1 = Geo::angle(Geo::Point(0, 0), coord) + Geo::PI / 2;
+        double last_degree0 = degree0 - 1, last_degree1 = degree1 - 1;
+        double m0 = (degree1 - degree0) / 3 + degree0, m1 = degree1 - (degree1 - degree0) / 3;
+        double x0, y0, x1, y1;
+        while (degree1 * 1e16 - degree0 * 1e16 > 1 && (last_degree0 != degree0 || last_degree1 != degree1))
+        {
+            last_degree0 = degree0, last_degree1 = degree1;
+            m0 = (degree1 - degree0) / 3 + degree0, m1 = degree1 - (degree1 - degree0) / 3;
+            x0 = a * std::cos(m0), y0 = b * std::sin(m0);
+            x1 = a * std::cos(m1), y1 = b * std::sin(m1);
+            if (Geo::distance_square(x0, y0, coord.x, coord.y) > Geo::distance_square(x1, y1, coord.x, coord.y))
+            {
+                degree0 = m0;
+            }
+            else
+            {
+                degree1 = m1;
+            }
+        }
+        if (ellipse.is_arc())
+        {
+            double angle0 = Geo::rad_to_2PI(ellipse.arc_angle0());
+            double angle1 = Geo::rad_to_2PI(ellipse.arc_angle1());
+            angle0 = angle0 < angle1 ? angle1 - angle0 : Geo::PI * 2 - angle0 + angle1;
+            angle1 = Geo::angle(ellipse.arc_point0(), center, point);
+            if (angle1 < 0)
+            {
+                angle1 += Geo::PI * 2;
+            }
+            if (angle1 <= angle0)
+            {
+                return std::min(Geo::distance(x0, y0, coord.x, coord.y), Geo::distance(x1, y1, coord.x, coord.y));
+            }
+            else
+            {
+                return std::min(Geo::distance(point, ellipse.arc_point0()), Geo::distance(point, ellipse.arc_point1()));
+            }
+        }
+        else
+        {
+            return std::min(Geo::distance(x0, y0, coord.x, coord.y), Geo::distance(x1, y1, coord.x, coord.y));
+        }
     }
 }
 
 double Geo::distance(const Point &point, const Arc &arc)
 {
     const Geo::Point center(arc.x, arc.y);
+    if (point == center)
+    {
+        return arc.radius;
+    }
     double angle0 = Geo::angle(arc.control_points[0], center, arc.control_points[2]);
     double angle1 = Geo::angle(arc.control_points[0], center, point);
     if (arc.is_cw())
@@ -6576,6 +6627,246 @@ int Geo::closest_point(const Polygon &polygon, const Point &point, std::vector<P
     }
     output.insert(output.end(), temp.begin(), temp.end());
     return temp.size();
+}
+
+int Geo::closest_point(const Ellipse &ellipse, const Point &point, std::vector<Point> &output)
+{   
+    if (const Geo::Point center = ellipse.center(); center == point)
+    {
+        if (ellipse.is_arc())
+        {
+            const Geo::Point start(ellipse.arc_point0()), end(ellipse.arc_point1());
+            double angles[4] = { Geo::angle(start, center, ellipse.a0()),
+                Geo::angle(start, center, ellipse.a1()),
+                Geo::angle(start, center, ellipse.b0()),
+                Geo::angle(start, center, ellipse.b1()) };
+            bool mask[4] = { false, false, false, false }; // a0, a1, b0, b1
+            for (int i = 0; i < 4; ++i)
+            {
+                if (angles[i] < 0)
+                {
+                    angles[i] += Geo::PI * 2;
+                }
+                if (ellipse.arc_angle0() <= angles[i] && angles[i] <= ellipse.arc_angle1())
+                {
+                    mask[i] = true; // 判断椭圆弧是否经过轴端点
+                }
+            }
+            if ((mask[0] || mask[1]) && (mask[2] || mask[3])) // 椭圆弧经过a轴和b轴端点
+            {
+                if (ellipse.lengtha() < ellipse.lengthb())
+                {
+                    if (mask[0])
+                    {
+                        output.emplace_back(ellipse.a0());
+                    }
+                    if (mask[1])
+                    {
+                        output.emplace_back(ellipse.a1());
+                    }
+                    return (mask[0] ? 1 : 0) + (mask[1] ? 1 : 0);
+                }
+                else
+                {
+                    if (mask[2])
+                    {
+                        output.emplace_back(ellipse.b0());
+                    }
+                    if (mask[3])
+                    {
+                        output.emplace_back(ellipse.b1());
+                    }
+                    return (mask[2] ? 1 : 0) + (mask[3] ? 1 : 0);
+                }
+            }
+            else if (mask[0] || mask[1]) // 椭圆弧经过a轴端点
+            {
+                if (ellipse.lengtha() < std::min(Geo::distance(point, ellipse.arc_point0()),
+                    Geo::distance(point, ellipse.arc_point1())))
+                {
+                    output.emplace_back(mask[0] ? ellipse.a0() : ellipse.a1());
+                    return 1;
+                }
+                else
+                {
+                    if (Geo::distance(point, ellipse.arc_point0()) < Geo::distance(point, ellipse.arc_point1()))
+                    {
+                        output.emplace_back(ellipse.arc_point0());
+                        return 1;
+                    }
+                    else if (Geo::distance(point, ellipse.arc_point0()) < Geo::distance(point, ellipse.arc_point1()))
+                    {
+                        output.emplace_back(ellipse.arc_point1());
+                        return 1;
+                    }
+                    else
+                    {
+                        output.emplace_back(ellipse.arc_point0());
+                        output.emplace_back(ellipse.arc_point1());
+                        return 2;
+                    }
+                }
+            }
+            else if (mask[2] || mask[3]) // 椭圆弧经过b轴端点
+            {
+                if (ellipse.lengthb(), std::min(Geo::distance(point, ellipse.arc_point0()),
+                    Geo::distance(point, ellipse.arc_point1())))
+                {
+                    output.emplace_back(mask[2] ? ellipse.b0() : ellipse.b1());
+                    return 1;
+                }
+                else
+                {
+                    if (Geo::distance(point, ellipse.arc_point0()) < Geo::distance(point, ellipse.arc_point1()))
+                    {
+                        output.emplace_back(ellipse.arc_point0());
+                        return 1;
+                    }
+                    else if (Geo::distance(point, ellipse.arc_point0()) < Geo::distance(point, ellipse.arc_point1()))
+                    {
+                        output.emplace_back(ellipse.arc_point1());
+                        return 1;
+                    }
+                    else
+                    {
+                        output.emplace_back(ellipse.arc_point0());
+                        output.emplace_back(ellipse.arc_point1());
+                        return 2;
+                    }
+                }
+            }
+            else // 椭圆弧不经过轴端点
+            {
+                if (Geo::distance(point, ellipse.arc_point0()) < Geo::distance(point, ellipse.arc_point1()))
+                {
+                    output.emplace_back(ellipse.arc_point0());
+                    return 1;
+                }
+                else if (Geo::distance(point, ellipse.arc_point0()) > Geo::distance(point, ellipse.arc_point1()))
+                {
+                    output.emplace_back(ellipse.arc_point1());
+                    return 1;
+                }
+                else
+                {
+                    output.emplace_back(ellipse.arc_point0());
+                    output.emplace_back(ellipse.arc_point1());
+                    return 2;
+                }
+            }
+        }
+        else
+        {
+            if (ellipse.lengtha() < ellipse.lengthb())
+            {
+                output.emplace_back(ellipse.a0());
+                output.emplace_back(ellipse.a1());
+            }
+            else
+            {
+                output.emplace_back(ellipse.b0());
+                output.emplace_back(ellipse.b1());
+            }
+            return 2;
+        }
+    }
+    else
+    {
+        const Geo::Point coord = Geo::to_coord(point, center.x, center.y, Geo::angle(ellipse.a0(), ellipse.a1()));
+        const double a = ellipse.lengtha(), b = ellipse.lengthb();
+        double degree0 = Geo::angle(Geo::Point(0, 0), coord) - Geo::PI / 2,
+            degree1 = Geo::angle(Geo::Point(0, 0), coord) + Geo::PI / 2;
+        double last_degree0 = degree0 - 1, last_degree1 = degree1 - 1;
+        double m0 = (degree1 - degree0) / 3 + degree0, m1 = degree1 - (degree1 - degree0) / 3;
+        double x0, y0, x1, y1;
+        while (degree1 * 1e16 - degree0 * 1e16 > 1 && (last_degree0 != degree0 || last_degree1 != degree1))
+        {
+            last_degree0 = degree0, last_degree1 = degree1;
+            m0 = (degree1 - degree0) / 3 + degree0, m1 = degree1 - (degree1 - degree0) / 3;
+            x0 = a * std::cos(m0), y0 = b * std::sin(m0);
+            x1 = a * std::cos(m1), y1 = b * std::sin(m1);
+            if (Geo::distance_square(x0, y0, coord.x, coord.y) > Geo::distance_square(x1, y1, coord.x, coord.y))
+            {
+                degree0 = m0;
+            }
+            else
+            {
+                degree1 = m1;
+            }
+        }
+        if (ellipse.is_arc())
+        {
+            double angle0 = Geo::rad_to_2PI(ellipse.arc_angle0());
+            double angle1 = Geo::rad_to_2PI(ellipse.arc_angle1());
+            angle0 = angle0 < angle1 ? angle1 - angle0 : Geo::PI * 2 - angle0 + angle1;
+            angle1 = Geo::angle(ellipse.arc_point0(), center, point);
+            if (angle1 < 0)
+            {
+                angle1 += Geo::PI * 2;
+            }
+            if (angle1 <= angle0)
+            {
+                const double angle = Geo::angle(ellipse.a0(), ellipse.a1());
+                const Geo::Point coord2 = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+                if (Geo::distance(x0, y0, coord.x, coord.y) < Geo::distance(x1, y1, coord.x, coord.y))
+                {
+                    output.emplace_back(Geo::to_coord(Geo::Point(x0, y0), coord2.x, coord2.y, -angle));
+                    return 1;
+                }
+                else if (Geo::distance(x0, y0, coord.x, coord.y) > Geo::distance(x1, y1, coord.x, coord.y))
+                {
+                    output.emplace_back(Geo::to_coord(Geo::Point(x1, y1), coord2.x, coord2.y, -angle));
+                    return 1;
+                }
+                else
+                {
+                    output.emplace_back(Geo::to_coord(Geo::Point(x0, y0), coord2.x, coord2.y, -angle));
+                    output.emplace_back(Geo::to_coord(Geo::Point(x1, y1), coord2.x, coord2.y, -angle));
+                    return 2;
+                }
+            }
+            else
+            {
+                if (Geo::distance(point, ellipse.arc_point0()) < Geo::distance(point, ellipse.arc_point1()))
+                {
+                    output.emplace_back(ellipse.arc_point0());
+                    return 1;
+                }
+                else if (Geo::distance(point, ellipse.arc_point0()) > Geo::distance(point, ellipse.arc_point1()))
+                {
+                    output.emplace_back(ellipse.arc_point1());
+                    return 1;
+                }
+                else
+                {
+                    output.emplace_back(ellipse.arc_point0());
+                    output.emplace_back(ellipse.arc_point1());
+                    return 2;
+                }
+            }
+        }
+        else
+        {
+            const double angle = Geo::angle(ellipse.a0(), ellipse.a1());
+            const Geo::Point coord2 = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+            if (Geo::distance(x0, y0, coord.x, coord.y) < Geo::distance(x1, y1, coord.x, coord.y))
+            {
+                output.emplace_back(Geo::to_coord(Geo::Point(x0, y0), coord2.x, coord2.y, -angle));
+                return 1;
+            }
+            else if (Geo::distance(x0, y0, coord.x, coord.y) < Geo::distance(x1, y1, coord.x, coord.y))
+            {
+                output.emplace_back(Geo::to_coord(Geo::Point(x1, y1), coord2.x, coord2.y, -angle));
+                return 1;
+            }
+            else
+            {
+                output.emplace_back(Geo::to_coord(Geo::Point(x0, y0), coord2.x, coord2.y, -angle));
+                output.emplace_back(Geo::to_coord(Geo::Point(x1, y1), coord2.x, coord2.y, -angle));
+                return 2;
+            }
+        }
+    }
 }
 
 int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Point> &output)
