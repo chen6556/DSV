@@ -3586,12 +3586,6 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                         result[2].x = output0.x;
                         result[2].y = output0.y;
                     }
-                    if (const double d = Geo::distance(pos.x, pos.y, output1.x, output1.y); d < dis[2])
-                    {
-                        dis[2] = d;
-                        result[2].x = output1.x;
-                        result[2].y = output1.y;
-                    }
                 }
                 if (Geo::Point output0(DBL_MAX, DBL_MAX), output1(DBL_MAX, DBL_MAX);
                     _catch_types[3] && Geo::tangency_point(_mouse_press_pos, *c, output0, output1))
