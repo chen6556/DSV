@@ -2618,8 +2618,6 @@ double Ellipse::lengthb() const
 double Ellipse::angle() const
 {
     return Geo::angle(_a[0], _a[1]);
-    // double value = Geo::angle(_a[0], _a[1]);
-    // return value >= 0 ? value : value + Geo::PI;
 }
 
 Geo::Point Ellipse::center() const
