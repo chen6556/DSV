@@ -8043,7 +8043,10 @@ Geo::Polygon Geo::circle_to_polygon(const double x, const double y, const double
     if (points.size() >= 3)
     {
         Geo::Polygon shape(points.cbegin(), points.cend());
-        Geo::down_sampling(shape, down_sampling_value);
+        if (step < Geo::PI / 32)
+        {
+            Geo::down_sampling(shape, down_sampling_value);
+        }
         return shape;
     }
     else
@@ -8090,7 +8093,10 @@ Geo::Polyline Geo::arc_to_polyline(const Geo::Point &center, const double radius
     else
     {
         Geo::Polyline shape(points.begin(), points.end());
-        Geo::down_sampling(shape, down_sampling_value);
+        if (step < Geo::PI / 32)
+        {
+            Geo::down_sampling(shape, down_sampling_value);
+        }
         return shape;
     }
 }
@@ -8124,7 +8130,10 @@ Geo::Polygon Geo::ellipse_to_polygon(const double x, const double y, const doubl
     if (points.size() >= 3)
     {
         Geo::Polygon shape(points.cbegin(), points.cend());
-        Geo::down_sampling(shape, down_sampling_value);
+        if (step < Geo::PI / 32)
+        {
+            Geo::down_sampling(shape, down_sampling_value);
+        }
         return shape;
     }
     else
@@ -8160,7 +8169,10 @@ Geo::Polyline Geo::ellipse_to_polyline(const double x, const double y, const dou
     if (points.size() >= 2)
     {
         Geo::Polyline shape(points.cbegin(), points.cend());
-        Geo::down_sampling(shape, down_sampling_value);
+        if (step < Geo::PI / 32)
+        {
+            Geo::down_sampling(shape, down_sampling_value);
+        }
         return shape;
     }
     else

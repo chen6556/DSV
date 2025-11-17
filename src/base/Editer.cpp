@@ -975,8 +975,13 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         if (Geo::Ellipse *temp = static_cast<Geo::Ellipse *>(points); change_shape && !points->shape_fixed)
         {
             const Geo::Point point0(x0, y0), point1(x1, y1);
-            if (Geo::distance(temp->a0(), point0) <= catch_distance || Geo::distance(temp->a0(), point1) <= catch_distance
-                || Geo::distance(temp->a1(), point0) <= catch_distance || Geo::distance(temp->a1(), point1) <= catch_distance)
+            const double disa[4] = { Geo::distance(temp->a0(), point0), Geo::distance(temp->a0(), point1), 
+                Geo::distance(temp->a1(), point0), Geo::distance(temp->a1(), point1) };
+            const double min_disa = *std::min_element(disa, disa + 4);
+            const double disb[4] = { Geo::distance(temp->b0(), point0), Geo::distance(temp->b0(), point1),
+                Geo::distance(temp->b1(), point0), Geo::distance(temp->b1(), point1) };
+            const double min_disb = *std::min_element(disb, disb + 4);
+            if (min_disa < min_disb && min_disa <= catch_distance)
             {
                 if (_edited_shape.empty())
                 {
@@ -989,8 +994,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                 temp->set_lengtha(Geo::distance(point1, temp->center()));
                 temp->update_shape(Geo::Ellipse::default_down_sampling_value);
             }
-            else if (Geo::distance(temp->b0(), point0) <= catch_distance || Geo::distance(temp->b0(), point1) <= catch_distance
-                || Geo::distance(temp->b1(), point0) <= catch_distance || Geo::distance(temp->b1(), point1) <= catch_distance)
+            else if (min_disb < min_disa && min_disb <= catch_distance)
             {
                 if (_edited_shape.empty())
                 {
