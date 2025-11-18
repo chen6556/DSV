@@ -6566,12 +6566,12 @@ bool Geo::foot_point(const Ellipse &ellipse, const Point &point, Point &output)
         return false;
     }
     const Geo::Point center = ellipse.center();
-    if (std::abs(std::abs(Geo::angle(point, center, ellipse.a0())) - std::abs(Geo::angle(point, center, ellipse.a1()))) < Geo::EPSILON)
+    if (std::abs(std::abs(Geo::angle(point, center, ellipse.a0())) - std::abs(Geo::angle(point, center, ellipse.a1())) - Geo::PI) < Geo::EPSILON)
     {
         output = Geo::distance(point, ellipse.a0()) < Geo::distance(point, ellipse.a1()) ? ellipse.a0() : ellipse.a1();
         return true;
     }
-    else if (std::abs(std::abs(Geo::angle(point, center, ellipse.b0())) - std::abs(Geo::angle(point, center, ellipse.b1()))) < Geo::EPSILON)
+    else if (std::abs(std::abs(Geo::angle(point, center, ellipse.b0())) - std::abs(Geo::angle(point, center, ellipse.b1())) - Geo::PI) < Geo::EPSILON)
     {
         output = Geo::distance(point, ellipse.b0()) < Geo::distance(point, ellipse.b1()) ? ellipse.b0() : ellipse.b1();
         return true;
