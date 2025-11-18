@@ -3,8 +3,6 @@
 #include <array>
 #include <functional>
 
-#include <QDebug>
-
 #include <EarCut/EarCut.hpp>
 #include <clipper2/clipper.h>
 #include "base/Algorithm.hpp"

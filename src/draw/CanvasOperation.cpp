@@ -715,6 +715,8 @@ bool Circle0Operation::read_parameters(const double *params, const int count)
             }
             tool_lines[0] = tool_lines[3] = params[0];
             tool_lines[1] = tool_lines[4] = params[1];
+            release_pos[0] = press_pos[0] = _parameters[0];
+            release_pos[1] = press_pos[1] = _parameters[1];
             tool_lines_count = 6;
             _set_center = false;
             return true;
@@ -814,6 +816,8 @@ bool Circle1Operation::read_parameters(const double *params, const int count)
             tool_lines_count = 6;
             tool_lines[0] = tool_lines[3] = params[0];
             tool_lines[1] = tool_lines[4] = params[1];
+            release_pos[0] = press_pos[0] = _parameters[0];
+            release_pos[1] = press_pos[1] = _parameters[1];
             _set_first_point = false;
             return true;
         }
@@ -851,6 +855,8 @@ bool Circle1Operation::read_parameters(const double *params, const int count)
                 }
             }
             canvas->add_geometry(new Geo::Circle(_parameters[0], _parameters[1], _parameters[2], _parameters[3]));
+            release_pos[0] = press_pos[0] = _parameters[2];
+            release_pos[1] = press_pos[1] = _parameters[3];
             shape_count = tool_lines_count = 0;
             tool[0] = Tool::Select;
             info.clear();
@@ -980,6 +986,8 @@ bool Circle2Operation::read_parameters(const double *params, const int count)
             _parameters[1] = params[1];
             tool_lines[0] = tool_lines[3] = tool_lines[6] = params[0];
             tool_lines[1] = tool_lines[4] = tool_lines[7] = params[1];
+            release_pos[0] = press_pos[0] = _parameters[0];
+            release_pos[1] = press_pos[1] = _parameters[1];
             tool_lines_count = 6;
             _index++;
             return true;
@@ -1018,6 +1026,8 @@ bool Circle2Operation::read_parameters(const double *params, const int count)
             }
             tool_lines[3] = tool_lines[6] = tool_lines[9] = _parameters[2];
             tool_lines[4] = tool_lines[7] = tool_lines[10] = _parameters[3];
+            release_pos[0] = press_pos[0] = _parameters[2];
+            release_pos[1] = press_pos[1] = _parameters[3];
             tool_lines_count = 12;
             _index++;
             return true;
@@ -1059,6 +1069,8 @@ bool Circle2Operation::read_parameters(const double *params, const int count)
             canvas->add_geometry(new Geo::Circle(_parameters[0], _parameters[1], _parameters[2],
                 _parameters[3], _parameters[4], _parameters[5]));
             _index = shape_count = tool_lines_count = 0;
+            release_pos[0] = press_pos[0] = _parameters[4];
+            release_pos[1] = press_pos[1] = _parameters[5];
             tool[0] = Tool::Select;
             info.clear();
             return true;
@@ -1256,6 +1268,8 @@ bool PolythingOperation::read_parameters(const double *params, const int count)
         shape[shape_count - 2] = _points.back().y;
         shape[shape_count++] = _points.back().x;
         shape[shape_count++] = _points.back().y;
+        release_pos[0] = press_pos[0] = _points.back().x;
+        release_pos[1] = press_pos[1] = _points.back().y;
         ++shape_count;
         check_shape_size();
         return true;
@@ -1382,6 +1396,8 @@ bool Arc0Operation::read_parameters(const double *params, const int count)
             _parameters[1] = params[1];
             tool_lines[0] = tool_lines[3] = tool_lines[6] = params[0];
             tool_lines[1] = tool_lines[4] = tool_lines[7] = params[1];
+            release_pos[0] = press_pos[0] = _parameters[0];
+            release_pos[1] = press_pos[1] = _parameters[1];
             tool_lines_count = 6;
             _index++;
             return true;
@@ -1420,6 +1436,8 @@ bool Arc0Operation::read_parameters(const double *params, const int count)
             }
             tool_lines[3] = tool_lines[6] = tool_lines[9] = _parameters[2];
             tool_lines[4] = tool_lines[7] = tool_lines[10] = _parameters[3];
+            release_pos[0] = press_pos[0] = _parameters[2];
+            release_pos[1] = press_pos[1] = _parameters[3];
             tool_lines_count = 12;
             _index++;
             return true;
@@ -1461,6 +1479,8 @@ bool Arc0Operation::read_parameters(const double *params, const int count)
             canvas->add_geometry(new Geo::Arc(_parameters[0], _parameters[1],
                 _parameters[2], _parameters[3], _parameters[4], _parameters[5]));
             _index = shape_count = tool_lines_count = 0;
+            release_pos[0] = press_pos[0] = _parameters[0];
+            release_pos[1] = press_pos[1] = _parameters[1];
             tool[0] = Tool::Select;
             info.clear();
             return true;
@@ -1592,6 +1612,8 @@ bool Arc1Operation::read_parameters(const double *params, const int count)
             _parameters[1] = params[1];
             tool_lines[0] = tool_lines[3] = tool_lines[6] = params[0];
             tool_lines[1] = tool_lines[4] = tool_lines[7] = params[1];
+            release_pos[0] = press_pos[0] = _parameters[0];
+            release_pos[1] = press_pos[1] = _parameters[1];
             tool_lines_count = 6;
             _index++;
             return true;
@@ -1630,6 +1652,8 @@ bool Arc1Operation::read_parameters(const double *params, const int count)
             }
             tool_lines[3] = tool_lines[6] = tool_lines[9] = _parameters[2];
             tool_lines[4] = tool_lines[7] = tool_lines[10] = _parameters[3];
+            release_pos[0] = press_pos[0] = _parameters[2];
+            release_pos[1] = press_pos[1] = _parameters[3];
             tool_lines_count = 12;
             _index++;
             return true;
@@ -1747,6 +1771,8 @@ bool Arc2Operation::read_parameters(const double *params, const int count)
             _parameters[1] = params[1];
             tool_lines[0] = tool_lines[3] = tool_lines[6] = params[0];
             tool_lines[1] = tool_lines[4] = tool_lines[7] = params[1];
+            release_pos[0] = press_pos[0] = _parameters[0];
+            release_pos[1] = press_pos[1] = _parameters[1];
             tool_lines_count = 6;
             _index++;
             return true;
@@ -1785,6 +1811,8 @@ bool Arc2Operation::read_parameters(const double *params, const int count)
             }
             tool_lines[3] = tool_lines[6] = tool_lines[9] = _parameters[2];
             tool_lines[4] = tool_lines[7] = tool_lines[10] = _parameters[3];
+            release_pos[0] = press_pos[0] = _parameters[2];
+            release_pos[1] = press_pos[1] = _parameters[3];
             tool_lines_count = 12;
             _index++;
             return true;
@@ -1899,6 +1927,8 @@ bool Arc3Operation::read_parameters(const double *params, const int count)
             _parameters[1] = params[1];
             tool_lines[0] = tool_lines[3] = tool_lines[6] = params[0];
             tool_lines[1] = tool_lines[4] = tool_lines[7] = params[1];
+            release_pos[0] = press_pos[0] = _parameters[0];
+            release_pos[1] = press_pos[1] = _parameters[1];
             tool_lines_count = 6;
             _index++;
             return true;
@@ -1937,6 +1967,8 @@ bool Arc3Operation::read_parameters(const double *params, const int count)
             }
             tool_lines[3] = tool_lines[6] = tool_lines[9] = _parameters[2];
             tool_lines[4] = tool_lines[7] = tool_lines[10] = _parameters[3];
+            release_pos[0] = press_pos[0] = _parameters[2];
+            release_pos[1] = press_pos[1] = _parameters[3];
             tool_lines_count = 12;
             _index++;
             return true;
@@ -2125,6 +2157,8 @@ bool RectangleOperation::read_parameters(const double *params, const int count)
             shape_count = 15;
             shape[0] = shape[3] = shape[6] = shape[9] = shape[12] = params[0];
             shape[1] = shape[4] = shape[7] = shape[10] = shape[13] = params[1];
+            release_pos[0] = press_pos[0] = _parameters[0];
+            release_pos[1] = press_pos[1] = _parameters[1];
         }
         else
         {
@@ -2146,6 +2180,8 @@ bool RectangleOperation::read_parameters(const double *params, const int count)
             }
             canvas->add_geometry(new Geo::Polygon(Geo::AABBRect(_parameters[0],
                 _parameters[1], _parameters[2], _parameters[3])));
+            release_pos[0] = press_pos[0] = _parameters[2];
+            release_pos[1] = press_pos[1] = _parameters[3];
             shape_count = 0;
             tool[0] = Tool::Select;
             info.clear();
@@ -2274,6 +2310,8 @@ bool CircumscribedPolygonOperation::read_parameters(const double *params, const 
                 }
                 tool_lines[0] = tool_lines[3] = params[0];
                 tool_lines[1] = tool_lines[4] = params[1];
+                release_pos[0] = press_pos[0] = _parameters[0];
+                release_pos[1] = press_pos[1] = _parameters[1];
                 tool_lines_count = 6;
                 _set_n = _set_center = false;
                 return true;
@@ -2424,6 +2462,8 @@ bool InscribedPolygonOperation::read_parameters(const double *params, const int 
                 }
                 tool_lines[0] = tool_lines[3] = params[0];
                 tool_lines[1] = tool_lines[4] = params[1];
+                release_pos[0] = press_pos[0] = _parameters[0];
+                release_pos[1] = press_pos[1] = _parameters[1];
                 tool_lines_count = 6;
                 _set_n = _set_center = false;
                 return true;
@@ -2652,6 +2692,8 @@ bool BSplineOperation::read_parameters(const double *params, const int count)
         }
         tool_lines[tool_lines_count++] = _points.back().x;
         tool_lines[tool_lines_count++] = _points.back().y;
+        release_pos[0] = press_pos[0] = _points.back().x;
+        release_pos[1] = press_pos[1] = _points.back().y;
         ++tool_lines_count;
         check_tool_lines_size();
 
@@ -2880,6 +2922,8 @@ bool BezierOperation::read_parameters(const double *params, const int count)
         }
         tool_lines[tool_lines_count++] = _points.back().x;
         tool_lines[tool_lines_count++] = _points.back().y;
+        release_pos[0] = press_pos[0] = _points.back().x;
+        release_pos[1] = press_pos[1] = _points.back().y;
         ++tool_lines_count;
         check_tool_lines_size();
 
@@ -3096,6 +3140,8 @@ bool Ellipse0Operation::read_parameters(const double *params, const int count)
         if (count >= 2)
         {
             _parameters[0] = params[0], _parameters[1] = params[1];
+            release_pos[0] = press_pos[0] = _parameters[0];
+            release_pos[1] = press_pos[1] = _parameters[1];
             tool_lines_count = 6;
             _index++;
             return true;

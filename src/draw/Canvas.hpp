@@ -54,7 +54,6 @@ private:
     double _select_rect[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     QPointF _mouse_pos_0, _mouse_pos_1;
-    Geo::Point _mouse_press_pos, _mouse_release_pos;
     std::vector<Geo::Point> _points_cache;
     Text *_edited_text = nullptr;
 
