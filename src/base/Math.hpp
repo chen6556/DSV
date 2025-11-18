@@ -85,4 +85,8 @@ namespace Math
     int ellipse_foot_f(const gsl_vector *v, void *params, gsl_vector *f);
 
     int ellipse_foot_df(const gsl_vector *v, void *params, gsl_matrix *j);
+
+    int ellipse_foot_fdf(const gsl_vector *v, void *params, gsl_vector *f, gsl_matrix *j);
+
+    double solve_ellipse_foot(EllipseFootParameter &param, const double init_t);
 };

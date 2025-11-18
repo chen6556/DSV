@@ -6559,7 +6559,7 @@ bool Geo::fool_point(const Circle &circle, const Point &point, Point &output)
     return true;
 }
 
-bool Geo::foot_point(const Ellipse &ellipse, const Point &point, Point &output0, Point &output1)
+bool Geo::foot_point(const Ellipse &ellipse, const Point &point, Point &output)
 {
     if (Geo::is_inside(point, ellipse, true))
     {
@@ -6572,6 +6572,16 @@ bool Geo::foot_point(const Ellipse &ellipse, const Point &point, Point &output0,
     const double b = Geo::distance(ellipse.b0(), ellipse.b1()) / 2;
     const double aa = Geo::distance_square(ellipse.a0(), ellipse.a1()) / 4;
     const double bb = Geo::distance_square(ellipse.b0(), ellipse.b1()) / 4;
+    Math::EllipseFootParameter parameter;
+    parameter.a = b * coord.y;
+    parameter.b = -a * coord.x;
+    parameter.c = aa - bb;
+    double t = Geo::rad_to_2PI(Geo::angle(Geo::Point(0, 0), coord));
+    t = Geo::rad_to_2PI(Math::solve_ellipse_foot(parameter, t));
+    coord = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+    output.x = a * std::cos(t), output.y = b * std::sin(t);
+    output = Geo::to_coord(output, coord.x, coord.y, -angle);
+    return true;
 }
 
 
