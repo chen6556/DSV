@@ -501,10 +501,10 @@ QComboBox QAbstractItemView::item:selected
             <number>3</number>
            </property>
            <property name="minimum">
-            <double>0.010000000000000</double>
+            <double>0.001000000000000</double>
            </property>
            <property name="maximum">
-            <double>0.100000000000000</double>
+            <double>0.200000000000000</double>
            </property>
            <property name="singleStep">
             <double>0.010000000000000</double>

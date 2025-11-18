@@ -3,6 +3,8 @@
 #include <array>
 #include <functional>
 
+#include <QDebug>
+
 #include <EarCut/EarCut.hpp>
 #include <clipper2/clipper.h>
 #include "base/Algorithm.hpp"
@@ -6566,6 +6568,16 @@ bool Geo::foot_point(const Ellipse &ellipse, const Point &point, Point &output)
         return false;
     }
     const Geo::Point center = ellipse.center();
+    if (std::abs(std::abs(Geo::angle(point, center, ellipse.a0())) - std::abs(Geo::angle(point, center, ellipse.a1()))) < Geo::EPSILON)
+    {
+        output = Geo::distance(point, ellipse.a0()) < Geo::distance(point, ellipse.a1()) ? ellipse.a0() : ellipse.a1();
+        return true;
+    }
+    else if (std::abs(std::abs(Geo::angle(point, center, ellipse.b0())) - std::abs(Geo::angle(point, center, ellipse.b1()))) < Geo::EPSILON)
+    {
+        output = Geo::distance(point, ellipse.b0()) < Geo::distance(point, ellipse.b1()) ? ellipse.b0() : ellipse.b1();
+        return true;
+    }
     const double angle = Geo::angle(ellipse.a0(), ellipse.a1());
     Geo::Point coord = Geo::to_coord(point, center.x, center.y, angle);
     const double a = Geo::distance(ellipse.a0(), ellipse.a1()) / 2;

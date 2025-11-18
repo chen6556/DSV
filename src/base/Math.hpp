@@ -75,18 +75,14 @@ namespace Math
     std::tuple<double, double> solve_curve_intersection(void *param, const CurveIntersectType type, const double init_t0, const double init_t1);
 
 
-    struct EllipseFootParameter // a * sint - b * cost + c * sint * cost = 0
+    struct EllipseFootParameter // a * cost + b * sint + c * sint * cost = 0
     {
         double a = 0;
         double b = 0;
         double c = 0;
     };
 
-    int ellipse_foot_f(const gsl_vector *v, void *params, gsl_vector *f);
-
-    int ellipse_foot_df(const gsl_vector *v, void *params, gsl_matrix *j);
-
-    int ellipse_foot_fdf(const gsl_vector *v, void *params, gsl_vector *f, gsl_matrix *j);
+    double ellipse_foot_f(const double v, void *params);
 
     double solve_ellipse_foot(EllipseFootParameter &param, const double init_t);
 };

@@ -4,6 +4,7 @@
 #include "base/Math.hpp"
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_cblas.h>
+#include <gsl/gsl_roots.h>
 
 
 void Math::error_handle(const char *reason, const char *file, int line, int gsl_errno)
@@ -301,53 +302,34 @@ std::tuple<double, double> Math::solve_curve_intersection(void *param, const Cur
     return res;
 }
 
-int Math::ellipse_foot_f(const gsl_vector *v, void *params, gsl_vector *f)
+double Math::ellipse_foot_f(const double v, void *params)
 {
     EllipseFootParameter *foot = static_cast<EllipseFootParameter *>(params);
-    const double t = gsl_vector_get(v, 0);
-    gsl_vector_set(f, 0, foot->a * std::cos(t) + foot->b * std::sin(t) + foot->c * std::sin(t) * std::cos(t));
-    return GSL_SUCCESS;
-}
-
-int Math::ellipse_foot_df(const gsl_vector *v, void *params, gsl_matrix *j)
-{
-    EllipseFootParameter *foot = static_cast<EllipseFootParameter *>(params);
-    const double t = gsl_vector_get(v, 0);
-    gsl_matrix_set(j, 0, 0, -std::sin(t) * (foot->c + std::sin(t)) + foot->b * std::cos(t) + foot->c * std::cos(t) * std::cos(t));
-    return GSL_SUCCESS;
-}
-
-int Math::ellipse_foot_fdf(const gsl_vector *v, void *params, gsl_vector *f, gsl_matrix *j)
-{
-    Math::ellipse_foot_f(v, params, f);
-    Math::ellipse_foot_df(v, params, j);
-    return GSL_SUCCESS;
+    return foot->a * std::cos(v) + foot->b * std::sin(v) + foot->c * std::sin(v) * std::cos(v);
 }
 
 double Math::solve_ellipse_foot(EllipseFootParameter &param, const double init_t)
 {
-    const size_t n = 1; // 方程组未知数的个数
-    gsl_multiroot_function_fdf f = {&Math::ellipse_foot_f, &Math::ellipse_foot_df, &Math::ellipse_foot_fdf, n, &param};
+    gsl_function f = {&Math::ellipse_foot_f, &param};
 
-    gsl_vector *x = gsl_vector_alloc(n);
-    gsl_vector_set(x, 0, init_t);
-
-    const gsl_multiroot_fdfsolver_type *t = gsl_multiroot_fdfsolver_gnewton;
-    gsl_multiroot_fdfsolver *s = gsl_multiroot_fdfsolver_alloc(t, n);
-    gsl_multiroot_fdfsolver_set(s, &f, x);
+    const gsl_root_fsolver_type *t = gsl_root_fsolver_brent;
+    gsl_root_fsolver *s = gsl_root_fsolver_alloc(t);
+    gsl_root_fsolver_set(s, &f, init_t - 1.5, init_t + 1.5);
 
     int status = GSL_CONTINUE;
     int count = 0;
     while (status == GSL_CONTINUE && count++ < Math::MAX_ITERATION) //这个循环迭代解方程，最多迭代Math::MAX_ITERATION次
     {
-        status = gsl_multiroot_fdfsolver_iterate(s);
-        status = gsl_multiroot_test_residual(s->f, Math::EPSILON); //判断解是否是真实解
+        status = gsl_root_fsolver_iterate(s);
+        const double res = gsl_root_fsolver_root(s);
+        const double lower = gsl_root_fsolver_x_lower(s);
+        const double upper = gsl_root_fsolver_x_upper(s);
+        status = gsl_root_test_interval(lower, upper, 0, 0);
     }
 
-    double res = gsl_vector_get(s->x, 0);
+    double res = gsl_root_fsolver_root(s);
 
-    gsl_multiroot_fdfsolver_free(s);
-    gsl_vector_free(x);
+    gsl_root_fsolver_free(s);
 
     return res;
 }
