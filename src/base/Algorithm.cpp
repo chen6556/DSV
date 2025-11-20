@@ -1626,13 +1626,23 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Ellipse 
     const double value2 = std::pow(b1, 2);
     if (std::pow(a1, 2) * a0 + std::pow(b1, 2) * b0 > std::pow(c1, 2))
     {
-        const double t0 = a0 * std::pow(a1, 2) + b0 * std::pow(b1, 2);
-        const double t1 = b0 * std::pow(b1, 2) * c1;
-        const double t2 = std::sqrt(a0 * b0 * std::pow(b1, 2) * (t0 - std::pow(c1, 2)));
-        output0.x = (-a0 * a1 * c1 - t2) / t0;
-        output0.y = (a1 * t2 - t1) / (b1 * t0);
-        output1.x = (t2 - a0 * a1 * c1) / t0;
-        output1.y = (-a1 * t2 - t1) / (b1 * t0);
+        if (b1 != 0)
+        {
+            const double t0 = a0 * std::pow(a1, 2) + b0 * std::pow(b1, 2);
+            const double t1 = b0 * std::pow(b1, 2) * c1;
+            const double t2 = std::sqrt(a0 * b0 * std::pow(b1, 2) * (t0 - std::pow(c1, 2)));
+            output0.x = (-a0 * a1 * c1 - t2) / t0;
+            output0.y = (a1 * t2 - t1) / (b1 * t0);
+            output1.x = (t2 - a0 * a1 * c1) / t0;
+            output1.y = (-a1 * t2 - t1) / (b1 * t0);
+        }
+        else
+        {
+            output0.x = point2.x;
+            output0.y = std::sqrt(b0 - b0 * std::pow(output0.x, 2) / a0);
+            output1.x = point2.x;
+            output1.y = -std::sqrt(b0 - b0 * std::pow(output1.x, 2) / a0);
+        }
         
         if (infinite)
         {
@@ -1718,10 +1728,18 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Ellipse 
     }
     else if (std::pow(a1, 2) * a0 + std::pow(b1, 2) * b0 == std::pow(c1, 2))
     {
-        const double t0 = a0 * std::pow(a1, 2) + b0 * std::pow(b1, 2);
-        const double t1 = b0 * std::pow(b1, 2) * c1;
-        output0.x = (-a0 * a1 * c1) / t0;
-        output0.y = t1 / (b1 * t0);
+        if (b1 != 0)
+        {
+            const double t0 = a0 * std::pow(a1, 2) + b0 * std::pow(b1, 2);
+            const double t1 = b0 * std::pow(b1, 2) * c1;
+            output0.x = (-a0 * a1 * c1) / t0;
+            output0.y = t1 / (b1 * t0);
+        }
+        else
+        {
+            output0.x = point2.x;
+            output0.y = 0;
+        }
 
         if (infinite)
         {
