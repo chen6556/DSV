@@ -4930,6 +4930,13 @@ bool Geo::is_intersected(const AABBRect &rect, const Circle &circle)
         return false;
     }
 
+    for (const Geo::Point &point : circle.shape())
+    {
+        if (Geo::is_inside(point, rect))
+        {
+            return true;
+        }
+    }
     Geo::Point point0, point1;
     for (size_t i = 1; i < 5; ++i)
     {
@@ -4948,6 +4955,13 @@ bool Geo::is_intersected(const AABBRect &rect, const Ellipse &ellipse)
         return false;
     }
 
+    for (const Geo::Point &point : ellipse.shape())
+    {
+        if (Geo::is_inside(point, rect))
+        {
+            return true;
+        }
+    }
     if (ellipse.is_arc())
     {
         Geo::Point point0, point1;
@@ -4984,7 +4998,7 @@ bool Geo::is_intersected(const AABBRect &rect, const Arc &arc)
     {
         return false;
     }
-    for (const Geo::Point &point : arc.control_points)
+    for (const Geo::Point &point : arc.shape())
     {
         if (Geo::is_inside(point, rect, true))
         {
