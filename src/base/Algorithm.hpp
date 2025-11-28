@@ -408,6 +408,8 @@ namespace Geo
 
     Polygon circle_to_polygon(const Circle &circle, const double down_sampling_value = 0.02);
 
+    Bezier circle_to_bezier(const Circle &circle);
+
     Polygon ellipse_to_polygon(const double x, const double y, const double a, const double b, const double rad, const double down_sampling_value = 0.02);
 
     Polygon ellipse_to_polygon(const Ellipse &ellipse, const double down_sampling_value = 0.02);

@@ -8703,31 +8703,6 @@ bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &po
 
 
 
-Geo::Polygon Geo::circle_to_polygon(const double x, const double y, const double r, const double down_sampling_value)
-{
-    const double v = std::asin(1 / r);
-    const double step = std::isnan(v) ? Geo::PI / 32 : std::min(v, Geo::PI / 64);
-    double degree = 0;
-    std::vector<Geo::Point> points;
-    while (degree < Geo::PI * 2)
-    {
-        points.emplace_back(r * std::cos(degree) + x, r * std::sin(degree) + y);
-        degree += step;
-    }
-    if (points.size() >= 3)
-    {
-        Geo::Polygon shape(points.cbegin(), points.cend());
-        if (step < Geo::PI / 32)
-        {
-            Geo::down_sampling(shape, down_sampling_value);
-        }
-        return shape;
-    }
-    else
-    {
-        return Geo::Polygon();
-    }
-}
 
 Geo::Polyline Geo::arc_to_polyline(const Geo::Point &center, const double radius, double start_angle, double end_angle, const bool is_cw, const double down_sampling_value)
 {
@@ -8831,11 +8806,62 @@ Geo::Bezier Geo::arc_to_bezier(const Geo::Arc &arc)
     return Geo::Bezier(points.begin(), points.end(), 3, false);
 }
 
+Geo::Polygon Geo::circle_to_polygon(const double x, const double y, const double r, const double down_sampling_value)
+{
+    const double v = std::asin(1 / r);
+    const double step = std::isnan(v) ? Geo::PI / 32 : std::min(v, Geo::PI / 64);
+    double degree = 0;
+    std::vector<Geo::Point> points;
+    while (degree < Geo::PI * 2)
+    {
+        points.emplace_back(r * std::cos(degree) + x, r * std::sin(degree) + y);
+        degree += step;
+    }
+    if (points.size() >= 3)
+    {
+        Geo::Polygon shape(points.cbegin(), points.cend());
+        if (step < Geo::PI / 32)
+        {
+            Geo::down_sampling(shape, down_sampling_value);
+        }
+        return shape;
+    }
+    else
+    {
+        return Geo::Polygon();
+    }
+}
+
 Geo::Polygon Geo::circle_to_polygon(const Circle &circle, const double down_sampling_value)
 {
     return Geo::circle_to_polygon(circle.x, circle.y, circle.radius, down_sampling_value);
 }
 
+Geo::Bezier Geo::circle_to_bezier(const Geo::Circle &circle)
+{
+    std::vector<Geo::Point> points;
+    const double k = 4 * (-1 + std::sqrt(2)) / 3 * circle.radius;
+    const Geo::Point point0(circle.x + circle.radius, circle.y), point1(circle.x, circle.y + circle.radius),
+        point2(circle.x - circle.radius, circle.y), point3(circle.x, circle.y - circle.radius);
+    // 第一象限
+    points.emplace_back(point0);
+    points.emplace_back(point0.x, point0.y + k);
+    points.emplace_back(point1.x + k, point1.y);
+    points.emplace_back(point1);
+    // 第二象限
+    points.emplace_back(point1.x - k, point1.y);
+    points.emplace_back(point2.x, point2.y + k);
+    points.emplace_back(point2);
+    // 第三象限
+    points.emplace_back(point2.x, point2.y - k);
+    points.emplace_back(point3.x - k, point3.y);
+    points.emplace_back(point3);
+    // 第四象限
+    points.emplace_back(point3.x + k, point3.y);
+    points.emplace_back(point0.x, point0.y - k);
+    points.emplace_back(point0);
+    return Geo::Bezier(points.begin(), points.end(), 3, false);
+}
 
 Geo::Polygon Geo::ellipse_to_polygon(const double x, const double y, const double a, const double b, const double rad, const double down_sampling_value)
 {
