@@ -32,12 +32,21 @@ void Editer::init()
     GlobalSetting::setting().graph = _graph;
     if (_graph != nullptr)
     {
+        std::vector<Geo::Ellipse *> ellipses;
         for (ContainerGroup &group : _graph->container_groups())
         {
             for (Geo::Geometry *geo : group)
             {
                 geo->is_selected = false;
+                if (geo->type() == Geo::Type::ELLIPSE)
+                {
+                    ellipses.push_back(static_cast<Geo::Ellipse *>(geo));
+                }
             }
+        }
+        for (Geo::Ellipse *ellipse : ellipses)
+        {
+            _graph->append(new Geo::Bezier(Geo::ellipse_to_bezier(*ellipse)));
         }
         if (_graph->container_groups().empty())
         {

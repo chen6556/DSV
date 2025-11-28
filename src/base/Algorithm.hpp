@@ -420,6 +420,8 @@ namespace Geo
 
     Polyline ellipse_to_polyline(const Ellipse &ellipse, const double down_sampling_value = 0.02);
 
+    Bezier ellipse_to_bezier(const Ellipse &ellipse);
+
     std::vector<unsigned int> ear_cut_to_indexs(const Polygon &polygon);
 
     std::vector<MarkedPoint> ear_cut_to_coords(const Polygon &polygon);

@@ -8935,6 +8935,48 @@ Geo::Polyline Geo::ellipse_to_polyline(const Ellipse &ellipse, const double down
         ellipse.lengthb(), ellipse.angle(), ellipse.arc_param0(), ellipse.arc_param1(), down_sampling_value);
 }
 
+Geo::Bezier Geo::ellipse_to_bezier(const Geo::Ellipse &ellipse)
+{
+    std::vector<Geo::Point> points;
+    const Geo::Point center = ellipse.center();
+    // if (ellipse.is_arc())
+    // {
+
+    // }
+    // else
+    {
+        const double k0 = 4 * (-1 + std::sqrt(2)) / 3 * ellipse.lengtha();
+        const double k1 = 4 * (-1 + std::sqrt(2)) / 3 * ellipse.lengthb();
+        const Geo::Point point0(center.x + ellipse.lengtha(), center.y), point1(center.x, center.y + ellipse.lengthb()),
+            point2(center.x - ellipse.lengtha(), center.y), point3(center.x, center.y - ellipse.lengthb());
+        // 第一象限
+        points.emplace_back(point0);
+        points.emplace_back(point0.x, point0.y + k1);
+        points.emplace_back(point1.x + k0, point1.y);
+        points.emplace_back(point1);
+        // 第二象限
+        points.emplace_back(point1.x - k0, point1.y);
+        points.emplace_back(point2.x, point2.y + k1);
+        points.emplace_back(point2);
+        // 第三象限
+        points.emplace_back(point2.x, point2.y - k1);
+        points.emplace_back(point3.x - k0, point3.y);
+        points.emplace_back(point3);
+        // 第四象限
+        points.emplace_back(point3.x + k0, point3.y);
+        points.emplace_back(point0.x, point0.y - k1);
+        points.emplace_back(point0);
+    }
+    if (const double angle = ellipse.angle(); angle != 0)
+    {
+        for (Geo::Point &point : points)
+        {
+            point.rotate(center.x, center.y, angle);
+        }
+    }
+    return Geo::Bezier(points.begin(), points.end(), 3, false);
+}
+
 
 std::vector<unsigned int> Geo::ear_cut_to_indexs(const Geo::Polygon &polygon)
 {
