@@ -881,7 +881,7 @@ AABBRect &AABBRect::operator=(const AABBRect &rect)
 
 const bool AABBRect::empty() const
 {
-    return _points.empty();
+    return _points.size() < 5;
 }
 
 const double AABBRect::length() const
@@ -1159,8 +1159,7 @@ Polygon::Polygon(const Polygon &polygon)
 Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end)
     : Polyline(begin, end)
 {
-    assert(size() >= 3);
-    if (_points.back() != _points.front())
+    if (!_points.empty() && _points.back() != _points.front())
     {
         _points.emplace_back(_points.front());
     }
@@ -1169,8 +1168,7 @@ Polygon::Polygon(std::vector<Point>::const_iterator begin, std::vector<Point>::c
 Polygon::Polygon(const std::initializer_list<Point>& points)
     : Polyline(points)
 {
-    assert(size() > 2);
-    if (_points.back() != _points.front())
+    if (!_points.empty() && _points.back() != _points.front())
     {
         _points.emplace_back(_points.front());
     }
@@ -1179,7 +1177,7 @@ Polygon::Polygon(const std::initializer_list<Point>& points)
 Polygon::Polygon(const Polyline &polyline)
     : Polyline(polyline)
 {
-    if (_points.back() != _points.front())
+    if (!_points.empty() && _points.back() != _points.front())
     {
         _points.emplace_back(_points.front());
     }
@@ -1191,7 +1189,11 @@ Polygon::Polygon(const AABBRect& rect)
 
 Polygon::Polygon(const double x, const double y, const double radius, const int n, const double rad, const bool circumscribed)
 {
-    assert(n >= 3 && radius > 0);
+    assert(n >= 3 && radius >= 0);
+    if (radius == 0)
+    {
+        return;
+    }
     const Geo::Point anchor(x, y);
     const double step = 2 * Geo::PI / n;
     Geo::Vector vec;
@@ -1857,14 +1859,14 @@ double Circle::default_down_sampling_value = 0.02;
 Circle::Circle(const double x, const double y, const double r)
     : Point(x, y), radius(r)
 {
-    assert(r > 0);
+    assert(r >= 0);
     update_shape(Geo::Circle::default_down_sampling_value);
 }
 
 Circle::Circle(const Point &point, const double r)
     : Point(point), radius(r)
 {
-    assert(r > 0);
+    assert(r >= 0);
     update_shape(Geo::Circle::default_down_sampling_value);
 }
 
@@ -2285,13 +2287,137 @@ Polygon Bezier::mini_bounding_rect() const
     return _shape.mini_bounding_rect();
 }
 
+Point Bezier::tangent(const size_t index, const double t) const
+{
+    if (_points.size() < _order * (index + 1) + 1)
+    {
+        return Point();
+    }
+    std::vector<int> nums(_order, 1);
+    switch (_order - 1)
+    {
+    case 1:
+        break;
+    case 2:
+        nums[1] = 2;
+        break;
+    case 3:
+        nums[1] = nums[2] = 3;
+        break;
+    default:
+        {
+            std::vector<int> temp(1, 1);
+            for (size_t i = 1; i < _order; ++i)
+            {
+                for (size_t j = 1; j < i; ++j)
+                {
+                    nums[j] = temp[j - 1] + temp[j];
+                }
+                temp.assign(nums.begin(), nums.begin() + i + 1);
+            }
+        }
+        break;
+    }
+
+    Point start, end;
+    for (size_t i = 0; i < _order; ++i)
+    {
+        start += (_points[i + index] * (nums[i] * std::pow(1 - t, _order - i - 1) * std::pow(t, i)));
+    }
+    for (size_t i = 0; i < _order; ++i)
+    {
+        end += (_points[i + index + 1] * (nums[i] * std::pow(1 - t, _order - i - 1) * std::pow(t, i)));
+    }
+    return end - start;
+}
+
+Point Bezier::vertical(const size_t index, const double t) const
+{
+    if (_points.size() < _order * (index + 1) + 1)
+    {
+        return Point();
+    }
+
+    Point start, end;
+    {
+        std::vector<int> nums(_order, 1);
+        switch (_order - 1)
+        {
+        case 1:
+            break;
+        case 2:
+            nums[1] = 2;
+            break;
+        case 3:
+            nums[1] = nums[2] = 3;
+            break;
+        default:
+            {
+                std::vector<int> temp(1, 1);
+                for (size_t i = 1; i < _order; ++i)
+                {
+                    for (size_t j = 1; j < i; ++j)
+                    {
+                        nums[j] = temp[j - 1] + temp[j];
+                    }
+                    temp.assign(nums.begin(), nums.begin() + i + 1);
+                }
+            }
+            break;
+        }
+        for (size_t i = 0; i < _order; ++i)
+        {
+            start += (_points[i + index] * (nums[i] * std::pow(1 - t, _order - i - 1) * std::pow(t, i)));
+        }
+        for (size_t i = 0; i < _order; ++i)
+        {
+            end += (_points[i + index + 1] * (nums[i] * std::pow(1 - t, _order - i - 1) * std::pow(t, i)));
+        }
+    }
+    Point vec(end - start);
+
+    {
+        std::vector<int> nums(_order + 1, 1);
+        switch (_order)
+        {
+        case 2:
+            nums[1] = 2;
+            break;
+        case 3:
+            nums[1] = nums[2] = 3;
+            break;
+        default:
+            {
+                std::vector<int> temp(1, 1);
+                for (size_t i = 1; i <= _order; ++i)
+                {
+                    for (size_t j = 1; j < i; ++j)
+                    {
+                        nums[j] = temp[j - 1] + temp[j];
+                    }
+                    temp.assign(nums.begin(), nums.begin() + i + 1);
+                }
+            }
+            break;
+        }
+        Point anchor;
+        for (size_t i = 0; i <= _order; ++i)
+        {
+            anchor += (_points[i + index] * (nums[i] * std::pow(1 - t, _order - i) * std::pow(t, i)));
+        }
+        vec.rotate(anchor.x, anchor.y, Geo::PI / 2);
+    }
+
+    return vec;
+}
+
 
 // Ellipse
 double Ellipse::default_down_sampling_value = 0.02;
 
 Ellipse::Ellipse(const double x, const double y, const double a, const double b)
 {
-    assert(a > 0 && b > 0);
+    assert(a >= 0 && b >= 0);
     _a[0].x = x - a;
     _a[1].x = x + a;
     _a[0].y = _a[1].y = y;
@@ -2301,15 +2427,41 @@ Ellipse::Ellipse(const double x, const double y, const double a, const double b)
     update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
+Ellipse::Ellipse(const double x, const double y, const double a, const double b, const double start, const double end, const bool is_param)
+{
+    assert(a >= 0 && b >= 0);
+    _a[0].x = x - a;
+    _a[1].x = x + a;
+    _a[0].y = _a[1].y = y;
+    _b[0].y = y + b;
+    _b[1].y = y - b;
+    _b[0].x = _b[1].x = x;
+    update_angle_param(start, end, is_param);
+    update_shape(Geo::Ellipse::default_down_sampling_value);
+}
+
 Ellipse::Ellipse(const Point &point, const double a, const double b)
 {
-    assert(a > 0 && b > 0);
+    assert(a >= 0 && b >= 0);
     _a[0].x = point.x - a;
     _a[1].x = point.x + a;
     _a[0].y = _a[1].y = point.y;
     _b[0].y = point.y + b;
     _b[1].y = point.y - b;
     _b[0].x = _b[1].x = point.x;
+    update_shape(Geo::Ellipse::default_down_sampling_value);
+}
+
+Ellipse::Ellipse(const Point &point, const double a, const double b, const double start, const double end, const bool is_param)
+{
+    assert(a >= 0 && b >= 0);
+    _a[0].x = point.x - a;
+    _a[1].x = point.x + a;
+    _a[0].y = _a[1].y = point.y;
+    _b[0].y = point.y + b;
+    _b[1].y = point.y - b;
+    _b[0].x = _b[1].x = point.x;
+    update_angle_param(start, end, is_param);
     update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
@@ -2320,6 +2472,14 @@ Ellipse::Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point 
     update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
+Ellipse::Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point &b1, const double start, const double end, const bool is_param)
+{
+    _a[0] = a0, _a[1] = a1;
+    _b[0] = b0, _b[1] = b1;
+    update_angle_param(start, end, is_param);
+    update_shape(Geo::Ellipse::default_down_sampling_value);
+}
+
 Ellipse::Ellipse(const Ellipse &ellipse)
     : Geometry(ellipse), _shape(ellipse._shape)
 {
@@ -2327,6 +2487,10 @@ Ellipse::Ellipse(const Ellipse &ellipse)
     _a[1] = ellipse._a[1];
     _b[0] = ellipse._b[0];
     _b[1] = ellipse._b[1];
+    _arc_angle[0] = ellipse._arc_angle[0];
+    _arc_angle[1] = ellipse._arc_angle[1];
+    _arc_param[0] = ellipse._arc_param[0];
+    _arc_param[1] = ellipse._arc_param[1];
 }
 
 Ellipse &Ellipse::operator=(const Ellipse &ellipse)
@@ -2338,9 +2502,93 @@ Ellipse &Ellipse::operator=(const Ellipse &ellipse)
         _a[1] = ellipse._a[1];
         _b[0] = ellipse._b[0];
         _b[1] = ellipse._b[1];
+        _arc_angle[0] = ellipse._arc_angle[0];
+        _arc_angle[1] = ellipse._arc_angle[1];
+        _arc_param[0] = ellipse._arc_param[0];
+        _arc_param[1] = ellipse._arc_param[1];
         _shape = ellipse._shape;
     }
     return *this;
+}
+
+double Ellipse::angle_to_param(double angle) const
+{
+    angle = Geo::rad_to_2PI(angle);
+    if (angle <= Geo::PI / 2)
+    {
+        return angle == Geo::PI / 2 ? Geo::PI / 2 : std::atan(std::tan(angle) * lengtha() / lengthb());
+    }
+    else if (angle <= Geo::PI)
+    {
+        return angle == Geo::PI ? Geo::PI : std::atan(std::tan(angle) * lengtha() / lengthb()) + Geo::PI;
+    }
+    else if (angle <= Geo::PI * 3 / 2)
+    {
+        return angle == Geo::PI * 3 / 2 ? Geo::PI * 3 / 2 : std::atan(std::tan(angle) * lengtha() / lengthb()) + Geo::PI;
+    }
+    else
+    {
+        return angle == Geo::PI * 2 ? Geo::PI * 2 : std::atan(std::tan(angle) * lengtha() / lengthb()) + Geo::PI * 2;
+    }
+}
+
+double Ellipse::param_to_angle(double param) const
+{
+    param = Geo::rad_to_2PI(param);
+    if (param <= Geo::PI / 2)
+    {
+        return param == Geo::PI / 2 ? Geo::PI / 2 : std::atan(std::tan(param) * lengthb() / lengtha());
+    }
+    else if (param <= Geo::PI)
+    {
+        return param == Geo::PI ? Geo::PI : std::atan(std::tan(param) * lengthb() / lengtha()) + Geo::PI;
+    }
+    else if (param <= Geo::PI * 3 / 2)
+    {
+        return param == Geo::PI * 3 / 2 ? Geo::PI * 3 / 2 : std::atan(std::tan(param) * lengthb() / lengtha()) + Geo::PI;
+    }
+    else
+    {
+        return param == Geo::PI * 2 ? Geo::PI * 2 : std::atan(std::tan(param) * lengthb() / lengtha()) + Geo::PI * 2;
+    }
+}
+
+void Ellipse::update_angle_param(const double start, const double end, const bool is_param)
+{
+    if (is_param)
+    {
+        _arc_param[0] = start, _arc_param[1] = end;
+        for (int i = 0; i < 2; ++i)
+        {
+            while (_arc_param[i] > Geo::PI * 2)
+            {
+                _arc_param[i] -= Geo::PI * 2;
+            }
+            while (_arc_param[i] < 0)
+            {
+                _arc_param[i] += Geo::PI * 2;
+            }
+        }
+        _arc_angle[0] = param_to_angle(_arc_param[0]);
+        _arc_angle[1] = param_to_angle(_arc_param[1]);
+    }
+    else
+    {
+        _arc_angle[0] = start, _arc_angle[1] = end;
+        for (int i = 0; i < 2; ++i)
+        {
+            while (_arc_angle[i] > Geo::PI * 2)
+            {
+                _arc_angle[i] -= Geo::PI * 2;
+            }
+            while (_arc_angle[i] < 0)
+            {
+                _arc_angle[i] += Geo::PI * 2;
+            }
+        }
+        _arc_param[0] = angle_to_param(_arc_angle[0]);
+        _arc_param[1] = angle_to_param(_arc_angle[1]);
+    }
 }
 
 const Type Ellipse::type() const
@@ -2493,8 +2741,7 @@ double Ellipse::lengthb() const
 
 double Ellipse::angle() const
 {
-    double value = Geo::angle(_a[0], _a[1]);
-    return value >= 0 ? value : value + Geo::PI;
+    return Geo::angle(_a[0], _a[1]);
 }
 
 Geo::Point Ellipse::center() const
@@ -2558,20 +2805,47 @@ void Ellipse::set_center(const double x, const double y)
     translate(x - anchor.x, y - anchor.y);
 }
 
-void Ellipse::reset_parameter(const Geo::Point &a0, const Geo::Point &a1, const Geo::Point &b0, const Geo::Point &b1)
+void Ellipse::reset_parameter(const Geo::Point &a0, const Geo::Point &a1, const Geo::Point &b0,
+    const Geo::Point &b1, const double start_anlge, const double end_angle)
 {
-    _a[0] = a0;
-    _a[1] = a1;
-    _b[0] = b0;
-    _b[1] = b1;
+    _a[0] = a0, _a[1] = a1;
+    _b[0] = b0, _b[1] = b1;
+    _arc_angle[0] = start_anlge, _arc_angle[1] = end_angle;
+    for (int i = 0; i < 2; ++i)
+    {
+        while (_arc_angle[i] > Geo::PI * 2)
+        {
+            _arc_angle[i] -= Geo::PI * 2;
+        }
+        while (_arc_angle[i] < 0)
+        {
+            _arc_angle[i] += Geo::PI * 2;
+        }
+    }
+    _arc_param[0] = angle_to_param(_arc_angle[0]);
+    _arc_param[1] = angle_to_param(_arc_angle[1]);
 }
 
-void Ellipse::reset_parameter(const double parameters[8])
+void Ellipse::reset_parameter(const double parameters[10])
 {
     _a[0].x = parameters[0], _a[0].y = parameters[1];
     _a[1].y = parameters[2], _a[1].y = parameters[3];
     _b[0].x = parameters[4], _b[0].y = parameters[5];
     _b[1].x = parameters[6], _b[1].y = parameters[7];
+    _arc_angle[0] = parameters[8], _arc_angle[1] = parameters[9];
+    for (int i = 0; i < 2; ++i)
+    {
+        while (_arc_angle[i] > Geo::PI * 2)
+        {
+            _arc_angle[i] -= Geo::PI * 2;
+        }
+        while (_arc_angle[i] < 0)
+        {
+            _arc_angle[i] += Geo::PI * 2;
+        }
+    }
+    _arc_param[0] = angle_to_param(_arc_angle[0]);
+    _arc_param[1] = angle_to_param(_arc_angle[1]);
 }
 
 const Point &Ellipse::a0() const
@@ -2626,20 +2900,68 @@ Point Ellipse::c1() const
     }
 }
 
+double Ellipse::arc_angle0() const
+{
+    return _arc_angle[0];
+}
+
+Geo::Point Ellipse::arc_point0() const
+{
+    const Geo::Point anchor = center();
+    const double a = lengtha(), b = lengthb(), rad = angle();
+    return Geo::Point(anchor.x + a * std::cos(rad) * std::cos(_arc_param[0]) - b * std::sin(rad) * std::sin(_arc_param[0]),
+        anchor.y + a * std::sin(rad) * std::cos(_arc_param[0]) + b * std::cos(rad) * std::sin(_arc_param[0]));
+}
+
+double Ellipse::arc_angle1() const
+{
+    return _arc_angle[1];
+}
+
+Geo::Point Ellipse::arc_point1() const
+{
+    const Geo::Point anchor = center();
+    const double a = lengtha(), b = lengthb(), rad = angle();
+    return Geo::Point(anchor.x + a * std::cos(rad) * std::cos(_arc_param[1]) - b * std::sin(rad) * std::sin(_arc_param[1]),
+        anchor.y + a * std::sin(rad) * std::cos(_arc_param[1]) + b * std::cos(rad) * std::sin(_arc_param[1]));
+}
+
+double Ellipse::arc_param0() const
+{
+    return _arc_param[0];
+}
+
+double Ellipse::arc_param1() const
+{
+    return _arc_param[1];
+}
+
 void Ellipse::update_shape(const double down_sampling_value)
 {
     const Geo::Point point = center();
-    _shape = Geo::ellipse_to_polygon(point.x, point.y, lengtha(), lengthb(), angle(), down_sampling_value);
+    if (_arc_angle[0] == _arc_angle[1] || _arc_angle[1] - _arc_angle[0] == Geo::PI * 2)
+    {
+        _shape = Geo::ellipse_to_polygon(point.x, point.y, lengtha(), lengthb(), angle(), down_sampling_value);
+    }
+    else
+    {
+        _shape = Geo::ellipse_to_polyline(point.x, point.y, lengtha(), lengthb(), angle(), _arc_param[0], _arc_param[1], down_sampling_value);
+    }
 }
 
-const Polygon &Ellipse::shape() const
+const Polyline &Ellipse::shape() const
 {
     return _shape;
 }
 
+bool Ellipse::is_arc() const
+{
+    return _arc_angle[0] != _arc_angle[1] && std::abs(_arc_angle[1] - _arc_angle[0]) < Geo::PI * 2;
+}
+
 
 // BSpline
-double BSpline::default_step = 0.2;
+double BSpline::default_step = 0.02;
 double BSpline::default_down_sampling_value = 0.02;
 
 BSpline::BSpline()
@@ -2754,6 +3076,87 @@ const std::vector<double> &BSpline::knots() const
     return _knots;
 }
 
+void BSpline::rbasis(const int order, const double t, const size_t npts, const std::vector<double> &x, std::vector<double> &output)
+{
+    const size_t nplusc = npts + order + 1;
+    std::vector<double> temp(nplusc, 0);
+    // calculate the first order nonrational basis functions n[i]
+    for (size_t i = 0; i < nplusc - 1; ++i)
+    {
+        if ((t >= x[i]) && (t < x[i+1]))
+        {
+            temp[i] = 1;
+        }
+    }
+
+    // calculate the higher order nonrational basis functions
+    for (int k = 2; k <= order + 1; ++k)
+    {
+        for (size_t i = 0; i < nplusc - k; ++i)
+        {
+            // if the lower order basis function is zero skip the calculation
+            if (temp[i] != 0)
+            {
+                temp[i] = ((t - x[i]) * temp[i]) / (x[i + k - 1] - x[i]);
+            }
+            // if the lower order basis function is zero skip the calculation
+            if (temp[i + 1] != 0)
+            {
+                temp[i] += ((x[i + k] - t) * temp[i + 1]) / (x[i + k] - x[i + 1]);
+            }
+        }
+    }
+
+    // pick up last point
+    if (t >= x[nplusc - 1])
+    {
+        temp[npts-1] = 1;
+    }
+
+    // calculate sum for denominator of rational basis functions
+    double sum = 0;
+    for (size_t i = 0; i < npts; ++i)
+    {
+        sum += temp[i];
+    }
+
+    output.resize(npts, 0);
+    // form rational basis functions and put in r vector
+    if (sum != 0)
+    {
+        for (size_t i = 0; i < npts; ++i)
+        {
+            output[i] = temp[i] / sum;
+        }
+    }
+}
+
+void BSpline::rbspline(const int order, const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p)
+{
+    const size_t nplusc = npts + order + 1;
+    // calculate the points on the rational B-spline curve
+    double t = knots[0];
+    const double step = (knots[nplusc - 1] - t) / (p1 - 1);
+
+    for (Geo::Point &vp: p)
+    {
+        if (knots[nplusc - 1] - t < 5e-6)
+        {
+            t = knots[nplusc-1];
+        }
+        // generate the basis function for this value of t
+        std::vector<double> nbasis;
+        rbasis(order, t, npts, knots, nbasis);
+        // generate a point on the curve
+		for (size_t i = 0; i < npts; ++i)
+        {
+            vp += b[i] * nbasis[i];
+        }
+        t += step;
+    }
+}
+
+
 
 // QuadBSpline
 QuadBSpline::QuadBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const bool is_path_points)
@@ -2778,7 +3181,7 @@ QuadBSpline::QuadBSpline(std::vector<Point>::const_iterator begin, std::vector<P
         const size_t num = control_points.size();
         path_points.resize(num - 2);
         knot(num, _knots);
-        rbspline(num, num - 2, _knots, control_points, path_points);
+        rbspline(2, num, num - 2, _knots, control_points, path_points);
     }
     update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
@@ -2805,7 +3208,7 @@ QuadBSpline::QuadBSpline(std::vector<Point>::const_iterator begin, std::vector<P
         control_points.assign(begin, end);
         const size_t num = control_points.size();
         path_points.resize(num - 2);
-        rbspline(num, num - 2, _knots, control_points, path_points);
+        rbspline(2, num, num - 2, _knots, control_points, path_points);
     }
     update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
@@ -2832,7 +3235,7 @@ QuadBSpline::QuadBSpline(const std::initializer_list<Point> &points, const bool 
         const size_t num = control_points.size();
         path_points.resize(num - 2);
         knot(num, _knots);
-        rbspline(num, num - 2, _knots, control_points, path_points);
+        rbspline(2, num, num - 2, _knots, control_points, path_points);
     }
     update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
@@ -3008,87 +3411,6 @@ void QuadBSpline::knot(const size_t num, std::vector<double> &output)  // 从Lib
 	std::fill(output.begin() + num + 1, output.end(), output[num]);
 }
 
-void QuadBSpline::rbasis(const double t, const size_t npts, const std::vector<double> &x, std::vector<double> &output)  // 从LibreCAD抄的
-{
-    const size_t nplusc = npts + 3;
-    std::vector<double> temp(nplusc, 0);
-    // calculate the first order nonrational basis functions n[i]
-    for (size_t i = 0; i< nplusc - 1; ++i)
-    {
-        if ((t >= x[i]) && (t < x[i+1]))
-        {
-            temp[i] = 1;
-        }
-    }
-
-    /* calculate the higher order nonrational basis functions */
-
-    for (int k = 2; k <= 3; ++k)
-    {
-        for (size_t i = 0; i < nplusc - k; ++i)
-        {
-            // if the lower order basis function is zero skip the calculation
-            if (temp[i] != 0)
-            {
-                temp[i] = ((t - x[i]) * temp[i]) / (x[i + k - 1] - x[i]);
-            }
-            // if the lower order basis function is zero skip the calculation
-            if (temp[i + 1] != 0)
-            {
-                temp[i] += ((x[i + k] - t) * temp[i + 1]) / (x[i + k] - x[i + 1]);
-            }
-        }
-    }
-
-    // pick up last point
-    if (t >= x[nplusc - 1])
-    {
-        temp[npts-1] = 1;
-    }
-
-    // calculate sum for denominator of rational basis functions
-    double sum = 0;
-    for (size_t i = 0; i < npts; ++i)
-    {
-        sum += temp[i];
-    }
-
-    output.resize(npts, 0);
-    // form rational basis functions and put in r vector
-    if (sum != 0)
-    {
-        for (size_t i = 0; i < npts; ++i)
-        {
-            output[i] = temp[i] / sum;
-        }
-    }
-}
-
-void QuadBSpline::rbspline(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point>& b, std::vector<Point>& p)  // 从LibreCAD抄的
-{
-    const size_t nplusc = npts + 3;
-    // calculate the points on the rational B-spline curve
-    double t = knots[0];
-    const double step = (knots[nplusc - 1] - t) / (p1 - 1);
-
-    for (Geo::Point &vp: p)
-    {
-        if (knots[nplusc - 1] - t < 5e-6)
-        {
-            t = knots[nplusc-1];
-        }
-        // generate the basis function for this value of t
-        std::vector<double> nbasis;
-        rbasis(t, npts, knots, nbasis);
-        // generate a point on the curve
-		for (size_t i = 0; i < npts; ++i)
-        {
-            vp += b[i] * nbasis[i];
-        }
-        t += step;
-    }
-}
-
 void QuadBSpline::update_shape(const double step, const double down_sampling_value)
 {
     const size_t npts = control_points.size();
@@ -3103,7 +3425,7 @@ void QuadBSpline::update_shape(const double step, const double down_sampling_val
     const size_t points_count = std::max(npts * 8.0, length / step);
 
     std::vector<Point> points(points_count, Point(0, 0));
-    rbspline(npts, points_count, _knots, control_points, points);
+    rbspline(2, npts, points_count, _knots, control_points, points);
 
     _shape.clear();
     _shape.append(path_points.empty() ? control_points.front() : path_points.front());
@@ -3135,7 +3457,7 @@ void QuadBSpline::insert(const double t)
 
     const size_t npts = control_points.size();
     std::vector<double> nbasis;
-    rbasis(t, npts, _knots, nbasis);
+    rbasis(2, t, npts, _knots, nbasis);
     Geo::Point anchor;
     for (size_t i = 0; i < npts; ++i)
     {
@@ -3203,6 +3525,61 @@ void QuadBSpline::insert(const double t)
     }
 }
 
+Geo::Point QuadBSpline::at(const double t) const
+{
+    if (t <= _knots.front())
+    {
+        return control_points.front();
+    }
+    else if (t >= _knots.back())
+    {
+        return control_points.back();
+    }
+    const size_t npts = control_points.size();
+    std::vector<double> nbasis;
+    rbasis(2, t, npts, _knots, nbasis);
+    Geo::Point point;
+    for (size_t i = 0; i < npts; ++i)
+    {
+        point += control_points[i] * nbasis[i];
+    }
+    return point;
+}
+
+Geo::Point QuadBSpline::tangent(const double t) const
+{
+    if (t == _knots.front())
+    {
+        return control_points[1] - control_points.front();
+    }
+    else if (t == _knots.back())
+    {
+        return control_points.back() - control_points[control_points.size() - 2];
+    }
+    const size_t npts = control_points.size() - 1;
+    std::vector<double> nbasis;
+    const std::vector<double> knots(_knots.begin() + 1, _knots.end() - 1); // 一阶导数的节点矢量
+    rbasis(1, t, npts, knots, nbasis);
+    std::vector<Geo::Point> points;
+    for (size_t i = 0; i < npts; ++i)
+    {
+        const double denom = _knots[i + 3] - _knots[i + 1];
+        points.emplace_back((control_points[i + 1] - control_points[i]) * 2 / denom);
+    }
+    Geo::Point tang;
+    for (size_t i = 0; i < npts; ++i)
+    {
+        tang += points[i] * nbasis[i];
+    }
+    return tang;
+}
+
+Geo::Point QuadBSpline::vertical(const double t) const
+{
+    const Geo::Point tan = tangent(t);
+    return Geo::Point(-tan.y, tan.x);
+}
+
 
 // CubicBSpline
 CubicBSpline::CubicBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const bool is_path_points)
@@ -3228,7 +3605,7 @@ CubicBSpline::CubicBSpline(std::vector<Point>::const_iterator begin, std::vector
         std::iota(_knots.begin() + 4, _knots.begin() + num + 1, 1);
         std::fill(_knots.begin() + num + 1, _knots.end(), _knots[num]);
         path_points.resize(num - 2);
-        rbspline(num, num - 2, _knots, control_points, path_points);
+        rbspline(3, num, num - 2, _knots, control_points, path_points);
     }
     update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
@@ -3254,7 +3631,7 @@ CubicBSpline::CubicBSpline(std::vector<Point>::const_iterator begin, std::vector
         control_points.assign(begin, end);
         const size_t num = control_points.size();
         path_points.resize(num - 2);
-        rbspline(num, num - 2, _knots, control_points, path_points);
+        rbspline(3, num, num - 2, _knots, control_points, path_points);
     }
     update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
@@ -3282,7 +3659,7 @@ CubicBSpline::CubicBSpline(const std::initializer_list<Point> &points, const boo
         std::iota(_knots.begin() + 4, _knots.begin() + num + 1, 1);
         std::fill(_knots.begin() + num + 1, _knots.end(), _knots[num]);
         path_points.resize(num - 2);
-        rbspline(num, num - 2, _knots, control_points, path_points);
+        rbspline(3, num, num - 2, _knots, control_points, path_points);
     }
     update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
@@ -3402,87 +3779,6 @@ void CubicBSpline::update_control_points()
     delete[] y;
 }
 
-void CubicBSpline::rbasis(const double t, const size_t npts, const std::vector<double> &x, std::vector<double> &output)
-{
-    const size_t nplusc = npts + 4;
-    std::vector<double> temp(nplusc, 0);
-    // calculate the first order nonrational basis functions n[i]
-    for (size_t i = 0; i< nplusc - 1; ++i)
-    {
-        if ((t >= x[i]) && (t < x[i+1]))
-        {
-            temp[i] = 1;
-        }
-    }
-
-    /* calculate the higher order nonrational basis functions */
-
-    for (int k = 2; k <= 4; ++k)
-    {
-        for (size_t i = 0; i < nplusc - k; ++i)
-        {
-            // if the lower order basis function is zero skip the calculation
-            if (temp[i] != 0)
-            {
-                temp[i] = ((t - x[i]) * temp[i]) / (x[i + k - 1] - x[i]);
-            }
-            // if the lower order basis function is zero skip the calculation
-            if (temp[i + 1] != 0)
-            {
-                temp[i] += ((x[i + k] - t) * temp[i + 1]) / (x[i + k] - x[i + 1]);
-            }
-        }
-    }
-
-    // pick up last point
-    if (t >= x[nplusc - 1])
-    {
-        temp[npts-1] = 1;
-    }
-
-    // calculate sum for denominator of rational basis functions
-    double sum = 0;
-    for (size_t i = 0; i < npts; ++i)
-    {
-        sum += temp[i];
-    }
-
-    output.resize(npts, 0);
-    // form rational basis functions and put in r vector
-    if (sum != 0)
-    {
-        for (size_t i = 0; i < npts; ++i)
-        {
-            output[i] = temp[i] / sum;
-        }
-    }
-}
-
-void CubicBSpline::rbspline(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p)
-{
-    const size_t nplusc = npts + 4;
-    // calculate the points on the rational B-spline curve
-    double t = knots[0];
-    const double step = (knots[nplusc - 1] - t) / (p1 - 1);
-
-    for (Geo::Point &vp: p)
-    {
-        if (knots[nplusc - 1] - t < 5e-6)
-        {
-            t = knots[nplusc-1];
-        }
-        // generate the basis function for this value of t
-        std::vector<double> nbasis;
-        rbasis(t, npts, knots, nbasis);
-        // generate a point on the curve
-		for (size_t i = 0; i < npts; ++i)
-        {
-            vp += b[i] * nbasis[i];
-        }
-        t += step;
-    }
-}
-
 void CubicBSpline::update_shape(const double step, const double down_sampling_value)
 {
     const size_t npts = control_points.size();
@@ -3505,7 +3801,7 @@ void CubicBSpline::update_shape(const double step, const double down_sampling_va
     const size_t points_count = std::max(npts * 8.0, length / step);
 
     std::vector<Point> points(points_count, Point(0, 0));
-    rbspline(npts, points_count, _knots, control_points, points);
+    rbspline(3, npts, points_count, _knots, control_points, points);
 
     _shape.clear();
     _shape.append(path_points.empty() ? control_points.front() : path_points.front());
@@ -3537,7 +3833,7 @@ void CubicBSpline::insert(const double t)
 
     const size_t npts = control_points.size();
     std::vector<double> nbasis;
-    rbasis(t, npts, _knots, nbasis);
+    rbasis(3, t, npts, _knots, nbasis);
     Geo::Point anchor;
     for (size_t i = 0; i < npts; ++i)
     {
@@ -3603,6 +3899,61 @@ void CubicBSpline::insert(const double t)
             break;
         }
     }
+}
+
+Geo::Point CubicBSpline::at(const double t) const
+{
+    if (t <= _knots.front())
+    {
+        return control_points.front();
+    }
+    else if (t >= _knots.back())
+    {
+        return control_points.back();
+    }
+    const size_t npts = control_points.size();
+    std::vector<double> nbasis;
+    rbasis(3, t, npts, _knots, nbasis);
+    Geo::Point point;
+    for (size_t i = 0; i < npts; ++i)
+    {
+        point += control_points[i] * nbasis[i];
+    }
+    return point;
+}
+
+Geo::Point CubicBSpline::tangent(const double t) const
+{
+    if (t == _knots.front())
+    {
+        return control_points[1] - control_points.front();
+    }
+    else if (t == _knots.back())
+    {
+        return control_points.back() - control_points[control_points.size() - 2];
+    }
+    const size_t npts = control_points.size() - 1;
+    std::vector<double> nbasis;
+    const std::vector<double> knots(_knots.begin() + 1, _knots.end() - 1); // 二阶导数的节点矢量
+    rbasis(2, t, npts, knots, nbasis);
+    std::vector<Geo::Point> points;
+    for (size_t i = 0; i < npts; ++i)
+    {
+        const double denom = _knots[i + 4] - _knots[i + 1];
+        points.emplace_back((control_points[i + 1] - control_points[i]) * 3 / denom);
+    }
+    Geo::Point tang;
+    for (size_t i = 0; i < npts; ++i)
+    {
+        tang += points[i] * nbasis[i];
+    }
+    return tang;
+}
+
+Geo::Point CubicBSpline::vertical(const double t) const
+{
+    const Geo::Point tan = tangent(t);
+    return Geo::Point(-tan.y, tan.x);
 }
 
 
@@ -3816,7 +4167,7 @@ const double Arc::length() const
 
 const bool Arc::empty() const
 {
-    return radius == 0;
+    return radius == 0 || control_points[0] == control_points[2];
 }
 
 void Arc::clear()

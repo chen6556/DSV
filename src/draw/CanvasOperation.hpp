@@ -30,7 +30,8 @@ namespace CanvasOperations
         BSpline, 
         Bezier, 
         Text, 
-        Ellipse,
+        Ellipse0, // Ellipse
+        Ellipse1, // Ellipse Arc
  
         Mirror, 
         RingArray, 
@@ -264,7 +265,7 @@ namespace CanvasOperations
     class Arc0Operation : public CanvasOperation
     {
     private:
-        double _parameters[6];
+        double _parameters[6]; // x0, y0, x1, y1, x2, y2
         int _index = 0;
         ParamType _param_type = ParamType::LengthAngle;
 
@@ -286,7 +287,7 @@ namespace CanvasOperations
     class Arc1Operation : public CanvasOperation
     {
     private:
-        double _parameters[5];
+        double _parameters[5]; // startx, starty, centerx, centery, angle
         int _index = 0;
         ParamType _param_type = ParamType::LengthAngle;
 
@@ -308,7 +309,7 @@ namespace CanvasOperations
     class Arc2Operation : public CanvasOperation
     {
     private:
-        double _parameters[5];
+        double _parameters[5]; // startx, starty, endx, endy, angle
         int _index = 0;
         ParamType _param_type = ParamType::LengthAngle;
 
@@ -330,7 +331,7 @@ namespace CanvasOperations
     class Arc3Operation : public CanvasOperation
     {
     private:
-        double _parameters[5];
+        double _parameters[5]; // startx, starty, endx, endy, length
         int _index = 0;
         ParamType _param_type = ParamType::LengthAngle;
 
@@ -467,10 +468,29 @@ namespace CanvasOperations
     };
 
 
-    class EllipseOperation : public CanvasOperation
+    class Ellipse0Operation : public CanvasOperation
     {
     private:
         double _parameters[5]; // x, y, a, b, angle
+        int _index = 0;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+
+        bool read_parameters(const double *params, const int count) override;
+
+        QString cmd_tips() const override;
+    };
+
+
+    class Ellipse1Operation : public CanvasOperation
+    {
+    private:
+        double _parameters[7]; // x, y, a, b, angle, start, end
         int _index = 0;
 
     public:

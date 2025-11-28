@@ -304,11 +304,28 @@ namespace Geo
     // 计算线段或直线外一点的垂足
     bool foot_point(const Point &start, const Point &end, const Point &point, Point &foot, const bool infinite = false);
 
+    // 计算圆外一点到圆的垂足
+    bool fool_point(const Circle &circle, const Point &point, Point &output);
+
+    // 计算椭圆外一点到椭圆的垂足
+    bool foot_point(const Ellipse &ellipse, const Point &point, Point &output);
+
+    // 计算贝塞尔曲线外一点到贝塞尔曲线的垂足<index, t, x, y>
+    int foot_point(const Point &point, const Bezier &bezier, std::vector<Point> &output,
+        std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
+
+    // 计算B样条曲线外一点到B样条曲线的垂足<t, x, y>
+    int foot_point(const Point &point, const BSpline &bspline, std::vector<Point> &output,
+        std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
+
     // 计算多段线到一点的最近点
     int closest_point(const Polyline &polyline, const Point &point, std::vector<Point> &output);
 
     // 计算多边形到一点的最近点
     int closest_point(const Polygon &polygon, const Point &point, std::vector<Point> &output);
+
+    // 计算椭圆到一点的最近点
+    int closest_point(const Ellipse &ellipse, const Point &point, std::vector<Point> &output);
 
     // [数值解]计算贝塞尔曲线到一点的最近点
     int closest_point(const Bezier &bezier, const Point &point, std::vector<Point> &output);
@@ -321,6 +338,14 @@ namespace Geo
 
     // 计算椭圆外一点与椭圆的切点
     bool tangency_point(const Point &point, const Ellipse &ellipse, Point &output0, Point &output1);
+
+    // 计算贝塞尔曲线外一点与贝塞尔曲线的切点<index, t, x, y>
+    int tangency_point(const Point &point, const Bezier &bezier, std::vector<Point> &output,
+        std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
+
+    // 计算B样条曲线外一点与B样条曲线的切点<t, x, y>
+    int tangency_point(const Point &point, const BSpline &bspline, std::vector<Point> &output,
+        std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
 
     // 将Polyline从pos处拆分为两段Polyline
     bool split(const Polyline &polyline, const Point &pos, Polyline &output0, Polyline &output1);
@@ -384,6 +409,12 @@ namespace Geo
     Polygon ellipse_to_polygon(const double x, const double y, const double a, const double b, const double rad, const double down_sampling_value = 0.02);
 
     Polygon ellipse_to_polygon(const Ellipse &ellipse, const double down_sampling_value = 0.02);
+
+    // start_angle:参数方程中参数的起点 end_angle:参数方程中参数的终点
+    Polyline ellipse_to_polyline(const double x, const double y, const double a, const double b, const double rad, 
+        const double start_angle, double end_angle, const double down_sampling_value = 0.02);
+
+    Polyline ellipse_to_polyline(const Ellipse &ellipse, const double down_sampling_value = 0.02);
 
     std::vector<unsigned int> ear_cut_to_indexs(const Polygon &polygon);
 

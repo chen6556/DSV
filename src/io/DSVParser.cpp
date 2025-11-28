@@ -73,12 +73,12 @@ void Importer::store_ellipse()
     if (_is_combination)
     {
         static_cast<Combination *>(_graph->container_groups().back().back())->append(
-            new Geo::Ellipse(_points[0], _points[1], _points[2], _points[3]));
+            new Geo::Ellipse(_points[0], _points[1], _points[2], _points[3], _points[4].x, _points[4].y, false));
     }
     else
     {
         _graph->container_groups().back().append(
-            new Geo::Ellipse(_points[0], _points[1], _points[2], _points[3]));
+            new Geo::Ellipse(_points[0], _points[1], _points[2], _points[3], _points[4].x, _points[4].y, false));
     }
     _text.clear();
     _points.clear();

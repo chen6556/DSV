@@ -43,7 +43,6 @@ void Editer::init()
         {
             _graph->append_group();
         }
-
         _backup.clear();
         _backup.set_graph(_graph);
     }
@@ -198,12 +197,23 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             break;
         case Geo::Type::ELLIPSE:
             ellipse = static_cast<Geo::Ellipse *>(*it);
-            if (std::abs(Geo::distance(ellipse->c0(), point) + Geo::distance(ellipse->c1(), point)
-                - std::max(ellipse->lengtha(), ellipse->lengthb()) * 2) <= catch_distance
-                || Geo::distance_square(point, (ellipse->c0() + ellipse->c1()) / 2) <= catch_distance)
+            if (ellipse->is_arc())
             {
-                ellipse->is_selected = true;
-                return ellipse;
+                if (Geo::distance(point, *ellipse) <= catch_distance)
+                {
+                    ellipse->is_selected = true;
+                    return ellipse;
+                }
+            }
+            else
+            {
+                if (std::abs(Geo::distance(ellipse->c0(), point) + Geo::distance(ellipse->c1(), point)
+                    - std::max(ellipse->lengtha(), ellipse->lengthb()) * 2) <= catch_distance
+                    || Geo::distance_square(point, (ellipse->c0() + ellipse->c1()) / 2) <= catch_distance)
+                {
+                    ellipse->is_selected = true;
+                    return ellipse;
+                }
             }
             ellipse = nullptr;
             break;
@@ -847,6 +857,10 @@ void Editer::set_group_name(const size_t index, const QString &name)
 
 void Editer::append(Geo::Geometry *object)
 {
+    if (object->empty())
+    {
+        return;
+    }
     _graph->append(object, _current_group);
     _graph->modified = true;
     _backup.push_command(new UndoStack::ObjectCommand(object, 
@@ -964,8 +978,13 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         if (Geo::Ellipse *temp = static_cast<Geo::Ellipse *>(points); change_shape && !points->shape_fixed)
         {
             const Geo::Point point0(x0, y0), point1(x1, y1);
-            if (Geo::distance(temp->a0(), point0) <= catch_distance || Geo::distance(temp->a0(), point1) <= catch_distance
-                || Geo::distance(temp->a1(), point0) <= catch_distance || Geo::distance(temp->a1(), point1) <= catch_distance)
+            const double disa[4] = { Geo::distance(temp->a0(), point0), Geo::distance(temp->a0(), point1), 
+                Geo::distance(temp->a1(), point0), Geo::distance(temp->a1(), point1) };
+            const double min_disa = *std::min_element(disa, disa + 4);
+            const double disb[4] = { Geo::distance(temp->b0(), point0), Geo::distance(temp->b0(), point1),
+                Geo::distance(temp->b1(), point0), Geo::distance(temp->b1(), point1) };
+            const double min_disb = *std::min_element(disb, disb + 4);
+            if (min_disa < min_disb && min_disa <= catch_distance)
             {
                 if (_edited_shape.empty())
                 {
@@ -973,12 +992,12 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                     _edited_shape.emplace_back(temp->a1().x, temp->a1().y);
                     _edited_shape.emplace_back(temp->b0().x, temp->b0().y);
                     _edited_shape.emplace_back(temp->b1().x, temp->b1().y);
+                    _edited_shape.emplace_back(temp->arc_angle0(), temp->arc_angle1());
                 }
                 temp->set_lengtha(Geo::distance(point1, temp->center()));
                 temp->update_shape(Geo::Ellipse::default_down_sampling_value);
             }
-            else if (Geo::distance(temp->b0(), point0) <= catch_distance || Geo::distance(temp->b0(), point1) <= catch_distance
-                || Geo::distance(temp->b1(), point0) <= catch_distance || Geo::distance(temp->b1(), point1) <= catch_distance)
+            else if (min_disb < min_disa && min_disb <= catch_distance)
             {
                 if (_edited_shape.empty())
                 {
@@ -986,6 +1005,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                     _edited_shape.emplace_back(temp->a1().x, temp->a1().y);
                     _edited_shape.emplace_back(temp->b0().x, temp->b0().y);
                     _edited_shape.emplace_back(temp->b1().x, temp->b1().y);
+                    _edited_shape.emplace_back(temp->arc_angle0(), temp->arc_angle1());
                 }
                 temp->set_lengthb(Geo::distance(point1, temp->center()));
                 temp->update_shape(Geo::Ellipse::default_down_sampling_value);
@@ -2404,98 +2424,6 @@ void Editer::down(Geo::Geometry *item)
     }
 }
 
-void Editer::rotate(std::vector<Geo::Geometry *> objects, const double rad, const bool unitary, const bool all_layers)
-{
-    Geo::Point coord;
-    if (objects.empty())
-    {
-        if (unitary)
-        {
-            if (all_layers)
-            {
-                coord = _graph->bounding_rect().center();
-                for (ContainerGroup &group : _graph->container_groups())
-                {
-                    for (Geo::Geometry *geo : group)
-                    {
-                        geo->rotate(coord.x, coord.y, rad);
-                    }
-                    objects.insert(objects.end(), group.begin(), group.end());
-                }
-            }
-            else
-            {
-                coord = _graph->container_group(_current_group).bounding_rect().center();
-                for (Geo::Geometry *geo : _graph->container_group(_current_group))
-                {
-                    geo->rotate(coord.x, coord.y, rad);
-                }
-                objects.assign(_graph->container_group(_current_group).begin(), 
-                    _graph->container_group(_current_group).end());
-            }
-        }
-        else
-        {
-            if (all_layers)
-            {
-                for (ContainerGroup &group : _graph->container_groups())
-                {
-                    for (Geo::Geometry *geo : group)
-                    {
-                        coord = geo->bounding_rect().center();
-                        geo->rotate(coord.x, coord.y, rad);
-                    }
-                    objects.insert(objects.end(), group.begin(), group.end());
-                }
-            }
-            else
-            {
-                for (Geo::Geometry *geo : _graph->container_group(_current_group))
-                {
-                    coord = geo->bounding_rect().center();
-                    geo->rotate(coord.x, coord.y, rad);
-                }
-                objects.assign(_graph->container_group(_current_group).begin(), 
-                    _graph->container_group(_current_group).end());
-            }
-        }
-    }
-    else
-    {
-        if (unitary)
-        {
-            Geo::AABBRect rect;
-            double left = DBL_MAX, top = -DBL_MAX, right = -DBL_MAX, bottom = DBL_MAX;
-            for (Geo::Geometry *geo : objects)
-            {
-                rect = geo->bounding_rect();
-                left = std::min(left, rect.left());
-                top = std::max(top, rect.top());
-                right = std::max(right, rect.right());
-                bottom = std::min(bottom, rect.bottom());
-            }
-            coord.x = (left + right) / 2;
-            coord.y = (top + bottom) / 2;
-
-            for (Geo::Geometry *geo : objects)
-            {
-                geo->rotate(coord.x, coord.y, rad);
-            }
-        }
-        else
-        {
-            for (Geo::Geometry *geo : objects)
-            {
-                coord = geo->bounding_rect().center();
-                geo->rotate(coord.x, coord.y, rad);
-            }
-        }
-    }
-
-    _graph->modified = true;
-    _backup.push_command(new UndoStack::RotateCommand(objects, coord.x, coord.y, rad, unitary));
-}
-
 void Editer::rotate(std::vector<Geo::Geometry *> objects, const double x, const double y, const double rad)
 {
     for (Geo::Geometry *geo : objects)
@@ -2503,7 +2431,7 @@ void Editer::rotate(std::vector<Geo::Geometry *> objects, const double x, const 
         geo->rotate(x, y, rad);
     }
     _graph->modified = true;
-    _backup.push_command(new UndoStack::RotateCommand(objects, x, y, rad, false));
+    _backup.push_command(new UndoStack::RotateCommand(objects, x, y, rad));
 }
 
 void Editer::flip(std::vector<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers)
@@ -3778,15 +3706,7 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
         while (anchor_t <= knots[nplusc - 1])
         {
             std::vector<double> nbasis;
-            if (is_cubic)
-            {
-                Geo::CubicBSpline::rbasis(anchor_t, npts, knots, nbasis);
-            }
-            else
-            {
-                Geo::QuadBSpline::rbasis(anchor_t, npts, knots, nbasis);
-            }
-
+            Geo::BSpline::rbasis(is_cubic ? 3 : 2, anchor_t, npts, knots, nbasis);
             Geo::Point coord;
             for (size_t i = 0; i < npts; ++i)
             {
@@ -3817,14 +3737,7 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
                 {
                     x = x < upper ? x : upper;
                     std::vector<double> nbasis;
-                    if (is_cubic)
-                    {
-                        Geo::CubicBSpline::rbasis(x, npts, knots, nbasis);
-                    }
-                    else
-                    {
-                        Geo::QuadBSpline::rbasis(x, npts, knots, nbasis);
-                    }
+                    Geo::BSpline::rbasis(is_cubic ? 3 : 2, x, npts, knots, nbasis);
                     Geo::Point coord;
                     for (size_t i = 0; i < npts; ++i)
                     {
@@ -3856,14 +3769,7 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
                 {
                     x = x < upper ? x : upper;
                     std::vector<double> nbasis;
-                    if (is_cubic)
-                    {
-                        Geo::CubicBSpline::rbasis(x, npts, knots, nbasis);
-                    }
-                    else
-                    {
-                        Geo::QuadBSpline::rbasis(x, npts, knots, nbasis);
-                    }
+                    Geo::BSpline::rbasis(is_cubic ? 3 : 2, x, npts, knots, nbasis);
                     Geo::Point coord;
                     for (size_t i = 0; i < npts; ++i)
                     {
@@ -3935,14 +3841,7 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
             }
 
             std::vector<double> nbasis;
-            if (is_cubic)
-            {
-                Geo::CubicBSpline::rbasis(v, npts, knots, nbasis);
-            }
-            else
-            {
-                Geo::QuadBSpline::rbasis(v, npts, knots, nbasis);
-            }
+            Geo::BSpline::rbasis(is_cubic ? 3 : 2, v, npts, knots, nbasis);
             Geo::Point coord;
             for (size_t i = 0; i < npts; ++i)
             {
@@ -4424,7 +4323,7 @@ void Editer::trim(Geo::Arc *arc, const double x, const double y)
         return;
     }
 
-    Geo::Point anchor(x, y), center(arc->x, arc->y);
+    const Geo::Point anchor(x, y), center(arc->x, arc->y);
     double anchor_angle = Geo::angle(arc->control_points[0], center, anchor);
     if (arc->is_cw()) // 计算圆弧起点沿圆弧方向转动到修剪点所转过的角度
     {
@@ -4471,7 +4370,6 @@ void Editer::trim(Geo::Arc *arc, const double x, const double y)
         }
     }
     // 使位置分布为control_points[0],intersections[index0],intersections[index1],control_points[2]
-    anchor = center + (anchor - center).normalize() * arc->radius;
     Geo::Arc *arc0 = nullptr, *arc1 = nullptr;
     if (index0 < SIZE_MAX && index1 < SIZE_MAX)
     {
@@ -4517,6 +4415,260 @@ void Editer::trim(Geo::Arc *arc, const double x, const double y)
             {
                 _graph->container_group(_current_group).insert(i, arc1);
                 add_items.emplace_back(arc1, _current_group, i);
+            }
+            break;
+        }
+    }
+    _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+}
+
+void Editer::trim(Geo::Ellipse *ellipse, const double x, const double y)
+{
+    std::vector<Geo::Point> intersections;
+    for (const Geo::Geometry *object : _graph->container_group(_current_group))
+    {
+        std::vector<Geo::Point> temp;
+        switch (object->type())
+        {
+        case Geo::Type::POLYGON:
+        case Geo::Type::POLYLINE:
+            {
+                const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
+                Geo::Point point0, point1;
+                for (size_t i = 1, count = polyline->size(); i < count; ++i)
+                {
+                    switch (Geo::is_intersected((*polyline)[i - 1], (*polyline)[i], *ellipse, point0, point1))
+                    {
+                    case 2:
+                        intersections.emplace_back(point1);
+                    case 1:
+                        intersections.emplace_back(point0);
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            {
+                Geo::Point point0, point1, point2, point3;
+                switch (Geo::is_intersected(*static_cast<const Geo::Circle *>(object),
+                    *ellipse, point0, point1, point2, point3))
+                {
+                case 4:
+                    intersections.emplace_back(point3);
+                case 3:
+                    intersections.emplace_back(point2);
+                case 2:
+                    intersections.emplace_back(point1);
+                case 1:
+                    intersections.emplace_back(point0);
+                    break;
+                default:
+                    break;
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            if (ellipse != object)
+            {
+                Geo::Point point0, point1, point2, point3;
+                switch (Geo::is_intersected(*static_cast<const Geo::Ellipse *>(object),
+                    *ellipse, point0, point1, point2, point3))
+                {
+                case 4:
+                    intersections.emplace_back(point3);
+                case 3:
+                    intersections.emplace_back(point2);
+                case 2:
+                    intersections.emplace_back(point1);
+                case 1:
+                    intersections.emplace_back(point0);
+                    break;
+                default:
+                    break;
+                }
+            }
+            break;
+        case Geo::Type::BEZIER:
+            Geo::is_intersected(*ellipse, *static_cast<const Geo::Bezier *>(object), intersections, nullptr);
+            break;
+        case Geo::Type::BSPLINE:
+            Geo::is_intersected(*ellipse, *static_cast<const Geo::BSpline *>(object),
+                dynamic_cast<const Geo::CubicBSpline *>(object), intersections, nullptr);
+            break;
+        case Geo::Type::ARC:
+            {
+                Geo::Point point0, point1, point2, point3;
+                switch (Geo::is_intersected(*ellipse, *static_cast<const Geo::Arc *>(object),
+                    point0, point1, point2, point3))
+                {
+                case 4:
+                    intersections.emplace_back(point3);
+                case 3:
+                    intersections.emplace_back(point2);
+                case 2:
+                    intersections.emplace_back(point1);
+                case 1:
+                    intersections.emplace_back(point0);
+                    break;
+                default:
+                    break;
+                }
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (ellipse->is_arc())
+    {
+        const Geo::Point point0(ellipse->arc_point0()), point1(ellipse->arc_point1());
+        for (size_t i = 0, count = intersections.size(); i < count; ++i)
+        {
+            if (Geo::distance(intersections[i], point0) < Geo::EPSILON ||
+                Geo::distance(intersections[i], point1) < Geo::EPSILON)
+            {
+                --count;
+                intersections.erase(intersections.begin() + i--);
+            }
+        }
+    }
+
+    if (intersections.empty() || (!ellipse->is_arc() && intersections.size() < 2))
+    {
+        return;
+    }
+
+    const Geo::Point start(ellipse->is_arc() ? ellipse->arc_point0() : ellipse->a1());
+    const Geo::Point anchor(x, y), center(ellipse->center());
+    double anchor_angle = Geo::angle(start, center, anchor);
+    if (anchor_angle < 0) // 计算椭圆或椭圆弧起点逆时针转动到修剪点所转过的角度
+    {
+        anchor_angle += Geo::PI * 2;
+    }
+    double angle0 = 0, angle1 = 7;
+    size_t index0 = SIZE_MAX, index1 = SIZE_MAX;
+    for (size_t i = 0, count = intersections.size(); i < count; ++i)
+    {
+        double value = Geo::angle(start, center, intersections[i]);
+        if (value < 0) // 计算椭圆或椭圆弧起点逆时针转动到交点所转过的角度
+        {
+            value += Geo::PI * 2;
+        }
+        if (value > angle0 && value < anchor_angle)
+        { // 转过角度小于修剪点转过角度的最大值
+            angle0 = value;
+            index0 = i;
+        }
+        if (value < angle1 && value > anchor_angle)
+        { // 转过角度大于修剪点转过角度的最小值
+            angle1 = value;
+            index1 = i;
+        }
+    }
+    if (index0 == SIZE_MAX && index1 == SIZE_MAX)
+    {
+        return;
+    }
+    if (!ellipse->is_arc())
+    {
+        if (index0 == SIZE_MAX)
+        { // 所有交点在修剪点之后,那么要保留的椭圆弧终止圆心角是交点最大圆心角
+            for (size_t i = 0, count = intersections.size(); i < count; ++i)
+            {
+                double value = Geo::angle(start, center, intersections[i]);
+                if (value < 0) // 计算椭圆或椭圆弧起点逆时针转动到交点所转过的角度
+                {
+                    value += Geo::PI * 2;
+                }
+                if (value > angle0)
+                { // 转过角度的最大值
+                    angle0 = value;
+                    index0 = i;
+                }
+            }
+        }
+        else if (index1 == SIZE_MAX)
+        { // 所有交点在修剪点之前,那么要保留的椭圆弧起始圆心角是交点最小圆心角
+            for (size_t i = 0, count = intersections.size(); i < count; ++i)
+            {
+                double value = Geo::angle(start, center, intersections[i]);
+                if (value < 0) // 计算椭圆或椭圆弧起点逆时针转动到交点所转过的角度
+                {
+                    value += Geo::PI * 2;
+                }
+                if (value < angle1)
+                { // 转过角度的最小值
+                    angle1 = value;
+                    index1 = i;
+                }
+            }
+        }
+    }
+
+    // 使位置分布为start,intersections[index0],intersections[index1],end
+    Geo::Ellipse *ellipse0 = nullptr, *ellipse1 = nullptr;
+    const Geo::Point end(ellipse->is_arc() ? ellipse->arc_point1() : ellipse->a1());
+    const double a = ellipse->lengtha(), b = ellipse->lengthb();
+    if (index0 < SIZE_MAX && index1 < SIZE_MAX)
+    {
+        angle0 = Geo::angle(ellipse->a1(), center, intersections[index0]);
+        angle1 = Geo::angle(ellipse->a1(), center, intersections[index1]);
+        if (ellipse->is_arc())
+        {
+            const double angle2 = ellipse->is_arc() ? Geo::angle(ellipse->a1(), center, start) : 0;
+            const double angle3 = ellipse->is_arc() ? Geo::angle(ellipse->a1(), center, end) : Geo::PI * 2;
+            ellipse0 = new Geo::Ellipse(center.x, center.y, a, b, angle2, angle0, false);
+            ellipse1 = new Geo::Ellipse(center.x, center.y, a, b, angle1, angle3, false);
+            ellipse0->rotate(center.x, center.y, ellipse->angle());
+            ellipse1->rotate(center.x, center.y, ellipse->angle());
+        }
+        else
+        {
+            ellipse0 = new Geo::Ellipse(center.x, center.y, a, b, angle1, angle0, false);
+            ellipse0->rotate(center.x, center.y, ellipse->angle());
+        }
+    }
+    else if (ellipse->is_arc())
+    {
+        if (index0 < SIZE_MAX)
+        {
+            angle0 = Geo::angle(ellipse->a1(), center, intersections[index0]);
+            ellipse0 = new Geo::Ellipse(center.x, center.y, a, b,
+                Geo::angle(ellipse->a1(), center, start), angle0, false);
+            ellipse0->rotate(center.x, center.y, ellipse->angle());
+        }
+        if (index1 < SIZE_MAX)
+        {
+            angle1 = Geo::angle(ellipse->a1(), center, intersections[index1]);
+            ellipse1 = new Geo::Ellipse(center.x, center.y, a, b,
+                angle1, Geo::angle(ellipse->a1(), center, end), false);
+            ellipse1->rotate(center.x, center.y, ellipse->angle());
+        }
+    }
+
+    if (ellipse0 == nullptr && ellipse1 == nullptr)
+    {
+        return;
+    }
+    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
+    {
+        if (_graph->container_group(_current_group)[i] == ellipse)
+        {
+            remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+            if (ellipse0 != nullptr)
+            {
+                _graph->container_group(_current_group).insert(i, ellipse0);
+                add_items.emplace_back(ellipse0, _current_group, i++);
+            }
+            if (ellipse1 != nullptr)
+            {
+                _graph->container_group(_current_group).insert(i, ellipse1);
+                add_items.emplace_back(ellipse1, _current_group, i);
             }
             break;
         }

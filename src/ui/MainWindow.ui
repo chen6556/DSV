@@ -706,13 +706,19 @@ QScrollArea
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/ellipse_btn.png</normaloff>:/icons/ellipse_btn.png</iconset>
+                  <normaloff>:/icons/ellipse/ellipse_btn.png</normaloff>:/icons/ellipse/ellipse_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
                   <width>24</width>
                   <height>24</height>
                  </size>
+                </property>
+                <property name="popupMode">
+                 <enum>QToolButton::ToolButtonPopupMode::MenuButtonPopup</enum>
+                </property>
+                <property name="autoRaise">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>

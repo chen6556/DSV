@@ -109,7 +109,6 @@ void MainWindow::connect_btn_to_cmd()
     connect(ui->measure_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Length_CMD); });
     connect(ui->angle_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Angle_CMD); });
 
-    connect(ui->ellipse_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Ellipse_CMD); });
     connect(ui->text_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Text_CMD); });
     connect(ui->connect_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Connect_CMD); });
     connect(ui->close_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Close_CMD); });
@@ -876,6 +875,19 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
             break;
         case 2: // 3-Point
             _cmd_widget->work(CMDWidget::CMD::PCircle_CMD);
+            break;
+        default:
+            break;
+        }
+        break;
+    case ActionGroup::MenuType::EllipseMenu:
+        switch (index)
+        {
+        case 0: // Ellipse
+            _cmd_widget->work(CMDWidget::CMD::Ellipse_CMD);
+            break;
+        case 1: // Ellipse arc
+            _cmd_widget->work(CMDWidget::CMD::EllipseArc_CMD);
             break;
         default:
             break;
