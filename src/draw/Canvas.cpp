@@ -328,21 +328,21 @@ void Canvas::mousePressEvent(QMouseEvent *event)
     _mouse_pos_1 = event->position();
     double real_x1 = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
     double real_y1 = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
-    _mouse_press_pos.x = real_x1, _mouse_press_pos.y = real_y1;
 
     if (Geo::Point coord; event->button() == Qt::MouseButton::LeftButton
         && catch_cursor(real_x1, real_y1, coord, _catch_distance, false))
     {
         real_x1 = coord.x, real_y1 = coord.y;
-        _mouse_press_pos.x = real_x1, _mouse_press_pos.y = real_y1;
         coord = real_coord_to_view_coord(coord.x, coord.y);
         _mouse_pos_1.setX(coord.x);
         _mouse_pos_1.setY(coord.y);
         QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
     }
-    CanvasOperations::CanvasOperation::real_pos[0] = real_x1, CanvasOperations::CanvasOperation::real_pos[1] = real_y1;
-    CanvasOperations::CanvasOperation::press_pos[0] = real_x1, CanvasOperations::CanvasOperation::press_pos[1] = real_y1;
-
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        CanvasOperations::CanvasOperation::real_pos[0] = real_x1, CanvasOperations::CanvasOperation::real_pos[1] = real_y1;
+        CanvasOperations::CanvasOperation::press_pos[0] = real_x1, CanvasOperations::CanvasOperation::press_pos[1] = real_y1;
+    }
     if (CanvasOperations::CanvasOperation *op = CanvasOperations::CanvasOperation::operation()[
         CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_press(event))
     {
@@ -381,19 +381,19 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
 {
     std::swap(_mouse_pos_0, _mouse_pos_1);
     _mouse_pos_1 = event->position();
-    _mouse_release_pos.x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
-    _mouse_release_pos.y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
+    double x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
+    double y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
 
-    if (Geo::Point coord; catch_cursor(_mouse_release_pos.x, _mouse_release_pos.y, coord, _catch_distance, false))
+    if (Geo::Point coord; catch_cursor(x, y, coord, _catch_distance, false))
     {
-        _mouse_release_pos.x = coord.x, _mouse_release_pos.y = coord.y;
+        x = coord.x, y = coord.y;
         coord = real_coord_to_view_coord(coord.x, coord.y);
         _mouse_pos_1.setX(coord.x);
         _mouse_pos_1.setY(coord.y);
         QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
     }
-    CanvasOperations::CanvasOperation::real_pos[0] = _mouse_release_pos.x, CanvasOperations::CanvasOperation::real_pos[1] = _mouse_release_pos.y;
-    CanvasOperations::CanvasOperation::release_pos[0] = _mouse_release_pos.x, CanvasOperations::CanvasOperation::release_pos[1] = _mouse_release_pos.y;
+    CanvasOperations::CanvasOperation::real_pos[0] = x, CanvasOperations::CanvasOperation::real_pos[1] = y;
+    CanvasOperations::CanvasOperation::release_pos[0] = x, CanvasOperations::CanvasOperation::release_pos[1] = y;
     if (CanvasOperations::CanvasOperation *op = CanvasOperations::CanvasOperation::operation()[
         CanvasOperations::CanvasOperation::tool[0]]; op != nullptr && op->mouse_release(event))
     {
@@ -3451,7 +3451,8 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
 
     Geo::Point result[Canvas::catch_count]; // Vertex, Center, Foot, Tangency, Intersection
     double dis[Canvas::catch_count] = {DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX, DBL_MAX};
-
+    const Geo::Point press_pos(CanvasOperations::CanvasOperation::press_pos[0],
+        CanvasOperations::CanvasOperation::press_pos[1]);
     for (const Geo::Geometry *object : objects)
     {
         switch (object->type())
@@ -3477,8 +3478,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                         dis[1] = d;
                         result[1] = center;
                     }
-                    Geo::Point foot;
-                    if (_catch_types[2] && Geo::foot_point(polyline[i - 1], polyline[i], _mouse_press_pos, foot))
+                    if (Geo::Point foot; _catch_types[2] && Geo::foot_point(polyline[i - 1], polyline[i], press_pos, foot))
                     {
                         if (const double d = Geo::distance(pos, foot); d < dis[2])
                         {
@@ -3532,8 +3532,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                         dis[1] = d;
                         result[1] = center;
                     }
-                    Geo::Point foot;
-                    if (_catch_types[2] && Geo::foot_point(polygon[i - 1], polygon[i], _mouse_press_pos, foot))
+                    if (Geo::Point foot; _catch_types[2] && Geo::foot_point(polygon[i - 1], polygon[i], press_pos, foot))
                     {
                         if (const double d = Geo::distance(pos, foot); d < dis[2])
                         {
@@ -3579,7 +3578,18 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                         result[0].y = c->y - c->radius;
                     }
                 }
-                if (Geo::Point output0, output1; _catch_types[3] && Geo::tangency_point(_mouse_press_pos, *c, output0, output1))
+                if (Geo::Point output0(DBL_MAX, DBL_MAX), output1(DBL_MAX, DBL_MAX);
+                    _catch_types[2] && Geo::is_intersected(press_pos, *c, *c, output0, output1))
+                {
+                    if (const double d = Geo::distance(pos.x, pos.y, output0.x, output0.y); d < dis[2])
+                    {
+                        dis[2] = d;
+                        result[2].x = output0.x;
+                        result[2].y = output0.y;
+                    }
+                }
+                if (Geo::Point output0(DBL_MAX, DBL_MAX), output1(DBL_MAX, DBL_MAX);
+                    _catch_types[3] && Geo::tangency_point(press_pos, *c, output0, output1))
                 {
                     if (const double d = Geo::distance(pos.x, pos.y, output0.x, output0.y); d < dis[3])
                     {
@@ -3643,7 +3653,17 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                         }
                     }
                 }
-                if (Geo::Point output0, output1; _catch_types[3] && Geo::tangency_point(_mouse_press_pos, *e, output0, output1))
+                if (Geo::Point output(DBL_MAX, DBL_MAX); _catch_types[2] && Geo::foot_point(*e, press_pos, output))
+                {
+                    if (const double d = Geo::distance(pos.x, pos.y, output.x, output.y); d < dis[2])
+                    {
+                        dis[2] = d;
+                        result[2].x = output.x;
+                        result[2].y = output.y;
+                    }
+                }
+                if (Geo::Point output0(DBL_MAX, DBL_MAX), output1(DBL_MAX, DBL_MAX);
+                    _catch_types[3] && Geo::tangency_point(press_pos, *e, output0, output1))
                 {
                     if (const double d = Geo::distance(pos.x, pos.y, output0.x, output0.y); d < dis[3])
                     {
@@ -3667,6 +3687,34 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                 {
                     dis[0] = Geo::distance(pos, bspline.path_points.front());
                     result[0] = bspline.path_points.front();
+                }
+                if (_catch_types[2])
+                {
+                    if (std::vector<Geo::Point> points; Geo::foot_point(press_pos, bspline, points, nullptr))
+                    {
+                        for (const Geo::Point &point : points)
+                        {
+                            if (double dis2 = Geo::distance(pos, point); dis2 < dis[2])
+                            {
+                                dis[2] = dis2;
+                                result[2] = point;
+                            }
+                        }
+                    }
+                }
+                if (_catch_types[3])
+                {
+                    if (std::vector<Geo::Point> points; Geo::tangency_point(press_pos, bspline, points, nullptr))
+                    {
+                        for (const Geo::Point &point : points)
+                        {
+                            if (double dis3 = Geo::distance(pos, point); dis3 < dis[3])
+                            {
+                                dis[3] = dis3;
+                                result[3] = point;
+                            }
+                        }
+                    }
                 }
                 for (size_t i = 1, count = bspline.path_points.size(); i < count; ++i)
                 {
@@ -3693,6 +3741,34 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                     {
                         dis[0] = dis1;
                         result[0] = bezier.back();
+                    }
+                }
+                if (_catch_types[2])
+                {
+                    if (std::vector<Geo::Point> points; Geo::foot_point(press_pos, bezier, points, nullptr))
+                    {
+                        for (const Geo::Point &point : points)
+                        {
+                            if (double dis2 = Geo::distance(pos, point); dis2 < dis[2])
+                            {
+                                dis[2] = dis2;
+                                result[2] = point;
+                            }
+                        }
+                    }
+                }
+                if (_catch_types[3])
+                {
+                    if (std::vector<Geo::Point> points; Geo::tangency_point(press_pos, bezier, points, nullptr))
+                    {
+                        for (const Geo::Point &point : points)
+                        {
+                            if (double dis1 = Geo::distance(pos, point); dis1 < dis[3])
+                            {
+                                dis[3] = dis1;
+                                result[3] = point;
+                            }
+                        }
                     }
                 }
             }
@@ -3762,8 +3838,8 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                 dis[1] = d;
                 result[1] = center;
             }
-            Geo::Point foot;
-            if (_catch_types[2] && Geo::foot_point(_editer->point_cache()[i - 1], _editer->point_cache()[i], _mouse_press_pos, foot))
+            if (Geo::Point foot; _catch_types[2] && Geo::foot_point(_editer->point_cache()[i - 1],
+                _editer->point_cache()[i], press_pos, foot))
             {
                 if (const double d = Geo::distance(pos, foot); d < dis[2])
                 {

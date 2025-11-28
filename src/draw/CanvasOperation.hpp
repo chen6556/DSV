@@ -265,7 +265,7 @@ namespace CanvasOperations
     class Arc0Operation : public CanvasOperation
     {
     private:
-        double _parameters[6];
+        double _parameters[6]; // x0, y0, x1, y1, x2, y2
         int _index = 0;
         ParamType _param_type = ParamType::LengthAngle;
 
@@ -287,7 +287,7 @@ namespace CanvasOperations
     class Arc1Operation : public CanvasOperation
     {
     private:
-        double _parameters[5];
+        double _parameters[5]; // startx, starty, centerx, centery, angle
         int _index = 0;
         ParamType _param_type = ParamType::LengthAngle;
 
@@ -309,7 +309,7 @@ namespace CanvasOperations
     class Arc2Operation : public CanvasOperation
     {
     private:
-        double _parameters[5];
+        double _parameters[5]; // startx, starty, endx, endy, angle
         int _index = 0;
         ParamType _param_type = ParamType::LengthAngle;
 
@@ -331,7 +331,7 @@ namespace CanvasOperations
     class Arc3Operation : public CanvasOperation
     {
     private:
-        double _parameters[5];
+        double _parameters[5]; // startx, starty, endx, endy, length
         int _index = 0;
         ParamType _param_type = ParamType::LengthAngle;
 

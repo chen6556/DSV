@@ -645,6 +645,10 @@ namespace Geo
         AABBRect bounding_rect() const override;
 
         Polygon mini_bounding_rect() const override;
+
+        Point tangent(const size_t index, const double t) const;
+
+        Point vertical(const size_t index, const double t) const;
     };
 
     class Ellipse : public Geometry
@@ -829,6 +833,18 @@ namespace Geo
         const Point &back() const;
 
         const std::vector<double> &knots() const;
+
+        virtual Point at(const double t) const = 0;
+
+        virtual Point tangent(const double t) const = 0;
+
+        virtual Point vertical(const double t) const = 0;
+
+        static void rbasis(const int order, const double t, const size_t npts,
+            const std::vector<double> &x, std::vector<double> &output);
+
+        static void rbspline(const int order, const size_t npts, const size_t p1,
+            const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p);
     };
 
     class QuadBSpline : public BSpline
@@ -850,15 +866,17 @@ namespace Geo
 
         static void knot(const size_t num, std::vector<double> &output);
 
-        static void rbasis(const double t, const size_t npts, const std::vector<double> &x, std::vector<double> &output);
-
-        static void rbspline(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p);
-
         void update_shape(const double step, const double down_sampling_value) override;
 
         QuadBSpline *clone() const override;
 
         void insert(const double t) override;
+
+        Point at(const double t) const override;
+
+        Point tangent(const double t) const override;
+
+        Point vertical(const double t) const override;
     };
 
     class CubicBSpline : public BSpline
@@ -874,10 +892,6 @@ namespace Geo
 
         void update_control_points() override;
 
-        static void rbasis(const double t, const size_t npts, const std::vector<double> &x, std::vector<double> &output);
-
-        static void rbspline(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p);
-
         static void update_path_points(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p);
 
         void update_shape(const double step, const double down_sampling_value) override;
@@ -885,6 +899,12 @@ namespace Geo
         CubicBSpline *clone() const override;
 
         void insert(const double t) override;
+
+        Point at(const double t) const override;
+
+        Point tangent(const double t) const override;
+
+        Point vertical(const double t) const override;
     };
 
     class Arc : public Geometry
@@ -948,5 +968,7 @@ namespace Geo
         const Polyline &shape() const;
 
         bool is_cw() const;
+
+        double angle() const;
     };
 };

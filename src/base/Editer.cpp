@@ -32,18 +32,26 @@ void Editer::init()
     GlobalSetting::setting().graph = _graph;
     if (_graph != nullptr)
     {
+        std::vector<Geo::Ellipse *> ellipses;
         for (ContainerGroup &group : _graph->container_groups())
         {
             for (Geo::Geometry *geo : group)
             {
                 geo->is_selected = false;
+                if (geo->type() == Geo::Type::ELLIPSE)
+                {
+                    ellipses.push_back(static_cast<Geo::Ellipse *>(geo));
+                }
             }
+        }
+        for (Geo::Ellipse *ellipse : ellipses)
+        {
+            _graph->append(new Geo::Bezier(Geo::ellipse_to_bezier(*ellipse)));
         }
         if (_graph->container_groups().empty())
         {
             _graph->append_group();
         }
-
         _backup.clear();
         _backup.set_graph(_graph);
     }
@@ -3707,15 +3715,7 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
         while (anchor_t <= knots[nplusc - 1])
         {
             std::vector<double> nbasis;
-            if (is_cubic)
-            {
-                Geo::CubicBSpline::rbasis(anchor_t, npts, knots, nbasis);
-            }
-            else
-            {
-                Geo::QuadBSpline::rbasis(anchor_t, npts, knots, nbasis);
-            }
-
+            Geo::BSpline::rbasis(is_cubic ? 3 : 2, anchor_t, npts, knots, nbasis);
             Geo::Point coord;
             for (size_t i = 0; i < npts; ++i)
             {
@@ -3746,14 +3746,7 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
                 {
                     x = x < upper ? x : upper;
                     std::vector<double> nbasis;
-                    if (is_cubic)
-                    {
-                        Geo::CubicBSpline::rbasis(x, npts, knots, nbasis);
-                    }
-                    else
-                    {
-                        Geo::QuadBSpline::rbasis(x, npts, knots, nbasis);
-                    }
+                    Geo::BSpline::rbasis(is_cubic ? 3 : 2, x, npts, knots, nbasis);
                     Geo::Point coord;
                     for (size_t i = 0; i < npts; ++i)
                     {
@@ -3785,14 +3778,7 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
                 {
                     x = x < upper ? x : upper;
                     std::vector<double> nbasis;
-                    if (is_cubic)
-                    {
-                        Geo::CubicBSpline::rbasis(x, npts, knots, nbasis);
-                    }
-                    else
-                    {
-                        Geo::QuadBSpline::rbasis(x, npts, knots, nbasis);
-                    }
+                    Geo::BSpline::rbasis(is_cubic ? 3 : 2, x, npts, knots, nbasis);
                     Geo::Point coord;
                     for (size_t i = 0; i < npts; ++i)
                     {
@@ -3864,14 +3850,7 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
             }
 
             std::vector<double> nbasis;
-            if (is_cubic)
-            {
-                Geo::CubicBSpline::rbasis(v, npts, knots, nbasis);
-            }
-            else
-            {
-                Geo::QuadBSpline::rbasis(v, npts, knots, nbasis);
-            }
+            Geo::BSpline::rbasis(is_cubic ? 3 : 2, v, npts, knots, nbasis);
             Geo::Point coord;
             for (size_t i = 0; i < npts; ++i)
             {
