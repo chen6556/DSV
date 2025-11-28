@@ -968,5 +968,7 @@ namespace Geo
         const Polyline &shape() const;
 
         bool is_cw() const;
+
+        double angle() const;
     };
 };

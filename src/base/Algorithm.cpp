@@ -8783,6 +8783,54 @@ Geo::Polyline Geo::arc_to_polyline(const Geo::Arc &arc, const double down_sampli
     return arc_to_polyline(center, arc.radius, angle0, angle1, arc.is_cw(), down_sampling_value);
 }
 
+Geo::Bezier Geo::arc_to_bezier(const Geo::Arc &arc)
+{
+    std::vector<Geo::Point> points;
+    points.emplace_back(arc.control_points[0]);
+    if (const double angle = std::abs(arc.angle()); angle <= Geo::PI / 2)
+    {
+        const double k = 4.0 / 3.0 * (1 - std::cos(angle / 2)) / std::sin(angle / 2) * arc.radius;
+        if (arc.is_cw())
+        {
+            Geo::Vector vec0(arc.control_points[0].x - arc.x, arc.control_points[0].y - arc.y);
+            Geo::Vector vec1(arc.control_points[2].x - arc.x, arc.control_points[2].y - arc.y);
+            vec0.rotate(0, 0, -Geo::PI / 2), vec1.rotate(0, 0, Geo::PI / 2);
+            points.emplace_back(arc.control_points[0] + vec0.normalize() * k);
+            points.emplace_back(arc.control_points[2] + vec1.normalize() * k);
+        }
+        else
+        {
+            Geo::Vector vec0(arc.control_points[0].x - arc.x, arc.control_points[0].y - arc.y);
+            Geo::Vector vec1(arc.control_points[2].x - arc.x, arc.control_points[2].y - arc.y);
+            vec0.rotate(0, 0, Geo::PI / 2), vec1.rotate(0, 0, -Geo::PI / 2);
+            points.emplace_back(arc.control_points[0] + vec0.normalize() * k);
+            points.emplace_back(arc.control_points[2] + vec1.normalize() * k);
+        }
+        points.emplace_back(arc.control_points[2]);
+    }
+    else
+    {
+        const int count = std::ceil(angle / (Geo::PI / 2));
+        const double step = angle / count;
+        const double k = 4.0 / 3.0 * (1 - std::cos(step / 2)) / std::sin(step / 2) * arc.radius;
+        Geo::Point point = arc.control_points[0];
+        Geo::Vector vec_start(point.x - arc.x, point.y - arc.y);
+        for (int i = 0; i < count; ++i)
+        {
+            Geo::Vector vec0(point.x - arc.x, point.y - arc.y);
+            vec0.rotate(0, 0, arc.is_cw() ? -Geo::PI / 2 : Geo::PI / 2);
+            points.emplace_back(point + vec0.normalize() * k);
+            vec_start.rotate(0, 0, arc.is_cw() ? -step : step);
+            point.x = arc.x + vec_start.x, point.y = arc.y + vec_start.y;
+            Geo::Vector vec1(point.x - arc.x, point.y - arc.y);
+            vec1.rotate(0, 0, arc.is_cw() ? Geo::PI / 2 : -Geo::PI / 2);
+            points.emplace_back(point + vec1.normalize() * k);
+            points.emplace_back(point);
+        }
+    }
+    return Geo::Bezier(points.begin(), points.end(), 3, false);
+}
+
 Geo::Polygon Geo::circle_to_polygon(const Circle &circle, const double down_sampling_value)
 {
     return Geo::circle_to_polygon(circle.x, circle.y, circle.radius, down_sampling_value);

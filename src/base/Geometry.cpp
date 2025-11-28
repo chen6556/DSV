@@ -4332,3 +4332,23 @@ bool Arc::is_cw() const
     return (control_points[1].x - control_points[0].x) * (control_points[2].y - control_points[1].y)
         < (control_points[1].y - control_points[0].y) * (control_points[2].x - control_points[1].x);
 }
+
+double Arc::angle() const
+{
+    double angle = Geo::angle(control_points[0], Geo::Point(x, y), control_points[2]);
+    if (is_cw())
+    {
+        if (angle > 0)
+        {
+            angle -= Geo::PI * 2;
+        }
+    }
+    else
+    {
+        if (angle < 0)
+        {
+            angle += Geo::PI * 2;
+        }
+    }
+    return angle;
+}

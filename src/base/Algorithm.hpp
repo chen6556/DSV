@@ -402,6 +402,8 @@ namespace Geo
 
     Polyline arc_to_polyline(const Arc &arc, const double down_sampling_value = 0.02);
 
+    Bezier arc_to_bezier(const Arc &arc);
+
     Polygon circle_to_polygon(const double x, const double y, const double r, const double down_sampling_value = 0.02);
 
     Polygon circle_to_polygon(const Circle &circle, const double down_sampling_value = 0.02);
