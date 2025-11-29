@@ -8937,15 +8937,10 @@ Geo::Polyline Geo::ellipse_to_polyline(const Ellipse &ellipse, const double down
 Geo::Bezier Geo::ellipse_to_bezier(const Geo::Ellipse &ellipse)
 {
     std::vector<Geo::Point> points;
-    const Geo::Point center = ellipse.center();
-    // if (ellipse.is_arc())
-    // {
-
-    // }
-    // else
     {
         const double k0 = 4 * (-1 + std::sqrt(2)) / 3 * ellipse.lengtha();
         const double k1 = 4 * (-1 + std::sqrt(2)) / 3 * ellipse.lengthb();
+        const Geo::Point center = ellipse.center();
         const Geo::Point point0(center.x + ellipse.lengtha(), center.y), point1(center.x, center.y + ellipse.lengthb()),
             point2(center.x - ellipse.lengtha(), center.y), point3(center.x, center.y - ellipse.lengthb());
         // 第一象限
@@ -8965,12 +8960,44 @@ Geo::Bezier Geo::ellipse_to_bezier(const Geo::Ellipse &ellipse)
         points.emplace_back(point3.x + k0, point3.y);
         points.emplace_back(point0.x, point0.y - k1);
         points.emplace_back(point0);
-    }
-    if (const double angle = ellipse.angle(); angle != 0)
-    {
-        for (Geo::Point &point : points)
+
+        if (const double angle = ellipse.angle(); angle != 0)
         {
-            point.rotate(center.x, center.y, angle);
+            for (Geo::Point &point : points)
+            {
+                point.rotate(center.x, center.y, angle);
+            }
+        }
+    }
+    if (ellipse.is_arc())
+    {
+        Geo::Bezier bezier(points.begin(), points.end(), 3, false);
+        if (std::vector<Geo::Point> output; ellipse.arc_angle0() < ellipse.arc_angle1())
+        {
+            if (Geo::Bezier b0(3), b1(3); Geo::closest_point(bezier, ellipse.arc_point0(), output)
+                && Geo::split(bezier, output.front(), b0, b1))
+            {
+                output.clear();
+                if (Geo::Bezier b2(3), b3(3); Geo::closest_point(b1, ellipse.arc_point1(), output)
+                    && Geo::split(b1, output.front(), b2, b3))
+                {
+                    points.assign(b2.begin(), b2.end());
+                }
+            }
+        }
+        else
+        {
+            if (Geo::Bezier b0(3), b1(3); Geo::closest_point(bezier, ellipse.arc_point0(), output)
+                && Geo::split(bezier, output.front(), b0, b1))
+            {
+                output.clear();
+                if (Geo::Bezier b2(3), b3(3); Geo::closest_point(b0, ellipse.arc_point1(), output)
+                    && Geo::split(b0, output.front(), b2, b3))
+                {
+                    points.assign(b1.begin(), b1.end());
+                    points.insert(points.end(), b2.begin(), b2.end());
+                }
+            }
         }
     }
     return Geo::Bezier(points.begin(), points.end(), 3, false);
