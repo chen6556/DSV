@@ -101,6 +101,9 @@ QCheckBox::indicator:unchecked
     <property name="leftMargin">
      <number>0</number>
     </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
     <item>
      <widget class="QStackedWidget" name="tool_widget">
       <property name="maximumSize">
@@ -266,7 +269,7 @@ QScrollArea
              <x>0</x>
              <y>0</y>
              <width>120</width>
-             <height>632</height>
+             <height>641</height>
             </rect>
            </property>
            <property name="maximumSize">
@@ -1777,17 +1780,40 @@ QScrollArea
      </widget>
     </item>
     <item>
-     <widget class="Canvas" name="canvas">
-      <property name="cursor">
-       <cursorShape>CrossCursor</cursorShape>
+     <layout class="QVBoxLayout" name="verticalLayout_5">
+      <property name="spacing">
+       <number>2</number>
       </property>
-      <property name="mouseTracking">
-       <bool>true</bool>
-      </property>
-      <property name="focusPolicy">
-       <enum>Qt::FocusPolicy::ClickFocus</enum>
-      </property>
-     </widget>
+      <item>
+       <widget class="Canvas" name="canvas">
+        <property name="cursor">
+         <cursorShape>CrossCursor</cursorShape>
+        </property>
+        <property name="mouseTracking">
+         <bool>true</bool>
+        </property>
+        <property name="focusPolicy">
+         <enum>Qt::FocusPolicy::ClickFocus</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="CMDWidget" name="cmd_widget" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>24</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </item>
    </layout>
   </widget>
@@ -1844,6 +1870,7 @@ QScrollArea
      <string>Settings</string>
     </property>
     <addaction name="show_origin"/>
+    <addaction name="show_cmdline"/>
     <addaction name="auto_layering"/>
     <addaction name="auto_combinate"/>
     <addaction name="auto_connect"/>
@@ -2079,12 +2106,32 @@ QComboBox QAbstractItemView::item:selected
     <string>Auto combinate</string>
    </property>
   </action>
+  <action name="show_cmdline">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Show cmdline</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>
    <class>Canvas</class>
    <extends>QOpenGLWidget</extends>
    <header>draw/Canvas.hpp</header>
+  </customwidget>
+  <customwidget>
+   <class>CMDWidget</class>
+   <extends>QWidget</extends>
+   <header>ui/CMDWidget.hpp</header>
+   <container>1</container>
+   <slots>
+    <signal>cmd_changed(CMDWidget::CMD)</signal>
+   </slots>
   </customwidget>
  </customwidgets>
  <resources>
@@ -2267,6 +2314,22 @@ QComboBox QAbstractItemView::item:selected
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>cmd_widget</sender>
+   <signal>cmd_changed(CMDWidget::CMD)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>refresh_cmd(CMDWidget::CMD)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>558</x>
+     <y>686</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>360</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>open_file()</slot>
@@ -2279,5 +2342,6 @@ QComboBox QAbstractItemView::item:selected
   <slot>show_data_panel()</slot>
   <slot>append_file()</slot>
   <slot>set_catch(QAction*)</slot>
+  <slot>refresh_cmd(CMDWidget::CMD)</slot>
  </slots>
 </ui>

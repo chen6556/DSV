@@ -9,7 +9,6 @@
 #include "base/Editer.hpp"
 #include "ui/LayersManager.hpp"
 #include "ui/Setting.hpp"
-#include "ui/CMDWidget.hpp"
 #include "ui/DataPanel.hpp"
 #include "ui/ActionGroup.hpp"
 
@@ -29,7 +28,6 @@ private:
     std::vector<Qt::Key> _keys;
     QTimer _clock;
     QLabel *_info_labels[3] = {nullptr, nullptr, nullptr};
-    CMDWidget *_cmd_widget = nullptr;
     DataPanel *_panel = nullptr;
 
     QComboBox *_layers_cbx = nullptr;

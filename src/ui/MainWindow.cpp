@@ -37,7 +37,6 @@ MainWindow::~MainWindow()
     delete _layers_cbx;
     delete _layers_btn;
     delete _layers_manager;
-    delete _cmd_widget;
     delete _setting;
     delete _panel;
 }
@@ -51,10 +50,7 @@ void MainWindow::init()
     _editer.load_graph(new Graph());
     ui->canvas->bind_editer(&_editer);
 
-    _cmd_widget = new CMDWidget(this);
-    _cmd_widget->show();
-    ui->canvas->installEventFilter(_cmd_widget);
-    connect(_cmd_widget, &CMDWidget::cmd_changed, this, &MainWindow::refresh_cmd);
+    ui->canvas->installEventFilter(ui->cmd_widget);
 
     _clock.start(5000);
     connect_btn_to_cmd();
@@ -63,6 +59,7 @@ void MainWindow::init()
     connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::setting().auto_aligning = ui->auto_aligning->isChecked(); });
     connect(ui->actionadvanced, &QAction::triggered, _setting, &Setting::exec);
     connect(ui->show_origin, &QAction::triggered, [this]() { ui->show_origin->isChecked() ? ui->canvas->show_origin() : ui->canvas->hide_origin(); });
+    connect(ui->show_cmdline, &QAction::triggered, [this]() { ui->show_cmdline->isChecked() ? ui->cmd_widget->show() : ui->cmd_widget->hide(); });
 
     connect(_setting, &Setting::accepted, this, &MainWindow::refresh_settings);
 
@@ -106,32 +103,32 @@ void MainWindow::init()
 
 void MainWindow::connect_btn_to_cmd()
 {
-    connect(ui->measure_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Length_CMD); });
-    connect(ui->angle_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Angle_CMD); });
+    connect(ui->measure_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Length_CMD); });
+    connect(ui->angle_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Angle_CMD); });
 
-    connect(ui->text_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Text_CMD); });
-    connect(ui->connect_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Connect_CMD); });
-    connect(ui->close_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Close_CMD); });
-    connect(ui->combinate_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Combinate_CMD); });
-    connect(ui->detach_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Detach_CMD); });
+    connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Text_CMD); });
+    connect(ui->connect_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Connect_CMD); });
+    connect(ui->close_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Close_CMD); });
+    connect(ui->combinate_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Combinate_CMD); });
+    connect(ui->detach_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Detach_CMD); });
 
-    connect(ui->trim_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Trim_CMD); });
-    connect(ui->extend_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Extend_CMD); });
-    connect(ui->split_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Split_CMD); });
-    connect(ui->mirror_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Mirror_CMD); });
-    connect(ui->flipx_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::FlipX_CMD); });
-    connect(ui->flipy_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::FlipY_CMD); });
-    connect(ui->rotate_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Rotate_CMD); });
-    connect(ui->scale_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Scale_CMD); });
-    connect(ui->offset_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Offset_CMD); });
+    connect(ui->trim_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Trim_CMD); });
+    connect(ui->extend_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Extend_CMD); });
+    connect(ui->split_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Split_CMD); });
+    connect(ui->mirror_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Mirror_CMD); });
+    connect(ui->flipx_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::FlipX_CMD); });
+    connect(ui->flipy_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::FlipY_CMD); });
+    connect(ui->rotate_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Rotate_CMD); });
+    connect(ui->scale_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Scale_CMD); });
+    connect(ui->offset_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Offset_CMD); });
 
-    connect(ui->intersection_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Intersection_CMD); });
-    connect(ui->union_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Union_CMD); });
-    connect(ui->xor_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::XOR_CMD); });
-    connect(ui->difference_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::Difference_CMD); });
+    connect(ui->intersection_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Intersection_CMD); });
+    connect(ui->union_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Union_CMD); });
+    connect(ui->xor_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::XOR_CMD); });
+    connect(ui->difference_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Difference_CMD); });
 
-    connect(ui->line_array_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::LineArray_CMD); });
-    connect(ui->ring_array_btn, &QPushButton::clicked, [this]() { _cmd_widget->work(CMDWidget::CMD::RingArray_CMD); });
+    connect(ui->line_array_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::LineArray_CMD); });
+    connect(ui->ring_array_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::RingArray_CMD); });
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -196,10 +193,10 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         ui->canvas->cancel_painting();
         _editer.reset_selected_mark();
         ui->canvas->refresh_selected_ibo();
-        _cmd_widget->clear();
+        ui->cmd_widget->clear();
         break;
     case Qt::Key_Space:
-        _cmd_widget->work_last_cmd();
+        ui->cmd_widget->work_last_cmd();
         break;
     case Qt::Key_Delete:
     case Qt::Key_Backspace:
@@ -283,16 +280,6 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             ui->canvas->update();
         }
         break;
-    case Qt::Key::Key_AsciiTilde:
-        if (_cmd_widget->isVisible())
-        {
-            _cmd_widget->hide();
-        }
-        else
-        {
-            _cmd_widget->show();
-        }
-        break;
     default:
         break;
     }
@@ -300,7 +287,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     if (event->modifiers() != Qt::ControlModifier &&
         0x41 <= event->key() && event->key() <= 0x5A)
     {
-        _cmd_widget->activate(event->key());
+        ui->cmd_widget->activate(event->key());
     }
 
     QMainWindow::keyPressEvent(event);
@@ -331,8 +318,8 @@ void MainWindow::dropEvent(QDropEvent *event)
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     QMainWindow::resizeEvent(event);
-    _cmd_widget->move(_cmd_widget->mapToParent(QPoint((width() - _cmd_widget->width()) / 2,
-        height() - 33 - _cmd_widget->height()) - _cmd_widget->pos()));
+    ui->cmd_widget->move(ui->cmd_widget->mapToParent(QPoint((width() - ui->cmd_widget->width()) / 2,
+        height() - 33 - ui->cmd_widget->height()) - ui->cmd_widget->pos()));
 }
 
 
@@ -575,15 +562,10 @@ void MainWindow::load_settings()
     ui->auto_connect->setChecked(GlobalSetting::setting().auto_connect);
     ui->auto_aligning->setChecked(GlobalSetting::setting().auto_aligning);
     ui->remember_file_type->setChecked(GlobalSetting::setting().remember_file_type);
+    ui->show_cmdline->setChecked(GlobalSetting::setting().show_cmdline);
+    ui->show_cmdline->isChecked() ? ui->cmd_widget->show() : ui->cmd_widget->hide();
     ui->show_origin->setChecked(GlobalSetting::setting().show_origin);
-    if (ui->show_origin->isChecked())
-    {
-        ui->canvas->show_origin();
-    }
-    else
-    {
-        ui->canvas->hide_origin();
-    }
+    ui->show_origin->isChecked() ? ui->canvas->show_origin() : ui->canvas->hide_origin();
     if (ui->remember_file_type->isChecked())
     {
        _file_type = GlobalSetting::setting().file_type;
@@ -610,6 +592,7 @@ void MainWindow::save_settings()
     GlobalSetting::setting().auto_connect = ui->auto_connect->isChecked();
     GlobalSetting::setting().auto_aligning = ui->auto_aligning->isChecked();
     GlobalSetting::setting().remember_file_type = ui->remember_file_type->isChecked();
+    GlobalSetting::setting().show_cmdline = ui->show_cmdline->isChecked();
     GlobalSetting::setting().show_origin = ui->show_origin->isChecked();
     if (ui->remember_file_type->isChecked())
     {
@@ -830,16 +813,16 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
         switch (index)
         {
         case 0: // polyline
-            _cmd_widget->work(CMDWidget::CMD::Polyline_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::Polyline_CMD);
             break;
         case 1: // rectangle
-            _cmd_widget->work(CMDWidget::CMD::Rectangle_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::Rectangle_CMD);
             break;
         case 2: // circumscribed polygon
-            _cmd_widget->work(CMDWidget::CMD::CPolygon_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::CPolygon_CMD);
             break;
         case 3: // inscribed polygon
-            _cmd_widget->work(CMDWidget::CMD::IPolygon_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::IPolygon_CMD);
             break;
         default:
             break;
@@ -849,16 +832,16 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
         switch (index)
         {
         case 0: // 3-Point Arc
-            _cmd_widget->work(CMDWidget::CMD::PArc_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::PArc_CMD);
             break;
         case 1: // Start-Center-Angle Arc
-            _cmd_widget->work(CMDWidget::CMD::SCAArc_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::SCAArc_CMD);
             break;
         case 2: // Start-End-Angle Arc
-            _cmd_widget->work(CMDWidget::CMD::SEAArc_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::SEAArc_CMD);
             break;
         case 3: // Start-End-Radius Arc
-            _cmd_widget->work(CMDWidget::CMD::SERArc_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::SERArc_CMD);
             break;
         default:
             break;
@@ -868,13 +851,13 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
         switch (index)
         {
         case 0: // Center-Radius
-            _cmd_widget->work(CMDWidget::CMD::CCircle_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::CCircle_CMD);
             break;
         case 1: // 2-Point
-            _cmd_widget->work(CMDWidget::CMD::DCircle_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::DCircle_CMD);
             break;
         case 2: // 3-Point
-            _cmd_widget->work(CMDWidget::CMD::PCircle_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::PCircle_CMD);
             break;
         default:
             break;
@@ -884,10 +867,10 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
         switch (index)
         {
         case 0: // Ellipse
-            _cmd_widget->work(CMDWidget::CMD::Ellipse_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::Ellipse_CMD);
             break;
         case 1: // Ellipse arc
-            _cmd_widget->work(CMDWidget::CMD::EllipseArc_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::EllipseArc_CMD);
             break;
         default:
             break;
@@ -897,10 +880,10 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
         switch (index)
         {
         case 0: // BSpline
-            _cmd_widget->work(CMDWidget::CMD::BSpline_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::BSpline_CMD);
             break;
         case 1: // Bezier
-            _cmd_widget->work(CMDWidget::CMD::Bezier_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::Bezier_CMD);
             break;
         default:
             break;
@@ -910,10 +893,10 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
         switch (index)
         {
         case 0: // fillet
-            _cmd_widget->work(CMDWidget::CMD::Fillet_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::Fillet_CMD);
             break;
         case 1: // chamfer
-            _cmd_widget->work(CMDWidget::CMD::Chamfer_CMD);
+            ui->cmd_widget->work(CMDWidget::CMD::Chamfer_CMD);
             break;
         default:
             break;

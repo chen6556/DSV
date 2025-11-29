@@ -30,8 +30,6 @@ public:
 private:
     Ui::CMDWidget *ui = nullptr;
 
-    QPoint _last_pos;
-    QWidget *_parent = nullptr;
     QStringList _cmd_list;
     QCompleter *_completer = nullptr;
     std::unordered_map<QString, CMD> _cmd_dict;
@@ -52,10 +50,6 @@ private slots:
     void refresh_tool(const CanvasOperations::Tool tool);
 
 protected:
-    void mousePressEvent(QMouseEvent *event);
-
-    void mouseMoveEvent(QMouseEvent *event);
-
     bool eventFilter(QObject *target, QEvent *event);
 
 public:

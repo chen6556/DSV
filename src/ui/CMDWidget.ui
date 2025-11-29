@@ -6,21 +6,26 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>385</width>
-    <height>42</height>
+    <width>562</width>
+    <height>24</height>
    </rect>
   </property>
-  <property name="minimumSize">
-   <size>
-    <width>385</width>
-    <height>42</height>
-   </size>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="maximumSize">
    <size>
     <width>16777215</width>
-    <height>60</height>
+    <height>24</height>
    </size>
+  </property>
+  <property name="font">
+   <font>
+    <pointsize>10</pointsize>
+   </font>
   </property>
   <property name="focusPolicy">
    <enum>Qt::FocusPolicy::StrongFocus</enum>
@@ -32,8 +37,9 @@
    <string>Command</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: transparent;
-color:rgb(230, 230, 230);</string>
+   <string notr="true">background-color: rgb(120, 120, 121);
+color:rgb(230, 230, 230);
+padding-left: 2px;</string>
   </property>
   <property name="locale">
    <locale language="English" country="UnitedStates"/>
@@ -42,23 +48,47 @@ color:rgb(230, 230, 230);</string>
    <property name="spacing">
     <number>0</number>
    </property>
+   <property name="leftMargin">
+    <number>0</number>
+   </property>
    <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
     <number>0</number>
    </property>
    <property name="bottomMargin">
     <number>0</number>
    </property>
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <property name="spacing">
+      <number>0</number>
+     </property>
      <item>
       <widget class="QLabel" name="cmd_label">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>120</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>24</height>
+        </size>
+       </property>
        <property name="font">
         <font>
          <pointsize>10</pointsize>
         </font>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">margin-right:10px;</string>
        </property>
        <property name="text">
         <string/>
@@ -67,38 +97,22 @@ color:rgb(230, 230, 230);</string>
      </item>
      <item>
       <widget class="QLabel" name="parameter_label">
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-        </font>
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
        </property>
-       <property name="text">
-        <string/>
+       <property name="minimumSize">
+        <size>
+         <width>120</width>
+         <height>0</height>
+        </size>
        </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="absolute_label">
-       <property name="font">
-        <font>
-         <pointsize>10</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string/>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <widget class="QLabel" name="label">
        <property name="maximumSize">
         <size>
-         <width>38</width>
-         <height>22</height>
+         <width>16777215</width>
+         <height>24</height>
         </size>
        </property>
        <property name="font">
@@ -106,20 +120,49 @@ color:rgb(230, 230, 230);</string>
          <pointsize>10</pointsize>
         </font>
        </property>
-       <property name="styleSheet">
-        <string notr="true">background-color: rgb(90, 90, 91);
-color:rgb(230, 230, 230);</string>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
        </property>
        <property name="text">
-        <string> CMD </string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignmentFlag::AlignCenter</set>
+        <string>CMD:</string>
        </property>
       </widget>
      </item>
      <item>
       <widget class="QLineEdit" name="cmd">
+       <property name="minimumSize">
+        <size>
+         <width>120</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>24</height>
+        </size>
+       </property>
        <property name="font">
         <font>
          <pointsize>12</pointsize>
@@ -131,12 +174,38 @@ color:rgb(230, 230, 230);</string>
        <property name="contextMenuPolicy">
         <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
        </property>
-       <property name="styleSheet">
-        <string notr="true">background-color: rgb(120, 120, 121);
-color:rgb(230, 230, 230);</string>
-       </property>
        <property name="frame">
         <bool>false</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="absolute_label">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="minimumSize">
+        <size>
+         <width>60</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>24</height>
+        </size>
+       </property>
+       <property name="font">
+        <font>
+         <pointsize>10</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string/>
        </property>
       </widget>
      </item>

@@ -34,6 +34,7 @@ public:
     bool multiple_select = false;
     bool remember_file_type = true;
     bool show_origin = true;
+    bool show_cmdline = true;
     bool show_points = false;
     bool show_text = true;
 
