@@ -6440,34 +6440,22 @@ bool Geo::foot_point(const Point &start, const Point &end, const Point &point, P
     }
 }
 
-bool Geo::fool_point(const Circle &circle, const Point &point, Point &output)
+bool Geo::foot_point(const Circle &circle, const Point &point, Point &output0, Point &output1)
 {
-    if (Geo::distance(point, circle) <= circle.radius)
+    if (point == circle || Geo::distance(point, circle) == circle.radius)
     {
         return false;
     }
-    Geo::Point temp;
-    Geo::is_intersected(point, circle, circle, output, temp);
-    return true;
+    return Geo::is_intersected(point, circle, circle, output0, output1, true);
 }
 
-bool Geo::foot_point(const Ellipse &ellipse, const Point &point, Point &output)
+int Geo::foot_point(const Ellipse &ellipse, const Point &point, std::vector<Point> &output)
 {
-    if (Geo::is_inside(point, ellipse, true))
+    if (Geo::distance(ellipse.c0(), point) + Geo::distance(ellipse.c1(), point) == std::max(ellipse.lengtha(), ellipse.lengthb()) * 2)
     {
-        return false;
+        return 0;
     }
     const Geo::Point center = ellipse.center();
-    if (std::abs(std::abs(Geo::angle(point, center, ellipse.a0())) - std::abs(Geo::angle(point, center, ellipse.a1())) - Geo::PI) < Geo::EPSILON)
-    {
-        output = Geo::distance(point, ellipse.a0()) < Geo::distance(point, ellipse.a1()) ? ellipse.a0() : ellipse.a1();
-        return true;
-    }
-    else if (std::abs(std::abs(Geo::angle(point, center, ellipse.b0())) - std::abs(Geo::angle(point, center, ellipse.b1())) - Geo::PI) < Geo::EPSILON)
-    {
-        output = Geo::distance(point, ellipse.b0()) < Geo::distance(point, ellipse.b1()) ? ellipse.b0() : ellipse.b1();
-        return true;
-    }
     const double angle = Geo::angle(ellipse.a0(), ellipse.a1());
     Geo::Point coord = Geo::to_coord(point, center.x, center.y, angle);
     const double a = Geo::distance(ellipse.a0(), ellipse.a1()) / 2;
@@ -6478,12 +6466,19 @@ bool Geo::foot_point(const Ellipse &ellipse, const Point &point, Point &output)
     parameter.a = b * coord.y;
     parameter.b = -a * coord.x;
     parameter.c = aa - bb;
-    double t = Geo::rad_to_2PI(Geo::angle(Geo::Point(0, 0), coord));
-    t = Geo::rad_to_2PI(Math::solve_ellipse_foot(parameter, t));
-    coord = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
-    output.x = a * std::cos(t), output.y = b * std::sin(t);
-    output = Geo::to_coord(output, coord.x, coord.y, -angle);
-    return true;
+    std::vector<double> ts;
+    for (double t = 0; t < Geo::PI * 2; t += 0.2)
+    {
+        if (const double t2 = Geo::rad_to_2PI(Math::solve_ellipse_foot(parameter, t)); std::find_if(ts.begin(),
+            ts.end(), [=](const double value) { return std::abs(value - t2) < Geo::EPSILON; }) == ts.end())
+        {
+            coord = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+            Geo::Point result(a * std::cos(t2), b * std::sin(t2));
+            output.emplace_back(Geo::to_coord(result, coord.x, coord.y, -angle));
+            ts.push_back(t2);
+        }
+    }
+    return ts.size();
 }
 
 int Geo::foot_point(const Point &point, const Bezier &bezier, std::vector<Point> &output,

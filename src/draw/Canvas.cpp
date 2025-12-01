@@ -3579,13 +3579,19 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                     }
                 }
                 if (Geo::Point output0(DBL_MAX, DBL_MAX), output1(DBL_MAX, DBL_MAX);
-                    _catch_types[2] && Geo::is_intersected(press_pos, *c, *c, output0, output1))
+                    _catch_types[2] && Geo::foot_point(*c, press_pos, output0, output1))
                 {
                     if (const double d = Geo::distance(pos.x, pos.y, output0.x, output0.y); d < dis[2])
                     {
                         dis[2] = d;
                         result[2].x = output0.x;
                         result[2].y = output0.y;
+                    }
+                    if (const double d = Geo::distance(pos.x, pos.y, output1.x, output1.y); d < dis[2])
+                    {
+                        dis[2] = d;
+                        result[2].x = output1.x;
+                        result[2].y = output1.y;
                     }
                 }
                 if (Geo::Point output0(DBL_MAX, DBL_MAX), output1(DBL_MAX, DBL_MAX);
@@ -3653,13 +3659,16 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                         }
                     }
                 }
-                if (Geo::Point output(DBL_MAX, DBL_MAX); _catch_types[2] && Geo::foot_point(*e, press_pos, output))
+                if (std::vector<Geo::Point> output; _catch_types[2] && Geo::foot_point(*e, press_pos, output))
                 {
-                    if (const double d = Geo::distance(pos.x, pos.y, output.x, output.y); d < dis[2])
+                    for (const Geo::Point &p : output)
                     {
-                        dis[2] = d;
-                        result[2].x = output.x;
-                        result[2].y = output.y;
+                        if (const double d = Geo::distance(pos.x, pos.y, p.x, p.y); d < dis[2])
+                        {
+                            dis[2] = d;
+                            result[2].x = p.x;
+                            result[2].y = p.y;
+                        }
                     }
                 }
                 if (Geo::Point output0(DBL_MAX, DBL_MAX), output1(DBL_MAX, DBL_MAX);
