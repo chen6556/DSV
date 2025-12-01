@@ -6446,7 +6446,14 @@ bool Geo::foot_point(const Circle &circle, const Point &point, Point &output0, P
     {
         return false;
     }
-    return Geo::is_intersected(point, circle, circle, output0, output1, true);
+    const double dx = point.x - circle.x;
+    const double dy = point.y - circle.y;
+    const double dist = std::hypot(dx, dy);
+    output0.x = circle.x + circle.radius * dx / dist;
+    output0.y = circle.y + circle.radius * dy / dist;
+    output1.x = circle.x - circle.radius * dx / dist;
+    output1.y = circle.y - circle.radius * dy / dist;
+    return true;
 }
 
 int Geo::foot_point(const Ellipse &ellipse, const Point &point, std::vector<Point> &output)
