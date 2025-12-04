@@ -3432,7 +3432,7 @@ void QuadBSpline::update_shape(const double step, const double down_sampling_val
     }
 
     // resolution:
-    const size_t points_count = std::max(npts * 8.0, length / step);
+    const size_t points_count = std::max(npts * 8.0, length / (step * 5));
 
     std::vector<Point> points(points_count, Point(0, 0));
     rbspline(2, npts, points_count, _knots, control_points, points);
@@ -3808,7 +3808,7 @@ void CubicBSpline::update_shape(const double step, const double down_sampling_va
     }
 
     // resolution:
-    const size_t points_count = std::max(npts * 8.0, length / step);
+    const size_t points_count = std::max(npts * 8.0, length / (step * 5));
 
     std::vector<Point> points(points_count, Point(0, 0));
     rbspline(3, npts, points_count, _knots, control_points, points);
