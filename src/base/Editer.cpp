@@ -2933,9 +2933,9 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
             anchor_index = i;
         }
     }
-    if (dis0 > 4 * _view_ratio * _view_ratio)
+    if (dis0 > 4 / (_view_ratio * _view_ratio))
     {
-        return; // 裁剪位置不在线上
+        return; // 修剪位置不在线上
     }
 
     const Geo::Point head((*polyline)[anchor_index - 1]), tail((*polyline)[anchor_index]);
@@ -3255,9 +3255,9 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
             anchor_index = i;
         }
     }
-    if (dis0 > 4 * _view_ratio * _view_ratio)
+    if (dis0 > 4 / (_view_ratio * _view_ratio))
     {
-        return; // 裁剪位置不在线上
+        return; // 修剪位置不在线上
     }
 
     const Geo::Point head((*polygon)[anchor_index - 1]), tail((*polygon)[anchor_index]);
