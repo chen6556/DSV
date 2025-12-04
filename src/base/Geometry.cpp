@@ -321,6 +321,16 @@ const Point &Polyline::operator[](const size_t index) const
     return _points[index];
 }
 
+Point &Polyline::at(const size_t index)
+{
+    return _points.at(index);
+}
+
+const Point &Polyline::at(const size_t index) const
+{
+    return _points.at(index);
+}
+
 Polyline &Polyline::operator=(const Polyline &polyline)
 {
     if (this != &polyline)

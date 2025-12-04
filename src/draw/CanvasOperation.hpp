@@ -538,9 +538,14 @@ namespace CanvasOperations
     {
     private:
         double _radius = 0;
+        Geo::Geometry *_object0 = nullptr;
+        Geo::Geometry *_object1 = nullptr;
+        Geo::Point _pos0, _pos1;
 
     public:
         bool mouse_press(QMouseEvent *event) override;
+        
+        void reset() override;
 
         bool read_parameters(const double *params, const int count) override;
 

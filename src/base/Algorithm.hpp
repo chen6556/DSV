@@ -398,6 +398,9 @@ namespace Geo
     // 倒圆角
     bool angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Polyline &arc, const double step = 0.8, const double down_sampling_value = 0.02);
 
+    // 倒圆角
+    bool angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Arc &arc);
+
     Polyline arc_to_polyline(const Point &center, const double radius, double start_angle, double end_angle, const bool is_cw, const double down_sampling_value = 0.02);
 
     Polyline arc_to_polyline(const Arc &arc, const double down_sampling_value = 0.02);

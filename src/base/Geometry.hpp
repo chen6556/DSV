@@ -195,6 +195,10 @@ namespace Geo
 
         const Point &operator[](const size_t index) const;
 
+        Point &at(const size_t index);
+
+        const Point &at(const size_t index) const;
+
         Polyline &operator=(const Polyline &polyline);
 
         Polyline operator+(const Point &point) const;

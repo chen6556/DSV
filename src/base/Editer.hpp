@@ -137,6 +137,8 @@ public:
 
     bool fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius);
 
+    bool fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1, const double radius);
+
     bool chamfer(Geo::Polygon *shape, const Geo::Point &point, const double distance);
 
     bool chamfer(Geo::Polyline *polyline, const Geo::Point &point, const double distance);

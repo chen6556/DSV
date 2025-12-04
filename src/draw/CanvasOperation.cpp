@@ -3611,49 +3611,86 @@ bool FilletOperation::mouse_press(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
-        if (clicked_object = editer->select(real_pos[0], real_pos[1], true))
+        if (event->modifiers() == Qt::KeyboardModifier::ControlModifier)
         {
-            bool result = false;
-            double dis = DBL_MAX;
-            Geo::Point point;
-            switch (clicked_object->type())
+            if (clicked_object = editer->select(real_pos[0], real_pos[1], true))
             {
-            case Geo::Type::POLYGON:
-                for (const Geo::Point &p : *static_cast<Geo::Polygon *>(clicked_object))
+                bool result = false;
+                double dis = DBL_MAX;
+                Geo::Point point;
+                switch (clicked_object->type())
                 {
-                    if (Geo::distance(p.x, p.y, real_pos[0], real_pos[1]) < dis)
+                case Geo::Type::POLYGON:
+                    for (const Geo::Point &p : *static_cast<Geo::Polygon *>(clicked_object))
                     {
-                        dis = Geo::distance(p.x, p.y, real_pos[0], real_pos[1]);
-                        point = p;
+                        if (Geo::distance(p.x, p.y, real_pos[0], real_pos[1]) < dis)
+                        {
+                            dis = Geo::distance(p.x, p.y, real_pos[0], real_pos[1]);
+                            point = p;
+                        }
                     }
-                }
-                if (editer->fillet(dynamic_cast<Geo::Polygon *>(clicked_object), point, _radius))
-                {
-                    canvas->refresh_vbo(Geo::Type::POLYGON, true);
-                    canvas->refresh_selected_ibo();
-                    result = true;
-                }
-                break;
-            case Geo::Type::POLYLINE:
-                for (const Geo::Point &p : *static_cast<Geo::Polyline *>(clicked_object))
-                {
-                    if (Geo::distance(p.x, p.y, real_pos[0], real_pos[1]) < dis)
+                    if (editer->fillet(dynamic_cast<Geo::Polygon *>(clicked_object), point, _radius))
                     {
-                        dis = Geo::distance(p.x, p.y, real_pos[0], real_pos[1]);
-                        point = p;
+                        canvas->refresh_vbo({Geo::Type::POLYGON, Geo::Type::POLYLINE, Geo::Type::ARC}, true);
+                        canvas->refresh_selected_ibo();
+                        result = true;
                     }
+                    break;
+                case Geo::Type::POLYLINE:
+                    for (const Geo::Point &p : *static_cast<Geo::Polyline *>(clicked_object))
+                    {
+                        if (Geo::distance(p.x, p.y, real_pos[0], real_pos[1]) < dis)
+                        {
+                            dis = Geo::distance(p.x, p.y, real_pos[0], real_pos[1]);
+                            point = p;
+                        }
+                    }
+                    if (editer->fillet(dynamic_cast<Geo::Polyline *>(clicked_object), point, _radius))
+                    {
+                        canvas->refresh_vbo({Geo::Type::POLYLINE, Geo::Type::ARC}, true);
+                        canvas->refresh_selected_ibo();
+                        result = true;
+                    }
+                    break;
+                default:
+                    break;
                 }
-                if (editer->fillet(dynamic_cast<Geo::Polyline *>(clicked_object), point, _radius))
-                {
-                    canvas->refresh_vbo(Geo::Type::POLYLINE, true);
-                    canvas->refresh_selected_ibo();
-                    result = true;
-                }
-                break;
-            default:
-                break;
+                return result;
             }
-            return result;
+        }
+        else
+        {
+            if (_object0 == nullptr)
+            {
+                if (_object0 = editer->select(real_pos[0], real_pos[1], true);
+                    dynamic_cast<Geo::Polyline *>(_object0) != nullptr)
+                {
+                    _pos0.x = real_pos[0], _pos0.y = real_pos[1];
+                    _object0->is_selected = true;
+                    canvas->refresh_selected_ibo();
+                }
+                else
+                {
+                    _object0 = nullptr;
+                }
+            }
+            else if (_object1 = editer->select(real_pos[0], real_pos[1], true);
+                dynamic_cast<Geo::Polyline *>(_object1) != nullptr)
+            {
+                _pos1.x = real_pos[0], _pos1.y = real_pos[1];
+                if (editer->fillet(dynamic_cast<Geo::Polyline *>(_object0), _pos0,
+                    dynamic_cast<Geo::Polyline *>(_object1), _pos1, _radius))
+                {
+                    _object0 = _object1 = nullptr;
+                    canvas->refresh_vbo({Geo::Type::POLYLINE, Geo::Type::ARC}, true);
+                    canvas->refresh_selected_ibo();
+                    return true;
+                }
+            }
+            else
+            {
+                _object1 = nullptr;
+            }
         }
         return false;
     }
@@ -3661,6 +3698,13 @@ bool FilletOperation::mouse_press(QMouseEvent *event)
     {
         return false;
     }
+}
+
+void FilletOperation::reset()
+{
+    _object0 = _object1 = nullptr;
+    _pos0.clear();
+    _pos1.clear();
 }
 
 bool FilletOperation::read_parameters(const double *params, const int count)

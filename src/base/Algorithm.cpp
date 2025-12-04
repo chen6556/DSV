@@ -8703,6 +8703,32 @@ bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &po
     return true;
 }
 
+bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Arc &arc)
+{
+    if (radius <= 0)
+    {
+        return false;
+    }
+
+    const double rad1 = std::abs(Geo::angle(point0, point1, point2));
+    const double len = radius / std::tan(rad1/2.0);
+    if (Geo::distance_square(point1, point0) < len * len || Geo::distance_square(point2, point1) < len * len)
+    {
+        return false;
+    }
+
+    const Geo::Vector vp = ((point0 - point1).normalize() + (point2 - point1).normalize()).normalize();
+    const Geo::Point center = point1 + vp * std::hypot(len, radius);
+    Geo::Point foot0, foot1;
+    Geo::foot_point(point0, point1, center, foot0, true);
+    Geo::foot_point(point2, point1, center, foot1, true);
+
+    const Geo::Vector vec = foot0 - center;
+    const double rad2 = Geo::angle(foot0, center, foot1) < 0 ? rad1 - Geo::PI : Geo::PI - rad1;
+    const double vrad = std::atan2(vec.y, vec.x) + rad2 / 2;
+    arc = Geo::Arc(foot0, center + Geo::Point(radius * std::cos(vrad), radius * std::sin(vrad)), foot1);
+    return true;
+}
 
 
 Geo::Polyline Geo::arc_to_polyline(const Geo::Point &center, const double radius, double start_angle, double end_angle, const bool is_cw, const double down_sampling_value)
