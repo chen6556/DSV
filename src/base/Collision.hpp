@@ -395,41 +395,7 @@ namespace Geo
                             if (!pair_in_pairs(moved_object_pairs, object, current_object, true))
                             {
                                 moved_object_pairs.emplace_back(object, current_object);
-                                if (object->type() == Geo::Type::POLYGON && current_object->type() == Geo::Type::POLYGON &&
-                                    Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Polygon *>(current_object), tx, ty, vec) > 0)
-                                {
-                                    if (vec.x * tx + vec.y * ty > 0)
-                                    {
-                                        current_object->translate(vec.x, vec.y);
-                                        _detector.update(current_object);
-                                        crushed_objects.push_back(current_object);
-                                    }
-                                    vec.clear();
-                                }
-                                else if (object->type() == Geo::Type::POLYGON && current_object->type() == Geo::Type::CIRCLE &&
-                                    Collision::epa(*static_cast<Geo::Polygon *>(object), *static_cast<Geo::Circle *>(current_object), tx, ty, vec) > 0)
-                                {
-                                    if (vec.x * tx + vec.y * ty > 0)
-                                    {
-                                        current_object->translate(vec.x, vec.y);
-                                        _detector.update(current_object);
-                                        crushed_objects.push_back(current_object);
-                                    }
-                                    vec.clear();
-                                }
-                                else if (object->type() == Geo::Type::CIRCLE && current_object->type() == Geo::Type::POLYGON &&
-                                    Collision::epa(*static_cast<Geo::Circle *>(object), *static_cast<Geo::Polygon *>(current_object), tx, ty, vec) > 0)
-                                {
-                                    if (vec.x * tx + vec.y * ty > 0)
-                                    {
-                                        current_object->translate(vec.x, vec.y);
-                                        _detector.update(current_object);
-                                        crushed_objects.push_back(current_object);
-                                    }
-                                    vec.clear();
-                                }
-                                else if (object->type() == Geo::Type::CIRCLE && current_object->type() == Geo::Type::CIRCLE &&
-                                    Collision::epa(*static_cast<Geo::Circle *>(object), *static_cast<Geo::Circle *>(current_object), tx, ty, vec) > 0)
+                                if (Collision::epa(*object, *current_object, tx, ty, vec) > 0)
                                 {
                                     if (vec.x * tx + vec.y * ty > 0)
                                     {

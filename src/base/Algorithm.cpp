@@ -2963,6 +2963,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const Arc &arc, Point &point0, P
         }
         break;
     }
+    return 0;
 }
 
 int Geo::is_intersected(const Arc &arc0, const Arc &arc1, Point &point0, Point &point1)
