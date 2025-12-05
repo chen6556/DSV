@@ -5,7 +5,6 @@
 #include <utility>
 
 #include "base/Geometry.hpp"
-#include "base/Container.hpp"
 
 
 namespace Geo
@@ -15,49 +14,45 @@ namespace Geo
         class DirectMode
         {
         private:
-            std::vector<Geo::Geometry *> _objects;
+            std::vector<Geo::Polygon *> _objects;
 
         public:
             DirectMode();
 
-            DirectMode(const ContainerGroup &group);
+            DirectMode(const std::vector<Geo::Polygon *> &objects);
 
-            DirectMode(const std::vector<Geo::Geometry *> &objects);
+            DirectMode(const std::initializer_list<Geo::Polygon *> &objects);
 
-            DirectMode(const std::initializer_list<Geo::Geometry *> &objects);
+            void build(const std::vector<Geo::Polygon *> &objects);
 
-            void build(const ContainerGroup &group);
+            void build(const std::vector<Geo::Polygon *> &objects, const std::vector<Geo::AABBRect> &rects);
 
-            void build(const std::vector<Geo::Geometry *> &objects);
+            void append(Geo::Polygon *object);
 
-            void build(const std::vector<Geo::Geometry *> &objects, const std::vector<Geo::AABBRect> &rects);
+            void remove(Geo::Polygon *object);
 
-            void append(Geo::Geometry *object);
-
-            void remove(Geo::Geometry *object);
-
-            void update(Geo::Geometry *object);
+            void update(Geo::Polygon *object);
 
             void update();
 
-            bool has(Geo::Geometry *object) const;
+            bool has(Geo::Polygon *object) const;
 
             void clear();
 
-            bool select(const Geo::Point &pos, std::vector<Geo::Geometry *> &objects) const;
+            bool select(const Geo::Point &pos, std::vector<Geo::Polygon *> &objects) const;
 
-            bool select(const Geo::AABBRect &rect, std::vector<Geo::Geometry *> &objects) const;
+            bool select(const Geo::AABBRect &rect, std::vector<Geo::Polygon *> &objects) const;
 
-            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geo::Geometry *> &objects, const bool norepeat = true) const;
+            bool find_collision_objects(const Geo::Polygon *object, std::vector<Geo::Polygon *> &objects, const bool norepeat = true) const;
 
-            bool find_collision_pairs(std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs, const bool norepeat = true) const;
+            bool find_collision_pairs(std::vector<std::pair<Geo::Polygon *, Geo::Polygon *>> &pairs, const bool norepeat = true) const;
         };
 
         class GridNode
         {
         protected:
             AABBRect _rect;
-            std::vector<Geometry *> _objects;
+            std::vector<Polygon *> _objects;
 
         public:
             GridNode();
@@ -70,65 +65,61 @@ namespace Geo
 
             const AABBRect &rect() const;
 
-            bool append(Geometry *object);
+            bool append(Polygon *object);
 
-            bool remove(Geometry *object);
+            bool remove(Polygon *object);
 
-            bool has(Geometry *object) const;
+            bool has(Polygon *object) const;
 
             void clear();
 
-            bool select(const Point &pos, std::vector<Geometry *> &objects) const;
+            bool select(const Point &pos, std::vector<Polygon *> &objects) const;
 
-            bool select(const AABBRect &rect, std::vector<Geometry *> &objects) const;
+            bool select(const AABBRect &rect, std::vector<Polygon *> &objects) const;
 
-            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geometry *> &objects) const;
+            bool find_collision_objects(const Geo::Polygon *object, std::vector<Polygon *> &objects) const;
 
-            bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs) const;
+            bool find_collision_pairs(std::vector<std::pair<Polygon *, Polygon *>> &pairs) const;
         };
 
         class GridMap
         {
         private:
             std::vector<GridNode> _grids;
-            std::vector<Geo::Geometry *> _objects;
+            std::vector<Geo::Polygon *> _objects;
             std::vector<Geo::AABBRect> _rects;
             double _left, _top, _right, _bottom;
 
         public:
             GridMap();
 
-            GridMap(const ContainerGroup &group);
+            GridMap(const std::vector<Geo::Polygon *> &objects);
 
-            GridMap(const std::vector<Geo::Geometry *> &objects);
+            GridMap(const std::initializer_list<Geo::Polygon *> &objects);
 
-            GridMap(const std::initializer_list<Geo::Geometry *> &objects);
+            void build(const std::vector<Geo::Polygon *> &objects);
 
-            void build(const ContainerGroup &group);
+            void build(const std::vector<Geo::Polygon *> &objects, const std::vector<Geo::AABBRect> &rects);
 
-            void build(const std::vector<Geo::Geometry *> &objects);
+            void append(Geo::Polygon *object);
 
-            void build(const std::vector<Geo::Geometry *> &objects, const std::vector<Geo::AABBRect> &rects);
+            void remove(Geo::Polygon *object);
 
-            void append(Geo::Geometry *object);
-
-            void remove(Geo::Geometry *object);
-
-            void update(Geo::Geometry *object);
+            void update(Geo::Polygon *object);
 
             void update();
 
-            bool has(Geometry *object) const;
+            bool has(Polygon *object) const;
 
             void clear();
 
-            bool select(const Point &pos, std::vector<Geometry *> &objects) const;
+            bool select(const Point &pos, std::vector<Polygon *> &objects) const;
 
-            bool select(const AABBRect &rect, std::vector<Geometry *> &objects) const;
+            bool select(const AABBRect &rect, std::vector<Polygon *> &objects) const;
 
-            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geometry *> &objects, const bool norepeat = true) const;
+            bool find_collision_objects(const Geo::Polygon *object, std::vector<Polygon *> &objects, const bool norepeat = true) const;
 
-            bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs, const bool norepeat = true) const;
+            bool find_collision_pairs(std::vector<std::pair<Polygon *, Polygon *>> &pairs, const bool norepeat = true) const;
         };
 
         class QuadTreeNode : public GridNode
@@ -151,69 +142,65 @@ namespace Geo
 
             ~QuadTreeNode();
 
-            bool append(Geometry *object);
+            bool append(Polygon *object);
 
             void append_node(const size_t index, QuadTreeNode *node);
 
-            bool remove(Geometry *object);
+            bool remove(Polygon *object);
 
-            bool has(Geometry *object) const;
+            bool has(Polygon *object) const;
 
             void clear();
 
-            bool select(const Geo::Point &pos, std::vector<Geometry *> &objects) const;
+            bool select(const Geo::Point &pos, std::vector<Polygon *> &objects) const;
 
-            bool select(const Geo::AABBRect &rect, std::vector<Geometry *> &objects) const;
+            bool select(const Geo::AABBRect &rect, std::vector<Polygon *> &objects) const;
 
-            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geometry *> &objects, const bool norepeat = true) const;
+            bool find_collision_objects(const Geo::Polygon *object, std::vector<Polygon *> &objects, const bool norepeat = true) const;
 
-            bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs, const bool norepeat = true) const;
+            bool find_collision_pairs(std::vector<std::pair<Polygon *, Polygon *>> &pairs, const bool norepeat = true) const;
         };
 
         class QuadTree
         {
         private:
             QuadTreeNode *_root = nullptr;
-            std::vector<Geo::Geometry *> _objects;
+            std::vector<Geo::Polygon *> _objects;
             std::vector<Geo::AABBRect> _rects;
             double _left, _top, _right, _bottom;
 
         public:
             QuadTree();
 
-            QuadTree(const ContainerGroup &group);
+            QuadTree(const std::vector<Geo::Polygon *> &objects);
 
-            QuadTree(const std::vector<Geo::Geometry *> &objects);
-
-            QuadTree(const std::initializer_list<Geo::Geometry *> &objects);
+            QuadTree(const std::initializer_list<Geo::Polygon *> &objects);
 
             ~QuadTree();
 
-            void build(const ContainerGroup &group);
+            void build(const std::vector<Geo::Polygon *> &objects);
 
-            void build(const std::vector<Geo::Geometry *> &objects);
+            void build(const std::vector<Geo::Polygon *> &objects, const std::vector<Geo::AABBRect> &rects);
 
-            void build(const std::vector<Geo::Geometry *> &objects, const std::vector<Geo::AABBRect> &rects);
+            void append(Geo::Polygon *object);
 
-            void append(Geo::Geometry *object);
+            void remove(Geo::Polygon *object);
 
-            void remove(Geo::Geometry *object);
-
-            void update(Geo::Geometry *object);
+            void update(Geo::Polygon *object);
 
             void update();
 
-            bool has(Geometry *object) const;
+            bool has(Polygon *object) const;
 
             void clear();
 
-            bool select(const Point &pos, std::vector<Geometry *> &objects) const;
+            bool select(const Point &pos, std::vector<Polygon *> &objects) const;
 
-            bool select(const AABBRect &rect, std::vector<Geometry *> &objects) const;
+            bool select(const AABBRect &rect, std::vector<Polygon *> &objects) const;
 
-            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geometry *> &objects, const bool norepeat = true) const;
+            bool find_collision_objects(const Geo::Polygon *object, std::vector<Polygon *> &objects, const bool norepeat = true) const;
 
-            bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs, const bool norepeat = true) const;
+            bool find_collision_pairs(std::vector<std::pair<Polygon *, Polygon *>> &pairs, const bool norepeat = true) const;
         };
 
 
@@ -228,6 +215,9 @@ namespace Geo
         void support(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Point &start, Geo::Point &end, std::vector<Geo::Point> &points, Geo::Point &result);
 
         bool is_inside(const Geo::Point &point, const Geo::Polygon &polygon);
+
+        bool gjk(const Geo::Point &point01, const Geo::Point &point02, const Geo::Point &point03,
+            const Geo::Point &point11, const Geo::Point &point12, const Geo::Point &point13);
 
         bool gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1);
 
@@ -257,11 +247,11 @@ namespace Geo
         private:
             T _detector;
 
-            static bool pair_in_pairs(const std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs, const Geo::Geometry *object0, const Geo::Geometry *object1, const bool ordered = false)
+            static bool pair_in_pairs(const std::vector<std::pair<Geo::Polygon *, Geo::Polygon *>> &pairs, const Geo::Polygon *object0, const Geo::Polygon *object1, const bool ordered = false)
             {
                 if (ordered)
                 {
-                    for (const std::pair<Geo::Geometry *, Geo::Geometry *> &pair : pairs)
+                    for (const std::pair<Geo::Polygon *, Geo::Polygon *> &pair : pairs)
                     {
                         if (pair.first == object0 && pair.second == object1)
                         {
@@ -271,7 +261,7 @@ namespace Geo
                 }
                 else
                 {
-                    for (const std::pair<Geo::Geometry *, Geo::Geometry *> &pair : pairs)
+                    for (const std::pair<Geo::Polygon *, Geo::Polygon *> &pair : pairs)
                     {
                         if ((pair.first == object0 && pair.second == object1) || 
                             (pair.first == object1 && pair.second == object0))
@@ -283,9 +273,9 @@ namespace Geo
                 return false;
             }
 
-            static bool in_pair_first(const Geo::Geometry *object, const std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs)
+            static bool in_pair_first(const Geo::Polygon *object, const std::vector<std::pair<Geo::Polygon *, Geo::Polygon *>> &pairs)
             {
-                for (const std::pair<Geo::Geometry *, Geo::Geometry *> &pair : pairs)
+                for (const std::pair<Geo::Polygon *, Geo::Polygon *> &pair : pairs)
                 {
                     if (pair.first == object)
                     {
@@ -295,9 +285,9 @@ namespace Geo
                 return false;
             }
 
-            static bool in_pair_second(const Geo::Geometry *object, const std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs)
+            static bool in_pair_second(const Geo::Polygon *object, const std::vector<std::pair<Geo::Polygon *, Geo::Polygon *>> &pairs)
             {
-                for (const std::pair<Geo::Geometry *, Geo::Geometry *> &pair : pairs)
+                for (const std::pair<Geo::Polygon *, Geo::Polygon *> &pair : pairs)
                 {
                     if (pair.second == object)
                     {
@@ -307,9 +297,9 @@ namespace Geo
                 return false;
             }
 
-            static bool in_pairs(const Geo::Geometry *object, const std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> &pairs)
+            static bool in_pairs(const Geo::Polygon *object, const std::vector<std::pair<Geo::Polygon *, Geo::Polygon *>> &pairs)
             {
-                for (const std::pair<Geo::Geometry *, Geo::Geometry *> &pair : pairs)
+                for (const std::pair<Geo::Polygon *, Geo::Polygon *> &pair : pairs)
                 {
                     if (pair.first == object || pair.second == object)
                     {
@@ -322,41 +312,33 @@ namespace Geo
         public:
             CollisionDetector() {}
 
-            CollisionDetector(const ContainerGroup &group)
-                : _detector(group) {}
-
-            CollisionDetector(const std::vector<Geo::Geometry *> &objects)
+            CollisionDetector(const std::vector<Geo::Polygon *> &objects)
                 : _detector(objects) {}
 
-            CollisionDetector(const std::initializer_list<Geo::Geometry *> &objects)
+            CollisionDetector(const std::initializer_list<Geo::Polygon *> &objects)
                 : _detector(objects) {}
 
-            void build(const ContainerGroup &group)
-            {
-                return _detector.build(group);
-            }
-
-            void build(const std::vector<Geo::Geometry *> &objects)
+            void build(const std::vector<Geo::Polygon *> &objects)
             {
                 return _detector.build(objects);
             }
 
-            void build(const std::vector<Geo::Geometry *> &objects, const std::vector<Geo::AABBRect> &rects)
+            void build(const std::vector<Geo::Polygon *> &objects, const std::vector<Geo::AABBRect> &rects)
             {
                 return _detector.build(objects, rects);
             }
 
-            void append(Geo::Geometry *object)
+            void append(Geo::Polygon *object)
             {
                 return _detector.append(object);
             }
 
-            void remove(Geo::Geometry *object)
+            void remove(Geo::Polygon *object)
             {
                 return _detector.remove(object);
             }
 
-            void update(Geo::Geometry *object)
+            void update(Geo::Polygon *object)
             {
                 return _detector.update(object);
             }
@@ -366,7 +348,7 @@ namespace Geo
                 return _detector.update();
             }
 
-            bool has(Geometry *object) const
+            bool has(Polygon *object) const
             {
                 return _detector.has(object);
             }
@@ -376,31 +358,31 @@ namespace Geo
                 return _detector.clear();
             }
 
-            bool select(const Point &pos, std::vector<Geometry *> &objects) const
+            bool select(const Point &pos, std::vector<Polygon *> &objects) const
             {
                 return _detector.select(pos, objects);
             }
 
-            bool select(const AABBRect &rect, std::vector<Geometry *> &objects) const
+            bool select(const AABBRect &rect, std::vector<Polygon *> &objects) const
             {
                 return _detector.select(rect, objects);
             }
 
-            bool find_collision_objects(const Geo::Geometry *object, std::vector<Geometry *> &objects, const bool norepeat = true) const
+            bool find_collision_objects(const Geo::Polygon *object, std::vector<Polygon *> &objects, const bool norepeat = true) const
             {
                 return _detector.find_collision_objects(object, objects, norepeat);
             }
 
-            bool find_collision_pairs(std::vector<std::pair<Geometry *, Geometry *>> &pairs, const bool norepeat = true) const
+            bool find_collision_pairs(std::vector<std::pair<Polygon *, Polygon *>> &pairs, const bool norepeat = true) const
             {
                 return _detector.find_collision_pairs(pairs, norepeat);
             }
 
-            void collision_translate(Geo::Geometry *object, const double tx, const double ty)
+            void collision_translate(Geo::Polygon *object, const double tx, const double ty)
             {
-                std::deque<Geo::Geometry *> crushed_objects({object});
-                std::vector<std::pair<Geo::Geometry *, Geo::Geometry *>> moved_object_pairs;
-                std::vector<Geo::Geometry *> current_objects;
+                std::deque<Geo::Polygon *> crushed_objects({object});
+                std::vector<std::pair<Geo::Polygon *, Geo::Polygon *>> moved_object_pairs;
+                std::vector<Geo::Polygon *> current_objects;
                 Geo::Point vec;
                 while (!crushed_objects.empty())
                 {
@@ -408,7 +390,7 @@ namespace Geo
                     crushed_objects.pop_back();
                     if (_detector.find_collision_objects(object, current_objects))
                     {
-                        for (Geo::Geometry *current_object : current_objects)
+                        for (Geo::Polygon *current_object : current_objects)
                         {
                             if (!pair_in_pairs(moved_object_pairs, object, current_object, true))
                             {

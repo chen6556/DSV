@@ -214,12 +214,6 @@ namespace Geo
     // 判断有限长线段是否与三角形相交,线段完全在三角形内不算相交
     bool is_intersected(const Point &start, const Point &end, const Triangle &triangle, Point &output0, Point &output1);
 
-    // 判断两Geometry Object是否相交
-    bool is_intersected(const Geometry *object0, const Geometry *object1);
-
-    // 判断AABB矩形与Geometry Object是否相交
-    bool is_intersected(const AABBRect &rect, const Geometry *object);
-
     namespace NoAABBTest
     {
         // 判断点是否在多边形内,coincide决定是否包含点在多边形上的情况
@@ -233,21 +227,6 @@ namespace Geo
 
         // 判断两多边形是否相交,inside决定完全在多边形内部是否算相交
         bool is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside = true);
-
-        // 判断AABB矩形是否与多段线相交,多段线完全在AABB矩形内也算相交
-        bool is_intersected(const AABBRect &rect, const Polyline &polyline);
-
-        // 判断AABB矩形是否与多边形相交,多边形完全在AABB矩形内或AABB矩形完全在多边形内也算相交
-        bool is_intersected(const AABBRect &rect, const Polygon &polygon);
-
-        // 判断AABB矩形是否与椭圆相交,椭圆完全在AABB矩形内或AABB矩形完全在多边形内也算相交
-        bool is_intersected(const AABBRect &rect, const Ellipse &ellipse);
-
-        // 判断两Geometry Object是否相交
-        bool is_intersected(const Geometry *object0, const Geometry *object1);
-
-        // 判断AABB矩形与Geometry Object是否相交
-        bool is_intersected(const AABBRect &rect, const Geometry *object);
     }
 
     // 找到Polyline与Polyline在pos附近的交点
