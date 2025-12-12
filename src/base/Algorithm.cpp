@@ -3879,7 +3879,7 @@ int Geo::is_intersected(const Arc &arc, const Bezier &bezier, std::vector<Point>
         {
             auto it = std::find_if(temp_tvalues.begin(), temp_tvalues.end(), [&](const std::tuple<size_t, double, double, double> &item)
                 { return std::get<2>(item) == temp_intersections[i].x && std::get<3>(item) == temp_intersections[i].y; });
-            while (it != tvalues->end())
+            while (it != temp_tvalues.end())
             {
                 temp_tvalues.erase(it);
                 it = std::find_if(temp_tvalues.begin(), temp_tvalues.end(), [&](const std::tuple<size_t, double, double, double> &item)
