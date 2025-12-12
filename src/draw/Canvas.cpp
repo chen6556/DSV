@@ -3444,7 +3444,12 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
 
 bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &objects, const double distance, Geo::Point &pos)
 {
-    if (!std::any_of(_catch_types, _catch_types + Canvas::catch_count, [](const bool v){ return v; }))
+    const CanvasOperations::Tool tool = CanvasOperations::CanvasOperation::tool[0];
+    const bool catch_flags[Canvas::catch_count] = { _catch_types[0], _catch_types[1],
+        _catch_types[2] && (tool > CanvasOperations::Tool::Move && tool < CanvasOperations::Tool::Mirror),
+        _catch_types[3] && (tool > CanvasOperations::Tool::Move && tool < CanvasOperations::Tool::Mirror),
+        _catch_types[4] };
+    if (!std::any_of(catch_flags, catch_flags + Canvas::catch_count, [](const bool v){ return v; }))
     {
         return false;
     }
@@ -3460,25 +3465,25 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
         case Geo::Type::POLYLINE:
             {
                 const Geo::Polyline &polyline = *static_cast<const Geo::Polyline *>(object);
-                if (_catch_types[0])
+                if (catch_flags[0])
                 {
                     dis[0] = Geo::distance(pos, polyline.front());
                     result[0] = polyline.front();
                 }
                 for (size_t i = 1, count = polyline.size(); i < count; ++i)
                 {
-                    if (const double d = Geo::distance(pos, polyline[i]); _catch_types[0] && d < dis[0])
+                    if (const double d = Geo::distance(pos, polyline[i]); catch_flags[0] && d < dis[0])
                     {
                         result[0] = polyline[i];
                         dis[0] = d;
                     }
                     const Geo::Point center((polyline[i - 1] + polyline[i]) / 2);
-                    if (const double d = Geo::distance(pos, center); _catch_types[1] && d < dis[1])
+                    if (const double d = Geo::distance(pos, center); catch_flags[1] && d < dis[1])
                     {
                         dis[1] = d;
                         result[1] = center;
                     }
-                    if (Geo::Point foot; _catch_types[2] && Geo::foot_point(polyline[i - 1], polyline[i], press_pos, foot))
+                    if (Geo::Point foot; catch_flags[2] && Geo::foot_point(polyline[i - 1], polyline[i], press_pos, foot))
                     {
                         if (const double d = Geo::distance(pos, foot); d < dis[2])
                         {
@@ -3487,7 +3492,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                         }
                     }
                 }
-                if (_catch_types[4])
+                if (catch_flags[4])
                 {
                     for (size_t i = 1, count = polyline.size(); i < count; ++i)
                     {
@@ -3514,25 +3519,25 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
         case Geo::Type::POLYGON:
             {
                 const Geo::Polygon &polygon = *static_cast<const Geo::Polygon *>(object);
-                if (_catch_types[0])
+                if (catch_flags[0])
                 {
                     dis[0] = Geo::distance(pos, polygon.front());
                     result[0] = polygon.front();
                 }
                 for (size_t i = 1, count = polygon.size(); i < count; ++i)
                 {
-                    if (const double d = Geo::distance(pos, polygon[i]); _catch_types[0] && d < dis[0])
+                    if (const double d = Geo::distance(pos, polygon[i]); catch_flags[0] && d < dis[0])
                     {
                         dis[0] = d;
                         result[0] = polygon[i];
                     }
                     const Geo::Point center((polygon[i - 1] + polygon[i]) / 2);
-                    if (const double d = Geo::distance(pos, center); _catch_types[1] && d < dis[1])
+                    if (const double d = Geo::distance(pos, center); catch_flags[1] && d < dis[1])
                     {
                         dis[1] = d;
                         result[1] = center;
                     }
-                    if (Geo::Point foot; _catch_types[2] && Geo::foot_point(polygon[i - 1], polygon[i], press_pos, foot))
+                    if (Geo::Point foot; catch_flags[2] && Geo::foot_point(polygon[i - 1], polygon[i], press_pos, foot))
                     {
                         if (const double d = Geo::distance(pos, foot); d < dis[2])
                         {
@@ -3546,7 +3551,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
         case Geo::Type::CIRCLE:
             {
                 const Geo::Circle *c = static_cast<const Geo::Circle *>(object);
-                if (_catch_types[0])
+                if (catch_flags[0])
                 {
                     if (const double d = Geo::distance(pos.x, pos.y, c->x, c->y); d < dis[0])
                     {
@@ -3579,7 +3584,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                     }
                 }
                 if (Geo::Point output0(DBL_MAX, DBL_MAX), output1(DBL_MAX, DBL_MAX);
-                    _catch_types[2] && Geo::foot_point(*c, press_pos, output0, output1))
+                    catch_flags[2] && Geo::foot_point(*c, press_pos, output0, output1))
                 {
                     if (const double d = Geo::distance(pos.x, pos.y, output0.x, output0.y); d < dis[2])
                     {
@@ -3595,7 +3600,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                     }
                 }
                 if (Geo::Point output0(DBL_MAX, DBL_MAX), output1(DBL_MAX, DBL_MAX);
-                    _catch_types[3] && Geo::tangency_point(press_pos, *c, output0, output1))
+                    catch_flags[3] && Geo::tangency_point(press_pos, *c, output0, output1))
                 {
                     if (const double d = Geo::distance(pos.x, pos.y, output0.x, output0.y); d < dis[3])
                     {
@@ -3615,7 +3620,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
         case Geo::Type::ELLIPSE:
             {
                 const Geo::Ellipse *e = static_cast<const Geo::Ellipse *>(object);
-                if (_catch_types[0])
+                if (catch_flags[0])
                 {
                     if (e->is_arc())
                     {
@@ -3659,7 +3664,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                         }
                     }
                 }
-                if (std::vector<Geo::Point> output; _catch_types[2] && Geo::foot_point(*e, press_pos, output))
+                if (std::vector<Geo::Point> output; catch_flags[2] && Geo::foot_point(*e, press_pos, output))
                 {
                     for (const Geo::Point &p : output)
                     {
@@ -3672,7 +3677,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                     }
                 }
                 if (Geo::Point output0(DBL_MAX, DBL_MAX), output1(DBL_MAX, DBL_MAX);
-                    _catch_types[3] && Geo::tangency_point(press_pos, *e, output0, output1))
+                    catch_flags[3] && Geo::tangency_point(press_pos, *e, output0, output1))
                 {
                     if (const double d = Geo::distance(pos.x, pos.y, output0.x, output0.y); d < dis[3])
                     {
@@ -3692,12 +3697,12 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
         case Geo::Type::BSPLINE:
             {
                 const Geo::BSpline &bspline = *static_cast<const Geo::BSpline *>(object);
-                if (_catch_types[0])
+                if (catch_flags[0])
                 {
                     dis[0] = Geo::distance(pos, bspline.path_points.front());
                     result[0] = bspline.path_points.front();
                 }
-                if (_catch_types[2])
+                if (catch_flags[2])
                 {
                     if (std::vector<Geo::Point> points; Geo::foot_point(press_pos, bspline, points, nullptr))
                     {
@@ -3711,7 +3716,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                         }
                     }
                 }
-                if (_catch_types[3])
+                if (catch_flags[3])
                 {
                     if (std::vector<Geo::Point> points; Geo::tangency_point(press_pos, bspline, points, nullptr))
                     {
@@ -3727,7 +3732,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                 }
                 for (size_t i = 1, count = bspline.path_points.size(); i < count; ++i)
                 {
-                    if (const double d = Geo::distance(pos, bspline.path_points[i]); _catch_types[0] && d < dis[0])
+                    if (const double d = Geo::distance(pos, bspline.path_points[i]); catch_flags[0] && d < dis[0])
                     {
                         result[0] = bspline.path_points[i];
                         dis[0] = d;
@@ -3738,7 +3743,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
         case Geo::Type::BEZIER:
             {
                 const Geo::Bezier &bezier = *static_cast<const Geo::Bezier *>(object);
-                if (_catch_types[0])
+                if (catch_flags[0])
                 {
                     if (double dis0 = Geo::distance(pos, bezier.front()),
                         dis1 = Geo::distance(pos, bezier.back()); dis0 <= dis1)
@@ -3752,7 +3757,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                         result[0] = bezier.back();
                     }
                 }
-                if (_catch_types[2])
+                if (catch_flags[2])
                 {
                     if (std::vector<Geo::Point> points; Geo::foot_point(press_pos, bezier, points, nullptr))
                     {
@@ -3766,7 +3771,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                         }
                     }
                 }
-                if (_catch_types[3])
+                if (catch_flags[3])
                 {
                     if (std::vector<Geo::Point> points; Geo::tangency_point(press_pos, bezier, points, nullptr))
                     {
@@ -3785,7 +3790,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
         case Geo::Type::ARC:
             {
                 const Geo::Arc *arc = static_cast<const Geo::Arc *>(object);
-                if (_catch_types[0])
+                if (catch_flags[0])
                 {
                     dis[0] = Geo::distance(pos, arc->control_points[0]);
                     result[0] = arc->control_points[0];
@@ -3805,7 +3810,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
         }
     }
 
-    if (_catch_types[4])
+    if (catch_flags[4])
     {
         for (size_t i = 0, count = objects.size(); i < count; ++i)
         {
@@ -3829,25 +3834,25 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
 
     if (_editer->point_cache().size() > 2)
     {
-        if (const double d = Geo::distance(pos, _editer->point_cache().front()); _catch_types[0] && d < dis[0])
+        if (const double d = Geo::distance(pos, _editer->point_cache().front()); catch_flags[0] && d < dis[0])
         {
             dis[0] = d;
             result[0] = _editer->point_cache().front();
         }
         for (size_t i = 1, count = _editer->point_cache().size() - 1; i < count; ++i)
         {
-            if (const double d = Geo::distance(pos, _editer->point_cache()[i]); _catch_types[0] && d < dis[0])
+            if (const double d = Geo::distance(pos, _editer->point_cache()[i]); catch_flags[0] && d < dis[0])
             {
                 result[0] = _editer->point_cache()[i];
                 dis[0] = d;
             }
             const Geo::Point center((_editer->point_cache()[i - 1] + _editer->point_cache()[i]) / 2);
-            if (const double d = Geo::distance(pos, center); _catch_types[1] && d < dis[1])
+            if (const double d = Geo::distance(pos, center); catch_flags[1] && d < dis[1])
             {
                 dis[1] = d;
                 result[1] = center;
             }
-            if (Geo::Point foot; _catch_types[2] && Geo::foot_point(_editer->point_cache()[i - 1],
+            if (Geo::Point foot; catch_flags[2] && Geo::foot_point(_editer->point_cache()[i - 1],
                 _editer->point_cache()[i], press_pos, foot))
             {
                 if (const double d = Geo::distance(pos, foot); d < dis[2])
@@ -3858,7 +3863,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
             }
         }
 
-        if (_catch_types[4])
+        if (catch_flags[4])
         {
             for (size_t i = 1, count = _editer->point_cache().size() - 1; i < count; ++i)
             {
