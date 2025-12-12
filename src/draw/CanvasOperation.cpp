@@ -3629,9 +3629,15 @@ bool FilletOperation::mouse_press(QMouseEvent *event)
                             point = p;
                         }
                     }
-                    if (editer->fillet(dynamic_cast<Geo::Polygon *>(clicked_object), point, _radius))
+                    if (_radius0 == _radius1 && editer->fillet(dynamic_cast<Geo::Polygon *>(clicked_object), point, _radius0))
                     {
                         canvas->refresh_vbo({Geo::Type::POLYGON, Geo::Type::POLYLINE, Geo::Type::ARC}, true);
+                        canvas->refresh_selected_ibo();
+                        result = true;
+                    }
+                    else if (_radius0 != _radius1 && editer->fillet(dynamic_cast<Geo::Polygon *>(clicked_object), point, _radius0, _radius1))
+                    {
+                        canvas->refresh_vbo({Geo::Type::POLYGON, Geo::Type::POLYLINE, Geo::Type::BEZIER}, true);
                         canvas->refresh_selected_ibo();
                         result = true;
                     }
@@ -3645,9 +3651,15 @@ bool FilletOperation::mouse_press(QMouseEvent *event)
                             point = p;
                         }
                     }
-                    if (editer->fillet(dynamic_cast<Geo::Polyline *>(clicked_object), point, _radius))
+                    if (_radius0 == _radius1 && editer->fillet(dynamic_cast<Geo::Polyline *>(clicked_object), point, _radius0))
                     {
                         canvas->refresh_vbo({Geo::Type::POLYLINE, Geo::Type::ARC}, true);
+                        canvas->refresh_selected_ibo();
+                        result = true;
+                    }
+                    else if (_radius0 != _radius1 && editer->fillet(dynamic_cast<Geo::Polyline *>(clicked_object), point, _radius0, _radius1))
+                    {
+                        canvas->refresh_vbo({Geo::Type::POLYLINE, Geo::Type::BEZIER}, true);
                         canvas->refresh_selected_ibo();
                         result = true;
                     }
@@ -3678,11 +3690,19 @@ bool FilletOperation::mouse_press(QMouseEvent *event)
                 dynamic_cast<Geo::Polyline *>(_object1) != nullptr)
             {
                 _pos1.x = real_pos[0], _pos1.y = real_pos[1];
-                if (editer->fillet(dynamic_cast<Geo::Polyline *>(_object0), _pos0,
-                    dynamic_cast<Geo::Polyline *>(_object1), _pos1, _radius))
+                if (_radius0 == _radius1 && editer->fillet(dynamic_cast<Geo::Polyline *>(_object0),
+                    _pos0, dynamic_cast<Geo::Polyline *>(_object1), _pos1, _radius0))
                 {
                     _object0 = _object1 = nullptr;
                     canvas->refresh_vbo({Geo::Type::POLYLINE, Geo::Type::ARC}, true);
+                    canvas->refresh_selected_ibo();
+                    return true;
+                }
+                else if (_radius0 != _radius1 && editer->fillet(dynamic_cast<Geo::Polyline *>(_object0),
+                    _pos0, dynamic_cast<Geo::Polyline *>(_object1), _pos1, _radius0, _radius1))
+                {
+                    _object0 = _object1 = nullptr;
+                    canvas->refresh_vbo({Geo::Type::POLYLINE, Geo::Type::BEZIER}, true);
                     canvas->refresh_selected_ibo();
                     return true;
                 }
@@ -3709,9 +3729,15 @@ void FilletOperation::reset()
 
 bool FilletOperation::read_parameters(const double *params, const int count)
 {
-    if (count >= 1 && params[0] > 0)
+    if (count >= 2 && params[0] > 0 && params[1] > 0)
     {
-        _radius = params[0];
+        _radius0 = params[0];
+        _radius1 = params[1];
+        return true;
+    }
+    else if (count == 1 && params[0] > 0)
+    {
+        _radius0 = _radius1 = params[0];
         return true;
     }
     else
@@ -3722,7 +3748,7 @@ bool FilletOperation::read_parameters(const double *params, const int count)
 
 QString FilletOperation::cmd_tips() const
 {
-    return QString("radius: %1").arg(_radius);
+    return QString("radius0: %1 radius1: %2").arg(_radius0).arg(_radius1);
 }
 
 

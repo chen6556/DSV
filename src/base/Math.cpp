@@ -9,18 +9,11 @@
 
 void Math::error_handle(const char *reason, const char *file, int line, int gsl_errno)
 {
-    std::cerr << file << " line: " << line << " error: " << reason << std::endl;
+    std::cerr << file << " line: " << line << " error: " << reason << " error code: " << gsl_errno << std::endl;
 }
 
-void Math::init()
-{
-    static bool flag = true;
-    if (flag)
-    {
-        gsl_set_error_handler(&Math::error_handle);
-        flag = false;
-    }
-}
+static int initer = []{ gsl_set_error_handler(&Math::error_handle); return 0;}();
+
 
 int Math::ellipse_ellipse_f(const gsl_vector *x, void *params, gsl_vector *f)
 {
@@ -314,7 +307,7 @@ double Math::solve_ellipse_foot(EllipseFootParameter &param, const double init_t
 
     const gsl_root_fsolver_type *t = gsl_root_fsolver_brent;
     gsl_root_fsolver *s = gsl_root_fsolver_alloc(t);
-    gsl_root_fsolver_set(s, &f, init_t - 1.5, init_t + 1.5);
+    gsl_root_fsolver_set(s, &f, init_t - Math::PI / 6, init_t + Math::PI / 6);
 
     int status = GSL_CONTINUE;
     int count = 0;
@@ -324,7 +317,7 @@ double Math::solve_ellipse_foot(EllipseFootParameter &param, const double init_t
         const double res = gsl_root_fsolver_root(s);
         const double lower = gsl_root_fsolver_x_lower(s);
         const double upper = gsl_root_fsolver_x_upper(s);
-        status = gsl_root_test_interval(lower, upper, 0, 0);
+        status = gsl_root_test_interval(lower, upper, 0, Math::EPSILON);
     }
 
     double res = gsl_root_fsolver_root(s);

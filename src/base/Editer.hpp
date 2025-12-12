@@ -135,9 +135,15 @@ public:
 
     bool fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius);
 
+    bool fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius0, const double radius1);
+
     bool fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius);
 
+    bool fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius0, const double radius1);
+
     bool fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1, const double radius);
+
+    bool fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1, const double radius0, const double radius1);
 
     bool chamfer(Geo::Polygon *shape, const Geo::Point &point, const double distance);
 

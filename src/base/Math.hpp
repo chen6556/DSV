@@ -7,11 +7,11 @@
 namespace Math
 {
     static const double EPSILON = 1e-14;
+    static const double PI = 3.14159265358979323846;
     static const int MAX_ITERATION = 10;
 
     void error_handle(const char *reason, const char *file, int line, int gsl_errno);
 
-    void init();
 
     struct EllipseParameter
     {

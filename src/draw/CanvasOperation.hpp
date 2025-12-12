@@ -537,7 +537,7 @@ namespace CanvasOperations
     class FilletOperation : public CanvasOperation
     {
     private:
-        double _radius = 0;
+        double _radius0 = 0, _radius1 = 0;
         Geo::Geometry *_object0 = nullptr;
         Geo::Geometry *_object1 = nullptr;
         Geo::Point _pos0, _pos1;

@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <array>
 #include <functional>
-
+#include <QDebug>
 #include <EarCut/EarCut.hpp>
 #include <clipper2/clipper.h>
 #include "base/Algorithm.hpp"
@@ -1221,7 +1221,7 @@ bool Geo::is_inside(const Point &start, const Point &end, const Triangle &triang
 
 bool Geo::is_inside(const Point &point, const Arc &arc)
 {
-    if (Geo::distance(point.x, point.y, arc.x, arc.y) != arc.radius)
+    if (std::abs(Geo::distance(point.x, point.y, arc.x, arc.y) - arc.radius) >= Geo::EPSILON)
     {
         return false;
     }
@@ -1262,15 +1262,8 @@ bool Geo::is_inside(const Triangle &triangle0, const Triangle &triangle1)
 
 bool Geo::is_parallel(const Point &point0, const Point &point1, const Point &point2, const Point &point3)
 {
-    if (point0.x == point1.x && point2.x == point3.x)
-    {
-        return true;
-    }
-    else
-    {
-        return ((point0.y - point1.y) * (point2.x - point3.x)) ==
-            ((point2.y - point3.y) * (point0.x - point1.x));
-    }
+    return ((point0.y - point1.y) * (point2.x - point3.x))
+        == ((point2.y - point3.y) * (point0.x - point1.x));
 }
 
 
@@ -1837,7 +1830,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
         polyline.append(bezier[i + order]);
         Geo::down_sampling(polyline, Geo::Bezier::default_down_sampling_value);
 
-        if (!Geo::is_intersected(polyline.bounding_rect(), point0, point1))
+        if (!infinite && !Geo::is_intersected(polyline.bounding_rect(), point0, point1))
         {
             continue;
         }
@@ -1893,7 +1886,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
                     {
                         coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                     }
-                    if (const double dis = Geo::distance(coord, point0, point1) * 1e9; dis < min_dis)
+                    if (const double dis = Geo::distance(coord, point0, point1, infinite) * 1e9; dis < min_dis)
                     {
                         min_dis = dis;
                         t = x;
@@ -6292,16 +6285,28 @@ int Geo::foot_point(const Ellipse &ellipse, const Point &point, std::vector<Poin
     parameter.b = -a * coord.x;
     parameter.c = aa - bb;
     std::vector<double> ts;
-    for (double t = 0; t < Geo::PI * 2; t += 0.2)
+    coord = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+    double values[2] = {parameter.a, 0};
+    for (double t = 0.0174; t <= Geo::PI * 2; t += 0.0175)
     {
-        if (const double t2 = Geo::rad_to_2PI(Math::solve_ellipse_foot(parameter, t)); std::find_if(ts.begin(),
-            ts.end(), [=](const double value) { return std::abs(value - t2) < Geo::EPSILON; }) == ts.end())
+        values[1] = parameter.a * std::cos(t) + parameter.b * std::sin(t) + parameter.c * std::sin(t) * std::cos(t);
+        if (values[0] * values[1] <= 0)
         {
-            coord = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
-            Geo::Point result(a * std::cos(t2), b * std::sin(t2));
-            output.emplace_back(Geo::to_coord(result, coord.x, coord.y, -angle));
-            ts.push_back(t2);
+            double t0 = Math::solve_ellipse_foot(parameter, t);
+            if (std::abs(parameter.a * std::cos(t0) + parameter.b * std::sin(t0)
+                + parameter.c * std::sin(t0) * std::cos(t0)) >= Geo::EPSILON)
+            {
+                continue;
+            }
+            t0 = Geo::rad_to_PI(t0);
+            if (std::find(ts.begin(), ts.end(), t0) == ts.end())
+            {
+                ts.push_back(t0);
+                Geo::Point result(a * std::cos(t0), b * std::sin(t0));
+                output.emplace_back(Geo::to_coord(result, coord.x, coord.y, -angle));
+            }
         }
+        values[0] = values[1];
     }
     return ts.size();
 }
@@ -6872,7 +6877,7 @@ int Geo::closest_point(const Ellipse &ellipse, const Point &point, std::vector<P
                 output.emplace_back(Geo::to_coord(Geo::Point(x0, y0), coord2.x, coord2.y, -angle));
                 return 1;
             }
-            else if (Geo::distance(x0, y0, coord.x, coord.y) < Geo::distance(x1, y1, coord.x, coord.y))
+            else if (Geo::distance(x0, y0, coord.x, coord.y) > Geo::distance(x1, y1, coord.x, coord.y))
             {
                 output.emplace_back(Geo::to_coord(Geo::Point(x1, y1), coord2.x, coord2.y, -angle));
                 return 1;
@@ -8545,6 +8550,65 @@ bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &po
     const double rad2 = Geo::angle(foot0, center, foot1) < 0 ? rad1 - Geo::PI : Geo::PI - rad1;
     const double vrad = std::atan2(vec.y, vec.x) + rad2 / 2;
     arc = Geo::Arc(foot0, center + Geo::Point(radius * std::cos(vrad), radius * std::sin(vrad)), foot1);
+    return true;
+}
+
+bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius0, const double radius1, Bezier &arc)
+{
+    if (radius0 <= 0 || radius1 <= 0)
+    {
+        return false;
+    }
+
+    Geo::Point center;
+    if (Geo::is_on_left(point0, point2, point1))
+    {
+        const Geo::Point vec0 = (point0 - point1).vertical().normalize() * radius0;
+        const Geo::Point vec1 = (point1 - point2).vertical().normalize() * radius1;
+        if (!Geo::is_intersected(point0 + vec0, point1 + vec0, point2 + vec1, point1 + vec1, center, true))
+        {
+            return false;
+        }
+        if (!(Geo::is_on_left(center, point2, point1) && Geo::is_on_left(center, point1, point0)))
+        {
+            return false;
+        }
+    }
+    else
+    {
+        const Geo::Point vec0 = (point1 - point0).vertical().normalize() * radius0;
+        const Geo::Point vec1 = (point2 - point1).vertical().normalize() * radius1;
+        if (!Geo::is_intersected(point0 + vec0, point1 + vec0, point2 + vec1, point1 + vec1, center, true))
+        {
+            return false;
+        }
+        if (!(Geo::is_on_left(center, point1, point2) && Geo::is_on_left(center, point0, point1)))
+        {
+            return false;
+        }
+    }
+
+    Geo::Point array0[3];
+    if (!Geo::foot_point(point0, point1, center, array0[0]))
+    {
+        return false;
+    }
+    Geo::Point array1[3];
+    if (!Geo::foot_point(point2, point1, center, array1[0]))
+    {
+        return false;
+    }
+    array0[2] = (array0[0] + point1) / 2;
+    array0[1] = (array0[0] + array0[2]) / 2;
+    array1[2] = (array1[0] + point1) / 2;
+    array1[1] = (array1[0] + array1[2]) / 2;
+    std::vector<Geo::Point> controls({array0[0], array0[1], array0[2]});
+    controls.emplace_back((array0[2] + array1[2]) / 2);
+    controls.emplace_back(array1[2]);
+    controls.emplace_back(array1[1]);
+    controls.emplace_back(array1[0]);
+
+    arc = Geo::Bezier(controls.begin(), controls.end(), 3, false);
     return true;
 }
 
