@@ -159,6 +159,8 @@ public:
 
     void down(Geo::Geometry *item);
 
+    void text_to_polylines(Text *text);
+
     void rotate(std::vector<Geo::Geometry *> objects, const double x, const double y, const double rad);
 
     // true:X false:Y

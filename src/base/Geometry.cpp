@@ -4110,6 +4110,43 @@ Arc::Arc(const double x_, const double y_, const double radius_, const double st
     update_shape(Circle::default_down_sampling_value);
 }
 
+Arc::Arc(const double x0, const double y0, const double x1, const double y1, const double bulge)
+{
+    assert(x0 != x1 || y0 != y1);
+    assert(-1 <= bulge && bulge <= 1 && bulge != 0);
+    control_points[0].x = x0, control_points[0].y = y0;
+    control_points[2].x = x1, control_points[2].y = y1;
+    radius = (Geo::distance(x0, y0, x1, y1) * (1 + std::pow(bulge, 2))) / (4 * std::abs(bulge));
+    {
+        const Geo::Point line(x1 - x0, y1 - y0);
+        const Geo::Point half_line = line / 2;
+        const double line_to_center_angle = Geo::PI / 2 - std::atan(bulge) * 2;
+        if (std::abs(line_to_center_angle) < Geo::EPSILON)
+        {
+            x = half_line.x + x0;
+            y = half_line.y + y0;
+        }
+        else
+        {
+            const Geo::Point point = half_line + Geo::Point(-half_line.y, half_line.x) * std::tan(line_to_center_angle);
+            x = point.x + x0;
+            y = point.y + y0;
+        }
+    }
+    if (bulge < 0)
+    {
+        control_points[1] = Geo::Point(x, y) + (control_points[2] - control_points[0]).vertical().normalize() * radius;
+    }
+    else
+    {
+        control_points[1] = Geo::Point(x, y) + (control_points[0] - control_points[2]).vertical().normalize() * radius;
+    }
+}
+
+Arc::Arc(const Point &point0, const Point &point1, const double bulge)
+    : Arc(point0.x, point0.y, point1.x, point1.y, bulge)
+{}
+
 Arc::Arc(const Arc &arc)
     : Geometry(arc), x(arc.x), y(arc.y), radius(arc.radius), _shape(arc._shape)
 {

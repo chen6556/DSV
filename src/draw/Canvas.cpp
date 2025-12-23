@@ -18,6 +18,7 @@ Canvas::~Canvas()
     delete _menu;
     delete _up;
     delete _down;
+    delete _text_to_polylines;
 }
 
 
@@ -31,8 +32,10 @@ void Canvas::init()
     _menu = new QMenu(this);
     _up = new QAction("Up");
     _down = new QAction("Down");
+    _text_to_polylines = new QAction("To Polylines");
     _menu->addAction(_up);
     _menu->addAction(_down);
+    _menu->addAction(_text_to_polylines);
 }
 
 void Canvas::bind_editer(Editer *editer)
@@ -803,6 +806,7 @@ void Canvas::add_geometry(Geo::Geometry *object)
 void Canvas::show_menu(Geo::Geometry *object)
 {
     refresh_selected_ibo(object);
+    _text_to_polylines->setVisible(dynamic_cast<Text *>(object) != nullptr);
     if (const QAction *a = _menu->exec(QCursor::pos()); a == _up)
     {
         _editer->up(object);
@@ -813,6 +817,12 @@ void Canvas::show_menu(Geo::Geometry *object)
     {
         _editer->down(object);
         refresh_vbo(object->type(), true);
+        refresh_selected_ibo();
+    }
+    else if (a == _text_to_polylines)
+    {
+        _editer->text_to_polylines(dynamic_cast<Text *>(object));
+        refresh_vbo({ Geo::Type::TEXT, Geo::Type::POLYLINE }, true);
         refresh_selected_ibo();
     }
 }
@@ -3138,6 +3148,7 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_t
     Geo::Polygon points;
     unsigned int offset;
     int string_index;
+    int width;
     QStringList strings;
 
     unsigned int data_len = 4104, data_count = 0;
@@ -3164,10 +3175,15 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_t
                 coord = text->center();
                 strings = text->text().split('\n');
                 string_index = 1;
+                width = 0;
+                for (const QString &string : strings)
+                {
+                    width = std::max(font_metrics.boundingRect(string).width(), width);
+                }
                 for (const QString &string : strings)
                 {
                     text_rect = font_metrics.boundingRect(string);
-                    path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
+                    path.addText(coord.x - width / 2, coord.y - text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
                 text->text_index = data_count;
@@ -3184,10 +3200,15 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_t
                         coord = text->center();
                         strings = text->text().split('\n');
                         string_index = 1;
+                        width = 0;
+                        for (const QString &string : strings)
+                        {
+                            width = std::max(font_metrics.boundingRect(string).width(), width);
+                        }
                         for (const QString &string : strings)
                         {
                             text_rect = font_metrics.boundingRect(string);
-                            path.addText(coord.x - text_rect.width() / 2, coord.y - text_rect.height()
+                            path.addText(coord.x - width / 2, coord.y - text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
                         text->text_index = data_count;

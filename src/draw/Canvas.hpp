@@ -60,6 +60,7 @@ private:
     QMenu *_menu = nullptr;
     QAction *_up = nullptr;
     QAction *_down = nullptr;
+    QAction *_text_to_polylines = nullptr;
 
 private:
     void init();

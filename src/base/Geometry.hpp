@@ -935,6 +935,10 @@ namespace Geo
 
         Arc(const double x, const double y, const double radius, const double start_angle, const double end_angle, const bool counterclockwise);
 
+        Arc(const double x0, const double y0, const double x1, const double y1, const double bulge);
+
+        Arc(const Point &point0, const Point &point1, const double bulge);
+
         Arc(const Arc &arc);
 
         Arc &operator=(const Arc &arc);

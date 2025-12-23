@@ -12,9 +12,14 @@ Text::Text(const double x, const double y, const int size, const QString &text)
     QFont font("SimSun");
     font.setPointSize(size);
     const QFontMetrics font_metrics(font);
-    const QRect rect = font_metrics.tightBoundingRect(_text);
-    int width = rect.width();
-    int height = rect.height();
+    int width = 0;
+    int height = 0;
+    for (const QString &txt : _text.split('\n'))
+    {
+        const QRect rect = font_metrics.tightBoundingRect(txt);
+        width = std::max(width, rect.width());
+        height += rect.height();
+    }
     if (width == 0)
     {
         width = 20;
@@ -60,9 +65,14 @@ void Text::set_text(const QString &str, const int size)
     QFont font("SimSun");
     font.setPointSize(size);
     const QFontMetrics font_metrics(font);
-    const QRect rect = font_metrics.tightBoundingRect(_text);
-    int width = rect.width();
-    int height = rect.height();
+    int width = 0;
+    int height = 0;
+    for (const QString &txt : _text.split('\n'))
+    {
+        const QRect rect = font_metrics.tightBoundingRect(txt);
+        width = std::max(width, rect.width());
+        height += rect.height();
+    }
     if (width == 0)
     {
         width = 20;
@@ -87,9 +97,14 @@ void Text::update_size(const int size)
     QFont font("SimSun");
     font.setPointSize(size);
     const QFontMetrics font_metrics(font);
-    const QRect rect = font_metrics.tightBoundingRect(_text);
-    int width = rect.width();
-    int height = rect.height();
+    int width = 0;
+    int height = 0;
+    for (const QString &txt : _text.split('\n'))
+    {
+        const QRect rect = font_metrics.tightBoundingRect(txt);
+        width = std::max(width, rect.width());
+        height += rect.height();
+    }
     if (width == 0)
     {
         width = 20;
