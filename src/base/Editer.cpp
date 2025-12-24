@@ -3179,7 +3179,7 @@ void Editer::up(Geo::Geometry *item)
         if (_graph->container_group(_current_group)[i] == item)
         {
             _graph->container_group(_current_group).pop(i);
-            _graph->container_group(_current_group).insert(++i, item);
+            _graph->container_group(_current_group).append(item);
             break;
         }
     }
@@ -3192,7 +3192,7 @@ void Editer::down(Geo::Geometry *item)
         if (_graph->container_group(_current_group)[i] == item)
         {
             _graph->container_group(_current_group).pop(i);
-            _graph->container_group(_current_group).insert(--i, item);
+            _graph->container_group(_current_group).insert(0, item);
             break;
         }
     }
