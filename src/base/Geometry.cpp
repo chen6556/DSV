@@ -3977,7 +3977,7 @@ Arc::Arc(const double x0, const double y0, const double x1, const double y1, con
     const double e = (x0 * x0 - x1 * x1 + y0 * y0 - y1 * y1) / 2;
     const double f = (x0 * x0 - x2 * x2 + y0 * y0 - y2 * y2) / 2;
     const double t = b * c - a * d;
-    assert(t != 0);
+    // assert(t != 0);
     x = (b * f - d * e) / t, y = (c * e - a * f) / t;
     radius = (std::hypot(x - x0, y - y0) + std::hypot(x - x1, y - y1) + std::hypot(x - x2, y - y2)) / 3;
     if ((x1 - x0) * (y2 - y1) > (y1 - y0) * (x2 - x1)) // 逆时针
