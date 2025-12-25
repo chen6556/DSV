@@ -145,6 +145,9 @@ public:
 
     bool fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1, const double radius0, const double radius1);
 
+    bool fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::Point &start, const Geo::Point &center,
+        const Geo::Point &end, const std::vector<std::tuple<size_t, double, double, double>> &tvalues);
+
     bool chamfer(Geo::Polygon *shape, const Geo::Point &point, const double distance);
 
     bool chamfer(Geo::Polyline *polyline, const Geo::Point &point, const double distance);

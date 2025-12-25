@@ -30,7 +30,7 @@ void CMDWidget::init()
         << "CCIRCLE" << "CHAMFER" << "CLOSE" << "COMBINATE" << "CONNECT" << "COPY"
         << "CPOLYGON" << "CUT" << "DCIRCLE" << "DELETE" << "DETACH" << "DIFFERENCE"
         << "ELLIPSE" << "ELLIPSEARC"
-        << "EXTEND" << "FILLET" << "FLIPX" << "FLIPY" << "GETPOINT"
+        << "EXTEND" << "FILLET" << "FREEFILLET" << "FLIPX" << "FLIPY" << "GETPOINT"
         << "IPOLYGON" << "INTERSECTION" << "LENGTH" << "LINEARRAY" << "MAIN" << "MIRROR"
         << "OFFSET" << "PASTE" << "PARC" << "PCIRCLE" << "POLYLINE" << "RECTANGLE"
         << "SEAARC" << "SERARC"
@@ -70,6 +70,7 @@ void CMDWidget::init()
         {CMD::EllipseArc_CMD, CanvasOperations::Tool::Ellipse1},
         {CMD::Mirror_CMD, CanvasOperations::Tool::Mirror}, {CMD::Trim_CMD, CanvasOperations::Tool::Trim},
         {CMD::Extend_CMD, CanvasOperations::Tool::Extend}, {CMD::Fillet_CMD, CanvasOperations::Tool::Fillet},
+        {CMD::FreeFillet_CMD, CanvasOperations::Tool::FreeFillet},
         {CMD::Chamfer_CMD, CanvasOperations::Tool::Chamfer}, {CMD::Split_CMD, CanvasOperations::Tool::Split},
         {CMD::Difference_CMD, CanvasOperations::Tool::PolygonDifference}};
 
@@ -85,7 +86,8 @@ void CMDWidget::init()
         {CanvasOperations::Tool::Ellipse1, CMD::EllipseArc_CMD},
         {CanvasOperations::Tool::Mirror, CMD::Mirror_CMD}, {CanvasOperations::Tool::Extend, CMD::Extend_CMD},
         {CanvasOperations::Tool::Trim, CMD::Trim_CMD}, {CanvasOperations::Tool::Split, CMD::Split_CMD},
-        {CanvasOperations::Tool::Fillet, CMD::Fillet_CMD}, {CanvasOperations::Tool::Chamfer, CMD::Chamfer_CMD},
+        {CanvasOperations::Tool::Fillet, CMD::Fillet_CMD}, {CanvasOperations::Tool::FreeFillet, CMD::FreeFillet_CMD},
+        {CanvasOperations::Tool::Chamfer, CMD::Chamfer_CMD},
         {CanvasOperations::Tool::PolygonDifference, CMD::Difference_CMD}, {CanvasOperations::Tool::Rotate, CMD::Rotate_CMD},
         {CanvasOperations::Tool::RingArray, CMD::RingArray_CMD}};
 
@@ -94,7 +96,7 @@ void CMDWidget::init()
         {CMD::Connect_CMD, "Connect"}, {CMD::Copy_CMD, "Copy"}, {CMD::Cut_CMD, "Cut"},
         {CMD::DCircle_CMD, "2-Point Circle"}, {CMD::Detach_CMD, "Detach"}, {CMD::Difference_CMD, "Difference"},
         {CMD::Ellipse_CMD, "Ellipse"}, {CMD::EllipseArc_CMD, "Ellipse Arc"},
-        {CMD::Extend_CMD, "Extend"}, {CMD::Fillet_CMD, "Fillet"},
+        {CMD::Extend_CMD, "Extend"}, {CMD::Fillet_CMD, "Fillet"}, {CMD::FreeFillet_CMD, "Free Fillet"},
         {CMD::Chamfer_CMD, "Chamfer"}, {CMD::PArc_CMD, "3-Point Arc"}, {CMD::SCAArc_CMD, "Start-Center-Angle Arc"},
         {CMD::SEAArc_CMD, "Start-End-Angle Arc"}, {CMD::SERArc_CMD, "Start-End-Radius Arc"},
         {CMD::FlipX_CMD, "Flip X"}, {CMD::FlipY_CMD, "Flip Y"}, {CMD::Intersection_CMD, "Intersection"},

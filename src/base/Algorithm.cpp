@@ -8612,6 +8612,37 @@ bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &po
     return true;
 }
 
+bool Geo::angle_to_arc(const Point &start, const Point &center, const Point &end, Bezier &arc)
+{
+    if (center == start || center == end || start == end)
+    {
+        return false;
+    }
+
+    const Geo::Point vec0((start - center).vertical()), vec1((center - end).vertical());
+    if (Geo::Point anchor; Geo::is_intersected(start, start + vec0, end, end + vec1, anchor, true))
+    {
+        Geo::Point array0[3], array1[3];
+        array0[0] = start, array1[0] = end;
+        array0[2] = (array0[0] + anchor) / 2;
+        array0[1] = (array0[0] + array0[2]) / 2;
+        array1[2] = (array1[0] + anchor) / 2;
+        array1[1] = (array1[0] + array1[2]) / 2;
+        std::vector<Geo::Point> controls({array0[0], array0[1], array0[2]});
+        controls.emplace_back((array0[2] + array1[2]) / 2);
+        controls.emplace_back(array1[2]);
+        controls.emplace_back(array1[1]);
+        controls.emplace_back(array1[0]);
+
+        arc = Geo::Bezier(controls.begin(), controls.end(), 3, false);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 
 Geo::Polyline Geo::arc_to_polyline(const Geo::Point &center, const double radius, double start_angle, double end_angle, const bool is_cw, const double down_sampling_value)
 {

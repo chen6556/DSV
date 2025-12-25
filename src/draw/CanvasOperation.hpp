@@ -37,6 +37,7 @@ namespace CanvasOperations
         RingArray, 
         PolygonDifference, 
         Fillet, 
+        FreeFillet, 
         Chamfer, 
         Rotate, 
         Trim, 
@@ -553,6 +554,28 @@ namespace CanvasOperations
     };
 
 
+    class FreeFilletOperation : public CanvasOperation
+    {
+    private:
+        double _pos[2];
+        Geo::Geometry *_object0 = nullptr;
+        Geo::Geometry *_object1 = nullptr;
+        std::vector<Geo::Point> _points;
+        std::vector<std::tuple<size_t, double, double, double>> _tvalues;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+
+        bool read_parameters(const double *params, const int count) override;
+
+        QString cmd_tips() const override;
+    };
+
+
     class ChamferOperation : public CanvasOperation
     {
     private:
@@ -605,4 +628,5 @@ namespace CanvasOperations
     public:
         bool mouse_press(QMouseEvent *event) override;
     };
+
 }

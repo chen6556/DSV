@@ -62,6 +62,7 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::RingArray)] = new RingArrayOperation();
     operations[static_cast<int>(Tool::PolygonDifference)] = new PolygonDifferenceOperation();
     operations[static_cast<int>(Tool::Fillet)] = new FilletOperation();
+    operations[static_cast<int>(Tool::FreeFillet)] = new FreeFilletOperation();
     operations[static_cast<int>(Tool::Chamfer)] = new ChamferOperation();
     operations[static_cast<int>(Tool::Rotate)] = new RotateOperation();
     operations[static_cast<int>(Tool::Trim)] = new TrimOperation();
@@ -3752,6 +3753,208 @@ QString FilletOperation::cmd_tips() const
 }
 
 
+bool FreeFilletOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        clicked_object = editer->select(real_pos[0], real_pos[1], true);
+        if ((_object0 == nullptr || _object1 == nullptr) && clicked_object == nullptr)
+        {
+            return false;
+        }
+        if (_object0 == nullptr)
+        {
+            _object0 = clicked_object;
+            canvas->refresh_selected_ibo();
+            return true;
+        }
+        else if (_object1 == nullptr)
+        {
+            if (clicked_object != _object0)
+            {
+                _object1 = clicked_object;
+                _object0->is_selected = true;
+                canvas->refresh_selected_ibo();
+                return true;
+            }
+        }
+        else
+        {
+            if (editer->fillet(_object0, _object1, _points.front(),
+                Geo::Point(_pos[0], _pos[1]), _points.back(), _tvalues))
+            {
+                canvas->refresh_vbo(Geo::Type::BEZIER, false);
+            }
+            reset();
+            tool_lines_count = 0;
+            tool[0] = Tool::Select;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool FreeFilletOperation::mouse_move(QMouseEvent *event)
+{
+    if (_object0 != nullptr && _object1 != nullptr)
+    {
+        _pos[0] = real_pos[0], _pos[1] = real_pos[1];
+        tool_lines[tool_lines_count++] = _pos[0];
+        tool_lines[tool_lines_count++] = _pos[1];
+        ++tool_lines_count;
+
+        _tvalues.clear();
+        _points.clear();
+        const Geo::Point anchor(_pos[0], _pos[1]);
+        const Geo::Geometry *objects[2] = { _object0, _object1 };
+        for (const Geo::Geometry *object : objects)
+        {
+            switch (object->type())
+            {
+            case Geo::Type::ARC:
+                {
+                    const Geo::Arc *arc = static_cast<const Geo::Arc *>(object);
+                    const Geo::Circle circle(arc->x, arc->y, arc->radius);
+                    if (Geo::Point point0, point1; Geo::foot_point(circle, anchor, point0, point1))
+                    {
+                        if (Geo::is_inside(point0, *arc) && Geo::is_inside(point1, *arc))
+                        {
+                            _points.emplace_back(Geo::distance(anchor, point0) <= Geo::distance(anchor, point1) ? point0 : point1);
+                        }
+                        else if (Geo::is_inside(point0, *arc))
+                        {
+                            _points.emplace_back(point0);
+                        }
+                        else if (Geo::is_inside(point1, *arc))
+                        {
+                            _points.emplace_back(point1);
+                        }
+                    }
+                    break;
+                }
+            case Geo::Type::BEZIER:
+                {
+                    std::vector<std::tuple<size_t, double, double, double>> tvalues;
+                    if (std::vector<Geo::Point> points; Geo::foot_point(anchor, *static_cast<const Geo::Bezier *>(object), points, &tvalues) && !points.empty())
+                    {
+                        _tvalues.emplace_back(*std::min_element(tvalues.begin(), tvalues.end(), [&](const auto &a, const auto &b)
+                            { return Geo::distance(std::get<2>(a), std::get<3>(a), anchor.x, anchor.y) <
+                                Geo::distance(std::get<2>(b), std::get<3>(b), anchor.x, anchor.y); }));
+                        _points.emplace_back(std::get<2>(_tvalues.back()), std::get<3>(_tvalues.back()));
+                    }
+                    break;
+                }
+            case Geo::Type::BSPLINE:
+                {
+                    std::vector<std::tuple<double, double, double>> tvalues;
+                    if (std::vector<Geo::Point> points; Geo::foot_point(anchor, *static_cast<const Geo::BSpline *>(object), points, &tvalues) && !points.empty())
+                    {
+                        const auto it = std::min_element(tvalues.begin(), tvalues.end(), [&](const auto &a, const auto &b)
+                            { return Geo::distance(std::get<1>(a), std::get<2>(a), anchor.x, anchor.y) <
+                                Geo::distance(std::get<1>(b), std::get<2>(b), anchor.x, anchor.y); });
+                        _tvalues.emplace_back(0, std::get<0>(*it), std::get<1>(*it), std::get<2>(*it));
+                        _points.emplace_back(std::get<2>(_tvalues.back()), std::get<3>(_tvalues.back()));
+                    }
+                    break;
+                }
+            case Geo::Type::CIRCLE:
+                if (Geo::Point point0, point1; Geo::foot_point(*static_cast<const Geo::Circle *>(object), anchor, point0, point1))
+                {
+                    _points.emplace_back(Geo::distance(anchor, point0) <= Geo::distance(anchor, point1) ? point0 : point1);
+                }
+                break;
+            case Geo::Type::ELLIPSE:
+                if (std::vector<Geo::Point> points; Geo::foot_point(*static_cast<const Geo::Ellipse *>(object), anchor, points) && !points.empty())
+                {
+                    _points.emplace_back(*std::min_element(points.begin(), points.end(), [&](const Geo::Point &a,
+                        const Geo::Point &b) { return Geo::distance(a, anchor) < Geo::distance(b, anchor); }));
+                }
+                break;
+            case Geo::Type::POLYGON:
+            case Geo::Type::POLYLINE:
+                {
+                    const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
+                    std::vector<Geo::Point> points;
+                    for (size_t i = 1, count = polyline->size(); i < count; ++i)
+                    {
+                        if (Geo::Point point; Geo::foot_point(polyline->at(i - 1), polyline->at(i), anchor, point, false))
+                        {
+                            points.emplace_back(point);
+                        }
+                    }
+                    if (!points.empty())
+                    {
+                        _points.emplace_back(*std::min_element(points.begin(), points.end(), [&](const Geo::Point &a,
+                            const Geo::Point &b) { return Geo::distance(a, anchor) < Geo::distance(b, anchor); }));
+                    }
+                    break;
+                }
+            default:
+                break;
+            }
+        }
+
+        tool_lines_count = 0;
+        if (_points.size() > 0)
+        {
+            tool_lines[tool_lines_count++] = _pos[0];
+            tool_lines[tool_lines_count++] = _pos[1];
+            ++tool_lines_count;
+            tool_lines[tool_lines_count++] = _points.front().x;
+            tool_lines[tool_lines_count++] = _points.front().y;
+            ++tool_lines_count;
+        }
+        if (_points.size() > 1)
+        {
+            tool_lines[tool_lines_count++] = _pos[0];
+            tool_lines[tool_lines_count++] = _pos[1];
+            ++tool_lines_count;
+            tool_lines[tool_lines_count++] = _points.back().x;
+            tool_lines[tool_lines_count++] = _points.back().y;
+            ++tool_lines_count;
+        }
+        return true;
+    }
+    return false;
+}
+
+void FreeFilletOperation::reset()
+{
+    _object0 = _object1 = nullptr;
+    _tvalues.clear();
+    _points.clear();
+}
+
+bool FreeFilletOperation::read_parameters(const double *params, const int count)
+{
+    if (count >= 2 && _object0 != nullptr && _object1 != nullptr)
+    {
+        if (editer->fillet(_object0, _object1, _points.front(),
+            Geo::Point(params[0], params[1]), _points.back(), _tvalues))
+        {
+            canvas->refresh_vbo(Geo::Type::BEZIER, false);
+        }
+        reset();
+        tool_lines_count = 0;
+        tool[0] = Tool::Select;
+        return true;
+    }
+    return false;
+}
+
+QString FreeFilletOperation::cmd_tips() const
+{
+    if (_object0 != nullptr && _object1 != nullptr)
+    {
+        return "(x, y):";
+    }
+    else
+    {
+        return QString();
+    }
+}
+
+
 bool ChamferOperation::mouse_press(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
@@ -4099,6 +4302,7 @@ bool SplitOperation::mouse_press(QMouseEvent *event)
         return false;
     }
 }
+
 
 
 

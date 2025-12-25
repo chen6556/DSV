@@ -22,7 +22,8 @@ public:
         PArc_CMD, SCAArc_CMD, SEAArc_CMD, SERArc_CMD, Ellipse_CMD, EllipseArc_CMD, 
         Rectangle_CMD, CPolygon_CMD, IPolygon_CMD, BSpline_CMD, Bezier_CMD, Text_CMD,
         Connect_CMD, Close_CMD, Combinate_CMD, Detach_CMD, Rotate_CMD, FlipX_CMD, FlipY_CMD,
-        Mirror_CMD, Offset_CMD, Scale_CMD, Fillet_CMD, Chamfer_CMD, Trim_CMD, Extend_CMD, Split_CMD,
+        Mirror_CMD, Offset_CMD, Scale_CMD, Fillet_CMD, FreeFillet_CMD, Chamfer_CMD,
+        Trim_CMD, Extend_CMD, Split_CMD,
         Union_CMD, Intersection_CMD, Difference_CMD, XOR_CMD, LineArray_CMD, RingArray_CMD};
 
     enum class SETTING {Absolute_SETTING, Relative_SETTING};

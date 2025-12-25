@@ -895,7 +895,10 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
         case 0: // fillet
             ui->cmd_widget->work(CMDWidget::CMD::Fillet_CMD);
             break;
-        case 1: // chamfer
+        case 1: // free fillet
+            ui->cmd_widget->work(CMDWidget::CMD::FreeFillet_CMD);
+            break;
+        case 2: // chamfer
             ui->cmd_widget->work(CMDWidget::CMD::Chamfer_CMD);
             break;
         default:

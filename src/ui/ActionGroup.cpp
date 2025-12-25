@@ -164,6 +164,10 @@ void ActionGroup::init_fillet_menu()
     _fillet_menu->addAction(fillet);
     ui->fillet_btn->setDefaultAction(fillet);
 
+    QAction *free_fillet = new QAction(QIcon(":/icons/free_fillet_btn.png"),
+        "Free Fillet", ui->fillet_btn);
+    _fillet_menu->addAction(free_fillet);
+
     QAction *chamfer = new QAction(QIcon(":/icons/chamfer_btn.png"),
         "Chamfer", ui->fillet_btn);
     _fillet_menu->addAction(chamfer);

@@ -2849,6 +2849,25 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
     return true;
 }
 
+bool Editer::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::Point &start, const Geo::Point &center,
+    const Geo::Point &end, const std::vector<std::tuple<size_t, double, double, double>> &tvalues)
+{
+    if (object0 == object1 || start == center || center == end || start == end)
+    {
+        return false;
+    }
+
+    if (Geo::Bezier arc(3); Geo::angle_to_arc(start, center, end, arc))
+    {
+        
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 bool Editer::chamfer(Geo::Polygon *shape, const Geo::Point &point, const double distance)
 {
     if (distance <= 0)
