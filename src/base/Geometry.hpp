@@ -854,6 +854,8 @@ namespace Geo
     class QuadBSpline : public BSpline
     {
     public:
+        QuadBSpline() = default;
+
         QuadBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const bool is_path_points);
 
         QuadBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const std::vector<double> &knots, const bool is_path_points);
@@ -886,6 +888,8 @@ namespace Geo
     class CubicBSpline : public BSpline
     {
     public:
+        CubicBSpline() = default;
+
         CubicBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const bool is_path_points);
 
         CubicBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const std::vector<double> &knots, const bool is_path_points);

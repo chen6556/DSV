@@ -3764,13 +3764,18 @@ bool FreeFilletOperation::mouse_press(QMouseEvent *event)
         }
         if (_object0 == nullptr)
         {
-            _object0 = clicked_object;
-            canvas->refresh_selected_ibo();
-            return true;
+            if (const Geo::Type type = clicked_object->type(); type == Geo::Type::ARC ||
+                type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE || type == Geo::Type::POLYLINE)
+            {
+                _object0 = clicked_object;
+                canvas->refresh_selected_ibo();
+                return true;
+            }
         }
         else if (_object1 == nullptr)
         {
-            if (clicked_object != _object0)
+            if (const Geo::Type type = clicked_object->type(); clicked_object != _object0 && (type == Geo::Type::ARC
+                || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE || type == Geo::Type::POLYLINE))
             {
                 _object1 = clicked_object;
                 _object0->is_selected = true;
@@ -3783,7 +3788,12 @@ bool FreeFilletOperation::mouse_press(QMouseEvent *event)
             if (editer->fillet(_object0, _object1, _points.front(),
                 Geo::Point(_pos[0], _pos[1]), _points.back(), _tvalues))
             {
-                canvas->refresh_vbo(Geo::Type::BEZIER, false);
+                std::set<Geo::Type> types;
+                types.insert(Geo::Type::BEZIER);
+                types.insert(_object0->type());
+                types.insert(_object1->type());
+                canvas->refresh_vbo(types, false);
+                canvas->refresh_selected_ibo();
             }
             reset();
             tool_lines_count = 0;
@@ -3857,35 +3867,24 @@ bool FreeFilletOperation::mouse_move(QMouseEvent *event)
                     }
                     break;
                 }
-            case Geo::Type::CIRCLE:
-                if (Geo::Point point0, point1; Geo::foot_point(*static_cast<const Geo::Circle *>(object), anchor, point0, point1))
-                {
-                    _points.emplace_back(Geo::distance(anchor, point0) <= Geo::distance(anchor, point1) ? point0 : point1);
-                }
-                break;
-            case Geo::Type::ELLIPSE:
-                if (std::vector<Geo::Point> points; Geo::foot_point(*static_cast<const Geo::Ellipse *>(object), anchor, points) && !points.empty())
-                {
-                    _points.emplace_back(*std::min_element(points.begin(), points.end(), [&](const Geo::Point &a,
-                        const Geo::Point &b) { return Geo::distance(a, anchor) < Geo::distance(b, anchor); }));
-                }
-                break;
-            case Geo::Type::POLYGON:
             case Geo::Type::POLYLINE:
                 {
                     const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
-                    std::vector<Geo::Point> points;
+                    std::vector<std::tuple<size_t, double, double>> points;
                     for (size_t i = 1, count = polyline->size(); i < count; ++i)
                     {
                         if (Geo::Point point; Geo::foot_point(polyline->at(i - 1), polyline->at(i), anchor, point, false))
                         {
-                            points.emplace_back(point);
+                            points.emplace_back(i, point.x, point.y);
                         }
                     }
                     if (!points.empty())
                     {
-                        _points.emplace_back(*std::min_element(points.begin(), points.end(), [&](const Geo::Point &a,
-                            const Geo::Point &b) { return Geo::distance(a, anchor) < Geo::distance(b, anchor); }));
+                        const auto it = std::min_element(points.begin(), points.end(), [&](const auto &a, const auto &b) 
+                            { return Geo::distance(std::get<1>(a), std::get<2>(a), anchor.x, anchor.y) <
+                                Geo::distance(std::get<1>(b), std::get<2>(b), anchor.x, anchor.y); });
+                        _points.emplace_back(std::get<1>(*it), std::get<2>(*it));
+                        _tvalues.emplace_back(std::get<0>(*it), 0, std::get<1>(*it), std::get<2>(*it));
                     }
                     break;
                 }
@@ -3944,13 +3943,17 @@ bool FreeFilletOperation::read_parameters(const double *params, const int count)
 
 QString FreeFilletOperation::cmd_tips() const
 {
-    if (_object0 != nullptr && _object1 != nullptr)
+    if (_object0 == nullptr)
     {
-        return "(x, y):";
+        return "Select first object.";
+    }
+    else if (_object1 == nullptr)
+    {
+        return "Select second object.";
     }
     else
     {
-        return QString();
+        return "(x, y):";
     }
 }
 

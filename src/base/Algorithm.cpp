@@ -8622,11 +8622,20 @@ bool Geo::angle_to_arc(const Point &start, const Point &center, const Point &end
     const Geo::Point vec0((start - center).vertical()), vec1((center - end).vertical());
     if (Geo::Point anchor; Geo::is_intersected(start, start + vec0, end, end + vec1, anchor, true))
     {
+        const double radius0 = Geo::distance(center, start), radius1 = Geo::distance(center, end);
         Geo::Point array0[3], array1[3];
         array0[0] = start, array1[0] = end;
         array0[2] = (array0[0] + anchor) / 2;
+        if (Geo::distance(array0[0], array0[2]) > radius0 * 2.4)
+        {
+            array0[2] = array0[0] + (array0[2] - array0[0]).normalize() * radius0 * 2.4;
+        }
         array0[1] = (array0[0] + array0[2]) / 2;
         array1[2] = (array1[0] + anchor) / 2;
+        if (Geo::distance(array1[0], array1[2]) > radius1 * 2.4)
+        {
+            array1[2] = array1[0] + (array1[2] - array1[0]).normalize() * radius1 * 2.4;
+        }
         array1[1] = (array1[0] + array1[2]) / 2;
         std::vector<Geo::Point> controls({array0[0], array0[1], array0[2]});
         controls.emplace_back((array0[2] + array1[2]) / 2);

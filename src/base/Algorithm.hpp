@@ -104,7 +104,7 @@ namespace Geo
     // 判断线段是否与椭圆相交并尝试获取交点,返回交点数量
     int is_intersected(const Point &point0, const Point &point1, const Ellipse &ellipse, Point &output0, Point &output1, const bool infinite = false);
 
-    // 判断线段是否与圆弧相机并尝试获取交点,返回交点数量
+    // 判断线段是否与圆弧相交并尝试获取交点,返回交点数量
     int is_intersected(const Point &point0, const Point &point1, const Arc &arc, Point &output0, Point &output1, const bool infinite = false);
 
     // [数值解]计算贝塞尔曲线与直线的交点,<index, t, x, y>
