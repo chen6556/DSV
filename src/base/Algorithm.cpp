@@ -12861,3 +12861,44 @@ void Geo::down_sampling(Geo::Polyline &points, const double distance)
 		}
 	}
 }
+
+
+Geo::BSpline *Geo::bezier_to_bspline(const Geo::Bezier &bezier)
+{
+    switch (bezier.order())
+    {
+    case 3:
+        {
+            std::vector<double> knots(4, 0);
+            int value = 1;
+            for (size_t i = 1, count = bezier.size() / 3; i < count; ++i, ++value)
+            {
+                knots.push_back(value);
+                knots.push_back(value);
+                knots.push_back(value);
+            }
+            knots.push_back(value);
+            knots.push_back(value);
+            knots.push_back(value);
+            knots.push_back(value);
+            return new Geo::CubicBSpline(bezier.begin(), bezier.end(), knots, false);
+        }
+    case 2:
+        {
+            std::vector<double> knots(3, 0);
+            int value = 1;
+            for (size_t i = 1, count = bezier.size() / 2; i < count; ++i, ++value)
+            {
+                knots.push_back(value);
+                knots.push_back(value);
+            }
+            knots.push_back(value);
+            knots.push_back(value);
+            knots.push_back(value);
+            return new Geo::QuadBSpline(bezier.begin(), bezier.end(), knots, false);
+        }
+        break;
+    default:
+        return nullptr;
+    }
+}

@@ -447,4 +447,6 @@ namespace Geo
     bool merge_ear_cut_triangles(const std::vector<Triangle> &triangles, std::vector<Polygon> &polygons);
 
     void down_sampling(Geo::Polyline &points, const double distance);
+
+    BSpline *bezier_to_bspline(const Geo::Bezier &bezier);
 }

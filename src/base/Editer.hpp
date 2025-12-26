@@ -162,8 +162,6 @@ public:
 
     void down(Geo::Geometry *item);
 
-    void text_to_polylines(Text *text);
-
     void rotate(std::vector<Geo::Geometry *> objects, const double x, const double y, const double rad);
 
     // true:X false:Y
@@ -201,6 +199,11 @@ public:
 	void auto_layering();
 
     void auto_connect();
+
+
+    void text_to_polylines(Text *text);
+
+    void bezier_to_bspline(Geo::Bezier *bezier);
 
 private:
     void select_subfunc(const Geo::AABBRect &rect, const size_t start, const size_t end, std::vector<Geo::Geometry *> *result);

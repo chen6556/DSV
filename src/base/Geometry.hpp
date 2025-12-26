@@ -900,8 +900,6 @@ namespace Geo
 
         void update_control_points() override;
 
-        static void update_path_points(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p);
-
         void update_shape(const double step, const double down_sampling_value) override;
 
         CubicBSpline *clone() const override;

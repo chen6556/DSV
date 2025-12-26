@@ -3770,89 +3770,6 @@ void Editer::down(Geo::Geometry *item)
     }
 }
 
-void Editer::text_to_polylines(Text *text)
-{
-    if (text == nullptr)
-    {
-        return;
-    }
-    std::ifstream cfile("./fonts/HZFS.SHX", std::ios::binary);
-    std::ifstream efile("./fonts/ISO.SHX", std::ios::binary);
-    if (!cfile.is_open() || !efile.is_open())
-    {
-        return;
-    }
-
-    SHXReader::SHXFont cfont(&cfile), efont(&efile);
-    Combination *combination = new Combination();
-    const std::string result = TextEncoding::uft8_to_gbk(text->text().toStdString());
-    for (int i = 0, init_x = text->bounding_rect().left(), x = text->bounding_rect().left(),
-        y = text->bounding_rect().top() - GlobalSetting::setting().text_size,
-        count = result.length(), font_size = GlobalSetting::setting().text_size; i < count; ++i)
-    {
-        if (result[i] < 0)
-        {
-            const int code = (static_cast<uint8_t>(result[i]) << 8) | static_cast<uint8_t>(result[++i]);
-            SHXReader::SHXShape shape = cfont.char_shape(code, font_size);
-            for (Geo::Polyline &polyline : shape.polylines)
-            {
-                polyline.translate(x, y);
-                combination->append(new Geo::Polyline(polyline));
-            }
-            if (shape.polylines.empty())
-            {
-                x += font_size;
-            }
-            else
-            {
-                shape.update_bbox();
-                x = shape.bbox.max_x + font_size / 8;
-            }
-        }
-        else
-        {
-            SHXReader::SHXShape shape = efont.char_shape(result[i], font_size / 2);
-            for (Geo::Polyline &polyline : shape.polylines)
-            {
-                polyline.translate(x, y);
-                combination->append(new Geo::Polyline(polyline));
-            }
-            if (shape.polylines.empty())
-            {
-                switch (result[i])
-                {
-                case '\n':
-                    y -= font_size;
-                    y -= (font_size / 10);
-                    x = init_x;
-                    break;
-                case '\t':
-                    x += font_size;
-                    break;
-                default:
-                    x += (font_size / 2);
-                    break;
-                }
-            }
-            else
-            {
-                shape.update_bbox();
-                x = shape.bbox.max_x + font_size / 8;
-            }
-        }
-    }
-    combination->update_border();
-    const size_t index = std::distance(_graph->container_group(_current_group).begin(),
-        std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), text));
-    _graph->container_group(_current_group).pop(index);
-    _graph->container_group(_current_group).insert(index, combination);
-    _graph->modified = true;
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-    add_items.emplace_back(combination, _current_group, index);
-    remove_items.emplace_back(text, _current_group, index);
-    _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
-}
-
 void Editer::rotate(std::vector<Geo::Geometry *> objects, const double x, const double y, const double rad)
 {
     for (Geo::Geometry *geo : objects)
@@ -7620,6 +7537,110 @@ void Editer::auto_connect()
                 break;
             }
         }
+    }
+}
+
+
+void Editer::text_to_polylines(Text *text)
+{
+    if (text == nullptr)
+    {
+        return;
+    }
+    std::ifstream cfile("./fonts/HZFS.SHX", std::ios::binary);
+    std::ifstream efile("./fonts/ISO.SHX", std::ios::binary);
+    if (!cfile.is_open() || !efile.is_open())
+    {
+        return;
+    }
+
+    SHXReader::SHXFont cfont(&cfile), efont(&efile);
+    Combination *combination = new Combination();
+    const std::string result = TextEncoding::uft8_to_gbk(text->text().toStdString());
+    for (int i = 0, init_x = text->bounding_rect().left(), x = text->bounding_rect().left(),
+        y = text->bounding_rect().top() - GlobalSetting::setting().text_size,
+        count = result.length(), font_size = GlobalSetting::setting().text_size; i < count; ++i)
+    {
+        if (result[i] < 0)
+        {
+            const int code = (static_cast<uint8_t>(result[i]) << 8) | static_cast<uint8_t>(result[++i]);
+            SHXReader::SHXShape shape = cfont.char_shape(code, font_size);
+            for (Geo::Polyline &polyline : shape.polylines)
+            {
+                polyline.translate(x, y);
+                combination->append(new Geo::Polyline(polyline));
+            }
+            if (shape.polylines.empty())
+            {
+                x += font_size;
+            }
+            else
+            {
+                shape.update_bbox();
+                x = shape.bbox.max_x + font_size / 8;
+            }
+        }
+        else
+        {
+            SHXReader::SHXShape shape = efont.char_shape(result[i], font_size / 2);
+            for (Geo::Polyline &polyline : shape.polylines)
+            {
+                polyline.translate(x, y);
+                combination->append(new Geo::Polyline(polyline));
+            }
+            if (shape.polylines.empty())
+            {
+                switch (result[i])
+                {
+                case '\n':
+                    y -= font_size;
+                    y -= (font_size / 10);
+                    x = init_x;
+                    break;
+                case '\t':
+                    x += font_size;
+                    break;
+                default:
+                    x += (font_size / 2);
+                    break;
+                }
+            }
+            else
+            {
+                shape.update_bbox();
+                x = shape.bbox.max_x + font_size / 8;
+            }
+        }
+    }
+    combination->update_border();
+    const size_t index = std::distance(_graph->container_group(_current_group).begin(),
+        std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), text));
+    _graph->container_group(_current_group).pop(index);
+    _graph->container_group(_current_group).insert(index, combination);
+    _graph->modified = true;
+    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    add_items.emplace_back(combination, _current_group, index);
+    remove_items.emplace_back(text, _current_group, index);
+    _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+}
+
+void Editer::bezier_to_bspline(Geo::Bezier *bezier)
+{
+    if (bezier == nullptr)
+    {
+        return;
+    }
+    if (Geo::BSpline *bspline = Geo::bezier_to_bspline(*bezier))
+    {
+        const size_t index = std::distance(_graph->container_group(_current_group).begin(),
+            std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), bezier));
+        _graph->container_group(_current_group).pop(index);
+        _graph->container_group(_current_group).insert(index, bspline);
+        _graph->modified = true;
+        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+        add_items.emplace_back(bspline, _current_group, index);
+        remove_items.emplace_back(bezier, _current_group, index);
+        _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
     }
 }
 

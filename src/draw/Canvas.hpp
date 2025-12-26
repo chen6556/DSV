@@ -61,6 +61,7 @@ private:
     QAction *_up = nullptr;
     QAction *_down = nullptr;
     QAction *_text_to_polylines = nullptr;
+    QAction *_bezier_to_bspline = nullptr;
 
 private:
     void init();

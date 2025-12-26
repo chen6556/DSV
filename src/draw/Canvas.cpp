@@ -33,9 +33,11 @@ void Canvas::init()
     _up = new QAction("Up");
     _down = new QAction("Down");
     _text_to_polylines = new QAction("To Polylines");
+    _bezier_to_bspline = new QAction("To BSpline");
     _menu->addAction(_up);
     _menu->addAction(_down);
     _menu->addAction(_text_to_polylines);
+    _menu->addAction(_bezier_to_bspline);
 }
 
 void Canvas::bind_editer(Editer *editer)
@@ -807,6 +809,7 @@ void Canvas::show_menu(Geo::Geometry *object)
 {
     refresh_selected_ibo(object);
     _text_to_polylines->setVisible(dynamic_cast<Text *>(object) != nullptr);
+    _bezier_to_bspline->setVisible(dynamic_cast<Geo::Bezier *>(object) != nullptr);
     if (const QAction *a = _menu->exec(QCursor::pos()); a == _up)
     {
         _editer->up(object);
@@ -823,6 +826,12 @@ void Canvas::show_menu(Geo::Geometry *object)
     {
         _editer->text_to_polylines(dynamic_cast<Text *>(object));
         refresh_vbo({ Geo::Type::TEXT, Geo::Type::POLYLINE }, true);
+        refresh_selected_ibo();
+    }
+    else if (a == _bezier_to_bspline)
+    {
+        _editer->bezier_to_bspline(dynamic_cast<Geo::Bezier *>(object));
+        refresh_vbo({ Geo::Type::BEZIER, Geo::Type::BSPLINE }, true);
         refresh_selected_ibo();
     }
 }
