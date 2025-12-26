@@ -3928,10 +3928,23 @@ bool FreeFilletOperation::read_parameters(const double *params, const int count)
 {
     if (count >= 2 && _object0 != nullptr && _object1 != nullptr)
     {
+        if (params[0] != real_pos[0] || params[1] != real_pos[1])
+        {
+            const double pos[2] = { real_pos[0], real_pos[1] };
+            real_pos[0] = params[0], real_pos[1] = params[1];
+            mouse_move(nullptr);
+            real_pos[0] = pos[0], real_pos[1] = pos[1];
+        }
+
         if (editer->fillet(_object0, _object1, _points.front(),
             Geo::Point(params[0], params[1]), _points.back(), _tvalues))
         {
-            canvas->refresh_vbo(Geo::Type::BEZIER, false);
+            std::set<Geo::Type> types;
+            types.insert(Geo::Type::BEZIER);
+            types.insert(_object0->type());
+            types.insert(_object1->type());
+            canvas->refresh_vbo(types, false);
+            canvas->refresh_selected_ibo();
         }
         reset();
         tool_lines_count = 0;
