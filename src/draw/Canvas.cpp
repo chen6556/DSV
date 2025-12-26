@@ -831,6 +831,7 @@ void Canvas::show_menu(Geo::Geometry *object)
     else if (a == _bezier_to_bspline)
     {
         _editer->bezier_to_bspline(dynamic_cast<Geo::Bezier *>(object));
+        CanvasOperations::CanvasOperation::tool_lines_count = 0;
         refresh_vbo({ Geo::Type::BEZIER, Geo::Type::BSPLINE }, true);
         refresh_selected_ibo();
     }
