@@ -4324,9 +4324,9 @@ bool BlendOperation::mouse_press(QMouseEvent *event)
         }
         else
         {
-            if (const Geo::Type type = clicked_object->type(); clicked_object != _object0 && (type == Geo::Type::ARC
+            if (const Geo::Type type = clicked_object->type(); type == Geo::Type::ARC
                 || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE || type == Geo::Type::POLYLINE ||
-                (type == Geo::Type::ELLIPSE && static_cast<Geo::Ellipse *>(clicked_object)->is_arc())))
+                (type == Geo::Type::ELLIPSE && static_cast<Geo::Ellipse *>(clicked_object)->is_arc()))
             {
                 _pos[1].x = real_pos[0];
                 _pos[1].y = real_pos[1];
