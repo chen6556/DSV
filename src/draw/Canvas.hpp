@@ -61,9 +61,14 @@ private:
     QAction *_up = nullptr;
     QAction *_down = nullptr;
     QAction *_text_to_polylines = nullptr;
+    QAction *_bezier_to_bspline = nullptr;
+    QAction *_bspline_to_bezier = nullptr;
+    QAction *_change_bspline_model = nullptr;
 
 private:
     void init();
+
+    void init_menu();
 
 protected:
     void initializeGL();

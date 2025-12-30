@@ -37,11 +37,13 @@ namespace CanvasOperations
         RingArray, 
         PolygonDifference, 
         Fillet, 
+        FreeFillet, 
         Chamfer, 
         Rotate, 
         Trim, 
         Extend, 
         Split, 
+        Blend, 
 
         End
     };
@@ -99,6 +101,8 @@ namespace CanvasOperations
         static void check_tool_lines_size();
 
         static void check_tool_lines_size(const size_t count);
+
+        static void refresh_tool_lines(const Geo::Geometry *object);
 
         virtual bool mouse_press(QMouseEvent *event);
 
@@ -553,6 +557,28 @@ namespace CanvasOperations
     };
 
 
+    class FreeFilletOperation : public CanvasOperation
+    {
+    private:
+        double _pos[2];
+        Geo::Geometry *_object0 = nullptr;
+        Geo::Geometry *_object1 = nullptr;
+        std::vector<Geo::Point> _points;
+        std::vector<std::tuple<size_t, double, double, double>> _tvalues;
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+
+        bool read_parameters(const double *params, const int count) override;
+
+        QString cmd_tips() const override;
+    };
+
+
     class ChamferOperation : public CanvasOperation
     {
     private:
@@ -604,5 +630,21 @@ namespace CanvasOperations
     {
     public:
         bool mouse_press(QMouseEvent *event) override;
+    };
+
+
+    class BlendOperation : public CanvasOperation
+    {
+    private:
+        Geo::Geometry *_object0 = nullptr;
+        Geo::Geometry *_object1 = nullptr;
+        Geo::Point _pos[2];
+
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        void reset() override;
+
+        QString cmd_tips() const override;
     };
 }

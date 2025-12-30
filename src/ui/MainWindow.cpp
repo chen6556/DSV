@@ -107,7 +107,6 @@ void MainWindow::connect_btn_to_cmd()
     connect(ui->angle_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Angle_CMD); });
 
     connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Text_CMD); });
-    connect(ui->connect_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Connect_CMD); });
     connect(ui->close_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Close_CMD); });
     connect(ui->combinate_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Combinate_CMD); });
     connect(ui->detach_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Detach_CMD); });
@@ -895,8 +894,24 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
         case 0: // fillet
             ui->cmd_widget->work(CMDWidget::CMD::Fillet_CMD);
             break;
-        case 1: // chamfer
+        case 1: // free fillet
+            ui->cmd_widget->work(CMDWidget::CMD::FreeFillet_CMD);
+            break;
+        case 2: // chamfer
             ui->cmd_widget->work(CMDWidget::CMD::Chamfer_CMD);
+            break;
+        default:
+            break;
+        }
+        break;
+    case ActionGroup::MenuType::ConnectMenu:
+        switch (index)
+        {
+        case 0: // connect
+            ui->cmd_widget->work(CMDWidget::CMD::Connect_CMD);
+            break;
+        case 1: // blend
+            ui->cmd_widget->work(CMDWidget::CMD::Blend_CMD);
             break;
         default:
             break;

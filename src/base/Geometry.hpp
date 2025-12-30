@@ -787,8 +787,10 @@ namespace Geo
     protected:
         Polyline _shape;
         std::vector<double> _knots;
+        std::vector<double> _path_values;
 
     public:
+        bool controls_model = false;
         std::vector<Point> control_points;
         std::vector<Point> path_points;
 
@@ -854,6 +856,8 @@ namespace Geo
     class QuadBSpline : public BSpline
     {
     public:
+        QuadBSpline() = default;
+
         QuadBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const bool is_path_points);
 
         QuadBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const std::vector<double> &knots, const bool is_path_points);
@@ -886,6 +890,8 @@ namespace Geo
     class CubicBSpline : public BSpline
     {
     public:
+        CubicBSpline() = default;
+
         CubicBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const bool is_path_points);
 
         CubicBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const std::vector<double> &knots, const bool is_path_points);
@@ -895,8 +901,6 @@ namespace Geo
         const Type type() const override;
 
         void update_control_points() override;
-
-        static void update_path_points(const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b, std::vector<Point> &p);
 
         void update_shape(const double step, const double down_sampling_value) override;
 

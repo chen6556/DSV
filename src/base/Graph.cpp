@@ -256,7 +256,7 @@ void Graph::rescale(const double x, const double y)
 
 Geo::AABBRect Graph::bounding_rect() const
 {
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
+    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
     for (const ContainerGroup &group : _container_groups)
     {
         if (group.empty())

@@ -726,7 +726,7 @@ AABBRect Polyline::bounding_rect() const
         return AABBRect();
     }
 
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
+    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
     for (const Point &point : _points)
     {
         x0 = std::min(x0, point.x);
@@ -1022,7 +1022,7 @@ AABBRect AABBRect::bounding_rect() const
     {
         return AABBRect();
     }
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
+    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
     for (const Point &point : _points)
     {
         x0 = std::min(x0, point.x);
@@ -2981,7 +2981,8 @@ BSpline::BSpline()
 
 BSpline::BSpline(const BSpline &bspline)
     : Geometry(bspline), _shape(bspline._shape), control_points(bspline.control_points),
-    path_points(bspline.path_points), _knots(bspline._knots)
+    path_points(bspline.path_points), _knots(bspline._knots),
+    controls_model(bspline.controls_model), _path_values(bspline._path_values)
 {
     _shape.shape_fixed = true;
 }
@@ -2992,8 +2993,10 @@ BSpline &BSpline::operator=(const BSpline &bspline)
     {
         Geometry::operator=(bspline);
         _shape = bspline._shape;
+        controls_model = bspline.controls_model;
         control_points = bspline.control_points;
         path_points = bspline.path_points;
+        _path_values = bspline._path_values;
         _knots = bspline._knots;
     }
     return *this;
@@ -3188,10 +3191,15 @@ QuadBSpline::QuadBSpline(std::vector<Point>::const_iterator begin, std::vector<P
     else
     {
         control_points.assign(begin, end);
-        const size_t num = control_points.size();
-        path_points.resize(num - 2);
-        knot(num, _knots);
-        rbspline(2, num, num - 2, _knots, control_points, path_points);
+        knot(control_points.size(), _knots);
+        for (const double value : _knots)
+        {
+            if (std::find(_path_values.begin(), _path_values.end(), value) == _path_values.end())
+            {
+                _path_values.push_back(value);
+                path_points.emplace_back(at(value));
+            }
+        }
     }
     update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
@@ -3216,9 +3224,14 @@ QuadBSpline::QuadBSpline(std::vector<Point>::const_iterator begin, std::vector<P
     {
         _knots.assign(knots.begin(), knots.end());
         control_points.assign(begin, end);
-        const size_t num = control_points.size();
-        path_points.resize(num - 2);
-        rbspline(2, num, num - 2, _knots, control_points, path_points);
+        for (const double value : _knots)
+        {
+            if (std::find(_path_values.begin(), _path_values.end(), value) == _path_values.end())
+            {
+                _path_values.push_back(value);
+                path_points.emplace_back(at(value));
+            }
+        }
     }
     update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
@@ -3242,10 +3255,15 @@ QuadBSpline::QuadBSpline(const std::initializer_list<Point> &points, const bool 
     else
     {
         control_points.assign(points.begin(), points.end());
-        const size_t num = control_points.size();
-        path_points.resize(num - 2);
-        knot(num, _knots);
-        rbspline(2, num, num - 2, _knots, control_points, path_points);
+        knot(control_points.size(), _knots);
+        for (const double value : _knots)
+        {
+            if (std::find(_path_values.begin(), _path_values.end(), value) == _path_values.end())
+            {
+                _path_values.push_back(value);
+                path_points.emplace_back(at(value));
+            }
+        }
     }
     update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
@@ -3261,17 +3279,23 @@ void QuadBSpline::update_control_points() // 从LibreCAD抄的
     const size_t n = path_points.size();
     if(n < 4)
     {
+        _path_values.clear();
         if(n > 0)
         {
             control_points.emplace_back(path_points[0]);
+            _path_values.push_back(0);
         }
         if(Point control; n > 2 && get_three_points_control(path_points[0], path_points[1], path_points[2], control))
         {
             control_points.emplace_back(control);
+            const double dl1 = Geo::distance(path_points[1], path_points[0]);
+            const double dl2 = Geo::distance(path_points[2], path_points[1]);
+            _path_values.push_back(dl1 / (dl1 + dl2));
         }
         if(n > 1)
         {
             control_points.emplace_back(path_points[n - 1]);
+            _path_values.push_back(1);
         }
         return;
     }
@@ -3304,6 +3328,19 @@ void QuadBSpline::update_control_points() // 从LibreCAD抄的
         这样可以让末端的插值更平滑，末端的切线方向和曲率更自然，减少端点处的异常。*/
         /*首段用 dt[0] = dl1 / (dl1 + dl2 / 2.0)，末段用 dt[dim-1] = dl1 / (dl1 + 2.0 * dl2)，
         两者对称，都是为了让两端的参数分布更平滑，兼顾端点与相邻段的长度。*/
+    }
+
+    {
+        _path_values.clear();
+        _path_values.push_back(0);
+        _path_values.insert(_path_values.end(), dt.begin(), dt.end());
+        _path_values.push_back(1);
+        std::sort(_path_values.begin(), _path_values.end());
+        const double value = path_points.size() - 2;
+        for (size_t i = 0, count = _path_values.size(); i < count; ++i)
+        {
+            _path_values[i] *= value;
+        }
     }
 
     std::vector<double> matrix;
@@ -3442,6 +3479,15 @@ void QuadBSpline::update_shape(const double step, const double down_sampling_val
     _shape.append(points.begin(), points.end());
     _shape.append(path_points.empty() ? control_points.back() : path_points.back());
     Geo::down_sampling(_shape, down_sampling_value);
+
+    if (controls_model)
+    {
+        path_points.clear();
+        for (const double t : _path_values)
+        {
+            path_points.emplace_back(at(t));
+        }
+    }
 }
 
 QuadBSpline *QuadBSpline::clone() const
@@ -3530,6 +3576,7 @@ void QuadBSpline::insert(const double t)
         if (distances[i - 1] <= anchor_dis && anchor_dis <= distances[i])
         {
             path_points.insert(path_points.begin() + i, anchor);
+            _path_values.insert(_path_values.begin() + i, t);
             break;
         }
     }
@@ -3614,8 +3661,14 @@ CubicBSpline::CubicBSpline(std::vector<Point>::const_iterator begin, std::vector
         _knots.resize(num + 4, 0);
         std::iota(_knots.begin() + 4, _knots.begin() + num + 1, 1);
         std::fill(_knots.begin() + num + 1, _knots.end(), _knots[num]);
-        path_points.resize(num - 2);
-        rbspline(3, num, num - 2, _knots, control_points, path_points);
+        for (const double value : _knots)
+        {
+            if (std::find(_path_values.begin(), _path_values.end(), value) == _path_values.end())
+            {
+                _path_values.push_back(value);
+                path_points.emplace_back(at(value));
+            }
+        }
     }
     update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
@@ -3639,9 +3692,14 @@ CubicBSpline::CubicBSpline(std::vector<Point>::const_iterator begin, std::vector
     {
         _knots.assign(knots.begin(), knots.end());
         control_points.assign(begin, end);
-        const size_t num = control_points.size();
-        path_points.resize(num - 2);
-        rbspline(3, num, num - 2, _knots, control_points, path_points);
+        for (const double value : _knots)
+        {
+            if (std::find(_path_values.begin(), _path_values.end(), value) == _path_values.end())
+            {
+                _path_values.push_back(value);
+                path_points.emplace_back(at(value));
+            }
+        }
     }
     update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
@@ -3668,8 +3726,14 @@ CubicBSpline::CubicBSpline(const std::initializer_list<Point> &points, const boo
         _knots.resize(num + 4, 0);
         std::iota(_knots.begin() + 4, _knots.begin() + num + 1, 1);
         std::fill(_knots.begin() + num + 1, _knots.end(), _knots[num]);
-        path_points.resize(num - 2);
-        rbspline(3, num, num - 2, _knots, control_points, path_points);
+        for (const double value : _knots)
+        {
+            if (std::find(_path_values.begin(), _path_values.end(), value) == _path_values.end())
+            {
+                _path_values.push_back(value);
+                path_points.emplace_back(at(value));
+            }
+        }
     }
     update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
@@ -3685,13 +3749,16 @@ void CubicBSpline::update_control_points()
     const size_t n = path_points.size();
     if (n < 3)
     {
+        _path_values.clear();
         if(n > 0)
         {
             control_points.emplace_back(path_points.front());
+            _path_values.push_back(0);
         }
         if(n > 1)
         {
             control_points.emplace_back(path_points.back());
+            _path_values.push_back(1);
         }
         return;
     }
@@ -3711,6 +3778,8 @@ void CubicBSpline::update_control_points()
             _knots[i] = 0;
             _knots[i + n + 2] = 1;
         }
+        _path_values.clear();
+        _path_values.push_back(0);
         for (size_t i = 4; i < n + 2; ++i)
         {   
             double l2 = 0;
@@ -3719,7 +3788,9 @@ void CubicBSpline::update_control_points()
                 l2 += l[j];
             }
             _knots[i] = l2 / l1;
+            _path_values.push_back(_knots[i]);
         }
+        _path_values.push_back(1);
         delete[] l;
 
         for (size_t i = 0; i < n + 5; ++i)
@@ -3798,6 +3869,10 @@ void CubicBSpline::update_shape(const double step, const double down_sampling_va
         _shape.clear();
         _shape.append(control_points.front());
         _shape.append(control_points.back());
+        if (controls_model)
+        {
+            path_points.assign(control_points.begin(), control_points.end());
+        }
         return;
     }
 
@@ -3818,6 +3893,15 @@ void CubicBSpline::update_shape(const double step, const double down_sampling_va
     _shape.append(points.begin(), points.end());
     _shape.append(path_points.empty() ? control_points.back() : path_points.back());
     Geo::down_sampling(_shape, down_sampling_value);
+
+    if (controls_model)
+    {
+        path_points.clear();
+        for (const double t : _path_values)
+        {
+            path_points.emplace_back(at(t));
+        }
+    }
 }
 
 CubicBSpline *CubicBSpline::clone() const
@@ -3906,6 +3990,7 @@ void CubicBSpline::insert(const double t)
         if (distances[i - 1] <= anchor_dis && anchor_dis <= distances[i])
         {
             path_points.insert(path_points.begin() + i, anchor);
+            _path_values.insert(_path_values.begin() + i, t);
             break;
         }
     }

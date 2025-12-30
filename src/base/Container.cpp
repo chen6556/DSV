@@ -375,7 +375,7 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
     {
         return Geo::AABBRect();
     }
-    double r, x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
+    double r, x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
     Geo::Point coord;
     for (const Geo::Geometry *continer : _containers)
     {
@@ -408,18 +408,18 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
             {
                 const Geo::AABBRect rect(static_cast<const Geo::Ellipse *>(continer)->bounding_rect());
                 x0 = std::min(x0, rect.left());
-                y0 = std::min(y0, rect.top());
+                y0 = std::min(y0, rect.bottom());
                 x1 = std::max(x1, rect.right());
-                y1 = std::max(y1, rect.bottom());
+                y1 = std::max(y1, rect.top());
             }
             break;
         case Geo::Type::COMBINATION:
             {
                 const Geo::AABBRect rect(static_cast<const Combination *>(continer)->bounding_rect());
                 x0 = std::min(x0, rect.left());
-                y0 = std::min(y0, rect.top());
+                y0 = std::min(y0, rect.bottom());
                 x1 = std::max(x1, rect.right());
-                y1 = std::max(y1, rect.bottom());
+                y1 = std::max(y1, rect.top());
             }
             break;
         case Geo::Type::POLYLINE:

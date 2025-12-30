@@ -104,7 +104,7 @@ namespace Geo
     // 判断线段是否与椭圆相交并尝试获取交点,返回交点数量
     int is_intersected(const Point &point0, const Point &point1, const Ellipse &ellipse, Point &output0, Point &output1, const bool infinite = false);
 
-    // 判断线段是否与圆弧相机并尝试获取交点,返回交点数量
+    // 判断线段是否与圆弧相交并尝试获取交点,返回交点数量
     int is_intersected(const Point &point0, const Point &point1, const Arc &arc, Point &output0, Point &output1, const bool infinite = false);
 
     // [数值解]计算贝塞尔曲线与直线的交点,<index, t, x, y>
@@ -307,10 +307,12 @@ namespace Geo
     int closest_point(const Ellipse &ellipse, const Point &point, std::vector<Point> &output);
 
     // [数值解]计算贝塞尔曲线到一点的最近点
-    int closest_point(const Bezier &bezier, const Point &point, std::vector<Point> &output);
+    int closest_point(const Bezier &bezier, const Point &point, std::vector<Point> &output,
+        std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
 
     // [数值解]计算B样条曲线到一点的最近点
-    int closest_point(const BSpline &bspline, const bool is_cubic, const Point &point, std::vector<Point> &output);
+    int closest_point(const BSpline &bspline, const bool is_cubic, const Point &point, std::vector<Point> &output,
+        std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
 
     // 计算圆外一点与圆的切点
     bool tangency_point(const Point &point, const Circle &circle, Point &output0, Point &output1);
@@ -343,6 +345,9 @@ namespace Geo
 
     // 将Arc从pos处拆分为两段Arc
     bool split(const Arc &arc, const Point &pos, Arc &output0, Arc &output1);
+
+    // 将椭圆弧从pos处拆分为两段椭圆弧
+    bool split(const Ellipse &ellipse, const Point &pos, Ellipse &output0, Ellipse &output1);
 
     // 计算直线的旋转角度(弧度制,-PI-PI)
     double angle(const Point &start, const Point &end);
@@ -382,6 +387,9 @@ namespace Geo
 
     // 非对称圆角
     bool angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius0, const double radius1, Bezier &arc);
+
+    // 自由非对称圆角
+    bool angle_to_arc(const Point &start, const Point &center, const Point &end, Bezier &arc);
 
     Polyline arc_to_polyline(const Point &center, const double radius, double start_angle, double end_angle, const bool is_cw, const double down_sampling_value = 0.02);
 
@@ -444,4 +452,10 @@ namespace Geo
     bool merge_ear_cut_triangles(const std::vector<Triangle> &triangles, std::vector<Polygon> &polygons);
 
     void down_sampling(Geo::Polyline &points, const double distance);
+
+    BSpline *bezier_to_bspline(const Geo::Bezier &bezier);
+
+    Bezier *bspline_to_bezier(const Geo::BSpline &bspline);
+
+    Geo::Bezier *blend(const Point pre0, const Point point0, const Point point1, const Point pre1);
 }

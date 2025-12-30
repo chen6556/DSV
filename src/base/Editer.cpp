@@ -354,7 +354,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             bs = static_cast<Geo::BSpline *>(*it);
             if (bs->is_selected)
             {
-                for (const Geo::Point &inner_point : bs->path_points)
+                for (const Geo::Point &inner_point : (bs->controls_model ? bs->control_points : bs->path_points))
                 {
                     if (Geo::distance_square(point, inner_point) <= catch_distance * catch_distance * 2.25)
                     {
@@ -1094,38 +1094,76 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     case Geo::Type::BSPLINE:
         if (Geo::BSpline *temp = static_cast<Geo::BSpline *>(points); change_shape && !temp->shape_fixed)
         {
-            size_t count = temp->path_points.size(), index = SIZE_MAX;
-            double distance, min_distance = DBL_MAX;
-            for (size_t i = 0; i < count; ++i)
+            if (temp->controls_model)
             {
-                distance = std::min(Geo::distance_square(x0, y0, temp->path_points[i].x, temp->path_points[i].y),
-                    Geo::distance_square(x1, y1, temp->path_points[i].x, temp->path_points[i].y));
-                if (distance <= catch_distance * catch_distance && distance < min_distance)
+                size_t count = temp->control_points.size(), index = SIZE_MAX;
+                double distance, min_distance = DBL_MAX;
+                for (size_t i = 0; i < count; ++i)
                 {
-                    index = i;
-                    min_distance = distance;
+                    distance = std::min(Geo::distance_square(x0, y0, temp->control_points[i].x, temp->control_points[i].y),
+                        Geo::distance_square(x1, y1, temp->control_points[i].x, temp->control_points[i].y));
+                    if (distance <= catch_distance * catch_distance && distance < min_distance)
+                    {
+                        index = i;
+                        min_distance = distance;
+                    }
+                }
+                if (index < SIZE_MAX)
+                {
+                    if (_edited_shape.empty())
+                    {
+                        _edited_shape.emplace_back(temp->path_points.size(), temp->control_points.size());
+                        for (const Geo::Point &point : temp->path_points)
+                        {
+                            _edited_shape.emplace_back(point.x, point.y);
+                        }
+                        for (const Geo::Point &point : temp->control_points)
+                        {
+                            _edited_shape.emplace_back(point.x, point.y);
+                        }
+                    }
+
+                    temp->control_points[index].translate(x1 - x0, y1 - y0);
+                    temp->update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
+                    _graph->modified = true;
+                    return;
                 }
             }
-            if (index < SIZE_MAX)
+            else
             {
-                if (_edited_shape.empty())
+                size_t count = temp->path_points.size(), index = SIZE_MAX;
+                double distance, min_distance = DBL_MAX;
+                for (size_t i = 0; i < count; ++i)
                 {
-                    _edited_shape.emplace_back(temp->path_points.size(), temp->control_points.size());
-                    for (const Geo::Point &point : temp->path_points)
+                    distance = std::min(Geo::distance_square(x0, y0, temp->path_points[i].x, temp->path_points[i].y),
+                        Geo::distance_square(x1, y1, temp->path_points[i].x, temp->path_points[i].y));
+                    if (distance <= catch_distance * catch_distance && distance < min_distance)
                     {
-                        _edited_shape.emplace_back(point.x, point.y);
-                    }
-                    for (const Geo::Point &point : temp->control_points)
-                    {
-                        _edited_shape.emplace_back(point.x, point.y);
+                        index = i;
+                        min_distance = distance;
                     }
                 }
+                if (index < SIZE_MAX)
+                {
+                    if (_edited_shape.empty())
+                    {
+                        _edited_shape.emplace_back(temp->path_points.size(), temp->control_points.size());
+                        for (const Geo::Point &point : temp->path_points)
+                        {
+                            _edited_shape.emplace_back(point.x, point.y);
+                        }
+                        for (const Geo::Point &point : temp->control_points)
+                        {
+                            _edited_shape.emplace_back(point.x, point.y);
+                        }
+                    }
 
-                temp->path_points[index].translate(x1 - x0, y1 - y0);
-                temp->update_control_points();
-                temp->update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
-                _graph->modified = true;
-                return;
+                    temp->path_points[index].translate(x1 - x0, y1 - y0);
+                    temp->update_control_points();
+                    temp->update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
+                    _graph->modified = true;
+                    return;
+                }
             }
         }
         else
@@ -1395,6 +1433,264 @@ bool Editer::connect(std::vector<Geo::Geometry *> objects, const double connect_
     _graph->modified = true;
     _backup.push_command(new UndoStack::ConnectCommand(items, polyline, _current_group));
     return true;
+}
+
+bool Editer::blend(const Geo::Geometry *object0, const Geo::Geometry *object1, const Geo::Point &pos0, const Geo::Point &pos1)
+{
+    Geo::Point pre0, point0, pre1, point1;
+    switch (object0->type())
+    {
+    case Geo::Type::ARC:
+        if (const Geo::Arc *arc = static_cast<const Geo::Arc *>(object0);
+            Geo::distance_square(arc->control_points[0], pos0) < Geo::distance_square(arc->control_points[2], pos0))
+        {
+            point0 = arc->control_points[0];
+            if (Geo::is_on_left(arc->control_points[1], arc->control_points[0], arc->control_points[2]))
+            {
+                pre0 = point0 + (Geo::Point(arc->x, arc->y) - arc->control_points[0]).vertical();
+            }
+            else
+            {
+                pre0 = point0 + (arc->control_points[0] - Geo::Point(arc->x, arc->y)).vertical();
+            }
+        }
+        else
+        {
+            point0 = arc->control_points[2];
+            if (Geo::is_on_left(arc->control_points[1], arc->control_points[2], arc->control_points[0]))
+            {
+                pre0 = point0 + (Geo::Point(arc->x, arc->y) - arc->control_points[2]).vertical();
+            }
+            else
+            {
+                pre0 = point0 + (arc->control_points[2] - Geo::Point(arc->x, arc->y)).vertical();
+            }
+        }
+        break;
+    case Geo::Type::BEZIER:
+        if (const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(object0);
+            Geo::distance_square(bezier->front(), pos0) < Geo::distance_square(bezier->back(), pos0))
+        {
+            point0 = bezier->front();
+            pre0 = bezier->at(1);
+        }
+        else
+        {
+            point0 = bezier->back();
+            pre0 = bezier->at(bezier->size() - 2);
+        }
+        break;
+    case Geo::Type::BSPLINE:
+        if (const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object0);
+            Geo::distance_square(bspline->front(), pos0) < Geo::distance_square(bspline->back(), pos0))
+        {
+            point0 = bspline->front();
+            pre0 = bspline->control_points[1];
+        }
+        else
+        {
+            point0 = bspline->back();
+            pre0 = bspline->control_points[bspline->control_points.size() - 2];
+        }
+        break;
+    case Geo::Type::ELLIPSE:
+        {
+            const Geo::Ellipse *ellipse = static_cast<const Geo::Ellipse *>(object0);
+            const Geo::Point center = ellipse->center();
+            const double angle = Geo::angle(ellipse->a0(), ellipse->a1());
+            const double aa = Geo::distance_square(ellipse->a0(), ellipse->a1()) / 4;
+            const double bb = Geo::distance_square(ellipse->b0(), ellipse->b1()) / 4;
+            if (Geo::distance_square(ellipse->arc_point0(), pos0) < Geo::distance_square(ellipse->arc_point1(), pos0))
+            {
+                point0 = ellipse->arc_point0();
+                Geo::Point coord = Geo::to_coord(point0, center.x, center.y, angle);
+                const double a = coord.x / aa, b = coord.y / bb;
+                pre0.x = coord.x + 10;
+                pre0.y = (1 - a * pre0.x) / b;
+                if (Geo::is_on_left(pre0, Geo::Point(0, 0), coord))
+                {
+                    const Geo::Point anchor = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+                    pre0 = Geo::to_coord(pre0, anchor.x, anchor.y, -angle);
+                }
+                else
+                {
+                    pre0.x = coord.x - 10;
+                    pre0.y = (1 - a * pre0.x) / b;
+                    const Geo::Point anchor = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+                    pre0 = Geo::to_coord(pre0, anchor.x, anchor.y, -angle);
+                }
+            }
+            else
+            {
+                point0 = ellipse->arc_point1();
+                Geo::Point coord = Geo::to_coord(point0, center.x, center.y, angle);
+                const double a = coord.x / aa, b = coord.y / bb;
+                pre0.x = coord.x + 10;
+                pre0.y = (1 - a * pre0.x) / b;
+                if (Geo::is_on_left(pre0, Geo::Point(0, 0), coord))
+                {
+                    pre0.x = coord.x - 10;
+                    pre0.y = (1 - a * pre0.x) / b;
+                    const Geo::Point anchor = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+                    pre0 = Geo::to_coord(pre0, anchor.x, anchor.y, -angle);
+                }
+                else
+                {
+                    const Geo::Point anchor = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+                    pre0 = Geo::to_coord(pre0, anchor.x, anchor.y, -angle);
+                }
+            }
+        }
+        break;
+    case Geo::Type::POLYLINE:
+        if (const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object0);
+            Geo::distance(polyline->front(), pos0) < Geo::distance(polyline->back(), pos0))
+        {
+            point0 = polyline->front();
+            pre0 = polyline->at(1);
+        }
+        else
+        {
+            point0 = polyline->back();
+            pre0 = polyline->at(polyline->size() - 2);
+        }
+        break;
+    default:
+        break;
+    }
+    switch (object1->type())
+    {
+    case Geo::Type::ARC:
+        if (const Geo::Arc *arc = static_cast<const Geo::Arc *>(object1);
+            Geo::distance_square(arc->control_points[0], pos1) < Geo::distance_square(arc->control_points[2], pos1))
+        {
+            point1 = arc->control_points[0];
+            if (Geo::is_on_left(arc->control_points[1], arc->control_points[0], arc->control_points[2]))
+            {
+                pre1 = point1 + (Geo::Point(arc->x, arc->y) - arc->control_points[0]).vertical();
+            }
+            else
+            {
+                pre1 = point1 + (arc->control_points[0] - Geo::Point(arc->x, arc->y)).vertical();
+            }
+        }
+        else
+        {
+            point1 = arc->control_points[2];
+            if (Geo::is_on_left(arc->control_points[1], arc->control_points[2], arc->control_points[0]))
+            {
+                pre1 = point1 + (Geo::Point(arc->x, arc->y) - arc->control_points[2]).vertical();
+            }
+            else
+            {
+                pre1 = point1 + (arc->control_points[2] - Geo::Point(arc->x, arc->y)).vertical();
+            }
+        }
+        break;
+    case Geo::Type::BEZIER:
+        if (const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(object1);
+            Geo::distance_square(bezier->front(), pos1) < Geo::distance_square(bezier->back(), pos1))
+        {
+            point1 = bezier->front();
+            pre1 = bezier->at(1);
+        }
+        else
+        {
+            point1 = bezier->back();
+            pre1 = bezier->at(bezier->size() - 2);
+        }
+        break;
+    case Geo::Type::BSPLINE:
+        if (const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object1);
+            Geo::distance_square(bspline->front(), pos1) < Geo::distance_square(bspline->back(), pos1))
+        {
+            point1 = bspline->front();
+            pre1 = bspline->control_points[1];
+        }
+        else
+        {
+            point1 = bspline->back();
+            pre1 = bspline->control_points[bspline->control_points.size() - 2];
+        }
+        break;
+    case Geo::Type::ELLIPSE:
+        {
+            const Geo::Ellipse *ellipse = static_cast<const Geo::Ellipse *>(object1);
+            const Geo::Point center = ellipse->center();
+            const double angle = Geo::angle(ellipse->a0(), ellipse->a1());
+            const double aa = Geo::distance_square(ellipse->a0(), ellipse->a1()) / 4;
+            const double bb = Geo::distance_square(ellipse->b0(), ellipse->b1()) / 4;
+            if (Geo::distance_square(ellipse->arc_point0(), pos1) < Geo::distance_square(ellipse->arc_point1(), pos1))
+            {
+                point1 = ellipse->arc_point0();
+                Geo::Point coord = Geo::to_coord(point1, center.x, center.y, angle);
+                const double a = coord.x / aa, b = coord.y / bb;
+                pre1.x = coord.x + 10;
+                pre1.y = (1 - a * pre1.x) / b;
+                if (Geo::is_on_left(pre1, Geo::Point(0, 0), coord))
+                {
+                    const Geo::Point anchor = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+                    pre1 = Geo::to_coord(pre1, anchor.x, anchor.y, -angle);
+                }
+                else
+                {
+                    pre1.x = coord.x - 10;
+                    pre1.y = (1 - a * pre1.x) / b;
+                    const Geo::Point anchor = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+                    pre1 = Geo::to_coord(pre1, anchor.x, anchor.y, -angle);
+                }
+            }
+            else
+            {
+                point1 = ellipse->arc_point1();
+                Geo::Point coord = Geo::to_coord(point1, center.x, center.y, angle);
+                const double a = coord.x / aa, b = coord.y / bb;
+                pre1.x = coord.x + 10;
+                pre1.y = (1 - a * pre1.x) / b;
+                if (Geo::is_on_left(pre1, Geo::Point(0, 0), coord))
+                {
+                    pre1.x = coord.x - 10;
+                    pre1.y = (1 - a * pre1.x) / b;
+                    const Geo::Point anchor = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+                    pre1 = Geo::to_coord(pre1, anchor.x, anchor.y, -angle);
+                }
+                else
+                {
+                    const Geo::Point anchor = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+                    pre1 = Geo::to_coord(pre1, anchor.x, anchor.y, -angle);
+                }
+            }
+        }
+        break;
+    case Geo::Type::POLYLINE:
+        if (const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object1);
+            Geo::distance(polyline->front(), pos1) < Geo::distance(polyline->back(), pos1))
+        {
+            point1 = polyline->front();
+            pre1 = polyline->at(1);
+        }
+        else
+        {
+            point1 = polyline->back();
+            pre1 = polyline->at(polyline->size() - 2);
+        }
+        break;
+    default:
+        break;
+    }
+
+    if (Geo::Bezier *bezier = Geo::blend(pre0, point0, point1, pre1))
+    {
+        bezier->is_selected = true;
+        _graph->container_group(_current_group).append(bezier);
+        _backup.push_command(new UndoStack::ObjectCommand(bezier, _current_group,
+            _graph->container_group(_current_group).size() - 1, true));
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 bool Editer::close_polyline(std::vector<Geo::Geometry *> objects)
@@ -2849,6 +3145,622 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
     return true;
 }
 
+bool Editer::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::Point &start, const Geo::Point &center,
+    const Geo::Point &end, const std::vector<std::tuple<size_t, double, double, double>> &tvalues)
+{
+    if (object0 == object1 || start == center || center == end || start == end)
+    {
+        return false;
+    }
+
+    if (Geo::Bezier curve(3); Geo::angle_to_arc(start, center, end, curve))
+    {
+        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
+        switch (object0->type())
+        {
+        case Geo::Type::ARC:
+            {
+                Geo::Arc *arc = static_cast<Geo::Arc *>(object0);
+                if (Geo::Arc arc0, arc1; Geo::split(*arc, start, arc0, arc1))
+                {
+                    size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                        std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), arc));
+                    remove.emplace_back(arc, _current_group, index);
+                    _graph->container_group(_current_group).pop(index);
+                    if (Geo::angle(start, center, end) > 0)
+                    {
+                        if (Geo::is_on_left(arc0.control_points[1], center, start))
+                        {
+                            _graph->container_group(_current_group).insert(index, new Geo::Arc(arc1));
+                        }
+                        else
+                        {
+                            _graph->container_group(_current_group).insert(index, new Geo::Arc(arc0));
+                        }
+                    }
+                    else
+                    {
+                        if (Geo::is_on_left(arc0.control_points[1], center, start))
+                        {
+                            _graph->container_group(_current_group).insert(index, new Geo::Arc(arc0));
+                        }
+                        else
+                        {
+                            _graph->container_group(_current_group).insert(index, new Geo::Arc(arc1));
+                        }
+                    }
+                    append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                }
+                break;
+            }
+        case Geo::Type::BEZIER:
+            {
+                Geo::Bezier *bezier = static_cast<Geo::Bezier *>(object0);
+                if (Geo::Bezier bezier0(bezier->order()), bezier1(bezier->order());
+                    Geo::split(*bezier, std::get<0>(tvalues.front()), std::get<1>(tvalues.front()), bezier0, bezier1))
+                {
+                    size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                        std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), bezier));
+                    remove.emplace_back(bezier, _current_group, index);
+                    _graph->container_group(_current_group).pop(index);
+                    if (Geo::angle(start, center, end) > 0)
+                    {
+                        if (Geo::distance(bezier0.front(), start) < Geo::distance(bezier0.back(), start))
+                        {
+                            if (Geo::is_on_left(bezier0[1], center, start))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                            }
+                        }
+                        else
+                        {
+                            if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, start))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (Geo::distance(bezier0.front(), start) < Geo::distance(bezier0.back(), start))
+                        {
+                            if (Geo::is_on_left(bezier0[1], center, start))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                            }
+                        }
+                        else
+                        {
+                            if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, start))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                            }
+                        }
+                    }
+                    append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                }
+                break;
+            }
+        case Geo::Type::BSPLINE:
+            if (Geo::BSpline *bspline = static_cast<Geo::BSpline *>(object0); dynamic_cast<Geo::CubicBSpline *>(bspline) != nullptr)
+            {
+                if (Geo::CubicBSpline bspline0, bspline1; Geo::split(*bspline, true, std::get<1>(tvalues.front()), bspline0, bspline1))
+                {
+                    size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                        std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), bspline));
+                    remove.emplace_back(bspline, _current_group, index);
+                    _graph->container_group(_current_group).pop(index);
+                    if (Geo::angle(start, center, end) > 0)
+                    {
+                        if (Geo::distance(bspline0.control_points.front(), start) < Geo::distance(bspline0.control_points.back(), start))
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[1], center, start))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline1));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline0));
+                            }
+                        }
+                        else
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[bspline0.control_points.size() - 2], center, start))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline1));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline0));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (Geo::distance(bspline0.control_points.front(), start) < Geo::distance(bspline0.control_points.back(), start))
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[1], center, start))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline0));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline1));
+                            }
+                        }
+                        else
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[bspline0.control_points.size() - 2], center, start))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline0));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline1));
+                            }
+                        }
+                    }
+                    append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                }
+            }
+            else
+            {
+                if (Geo::QuadBSpline bspline0, bspline1; Geo::split(*bspline, false, std::get<1>(tvalues.front()), bspline0, bspline1))
+                {
+                    size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                        std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), bspline));
+                    remove.emplace_back(bspline, _current_group, index);
+                    _graph->container_group(_current_group).pop(index);
+                    if (Geo::angle(start, center, end) > 0)
+                    {
+                        if (Geo::distance(bspline0.control_points.front(), start) < Geo::distance(bspline0.control_points.back(), start))
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[1], center, start))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline1));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline0));
+                            }
+                        }
+                        else
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[bspline0.control_points.size() - 2], center, start))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline1));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline0));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (Geo::distance(bspline0.control_points.front(), start) < Geo::distance(bspline0.control_points.back(), start))
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[1], center, start))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline0));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline1));
+                            }
+                        }
+                        else
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[bspline0.control_points.size() - 2], center, start))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline0));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline1));
+                            }
+                        }
+                    }
+                    append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            {
+                Geo::Ellipse *ellipse = static_cast<Geo::Ellipse *>(object0);
+                if (Geo::Ellipse ellipse0, ellipse1; Geo::split(*ellipse, start, ellipse0, ellipse1))
+                {
+                    size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                        std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), ellipse));
+                    remove.emplace_back(ellipse, _current_group, index);
+                    _graph->container_group(_current_group).pop(index);
+                    if (Geo::angle(start, center, end) > 0)
+                    {
+                        _graph->container_group(_current_group).insert(index, new Geo::Ellipse(ellipse1));
+                    }
+                    else
+                    {
+                        _graph->container_group(_current_group).insert(index, new Geo::Ellipse(ellipse0));
+                    }
+                    append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                }
+                break;
+            }
+        case Geo::Type::POLYLINE:
+            {
+                Geo::Polyline *polyline = static_cast<Geo::Polyline *>(object0);
+                size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                    std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), polyline));
+                remove.emplace_back(polyline, _current_group, index);
+                _graph->container_group(_current_group).pop(index);
+                const size_t i = std::get<0>(tvalues.front());
+                if (Geo::angle(start, center, end) > 0)
+                {
+                    if (Geo::is_on_left(polyline->at(i), center, start))
+                    {
+                        Geo::Polyline *points = new Geo::Polyline(polyline->begin(), polyline->begin() + i + 1);
+                        points->back().x = start.x, points->back().y = start.y;
+                        _graph->container_group(_current_group).insert(index, points);
+                    }
+                    else
+                    {
+                        Geo::Polyline *points = new Geo::Polyline(polyline->begin() + i - 1, polyline->end());
+                        points->front().x = start.x, points->front().y = start.y;
+                        _graph->container_group(_current_group).insert(index, points);
+                    }
+                }
+                else
+                {
+                    if (Geo::is_on_left(polyline->at(i), center, start))
+                    {
+                        Geo::Polyline *points = new Geo::Polyline(polyline->begin() + i - 1, polyline->end());
+                        points->front().x = start.x, points->front().y = start.y;
+                        _graph->container_group(_current_group).insert(index, points);
+                    }
+                    else
+                    {
+                        Geo::Polyline *points = new Geo::Polyline(polyline->begin(), polyline->begin() + i + 1);
+                        points->back().x = start.x, points->back().y = start.y;
+                        _graph->container_group(_current_group).insert(index, points);
+                    }
+                }
+                append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                break;
+            }
+        default:
+            break;
+        }
+        switch (object1->type())
+        {
+        case Geo::Type::ARC:
+            {
+                Geo::Arc *arc = static_cast<Geo::Arc *>(object1);
+                if (Geo::Arc arc0, arc1; Geo::split(*arc, end, arc0, arc1))
+                {
+                    size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                        std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), arc));
+                    remove.emplace_back(arc, _current_group, index);
+                    _graph->container_group(_current_group).pop(index);
+                    if (Geo::angle(start, center, end) > 0)
+                    {
+                        if (Geo::is_on_left(arc0.control_points[1], center, end))
+                        {
+                            _graph->container_group(_current_group).insert(index, new Geo::Arc(arc0));
+                        }
+                        else
+                        {
+                            _graph->container_group(_current_group).insert(index, new Geo::Arc(arc1));
+                        }
+                    }
+                    else
+                    {
+                        if (Geo::is_on_left(arc0.control_points[1], center, end))
+                        {
+                            _graph->container_group(_current_group).insert(index, new Geo::Arc(arc1));
+                        }
+                        else
+                        {
+                            _graph->container_group(_current_group).insert(index, new Geo::Arc(arc0));
+                        }
+                    }
+                    append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                }
+                break;
+            }
+        case Geo::Type::BEZIER:
+            {
+                Geo::Bezier *bezier = static_cast<Geo::Bezier *>(object1);
+                if (Geo::Bezier bezier0(bezier->order()), bezier1(bezier->order());
+                    Geo::split(*bezier, std::get<0>(tvalues.back()), std::get<1>(tvalues.back()), bezier0, bezier1))
+                {
+                    size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                        std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), bezier));
+                    remove.emplace_back(bezier, _current_group, index);
+                    _graph->container_group(_current_group).pop(index);
+                    if (Geo::angle(start, center, end) > 0)
+                    {
+                        if (Geo::distance(bezier0.front(), end) < Geo::distance(bezier0.back(), end))
+                        {
+                            if (Geo::is_on_left(bezier0[1], center, end))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                            }
+                        }
+                        else
+                        {
+                            if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, end))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (Geo::distance(bezier0.front(), end) < Geo::distance(bezier0.back(), end))
+                        {
+                            if (Geo::is_on_left(bezier0[1], center, end))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                            }
+                        }
+                        else
+                        {
+                            if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, end))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                            }
+                        }
+                    }
+                    append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                }
+                break;
+            }
+        case Geo::Type::BSPLINE:
+            if (Geo::BSpline *bspline = static_cast<Geo::BSpline *>(object1); dynamic_cast<Geo::CubicBSpline *>(bspline) != nullptr)
+            {
+                if (Geo::CubicBSpline bspline0, bspline1; Geo::split(*bspline, true, std::get<1>(tvalues.back()), bspline0, bspline1))
+                {
+                    size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                        std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), bspline));
+                    remove.emplace_back(bspline, _current_group, index);
+                    _graph->container_group(_current_group).pop(index);
+                    if (Geo::angle(start, center, end) > 0)
+                    {
+                        if (Geo::distance(bspline0.control_points.front(), end) < Geo::distance(bspline0.control_points.back(), end))
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[1], center, end))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline0));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline1));
+                            }
+                        }
+                        else
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[bspline0.control_points.size() - 2], center, end))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline0));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline1));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (Geo::distance(bspline0.control_points.front(), end) < Geo::distance(bspline0.control_points.back(), end))
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[1], center, end))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline1));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline0));
+                            }
+                        }
+                        else
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[bspline0.control_points.size() - 2], center, end))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline1));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline0));
+                            }
+                        }
+                    }
+                    append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                }
+            }
+            else
+            {
+                if (Geo::QuadBSpline bspline0, bspline1; Geo::split(*bspline, false, std::get<1>(tvalues.back()), bspline0, bspline1))
+                {
+                    size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                        std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), bspline));
+                    remove.emplace_back(bspline, _current_group, index);
+                    _graph->container_group(_current_group).pop(index);
+                    if (Geo::angle(start, center, end) > 0)
+                    {
+                        if (Geo::distance(bspline0.control_points.front(), end) < Geo::distance(bspline0.control_points.back(), end))
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[1], center, end))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline0));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline1));
+                            }
+                        }
+                        else
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[bspline0.control_points.size() - 2], center, end))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline0));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline1));
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (Geo::distance(bspline0.control_points.front(), end) < Geo::distance(bspline0.control_points.back(), end))
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[1], center, end))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline1));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline0));
+                            }
+                        }
+                        else
+                        {
+                            if (Geo::is_on_left(bspline0.control_points[bspline0.control_points.size() - 2], center, end))
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline1));
+                            }
+                            else
+                            {
+                                _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline0));
+                            }
+                        }
+                    }
+                    append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            {
+                Geo::Ellipse *ellipse = static_cast<Geo::Ellipse *>(object1);
+                if (Geo::Ellipse ellipse0, ellipse1; Geo::split(*ellipse, end, ellipse0, ellipse1))
+                {
+                    size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                        std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), ellipse));
+                    remove.emplace_back(ellipse, _current_group, index);
+                    _graph->container_group(_current_group).pop(index);
+                    if (Geo::angle(start, center, end) > 0)
+                    {
+                        _graph->container_group(_current_group).insert(index, new Geo::Ellipse(ellipse0));
+                    }
+                    else
+                    {
+                        _graph->container_group(_current_group).insert(index, new Geo::Ellipse(ellipse1));
+                    }
+                    append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                }
+                break;
+            }
+        case Geo::Type::POLYLINE:
+            {
+                Geo::Polyline *polyline = static_cast<Geo::Polyline *>(object1);
+                size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                    std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), polyline));
+                remove.emplace_back(polyline, _current_group, index);
+                _graph->container_group(_current_group).pop(index);
+                const size_t i = std::get<0>(tvalues.back());
+                if (Geo::angle(start, center, end) > 0)
+                {
+                    if (Geo::is_on_left(polyline->at(i), center, end))
+                    {
+                        Geo::Polyline *points = new Geo::Polyline(polyline->begin() + i - 1, polyline->end());
+                        points->front().x = end.x, points->front().y = end.y;
+                        _graph->container_group(_current_group).insert(index, points);   
+                    }
+                    else
+                    {
+                        Geo::Polyline *points = new Geo::Polyline(polyline->begin(), polyline->begin() + i + 1);
+                        points->back().x = end.x, points->back().y = end.y;
+                        _graph->container_group(_current_group).insert(index, points);
+                    }
+                }
+                else
+                {
+                    if (Geo::is_on_left(polyline->at(i), center, end))
+                    {
+                        Geo::Polyline *points = new Geo::Polyline(polyline->begin(), polyline->begin() + i + 1);
+                        points->back().x = end.x, points->back().y = end.y;
+                        _graph->container_group(_current_group).insert(index, points);
+                    }
+                    else
+                    {
+                        Geo::Polyline *points = new Geo::Polyline(polyline->begin() + i - 1, polyline->end());
+                        points->front().x = end.x, points->front().y = end.y;
+                        _graph->container_group(_current_group).insert(index, points);
+                    }
+                }
+                append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                break;
+            }
+        default:
+            break;
+        }
+
+        _graph->container_group(_current_group).append(new Geo::Bezier(curve));
+        append.emplace_back(_graph->container_group(_current_group).back(), _current_group,
+            _graph->container_group(_current_group).size() - 1);
+        _backup.push_command(new UndoStack::ObjectCommand(append, remove));
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 bool Editer::chamfer(Geo::Polygon *shape, const Geo::Point &point, const double distance)
 {
     if (distance <= 0)
@@ -2990,9 +3902,10 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
         {
             Geo::Bezier *bezier = static_cast<Geo::Bezier *>(object);
             std::vector<Geo::Point> coords;
-            Geo::closest_point(*bezier, pos, coords);
-            if (Geo::Bezier bezier0(bezier->order()), bezier1(bezier->order());
-                Geo::split(*bezier, coords.front(), bezier0, bezier1))
+            std::vector<std::tuple<size_t, double, double, double>> tvalues;
+            Geo::closest_point(*bezier, pos, coords, &tvalues);
+            if (Geo::Bezier bezier0(bezier->order()), bezier1(bezier->order()); !tvalues.empty() &&
+                Geo::split(*bezier, std::get<0>(tvalues.front()), std::get<1>(tvalues.front()), bezier0, bezier1))
             {
                 std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
                 size_t index = std::distance(_graph->container_group(_current_group).begin(),
@@ -3015,11 +3928,12 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
             Geo::QuadBSpline *quadbspline = dynamic_cast<Geo::QuadBSpline *>(object);
             const bool is_cubic = cubicbspline;
             std::vector<Geo::Point> coords;
-            Geo::closest_point(*static_cast<Geo::BSpline *>(object), is_cubic, pos, coords);
+            std::vector<std::tuple<double, double, double>> tvalues;
+            Geo::closest_point(*static_cast<Geo::BSpline *>(object), is_cubic, pos, coords, &tvalues);
             if (is_cubic)
             {
-                if (Geo::CubicBSpline bspline0(*cubicbspline), bspline1(*cubicbspline);
-                    Geo::split(*static_cast<Geo::BSpline *>(object), is_cubic, coords.front(), bspline0, bspline1))
+                if (Geo::CubicBSpline bspline0(*cubicbspline), bspline1(*cubicbspline); !tvalues.empty() &&
+                    Geo::split(*static_cast<Geo::BSpline *>(object), is_cubic, std::get<0>(tvalues.front()), bspline0, bspline1))
                 {
                     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
                     size_t index = std::distance(_graph->container_group(_current_group).begin(),
@@ -3036,8 +3950,8 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
             }
             else
             {
-                if (Geo::QuadBSpline bspline0(*quadbspline), bspline1(*quadbspline);
-                    Geo::split(*static_cast<Geo::BSpline *>(object), is_cubic, coords.front(), bspline0, bspline1))
+                if (Geo::QuadBSpline bspline0(*quadbspline), bspline1(*quadbspline); !tvalues.empty() &&
+                    Geo::split(*static_cast<Geo::BSpline *>(object), is_cubic, std::get<0>(tvalues.front()), bspline0, bspline1))
                 {
                     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
                     size_t index = std::distance(_graph->container_group(_current_group).begin(),
@@ -3058,9 +3972,8 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
         {
             Geo::Arc *arc = static_cast<Geo::Arc *>(object);
             Geo::Arc arc0, arc1;
-            Geo::Point point0, point1;
-            if (Geo::is_intersected(pos, Geo::Point(arc->x, arc->y), *arc, point0, point1) 
-                && Geo::split(*arc, point0, arc0, arc1))
+            if (Geo::Point point0, point1; Geo::is_intersected(pos, Geo::Point(arc->x, arc->y),
+                *arc, point0, point1, false) && Geo::split(*arc, point0, arc0, arc1))
             {
                 std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
                 size_t index = std::distance(_graph->container_group(_current_group).begin(),
@@ -3070,6 +3983,28 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
                 _graph->container_group(_current_group).pop(index);
                 _graph->container_group(_current_group).insert(index, new Geo::Arc(arc1));
                 _graph->container_group(_current_group).insert(index, new Geo::Arc(arc0));
+                append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
+                append.emplace_back(_graph->container_group(_current_group)[index + 1], _current_group, index + 1);
+                _backup.push_command(new UndoStack::ObjectCommand(append, remove));
+                return true;
+            }
+        }
+        break;
+    case Geo::Type::ELLIPSE:
+        {
+            Geo::Ellipse *ellipse = static_cast<Geo::Ellipse *>(object);
+            Geo::Ellipse ellipse0, ellipse1;
+            if (Geo::Point point0, point1; Geo::is_intersected(ellipse->center(), pos, *ellipse,
+                point0, point1, false) && Geo::split(*ellipse, point0, ellipse0, ellipse1))
+            {
+                std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
+                size_t index = std::distance(_graph->container_group(_current_group).begin(),
+                    std::find(_graph->container_group(_current_group).begin(),
+                        _graph->container_group(_current_group).end(), object));
+                remove.emplace_back(object, _current_group, index);
+                _graph->container_group(_current_group).pop(index);
+                _graph->container_group(_current_group).insert(index, new Geo::Ellipse(ellipse1));
+                _graph->container_group(_current_group).insert(index, new Geo::Ellipse(ellipse0));
                 append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
                 append.emplace_back(_graph->container_group(_current_group)[index + 1], _current_group, index + 1);
                 _backup.push_command(new UndoStack::ObjectCommand(append, remove));
@@ -3090,7 +4025,7 @@ bool Editer::line_array(std::vector<Geo::Geometry *> objects, int x, int y, doub
         return false;
     }
 
-    double left = FLT_MAX, right = -FLT_MAX, top = -FLT_MAX, bottom = FLT_MAX;
+    double left = DBL_MAX, right = -DBL_MAX, top = -DBL_MAX, bottom = DBL_MAX;
     Geo::AABBRect rect;
     for (Geo::Geometry *object : objects)
     {
@@ -3196,89 +4131,6 @@ void Editer::down(Geo::Geometry *item)
             break;
         }
     }
-}
-
-void Editer::text_to_polylines(Text *text)
-{
-    if (text == nullptr)
-    {
-        return;
-    }
-    std::ifstream cfile("./fonts/HZFS.SHX", std::ios::binary);
-    std::ifstream efile("./fonts/ISO.SHX", std::ios::binary);
-    if (!cfile.is_open() || !efile.is_open())
-    {
-        return;
-    }
-
-    SHXReader::SHXFont cfont(&cfile), efont(&efile);
-    Combination *combination = new Combination();
-    const std::string result = TextEncoding::uft8_to_gbk(text->text().toStdString());
-    for (int i = 0, init_x = text->bounding_rect().left(), x = text->bounding_rect().left(),
-        y = text->bounding_rect().top() - GlobalSetting::setting().text_size,
-        count = result.length(), font_size = GlobalSetting::setting().text_size; i < count; ++i)
-    {
-        if (result[i] < 0)
-        {
-            const int code = (static_cast<uint8_t>(result[i]) << 8) | static_cast<uint8_t>(result[++i]);
-            SHXReader::SHXShape shape = cfont.char_shape(code, font_size);
-            for (Geo::Polyline &polyline : shape.polylines)
-            {
-                polyline.translate(x, y);
-                combination->append(new Geo::Polyline(polyline));
-            }
-            if (shape.polylines.empty())
-            {
-                x += font_size;
-            }
-            else
-            {
-                shape.update_bbox();
-                x = shape.bbox.max_x + font_size / 8;
-            }
-        }
-        else
-        {
-            SHXReader::SHXShape shape = efont.char_shape(result[i], font_size / 2);
-            for (Geo::Polyline &polyline : shape.polylines)
-            {
-                polyline.translate(x, y);
-                combination->append(new Geo::Polyline(polyline));
-            }
-            if (shape.polylines.empty())
-            {
-                switch (result[i])
-                {
-                case '\n':
-                    y -= font_size;
-                    y -= (font_size / 10);
-                    x = init_x;
-                    break;
-                case '\t':
-                    x += font_size;
-                    break;
-                default:
-                    x += (font_size / 2);
-                    break;
-                }
-            }
-            else
-            {
-                shape.update_bbox();
-                x = shape.bbox.max_x + font_size / 8;
-            }
-        }
-    }
-    combination->update_border();
-    const size_t index = std::distance(_graph->container_group(_current_group).begin(),
-        std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), text));
-    _graph->container_group(_current_group).pop(index);
-    _graph->container_group(_current_group).insert(index, combination);
-    _graph->modified = true;
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-    add_items.emplace_back(combination, _current_group, index);
-    remove_items.emplace_back(text, _current_group, index);
-    _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
 }
 
 void Editer::rotate(std::vector<Geo::Geometry *> objects, const double x, const double y, const double rad)
@@ -7048,6 +7900,130 @@ void Editer::auto_connect()
                 break;
             }
         }
+    }
+}
+
+
+void Editer::text_to_polylines(Text *text)
+{
+    if (text == nullptr)
+    {
+        return;
+    }
+    std::ifstream cfile("./fonts/HZFS.SHX", std::ios::binary);
+    std::ifstream efile("./fonts/ISO.SHX", std::ios::binary);
+    if (!cfile.is_open() || !efile.is_open())
+    {
+        return;
+    }
+
+    SHXReader::SHXFont cfont(&cfile), efont(&efile);
+    Combination *combination = new Combination();
+    const std::string result = TextEncoding::uft8_to_gbk(text->text().toStdString());
+    for (int i = 0, init_x = text->bounding_rect().left(), x = text->bounding_rect().left(),
+        y = text->bounding_rect().top() - GlobalSetting::setting().text_size,
+        count = result.length(), font_size = GlobalSetting::setting().text_size; i < count; ++i)
+    {
+        if (result[i] < 0)
+        {
+            const int code = (static_cast<uint8_t>(result[i]) << 8) | static_cast<uint8_t>(result[++i]);
+            SHXReader::SHXShape shape = cfont.char_shape(code, font_size);
+            for (Geo::Polyline &polyline : shape.polylines)
+            {
+                polyline.translate(x, y);
+                combination->append(new Geo::Polyline(polyline));
+            }
+            if (shape.polylines.empty())
+            {
+                x += font_size;
+            }
+            else
+            {
+                shape.update_bbox();
+                x = shape.bbox.max_x + font_size / 8;
+            }
+        }
+        else
+        {
+            SHXReader::SHXShape shape = efont.char_shape(result[i], font_size / 2);
+            for (Geo::Polyline &polyline : shape.polylines)
+            {
+                polyline.translate(x, y);
+                combination->append(new Geo::Polyline(polyline));
+            }
+            if (shape.polylines.empty())
+            {
+                switch (result[i])
+                {
+                case '\n':
+                    y -= font_size;
+                    y -= (font_size / 10);
+                    x = init_x;
+                    break;
+                case '\t':
+                    x += font_size;
+                    break;
+                default:
+                    x += (font_size / 2);
+                    break;
+                }
+            }
+            else
+            {
+                shape.update_bbox();
+                x = shape.bbox.max_x + font_size / 8;
+            }
+        }
+    }
+    combination->update_border();
+    const size_t index = std::distance(_graph->container_group(_current_group).begin(),
+        std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), text));
+    _graph->container_group(_current_group).pop(index);
+    _graph->container_group(_current_group).insert(index, combination);
+    _graph->modified = true;
+    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    add_items.emplace_back(combination, _current_group, index);
+    remove_items.emplace_back(text, _current_group, index);
+    _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+}
+
+void Editer::bezier_to_bspline(Geo::Bezier *bezier)
+{
+    if (bezier == nullptr)
+    {
+        return;
+    }
+    if (Geo::BSpline *bspline = Geo::bezier_to_bspline(*bezier))
+    {
+        const size_t index = std::distance(_graph->container_group(_current_group).begin(),
+            std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), bezier));
+        _graph->container_group(_current_group).pop(index);
+        _graph->container_group(_current_group).insert(index, bspline);
+        _graph->modified = true;
+        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+        add_items.emplace_back(bspline, _current_group, index);
+        remove_items.emplace_back(bezier, _current_group, index);
+        _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+    }
+}
+
+void Editer::bspline_to_bezier(Geo::BSpline *bspline)
+{
+    if (bspline == nullptr)
+    {
+        return;
+    }
+    if (Geo::Bezier *bezier = Geo::bspline_to_bezier(*bspline))
+    {
+        const size_t index = std::distance(_graph->container_group(_current_group).begin(),
+            std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), bspline));
+        _graph->container_group(_current_group).pop(index);
+        _graph->container_group(_current_group).insert(index, bezier);
+        _graph->modified = true;
+        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+        add_items.emplace_back(bezier, _current_group, index);
+        remove_items.emplace_back(bspline, _current_group, index);
+        _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
     }
 }
 

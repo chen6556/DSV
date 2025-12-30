@@ -8,7 +8,7 @@
 class ActionGroup
 {
 public:
-    enum class MenuType {PolygonMenu, ArcMenu, CircleMenu, EllipseMenu, CurveMenu, FilletMenu};
+    enum class MenuType {PolygonMenu, ArcMenu, CircleMenu, EllipseMenu, CurveMenu, FilletMenu, ConnectMenu};
 
 private:
     Ui::MainWindow *ui = nullptr;
@@ -19,6 +19,7 @@ private:
     QMenu *_ellipse_menu = nullptr;
     QMenu *_curve_menu = nullptr;
     QMenu *_fillet_menu = nullptr;
+    QMenu *_connect_menu = nullptr;
 
 public:
     ActionGroup(Ui::MainWindow *ui, std::function<void(const MenuType, const int)> callback);
@@ -37,4 +38,6 @@ private:
     void init_curve_menu();
 
     void init_fillet_menu();
+
+    void init_connect_menu();
 };

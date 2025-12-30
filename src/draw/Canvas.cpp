@@ -19,6 +19,9 @@ Canvas::~Canvas()
     delete _up;
     delete _down;
     delete _text_to_polylines;
+    delete _bspline_to_bezier;
+    delete _bezier_to_bspline;
+    delete _change_bspline_model;
 }
 
 
@@ -28,14 +31,25 @@ void Canvas::init()
     CanvasOperations::CanvasOperation::canvas = this;
 
     _input_line.hide();
+    init_menu();
+}
 
+void Canvas::init_menu()
+{
     _menu = new QMenu(this);
     _up = new QAction("Up");
     _down = new QAction("Down");
     _text_to_polylines = new QAction("To Polylines");
+    _bezier_to_bspline = new QAction("To BSpline");
+    _bspline_to_bezier = new QAction("To Bezier");
+    _change_bspline_model = new QAction("Show Controls");
+
     _menu->addAction(_up);
     _menu->addAction(_down);
     _menu->addAction(_text_to_polylines);
+    _menu->addAction(_bezier_to_bspline);
+    _menu->addAction(_bspline_to_bezier);
+    _menu->addAction(_change_bspline_model);
 }
 
 void Canvas::bind_editer(Editer *editer)
@@ -717,7 +731,7 @@ Geo::Point Canvas::center() const
         return Geo::Point();
     }
 
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
+    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
     if (GlobalSetting::setting().graph == nullptr || GlobalSetting::setting().graph->empty())
     {
         return Geo::Point((x0 + x1) / 2, (y0 + y1) / 2);
@@ -744,7 +758,7 @@ Geo::AABBRect Canvas::bounding_rect() const
         return Geo::AABBRect();
     }
 
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-FLT_MAX), y1 = (-FLT_MAX);
+    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
     if (GlobalSetting::setting().graph == nullptr || GlobalSetting::setting().graph->empty())
     {
         return Geo::AABBRect(x0, y0, x1, y1);
@@ -807,6 +821,17 @@ void Canvas::show_menu(Geo::Geometry *object)
 {
     refresh_selected_ibo(object);
     _text_to_polylines->setVisible(dynamic_cast<Text *>(object) != nullptr);
+    _bezier_to_bspline->setVisible(dynamic_cast<Geo::Bezier *>(object) != nullptr);
+    _bspline_to_bezier->setVisible(dynamic_cast<Geo::BSpline *>(object) != nullptr);
+    if (const Geo::BSpline *bspline = dynamic_cast<const Geo::BSpline *>(object))
+    {
+        _change_bspline_model->setVisible(true);
+        _change_bspline_model->setText(bspline->controls_model ? "Show Path" : "Show Controls");
+    }
+    else
+    {
+        _change_bspline_model->setVisible(false);
+    }
     if (const QAction *a = _menu->exec(QCursor::pos()); a == _up)
     {
         _editer->up(object);
@@ -823,6 +848,29 @@ void Canvas::show_menu(Geo::Geometry *object)
     {
         _editer->text_to_polylines(dynamic_cast<Text *>(object));
         refresh_vbo({ Geo::Type::TEXT, Geo::Type::POLYLINE }, true);
+        refresh_selected_ibo();
+    }
+    else if (a == _bezier_to_bspline)
+    {
+        _editer->bezier_to_bspline(dynamic_cast<Geo::Bezier *>(object));
+        CanvasOperations::CanvasOperation::tool_lines_count = 0;
+        refresh_vbo({ Geo::Type::BEZIER, Geo::Type::BSPLINE }, true);
+        refresh_selected_ibo();
+    }
+    else if (a == _change_bspline_model)
+    {
+        static_cast<Geo::BSpline *>(object)->controls_model =
+            !static_cast<Geo::BSpline *>(object)->controls_model;
+        if (object == CanvasOperations::CanvasOperation::clicked_object)
+        {
+            CanvasOperations::CanvasOperation::refresh_tool_lines(object);
+        }
+    }
+    else if (a == _bspline_to_bezier)
+    {
+        _editer->bspline_to_bezier(dynamic_cast<Geo::BSpline *>(object));
+        CanvasOperations::CanvasOperation::tool_lines_count = 0;
+        refresh_vbo({ Geo::Type::BEZIER, Geo::Type::BSPLINE }, true);
         refresh_selected_ibo();
     }
 }

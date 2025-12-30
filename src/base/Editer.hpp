@@ -111,6 +111,8 @@ public:
 
     bool connect(std::vector<Geo::Geometry *> objects, const double connect_distance);
 
+    bool blend(const Geo::Geometry *object0, const Geo::Geometry *object1, const Geo::Point &pos0, const Geo::Point &pos1);
+
     bool close_polyline(std::vector<Geo::Geometry *> objects);
 
     bool combinate(std::vector<Geo::Geometry *> objects);
@@ -145,6 +147,9 @@ public:
 
     bool fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1, const double radius0, const double radius1);
 
+    bool fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::Point &start, const Geo::Point &center,
+        const Geo::Point &end, const std::vector<std::tuple<size_t, double, double, double>> &tvalues);
+
     bool chamfer(Geo::Polygon *shape, const Geo::Point &point, const double distance);
 
     bool chamfer(Geo::Polyline *polyline, const Geo::Point &point, const double distance);
@@ -158,8 +163,6 @@ public:
     void up(Geo::Geometry *item);
 
     void down(Geo::Geometry *item);
-
-    void text_to_polylines(Text *text);
 
     void rotate(std::vector<Geo::Geometry *> objects, const double x, const double y, const double rad);
 
@@ -198,6 +201,13 @@ public:
 	void auto_layering();
 
     void auto_connect();
+
+
+    void text_to_polylines(Text *text);
+
+    void bezier_to_bspline(Geo::Bezier *bezier);
+
+    void bspline_to_bezier(Geo::BSpline *bspline);
 
 private:
     void select_subfunc(const Geo::AABBRect &rect, const size_t start, const size_t end, std::vector<Geo::Geometry *> *result);

@@ -15,6 +15,7 @@ void ActionGroup::init()
     init_ellipse_menu();
     init_curve_menu();
     init_fillet_menu();
+    init_connect_menu();
 }
 
 void ActionGroup::init_polygon_menu()
@@ -164,7 +165,33 @@ void ActionGroup::init_fillet_menu()
     _fillet_menu->addAction(fillet);
     ui->fillet_btn->setDefaultAction(fillet);
 
+    QAction *free_fillet = new QAction(QIcon(":/icons/free_fillet_btn.png"),
+        "Free Fillet", ui->fillet_btn);
+    _fillet_menu->addAction(free_fillet);
+
     QAction *chamfer = new QAction(QIcon(":/icons/chamfer_btn.png"),
         "Chamfer", ui->fillet_btn);
     _fillet_menu->addAction(chamfer);
+}
+
+void ActionGroup::init_connect_menu()
+{
+    _connect_menu = new QMenu(ui->connect_btn);
+    _connect_menu->connect(_connect_menu, &QMenu::triggered, [this](QAction *action)
+        {
+            _callback(MenuType::ConnectMenu, _connect_menu->actions().indexOf(action));
+            ui->connect_btn->setIcon(action->icon());
+            ui->connect_btn->setToolTip(action->text());
+            ui->connect_btn->setDefaultAction(action);
+        });
+    ui->connect_btn->setMenu(_connect_menu);
+
+    QAction *connect = new QAction(QIcon(":/icons/connect_btn.png"),
+        "Connect", ui->connect_btn);
+    _connect_menu->addAction(connect);
+    _connect_menu->setDefaultAction(connect);
+
+    QAction *blend = new QAction(QIcon(":/icons/blend_btn.png"),
+        "Blend", ui->connect_btn);
+    _connect_menu->addAction(blend);
 }

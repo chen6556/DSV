@@ -62,11 +62,13 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::RingArray)] = new RingArrayOperation();
     operations[static_cast<int>(Tool::PolygonDifference)] = new PolygonDifferenceOperation();
     operations[static_cast<int>(Tool::Fillet)] = new FilletOperation();
+    operations[static_cast<int>(Tool::FreeFillet)] = new FreeFilletOperation();
     operations[static_cast<int>(Tool::Chamfer)] = new ChamferOperation();
     operations[static_cast<int>(Tool::Rotate)] = new RotateOperation();
     operations[static_cast<int>(Tool::Trim)] = new TrimOperation();
     operations[static_cast<int>(Tool::Extend)] = new ExtendOperation();
     operations[static_cast<int>(Tool::Split)] = new SplitOperation();
+    operations[static_cast<int>(Tool::Blend)] = new BlendOperation();
 }
 
 void CanvasOperation::clear()
@@ -160,6 +162,91 @@ void CanvasOperation::check_tool_lines_size(const size_t count)
     tool_lines = temp;
 }
 
+void CanvasOperation::refresh_tool_lines(const Geo::Geometry *object)
+{
+    tool_lines_count = 0;
+    if (object == nullptr)
+    {
+        return;
+    }
+
+    switch (object->type())
+    {
+    case Geo::Type::BEZIER:
+        {
+            const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(object);
+            check_tool_lines_size(bezier->size() * 6);
+            for (size_t i = 1, count = bezier->size(); i < count; ++i)
+            {
+                tool_lines[tool_lines_count++] = (*bezier)[i - 1].x;
+                tool_lines[tool_lines_count++] = (*bezier)[i - 1].y;
+                ++tool_lines_count;
+                tool_lines[tool_lines_count++] = (*bezier)[i].x;
+                tool_lines[tool_lines_count++] = (*bezier)[i].y;
+                ++tool_lines_count;
+            }
+        }
+        break;
+    case Geo::Type::BSPLINE:
+        {
+            const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
+            if (bspline->controls_model)
+            {
+                check_tool_lines_size(bspline->control_points.size() * 6);
+                for (size_t i = 1, count = bspline->control_points.size(); i < count; ++i)
+                {
+                    tool_lines[tool_lines_count++] = bspline->control_points[i - 1].x;
+                    tool_lines[tool_lines_count++] = bspline->control_points[i - 1].y;
+                    ++tool_lines_count;
+                    tool_lines[tool_lines_count++] = bspline->control_points[i].x;
+                    tool_lines[tool_lines_count++] = bspline->control_points[i].y;
+                    ++tool_lines_count;
+                }
+            }
+            else
+            {
+                check_tool_lines_size(bspline->path_points.size() * 6);
+                for (size_t i = 1, count = bspline->path_points.size(); i < count; ++i)
+                {
+                    tool_lines[tool_lines_count++] = bspline->path_points[i - 1].x;
+                    tool_lines[tool_lines_count++] = bspline->path_points[i - 1].y;
+                    ++tool_lines_count;
+                    tool_lines[tool_lines_count++] = bspline->path_points[i].x;
+                    tool_lines[tool_lines_count++] = bspline->path_points[i].y;
+                    ++tool_lines_count;
+                }
+            }
+        }
+        break;
+    case Geo::Type::CIRCLE:
+        {
+            const Geo::Circle *circle = static_cast<const Geo::Circle *>(object);
+            tool_lines[0] = circle->x - circle->radius, tool_lines[1] = circle->y;
+            tool_lines[3] = circle->x + circle->radius, tool_lines[4] = circle->y;
+            tool_lines[6] = circle->x, tool_lines[7] = circle->y - circle->radius;
+            tool_lines[9] = circle->x, tool_lines[10] = circle->y + circle->radius;
+            tool_lines[12] = circle->x, tool_lines[13] = circle->y;
+            tool_lines[15] = circle->x, tool_lines[16] = circle->y;
+            tool_lines_count = 18;
+        }
+        break;
+    case Geo::Type::ELLIPSE:
+        {
+            const Geo::Ellipse *ellipse = static_cast<const Geo::Ellipse *>(object);
+            tool_lines[0] = ellipse->a0().x, tool_lines[1] = ellipse->a0().y;
+            tool_lines[3] = ellipse->a1().x, tool_lines[4] = ellipse->a1().y;
+            tool_lines[6] = ellipse->b0().x, tool_lines[7] = ellipse->b0().y;
+            tool_lines[9] = ellipse->b1().x, tool_lines[10] = ellipse->b1().y;
+            tool_lines[15] = tool_lines[12] = (tool_lines[0] + tool_lines[3] + tool_lines[6] + tool_lines[9]) / 4;
+            tool_lines[16] = tool_lines[13] = (tool_lines[1] + tool_lines[4] + tool_lines[7] + tool_lines[10]) / 4;
+            tool_lines_count = 18;
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 bool CanvasOperation::mouse_press(QMouseEvent *event)
 {
     return false;
@@ -215,65 +302,7 @@ bool SelectOperation::mouse_press(QMouseEvent *event)
         {
             if (std::vector<Geo::Geometry *> selected_objects = editer->selected(); selected_objects.size() == 1)
             {
-                switch (clicked_object->type())
-                {
-                case Geo::Type::BEZIER:
-                    {
-                        const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(clicked_object);
-                        check_tool_lines_size(bezier->size() * 6);
-                        for (size_t i = 1, count = bezier->size(); i < count; ++i)
-                        {
-                            tool_lines[tool_lines_count++] = (*bezier)[i - 1].x;
-                            tool_lines[tool_lines_count++] = (*bezier)[i - 1].y;
-                            ++tool_lines_count;
-                            tool_lines[tool_lines_count++] = (*bezier)[i].x;
-                            tool_lines[tool_lines_count++] = (*bezier)[i].y;
-                            ++tool_lines_count;
-                        }
-                    }
-                    break;
-                case Geo::Type::BSPLINE:
-                    {
-                        const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(clicked_object);
-                        check_tool_lines_size(bspline->path_points.size() * 6);
-                        for (size_t i = 1, count = bspline->path_points.size(); i < count; ++i)
-                        {
-                            tool_lines[tool_lines_count++] = bspline->path_points[i - 1].x;
-                            tool_lines[tool_lines_count++] = bspline->path_points[i - 1].y;
-                            ++tool_lines_count;
-                            tool_lines[tool_lines_count++] = bspline->path_points[i].x;
-                            tool_lines[tool_lines_count++] = bspline->path_points[i].y;
-                            ++tool_lines_count;
-                        }
-                    }
-                    break;
-                case Geo::Type::CIRCLE:
-                    {
-                        const Geo::Circle *circle = static_cast<const Geo::Circle *>(clicked_object);
-                        tool_lines[0] = circle->x - circle->radius, tool_lines[1] = circle->y;
-                        tool_lines[3] = circle->x + circle->radius, tool_lines[4] = circle->y;
-                        tool_lines[6] = circle->x, tool_lines[7] = circle->y - circle->radius;
-                        tool_lines[9] = circle->x, tool_lines[10] = circle->y + circle->radius;
-                        tool_lines[12] = circle->x, tool_lines[13] = circle->y;
-                        tool_lines[15] = circle->x, tool_lines[16] = circle->y;
-                        tool_lines_count = 18;
-                    }
-                    break;
-                case Geo::Type::ELLIPSE:
-                    {
-                        const Geo::Ellipse *ellipse = static_cast<const Geo::Ellipse *>(clicked_object);
-                        tool_lines[0] = ellipse->a0().x, tool_lines[1] = ellipse->a0().y;
-                        tool_lines[3] = ellipse->a1().x, tool_lines[4] = ellipse->a1().y;
-                        tool_lines[6] = ellipse->b0().x, tool_lines[7] = ellipse->b0().y;
-                        tool_lines[9] = ellipse->b1().x, tool_lines[10] = ellipse->b1().y;
-                        tool_lines[15] = tool_lines[12] = (tool_lines[0] + tool_lines[3] + tool_lines[6] + tool_lines[9]) / 4;
-                        tool_lines[16] = tool_lines[13] = (tool_lines[1] + tool_lines[4] + tool_lines[7] + tool_lines[10]) / 4;
-                        tool_lines_count = 18;
-                    }
-                    break;
-                default:
-                    break;
-                }
+                refresh_tool_lines(clicked_object);
             }
             if (event->modifiers() != Qt::ControlModifier && GlobalSetting::setting().auto_aligning)
             {
@@ -415,65 +444,7 @@ bool MoveOperation::mouse_move(QMouseEvent *event)
     if (std::vector<Geo::Geometry *> selected_objects = editer->selected(); selected_objects.size() <= 1 && clicked_object != nullptr)
     {
         editer->translate_points(clicked_object, real_pos[2], real_pos[3], real_pos[0], real_pos[1], event->modifiers() == Qt::ControlModifier);
-        switch (clicked_object->type())
-        {
-        case Geo::Type::BEZIER:
-            {
-                const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(clicked_object);
-                check_tool_lines_size(bezier->size() * 6);
-                for (size_t i = 1, count = bezier->size(); i < count; ++i)
-                {
-                    tool_lines[tool_lines_count++] = (*bezier)[i - 1].x;
-                    tool_lines[tool_lines_count++] = (*bezier)[i - 1].y;
-                    ++tool_lines_count;
-                    tool_lines[tool_lines_count++] = (*bezier)[i].x;
-                    tool_lines[tool_lines_count++] = (*bezier)[i].y;
-                    ++tool_lines_count;
-                }
-            }
-            break;
-        case Geo::Type::BSPLINE:
-            {
-                const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(clicked_object);
-                check_tool_lines_size(bspline->path_points.size() * 6);
-                for (size_t i = 1, count = bspline->path_points.size(); i < count; ++i)
-                {
-                    tool_lines[tool_lines_count++] = bspline->path_points[i - 1].x;
-                    tool_lines[tool_lines_count++] = bspline->path_points[i - 1].y;
-                    ++tool_lines_count;
-                    tool_lines[tool_lines_count++] = bspline->path_points[i].x;
-                    tool_lines[tool_lines_count++] = bspline->path_points[i].y;
-                    ++tool_lines_count;
-                }
-            }
-            break;
-        case Geo::Type::CIRCLE:
-            {
-                const Geo::Circle *circle = static_cast<const Geo::Circle *>(clicked_object);
-                tool_lines[0] = circle->x - circle->radius, tool_lines[1] = circle->y;
-                tool_lines[3] = circle->x + circle->radius, tool_lines[4] = circle->y;
-                tool_lines[6] = circle->x, tool_lines[7] = circle->y - circle->radius;
-                tool_lines[9] = circle->x, tool_lines[10] = circle->y + circle->radius;
-                tool_lines[12] = circle->x, tool_lines[13] = circle->y;
-                tool_lines[15] = circle->x, tool_lines[16] = circle->y;
-                tool_lines_count = 18;
-            }
-            break;
-        case Geo::Type::ELLIPSE:
-            {
-                const Geo::Ellipse *ellipse = static_cast<const Geo::Ellipse *>(clicked_object);
-                tool_lines[0] = ellipse->a0().x, tool_lines[1] = ellipse->a0().y;
-                tool_lines[3] = ellipse->a1().x, tool_lines[4] = ellipse->a1().y;
-                tool_lines[6] = ellipse->b0().x, tool_lines[7] = ellipse->b0().y;
-                tool_lines[9] = ellipse->b1().x, tool_lines[10] = ellipse->b1().y;
-                tool_lines[15] = tool_lines[12] = (tool_lines[0] + tool_lines[3] + tool_lines[6] + tool_lines[9]) / 4;
-                tool_lines[16] = tool_lines[13] = (tool_lines[1] + tool_lines[4] + tool_lines[7] + tool_lines[10]) / 4;
-                tool_lines_count = 18;
-            }
-            break;
-        default:
-            break;
-        }
+        refresh_tool_lines(clicked_object);
         canvas->refresh_vbo(clicked_object->type(), event->modifiers() == Qt::ControlModifier);
         if (event->modifiers() == Qt::ControlModifier)
         {
@@ -3752,6 +3723,234 @@ QString FilletOperation::cmd_tips() const
 }
 
 
+bool FreeFilletOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        clicked_object = editer->select(real_pos[0], real_pos[1], true);
+        if ((_object0 == nullptr || _object1 == nullptr) && clicked_object == nullptr)
+        {
+            return false;
+        }
+        if (_object0 == nullptr)
+        {
+            if (const Geo::Type type = clicked_object->type(); type == Geo::Type::ARC ||
+                type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE || type == Geo::Type::POLYLINE || 
+                (type == Geo::Type::ELLIPSE && static_cast<Geo::Ellipse *>(clicked_object)->is_arc()))
+            {
+                _object0 = clicked_object;
+                canvas->refresh_selected_ibo();
+                return true;
+            }
+        }
+        else if (_object1 == nullptr)
+        {
+            if (const Geo::Type type = clicked_object->type(); clicked_object != _object0 && (type == Geo::Type::ARC
+                || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE || type == Geo::Type::POLYLINE ||
+                (type == Geo::Type::ELLIPSE && static_cast<Geo::Ellipse *>(clicked_object)->is_arc())))
+            {
+                _object1 = clicked_object;
+                _object0->is_selected = true;
+                canvas->refresh_selected_ibo();
+                return true;
+            }
+        }
+        else
+        {
+            if (editer->fillet(_object0, _object1, _points.front(),
+                Geo::Point(_pos[0], _pos[1]), _points.back(), _tvalues))
+            {
+                std::set<Geo::Type> types;
+                types.insert(Geo::Type::BEZIER);
+                types.insert(_object0->type());
+                types.insert(_object1->type());
+                canvas->refresh_vbo(types, false);
+                canvas->refresh_selected_ibo();
+            }
+            reset();
+            tool_lines_count = 0;
+            tool[0] = Tool::Select;
+            return true;
+        }
+    }
+    return false;
+}
+
+bool FreeFilletOperation::mouse_move(QMouseEvent *event)
+{
+    if (_object0 != nullptr && _object1 != nullptr)
+    {
+        _pos[0] = real_pos[0], _pos[1] = real_pos[1];
+        tool_lines[tool_lines_count++] = _pos[0];
+        tool_lines[tool_lines_count++] = _pos[1];
+        ++tool_lines_count;
+
+        _tvalues.clear();
+        _points.clear();
+        const Geo::Point anchor(_pos[0], _pos[1]);
+        const Geo::Geometry *objects[2] = { _object0, _object1 };
+        for (const Geo::Geometry *object : objects)
+        {
+            switch (object->type())
+            {
+            case Geo::Type::ARC:
+                {
+                    const Geo::Arc *arc = static_cast<const Geo::Arc *>(object);
+                    const Geo::Circle circle(arc->x, arc->y, arc->radius);
+                    if (Geo::Point point0, point1; Geo::foot_point(circle, anchor, point0, point1))
+                    {
+                        if (Geo::is_inside(point0, *arc) && Geo::is_inside(point1, *arc))
+                        {
+                            _points.emplace_back(Geo::distance(anchor, point0) <= Geo::distance(anchor, point1) ? point0 : point1);
+                        }
+                        else if (Geo::is_inside(point0, *arc))
+                        {
+                            _points.emplace_back(point0);
+                        }
+                        else if (Geo::is_inside(point1, *arc))
+                        {
+                            _points.emplace_back(point1);
+                        }
+                    }
+                    break;
+                }
+            case Geo::Type::BEZIER:
+                {
+                    std::vector<std::tuple<size_t, double, double, double>> tvalues;
+                    if (std::vector<Geo::Point> points; Geo::foot_point(anchor, *static_cast<const Geo::Bezier *>(object), points, &tvalues) && !points.empty())
+                    {
+                        _tvalues.emplace_back(*std::min_element(tvalues.begin(), tvalues.end(), [&](const auto &a, const auto &b)
+                            { return Geo::distance(std::get<2>(a), std::get<3>(a), anchor.x, anchor.y) <
+                                Geo::distance(std::get<2>(b), std::get<3>(b), anchor.x, anchor.y); }));
+                        _points.emplace_back(std::get<2>(_tvalues.back()), std::get<3>(_tvalues.back()));
+                    }
+                    break;
+                }
+            case Geo::Type::BSPLINE:
+                {
+                    std::vector<std::tuple<double, double, double>> tvalues;
+                    if (std::vector<Geo::Point> points; Geo::foot_point(anchor, *static_cast<const Geo::BSpline *>(object), points, &tvalues) && !points.empty())
+                    {
+                        const auto it = std::min_element(tvalues.begin(), tvalues.end(), [&](const auto &a, const auto &b)
+                            { return Geo::distance(std::get<1>(a), std::get<2>(a), anchor.x, anchor.y) <
+                                Geo::distance(std::get<1>(b), std::get<2>(b), anchor.x, anchor.y); });
+                        _tvalues.emplace_back(0, std::get<0>(*it), std::get<1>(*it), std::get<2>(*it));
+                        _points.emplace_back(std::get<2>(_tvalues.back()), std::get<3>(_tvalues.back()));
+                    }
+                    break;
+                }
+            case Geo::Type::ELLIPSE:
+                if (std::vector<Geo::Point> points; Geo::foot_point(*static_cast<const Geo::Ellipse *>(object), anchor, points))
+                {
+                    const auto it = std::min_element(points.begin(), points.end(), [&](const Geo::Point &a, const Geo::Point &b) 
+                        { return Geo::distance_square(a, anchor) < Geo::distance_square(b, anchor); });
+                    _points.emplace_back(*it);
+                }
+                break;
+            case Geo::Type::POLYLINE:
+                {
+                    const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
+                    std::vector<std::tuple<size_t, double, double>> points;
+                    for (size_t i = 1, count = polyline->size(); i < count; ++i)
+                    {
+                        if (Geo::Point point; Geo::foot_point(polyline->at(i - 1), polyline->at(i), anchor, point, false))
+                        {
+                            points.emplace_back(i, point.x, point.y);
+                        }
+                    }
+                    if (!points.empty())
+                    {
+                        const auto it = std::min_element(points.begin(), points.end(), [&](const auto &a, const auto &b) 
+                            { return Geo::distance(std::get<1>(a), std::get<2>(a), anchor.x, anchor.y) <
+                                Geo::distance(std::get<1>(b), std::get<2>(b), anchor.x, anchor.y); });
+                        _points.emplace_back(std::get<1>(*it), std::get<2>(*it));
+                        _tvalues.emplace_back(std::get<0>(*it), 0, std::get<1>(*it), std::get<2>(*it));
+                    }
+                    break;
+                }
+            default:
+                break;
+            }
+        }
+
+        tool_lines_count = 0;
+        if (_points.size() > 0)
+        {
+            tool_lines[tool_lines_count++] = _pos[0];
+            tool_lines[tool_lines_count++] = _pos[1];
+            ++tool_lines_count;
+            tool_lines[tool_lines_count++] = _points.front().x;
+            tool_lines[tool_lines_count++] = _points.front().y;
+            ++tool_lines_count;
+        }
+        if (_points.size() > 1)
+        {
+            tool_lines[tool_lines_count++] = _pos[0];
+            tool_lines[tool_lines_count++] = _pos[1];
+            ++tool_lines_count;
+            tool_lines[tool_lines_count++] = _points.back().x;
+            tool_lines[tool_lines_count++] = _points.back().y;
+            ++tool_lines_count;
+        }
+        return true;
+    }
+    return false;
+}
+
+void FreeFilletOperation::reset()
+{
+    _object0 = _object1 = nullptr;
+    _tvalues.clear();
+    _points.clear();
+}
+
+bool FreeFilletOperation::read_parameters(const double *params, const int count)
+{
+    if (count >= 2 && _object0 != nullptr && _object1 != nullptr)
+    {
+        if (params[0] != real_pos[0] || params[1] != real_pos[1])
+        {
+            const double pos[2] = { real_pos[0], real_pos[1] };
+            real_pos[0] = params[0], real_pos[1] = params[1];
+            mouse_move(nullptr);
+            real_pos[0] = pos[0], real_pos[1] = pos[1];
+        }
+
+        if (editer->fillet(_object0, _object1, _points.front(),
+            Geo::Point(params[0], params[1]), _points.back(), _tvalues))
+        {
+            std::set<Geo::Type> types;
+            types.insert(Geo::Type::BEZIER);
+            types.insert(_object0->type());
+            types.insert(_object1->type());
+            canvas->refresh_vbo(types, false);
+            canvas->refresh_selected_ibo();
+        }
+        reset();
+        tool_lines_count = 0;
+        tool[0] = Tool::Select;
+        return true;
+    }
+    return false;
+}
+
+QString FreeFilletOperation::cmd_tips() const
+{
+    if (_object0 == nullptr)
+    {
+        return "Select first object.";
+    }
+    else if (_object1 == nullptr)
+    {
+        return "Select second object.";
+    }
+    else
+    {
+        return "(x, y):";
+    }
+}
+
+
 bool ChamferOperation::mouse_press(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
@@ -4101,6 +4300,71 @@ bool SplitOperation::mouse_press(QMouseEvent *event)
 }
 
 
+bool BlendOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        clicked_object = editer->select(real_pos[0], real_pos[1], true);
+        if (clicked_object == nullptr)
+        {
+            return false;
+        }
+        if (_object0 == nullptr)
+        {
+            if (const Geo::Type type = clicked_object->type(); type == Geo::Type::ARC ||
+                type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE || type == Geo::Type::POLYLINE || 
+                (type == Geo::Type::ELLIPSE && static_cast<Geo::Ellipse *>(clicked_object)->is_arc()))
+            {
+                _pos[0].x = real_pos[0];
+                _pos[0].y = real_pos[1];
+                _object0 = clicked_object;
+                canvas->refresh_selected_ibo();
+                return true;
+            }
+        }
+        else
+        {
+            if (const Geo::Type type = clicked_object->type(); clicked_object != _object0 && (type == Geo::Type::ARC
+                || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE || type == Geo::Type::POLYLINE ||
+                (type == Geo::Type::ELLIPSE && static_cast<Geo::Ellipse *>(clicked_object)->is_arc())))
+            {
+                _pos[1].x = real_pos[0];
+                _pos[1].y = real_pos[1];
+                _object1 = clicked_object;
+                if (editer->blend(_object0, _object1, _pos[0], _pos[1]))
+                {
+                    _object1->is_selected = false;
+                    canvas->refresh_vbo(Geo::Type::BEZIER, false);
+                    canvas->refresh_selected_ibo();
+                }
+                _object0 = _object1 = nullptr;
+                tool[0] = Tool::Select;
+                return true;
+            }
+        }
+    }
+    return false;
+}
 
+void BlendOperation::reset()
+{
+    _object0 = _object1 = nullptr;
+}
+
+QString BlendOperation::cmd_tips() const
+{
+    if (_object0 == nullptr)
+    {
+        return "Select first object.";
+    }
+    else if (_object1 == nullptr)
+    {
+        return "Select second object.";
+    }
+    else
+    {
+        return QString();
+    }
+}
 
 

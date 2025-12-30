@@ -1053,16 +1053,24 @@ void DXFReaderWriter::write_geometry_object(const Geo::Geometry *object)
 
 void DXFReaderWriter::write_bezier(const Geo::Bezier *bezier)
 {
-    DRW_LWPolyline pol;
-    for (const Geo::Point &point : bezier->shape())
+    if (const Geo::BSpline *bspline = Geo::bezier_to_bspline(*bezier))
     {
-        pol.addVertex(DRW_Vertex2D(point.x, point.y, 0));
+        write_bspline(bspline);
+        delete bspline;
     }
-    pol.addVertex(DRW_Vertex2D(bezier->shape().back().x, bezier->shape().back().y, 0));
-    pol.vertexnum = pol.vertlist.size();
-    pol.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
-    pol.lineType = "CONTINUOUS";
-    _dxfrw->writeLWPolyline(&pol);
+    else
+    {
+        DRW_LWPolyline pol;
+        for (const Geo::Point &point : bezier->shape())
+        {
+            pol.addVertex(DRW_Vertex2D(point.x, point.y, 0));
+        }
+        pol.addVertex(DRW_Vertex2D(bezier->shape().back().x, bezier->shape().back().y, 0));
+        pol.vertexnum = pol.vertlist.size();
+        pol.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+        pol.lineType = "CONTINUOUS";
+        _dxfrw->writeLWPolyline(&pol);
+    }
 }
 
 void DXFReaderWriter::write_bspline(const Geo::BSpline *bspline)

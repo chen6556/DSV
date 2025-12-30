@@ -1,0 +1,20 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.0.3 Chrome/140.0.7339.249 Electron/38.7.0 Safari/537.36" version="29.0.3">
+  <diagram name="第 1 页" id="ewl9boTtj5eG1xmZE2dz">
+    <mxGraphModel dx="96" dy="62" grid="1" gridSize="3.937" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="48" pageHeight="48" background="#464647" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="yetpwsWAeCOAf3_PEcOi-3" value="" style="curved=1;endArrow=oval;html=1;rounded=0;endFill=1;startArrow=oval;startFill=1;dashed=1;strokeColor=#E6E6E6;strokeWidth=1.9685;dashPattern=1 1;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="8" y="39" as="sourcePoint" />
+            <mxPoint x="39" y="8" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="12" y="20" />
+              <mxPoint x="35" y="24" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
