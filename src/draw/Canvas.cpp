@@ -69,7 +69,7 @@ void Canvas::initializeGL()
     unsigned int vertex_shader;
     unsigned int fragment_shader;
 
-    glPointSize(9.6f); // 点大小
+    glPointSize(7.8f); // 点大小
     glLineWidth(1.4f); // 线宽
     glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
     // glEnable(GL_BLEND);
