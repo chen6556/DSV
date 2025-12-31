@@ -546,33 +546,6 @@ QComboBox QAbstractItemView::item:selected
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="multiple_select">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>22</height>
-            </size>
-           </property>
-           <property name="font">
-            <font>
-             <pointsize>10</pointsize>
-            </font>
-           </property>
-           <property name="layoutDirection">
-            <enum>Qt::LayoutDirection::RightToLeft</enum>
-           </property>
-           <property name="text">
-            <string>Multiple Select</string>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QCheckBox" name="show_points">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Preferred" vsizetype="Preferred">

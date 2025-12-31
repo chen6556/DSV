@@ -31,7 +31,6 @@ public:
     bool catch_intersection = false;
 
     bool ignore_M19 = true;
-    bool multiple_select = false;
     bool remember_file_type = true;
     bool show_origin = true;
     bool show_cmdline = true;

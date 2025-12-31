@@ -35,7 +35,6 @@ void Setting::init()
     _down_sampling_value = ui->down_sampling->value();
 
     ui->show_text->setChecked(GlobalSetting::setting().show_text);
-    ui->multiple_select->setChecked(GlobalSetting::setting().multiple_select);
     ui->show_points->setChecked(GlobalSetting::setting().show_points);
     ui->ignroe_M19->setChecked(GlobalSetting::setting().ignore_M19);
 
@@ -55,7 +54,6 @@ void Setting::accept()
     GlobalSetting::setting().offset_end_type = ui->offset_end_type->currentIndex();
 
     GlobalSetting::setting().show_text = ui->show_text->isChecked();
-    GlobalSetting::setting().multiple_select = ui->multiple_select->isChecked();
     GlobalSetting::setting().show_points = ui->show_points->isChecked();
     GlobalSetting::setting().ignore_M19 = ui->ignroe_M19->isChecked();
 

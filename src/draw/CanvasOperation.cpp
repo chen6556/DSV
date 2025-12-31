@@ -289,13 +289,8 @@ bool SelectOperation::mouse_press(QMouseEvent *event)
         _select = true;
         _pos[0] = real_pos[0], _pos[1] = real_pos[1];
         tool_lines_count = 0;
-        if (clicked_object = editer->select(_pos[0], _pos[1],
-            event->modifiers() != Qt::KeyboardModifier::ControlModifier); clicked_object == nullptr)
+        if (clicked_object = editer->select(_pos[0], _pos[1], false); clicked_object == nullptr)
         {
-            if (event->modifiers() != Qt::KeyboardModifier::ControlModifier)
-            {
-                editer->reset_selected_mark();
-            }
             canvas->hide_text_edit();
         }
         else
@@ -341,12 +336,13 @@ bool SelectOperation::mouse_press(QMouseEvent *event)
             {
                 canvas->show_menu(clicked_object);
             }
-            return true;
         }
         else
         {
-            return false;
+            editer->reset_selected_mark(false);
+            canvas->clear_selected_ibo();
         }
+        return true;
     }
     else
     {
@@ -370,14 +366,13 @@ bool SelectOperation::mouse_move(QMouseEvent *event)
     {
         canvas->refresh_select_rect(_pos[0], _pos[1], real_pos[0], real_pos[1]);
         if (std::vector<Geo::Geometry *> selected_objects = editer->select(
-            Geo::AABBRect(_pos[0], _pos[1], real_pos[0], real_pos[1]),
-            event->modifiers() != Qt::KeyboardModifier::ControlModifier); !selected_objects.empty())
+            Geo::AABBRect(_pos[0], _pos[1], real_pos[0], real_pos[1]), false); selected_objects.empty())
         {
-            canvas->refresh_selected_ibo(selected_objects);
+            canvas->clear_selected_ibo();
         }
         else
         {
-            canvas->clear_selected_ibo();
+            canvas->refresh_selected_ibo(selected_objects);
         }
         tool_lines_count = 0;
         return true;
