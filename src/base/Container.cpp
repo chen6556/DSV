@@ -458,6 +458,13 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
                 y1 = std::max(y1, point.y);
             }
             break;
+        case Geo::Type::POINT:
+            coord = *static_cast<const Geo::Point *>(continer);
+            x0 = std::min(x0, coord.x);
+            y0 = std::min(y0, coord.y);
+            x1 = std::max(x1, coord.x);
+            y1 = std::max(y1, coord.y);
+            break;
         default:
             break;
         }

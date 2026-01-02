@@ -140,26 +140,12 @@ void Point::scale(const double x_, const double y_, const double k)
 
 AABBRect Point::bounding_rect() const
 {
-    if (length() == 0)
-    {
-        return AABBRect();
-    }
-    else
-    {
-        return AABBRect(std::min(0.0, x), std::min(0.0, y), std::max(0.0, x), std::max(0.0, y));
-    }
+    return AABBRect(x, y, x, y);
 }
 
 Polygon Point::mini_bounding_rect() const
 {
-    if (length() == 0)
-    {
-        return Polygon();
-    }
-    else
-    {
-        return AABBRect(std::min(0.0, x), std::min(0.0, y), std::max(0.0, x), std::max(0.0, y));
-    }
+    return AABBRect(x, y, x, y);
 }
 
 Point Point::operator*(const double k) const

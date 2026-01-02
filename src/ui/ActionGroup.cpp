@@ -46,6 +46,10 @@ void ActionGroup::init_polygon_menu()
     QAction *inscribed = new QAction(QIcon(":/icons/polygon/"
         "polygon_inscribed_btn.png"), "Polygon Inscribed", ui->polyline_btn);
     _polygon_menu->addAction(inscribed);
+
+    QAction *point = new QAction(QIcon(":/icons/polygon/point_btn.png"),
+        "Point", ui->polyline_btn);
+    _polygon_menu->addAction(point);
 }
 
 void ActionGroup::init_arc_menu()

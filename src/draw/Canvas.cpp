@@ -109,10 +109,10 @@ void Canvas::initializeGL()
 
     glCreateVertexArrays(1, &_VAO);
     glCreateBuffers(4, _base_VBO);
-    glCreateBuffers(7, _shape_VBO);
+    glCreateBuffers(8, _shape_VBO);
     glCreateBuffers(4, _shape_IBO);
     glCreateBuffers(1, &_text_brush_IBO);
-    glCreateBuffers(4, _selected_IBO);
+    glCreateBuffers(5, _selected_IBO);
 
     glBindVertexArray(_VAO);
 
@@ -216,7 +216,23 @@ void Canvas::paintGL()
         }
     }
 
-    if (GlobalSetting::setting().show_text && _brush_index_count[2] > 0) // text
+    if (_point_count[4] > 0) // point
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[7]); // points
+        glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
+        glEnableVertexAttribArray(0);
+        glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
+        glDrawArrays(GL_POINTS, 0, _point_count[4]);
+
+        if (_selected_index_count[4] > 0) // selected
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, _selected_IBO[4]); // points
+            glUniform4f(_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
+            glDrawElements(GL_POINTS, _selected_index_count[4], GL_UNSIGNED_INT, NULL);
+        }
+    }
+
+    if (GlobalSetting::setting().show_text && _text_brush_count > 0) // text
     {
         glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[4]); // text
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
@@ -231,13 +247,13 @@ void Canvas::paintGL()
         glStencilFunc(GL_ALWAYS, 1, 1); //初始模板位为0，由于一定通过测试，所以全部会被置为1，而重复绘制区域由于画了两次模板位又归0
         glStencilMask(0x1); //开启模板缓冲区写入
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE); //第一次绘制只是为了构造模板缓冲区，没有必要显示到屏幕上，所以设置不显示第一遍的多边形
-        glDrawElements(GL_TRIANGLES, _brush_index_count[2], GL_UNSIGNED_INT, NULL);
+        glDrawElements(GL_TRIANGLES, _text_brush_count, GL_UNSIGNED_INT, NULL);
 
         glStencilFunc(GL_NOTEQUAL, 0, 1); //模板值不为0就通过
         glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
         glStencilMask(0x1);
         glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glDrawElements(GL_TRIANGLES, _brush_index_count[2], GL_UNSIGNED_INT, NULL);
+        glDrawElements(GL_TRIANGLES, _text_brush_count, GL_UNSIGNED_INT, NULL);
         glDisable(GL_STENCIL_TEST); //关闭模板测试
     }
 
@@ -628,7 +644,7 @@ void Canvas::show_overview()
     double width_ratio = _canvas_width / bounding_area.width();
     _ratio = std::min(height_ratio, width_ratio);
     // 缩放减少2%，使其与边界留出一些空间
-    _ratio = _ratio * 0.98;
+    _ratio = std::isinf(_ratio) ? 1 : _ratio * 0.98;
 
     _editer->set_view_ratio(_ratio);
     CanvasOperations::CanvasOperation::view_ratio = _ratio;
@@ -1070,6 +1086,7 @@ void Canvas::refresh_vbo(const bool refresh_ibo)
         polygon_vbo = std::async(std::launch::async, &Canvas::refresh_polygon_vbo, this),
         circle_vbo = std::async(std::launch::async, &Canvas::refresh_circle_vbo, this),
         curve_vbo = std::async(std::launch::async, &Canvas::refresh_curve_vbo, this);
+    std::future<std::tuple<double*, unsigned int>> point_vbo = std::async(std::launch::async, &Canvas::refresh_point_vbo, this);
     std::future<std::tuple<double*, unsigned int, unsigned int*, unsigned int>> text_vbo;
     if (GlobalSetting::setting().show_text)
     {
@@ -1078,7 +1095,7 @@ void Canvas::refresh_vbo(const bool refresh_ibo)
     }
     else
     {
-        _brush_index_count[2] = 0;
+        _text_brush_count = 0;
     }
     std::future<std::tuple<double*, unsigned int>> circle_printable_points, curve_printable_points;
     if (GlobalSetting::setting().show_points)
@@ -1156,6 +1173,15 @@ void Canvas::refresh_vbo(const bool refresh_ibo)
     }
     delete []polygon_data;
     delete []polygon_indexs;
+
+    point_vbo.wait();
+    auto [point_data, point_data_count] = point_vbo.get();
+    if (point_data_count > 0)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[7]); // point
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * point_data_count, point_data, GL_DYNAMIC_DRAW);
+    }
+    delete []point_data;
 
     if (GlobalSetting::setting().show_text)
     {
@@ -1349,7 +1375,20 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
         }
         else
         {
-            _brush_index_count[2] = 0;
+            _text_brush_count = 0;
+        }
+        break;
+    case Geo::Type::POINT:
+        {
+            auto [data, data_count] = refresh_point_vbo();
+            if (data_count > 0)
+            {
+                makeCurrent();
+                glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[7]); // point
+                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
+                doneCurrent();
+            }
+            delete []data;
         }
         break;
     default:
@@ -1368,7 +1407,7 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
     std::future<std::tuple<double*, unsigned int, unsigned int*, unsigned int>>
         polyline_vbo, polygon_vbo, circle_vbo, curve_vbo;
     std::future<std::tuple<double*, unsigned int, unsigned int*, unsigned int>> text_vbo;
-    std::future<std::tuple<double*, unsigned int>> circle_printable_points, curve_printable_points;
+    std::future<std::tuple<double*, unsigned int>> circle_printable_points, curve_printable_points, point_vbo;
 
     if (types.find(Geo::Type::POLYLINE) != types.end())
     {
@@ -1385,7 +1424,7 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
     }
     else
     {
-        _brush_index_count[2] = 0;
+        _text_brush_count = 0;
     }
     if (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end()
         || types.find(Geo::Type::ARC) != types.end())
@@ -1395,6 +1434,10 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
     if (types.find(Geo::Type::BEZIER) != types.end() || types.find(Geo::Type::BSPLINE) != types.end())
     {
         curve_vbo = std::async(std::launch::async, &Canvas::refresh_curve_vbo, this);
+    }
+    if (types.find(Geo::Type::POINT) != types.end())
+    {
+        point_vbo = std::async(std::launch::async, &Canvas::refresh_point_vbo, this);
     }
     if (GlobalSetting::setting().show_points)
     {
@@ -1495,6 +1538,18 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
         }
         delete []polygon_data;
         delete []polygon_indexs;
+    }
+
+    if (point_vbo.valid())
+    {
+        point_vbo.wait();
+        auto [point_data, point_data_count] = point_vbo.get();
+        if (point_data_count > 0)
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[7]); // point
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * point_data_count, point_data, GL_DYNAMIC_DRAW);
+        }
+        delete []point_data;
     }
 
     if (text_vbo.valid())
@@ -2074,6 +2129,44 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_c
     return std::make_tuple(data, data_count, indexs, index_count);
 }
 
+std::tuple<double*, unsigned int> Canvas::refresh_point_vbo()
+{
+    unsigned int data_len = 513, data_count = 0, index = 0;
+    double *data = new double[data_len];
+
+    for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
+    {
+        if (!group.visible())
+        {
+            continue;
+        }
+
+        for (Geo::Geometry *geo : group)
+        {
+            if (geo->type() == Geo::Type::POINT)
+            {
+                Geo::Point *point = static_cast<Geo::Point *>(geo);
+                point->point_index = index++;
+                point->point_count = 1;
+                data[data_count++] = point->x;
+                data[data_count++] = point->y;
+                data[data_count++] = 0;
+                if (data_count == data_len)
+                {
+                    data_len *= 2;
+                    double *temp = new double[data_len];
+                    std::move(data, data + data_len, temp);
+                    delete []data;
+                    data = temp;
+                }
+            }
+        }
+    }
+
+    _point_count[4] = data_count / 3;
+    return std::make_tuple(data, data_count);
+}
+
 std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
 {
     unsigned int data_len = 1200, data_count = 0;
@@ -2309,10 +2402,12 @@ void Canvas::refresh_selected_ibo()
     unsigned int polygon_index_len = 512, polygon_index_count = 0;
     unsigned int circle_index_len = 512, circle_index_count = 0;
     unsigned int curve_index_len = 512, curve_index_count = 0;
+    unsigned int point_index_len = 256, point_index_count = 0;
     unsigned int *polyline_indexs = new unsigned int[polyline_index_len];
     unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
     unsigned int *circle_indexs = new unsigned int[circle_index_len];
     unsigned int *curve_indexs = new unsigned int[curve_index_len];
+    unsigned int *point_indexs = new unsigned int[point_index_len];
     for (const Geo::Geometry *geo : _editer->selected())
     {
         switch (geo->type())
@@ -2512,9 +2607,31 @@ void Canvas::refresh_selected_ibo()
                         curve_indexs = temp;
                     }
                     break;
+                case Geo::Type::POINT:
+                    point_indexs[point_index_count++] = item->point_index;
+                    if (point_index_len == point_index_count)
+                    {
+                        point_index_len *= 2;
+                        unsigned int *temp = new unsigned int[point_index_len];
+                        std::move(point_indexs, point_indexs + point_index_count, temp);
+                        delete []point_indexs;
+                        point_indexs = temp;
+                    }
+                    break;
                 default:
                     break;
                 }
+            }
+            break;
+        case Geo::Type::POINT:
+            point_indexs[point_index_count++] = geo->point_index;
+            if (point_index_len == point_index_count)
+            {
+                point_index_len *= 2;
+                unsigned int *temp = new unsigned int[point_index_len];
+                std::move(point_indexs, point_indexs + point_index_count, temp);
+                delete []point_indexs;
+                point_indexs = temp;
             }
             break;
         default:
@@ -2526,6 +2643,7 @@ void Canvas::refresh_selected_ibo()
     _selected_index_count[1] = polygon_index_count;
     _selected_index_count[2] = circle_index_count;
     _selected_index_count[3] = curve_index_count;
+    _selected_index_count[4] = point_index_count;
 
     makeCurrent();
     if (polyline_index_count > 0)
@@ -2548,12 +2666,18 @@ void Canvas::refresh_selected_ibo()
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[3]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_index_count * sizeof(unsigned int), curve_indexs, GL_DYNAMIC_DRAW);
     }
+    if (point_index_count > 0)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[4]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_index_count * sizeof(unsigned int), point_indexs, GL_DYNAMIC_DRAW);
+    }
     doneCurrent();
-    
+
     delete []polyline_indexs;
     delete []polygon_indexs;
     delete []circle_indexs;
     delete []curve_indexs;
+    delete []point_indexs;
 }
 
 void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
@@ -2564,10 +2688,12 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
         unsigned int polygon_index_len = 512, polygon_index_count = 0;
         unsigned int circle_index_len = 512, circle_index_count = 0;
         unsigned int curve_index_len = 512, curve_index_count = 0;
+        unsigned int point_index_len = 256, point_index_count = 0;
         unsigned int *polyline_indexs = new unsigned int[polyline_index_len];
         unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
         unsigned int *circle_indexs = new unsigned int[circle_index_len];
         unsigned int *curve_indexs = new unsigned int[curve_index_len];
+        unsigned int *point_indexs = new unsigned int[point_index_len];
         for (const Geo::Geometry *item : *static_cast<const Combination *>(object))
         {
             switch (item->type())
@@ -2667,6 +2793,17 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
                     curve_indexs = temp;
                 }
                 break;
+            case Geo::Type::POINT:
+                point_indexs[point_index_count++] = item->point_index;
+                if (point_index_len == point_index_count)
+                {
+                    point_index_len *= 2;
+                    unsigned int *temp = new unsigned int[point_index_len];
+                    std::move(point_indexs, point_indexs + point_index_count, temp);
+                    delete []point_indexs;
+                    point_indexs = temp;
+                }
+                break;
             default:
                 break;
             }
@@ -2676,6 +2813,7 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
         _selected_index_count[1] = polygon_index_count;
         _selected_index_count[2] = circle_index_count;
         _selected_index_count[3] = curve_index_count;
+        _selected_index_count[4] = point_index_count;
         makeCurrent();
         if (polyline_index_count > 0)
         {
@@ -2697,12 +2835,18 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[3]);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_index_count * sizeof(unsigned int), curve_indexs, GL_DYNAMIC_DRAW);
         }
+        if (point_index_count > 0)
+        {
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[4]);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_index_count * sizeof(unsigned int), point_indexs, GL_DYNAMIC_DRAW);
+        }
         doneCurrent();
 
         delete []polyline_indexs;
         delete []polygon_indexs;
         delete []circle_indexs;
         delete []curve_indexs;
+        delete []point_indexs;
     }
     else
     {
@@ -2714,7 +2858,7 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
         }
         indexs[index_count++] = UINT_MAX;
         std::fill_n(_selected_index_count, 4, 0);
-        unsigned int IBO_index = _selected_IBO[3];
+        unsigned int IBO_index = _selected_IBO[4];
         switch (object->type())
         {
         case Geo::Type::POLYLINE:
@@ -2732,10 +2876,15 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
             _selected_index_count[2] = index_count;
             break;
         case Geo::Type::BEZIER:
+            IBO_index = _selected_IBO[3];
             _selected_index_count[3] = index_count;
             break;
         case Geo::Type::BSPLINE:
+            IBO_index = _selected_IBO[3];
             _selected_index_count[3] = index_count;
+            break;
+        case Geo::Type::POINT:
+            _selected_index_count[4] = index_count;
             break;
         default:
             break;
@@ -2762,10 +2911,12 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
     unsigned int polygon_index_len = 512, polygon_index_count = 0;
     unsigned int circle_index_len = 512, circle_index_count = 0;
     unsigned int curve_index_len = 512, curve_index_count = 0;
+    unsigned int point_index_len = 256, point_index_count = 0;
     unsigned int *polyline_indexs = new unsigned int[polyline_index_len];
     unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
     unsigned int *circle_indexs = new unsigned int[circle_index_len];
     unsigned int *curve_indexs = new unsigned int[curve_index_len];
+    unsigned int *point_indexs = new unsigned int[point_index_len];
     for (const Geo::Geometry *geo : objects)
     {
         switch (geo->type())
@@ -2965,9 +3116,31 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
                         curve_indexs = temp;
                     }
                     break;
+                case Geo::Type::POINT:
+                    point_indexs[point_index_count++] = item->point_index;
+                    if (point_index_len == point_index_count)
+                    {
+                        point_index_len *= 2;
+                        unsigned int *temp = new unsigned int[point_index_len];
+                        std::move(point_indexs, point_indexs + point_index_count, temp);
+                        delete []point_indexs;
+                        point_indexs = temp;
+                    }
+                    break;
                 default:
                     break;
                 }
+            }
+            break;
+        case Geo::Type::POINT:
+            point_indexs[point_index_count++] = geo->point_index;
+            if (point_index_len == point_index_count)
+            {
+                point_index_len *= 2;
+                unsigned int *temp = new unsigned int[point_index_len];
+                std::move(point_indexs, point_indexs + point_index_count, temp);
+                delete []point_indexs;
+                point_indexs = temp;
             }
             break;
         default:
@@ -2979,6 +3152,7 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
     _selected_index_count[1] = polygon_index_count;
     _selected_index_count[2] = circle_index_count;
     _selected_index_count[3] = curve_index_count;
+    _selected_index_count[4] = point_index_count;
 
     makeCurrent();
     if (polyline_index_count > 0)
@@ -3001,20 +3175,26 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[3]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_index_count * sizeof(unsigned int), curve_indexs, GL_DYNAMIC_DRAW);
     }
+    if (point_index_count > 0)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[4]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_index_count * sizeof(unsigned int), point_indexs, GL_DYNAMIC_DRAW);
+    }
     doneCurrent();
     
     delete []polyline_indexs;
     delete []polygon_indexs;
     delete []circle_indexs;
     delete []curve_indexs;
+    delete []point_indexs;
 }
 
 void Canvas::refresh_selected_vbo()
 {
     std::future<std::tuple<double*, unsigned int, unsigned int*, unsigned int>> polyline_vbo,
         polygon_vbo, circle_vbo, curve_vbo, text_vbo;
-    std::future<std::tuple<double*, unsigned int>> circle_point, curve_point;
-    bool refresh[5] = {false, false, false, false, false};
+    std::future<std::tuple<double*, unsigned int>> circle_point, curve_point, point_vbo;
+    bool refresh[6] = {false, false, false, false, false, false};
     for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
         for (const Geo::Geometry *object : group)
@@ -3108,9 +3288,23 @@ void Canvas::refresh_selected_vbo()
                                 refresh[4] = true;
                             }
                             break;
+                        case Geo::Type::POINT:
+                            if (!refresh[5])
+                            {
+                                point_vbo = std::async(std::launch::async, &Canvas::refresh_point_vbo, this);
+                                refresh[5] = true;
+                            }
+                            break;
                         default:
                             break;
                         }
+                    }
+                    break;
+                case Geo::Type::POINT:
+                    if (!refresh[5])
+                    {
+                        point_vbo = std::async(std::launch::async, &Canvas::refresh_point_vbo, this);
+                        refresh[5] = true;
                     }
                     break;
                 default:
@@ -3121,6 +3315,14 @@ void Canvas::refresh_selected_vbo()
     }
 
     makeCurrent();
+    if (refresh[5])
+    {
+        point_vbo.wait();
+        auto [data, data_count] = point_vbo.get();
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[7]); // point
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
+        delete []data;
+    }
     if (refresh[2])
     {
         circle_point.wait();
@@ -3181,7 +3383,7 @@ void Canvas::refresh_selected_vbo()
 
 void Canvas::clear_selected_ibo()
 {
-    std::fill_n(_selected_index_count, 4, 0);
+    std::fill_n(_selected_index_count, 5, 0);
 }
 
 std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_text_vbo()
@@ -3351,7 +3553,7 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_t
         }
     }
 
-    _brush_index_count[2] = index_count;
+    _text_brush_count = index_count;
     return std::make_tuple(data, data_count, indexs, index_count);
 }
 
@@ -3437,6 +3639,12 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                     catched_objects.push_back(geo);
                 }
                 break;
+            case Geo::Type::POINT:
+                if (Geo::distance(pos, *static_cast<const Geo::Point *>(geo)) * _ratio < distance)
+                {
+                    catched_objects.push_back(geo);
+                }
+                break;
             default:
                 break;
             }
@@ -3497,6 +3705,12 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                     break;
                 case Geo::Type::ARC:
                     if (Geo::is_intersected(rect, *static_cast<const Geo::Arc *>(geo)))
+                    {
+                        catched_objects.push_back(geo);
+                    }
+                    break;
+                case Geo::Type::POINT:
+                    if (Geo::distance(pos, *static_cast<const Geo::Point *>(geo)) * _ratio < distance)
                     {
                         catched_objects.push_back(geo);
                     }
@@ -3871,6 +4085,16 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                         dis[0] = d;
                         result[0] = arc->control_points[i];
                     }
+                }
+            }
+            break;
+        case Geo::Type::POINT:
+            {
+                const Geo::Point *point = static_cast<const Geo::Point *>(object);
+                if (const double d = Geo::distance(pos, *point); catch_flags[0] && d < dis[0])
+                {
+                    dis[0] = d;
+                    result[0] = *point;
                 }
             }
             break;

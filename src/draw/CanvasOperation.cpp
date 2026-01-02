@@ -53,6 +53,7 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::Rectangle)] = new RectangleOperation();
     operations[static_cast<int>(Tool::Polygon0)] = new CircumscribedPolygonOperation();
     operations[static_cast<int>(Tool::Polygon1)] = new InscribedPolygonOperation();
+    operations[static_cast<int>(Tool::Point)] = new PointOperation();
     operations[static_cast<int>(Tool::BSpline)] = new BSplineOperation();
     operations[static_cast<int>(Tool::Bezier)] = new BezierOperation();
     operations[static_cast<int>(Tool::Text)] = new TextOperation();
@@ -2468,6 +2469,37 @@ QString InscribedPolygonOperation::cmd_tips() const
 }
 
 
+bool PointOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        canvas->add_geometry(new Geo::Point(real_pos[0], real_pos[1]));
+        tool[0] = Tool::Select;
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool PointOperation::read_parameters(const double *params, const int count)
+{
+    if (count >= 2)
+    {
+        canvas->add_geometry(new Geo::Point(params[0], params[1]));
+        tool[0] = Tool::Select;
+        return true;
+    }
+    return false;
+}
+
+QString PointOperation::cmd_tips() const
+{
+    return "(x, y):";
+}
+
+
 bool BSplineOperation::mouse_press(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
@@ -3427,40 +3459,90 @@ bool MirrorOperation::mouse_press(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
-        std::vector<Geo::Geometry *> selected_objects = editer->selected();
-        if (clicked_object = editer->select(real_pos[0], real_pos[1], false); !selected_objects.empty() && clicked_object != nullptr
-            && editer->mirror(selected_objects, clicked_object, event->modifiers() == Qt::ControlModifier))
+        if (_set_first_point)
         {
-            clicked_object->is_selected = false;
-            std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : selected_objects)
-            {
-                if (const Combination *combination = dynamic_cast<const Combination *>(object))
-                {
-                    for (const Geo::Geometry *item : *combination)
-                    {
-                        types.insert(item->type());
-                    }
-                }
-                else
-                {
-                    types.insert(object->type());
-                }
-            }
-            canvas->refresh_vbo(types, true);
-            canvas->refresh_selected_ibo();
-            tool[0] = Tool::Select;
-            return true;
+            _pos[1].x = _pos[0].x = real_pos[0];
+            _pos[1].y = _pos[0].y = real_pos[1];
+            _set_first_point = false;
         }
         else
         {
-            return false;
+            tool[0] = Tool::Select;
+            _set_first_point = true;
+            tool_lines_count = 0;
+            if (std::vector<Geo::Geometry *> selected_objects = editer->selected();
+                editer->mirror(selected_objects, _pos[0], _pos[1], event->modifiers() == Qt::ControlModifier))
+            {
+                std::set<Geo::Type> types;
+                for (const Geo::Geometry *object : selected_objects)
+                {
+                    if (const Combination *combination = dynamic_cast<const Combination *>(object))
+                    {
+                        for (const Geo::Geometry *item : *combination)
+                        {
+                            types.insert(item->type());
+                        }
+                    }
+                    else
+                    {
+                        types.insert(object->type());
+                    }
+                }
+                canvas->refresh_vbo(types, true);
+                canvas->refresh_selected_ibo();
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
     else
     {
         return false;
     }
+}
+
+bool MirrorOperation::mouse_move(QMouseEvent *event)
+{
+    if (_set_first_point)
+    {
+        return false;
+    }
+    else
+    {
+        _pos[1].x = real_pos[0], _pos[1].y = real_pos[1];
+        if (event->modifiers() == Qt::KeyboardModifier::ControlModifier)
+        {
+            if (std::abs(real_pos[0] - _pos[0].x) > std::abs(real_pos[1] - _pos[0].y))
+            {
+                _pos[1].y = _pos[0].y;
+            }
+            else
+            {
+                _pos[1].x = _pos[0].x;
+            }
+        }
+        tool_lines_count = 0;
+        tool_lines[tool_lines_count++] = _pos[0].x;
+        tool_lines[tool_lines_count++] = _pos[0].y;
+        ++tool_lines_count;
+        tool_lines[tool_lines_count++] = _pos[1].x;
+        tool_lines[tool_lines_count++] = _pos[1].y;
+        ++tool_lines_count;
+        return true;
+    }
+}
+
+void MirrorOperation::reset()
+{
+    _set_first_point = true;
+}
+
+QString MirrorOperation::cmd_tips() const
+{
+    return _set_first_point == 0 ? "Choose first point." : "Choose second point.";
 }
 
 

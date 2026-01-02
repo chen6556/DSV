@@ -25,8 +25,9 @@ namespace CanvasOperations
         Arc2, // Start-End-Angle
         Arc3, // Start-End-Radius
         Rectangle,
-        Polygon0,
-        Polygon1, 
+        Polygon0, // CircumscribedPolygon
+        Polygon1, // InscribedPolygon
+        Point, 
         BSpline, 
         Bezier, 
         Text, 
@@ -413,6 +414,17 @@ namespace CanvasOperations
     };
 
 
+    class PointOperation : public CanvasOperation
+    {
+    public:
+        bool mouse_press(QMouseEvent *event) override;
+
+        bool read_parameters(const double *params, const int count) override;
+
+        QString cmd_tips() const override;
+    };
+
+
     class BSplineOperation : public CanvasOperation
     {
     private:
@@ -512,8 +524,18 @@ namespace CanvasOperations
 
     class MirrorOperation : public CanvasOperation
     {
+    private:
+        Geo::Point _pos[2];
+        bool _set_first_point = true;
+
     public:
         bool mouse_press(QMouseEvent *event) override;
+
+        bool mouse_move(QMouseEvent *event) override;
+
+        void reset() override;
+
+        QString cmd_tips() const override;
     };
 
 

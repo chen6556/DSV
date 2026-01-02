@@ -29,15 +29,16 @@ private:
 
     unsigned int _shader_program, _VAO;
     unsigned int _base_VBO[4]; // 0:origin and select rect 1:catched points 2:operation shape 3:operation tool lines
-    unsigned int _shape_VBO[7]; // 0:polyline 1:polygon 2:circle 3:curve 4:text 5:circle printable points 6:curve printable points
+    /* 0:polyline 1:polygon 2:circle 3:curve 4:text 5:circle printable points
+    6:curve printable points 7:point */
+    unsigned int _shape_VBO[8];
     unsigned int _shape_IBO[4]; // 0:polyline 1:polygon 2:circle 3:curve
-    unsigned int _text_brush_IBO;
-    unsigned int _selected_IBO[4]; // 0:polyline 1:polygon 2:circle 3:curve
+    unsigned int _text_brush_IBO = 0, _text_brush_count = 0;
+    unsigned int _selected_IBO[5]; // 0:polyline 1:polygon 2:circle 3:curve 4:point
     int _uniforms[5]; // w, h, vec0, vec1, color
-    unsigned int _point_count[4] = {0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve
+    unsigned int _point_count[5] = {0, 0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve 4:point
     unsigned int _shape_index_count[4] = {0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve
-    unsigned int _brush_index_count[3] = {0, 0, 0}; // 0:polygon brush 1:circle brush 2:text brush
-    unsigned int _selected_index_count[4] = {0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve
+    unsigned int _selected_index_count[5] = {0, 0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve 4:point
     double _catchline_points[24];
     
     double _catch_distance = 0;
@@ -176,6 +177,8 @@ public:
     std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_circle_vbo();
 
     std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_curve_vbo();
+
+    std::tuple<double*, unsigned int> refresh_point_vbo();
 
     std::tuple<double *, unsigned int> refresh_circle_printable_points();
 

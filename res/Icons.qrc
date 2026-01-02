@@ -46,5 +46,6 @@
         <file>icons/ellipse/ellipse_arc_btn.png</file>
         <file>icons/free_fillet_btn.png</file>
         <file>icons/blend_btn.png</file>
+        <file>icons/polygon/point_btn.png</file>
     </qresource>
 </RCC>

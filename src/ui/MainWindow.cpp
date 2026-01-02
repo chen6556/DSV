@@ -823,6 +823,9 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
         case 3: // inscribed polygon
             ui->cmd_widget->work(CMDWidget::CMD::IPolygon_CMD);
             break;
+        case 4: // regular point
+            ui->cmd_widget->work(CMDWidget::CMD::Point_CMD);
+            break;
         default:
             break;
         }

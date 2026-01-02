@@ -43,6 +43,8 @@ public:
 
     void store_arc();
 
+    void store_point();
+
     void begin_combination();
 
     void end_combination();

@@ -169,6 +169,13 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         output << std::endl;
                         arc = nullptr;
                         break;
+                    case Geo::Type::POINT:
+                        {
+                            const Geo::Point *point = static_cast<const Geo::Point *>(item);
+                            output << "POINT" << std::endl;
+                            output << point->x << ',' << point->y << std::endl;
+                        }
+                        break;
                     default:
                         break;
                     }
@@ -234,6 +241,13 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 output.seekp(-1, std::ios_base::cur);
                 output << std::endl;
                 arc = nullptr;
+                break;
+            case Geo::Type::POINT:
+                {
+                    const Geo::Point *point = static_cast<const Geo::Point *>(geo);
+                    output << "POINT" << std::endl;
+                    output << point->x << ',' << point->y << std::endl;
+                }
                 break;
             default:
                 break;
@@ -415,6 +429,13 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         output << arc->control_points[2].x * x_ratio << ',' << arc->control_points[2].y * y_ratio << ';' << std::endl;
                         arc = nullptr;
                         break;
+                    case Geo::Type::POINT:
+                        {
+                            const Geo::Point *point = static_cast<const Geo::Point *>(item);
+                            output << "PU" << point->x * x_ratio << ',' << point->y * y_ratio << ";PD";
+                            output << point->x * x_ratio << ',' << point->y * y_ratio << ';' << std::endl;
+                        }
+                        break;
                     default:
                         break;
                     }
@@ -487,6 +508,13 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 output << arc->control_points[1].x * x_ratio << ',' << arc->control_points[1].y * y_ratio << ',';
                 output << arc->control_points[2].x * x_ratio << ',' << arc->control_points[2].y * y_ratio << ';' << std::endl;
                 arc = nullptr;
+                break;
+            case Geo::Type::POINT:
+                {
+                    const Geo::Point *point = static_cast<const Geo::Point *>(geo);
+                    output << "PU" << point->x * x_ratio << ',' << point->y * y_ratio << ";PD";
+                    output << point->x * x_ratio << ',' << point->y * y_ratio << ';' << std::endl;
+                }
                 break;
             default:
                 break;

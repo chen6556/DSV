@@ -119,7 +119,7 @@ public:
 
     bool detach(std::vector<Geo::Geometry *> objects);
 
-    bool mirror(std::vector<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy);
+    bool mirror(std::vector<Geo::Geometry *> objects, const Geo::Point &start, const Geo::Point &end, const bool copy);
 
     bool offset(std::vector<Geo::Geometry *> objects, const double distance,
         const Geo::Offset::JoinType join_type = Geo::Offset::JoinType::Round,

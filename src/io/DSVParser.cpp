@@ -183,6 +183,21 @@ void Importer::store_arc()
     _points.clear();
 }
 
+void Importer::store_point()
+{
+    if (_is_combination)
+    {
+        static_cast<Combination *>(_graph->container_groups().back().back())->append(
+            new Geo::Point(_points.back()));
+    }
+    else
+    {
+        _graph->container_groups().back().append(
+            new Geo::Point(_points.back()));
+    }
+    _points.clear();
+}
+
 void Importer::begin_combination()
 {
     _graph->container_groups().back().append(new Combination());
@@ -238,6 +253,7 @@ static Action<void> bspline_a(&importer, &Importer::store_bspline);
 static Action<void> text_a(&importer, &Importer::store_text);
 static Action<std::string> str_a(&importer, &Importer::store_text);
 static Action<void> arc_a(&importer, &Importer::store_arc);
+static Action<void> point_a(&importer, &Importer::store_point);
 static Action<void> begin_combination_a(&importer, &Importer::begin_combination);
 static Action<void> end_combination_a(&importer, &Importer::end_combination);
 static Action<void> group_a(&importer, &Importer::store_group);
@@ -256,10 +272,11 @@ static Parser<bool> bezier = str_p("BEZIER") >> !eol_p() >> parameter >> separat
 static Parser<bool> bspline = str_p("BSPLINE") >> !eol_p() >> parameter >> separator >> list_p(coord, separator) >> !eol_p() >> end[bspline_a];
 static Parser<bool> text = str_p("TEXT") >> str >> !eol_p() >> coord >> !eol_p() >> end[text_a];
 static Parser<bool> arc = str_p("ARC") >> !eol_p() >> coord >> separator >> coord >> separator >> coord >> !eol_p() >> end[arc_a];
+static Parser<bool> point = str_p("POINT") >> !eol_p() >> coord >> !eol_p() >> end[point_a];
 static Parser<bool> combination = str_p("COMBINATION")[begin_combination_a] >> !eol_p() >>
-                           +(polygon | polyline | circle | ellipse | text | bezier) >> end[end_combination_a];
+                           +(polygon | polyline | circle | ellipse | text | bezier | point) >> end[end_combination_a];
 static Parser<bool> group = str_p("GROUP") >> str[group_a] >> !eol_p() >>
-                    *(polygon | polyline | circle | ellipse | text | arc | combination | bezier | bspline) >> str_p("END") >> !eol_p();
+                    *(polygon | polyline | circle | ellipse | text | arc | combination | bezier | bspline | point) >> str_p("END") >> !eol_p();
 static Parser<bool> dsv = +group;
 
 

@@ -39,9 +39,14 @@ void Importer::store_points()
     {
         return;
     }
-    if (_points.size() <= 1)
+    if (_points.size() == 1)
     {
+        _graph->container_groups().back().append(new Geo::Point(_last_coord));
         _points.clear();
+        return;
+    }
+    else if (_points.empty())
+    {
         return;
     }
 

@@ -309,6 +309,14 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         }
                         arc = nullptr;
                         break;
+                    case Geo::Type::POINT:
+                        if (Geo::Point *pt = static_cast<Geo::Point *>(item);
+                            Geo::distance_square(point, *pt) <= catch_distance * catch_distance)
+                        {
+                            cb->is_selected = true;
+                            return cb;
+                        }
+                        break;
                     default:
                         break;
                     }
@@ -380,6 +388,14 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                 return arc;
             }
             arc = nullptr;
+            break;
+        case Geo::Type::POINT:
+            if (Geo::Point *pt = static_cast<Geo::Point *>(*it);
+                Geo::distance_square(point, *pt) <= catch_distance * catch_distance)
+            {
+                pt->is_selected = true;
+                return pt;
+            }
             break;
         default:
             break;
@@ -856,7 +872,7 @@ void Editer::set_group_name(const size_t index, const QString &name)
 
 void Editer::append(Geo::Geometry *object)
 {
-    if (object->empty())
+    if (object->type() != Geo::Type::POINT && object->empty())
     {
         return;
     }
@@ -973,6 +989,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     case Geo::Type::TEXT:
     case Geo::Type::COMBINATION:
     case Geo::Type::ARC:
+    case Geo::Type::POINT:
         points->translate(x1 - x0, y1 - y0);
         break;
     case Geo::Type::POLYLINE:
@@ -1821,18 +1838,16 @@ bool Editer::detach(std::vector<Geo::Geometry *> objects)
     return true;
 }
 
-bool Editer::mirror(std::vector<Geo::Geometry *> objects, const Geo::Geometry *line, const bool copy)
+bool Editer::mirror(std::vector<Geo::Geometry *> objects, const Geo::Point &start, const Geo::Point &end, const bool copy)
 {
-    if (objects.empty() || line->type() != Geo::Type::POLYLINE)
+    if (objects.empty() || start == end)
     {
         return false;
     }
 
-    const Geo::Point &point0 = static_cast<const Geo::Polyline *>(line)->front();
-    const Geo::Point &point1 = static_cast<const Geo::Polyline *>(line)->back();
-    const double a = point0.y - point1.y;
-    const double b = point1.x - point0.x;
-    const double c = point0.x * point1.y - point1.x * point0.y;
+    const double a = start.y - end.y;
+    const double b = end.x - start.x;
+    const double c = start.x * end.y - end.x * start.y;
     const double d = a * a + b * b;
     const double mat[6] = {(b * b - a * a) / d, -2 * a * b / d, -2 * a * c / d,
         -2 *a * b / d, (a * a - b * b) / d, -2 * b * c / d};
@@ -4026,10 +4041,9 @@ bool Editer::line_array(std::vector<Geo::Geometry *> objects, int x, int y, doub
     }
 
     double left = DBL_MAX, right = -DBL_MAX, top = -DBL_MAX, bottom = DBL_MAX;
-    Geo::AABBRect rect;
-    for (Geo::Geometry *object : objects)
+    for (const Geo::Geometry *object : objects)
     {
-        rect = object->bounding_rect();
+        const Geo::AABBRect rect = object->bounding_rect();
         left = std::min(rect.left(), left);
         right = std::max(rect.right(), right);
         top = std::max(rect.top(), top);
@@ -7112,6 +7126,10 @@ void Editer::auto_combinate()
                 lengths.insert_or_assign(group.back(), group.back()->length());
                 all_polylines.push_back(group.pop_back());
                 break;
+            case Geo::Type::POINT:
+                lengths.insert_or_assign(group.back(), 0);
+                all_polylines.push_back(group.pop_back());
+                break;
             case Geo::Type::POLYGON:
                 areas.insert_or_assign(group.back(), static_cast<const Geo::Polygon *>(group.back())->area());
                 all_containers.push_back(group.pop_back());
@@ -7378,6 +7396,16 @@ void Editer::auto_combinate()
                             j = object_count - 1;
                         }
                         break;
+                    case Geo::Type::POINT:
+                        if (Geo::is_inside(*static_cast<Geo::Point *>(all_polylines[k]),
+                                *static_cast<Geo::Polygon *>(objects[j]), true))
+                        {
+                            objects.push_back(all_polylines[k]);
+                            all_polylines.erase(all_polylines.begin() + k--);
+                            --polyline_count;
+                            j = object_count - 1;
+                        }
+                        break;
                     default:
                         break;
                     }
@@ -7418,6 +7446,16 @@ void Editer::auto_combinate()
                     case Geo::Type::TEXT:
                         if (Geo::is_intersected(*static_cast<Geo::AABBRect *>(all_polylines[k]),
                                 *static_cast<Geo::Circle *>(objects[j])))
+                        {
+                            objects.push_back(all_polylines[k]);
+                            all_polylines.erase(all_polylines.begin() + k--);
+                            --polyline_count;
+                            j = object_count - 1;
+                        }
+                        break;
+                    case Geo::Type::POINT:
+                        if (Geo::is_inside(*static_cast<Geo::Point *>(all_polylines[k]),
+                                *static_cast<Geo::Circle *>(objects[j]), true))
                         {
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
@@ -7472,6 +7510,16 @@ void Editer::auto_combinate()
                             j = object_count - 1;
                         }
                         break;
+                    case Geo::Type::POINT:
+                        if (Geo::is_inside(*static_cast<Geo::Point *>(all_polylines[k]),
+                                *static_cast<Geo::Ellipse *>(objects[j]), true))
+                        {
+                            objects.push_back(all_polylines[k]);
+                            all_polylines.erase(all_polylines.begin() + k--);
+                            --polyline_count;
+                            j = object_count - 1;
+                        }
+                        break;
                     default:
                         break;
                     }
@@ -7518,6 +7566,7 @@ void Editer::auto_layering()
             case Geo::Type::BEZIER:
             case Geo::Type::BSPLINE:
             case Geo::Type::ARC:
+            case Geo::Type::POINT:
                 all_polylines.emplace_back(group.pop_back());
                 break;
             default:
@@ -8124,6 +8173,12 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
                             end = true;
                         }
                         break;
+                    case Geo::Type::POINT:
+                        if (Geo::is_inside(*static_cast<Geo::Point *>(item), rect, true))
+                        {
+                            end = true;
+                        }
+                        break;
                     default:
                         break;
                     }
@@ -8162,6 +8217,13 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
             break;
         case Geo::Type::ARC:
             if (Geo::is_intersected(rect, *static_cast<Geo::Arc *>(container)))
+            {
+                container->is_selected = true;
+                result->push_back(container);
+            }
+            break;
+        case Geo::Type::POINT:
+            if (Geo::is_inside(*static_cast<Geo::Point *>(container), rect, true))
             {
                 container->is_selected = true;
                 result->push_back(container);

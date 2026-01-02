@@ -169,6 +169,34 @@ void DXFReaderWriter::endBlock()
 void DXFReaderWriter::addPoint(const DRW_Point &data)
 {
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
+    if (_ignore_entity)
+    {
+        return;
+    }
+    if (_to_graph)
+    {
+        for (ContainerGroup &group : _graph->container_groups())
+        {
+            if (group.name.toStdString() == data.layer)
+            {
+                group.append(new Geo::Point(data.basePoint.x, data.basePoint.y));
+                _object_map[group.back()] = data.handle;
+                _handle_map[data.handle] = group.back();
+                return;
+            }
+        }
+        _graph->append_group();
+        _graph->container_groups().back().name = QString::fromStdString(data.layer);
+        _graph->container_groups().back().append(new Geo::Point(data.basePoint.x, data.basePoint.y));
+        _object_map[_graph->container_groups().back().back()] = data.handle;
+        _handle_map[data.handle] = _graph->container_groups().back().back();
+    }
+    else
+    {
+        _combination->append(new Geo::Point(data.basePoint.x, data.basePoint.y));
+        _object_map[_combination->back()] = data.handle;
+        _handle_map[data.handle] = _combination->back();
+    }
 }
 
 void DXFReaderWriter::addLine(const DRW_Line &data)
@@ -1034,6 +1062,7 @@ void DXFReaderWriter::write_geometry_object(const Geo::Geometry *object)
         write_arc(static_cast<const Geo::Arc *>(object));
         break;
     case Geo::Type::POINT:
+        write_point(static_cast<const Geo::Point *>(object));
         break;
     case Geo::Type::POLYGON:
         write_polygon(static_cast<const Geo::Polygon *>(object));
@@ -1193,6 +1222,15 @@ void DXFReaderWriter::write_arc(const Geo::Arc *arc)
         a.endangle = Geo::angle(Geo::Point(arc->x, arc->y), arc->control_points[0]);
     }
     _dxfrw->writeArc(&a);
+}
+
+void DXFReaderWriter::write_point(const Geo::Point *point)
+{
+    DRW_Point p;
+    p.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    p.basePoint.x = point->x;
+    p.basePoint.y = point->y;
+    _dxfrw->writePoint(&p);
 }
 
 void DXFReaderWriter::check_block()
