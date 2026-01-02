@@ -3018,6 +3018,8 @@ bool Ellipse0Operation::mouse_press(QMouseEvent *event)
         {
         case 0:
             _parameters[0] = real_pos[0], _parameters[1] = real_pos[1];
+            tool_lines[0] = tool_lines[3] = real_pos[0];
+            tool_lines[1] = tool_lines[4] = real_pos[1];
             tool_lines_count = 6;
             break;
         case 1:
@@ -3200,6 +3202,8 @@ bool Ellipse1Operation::mouse_press(QMouseEvent *event)
         {
         case 0:
             _parameters[0] = real_pos[0], _parameters[1] = real_pos[1];
+            tool_lines[0] = tool_lines[3] = real_pos[0];
+            tool_lines[1] = tool_lines[4] = real_pos[1];
             tool_lines_count = 6;
             break;
         case 1:
@@ -3362,6 +3366,8 @@ bool Ellipse1Operation::read_parameters(const double *params, const int count)
         if (count >= 2)
         {
             _parameters[0] = params[0], _parameters[1] = params[1];
+            release_pos[0] = press_pos[0] = _parameters[0];
+            release_pos[1] = press_pos[1] = _parameters[1];
             tool_lines_count = 6;
             _index++;
             return true;
@@ -4112,6 +4118,8 @@ bool RotateOperation::mouse_press(QMouseEvent *event)
         case 0:
             _pos[1].x = tool_lines[3] = tool_lines[9] = real_pos[0];
             _pos[1].y = tool_lines[4] = tool_lines[10] = real_pos[1];
+            tool_lines[0] = tool_lines[3] = real_pos[0];
+            tool_lines[1] = tool_lines[4] = real_pos[1];
             tool_lines_count = 6;
             info.clear();
             break;
