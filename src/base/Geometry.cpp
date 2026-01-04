@@ -3075,6 +3075,11 @@ const std::vector<double> &BSpline::knots() const
     return _knots;
 }
 
+void BSpline::set_knots(std::vector<double>::const_iterator begin, std::vector<double>::const_iterator end)
+{
+    _knots.assign(begin, end);
+}
+
 void BSpline::rbasis(const int order, const double t, const size_t npts, const std::vector<double> &x, std::vector<double> &output)
 {
     const size_t nplusc = npts + order + 1;
@@ -3623,6 +3628,37 @@ Geo::Point QuadBSpline::vertical(const double t) const
     return Geo::Point(-tan.y, tan.x);
 }
 
+void QuadBSpline::extend_front(const Geo::Point &expoint)
+{
+    control_points.insert(control_points.begin(), (control_points.front() + expoint) / 2);
+    control_points.insert(control_points.begin(), expoint);
+
+    path_points.insert(path_points.begin(), expoint);
+
+    if (_knots.front() -= 1; _knots.front() < 0)
+    {
+        const double v = -_knots.front();
+        std::for_each(_knots.begin(), _knots.end(), [=](double &k) { k += v; });
+        std::for_each(_path_values.begin(), _path_values.end(), [=](double &k) { k += v; });
+    }
+    _knots.insert(_knots.begin(), _knots.front());
+    _knots.insert(_knots.begin(), _knots.front());
+    _path_values.insert(_path_values.begin(), _knots.front());
+}
+
+void QuadBSpline::extend_back(const Geo::Point &expoint)
+{
+    control_points.emplace_back((control_points.back() + expoint) / 2);
+    control_points.emplace_back(expoint);
+
+    path_points.emplace_back(expoint);
+
+    _knots.back() += 1;
+    _knots.push_back(_knots.back());
+    _knots.push_back(_knots.back());
+    _path_values.push_back(_knots.back());
+}
+
 
 // CubicBSpline
 CubicBSpline::CubicBSpline(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const bool is_path_points)
@@ -4035,6 +4071,43 @@ Geo::Point CubicBSpline::vertical(const double t) const
 {
     const Geo::Point tan = tangent(t);
     return Geo::Point(-tan.y, tan.x);
+}
+
+void CubicBSpline::extend_front(const Geo::Point &expoint)
+{
+    const Geo::Point head(control_points.front());
+    control_points.insert(control_points.begin(), (head + expoint * 2) / 3);
+    control_points.insert(control_points.begin(), (head * 2 + expoint) / 3);
+    control_points.insert(control_points.begin(), expoint);
+
+    path_points.insert(path_points.begin(), expoint);
+
+    if (_knots.front() -= 1; _knots.front() < 0)
+    {
+        const double v = -_knots.front();
+        std::for_each(_knots.begin(), _knots.end(), [=](double &k) { k += v; });
+        std::for_each(_path_values.begin(), _path_values.end(), [=](double &k) { k += v; });
+    }
+    _knots.insert(_knots.begin(), _knots.front());
+    _knots.insert(_knots.begin(), _knots.front());
+    _knots.insert(_knots.begin(), _knots.front());
+    _path_values.insert(_path_values.begin(), _knots.front());
+}
+
+void CubicBSpline::extend_back(const Geo::Point &expoint)
+{
+    const Geo::Point head(control_points.back());
+    control_points.emplace_back((head + expoint * 2) / 3);
+    control_points.emplace_back((head * 2 + expoint) / 3);
+    control_points.emplace_back(expoint);
+
+    path_points.emplace_back(expoint);
+
+    _knots.back() += 1;
+    _knots.push_back(_knots.back());
+    _knots.push_back(_knots.back());
+    _knots.push_back(_knots.back());
+    _path_values.push_back(_knots.back());
 }
 
 

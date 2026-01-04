@@ -19,7 +19,11 @@ private:
     double _view_ratio = 1.0;
 
     Geo::Geometry *_catched_points = nullptr;
-    std::vector<std::tuple<double, double>> _edited_shape;
+
+public:
+    std::vector<std::tuple<double, double>> edited_shape;
+    std::vector<std::tuple<double, double>> edited_path;
+    std::vector<double> edited_knots;
 
 private:
     void init();
@@ -46,8 +50,6 @@ public:
     std::vector<Geo::Point> &point_cache();
 
     const std::vector<Geo::Point> &point_cache() const;
-
-    std::vector<std::tuple<double, double>> &edited_shape();
 
     const size_t current_group() const;
 
@@ -184,6 +186,10 @@ public:
     void trim(Geo::Ellipse *ellipse, const double x, const double y);
 
     void extend(Geo::Polyline *polyline, const double x, const double y);
+
+    void extend(Geo::Bezier *bezier, const double x, const double y);
+
+    void extend(Geo::BSpline *bspline, const double x, const double y);
 
 
     bool auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines);

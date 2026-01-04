@@ -392,12 +392,9 @@ void Canvas::mousePressEvent(QMouseEvent *event)
     case Qt::LeftButton:
         break;
     case Qt::RightButton:
-        if (CanvasOperations::CanvasOperation::tool[0] != CanvasOperations::Tool::Select)
-        {
-            cancel_painting();
-            _editer->reset_selected_mark();
-            refresh_selected_ibo();
-        }
+        cancel_painting();
+        _editer->reset_selected_mark();
+        refresh_selected_ibo();
         break;
     case Qt::MiddleButton:
         _bool_flags[0] = true; // view moveable

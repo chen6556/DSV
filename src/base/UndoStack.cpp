@@ -169,6 +169,10 @@ void TransformCommand::undo(Graph *graph)
 ChangeShapeCommand::ChangeShapeCommand(Geo::Geometry *object, const std::vector<std::tuple<double, double>> &shape)
     : _object(object), _shape(shape) {}
 
+ChangeShapeCommand::ChangeShapeCommand(Geo::BSpline *bspline, const std::vector<std::tuple<double, double>> &shape,
+    const std::vector<std::tuple<double, double>> &path_points, const std::vector<double> &knots)
+    : _object(bspline), _shape(shape), _path_points(path_points), _knots(knots) {}
+
 void ChangeShapeCommand::undo(Graph *graph)
 {
     switch (_object->type())
@@ -199,14 +203,15 @@ void ChangeShapeCommand::undo(Graph *graph)
             Geo::BSpline *bspline = static_cast<Geo::BSpline *>(_object);
             bspline->path_points.clear();
             bspline->control_points.clear();
-            for (size_t i = 1, count = 1 + std::get<0>(_shape.front()); i < count; ++i)
+            for (const std::tuple<double, double> &point : _shape)
             {
-                bspline->path_points.emplace_back(std::get<0>(_shape[i]), std::get<1>(_shape[i]));
+                bspline->control_points.emplace_back(std::get<0>(point), std::get<1>(point));
             }
-            for (size_t i = 1 + std::get<0>(_shape.front()), count = _shape.size(); i < count; ++i)
+            for (const std::tuple<double, double> &point : _path_points)
             {
-                bspline->control_points.emplace_back(std::get<0>(_shape[i]), std::get<1>(_shape[i]));
+                bspline->path_points.emplace_back(std::get<0>(point), std::get<1>(point));
             }
+            bspline->set_knots(_knots.begin(), _knots.end());
             bspline->update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
         }
         break;

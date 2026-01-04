@@ -840,11 +840,17 @@ namespace Geo
 
         const std::vector<double> &knots() const;
 
+        void set_knots(std::vector<double>::const_iterator begin, std::vector<double>::const_iterator end);
+
         virtual Point at(const double t) const = 0;
 
         virtual Point tangent(const double t) const = 0;
 
         virtual Point vertical(const double t) const = 0;
+
+        virtual void extend_front(const Geo::Point &expoint) = 0;
+
+        virtual void extend_back(const Geo::Point &expoint) = 0;
 
         static void rbasis(const int order, const double t, const size_t npts,
             const std::vector<double> &x, std::vector<double> &output);
@@ -885,6 +891,10 @@ namespace Geo
         Point tangent(const double t) const override;
 
         Point vertical(const double t) const override;
+
+        void extend_front(const Geo::Point &expoint) override;
+
+        void extend_back(const Geo::Point &expoint) override;
     };
 
     class CubicBSpline : public BSpline
@@ -913,6 +923,10 @@ namespace Geo
         Point tangent(const double t) const override;
 
         Point vertical(const double t) const override;
+
+        void extend_front(const Geo::Point &expoint) override;
+
+        void extend_back(const Geo::Point &expoint) override;
     };
 
     class Arc : public Geometry

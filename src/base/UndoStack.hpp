@@ -95,10 +95,15 @@ namespace UndoStack
     {
     private:
         std::vector<std::tuple<double, double>> _shape;
+        std::vector<std::tuple<double, double>> _path_points;
+        std::vector<double> _knots;
         Geo::Geometry *_object;
 
     public:
         ChangeShapeCommand(Geo::Geometry *object, const std::vector<std::tuple<double, double>> &shape);
+
+        ChangeShapeCommand(Geo::BSpline *bspline, const std::vector<std::tuple<double, double>> &shape,
+            const std::vector<std::tuple<double, double>> &path_points, const std::vector<double> &knots);
 
         void undo(Graph *graph = nullptr) override;
     };

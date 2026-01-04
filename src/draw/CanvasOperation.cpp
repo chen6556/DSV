@@ -419,15 +419,25 @@ bool MoveOperation::mouse_release(QMouseEvent *event)
         if (std::vector<Geo::Geometry *> selected_objects = editer->selected(); !selected_objects.empty()
             && (press_pos[0] != release_pos[0] || press_pos[1] != release_pos[1]))
         {
-            if (editer->edited_shape().empty())
+            if (editer->edited_shape.empty())
             {
                 editer->push_backup_command(new UndoStack::TranslateCommand(selected_objects,
                     release_pos[0] - press_pos[0], release_pos[1] - press_pos[1]));
             }
             else
             {
-                editer->push_backup_command(new UndoStack::ChangeShapeCommand(selected_objects.front(), editer->edited_shape()));
-                editer->edited_shape().clear();
+                if (selected_objects.front()->type() == Geo::Type::BSPLINE)
+                {
+                    editer->push_backup_command(new UndoStack::ChangeShapeCommand(static_cast<Geo::BSpline *>(selected_objects.front()),
+                        editer->edited_shape, editer->edited_path, editer->edited_knots));
+                    editer->edited_path.clear();
+                    editer->edited_knots.clear();
+                }
+                else
+                {
+                    editer->push_backup_command(new UndoStack::ChangeShapeCommand(selected_objects.front(), editer->edited_shape));
+                }
+                editer->edited_shape.clear();
             }
         }
     }
@@ -4349,11 +4359,25 @@ bool ExtendOperation::mouse_press(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
-        if (clicked_object = editer->select(real_pos[0], real_pos[1], true);
-            clicked_object != nullptr && clicked_object->type() == Geo::Type::POLYLINE)
+        if (clicked_object = editer->select(real_pos[0], real_pos[1], true))
         {
-            editer->extend(static_cast<Geo::Polyline *>(clicked_object), real_pos[0], real_pos[1]);
-            canvas->refresh_vbo(Geo::Type::POLYLINE, true);
+            switch (clicked_object->type())
+            {
+            case Geo::Type::POLYLINE:
+                editer->extend(static_cast<Geo::Polyline *>(clicked_object), real_pos[0], real_pos[1]);
+                canvas->refresh_vbo(Geo::Type::POLYLINE, true);
+                break;
+            case Geo::Type::BEZIER:
+                editer->extend(static_cast<Geo::Bezier *>(clicked_object), real_pos[0], real_pos[1]);
+                canvas->refresh_vbo(Geo::Type::BEZIER, true);
+                break;
+            case Geo::Type::BSPLINE:
+                editer->extend(static_cast<Geo::BSpline *>(clicked_object), real_pos[0], real_pos[1]);
+                canvas->refresh_vbo(Geo::Type::BSPLINE, true);
+                break;
+            default:
+                return false;
+            }
             canvas->refresh_selected_ibo();
             return true;
         }

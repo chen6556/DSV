@@ -4,6 +4,7 @@
 #elif defined(__linux__) || defined(__GNUC__)
 #include <iconv.h>
 #endif
+#include <iostream>
 #include "io/TextEncoding.hpp"
 
 
