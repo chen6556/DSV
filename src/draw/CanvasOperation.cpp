@@ -3470,6 +3470,7 @@ bool MirrorOperation::mouse_press(QMouseEvent *event)
             _pos[1].x = _pos[0].x = real_pos[0];
             _pos[1].y = _pos[0].y = real_pos[1];
             _set_first_point = false;
+            return true;
         }
         else
         {
