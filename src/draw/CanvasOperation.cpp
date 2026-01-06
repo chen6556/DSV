@@ -3559,7 +3559,7 @@ void MirrorOperation::reset()
 
 QString MirrorOperation::cmd_tips() const
 {
-    return _set_first_point == 0 ? "Choose first point." : "Choose second point.";
+    return _set_first_point ? "Choose first point." : "Choose second point.";
 }
 
 

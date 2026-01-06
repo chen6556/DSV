@@ -14,8 +14,10 @@ void ActionGroup::init()
     init_circle_menu();
     init_ellipse_menu();
     init_curve_menu();
-    init_fillet_menu();
     init_connect_menu();
+    init_trim_menu();
+    init_flip_menu();
+    init_fillet_menu();
 }
 
 void ActionGroup::init_polygon_menu()
@@ -152,6 +154,72 @@ void ActionGroup::init_curve_menu()
     _curve_menu->addAction(bezier);
 }
 
+void ActionGroup::init_connect_menu()
+{
+    _connect_menu = new QMenu(ui->connect_btn);
+    _connect_menu->connect(_connect_menu, &QMenu::triggered, [this](QAction *action)
+        {
+            _callback(MenuType::ConnectMenu, _connect_menu->actions().indexOf(action));
+            ui->connect_btn->setIcon(action->icon());
+            ui->connect_btn->setToolTip(action->text());
+            ui->connect_btn->setDefaultAction(action);
+        });
+    ui->connect_btn->setMenu(_connect_menu);
+
+    QAction *connect = new QAction(QIcon(":/icons/connect_btn.png"),
+        "Connect", ui->connect_btn);
+    _connect_menu->addAction(connect);
+    ui->connect_btn->setDefaultAction(connect);
+
+    QAction *blend = new QAction(QIcon(":/icons/blend_btn.png"),
+        "Blend", ui->connect_btn);
+    _connect_menu->addAction(blend);
+}
+
+void ActionGroup::init_trim_menu()
+{
+    _trim_menu = new QMenu(ui->trim_btn);
+    _trim_menu->connect(_trim_menu, &QMenu::triggered, [this](QAction *action)
+        {
+            _callback(MenuType::TrimMenu, _trim_menu->actions().indexOf(action));
+            ui->trim_btn->setIcon(action->icon());
+            ui->trim_btn->setToolTip(action->text());
+            ui->trim_btn->setDefaultAction(action);
+        });
+    ui->trim_btn->setMenu(_trim_menu);
+
+    QAction *trim = new QAction(QIcon(":/icons/trim_btn.png"),
+        "Trim", ui->trim_btn);
+    _trim_menu->addAction(trim);
+    ui->trim_btn->setDefaultAction(trim);
+
+    QAction *extend = new QAction(QIcon(":/icons/extend_btn.png"),
+        "Extend", ui->trim_btn);
+    _trim_menu->addAction(extend);
+}
+
+void ActionGroup::init_flip_menu()
+{
+    _flip_menu = new QMenu(ui->flip_btn);
+    _flip_menu->connect(_flip_menu, &QMenu::triggered, [this](QAction *action)
+        {
+            _callback(MenuType::FlipMenu, _flip_menu->actions().indexOf(action));
+            ui->flip_btn->setIcon(action->icon());
+            ui->flip_btn->setToolTip(action->text());
+            ui->flip_btn->setDefaultAction(action);
+        });
+    ui->flip_btn->setMenu(_flip_menu);
+
+    QAction *flipx = new QAction(QIcon(":/icons/flipx_btn.png"),
+        "FlipX", ui->flip_btn);
+    _flip_menu->addAction(flipx);
+    ui->flip_btn->setDefaultAction(flipx);
+
+    QAction *flipy = new QAction(QIcon(":/icons/flipy_btn.png"),
+        "FlipY", ui->flip_btn);
+    _flip_menu->addAction(flipy);
+}
+
 void ActionGroup::init_fillet_menu()
 {
     _fillet_menu = new QMenu(ui->fillet_btn);
@@ -178,24 +246,3 @@ void ActionGroup::init_fillet_menu()
     _fillet_menu->addAction(chamfer);
 }
 
-void ActionGroup::init_connect_menu()
-{
-    _connect_menu = new QMenu(ui->connect_btn);
-    _connect_menu->connect(_connect_menu, &QMenu::triggered, [this](QAction *action)
-        {
-            _callback(MenuType::ConnectMenu, _connect_menu->actions().indexOf(action));
-            ui->connect_btn->setIcon(action->icon());
-            ui->connect_btn->setToolTip(action->text());
-            ui->connect_btn->setDefaultAction(action);
-        });
-    ui->connect_btn->setMenu(_connect_menu);
-
-    QAction *connect = new QAction(QIcon(":/icons/connect_btn.png"),
-        "Connect", ui->connect_btn);
-    _connect_menu->addAction(connect);
-    _connect_menu->setDefaultAction(connect);
-
-    QAction *blend = new QAction(QIcon(":/icons/blend_btn.png"),
-        "Blend", ui->connect_btn);
-    _connect_menu->addAction(blend);
-}

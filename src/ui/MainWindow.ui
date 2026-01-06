@@ -804,176 +804,7 @@ QScrollArea
               <property name="spacing">
                <number>2</number>
               </property>
-              <item row="0" column="1">
-               <widget class="QToolButton" name="extend_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="maximumSize">
-                 <size>
-                  <width>54</width>
-                  <height>16777215</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Extend</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/extend_btn.png</normaloff>:/icons/extend_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="8" column="1">
-               <widget class="QToolButton" name="difference_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Difference</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/difference_btn.png</normaloff>:/icons/difference_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="5" column="0">
-               <widget class="QToolButton" name="offset_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Offset</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/offset_btn.png</normaloff>:/icons/offset_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="3" column="0">
-               <widget class="QToolButton" name="rotate_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Rotate</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/rotate_btn.png</normaloff>:/icons/rotate_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-                <property name="autoRepeat">
-                 <bool>true</bool>
-                </property>
-               </widget>
-              </item>
-              <item row="1" column="1">
-               <widget class="QToolButton" name="mirror_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
-                </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Mirror</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/mirror_btn.png</normaloff>:/icons/mirror_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
-                </property>
-               </widget>
-              </item>
-              <item row="7" column="1">
+              <item row="6" column="1">
                <widget class="QToolButton" name="union_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -1005,8 +836,8 @@ QScrollArea
                 </property>
                </widget>
               </item>
-              <item row="8" column="0">
-               <widget class="QToolButton" name="xor_btn">
+              <item row="4" column="0">
+               <widget class="QToolButton" name="offset_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1023,11 +854,11 @@ QScrollArea
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>XOR</string>
+                 <string>Offset</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/xor_btn.png</normaloff>:/icons/xor_btn.png</iconset>
+                  <normaloff>:/icons/offset_btn.png</normaloff>:/icons/offset_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -1037,8 +868,8 @@ QScrollArea
                 </property>
                </widget>
               </item>
-              <item row="7" column="0">
-               <widget class="QToolButton" name="intersection_btn">
+              <item row="0" column="1">
+               <widget class="QToolButton" name="flip_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1055,11 +886,11 @@ QScrollArea
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Intersection</string>
+                 <string>Flip X</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/intersection_btn.png</normaloff>:/icons/intersection_btn.png</iconset>
+                  <normaloff>:/icons/flipx_btn.png</normaloff>:/icons/flipx_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -1067,37 +898,11 @@ QScrollArea
                   <height>24</height>
                  </size>
                 </property>
-               </widget>
-              </item>
-              <item row="1" column="0">
-               <widget class="QToolButton" name="split_btn">
-                <property name="sizePolicy">
-                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-                  <horstretch>0</horstretch>
-                  <verstretch>0</verstretch>
-                 </sizepolicy>
+                <property name="popupMode">
+                 <enum>QToolButton::ToolButtonPopupMode::MenuButtonPopup</enum>
                 </property>
-                <property name="minimumSize">
-                 <size>
-                  <width>0</width>
-                  <height>32</height>
-                 </size>
-                </property>
-                <property name="focusPolicy">
-                 <enum>Qt::FocusPolicy::NoFocus</enum>
-                </property>
-                <property name="toolTip">
-                 <string>Split</string>
-                </property>
-                <property name="icon">
-                 <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/split_btn.png</normaloff>:/icons/split_btn.png</iconset>
-                </property>
-                <property name="iconSize">
-                 <size>
-                  <width>24</width>
-                  <height>24</height>
-                 </size>
+                <property name="autoRaise">
+                 <bool>true</bool>
                 </property>
                </widget>
               </item>
@@ -1137,9 +942,114 @@ QScrollArea
                   <height>24</height>
                  </size>
                 </property>
+                <property name="popupMode">
+                 <enum>QToolButton::ToolButtonPopupMode::MenuButtonPopup</enum>
+                </property>
+                <property name="autoRaise">
+                 <bool>true</bool>
+                </property>
                </widget>
               </item>
-              <item row="3" column="1">
+              <item row="2" column="0">
+               <widget class="QToolButton" name="rotate_btn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Rotate</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/rotate_btn.png</normaloff>:/icons/rotate_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+                <property name="autoRepeat">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="1">
+               <widget class="QToolButton" name="difference_btn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Difference</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/difference_btn.png</normaloff>:/icons/difference_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="7" column="0">
+               <widget class="QToolButton" name="xor_btn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>XOR</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/xor_btn.png</normaloff>:/icons/xor_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="2" column="1">
                <widget class="QToolButton" name="scale_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -1174,7 +1084,39 @@ QScrollArea
                 </property>
                </widget>
               </item>
-              <item row="5" column="1">
+              <item row="1" column="0">
+               <widget class="QToolButton" name="split_btn">
+                <property name="sizePolicy">
+                 <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                  <horstretch>0</horstretch>
+                  <verstretch>0</verstretch>
+                 </sizepolicy>
+                </property>
+                <property name="minimumSize">
+                 <size>
+                  <width>0</width>
+                  <height>32</height>
+                 </size>
+                </property>
+                <property name="focusPolicy">
+                 <enum>Qt::FocusPolicy::NoFocus</enum>
+                </property>
+                <property name="toolTip">
+                 <string>Split</string>
+                </property>
+                <property name="icon">
+                 <iconset resource="../../res/Icons.qrc">
+                  <normaloff>:/icons/split_btn.png</normaloff>:/icons/split_btn.png</iconset>
+                </property>
+                <property name="iconSize">
+                 <size>
+                  <width>24</width>
+                  <height>24</height>
+                 </size>
+                </property>
+               </widget>
+              </item>
+              <item row="4" column="1">
                <widget class="QToolButton" name="fillet_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -1212,8 +1154,8 @@ QScrollArea
                 </property>
                </widget>
               </item>
-              <item row="2" column="0">
-               <widget class="QToolButton" name="flipx_btn">
+              <item row="1" column="1">
+               <widget class="QToolButton" name="mirror_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1230,11 +1172,11 @@ QScrollArea
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Flip X</string>
+                 <string>Mirror</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/flipx_btn.png</normaloff>:/icons/flipx_btn.png</iconset>
+                  <normaloff>:/icons/mirror_btn.png</normaloff>:/icons/mirror_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -1244,8 +1186,8 @@ QScrollArea
                 </property>
                </widget>
               </item>
-              <item row="2" column="1">
-               <widget class="QToolButton" name="flipy_btn">
+              <item row="6" column="0">
+               <widget class="QToolButton" name="intersection_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -1262,11 +1204,11 @@ QScrollArea
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Flip Y</string>
+                 <string>Intersection</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/flipy_btn.png</normaloff>:/icons/flipy_btn.png</iconset>
+                  <normaloff>:/icons/intersection_btn.png</normaloff>:/icons/intersection_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>

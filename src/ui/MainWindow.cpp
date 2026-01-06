@@ -111,12 +111,8 @@ void MainWindow::connect_btn_to_cmd()
     connect(ui->combinate_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Combinate_CMD); });
     connect(ui->detach_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Detach_CMD); });
 
-    connect(ui->trim_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Trim_CMD); });
-    connect(ui->extend_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Extend_CMD); });
     connect(ui->split_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Split_CMD); });
     connect(ui->mirror_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Mirror_CMD); });
-    connect(ui->flipx_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::FlipX_CMD); });
-    connect(ui->flipy_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::FlipY_CMD); });
     connect(ui->rotate_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Rotate_CMD); });
     connect(ui->scale_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Scale_CMD); });
     connect(ui->offset_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Offset_CMD); });
@@ -915,6 +911,32 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
             break;
         case 1: // blend
             ui->cmd_widget->work(CMDWidget::CMD::Blend_CMD);
+            break;
+        default:
+            break;
+        }
+        break;
+    case ActionGroup::MenuType::TrimMenu:
+        switch (index)
+        {
+        case 0: // trim
+            ui->cmd_widget->work(CMDWidget::CMD::Trim_CMD);
+            break;
+        case 1: // extend
+            ui->cmd_widget->work(CMDWidget::CMD::Extend_CMD);
+            break;
+        default:
+            break;
+        }
+        break;
+    case ActionGroup::MenuType::FlipMenu:
+        switch (index)
+        {
+        case 0: // flip x
+            ui->cmd_widget->work(CMDWidget::CMD::FlipX_CMD);
+            break;
+        case 1: // flip y
+            ui->cmd_widget->work(CMDWidget::CMD::FlipY_CMD);
             break;
         default:
             break;
