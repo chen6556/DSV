@@ -3647,28 +3647,42 @@ bool PolygonDifferenceOperation::mouse_press(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
-        std::vector<Geo::Geometry *> objects = editer->selected();
         if (clicked_object = editer->select(real_pos[0], real_pos[1], true);
-            clicked_object != nullptr && clicked_object->type() == Geo::Type::POLYGON)
+            clicked_object != nullptr && clicked_object != _polygon
+            && clicked_object->type() == Geo::Type::POLYGON)
         {
-            Geo::Polygon *polygon = static_cast<Geo::Polygon *>(clicked_object);
-            std::vector<Geo::Geometry *>::iterator it = std::find_if(objects.begin(), objects.end(),
-                [=](const Geo::Geometry *object) { return object != polygon && object->type() == Geo::Type::POLYGON; });
-            if (it != objects.end() && editer->polygon_difference(static_cast<Geo::Polygon *>(*it), polygon))
+            if (_polygon == nullptr)
             {
+                _polygon = static_cast<Geo::Polygon *>(clicked_object);
+                _polygon->is_selected = true;
+                canvas->refresh_selected_ibo();
+                return true;
+            }
+            else if (editer->polygon_difference(_polygon, static_cast<Geo::Polygon *>(clicked_object)))
+            {
+                _polygon = nullptr;
                 canvas->refresh_vbo(Geo::Type::POLYGON, true);
                 canvas->refresh_selected_ibo();
                 tool[0] = Tool::Select;
                 return true;
             }
         }
-        tool[0] = Tool::Select;
         return false;
     }
     else
     {
         return false;
     }
+}
+
+void PolygonDifferenceOperation::reset()
+{
+    _polygon = nullptr;
+}
+
+QString PolygonDifferenceOperation::cmd_tips() const
+{
+    return _polygon == nullptr ? "Choose first polygon." : "Choose second polygon.";
 }
 
 

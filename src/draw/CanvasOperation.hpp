@@ -555,8 +555,15 @@ namespace CanvasOperations
 
     class PolygonDifferenceOperation : public CanvasOperation
     {
+    private:
+        Geo::Polygon *_polygon = nullptr;
+
     public:
         bool mouse_press(QMouseEvent *event) override;
+
+        void reset() override;
+
+        QString cmd_tips() const override;
     };
 
 
