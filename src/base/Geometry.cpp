@@ -2053,6 +2053,7 @@ double Bezier::default_down_sampling_value = 0.02;
 Bezier::Bezier(const size_t n)
     : _order(n)
 {
+    assert(n == 3 || n == 2);
     _shape.shape_fixed = true;
 }
 
@@ -2065,6 +2066,7 @@ Bezier::Bezier(const Bezier &bezier)
 Bezier::Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::const_iterator end, const size_t n, const bool is_path_points)
     : Polyline(begin, end), _order(n)
 {
+    assert(n == 3 || n == 2);
     _shape.shape_fixed = true;
     if (is_path_points)
     {
@@ -2076,6 +2078,7 @@ Bezier::Bezier(std::vector<Point>::const_iterator begin, std::vector<Point>::con
 Bezier::Bezier(const std::initializer_list<Point> &points, const size_t n, const bool is_path_points)
     : Polyline(points), _order(n)
 {
+    assert(n == 3 || n == 2);
     _shape.shape_fixed = true;
     if (is_path_points)
     {
@@ -2105,9 +2108,8 @@ void Bezier::update_control_points()
     _points.erase(_points.begin() + 1, _points.end());
     Geo::Point mid0((paths[1] + paths[2]) / 2), mid1((paths[0] + paths[1]) / 2);
     _points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
-    switch (_order)
+    if (_order == 2)
     {
-    case 2:
         for (size_t i = 1, count = paths.size() - 1; i < count; ++i)
         {
             mid1 = paths[i] - _points.back();
@@ -2115,8 +2117,10 @@ void Bezier::update_control_points()
             _points.emplace_back(paths[i]);
             _points.emplace_back(paths[i] + mid1.normalize() * dis);
         }
-        break;
-    case 3:
+        _points.emplace_back(paths.back());
+    }
+    else
+    {
         for (size_t i = 1, count = paths.size() - 1; i < count; ++i)
         {
             mid0 = mid1;
@@ -2126,39 +2130,10 @@ void Bezier::update_control_points()
             _points.emplace_back(paths[i] + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
         }
         _points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
-        break;
-    default:
-        {
-            const size_t step = _order - 4;
-            for (size_t i = 1, count = paths.size() - 1; i < count; ++i)
-            {
-                mid0 = mid1;
-                mid1 = (paths[i] + paths[i + 1]) / 2;
-                const Geo::Point point = paths[i] + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) / 2;
-                const Geo::Vector vec = (point - _points.back()).normalize()
-                    * Geo::distance(_points.back(), point) / (step + 1);
-                for (size_t j = 1; j <= step; ++j)
-                {
-                    _points.emplace_back(_points.back() + vec);
-                }
-                _points.emplace_back(point);
-                _points.emplace_back(paths[i]);
-                _points.emplace_back(paths[i] + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
-            }
-            mid0 = mid1;
-            mid1 = (paths.front() + paths.back()) / 2;
-            const Geo::Point point = paths.back() + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) / 2;
-            const Geo::Vector vec = (point - _points.back()).normalize()
-                * Geo::distance(_points.back(), point) / (step + 1);
-            for (size_t j = 1; j <= step; ++j)
-            {
-                _points.emplace_back(_points.back() + vec);
-            }
-            _points.emplace_back(point);
-        }
-        break;
+        _points.emplace_back(paths.back());
+        _points[1] = (_points[0] + _points[2]) / 2;
+        _points[_points.size() - 2] = (_points.back() + _points[_points.size() - 3]) / 2;
     }
-    _points.emplace_back(paths.back());
 }
 
 void Bezier::update_shape(const double step, const double down_sampling_value)
@@ -2170,27 +2145,13 @@ void Bezier::update_shape(const double step, const double down_sampling_value)
         return;
     }
     std::vector<int> nums(_order + 1, 1);
-    switch (_order)
+    if (_order == 2)
     {
-    case 2:
         nums[1] = 2;
-        break;
-    case 3:
+    }
+    else
+    {
         nums[1] = nums[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= _order; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums.begin(), nums.begin() + i + 1);
-            }
-        }
-        break;
     }
 
     for (size_t i = 0, end = _points.size() - _order; i < end; i += _order)
@@ -2234,6 +2195,7 @@ Bezier &Bezier::operator=(const Bezier &bezier)
     {
         Polyline::operator=(bezier);
         _shape = bezier._shape;
+        _order = bezier._order;
     }
     return *this;
 }
@@ -2290,37 +2252,17 @@ Point Bezier::tangent(const size_t index, const double t) const
         return Point();
     }
     std::vector<int> nums(_order, 1);
-    switch (_order - 1)
+    if (_order == 3)
     {
-    case 1:
-        break;
-    case 2:
         nums[1] = 2;
-        break;
-    case 3:
-        nums[1] = nums[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i < _order; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums.begin(), nums.begin() + i + 1);
-            }
-        }
-        break;
     }
 
     Point start, end;
-    for (size_t i = 0; i < _order; ++i)
+    for (int i = 0; i < _order; ++i)
     {
         start += (_points[i + index] * (nums[i] * std::pow(1 - t, _order - i - 1) * std::pow(t, i)));
     }
-    for (size_t i = 0; i < _order; ++i)
+    for (int i = 0; i < _order; ++i)
     {
         end += (_points[i + index + 1] * (nums[i] * std::pow(1 - t, _order - i - 1) * std::pow(t, i)));
     }
@@ -2337,35 +2279,15 @@ Point Bezier::vertical(const size_t index, const double t) const
     Point start, end;
     {
         std::vector<int> nums(_order, 1);
-        switch (_order - 1)
+        if (_order == 3)
         {
-        case 1:
-            break;
-        case 2:
             nums[1] = 2;
-            break;
-        case 3:
-            nums[1] = nums[2] = 3;
-            break;
-        default:
-            {
-                std::vector<int> temp(1, 1);
-                for (size_t i = 1; i < _order; ++i)
-                {
-                    for (size_t j = 1; j < i; ++j)
-                    {
-                        nums[j] = temp[j - 1] + temp[j];
-                    }
-                    temp.assign(nums.begin(), nums.begin() + i + 1);
-                }
-            }
-            break;
         }
-        for (size_t i = 0; i < _order; ++i)
+        for (int i = 0; i < _order; ++i)
         {
             start += (_points[i + index] * (nums[i] * std::pow(1 - t, _order - i - 1) * std::pow(t, i)));
         }
-        for (size_t i = 0; i < _order; ++i)
+        for (int i = 0; i < _order; ++i)
         {
             end += (_points[i + index + 1] * (nums[i] * std::pow(1 - t, _order - i - 1) * std::pow(t, i)));
         }
@@ -2374,30 +2296,16 @@ Point Bezier::vertical(const size_t index, const double t) const
 
     {
         std::vector<int> nums(_order + 1, 1);
-        switch (_order)
+        if (_order == 2)
         {
-        case 2:
             nums[1] = 2;
-            break;
-        case 3:
+        }
+        else
+        {
             nums[1] = nums[2] = 3;
-            break;
-        default:
-            {
-                std::vector<int> temp(1, 1);
-                for (size_t i = 1; i <= _order; ++i)
-                {
-                    for (size_t j = 1; j < i; ++j)
-                    {
-                        nums[j] = temp[j - 1] + temp[j];
-                    }
-                    temp.assign(nums.begin(), nums.begin() + i + 1);
-                }
-            }
-            break;
         }
         Point anchor;
-        for (size_t i = 0; i <= _order; ++i)
+        for (int i = 0; i <= _order; ++i)
         {
             anchor += (_points[i + index] * (nums[i] * std::pow(1 - t, _order - i) * std::pow(t, i)));
         }

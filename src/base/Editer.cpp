@@ -4976,27 +4976,13 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
 {
     const size_t order = bezier->order();
     std::vector<int> nums(order + 1, 1);
-    switch (order)
+    if (order == 2)
     {
-    case 2:
         nums[1] = 2;
-        break;
-    case 3:
+    }
+    else
+    {
         nums[1] = nums[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= order; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums.begin(), nums.begin() + i + 1);
-            }
-        }
-        break;
     }
     Geo::Point anchor(x, y);
     double anchor_t = 0;

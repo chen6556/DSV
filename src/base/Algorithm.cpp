@@ -99,27 +99,13 @@ double Geo::distance(const Point &point, const Bezier &bezier)
 {
     const size_t order = bezier.order();
     std::vector<int> nums(order + 1, 1);
-    switch (order)
+    if (order == 2)
     {
-    case 2:
         nums[1] = 2;
-        break;
-    case 3:
+    }
+    else
+    {
         nums[1] = nums[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= order; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums.begin(), nums.begin() + i + 1);
-            }
-        }
-        break;
     }
 
     // index, points, distance
@@ -1788,27 +1774,13 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const Bezier &
 {
     const size_t order = bezier.order();
     std::vector<int> nums(order + 1, 1);
-    switch (order)
+    if (order == 2)
     {
-    case 2:
         nums[1] = 2;
-        break;
-    case 3:
+    }
+    else
+    {
         nums[1] = nums[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= order; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums.begin(), nums.begin() + i + 1);
-            }
-        }
-        break;
     }
 
     std::vector<Geo::Point> result;
@@ -3000,27 +2972,13 @@ int Geo::is_intersected(const Circle &circle, const Bezier &bezier, std::vector<
 {
     const size_t order = bezier.order();
     std::vector<int> nums(order + 1, 1);
-    switch (order)
+    if (order == 2)
     {
-    case 2:
         nums[1] = 2;
-        break;
-    case 3:
+    }
+    else
+    {
         nums[1] = nums[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= order; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums.begin(), nums.begin() + i + 1);
-            }
-        }
-        break;
     }
 
     const size_t size = intersections.size();
@@ -3438,27 +3396,13 @@ int Geo::is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vecto
 {
     const size_t order = bezier.order();
     std::vector<int> nums(order + 1, 1);
-    switch (order)
+    if (order == 2)
     {
-    case 2:
         nums[1] = 2;
-        break;
-    case 3:
+    }
+    else
+    {
         nums[1] = nums[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= order; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums.begin(), nums.begin() + i + 1);
-            }
-        }
-        break;
     }
 
     const double eps = Geo::EPSILON;
@@ -3931,49 +3875,21 @@ int Geo::is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vecto
 {
     const size_t order0 = bezier0.order(), order1 = bezier1.order();
     std::vector<int> nums0(order0 + 1, 1), nums1(order1 + 1, 1);
-    switch (order0)
+    if (order0)
     {
-    case 2:
         nums0[1] = 2;
-        break;
-    case 3:
-        nums0[1] = nums0[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= order0; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums0[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums0.begin(), nums0.begin() + i + 1);
-            }
-        }
-        break;
     }
-    switch (order1)
+    else
     {
-    case 2:
+        nums0[1] = nums0[2] = 3;
+    }
+    if (order1 == 2)
+    {
         nums1[1] = 2;
-        break;
-    case 3:
+    }
+    else
+    {
         nums1[1] = nums1[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= order1; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums1[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums1.begin(), nums1.begin() + i + 1);
-            }
-        }
-        break;
     }
 
     const size_t count = intersections.size();
@@ -4454,27 +4370,13 @@ int Geo::is_intersected(const Bezier &bezier, const BSpline &bspline, const bool
 {
     const size_t order = bezier.order();
     std::vector<int> nums(order + 1, 1);
-    switch (order)
+    if (order == 2)
     {
-    case 2:
         nums[1] = 2;
-        break;
-    case 3:
+    }
+    else
+    {
         nums[1] = nums[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= order; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums.begin(), nums.begin() + i + 1);
-            }
-        }
-        break;
     }
 
     std::vector<Geo::Point> temp_points;
@@ -6328,52 +6230,18 @@ int Geo::foot_point(const Point &point, const Bezier &bezier, std::vector<Point>
 {
     const size_t order = bezier.order();
     std::vector<int> nums(order, 1);
-    switch (order - 1)
+    if (order == 3)
     {
-    case 1:
-        break;
-    case 2:
         nums[1] = 2;
-        break;
-    case 3:
-        nums[1] = nums[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= order; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums.begin(), nums.begin() + i + 1);
-            }
-        }
-        break;
     }
     std::vector<int> nums1(order + 1, 1);
-    switch (order)
+    if (order == 2)
     {
-    case 2:
         nums1[1] = 2;
-        break;
-    case 3:
+    }
+    else
+    {
         nums1[1] = nums1[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= order; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums1[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums1.begin(), nums1.begin() + i + 1);
-            }
-        }
-        break;
     }
 
     std::vector<Geo::Point> result;
@@ -6909,27 +6777,13 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
 {
     const size_t order = bezier.order();
     std::vector<int> nums(order + 1, 1);
-    switch (order)
+    if (order == 2)
     {
-    case 2:
         nums[1] = 2;
-        break;
-    case 3:
+    }
+    else
+    {
         nums[1] = nums[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= order; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums.begin(), nums.begin() + i + 1);
-            }
-        }
-        break;
     }
 
     // index, points, distance
@@ -7362,52 +7216,18 @@ int Geo::tangency_point(const Point &point, const Bezier &bezier, std::vector<Po
 {
     const size_t order = bezier.order();
     std::vector<int> nums(order, 1);
-    switch (order - 1)
+    if (order == 3)
     {
-    case 1:
-        break;
-    case 2:
         nums[1] = 2;
-        break;
-    case 3:
-        nums[1] = nums[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= order; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums.begin(), nums.begin() + i + 1);
-            }
-        }
-        break;
     }
     std::vector<int> nums1(order + 1, 1);
-    switch (order)
+    if (order == 2)
     {
-    case 2:
         nums1[1] = 2;
-        break;
-    case 3:
+    }
+    else
+    {
         nums1[1] = nums1[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= order; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums1[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums1.begin(), nums1.begin() + i + 1);
-            }
-        }
-        break;
     }
 
     std::vector<Geo::Point> result;
@@ -7643,27 +7463,13 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
     }
 
     std::vector<int> nums(order + 1, 1);
-    switch (order)
+    if (order == 2)
     {
-    case 2:
         nums[1] = 2;
-        break;
-    case 3:
+    }
+    else
+    {
         nums[1] = nums[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= order; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums.begin(), nums.begin() + i + 1);
-            }
-        }
-        break;
     }
 
     // index, points, distance
@@ -7876,27 +7682,13 @@ bool Geo::split(const Bezier &bezier, const size_t i, const double t, Bezier &ou
     }
 
     std::vector<int> nums(order + 1, 1);
-    switch (order)
+    if (order == 2)
     {
-    case 2:
         nums[1] = 2;
-        break;
-    case 3:
+    }
+    else
+    {
         nums[1] = nums[2] = 3;
-        break;
-    default:
-        {
-            std::vector<int> temp(1, 1);
-            for (size_t i = 1; i <= order; ++i)
-            {
-                for (size_t j = 1; j < i; ++j)
-                {
-                    nums[j] = temp[j - 1] + temp[j];
-                }
-                temp.assign(nums.begin(), nums.begin() + i + 1);
-            }
-        }
-        break;
     }
 
     output0.clear(), output1.clear();
@@ -12925,45 +12717,39 @@ void Geo::down_sampling(Geo::Polyline &points, const double distance)
 
 Geo::BSpline *Geo::bezier_to_bspline(const Geo::Bezier &bezier)
 {
-    switch (bezier.order())
+    if (bezier.order() == 3)
     {
-    case 3:
+        std::vector<double> knots(4, 0);
+        int value = 1;
+        for (size_t i = 1, count = bezier.size() / 3; i < count; ++i, ++value)
         {
-            std::vector<double> knots(4, 0);
-            int value = 1;
-            for (size_t i = 1, count = bezier.size() / 3; i < count; ++i, ++value)
-            {
-                knots.push_back(value);
-                knots.push_back(value);
-                knots.push_back(value);
-            }
             knots.push_back(value);
             knots.push_back(value);
             knots.push_back(value);
-            knots.push_back(value);
-            Geo::CubicBSpline *bspline = new Geo::CubicBSpline(bezier.begin(), bezier.end(), knots, false);
-            bspline->controls_model = true;
-            return bspline;
         }
-    case 2:
+        knots.push_back(value);
+        knots.push_back(value);
+        knots.push_back(value);
+        knots.push_back(value);
+        Geo::CubicBSpline *bspline = new Geo::CubicBSpline(bezier.begin(), bezier.end(), knots, false);
+        bspline->controls_model = true;
+        return bspline;
+    }
+    else
+    {
+        std::vector<double> knots(3, 0);
+        int value = 1;
+        for (size_t i = 1, count = bezier.size() / 2; i < count; ++i, ++value)
         {
-            std::vector<double> knots(3, 0);
-            int value = 1;
-            for (size_t i = 1, count = bezier.size() / 2; i < count; ++i, ++value)
-            {
-                knots.push_back(value);
-                knots.push_back(value);
-            }
             knots.push_back(value);
             knots.push_back(value);
-            knots.push_back(value);
-            Geo::QuadBSpline *bspline = new Geo::QuadBSpline(bezier.begin(), bezier.end(), knots, false);
-            bspline->controls_model = true;
-            return bspline;
         }
-        break;
-    default:
-        return nullptr;
+        knots.push_back(value);
+        knots.push_back(value);
+        knots.push_back(value);
+        Geo::QuadBSpline *bspline = new Geo::QuadBSpline(bezier.begin(), bezier.end(), knots, false);
+        bspline->controls_model = true;
+        return bspline;
     }
 }
 
