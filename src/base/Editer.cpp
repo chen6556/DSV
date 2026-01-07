@@ -1929,7 +1929,7 @@ bool Editer::offset(std::vector<Geo::Geometry *> objects, const double distance,
             break;
         case Geo::Type::BSPLINE:
             bspline = static_cast<Geo::BSpline *>(object);
-            if (Geo::Polyline shape1, path_points(bspline->path_points.begin(), bspline->path_points.end());
+            if (Geo::Polyline shape1, path_points(bspline->control_points.begin(), bspline->control_points.end());
                 Geo::offset(path_points, shape1, distance))
             {
                 double area = 0;
@@ -1947,11 +1947,11 @@ bool Editer::offset(std::vector<Geo::Geometry *> objects, const double distance,
 
                 if (dynamic_cast<const Geo::CubicBSpline *>(bspline) == nullptr)
                 {
-                    _graph->append(new Geo::QuadBSpline(shape1.begin(), shape1.end(), true), _current_group);
+                    _graph->append(new Geo::QuadBSpline(shape1.begin(), shape1.end(), false), _current_group);
                 }
                 else
                 {
-                    _graph->append(new Geo::CubicBSpline(shape1.begin(), shape1.end(), true), _current_group);
+                    _graph->append(new Geo::CubicBSpline(shape1.begin(), shape1.end(), false), _current_group);
                 }
                 items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
             }
@@ -1974,7 +1974,7 @@ bool Editer::offset(std::vector<Geo::Geometry *> objects, const double distance,
                 shape1.front() = (path_points.front() + (path_points[1] - path_points[0]).vertical().normalize() * distance);
                 shape1.back() = (path_points.back() + (path_points.back() - path_points[path_points.size() - 2]).vertical().normalize() * distance);
 
-                _graph->append(new Geo::Bezier(shape1.begin(), shape1.end(), bezier->order(), true), _current_group);
+                _graph->append(new Geo::Bezier(shape1.begin(), shape1.end(), bezier->order(), false), _current_group);
                 items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
             }
             break;
