@@ -1,19 +1,18 @@
 #pragma once
 #include <set>
-#include <unordered_map>
 #include <QOpenGLWidget>
 #include <QPaintEvent>
 #include <QLabel>
 #include <QTextEdit>
 #include <QMenu>
 #include <QAction>
-#include <QOpenGLFunctions_4_5_Core>
+#include <QOpenGLFunctions_4_1_Core>
 
 #include "base/Editer.hpp"
 #include "draw/CanvasOperation.hpp"
 
 
-class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
+class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_1_Core
 {
     Q_OBJECT
 

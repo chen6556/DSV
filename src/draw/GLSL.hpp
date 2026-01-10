@@ -3,7 +3,7 @@
 
 namespace GLSL
 {
-const char *base_vss = "#version 450 core\n"
+const char *base_vss = "#version 410 core\n"
     "layout (location = 0) in dvec3 pos;\n"
     "uniform int w;\n"
     "uniform int h;\n"
@@ -15,7 +15,7 @@ const char *base_vss = "#version 450 core\n"
             "1.0 - (pos.x * vec1.x + pos.y * vec1.y + vec1.z) / h, pos.z, 1.0);\n"
     "}\0";
 
-const char *base_fss = "#version 450 core\n"
+const char *base_fss = "#version 410 core\n"
     "out vec4 FragColor;\n"
     "uniform vec4 color;\n"
     "void main()\n"

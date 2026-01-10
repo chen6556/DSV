@@ -1,11 +1,40 @@
 #include <future>
 #include <QPainterPath>
 
-#include "base/Algorithm.hpp"
 #include "draw/Canvas.hpp"
 #include "draw/GLSL.hpp"
 #include "io/GlobalSetting.hpp"
 
+// only for GL test
+const char *glErrorToString(GLenum err)
+{
+    switch (err)
+    {
+    case GL_NO_ERROR:
+        return "GL_NO_ERROR";
+    case GL_INVALID_ENUM:
+        return "GL_INVALID_ENUM";
+    case GL_INVALID_VALUE:
+        return "GL_INVALID_VALUE";
+    case GL_INVALID_OPERATION:
+        return "GL_INVALID_OPERATION";
+    case GL_INVALID_FRAMEBUFFER_OPERATION:
+        return "GL_INVALID_FRAMEBUFFER_OPERATION";
+    case GL_OUT_OF_MEMORY:
+        return "GL_OUT_OF_MEMORY";
+    default:
+        return "UNKNOWN_ERROR";
+    }
+}
+// only for GL test
+void checkGLError()
+{
+    GLenum err = glGetError();
+    if (err != GL_NO_ERROR)
+    {
+        qDebug() << "GL error:" << err << glErrorToString(err);
+    }
+}
 
 Canvas::Canvas(QWidget *parent)
     : QOpenGLWidget(parent), _input_line(this)
@@ -63,7 +92,13 @@ void Canvas::bind_editer(Editer *editer)
 
 void Canvas::initializeGL()
 {
-    initializeOpenGLFunctions();
+    qDebug() << "context:" << context();
+    qDebug() << "context valid:" << context()->isValid();
+    qDebug() << "format:" << context()->format();
+
+    bool ok = initializeOpenGLFunctions();
+    // assume init success
+    Q_ASSERT(ok);
     glClearColor(0.117647f, 0.156862f, 0.188235f, 1.0f);
 
     unsigned int vertex_shader;
@@ -71,7 +106,9 @@ void Canvas::initializeGL()
 
     glPointSize(7.8f); // 点大小
     glLineWidth(1.4f); // 线宽
-    glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+    // glEnable(GL_PRIMITIVE_RESTART_FIXED_INDEX);
+    glEnable(GL_PRIMITIVE_RESTART);
+    glPrimitiveRestartIndex(0xFFFFFFFF);
     // glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_MULTISAMPLE); // 抗锯齿
@@ -80,7 +117,7 @@ void Canvas::initializeGL()
     glEnable(GL_POLYGON_SMOOTH);
 
     int maxUniformBlockSize;
-	glGetIntegerv(GL_MAX_VERTEX_ATTRIB_BINDINGS, &maxUniformBlockSize);
+    glGetIntegerv(GL_MAX_VERTEX_ATTRIBS, &maxUniformBlockSize);
 
     vertex_shader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex_shader, 1, &GLSL::base_vss, NULL);
@@ -107,12 +144,14 @@ void Canvas::initializeGL()
     glUniform3d(_uniforms[2], 1.0, 0.0, 0.0); // vec0
     glUniform3d(_uniforms[3], 0.0, -1.0, 0.0); // vec1
 
-    glCreateVertexArrays(1, &_VAO);
-    glCreateBuffers(4, _base_VBO);
-    glCreateBuffers(8, _shape_VBO);
-    glCreateBuffers(4, _shape_IBO);
-    glCreateBuffers(1, &_text_brush_IBO);
-    glCreateBuffers(5, _selected_IBO);
+    glGenVertexArrays(1, &_VAO);
+    glBindVertexArray(_VAO);
+
+    glGenBuffers(4, _base_VBO);
+    glGenBuffers(8, _shape_VBO);
+    glGenBuffers(4, _shape_IBO);
+    glGenBuffers(1, &_text_brush_IBO);
+    glGenBuffers(5, _selected_IBO);
 
     glBindVertexArray(_VAO);
 
