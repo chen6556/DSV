@@ -74,7 +74,7 @@ void CMDWidget::init()
         {CMD::Extend_CMD, CanvasOperations::Tool::Extend}, {CMD::Fillet_CMD, CanvasOperations::Tool::Fillet},
         {CMD::FreeFillet_CMD, CanvasOperations::Tool::FreeFillet}, {CMD::Blend_CMD, CanvasOperations::Tool::Blend},
         {CMD::Chamfer_CMD, CanvasOperations::Tool::Chamfer}, {CMD::Split_CMD, CanvasOperations::Tool::Split},
-        {CMD::Difference_CMD, CanvasOperations::Tool::PolygonDifference}};
+        {CMD::Difference_CMD, CanvasOperations::Tool::ShapeDifference}};
 
     _tool_cmd_dict = {{CanvasOperations::Tool::Measure, CMD::Length_CMD}, {CanvasOperations::Tool::Angle, CMD::Angle_CMD},
         {CanvasOperations::Tool::Polyline, CMD::Polyline_CMD}, {CanvasOperations::Tool::Rectangle, CMD::Rectangle_CMD},
@@ -90,7 +90,7 @@ void CMDWidget::init()
         {CanvasOperations::Tool::Trim, CMD::Trim_CMD}, {CanvasOperations::Tool::Split, CMD::Split_CMD},
         {CanvasOperations::Tool::Fillet, CMD::Fillet_CMD}, {CanvasOperations::Tool::FreeFillet, CMD::FreeFillet_CMD},
         {CanvasOperations::Tool::Chamfer, CMD::Chamfer_CMD}, {CanvasOperations::Tool::Blend, CMD::Blend_CMD},
-        {CanvasOperations::Tool::PolygonDifference, CMD::Difference_CMD}, {CanvasOperations::Tool::Rotate, CMD::Rotate_CMD},
+        {CanvasOperations::Tool::ShapeDifference, CMD::Difference_CMD}, {CanvasOperations::Tool::Rotate, CMD::Rotate_CMD},
         {CanvasOperations::Tool::RingArray, CMD::RingArray_CMD}};
 
     _cmd_tips_dict = {{CMD::Angle_CMD, "Angle"}, {CMD::Bezier_CMD, "Bezier"}, {CMD::BSpline_CMD, "BSpline"},
@@ -300,15 +300,15 @@ bool CMDWidget::work()
             offset();
             break;
         case CMD::Union_CMD:
-            polygon_union();
+            shape_union();
             _current_cmd = CMD::Error_CMD;
             break;
         case CMD::Intersection_CMD:
-            polygon_intersection();
+            shape_intersection();
             _current_cmd = CMD::Error_CMD;
             break;
         case CMD::XOR_CMD:
-            polygon_xor();
+            shape_xor();
             _current_cmd = CMD::Error_CMD;
             break;
         case CMD::LineArray_CMD:
@@ -853,85 +853,130 @@ void CMDWidget::flip_y()
     CanvasOperations::CanvasOperation::canvas->update();
 }
 
-void CMDWidget::polygon_intersection()
+void CMDWidget::shape_intersection()
 {
-    Geo::Polygon *polygon0 = nullptr, *polygon1 = nullptr;
+    Geo::Geometry *shape0 = nullptr, *shape1 = nullptr;
+    std::set<Geo::Type> types;
     for (Geo::Geometry *object : CanvasOperations::CanvasOperation::editer->selected())
     {
-        if (dynamic_cast<Geo::Polygon *>(object) == nullptr)
+        if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON
+            && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
         {
             continue;
         }
-        if (polygon0 == nullptr)
+        else
         {
-            polygon0 = dynamic_cast<Geo::Polygon *>(object);
+            if (type == Geo::Type::ELLIPSE && static_cast<const Geo::Ellipse *>(object)->is_arc())
+            {
+                continue;
+            }
+            types.insert(type);
+        }
+        if (shape0 == nullptr)
+        {
+            shape0 = object;
         }
         else
         {
-            polygon1 = dynamic_cast<Geo::Polygon *>(object);
+            shape1 = object;
             break;
         }
     }
 
-    if (CanvasOperations::CanvasOperation::editer->polygon_intersection(polygon0, polygon1))
+    if (CanvasOperations::CanvasOperation::editer->shape_intersection(shape0, shape1))
     {
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(Geo::Type::POLYGON, true);
+        if (types.find(Geo::Type::POLYGON) != types.end() &&
+            (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end()))
+        {
+            types.insert(Geo::Type::POLYLINE);
+        }
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
         CanvasOperations::CanvasOperation::canvas->update();
     }
 }
 
-void CMDWidget::polygon_union()
+void CMDWidget::shape_union()
 {
-    Geo::Polygon *polygon0 = nullptr, *polygon1 = nullptr;
+    Geo::Geometry *shape0 = nullptr, *shape1 = nullptr;
+    std::set<Geo::Type> types;
     for (Geo::Geometry *object : CanvasOperations::CanvasOperation::editer->selected())
     {
-        if (dynamic_cast<Geo::Polygon *>(object) == nullptr)
+        if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON
+            && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
         {
             continue;
         }
-        if (polygon0 == nullptr)
+        else
         {
-            polygon0 = dynamic_cast<Geo::Polygon *>(object);
+            if (type == Geo::Type::ELLIPSE && static_cast<const Geo::Ellipse *>(object)->is_arc())
+            {
+                continue;
+            }
+            types.insert(type);
+        }
+        if (shape0 == nullptr)
+        {
+            shape0 = object;
         }
         else
         {
-            polygon1 = dynamic_cast<Geo::Polygon *>(object);
+            shape1 = object;
             break;
         }
     }
 
-    if (CanvasOperations::CanvasOperation::editer->polygon_union(polygon0, polygon1))
+    if (CanvasOperations::CanvasOperation::editer->shape_union(shape0, shape1))
     {
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(Geo::Type::POLYGON, true);
+        if (types.find(Geo::Type::POLYGON) != types.end() &&
+            (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end()))
+        {
+            types.insert(Geo::Type::POLYLINE);
+        }
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
         CanvasOperations::CanvasOperation::canvas->update();
     }
 }
 
-void CMDWidget::polygon_xor()
+void CMDWidget::shape_xor()
 {
-    Geo::Polygon *polygon0 = nullptr, *polygon1 = nullptr;
+    Geo::Geometry *shape0 = nullptr, *shape1 = nullptr;
+    std::set<Geo::Type> types;
     for (Geo::Geometry *object : CanvasOperations::CanvasOperation::editer->selected())
     {
-        if (dynamic_cast<Geo::Polygon *>(object) == nullptr)
+        if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON
+            && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
         {
             continue;
         }
-        if (polygon0 == nullptr)
+        else
         {
-            polygon0 = dynamic_cast<Geo::Polygon *>(object);
+            if (type == Geo::Type::ELLIPSE && static_cast<const Geo::Ellipse *>(object)->is_arc())
+            {
+                continue;
+            }
+            types.insert(type);
+        }
+        if (shape0 == nullptr)
+        {
+            shape0 = object;
         }
         else
         {
-            polygon1 = dynamic_cast<Geo::Polygon *>(object);
+            shape1 = object;
             break;
         }
     }
 
-    if (CanvasOperations::CanvasOperation::editer->polygon_xor(polygon0, polygon1))
+    if (CanvasOperations::CanvasOperation::editer->shape_xor(shape0, shape1))
     {
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(Geo::Type::POLYGON, true);
+        if (types.find(Geo::Type::POLYGON) != types.end() &&
+            (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end()))
+        {
+            types.insert(Geo::Type::POLYLINE);
+        }
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
         CanvasOperations::CanvasOperation::canvas->update();
     }

@@ -780,6 +780,18 @@ namespace Geo
         const Polyline &shape() const;
 
         bool is_arc() const;
+
+        // 参数角切向量
+        Point param_tangency(const double value) const;
+
+        // 圆心角切向量
+        Point angle_tangency(const double value) const;
+
+        // 参数角点
+        Point param_point(const double value) const;
+
+        // 圆心角点
+        Point angle_point(const double value) const;
     };
 
     class BSpline : public Geometry

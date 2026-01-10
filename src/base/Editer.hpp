@@ -129,13 +129,13 @@ public:
 
     bool scale(std::vector<Geo::Geometry *> objects, const bool unitary, const double k);
 
-    bool polygon_union(Geo::Polygon *shape0, Geo::Polygon *shape1);
+    bool shape_union(Geo::Geometry *shape0, Geo::Geometry *shape1);
 
-    bool polygon_intersection(Geo::Polygon *shape0, Geo::Polygon *shape1);
+    bool shape_intersection(Geo::Geometry *shape0, Geo::Geometry *shape1);
 
-    bool polygon_difference(Geo::Polygon *shape0, const Geo::Polygon *shape1); 
+    bool shape_difference(Geo::Geometry *shape0, const Geo::Geometry *shape1); 
 
-    bool polygon_xor(Geo::Polygon *shape0, Geo::Polygon *shape1); 
+    bool shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1); 
 
     bool fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius);
 

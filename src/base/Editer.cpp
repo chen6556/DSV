@@ -2084,14 +2084,184 @@ bool Editer::scale(std::vector<Geo::Geometry *> objects, const bool unitary, con
     return true;
 }
 
-bool Editer::polygon_union(Geo::Polygon *shape0, Geo::Polygon *shape1)
+bool Editer::shape_union(Geo::Geometry *shape0, Geo::Geometry *shape1)
 {
     if (_graph == nullptr || _graph->empty() || shape0 == nullptr || shape1 == nullptr  || shape0 == shape1)
     {
         return false;
     }
 
-    if (std::vector<Geo::Polygon> shapes; Geo::polygon_union(*shape0, *shape1, shapes))
+    std::vector<Geo::Geometry *> result;
+    switch (shape0->type())
+    {
+    case Geo::Type::POLYGON:
+        switch (shape1->type())
+        {
+        case Geo::Type::POLYGON:
+            if (std::vector<Geo::Polygon> shapes; Geo::polygon_union(*static_cast<const Geo::Polygon *>(shape0),
+                *static_cast<const Geo::Polygon *>(shape1), shapes))
+            {
+                for (const Geo::Polygon &polygon : shapes)
+                {
+                    result.push_back(new Geo::Polygon(polygon));
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            {
+                std::vector<Geo::Polyline> shapes0;
+                std::vector<Geo::Arc> shapes1;
+                if (Geo::polygon_circle_union(*static_cast<const Geo::Polygon *>(shape0),
+                    *static_cast<const Geo::Circle *>(shape1), shapes0, shapes1))
+                {
+                    for (const Geo::Polyline &polyline : shapes0)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                    for (const Geo::Arc &arc : shapes1)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            {
+                std::vector<Geo::Polyline> shapes0;
+                std::vector<Geo::Ellipse> shapes1;
+                if (Geo::polygon_ellipse_union(*static_cast<const Geo::Polygon *>(shape0),
+                    *static_cast<const Geo::Ellipse *>(shape1), shapes0, shapes1))
+                {
+                    for (const Geo::Polyline &polyline : shapes0)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                    for (const Geo::Ellipse &ellipse : shapes1)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::CIRCLE:
+        switch (shape1->type())
+        {
+        case Geo::Type::POLYGON:
+            {
+                std::vector<Geo::Polyline> shapes0;
+                std::vector<Geo::Arc> shapes1;
+                if (Geo::polygon_circle_union(*static_cast<const Geo::Polygon *>(shape1),
+                    *static_cast<const Geo::Circle *>(shape0), shapes0, shapes1))
+                {
+                    for (const Geo::Polyline &polyline : shapes0)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                    for (const Geo::Arc &arc : shapes1)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            if (std::vector<Geo::Arc> shapes; Geo::circle_union(*static_cast<const Geo::Circle *>(shape0),
+                *static_cast<const Geo::Circle *>(shape1), shapes))
+            {
+                for (const Geo::Arc &arc : shapes)
+                {
+                    result.push_back(new Geo::Arc(arc));
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            {
+                std::vector<Geo::Arc> shapes0;
+                std::vector<Geo::Ellipse> shapes1;
+                if (Geo::circle_ellipse_union(*static_cast<const Geo::Circle *>(shape0),
+                    *static_cast<const Geo::Ellipse *>(shape1), shapes0, shapes1))
+                {
+                    for (const Geo::Arc &arc : shapes0)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                    for (const Geo::Ellipse &ellipse : shapes1)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::ELLIPSE:
+        switch (shape1->type())
+        {
+        case Geo::Type::POLYGON:
+            {
+                std::vector<Geo::Polyline> shapes0;
+                std::vector<Geo::Ellipse> shapes1;
+                if (Geo::polygon_ellipse_union(*static_cast<const Geo::Polygon *>(shape1),
+                    *static_cast<const Geo::Ellipse *>(shape0), shapes0, shapes1))
+                {
+                    for (const Geo::Polyline &polyline : shapes0)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                    for (const Geo::Ellipse &ellipse : shapes1)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            {
+                std::vector<Geo::Arc> shapes0;
+                std::vector<Geo::Ellipse> shapes1;
+                if (Geo::circle_ellipse_union(*static_cast<const Geo::Circle *>(shape1),
+                    *static_cast<const Geo::Ellipse *>(shape0), shapes0, shapes1))
+                {
+                    for (const Geo::Arc &arc : shapes0)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                    for (const Geo::Ellipse &ellipse : shapes1)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            if (std::vector<Geo::Ellipse> shapes; Geo::ellipse_union(*static_cast<const Geo::Ellipse *>(shape0),
+                *static_cast<const Geo::Ellipse *>(shape1), shapes))
+            {
+                for (const Geo::Ellipse &ellipse : shapes)
+                {
+                    result.push_back(new Geo::Ellipse(ellipse));
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    default:
+        break;
+    }
+
+    if (result.empty())
+    {
+        return false;
+    }
+    else
     {
         ContainerGroup &group = _graph->container_group(_current_group);
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
@@ -2104,18 +2274,18 @@ bool Editer::polygon_union(Geo::Polygon *shape0, Geo::Polygon *shape1)
 
         if (index0 == group.size())
         {
-            group.append(new Geo::Polygon(shapes.front()));
+            group.append(result.front());
         }
         else
         {
-            group.insert(index0, new Geo::Polygon(shapes.front()));
+            group.insert(index0, result.front());
         }
         add_items.emplace_back(group[index0], _current_group, index0);
 
         index0 = group.size();
-        for (size_t i = 1, count = shapes.size(); i < count; ++i)
+        for (size_t i = 1, count = result.size(); i < count; ++i)
         {
-            group.append(new Geo::Polygon(shapes[i]));
+            group.append(result[i]);
             add_items.emplace_back(group.back(), _current_group, index0++);
         }
 
@@ -2123,20 +2293,186 @@ bool Editer::polygon_union(Geo::Polygon *shape0, Geo::Polygon *shape1)
         _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
         return true;
     }
-    else
-    {
-        return false;
-    }
 }
 
-bool Editer::polygon_intersection(Geo::Polygon *shape0, Geo::Polygon *shape1)
+bool Editer::shape_intersection(Geo::Geometry *shape0, Geo::Geometry *shape1)
 {
     if (_graph == nullptr || _graph->empty() || shape0 == nullptr || shape1 == nullptr || shape0 == shape1)
     {
         return false;
     }
 
-    if (std::vector<Geo::Polygon> shapes; Geo::polygon_intersection(*shape0, *shape1, shapes))
+    std::vector<Geo::Geometry *> result;
+    switch (shape0->type())
+    {
+    case Geo::Type::POLYGON:
+        switch (shape1->type())
+        {
+        case Geo::Type::POLYGON:
+            if (std::vector<Geo::Polygon> shapes; Geo::polygon_intersection(*static_cast<const Geo::Polygon *>(shape0),
+                *static_cast<const Geo::Polygon *>(shape1), shapes))
+            {
+                for (const Geo::Polygon &polygon : shapes)
+                {
+                    result.push_back(new Geo::Polygon(polygon));
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            {
+                std::vector<Geo::Polyline> shapes0;
+                std::vector<Geo::Arc> shapes1;
+                if (Geo::polygon_circle_intersection(*static_cast<const Geo::Polygon *>(shape0),
+                    *static_cast<const Geo::Circle *>(shape1), shapes0, shapes1))
+                {
+                    for (const Geo::Polyline &polyline : shapes0)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                    for (const Geo::Arc &arc : shapes1)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            {
+                std::vector<Geo::Polyline> shapes0;
+                std::vector<Geo::Ellipse> shapes1;
+                if (Geo::polygon_ellipse_intersection(*static_cast<const Geo::Polygon *>(shape0),
+                    *static_cast<const Geo::Ellipse *>(shape1), shapes0, shapes1))
+                {
+                    for (const Geo::Polyline &polyline : shapes0)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                    for (const Geo::Ellipse &ellipse : shapes1)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::CIRCLE:
+        switch (shape1->type())
+        {
+        case Geo::Type::POLYGON:
+            {
+                std::vector<Geo::Polyline> shapes0;
+                std::vector<Geo::Arc> shapes1;
+                if (Geo::polygon_circle_intersection(*static_cast<const Geo::Polygon *>(shape1),
+                    *static_cast<const Geo::Circle *>(shape0), shapes0, shapes1))
+                {
+                    for (const Geo::Polyline &polyline : shapes0)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                    for (const Geo::Arc &arc : shapes1)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            if (std::vector<Geo::Arc> shapes; Geo::circle_intersection(*static_cast<const Geo::Circle *>(shape0),
+                *static_cast<const Geo::Circle *>(shape1), shapes))
+            {
+                for (const Geo::Arc &arc : shapes)
+                {
+                    result.push_back(new Geo::Arc(arc));
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            {
+                std::vector<Geo::Arc> shapes0;
+                std::vector<Geo::Ellipse> shapes1;
+                if (Geo::circle_ellipse_intersection(*static_cast<const Geo::Circle *>(shape0),
+                    *static_cast<const Geo::Ellipse *>(shape1), shapes0, shapes1))
+                {
+                    for (const Geo::Arc &arc : shapes0)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                    for (const Geo::Ellipse &ellipse : shapes1)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::ELLIPSE:
+        switch (shape1->type())
+        {
+        case Geo::Type::POLYGON:
+            {
+                std::vector<Geo::Polyline> shapes0;
+                std::vector<Geo::Ellipse> shapes1;
+                if (Geo::polygon_ellipse_intersection(*static_cast<const Geo::Polygon *>(shape1),
+                    *static_cast<const Geo::Ellipse *>(shape0), shapes0, shapes1))
+                {
+                    for (const Geo::Polyline &polyline : shapes0)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                    for (const Geo::Ellipse &ellipse : shapes1)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            {
+                std::vector<Geo::Arc> shapes0;
+                std::vector<Geo::Ellipse> shapes1;
+                if (Geo::circle_ellipse_intersection(*static_cast<const Geo::Circle *>(shape1),
+                    *static_cast<const Geo::Ellipse *>(shape0), shapes0, shapes1))
+                {
+                    for (const Geo::Arc &arc : shapes0)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                    for (const Geo::Ellipse &ellipse : shapes1)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            if (std::vector<Geo::Ellipse> shapes; Geo::ellipse_intersection(*static_cast<const Geo::Ellipse *>(shape0),
+                *static_cast<const Geo::Ellipse *>(shape1), shapes))
+            {
+                for (const Geo::Ellipse &ellipse : shapes)
+                {
+                    result.push_back(new Geo::Ellipse(ellipse));
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    default:
+        break;
+    }
+
+    if (result.empty())
+    {
+        return false;
+    }
+    else
     {
         ContainerGroup &group = _graph->container_group(_current_group);
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
@@ -2149,18 +2485,18 @@ bool Editer::polygon_intersection(Geo::Polygon *shape0, Geo::Polygon *shape1)
 
         if (index0 == group.size())
         {
-            group.append(new Geo::Polygon(shapes.front()));
+            group.append(result.front());
         }
         else
         {
-            group.insert(index0, new Geo::Polygon(shapes.front()));
+            group.insert(index0, result.front());
         }
         add_items.emplace_back(group[index0], _current_group, index0);
 
-        index0 = group.size();        
-        for (size_t i = 1, count = shapes.size(); i < count; ++i)
+        index0 = group.size();
+        for (size_t i = 1, count = result.size(); i < count; ++i)
         {
-            group.append(new Geo::Polygon(shapes[i]));
+            group.append(result[i]);
             add_items.emplace_back(group.back(), _current_group, index0++);
         }
 
@@ -2168,20 +2504,186 @@ bool Editer::polygon_intersection(Geo::Polygon *shape0, Geo::Polygon *shape1)
         _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
         return true;
     }
-    else
-    {
-        return false;
-    }
 }
 
-bool Editer::polygon_difference(Geo::Polygon *shape0, const Geo::Polygon *shape1)
+bool Editer::shape_difference(Geo::Geometry *shape0, const Geo::Geometry *shape1)
 {
     if (shape0 == nullptr || shape1 == nullptr || shape0 == shape1)
     {
         return false;
     }
 
-    if (std::vector<Geo::Polygon> shapes; Geo::polygon_difference(*shape0, *shape1, shapes))
+    std::vector<Geo::Geometry *> result;
+    switch (shape0->type())
+    {
+    case Geo::Type::POLYGON:
+        switch (shape1->type())
+        {
+        case Geo::Type::POLYGON:
+            if (std::vector<Geo::Polygon> shapes; Geo::polygon_difference(*static_cast<const Geo::Polygon *>(shape0),
+                *static_cast<const Geo::Polygon *>(shape1), shapes))
+            {
+                for (const Geo::Polygon &polygon : shapes)
+                {
+                    result.push_back(new Geo::Polygon(polygon));
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            {
+                std::vector<Geo::Polyline> shapes0;
+                std::vector<Geo::Arc> shapes1;
+                if (Geo::polygon_circle_difference(*static_cast<const Geo::Polygon *>(shape0),
+                    *static_cast<const Geo::Circle *>(shape1), shapes0, shapes1))
+                {
+                    for (const Geo::Polyline &polyline : shapes0)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                    for (const Geo::Arc &arc : shapes1)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            {
+                std::vector<Geo::Polyline> shapes0;
+                std::vector<Geo::Ellipse> shapes1;
+                if (Geo::polygon_ellipse_difference(*static_cast<const Geo::Polygon *>(shape0),
+                    *static_cast<const Geo::Ellipse *>(shape1), shapes0, shapes1))
+                {
+                    for (const Geo::Polyline &polyline : shapes0)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                    for (const Geo::Ellipse &ellipse : shapes1)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::CIRCLE:
+        switch (shape1->type())
+        {
+        case Geo::Type::POLYGON:
+            {
+                std::vector<Geo::Arc> shapes0;
+                std::vector<Geo::Polyline> shapes1;
+                if (Geo::circle_polygon_difference(*static_cast<const Geo::Circle *>(shape0), 
+                    *static_cast<const Geo::Polygon *>(shape1), shapes0, shapes1))
+                {
+                    for (const Geo::Arc &arc : shapes0)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                    for (const Geo::Polyline &polyline : shapes1)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            if (std::vector<Geo::Arc> shapes; Geo::circle_difference(*static_cast<const Geo::Circle *>(shape0),
+                *static_cast<const Geo::Circle *>(shape1), shapes))
+            {
+                for (const Geo::Arc &arc : shapes)
+                {
+                    result.push_back(new Geo::Arc(arc));
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            {
+                std::vector<Geo::Arc> shapes0;
+                std::vector<Geo::Ellipse> shapes1;
+                if (Geo::circle_ellipse_difference(*static_cast<const Geo::Circle *>(shape0),
+                    *static_cast<const Geo::Ellipse *>(shape1), shapes0, shapes1))
+                {
+                    for (const Geo::Arc &arc : shapes0)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                    for (const Geo::Ellipse &ellipse : shapes1)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::ELLIPSE:
+        switch (shape1->type())
+        {
+        case Geo::Type::POLYGON:
+            {
+                std::vector<Geo::Ellipse> shapes0;
+                std::vector<Geo::Polyline> shapes1;
+                if (Geo::ellipse_polygon_difference(*static_cast<const Geo::Ellipse *>(shape0),
+                    *static_cast<const Geo::Polygon *>(shape1), shapes0, shapes1))
+                {
+                    for (const Geo::Ellipse &ellipse : shapes0)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                    for (const Geo::Polyline &polyline : shapes1)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            {
+                std::vector<Geo::Ellipse> shapes0;
+                std::vector<Geo::Arc> shapes1;
+                if (Geo::ellipse_circle_difference(*static_cast<const Geo::Ellipse *>(shape0),
+                    *static_cast<const Geo::Circle *>(shape1), shapes0, shapes1))
+                {
+                    for (const Geo::Ellipse &ellipse : shapes0)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                    for (const Geo::Arc &arc : shapes1)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            if (std::vector<Geo::Ellipse> shapes; Geo::ellipse_difference(*static_cast<const Geo::Ellipse *>(shape0),
+                *static_cast<const Geo::Ellipse *>(shape1), shapes))
+            {
+                for (const Geo::Ellipse &ellipse : shapes)
+                {
+                    result.push_back(new Geo::Ellipse(ellipse));
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    default:
+        break;
+    }
+
+    if (result.empty())
+    {
+        return false;
+    }
+    else
     {
         ContainerGroup &group = _graph->container_group(_current_group);
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
@@ -2191,18 +2693,18 @@ bool Editer::polygon_difference(Geo::Polygon *shape0, const Geo::Polygon *shape1
 
         if (index0 == group.size())
         {
-            group.append(new Geo::Polygon(shapes.front()));
+            group.append(result.front());
         }
         else
         {
-            group.insert(index0, new Geo::Polygon(shapes.front()));
+            group.insert(index0, result.front());
         }
         add_items.emplace_back(group[index0], _current_group, index0);
 
         index0 = group.size();
-        for (size_t i = 1, count = shapes.size(); i < count; ++i)
+        for (size_t i = 1, count = result.size(); i < count; ++i)
         {
-            group.append(new Geo::Polygon(shapes[i]));
+            group.append(result[i]);
             add_items.emplace_back(group.back(), _current_group, index0++);
         }
 
@@ -2210,20 +2712,186 @@ bool Editer::polygon_difference(Geo::Polygon *shape0, const Geo::Polygon *shape1
         _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
         return true;
     }
-    else
-    {
-        return false;
-    }
 }
 
-bool Editer::polygon_xor(Geo::Polygon *shape0, Geo::Polygon *shape1)
+bool Editer::shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1)
 {
     if (shape0 == nullptr || shape1 == nullptr || shape0 == shape1)
     {
         return false;
     }
 
-    if (std::vector<Geo::Polygon> shapes; Geo::polygon_xor(*shape0, *shape1, shapes))
+    std::vector<Geo::Geometry *> result;
+    switch (shape0->type())
+    {
+    case Geo::Type::POLYGON:
+        switch (shape1->type())
+        {
+        case Geo::Type::POLYGON:
+            if (std::vector<Geo::Polygon> shapes; Geo::polygon_xor(*static_cast<const Geo::Polygon *>(shape0),
+                *static_cast<const Geo::Polygon *>(shape1), shapes))
+            {
+                for (const Geo::Polygon &polygon : shapes)
+                {
+                    result.push_back(new Geo::Polygon(polygon));
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            {
+                std::vector<Geo::Polyline> shapes0;
+                std::vector<Geo::Arc> shapes1;
+                if (Geo::polygon_circle_xor(*static_cast<const Geo::Polygon *>(shape0),
+                    *static_cast<const Geo::Circle *>(shape1), shapes0, shapes1))
+                {
+                    for (const Geo::Polyline &polyline : shapes0)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                    for (const Geo::Arc &arc : shapes1)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            {
+                std::vector<Geo::Polyline> shapes0;
+                std::vector<Geo::Ellipse> shapes1;
+                if (Geo::polygon_ellipse_xor(*static_cast<const Geo::Polygon *>(shape0),
+                    *static_cast<const Geo::Ellipse *>(shape1), shapes0, shapes1))
+                {
+                    for (const Geo::Polyline &polyline : shapes0)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                    for (const Geo::Ellipse &ellipse : shapes1)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::CIRCLE:
+        switch (shape1->type())
+        {
+        case Geo::Type::POLYGON:
+            {
+                std::vector<Geo::Polyline> shapes0;
+                std::vector<Geo::Arc> shapes1;
+                if (Geo::polygon_circle_xor(*static_cast<const Geo::Polygon *>(shape1),
+                    *static_cast<const Geo::Circle *>(shape0), shapes0, shapes1))
+                {
+                    for (const Geo::Polyline &polyline : shapes0)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                    for (const Geo::Arc &arc : shapes1)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            if (std::vector<Geo::Arc> shapes; Geo::circle_xor(*static_cast<const Geo::Circle *>(shape0),
+                *static_cast<const Geo::Circle *>(shape1), shapes))
+            {
+                for (const Geo::Arc &arc : shapes)
+                {
+                    result.push_back(new Geo::Arc(arc));
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            {
+                std::vector<Geo::Arc> shapes0;
+                std::vector<Geo::Ellipse> shapes1;
+                if (Geo::circle_ellipse_xor(*static_cast<const Geo::Circle *>(shape0),
+                    *static_cast<const Geo::Ellipse *>(shape1), shapes0, shapes1))
+                {
+                    for (const Geo::Arc &arc : shapes0)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                    for (const Geo::Ellipse &ellipse : shapes1)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::ELLIPSE:
+        switch (shape1->type())
+        {
+        case Geo::Type::POLYGON:
+            {
+                std::vector<Geo::Polyline> shapes0;
+                std::vector<Geo::Ellipse> shapes1;
+                if (Geo::polygon_ellipse_xor(*static_cast<const Geo::Polygon *>(shape1),
+                    *static_cast<const Geo::Ellipse *>(shape0), shapes0, shapes1))
+                {
+                    for (const Geo::Polyline &polyline : shapes0)
+                    {
+                        result.push_back(new Geo::Polyline(polyline));
+                    }
+                    for (const Geo::Ellipse &ellipse : shapes1)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            {
+                std::vector<Geo::Arc> shapes0;
+                std::vector<Geo::Ellipse> shapes1;
+                if (Geo::circle_ellipse_xor(*static_cast<const Geo::Circle *>(shape1),
+                    *static_cast<const Geo::Ellipse *>(shape0), shapes0, shapes1))
+                {
+                    for (const Geo::Arc &arc : shapes0)
+                    {
+                        result.push_back(new Geo::Arc(arc));
+                    }
+                    for (const Geo::Ellipse &ellipse : shapes1)
+                    {
+                        result.push_back(new Geo::Ellipse(ellipse));
+                    }
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            if (std::vector<Geo::Ellipse> shapes; Geo::ellipse_xor(*static_cast<const Geo::Ellipse *>(shape0),
+                *static_cast<const Geo::Ellipse *>(shape1), shapes))
+            {
+                for (const Geo::Ellipse &ellipse : shapes)
+                {
+                    result.push_back(new Geo::Ellipse(ellipse));
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    default:
+        break;
+    }
+
+    if (result.empty())
+    {
+        return false;
+    }
+    else
     {
         ContainerGroup &group = _graph->container_group(_current_group);
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
@@ -2236,28 +2904,24 @@ bool Editer::polygon_xor(Geo::Polygon *shape0, Geo::Polygon *shape1)
 
         if (index0 == group.size())
         {
-            group.append(new Geo::Polygon(shapes.front()));
+            group.append(result.front());
         }
         else
         {
-            group.insert(index0, new Geo::Polygon(shapes.front()));
+            group.insert(index0, result.front());
         }
         add_items.emplace_back(group[index0], _current_group, index0);
 
         index0 = group.size();
-        for (size_t i = 1, count = shapes.size(); i < count; ++i)
+        for (size_t i = 1, count = result.size(); i < count; ++i)
         {
-            group.append(new Geo::Polygon(shapes[i]));
+            group.append(result[i]);
             add_items.emplace_back(group.back(), _current_group, index0++);
         }
 
         _graph->modified = true;
         _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
         return true;
-    }
-    else
-    {
-        return false;
     }
 }
 

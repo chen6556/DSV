@@ -111,9 +111,9 @@ public:
 
     void flip_y();
 
-    void polygon_intersection();
+    void shape_intersection();
 
-    void polygon_union();
+    void shape_union();
 
-    void polygon_xor();
+    void shape_xor();
 };

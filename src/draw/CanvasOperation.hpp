@@ -36,7 +36,7 @@ namespace CanvasOperations
  
         Mirror, 
         RingArray, 
-        PolygonDifference, 
+        ShapeDifference, 
         Fillet, 
         FreeFillet, 
         Chamfer, 
@@ -553,10 +553,10 @@ namespace CanvasOperations
     };
 
 
-    class PolygonDifferenceOperation : public CanvasOperation
+    class ShapeDifferenceOperation : public CanvasOperation
     {
     private:
-        Geo::Polygon *_polygon = nullptr;
+        Geo::Geometry *_shape = nullptr;
 
     public:
         bool mouse_press(QMouseEvent *event) override;

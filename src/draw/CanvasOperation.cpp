@@ -61,7 +61,7 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::Ellipse1)] = new Ellipse1Operation();
     operations[static_cast<int>(Tool::Mirror)] = new MirrorOperation();
     operations[static_cast<int>(Tool::RingArray)] = new RingArrayOperation();
-    operations[static_cast<int>(Tool::PolygonDifference)] = new PolygonDifferenceOperation();
+    operations[static_cast<int>(Tool::ShapeDifference)] = new ShapeDifferenceOperation();
     operations[static_cast<int>(Tool::Fillet)] = new FilletOperation();
     operations[static_cast<int>(Tool::FreeFillet)] = new FreeFilletOperation();
     operations[static_cast<int>(Tool::Chamfer)] = new ChamferOperation();
@@ -3643,25 +3643,35 @@ QString RingArrayOperation::cmd_tips() const
 }
 
 
-bool PolygonDifferenceOperation::mouse_press(QMouseEvent *event)
+bool ShapeDifferenceOperation::mouse_press(QMouseEvent *event)
 {
     if (event->button() == Qt::MouseButton::LeftButton)
     {
-        if (clicked_object = editer->select(real_pos[0], real_pos[1], true);
-            clicked_object != nullptr && clicked_object != _polygon
-            && clicked_object->type() == Geo::Type::POLYGON)
+        if (clicked_object = editer->select(real_pos[0], real_pos[1], true); clicked_object != nullptr
+            && clicked_object != _shape && (clicked_object->type() == Geo::Type::POLYGON
+            || clicked_object->type() == Geo::Type::CIRCLE || clicked_object->type() == Geo::Type::ELLIPSE))
         {
-            if (_polygon == nullptr)
+            if (clicked_object->type() == Geo::Type::ELLIPSE && static_cast<const Geo::Ellipse *>(clicked_object)->is_arc())
             {
-                _polygon = static_cast<Geo::Polygon *>(clicked_object);
-                _polygon->is_selected = true;
+                return false;
+            }
+            if (_shape == nullptr)
+            {
+                _shape = clicked_object;
+                _shape->is_selected = true;
                 canvas->refresh_selected_ibo();
                 return true;
             }
-            else if (editer->polygon_difference(_polygon, static_cast<Geo::Polygon *>(clicked_object)))
+            else if (std::set<Geo::Type> types({clicked_object->type(), _shape->type()});
+                editer->shape_difference(_shape, clicked_object))
             {
-                _polygon = nullptr;
-                canvas->refresh_vbo(Geo::Type::POLYGON, true);
+                _shape = nullptr;
+                if (types.find(Geo::Type::POLYGON) != types.end() &&
+                    (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end()))
+                {
+                    types.insert(Geo::Type::POLYLINE);
+                }
+                canvas->refresh_vbo(types, true);
                 canvas->refresh_selected_ibo();
                 tool[0] = Tool::Select;
                 return true;
@@ -3675,14 +3685,14 @@ bool PolygonDifferenceOperation::mouse_press(QMouseEvent *event)
     }
 }
 
-void PolygonDifferenceOperation::reset()
+void ShapeDifferenceOperation::reset()
 {
-    _polygon = nullptr;
+    _shape = nullptr;
 }
 
-QString PolygonDifferenceOperation::cmd_tips() const
+QString ShapeDifferenceOperation::cmd_tips() const
 {
-    return _polygon == nullptr ? "Choose first polygon." : "Choose second polygon.";
+    return _shape == nullptr ? "Choose first object." : "Choose second object.";
 }
 
 

@@ -2863,6 +2863,70 @@ bool Ellipse::is_arc() const
     return _arc_angle[0] != _arc_angle[1] && std::abs(_arc_angle[1] - _arc_angle[0]) < Geo::PI * 2;
 }
 
+Geo::Point Ellipse::param_tangency(const double value) const
+{
+    const double a = Geo::distance(_a[0], _a[1]) / 2;
+    const double b = Geo::distance(_b[0], _b[1]) / 2;
+    const double aa = Geo::distance_square(_a[0], _a[1]) / 4;
+    const double bb = Geo::distance_square(_b[0], _b[1]) / 4;
+    Geo::Point point0(a * std::cos(value), b * std::sin(value));
+    const double line_param[2] = { point0.x / aa, point0.y / bb };
+    Geo::Point point1;
+    if (line_param[0] == 0)
+    {
+        point1.x = point0.x - 10, point1.y = 1 / line_param[1];
+        if (!Geo::is_on_left(point1, Geo::Point(0, 0), point0))
+        {
+            point1.x = point0.x + 10;
+        }
+    }
+    else if (line_param[1] == 0)
+    {
+        point1.x = point0.x, point1.y = point0.y + 10;
+         if (!Geo::is_on_left(point1, Geo::Point(0, 0), point0))
+        {
+            point1.y = point0.y - 10;
+        }
+    }
+    else
+    {
+        point1.x = point0.x - 10, point1.y = (1 - (point0.x - 10) * line_param[0]) / line_param[1];
+        if (!Geo::is_on_left(point1, Geo::Point(0, 0), point0))
+        {
+            point1.x = point0.x + 10;
+            point1.y = (1 - point1.x * line_param[0]) / line_param[1];
+        }
+    }
+
+    const Geo::Point center((_a[0] + _a[1] + _b[0] + _b[1]) / 4);
+    const double angle = Geo::angle(_a[0], _a[1]);
+    const Geo::Point coord = Geo::to_coord(Geo::Point(0, 0), center.x, center.y, angle);
+    point1 = Geo::to_coord(point1, coord.x, coord.y, -angle);
+    point0.x = center.x + a * std::cos(angle) * std::cos(value) - b * std::sin(angle) * std::sin(value);
+    point0.y = center.y + a * std::sin(angle) * std::cos(value) + b * std::cos(angle) * std::sin(value);
+    return point1 - point0;
+}
+
+Geo::Point Ellipse::angle_tangency(const double value) const
+{
+    return param_tangency(angle_to_param(value));
+}
+
+Geo::Point Ellipse::param_point(const double value) const
+{
+    const Geo::Point center((_a[0] + _a[1] + _b[0] + _b[1]) / 4);
+    const double angle = Geo::angle(_a[0], _a[1]);
+    const double a = Geo::distance(_a[0], _a[1]) / 2;
+    const double b = Geo::distance(_b[0], _b[1]) / 2;
+    return Geo::Point(center.x + a * std::cos(angle) * std::cos(value) - b * std::sin(angle) * std::sin(value),
+        center.y + a * std::sin(angle) * std::cos(value) + b * std::cos(angle) * std::sin(value));
+}
+
+Geo::Point Ellipse::angle_point(const double value) const
+{
+    return param_point(angle_to_param(value));
+}
+
 
 // BSpline
 double BSpline::default_step = 0.02;

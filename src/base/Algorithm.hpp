@@ -1,88 +1,21 @@
 #pragma once
 
 #include "base/Geometry.hpp"
+#include "algorithm/Boolean.hpp"
+#include "algorithm/Conversion.hpp"
+#include "algorithm/ClosestPoint.hpp"
+#include "algorithm/Distance.hpp"
+#include "algorithm/EarCut.hpp"
+#include "algorithm/Foot.hpp"
+#include "algorithm/Split.hpp"
+#include "algorithm/Offset.hpp"
+#include "algorithm/Inside.hpp"
+#include "algorithm/Intersection.hpp"
+#include "algorithm/TangencyPoint.hpp"
 
 
 namespace Geo
 {
-    // 两点间距离
-    double distance(const double x0, const double y0, const double x1, const double y1);
-
-    // 两点间距离
-    double distance(const Point &point0, const Point &point1);
-
-    // 点到直线距离,如果为有限长线段且垂足不在线段上,则计算点到线段端点距离
-    double distance(const Point &point, const Point &start, const Point &end, const bool infinite = false);
-
-    // 点到多段线距离,计算点到每一段有限长线段的距离,取最近距离
-    double distance(const Point &point, const Polyline &polyline);
-
-    // [数值解]点到贝塞尔曲线距离,计算点到每一段曲线的距离,取最近距离
-    double distance(const Point &point, const Bezier &bezier);
-
-    // [数值解]点到B样条曲线的距离
-    double distance(const Point &point, const BSpline &bspline, const bool is_cubic);
-
-    // 点到多边形距离,计算点到每一段有限长线段的距离,取最近距离
-    double distance(const Point &point, const Polygon &polygon);
-
-    // [数值解]点到椭圆距离
-    double distance(const Point &point, const Ellipse &ellipse);
-
-    // 点到圆弧距离
-    double distance(const Point &point, const Arc &arc);
-
-    // 两有限长线段间的最短距离
-    double distance(const Point &start0, const Point &end0, const Point &start1, const Point &end1, Point &point0, Point &point1);
-
-    // 两点间距离的平方
-    double distance_square(const double x0, const double y0, const double x1, const double y1);
-
-    // 两点间距离的平方
-    double distance_square(const Point &point0, const Point &point1);
-
-    // 点到直线距离的平方,如果为有限长线段且垂足不在线段上,则计算点到线段端点距离的平方
-    double distance_square(const Point &point, const Point &start, const Point &end, const bool infinite = false);
-
-    // 点到多段线距离的平方,计算点到每一段有限长线段的距离,取最近距离的平方
-    double distance_square(const Point &point, const Polyline &polyline);
-
-    // 点到多边形距离的平方,计算点到每一段有限长线段的距离,取最近距离的平方
-    double distance_square(const Point &point, const Polygon &polygon);
-
-    // 判断点是否在有限长线段或直线上
-    bool is_inside(const Point &point, const Point &start, const Point &end, const bool infinite = false);
-
-    // 判断点是否在多段线上
-    bool is_inside(const Point &point, const Polyline &polyline);
-
-    // 判断点是否在多边形内,coincide决定是否包含点在多边形上的情况
-    bool is_inside(const Point &point, const Polygon &polygon, const bool coincide = false);
-
-    // 判断点是否在AABB矩形内,coincide决定是否包含点在AABB矩形上的情况
-    bool is_inside(const Point &point, const AABBRect &rect, const bool coincide = false);
-
-    // 判断点是否在圆内,coincide决定是否包含点在圆上的情况
-    bool is_inside(const Point &point, const Circle &circle, const bool coincide = false);
-
-    // 判断点是否在椭圆内,coincide决定是否包含点在椭圆上的情况
-    bool is_inside(const Point &point, const Ellipse &ellipse, const bool coincide = false);
-
-    // 判断点是否在三角形内,coincide决定是否包含点在三角形上的情况
-    bool is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2, const bool coincide = false);
-
-    // 判断点是否在三角形内,coincide决定是否包含点在三角形上的情况
-    bool is_inside(const Point &point, const Triangle &triangle, const bool coincide = false);
-
-    // 判断有限长线段是否完全在三角形内,线段与三角形相交或有端点在三角形上均不算在三角形内部
-    bool is_inside(const Point &start, const Point &end, const Triangle &triangle);
-
-    // 判断点是否在圆弧上
-    bool is_inside(const Point &point, const Arc &arc);
-
-    // 判断一个三角形是否完全在另一个三角形内部,与三角形相交或有顶点在三角形上均不算在三角形内部
-    bool is_inside(const Triangle &triangle0, const Triangle &triangle1);
-
     // 判断两直线是否平行
     bool is_parallel(const Point &point0, const Point &point1, const Point &point2, const Point &point3);
 
@@ -95,172 +28,9 @@ namespace Geo
     // 判断一个有限长线段是否是另一个有限长线段的一部分
     bool is_part(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
 
-    // 判断两线段是否相交并尝试获取交点,共线相交时仅在一个端点相交时获取交点
-    bool is_intersected(const Point &point0, const Point &point1, const Point &point2, const Point &point3, Point &output, const bool infinite = false);
-
-    // 判断线段是否与圆相交并尝试获取交点,返回交点数量
-    int is_intersected(const Point &point0, const Point &point1, const Circle &circle, Point &output0, Point &output1, const bool infinite = false);
-
-    // 判断线段是否与椭圆相交并尝试获取交点,返回交点数量
-    int is_intersected(const Point &point0, const Point &point1, const Ellipse &ellipse, Point &output0, Point &output1, const bool infinite = false);
-
-    // 判断线段是否与圆弧相交并尝试获取交点,返回交点数量
-    int is_intersected(const Point &point0, const Point &point1, const Arc &arc, Point &output0, Point &output1, const bool infinite = false);
-
-    // [数值解]计算贝塞尔曲线与直线的交点,<index, t, x, y>
-    int is_intersected(const Point &point0, const Point &point1, const Bezier &bezier, std::vector<Point> &intersections,
-        const bool infinite = false, std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
-
-    // [数值解]计算B样条曲线与直线的交点,<t, x, y>
-    int is_intersected(const Point &point0, const Point &point1, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections,
-        const bool infinite = false, std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
-
-    // 判断两个AABB矩形是否相交,inside决定完全在AABB矩形内部是否算相交
-    bool is_intersected(const AABBRect &rect0, const AABBRect &rect1, const bool inside = true);
-
-    // 判断两多段线是否相交
-    bool is_intersected(const Polyline &polyline0, const Polyline &polyline1);
-
-    // 判断多段线是否与多边形相交,inside决定多段线完全在多边形内部是否算相交
-    bool is_intersected(const Polyline &polyline, const Polygon &polygon, const bool inside = true);
-
-    // 判断多段线是否与圆相交
-    bool is_intersected(const Polyline &polyline, const Circle &circle);
-
-    // 判断多段线是否与椭圆相交,inside决定多段线完全在多边形内部是否算相交
-    bool is_intersected(const Polyline &polyline, const Ellipse &ellipse, const bool inside = true);
-
-    // 判断多段线是否与圆弧相机
-    bool is_intersected(const Polyline &polyline, const Arc &arc);
-
-    // 判断两多边形是否相交,inside决定完全在多边形内部是否算相交
-    bool is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside = true);
-
-    // 判断多边形与圆是否相交,inside决定多边形完全在圆内或圆完全在多边形内是否算相交
-    bool is_intersected(const Polygon &polygon, const Circle &circle, const bool inside = true);
-
-    // 判断多边形与椭圆是否相交,inside决定多边形完全在椭圆内或椭圆完全在多边形内是否算相交
-    bool is_intersected(const Polygon &polygon, const Ellipse &ellipse, const bool inside = true);
-
-    // 判断两圆是否相交,inside决定完全在圆内是否算相交
-    bool is_intersected(const Circle &circle0, const Circle &circle1, const bool inside = true);
-
-    // 计算两圆交点
-    int is_intersected(const Circle &circle0, const Circle &circle1, Point &point0, Point &point1);
-
-    // 计算圆与圆弧交点
-    int is_intersected(const Circle &circle, const Arc &arc, Point &output0, Point &output1);
-
-    // 计算两椭圆交点
-    int is_intersected(const Ellipse &ellipse0, const Ellipse &ellipse1, Point &point0, Point &point1, Point &point2, Point &point3);
-
-    // 计算圆与椭圆的交点
-    int is_intersected(const Circle &circle, const Ellipse &ellipse, Point &point0, Point &point1, Point &point2, Point &point3);
-
-    // 计算圆弧与椭圆的交点
-    int is_intersected(const Ellipse &ellipse, const Arc &arc, Point &point0, Point &point1, Point &point2, Point &point3);
-
-    // 计算两圆弧交点
-    int is_intersected(const Arc &arc0, const Arc &arc1, Point &point0, Point &point1);
-
-    // [数值解]计算圆与贝塞尔曲线交点,<index, t, x, y>
-    int is_intersected(const Circle &circle, const Bezier &bezier, std::vector<Point> &intersections, std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
-
-    // [数值解]计算圆与B样条曲线交点,<t, x, y>
-    int is_intersected(const Circle &circle, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections, std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
-
-    // [数值解]计算椭圆与贝塞尔曲线交点,<index, t, x, y>
-    int is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vector<Point> &intersections, std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
-
-    // [数值解]计算椭圆与B样条曲线交点,<t, x, y>
-    int is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections, std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
-
-    // [数值解]计算圆弧与贝塞尔曲线交点,<index, t, x, y>
-    int is_intersected(const Arc &arc, const Bezier &bezier, std::vector<Point> &intersections, std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
-
-    // [数值解]计算圆弧与B样条曲线交点,<t, x, y>
-    int is_intersected(const Arc &arc, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections, std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
-
-    // [数值解]计算两贝塞尔曲线交点,<index, t, x, y>,<,<index, t, x, y>>
-    int is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vector<Point> &intersections, std::vector<std::tuple<size_t, double, double, double>> *tvalues0 = nullptr,
-        std::vector<std::tuple<size_t, double, double, double>> *tvalues1 = nullptr);
-
-    // [数值解]计算两B样条曲线交点,<index, t, x, y>,,<t, x, y>
-    int is_intersected(const BSpline &bspline0, const bool is_cubic0, const BSpline &bspline1, const bool is_cubic1, std::vector<Point> &intersections,
-        std::vector<std::tuple<double, double, double>> *tvalues0 = nullptr, std::vector<std::tuple<double, double, double>> *tvalues1 = nullptr);
-
-    // [数值解]计算贝塞尔曲线与B样条曲线交点,,<index, t, x, y>,<t, x, y>
-    int is_intersected(const Bezier &bezier, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections,
-        std::vector<std::tuple<size_t, double, double, double>> *tvalues0 = nullptr, std::vector<std::tuple<double, double, double>> *tvalues1 = nullptr);
-
-    // 判断AABB矩形是否与有限长线段相交,线段完全在AABB矩形内也算相交
-    bool is_intersected(const AABBRect &rect, const Point &point0, const Point &point1);
-
-    // 判断AABB矩形是否与多段线相交,多段线完全在AABB矩形内也算相交
-    bool is_intersected(const AABBRect &rect, const Polyline &polyline);
-
-    // 判断AABB矩形是否与多边形相交,多边形完全在AABB矩形内或AABB矩形完全在多边形内也算相交
-    bool is_intersected(const AABBRect &rect, const Polygon &polygon);
-
-    // 判断AABB矩形是否与圆相交,圆完全在AABB矩形内或AABB矩形完全在圆内也算相交
-    bool is_intersected(const AABBRect &rect, const Circle &circle);
-
-    // 判断AABB矩形是否与椭圆相交,椭圆完全在AABB矩形内或AABB矩形完全在圆内也算相交
-    bool is_intersected(const AABBRect &rect, const Ellipse &ellipse);
-
-    // 判断AABB矩形是否与圆弧相交,圆弧完全在AABB矩形内也算相交
-    bool is_intersected(const AABBRect &rect, const Arc &arc);
-
-    // 判断有限长线段是否与三角形相交,线段完全在三角形内不算相交
-    bool is_intersected(const Point &start, const Point &end, const Triangle &triangle, Point &output0, Point &output1);
-
-    namespace NoAABBTest
-    {
-        // 判断点是否在多边形内,coincide决定是否包含点在多边形上的情况
-        bool is_inside(const Point &point, const Polygon &polygon, const bool coincide = false);
-
-        // 判断两多段线是否相交
-        bool is_intersected(const Polyline &polyline0, const Polyline &polyline1);
-
-        // 判断多段线是否与多边形相交,inside决定多段线完全在多边形内部是否算相交
-        bool is_intersected(const Polyline &polyline, const Polygon &polygon, const bool inside = true);
-
-        // 判断两多边形是否相交,inside决定完全在多边形内部是否算相交
-        bool is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside = true);
-    }
-
-    // 找到Polyline与Polyline在pos附近的交点
-    bool find_intersections(const Polyline &polyline0, const Polyline &polyline1, const Point &pos, const double distance, std::vector<Point> &intersections);
-
-    // [数值解]找到Polyline与Bezier在pos附近的交点
-    bool find_intersections(const Polyline &polyline, const Bezier &bezier, const Point &pos, const double distance, std::vector<Point> &intersections);
-
-    // [数值解]找到Polyline与BSpline在pos附近的交点
-    bool find_intersections(const Polyline &polyline, const BSpline &bspline, const bool is_cubic, const Point &pos, const double distance, std::vector<Point> &intersections);
-
-    // 找到Polyline与Cirlce在pos附近的交点
-    bool find_intersections(const Polyline &polyline, const Circle &circle, const Point &pos, const double distance, std::vector<Point> &intersections);
-
-    // 找到Polyline与Ellipse在pos附近的交点
-    bool find_intersections(const Polyline &polyline, const Ellipse &ellipse, const Point &pos, const double distance, std::vector<Point> &intersections);
-
-    // 找到Polyline与Arc在pos附件的交点
-    bool find_intersections(const Polyline &polyline, const Arc &arc, const Point &pos, const double distance, std::vector<Point> &intersections);
-
-    // 找到Circle与Circle在pos附近的交点
-    bool find_intersections(const Circle &circle0, const Circle &circle1, const Point &pos, const double distance, std::vector<Point> &intersections);
-
-    // 找到Ellipse与Ellipse在pos附近的交点
-    bool find_intersections(const Ellipse &ellipse0, const Ellipse &ellipse1, const Point &pos, const double distance, std::vector<Point> &intersections);
-
-    // 找到Ellipse与Circle在pos附近的交点
-    bool find_intersections(const Ellipse &ellipse, const Circle &circle, const Point &pos, const double distance, std::vector<Point> &intersections);
-
-    // 找到pos附近的交点
-    bool find_intersections(const Geometry *object0, const Geometry *object1, const Point &pos, const double distance, std::vector<Point> &intersections);
-
     // 判断点是否在直线的左侧
     bool is_on_left(const Point &point, const Point &start, const Point &end);
+
 
     // 判断点在三角形上
     bool is_point_on(const Point &point, const Triangle &triangle);
@@ -268,8 +38,10 @@ namespace Geo
     // 判断点在线上
     bool is_point_on(const Geo::Point &point, std::vector<Geo::Point>::const_iterator begin, std::vector<Geo::Point>::const_iterator end);
 
+
     // 判断多边形是否是矩形
     bool is_Rectangle(const Polygon &polygon);
+
 
     // 计算两向量叉积
     double cross(const double x0, const double y0, const double x1, const double y1);
@@ -280,74 +52,6 @@ namespace Geo
     // 计算两向量叉积
     double cross(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
 
-    // 计算线段或直线外一点的垂足
-    bool foot_point(const Point &start, const Point &end, const Point &point, Point &foot, const bool infinite = false);
-
-    // 计算圆外一点到圆的垂足
-    bool foot_point(const Circle &circle, const Point &point, Point &output0, Point &output1);
-
-    // 计算椭圆外一点到椭圆的垂足
-    int foot_point(const Ellipse &ellipse, const Point &point, std::vector<Point> &output);
-
-    // 计算贝塞尔曲线外一点到贝塞尔曲线的垂足<index, t, x, y>
-    int foot_point(const Point &point, const Bezier &bezier, std::vector<Point> &output,
-        std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
-
-    // 计算B样条曲线外一点到B样条曲线的垂足<t, x, y>
-    int foot_point(const Point &point, const BSpline &bspline, std::vector<Point> &output,
-        std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
-
-    // 计算多段线到一点的最近点
-    int closest_point(const Polyline &polyline, const Point &point, std::vector<Point> &output);
-
-    // 计算多边形到一点的最近点
-    int closest_point(const Polygon &polygon, const Point &point, std::vector<Point> &output);
-
-    // 计算椭圆到一点的最近点
-    int closest_point(const Ellipse &ellipse, const Point &point, std::vector<Point> &output);
-
-    // [数值解]计算贝塞尔曲线到一点的最近点
-    int closest_point(const Bezier &bezier, const Point &point, std::vector<Point> &output,
-        std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
-
-    // [数值解]计算B样条曲线到一点的最近点
-    int closest_point(const BSpline &bspline, const bool is_cubic, const Point &point, std::vector<Point> &output,
-        std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
-
-    // 计算圆外一点与圆的切点
-    bool tangency_point(const Point &point, const Circle &circle, Point &output0, Point &output1);
-
-    // 计算椭圆外一点与椭圆的切点
-    bool tangency_point(const Point &point, const Ellipse &ellipse, Point &output0, Point &output1);
-
-    // 计算贝塞尔曲线外一点与贝塞尔曲线的切点<index, t, x, y>
-    int tangency_point(const Point &point, const Bezier &bezier, std::vector<Point> &output,
-        std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
-
-    // 计算B样条曲线外一点与B样条曲线的切点<t, x, y>
-    int tangency_point(const Point &point, const BSpline &bspline, std::vector<Point> &output,
-        std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
-
-    // 将Polyline从pos处拆分为两段Polyline
-    bool split(const Polyline &polyline, const Point &pos, Polyline &output0, Polyline &output1);
-
-    // 将Bezier从pos处拆分为两段Bezier
-    bool split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier &output1);
-
-    // 将Bezier从i段t值处处拆分为两段Bezier
-    bool split(const Bezier &bezier, const size_t i, const double t, Bezier &output0, Bezier &output1);
-
-    // 将BSpline曲线从pos处拆分为两段BSpline
-    bool split(const BSpline &bspline, const bool is_cubic, const Point &pos, BSpline &output0, BSpline &output1);
-
-    // 将BSpline曲线从t值处拆分为两段BSpline
-    bool split(const BSpline &bspline, const bool is_cubic, const double t, BSpline &output0, BSpline &output1);
-
-    // 将Arc从pos处拆分为两段Arc
-    bool split(const Arc &arc, const Point &pos, Arc &output0, Arc &output1);
-
-    // 将椭圆弧从pos处拆分为两段椭圆弧
-    bool split(const Ellipse &ellipse, const Point &pos, Ellipse &output0, Ellipse &output1);
 
     // 计算直线的旋转角度(弧度制,-PI-PI)
     double angle(const Point &start, const Point &end);
@@ -376,86 +80,7 @@ namespace Geo
     // 角度转为弧度
     double degree_to_rad(double value);
 
-    // 点在另一坐标系下的坐标
-    Point to_coord(const Point &point, const double x, const double y, const double rad);
-
-    // 倒圆角
-    bool angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Polyline &arc, const double step = 0.8, const double down_sampling_value = 0.02);
-
-    // 倒圆角
-    bool angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Arc &arc);
-
-    // 非对称圆角
-    bool angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius0, const double radius1, Bezier &arc);
-
-    // 自由非对称圆角
-    bool angle_to_arc(const Point &start, const Point &center, const Point &end, Bezier &arc);
-
-    Polyline arc_to_polyline(const Point &center, const double radius, double start_angle, double end_angle, const bool is_cw, const double down_sampling_value = 0.02);
-
-    Polyline arc_to_polyline(const Arc &arc, const double down_sampling_value = 0.02);
-
-    Bezier arc_to_bezier(const Arc &arc);
-
-    Polygon circle_to_polygon(const double x, const double y, const double r, const double down_sampling_value = 0.02);
-
-    Polygon circle_to_polygon(const Circle &circle, const double down_sampling_value = 0.02);
-
-    Bezier circle_to_bezier(const Circle &circle);
-
-    Polygon ellipse_to_polygon(const double x, const double y, const double a, const double b, const double rad, const double down_sampling_value = 0.02);
-
-    Polygon ellipse_to_polygon(const Ellipse &ellipse, const double down_sampling_value = 0.02);
-
-    // start_angle:参数方程中参数的起点 end_angle:参数方程中参数的终点
-    Polyline ellipse_to_polyline(const double x, const double y, const double a, const double b, const double rad, 
-        const double start_angle, double end_angle, const double down_sampling_value = 0.02);
-
-    Polyline ellipse_to_polyline(const Ellipse &ellipse, const double down_sampling_value = 0.02);
-
-    Bezier ellipse_to_bezier(const Ellipse &ellipse);
-
-    std::vector<unsigned int> ear_cut_to_indexs(const Polygon &polygon);
-
-    std::vector<MarkedPoint> ear_cut_to_coords(const Polygon &polygon);
-
-    std::vector<Point> ear_cut_to_points(const Polygon &polygon);
-
-    std::vector<Triangle> ear_cut_to_triangles(const Polygon &polygon);
-
-    namespace Offset
-    {
-        enum class JoinType { Square, Bevel, Round, Miter };
-        enum class EndType { Polygon, Joined, Butt, Square, Round };
-    };
-
-    bool offset(const Polyline &input, Polyline &result, const double distance);
-
-    bool offset(const Polygon &input, Polygon &result, const double distance);
-
-    bool offset(const Polygon &input, std::vector<Polygon> &result, const double distance,
-        const Offset::JoinType join_type = Offset::JoinType::Round,
-        const Offset::EndType end_type = Offset::EndType::Polygon, const double epsilon = 2.0);
-
-    bool offset(const Circle &input, Circle &result, const double distance);
-
-    bool offset(const AABBRect &input, AABBRect &result, const double distance);
-
-    bool polygon_union(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output);
-
-    bool polygon_intersection(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output);
-
-    bool polygon_difference(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output);
-
-    bool polygon_xor(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output);
-
-    bool merge_ear_cut_triangles(const std::vector<Triangle> &triangles, std::vector<Polygon> &polygons);
 
     void down_sampling(Geo::Polyline &points, const double distance);
 
-    BSpline *bezier_to_bspline(const Geo::Bezier &bezier);
-
-    Bezier *bspline_to_bezier(const Geo::BSpline &bspline);
-
-    Geo::Bezier *blend(const Point pre0, const Point point0, const Point point1, const Point pre1);
 }
