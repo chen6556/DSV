@@ -31,6 +31,7 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/output/)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets OpenGLWidgets OpenGL Gui Core)
 find_package(GSL REQUIRED)
+find_package(Iconv REQUIRED)
 
 include_directories(libs)
 add_subdirectory(libs)
@@ -54,8 +55,7 @@ qt_add_executable(DSV
     res/Icons.qrc
 )
 
-target_link_libraries(DSV PRIVATE Qt6::Widgets Qt6::OpenGLWidgets Qt6::OpenGL Qt6::Gui Qt6::Core GSL::gsl)
-target_compile_definitions(DSV PUBLIC POINTERHOLDER_TRANSITION=0)
+target_link_libraries(DSV PRIVATE Qt6::Widgets Qt6::OpenGLWidgets Qt6::OpenGL Qt6::Gui Qt6::Core GSL::gsl  Iconv::Iconv)
 
 set_target_properties(DSV PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
