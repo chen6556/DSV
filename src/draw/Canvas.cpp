@@ -96,42 +96,75 @@ void Canvas::initializeGL()
     glDeleteShader(fragment_shader);
 
     glDeleteShader(vertex_shader);
-    _uniforms[0] = glGetUniformLocation(_shader_program, "w");
-    _uniforms[1] = glGetUniformLocation(_shader_program, "h");
-    _uniforms[2] = glGetUniformLocation(_shader_program, "vec0");
-    _uniforms[3] = glGetUniformLocation(_shader_program, "vec1");
-    _uniforms[4] = glGetUniformLocation(_shader_program, "color");
+    _uniforms.w = glGetUniformLocation(_shader_program, "w");
+    _uniforms.h = glGetUniformLocation(_shader_program, "h");
+    _uniforms.vec0 = glGetUniformLocation(_shader_program, "vec0");
+    _uniforms.vec1 = glGetUniformLocation(_shader_program, "vec1");
+    _uniforms.color = glGetUniformLocation(_shader_program, "color");
     const bool show_control_points = _editer->selected_count() == 1;
 
     glUseProgram(_shader_program);
-    glUniform3d(_uniforms[2], 1.0, 0.0, 0.0); // vec0
-    glUniform3d(_uniforms[3], 0.0, -1.0, 0.0); // vec1
+    glUniform3d(_uniforms.vec0, 1.0, 0.0, 0.0); // vec0
+    glUniform3d(_uniforms.vec1, 0.0, -1.0, 0.0); // vec1
 
     glCreateVertexArrays(1, &_VAO);
-    glCreateBuffers(4, _base_VBO);
-    glCreateBuffers(8, _shape_VBO);
-    glCreateBuffers(4, _shape_IBO);
+    {
+        unsigned int temp[4];
+        glCreateBuffers(4, temp);
+        _base_vbo.origin_and_select_rect = temp[0];
+        _base_vbo.catched_points = temp[1];
+        _base_vbo.operation_shape = temp[2];
+        _base_vbo.operation_tool_lines = temp[3];
+    }
+    {
+        unsigned int temp[8];
+        glCreateBuffers(8, temp);
+        _shape_vbo.polyline = temp[0];
+        _shape_vbo.polygon = temp[1];
+        _shape_vbo.circle = temp[2];
+        _shape_vbo.curve = temp[3];
+        _shape_vbo.text = temp[4];
+        _shape_vbo.circle_printable_points = temp[5];
+        _shape_vbo.curve_printable_points = temp[6];
+        _shape_vbo.point = temp[7];
+    }
+    {
+        unsigned int temp[4];
+        glCreateBuffers(4, temp);
+        _shape_ibo.polyline = temp[0];
+        _shape_ibo.polygon = temp[1];
+        _shape_ibo.circle = temp[2];
+        _shape_ibo.curve = temp[3];
+    }
     glCreateBuffers(1, &_text_brush_IBO);
-    glCreateBuffers(5, _selected_IBO);
+    {
+        unsigned int temp[5];
+        glCreateBuffers(5, temp);
+        _selected_ibo.polyline = temp[0];
+        _selected_ibo.polygon = temp[1];
+        _selected_ibo.circle = temp[2];
+        _selected_ibo.curve = temp[3];
+        _selected_ibo.point = temp[4];
+    }
 
     glBindVertexArray(_VAO);
 
-    glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[1]); // catcheline points
+    glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.catched_points); // catcheline points
     glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(double), _catchline_points, GL_STREAM_DRAW);
 
     double data[24] = {-10, 0, 0, 10, 0, 0, 0, -10, 0, 0, 10, 0};
-    glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[0]); // origin and select rect
+    glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.origin_and_select_rect); // origin and select rect
     glBufferData(GL_ARRAY_BUFFER, 24 * sizeof(double), data, GL_DYNAMIC_DRAW);
 }
 
 void Canvas::resizeGL(int w, int h)
 {
-    glUniform1i(_uniforms[0], w / 2); // w
-    glUniform1i(_uniforms[1], h / 2); // h
+    glUniform1i(_uniforms.w, w / 2); // w
+    glUniform1i(_uniforms.h, h / 2); // h
     glViewport(0, 0, w, h);
 
     _canvas_ctm[7] += (h - _canvas_height);
-    glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
+    glUniform3d(_uniforms.vec1, _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
     _view_ctm[7] += (h - _canvas_height) / _ratio;
     _canvas_width = w, _canvas_height = h;
 
@@ -144,102 +177,102 @@ void Canvas::paintGL()
     glUseProgram(_shader_program);
     glClear(GL_COLOR_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    if (_shape_index_count[0] > 0) // polyline
+    if (_shape_index_count.polyline > 0) // polyline
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[0]); // points
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polyline); // points
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[0]); // polyline
-        glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
-        glDrawElements(GL_LINE_STRIP, _shape_index_count[0], GL_UNSIGNED_INT, NULL);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polyline); // polyline
+        glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
+        glDrawElements(GL_LINE_STRIP, _shape_index_count.polyline, GL_UNSIGNED_INT, NULL);
 
-        if (_selected_index_count[0] > 0) // selected
+        if (_selected_index_count.polyline > 0) // selected
         {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[0]); // selected
-            glUniform4f(_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
-            glDrawElements(GL_LINE_STRIP, _selected_index_count[0], GL_UNSIGNED_INT, NULL);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polyline); // selected
+            glUniform4f(_uniforms.color, 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
+            glDrawElements(GL_LINE_STRIP, _selected_index_count.polyline, GL_UNSIGNED_INT, NULL);
         }
     }
 
-    if (_shape_index_count[1] > 0) // polygon
+    if (_shape_index_count.polygon > 0) // polygon
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[1]); // points
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polygon); // points
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[1]); // polygon
-        glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
-        glDrawElements(GL_LINE_STRIP, _shape_index_count[1], GL_UNSIGNED_INT, NULL);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polygon); // polygon
+        glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
+        glDrawElements(GL_LINE_STRIP, _shape_index_count.polygon, GL_UNSIGNED_INT, NULL);
 
-        if (_selected_index_count[1] > 0) // selected
+        if (_selected_index_count.polygon > 0) // selected
         {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[1]); // selected
-            glUniform4f(_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
-            glDrawElements(GL_LINE_STRIP, _selected_index_count[1], GL_UNSIGNED_INT, NULL);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polygon); // selected
+            glUniform4f(_uniforms.color, 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
+            glDrawElements(GL_LINE_STRIP, _selected_index_count.polygon, GL_UNSIGNED_INT, NULL);
         }
     }
 
-    if (_shape_index_count[2] > 0) // circle
+    if (_shape_index_count.circle > 0) // circle
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[2]); // points
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle); // points
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[2]); // circle
-        glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
-        glDrawElements(GL_LINE_STRIP, _shape_index_count[2], GL_UNSIGNED_INT, NULL);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.circle); // circle
+        glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
+        glDrawElements(GL_LINE_STRIP, _shape_index_count.circle, GL_UNSIGNED_INT, NULL);
 
-        if (_selected_index_count[2] > 0) // selected
+        if (_selected_index_count.circle > 0) // selected
         {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[2]); // selected
-            glUniform4f(_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
-            glDrawElements(GL_LINE_STRIP, _selected_index_count[2], GL_UNSIGNED_INT, NULL);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.circle); // selected
+            glUniform4f(_uniforms.color, 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
+            glDrawElements(GL_LINE_STRIP, _selected_index_count.circle, GL_UNSIGNED_INT, NULL);
         }
     }
 
-    if (_shape_index_count[3] > 0) // curve
+    if (_shape_index_count.curve > 0) // curve
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[3]); // points
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve); // points
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[3]); // curve
-        glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
-        glDrawElements(GL_LINE_STRIP, _shape_index_count[3], GL_UNSIGNED_INT, NULL);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.curve); // curve
+        glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
+        glDrawElements(GL_LINE_STRIP, _shape_index_count.curve, GL_UNSIGNED_INT, NULL);
 
-        if (_selected_index_count[3] > 0) // selected
+        if (_selected_index_count.curve > 0) // selected
         {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[3]); // selected
-            glUniform4f(_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
-            glDrawElements(GL_LINE_STRIP, _selected_index_count[3], GL_UNSIGNED_INT, NULL);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.curve); // selected
+            glUniform4f(_uniforms.color, 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
+            glDrawElements(GL_LINE_STRIP, _selected_index_count.curve, GL_UNSIGNED_INT, NULL);
         }
     }
 
-    if (_point_count[4] > 0) // point
+    if (_point_count.point > 0) // point
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[7]); // points
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.point); // points
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
-        glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
-        glDrawArrays(GL_POINTS, 0, _point_count[4]);
+        glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
+        glDrawArrays(GL_POINTS, 0, _point_count.point);
 
-        if (_selected_index_count[4] > 0) // selected
+        if (_selected_index_count.point > 0) // selected
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _selected_IBO[4]); // points
-            glUniform4f(_uniforms[4], 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
-            glDrawElements(GL_POINTS, _selected_index_count[4], GL_UNSIGNED_INT, NULL);
+            glBindBuffer(GL_ARRAY_BUFFER, _selected_ibo.point); // points
+            glUniform4f(_uniforms.color, 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
+            glDrawElements(GL_POINTS, _selected_index_count.point, GL_UNSIGNED_INT, NULL);
         }
     }
 
     if (GlobalSetting::setting().show_text && _text_brush_count > 0) // text
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[4]); // text
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.text); // text
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _text_brush_IBO); // text
-        glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color
+        glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color
 
         glEnable(GL_STENCIL_TEST); //开启模板测试
         glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT); //设置模板缓冲区更新方式(若通过则按位反转模板值)
@@ -259,87 +292,87 @@ void Canvas::paintGL()
 
     if (GlobalSetting::setting().show_points)
     {
-        glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
-        if (_point_count[0] > 0)
+        glUniform4f(_uniforms.color, 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
+        if (_point_count.polyline > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[0]); // polyline points
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polyline); // polyline points
             glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
             glEnableVertexAttribArray(0);
-            glDrawArrays(GL_POINTS, 0, _point_count[0]);
+            glDrawArrays(GL_POINTS, 0, _point_count.polyline);
         }
-        if (_point_count[1] > 0)
+        if (_point_count.polygon > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[1]); // polygon points
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polygon); // polygon points
             glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
             glEnableVertexAttribArray(0);
-            glDrawArrays(GL_POINTS, 0, _point_count[1]);
+            glDrawArrays(GL_POINTS, 0, _point_count.polygon);
         }
-        if (_point_count[2] > 0)
+        if (_point_count.circle > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[5]); // circle points
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle_printable_points); // circle points
             glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
             glEnableVertexAttribArray(0);
-            glDrawArrays(GL_POINTS, 0, _point_count[2]);
+            glDrawArrays(GL_POINTS, 0, _point_count.circle);
         }
-        if (_point_count[3] > 0)
+        if (_point_count.curve > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[6]); // curve points
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve_printable_points); // curve points
             glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
             glEnableVertexAttribArray(0);
-            glDrawArrays(GL_POINTS, 0, _point_count[3]);
+            glDrawArrays(GL_POINTS, 0, _point_count.curve);
         }
     }
 
     if (CanvasOperations::CanvasOperation::shape_count > 0)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[2]); // operation shpae
+        glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.operation_shape); // operation shpae
         glBufferData(GL_ARRAY_BUFFER, CanvasOperations::CanvasOperation::shape_count * sizeof(double),
             CanvasOperations::CanvasOperation::shape, GL_STREAM_DRAW);
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线
+        glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线
         glDrawArrays(GL_LINE_STRIP, 0, CanvasOperations::CanvasOperation::shape_count / 3);
     }
     if (CanvasOperations::CanvasOperation::tool_lines_count > 0)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[3]); // operation tool lines
+        glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.operation_tool_lines); // operation tool lines
         glBufferData(GL_ARRAY_BUFFER, CanvasOperations::CanvasOperation::tool_lines_count * sizeof(double),
             CanvasOperations::CanvasOperation::tool_lines, GL_STREAM_DRAW);
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
         
-        glUniform4f(_uniforms[4], CanvasOperations::CanvasOperation::tool_line_color[0], CanvasOperations::CanvasOperation::tool_line_color[1],
+        glUniform4f(_uniforms.color, CanvasOperations::CanvasOperation::tool_line_color[0], CanvasOperations::CanvasOperation::tool_line_color[1],
             CanvasOperations::CanvasOperation::tool_line_color[2], CanvasOperations::CanvasOperation::tool_line_color[3]); // color
         glDrawArrays(GL_LINES, 0, CanvasOperations::CanvasOperation::tool_lines_count / 3);
 
-        glUniform4f(_uniforms[4], 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
+        glUniform4f(_uniforms.color, 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
         glDrawArrays(GL_POINTS, 0, CanvasOperations::CanvasOperation::tool_lines_count / 3);
     }
 
-    if (_bool_flags[2]) // catched point
+    if (_bool_flags.show_catched_points) // catched point
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[1]); // catched point
+        glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.catched_points); // catched point
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
         glBufferSubData(GL_ARRAY_BUFFER, 0, 24 * sizeof(double), _catchline_points);
 
-        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 0.649f); // color
+        glUniform4f(_uniforms.color, 0.0f, 1.0f, 0.0f, 0.649f); // color
         glLineWidth(2.8f);
         glDrawArrays(GL_LINES, 0, 8);
         glLineWidth(1.4f);
-        glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 0.549f); // color
+        glUniform4f(_uniforms.color, 0.0f, 1.0f, 0.0f, 0.549f); // color
     }
 
-    if (_bool_flags[1] || _select_rect[0] != _select_rect[6] || _select_rect[1] != _select_rect[7])
+    if (_bool_flags.show_origin || _select_rect[0] != _select_rect[6] || _select_rect[1] != _select_rect[7])
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[0]); // origin and select rect
+        glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.origin_and_select_rect); // origin and select rect
         glVertexAttribLPointer(0, 3, GL_DOUBLE, 3 * sizeof(double), NULL);
         glEnableVertexAttribArray(0);
 
-        if (_bool_flags[1]) // origin
+        if (_bool_flags.show_origin) // origin
         {
-            glUniform4f(_uniforms[4], 1.0f, 1.0f, 1.0f, 1.0f); // color 画原点
+            glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color 画原点
             glDrawArrays(GL_LINES, 0, 4);
         }
 
@@ -347,10 +380,10 @@ void Canvas::paintGL()
         {
             glBufferSubData(GL_ARRAY_BUFFER, 12 * sizeof(double), 12 * sizeof(double), _select_rect);
 
-            glUniform4f(_uniforms[4], 0.0f, 0.47f, 0.843f, 0.1f); // color
+            glUniform4f(_uniforms.color, 0.0f, 0.47f, 0.843f, 0.1f); // color
             glDrawArrays(GL_POLYGON, 4, 4);
 
-            glUniform4f(_uniforms[4], 0.0f, 1.0f, 0.0f, 0.549f); // color
+            glUniform4f(_uniforms.color, 0.0f, 1.0f, 0.0f, 0.549f); // color
             glDrawArrays(GL_LINE_LOOP, 4, 4);
         }
     }
@@ -397,7 +430,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         refresh_selected_ibo();
         break;
     case Qt::MiddleButton:
-        _bool_flags[0] = true; // view moveable
+        _bool_flags.view_movable = true; // view moveable
         break;
     default:
         break;
@@ -442,7 +475,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
     case Qt::RightButton:
         break;
     case Qt::MiddleButton:
-        _bool_flags[0] = false; // view moveable
+        _bool_flags.view_movable = false; // view moveable
         break;
     default:
         break;
@@ -463,7 +496,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     const double real_y0 = _mouse_pos_0.x() * _view_ctm[1] + _mouse_pos_0.y() * _view_ctm[4] + _view_ctm[7];
     double canvas_x1 = real_x1 * _canvas_ctm[0] + real_y1 * _canvas_ctm[3] + _canvas_ctm[6];
     double canvas_y1 = real_x1 * _canvas_ctm[1] + real_y1 * _canvas_ctm[4] + _canvas_ctm[7];
-    const bool catched_point = _bool_flags[2];
+    const bool catched_point = _bool_flags.show_catched_points;
     if (Geo::Point coord; catch_cursor(real_x1, real_y1, coord,
         _catch_distance, event->buttons() & Qt::MouseButton::LeftButton))
     {
@@ -478,7 +511,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     }
     else
     {
-        _bool_flags[2] = false;
+        _bool_flags.show_catched_points = false;
         if (catched_point)
         {
             update();
@@ -487,7 +520,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
 
     _info_labels[0]->setText(QString("X:%1 Y:%2").arg(real_x1, 0, 'f', 2).arg(real_y1, 0, 'f', 2));
 
-    if (_bool_flags[0]) // 视图可移动
+    if (_bool_flags.view_movable) // 视图可移动
     {
         const double canvas_x0 = real_x0 * _canvas_ctm[0] + real_y0 * _canvas_ctm[3] + _canvas_ctm[6];
         const double canvas_y0 = real_x0 * _canvas_ctm[1] + real_y0 * _canvas_ctm[4] + _canvas_ctm[7];
@@ -495,8 +528,8 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         _view_ctm[6] -= (real_x1 - real_x0), _view_ctm[7] -= (real_y1 - real_y0);
         _visible_area.translate(real_x0 - real_x1, real_y0 - real_y1);
         makeCurrent();
-        glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
-        glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
+        glUniform3d(_uniforms.vec0, _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
+        glUniform3d(_uniforms.vec1, _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
         doneCurrent();
         update();
     }
@@ -560,10 +593,10 @@ void Canvas::wheelEvent(QWheelEvent *event)
         refresh_catchline_points(_catched_objects, _catch_distance, pos);
     }
     makeCurrent();
-    glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
-    glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
+    glUniform3d(_uniforms.vec0, _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
+    glUniform3d(_uniforms.vec1, _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
     double data[12] = {-10 / _ratio, 0, 0, 10 / _ratio, 0, 0, 0, -10 / _ratio, 0, 0, 10 / _ratio, 0};
-    glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[0]); // origin and select rect
+    glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.origin_and_select_rect); // origin and select rect
     glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), data);
     doneCurrent();
     _editer->set_view_ratio(_ratio);
@@ -608,7 +641,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
 void Canvas::show_overview()
 {
     _editer->set_view_ratio(1.0);
-    _bool_flags[2] = false;
+    _bool_flags.show_catched_points = false;
 
     Graph *graph = GlobalSetting::setting().graph;
     if (graph->empty())
@@ -673,11 +706,11 @@ void Canvas::show_overview()
         x1 * _view_ctm[1] + y1 * _view_ctm[4] + _view_ctm[7]);
 
     makeCurrent();
-    glUniform3d(_uniforms[2], _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
-    glUniform3d(_uniforms[3], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
+    glUniform3d(_uniforms.vec0, _canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6]); // vec0
+    glUniform3d(_uniforms.vec1, _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]); // vec1
     {
         double data[12] = {-10, 0, 0, 10, 0, 0, 0, -10, 0, 0, 10, 0};
-        glBindBuffer(GL_ARRAY_BUFFER, _base_VBO[0]); // origin and select rect
+        glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.origin_and_select_rect); // origin and select rect
         glBufferSubData(GL_ARRAY_BUFFER, 0, 12 * sizeof(double), data);
     }
     doneCurrent();
@@ -697,12 +730,12 @@ void Canvas::use_tool(const CanvasOperations::Tool tool)
 
 void Canvas::show_origin()
 {
-    _bool_flags[1] = true;
+    _bool_flags.show_origin = true;
 }
 
 void Canvas::hide_origin()
 {
-    _bool_flags[1] = false;
+    _bool_flags.show_origin = false;
 }
 
 const bool Canvas::is_typing() const
@@ -717,7 +750,26 @@ void Canvas::set_catch_distance(const double value)
 
 void Canvas::set_cursor_catch(const CatchedPointType type, const bool value)
 {
-    _catch_types[static_cast<int>(type)] = value;
+    switch (type)
+    {
+    case CatchedPointType::Vertex:
+        _catch_types.vertex = value;
+        break;
+    case CatchedPointType::Center:
+        _catch_types.center = value;
+        break;
+    case CatchedPointType::Foot:
+        _catch_types.foot = value;
+        break;
+    case CatchedPointType::Tangency:
+        _catch_types.tangency = value;
+        break;
+    case CatchedPointType::Intersection:
+        _catch_types.intersection = value;
+        break;
+    default:
+        break;
+    }
 }
 
 const size_t Canvas::current_group() const
@@ -1041,13 +1093,13 @@ bool Canvas::catch_cursor(const double x, const double y, Geo::Point &coord, con
     if (refresh_catchline_points(_catched_objects, distance, pos))
     {
         coord = pos;
-        _bool_flags[2] = true;
+        _bool_flags.show_catched_points = true;
     }
     else
     {
-        _bool_flags[2] = false;
+        _bool_flags.show_catched_points = false;
     }
-    return _bool_flags[2];
+    return _bool_flags.show_catched_points;
 }
 
 bool Canvas::catch_point(const double x, const double y, Geo::Point &coord, const double distance)
@@ -1060,17 +1112,17 @@ bool Canvas::catch_point(const double x, const double y, Geo::Point &coord, cons
         {
             coord.x = pos.x;
             coord.y = pos.y;
-            _bool_flags[2] = true;
+            _bool_flags.show_catched_points = true;
         }
         else
         {
-            _bool_flags[2] = false;
+            _bool_flags.show_catched_points = false;
         }
-        return _bool_flags[2];
+        return _bool_flags.show_catched_points;
     }
     else
     {
-        _bool_flags[2] = false;
+        _bool_flags.show_catched_points = false;
         return false;
     }
 }
@@ -1108,7 +1160,7 @@ void Canvas::refresh_vbo(const bool refresh_ibo)
         auto [circle_data, circle_data_count] = circle_printable_points.get();
         if (circle_data_count > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[5]); // circle printable points
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle_printable_points); // circle printable points
             glBufferData(GL_ARRAY_BUFFER, sizeof(double) * circle_data_count, circle_data, GL_DYNAMIC_DRAW);
         }
         delete []circle_data;
@@ -1117,7 +1169,7 @@ void Canvas::refresh_vbo(const bool refresh_ibo)
         auto [curve_data, curve_data_count] = curve_printable_points.get();
         if (curve_data_count > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[6]); // curve printable points
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve_printable_points); // curve printable points
             glBufferData(GL_ARRAY_BUFFER, sizeof(double) * curve_data_count, curve_data, GL_DYNAMIC_DRAW);
         }
         delete []curve_data;
@@ -1127,9 +1179,9 @@ void Canvas::refresh_vbo(const bool refresh_ibo)
     auto [circle_data, circle_data_count, circle_indexs, circle_index_count] = circle_vbo.get();
     if (circle_data_count > 0)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[2]);
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle); // circle
         glBufferData(GL_ARRAY_BUFFER, sizeof(double) * circle_data_count, circle_data, GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[2]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.circle);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * circle_index_count, circle_indexs, GL_DYNAMIC_DRAW);
     }
     delete []circle_data;
@@ -1139,9 +1191,9 @@ void Canvas::refresh_vbo(const bool refresh_ibo)
     auto [curve_data, curve_data_count, curve_indexs, curve_index_count] = curve_vbo.get();
     if (curve_data_count > 0)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[3]);
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve); // curve
         glBufferData(GL_ARRAY_BUFFER, sizeof(double) * curve_data_count, curve_data, GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[3]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.curve);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * curve_index_count, curve_indexs, GL_DYNAMIC_DRAW);
     }
     delete []curve_data;
@@ -1151,9 +1203,9 @@ void Canvas::refresh_vbo(const bool refresh_ibo)
     auto [polyline_data, polyline_data_count, polyline_indexs, polyline_index_count] = polyline_vbo.get();
     if (polyline_data_count > 0)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[0]);
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polyline);
         glBufferData(GL_ARRAY_BUFFER, sizeof(double) * polyline_data_count, polyline_data, GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[0]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polyline);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polyline_index_count, polyline_indexs, GL_DYNAMIC_DRAW);
     }
     delete []polyline_data;
@@ -1163,9 +1215,9 @@ void Canvas::refresh_vbo(const bool refresh_ibo)
     auto [polygon_data, polygon_data_count, polygon_indexs, polygon_index_count] = polygon_vbo.get();
     if (polygon_data_count > 0)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[1]);
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polygon);
         glBufferData(GL_ARRAY_BUFFER, sizeof(double) * polygon_data_count, polygon_data, GL_DYNAMIC_DRAW);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[1]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polygon);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_DYNAMIC_DRAW);
     }
     delete []polygon_data;
@@ -1175,7 +1227,7 @@ void Canvas::refresh_vbo(const bool refresh_ibo)
     auto [point_data, point_data_count] = point_vbo.get();
     if (point_data_count > 0)
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[7]); // point
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.point); // point
         glBufferData(GL_ARRAY_BUFFER, sizeof(double) * point_data_count, point_data, GL_DYNAMIC_DRAW);
     }
     delete []point_data;
@@ -1186,7 +1238,7 @@ void Canvas::refresh_vbo(const bool refresh_ibo)
         auto [text_data, text_data_count, text_indexs, text_index_count] = text_vbo.get();
         if (text_data_count > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[4]); // text
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.text); // text
             glBufferData(GL_ARRAY_BUFFER, sizeof(double) * text_data_count, text_data, GL_DYNAMIC_DRAW);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _text_brush_IBO); // text
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * text_index_count, text_indexs, GL_DYNAMIC_DRAW);
@@ -1207,9 +1259,9 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
             if (data_count > 0)
             {
                 makeCurrent();
-                glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[0]);
+                glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polyline);
                 glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[0]);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polyline);
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
                 doneCurrent();
             }
@@ -1224,9 +1276,9 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
             if (data_count > 0)
             {
                 makeCurrent();
-                glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[1]);
+                glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polygon);
                 glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[1]);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polygon);
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
                 doneCurrent();
             }
@@ -1239,9 +1291,9 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
             if (data_count > 0)
             {
                 makeCurrent();
-                glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[1]);
+                glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polygon);
                 glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[1]);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polygon);
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
                 doneCurrent();
             }
@@ -1263,9 +1315,9 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
             if (data_count > 0)
             {
                 makeCurrent();
-                glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[2]);
+                glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle);
                 glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[2]);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.circle);
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
                 doneCurrent();
             }
@@ -1278,7 +1330,7 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
                 if (point_data_count > 0)
                 {
                     makeCurrent();
-                    glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[5]); // circle printable points
+                    glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle_printable_points); // circle printable points
                     glBufferData(GL_ARRAY_BUFFER, sizeof(double) * point_data_count, point_data, GL_DYNAMIC_DRAW);
                     doneCurrent();
                 }
@@ -1296,9 +1348,9 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
             if (data_count > 0)
             {
                 makeCurrent();
-                glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[2]);
+                glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle);
                 glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[2]);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.circle);
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
                 doneCurrent();
             }
@@ -1311,7 +1363,7 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
                 if (point_data_count > 0)
                 {
                     makeCurrent();
-                    glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[5]); // circle printable points
+                    glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle_printable_points); // circle printable points
                     glBufferData(GL_ARRAY_BUFFER, sizeof(double) * point_data_count, point_data, GL_DYNAMIC_DRAW);
                     doneCurrent();
                 }
@@ -1331,9 +1383,9 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
             if (data_count > 0)
             {
                 makeCurrent();
-                glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[3]);
+                glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve);
                 glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[3]);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.curve);
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
                 doneCurrent();
             }
@@ -1346,7 +1398,7 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
                 if (point_data_count > 0)
                 {
                     makeCurrent();
-                    glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[6]); // curve printable points
+                    glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve_printable_points); // curve printable points
                     glBufferData(GL_ARRAY_BUFFER, sizeof(double) * point_data_count, point_data, GL_DYNAMIC_DRAW);
                     doneCurrent();
                 }
@@ -1361,7 +1413,7 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
             if (data_count > 0)
             {
                 makeCurrent();
-                glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[4]); // text
+                glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.text); // text
                 glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _text_brush_IBO); // text
                 glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
@@ -1381,7 +1433,7 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
             if (data_count > 0)
             {
                 makeCurrent();
-                glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[7]); // point
+                glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.text); // point
                 glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
                 doneCurrent();
             }
@@ -1459,7 +1511,7 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
             auto [circle_data, circle_data_count] = circle_printable_points.get();
             if (circle_data_count > 0)
             {
-                glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[5]); // circle printable points
+                glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle_printable_points); // circle printable points
                 glBufferData(GL_ARRAY_BUFFER, sizeof(double) * circle_data_count, circle_data, GL_DYNAMIC_DRAW);
             }
             delete []circle_data;
@@ -1470,7 +1522,7 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
             auto [curve_data, curve_data_count] = curve_printable_points.get();
             if (curve_data_count > 0)
             {
-                glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[6]); // curve printable points
+                glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve_printable_points); // curve printable points
                 glBufferData(GL_ARRAY_BUFFER, sizeof(double) * curve_data_count, curve_data, GL_DYNAMIC_DRAW);
             }
             delete []curve_data;
@@ -1483,9 +1535,9 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
         auto [circle_data, circle_data_count, circle_indexs, circle_index_count] = circle_vbo.get();
         if (circle_data_count > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[2]);
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle); // circle
             glBufferData(GL_ARRAY_BUFFER, sizeof(double) * circle_data_count, circle_data, GL_DYNAMIC_DRAW);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[2]);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.circle);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * circle_index_count, circle_indexs, GL_DYNAMIC_DRAW);
         }
         delete []circle_data;
@@ -1498,9 +1550,9 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
         auto [curve_data, curve_data_count, curve_indexs, curve_index_count] = curve_vbo.get();
         if (curve_data_count > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[3]);
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve); // curve
             glBufferData(GL_ARRAY_BUFFER, sizeof(double) * curve_data_count, curve_data, GL_DYNAMIC_DRAW);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[3]);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.curve);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * curve_index_count, curve_indexs, GL_DYNAMIC_DRAW);
         }
         delete []curve_data;
@@ -1513,9 +1565,9 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
         auto [polyline_data, polyline_data_count, polyline_indexs, polyline_index_count] = polyline_vbo.get();
         if (polyline_data_count > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[0]);
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polyline);
             glBufferData(GL_ARRAY_BUFFER, sizeof(double) * polyline_data_count, polyline_data, GL_DYNAMIC_DRAW);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[0]);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polyline);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polyline_index_count, polyline_indexs, GL_DYNAMIC_DRAW);
         }
         delete []polyline_data;
@@ -1528,9 +1580,9 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
         auto [polygon_data, polygon_data_count, polygon_indexs, polygon_index_count] = polygon_vbo.get();
         if (polygon_data_count > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[1]);
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polygon);
             glBufferData(GL_ARRAY_BUFFER, sizeof(double) * polygon_data_count, polygon_data, GL_DYNAMIC_DRAW);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_IBO[1]);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polygon);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_DYNAMIC_DRAW);
         }
         delete []polygon_data;
@@ -1543,7 +1595,7 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
         auto [point_data, point_data_count] = point_vbo.get();
         if (point_data_count > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[7]); // point
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.point); // point
             glBufferData(GL_ARRAY_BUFFER, sizeof(double) * point_data_count, point_data, GL_DYNAMIC_DRAW);
         }
         delete []point_data;
@@ -1555,7 +1607,7 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
         auto [text_data, text_data_count, text_indexs, text_index_count] = text_vbo.get();
         if (text_data_count > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[4]); // text
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.text); // text
             glBufferData(GL_ARRAY_BUFFER, sizeof(double) * text_data_count, text_data, GL_DYNAMIC_DRAW);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _text_brush_IBO); // text
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * text_index_count, text_indexs, GL_DYNAMIC_DRAW);
@@ -1656,8 +1708,8 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_p
         }
     }
 
-    _point_count[0] = data_count / 3;
-    _shape_index_count[0] = index_count;
+    _point_count.polyline = data_count / 3;
+    _shape_index_count.polyline = index_count;
     return std::make_tuple(data, data_count, indexs, index_count);
 }
 
@@ -1750,8 +1802,8 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_p
         }
     }
 
-    _point_count[1] = data_count / 3;
-    _shape_index_count[1] = index_count;
+    _point_count.polygon = data_count / 3;
+    _shape_index_count.polygon = index_count;
     return std::make_tuple(data, data_count, indexs, index_count);
 }
 
@@ -1966,7 +2018,8 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_c
         }
     }
 
-    _shape_index_count[2] = index_count;
+    _point_count.circle = data_count / 3;
+    _shape_index_count.circle = index_count;
     return std::make_tuple(data, data_count, indexs, index_count);
 }
 
@@ -2122,7 +2175,8 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_c
         }
     }
 
-    _shape_index_count[3] = index_count;
+    _point_count.curve = data_count / 3;
+    _shape_index_count.curve = index_count;
     return std::make_tuple(data, data_count, indexs, index_count);
 }
 
@@ -2160,7 +2214,7 @@ std::tuple<double*, unsigned int> Canvas::refresh_point_vbo()
         }
     }
 
-    _point_count[4] = data_count / 3;
+    _point_count.point = data_count / 3;
     return std::make_tuple(data, data_count);
 }
 
@@ -2316,7 +2370,7 @@ std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
         }
     }
 
-    _point_count[2] = data_count / 3;
+    _point_count.circle = data_count / 3;
     return std::make_tuple(data, data_count);
 }
 
@@ -2380,7 +2434,7 @@ std::tuple<double *, unsigned int> Canvas::refresh_curve_printable_points()
         }
     }
 
-    _point_count[3] = data_count / 3;
+    _point_count.curve = data_count / 3;
     return std::make_tuple(data, data_count);
 }
 
@@ -2636,36 +2690,36 @@ void Canvas::refresh_selected_ibo()
         }
     }
 
-    _selected_index_count[0] = polyline_index_count;
-    _selected_index_count[1] = polygon_index_count;
-    _selected_index_count[2] = circle_index_count;
-    _selected_index_count[3] = curve_index_count;
-    _selected_index_count[4] = point_index_count;
+    _selected_index_count.polyline = polyline_index_count;
+    _selected_index_count.polygon = polygon_index_count;
+    _selected_index_count.circle = circle_index_count;
+    _selected_index_count.curve = curve_index_count;
+    _selected_index_count.point = point_index_count;
 
     makeCurrent();
     if (polyline_index_count > 0)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[0]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polyline);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_index_count * sizeof(unsigned int), polyline_indexs, GL_DYNAMIC_DRAW);
     }
     if (polygon_index_count > 0)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[1]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polygon);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_index_count * sizeof(unsigned int), polygon_indexs, GL_DYNAMIC_DRAW);
     }
     if (circle_index_count > 0)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[2]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.circle);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_index_count * sizeof(unsigned int), circle_indexs, GL_DYNAMIC_DRAW);
     }
     if (curve_index_count > 0)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[3]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.curve);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_index_count * sizeof(unsigned int), curve_indexs, GL_DYNAMIC_DRAW);
     }
     if (point_index_count > 0)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[4]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.point);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_index_count * sizeof(unsigned int), point_indexs, GL_DYNAMIC_DRAW);
     }
     doneCurrent();
@@ -2806,35 +2860,35 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
             }
         }
 
-        _selected_index_count[0] = polyline_index_count;
-        _selected_index_count[1] = polygon_index_count;
-        _selected_index_count[2] = circle_index_count;
-        _selected_index_count[3] = curve_index_count;
-        _selected_index_count[4] = point_index_count;
+        _selected_index_count.polyline = polyline_index_count;
+        _selected_index_count.polygon = polygon_index_count;
+        _selected_index_count.circle = circle_index_count;
+        _selected_index_count.curve = curve_index_count;
+        _selected_index_count.point = point_index_count;
         makeCurrent();
         if (polyline_index_count > 0)
         {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[0]);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polyline);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_index_count * sizeof(unsigned int), polyline_indexs, GL_DYNAMIC_DRAW);
         }
         if (polygon_index_count > 0)
         {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[1]);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polygon);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_index_count * sizeof(unsigned int), polygon_indexs, GL_DYNAMIC_DRAW);
         }
         if (circle_index_count > 0)
         {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[2]);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.circle);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_index_count * sizeof(unsigned int), circle_indexs, GL_DYNAMIC_DRAW);
         }
         if (curve_index_count > 0)
         {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[3]);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.curve);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_index_count * sizeof(unsigned int), curve_indexs, GL_DYNAMIC_DRAW);
         }
         if (point_index_count > 0)
         {
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[4]);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.point);
             glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_index_count * sizeof(unsigned int), point_indexs, GL_DYNAMIC_DRAW);
         }
         doneCurrent();
@@ -2854,34 +2908,31 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
             indexs[index_count++] = index++;
         }
         indexs[index_count++] = UINT_MAX;
-        std::fill_n(_selected_index_count, 4, 0);
-        unsigned int IBO_index = _selected_IBO[4];
+        clear_selected_ibo();
+        unsigned int IBO_index = _selected_ibo.point;
         switch (object->type())
         {
         case Geo::Type::POLYLINE:
-            IBO_index = _selected_IBO[0];
-            _selected_index_count[0] = index_count;
+            IBO_index = _selected_ibo.polyline;
+            _selected_index_count.polyline = index_count;
             break;
         case Geo::Type::POLYGON:
-            IBO_index = _selected_IBO[1];
-            _selected_index_count[1] = index_count;
+            IBO_index = _selected_ibo.polygon;
+            _selected_index_count.polygon = index_count;
             break;
         case Geo::Type::CIRCLE:
         case Geo::Type::ELLIPSE:
         case Geo::Type::ARC:
-            IBO_index = _selected_IBO[2];
-            _selected_index_count[2] = index_count;
+            IBO_index = _selected_ibo.circle;
+            _selected_index_count.circle = index_count;
             break;
         case Geo::Type::BEZIER:
-            IBO_index = _selected_IBO[3];
-            _selected_index_count[3] = index_count;
-            break;
         case Geo::Type::BSPLINE:
-            IBO_index = _selected_IBO[3];
-            _selected_index_count[3] = index_count;
+            IBO_index = _selected_ibo.curve;
+            _selected_index_count.curve = index_count;
             break;
         case Geo::Type::POINT:
-            _selected_index_count[4] = index_count;
+            _selected_index_count.point = index_count;
             break;
         default:
             break;
@@ -3145,36 +3196,36 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
         }
     }
 
-    _selected_index_count[0] = polyline_index_count;
-    _selected_index_count[1] = polygon_index_count;
-    _selected_index_count[2] = circle_index_count;
-    _selected_index_count[3] = curve_index_count;
-    _selected_index_count[4] = point_index_count;
+    _selected_index_count.polyline = polyline_index_count;
+    _selected_index_count.polygon = polygon_index_count;
+    _selected_index_count.circle = circle_index_count;
+    _selected_index_count.curve = curve_index_count;
+    _selected_index_count.point = point_index_count;
 
     makeCurrent();
     if (polyline_index_count > 0)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[0]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polyline);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_index_count * sizeof(unsigned int), polyline_indexs, GL_DYNAMIC_DRAW);
     }
     if (polygon_index_count > 0)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[1]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polygon);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_index_count * sizeof(unsigned int), polygon_indexs, GL_DYNAMIC_DRAW);
     }
     if (circle_index_count > 0)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[2]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.circle);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_index_count * sizeof(unsigned int), circle_indexs, GL_DYNAMIC_DRAW);
     }
     if (curve_index_count > 0)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[3]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.curve);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_index_count * sizeof(unsigned int), curve_indexs, GL_DYNAMIC_DRAW);
     }
     if (point_index_count > 0)
     {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_IBO[4]);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.point);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_index_count * sizeof(unsigned int), point_indexs, GL_DYNAMIC_DRAW);
     }
     doneCurrent();
@@ -3316,7 +3367,7 @@ void Canvas::refresh_selected_vbo()
     {
         point_vbo.wait();
         auto [data, data_count] = point_vbo.get();
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[7]); // point
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.point); // point
         glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
         delete []data;
     }
@@ -3324,12 +3375,12 @@ void Canvas::refresh_selected_vbo()
     {
         circle_point.wait();
         auto [circle_printable_points, circle_printable_count] = circle_point.get();
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[5]); // circle
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle_printable_points); // circle printable points
         glBufferData(GL_ARRAY_BUFFER, sizeof(double) * circle_printable_count, circle_printable_points, GL_DYNAMIC_DRAW);
         delete []circle_printable_points;
         circle_vbo.wait();
         auto [data, data_count, indexs, index_count] = circle_vbo.get();
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[2]); // circle
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle); // circle
         glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
         delete []data;
         delete []indexs;
@@ -3338,12 +3389,12 @@ void Canvas::refresh_selected_vbo()
     {
         curve_point.wait();
         auto [curve_printable_points, curve_printable_count] = curve_point.get();
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[6]); // curve
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve_printable_points); // curve printable points
         glBufferData(GL_ARRAY_BUFFER, sizeof(double) * curve_printable_count, curve_printable_points, GL_DYNAMIC_DRAW);
         delete []curve_printable_points;
         curve_vbo.wait();
         auto [data, data_count, indexs, index_count] = curve_vbo.get();
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[3]); // curve
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve); // curve
         glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
         delete []data;
         delete []indexs;
@@ -3352,7 +3403,7 @@ void Canvas::refresh_selected_vbo()
     {
         text_vbo.wait();
         auto [data, data_count, indexs, index_count] = text_vbo.get();
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[4]); // text
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.text); // text
         glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
         delete []data;
         delete []indexs;
@@ -3361,7 +3412,7 @@ void Canvas::refresh_selected_vbo()
     {
         polyline_vbo.wait();
         auto [data, data_count, indexs, index_count] = polyline_vbo.get();
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[0]); // polyline
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polyline); // polyline
         glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
         delete []data;
         delete []indexs;
@@ -3370,7 +3421,7 @@ void Canvas::refresh_selected_vbo()
     {
         polygon_vbo.wait();
         auto [data, data_count, indexs, index_count] = polygon_vbo.get();
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_VBO[1]); // polygon
+        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polygon); // polygon
         glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
         delete []data;
         delete []indexs;
@@ -3380,7 +3431,9 @@ void Canvas::refresh_selected_vbo()
 
 void Canvas::clear_selected_ibo()
 {
-    std::fill_n(_selected_index_count, 5, 0);
+    _selected_index_count.polyline = _selected_index_count.polygon = 
+        _selected_index_count.circle = _selected_index_count.curve =
+        _selected_index_count.point = 0;
 }
 
 std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_text_vbo()
@@ -3557,7 +3610,7 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_t
 
 bool Canvas::refresh_catached_points(const double x, const double y, const double distance, std::vector<const Geo::Geometry *> &catched_objects, const bool skip_selected, const bool current_group_only) const
 {
-    if (!std::any_of(_catch_types, _catch_types + Canvas::catch_count, [](const bool v){ return v; }))
+    if (!(_catch_types.vertex || _catch_types.center || _catch_types.foot || _catch_types.tangency || _catch_types.intersection))
     {
         return false;
     }
@@ -3725,10 +3778,10 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
 bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &objects, const double distance, Geo::Point &pos)
 {
     const CanvasOperations::Tool tool = CanvasOperations::CanvasOperation::tool[0];
-    const bool catch_flags[Canvas::catch_count] = { _catch_types[0], _catch_types[1],
-        _catch_types[2] && (tool > CanvasOperations::Tool::Move && tool < CanvasOperations::Tool::Mirror),
-        _catch_types[3] && (tool > CanvasOperations::Tool::Move && tool < CanvasOperations::Tool::Mirror),
-        _catch_types[4] };
+    const bool catch_flags[Canvas::catch_count] = { _catch_types.vertex, _catch_types.center,
+        _catch_types.foot && (tool > CanvasOperations::Tool::Move && tool < CanvasOperations::Tool::Mirror),
+        _catch_types.tangency && (tool > CanvasOperations::Tool::Move && tool < CanvasOperations::Tool::Mirror),
+        _catch_types.intersection };
     if (!std::any_of(catch_flags, catch_flags + Canvas::catch_count, [](const bool v){ return v; }))
     {
         return false;
