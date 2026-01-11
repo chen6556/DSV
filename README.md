@@ -2,6 +2,8 @@
 # DSV
 DSV是一款基于Qt的自制画图程序，使用OpenGL绘图。支持圆形、多边形和多段线、曲线线条的绘制。DSV支持图层功能和自动分层功能。绘制的图形以DSV格式保存，同时也能读取部分PLT、DXF、CUT和NC格式的图形文件。DSV也支持通用快捷键，如复制、粘贴、撤销、删除。
 
+[![DSV](DSV.png "DSV")](https://github.com/chen6556/DSV.git)
+
 ###  DSV For MacOS
 
 > https://support.apple.com/zh-cn/101525
