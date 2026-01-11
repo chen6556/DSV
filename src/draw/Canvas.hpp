@@ -27,30 +27,106 @@ private:
     QTextEdit _input_line;
 
     unsigned int _shader_program, _VAO;
-    unsigned int _base_VBO[4]; // 0:origin and select rect 1:catched points 2:operation shape 3:operation tool lines
-    /* 0:polyline 1:polygon 2:circle 3:curve 4:text 5:circle printable points
-    6:curve printable points 7:point */
-    unsigned int _shape_VBO[8];
-    unsigned int _shape_IBO[4]; // 0:polyline 1:polygon 2:circle 3:curve
+
+    struct BaseVBO
+    {
+        unsigned int origin_and_select_rect;
+        unsigned int catched_points;
+        unsigned int operation_shape;
+        unsigned int operation_tool_lines;
+    } _base_vbo;
+
+    struct ShapeVBO
+    {
+        unsigned int polyline;
+        unsigned int polygon;
+        unsigned int circle;
+        unsigned int curve;
+        unsigned int text;
+        unsigned int circle_printable_points;
+        unsigned int curve_printable_points;
+        unsigned int point;
+    } _shape_vbo;
+
+    struct ShapeIBO
+    {
+        unsigned int polyline;
+        unsigned int polygon;
+        unsigned int circle;
+        unsigned int curve;
+    } _shape_ibo;
+
     unsigned int _text_brush_IBO = 0, _text_brush_count = 0;
-    unsigned int _selected_IBO[5]; // 0:polyline 1:polygon 2:circle 3:curve 4:point
-    int _uniforms[5]; // w, h, vec0, vec1, color
-    unsigned int _point_count[5] = {0, 0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve 4:point
-    unsigned int _shape_index_count[4] = {0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve
-    unsigned int _selected_index_count[5] = {0, 0, 0, 0, 0}; // 0:polyline 1:polygon 2:circle 3:curve 4:point
-    double _catchline_points[24];
+
+    struct SelectedIBO
+    {
+        unsigned int polyline;
+        unsigned int polygon;
+        unsigned int circle;
+        unsigned int curve;
+        unsigned int point;
+    } _selected_ibo;
+
+    struct Uniforms
+    {
+        int w;
+        int h;
+        int vec0;
+        int vec1;
+        int color;
+    } _uniforms;
+
+    struct PointCount
+    {
+        unsigned int polyline;
+        unsigned int polygon;
+        unsigned int circle;
+        unsigned int curve;
+        unsigned int point;
+    } _point_count;
+
+    struct ShapeIndexCount
+    {
+        unsigned int polyline;
+        unsigned int polygon;
+        unsigned int circle;
+        unsigned int curve;
+    } _shape_index_count;
+
+    struct SelectedIndexCount
+    {
+        unsigned int polyline;
+        unsigned int polygon;
+        unsigned int circle;
+        unsigned int curve;
+        unsigned int point;
+    } _selected_index_count;
     
+    double _catchline_points[24];
+
     double _catch_distance = 0;
     static const int catch_count = 5;
-    bool _catch_types[5] = {false, false, false, false, false};
+
+    struct CatchTypes
+    {
+        bool vertex = false;
+        bool center = false;
+        bool foot = false;
+        bool tangency = false;
+        bool intersection = false;
+    } _catch_types;
 
     double _canvas_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
     double _view_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
     double _ratio = 1; // 缩放系数
     int _canvas_width = 0, _canvas_height = 0;
 
-    // 0:可移动视图 1:显示坐标原点 2:显示捕捉点
-    bool _bool_flags[3] = {false, true, false};
+    struct BoolFlags
+    {
+        bool view_movable = false;
+        bool show_origin = true;
+        bool show_catched_points = false;
+    } _bool_flags;
     double _select_rect[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
     QPointF _mouse_pos_0, _mouse_pos_1;
