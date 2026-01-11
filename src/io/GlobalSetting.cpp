@@ -1,4 +1,5 @@
 #include <QFile>
+#include <QtLogging>
 #include <QIODevice>
 #include <QJsonObject>
 #include <QJsonDocument>
@@ -15,7 +16,11 @@ GlobalSetting &GlobalSetting::setting()
 void GlobalSetting::load_setting()
 {
     QFile file("./config.json");
-    file.open(QIODevice::ReadOnly);
+    if (!file.open(QIODevice::ReadOnly)) {
+        auto err = file.errorString();
+        qWarning() << "Failed to load settings: " << err;
+        return;
+    }
     QJsonParseError jerr;
     const QJsonObject values = QJsonDocument::fromJson(file.readAll(), &jerr).object();
     file.close();
@@ -154,7 +159,11 @@ void GlobalSetting::save_setting()
     QJsonDocument doc;
     doc.setObject(values);
     QFile file("./config.json");
-    file.open(QIODevice::WriteOnly);
+    if (!file.open(QIODevice::WriteOnly))
+    {
+        auto err = file.errorString();
+        qWarning() << "Failed to save settings: " << err;
+        return;
+    }
     file.write(doc.toJson());
-    file.close();
 }

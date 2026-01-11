@@ -8629,6 +8629,9 @@ void Editer::auto_layering()
             case Geo::Type::ELLIPSE:
                 areas.insert_or_assign(object, static_cast<const Geo::Ellipse *>(object)->area());
                 break;
+            default:
+                break; // Not sure if only three types needs to be checked.
+                       // Remove this and see the error to check if anything that nedds to be checked is missing.
             }
         }
         std::sort(all_containers.begin(), all_containers.end(), [&](const Geo::Geometry *a, const Geo::Geometry *b)
