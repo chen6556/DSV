@@ -239,25 +239,31 @@ public:
 
 
     // 直接更新所有VBO,点数量可能发生变化
-    void refresh_vbo(const bool refresh_ibo);
+    void refresh_vbo();
 
-    void refresh_vbo(const Geo::Type type, const bool refresh_ibo);
+    void refresh_vbo(const Geo::Type type);
 
-    void refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ibo);
+    void refresh_vbo(const std::set<Geo::Type> &types);
 
-    std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_polyline_vbo();
+    struct VBOData
+    {
+        std::vector<double> vbo_data;
+        std::vector<unsigned int> ibo_data;
+    };
 
-    std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_polygon_vbo();
+    VBOData refresh_polyline_vbo();
 
-    std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_circle_vbo();
+    VBOData refresh_polygon_vbo();
 
-    std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_curve_vbo();
+    VBOData refresh_circle_vbo();
 
-    std::tuple<double*, unsigned int> refresh_point_vbo();
+    VBOData refresh_curve_vbo();
 
-    std::tuple<double *, unsigned int> refresh_circle_printable_points();
+    VBOData refresh_point_vbo();
 
-    std::tuple<double *, unsigned int> refresh_curve_printable_points();
+    VBOData refresh_circle_printable_points();
+
+    VBOData refresh_curve_printable_points();
 
     void refresh_select_rect(const double x0, const double y0, const double x1, const double y1);
 
@@ -271,7 +277,7 @@ public:
 
     void clear_selected_ibo();
 
-    std::tuple<double*, unsigned int, unsigned int*, unsigned int> refresh_text_vbo();
+    VBOData refresh_text_vbo();
 
 
     bool refresh_catached_points(const double x, const double y, const double distance, std::vector<const Geo::Geometry *> &catched_objects, const bool skip_selected, const bool current_group_only = true) const;

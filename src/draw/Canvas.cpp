@@ -916,7 +916,7 @@ void Canvas::set_info_labels(QLabel **labels)
 void Canvas::add_geometry(Geo::Geometry *object)
 {
     _editer->append(object);
-    refresh_vbo(object->type(), true);
+    refresh_vbo(object->type());
     update();
 }
 
@@ -938,26 +938,26 @@ void Canvas::show_menu(Geo::Geometry *object)
     if (const QAction *a = _menu->exec(QCursor::pos()); a == _up)
     {
         _editer->up(object);
-        refresh_vbo(object->type(), true);
+        refresh_vbo(object->type());
         refresh_selected_ibo();
     }
     else if (a == _down)
     {
         _editer->down(object);
-        refresh_vbo(object->type(), true);
+        refresh_vbo(object->type());
         refresh_selected_ibo();
     }
     else if (a == _text_to_polylines)
     {
         _editer->text_to_polylines(dynamic_cast<Text *>(object));
-        refresh_vbo({ Geo::Type::TEXT, Geo::Type::POLYLINE }, true);
+        refresh_vbo({ Geo::Type::TEXT, Geo::Type::POLYLINE });
         refresh_selected_ibo();
     }
     else if (a == _bezier_to_bspline)
     {
         _editer->bezier_to_bspline(dynamic_cast<Geo::Bezier *>(object));
         CanvasOperations::CanvasOperation::tool_lines_count = 0;
-        refresh_vbo({ Geo::Type::BEZIER, Geo::Type::BSPLINE }, true);
+        refresh_vbo({ Geo::Type::BEZIER, Geo::Type::BSPLINE });
         refresh_selected_ibo();
     }
     else if (a == _change_bspline_model)
@@ -973,7 +973,7 @@ void Canvas::show_menu(Geo::Geometry *object)
     {
         _editer->bspline_to_bezier(dynamic_cast<Geo::BSpline *>(object));
         CanvasOperations::CanvasOperation::tool_lines_count = 0;
-        refresh_vbo({ Geo::Type::BEZIER, Geo::Type::BSPLINE }, true);
+        refresh_vbo({ Geo::Type::BEZIER, Geo::Type::BSPLINE });
         refresh_selected_ibo();
     }
 }
@@ -1000,7 +1000,7 @@ void Canvas::hide_text_edit()
         {
             _edited_text->set_text(_input_line.toPlainText(), GlobalSetting::setting().text_size);
             _editer->push_backup_command(new UndoStack::TextChangedCommand(_edited_text, text));
-            refresh_vbo(Geo::Type::TEXT, false);
+            refresh_vbo(Geo::Type::TEXT);
             update();
         }
         _edited_text = nullptr;
@@ -1038,7 +1038,7 @@ void Canvas::cut()
             types.insert(object->type());
         }
     }
-    refresh_vbo(types, true);
+    refresh_vbo(types);
 }
 
 void Canvas::paste()
@@ -1062,7 +1062,7 @@ void Canvas::paste()
                 types.insert(object->type());
             }
         }
-        refresh_vbo(types, true);
+        refresh_vbo(types);
         refresh_selected_ibo();
         update();
     }
@@ -1087,7 +1087,7 @@ void Canvas::paste(const double x, const double y)
                 types.insert(object->type());
             }
         }
-        refresh_vbo(types, true);
+        refresh_vbo(types);
         refresh_selected_ibo();
         update();
     }
@@ -1166,25 +1166,23 @@ bool Canvas::catch_point(const double x, const double y, Geo::Point &coord, cons
 }
 
 
-void Canvas::refresh_vbo(const bool refresh_ibo)
+void Canvas::refresh_vbo()
 {
-    std::future<std::tuple<double*, unsigned int, unsigned int*, unsigned int>>
-        polyline_vbo = std::async(std::launch::async, &Canvas::refresh_polyline_vbo, this),
+    std::future<VBOData> polyline_vbo = std::async(std::launch::async, &Canvas::refresh_polyline_vbo, this),
         polygon_vbo = std::async(std::launch::async, &Canvas::refresh_polygon_vbo, this),
         circle_vbo = std::async(std::launch::async, &Canvas::refresh_circle_vbo, this),
-        curve_vbo = std::async(std::launch::async, &Canvas::refresh_curve_vbo, this);
-    std::future<std::tuple<double*, unsigned int>> point_vbo = std::async(std::launch::async, &Canvas::refresh_point_vbo, this);
-    std::future<std::tuple<double*, unsigned int, unsigned int*, unsigned int>> text_vbo;
+        curve_vbo = std::async(std::launch::async, &Canvas::refresh_curve_vbo, this),
+        point_vbo = std::async(std::launch::async, &Canvas::refresh_point_vbo, this);
+    std::future<VBOData> text_vbo;
     if (GlobalSetting::setting().show_text)
     {
-        text_vbo = std::async(std::launch::async,
-            static_cast<std::tuple<double*, unsigned int, unsigned int*, unsigned int>(Canvas::*)(void)>(&Canvas::refresh_text_vbo), this);
+        text_vbo = std::async(std::launch::async, &Canvas::refresh_text_vbo, this);
     }
     else
     {
         _text_brush_count = 0;
     }
-    std::future<std::tuple<double*, unsigned int>> circle_printable_points, curve_printable_points;
+    std::future<VBOData> circle_printable_points, curve_printable_points;
     if (GlobalSetting::setting().show_points)
     {
         circle_printable_points = std::async(std::launch::async, &Canvas::refresh_circle_printable_points, this);
@@ -1195,270 +1193,176 @@ void Canvas::refresh_vbo(const bool refresh_ibo)
     if (GlobalSetting::setting().show_points)
     {
         circle_printable_points.wait();
-        auto [circle_data, circle_data_count] = circle_printable_points.get();
-        if (circle_data_count > 0)
+        if (VBOData data = circle_printable_points.get(); !data.vbo_data.empty())
         {
             glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle_printable_points); // circle printable points
-            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * circle_data_count, circle_data, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
         }
-        delete []circle_data;
 
         curve_printable_points.wait();
-        auto [curve_data, curve_data_count] = curve_printable_points.get();
-        if (curve_data_count > 0)
+        if (VBOData data = curve_printable_points.get(); !data.vbo_data.empty())
         {
             glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve_printable_points); // curve printable points
-            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * curve_data_count, curve_data, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
         }
-        delete []curve_data;
     }
 
     circle_vbo.wait();
-    auto [circle_data, circle_data_count, circle_indexs, circle_index_count] = circle_vbo.get();
-    if (circle_data_count > 0)
+    if (VBOData data = circle_vbo.get(); !data.vbo_data.empty())
     {
         glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle); // circle
-        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * circle_data_count, circle_data, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.circle);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * circle_index_count, circle_indexs, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * data.ibo_data.size(), data.ibo_data.data(), GL_DYNAMIC_DRAW);
     }
-    delete []circle_data;
-    delete []circle_indexs;
 
     curve_vbo.wait();
-    auto [curve_data, curve_data_count, curve_indexs, curve_index_count] = curve_vbo.get();
-    if (curve_data_count > 0)
+    if (VBOData data = curve_vbo.get(); !data.vbo_data.empty())
     {
         glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve); // curve
-        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * curve_data_count, curve_data, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.curve);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * curve_index_count, curve_indexs, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * data.ibo_data.size(), data.ibo_data.data(), GL_DYNAMIC_DRAW);
     }
-    delete []curve_data;
-    delete []curve_indexs;
 
     polyline_vbo.wait();
-    auto [polyline_data, polyline_data_count, polyline_indexs, polyline_index_count] = polyline_vbo.get();
-    if (polyline_data_count > 0)
+    if (VBOData data = polyline_vbo.get(); !data.vbo_data.empty())
     {
         glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polyline);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * polyline_data_count, polyline_data, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polyline);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polyline_index_count, polyline_indexs, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * data.ibo_data.size(), data.ibo_data.data(), GL_DYNAMIC_DRAW);
     }
-    delete []polyline_data;
-    delete []polyline_indexs;
 
     polygon_vbo.wait();
-    auto [polygon_data, polygon_data_count, polygon_indexs, polygon_index_count] = polygon_vbo.get();
-    if (polygon_data_count > 0)
+    if (VBOData data = polygon_vbo.get(); !data.vbo_data.empty())
     {
         glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polygon);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * polygon_data_count, polygon_data, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polygon);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * data.ibo_data.size(), data.ibo_data.data(), GL_DYNAMIC_DRAW);
     }
-    delete []polygon_data;
-    delete []polygon_indexs;
 
     point_vbo.wait();
-    auto [point_data, point_data_count] = point_vbo.get();
-    if (point_data_count > 0)
+    if (VBOData data = point_vbo.get(); !data.vbo_data.empty())
     {
         glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.point); // point
-        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * point_data_count, point_data, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
     }
-    delete []point_data;
 
     if (GlobalSetting::setting().show_text)
     {
         text_vbo.wait();
-        auto [text_data, text_data_count, text_indexs, text_index_count] = text_vbo.get();
-        if (text_data_count > 0)
+        if (VBOData data = text_vbo.get(); !data.vbo_data.empty())
         {
             glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.text); // text
-            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * text_data_count, text_data, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _text_brush_IBO); // text
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * text_index_count, text_indexs, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * data.ibo_data.size(), data.ibo_data.data(), GL_DYNAMIC_DRAW);
         }
-        delete []text_data;
-        delete []text_indexs;
     }
     doneCurrent();
 }
 
-void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
+void Canvas::refresh_vbo(const Geo::Type type)
 {
     switch (type)
     {
     case Geo::Type::POLYLINE:
+        if (VBOData data = refresh_polyline_vbo(); !data.vbo_data.empty())
         {
-            auto [data, data_count, indexs, index_count] = refresh_polyline_vbo();
-            if (data_count > 0)
-            {
-                makeCurrent();
-                glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polyline);
-                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polyline);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
-                doneCurrent();
-            }
-            delete []data;
-            delete []indexs;
+            makeCurrent();
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polyline);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polyline);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * data.ibo_data.size(), data.ibo_data.data(), GL_DYNAMIC_DRAW);
+            doneCurrent();
         }
         break;
     case Geo::Type::POLYGON:
-        if (refresh_ibo)
+        if (VBOData data = refresh_polygon_vbo(); !data.vbo_data.empty())
         {
-            auto [data, data_count, indexs, index_count] = refresh_polygon_vbo();
-            if (data_count > 0)
-            {
-                makeCurrent();
-                glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polygon);
-                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polygon);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
-                doneCurrent();
-            }
-            delete []data;
-            delete []indexs;
-        }
-        else
-        {
-            auto [data, data_count, indexs, index_count] = refresh_polygon_vbo();
-            if (data_count > 0)
-            {
-                makeCurrent();
-                glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polygon);
-                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polygon);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
-                doneCurrent();
-            }
-            delete []data;
-            delete []indexs;
+            makeCurrent();
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polygon);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polygon);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * data.ibo_data.size(), data.ibo_data.data(), GL_DYNAMIC_DRAW);
+            doneCurrent();
         }
         break;
     case Geo::Type::CIRCLE:
     case Geo::Type::ELLIPSE:
     case Geo::Type::ARC:
-        if (refresh_ibo)
         {
-            std::future<std::tuple<double*, unsigned int>> point;
+            std::future<VBOData> point;
             if (GlobalSetting::setting().show_points)
             {
                 point = std::async(std::launch::async, &Canvas::refresh_circle_printable_points, this);
             }
-            auto [data, data_count, indexs, index_count] = refresh_circle_vbo();
-            if (data_count > 0)
+            if (VBOData data = refresh_circle_vbo(); !data.vbo_data.empty())
             {
                 makeCurrent();
                 glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle);
-                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.circle);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * data.ibo_data.size(), data.ibo_data.data(), GL_DYNAMIC_DRAW);
                 doneCurrent();
             }
-            delete []data;
-            delete []indexs;
             if (GlobalSetting::setting().show_points)
             {
                 point.wait();
-                auto [point_data, point_data_count] = point.get();
-                if (point_data_count > 0)
+                if (VBOData data = point.get(); !data.vbo_data.empty())
                 {
                     makeCurrent();
                     glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle_printable_points); // circle printable points
-                    glBufferData(GL_ARRAY_BUFFER, sizeof(double) * point_data_count, point_data, GL_DYNAMIC_DRAW);
+                    glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
                     doneCurrent();
                 }
-                delete []point_data;
-            }
-        }
-        else
-        {
-            std::future<std::tuple<double*, unsigned int>> point;
-            if (GlobalSetting::setting().show_points)
-            {
-                point = std::async(std::launch::async, &Canvas::refresh_circle_printable_points, this);
-            }
-            auto [data, data_count, indexs, index_count] = refresh_circle_vbo();
-            if (data_count > 0)
-            {
-                makeCurrent();
-                glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle);
-                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.circle);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
-                doneCurrent();
-            }
-            delete []data;
-            delete []indexs;
-            if (GlobalSetting::setting().show_points)
-            {
-                point.wait();
-                auto [point_data, point_data_count] = point.get();
-                if (point_data_count > 0)
-                {
-                    makeCurrent();
-                    glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle_printable_points); // circle printable points
-                    glBufferData(GL_ARRAY_BUFFER, sizeof(double) * point_data_count, point_data, GL_DYNAMIC_DRAW);
-                    doneCurrent();
-                }
-                delete []point_data;
             }
         }
         break;
     case Geo::Type::BEZIER:
     case Geo::Type::BSPLINE:
         {
-            std::future<std::tuple<double*, unsigned int>> point;
+            std::future<VBOData> point;
             if (GlobalSetting::setting().show_points)
             {
                 point = std::async(std::launch::async, &Canvas::refresh_curve_printable_points, this);
             }
-            auto [data, data_count, indexs, index_count] = refresh_curve_vbo();
-            if (data_count > 0)
+            if (VBOData data = refresh_curve_vbo(); !data.vbo_data.empty())
             {
                 makeCurrent();
                 glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve);
-                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.curve);
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
                 doneCurrent();
             }
-            delete []data;
-            delete []indexs;
             if (GlobalSetting::setting().show_points)
             {
                 point.wait();
-                auto [point_data, point_data_count] = point.get();
-                if (point_data_count > 0)
+                if (VBOData data = point.get(); !data.vbo_data.empty())
                 {
                     makeCurrent();
                     glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve_printable_points); // curve printable points
-                    glBufferData(GL_ARRAY_BUFFER, sizeof(double) * point_data_count, point_data, GL_DYNAMIC_DRAW);
+                    glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
                     doneCurrent();
                 }
-                delete []point_data;
             }
         }
         break;
     case Geo::Type::TEXT:
         if (GlobalSetting::setting().show_text)
         {
-            auto [data, data_count, indexs, index_count] = refresh_text_vbo();
-            if (data_count > 0)
+            if (VBOData data = refresh_text_vbo(); !data.vbo_data.empty())
             {
                 makeCurrent();
                 glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.text); // text
-                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _text_brush_IBO); // text
-                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * index_count, indexs, GL_DYNAMIC_DRAW);
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * data.ibo_data.size(), data.ibo_data.data(), GL_DYNAMIC_DRAW);
                 doneCurrent();
             }
-            delete []data;
-            delete []indexs;
         }
         else
         {
@@ -1466,35 +1370,29 @@ void Canvas::refresh_vbo(const Geo::Type type, const bool refresh_ibo)
         }
         break;
     case Geo::Type::POINT:
+        if (VBOData data = refresh_point_vbo(); !data.vbo_data.empty())
         {
-            auto [data, data_count] = refresh_point_vbo();
-            if (data_count > 0)
-            {
-                makeCurrent();
-                glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.text); // point
-                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-                doneCurrent();
-            }
-            delete []data;
+            makeCurrent();
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.text); // point
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
+            doneCurrent();
         }
         break;
     default:
-        refresh_vbo(refresh_ibo);
+        refresh_vbo();
         break;
     }
 }
 
-void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ibo)
+void Canvas::refresh_vbo(const std::set<Geo::Type> &types)
 {
     if (types.find(Geo::Type::COMBINATION) != types.end())
     {
-        return refresh_vbo(refresh_ibo);
+        return refresh_vbo();
     }
 
-    std::future<std::tuple<double*, unsigned int, unsigned int*, unsigned int>>
-        polyline_vbo, polygon_vbo, circle_vbo, curve_vbo;
-    std::future<std::tuple<double*, unsigned int, unsigned int*, unsigned int>> text_vbo;
-    std::future<std::tuple<double*, unsigned int>> circle_printable_points, curve_printable_points, point_vbo;
+    std::future<VBOData> polyline_vbo, polygon_vbo, circle_vbo, curve_vbo, text_vbo,
+        circle_printable_points, curve_printable_points, point_vbo;
 
     if (types.find(Geo::Type::POLYLINE) != types.end())
     {
@@ -1506,8 +1404,7 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
     }
     if (GlobalSetting::setting().show_text && types.find(Geo::Type::TEXT) != types.end())
     {
-        text_vbo = std::async(std::launch::async,
-            static_cast<std::tuple<double*, unsigned int, unsigned int*, unsigned int>(Canvas::*)(void)>(&Canvas::refresh_text_vbo), this);
+        text_vbo = std::async(std::launch::async, &Canvas::refresh_text_vbo, this);
     }
     else
     {
@@ -1546,124 +1443,99 @@ void Canvas::refresh_vbo(const std::set<Geo::Type> &types, const bool refresh_ib
             || types.find(Geo::Type::ARC) != types.end())
         {
             circle_printable_points.wait();
-            auto [circle_data, circle_data_count] = circle_printable_points.get();
-            if (circle_data_count > 0)
+            if (VBOData data = circle_printable_points.get(); !data.vbo_data.empty())
             {
                 glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle_printable_points); // circle printable points
-                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * circle_data_count, circle_data, GL_DYNAMIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
             }
-            delete []circle_data;
         }
         if (types.find(Geo::Type::BEZIER) != types.end() || types.find(Geo::Type::BSPLINE) != types.end())
         {
             curve_printable_points.wait();
-            auto [curve_data, curve_data_count] = curve_printable_points.get();
-            if (curve_data_count > 0)
+            if (VBOData data = curve_printable_points.get(); !data.vbo_data.empty())
             {
                 glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve_printable_points); // curve printable points
-                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * curve_data_count, curve_data, GL_DYNAMIC_DRAW);
+                glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
             }
-            delete []curve_data;
         }
     }
 
     if (circle_vbo.valid())
     {
         circle_vbo.wait();
-        auto [circle_data, circle_data_count, circle_indexs, circle_index_count] = circle_vbo.get();
-        if (circle_data_count > 0)
+        if (VBOData data = circle_vbo.get(); !data.vbo_data.empty())
         {
             glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle); // circle
-            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * circle_data_count, circle_data, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.circle);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * circle_index_count, circle_indexs, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * data.ibo_data.size(), data.ibo_data.data(), GL_DYNAMIC_DRAW);
         }
-        delete []circle_data;
-        delete []circle_indexs;
     }
 
     if (curve_vbo.valid())
     {
         curve_vbo.wait();
-        auto [curve_data, curve_data_count, curve_indexs, curve_index_count] = curve_vbo.get();
-        if (curve_data_count > 0)
+        if (VBOData data = curve_vbo.get(); !data.vbo_data.empty())
         {
             glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve); // curve
-            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * curve_data_count, curve_data, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.curve);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * curve_index_count, curve_indexs, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * data.ibo_data.size(), data.ibo_data.data(), GL_DYNAMIC_DRAW);
         }
-        delete []curve_data;
-        delete []curve_indexs;
     }
 
     if (polyline_vbo.valid())
     {
         polyline_vbo.wait();
-        auto [polyline_data, polyline_data_count, polyline_indexs, polyline_index_count] = polyline_vbo.get();
-        if (polyline_data_count > 0)
+        if (VBOData data = polyline_vbo.get(); !data.vbo_data.empty())
         {
             glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polyline);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * polyline_data_count, polyline_data, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polyline);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polyline_index_count, polyline_indexs, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * data.ibo_data.size(), data.ibo_data.data(), GL_DYNAMIC_DRAW);
         }
-        delete []polyline_data;
-        delete []polyline_indexs;
     }
 
     if (polygon_vbo.valid())
     {
         polygon_vbo.wait();
-        auto [polygon_data, polygon_data_count, polygon_indexs, polygon_index_count] = polygon_vbo.get();
-        if (polygon_data_count > 0)
+        if (VBOData data = polygon_vbo.get(); !data.vbo_data.empty())
         {
             glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polygon);
-            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * polygon_data_count, polygon_data, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polygon);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * polygon_index_count, polygon_indexs, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * data.ibo_data.size(), data.ibo_data.data(), GL_DYNAMIC_DRAW);
         }
-        delete []polygon_data;
-        delete []polygon_indexs;
     }
 
     if (point_vbo.valid())
     {
         point_vbo.wait();
-        auto [point_data, point_data_count] = point_vbo.get();
-        if (point_data_count > 0)
+        if (VBOData data = point_vbo.get(); !data.vbo_data.empty())
         {
             glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.point); // point
-            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * point_data_count, point_data, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
         }
-        delete []point_data;
     }
 
     if (text_vbo.valid())
     {
         text_vbo.wait();
-        auto [text_data, text_data_count, text_indexs, text_index_count] = text_vbo.get();
-        if (text_data_count > 0)
+        if (VBOData data = text_vbo.get(); !data.vbo_data.empty())
         {
             glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.text); // text
-            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * text_data_count, text_data, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _text_brush_IBO); // text
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * text_index_count, text_indexs, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * data.ibo_data.size(), data.ibo_data.data(), GL_DYNAMIC_DRAW);
         }
-        delete []text_data;
-        delete []text_indexs;
     }
 
     doneCurrent();
 }
 
-std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_polyline_vbo()
+Canvas::VBOData Canvas::refresh_polyline_vbo()
 {
-    unsigned int data_len = 1026, data_count = 0;
-    unsigned int index_len = 512, index_count = 0;
-    double *data = new double[data_len];
-    unsigned int *indexs = new unsigned int[index_len];
-
+    VBOData result;
     Geo::Polyline *polyline = nullptr;
     for (ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
@@ -1682,62 +1554,30 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_p
                     if (item->type() == Geo::Type::POLYLINE)
                     {
                         polyline = static_cast<Geo::Polyline *>(item);
-                        polyline->point_index = data_count / 3;
-                        while (data_count + polyline->size() * 3 > data_len)
-                        {
-                            data_len *= 2;
-                            double *temp = new double[data_len];
-                            std::move(data, data + data_count, temp);
-                            delete []data;
-                            data = temp;
-                        }
-                        if (index_count + polyline->size() >= index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::move(indexs, indexs + index_count, temp);
-                            delete []indexs;
-                            indexs = temp;
-                        }
+                        polyline->point_index = result.vbo_data.size() / 3;
                         for (const Geo::Point &point : *polyline)
                         {
-                            indexs[index_count++] = data_count / 3;
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
+                            result.ibo_data.push_back(result.vbo_data.size() / 3);
+                            result.vbo_data.push_back(point.x);
+                            result.vbo_data.push_back(point.y);
+                            result.vbo_data.push_back(0.5);
                         }
-                        indexs[index_count++] = UINT_MAX;
+                        result.ibo_data.push_back(UINT_MAX);
                         polyline->point_count = polyline->size();
                     }
                 }
                 break;
             case Geo::Type::POLYLINE:
                 polyline = static_cast<Geo::Polyline *>(geo);
-                polyline->point_index = data_count / 3;
-                while (data_count + polyline->size() * 3 > data_len)
-                {
-                    data_len *= 2;
-                    double *temp = new double[data_len];
-                    std::move(data, data + data_count, temp);
-                    delete []data;
-                    data = temp;
-                }
-                while (index_count + polyline->size() >= index_len)
-                {
-                    index_len *= 2;
-                    unsigned int *temp = new unsigned int[index_len];
-                    std::move(indexs, indexs + index_count, temp);
-                    delete []indexs;
-                    indexs = temp;
-                }
+                polyline->point_index = result.vbo_data.size() / 3;
                 for (const Geo::Point &point : *polyline)
                 {
-                    indexs[index_count++] = data_count / 3;
-                    data[data_count++] = point.x;
-                    data[data_count++] = point.y;
-                    data[data_count++] = 0.5;
+                    result.ibo_data.push_back(result.vbo_data.size() / 3);
+                    result.vbo_data.push_back(point.x);
+                    result.vbo_data.push_back(point.y);
+                    result.vbo_data.push_back(0.5);
                 }
-                indexs[index_count++] = UINT_MAX;
+                result.ibo_data.push_back(UINT_MAX);
                 polyline->point_count = polyline->size();
                 break;
             default:
@@ -1746,18 +1586,14 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_p
         }
     }
 
-    _point_count.polyline = data_count / 3;
-    _shape_index_count.polyline = index_count;
-    return std::make_tuple(data, data_count, indexs, index_count);
+    _point_count.polyline = result.vbo_data.size() / 3;
+    _shape_index_count.polyline = result.ibo_data.size();
+    return result;
 }
 
-std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_polygon_vbo()
+Canvas::VBOData Canvas::refresh_polygon_vbo()
 {
-    unsigned int data_len = 1026, data_count = 0;
-    unsigned int index_len = 512, index_count = 0;
-    double *data = new double[data_len];
-    unsigned int *indexs = new unsigned int[index_len];
-
+    VBOData result;
     Geo::Polygon *polygon = nullptr;
     for (ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
@@ -1776,62 +1612,30 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_p
                     if (item->type() == Geo::Type::POLYGON)
                     {
                         polygon = static_cast<Geo::Polygon *>(item);
-                        polygon->point_index = data_count / 3;
-                        while (data_count + polygon->size() * 3 > data_len)
-                        {
-                            data_len *= 2;
-                            double *temp = new double[data_len];
-                            std::move(data, data + data_count, temp);
-                            delete []data;
-                            data = temp;
-                        }
-                        while (index_count + polygon->size() >= index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::move(indexs, indexs + index_count, temp);
-                            delete []indexs;
-                            indexs = temp;
-                        }
+                        polygon->point_index = result.vbo_data.size() / 3;
                         for (const Geo::Point &point : *polygon)
                         {
-                            indexs[index_count++] = data_count / 3;
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
+                            result.ibo_data.push_back(result.vbo_data.size() / 3);
+                            result.vbo_data.push_back(point.x);
+                            result.vbo_data.push_back(point.y);
+                            result.vbo_data.push_back(0.5);
                         }
-                        indexs[index_count++] = UINT_MAX;
+                        result.ibo_data.push_back(UINT_MAX);
                         polygon->point_count = polygon->size();
                     }
                 }
                 break;
             case Geo::Type::POLYGON:
                 polygon = static_cast<Geo::Polygon *>(geo);
-                polygon->point_index = data_count / 3;
-                while (data_count + polygon->size() * 3 > data_len)
-                {
-                    data_len *= 2;
-                    double *temp = new double[data_len];
-                    std::move(data, data + data_count, temp);
-                    delete []data;
-                    data = temp;
-                }
-                while (index_count + polygon->size() >= index_len)
-                {
-                    index_len *= 2;
-                    unsigned int *temp = new unsigned int[index_len];
-                    std::move(indexs, indexs + index_count, temp);
-                    delete []indexs;
-                    indexs = temp;
-                }
+                polygon->point_index = result.vbo_data.size() / 3;
                 for (const Geo::Point &point : *polygon)
                 {
-                    indexs[index_count++] = data_count / 3;
-                    data[data_count++] = point.x;
-                    data[data_count++] = point.y;
-                    data[data_count++] = 0.5;
+                    result.ibo_data.push_back(result.vbo_data.size() / 3);
+                    result.vbo_data.push_back(point.x);
+                    result.vbo_data.push_back(point.y);
+                    result.vbo_data.push_back(0.5);
                 }
-                indexs[index_count++] = UINT_MAX;
+                result.ibo_data.push_back(UINT_MAX);
                 polygon->point_count = polygon->size();
                 break;
             default:
@@ -1840,18 +1644,14 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_p
         }
     }
 
-    _point_count.polygon = data_count / 3;
-    _shape_index_count.polygon = index_count;
-    return std::make_tuple(data, data_count, indexs, index_count);
+    _point_count.polygon = result.vbo_data.size() / 3;
+    _shape_index_count.polygon = result.ibo_data.size();
+    return result;
 }
 
-std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_circle_vbo()
+Canvas::VBOData Canvas::refresh_circle_vbo()
 {
-    unsigned int data_len = 1026, data_count = 0;
-    unsigned int index_len = 512, index_count = 0;
-    double *data = new double[data_len];
-    unsigned int *indexs = new unsigned int[index_len];
-
+    VBOData result;
     Geo::Circle *circle = nullptr;
     Geo::Ellipse *ellipse = nullptr;
     Geo::Arc *arc = nullptr;
@@ -1873,89 +1673,41 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_c
                     {
                     case Geo::Type::CIRCLE:
                         circle = static_cast<Geo::Circle *>(item);
-                        circle->point_index = data_count / 3;
-                        while (data_count + circle->shape().size() * 3 > data_len)
-                        {
-                            data_len *= 2;
-                            double *temp = new double[data_len];
-                            std::move(data, data + data_count, temp);
-                            delete []data;
-                            data = temp;
-                        }
-                        while (index_count + circle->shape().size() >= index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::move(indexs, indexs + index_count, temp);
-                            delete []indexs;
-                            indexs = temp;
-                        }
+                        circle->point_index = result.vbo_data.size() / 3;
                         for (const Geo::Point &point : circle->shape())
                         {
-                            indexs[index_count++] = data_count / 3;
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
+                            result.ibo_data.push_back(result.vbo_data.size() / 3);
+                            result.vbo_data.push_back(point.x);
+                            result.vbo_data.push_back(point.y);
+                            result.vbo_data.push_back(0.5);
                         }
-                        indexs[index_count++] = UINT_MAX;
+                        result.ibo_data.push_back(UINT_MAX);
                         circle->point_count = circle->shape().size();
                         break;
                     case Geo::Type::ELLIPSE:
                         ellipse = static_cast<Geo::Ellipse *>(item);
-                        ellipse->point_index = data_count / 3;
-                        while (data_count + ellipse->shape().size() * 3 > data_len)
-                        {
-                            data_len *= 2;
-                            double *temp = new double[data_len];
-                            std::move(data, data + data_count, temp);
-                            delete []data;
-                            data = temp;
-                        }
-                        while (index_count + ellipse->shape().size() >= index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::move(indexs, indexs + index_count, temp);
-                            delete []indexs;
-                            indexs = temp;
-                        }
+                        ellipse->point_index = result.vbo_data.size() / 3;
                         for (const Geo::Point &point : ellipse->shape())
                         {
-                            indexs[index_count++] = data_count / 3;
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
+                            result.ibo_data.push_back(result.vbo_data.size() / 3);
+                            result.vbo_data.push_back(point.x);
+                            result.vbo_data.push_back(point.y);
+                            result.vbo_data.push_back(0.5);
                         }
-                        indexs[index_count++] = UINT_MAX;
+                        result.ibo_data.push_back(UINT_MAX);
                         ellipse->point_count = ellipse->shape().size();
                         break;
                     case Geo::Type::ARC:
                         arc = static_cast<Geo::Arc *>(item);
-                        arc->point_index = data_count / 3;
-                        while (data_count + arc->shape().size() * 3 > data_len)
-                        {
-                            data_len *= 2;
-                            double *temp = new double[data_len];
-                            std::move(data, data + data_count, temp);
-                            delete []data;
-                            data = temp;
-                        }
-                        while (index_count + arc->shape().size() >= index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::move(indexs, indexs + index_count, temp);
-                            delete []indexs;
-                            indexs = temp;
-                        }
+                        arc->point_index = result.vbo_data.size() / 3;
                         for (const Geo::Point &point : arc->shape())
                         {
-                            indexs[index_count++] = data_count / 3;
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
+                            result.ibo_data.push_back(result.vbo_data.size() / 3);
+                            result.vbo_data.push_back(point.x);
+                            result.vbo_data.push_back(point.y);
+                            result.vbo_data.push_back(0.5);
                         }
-                        indexs[index_count++] = UINT_MAX;
+                        result.ibo_data.push_back(UINT_MAX);
                         arc->point_count = arc->shape().size();
                         break;
                     default:
@@ -1965,89 +1717,41 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_c
                 break;
             case Geo::Type::CIRCLE:
                 circle = static_cast<Geo::Circle *>(geo);
-                circle->point_index = data_count / 3;
-                while (data_count + circle->shape().size() * 3 > data_len)
-                {
-                    data_len *= 2;
-                    double *temp = new double[data_len];
-                    std::move(data, data + data_count, temp);
-                    delete []data;
-                    data = temp;
-                }
-                while (index_count + circle->shape().size() >= index_len)
-                {
-                    index_len *= 2;
-                    unsigned int *temp = new unsigned int[index_len];
-                    std::move(indexs, indexs + index_count, temp);
-                    delete []indexs;
-                    indexs = temp;
-                }
+                circle->point_index = result.vbo_data.size() / 3;
                 for (const Geo::Point &point : circle->shape())
                 {
-                    indexs[index_count++] = data_count / 3;
-                    data[data_count++] = point.x;
-                    data[data_count++] = point.y;
-                    data[data_count++] = 0.5;
+                    result.ibo_data.push_back(result.vbo_data.size() / 3);
+                    result.vbo_data.push_back(point.x);
+                    result.vbo_data.push_back(point.y);
+                    result.vbo_data.push_back(0.5);
                 }
-                indexs[index_count++] = UINT_MAX;
+                result.ibo_data.push_back(UINT_MAX);
                 circle->point_count = circle->shape().size();
                 break;
             case Geo::Type::ELLIPSE:
                 ellipse = static_cast<Geo::Ellipse *>(geo);
-                ellipse->point_index = data_count / 3;
-                while (data_count + ellipse->shape().size() * 3 > data_len)
-                {
-                    data_len *= 2;
-                    double *temp = new double[data_len];
-                    std::move(data, data + data_count, temp);
-                    delete []data;
-                    data = temp;
-                }
-                while (index_count + ellipse->shape().size() >= index_len)
-                {
-                    index_len *= 2;
-                    unsigned int *temp = new unsigned int[index_len];
-                    std::move(indexs, indexs + index_count, temp);
-                    delete []indexs;
-                    indexs = temp;
-                }
+                ellipse->point_index = result.vbo_data.size() / 3;
                 for (const Geo::Point &point : ellipse->shape())
                 {
-                    indexs[index_count++] = data_count / 3;
-                    data[data_count++] = point.x;
-                    data[data_count++] = point.y;
-                    data[data_count++] = 0.5;
+                    result.ibo_data.push_back(result.vbo_data.size() / 3);
+                    result.vbo_data.push_back(point.x);
+                    result.vbo_data.push_back(point.y);
+                    result.vbo_data.push_back(0.5);
                 }
-                indexs[index_count++] = UINT_MAX;
+                result.ibo_data.push_back(UINT_MAX);
                 ellipse->point_count = ellipse->shape().size();
                 break;
             case Geo::Type::ARC:
                 arc = static_cast<Geo::Arc *>(geo);
-                arc->point_index = data_count / 3;
-                while (data_count + arc->shape().size() * 3 > data_len)
-                {
-                    data_len *= 2;
-                    double *temp = new double[data_len];
-                    std::move(data, data + data_count, temp);
-                    delete []data;
-                    data = temp;
-                }
-                while (index_count + arc->shape().size() >= index_len)
-                {
-                    index_len *= 2;
-                    unsigned int *temp = new unsigned int[index_len];
-                    std::move(indexs, indexs + index_count, temp);
-                    delete []indexs;
-                    indexs = temp;
-                }
+                arc->point_index = result.vbo_data.size() / 3;
                 for (const Geo::Point &point : arc->shape())
                 {
-                    indexs[index_count++] = data_count / 3;
-                    data[data_count++] = point.x;
-                    data[data_count++] = point.y;
-                    data[data_count++] = 0.5;
+                    result.ibo_data.push_back(result.vbo_data.size() / 3);
+                    result.vbo_data.push_back(point.x);
+                    result.vbo_data.push_back(point.y);
+                    result.vbo_data.push_back(0.5);
                 }
-                indexs[index_count++] = UINT_MAX;
+                result.ibo_data.push_back(UINT_MAX);
                 arc->point_count = arc->shape().size();
                 break;
             default:
@@ -2056,18 +1760,14 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_c
         }
     }
 
-    _point_count.circle = data_count / 3;
-    _shape_index_count.circle = index_count;
-    return std::make_tuple(data, data_count, indexs, index_count);
+    _point_count.circle = result.vbo_data.size() / 3;
+    _shape_index_count.circle = result.ibo_data.size();
+    return result;
 }
 
-std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_curve_vbo()
+Canvas::VBOData Canvas::refresh_curve_vbo()
 {
-    unsigned int data_len = 1026, data_count = 0;
-    unsigned int index_len = 512, index_count = 0;
-    double *data = new double[data_len];
-    unsigned int *indexs = new unsigned int[index_len];
-
+    VBOData result;
     Geo::Bezier *bezier = nullptr;
     Geo::BSpline *bspline = nullptr;
     for (ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
@@ -2088,60 +1788,28 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_c
                     {
                     case Geo::Type::BEZIER:
                         bezier = static_cast<Geo::Bezier *>(item);
-                        bezier->point_index = data_count / 3;
-                        while (data_count + bezier->shape().size() * 3 > data_len)
-                        {
-                            data_len *= 2;
-                            double *temp = new double[data_len];
-                            std::move(data, data + data_count, temp);
-                            delete []data;
-                            data = temp;
-                        }
-                        while (index_count + bezier->shape().size() >= index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::move(indexs, indexs + index_count, temp);
-                            delete []indexs;
-                            indexs = temp;
-                        }
+                        bezier->point_index = result.vbo_data.size() / 3;
                         for (const Geo::Point &point : bezier->shape())
                         {
-                            indexs[index_count++] = data_count / 3;
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
+                            result.ibo_data.push_back(result.vbo_data.size() / 3);
+                            result.vbo_data.push_back(point.x);
+                            result.vbo_data.push_back(point.y);
+                            result.vbo_data.push_back(0.5);
                         }
-                        indexs[index_count++] = UINT_MAX;
+                        result.ibo_data.push_back(UINT_MAX);
                         bezier->point_count = bezier->shape().size();
                         break;
                     case Geo::Type::BSPLINE:
                         bspline = static_cast<Geo::BSpline *>(item);
-                        bspline->point_index = data_count / 3;
-                        while (data_count + bspline->shape().size() * 3 > data_len)
-                        {
-                            data_len *= 2;
-                            double *temp = new double[data_len];
-                            std::move(data, data + data_count, temp);
-                            delete []data;
-                            data = temp;
-                        }
-                        while (index_count + bspline->shape().size() >= index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::move(indexs, indexs + index_count, temp);
-                            delete []indexs;
-                            indexs = temp;
-                        }
+                        bspline->point_index = result.vbo_data.size() / 3;
                         for (const Geo::Point &point : bspline->shape())
                         {
-                            indexs[index_count++] = data_count / 3;
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;           
+                            result.ibo_data.push_back(result.vbo_data.size() / 3);
+                            result.vbo_data.push_back(point.x);
+                            result.vbo_data.push_back(point.y);
+                            result.vbo_data.push_back(0.5);         
                         }
-                        indexs[index_count++] = UINT_MAX;
+                        result.ibo_data.push_back(UINT_MAX);
                         bspline->point_count = bspline->shape().size();
                         break;
                     default:
@@ -2151,60 +1819,28 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_c
                 break;
             case Geo::Type::BEZIER:
                 bezier = static_cast<Geo::Bezier *>(geo);
-                bezier->point_index = data_count / 3;
-                while (data_count + bezier->shape().size() * 3 > data_len)
-                {
-                    data_len *= 2;
-                    double *temp = new double[data_len];
-                    std::move(data, data + data_count, temp);
-                    delete []data;
-                    data = temp;
-                }
-                while (index_count + bezier->shape().size() >= index_len)
-                {
-                    index_len *= 2;
-                    unsigned int *temp = new unsigned int[index_len];
-                    std::move(indexs, indexs + index_count, temp);
-                    delete []indexs;
-                    indexs = temp;
-                }
+                bezier->point_index = result.vbo_data.size() / 3;
                 for (const Geo::Point &point : bezier->shape())
                 {
-                    indexs[index_count++] = data_count / 3;
-                    data[data_count++] = point.x;
-                    data[data_count++] = point.y;
-                    data[data_count++] = 0.5;                  
+                    result.ibo_data.push_back(result.vbo_data.size() / 3);
+                    result.vbo_data.push_back(point.x);
+                    result.vbo_data.push_back(point.y);
+                    result.vbo_data.push_back(0.5);                 
                 }
-                indexs[index_count++] = UINT_MAX;
+                result.ibo_data.push_back(UINT_MAX);
                 bezier->point_count = bezier->shape().size();
                 break;
             case Geo::Type::BSPLINE:
                 bspline = static_cast<Geo::BSpline *>(geo);
-                bspline->point_index = data_count / 3;
-                while (data_count + bspline->shape().size() * 3 > data_len)
-                {
-                    data_len *= 2;
-                    double *temp = new double[data_len];
-                    std::move(data, data + data_count, temp);
-                    delete []data;
-                    data = temp;
-                }
-                while (index_count + bspline->shape().size() >= index_len)
-                {
-                    index_len *= 2;
-                    unsigned int *temp = new unsigned int[index_len];
-                    std::move(indexs, indexs + index_count, temp);
-                    delete []indexs;
-                    indexs = temp;
-                }
+                bspline->point_index = result.vbo_data.size() / 3;
                 for (const Geo::Point &point : bspline->shape())
                 {
-                    indexs[index_count++] = data_count / 3;
-                    data[data_count++] = point.x;
-                    data[data_count++] = point.y;
-                    data[data_count++] = 0.5;
+                    result.ibo_data.push_back(result.vbo_data.size() / 3);
+                    result.vbo_data.push_back(point.x);
+                    result.vbo_data.push_back(point.y);
+                    result.vbo_data.push_back(0.5);
                 }
-                indexs[index_count++] = UINT_MAX;
+                result.ibo_data.push_back(UINT_MAX);
                 bspline->point_count = bspline->shape().size();
                 break;
             default:
@@ -2213,16 +1849,15 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_c
         }
     }
 
-    _point_count.curve = data_count / 3;
-    _shape_index_count.curve = index_count;
-    return std::make_tuple(data, data_count, indexs, index_count);
+    _point_count.curve = result.vbo_data.size() / 3;
+    _shape_index_count.curve = result.ibo_data.size();
+    return result;
 }
 
-std::tuple<double*, unsigned int> Canvas::refresh_point_vbo()
+Canvas::VBOData Canvas::refresh_point_vbo()
 {
-    unsigned int data_len = 513, data_count = 0, index = 0;
-    double *data = new double[data_len];
-
+    VBOData result;
+    unsigned int index = 0;
     for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
         if (!group.visible())
@@ -2237,32 +1872,37 @@ std::tuple<double*, unsigned int> Canvas::refresh_point_vbo()
                 Geo::Point *point = static_cast<Geo::Point *>(geo);
                 point->point_index = index++;
                 point->point_count = 1;
-                data[data_count++] = point->x;
-                data[data_count++] = point->y;
-                data[data_count++] = 0;
-                if (data_count == data_len)
+                result.vbo_data.push_back(point->x);
+                result.vbo_data.push_back(point->y);
+                result.vbo_data.push_back(0.5);
+            }
+            else if (geo->type() == Geo::Type::COMBINATION)
+            {
+                for (Geo::Geometry *item : *static_cast<Combination *>(geo))
                 {
-                    data_len *= 2;
-                    double *temp = new double[data_len];
-                    std::move(data, data + data_len, temp);
-                    delete []data;
-                    data = temp;
+                    if (item->type() == Geo::Type::POINT)
+                    {
+                        Geo::Point *point = static_cast<Geo::Point *>(item);
+                        point->point_index = index++;
+                        point->point_count = 1;
+                        result.vbo_data.push_back(point->x);
+                        result.vbo_data.push_back(point->y);
+                        result.vbo_data.push_back(0.5);
+                    }
                 }
             }
         }
     }
 
-    _point_count.point = data_count / 3;
-    return std::make_tuple(data, data_count);
+    _point_count.point = result.vbo_data.size() / 3;
+    return result;
 }
 
-std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
+Canvas::VBOData Canvas::refresh_circle_printable_points()
 {
-    unsigned int data_len = 1200, data_count = 0;
-    double *data = new double[data_len];
+    VBOData result;
     const Geo::Circle *circle = nullptr;
     const Geo::Ellipse *ellipse = nullptr;
-
     for (ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
         if (!group.visible())
@@ -2272,129 +1912,113 @@ std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
 
         for (const Geo::Geometry *geo : group)
         {
-            if (data_count + 15 > data_len)
-            {
-                data_len *= 2;
-                double *temp = new double[data_len];
-                std::move(data, data + data_count, temp);
-                delete []data;
-                data = temp;
-            }
             switch (geo->type())
             {
             case Geo::Type::CIRCLE:
                 circle = static_cast<const Geo::Circle *>(geo);
-                data[data_count++] = circle->x;
-                data[data_count++] = circle->y;
-                data[data_count++] = 0.5;
-                data[data_count++] = circle->x - circle->radius;
-                data[data_count++] = circle->y;
-                data[data_count++] = 0.5;
-                data[data_count++] = circle->x;
-                data[data_count++] = circle->y + circle->radius;
-                data[data_count++] = 0.5;
-                data[data_count++] = circle->x + circle->radius;
-                data[data_count++] = circle->y;
-                data[data_count++] = 0.5;
-                data[data_count++] = circle->x;
-                data[data_count++] = circle->y - circle->radius;
-                data[data_count++] = 0.5;
+                result.vbo_data.push_back(circle->x);
+                result.vbo_data.push_back(circle->y);
+                result.vbo_data.push_back(0.5);
+                result.vbo_data.push_back(circle->x - circle->radius);
+                result.vbo_data.push_back(circle->y);
+                result.vbo_data.push_back(0.5);
+                result.vbo_data.push_back(circle->x);
+                result.vbo_data.push_back(circle->y + circle->radius);
+                result.vbo_data.push_back(0.5);
+                result.vbo_data.push_back(circle->x + circle->radius);
+                result.vbo_data.push_back(circle->y);
+                result.vbo_data.push_back(0.5);
+                result.vbo_data.push_back(circle->x);
+                result.vbo_data.push_back(circle->y - circle->radius);
+                result.vbo_data.push_back(0.5);
                 break;
             case Geo::Type::ELLIPSE:
                 ellipse = static_cast<const Geo::Ellipse *>(geo);
                 if (ellipse->is_arc())
                 {
                     const Geo::Point point0(ellipse->arc_point0());
-                    data[data_count++] = point0.x;
-                    data[data_count++] = point0.y;
-                    data[data_count++] = 0.5;
+                    result.vbo_data.push_back(point0.x);
+                    result.vbo_data.push_back(point0.y);
+                    result.vbo_data.push_back(0.5);
                     const Geo::Point point1(ellipse->arc_point1());
-                    data[data_count++] = point1.x;
-                    data[data_count++] = point1.y;
-                    data[data_count++] = 0.5;
+                    result.vbo_data.push_back(point1.x);
+                    result.vbo_data.push_back(point1.y);
+                    result.vbo_data.push_back(0.5);
                 }
                 else
                 {
-                    data[data_count++] = (ellipse->a0().x + ellipse->a1().x + ellipse->b0().x + ellipse->b1().x) / 4;
-                    data[data_count++] = (ellipse->a0().y + ellipse->a1().y + ellipse->b0().y + ellipse->b1().y) / 4;
-                    data[data_count++] = 0.5;
-                    data[data_count++] = ellipse->a0().x;
-                    data[data_count++] = ellipse->a0().y;
-                    data[data_count++] = 0.5;
-                    data[data_count++] = ellipse->a1().x;
-                    data[data_count++] = ellipse->a1().y;
-                    data[data_count++] = 0.5;
-                    data[data_count++] = ellipse->b0().x;
-                    data[data_count++] = ellipse->b0().y;
-                    data[data_count++] = 0.5;
-                    data[data_count++] = ellipse->b1().x;
-                    data[data_count++] = ellipse->b1().y;
-                    data[data_count++] = 0.5;
+                    result.vbo_data.push_back((ellipse->a0().x + ellipse->a1().x + ellipse->b0().x + ellipse->b1().x) / 4);
+                    result.vbo_data.push_back((ellipse->a0().y + ellipse->a1().y + ellipse->b0().y + ellipse->b1().y) / 4);
+                    result.vbo_data.push_back(0.5);
+                    result.vbo_data.push_back(ellipse->a0().x);
+                    result.vbo_data.push_back(ellipse->a0().y);
+                    result.vbo_data.push_back(0.5);
+                    result.vbo_data.push_back(ellipse->a1().x);
+                    result.vbo_data.push_back(ellipse->a1().y);
+                    result.vbo_data.push_back(0.5);
+                    result.vbo_data.push_back(ellipse->b0().x);
+                    result.vbo_data.push_back(ellipse->b0().y);
+                    result.vbo_data.push_back(0.5);
+                    result.vbo_data.push_back(ellipse->b1().x);
+                    result.vbo_data.push_back(ellipse->b1().y);
+                    result.vbo_data.push_back(0.5);
                 }
                 break;
             case Geo::Type::ARC:
                 for (const Geo::Point &point : static_cast<const Geo::Arc *>(geo)->control_points)
                 {
-                    data[data_count++] = point.x;
-                    data[data_count++] = point.y;
-                    data[data_count++] = 0.5;
+                    result.vbo_data.push_back(point.x);
+                    result.vbo_data.push_back(point.y);
+                    result.vbo_data.push_back(0.5);
                 }
                 break;
             case Geo::Type::COMBINATION:
                 for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
                 {
-                    if (data_count + 15 > data_len)
-                    {
-                        data_len *= 2;
-                        double *temp = new double[data_len];
-                        std::move(data, data + data_count, temp);
-                        delete []data;
-                        data = temp;
-                    }
                     switch (item->type())
                     {
                     case Geo::Type::CIRCLE:
                         circle = static_cast<const Geo::Circle *>(item);
-                        data[data_count++] = circle->x;
-                        data[data_count++] = circle->y;
-                        data[data_count++] = 0.5;
-                        data[data_count++] = circle->x - circle->radius;
-                        data[data_count++] = circle->y;
-                        data[data_count++] = 0.5;
-                        data[data_count++] = circle->x;
-                        data[data_count++] = circle->y + circle->radius;
-                        data[data_count++] = 0.5;
-                        data[data_count++] = circle->x + circle->radius;
-                        data[data_count++] = circle->y;
-                        data[data_count++] = 0.5;
-                        data[data_count++] = circle->x;
-                        data[data_count++] = circle->y - circle->radius;
-                        data[data_count++] = 0.5;
+                        result.vbo_data.push_back(circle->x);
+                        result.vbo_data.push_back(circle->y);
+                        result.vbo_data.push_back(0.5);
+                        result.vbo_data.push_back(circle->x - circle->radius);
+                        result.vbo_data.push_back(circle->y);
+                        result.vbo_data.push_back(0.5);
+                        result.vbo_data.push_back(circle->x);
+                        result.vbo_data.push_back(circle->y + circle->radius);
+                        result.vbo_data.push_back(0.5);
+                        result.vbo_data.push_back(circle->x + circle->radius);
+                        result.vbo_data.push_back(circle->y);
+                        result.vbo_data.push_back(0.5);
+                        result.vbo_data.push_back(circle->x);
+                        result.vbo_data.push_back(circle->y - circle->radius);
+                        result.vbo_data.push_back(0.5);
                         break;
                     case Geo::Type::ELLIPSE:
                         ellipse = static_cast<const Geo::Ellipse *>(item);
-                        data[data_count++] = (ellipse->a0().x + ellipse->a1().x + ellipse->b0().x + ellipse->b1().x) / 4;
-                        data[data_count++] = (ellipse->a0().y + ellipse->a1().y + ellipse->b0().y + ellipse->b1().y) / 4;
-                        data[data_count++] = 0.5;
-                        data[data_count++] = ellipse->a0().x;
-                        data[data_count++] = ellipse->a0().y;
-                        data[data_count++] = 0.5;
-                        data[data_count++] = ellipse->a1().x;
-                        data[data_count++] = ellipse->a1().y;
-                        data[data_count++] = 0.5;
-                        data[data_count++] = ellipse->b0().x;
-                        data[data_count++] = ellipse->b0().y;
-                        data[data_count++] = 0.5;
-                        data[data_count++] = ellipse->b1().x;
-                        data[data_count++] = ellipse->b1().y;
-                        data[data_count++] = 0.5;
+                        result.vbo_data.push_back((ellipse->a0().x + ellipse->a1().x + ellipse->b0().x + ellipse->b1().x) / 4);
+                        result.vbo_data.push_back((ellipse->a0().y + ellipse->a1().y + ellipse->b0().y + ellipse->b1().y) / 4);
+                        result.vbo_data.push_back(0.5);
+                        result.vbo_data.push_back(ellipse->a0().x);
+                        result.vbo_data.push_back(ellipse->a0().y);
+                        result.vbo_data.push_back(0.5);
+                        result.vbo_data.push_back(ellipse->a1().x);
+                        result.vbo_data.push_back(ellipse->a1().y);
+                        result.vbo_data.push_back(0.5);
+                        result.vbo_data.push_back(ellipse->b0().x);
+                        result.vbo_data.push_back(ellipse->b0().y);
+                        result.vbo_data.push_back(0.5);
+                        result.vbo_data.push_back(ellipse->b1().x);
+                        result.vbo_data.push_back(ellipse->b1().y);
+                        result.vbo_data.push_back(0.5);
                         break;
                     case Geo::Type::ARC:
                         for (const Geo::Point &point : static_cast<const Geo::Arc *>(item)->control_points)
                         {
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
+                            result.vbo_data.push_back(point.x);
+                            result.vbo_data.push_back(point.y);
+                            result.vbo_data.push_back(0.5);
                         }
                         break;
                     default:
@@ -2408,15 +2032,13 @@ std::tuple<double *, unsigned int> Canvas::refresh_circle_printable_points()
         }
     }
 
-    _point_count.circle = data_count / 3;
-    return std::make_tuple(data, data_count);
+    _point_count.circle = result.vbo_data.size() / 3;
+    return result;
 }
 
-std::tuple<double *, unsigned int> Canvas::refresh_curve_printable_points()
+Canvas::VBOData Canvas::refresh_curve_printable_points()
 {
-    unsigned int data_len = 1026, data_count = 0;
-    double *data = new double[data_len];
-
+    VBOData result;
     for (ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
         if (!group.visible())
@@ -2433,37 +2055,21 @@ std::tuple<double *, unsigned int> Canvas::refresh_curve_printable_points()
                 {
                     if (const Geo::BSpline *bspline = dynamic_cast<const Geo::BSpline *>(item))
                     {
-                        while (data_count + bspline->path_points.size() * 3 > data_len)
-                        {
-                            data_len *= 2;
-                            double *temp = new double[data_len];
-                            std::move(data, data + data_count, temp);
-                            delete []data;
-                            data = temp;
-                        }
                         for (const Geo::Point &point : bspline->path_points)
                         {
-                            data[data_count++] = point.x;
-                            data[data_count++] = point.y;
-                            data[data_count++] = 0.5;
+                            result.vbo_data.push_back(point.x);
+                            result.vbo_data.push_back(point.y);
+                            result.vbo_data.push_back(0.5);
                         }
                     }
                 }
                 break;
             case Geo::Type::BSPLINE:
-                while (data_count + static_cast<const Geo::BSpline *>(geo)->path_points.size() * 3 > data_len)
-                {
-                    data_len *= 2;
-                    double *temp = new double[data_len];
-                    std::move(data, data + data_count, temp);
-                    delete []data;
-                    data = temp;
-                }
                 for (const Geo::Point &point : static_cast<const Geo::BSpline *>(geo)->path_points)
                 {
-                    data[data_count++] = point.x;
-                    data[data_count++] = point.y;
-                    data[data_count++] = 0.5;
+                    result.vbo_data.push_back(point.x);
+                    result.vbo_data.push_back(point.y);
+                    result.vbo_data.push_back(0.5);
                 }
                 break;
             default:
@@ -2472,8 +2078,8 @@ std::tuple<double *, unsigned int> Canvas::refresh_curve_printable_points()
         }
     }
 
-    _point_count.curve = data_count / 3;
-    return std::make_tuple(data, data_count);
+    _point_count.curve = result.vbo_data.size() / 3;
+    return result;
 }
 
 
@@ -3277,9 +2883,8 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
 
 void Canvas::refresh_selected_vbo()
 {
-    std::future<std::tuple<double*, unsigned int, unsigned int*, unsigned int>> polyline_vbo,
-        polygon_vbo, circle_vbo, curve_vbo, text_vbo;
-    std::future<std::tuple<double*, unsigned int>> circle_point, curve_point, point_vbo;
+    std::future<VBOData> polyline_vbo, polygon_vbo, circle_vbo, curve_vbo,
+        text_vbo, circle_point, curve_point, point_vbo;
     bool refresh[6] = {false, false, false, false, false, false};
     for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
@@ -3404,65 +3009,54 @@ void Canvas::refresh_selected_vbo()
     if (refresh[5])
     {
         point_vbo.wait();
-        auto [data, data_count] = point_vbo.get();
+        VBOData data = point_vbo.get();
         glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.point); // point
-        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-        delete []data;
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
     }
     if (refresh[2])
     {
         circle_point.wait();
-        auto [circle_printable_points, circle_printable_count] = circle_point.get();
+        VBOData data = circle_point.get();
         glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle_printable_points); // circle printable points
-        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * circle_printable_count, circle_printable_points, GL_DYNAMIC_DRAW);
-        delete []circle_printable_points;
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
+
         circle_vbo.wait();
-        auto [data, data_count, indexs, index_count] = circle_vbo.get();
+        data = circle_vbo.get();
         glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle); // circle
-        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-        delete []data;
-        delete []indexs;
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
     }
     if (refresh[3])
     {
         curve_point.wait();
-        auto [curve_printable_points, curve_printable_count] = curve_point.get();
+        VBOData data = curve_point.get();
         glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve_printable_points); // curve printable points
-        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * curve_printable_count, curve_printable_points, GL_DYNAMIC_DRAW);
-        delete []curve_printable_points;
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
+
         curve_vbo.wait();
-        auto [data, data_count, indexs, index_count] = curve_vbo.get();
+        data = curve_vbo.get();
         glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve); // curve
-        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-        delete []data;
-        delete []indexs;
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
     }
     if (refresh[4])
     {
         text_vbo.wait();
-        auto [data, data_count, indexs, index_count] = text_vbo.get();
+        VBOData data = text_vbo.get();
         glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.text); // text
-        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-        delete []data;
-        delete []indexs;
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
     }
     if (refresh[0])
     {
         polyline_vbo.wait();
-        auto [data, data_count, indexs, index_count] = polyline_vbo.get();
+        VBOData data = polyline_vbo.get();
         glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polyline); // polyline
-        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-        delete []data;
-        delete []indexs;
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
     }
     if (refresh[1])
     {
         polygon_vbo.wait();
-        auto [data, data_count, indexs, index_count] = polygon_vbo.get();
+        VBOData data = polygon_vbo.get();
         glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polygon); // polygon
-        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data_count, data, GL_DYNAMIC_DRAW);
-        delete []data;
-        delete []indexs;
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
     }
     doneCurrent();
 }
@@ -3474,7 +3068,7 @@ void Canvas::clear_selected_ibo()
         _selected_index_count.point = 0;
 }
 
-std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_text_vbo()
+Canvas::VBOData Canvas::refresh_text_vbo()
 {
     QPainterPath path;
     const QFont font("SimSun", GlobalSetting::setting().text_size);
@@ -3489,10 +3083,7 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_t
     int width;
     QStringList strings;
 
-    unsigned int data_len = 4104, data_count = 0;
-    double *data = new double[data_len];
-    unsigned int index_len = 1368, index_count = 0;
-    unsigned int *indexs = new unsigned int[index_len];
+    VBOData result;
     for (const ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
         if (!group.visible())
@@ -3524,7 +3115,7 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_t
                     path.addText(coord.x - width / 2, coord.y - text_rect.height()
                         * (strings.length() / 2.0 - string_index++), font, string);
                 }
-                text->text_index = data_count;
+                text->text_index = result.vbo_data.size();
                 break;
             case Geo::Type::COMBINATION:
                 for (Geo::Geometry *item : *static_cast<const Combination *>(geo))
@@ -3549,47 +3140,31 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_t
                             path.addText(coord.x - width / 2, coord.y - text_rect.height()
                                 * (strings.length() / 2.0 - string_index++), font, string);
                         }
-                        text->text_index = data_count;
+                        text->text_index = result.vbo_data.size();
                     }
                     for (const QPolygonF &polygon : path.toSubpathPolygons())
                     {
-                        offset = data_count / 3;
-                        while (data_count + polygon.size() * 3 > data_len)
-                        {
-                            data_len *= 2;
-                            double *temp = new double[data_len];
-                            std::move(data, data + data_count, temp);
-                            delete []data;
-                            data = temp;
-                        }
+                        offset = result.vbo_data.size() / 3;
                         for (const QPointF &point : polygon)
                         {
                             points.append(Geo::Point(point.x(), coord.y * 2 - point.y()));
-                            data[data_count++] = point.x();
-                            data[data_count++] = coord.y * 2 - point.y();
-                            data[data_count++] = 0.5;
+                            result.vbo_data.push_back(point.x());
+                            result.vbo_data.push_back(coord.y * 2 - point.y());
+                            result.vbo_data.push_back(0.5);
                         }
 
                         const std::vector<unsigned int> index(Geo::ear_cut_to_indexs(points));
-                        while (index_count + index.size() >= index_len)
-                        {
-                            index_len *= 2;
-                            unsigned int *temp = new unsigned int[index_len];
-                            std::move(indexs, indexs + index_count, temp);
-                            delete []indexs;
-                            indexs = temp;
-                        }
                         for (const unsigned int i : index)
                         {
-                            indexs[index_count++] = offset + i;
+                            result.ibo_data.push_back(offset + i);
                         }
 
                         points.clear();
-                        indexs[index_count++] = UINT_MAX;
+                        result.ibo_data.push_back(UINT_MAX);
                     }
                     if (text != nullptr)
                     {
-                        text->text_count = data_count - text->text_index;
+                        text->text_count = result.vbo_data.size() - text->text_index;
                     }
                     path.clear();
                 }
@@ -3599,50 +3174,35 @@ std::tuple<double*, unsigned int, unsigned int*, unsigned int> Canvas::refresh_t
             }
             for (const QPolygonF &polygon : path.toSubpathPolygons())
             {
-                offset = data_count / 3;
-                while (data_count + polygon.size() * 3 > data_len)
-                {
-                    data_len *= 2;
-                    double *temp = new double[data_len];
-                    std::move(data, data + data_count, temp);
-                    delete []data;
-                    data = temp;
-                }
+                offset = result.vbo_data.size() / 3;
                 for (const QPointF &point : polygon)
                 {
                     points.append(Geo::Point(point.x(),  coord.y * 2 - point.y()));
-                    data[data_count++] = point.x();
-                    data[data_count++] = coord.y * 2 - point.y();
-                    data[data_count++] = 0.5;
+                    result.vbo_data.push_back(point.x());
+                    result.vbo_data.push_back(coord.y * 2 - point.y());
+                    result.vbo_data.push_back(0.5);
                 }
 
                 const std::vector<unsigned int> index(Geo::ear_cut_to_indexs(points));
-                while (index_count + index.size() >= index_len)
-                {
-                    index_len *= 2;
-                    unsigned int *temp = new unsigned int[index_len];
-                    std::move(indexs, indexs + index_count, temp);
-                    delete []indexs;
-                    indexs = temp;
-                }
                 for (const unsigned int i : index)
                 {
-                    indexs[index_count++] = offset + i;
+                    result.ibo_data.push_back(offset + i);
                 }
 
                 points.clear();
-                indexs[index_count++] = UINT_MAX;
+                result.ibo_data.push_back(UINT_MAX);
             }
             if (dynamic_cast<Text *>(geo) != nullptr)
             {
-                text->text_count = data_count - text->text_index;
+                text->text_count = result.vbo_data.size() - text->text_index;
             }
             path.clear();
         }
     }
 
-    _text_brush_count = index_count;
-    return std::make_tuple(data, data_count, indexs, index_count);
+    _text_brush_IBO = result.ibo_data.size();
+    _text_brush_count = result.vbo_data.size();
+    return result;
 }
 
 
