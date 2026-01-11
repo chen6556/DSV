@@ -283,7 +283,7 @@ Geo::Bezier Geo::arc_to_bezier(const Geo::Arc &arc)
 Geo::Polygon Geo::circle_to_polygon(const double x, const double y, const double r, const double down_sampling_value)
 {
     const double v = std::asin(1 / r);
-    const double step = std::isnan(v) ? Geo::PI / 32 : std::min(v, Geo::PI / 64);
+    const double step = std::isnan(v) ? Geo::PI / 32 : std::max(std::min(v, Geo::PI / 64), Geo::PI / 4096);
     double degree = 0;
     std::vector<Geo::Point> points;
     while (degree < Geo::PI * 2)
