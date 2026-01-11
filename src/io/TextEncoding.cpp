@@ -139,7 +139,7 @@ bool TextEncoding::encoding_convert(const char *charset_src, const char *charset
     const char *inbuf, size_t insize, char *outbuf, size_t outsize)
 {
     iconv_t cd;
-    char** pin = (char **)&inbuf;
+    char** pin = const_cast<char **>(&inbuf);
     char** pout = &outbuf;
     cd = iconv_open(charset_dest, charset_src);
     if (0 == cd)
