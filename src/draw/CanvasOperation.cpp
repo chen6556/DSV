@@ -451,7 +451,7 @@ bool MoveOperation::mouse_move(QMouseEvent *event)
     {
         editer->translate_points(clicked_object, real_pos[2], real_pos[3], real_pos[0], real_pos[1], event->modifiers() == Qt::ControlModifier);
         refresh_tool_lines(clicked_object);
-        canvas->refresh_vbo(clicked_object->type(), event->modifiers() == Qt::ControlModifier);
+        canvas->refresh_vbo(clicked_object->type());
         if (event->modifiers() == Qt::ControlModifier)
         {
             canvas->refresh_selected_ibo(clicked_object);
@@ -483,7 +483,7 @@ bool MoveOperation::mouse_move(QMouseEvent *event)
             editer->translate_points(object, real_pos[2], real_pos[3], real_pos[0], real_pos[1], false);
             types.insert(object->type());
         }
-        canvas->refresh_vbo(types, false);
+        canvas->refresh_vbo(types);
     }
     if (GlobalSetting::setting().show_text)
     {
@@ -3505,7 +3505,7 @@ bool MirrorOperation::mouse_press(QMouseEvent *event)
                         types.insert(object->type());
                     }
                 }
-                canvas->refresh_vbo(types, true);
+                canvas->refresh_vbo(types);
                 canvas->refresh_selected_ibo();
                 return true;
             }
@@ -3585,7 +3585,7 @@ bool RingArrayOperation::mouse_press(QMouseEvent *event)
                     types.insert(object->type());
                 }
             }
-            canvas->refresh_vbo(types, true);
+            canvas->refresh_vbo(types);
             canvas->refresh_selected_ibo();
             tool[0] = Tool::Select;
             return true;
@@ -3628,7 +3628,7 @@ bool RingArrayOperation::read_parameters(const double *params, const int count)
                     types.insert(object->type());
                 }
             }
-            canvas->refresh_vbo(types, true);
+            canvas->refresh_vbo(types);
             canvas->refresh_selected_ibo();
             tool[0] = Tool::Select;
             return true;
@@ -3671,7 +3671,7 @@ bool ShapeDifferenceOperation::mouse_press(QMouseEvent *event)
                 {
                     types.insert(Geo::Type::POLYLINE);
                 }
-                canvas->refresh_vbo(types, true);
+                canvas->refresh_vbo(types);
                 canvas->refresh_selected_ibo();
                 tool[0] = Tool::Select;
                 return true;
@@ -3720,13 +3720,13 @@ bool FilletOperation::mouse_press(QMouseEvent *event)
                     }
                     if (_radius0 == _radius1 && editer->fillet(dynamic_cast<Geo::Polygon *>(clicked_object), point, _radius0))
                     {
-                        canvas->refresh_vbo({Geo::Type::POLYGON, Geo::Type::POLYLINE, Geo::Type::ARC}, true);
+                        canvas->refresh_vbo({Geo::Type::POLYGON, Geo::Type::POLYLINE, Geo::Type::ARC});
                         canvas->refresh_selected_ibo();
                         result = true;
                     }
                     else if (_radius0 != _radius1 && editer->fillet(dynamic_cast<Geo::Polygon *>(clicked_object), point, _radius0, _radius1))
                     {
-                        canvas->refresh_vbo({Geo::Type::POLYGON, Geo::Type::POLYLINE, Geo::Type::BEZIER}, true);
+                        canvas->refresh_vbo({Geo::Type::POLYGON, Geo::Type::POLYLINE, Geo::Type::BEZIER});
                         canvas->refresh_selected_ibo();
                         result = true;
                     }
@@ -3742,13 +3742,13 @@ bool FilletOperation::mouse_press(QMouseEvent *event)
                     }
                     if (_radius0 == _radius1 && editer->fillet(dynamic_cast<Geo::Polyline *>(clicked_object), point, _radius0))
                     {
-                        canvas->refresh_vbo({Geo::Type::POLYLINE, Geo::Type::ARC}, true);
+                        canvas->refresh_vbo({Geo::Type::POLYLINE, Geo::Type::ARC});
                         canvas->refresh_selected_ibo();
                         result = true;
                     }
                     else if (_radius0 != _radius1 && editer->fillet(dynamic_cast<Geo::Polyline *>(clicked_object), point, _radius0, _radius1))
                     {
-                        canvas->refresh_vbo({Geo::Type::POLYLINE, Geo::Type::BEZIER}, true);
+                        canvas->refresh_vbo({Geo::Type::POLYLINE, Geo::Type::BEZIER});
                         canvas->refresh_selected_ibo();
                         result = true;
                     }
@@ -3783,7 +3783,7 @@ bool FilletOperation::mouse_press(QMouseEvent *event)
                     _pos0, dynamic_cast<Geo::Polyline *>(_object1), _pos1, _radius0))
                 {
                     _object0 = _object1 = nullptr;
-                    canvas->refresh_vbo({Geo::Type::POLYLINE, Geo::Type::ARC}, true);
+                    canvas->refresh_vbo({Geo::Type::POLYLINE, Geo::Type::ARC});
                     canvas->refresh_selected_ibo();
                     return true;
                 }
@@ -3791,7 +3791,7 @@ bool FilletOperation::mouse_press(QMouseEvent *event)
                     _pos0, dynamic_cast<Geo::Polyline *>(_object1), _pos1, _radius0, _radius1))
                 {
                     _object0 = _object1 = nullptr;
-                    canvas->refresh_vbo({Geo::Type::POLYLINE, Geo::Type::BEZIER}, true);
+                    canvas->refresh_vbo({Geo::Type::POLYLINE, Geo::Type::BEZIER});
                     canvas->refresh_selected_ibo();
                     return true;
                 }
@@ -3882,7 +3882,7 @@ bool FreeFilletOperation::mouse_press(QMouseEvent *event)
                 types.insert(Geo::Type::BEZIER);
                 types.insert(_object0->type());
                 types.insert(_object1->type());
-                canvas->refresh_vbo(types, false);
+                canvas->refresh_vbo(types);
                 canvas->refresh_selected_ibo();
             }
             reset();
@@ -4041,7 +4041,7 @@ bool FreeFilletOperation::read_parameters(const double *params, const int count)
             types.insert(Geo::Type::BEZIER);
             types.insert(_object0->type());
             types.insert(_object1->type());
-            canvas->refresh_vbo(types, false);
+            canvas->refresh_vbo(types);
             canvas->refresh_selected_ibo();
         }
         reset();
@@ -4091,7 +4091,7 @@ bool ChamferOperation::mouse_press(QMouseEvent *event)
                 }
                 if (editer->chamfer(dynamic_cast<Geo::Polygon *>(clicked_object), point, _distance))
                 {
-                    canvas->refresh_vbo(Geo::Type::POLYGON, true);
+                    canvas->refresh_vbo(Geo::Type::POLYGON);
                     canvas->refresh_selected_ibo();
                     result = true;
                 }
@@ -4107,7 +4107,7 @@ bool ChamferOperation::mouse_press(QMouseEvent *event)
                 }
                 if (editer->chamfer(dynamic_cast<Geo::Polyline *>(clicked_object), point, _distance))
                 {
-                    canvas->refresh_vbo(Geo::Type::POLYLINE, true);
+                    canvas->refresh_vbo(Geo::Type::POLYLINE);
                     canvas->refresh_selected_ibo();
                     result = true;
                 }
@@ -4325,43 +4325,43 @@ bool TrimOperation::mouse_press(QMouseEvent *event)
             {
             case Geo::Type::POLYLINE:
                 editer->trim(static_cast<Geo::Polyline *>(clicked_object), real_pos[0], real_pos[1]);
-                canvas->refresh_vbo(Geo::Type::POLYLINE, true);
+                canvas->refresh_vbo(Geo::Type::POLYLINE);
                 canvas->refresh_selected_ibo();
                 result = true;
                 break;
             case Geo::Type::POLYGON:
                 editer->trim(static_cast<Geo::Polygon *>(clicked_object), real_pos[0], real_pos[1]);
-                canvas->refresh_vbo({Geo::Type::POLYGON, Geo::Type::POLYLINE}, true);
+                canvas->refresh_vbo({Geo::Type::POLYGON, Geo::Type::POLYLINE});
                 canvas->refresh_selected_ibo();
                 result = true;
                 break;
             case Geo::Type::BEZIER:
                 editer->trim(static_cast<Geo::Bezier *>(clicked_object), real_pos[0], real_pos[1]);
-                canvas->refresh_vbo(Geo::Type::BEZIER, true);
+                canvas->refresh_vbo(Geo::Type::BEZIER);
                 canvas->refresh_selected_ibo();
                 result = true;
                 break;
             case Geo::Type::BSPLINE:
                 editer->trim(static_cast<Geo::BSpline *>(clicked_object), real_pos[0], real_pos[1]);
-                canvas->refresh_vbo(Geo::Type::BSPLINE, true);
+                canvas->refresh_vbo(Geo::Type::BSPLINE);
                 canvas->refresh_selected_ibo();
                 result = true;
                 break;
             case Geo::Type::CIRCLE:
                 editer->trim(static_cast<Geo::Circle *>(clicked_object), real_pos[0], real_pos[1]);
-                canvas->refresh_vbo(Geo::Type::CIRCLE, true);
+                canvas->refresh_vbo(Geo::Type::CIRCLE);
                 canvas->refresh_selected_ibo();
                 result = true;
                 break;
             case Geo::Type::ELLIPSE:
                 editer->trim(static_cast<Geo::Ellipse *>(clicked_object), real_pos[0], real_pos[1]);
-                canvas->refresh_vbo(Geo::Type::ELLIPSE, true);
+                canvas->refresh_vbo(Geo::Type::ELLIPSE);
                 canvas->refresh_selected_ibo();
                 result = true;
                 break;
             case Geo::Type::ARC:
                 editer->trim(static_cast<Geo::Arc *>(clicked_object), real_pos[0], real_pos[1]);
-                canvas->refresh_vbo(Geo::Type::ARC, true);
+                canvas->refresh_vbo(Geo::Type::ARC);
                 canvas->refresh_selected_ibo();
                 result = true;
                 break;
@@ -4389,15 +4389,15 @@ bool ExtendOperation::mouse_press(QMouseEvent *event)
             {
             case Geo::Type::POLYLINE:
                 editer->extend(static_cast<Geo::Polyline *>(clicked_object), real_pos[0], real_pos[1]);
-                canvas->refresh_vbo(Geo::Type::POLYLINE, true);
+                canvas->refresh_vbo(Geo::Type::POLYLINE);
                 break;
             case Geo::Type::BEZIER:
                 editer->extend(static_cast<Geo::Bezier *>(clicked_object), real_pos[0], real_pos[1]);
-                canvas->refresh_vbo(Geo::Type::BEZIER, true);
+                canvas->refresh_vbo(Geo::Type::BEZIER);
                 break;
             case Geo::Type::BSPLINE:
                 editer->extend(static_cast<Geo::BSpline *>(clicked_object), real_pos[0], real_pos[1]);
-                canvas->refresh_vbo(Geo::Type::BSPLINE, true);
+                canvas->refresh_vbo(Geo::Type::BSPLINE);
                 break;
             default:
                 return false;
@@ -4421,7 +4421,7 @@ bool SplitOperation::mouse_press(QMouseEvent *event)
         if (clicked_object = editer->select(real_pos[0], real_pos[1], true);
             clicked_object != nullptr && editer->split(clicked_object, Geo::Point(real_pos[0], real_pos[1])))
         {
-            canvas->refresh_vbo(clicked_object->type(), true);
+            canvas->refresh_vbo(clicked_object->type());
             canvas->refresh_selected_ibo();
             return true;
         }
@@ -4468,7 +4468,7 @@ bool BlendOperation::mouse_press(QMouseEvent *event)
                 if (editer->blend(_object0, _object1, _pos[0], _pos[1]))
                 {
                     _object1->is_selected = false;
-                    canvas->refresh_vbo(Geo::Type::BEZIER, false);
+                    canvas->refresh_vbo(Geo::Type::BEZIER);
                     canvas->refresh_selected_ibo();
                 }
                 _object0 = _object1 = nullptr;

@@ -338,7 +338,7 @@ bool CMDWidget::work()
             break;
         case CMD::Undo_CMD:
             CanvasOperations::CanvasOperation::editer->undo();
-            CanvasOperations::CanvasOperation::canvas->refresh_vbo(true);
+            CanvasOperations::CanvasOperation::canvas->refresh_vbo();
             CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
             CanvasOperations::CanvasOperation::canvas->update();
             _current_cmd = CMD::Error_CMD;
@@ -520,7 +520,7 @@ void CMDWidget::delete_selected_objects()
     {
         CanvasOperations::CanvasOperation::operation().clear();
         CanvasOperations::CanvasOperation::editer->remove_selected();
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
         CanvasOperations::CanvasOperation::canvas->update();
     }
@@ -540,7 +540,7 @@ void CMDWidget::connect_polyline()
     }
     if (CanvasOperations::CanvasOperation::editer->connect(objects, GlobalSetting::setting().catch_distance))
     {
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
     }
 }
@@ -560,7 +560,7 @@ void CMDWidget::close_polyline()
     types.insert(Geo::Type::POLYGON);
     if (CanvasOperations::CanvasOperation::editer->close_polyline(objects))
     {
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
     }
 }
@@ -585,7 +585,7 @@ void CMDWidget::combinate()
                 types.insert(object->type());
             }
         }
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
     }
 }
@@ -607,7 +607,7 @@ void CMDWidget::detach()
     if (!types.empty())
     {
         CanvasOperations::CanvasOperation::editer->detach(objects);
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
     }
 }
@@ -646,7 +646,7 @@ void CMDWidget::scale()
                         types.insert(object->type());
                     }
                 }
-                CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, false);
+                CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
                 if (objects.size() == 1)
                 {
                     CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo(objects.front());
@@ -692,7 +692,7 @@ void CMDWidget::offset()
                 {
                     types.insert(object->type());
                 }
-                CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+                CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
                 CanvasOperations::CanvasOperation::canvas->update();
                 clear();
             }
@@ -739,7 +739,7 @@ void CMDWidget::line_array()
                     types.insert(object->type());
                 }
             }
-            CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+            CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
             CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
             CanvasOperations::CanvasOperation::canvas->update();
         }
@@ -767,7 +767,7 @@ void CMDWidget::line_array()
                         types.insert(object->type());
                     }
                 }
-                CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+                CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
                 CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
                 CanvasOperations::CanvasOperation::canvas->update();
             }
@@ -803,11 +803,11 @@ void CMDWidget::flip_x()
     }
     if (types.empty())
     {
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(false);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo();
     }
     else
     {
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, false);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
     }
     if (objects.size() == 1)
     {
@@ -839,11 +839,11 @@ void CMDWidget::flip_y()
     }
     if (types.empty())
     {
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(false);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo();
     }
     else
     {
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, false);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
     }
     if (objects.size() == 1)
     {
@@ -890,7 +890,7 @@ void CMDWidget::shape_intersection()
         {
             types.insert(Geo::Type::POLYLINE);
         }
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
         CanvasOperations::CanvasOperation::canvas->update();
     }
@@ -933,7 +933,7 @@ void CMDWidget::shape_union()
         {
             types.insert(Geo::Type::POLYLINE);
         }
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
         CanvasOperations::CanvasOperation::canvas->update();
     }
@@ -976,7 +976,7 @@ void CMDWidget::shape_xor()
         {
             types.insert(Geo::Type::POLYLINE);
         }
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types, true);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
         CanvasOperations::CanvasOperation::canvas->update();
     }
