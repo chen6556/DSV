@@ -1373,7 +1373,7 @@ void Canvas::refresh_vbo(const Geo::Type type)
         if (VBOData data = refresh_point_vbo(); !data.vbo_data.empty())
         {
             makeCurrent();
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.text); // point
+            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.point); // point
             glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
             doneCurrent();
         }
