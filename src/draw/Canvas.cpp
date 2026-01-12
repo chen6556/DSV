@@ -297,7 +297,7 @@ void Canvas::paintGL()
 
         if (_selected_index_count.point > 0) // selected
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _selected_ibo.point); // points
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.point); // points
             glUniform4f(_uniforms.color, 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
             glDrawElements(GL_POINTS, _selected_index_count.point, GL_UNSIGNED_INT, NULL);
         }
@@ -2093,114 +2093,41 @@ void Canvas::refresh_select_rect(const double x0, const double y0, const double 
 
 void Canvas::refresh_selected_ibo()
 {
-    unsigned int polyline_index_len = 512, polyline_index_count = 0;
-    unsigned int polygon_index_len = 512, polygon_index_count = 0;
-    unsigned int circle_index_len = 512, circle_index_count = 0;
-    unsigned int curve_index_len = 512, curve_index_count = 0;
-    unsigned int point_index_len = 256, point_index_count = 0;
-    unsigned int *polyline_indexs = new unsigned int[polyline_index_len];
-    unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
-    unsigned int *circle_indexs = new unsigned int[circle_index_len];
-    unsigned int *curve_indexs = new unsigned int[curve_index_len];
-    unsigned int *point_indexs = new unsigned int[point_index_len];
+    std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
     for (const Geo::Geometry *geo : _editer->selected())
     {
         switch (geo->type())
         {
         case Geo::Type::POLYLINE:
-            while (polyline_index_count + geo->point_count >= polyline_index_len)
-            {
-                polyline_index_len *= 2;
-                unsigned int *temp = new unsigned int[polyline_index_len];
-                std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                delete []polyline_indexs;
-                polyline_indexs = temp;
-            }
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                polyline_indexs[polyline_index_count++] = index++;
+                polyline_indexs.push_back(index++);
             }
-            polyline_indexs[polyline_index_count++] = UINT_MAX;
-            if (polyline_index_count == polyline_index_len)
-            {
-                polyline_index_len *= 2;
-                unsigned int *temp = new unsigned int[polyline_index_len];
-                std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                delete []polyline_indexs;
-                polyline_indexs = temp;
-            }
+            polyline_indexs.push_back(UINT_MAX);
             break;
         case Geo::Type::POLYGON:
-            while (polygon_index_count + geo->point_count >= polygon_index_len)
-            {
-                polygon_index_len *= 2;
-                unsigned int *temp = new unsigned int[polygon_index_len];
-                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                delete []polygon_indexs;
-                polygon_indexs = temp;
-            }
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                polygon_indexs[polygon_index_count++] = index++;
+                polygon_indexs.push_back(index++);
             }
-            polygon_indexs[polygon_index_count++] = UINT_MAX;
-            if (polygon_index_count == polygon_index_len)
-            {
-                polygon_index_len *= 2;
-                unsigned int *temp = new unsigned int[polygon_index_len];
-                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                delete []polygon_indexs;
-                polygon_indexs = temp;
-            }
+            polygon_indexs.push_back(UINT_MAX);
             break;
         case Geo::Type::CIRCLE:
         case Geo::Type::ELLIPSE:
         case Geo::Type::ARC:
-            while (circle_index_count + geo->point_count >= circle_index_len)
-            {
-                circle_index_len *= 2;
-                unsigned int *temp = new unsigned int[circle_index_len];
-                std::move(circle_indexs, circle_indexs + circle_index_count, temp);
-                delete []circle_indexs;
-                circle_indexs = temp;
-            }
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                circle_indexs[circle_index_count++] = index++;
+                circle_indexs.push_back(index++);
             }
-            circle_indexs[circle_index_count++] = UINT_MAX;
-            if (circle_index_count == circle_index_len)
-            {
-                circle_index_len *= 2;
-                unsigned int *temp = new unsigned int[circle_index_len];
-                std::move(circle_indexs, circle_indexs + circle_index_count, temp);
-                delete []circle_indexs;
-                circle_indexs = temp;
-            }
+            circle_indexs.push_back(UINT_MAX);
             break;
         case Geo::Type::BEZIER:
         case Geo::Type::BSPLINE:
-            while (curve_index_count + geo->point_count >= curve_index_len)
-            {
-                curve_index_len *= 2;
-                unsigned int *temp = new unsigned int[curve_index_len];
-                std::move(curve_indexs, curve_indexs + curve_index_count, temp);
-                delete []curve_indexs;
-                curve_indexs = temp;
-            }
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                curve_indexs[curve_index_count++] = index++;
+                curve_indexs.push_back(index++);
             }
-            curve_indexs[curve_index_count++] = UINT_MAX;
-            if (curve_index_count == curve_index_len)
-            {
-                curve_index_len *= 2;
-                unsigned int *temp = new unsigned int[curve_index_len];
-                std::move(curve_indexs, curve_indexs + curve_index_count, temp);
-                delete []curve_indexs;
-                curve_indexs = temp;
-            }
+            curve_indexs.push_back(UINT_MAX);
             break;
         case Geo::Type::COMBINATION:
             for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
@@ -2208,110 +2135,38 @@ void Canvas::refresh_selected_ibo()
                 switch (item->type())
                 {
                 case Geo::Type::POLYLINE:
-                    while (polyline_index_count + item->point_count >= polyline_index_len)
-                    {
-                        polyline_index_len *= 2;
-                        unsigned int *temp = new unsigned int[polyline_index_len];
-                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                        delete []polyline_indexs;
-                        polyline_indexs = temp;
-                    }
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        polyline_indexs[polyline_index_count++] = index++;
+                        polyline_indexs.push_back(index++);
                     }
-                    polyline_indexs[polyline_index_count++] = UINT_MAX;
-                    if (polyline_index_count == polyline_index_len)
-                    {
-                        polyline_index_len *= 2;
-                        unsigned int *temp = new unsigned int[polyline_index_len];
-                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                        delete []polyline_indexs;
-                        polyline_indexs = temp;
-                    }
+                    polyline_indexs.push_back(UINT_MAX);
                     break;
                 case Geo::Type::POLYGON:
-                    while (polygon_index_count + item->point_count >= polygon_index_len)
-                    {
-                        polygon_index_len *= 2;
-                        unsigned int *temp = new unsigned int[polygon_index_len];
-                        std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                        delete []polygon_indexs;
-                        polygon_indexs = temp;
-                    }
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        polygon_indexs[polygon_index_count++] = index++;
+                        polygon_indexs.push_back(index++);
                     }
-                    polygon_indexs[polygon_index_count++] = UINT_MAX;
-                    if (polygon_index_count == polygon_index_len)
-                    {
-                        polygon_index_len *= 2;
-                        unsigned int *temp = new unsigned int[polygon_index_len];
-                        std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                        delete []polygon_indexs;
-                        polygon_indexs = temp;
-                    }
+                    polygon_indexs.push_back(UINT_MAX);
                     break;
                 case Geo::Type::CIRCLE:
                 case Geo::Type::ELLIPSE:
                 case Geo::Type::ARC:
-                    while (circle_index_count + item->point_count >= circle_index_len)
-                    {
-                        circle_index_len *= 2;
-                        unsigned int *temp = new unsigned int[circle_index_len];
-                        std::move(circle_indexs, circle_indexs + circle_index_count, temp);
-                        delete []circle_indexs;
-                        circle_indexs = temp;
-                    }
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        circle_indexs[circle_index_count++] = index++;
+                        circle_indexs.push_back(index++);
                     }
-                    circle_indexs[circle_index_count++] = UINT_MAX;
-                    if (circle_index_count == circle_index_len)
-                    {
-                        circle_index_len *= 2;
-                        unsigned int *temp = new unsigned int[circle_index_len];
-                        std::move(circle_indexs, circle_indexs + circle_index_count, temp);
-                        delete []circle_indexs;
-                        circle_indexs = temp;
-                    }
+                    circle_indexs.push_back(UINT_MAX);
                     break;
                 case Geo::Type::BEZIER:
                 case Geo::Type::BSPLINE:
-                    while (curve_index_count + item->point_count >= curve_index_len)
-                    {
-                        curve_index_len *= 2;
-                        unsigned int *temp = new unsigned int[curve_index_len];
-                        std::move(curve_indexs, curve_indexs + curve_index_count, temp);
-                        delete []curve_indexs;
-                        curve_indexs = temp;
-                    }
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        curve_indexs[curve_index_count++] = index++; 
+                        curve_indexs.push_back(index++);
                     }
-                    curve_indexs[curve_index_count++] = UINT_MAX;
-                    if (curve_index_count == curve_index_len)
-                    {
-                        curve_index_len *= 2;
-                        unsigned int *temp = new unsigned int[curve_index_len];
-                        std::move(curve_indexs, curve_indexs + curve_index_count, temp);
-                        delete []curve_indexs;
-                        curve_indexs = temp;
-                    }
+                    curve_indexs.push_back(UINT_MAX);
                     break;
                 case Geo::Type::POINT:
-                    point_indexs[point_index_count++] = item->point_index;
-                    if (point_index_len == point_index_count)
-                    {
-                        point_index_len *= 2;
-                        unsigned int *temp = new unsigned int[point_index_len];
-                        std::move(point_indexs, point_indexs + point_index_count, temp);
-                        delete []point_indexs;
-                        point_indexs = temp;
-                    }
+                    point_indexs.push_back(item->point_index);
                     break;
                 default:
                     break;
@@ -2319,276 +2174,174 @@ void Canvas::refresh_selected_ibo()
             }
             break;
         case Geo::Type::POINT:
-            point_indexs[point_index_count++] = geo->point_index;
-            if (point_index_len == point_index_count)
-            {
-                point_index_len *= 2;
-                unsigned int *temp = new unsigned int[point_index_len];
-                std::move(point_indexs, point_indexs + point_index_count, temp);
-                delete []point_indexs;
-                point_indexs = temp;
-            }
+            point_indexs.push_back(geo->point_index);
             break;
         default:
             continue;
         }
     }
 
-    _selected_index_count.polyline = polyline_index_count;
-    _selected_index_count.polygon = polygon_index_count;
-    _selected_index_count.circle = circle_index_count;
-    _selected_index_count.curve = curve_index_count;
-    _selected_index_count.point = point_index_count;
+    _selected_index_count.polyline = polyline_indexs.size();
+    _selected_index_count.polygon = polygon_indexs.size();
+    _selected_index_count.circle = circle_indexs.size();
+    _selected_index_count.curve = curve_indexs.size();
+    _selected_index_count.point = point_indexs.size();
 
     makeCurrent();
-    if (polyline_index_count > 0)
+    if (!polyline_indexs.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polyline);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_index_count * sizeof(unsigned int), polyline_indexs, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_indexs.size() * sizeof(unsigned int), polyline_indexs.data(), GL_DYNAMIC_DRAW);
     }
-    if (polygon_index_count > 0)
+    if (!polygon_indexs.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polygon);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_index_count * sizeof(unsigned int), polygon_indexs, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_indexs.size() * sizeof(unsigned int), polygon_indexs.data(), GL_DYNAMIC_DRAW);
     }
-    if (circle_index_count > 0)
+    if (!circle_indexs.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.circle);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_index_count * sizeof(unsigned int), circle_indexs, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indexs.size() * sizeof(unsigned int), circle_indexs.data(), GL_DYNAMIC_DRAW);
     }
-    if (curve_index_count > 0)
+    if (!curve_indexs.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.curve);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_index_count * sizeof(unsigned int), curve_indexs, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_indexs.size() * sizeof(unsigned int), curve_indexs.data(), GL_DYNAMIC_DRAW);
     }
-    if (point_index_count > 0)
+    if (!point_indexs.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.point);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_index_count * sizeof(unsigned int), point_indexs, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_indexs.size() * sizeof(unsigned int), point_indexs.data(), GL_DYNAMIC_DRAW);
     }
     doneCurrent();
-
-    delete []polyline_indexs;
-    delete []polygon_indexs;
-    delete []circle_indexs;
-    delete []curve_indexs;
-    delete []point_indexs;
 }
 
 void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
 {
     if (object->type() == Geo::Type::COMBINATION)
     {
-        unsigned int polyline_index_len = 512, polyline_index_count = 0;
-        unsigned int polygon_index_len = 512, polygon_index_count = 0;
-        unsigned int circle_index_len = 512, circle_index_count = 0;
-        unsigned int curve_index_len = 512, curve_index_count = 0;
-        unsigned int point_index_len = 256, point_index_count = 0;
-        unsigned int *polyline_indexs = new unsigned int[polyline_index_len];
-        unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
-        unsigned int *circle_indexs = new unsigned int[circle_index_len];
-        unsigned int *curve_indexs = new unsigned int[curve_index_len];
-        unsigned int *point_indexs = new unsigned int[point_index_len];
+        std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
         for (const Geo::Geometry *item : *static_cast<const Combination *>(object))
         {
             switch (item->type())
             {
             case Geo::Type::POLYLINE:
-                while (polyline_index_count + item->point_count >= polyline_index_len)
-                {
-                    polyline_index_len *= 2;
-                    unsigned int *temp = new unsigned int[polyline_index_len];
-                    std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                    delete []polyline_indexs;
-                    polyline_indexs = temp;
-                }
                 for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                 {
-                    polyline_indexs[polyline_index_count++] = index++;
+                    polyline_indexs.push_back(index++);
                 }
-                polyline_indexs[polyline_index_count++] = UINT_MAX;
-                if (polyline_index_count == polyline_index_len)
-                {
-                    polyline_index_len *= 2;
-                    unsigned int *temp = new unsigned int[polyline_index_len];
-                    std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                    delete []polyline_indexs;
-                    polyline_indexs = temp;
-                }
+                polyline_indexs.push_back(UINT_MAX);
                 break;
             case Geo::Type::POLYGON:
-                while (polygon_index_count + item->point_count >= polygon_index_len)
-                {
-                    polygon_index_len *= 2;
-                    unsigned int *temp = new unsigned int[polygon_index_len];
-                    std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                    delete []polygon_indexs;
-                    polygon_indexs = temp;
-                }
                 for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                 {
-                    polygon_indexs[polygon_index_count++] = index++;
+                    polygon_indexs.push_back(index++);
                 }
-                polygon_indexs[polygon_index_count++] = UINT_MAX;
-                if (polygon_index_count == polygon_index_len)
-                {
-                    polygon_index_len *= 2;
-                    unsigned int *temp = new unsigned int[polygon_index_len];
-                    std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                    delete []polygon_indexs;
-                    polygon_indexs = temp;
-                }
+                polygon_indexs.push_back(UINT_MAX);
                 break;
             case Geo::Type::CIRCLE:
             case Geo::Type::ELLIPSE:
             case Geo::Type::ARC:
-                while (circle_index_count + item->point_count >= circle_index_len)
-                {
-                    circle_index_len *= 2;
-                    unsigned int *temp = new unsigned int[circle_index_len];
-                    std::move(circle_indexs, circle_indexs + circle_index_count, temp);
-                    delete []circle_indexs;
-                    circle_indexs = temp;
-                }
                 for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                 {
-                    circle_indexs[circle_index_count++] = index++;
+                    circle_indexs.push_back(index++);
                 }
-                circle_indexs[circle_index_count++] = UINT_MAX;
-                if (circle_index_count == circle_index_len)
-                {
-                    circle_index_len *= 2;
-                    unsigned int *temp = new unsigned int[circle_index_len];
-                    std::move(circle_indexs, circle_indexs + circle_index_count, temp);
-                    delete []circle_indexs;
-                    circle_indexs = temp;
-                }
+                circle_indexs.push_back(UINT_MAX);
                 break;
             case Geo::Type::BEZIER:
             case Geo::Type::BSPLINE:
-                while (curve_index_count + item->point_count >= curve_index_len)
-                {
-                    curve_index_len *= 2;
-                    unsigned int *temp = new unsigned int[curve_index_len];
-                    std::move(curve_indexs, curve_indexs + curve_index_count, temp);
-                    delete []curve_indexs;
-                    curve_indexs = temp;
-                }
                 for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                 {
-                    curve_indexs[curve_index_count++] = index++;   
+                    curve_indexs.push_back(index++);   
                 }
-                curve_indexs[curve_index_count++] = UINT_MAX;
-                if (curve_index_count == curve_index_len)
-                {
-                    curve_index_len *= 2;
-                    unsigned int *temp = new unsigned int[curve_index_len];
-                    std::move(curve_indexs, curve_indexs + curve_index_count, temp);
-                    delete []curve_indexs;
-                    curve_indexs = temp;
-                }
+                curve_indexs.push_back(UINT_MAX);
                 break;
             case Geo::Type::POINT:
-                point_indexs[point_index_count++] = item->point_index;
-                if (point_index_len == point_index_count)
-                {
-                    point_index_len *= 2;
-                    unsigned int *temp = new unsigned int[point_index_len];
-                    std::move(point_indexs, point_indexs + point_index_count, temp);
-                    delete []point_indexs;
-                    point_indexs = temp;
-                }
+                point_indexs.push_back(item->point_index);
                 break;
             default:
                 break;
             }
         }
 
-        _selected_index_count.polyline = polyline_index_count;
-        _selected_index_count.polygon = polygon_index_count;
-        _selected_index_count.circle = circle_index_count;
-        _selected_index_count.curve = curve_index_count;
-        _selected_index_count.point = point_index_count;
+        _selected_index_count.polyline = polyline_indexs.size();
+        _selected_index_count.polygon = polygon_indexs.size();
+        _selected_index_count.circle = circle_indexs.size();
+        _selected_index_count.curve = curve_indexs.size();
+        _selected_index_count.point = point_indexs.size();
         makeCurrent();
-        if (polyline_index_count > 0)
+        if (!polyline_indexs.empty())
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polyline);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_index_count * sizeof(unsigned int), polyline_indexs, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_indexs.size() * sizeof(unsigned int), polyline_indexs.data(), GL_DYNAMIC_DRAW);
         }
-        if (polygon_index_count > 0)
+        if (!polygon_indexs.empty())
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polygon);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_index_count * sizeof(unsigned int), polygon_indexs, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_indexs.size() * sizeof(unsigned int), polygon_indexs.data(), GL_DYNAMIC_DRAW);
         }
-        if (circle_index_count > 0)
+        if (!circle_indexs.empty())
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.circle);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_index_count * sizeof(unsigned int), circle_indexs, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indexs.size() * sizeof(unsigned int), circle_indexs.data(), GL_DYNAMIC_DRAW);
         }
-        if (curve_index_count > 0)
+        if (!curve_indexs.empty())
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.curve);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_index_count * sizeof(unsigned int), curve_indexs, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_indexs.size() * sizeof(unsigned int), curve_indexs.data(), GL_DYNAMIC_DRAW);
         }
-        if (point_index_count > 0)
+        if (!point_indexs.empty())
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.point);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_index_count * sizeof(unsigned int), point_indexs, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_indexs.size() * sizeof(unsigned int), point_indexs.data(), GL_DYNAMIC_DRAW);
         }
         doneCurrent();
-
-        delete []polyline_indexs;
-        delete []polygon_indexs;
-        delete []circle_indexs;
-        delete []curve_indexs;
-        delete []point_indexs;
     }
     else
     {
-        unsigned int index_count = 0;
-        unsigned int *indexs = new unsigned int[object->point_count + 1];
+        std::vector<unsigned int> indexs;
         for (size_t i = 0, index = object->point_index, count = object->point_count; i < count; ++i)
         {
-            indexs[index_count++] = index++;
+            indexs.push_back(index++);
         }
-        indexs[index_count++] = UINT_MAX;
+        indexs.push_back(UINT_MAX);
         clear_selected_ibo();
-        unsigned int IBO_index = _selected_ibo.point;
+        unsigned int IBO_index;
         switch (object->type())
         {
         case Geo::Type::POLYLINE:
             IBO_index = _selected_ibo.polyline;
-            _selected_index_count.polyline = index_count;
+            _selected_index_count.polyline = indexs.size();
             break;
         case Geo::Type::POLYGON:
             IBO_index = _selected_ibo.polygon;
-            _selected_index_count.polygon = index_count;
+            _selected_index_count.polygon = indexs.size();
             break;
         case Geo::Type::CIRCLE:
         case Geo::Type::ELLIPSE:
         case Geo::Type::ARC:
             IBO_index = _selected_ibo.circle;
-            _selected_index_count.circle = index_count;
+            _selected_index_count.circle = indexs.size();
             break;
         case Geo::Type::BEZIER:
         case Geo::Type::BSPLINE:
             IBO_index = _selected_ibo.curve;
-            _selected_index_count.curve = index_count;
+            _selected_index_count.curve = indexs.size();
             break;
         case Geo::Type::POINT:
-            _selected_index_count.point = index_count;
+            IBO_index = _selected_ibo.point;
+            _selected_index_count.point = indexs.size();
             break;
         default:
             break;
         }
-        if (index_count > 0)
+        if (!indexs.empty())
         {
             makeCurrent();
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO_index);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, index_count * sizeof(unsigned int), indexs, GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexs.size() * sizeof(unsigned int), indexs.data(), GL_DYNAMIC_DRAW);
             doneCurrent();
         }
-        delete []indexs;
     }
 }
 
@@ -2599,114 +2352,41 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
         return;
     }
 
-    unsigned int polyline_index_len = 512, polyline_index_count = 0;
-    unsigned int polygon_index_len = 512, polygon_index_count = 0;
-    unsigned int circle_index_len = 512, circle_index_count = 0;
-    unsigned int curve_index_len = 512, curve_index_count = 0;
-    unsigned int point_index_len = 256, point_index_count = 0;
-    unsigned int *polyline_indexs = new unsigned int[polyline_index_len];
-    unsigned int *polygon_indexs = new unsigned int[polygon_index_len];
-    unsigned int *circle_indexs = new unsigned int[circle_index_len];
-    unsigned int *curve_indexs = new unsigned int[curve_index_len];
-    unsigned int *point_indexs = new unsigned int[point_index_len];
+    std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
     for (const Geo::Geometry *geo : objects)
     {
         switch (geo->type())
         {
         case Geo::Type::POLYLINE:
-            while (polyline_index_count + geo->point_count >= polyline_index_len)
-            {
-                polyline_index_len *= 2;
-                unsigned int *temp = new unsigned int[polyline_index_len];
-                std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                delete []polyline_indexs;
-                polyline_indexs = temp;
-            }
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                polyline_indexs[polyline_index_count++] = index++;
+                polyline_indexs.push_back(index++);
             }
-            polyline_indexs[polyline_index_count++] = UINT_MAX;
-            if (polyline_index_count == polyline_index_len)
-            {
-                polyline_index_len *= 2;
-                unsigned int *temp = new unsigned int[polyline_index_len];
-                std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                delete []polyline_indexs;
-                polyline_indexs = temp;
-            }
+            polyline_indexs.push_back(UINT_MAX);
             break;
         case Geo::Type::POLYGON:
-            while (polygon_index_count + geo->point_count >= polygon_index_len)
-            {
-                polygon_index_len *= 2;
-                unsigned int *temp = new unsigned int[polygon_index_len];
-                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                delete []polygon_indexs;
-                polygon_indexs = temp;
-            }
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                polygon_indexs[polygon_index_count++] = index++;
+                polygon_indexs.push_back(index++);
             }
-            polygon_indexs[polygon_index_count++] = UINT_MAX;
-            if (polygon_index_count == polygon_index_len)
-            {
-                polygon_index_len *= 2;
-                unsigned int *temp = new unsigned int[polygon_index_len];
-                std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                delete []polygon_indexs;
-                polygon_indexs = temp;
-            }
+            polygon_indexs.push_back(UINT_MAX);
             break;
         case Geo::Type::CIRCLE:
         case Geo::Type::ELLIPSE:
         case Geo::Type::ARC:
-            while (circle_index_count + geo->point_count >= circle_index_len)
-            {
-                circle_index_len *= 2;
-                unsigned int *temp = new unsigned int[circle_index_len];
-                std::move(circle_indexs, circle_indexs + circle_index_count, temp);
-                delete []circle_indexs;
-                circle_indexs = temp;
-            }
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                circle_indexs[circle_index_count++] = index++;
+                circle_indexs.push_back(index++);
             }
-            circle_indexs[circle_index_count++] = UINT_MAX;
-            if (circle_index_count == circle_index_len)
-            {
-                circle_index_len *= 2;
-                unsigned int *temp = new unsigned int[circle_index_len];
-                std::move(circle_indexs, circle_indexs + circle_index_count, temp);
-                delete []circle_indexs;
-                circle_indexs = temp;
-            }
+            circle_indexs.push_back(UINT_MAX);
             break;
         case Geo::Type::BEZIER:
         case Geo::Type::BSPLINE:
-            while (curve_index_count + geo->point_count >= curve_index_len)
-            {
-                curve_index_len *= 2;
-                unsigned int *temp = new unsigned int[curve_index_len];
-                std::move(curve_indexs, curve_indexs + curve_index_count, temp);
-                delete []curve_indexs;
-                curve_indexs = temp;
-            }
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                curve_indexs[curve_index_count++] = index++;
+                curve_indexs.push_back(index++);
             }
-            curve_indexs[curve_index_count++] = UINT_MAX;
-            if (curve_index_count == curve_index_len)
-            {
-                curve_index_len *= 2;
-                unsigned int *temp = new unsigned int[curve_index_len];
-                std::move(curve_indexs, curve_indexs + curve_index_count, temp);
-                delete []curve_indexs;
-                curve_indexs = temp;
-            }
+            curve_indexs.push_back(UINT_MAX);
             break;
         case Geo::Type::COMBINATION:
             for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
@@ -2714,110 +2394,38 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
                 switch (item->type())
                 {
                 case Geo::Type::POLYLINE:
-                    while (polyline_index_count + item->point_count >= polyline_index_len)
-                    {
-                        polyline_index_len *= 2;
-                        unsigned int *temp = new unsigned int[polyline_index_len];
-                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                        delete []polyline_indexs;
-                        polyline_indexs = temp;
-                    }
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        polyline_indexs[polyline_index_count++] = index++;
+                        polyline_indexs.push_back(index++);
                     }
-                    polyline_indexs[polyline_index_count++] = UINT_MAX;
-                    if (polyline_index_count == polyline_index_len)
-                    {
-                        polyline_index_len *= 2;
-                        unsigned int *temp = new unsigned int[polyline_index_len];
-                        std::move(polyline_indexs, polyline_indexs + polyline_index_count, temp);
-                        delete []polyline_indexs;
-                        polyline_indexs = temp;
-                    }
+                    polyline_indexs.push_back(UINT_MAX);
                     break;
                 case Geo::Type::POLYGON:
-                    while (polygon_index_count + item->point_count >= polygon_index_len)
-                    {
-                        polygon_index_len *= 2;
-                        unsigned int *temp = new unsigned int[polygon_index_len];
-                        std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                        delete []polygon_indexs;
-                        polygon_indexs = temp;
-                    }
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        polygon_indexs[polygon_index_count++] = index++;
+                        polygon_indexs.push_back(index++);
                     }
-                    polygon_indexs[polygon_index_count++] = UINT_MAX;
-                    if (polygon_index_count == polygon_index_len)
-                    {
-                        polygon_index_len *= 2;
-                        unsigned int *temp = new unsigned int[polygon_index_len];
-                        std::move(polygon_indexs, polygon_indexs + polygon_index_count, temp);
-                        delete []polygon_indexs;
-                        polygon_indexs = temp;
-                    }
+                    polygon_indexs.push_back(UINT_MAX);
                     break;
                 case Geo::Type::CIRCLE:
                 case Geo::Type::ELLIPSE:
                 case Geo::Type::ARC:
-                    while (circle_index_count + item->point_count >= circle_index_len)
-                    {
-                        circle_index_len *= 2;
-                        unsigned int *temp = new unsigned int[circle_index_len];
-                        std::move(circle_indexs, circle_indexs + circle_index_count, temp);
-                        delete []circle_indexs;
-                        circle_indexs = temp;
-                    }
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        circle_indexs[circle_index_count++] = index++;
+                        circle_indexs.push_back(index++);
                     }
-                    circle_indexs[circle_index_count++] = UINT_MAX;
-                    if (circle_index_count == circle_index_len)
-                    {
-                        circle_index_len *= 2;
-                        unsigned int *temp = new unsigned int[circle_index_len];
-                        std::move(circle_indexs, circle_indexs + circle_index_count, temp);
-                        delete []circle_indexs;
-                        circle_indexs = temp;
-                    }
+                    circle_indexs.push_back(UINT_MAX);
                     break;
                 case Geo::Type::BEZIER:
                 case Geo::Type::BSPLINE:
-                    while (curve_index_count + item->point_count >= curve_index_len)
-                    {
-                        curve_index_len *= 2;
-                        unsigned int *temp = new unsigned int[curve_index_len];
-                        std::move(curve_indexs, curve_indexs + curve_index_count, temp);
-                        delete []curve_indexs;
-                        curve_indexs = temp;
-                    }
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        curve_indexs[curve_index_count++] = index++; 
+                        curve_indexs.push_back(index++); 
                     }
-                    curve_indexs[curve_index_count++] = UINT_MAX;
-                    if (curve_index_count == curve_index_len)
-                    {
-                        curve_index_len *= 2;
-                        unsigned int *temp = new unsigned int[curve_index_len];
-                        std::move(curve_indexs, curve_indexs + curve_index_count, temp);
-                        delete []curve_indexs;
-                        curve_indexs = temp;
-                    }
+                    curve_indexs.push_back(UINT_MAX);
                     break;
                 case Geo::Type::POINT:
-                    point_indexs[point_index_count++] = item->point_index;
-                    if (point_index_len == point_index_count)
-                    {
-                        point_index_len *= 2;
-                        unsigned int *temp = new unsigned int[point_index_len];
-                        std::move(point_indexs, point_indexs + point_index_count, temp);
-                        delete []point_indexs;
-                        point_indexs = temp;
-                    }
+                    point_indexs.push_back(item->point_index);
                     break;
                 default:
                     break;
@@ -2825,60 +2433,46 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
             }
             break;
         case Geo::Type::POINT:
-            point_indexs[point_index_count++] = geo->point_index;
-            if (point_index_len == point_index_count)
-            {
-                point_index_len *= 2;
-                unsigned int *temp = new unsigned int[point_index_len];
-                std::move(point_indexs, point_indexs + point_index_count, temp);
-                delete []point_indexs;
-                point_indexs = temp;
-            }
+            point_indexs.push_back(geo->point_index);
             break;
         default:
             continue;
         }
     }
 
-    _selected_index_count.polyline = polyline_index_count;
-    _selected_index_count.polygon = polygon_index_count;
-    _selected_index_count.circle = circle_index_count;
-    _selected_index_count.curve = curve_index_count;
-    _selected_index_count.point = point_index_count;
+    _selected_index_count.polyline = polyline_indexs.size();
+    _selected_index_count.polygon = polygon_indexs.size();
+    _selected_index_count.circle = circle_indexs.size();
+    _selected_index_count.curve = curve_indexs.size();
+    _selected_index_count.point  = point_indexs.size();
 
     makeCurrent();
-    if (polyline_index_count > 0)
+    if (!polyline_indexs.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polyline);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_index_count * sizeof(unsigned int), polyline_indexs, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_indexs.size() * sizeof(unsigned int), polyline_indexs.data(), GL_DYNAMIC_DRAW);
     }
-    if (polygon_index_count > 0)
+    if (!polygon_indexs.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polygon);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_index_count * sizeof(unsigned int), polygon_indexs, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_indexs.size() * sizeof(unsigned int), polygon_indexs.data(), GL_DYNAMIC_DRAW);
     }
-    if (circle_index_count > 0)
+    if (!circle_indexs.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.circle);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_index_count * sizeof(unsigned int), circle_indexs, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indexs.size() * sizeof(unsigned int), circle_indexs.data(), GL_DYNAMIC_DRAW);
     }
-    if (curve_index_count > 0)
+    if (!curve_indexs.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.curve);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_index_count * sizeof(unsigned int), curve_indexs, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_indexs.size() * sizeof(unsigned int), curve_indexs.data(), GL_DYNAMIC_DRAW);
     }
-    if (point_index_count > 0)
+    if (!point_indexs.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.point);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_index_count * sizeof(unsigned int), point_indexs, GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_indexs.size() * sizeof(unsigned int), point_indexs.data(), GL_DYNAMIC_DRAW);
     }
     doneCurrent();
-    
-    delete []polyline_indexs;
-    delete []polygon_indexs;
-    delete []circle_indexs;
-    delete []curve_indexs;
-    delete []point_indexs;
 }
 
 void Canvas::refresh_selected_vbo()
