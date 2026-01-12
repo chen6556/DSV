@@ -3162,7 +3162,6 @@ Canvas::VBOData Canvas::refresh_text_vbo()
         }
     }
 
-    _text_brush_IBO = result.ibo_data.size();
     _text_brush_count = result.vbo_data.size();
     return result;
 }
