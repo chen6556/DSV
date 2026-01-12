@@ -78,28 +78,28 @@ private:
 
     struct PointCount
     {
-        unsigned int polyline;
-        unsigned int polygon;
-        unsigned int circle;
-        unsigned int curve;
-        unsigned int point;
+        unsigned int polyline = 0;
+        unsigned int polygon = 0;
+        unsigned int circle = 0;
+        unsigned int curve = 0;
+        unsigned int point = 0;
     } _point_count;
 
     struct ShapeIndexCount
     {
-        unsigned int polyline;
-        unsigned int polygon;
-        unsigned int circle;
-        unsigned int curve;
+        unsigned int polyline = 0;
+        unsigned int polygon = 0;
+        unsigned int circle = 0;
+        unsigned int curve = 0;
     } _shape_index_count;
 
     struct SelectedIndexCount
     {
-        unsigned int polyline;
-        unsigned int polygon;
-        unsigned int circle;
-        unsigned int curve;
-        unsigned int point;
+        unsigned int polyline = 0;
+        unsigned int polygon = 0;
+        unsigned int circle = 0;
+        unsigned int curve = 0;
+        unsigned int point = 0;
     } _selected_index_count;
     
     double _catchline_points[24];
