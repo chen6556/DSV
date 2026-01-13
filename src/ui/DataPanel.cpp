@@ -3,8 +3,7 @@
 #include "ui/WinUITool.hpp"
 
 
-DataPanel::DataPanel(QWidget *parent)
-    : QDialog(parent), ui(new Ui::DataPanel)
+DataPanel::DataPanel(QWidget *parent) : QDialog(parent), ui(new Ui::DataPanel)
 {
     ui->setupUi(this);
 }
@@ -17,8 +16,8 @@ DataPanel::~DataPanel()
 
 void DataPanel::load_draw_data(const Graph *graph)
 {
-    size_t point_count = 0, polyline_count = 0, bezier_count = 0, bspline_count = 0,
-        polygon_count = 0, circle_count = 0, ellipse_count = 0, text_count = 0;
+    size_t point_count = 0, polyline_count = 0, bezier_count = 0, bspline_count = 0, polygon_count = 0, circle_count = 0, ellipse_count = 0,
+           text_count = 0;
     for (const ContainerGroup &group : *graph)
     {
         for (const Geo::Geometry *object : group)

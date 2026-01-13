@@ -12,7 +12,7 @@ bool TextEncoding::is_utf8(const std::string &str)
 {
     // UFT8可用1-6个字节编码，ASCII用一个字节
     unsigned int bytes_count = 0;
-    unsigned char uc;
+    unsigned char uc = 0;
     bool all_ascii = true;
     for (char c : str)
     {
@@ -24,7 +24,7 @@ bool TextEncoding::is_utf8(const std::string &str)
         }
         if (bytes_count == 0)
         {
-            //如果不是ASCII码，应该是多字节符，计算字节数
+            // 如果不是ASCII码，应该是多字节符，计算字节数
             if (uc >= 0x80)
             {
                 if (uc >= 0xFC && uc <= 0xFD)
@@ -83,75 +83,74 @@ bool TextEncoding::is_utf8(const std::string &str)
 bool TextEncoding::is_gbk(const std::string &str)
 {
     // GBK可用1 - 2个字节编码，中文两个，英文一个
-		unsigned int bytes_count = 0;
-		unsigned char uc;
-		// 如果全部都是ASCII
-		bool all_ascii = true;
-		for (char c : str)
-		{
-			uc = static_cast<unsigned char>(c);
-			if ((uc & 0x80) != 0 && bytes_count == 0)
-			{
-				// 判断是否ASCII编码，如果不是，说明有可能是GBK
-				all_ascii = false;
-			}
-			if (bytes_count == 0)
-			{
-				if (uc >= 0x80)
-				{
-					if (uc >= 0x81 && uc <= 0xFE)
-					{
-						bytes_count = 2;
-					}
-					else
-					{
-						return false;
-					}
-					--bytes_count;
-				}
-			}
-			else
-			{
-				if (uc < 0x40 || uc > 0xFE)
-				{
-					return false;
-				}
-				--bytes_count;
-			}
-		}
+    unsigned int bytes_count = 0;
+    unsigned char uc = 0;
+    // 如果全部都是ASCII
+    bool all_ascii = true;
+    for (char c : str)
+    {
+        uc = static_cast<unsigned char>(c);
+        if ((uc & 0x80) != 0 && bytes_count == 0)
+        {
+            // 判断是否ASCII编码，如果不是，说明有可能是GBK
+            all_ascii = false;
+        }
+        if (bytes_count == 0)
+        {
+            if (uc >= 0x80)
+            {
+                if (uc >= 0x81 && uc <= 0xFE)
+                {
+                    bytes_count = 2;
+                }
+                else
+                {
+                    return false;
+                }
+                --bytes_count;
+            }
+        }
+        else
+        {
+            if (uc < 0x40 || uc > 0xFE)
+            {
+                return false;
+            }
+            --bytes_count;
+        }
+    }
 
-		if (bytes_count != 0)
-		{
-			// 违返规则
-			return false;
-		}
-		if (all_ascii)
-		{
-			// 如果全部都是ASCII，也是GBK
-			return true;
-		}
+    if (bytes_count != 0)
+    {
+        // 违返规则
+        return false;
+    }
+    if (all_ascii)
+    {
+        // 如果全部都是ASCII，也是GBK
+        return true;
+    }
 
-		return true;
+    return true;
 }
 
 #if defined(__linux__) || defined(__GNUC__)
-bool TextEncoding::encoding_convert(const char *charset_src, const char *charset_dest,
-    const char *inbuf, size_t insize, char *outbuf, size_t outsize)
+bool TextEncoding::encoding_convert(const char *charset_src, const char *charset_dest, const char *inbuf, size_t insize, char *outbuf,
+                                    size_t outsize)
 {
     iconv_t cd;
-    char** pin = const_cast<char **>(&inbuf);
-    char** pout = &outbuf;
+    char **pin = const_cast<char **>(&inbuf);
+    char **pout = &outbuf;
     cd = iconv_open(charset_dest, charset_src);
     if (0 == cd)
     {
-        std::cerr << charset_src << " to " << charset_dest
-            << " conversion not available" << std::endl; 
+        std::cerr << charset_src << " to " << charset_dest << " conversion not available" << std::endl;
         return false;
     }
 
     if (-1 == static_cast<int>(iconv(cd, pin, &insize, pout, &outsize)))
     {
-   
+
         std::cerr << "conversion failure" << std::endl;
         return false;
     }
@@ -165,7 +164,7 @@ bool TextEncoding::encoding_convert(const char *charset_src, const char *charset
 std::string TextEncoding::gbk_to_utf8(const std::string &str)
 {
 #if defined(_MSC_VER) || defined(WIN64)
-    UErrorCode err;
+    UErrorCode err = UErrorCode::U_ZERO_ERROR;
     UConverter *gbkconv = ucnv_open("GBK", &err);
     UChar *unicode = new UChar[str.length() * 2 + 1];
     const int32_t unilen = ucnv_toUChars(gbkconv, unicode, str.length() * 2, str.data(), str.length(), &err);
@@ -180,8 +179,8 @@ std::string TextEncoding::gbk_to_utf8(const std::string &str)
     return res;
 #elif defined(__linux__) || defined(__GNUC__)
     size_t len = str.size() * 2 + 1;
-    char* temp = new char[len];
-    if (encoding_convert("gbk", "utf-8", const_cast<char*>(str.c_str()), str.size(), temp, len))
+    char *temp = new char[len];
+    if (encoding_convert("gbk", "utf-8", const_cast<char *>(str.c_str()), str.size(), temp, len))
     {
         std::string res;
         res.append(temp);
@@ -202,7 +201,7 @@ std::string TextEncoding::gbk_to_utf8(const std::string &str)
 std::string TextEncoding::uft8_to_gbk(const std::string &str)
 {
 #if defined(_MSC_VER) || defined(WIN64)
-    UErrorCode err;
+    UErrorCode err = UErrorCode::U_ZERO_ERROR;
     UConverter *u8conv = ucnv_open("UTF8", &err);
     UChar *unicode = new UChar[str.length() * 2 + 1];
     const int32_t unilen = ucnv_toUChars(u8conv, unicode, str.length() * 2, str.data(), str.length(), &err);
@@ -217,8 +216,8 @@ std::string TextEncoding::uft8_to_gbk(const std::string &str)
     return res;
 #elif defined(__linux__) || defined(__GNUC__)
     size_t len = str.size() * 2 + 1;
-    char* temp = new char[len];
-    if (encoding_convert("utf-8", "gbk", const_cast<char*>(str.c_str()), str.size(), temp, len))
+    char *temp = new char[len];
+    if (encoding_convert("utf-8", "gbk", const_cast<char *>(str.c_str()), str.size(), temp, len))
     {
         std::string res;
         res.append(temp);

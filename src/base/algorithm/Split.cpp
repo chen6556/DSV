@@ -58,7 +58,7 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
             Geo::Point point;
             for (size_t j = 0; j <= order; ++j)
             {
-                point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j))); 
+                point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             polyline.append(point);
             t += Geo::Bezier::default_step;
@@ -70,8 +70,7 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
         Geo::closest_point(polyline, pos, points);
         temp.emplace_back(i, points, Geo::distance(pos, points.front()));
     }
-    std::sort(temp.begin(), temp.end(), [](const auto &a, const auto &b)
-        { return std::get<2>(a) < std::get<2>(b); });
+    std::sort(temp.begin(), temp.end(), [](const auto &a, const auto &b) { return std::get<2>(a) < std::get<2>(b); });
     while (temp.size() > 1)
     {
         if (std::get<2>(temp.back()) - std::get<2>(temp.front()) > 1.0)
@@ -100,7 +99,7 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j))); 
+                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
                 if (double dis = Geo::distance(pos, coord); dis < min_dis[1])
                 {
@@ -115,11 +114,10 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
             {
                 min_dis[0] = min_dis[1];
             }
-        }
-        while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
+        } while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
         lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
-        step = (upper - lower) / 100; 
+        step = (upper - lower) / 100;
         min_dis[0] = min_dis[1] = DBL_MAX;
         std::vector<double> stored_t;
         while ((upper - lower) * 1e15 > 1)
@@ -206,7 +204,7 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
             result_pos.clear();
             for (size_t j = 0; j <= order; ++j)
             {
-                result_pos += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j))); 
+                result_pos += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
         }
     }
@@ -249,8 +247,7 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
 bool Geo::split(const Bezier &bezier, const size_t i, const double t, Bezier &output0, Bezier &output1)
 {
     const size_t order = bezier.order();
-    if (output0.order() != order || output1.order() != order || (i == 0 && t == 0)
-        || (i == (bezier.size() / (order + 1) -1) && t == 1))
+    if (output0.order() != order || output1.order() != order || (i == 0 && t == 0) || (i == (bezier.size() / (order + 1) - 1) && t == 1))
     {
         return false;
     }
@@ -271,7 +268,7 @@ bool Geo::split(const Bezier &bezier, const size_t i, const double t, Bezier &ou
     for (size_t j = 0; j <= order; ++j)
     {
         control_points.emplace_back(bezier[j + i]);
-        pos += (control_points.back() * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j))); 
+        pos += (control_points.back() * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
     }
     std::vector<Geo::Point> temp_points, result_points0, result_points1;
     for (size_t k = 0; k < order; ++k)
@@ -299,13 +296,13 @@ bool Geo::split(const Bezier &bezier, const size_t i, const double t, Bezier &ou
 
 bool Geo::split(const BSpline &bspline, const bool is_cubic, const Point &pos, BSpline &output0, BSpline &output1)
 {
-    if (is_cubic && (dynamic_cast<const Geo::CubicBSpline *>(&output0) == nullptr
-        || dynamic_cast<const Geo::CubicBSpline *>(&output1) == nullptr))
+    if (is_cubic &&
+        (dynamic_cast<const Geo::CubicBSpline *>(&output0) == nullptr || dynamic_cast<const Geo::CubicBSpline *>(&output1) == nullptr))
     {
         return false;
     }
-    else if (!is_cubic && (dynamic_cast<const Geo::QuadBSpline *>(&output0) == nullptr
-        || dynamic_cast<const Geo::QuadBSpline *>(&output1) == nullptr))
+    else if (!is_cubic &&
+             (dynamic_cast<const Geo::QuadBSpline *>(&output0) == nullptr || dynamic_cast<const Geo::QuadBSpline *>(&output1) == nullptr))
     {
         return false;
     }
@@ -374,8 +371,7 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const Point &pos, B
                 {
                     min_dis[0] = min_dis[1];
                 }
-            }
-            while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
+            } while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
             step = 1e-3, lower = std::max(knots[0], t - 0.1), upper = std::min(knots[nplusc - 1], t + 0.1);
             min_dis[0] = min_dis[1] = DBL_MAX;
@@ -468,8 +464,7 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const Point &pos, B
             result.emplace_back(std::min(min_dis[0], min_dis[1]), v, coord);
         }
 
-        std::sort(result.begin(), result.end(), [](const auto &a, const auto &b)
-            { return std::get<0>(a) < std::get<0>(b); });
+        std::sort(result.begin(), result.end(), [](const auto &a, const auto &b) { return std::get<0>(a) < std::get<0>(b); });
         t = std::get<1>(result.front());
         anchor = std::get<2>(result.front());
     }
@@ -536,7 +531,7 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const Point &pos, B
         for (size_t i = k, j = p - 1; i > k - p; --i, --j)
         {
             double alpha = (t - knots[i]);
-            double dev =  (knots[i + p] - knots[i]);
+            double dev = (knots[i + p] - knots[i]);
             alpha = (dev == 0) ? 0 : alpha / dev;
             array[j] = control_points[i - 1] * (1 - alpha) + control_points[i] * alpha;
         }
@@ -604,13 +599,13 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const double t, BSp
     {
         return false;
     }
-    else if (is_cubic && (dynamic_cast<const Geo::CubicBSpline *>(&output0) == nullptr
-        || dynamic_cast<const Geo::CubicBSpline *>(&output1) == nullptr))
+    else if (is_cubic &&
+             (dynamic_cast<const Geo::CubicBSpline *>(&output0) == nullptr || dynamic_cast<const Geo::CubicBSpline *>(&output1) == nullptr))
     {
         return false;
     }
-    else if (!is_cubic && (dynamic_cast<const Geo::QuadBSpline *>(&output0) == nullptr
-        || dynamic_cast<const Geo::QuadBSpline *>(&output1) == nullptr))
+    else if (!is_cubic &&
+             (dynamic_cast<const Geo::QuadBSpline *>(&output0) == nullptr || dynamic_cast<const Geo::QuadBSpline *>(&output1) == nullptr))
     {
         return false;
     }
@@ -689,7 +684,7 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const double t, BSp
         for (size_t i = k, j = p - 1; i > k - p; --i, --j)
         {
             double alpha = (t - knots[i]);
-            double dev =  (knots[i + p] - knots[i]);
+            double dev = (knots[i + p] - knots[i]);
             alpha = (dev == 0) ? 0 : alpha / dev;
             array[j] = control_points[i - 1] * (1 - alpha) + control_points[i] * alpha;
         }
@@ -753,8 +748,8 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const double t, BSp
 
 bool Geo::split(const Arc &arc, const Point &pos, Arc &output0, Arc &output1)
 {
-    if (Geo::distance(pos, arc) < Geo::EPSILON && Geo::distance(pos, arc.control_points[0]) > Geo::EPSILON
-        && Geo::distance(pos, arc.control_points[2]) > Geo::EPSILON)
+    if (Geo::distance(pos, arc) < Geo::EPSILON && Geo::distance(pos, arc.control_points[0]) > Geo::EPSILON &&
+        Geo::distance(pos, arc.control_points[2]) > Geo::EPSILON)
     {
         const Geo::Point center(arc.x, arc.y);
         const double angle0 = Geo::angle(center, arc.control_points[0]);
@@ -772,8 +767,7 @@ bool Geo::split(const Arc &arc, const Point &pos, Arc &output0, Arc &output1)
 
 bool Geo::split(const Ellipse &ellipse, const Point &pos, Ellipse &output0, Ellipse &output1)
 {
-    if (ellipse.is_arc() && Geo::distance(pos, ellipse) < Geo::EPSILON &&
-        Geo::distance(pos, ellipse.arc_point0()) > Geo::EPSILON && 
+    if (ellipse.is_arc() && Geo::distance(pos, ellipse) < Geo::EPSILON && Geo::distance(pos, ellipse.arc_point0()) > Geo::EPSILON &&
         Geo::distance(pos, ellipse.arc_point1()) > Geo::EPSILON)
     {
         const Geo::Point center(ellipse.center());

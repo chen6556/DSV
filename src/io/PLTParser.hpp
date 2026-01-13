@@ -23,7 +23,7 @@ private:
     bool _polygon_mode = false;
     int _rotate_coord = 0;
     double _x_ratio = 0.025, _y_ratio = 0.025;
-    double _ip[6], _sc[4];
+    double _ip[6] = {}, _sc[4] = {};
 
     struct Txt
     {
@@ -31,8 +31,8 @@ private:
         Geo::Point pos;
         bool marked = false;
 
-        Txt(const std::string &text, const Geo::Point &position)
-            : txt(text), pos(position) {};
+        Txt(std::string text, const Geo::Point &position)
+            : txt(std::move(text)), pos(position) {};
     };
     std::list<Txt> _texts;
 

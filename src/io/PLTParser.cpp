@@ -65,8 +65,6 @@ void Importer::store_arc()
 {
     const Geo::Point center(_parameters[0], _parameters[1]);
     const Geo::Vector dir(_last_coord.x - _parameters[0], _last_coord.y - _parameters[1]);
-    const double radius = std::hypot(_parameters[0] - _last_coord.x,
-        _parameters[1] - _last_coord.y);
     const double angle = Geo::degree_to_rad(_parameters[2]);
 
     Geo::Arc *arc = new Geo::Arc(center + dir, center, std::abs(angle),
@@ -487,7 +485,7 @@ void Importer::ep()
 void Importer::store_text(const std::string &text)
 {
     std::string str(text);
-    size_t pos;
+    size_t pos = 0;
     for (char c = 1; c < 32; ++c)
     {
         pos = str.find(c);

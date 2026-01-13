@@ -16,8 +16,7 @@
 
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow), _setting(new Setting(this)),
-    _panel(new DataPanel(this))
+    : QMainWindow(parent), ui(new Ui::MainWindow), _setting(new Setting(this)), _panel(new DataPanel(this))
 {
     ui->setupUi(this);
     init();
@@ -44,8 +43,7 @@ MainWindow::~MainWindow()
 void MainWindow::init()
 {
     GlobalSetting::setting().ui = ui;
-    _actiongroup = new ActionGroup(ui, std::bind(&MainWindow::actiongroup_callback,
-        this, std::placeholders::_1, std::placeholders::_2));
+    _actiongroup = new ActionGroup(ui, [this](const ActionGroup::MenuType menu, const int index) { actiongroup_callback(menu, index); });
 
     _editer.load_graph(new Graph());
     ui->canvas->bind_editer(&_editer);
@@ -58,8 +56,10 @@ void MainWindow::init()
 
     connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::setting().auto_aligning = ui->auto_aligning->isChecked(); });
     connect(ui->actionadvanced, &QAction::triggered, _setting, &Setting::exec);
-    connect(ui->show_origin, &QAction::triggered, [this]() { ui->show_origin->isChecked() ? ui->canvas->show_origin() : ui->canvas->hide_origin(); });
-    connect(ui->show_cmdline, &QAction::triggered, [this]() { ui->show_cmdline->isChecked() ? ui->cmd_widget->show() : ui->cmd_widget->hide(); });
+    connect(ui->show_origin, &QAction::triggered,
+            [this]() { ui->show_origin->isChecked() ? ui->canvas->show_origin() : ui->canvas->hide_origin(); });
+    connect(ui->show_cmdline, &QAction::triggered,
+            [this]() { ui->show_cmdline->isChecked() ? ui->cmd_widget->show() : ui->cmd_widget->hide(); });
 
     connect(_setting, &Setting::accepted, this, &MainWindow::refresh_settings);
 
@@ -94,7 +94,7 @@ void MainWindow::init()
     ui->statusBar->addPermanentWidget(_layers_cbx);
     _layers_cbx->setModel(_layers_manager->model());
     connect(_layers_cbx, &QComboBox::currentIndexChanged,
-        [this](int index) { _editer.set_current_group(_editer.groups_count() - 1 - index); });
+            [this](int index) { _editer.set_current_group(_editer.groups_count() - 1 - index); });
 
 #ifdef _WIN64
     WinUITool::set_caption_color(winId(), 0x3C3C3D);
@@ -130,8 +130,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     if (GlobalSetting::setting().graph->modified)
     {
-        switch (MessageBox::question(this, "File is modified", "Save or not?", QDialogButtonBox::StandardButton::Yes |
-            QDialogButtonBox::StandardButton::No | QDialogButtonBox::StandardButton::Cancel))
+        switch (MessageBox::question(this, "File is modified", "Save or not?",
+                                     QDialogButtonBox::StandardButton::Yes | QDialogButtonBox::StandardButton::No |
+                                         QDialogButtonBox::StandardButton::Cancel))
         {
         case QDialogButtonBox::StandardButton::Yes:
             save_file();
@@ -279,8 +280,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
         break;
     }
 
-    if (event->modifiers() != Qt::ControlModifier &&
-        0x41 <= event->key() && event->key() <= 0x5A)
+    if (event->modifiers() != Qt::ControlModifier && 0x41 <= event->key() && event->key() <= 0x5A)
     {
         ui->cmd_widget->activate(event->key());
     }
@@ -290,7 +290,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 {
-    if(event->mimeData()->hasUrls())
+    if (event->mimeData()->hasUrls())
     {
         event->acceptProposedAction();
     }
@@ -304,7 +304,7 @@ void MainWindow::dropEvent(QDropEvent *event)
 {
     const QString suffixs = "dsv DSV plt PLT cut CUT dxf DXF nc NC";
     QFileInfo file_info(event->mimeData()->urls().front().toLocalFile());
-    if( file_info.isFile() && suffixs.contains(file_info.suffix()))
+    if (file_info.isFile() && suffixs.contains(file_info.suffix()))
     {
         open_file(file_info.absoluteFilePath());
     }
@@ -313,29 +313,33 @@ void MainWindow::dropEvent(QDropEvent *event)
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     QMainWindow::resizeEvent(event);
-    ui->cmd_widget->move(ui->cmd_widget->mapToParent(QPoint((width() - ui->cmd_widget->width()) / 2,
-        height() - 33 - ui->cmd_widget->height()) - ui->cmd_widget->pos()));
+    ui->cmd_widget->move(ui->cmd_widget->mapToParent(
+        QPoint((width() - ui->cmd_widget->width()) / 2, height() - 33 - ui->cmd_widget->height()) - ui->cmd_widget->pos()));
 }
 
 
 void MainWindow::open_file()
 {
-    if (GlobalSetting::setting().graph->modified && MessageBox::question(this, "File is modified", "Save or not?") == QDialogButtonBox::StandardButton::Yes)
+    if (GlobalSetting::setting().graph->modified &&
+        MessageBox::question(this, "File is modified", "Save or not?") == QDialogButtonBox::StandardButton::Yes)
     {
         save_file();
     }
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;"
-        "PLT: (*.plt *.PLT);;RS274D: (*.cut *.CUT *.nc *.NC);;DXF: (*.dxf *.DXF)", &_file_type);
+    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(),
+                                           "All Files: (*.*);;DSV: (*.dsv *.DSV);;"
+                                           "PLT: (*.plt *.PLT);;RS274D: (*.cut *.CUT *.nc *.NC);;DXF: (*.dxf *.DXF)",
+                                           &_file_type);
     open_file(path);
     delete dialog;
 }
 
 void MainWindow::close_file()
 {
-    if (GlobalSetting::setting().graph->modified && MessageBox::question(this, "File is modified", "Save or not?") == QDialogButtonBox::StandardButton::Yes)
+    if (GlobalSetting::setting().graph->modified &&
+        MessageBox::question(this, "File is modified", "Save or not?") == QDialogButtonBox::StandardButton::Yes)
     {
         save_file();
     }
@@ -358,8 +362,9 @@ void MainWindow::save_file()
         return;
     }
 
-    if (const QString label_path = _info_labels[2]->text(); label_path.isEmpty() || !(label_path.toLower().endsWith(".dsv")
-        || label_path.toLower().endsWith(".plt") || label_path.toLower().endsWith(".dxf")))
+    if (const QString label_path = _info_labels[2]->text();
+        label_path.isEmpty() ||
+        !(label_path.toLower().endsWith(".dsv") || label_path.toLower().endsWith(".plt") || label_path.toLower().endsWith(".dxf")))
     {
         QFileDialog *dialog = new QFileDialog();
         dialog->setModal(true);
@@ -369,12 +374,12 @@ void MainWindow::save_file()
             bool flag = false;
             if (path.toLower().endsWith(".dsv"))
             {
-                File::write(path, GlobalSetting::setting().graph, File::DSV);
+                File::write(path, GlobalSetting::setting().graph, File::FileType::DSV);
                 flag = true;
             }
             else if (path.toLower().endsWith(".plt"))
             {
-                File::write(path, GlobalSetting::setting().graph, File::PLT);
+                File::write(path, GlobalSetting::setting().graph, File::FileType::PLT);
                 flag = true;
             }
             else if (path.toLower().endsWith(".dxf"))
@@ -397,12 +402,12 @@ void MainWindow::save_file()
     {
         if (label_path.toLower().endsWith(".dsv"))
         {
-            File::write(label_path, GlobalSetting::setting().graph, File::DSV);
+            File::write(label_path, GlobalSetting::setting().graph, File::FileType::DSV);
             GlobalSetting::setting().graph->modified = false;
         }
         else if (label_path.toLower().endsWith(".plt"))
         {
-            File::write(label_path, GlobalSetting::setting().graph, File::PLT);
+            File::write(label_path, GlobalSetting::setting().graph, File::FileType::PLT);
             GlobalSetting::setting().graph->modified = false;
         }
         else if (label_path.toLower().endsWith(".dxf"))
@@ -417,8 +422,9 @@ void MainWindow::save_file()
 
 void MainWindow::auto_save()
 {
-    if (!ui->auto_save->isChecked() || _editer.path().isEmpty() || !(_editer.path().toLower().endsWith(".dsv")
-        || _editer.path().toLower().endsWith(".plt") || _editer.path().toLower().endsWith(".dxf")))
+    if (!ui->auto_save->isChecked() || _editer.path().isEmpty() ||
+        !(_editer.path().toLower().endsWith(".dsv") || _editer.path().toLower().endsWith(".plt") ||
+          _editer.path().toLower().endsWith(".dxf")))
     {
         return;
     }
@@ -426,11 +432,11 @@ void MainWindow::auto_save()
     {
         if (_editer.path().toLower().endsWith(".dsv"))
         {
-            File::write(_editer.path(), GlobalSetting::setting().graph, File::DSV);
+            File::write(_editer.path(), GlobalSetting::setting().graph, File::FileType::DSV);
         }
         else if (_editer.path().toLower().endsWith(".plt"))
         {
-            File::write(_editer.path(), GlobalSetting::setting().graph, File::PLT);
+            File::write(_editer.path(), GlobalSetting::setting().graph, File::FileType::PLT);
         }
         else if (_editer.path().toLower().endsWith(".dxf"))
         {
@@ -450,16 +456,17 @@ void MainWindow::saveas_file()
     }
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
-    QString path = dialog->getSaveFileName(dialog, nullptr, _editer.path().isEmpty() ? "D:/output.dsv" : _editer.path(), "DSV: (*.dsv);;PLT: (*.plt);;DXF: (*.dxf)");
+    QString path = dialog->getSaveFileName(dialog, nullptr, _editer.path().isEmpty() ? "D:/output.dsv" : _editer.path(),
+                                           "DSV: (*.dsv);;PLT: (*.plt);;DXF: (*.dxf)");
     if (!path.isEmpty())
     {
         if (path.toLower().endsWith(".dsv"))
         {
-            File::write(path, GlobalSetting::setting().graph, File::DSV);
+            File::write(path, GlobalSetting::setting().graph, File::FileType::DSV);
         }
         else if (path.toLower().endsWith(".plt"))
         {
-            File::write(path, GlobalSetting::setting().graph, File::PLT);
+            File::write(path, GlobalSetting::setting().graph, File::FileType::PLT);
         }
         else if (path.toLower().endsWith(".dxf"))
         {
@@ -477,8 +484,10 @@ void MainWindow::append_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(), "All Files: (*.*);;DSV: (*.dsv *.DSV);;"
-        "PLT: (*.plt *.PLT);;RS274D: (*.cut *.CUT *.nc *.NC);;DXF: (*.dxf *.DXF)", &_file_type);
+    QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(),
+                                           "All Files: (*.*);;DSV: (*.dsv *.DSV);;"
+                                           "PLT: (*.plt *.PLT);;RS274D: (*.cut *.CUT *.nc *.NC);;DXF: (*.dxf *.DXF)",
+                                           &_file_type);
     append_file(path);
     delete dialog;
 }
@@ -525,8 +534,8 @@ void MainWindow::refresh_settings()
     if (_setting->update_curve_vbo())
     {
         const double value = GlobalSetting::setting().down_sampling;
-        Geo::BSpline::default_down_sampling_value = Geo::Bezier::default_down_sampling_value =
-            Geo::Circle::default_down_sampling_value = Geo::Ellipse::default_down_sampling_value = value;
+        Geo::BSpline::default_down_sampling_value = Geo::Bezier::default_down_sampling_value = Geo::Circle::default_down_sampling_value =
+            Geo::Ellipse::default_down_sampling_value = value;
         const double step = GlobalSetting::setting().sampling_step;
         Geo::BSpline::default_step = step * 2, Geo::Bezier::default_step = step;
         GlobalSetting::setting().graph->update_curve_shape(step, value);
@@ -545,9 +554,8 @@ void MainWindow::load_settings()
 {
     GlobalSetting::setting().load_setting();
 
-    Geo::Bezier::default_down_sampling_value = Geo::BSpline::default_down_sampling_value =
-        Geo::Circle::default_down_sampling_value = Geo::Ellipse::default_down_sampling_value =
-        GlobalSetting::setting().down_sampling;
+    Geo::Bezier::default_down_sampling_value = Geo::BSpline::default_down_sampling_value = Geo::Circle::default_down_sampling_value =
+        Geo::Ellipse::default_down_sampling_value = GlobalSetting::setting().down_sampling;
 
     _editer.set_path(GlobalSetting::setting().file_path);
     _editer.set_backup_count(GlobalSetting::setting().backup_times);
@@ -563,7 +571,7 @@ void MainWindow::load_settings()
     ui->show_origin->isChecked() ? ui->canvas->show_origin() : ui->canvas->hide_origin();
     if (ui->remember_file_type->isChecked())
     {
-       _file_type = GlobalSetting::setting().file_type;
+        _file_type = GlobalSetting::setting().file_type;
     }
 
     ui->canvas->set_catch_distance(GlobalSetting::setting().catch_distance);
@@ -647,7 +655,7 @@ void MainWindow::open_file(const QString &path)
         std::ifstream file(path.toLocal8Bit(), std::ios::in | std::ios::binary);
         DSVParser::parse(file, g);
         file.close();
-        
+
         if (ui->remember_file_type->isChecked())
         {
             _file_type = "DSV: (*.dsv *.DSV)";
@@ -658,13 +666,13 @@ void MainWindow::open_file(const QString &path)
         std::ifstream file(path.toLocal8Bit(), std::ios::in | std::ios::binary);
         PLTParser::parse(file, g);
         file.close();
-        
+
         if (ui->remember_file_type->isChecked())
         {
             _file_type = "PLT: (*.plt *.PLT)";
         }
     }
-    else if(path.toUpper().endsWith(".CUT") || path.toUpper().endsWith(".NC"))
+    else if (path.toUpper().endsWith(".CUT") || path.toUpper().endsWith(".NC"))
     {
         std::ifstream file(path.toLocal8Bit(), std::ios::in | std::ios::binary);
         RS274DParser::parse(file, g);
@@ -758,10 +766,10 @@ void MainWindow::append_file(const QString &path)
         PLTParser::parse(file, g);
         file.close();
     }
-    else if(path.toUpper().endsWith(".CUT") || path.toUpper().endsWith(".NC"))
+    else if (path.toUpper().endsWith(".CUT") || path.toUpper().endsWith(".NC"))
     {
         std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
-        RS274DParser::parse(file,g);
+        RS274DParser::parse(file, g);
         file.close();
     }
     else if (path.toUpper().endsWith(".DXF"))

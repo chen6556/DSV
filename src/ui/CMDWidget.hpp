@@ -7,7 +7,10 @@
 
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class CMDWidget;}
+namespace Ui
+{
+class CMDWidget;
+}
 QT_END_NAMESPACE
 
 
@@ -16,17 +19,66 @@ class CMDWidget : public QWidget
     Q_OBJECT
 
 public:
-    enum class CMD {Error_CMD, Main_CMD, Array_CMD,
-        Delete_CMD, Copy_CMD, Cut_CMD, Paste_CMD, Undo_CMD, SelectAll_CMD,
-        Length_CMD, Angle_CMD, Polyline_CMD, CCircle_CMD, DCircle_CMD, PCircle_CMD,
-        PArc_CMD, SCAArc_CMD, SEAArc_CMD, SERArc_CMD, Ellipse_CMD, EllipseArc_CMD, 
-        Rectangle_CMD, CPolygon_CMD, IPolygon_CMD, Point_CMD, BSpline_CMD, Bezier_CMD, Text_CMD,
-        Connect_CMD, Blend_CMD, Close_CMD, Combinate_CMD, Detach_CMD, Rotate_CMD, FlipX_CMD, FlipY_CMD,
-        Mirror_CMD, Offset_CMD, Scale_CMD, Fillet_CMD, FreeFillet_CMD, Chamfer_CMD,
-        Trim_CMD, Extend_CMD, Split_CMD,
-        Union_CMD, Intersection_CMD, Difference_CMD, XOR_CMD, LineArray_CMD, RingArray_CMD};
+    enum class CMD
+    {
+        Error_CMD,
+        Main_CMD,
+        Array_CMD,
+        Delete_CMD,
+        Copy_CMD,
+        Cut_CMD,
+        Paste_CMD,
+        Undo_CMD,
+        SelectAll_CMD,
+        Length_CMD,
+        Angle_CMD,
+        Polyline_CMD,
+        CCircle_CMD,
+        DCircle_CMD,
+        PCircle_CMD,
+        PArc_CMD,
+        SCAArc_CMD,
+        SEAArc_CMD,
+        SERArc_CMD,
+        Ellipse_CMD,
+        EllipseArc_CMD,
+        Rectangle_CMD,
+        CPolygon_CMD,
+        IPolygon_CMD,
+        Point_CMD,
+        BSpline_CMD,
+        Bezier_CMD,
+        Text_CMD,
+        Connect_CMD,
+        Blend_CMD,
+        Close_CMD,
+        Combinate_CMD,
+        Detach_CMD,
+        Rotate_CMD,
+        FlipX_CMD,
+        FlipY_CMD,
+        Mirror_CMD,
+        Offset_CMD,
+        Scale_CMD,
+        Fillet_CMD,
+        FreeFillet_CMD,
+        Chamfer_CMD,
+        Trim_CMD,
+        Extend_CMD,
+        Split_CMD,
+        Union_CMD,
+        Intersection_CMD,
+        Difference_CMD,
+        XOR_CMD,
+        LineArray_CMD,
+        RingArray_CMD
+    };
 
-    enum class SETTING {Absolute_SETTING, Relative_SETTING};
+    enum class SETTING
+    {
+        Absolute_SETTING,
+        Relative_SETTING
+    };
 
 private:
     Ui::CMDWidget *ui = nullptr;
@@ -51,7 +103,7 @@ private slots:
     void refresh_tool(const CanvasOperations::Tool tool);
 
 protected:
-    bool eventFilter(QObject *target, QEvent *event);
+    bool eventFilter(QObject *target, QEvent *event) override;
 
 public:
 signals:
@@ -59,7 +111,7 @@ signals:
 
 public:
     CMDWidget(QWidget *parent);
-    ~CMDWidget();
+    ~CMDWidget() override;
 
     void clear();
 

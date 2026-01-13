@@ -14,7 +14,10 @@
 
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow;}
+namespace Ui
+{
+class MainWindow;
+}
 QT_END_NAMESPACE
 
 class MainWindow : public QMainWindow
@@ -42,17 +45,17 @@ private:
     void connect_btn_to_cmd();
 
 protected:
-    void mousePressEvent(QMouseEvent *event);
+    void mousePressEvent(QMouseEvent *event) override;
 
-    void keyPressEvent(QKeyEvent *event);
+    void keyPressEvent(QKeyEvent *event) override;
 
-    void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *event) override;
 
-    void dragEnterEvent(QDragEnterEvent *event);
+    void dragEnterEvent(QDragEnterEvent *event) override;
 
-    void dropEvent(QDropEvent *event);
+    void dropEvent(QDropEvent *event) override;
 
-    void resizeEvent(QResizeEvent *event);
+    void resizeEvent(QResizeEvent *event) override;
 
 private slots:
     void open_file();
@@ -96,5 +99,5 @@ private:
 
 public:
     MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    ~MainWindow() override;
 };

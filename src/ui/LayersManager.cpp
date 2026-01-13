@@ -3,8 +3,7 @@
 #include "ui/WinUITool.hpp"
 
 
-LayersManager::LayersManager(QWidget *parent)
-    : QDialog(parent), ui(new Ui::LayersManager)
+LayersManager::LayersManager(QWidget *parent) : QDialog(parent), ui(new Ui::LayersManager)
 {
     ui->setupUi(this);
     init();
@@ -44,7 +43,7 @@ void LayersManager::init()
     QObject::connect(_add, &QAction::triggered, this, &LayersManager::add_layer);
     QObject::connect(_insert, &QAction::triggered, this, &LayersManager::insert_layer);
     QObject::connect(_del, &QAction::triggered, this, &LayersManager::remove_layer);
-    
+
     _layers_model = new QStringListModel(this);
     ui->layers_view->setModel(_layers_model);
     QObject::connect(ui->layers_view, &QListView::customContextMenuRequested, [this](const QPoint &pos) { _menu->exec(QCursor::pos()); });
@@ -76,7 +75,7 @@ void LayersManager::show_layer()
     else
     {
         _editer->show_group(index);
-        _layers[count - 1- index] = "O " + _editer->group_name(index);
+        _layers[count - 1 - index] = "O " + _editer->group_name(index);
     }
     _layers_model->setStringList(_layers);
 }
@@ -97,7 +96,7 @@ void LayersManager::layer_up()
     }
     else
     {
-        _layers.insert(count - 2 - index, _layers[count - 1 - index]);  
+        _layers.insert(count - 2 - index, _layers[count - 1 - index]);
     }
     _layers.remove(count - index);
     _layers_model->setStringList(_layers);
@@ -183,7 +182,6 @@ void LayersManager::update_layers()
         {
             _editer->set_group_name(i, QString::number(index++));
         }
-        std::string value = _editer->group_name(i).toStdString();
         _layers.append((_editer->group_is_visible(i) ? "O " : "X ") + _editer->group_name(i));
     }
     std::reverse(_layers.begin(), _layers.end());

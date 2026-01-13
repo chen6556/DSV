@@ -10,670 +10,674 @@ class Canvas;
 
 namespace CanvasOperations
 {
-    enum class Tool
-    {
-        Select, 
-        Move, 
-        Measure, 
-        Angle, 
-        Circle0, // Center-Radius
-        Circle1, // 2-Point
-        Circle2, // 3-Point
-        Polyline, 
-        Arc0, // 3-Point
-        Arc1, // Start-Center-End
-        Arc2, // Start-End-Angle
-        Arc3, // Start-End-Radius
-        Rectangle,
-        Polygon0, // CircumscribedPolygon
-        Polygon1, // InscribedPolygon
-        Point, 
-        BSpline, 
-        Bezier, 
-        Text, 
-        Ellipse0, // Ellipse
-        Ellipse1, // Ellipse Arc
- 
-        Mirror, 
-        RingArray, 
-        ShapeDifference, 
-        Fillet, 
-        FreeFillet, 
-        Chamfer, 
-        Rotate, 
-        Trim, 
-        Extend, 
-        Split, 
-        Blend, 
+enum class Tool
+{
+    Select,
+    Move,
+    Measure,
+    Angle,
+    Circle0, // Center-Radius
+    Circle1, // 2-Point
+    Circle2, // 3-Point
+    Polyline,
+    Arc0, // 3-Point
+    Arc1, // Start-Center-End
+    Arc2, // Start-End-Angle
+    Arc3, // Start-End-Radius
+    Rectangle,
+    Polygon0, // CircumscribedPolygon
+    Polygon1, // InscribedPolygon
+    Point,
+    BSpline,
+    Bezier,
+    Text,
+    Ellipse0, // Ellipse
+    Ellipse1, // Ellipse Arc
 
-        End
+    Mirror,
+    RingArray,
+    ShapeDifference,
+    Fillet,
+    FreeFillet,
+    Chamfer,
+    Rotate,
+    Trim,
+    Extend,
+    Split,
+    Blend,
+
+    End
+};
+
+class CanvasOperation
+{
+public:
+    static double *shape;
+    static double *tool_lines;
+    static unsigned int shape_len;
+    static unsigned int shape_count;
+    static unsigned int tool_lines_len;
+    static unsigned int tool_lines_count;
+    static float tool_line_width;
+    static float tool_line_color[4];
+    static double real_pos[4]; // current(x,y), last(x,y)
+    static double press_pos[2];
+    static double release_pos[2];
+    static Tool tool[2]; // current, last
+    static double view_ratio;
+    static QString info;
+    static Editer *editer;
+    static Canvas *canvas;
+    static Geo::Geometry *clicked_object;
+    static bool absolute_coord;
+
+protected:
+    enum class ParamType
+    {
+        LengthAngle,
+        Coord
     };
 
-    class CanvasOperation
-    {
-    public:
-        static double *shape;
-        static double *tool_lines;
-        static unsigned int shape_len;
-        static unsigned int shape_count;
-        static unsigned int tool_lines_len;
-        static unsigned int tool_lines_count;
-        static float tool_line_width;
-        static float tool_line_color[4];
-        static double real_pos[4]; // current(x,y), last(x,y)
-        static double press_pos[2];
-        static double release_pos[2];
-        static Tool tool[2]; // current, last
-        static double view_ratio;
-        static QString info;
-        static Editer *editer;
-        static Canvas *canvas;
-        static Geo::Geometry *clicked_object;
-        static bool absolute_coord;
+private:
+    CanvasOperation *operations[static_cast<int>(Tool::End)] = {nullptr};
 
-    protected:
-        enum class ParamType {LengthAngle, Coord};
+protected:
+    CanvasOperation() = default;
 
-    private:
-        CanvasOperation *operations[static_cast<int>(Tool::End)] = {nullptr};
+public:
+    CanvasOperation(const CanvasOperation &) = delete;
 
-    protected:
-        CanvasOperation() = default;
+    CanvasOperation &operator=(const CanvasOperation &) = delete;
 
-        CanvasOperation(const CanvasOperation &) = delete;
+    virtual ~CanvasOperation();
 
-        CanvasOperation &operator=(const CanvasOperation &) = delete;
+    static CanvasOperation &operation();
 
-        virtual ~CanvasOperation();
-    
-    public:
-        static CanvasOperation &operation();
+    void init();
 
-        void init();
+    void clear();
 
-        void clear();
+    CanvasOperation *operator[](const Tool tool);
 
-        CanvasOperation *operator[](const Tool tool);
+    static void check_shape_size();
 
-        static void check_shape_size();
+    static void check_shape_size(const size_t count);
 
-        static void check_shape_size(const size_t count);
+    static void check_tool_lines_size();
 
-        static void check_tool_lines_size();
+    static void check_tool_lines_size(const size_t count);
 
-        static void check_tool_lines_size(const size_t count);
+    static void refresh_tool_lines(const Geo::Geometry *object);
 
-        static void refresh_tool_lines(const Geo::Geometry *object);
+    virtual bool mouse_press(QMouseEvent *event);
 
-        virtual bool mouse_press(QMouseEvent *event);
+    virtual bool mouse_release(QMouseEvent *event);
 
-        virtual bool mouse_release(QMouseEvent *event);
+    virtual bool mouse_move(QMouseEvent *event);
 
-        virtual bool mouse_move(QMouseEvent *event);
+    virtual bool mouse_double_click(QMouseEvent *event);
 
-        virtual bool mouse_double_click(QMouseEvent *event);
+    virtual void reset();
 
-        virtual void reset();
+    virtual bool read_parameters(const double *params, const int count);
 
-        virtual bool read_parameters(const double *params, const int count);
+    virtual QString cmd_tips() const;
 
-        virtual QString cmd_tips() const;
+    virtual void switch_parameters_type();
+};
 
-        virtual void switch_parameters_type();
-    };
 
+class SelectOperation : public CanvasOperation
+{
+private:
+    double _pos[2] = {0, 0};
+    bool _select = false;
 
-    class SelectOperation : public CanvasOperation
-    {
-    private:
-        double _pos[2];
-        bool _select = false;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_release(QMouseEvent *event) override;
 
-        bool mouse_release(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    bool mouse_double_click(QMouseEvent *event) override;
 
-        bool mouse_double_click(QMouseEvent *event) override;
+    void reset() override;
+};
 
-        void reset() override;
-    };
 
+class MoveOperation : public CanvasOperation
+{
+public:
+    bool mouse_release(QMouseEvent *event) override;
 
-    class MoveOperation : public CanvasOperation
-    {
-    public:
-        bool mouse_release(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
+};
 
-        bool mouse_move(QMouseEvent *event) override;
-    };
 
+class MeasureOperation : public CanvasOperation
+{
+private:
+    Geo::Point _pos[2];
+    bool _is_head = true;
 
-    class MeasureOperation : public CanvasOperation
-    {
-    private:
-        Geo::Point _pos[2];
-        bool _is_head = true;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    void reset() override;
+};
 
-        void reset() override;
-    };
 
+class AngleOperation : public CanvasOperation
+{
+private:
+    Geo::Point _pos[3];
+    int _index = 0;
 
-    class AngleOperation : public CanvasOperation
-    {
-    private:
-        Geo::Point _pos[3];
-        int _index = 0;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    void reset() override;
+};
 
-        void reset() override;
-    };
 
+class Circle0Operation : public CanvasOperation
+{
+private:
+    double _parameters[3] = {0, 0, 0}; // x, y, r
+    bool _set_center = true;
 
-    class Circle0Operation : public CanvasOperation
-    {
-    private:
-        double _parameters[3]; // x, y, r
-        bool _set_center = true;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
+};
 
-        QString cmd_tips() const override;
-    };
 
+class Circle1Operation : public CanvasOperation
+{
+private:
+    double _parameters[4] = {0, 0, 0, 0}; // x0, y0, x1, y1
+    bool _set_first_point = true;
+    ParamType _param_type = ParamType::LengthAngle;
 
-    class Circle1Operation : public CanvasOperation
-    {
-    private:
-        double _parameters[4]; // x0, y0, x1, y1
-        bool _set_first_point = true;
-        ParamType _param_type = ParamType::LengthAngle;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
 
-        QString cmd_tips() const override;
+    void switch_parameters_type() override;
+};
 
-        void switch_parameters_type() override;
-    };
 
+class Circle2Operation : public CanvasOperation
+{
+private:
+    double _parameters[6] = {0, 0, 0, 0, 0, 0}; // x0, y0, x1, y1, x2, y2
+    int _index = 0;
+    ParamType _param_type = ParamType::LengthAngle;
 
-    class Circle2Operation : public CanvasOperation
-    {
-    private:
-        double _parameters[6]; // x0, y0, x1, y1, x2, y2
-        int _index = 0;
-        ParamType _param_type = ParamType::LengthAngle;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
 
-        QString cmd_tips() const override;
+    void switch_parameters_type() override;
+};
 
-        void switch_parameters_type() override;
-    };
 
+class PolythingOperation : public CanvasOperation
+{
+private:
+    std::vector<Geo::Point> _points;
+    ParamType _param_type = ParamType::LengthAngle;
 
-    class PolythingOperation : public CanvasOperation
-    {
-    private:
-        std::vector<Geo::Point> _points;
-        ParamType _param_type = ParamType::LengthAngle;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    bool mouse_double_click(QMouseEvent *event) override;
 
-        bool mouse_double_click(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
 
-        QString cmd_tips() const override;
+    void switch_parameters_type() override;
+};
 
-        void switch_parameters_type() override;
-    };
 
+class Arc0Operation : public CanvasOperation
+{
+private:
+    double _parameters[6] = {0, 0, 0, 0, 0, 0}; // x0, y0, x1, y1, x2, y2
+    int _index = 0;
+    ParamType _param_type = ParamType::LengthAngle;
 
-    class Arc0Operation : public CanvasOperation
-    {
-    private:
-        double _parameters[6]; // x0, y0, x1, y1, x2, y2
-        int _index = 0;
-        ParamType _param_type = ParamType::LengthAngle;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
 
-        QString cmd_tips() const override;
+    void switch_parameters_type() override;
+};
 
-        void switch_parameters_type() override;
-    };
 
+class Arc1Operation : public CanvasOperation
+{
+private:
+    double _parameters[5] = {0, 0, 0, 0, 0}; // startx, starty, centerx, centery, angle
+    int _index = 0;
+    ParamType _param_type = ParamType::LengthAngle;
 
-    class Arc1Operation : public CanvasOperation
-    {
-    private:
-        double _parameters[5]; // startx, starty, centerx, centery, angle
-        int _index = 0;
-        ParamType _param_type = ParamType::LengthAngle;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
 
-        QString cmd_tips() const override;
+    void switch_parameters_type() override;
+};
 
-        void switch_parameters_type() override;    
-    };
 
+class Arc2Operation : public CanvasOperation
+{
+private:
+    double _parameters[5] = {0, 0, 0, 0, 0}; // startx, starty, endx, endy, angle
+    int _index = 0;
+    ParamType _param_type = ParamType::LengthAngle;
 
-    class Arc2Operation : public CanvasOperation
-    {
-    private:
-        double _parameters[5]; // startx, starty, endx, endy, angle
-        int _index = 0;
-        ParamType _param_type = ParamType::LengthAngle;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
 
-        QString cmd_tips() const override;
+    void switch_parameters_type() override;
+};
 
-        void switch_parameters_type() override;
-    };
 
+class Arc3Operation : public CanvasOperation
+{
+private:
+    double _parameters[5] = {0, 0, 0, 0, 0}; // startx, starty, endx, endy, length
+    int _index = 0;
+    ParamType _param_type = ParamType::LengthAngle;
 
-    class Arc3Operation : public CanvasOperation
-    {
-    private:
-        double _parameters[5]; // startx, starty, endx, endy, length
-        int _index = 0;
-        ParamType _param_type = ParamType::LengthAngle;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
 
-        QString cmd_tips() const override;
+    void switch_parameters_type() override;
+};
 
-        void switch_parameters_type() override;
-    };
 
+class RectangleOperation : public CanvasOperation
+{
+private:
+    double _parameters[4] = {0, 0, 0, 0}; // x0, y0, x1, y1
+    bool _set_first_point = true;
 
-    class RectangleOperation : public CanvasOperation
-    {
-    private:
-        double _parameters[4];
-        bool _set_first_point = true;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
+};
 
-        QString cmd_tips() const override;
-    };
 
+class CircumscribedPolygonOperation : public CanvasOperation
+{
+private:
+    double _parameters[4] = {0, 0, 0, 0}; // x, y, r, angle
+    int _n = 5;
+    bool _set_n = true, _set_center = true;
 
-    class CircumscribedPolygonOperation : public CanvasOperation
-    {
-    private:
-        double _parameters[4]; // x, y, r, angle
-        int _n = 5;
-        bool _set_n = true, _set_center = true;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
+};
 
-        QString cmd_tips() const override;
-    };
 
+class InscribedPolygonOperation : public CanvasOperation
+{
+private:
+    double _parameters[4] = {0, 0, 0, 0}; // x, y, r, angle
+    int _n = 5;
+    bool _set_n = true, _set_center = true;
 
-    class InscribedPolygonOperation : public CanvasOperation
-    {
-    private:
-        double _parameters[4]; // x, y, r, angle
-        int _n = 5;
-        bool _set_n = true, _set_center = true;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
+};
 
-        QString cmd_tips() const override;
-    };
 
+class PointOperation : public CanvasOperation
+{
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    class PointOperation : public CanvasOperation
-    {
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
+};
 
-        QString cmd_tips() const override;
-    };
 
+class BSplineOperation : public CanvasOperation
+{
+private:
+    std::vector<Geo::Point> _points;
+    int _order = 3;
+    ParamType _param_type = ParamType::LengthAngle;
 
-    class BSplineOperation : public CanvasOperation
-    {
-    private:
-        std::vector<Geo::Point> _points;
-        int _order = 3;
-        ParamType _param_type = ParamType::LengthAngle;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    bool mouse_double_click(QMouseEvent *event) override;
 
-        bool mouse_double_click(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
 
-        QString cmd_tips() const override;
+    void switch_parameters_type() override;
+};
 
-        void switch_parameters_type() override;
-    };
 
+class BezierOperation : public CanvasOperation
+{
+private:
+    std::vector<Geo::Point> _points;
+    int _order = 3;
+    ParamType _param_type = ParamType::LengthAngle;
 
-    class BezierOperation : public CanvasOperation
-    {
-    private:
-        std::vector<Geo::Point> _points;
-        int _order = 3;
-        ParamType _param_type = ParamType::LengthAngle;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    bool mouse_double_click(QMouseEvent *event) override;
 
-        bool mouse_double_click(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
 
-        QString cmd_tips() const override;
+    void switch_parameters_type() override;
+};
 
-        void switch_parameters_type() override;
-    };
 
+class TextOperation : public CanvasOperation
+{
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    class TextOperation : public CanvasOperation
-    {
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
+};
 
-        QString cmd_tips() const override;
-    };
 
+class Ellipse0Operation : public CanvasOperation
+{
+private:
+    double _parameters[5] = {0, 0, 0, 0, 0}; // x, y, a, b, angle
+    int _index = 0;
 
-    class Ellipse0Operation : public CanvasOperation
-    {
-    private:
-        double _parameters[5]; // x, y, a, b, angle
-        int _index = 0;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
+};
 
-        QString cmd_tips() const override;
-    };
 
+class Ellipse1Operation : public CanvasOperation
+{
+private:
+    double _parameters[7] = {0, 0, 0, 0, 0, 0, 0}; // x, y, a, b, angle, start, end
+    int _index = 0;
 
-    class Ellipse1Operation : public CanvasOperation
-    {
-    private:
-        double _parameters[7]; // x, y, a, b, angle, start, end
-        int _index = 0;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
+};
 
-        QString cmd_tips() const override;
-    };
 
+class MirrorOperation : public CanvasOperation
+{
+private:
+    Geo::Point _pos[2];
+    bool _set_first_point = true;
 
-    class MirrorOperation : public CanvasOperation
-    {
-    private:
-        Geo::Point _pos[2];
-        bool _set_first_point = true;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    QString cmd_tips() const override;
+};
 
-        QString cmd_tips() const override;
-    };
 
+class RingArrayOperation : public CanvasOperation
+{
+private:
+    int _count = 4;
 
-    class RingArrayOperation : public CanvasOperation
-    {
-    private:
-        int _count = 4;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    bool read_parameters(const double *params, const int count) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    QString cmd_tips() const override;
+};
 
-        QString cmd_tips() const override;
-    };
 
+class ShapeDifferenceOperation : public CanvasOperation
+{
+private:
+    Geo::Geometry *_shape = nullptr;
 
-    class ShapeDifferenceOperation : public CanvasOperation
-    {
-    private:
-        Geo::Geometry *_shape = nullptr;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+    void reset() override;
 
-        void reset() override;
+    QString cmd_tips() const override;
+};
 
-        QString cmd_tips() const override;
-    };
 
+class FilletOperation : public CanvasOperation
+{
+private:
+    double _radius0 = 0, _radius1 = 0;
+    Geo::Geometry *_object0 = nullptr;
+    Geo::Geometry *_object1 = nullptr;
+    Geo::Point _pos0, _pos1;
 
-    class FilletOperation : public CanvasOperation
-    {
-    private:
-        double _radius0 = 0, _radius1 = 0;
-        Geo::Geometry *_object0 = nullptr;
-        Geo::Geometry *_object1 = nullptr;
-        Geo::Point _pos0, _pos1;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
-        
-        void reset() override;
+    void reset() override;
 
-        bool read_parameters(const double *params, const int count) override;
+    bool read_parameters(const double *params, const int count) override;
 
-        QString cmd_tips() const override;
-    };
+    QString cmd_tips() const override;
+};
 
 
-    class FreeFilletOperation : public CanvasOperation
-    {
-    private:
-        double _pos[2];
-        Geo::Geometry *_object0 = nullptr;
-        Geo::Geometry *_object1 = nullptr;
-        std::vector<Geo::Point> _points;
-        std::vector<std::tuple<size_t, double, double, double>> _tvalues;
+class FreeFilletOperation : public CanvasOperation
+{
+private:
+    double _pos[2] = {0, 0};
+    Geo::Geometry *_object0 = nullptr;
+    Geo::Geometry *_object1 = nullptr;
+    std::vector<Geo::Point> _points;
+    std::vector<std::tuple<size_t, double, double, double>> _tvalues;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        void reset() override;
+    void reset() override;
 
-        bool read_parameters(const double *params, const int count) override;
+    bool read_parameters(const double *params, const int count) override;
 
-        QString cmd_tips() const override;
-    };
+    QString cmd_tips() const override;
+};
 
 
-    class ChamferOperation : public CanvasOperation
-    {
-    private:
-        double _distance = 0;
+class ChamferOperation : public CanvasOperation
+{
+private:
+    double _distance = 0;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-        bool read_parameters(const double *params, const int count) override;
+    bool read_parameters(const double *params, const int count) override;
 
-        QString cmd_tips() const override;
-    };
+    QString cmd_tips() const override;
+};
 
 
-    class RotateOperation : public CanvasOperation
-    {
-    private:
-        Geo::Point _pos[3];
-        int _index = 0;
+class RotateOperation : public CanvasOperation
+{
+private:
+    Geo::Point _pos[3];
+    int _index = 0;
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-        bool mouse_move(QMouseEvent *event) override;
+    bool mouse_move(QMouseEvent *event) override;
 
-        void reset() override;
+    void reset() override;
 
-        bool read_parameters(const double *params, const int count) override;
+    bool read_parameters(const double *params, const int count) override;
 
-        QString cmd_tips() const override;
-    };
+    QString cmd_tips() const override;
+};
 
 
-    class TrimOperation : public CanvasOperation
-    {
-    public:
-        bool mouse_press(QMouseEvent *event) override;
-    };
+class TrimOperation : public CanvasOperation
+{
+public:
+    bool mouse_press(QMouseEvent *event) override;
+};
 
 
-    class ExtendOperation : public CanvasOperation
-    {
-    public:
-        bool mouse_press(QMouseEvent *event) override;
-    };
+class ExtendOperation : public CanvasOperation
+{
+public:
+    bool mouse_press(QMouseEvent *event) override;
+};
 
 
-    class SplitOperation : public CanvasOperation
-    {
-    public:
-        bool mouse_press(QMouseEvent *event) override;
-    };
+class SplitOperation : public CanvasOperation
+{
+public:
+    bool mouse_press(QMouseEvent *event) override;
+};
 
 
-    class BlendOperation : public CanvasOperation
-    {
-    private:
-        Geo::Geometry *_object0 = nullptr;
-        Geo::Geometry *_object1 = nullptr;
-        Geo::Point _pos[2];
+class BlendOperation : public CanvasOperation
+{
+private:
+    Geo::Geometry *_object0 = nullptr;
+    Geo::Geometry *_object1 = nullptr;
+    Geo::Point _pos[2];
 
-    public:
-        bool mouse_press(QMouseEvent *event) override;
+public:
+    bool mouse_press(QMouseEvent *event) override;
 
-        void reset() override;
+    void reset() override;
 
-        QString cmd_tips() const override;
-    };
-}
+    QString cmd_tips() const override;
+};
+} // namespace CanvasOperations

@@ -54,11 +54,11 @@ std::vector<Geo::Triangle> Geo::ear_cut_to_triangles(const Geo::Polygon &polygon
     }
 
     std::vector<Geo::Triangle> triangles;
-    bool is_ear, is_cut;
+    bool is_ear = false, is_cut = false;
     while (indexs.size() > 3)
     {
         is_cut = false;
-        for (size_t pre, cur, nxt, i = 0, count = indexs.size(); i < count; ++i)
+        for (size_t pre = 0, cur = 0, nxt = 0, i = 0, count = indexs.size(); i < count; ++i)
         {
             pre = i > 0 ? indexs[i - 1] : indexs[count - 1];
             cur = indexs[i];
@@ -99,7 +99,7 @@ std::vector<Geo::Triangle> Geo::ear_cut_to_triangles(const Geo::Polygon &polygon
     {
         triangles.emplace_back(polygon[indexs[0]], polygon[indexs[1]], polygon[indexs[2]]);
     }
-    
+
     return triangles;
 }
 
@@ -110,14 +110,12 @@ bool Geo::merge_ear_cut_triangles(const std::vector<Geo::Triangle> &triangles, s
     {
         return false;
     }
-    
+
     polygons.clear();
     const size_t triangles_count = triangles.size();
     size_t merged_count = 1, index = 0;
-    int index0, index1, index2;
     std::vector<bool> merged(triangles_count, false), current_triangles(triangles_count, false);
     Geo::Polygon points;
-    bool flag;
 
     while (merged_count < triangles_count)
     {
@@ -137,7 +135,6 @@ bool Geo::merge_ear_cut_triangles(const std::vector<Geo::Triangle> &triangles, s
         current_triangles.assign(triangles_count, false);
         current_triangles[index++] = true;
 
-        flag = true;
         for (size_t i = index; i < triangles_count; ++i)
         {
             if (merged[i])
@@ -147,7 +144,7 @@ bool Geo::merge_ear_cut_triangles(const std::vector<Geo::Triangle> &triangles, s
 
             for (size_t j = 1, count = points.size(); j < count; ++j)
             {
-                index0 = index1 = index2 = -1;
+                int index0 = -1, index1 = -1;
                 if (points[j - 1] == triangles[i][0])
                 {
                     index0 = 0;
@@ -178,9 +175,9 @@ bool Geo::merge_ear_cut_triangles(const std::vector<Geo::Triangle> &triangles, s
                 {
                     continue;
                 }
-                index2 = 3 - index0 - index1;
+                int index2 = 3 - index0 - index1;
 
-                flag = true;
+                bool flag = true;
                 for (size_t k = 0; k < triangles_count; ++k)
                 {
                     if (current_triangles[k] && Geo::is_inside(triangles[i][index2], triangles[k]))
@@ -200,7 +197,7 @@ bool Geo::merge_ear_cut_triangles(const std::vector<Geo::Triangle> &triangles, s
                 }
             }
         }
-        
+
         index = 0;
         polygons.emplace_back(points);
         points.clear();

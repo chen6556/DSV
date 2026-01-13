@@ -29,11 +29,11 @@ private:
     void init();
 
 public:
-    Editer(){};
+    Editer() = default;
 
     Editer(Graph *graph);
 
-    Editer(Graph *graph, const QString &path);
+    Editer(Graph *graph, QString path);
 
     ~Editer();
 
@@ -58,7 +58,7 @@ public:
     const size_t groups_count() const;
 
     void set_view_ratio(const double value);
-    
+
     Geo::Geometry *select(const Geo::Point &point, const bool reset_others = true);
 
     Geo::Geometry *select(const double x, const double y, const bool reset_others = true);
@@ -101,7 +101,8 @@ public:
 
     void append(Geo::Geometry *object);
 
-    void translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1, const bool change_shape = true);
+    void translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1,
+                          const bool change_shape = true);
 
     bool remove_selected();
 
@@ -111,31 +112,31 @@ public:
 
     bool paste(const double tx, const double ty);
 
-    bool connect(std::vector<Geo::Geometry *> objects, const double connect_distance);
+    bool connect(const std::vector<Geo::Geometry *> &objects, const double connect_distance);
 
     bool blend(const Geo::Geometry *object0, const Geo::Geometry *object1, const Geo::Point &pos0, const Geo::Point &pos1);
 
-    bool close_polyline(std::vector<Geo::Geometry *> objects);
+    bool close_polyline(const std::vector<Geo::Geometry *> &objects);
 
-    bool combinate(std::vector<Geo::Geometry *> objects);
+    bool combinate(const std::vector<Geo::Geometry *> &objects);
 
-    bool detach(std::vector<Geo::Geometry *> objects);
+    bool detach(const std::vector<Geo::Geometry *> &objects);
 
-    bool mirror(std::vector<Geo::Geometry *> objects, const Geo::Point &start, const Geo::Point &end, const bool copy);
+    bool mirror(const std::vector<Geo::Geometry *> &objects, const Geo::Point &start, const Geo::Point &end, const bool copy);
 
-    bool offset(std::vector<Geo::Geometry *> objects, const double distance,
-        const Geo::Offset::JoinType join_type = Geo::Offset::JoinType::Round,
-        const Geo::Offset::EndType end_type = Geo::Offset::EndType::Polygon);
+    bool offset(const std::vector<Geo::Geometry *> &objects, const double distance,
+                const Geo::Offset::JoinType join_type = Geo::Offset::JoinType::Round,
+                const Geo::Offset::EndType end_type = Geo::Offset::EndType::Polygon);
 
-    bool scale(std::vector<Geo::Geometry *> objects, const bool unitary, const double k);
+    bool scale(const std::vector<Geo::Geometry *> &objects, const bool unitary, const double k);
 
     bool shape_union(Geo::Geometry *shape0, Geo::Geometry *shape1);
 
     bool shape_intersection(Geo::Geometry *shape0, Geo::Geometry *shape1);
 
-    bool shape_difference(Geo::Geometry *shape0, const Geo::Geometry *shape1); 
+    bool shape_difference(Geo::Geometry *shape0, const Geo::Geometry *shape1);
 
-    bool shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1); 
+    bool shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1);
 
     bool fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius);
 
@@ -145,12 +146,14 @@ public:
 
     bool fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius0, const double radius1);
 
-    bool fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1, const double radius);
+    bool fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1,
+                const double radius);
 
-    bool fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1, const double radius0, const double radius1);
+    bool fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1,
+                const double radius0, const double radius1);
 
-    bool fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::Point &start, const Geo::Point &center,
-        const Geo::Point &end, const std::vector<std::tuple<size_t, double, double, double>> &tvalues);
+    bool fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::Point &start, const Geo::Point &center, const Geo::Point &end,
+                const std::vector<std::tuple<size_t, double, double, double>> &tvalues);
 
     bool chamfer(Geo::Polygon *shape, const Geo::Point &point, const double distance);
 
@@ -158,15 +161,15 @@ public:
 
     bool split(Geo::Geometry *object, const Geo::Point &pos);
 
-    bool line_array(std::vector<Geo::Geometry *> objects, int x, int y, double x_space, double y_space);
+    bool line_array(const std::vector<Geo::Geometry *> &objects, int x, int y, double x_space, double y_space);
 
-    bool ring_array(std::vector<Geo::Geometry *> objects, const double x, const double y, const int n);
+    bool ring_array(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const int n);
 
     void up(Geo::Geometry *item);
 
     void down(Geo::Geometry *item);
 
-    void rotate(std::vector<Geo::Geometry *> objects, const double x, const double y, const double rad);
+    void rotate(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad);
 
     // true:X false:Y
     void flip(std::vector<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers);
@@ -198,13 +201,14 @@ public:
 
     bool auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, const bool current_group_only = true);
 
-    bool auto_aligning(Geo::Geometry *points, const double x, const double y, std::list<QLineF> &reflines, const bool current_group_only = true);
+    bool auto_aligning(Geo::Geometry *points, const double x, const double y, std::list<QLineF> &reflines,
+                       const bool current_group_only = true);
 
     bool auto_aligning(Geo::Point &coord, std::list<QLineF> &reflines, const bool current_group_only = true);
 
     void auto_combinate();
 
-	void auto_layering();
+    void auto_layering();
 
     void auto_connect();
 

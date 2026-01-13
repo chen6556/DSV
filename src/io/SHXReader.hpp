@@ -23,7 +23,7 @@ public:
     std::vector<Geo::Polyline> polylines;
     Box2D bbox;
 
-    SHXShape() {};
+    SHXShape() = default;
 
     void update_bbox();
 
@@ -190,6 +190,8 @@ class SHXContentParser
 {
 public:
     virtual SHXFontContentData parse(SHXFileReader &reader) = 0;
+
+    virtual ~SHXContentParser() = default;
 };
 
 class SHXShapeContentParser : public SHXContentParser

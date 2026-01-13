@@ -8,8 +8,9 @@ bool Geo::tangency_point(const Point &point, const Circle &circle, Point &output
     {
         return false;
     }
-    const Geo::Point point1(-100, (std::pow(circle.radius, 2) - (point.x - circle.x) * (-100 - circle.x))  / (point.y - circle.y) + circle.y);
-    const Geo::Point point2(100, (std::pow(circle.radius, 2) - (point.x - circle.x) * (100 - circle.x))  / (point.y - circle.y) + circle.y);
+    const Geo::Point point1(-100,
+                            (std::pow(circle.radius, 2) - (point.x - circle.x) * (-100 - circle.x)) / (point.y - circle.y) + circle.y);
+    const Geo::Point point2(100, (std::pow(circle.radius, 2) - (point.x - circle.x) * (100 - circle.x)) / (point.y - circle.y) + circle.y);
     return Geo::is_intersected(point1, point2, circle, output0, output1, true);
 }
 
@@ -25,7 +26,7 @@ bool Geo::tangency_point(const Point &point, const Ellipse &ellipse, Point &outp
     const double aa = Geo::distance_square(ellipse.a0(), ellipse.a1()) / 4;
     const double bb = Geo::distance_square(ellipse.b0(), ellipse.b1()) / 4;
     const double a1 = coord.x / aa, b1 = coord.y / bb;
-    const double a = std::pow(a1, 2) * aa  + std::pow(b1, 2) * bb;
+    const double a = std::pow(a1, 2) * aa + std::pow(b1, 2) * bb;
     if (b1 != 0)
     {
         const double b = -2 * a1 * aa;
@@ -51,7 +52,7 @@ bool Geo::tangency_point(const Point &point, const Ellipse &ellipse, Point &outp
 }
 
 int Geo::tangency_point(const Point &point, const Bezier &bezier, std::vector<Point> &output,
-    std::vector<std::tuple<size_t, double, double, double>> *tvalues)
+                        std::vector<std::tuple<size_t, double, double, double>> *tvalues)
 {
     const size_t order = bezier.order();
     std::vector<int> nums(order, 1);
@@ -88,7 +89,7 @@ int Geo::tangency_point(const Point &point, const Bezier &bezier, std::vector<Po
             Geo::Point coord;
             for (size_t j = 0; j <= order; ++j)
             {
-                coord += (bezier[j + i] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j))); 
+                coord += (bezier[j + i] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
             }
             angles[1] = Geo::cross(coord, point, head, tail);
             if (angles[0] * angles[1] <= 0)
@@ -106,7 +107,7 @@ int Geo::tangency_point(const Point &point, const Bezier &bezier, std::vector<Po
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t0, order - j) * std::pow(t0, j))); 
+                    coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t0, order - j) * std::pow(t0, j)));
                 }
                 Geo::Point head, tail;
                 for (size_t j = 0; j < order; ++j)
@@ -120,7 +121,7 @@ int Geo::tangency_point(const Point &point, const Bezier &bezier, std::vector<Po
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j))); 
+                    coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
                 }
                 Geo::Point head, tail;
                 for (size_t j = 0; j < order; ++j)
@@ -136,7 +137,7 @@ int Geo::tangency_point(const Point &point, const Bezier &bezier, std::vector<Po
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t, order - j) * std::pow(t, j))); 
+                    coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
                 Geo::Point head, tail;
                 for (size_t j = 0; j < order; ++j)
@@ -170,7 +171,7 @@ int Geo::tangency_point(const Point &point, const Bezier &bezier, std::vector<Po
             Geo::Point coord;
             for (size_t j = 0; j <= order; ++j)
             {
-                coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j))); 
+                coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
             }
             Geo::Point head, tail;
             for (size_t j = 0; j < order; ++j)
@@ -195,8 +196,8 @@ int Geo::tangency_point(const Point &point, const Bezier &bezier, std::vector<Po
     return result.size();
 }
 
-int Geo::tangency_point(const Point &point, const BSpline &bspline,
-    std::vector<Point> &output, std::vector<std::tuple<double, double, double>> *tvalues)
+int Geo::tangency_point(const Point &point, const BSpline &bspline, std::vector<Point> &output,
+                        std::vector<std::tuple<double, double, double>> *tvalues)
 {
     std::vector<std::tuple<double, double>> pairs;
     {
@@ -221,8 +222,8 @@ int Geo::tangency_point(const Point &point, const BSpline &bspline,
     for (auto [t0, t1] : pairs)
     {
         const Geo::Point origin(0, 0);
-        double angles[2] = { Geo::angle(bspline.at(t0), point, origin, bspline.tangent(t0)),
-            Geo::angle(bspline.at(t1), point, origin, bspline.tangent(t1)) };
+        double angles[2] = {Geo::angle(bspline.at(t0), point, origin, bspline.tangent(t0)),
+                            Geo::angle(bspline.at(t1), point, origin, bspline.tangent(t1))};
         double last_t = -1, t = (t0 + t1) / 2;
         while (t1 - t0 > 1e-14 && last_t != t && angles[0] * angles[1] != 0)
         {
@@ -249,7 +250,7 @@ int Geo::tangency_point(const Point &point, const BSpline &bspline,
         {
             t1 = (t0 + t1) / 2;
         }
-        if (const Geo::Point coord = bspline.at(t1); 
+        if (const Geo::Point coord = bspline.at(t1);
             std::abs(Geo::angle(coord, point, origin, bspline.tangent(t1))) < 1e-4 ||
             std::abs(std::abs(Geo::angle(coord, point, origin, bspline.tangent(t1))) - Geo::PI) < 1e-4)
         {

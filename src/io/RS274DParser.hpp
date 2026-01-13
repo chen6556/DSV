@@ -58,8 +58,8 @@ private:
     Graph *_graph = nullptr;
     std::vector<Geo::Point> _points;
     Geo::Point _last_coord;
-    Geo::Circle *_last_circle;
-    Geo::Polygon *_last_polygon;
+    Geo::Circle *_last_circle = nullptr;
+    Geo::Polygon *_last_polygon = nullptr;
 
     int _circle_radius = 10;
     size_t _index = 0;

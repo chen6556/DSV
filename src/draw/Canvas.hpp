@@ -17,7 +17,14 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_1_Core
     Q_OBJECT
 
 public:
-    enum class CatchedPointType {Vertex, Center, Foot, Tangency, Intersection};
+    enum class CatchedPointType
+    {
+        Vertex,
+        Center,
+        Foot,
+        Tangency,
+        Intersection
+    };
 
 private:
     Geo::AABBRect _visible_area;
@@ -26,54 +33,54 @@ private:
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
 
-    unsigned int _shader_program, _VAO;
+    unsigned int _shader_program = 0, _VAO = 0;
 
     struct BaseVBO
     {
-        unsigned int origin_and_select_rect;
-        unsigned int catched_points;
-        unsigned int operation_shape;
-        unsigned int operation_tool_lines;
+        unsigned int origin_and_select_rect = 0;
+        unsigned int catched_points = 0;
+        unsigned int operation_shape = 0;
+        unsigned int operation_tool_lines = 0;
     } _base_vbo;
 
     struct ShapeVBO
     {
-        unsigned int polyline;
-        unsigned int polygon;
-        unsigned int circle;
-        unsigned int curve;
-        unsigned int text;
-        unsigned int circle_printable_points;
-        unsigned int curve_printable_points;
-        unsigned int point;
+        unsigned int polyline = 0;
+        unsigned int polygon = 0;
+        unsigned int circle = 0;
+        unsigned int curve = 0;
+        unsigned int text = 0;
+        unsigned int circle_printable_points = 0;
+        unsigned int curve_printable_points = 0;
+        unsigned int point = 0;
     } _shape_vbo;
 
     struct ShapeIBO
     {
-        unsigned int polyline;
-        unsigned int polygon;
-        unsigned int circle;
-        unsigned int curve;
+        unsigned int polyline = 0;
+        unsigned int polygon = 0;
+        unsigned int circle = 0;
+        unsigned int curve = 0;
     } _shape_ibo;
 
     unsigned int _text_brush_IBO = 0, _text_brush_count = 0;
 
     struct SelectedIBO
     {
-        unsigned int polyline;
-        unsigned int polygon;
-        unsigned int circle;
-        unsigned int curve;
-        unsigned int point;
+        unsigned int polyline = 0;
+        unsigned int polygon = 0;
+        unsigned int circle = 0;
+        unsigned int curve = 0;
+        unsigned int point = 0;
     } _selected_ibo;
 
     struct Uniforms
     {
-        int w;
-        int h;
-        int vec0;
-        int vec1;
-        int color;
+        int w = 0;
+        int h = 0;
+        int vec0 = 0;
+        int vec1 = 0;
+        int color = 0;
     } _uniforms;
 
     struct PointCount
@@ -101,8 +108,8 @@ private:
         unsigned int curve = 0;
         unsigned int point = 0;
     } _selected_index_count;
-    
-    double _catchline_points[24];
+
+    double _catchline_points[24] = {};
 
     double _catch_distance = 0;
     static const int catch_count = 5;
@@ -116,9 +123,9 @@ private:
         bool intersection = false;
     } _catch_types;
 
-    double _canvas_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
-    double _view_ctm[9] = {1,0,0, 0,-1,0, 0,0,1}; // 显示坐标变换矩阵(显示坐标变为真实坐标)
-    double _ratio = 1; // 缩放系数
+    double _canvas_ctm[9] = {1, 0, 0, 0, -1, 0, 0, 0, 1}; // 画布坐标变换矩阵(真实坐标变为画布坐标)
+    double _view_ctm[9] = {1, 0, 0, 0, -1, 0, 0, 0, 1};   // 显示坐标变换矩阵(显示坐标变为真实坐标)
+    double _ratio = 1;                                    // 缩放系数
     int _canvas_width = 0, _canvas_height = 0;
 
     struct BoolFlags
@@ -147,21 +154,21 @@ private:
     void init_menu();
 
 protected:
-    void initializeGL();
+    void initializeGL() override;
 
-    void resizeGL(int w, int h);
+    void resizeGL(int w, int h) override;
 
-    void paintGL();
+    void paintGL() override;
 
-    void mousePressEvent(QMouseEvent *event);
+    void mousePressEvent(QMouseEvent *event) override;
 
-    void mouseReleaseEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event) override;
 
-    void mouseMoveEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event) override;
 
-    void wheelEvent(QWheelEvent *event);
+    void wheelEvent(QWheelEvent *event) override;
 
-    void mouseDoubleClickEvent(QMouseEvent *event);
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
 
 public:
 signals:
@@ -172,7 +179,7 @@ signals:
 public:
     Canvas(QWidget *parent = nullptr);
 
-    ~Canvas();
+    ~Canvas() override;
 
     void bind_editer(Editer *editer);
 
@@ -184,7 +191,7 @@ public:
 
     void show_overview();
 
-    const bool is_typing() const;
+    bool is_typing() const;
 
     void set_catch_distance(const double value);
 
@@ -280,8 +287,8 @@ public:
     VBOData refresh_text_vbo();
 
 
-    bool refresh_catached_points(const double x, const double y, const double distance, std::vector<const Geo::Geometry *> &catched_objects, const bool skip_selected, const bool current_group_only = true) const;
+    bool refresh_catached_points(const double x, const double y, const double distance, std::vector<const Geo::Geometry *> &catched_objects,
+                                 const bool skip_selected, const bool current_group_only = true) const;
 
     bool refresh_catchline_points(const std::vector<const Geo::Geometry *> &objects, const double distance, Geo::Point &pos);
-
 };

@@ -1,8 +1,7 @@
 #include "base/Graph.hpp"
 
 
-Graph::Graph(const Graph &graph)
-    : Geo::Geometry(graph), modified(graph.modified)
+Graph::Graph(const Graph &graph) : Geo::Geometry(graph), modified(graph.modified)
 {
     for (const ContainerGroup &group : graph._container_groups)
     {
@@ -170,8 +169,8 @@ const ContainerGroup &Graph::operator[](const size_t index) const
 
 const bool Graph::empty() const
 {
-    return _container_groups.empty() || std::all_of(_container_groups.begin(), _container_groups.end(), [](const ContainerGroup &g)
-                                                    { return g.empty(); });
+    return _container_groups.empty() ||
+           std::all_of(_container_groups.begin(), _container_groups.end(), [](const ContainerGroup &g) { return g.empty(); });
 }
 
 const bool Graph::empty(const size_t index) const
@@ -275,8 +274,6 @@ Geo::AABBRect Graph::bounding_rect() const
 }
 
 
-
-
 std::list<ContainerGroup>::iterator Graph::begin()
 {
     return _container_groups.begin();
@@ -362,7 +359,6 @@ const ContainerGroup &Graph::back() const
 }
 
 
-
 void Graph::append(Geo::Geometry *object, const size_t index)
 {
     assert(index < _container_groups.size());
@@ -372,7 +368,7 @@ void Graph::append(Geo::Geometry *object, const size_t index)
 
 void Graph::append_group()
 {
-    _container_groups.push_back(ContainerGroup());
+    _container_groups.emplace_back();
 }
 
 void Graph::append_group(const ContainerGroup &group)
@@ -428,8 +424,6 @@ void Graph::remove_group(const size_t index)
     }
     _container_groups.erase(it);
 }
-
-
 
 
 bool Graph::has_group(const QString &name) const

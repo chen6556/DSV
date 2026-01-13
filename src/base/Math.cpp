@@ -9,10 +9,14 @@
 
 void Math::error_handle(const char *reason, const char *file, int line, int gsl_errno)
 {
-    std::cerr << file << " line: " << line << " error: " << reason << " error code: " << gsl_errno << std::endl;
+    std::cerr << file << " line: " << line << " error: " << reason << " error code: " << gsl_errno << '\n';
 }
 
-static int initer = []{ gsl_set_error_handler(&Math::error_handle); return 0;}();
+static const int initer = []
+{
+    gsl_set_error_handler(&Math::error_handle);
+    return 0;
+}();
 
 
 int Math::ellipse_ellipse_f(const gsl_vector *x, void *params, gsl_vector *f)
@@ -21,10 +25,12 @@ int Math::ellipse_ellipse_f(const gsl_vector *x, void *params, gsl_vector *f)
     const double x0 = gsl_vector_get(x, 0);
     const double x1 = gsl_vector_get(x, 1);
 
-    gsl_vector_set(f, 0, ellipse->a[0] * x0 * x0 + ellipse->b[0] * x0 * x1
-        + ellipse->c[0] * x1 * x1 + ellipse->d[0] * x0 + ellipse->e[0] * x1 + ellipse->f[0]);
-    gsl_vector_set(f, 1, ellipse->a[1] * x0 * x0 + ellipse->b[1] * x0 * x1
-        + ellipse->c[1] * x1 * x1 + ellipse->d[1] * x0 + ellipse->e[1] * x1 + ellipse->f[1]);
+    gsl_vector_set(f, 0,
+                   ellipse->a[0] * x0 * x0 + ellipse->b[0] * x0 * x1 + ellipse->c[0] * x1 * x1 + ellipse->d[0] * x0 + ellipse->e[0] * x1 +
+                       ellipse->f[0]);
+    gsl_vector_set(f, 1,
+                   ellipse->a[1] * x0 * x0 + ellipse->b[1] * x0 * x1 + ellipse->c[1] * x1 * x1 + ellipse->d[1] * x0 + ellipse->e[1] * x1 +
+                       ellipse->f[1]);
 
     return GSL_SUCCESS;
 }
@@ -57,24 +63,24 @@ std::tuple<double, double> Math::solve_ellipse_ellipse_intersection(EllipseParam
 
     gsl_vector *x = gsl_vector_alloc(n);
     gsl_vector_set(x, 0, init_x);
-	gsl_vector_set(x, 1, init_y);
+    gsl_vector_set(x, 1, init_y);
 
     const gsl_multiroot_fdfsolver_type *t = gsl_multiroot_fdfsolver_gnewton;
-	gsl_multiroot_fdfsolver *s = gsl_multiroot_fdfsolver_alloc(t, n);
+    gsl_multiroot_fdfsolver *s = gsl_multiroot_fdfsolver_alloc(t, n);
     gsl_multiroot_fdfsolver_set(s, &f, x);
 
     int status = GSL_CONTINUE;
     int count = 0;
-    while (status == GSL_CONTINUE && count++ < Math::MAX_ITERATION) //这个循环迭代解方程，最多迭代Math::MAX_ITERATION次
-	{
-		status = gsl_multiroot_fdfsolver_iterate(s);
-		status = gsl_multiroot_test_residual(s->f, Math::EPSILON); //判断解是否是真实解
-	}
+    while (status == GSL_CONTINUE && count++ < Math::MAX_ITERATION) // 这个循环迭代解方程，最多迭代Math::MAX_ITERATION次
+    {
+        gsl_multiroot_fdfsolver_iterate(s);
+        status = gsl_multiroot_test_residual(s->f, Math::EPSILON); // 判断解是否是真实解
+    }
 
     std::tuple<double, double> res = std::make_tuple(gsl_vector_get(s->x, 0), gsl_vector_get(s->x, 1));
 
     gsl_multiroot_fdfsolver_free(s);
-	gsl_vector_free(x);
+    gsl_vector_free(x);
 
     return res;
 }
@@ -83,14 +89,14 @@ void Math::inverse(const double *input, const size_t n, double *output)
 {
     gsl_matrix_const_view a = gsl_matrix_const_view_array(input, n, n);
     gsl_matrix *tmpA = gsl_matrix_alloc(n, n);
-	gsl_matrix_memcpy(tmpA, &a.matrix);
-	gsl_permutation *p = gsl_permutation_alloc(n);
-	int sign = n % 2 == 0 ? 1 : -1;
-	gsl_linalg_LU_decomp(tmpA, p, &sign);
-	gsl_matrix *inv = gsl_matrix_alloc(n, n);
-	gsl_linalg_LU_invert(tmpA, p, inv);
-	gsl_permutation_free(p);
-	gsl_matrix_free(tmpA);
+    gsl_matrix_memcpy(tmpA, &a.matrix);
+    gsl_permutation *p = gsl_permutation_alloc(n);
+    int sign = n % 2 == 0 ? 1 : -1;
+    gsl_linalg_LU_decomp(tmpA, p, &sign);
+    gsl_matrix *inv = gsl_matrix_alloc(n, n);
+    gsl_linalg_LU_invert(tmpA, p, inv);
+    gsl_permutation_free(p);
+    gsl_matrix_free(tmpA);
     for (size_t i = 0; i < n; ++i)
     {
         for (size_t j = 0; j < n; ++j)
@@ -151,9 +157,9 @@ void Math::rbasis(const bool is_cubic, const double t, const size_t npts, const 
     const size_t nplusc = npts + (is_cubic ? 4 : 3);
     double *temp = new double[nplusc];
     std::fill_n(temp, nplusc, 0);
-    for (size_t i = 0; i< nplusc - 1; ++i)
+    for (size_t i = 0; i < nplusc - 1; ++i)
     {
-        if ((t >= x[i]) && (t < x[i+1]))
+        if ((t >= x[i]) && (t < x[i + 1]))
         {
             temp[i] = 1;
         }
@@ -176,7 +182,7 @@ void Math::rbasis(const bool is_cubic, const double t, const size_t npts, const 
 
     if (t >= x[nplusc - 1])
     {
-        temp[npts-1] = 1;
+        temp[npts - 1] = 1;
     }
 
     double sum = 0;
@@ -235,11 +241,12 @@ int Math::bezier_bspline_f(const gsl_vector *v, void *params, gsl_vector *f)
     for (int i = 0; i <= curve->bezier.order; ++i)
     {
         coord0[0] += (curve->bezier.points[i * 2] * curve->bezier.values[i] * std::pow(1 - t0, curve->bezier.order - i) * std::pow(t0, i));
-        coord0[1] += (curve->bezier.points[i * 2 + 1] * curve->bezier.values[i] * std::pow(1 - t0, curve->bezier.order - i) * std::pow(t0, i));
+        coord0[1] +=
+            (curve->bezier.points[i * 2 + 1] * curve->bezier.values[i] * std::pow(1 - t0, curve->bezier.order - i) * std::pow(t0, i));
     }
     {
         double *nbasis = new double[curve->bspline.npts];
-        rbasis(curve->bspline.is_cubic, t0, curve->bspline.npts, curve->bspline.values, nbasis);
+        rbasis(curve->bspline.is_cubic, t1, curve->bspline.npts, curve->bspline.values, nbasis);
         for (size_t i = 0; i < curve->bspline.npts; ++i)
         {
             coord1[0] += curve->bspline.points[i * 2] * nbasis[i];
@@ -252,7 +259,8 @@ int Math::bezier_bspline_f(const gsl_vector *v, void *params, gsl_vector *f)
     return GSL_SUCCESS;
 }
 
-std::tuple<double, double> Math::solve_curve_intersection(void *param, const CurveIntersectType type, const double init_t0, const double init_t1)
+std::tuple<double, double> Math::solve_curve_intersection(void *param, const CurveIntersectType type, const double init_t0,
+                                                          const double init_t1)
 {
     const size_t n = 2; // 方程组未知数的个数
     gsl_multiroot_function f;
@@ -273,7 +281,7 @@ std::tuple<double, double> Math::solve_curve_intersection(void *param, const Cur
 
     gsl_vector *x = gsl_vector_alloc(n);
     gsl_vector_set(x, 0, init_t0);
-	gsl_vector_set(x, 1, init_t1);
+    gsl_vector_set(x, 1, init_t1);
 
     const gsl_multiroot_fsolver_type *t = gsl_multiroot_fsolver_dnewton;
     gsl_multiroot_fsolver *s = gsl_multiroot_fsolver_alloc(t, n);
@@ -281,16 +289,16 @@ std::tuple<double, double> Math::solve_curve_intersection(void *param, const Cur
 
     int status = GSL_CONTINUE;
     int count = 0;
-    while (status == GSL_CONTINUE && count++ < Math::MAX_ITERATION) //这个循环迭代解方程，最多迭代Math::MAX_ITERATION次
-	{
-        status = gsl_multiroot_fsolver_iterate(s);
-		status = gsl_multiroot_test_residual(s->f, Math::EPSILON); //判断解是否是真实解
-	}
+    while (status == GSL_CONTINUE && count++ < Math::MAX_ITERATION) // 这个循环迭代解方程，最多迭代Math::MAX_ITERATION次
+    {
+        gsl_multiroot_fsolver_iterate(s);
+        status = gsl_multiroot_test_residual(s->f, Math::EPSILON); // 判断解是否是真实解
+    }
 
     std::tuple<double, double> res = std::make_tuple(gsl_vector_get(s->x, 0), gsl_vector_get(s->x, 1));
 
     gsl_multiroot_fsolver_free(s);
-	gsl_vector_free(x);
+    gsl_vector_free(x);
 
     return res;
 }
@@ -311,10 +319,10 @@ double Math::solve_ellipse_foot(EllipseFootParameter &param, const double init_t
 
     int status = GSL_CONTINUE;
     int count = 0;
-    while (status == GSL_CONTINUE && count++ < Math::MAX_ITERATION) //这个循环迭代解方程，最多迭代Math::MAX_ITERATION次
+    while (status == GSL_CONTINUE && count++ < Math::MAX_ITERATION) // 这个循环迭代解方程，最多迭代Math::MAX_ITERATION次
     {
-        status = gsl_root_fsolver_iterate(s);
-        const double res = gsl_root_fsolver_root(s);
+        gsl_root_fsolver_iterate(s);
+        gsl_root_fsolver_root(s);
         const double lower = gsl_root_fsolver_x_lower(s);
         const double upper = gsl_root_fsolver_x_upper(s);
         status = gsl_root_test_interval(lower, upper, 0, Math::EPSILON);

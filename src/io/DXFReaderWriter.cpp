@@ -1235,7 +1235,7 @@ void DXFReaderWriter::write_point(const Geo::Point *point)
 
 void DXFReaderWriter::check_block()
 {
-    for (const std::pair<Combination *, std::string> &bpair : _block_names)
+    for (const std::pair<Combination *, std::string> bpair : _block_names)
     {
         if (_inserted_blocks.find(bpair.second) == _inserted_blocks.end())
         {
@@ -1243,7 +1243,7 @@ void DXFReaderWriter::check_block()
             _graph->remove_object(bpair.first);
         }
     }
-    for (const std::pair<Combination *, int> &bpair : _block_map)
+    for (const std::pair<Combination *, int> bpair : _block_map)
     {
         for (size_t i = bpair.first->size() - 1; i > 0;--i)
         {

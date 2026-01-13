@@ -6,7 +6,10 @@
 
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class DataPanel;}
+namespace Ui
+{
+class DataPanel;
+}
 QT_END_NAMESPACE
 
 class DataPanel : public QDialog
@@ -18,7 +21,7 @@ private:
 
 public:
     DataPanel(QWidget *parent);
-    ~DataPanel();
+    ~DataPanel() override;
 
     void load_draw_data(const Graph *graph);
 
