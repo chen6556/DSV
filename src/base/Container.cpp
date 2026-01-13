@@ -1,13 +1,13 @@
 #include <QFontMetrics>
 #include <QStringList>
+#include <utility>
 
 #include "base/Container.hpp"
 
 
 // Text
 
-Text::Text(const double x, const double y, const int size, const QString &text)
-    : _text(text), _text_size(size)
+Text::Text(const double x, const double y, const int size, QString text) : _text(std::move(text)), _text_size(size)
 {
     QFont font("SimSun");
     font.setPointSize(size);
@@ -33,11 +33,6 @@ Text::Text(const double x, const double y, const int size, const QString &text)
     set_top(y + height / 2);
     set_bottom(y - height / 2);
 }
-
-Text::Text(const Text &text)
-    : Geo::AABBRect(text), _text(text._text), _text_size(text._text_size),
-    text_index(text.text_index), text_count(text.text_count)
-{}
 
 const Geo::Type Text::type() const
 {
@@ -116,7 +111,7 @@ void Text::update_size(const int size)
     set_left(coord.x - 1 - width / 2);
     set_right(coord.x + 1 + width / 2);
     set_top(coord.y + height / 2);
-    set_bottom(coord.y- height / 2);
+    set_bottom(coord.y - height / 2);
 }
 
 int Text::text_size() const
@@ -166,13 +161,15 @@ ContainerGroup::ContainerGroup(const ContainerGroup &containers)
     }
 }
 
-ContainerGroup::ContainerGroup(const std::initializer_list<Geo::Geometry *> &containers)
-    : _containers(containers.begin(), containers.end())
-{}
+ContainerGroup::ContainerGroup(const std::initializer_list<Geo::Geometry *> &containers) : _containers(containers.begin(), containers.end())
+{
+}
 
-ContainerGroup::ContainerGroup(std::vector<Geo::Geometry *>::const_iterator begin, std::vector<Geo::Geometry *>::const_iterator end)
+ContainerGroup::ContainerGroup(const std::vector<Geo::Geometry *>::const_iterator &begin,
+                               const std::vector<Geo::Geometry *>::const_iterator &end)
     : _containers(begin, end)
-{}
+{
+}
 
 ContainerGroup::~ContainerGroup()
 {
@@ -204,7 +201,7 @@ void ContainerGroup::hide()
 
 ContainerGroup *ContainerGroup::clone() const
 {
-    std::vector<Geo::Geometry *> containers;
+    std::vector<Geo::Geometry *> containers(_containers.size());
     for (const Geo::Geometry *geo : _containers)
     {
         containers.push_back(geo->clone());
@@ -330,41 +327,35 @@ void ContainerGroup::clear()
 
 void ContainerGroup::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
-    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container)
-                  { container->transform(a, b, c, d, e, f); });
+    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container) { container->transform(a, b, c, d, e, f); });
 }
 
 void ContainerGroup::transform(const double mat[6])
 {
-    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container)
-                  { container->transform(mat); });
+    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container) { container->transform(mat); });
 }
 
 void ContainerGroup::translate(const double tx, const double ty)
 {
-    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container)
-                  { container->translate(tx, ty); });
+    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container) { container->translate(tx, ty); });
 }
 
 void ContainerGroup::rotate(const double x, const double y, const double rad)
 {
-    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container)
-                  { container->rotate(x, y, rad); });
+    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container) { container->rotate(x, y, rad); });
 }
 
 void ContainerGroup::scale(const double x, const double y, const double k)
 {
     _ratio *= k;
-    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container)
-                  { container->scale(x, y, k); });
+    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container) { container->scale(x, y, k); });
 }
 
 void ContainerGroup::rescale(const double x, const double y)
 {
     if (_ratio != 1)
     {
-        std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *c)
-                      { c->scale(x, y, 1.0 / _ratio); });
+        std::for_each(_containers.begin(), _containers.end(), [this, x, y](Geo::Geometry *c) { c->scale(x, y, 1.0 / _ratio); });
         _ratio = 1;
     }
 }
@@ -375,7 +366,7 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
     {
         return Geo::AABBRect();
     }
-    double r, x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
+    double r = 0, x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
     Geo::Point coord;
     for (const Geo::Geometry *continer : _containers)
     {
@@ -398,7 +389,8 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
             break;
         case Geo::Type::CIRCLE:
             r = static_cast<const Geo::Circle *>(continer)->radius;
-            coord = *static_cast<const Geo::Circle *>(continer);
+            coord.x = static_cast<const Geo::Circle *>(continer)->x;
+            coord.y = static_cast<const Geo::Circle *>(continer)->y;
             x0 = std::min(x0, coord.x - r);
             y0 = std::min(y0, coord.y - r);
             x1 = std::max(x1, coord.x + r);
@@ -481,22 +473,21 @@ const size_t ContainerGroup::count(const Geo::Type type, const bool include_comb
 {
     if (include_combinated)
     {
-        size_t num = std::count_if(_containers.begin(), _containers.end(),
-            [=](const Geo::Geometry *object) { return object->type() == type; });
+        size_t num =
+            std::count_if(_containers.begin(), _containers.end(), [=](const Geo::Geometry *object) { return object->type() == type; });
         for (const Geo::Geometry *object : _containers)
         {
             if (const Combination *combination = dynamic_cast<const Combination *>(object))
             {
                 num += std::count_if(combination->begin(), combination->end(),
-                    [=](const Geo::Geometry *object) { return object->type() == type; });
+                                     [=](const Geo::Geometry *object) { return object->type() == type; });
             }
         }
         return num;
     }
     else
     {
-        return std::count_if(_containers.begin(), _containers.end(),
-            [=](const Geo::Geometry *object) { return object->type() == type; });
+        return std::count_if(_containers.begin(), _containers.end(), [=](const Geo::Geometry *object) { return object->type() == type; });
     }
 }
 
@@ -647,17 +638,12 @@ void ContainerGroup::remove_back()
 
 // Combination
 
-Combination::Combination(const Combination &combination)
-    : ContainerGroup(combination), _border(combination._border)
-{}
-
-Combination::Combination(const std::initializer_list<Geo::Geometry *> &containers)
-    : ContainerGroup(containers)
+Combination::Combination(const std::initializer_list<Geo::Geometry *> &containers) : ContainerGroup(containers)
 {
     update_border();
 }
 
-Combination::Combination(std::vector<Geo::Geometry *>::const_iterator begin, std::vector<Geo::Geometry *>::const_iterator end)
+Combination::Combination(const std::vector<Geo::Geometry *>::const_iterator &begin, const std::vector<Geo::Geometry *>::const_iterator &end)
     : ContainerGroup(begin, end)
 {
     update_border();
@@ -757,4 +743,3 @@ const Geo::AABBRect &Combination::border() const
 {
     return _border;
 }
-

@@ -6,9 +6,7 @@
 #include "base/Algorithm.hpp"
 
 
-
-CMDWidget::CMDWidget(QWidget *parent)
-    : QWidget(parent), ui(new Ui::CMDWidget)
+CMDWidget::CMDWidget(QWidget *parent) : QWidget(parent), ui(new Ui::CMDWidget)
 {
     ui->setupUi(this);
 
@@ -27,93 +25,166 @@ void CMDWidget::init()
     ui->cmd->installEventFilter(this);
 
     _cmd_list << QString() << "ALL" << "ANGLE" << "ARRAY" << "BEZIER" << "BSPLINE" << "BLEND"
-        << "CCIRCLE" << "CHAMFER" << "CLOSE" << "COMBINATE" << "CONNECT" << "COPY"
-        << "CPOLYGON" << "CUT" << "DCIRCLE" << "DELETE" << "DETACH" << "DIFFERENCE"
-        << "ELLIPSE" << "ELLIPSEARC"
-        << "EXTEND" << "FILLET" << "FREEFILLET" << "FLIPX" << "FLIPY"
-        << "IPOLYGON" << "INTERSECTION" << "LENGTH" << "LINEARRAY" << "MAIN" << "MIRROR"
-        << "OFFSET" << "PASTE" << "PARC" << "PCIRCLE" << "POLYLINE" << "POINT" << "RECTANGLE"
-        << "SEAARC" << "SERARC"
-        << "RINGARRAY" << "ROTATE" << "SCALE" << "SCAARC" << "SAVE" << "SPLIT" << "TEXT"
-        << "TRIM" << "UNDO" << "UNION" << "XOR";
+              << "CCIRCLE" << "CHAMFER" << "CLOSE" << "COMBINATE" << "CONNECT" << "COPY"
+              << "CPOLYGON" << "CUT" << "DCIRCLE" << "DELETE" << "DETACH" << "DIFFERENCE"
+              << "ELLIPSE" << "ELLIPSEARC"
+              << "EXTEND" << "FILLET" << "FREEFILLET" << "FLIPX" << "FLIPY"
+              << "IPOLYGON" << "INTERSECTION" << "LENGTH" << "LINEARRAY" << "MAIN" << "MIRROR"
+              << "OFFSET" << "PASTE" << "PARC" << "PCIRCLE" << "POLYLINE" << "POINT" << "RECTANGLE"
+              << "SEAARC" << "SERARC"
+              << "RINGARRAY" << "ROTATE" << "SCALE" << "SCAARC" << "SAVE" << "SPLIT" << "TEXT"
+              << "TRIM" << "UNDO" << "UNION" << "XOR";
     _cmd_list.sort();
 
-    _cmd_dict = {{"LENGTH",CMD::Length_CMD}, {"ANGLE",CMD::Angle_CMD}, {"MAIN",CMD::Main_CMD},
-        {"CCIRCLE",CMD::CCircle_CMD}, {"DCIRCLE",CMD::DCircle_CMD}, {"PCIRCLE",CMD::PCircle_CMD},
-        {"ELLIPSE",CMD::Ellipse_CMD}, {"ELLIPSEARC",CMD::EllipseArc_CMD},
-        {"POLYLINE",CMD::Polyline_CMD}, {"RECTANGLE",CMD::Rectangle_CMD}, {"POINT",CMD::Point_CMD},
-        {"PARC",CMD::PArc_CMD}, {"SCAARC",CMD::SCAArc_CMD}, {"SEAARC",CMD::SEAArc_CMD}, {"SERARC",CMD::SERArc_CMD},
-        {"CPOLYGON",CMD::CPolygon_CMD}, {"IPOLYGON",CMD::IPolygon_CMD},
-        {"BSPLINE",CMD::BSpline_CMD}, {"BEZIER",CMD::Bezier_CMD}, {"CONNECT",CMD::Connect_CMD},
-        {"BLEND",CMD::Blend_CMD},
-        {"COMBINATE",CMD::Combinate_CMD}, {"CLOSE",CMD::Close_CMD}, {"DETACH",CMD::Detach_CMD},
-        {"ROTATE",CMD::Rotate_CMD}, {"FLIPX",CMD::FlipX_CMD}, {"FLIPY",CMD::FlipY_CMD},
-        {"TEXT",CMD::Text_CMD}, {"TRIM",CMD::Trim_CMD}, {"EXTEND",CMD::Extend_CMD}, {"MIRROR",CMD::Mirror_CMD},
-        {"ARRAY",CMD::Array_CMD}, {"LINEARRAY",CMD::LineArray_CMD}, {"RINGARRAY",CMD::RingArray_CMD},
-        {"OFFSET",CMD::Offset_CMD}, {"SCALE", CMD::Scale_CMD},
-        {"FILLET",CMD::Fillet_CMD}, {"CHAMFER", CMD::Chamfer_CMD}, {"SPLIT",CMD::Split_CMD},
-        {"UNION",CMD::Union_CMD}, {"INTERSECTION",CMD::Intersection_CMD}, {"DIFFERENCE",CMD::Difference_CMD},
-        {"XOR",CMD::XOR_CMD},
-        {"DELETE",CMD::Delete_CMD}, {"COPY",CMD::Copy_CMD}, {"CUT",CMD::Cut_CMD}, {"PASTE",CMD::Paste_CMD},
-        {"UNDO",CMD::Undo_CMD}, {"ALL",CMD::SelectAll_CMD}};
+    _cmd_dict = {{"LENGTH", CMD::Length_CMD},
+                 {"ANGLE", CMD::Angle_CMD},
+                 {"MAIN", CMD::Main_CMD},
+                 {"CCIRCLE", CMD::CCircle_CMD},
+                 {"DCIRCLE", CMD::DCircle_CMD},
+                 {"PCIRCLE", CMD::PCircle_CMD},
+                 {"ELLIPSE", CMD::Ellipse_CMD},
+                 {"ELLIPSEARC", CMD::EllipseArc_CMD},
+                 {"POLYLINE", CMD::Polyline_CMD},
+                 {"RECTANGLE", CMD::Rectangle_CMD},
+                 {"POINT", CMD::Point_CMD},
+                 {"PARC", CMD::PArc_CMD},
+                 {"SCAARC", CMD::SCAArc_CMD},
+                 {"SEAARC", CMD::SEAArc_CMD},
+                 {"SERARC", CMD::SERArc_CMD},
+                 {"CPOLYGON", CMD::CPolygon_CMD},
+                 {"IPOLYGON", CMD::IPolygon_CMD},
+                 {"BSPLINE", CMD::BSpline_CMD},
+                 {"BEZIER", CMD::Bezier_CMD},
+                 {"CONNECT", CMD::Connect_CMD},
+                 {"BLEND", CMD::Blend_CMD},
+                 {"COMBINATE", CMD::Combinate_CMD},
+                 {"CLOSE", CMD::Close_CMD},
+                 {"DETACH", CMD::Detach_CMD},
+                 {"ROTATE", CMD::Rotate_CMD},
+                 {"FLIPX", CMD::FlipX_CMD},
+                 {"FLIPY", CMD::FlipY_CMD},
+                 {"TEXT", CMD::Text_CMD},
+                 {"TRIM", CMD::Trim_CMD},
+                 {"EXTEND", CMD::Extend_CMD},
+                 {"MIRROR", CMD::Mirror_CMD},
+                 {"ARRAY", CMD::Array_CMD},
+                 {"LINEARRAY", CMD::LineArray_CMD},
+                 {"RINGARRAY", CMD::RingArray_CMD},
+                 {"OFFSET", CMD::Offset_CMD},
+                 {"SCALE", CMD::Scale_CMD},
+                 {"FILLET", CMD::Fillet_CMD},
+                 {"CHAMFER", CMD::Chamfer_CMD},
+                 {"SPLIT", CMD::Split_CMD},
+                 {"UNION", CMD::Union_CMD},
+                 {"INTERSECTION", CMD::Intersection_CMD},
+                 {"DIFFERENCE", CMD::Difference_CMD},
+                 {"XOR", CMD::XOR_CMD},
+                 {"DELETE", CMD::Delete_CMD},
+                 {"COPY", CMD::Copy_CMD},
+                 {"CUT", CMD::Cut_CMD},
+                 {"PASTE", CMD::Paste_CMD},
+                 {"UNDO", CMD::Undo_CMD},
+                 {"ALL", CMD::SelectAll_CMD}};
 
     _setting_dict = {{"RELATIVE", SETTING::Relative_SETTING}, {"ABSOLUTE", SETTING::Absolute_SETTING}};
 
-    _cmd_tool_dict = {{CMD::Length_CMD, CanvasOperations::Tool::Measure}, {CMD::Angle_CMD, CanvasOperations::Tool::Angle},
-        {CMD::Polyline_CMD, CanvasOperations::Tool::Polyline}, {CMD::Rectangle_CMD, CanvasOperations::Tool::Rectangle},
-        {CMD::CPolygon_CMD, CanvasOperations::Tool::Polygon0}, {CMD::IPolygon_CMD, CanvasOperations::Tool::Polygon1},
+    _cmd_tool_dict = {
+        {CMD::Length_CMD, CanvasOperations::Tool::Measure},      {CMD::Angle_CMD, CanvasOperations::Tool::Angle},
+        {CMD::Polyline_CMD, CanvasOperations::Tool::Polyline},   {CMD::Rectangle_CMD, CanvasOperations::Tool::Rectangle},
+        {CMD::CPolygon_CMD, CanvasOperations::Tool::Polygon0},   {CMD::IPolygon_CMD, CanvasOperations::Tool::Polygon1},
         {CMD::RingArray_CMD, CanvasOperations::Tool::RingArray}, {CMD::Rotate_CMD, CanvasOperations::Tool::Rotate},
-        {CMD::Text_CMD, CanvasOperations::Tool::Text}, {CMD::PArc_CMD, CanvasOperations::Tool::Arc0},
-        {CMD::SCAArc_CMD, CanvasOperations::Tool::Arc1}, {CMD::SEAArc_CMD, CanvasOperations::Tool::Arc2},
-        {CMD::SERArc_CMD, CanvasOperations::Tool::Arc3}, {CMD::Point_CMD, CanvasOperations::Tool::Point},
-        {CMD::Bezier_CMD, CanvasOperations::Tool::Bezier}, {CMD::BSpline_CMD, CanvasOperations::Tool::BSpline},
-        {CMD::CCircle_CMD, CanvasOperations::Tool::Circle0},{CMD::DCircle_CMD, CanvasOperations::Tool::Circle1},
-        {CMD::PCircle_CMD, CanvasOperations::Tool::Circle2}, {CMD::Ellipse_CMD, CanvasOperations::Tool::Ellipse0},
-        {CMD::EllipseArc_CMD, CanvasOperations::Tool::Ellipse1},
-        {CMD::Mirror_CMD, CanvasOperations::Tool::Mirror}, {CMD::Trim_CMD, CanvasOperations::Tool::Trim},
-        {CMD::Extend_CMD, CanvasOperations::Tool::Extend}, {CMD::Fillet_CMD, CanvasOperations::Tool::Fillet},
-        {CMD::FreeFillet_CMD, CanvasOperations::Tool::FreeFillet}, {CMD::Blend_CMD, CanvasOperations::Tool::Blend},
-        {CMD::Chamfer_CMD, CanvasOperations::Tool::Chamfer}, {CMD::Split_CMD, CanvasOperations::Tool::Split},
-        {CMD::Difference_CMD, CanvasOperations::Tool::ShapeDifference}};
+        {CMD::Text_CMD, CanvasOperations::Tool::Text},           {CMD::PArc_CMD, CanvasOperations::Tool::Arc0},
+        {CMD::SCAArc_CMD, CanvasOperations::Tool::Arc1},         {CMD::SEAArc_CMD, CanvasOperations::Tool::Arc2},
+        {CMD::SERArc_CMD, CanvasOperations::Tool::Arc3},         {CMD::Point_CMD, CanvasOperations::Tool::Point},
+        {CMD::Bezier_CMD, CanvasOperations::Tool::Bezier},       {CMD::BSpline_CMD, CanvasOperations::Tool::BSpline},
+        {CMD::CCircle_CMD, CanvasOperations::Tool::Circle0},     {CMD::DCircle_CMD, CanvasOperations::Tool::Circle1},
+        {CMD::PCircle_CMD, CanvasOperations::Tool::Circle2},     {CMD::Ellipse_CMD, CanvasOperations::Tool::Ellipse0},
+        {CMD::EllipseArc_CMD, CanvasOperations::Tool::Ellipse1}, {CMD::Mirror_CMD, CanvasOperations::Tool::Mirror},
+        {CMD::Trim_CMD, CanvasOperations::Tool::Trim},           {CMD::Extend_CMD, CanvasOperations::Tool::Extend},
+        {CMD::Fillet_CMD, CanvasOperations::Tool::Fillet},       {CMD::FreeFillet_CMD, CanvasOperations::Tool::FreeFillet},
+        {CMD::Blend_CMD, CanvasOperations::Tool::Blend},         {CMD::Chamfer_CMD, CanvasOperations::Tool::Chamfer},
+        {CMD::Split_CMD, CanvasOperations::Tool::Split},         {CMD::Difference_CMD, CanvasOperations::Tool::ShapeDifference}};
 
-    _tool_cmd_dict = {{CanvasOperations::Tool::Measure, CMD::Length_CMD}, {CanvasOperations::Tool::Angle, CMD::Angle_CMD},
-        {CanvasOperations::Tool::Polyline, CMD::Polyline_CMD}, {CanvasOperations::Tool::Rectangle, CMD::Rectangle_CMD},
-        {CanvasOperations::Tool::Polygon0, CMD::CPolygon_CMD}, {CanvasOperations::Tool::Polygon1, CMD::IPolygon_CMD},
-        {CanvasOperations::Tool::BSpline, CMD::BSpline_CMD}, {CanvasOperations::Tool::Bezier, CMD::Bezier_CMD},
-        {CanvasOperations::Tool::Text, CMD::Text_CMD}, {CanvasOperations::Tool::Arc0, CMD::PArc_CMD},
-        {CanvasOperations::Tool::Arc1, CMD::SCAArc_CMD}, {CanvasOperations::Tool::Arc2, CMD::SEAArc_CMD},
-        {CanvasOperations::Tool::Arc3, CMD::SERArc_CMD}, {CanvasOperations::Tool::Point, CMD::Point_CMD},
-        {CanvasOperations::Tool::Circle0, CMD::CCircle_CMD},{CanvasOperations::Tool::Circle1, CMD::DCircle_CMD},
-        {CanvasOperations::Tool::Circle2, CMD::PCircle_CMD}, {CanvasOperations::Tool::Ellipse0, CMD::Ellipse_CMD},
-        {CanvasOperations::Tool::Ellipse1, CMD::EllipseArc_CMD},
-        {CanvasOperations::Tool::Mirror, CMD::Mirror_CMD}, {CanvasOperations::Tool::Extend, CMD::Extend_CMD},
-        {CanvasOperations::Tool::Trim, CMD::Trim_CMD}, {CanvasOperations::Tool::Split, CMD::Split_CMD},
-        {CanvasOperations::Tool::Fillet, CMD::Fillet_CMD}, {CanvasOperations::Tool::FreeFillet, CMD::FreeFillet_CMD},
-        {CanvasOperations::Tool::Chamfer, CMD::Chamfer_CMD}, {CanvasOperations::Tool::Blend, CMD::Blend_CMD},
-        {CanvasOperations::Tool::ShapeDifference, CMD::Difference_CMD}, {CanvasOperations::Tool::Rotate, CMD::Rotate_CMD},
-        {CanvasOperations::Tool::RingArray, CMD::RingArray_CMD}};
+    _tool_cmd_dict = {{CanvasOperations::Tool::Measure, CMD::Length_CMD},
+                      {CanvasOperations::Tool::Angle, CMD::Angle_CMD},
+                      {CanvasOperations::Tool::Polyline, CMD::Polyline_CMD},
+                      {CanvasOperations::Tool::Rectangle, CMD::Rectangle_CMD},
+                      {CanvasOperations::Tool::Polygon0, CMD::CPolygon_CMD},
+                      {CanvasOperations::Tool::Polygon1, CMD::IPolygon_CMD},
+                      {CanvasOperations::Tool::BSpline, CMD::BSpline_CMD},
+                      {CanvasOperations::Tool::Bezier, CMD::Bezier_CMD},
+                      {CanvasOperations::Tool::Text, CMD::Text_CMD},
+                      {CanvasOperations::Tool::Arc0, CMD::PArc_CMD},
+                      {CanvasOperations::Tool::Arc1, CMD::SCAArc_CMD},
+                      {CanvasOperations::Tool::Arc2, CMD::SEAArc_CMD},
+                      {CanvasOperations::Tool::Arc3, CMD::SERArc_CMD},
+                      {CanvasOperations::Tool::Point, CMD::Point_CMD},
+                      {CanvasOperations::Tool::Circle0, CMD::CCircle_CMD},
+                      {CanvasOperations::Tool::Circle1, CMD::DCircle_CMD},
+                      {CanvasOperations::Tool::Circle2, CMD::PCircle_CMD},
+                      {CanvasOperations::Tool::Ellipse0, CMD::Ellipse_CMD},
+                      {CanvasOperations::Tool::Ellipse1, CMD::EllipseArc_CMD},
+                      {CanvasOperations::Tool::Mirror, CMD::Mirror_CMD},
+                      {CanvasOperations::Tool::Extend, CMD::Extend_CMD},
+                      {CanvasOperations::Tool::Trim, CMD::Trim_CMD},
+                      {CanvasOperations::Tool::Split, CMD::Split_CMD},
+                      {CanvasOperations::Tool::Fillet, CMD::Fillet_CMD},
+                      {CanvasOperations::Tool::FreeFillet, CMD::FreeFillet_CMD},
+                      {CanvasOperations::Tool::Chamfer, CMD::Chamfer_CMD},
+                      {CanvasOperations::Tool::Blend, CMD::Blend_CMD},
+                      {CanvasOperations::Tool::ShapeDifference, CMD::Difference_CMD},
+                      {CanvasOperations::Tool::Rotate, CMD::Rotate_CMD},
+                      {CanvasOperations::Tool::RingArray, CMD::RingArray_CMD}};
 
-    _cmd_tips_dict = {{CMD::Angle_CMD, "Angle"}, {CMD::Bezier_CMD, "Bezier"}, {CMD::BSpline_CMD, "BSpline"},
-        {CMD::CCircle_CMD, "Center-Radius Circle"}, {CMD::Combinate_CMD, "Combinate"},
-        {CMD::Connect_CMD, "Connect"}, {CMD::Copy_CMD, "Copy"}, {CMD::Cut_CMD, "Cut"},
-        {CMD::DCircle_CMD, "2-Point Circle"}, {CMD::Detach_CMD, "Detach"}, {CMD::Difference_CMD, "Difference"},
-        {CMD::Ellipse_CMD, "Ellipse"}, {CMD::EllipseArc_CMD, "Ellipse Arc"}, {CMD::Point_CMD, "Point"},
-        {CMD::Extend_CMD, "Extend"}, {CMD::Fillet_CMD, "Fillet"}, {CMD::FreeFillet_CMD, "Free Fillet"},
-        {CMD::Chamfer_CMD, "Chamfer"}, {CMD::PArc_CMD, "3-Point Arc"}, {CMD::SCAArc_CMD, "Start-Center-Angle Arc"},
-        {CMD::SEAArc_CMD, "Start-End-Angle Arc"}, {CMD::SERArc_CMD, "Start-End-Radius Arc"},
-        {CMD::FlipX_CMD, "Flip X"}, {CMD::FlipY_CMD, "Flip Y"}, {CMD::Intersection_CMD, "Intersection"},
-        {CMD::Length_CMD, "Length"}, {CMD::LineArray_CMD, "Line Array"}, {CMD::Mirror_CMD, "Mirror"},
-        {CMD::Offset_CMD, "Offset"}, {CMD::Paste_CMD, "Paste"}, {CMD::PCircle_CMD, "3-Point Circle"},
-        {CMD::Polyline_CMD, "Polyline"}, {CMD::Rectangle_CMD, "Rectangle"}, {CMD::RingArray_CMD, "Ring Array"},
-        {CMD::CPolygon_CMD, "Polygon Circumscribed"}, {CMD::IPolygon_CMD, "Polygon Inscribed"},
-        {CMD::Rotate_CMD, "Rotate"}, {CMD::Scale_CMD, "Scale"}, {CMD::Split_CMD, "Split"}, {CMD::Blend_CMD, "Blend"},
-        {CMD::Text_CMD, "Text"}, {CMD::Trim_CMD, "Trim"}, {CMD::Union_CMD, "Union"}, {CMD::XOR_CMD, "XOR"}};
+    _cmd_tips_dict = {{CMD::Angle_CMD, "Angle"},
+                      {CMD::Bezier_CMD, "Bezier"},
+                      {CMD::BSpline_CMD, "BSpline"},
+                      {CMD::CCircle_CMD, "Center-Radius Circle"},
+                      {CMD::Combinate_CMD, "Combinate"},
+                      {CMD::Connect_CMD, "Connect"},
+                      {CMD::Copy_CMD, "Copy"},
+                      {CMD::Cut_CMD, "Cut"},
+                      {CMD::DCircle_CMD, "2-Point Circle"},
+                      {CMD::Detach_CMD, "Detach"},
+                      {CMD::Difference_CMD, "Difference"},
+                      {CMD::Ellipse_CMD, "Ellipse"},
+                      {CMD::EllipseArc_CMD, "Ellipse Arc"},
+                      {CMD::Point_CMD, "Point"},
+                      {CMD::Extend_CMD, "Extend"},
+                      {CMD::Fillet_CMD, "Fillet"},
+                      {CMD::FreeFillet_CMD, "Free Fillet"},
+                      {CMD::Chamfer_CMD, "Chamfer"},
+                      {CMD::PArc_CMD, "3-Point Arc"},
+                      {CMD::SCAArc_CMD, "Start-Center-Angle Arc"},
+                      {CMD::SEAArc_CMD, "Start-End-Angle Arc"},
+                      {CMD::SERArc_CMD, "Start-End-Radius Arc"},
+                      {CMD::FlipX_CMD, "Flip X"},
+                      {CMD::FlipY_CMD, "Flip Y"},
+                      {CMD::Intersection_CMD, "Intersection"},
+                      {CMD::Length_CMD, "Length"},
+                      {CMD::LineArray_CMD, "Line Array"},
+                      {CMD::Mirror_CMD, "Mirror"},
+                      {CMD::Offset_CMD, "Offset"},
+                      {CMD::Paste_CMD, "Paste"},
+                      {CMD::PCircle_CMD, "3-Point Circle"},
+                      {CMD::Polyline_CMD, "Polyline"},
+                      {CMD::Rectangle_CMD, "Rectangle"},
+                      {CMD::RingArray_CMD, "Ring Array"},
+                      {CMD::CPolygon_CMD, "Polygon Circumscribed"},
+                      {CMD::IPolygon_CMD, "Polygon Inscribed"},
+                      {CMD::Rotate_CMD, "Rotate"},
+                      {CMD::Scale_CMD, "Scale"},
+                      {CMD::Split_CMD, "Split"},
+                      {CMD::Blend_CMD, "Blend"},
+                      {CMD::Text_CMD, "Text"},
+                      {CMD::Trim_CMD, "Trim"},
+                      {CMD::Union_CMD, "Union"},
+                      {CMD::XOR_CMD, "XOR"}};
 
-    _direct_cmd_list = {CMD::Error_CMD, CMD::Main_CMD,
-        CMD::Connect_CMD, CMD::Close_CMD, CMD::Combinate_CMD, CMD::Detach_CMD, CMD::FlipX_CMD, CMD::FlipY_CMD,
-        CMD::LineArray_CMD, CMD::Array_CMD, CMD::Offset_CMD, CMD::Scale_CMD,
-        CMD::Union_CMD, CMD::Intersection_CMD, CMD::XOR_CMD,
-        CMD::Delete_CMD, CMD::Copy_CMD, CMD::Cut_CMD, CMD::Paste_CMD, CMD::Undo_CMD, CMD::SelectAll_CMD};
+    _direct_cmd_list = {CMD::Error_CMD, CMD::Main_CMD,         CMD::Connect_CMD,   CMD::Close_CMD,  CMD::Combinate_CMD, CMD::Detach_CMD,
+                        CMD::FlipX_CMD, CMD::FlipY_CMD,        CMD::LineArray_CMD, CMD::Array_CMD,  CMD::Offset_CMD,    CMD::Scale_CMD,
+                        CMD::Union_CMD, CMD::Intersection_CMD, CMD::XOR_CMD,       CMD::Delete_CMD, CMD::Copy_CMD,      CMD::Cut_CMD,
+                        CMD::Paste_CMD, CMD::Undo_CMD,         CMD::SelectAll_CMD};
 
     _completer = new QCompleter(_cmd_list, this);
     _completer->setCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
@@ -123,8 +194,11 @@ void CMDWidget::init()
 
     connect(CanvasOperations::CanvasOperation::canvas, &Canvas::tool_changed, this, &CMDWidget::refresh_tool);
     connect(CanvasOperations::CanvasOperation::canvas, &Canvas::refresh_cmd_parameters_label,
-        [this]() { ui->parameter_label->setText(CanvasOperations::CanvasOperation::operation()[
-            CanvasOperations::CanvasOperation::tool[0]]->cmd_tips()); });
+            [this]()
+            {
+                ui->parameter_label->setText(
+                    CanvasOperations::CanvasOperation::operation()[CanvasOperations::CanvasOperation::tool[0]]->cmd_tips());
+            });
 }
 
 
@@ -162,8 +236,7 @@ bool CMDWidget::eventFilter(QObject *target, QEvent *event)
 {
     if (event->type() == QEvent::Type::KeyPress)
     {
-        if (QKeyEvent *kevent = static_cast<QKeyEvent *>(event);
-            kevent->modifiers() == Qt::KeyboardModifier::NoModifier)
+        if (QKeyEvent *kevent = static_cast<QKeyEvent *>(event); kevent->modifiers() == Qt::KeyboardModifier::NoModifier)
         {
             switch (kevent->key())
             {
@@ -187,10 +260,9 @@ bool CMDWidget::eventFilter(QObject *target, QEvent *event)
                 work();
                 return true;
             case Qt::Key::Key_Tab:
-                CanvasOperations::CanvasOperation::operation()[
-                    CanvasOperations::CanvasOperation::tool[0]]->switch_parameters_type();
-                ui->parameter_label->setText(CanvasOperations::CanvasOperation::operation()[
-                    CanvasOperations::CanvasOperation::tool[0]]->cmd_tips());
+                CanvasOperations::CanvasOperation::operation()[CanvasOperations::CanvasOperation::tool[0]]->switch_parameters_type();
+                ui->parameter_label->setText(
+                    CanvasOperations::CanvasOperation::operation()[CanvasOperations::CanvasOperation::tool[0]]->cmd_tips());
                 return true;
             default:
                 break;
@@ -363,8 +435,8 @@ bool CMDWidget::work()
     }
     if (CanvasOperations::CanvasOperation::tool[0] != CanvasOperations::Tool::Select)
     {
-        ui->parameter_label->setText(CanvasOperations::CanvasOperation::operation()[
-            CanvasOperations::CanvasOperation::tool[0]]->cmd_tips());
+        ui->parameter_label->setText(
+            CanvasOperations::CanvasOperation::operation()[CanvasOperations::CanvasOperation::tool[0]]->cmd_tips());
     }
     return true;
 }
@@ -532,8 +604,7 @@ void CMDWidget::connect_polyline()
     std::set<Geo::Type> types;
     for (const Geo::Geometry *object : objects)
     {
-        if (Geo::Type type = object->type(); type == Geo::Type::POLYLINE
-            || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE)
+        if (Geo::Type type = object->type(); type == Geo::Type::POLYLINE || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE)
         {
             types.insert(type);
         }
@@ -551,8 +622,7 @@ void CMDWidget::close_polyline()
     std::set<Geo::Type> types;
     for (const Geo::Geometry *object : objects)
     {
-        if (Geo::Type type = object->type(); type == Geo::Type::POLYLINE
-            || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE)
+        if (Geo::Type type = object->type(); type == Geo::Type::POLYLINE || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE)
         {
             types.insert(type);
         }
@@ -628,8 +698,8 @@ void CMDWidget::scale()
         if (_parameters.back() > 0)
         {
             if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
-                CanvasOperations::CanvasOperation::editer->scale(objects,
-                QApplication::keyboardModifiers() != Qt::KeyboardModifier::ControlModifier, _parameters.back()))
+                CanvasOperations::CanvasOperation::editer->scale(
+                    objects, QApplication::keyboardModifiers() != Qt::KeyboardModifier::ControlModifier, _parameters.back()))
             {
                 std::set<Geo::Type> types;
                 for (const Geo::Geometry *object : objects)
@@ -683,9 +753,9 @@ void CMDWidget::offset()
         if (_parameters.back() != 0)
         {
             if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
-                CanvasOperations::CanvasOperation::editer->offset(objects, _parameters.back(),
-                static_cast<Geo::Offset::JoinType>(GlobalSetting::setting().offset_join_type),
-                static_cast<Geo::Offset::EndType>(GlobalSetting::setting().offset_end_type)))
+                CanvasOperations::CanvasOperation::editer->offset(
+                    objects, _parameters.back(), static_cast<Geo::Offset::JoinType>(GlobalSetting::setting().offset_join_type),
+                    static_cast<Geo::Offset::EndType>(GlobalSetting::setting().offset_end_type)))
             {
                 std::set<Geo::Type> types;
                 for (const Geo::Geometry *object : objects)
@@ -720,9 +790,9 @@ void CMDWidget::line_array()
         break;
     case 1:
         if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
-            CanvasOperations::CanvasOperation::editer->line_array(objects,
-            GlobalSetting::setting().ui->array_x_item->value(), GlobalSetting::setting().ui->array_y_item->value(),
-            GlobalSetting::setting().ui->array_x_space->value(), GlobalSetting::setting().ui->array_y_space->value()))
+            CanvasOperations::CanvasOperation::editer->line_array(
+                objects, GlobalSetting::setting().ui->array_x_item->value(), GlobalSetting::setting().ui->array_y_item->value(),
+                GlobalSetting::setting().ui->array_x_space->value(), GlobalSetting::setting().ui->array_y_space->value()))
         {
             std::set<Geo::Type> types;
             for (const Geo::Geometry *object : objects)
@@ -749,8 +819,8 @@ void CMDWidget::line_array()
         if (_parameters.size() >= 5 && std::abs(_parameters[1]) >= 1 && std::abs(_parameters[2]) >= 1)
         {
             if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
-                CanvasOperations::CanvasOperation::editer->line_array(objects, _parameters[1],
-                _parameters[2], _parameters[3], _parameters[4]))
+                CanvasOperations::CanvasOperation::editer->line_array(objects, _parameters[1], _parameters[2], _parameters[3],
+                                                                      _parameters[4]))
             {
                 std::set<Geo::Type> types;
                 for (const Geo::Geometry *object : objects)
@@ -784,8 +854,8 @@ void CMDWidget::line_array()
 void CMDWidget::flip_x()
 {
     std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
-    CanvasOperations::CanvasOperation::editer->flip(objects, true,
-        QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
+    CanvasOperations::CanvasOperation::editer->flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier,
+                                                    GlobalSetting::setting().ui->to_all_layers->isChecked());
     std::set<Geo::Type> types;
     for (const Geo::Geometry *object : objects)
     {
@@ -820,8 +890,8 @@ void CMDWidget::flip_x()
 void CMDWidget::flip_y()
 {
     std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
-    CanvasOperations::CanvasOperation::editer->flip(objects, false,
-        QApplication::keyboardModifiers() != Qt::ControlModifier, GlobalSetting::setting().ui->to_all_layers->isChecked());
+    CanvasOperations::CanvasOperation::editer->flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier,
+                                                    GlobalSetting::setting().ui->to_all_layers->isChecked());
     std::set<Geo::Type> types;
     for (const Geo::Geometry *object : objects)
     {
@@ -859,8 +929,7 @@ void CMDWidget::shape_intersection()
     std::set<Geo::Type> types;
     for (Geo::Geometry *object : CanvasOperations::CanvasOperation::editer->selected())
     {
-        if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON
-            && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
+        if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
         {
             continue;
         }
@@ -902,8 +971,7 @@ void CMDWidget::shape_union()
     std::set<Geo::Type> types;
     for (Geo::Geometry *object : CanvasOperations::CanvasOperation::editer->selected())
     {
-        if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON
-            && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
+        if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
         {
             continue;
         }
@@ -945,8 +1013,7 @@ void CMDWidget::shape_xor()
     std::set<Geo::Type> types;
     for (Geo::Geometry *object : CanvasOperations::CanvasOperation::editer->selected())
     {
-        if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON
-            && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
+        if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
         {
             continue;
         }

@@ -16,7 +16,8 @@ GlobalSetting &GlobalSetting::setting()
 void GlobalSetting::load_setting()
 {
     QFile file("./config.json");
-    if (!file.open(QIODevice::ReadOnly)) {
+    if (!file.open(QIODevice::ReadOnly))
+    {
         auto err = file.errorString();
         qWarning() << "Failed to load settings: " << err;
         return;

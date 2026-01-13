@@ -5,8 +5,7 @@
 #include "io/GlobalSetting.hpp"
 
 
-Setting::Setting(QWidget *parent)
-    :QDialog(parent), ui(new Ui::Setting)
+Setting::Setting(QWidget *parent) : QDialog(parent), ui(new Ui::Setting)
 {
     ui->setupUi(this);
 }

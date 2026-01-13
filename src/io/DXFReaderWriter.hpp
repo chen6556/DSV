@@ -39,7 +39,7 @@ class DXFReaderWriter : public DRW_Interface
 private:
     bool _to_graph = true;
     bool _ignore_entity = false;
-    int _version;
+    int _version = 0;
     Graph *_graph;
     Combination *_combination = nullptr;
     const ContainerGroup *_current_group = nullptr;
@@ -58,7 +58,7 @@ public:
 
     DXFReaderWriter(Graph *graph, dxfRW *dxfrw);
 
-    ~DXFReaderWriter();
+    ~DXFReaderWriter() override;
 
     /** Called when header is parsed.  */
     void addHeader(const DRW_Header *data) override;

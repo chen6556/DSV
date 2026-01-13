@@ -11,7 +11,7 @@ bool Geo::is_inside(const Point &point, const Polyline &polyline)
 {
     for (size_t i = 1, count = polyline.size(); i < count; ++i)
     {
-        if (Geo::is_inside(point, polyline[i-1], polyline[i]))
+        if (Geo::is_inside(point, polyline[i - 1], polyline[i]))
         {
             return true;
         }
@@ -27,7 +27,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
         {
             for (size_t i = 1, len = polygon.size(); i < len; ++i)
             {
-                if (Geo::is_inside(point, polygon[i-1], polygon[i]))
+                if (Geo::is_inside(point, polygon[i - 1], polygon[i]))
                 {
                     return true;
                 }
@@ -37,7 +37,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
         {
             for (size_t i = 1, len = polygon.size(); i < len; ++i)
             {
-                if (Geo::is_inside(point, polygon[i-1], polygon[i]))
+                if (Geo::is_inside(point, polygon[i - 1], polygon[i]))
                 {
                     return false;
                 }
@@ -59,8 +59,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
         Geo::Point temp, end(x + 80, point.y); // 找到交点并计算其几何数
         for (size_t i = 1, count = points.size(); i < count; ++i)
         {
-            if (!Geo::is_parallel(point, end, points[i], points[i - 1]) &&
-                Geo::is_intersected(point, end, points[i], points[i - 1], temp))
+            if (!Geo::is_parallel(point, end, points[i], points[i - 1]) && Geo::is_intersected(point, end, points[i], points[i - 1], temp))
             {
                 points.insert(points.begin() + i++, MarkedPoint(temp.x, temp.y, false));
                 ++count;
@@ -83,12 +82,11 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
         // 去除重复交点
         {
             const size_t i = points.size() - 1; // 对最后一个点进行处理
-            size_t j0, j1;
+            size_t j0 = 0, j1 = 0;
             size_t count = points[i].original ? 0 : 1;
             for (j0 = i; j0 > 0; --j0) // 向前查找与points[i]重合的点
             {
-                if (std::abs(points[i].x - points[j0 - 1].x) > Geo::EPSILON || 
-                    std::abs(points[i].y - points[j0 - 1].y) > Geo::EPSILON)
+                if (std::abs(points[i].x - points[j0 - 1].x) > Geo::EPSILON || std::abs(points[i].y - points[j0 - 1].y) > Geo::EPSILON)
                 {
                     break;
                 }
@@ -99,8 +97,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
             }
             for (j1 = 0; j1 < i; ++j1) // 向后查找与points[i]重合的点
             {
-                if (std::abs(points[i].x - points[j1].x) > Geo::EPSILON || 
-                    std::abs(points[i].y - points[j1].y) > Geo::EPSILON)
+                if (std::abs(points[i].x - points[j1].x) > Geo::EPSILON || std::abs(points[i].y - points[j1].y) > Geo::EPSILON)
                 {
                     break;
                 }
@@ -111,7 +108,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
             }
             if (count >= 2)
             {
-                int value = 0; // 几何数之和
+                int value = 0;                  // 几何数之和
                 for (size_t k = i; k > j0; --k) // 计算前向几何数之和
                 {
                     if (!points[k].original)
@@ -153,7 +150,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
                 }
                 else
                 {
-                    bool flag = false; // 标记是否包含原始点
+                    bool flag = false;              // 标记是否包含原始点
                     for (size_t k = i; k > j0; --k) // 移除前向交点
                     {
                         flag = (flag || points[k].original);
@@ -171,13 +168,12 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
                 }
             }
         }
-        for (size_t count, j, i = points.size() - 2; i > 0; --i)
+        for (size_t count = 0, j = 0, i = points.size() - 2; i > 0; --i)
         {
             count = points[i].original ? 0 : 1;
             for (j = i; j > 0; --j) // 向前查找与points[i]重合的点
             {
-                if (std::abs(points[i].x - points[j - 1].x) > Geo::EPSILON || 
-                    std::abs(points[i].y - points[j - 1].y) > Geo::EPSILON)
+                if (std::abs(points[i].x - points[j - 1].x) > Geo::EPSILON || std::abs(points[i].y - points[j - 1].y) > Geo::EPSILON)
                 {
                     break;
                 }
@@ -191,7 +187,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
                 continue;
             }
 
-            int value = 0; // 几何数之和
+            int value = 0;                 // 几何数之和
             for (size_t k = i; k > j; --k) // 计算前向几何数之和
             {
                 if (!points[k].original)
@@ -219,7 +215,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
             }
             else
             {
-                bool flag = false; // 标记是否包含原始点
+                bool flag = false;             // 标记是否包含原始点
                 for (size_t k = i; k > j; --k) // 移除前向交点
                 {
                     flag = (flag || points[k].original);
@@ -331,8 +327,8 @@ bool Geo::is_inside(const Point &point, const Ellipse &ellipse, const bool coinc
         const double angle2 = angle + Geo::PI * 2;
         if ((angle0 <= angle && angle <= angle1) || (angle0 <= angle2 && angle2 <= angle1))
         {
-            return Geo::distance(ellipse.c0(), point) + Geo::distance(ellipse.c1(), point)
-                == std::max(ellipse.lengtha(), ellipse.lengthb()) * 2;
+            return Geo::distance(ellipse.c0(), point) + Geo::distance(ellipse.c1(), point) ==
+                   std::max(ellipse.lengtha(), ellipse.lengthb()) * 2;
         }
         else
         {
@@ -343,13 +339,13 @@ bool Geo::is_inside(const Point &point, const Ellipse &ellipse, const bool coinc
     {
         if (coincide)
         {
-            return Geo::distance(ellipse.c0(), point) + Geo::distance(ellipse.c1(), point)
-                <= std::max(ellipse.lengtha(), ellipse.lengthb()) * 2;
+            return Geo::distance(ellipse.c0(), point) + Geo::distance(ellipse.c1(), point) <=
+                   std::max(ellipse.lengtha(), ellipse.lengthb()) * 2;
         }
         else
         {
-            return Geo::distance(ellipse.c0(), point) + Geo::distance(ellipse.c1(), point)
-                < std::max(ellipse.lengtha(), ellipse.lengthb()) * 2;
+            return Geo::distance(ellipse.c0(), point) + Geo::distance(ellipse.c1(), point) <
+                   std::max(ellipse.lengtha(), ellipse.lengthb()) * 2;
         }
     }
 }
@@ -358,23 +354,17 @@ bool Geo::is_inside(const Point &point, const Point &point0, const Point &point1
 {
     if (coincide)
     {
-        const bool a = (point2.x - point.x) * (point0.y - point.y) 
-            >= (point0.x - point.x) * (point2.y - point.y);
-        const bool b = (point0.x - point.x) * (point1.y - point.y)
-            >= (point1.x - point.x) * (point0.y - point.y);
-        const bool c = (point1.x - point.x) * (point2.y - point.y)
-            >= (point2.x - point.x) * (point1.y - point.y);
+        const bool a = (point2.x - point.x) * (point0.y - point.y) >= (point0.x - point.x) * (point2.y - point.y);
+        const bool b = (point0.x - point.x) * (point1.y - point.y) >= (point1.x - point.x) * (point0.y - point.y);
+        const bool c = (point1.x - point.x) * (point2.y - point.y) >= (point2.x - point.x) * (point1.y - point.y);
 
         return a == b && b == c;
     }
     else
     {
-        const bool a = (point2.x - point.x) * (point0.y - point.y) 
-            > (point0.x - point.x) * (point2.y - point.y);
-        const bool b = (point0.x - point.x) * (point1.y - point.y)
-            > (point1.x - point.x) * (point0.y - point.y);
-        const bool c = (point1.x - point.x) * (point2.y - point.y)
-            > (point2.x - point.x) * (point1.y - point.y);
+        const bool a = (point2.x - point.x) * (point0.y - point.y) > (point0.x - point.x) * (point2.y - point.y);
+        const bool b = (point0.x - point.x) * (point1.y - point.y) > (point1.x - point.x) * (point0.y - point.y);
+        const bool c = (point1.x - point.x) * (point2.y - point.y) > (point2.x - point.x) * (point1.y - point.y);
 
         return a == b && b == c;
     }
@@ -396,7 +386,7 @@ bool Geo::is_inside(const Point &point, const Arc &arc)
     {
         return false;
     }
-    const Geo::Point center(arc.x, arc.y); 
+    const Geo::Point center(arc.x, arc.y);
     double angle0 = Geo::angle(arc.control_points[0], center, arc.control_points[2]);
     double angle1 = Geo::angle(arc.control_points[0], center, point);
     if (arc.is_cw())
@@ -426,8 +416,7 @@ bool Geo::is_inside(const Point &point, const Arc &arc)
 
 bool Geo::is_inside(const Triangle &triangle0, const Triangle &triangle1)
 {
-    return Geo::is_inside(triangle0[0], triangle1) && Geo::is_inside(triangle0[1], triangle1)
-        && Geo::is_inside(triangle0[2], triangle1);
+    return Geo::is_inside(triangle0[0], triangle1) && Geo::is_inside(triangle0[1], triangle1) && Geo::is_inside(triangle0[2], triangle1);
 }
 
 
@@ -437,7 +426,7 @@ bool Geo::NoAABBTest::is_inside(const Geo::Point &point, const Geo::Polygon &pol
     {
         for (size_t i = 1, len = polygon.size(); i < len; ++i)
         {
-            if (Geo::is_inside(point, polygon[i-1], polygon[i]))
+            if (Geo::is_inside(point, polygon[i - 1], polygon[i]))
             {
                 return true;
             }
@@ -447,7 +436,7 @@ bool Geo::NoAABBTest::is_inside(const Geo::Point &point, const Geo::Polygon &pol
     {
         for (size_t i = 1, len = polygon.size(); i < len; ++i)
         {
-            if (Geo::is_inside(point, polygon[i-1], polygon[i]))
+            if (Geo::is_inside(point, polygon[i - 1], polygon[i]))
             {
                 return false;
             }
@@ -465,8 +454,7 @@ bool Geo::NoAABBTest::is_inside(const Geo::Point &point, const Geo::Polygon &pol
     Geo::Point temp, end(x + 80, point.y); // 找到交点并计算其几何数
     for (size_t i = 1, count = points.size(); i < count; ++i)
     {
-        if (!Geo::is_parallel(point, end, points[i], points[i - 1]) &&
-            Geo::is_intersected(point, end, points[i], points[i - 1], temp))
+        if (!Geo::is_parallel(point, end, points[i], points[i - 1]) && Geo::is_intersected(point, end, points[i], points[i - 1], temp))
         {
             points.insert(points.begin() + i++, MarkedPoint(temp.x, temp.y, false));
             ++count;
@@ -489,12 +477,11 @@ bool Geo::NoAABBTest::is_inside(const Geo::Point &point, const Geo::Polygon &pol
     // 去除重复交点
     {
         const size_t i = points.size() - 1;
-        size_t j0, j1;
+        size_t j0 = 0, j1 = 0;
         size_t count = points[i].original ? 0 : 1;
         for (j0 = i; j0 > 0; --j0)
         {
-            if (std::abs(points[i].x - points[j0 - 1].x) > Geo::EPSILON || 
-                std::abs(points[i].y - points[j0 - 1].y) > Geo::EPSILON)
+            if (std::abs(points[i].x - points[j0 - 1].x) > Geo::EPSILON || std::abs(points[i].y - points[j0 - 1].y) > Geo::EPSILON)
             {
                 break;
             }
@@ -505,8 +492,7 @@ bool Geo::NoAABBTest::is_inside(const Geo::Point &point, const Geo::Polygon &pol
         }
         for (j1 = 0; j1 < i; ++j1)
         {
-            if (std::abs(points[i].x - points[j1].x) > Geo::EPSILON || 
-                std::abs(points[i].y - points[j1].y) > Geo::EPSILON)
+            if (std::abs(points[i].x - points[j1].x) > Geo::EPSILON || std::abs(points[i].y - points[j1].y) > Geo::EPSILON)
             {
                 break;
             }
@@ -577,13 +563,12 @@ bool Geo::NoAABBTest::is_inside(const Geo::Point &point, const Geo::Polygon &pol
             }
         }
     }
-    for (size_t count, j, i = points.size() - 2; i > 0; --i)
+    for (size_t count = 0, j = 0, i = points.size() - 2; i > 0; --i)
     {
         count = points[i].original ? 0 : 1;
         for (j = i; j > 0; --j)
         {
-            if (std::abs(points[i].x - points[j - 1].x) > Geo::EPSILON || 
-                std::abs(points[i].y - points[j - 1].y) > Geo::EPSILON)
+            if (std::abs(points[i].x - points[j - 1].x) > Geo::EPSILON || std::abs(points[i].y - points[j - 1].y) > Geo::EPSILON)
             {
                 break;
             }

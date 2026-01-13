@@ -4,8 +4,7 @@
 #include "ui/WinUITool.hpp"
 
 
-MessageBox::MessageBox(const QDialogButtonBox::StandardButtons buttons, QWidget *parent)
-    : QDialog(parent), ui(new Ui::MessageBox)
+MessageBox::MessageBox(const QDialogButtonBox::StandardButtons buttons, QWidget *parent) : QDialog(parent), ui(new Ui::MessageBox)
 {
     ui->setupUi(this);
     ui->buttonBox->setStandardButtons(buttons);
@@ -26,7 +25,8 @@ QDialogButtonBox::StandardButton MessageBox::result() const
     return _result;
 }
 
-QDialogButtonBox::StandardButton MessageBox::question(QWidget *parent, const QString &title, const QString &text, const QDialogButtonBox::StandardButtons buttons)
+QDialogButtonBox::StandardButton MessageBox::question(QWidget *parent, const QString &title, const QString &text,
+                                                      const QDialogButtonBox::StandardButtons buttons)
 {
     MessageBox dialog(title, text, buttons, parent);
     QPixmap pixmap(":/icons/help.svg");
@@ -36,7 +36,8 @@ QDialogButtonBox::StandardButton MessageBox::question(QWidget *parent, const QSt
     return dialog.result();
 }
 
-QDialogButtonBox::StandardButton MessageBox::information(QWidget *parent, const QString &title, const QString &text, const QDialogButtonBox::StandardButtons buttons)
+QDialogButtonBox::StandardButton MessageBox::information(QWidget *parent, const QString &title, const QString &text,
+                                                         const QDialogButtonBox::StandardButtons buttons)
 {
     MessageBox dialog(title, text, buttons, parent);
     QPixmap pixmap(":/icons/info.svg");
@@ -46,7 +47,8 @@ QDialogButtonBox::StandardButton MessageBox::information(QWidget *parent, const 
     return dialog.result();
 }
 
-QDialogButtonBox::StandardButton MessageBox::attention(QWidget *parent, const QString &title, const QString &text, const QDialogButtonBox::StandardButtons buttons)
+QDialogButtonBox::StandardButton MessageBox::attention(QWidget *parent, const QString &title, const QString &text,
+                                                       const QDialogButtonBox::StandardButtons buttons)
 {
     MessageBox dialog(title, text, buttons, parent);
     QPixmap pixmap(":/icons/attention.svg");

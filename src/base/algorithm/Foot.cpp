@@ -21,7 +21,7 @@ bool Geo::foot_point(const Point &start, const Point &end, const Point &point, P
     else
     {
         const double k = (end.y - start.y) / (end.x - start.x);
-        const double b = start.y -  k * start.x;
+        const double b = start.y - k * start.x;
         foot.x = (point.x - k * b + k * point.y) / (1 + k * k);
         foot.y = (k * point.x + k * k * point.y + b) / (1 + k * k);
         if (infinite)
@@ -77,8 +77,8 @@ int Geo::foot_point(const Ellipse &ellipse, const Point &point, std::vector<Poin
         if (values[0] * values[1] <= 0)
         {
             double t0 = Math::solve_ellipse_foot(parameter, t);
-            if (std::abs(parameter.a * std::cos(t0) + parameter.b * std::sin(t0)
-                + parameter.c * std::sin(t0) * std::cos(t0)) >= Geo::EPSILON)
+            if (std::abs(parameter.a * std::cos(t0) + parameter.b * std::sin(t0) + parameter.c * std::sin(t0) * std::cos(t0)) >=
+                Geo::EPSILON)
             {
                 continue;
             }
@@ -108,7 +108,7 @@ int Geo::foot_point(const Ellipse &ellipse, const Point &point, std::vector<Poin
 }
 
 int Geo::foot_point(const Point &point, const Bezier &bezier, std::vector<Point> &output,
-    std::vector<std::tuple<size_t, double, double, double>> *tvalues)
+                    std::vector<std::tuple<size_t, double, double, double>> *tvalues)
 {
     const size_t order = bezier.order();
     std::vector<int> nums(order, 1);
@@ -145,7 +145,7 @@ int Geo::foot_point(const Point &point, const Bezier &bezier, std::vector<Point>
             Geo::Point coord;
             for (size_t j = 0; j <= order; ++j)
             {
-                coord += (bezier[j + i] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j))); 
+                coord += (bezier[j + i] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
             }
             head.rotate(coord.x, coord.y, Geo::PI / 2);
             tail.rotate(coord.x, coord.y, Geo::PI / 2);
@@ -165,7 +165,7 @@ int Geo::foot_point(const Point &point, const Bezier &bezier, std::vector<Point>
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t0, order - j) * std::pow(t0, j))); 
+                    coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t0, order - j) * std::pow(t0, j)));
                 }
                 Geo::Point head, tail;
                 for (size_t j = 0; j < order; ++j)
@@ -181,7 +181,7 @@ int Geo::foot_point(const Point &point, const Bezier &bezier, std::vector<Point>
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j))); 
+                    coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
                 }
                 Geo::Point head, tail;
                 for (size_t j = 0; j < order; ++j)
@@ -199,7 +199,7 @@ int Geo::foot_point(const Point &point, const Bezier &bezier, std::vector<Point>
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t, order - j) * std::pow(t, j))); 
+                    coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
                 Geo::Point head, tail;
                 for (size_t j = 0; j < order; ++j)
@@ -235,7 +235,7 @@ int Geo::foot_point(const Point &point, const Bezier &bezier, std::vector<Point>
             Geo::Point coord;
             for (size_t j = 0; j <= order; ++j)
             {
-                coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j))); 
+                coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
             }
             Geo::Point head, tail;
             for (size_t j = 0; j < order; ++j)
@@ -263,7 +263,7 @@ int Geo::foot_point(const Point &point, const Bezier &bezier, std::vector<Point>
 }
 
 int Geo::foot_point(const Point &point, const BSpline &bspline, std::vector<Point> &output,
-    std::vector<std::tuple<double, double, double>> *tvalues)
+                    std::vector<std::tuple<double, double, double>> *tvalues)
 {
     std::vector<std::tuple<double, double>> pairs;
     {
@@ -288,8 +288,8 @@ int Geo::foot_point(const Point &point, const BSpline &bspline, std::vector<Poin
     for (auto [t0, t1] : pairs)
     {
         const Geo::Point origin(0, 0);
-        double angles[2] = { Geo::angle(bspline.at(t0), point, origin, bspline.vertical(t0)),
-            Geo::angle(bspline.at(t1), point, origin, bspline.vertical(t1)) };
+        double angles[2] = {Geo::angle(bspline.at(t0), point, origin, bspline.vertical(t0)),
+                            Geo::angle(bspline.at(t1), point, origin, bspline.vertical(t1))};
         double last_t = -1, t = (t0 + t1) / 2;
         while (t1 - t0 > 1e-14 && last_t != t && angles[0] * angles[1] != 0)
         {
@@ -316,7 +316,7 @@ int Geo::foot_point(const Point &point, const BSpline &bspline, std::vector<Poin
         {
             t1 = (t0 + t1) / 2;
         }
-        if (const Geo::Point coord = bspline.at(t1); 
+        if (const Geo::Point coord = bspline.at(t1);
             std::abs(Geo::angle(coord, point, origin, bspline.vertical(t1))) < 1e-4 ||
             std::abs(std::abs(Geo::angle(coord, point, origin, bspline.vertical(t1))) - Geo::PI) < 1e-4)
         {

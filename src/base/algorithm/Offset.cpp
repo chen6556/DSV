@@ -12,7 +12,7 @@ bool Geo::offset(const Geo::Polyline &input, Geo::Polyline &result, const double
         double area = 0;
         for (size_t i = 1, count = temp.size(); i < count; ++i)
         {
-            area += (temp[i].x * (temp[i+1 != count ? i+1 : 0].y - temp[i-1].y));
+            area += (temp[i].x * (temp[i + 1 != count ? i + 1 : 0].y - temp[i - 1].y));
         }
         area += (temp.front().x * (temp[1].y - temp.back().y));
         if (area > 0)
@@ -65,8 +65,7 @@ bool Geo::offset(const Geo::Polygon &input, Geo::Polygon &result, const double d
         {
             error_edges.push_back((temp[i] - temp[i - 1]) * (result[i] - result[i - 1]) < 0);
         }
-        for (size_t i = 0, edge_count = error_edges.size(), point_count = temp.size(),
-                count = result.size(), of = 0, j = 0; i < edge_count; ++i)
+        for (size_t i = 0, edge_count = error_edges.size(), count = result.size(), of = 0, j = 0; i < edge_count; ++i)
         {
             if (error_edges[i])
             {
@@ -75,16 +74,15 @@ bool Geo::offset(const Geo::Polygon &input, Geo::Polygon &result, const double d
                 {
                     b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
                     a.x = a.y = std::numeric_limits<double>::infinity();
-                    Geo::is_intersected(result.last_point(j), result[j],
-                        temp[i] + b, temp.next_point(i) + b, a, true);
+                    Geo::is_intersected(result.last_point(j), result[j], temp[i] + b, temp.next_point(i) + b, a, true);
                     if (!std::isinf(a.x) && !std::isinf(a.y))
                     {
                         result[j] = a;
                     }
                     a.x = a.y = std::numeric_limits<double>::infinity();
                     Geo::is_intersected(result.next_point(result.next_point_index(j)),
-                        result.next_point(result.next_point_index(result.next_point_index(j))),
-                        temp[i] + b, temp.next_point(i) + b, a, true);
+                                        result.next_point(result.next_point_index(result.next_point_index(j))), temp[i] + b,
+                                        temp.next_point(i) + b, a, true);
                     if (!std::isinf(a.x) && !std::isinf(a.y))
                     {
                         result.next_point(result.next_point_index(j)) = a;
@@ -96,8 +94,8 @@ bool Geo::offset(const Geo::Polygon &input, Geo::Polygon &result, const double d
                 else
                 {
                     a.x = a.y = std::numeric_limits<double>::infinity();
-                    if (Geo::is_intersected(result.last_point(j), result[j],
-                        result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
+                    if (Geo::is_intersected(result.last_point(j), result[j], result.next_point(j),
+                                            result.next_point(result.next_point_index(j)), a, true))
                     {
                         if (!std::isinf(a.x) && !std::isinf(a.y))
                         {
@@ -110,11 +108,11 @@ bool Geo::offset(const Geo::Polygon &input, Geo::Polygon &result, const double d
                     {
                         b = (temp[i] - temp.last_point(i)).vertical().normalize() * distance;
                         Geo::is_intersected(result.next_point(result.next_point_index(j)),
-                            result.next_point(result.next_point_index(result.next_point_index(j))),
-                            temp[i] + b, temp.last_point(i) + b, a, true);
+                                            result.next_point(result.next_point_index(result.next_point_index(j))), temp[i] + b,
+                                            temp.last_point(i) + b, a, true);
                         b = (temp.next_point(temp.next_point_index(i)) - temp.next_point(i)).vertical().normalize() * distance;
-                        Geo::is_intersected(result.last_point(j), result.last_point(result.last_point_index(j)),
-                            temp.next_point(i) + b, temp.next_point(temp.next_point_index(i)) + b, b, true);
+                        Geo::is_intersected(result.last_point(j), result.last_point(result.last_point_index(j)), temp.next_point(i) + b,
+                                            temp.next_point(temp.next_point_index(i)) + b, b, true);
 
                         if ((temp.next_point(temp.next_point_index(i)) - temp.last_point(i)) * (a - b) < 0)
                         {
@@ -156,8 +154,7 @@ bool Geo::offset(const Geo::Polygon &input, Geo::Polygon &result, const double d
         {
             error_edges.push_back((temp[i] - temp[i - 1]) * (result[i] - result[i - 1]) < 0);
         }
-        for (size_t i = 0, edge_count = error_edges.size(), point_count = temp.size(),
-                count = result.size(), of = 0, j = 0; i < edge_count; ++i)
+        for (size_t i = 0, edge_count = error_edges.size(), count = result.size(), of = 0, j = 0; i < edge_count; ++i)
         {
             if (error_edges[i])
             {
@@ -166,16 +163,15 @@ bool Geo::offset(const Geo::Polygon &input, Geo::Polygon &result, const double d
                 {
                     b = (temp.next_point(i) - temp[i]).vertical().normalize() * distance;
                     a.x = a.y = std::numeric_limits<double>::infinity();
-                    Geo::is_intersected(result.last_point(j), result[j],
-                        temp[i] + b, temp.next_point(i) + b, a, true);
+                    Geo::is_intersected(result.last_point(j), result[j], temp[i] + b, temp.next_point(i) + b, a, true);
                     if (!std::isinf(a.x) && !std::isinf(a.y))
                     {
                         result[j] = a;
                     }
                     a.x = a.y = std::numeric_limits<double>::infinity();
                     Geo::is_intersected(result.next_point(result.next_point_index(j)),
-                        result.next_point(result.next_point_index(result.next_point_index(j))),
-                        temp[i] + b, temp.next_point(i) + b, a, true);
+                                        result.next_point(result.next_point_index(result.next_point_index(j))), temp[i] + b,
+                                        temp.next_point(i) + b, a, true);
                     if (!std::isinf(a.x) && !std::isinf(a.y))
                     {
                         result.next_point(result.next_point_index(j)) = a;
@@ -187,8 +183,8 @@ bool Geo::offset(const Geo::Polygon &input, Geo::Polygon &result, const double d
                 else
                 {
                     a.x = a.y = std::numeric_limits<double>::infinity();
-                    if (Geo::is_intersected(result.last_point(j), result[j],
-                        result.next_point(j), result.next_point(result.next_point_index(j)), a, true))
+                    if (Geo::is_intersected(result.last_point(j), result[j], result.next_point(j),
+                                            result.next_point(result.next_point_index(j)), a, true))
                     {
                         if (!std::isinf(a.x) && !std::isinf(a.y))
                         {
@@ -201,11 +197,11 @@ bool Geo::offset(const Geo::Polygon &input, Geo::Polygon &result, const double d
                     {
                         b = (temp[i] - temp.last_point(i)).vertical().normalize() * distance;
                         Geo::is_intersected(result.next_point(result.next_point_index(j)),
-                            result.next_point(result.next_point_index(result.next_point_index(j))),
-                            temp[i] + b, temp.last_point(i) + b, a, true);
+                                            result.next_point(result.next_point_index(result.next_point_index(j))), temp[i] + b,
+                                            temp.last_point(i) + b, a, true);
                         b = (temp.next_point(temp.next_point_index(i)) - temp.next_point(i)).vertical().normalize() * distance;
-                        Geo::is_intersected(result.last_point(j), result.last_point(result.last_point_index(j)),
-                            temp.next_point(i) + b, temp.next_point(temp.next_point_index(i)) + b, b, true);
+                        Geo::is_intersected(result.last_point(j), result.last_point(result.last_point_index(j)), temp.next_point(i) + b,
+                                            temp.next_point(temp.next_point_index(i)) + b, b, true);
 
                         if ((temp.next_point(temp.next_point_index(i)) - temp.last_point(i)) * (a - b) < 0)
                         {
@@ -236,8 +232,7 @@ bool Geo::offset(const Geo::Polygon &input, Geo::Polygon &result, const double d
 
     for (size_t i = 0, count = result.size(); i < count; ++i)
     {
-        if (std::isnan(result[i].x) || std::isnan(result[i].y)
-            || std::isinf(result[i].x) || std::isinf(result[i].y))
+        if (std::isnan(result[i].x) || std::isnan(result[i].y) || std::isinf(result[i].x) || std::isinf(result[i].y))
         {
             result.remove(i--);
             --count;
@@ -247,8 +242,8 @@ bool Geo::offset(const Geo::Polygon &input, Geo::Polygon &result, const double d
 
     for (size_t i = 0, count = result.size() - 1; i < count; ++i)
     {
-        if (Geo::is_inside(result[i], result[i + 1], result.next_point(i + 1))
-            && Geo::is_inside(result[i + 1], result[i], result.last_point(i)))
+        if (Geo::is_inside(result[i], result[i + 1], result.next_point(i + 1)) &&
+            Geo::is_inside(result[i + 1], result[i], result.last_point(i)))
         {
             result.remove(i + 1);
             result.remove(i--);
@@ -268,8 +263,8 @@ bool Geo::offset(const Geo::Polygon &input, Geo::Polygon &result, const double d
     return true;
 }
 
-bool Geo::offset(const Geo::Polygon &input, std::vector<Geo::Polygon> &result, const double distance,
-    const Offset::JoinType join_type, const Offset::EndType end_type, const double epsilon)
+bool Geo::offset(const Geo::Polygon &input, std::vector<Geo::Polygon> &result, const double distance, const Offset::JoinType join_type,
+                 const Offset::EndType end_type, const double epsilon)
 {
     if (distance == 0)
     {

@@ -2,7 +2,7 @@
 
 
 ActionGroup::ActionGroup(Ui::MainWindow *ui_, std::function<void(const MenuType, const int)> callback)
-    : ui(ui_), _callback(callback)
+    : ui(ui_), _callback(std::move(callback))
 {
     init();
 }
@@ -23,226 +23,213 @@ void ActionGroup::init()
 void ActionGroup::init_polygon_menu()
 {
     _polygon_menu = new QMenu(ui->polyline_btn);
-    _polygon_menu->connect(_polygon_menu, &QMenu::triggered, [this](QAction *action)
-        {
-            _callback(MenuType::PolygonMenu, _polygon_menu->actions().indexOf(action));
-            ui->polyline_btn->setIcon(action->icon());
-            ui->polyline_btn->setToolTip(action->text());
-            ui->polyline_btn->setDefaultAction(action);
-        });
+    _polygon_menu->connect(_polygon_menu, &QMenu::triggered,
+                           [this](QAction *action)
+                           {
+                               _callback(MenuType::PolygonMenu, _polygon_menu->actions().indexOf(action));
+                               ui->polyline_btn->setIcon(action->icon());
+                               ui->polyline_btn->setToolTip(action->text());
+                               ui->polyline_btn->setDefaultAction(action);
+                           });
     ui->polyline_btn->setMenu(_polygon_menu);
 
-    QAction *polyline = new QAction(QIcon(":/icons/polygon/polyline_btn.png"),
-        "Polyline", ui->polyline_btn);
+    QAction *polyline = new QAction(QIcon(":/icons/polygon/polyline_btn.png"), "Polyline", ui->polyline_btn);
     _polygon_menu->addAction(polyline);
     ui->polyline_btn->setDefaultAction(polyline);
 
-    QAction *rectangle = new QAction(QIcon(":/icons/polygon/rectangle_btn.png"),
-        "Rectangle", ui->polyline_btn);
+    QAction *rectangle = new QAction(QIcon(":/icons/polygon/rectangle_btn.png"), "Rectangle", ui->polyline_btn);
     _polygon_menu->addAction(rectangle);
 
     QAction *circumscribed = new QAction(QIcon(":/icons/polygon/"
-        "polygon_circumscribed_btn.png"), "Polygon Circumscribed", ui->polyline_btn);
+                                               "polygon_circumscribed_btn.png"),
+                                         "Polygon Circumscribed", ui->polyline_btn);
     _polygon_menu->addAction(circumscribed);
 
     QAction *inscribed = new QAction(QIcon(":/icons/polygon/"
-        "polygon_inscribed_btn.png"), "Polygon Inscribed", ui->polyline_btn);
+                                           "polygon_inscribed_btn.png"),
+                                     "Polygon Inscribed", ui->polyline_btn);
     _polygon_menu->addAction(inscribed);
 
-    QAction *point = new QAction(QIcon(":/icons/polygon/point_btn.png"),
-        "Point", ui->polyline_btn);
+    QAction *point = new QAction(QIcon(":/icons/polygon/point_btn.png"), "Point", ui->polyline_btn);
     _polygon_menu->addAction(point);
 }
 
 void ActionGroup::init_arc_menu()
 {
     _arc_menu = new QMenu(ui->arc_btn);
-    _arc_menu->connect(_arc_menu, &QMenu::triggered, [this](QAction *action)
-        {
-            _callback(MenuType::ArcMenu, _arc_menu->actions().indexOf(action));
-            ui->arc_btn->setIcon(action->icon());
-            ui->arc_btn->setToolTip(action->text());
-            ui->arc_btn->setDefaultAction(action);
-        });
+    _arc_menu->connect(_arc_menu, &QMenu::triggered,
+                       [this](QAction *action)
+                       {
+                           _callback(MenuType::ArcMenu, _arc_menu->actions().indexOf(action));
+                           ui->arc_btn->setIcon(action->icon());
+                           ui->arc_btn->setToolTip(action->text());
+                           ui->arc_btn->setDefaultAction(action);
+                       });
     ui->arc_btn->setMenu(_arc_menu);
 
-    QAction *arc_3p = new QAction(QIcon(":/icons/arc/3p_arc_btn.png"),
-        "3-Point Arc", ui->arc_btn);
+    QAction *arc_3p = new QAction(QIcon(":/icons/arc/3p_arc_btn.png"), "3-Point Arc", ui->arc_btn);
     _arc_menu->addAction(arc_3p);
     ui->arc_btn->setDefaultAction(arc_3p);
 
-    QAction *start_center_angle_arc = new QAction(QIcon(":/icons/arc/sca_arc_btn.png"),
-        "Start-Center-Angle Arc", ui->arc_btn);
+    QAction *start_center_angle_arc = new QAction(QIcon(":/icons/arc/sca_arc_btn.png"), "Start-Center-Angle Arc", ui->arc_btn);
     _arc_menu->addAction(start_center_angle_arc);
 
-    QAction *start_end_angle_arc = new QAction(QIcon(":/icons/arc/sea_arc_btn.png"),
-        "Start-End-Angle Arc", ui->arc_btn);
+    QAction *start_end_angle_arc = new QAction(QIcon(":/icons/arc/sea_arc_btn.png"), "Start-End-Angle Arc", ui->arc_btn);
     _arc_menu->addAction(start_end_angle_arc);
-    
-    QAction *start_end_radius_arc = new QAction(QIcon(":/icons/arc/ser_arc_btn.png"),
-        "Start-End-Radius Arc", ui->arc_btn);
+
+    QAction *start_end_radius_arc = new QAction(QIcon(":/icons/arc/ser_arc_btn.png"), "Start-End-Radius Arc", ui->arc_btn);
     _arc_menu->addAction(start_end_radius_arc);
 }
 
 void ActionGroup::init_circle_menu()
 {
     _circle_menu = new QMenu(ui->circle_btn);
-    _circle_menu->connect(_circle_menu, &QMenu::triggered, [this](QAction *action)
-        {
-            _callback(MenuType::CircleMenu, _circle_menu->actions().indexOf(action));
-            ui->circle_btn->setIcon(action->icon());
-            ui->circle_btn->setToolTip(action->text());
-            ui->circle_btn->setDefaultAction(action);
-        });
+    _circle_menu->connect(_circle_menu, &QMenu::triggered,
+                          [this](QAction *action)
+                          {
+                              _callback(MenuType::CircleMenu, _circle_menu->actions().indexOf(action));
+                              ui->circle_btn->setIcon(action->icon());
+                              ui->circle_btn->setToolTip(action->text());
+                              ui->circle_btn->setDefaultAction(action);
+                          });
     ui->circle_btn->setMenu(_circle_menu);
 
-    QAction *circle_r = new QAction(QIcon(":/icons/circle/circle_btn.png"),
-        "Center-Radius", ui->circle_btn);
+    QAction *circle_r = new QAction(QIcon(":/icons/circle/circle_btn.png"), "Center-Radius", ui->circle_btn);
     _circle_menu->addAction(circle_r);
     ui->circle_btn->setDefaultAction(circle_r);
 
-    QAction *circle_2p = new QAction(QIcon(":/icons/circle/2p_circle_btn.png"),
-        "2-Point", ui->circle_btn);
+    QAction *circle_2p = new QAction(QIcon(":/icons/circle/2p_circle_btn.png"), "2-Point", ui->circle_btn);
     _circle_menu->addAction(circle_2p);
 
-    QAction *circle_3p = new QAction(QIcon(":/icons/circle/3p_circle_btn.png"),
-        "3-Point", ui->circle_btn);
+    QAction *circle_3p = new QAction(QIcon(":/icons/circle/3p_circle_btn.png"), "3-Point", ui->circle_btn);
     _circle_menu->addAction(circle_3p);
 }
 
 void ActionGroup::init_ellipse_menu()
 {
     _ellipse_menu = new QMenu(ui->ellipse_btn);
-    _ellipse_menu->connect(_ellipse_menu, &QMenu::triggered, [this](QAction *action)
-        {
-            _callback(MenuType::EllipseMenu, _ellipse_menu->actions().indexOf(action));
-            ui->ellipse_btn->setIcon(action->icon());
-            ui->ellipse_btn->setToolTip(action->text());
-            ui->ellipse_btn->setDefaultAction(action);
-        });
+    _ellipse_menu->connect(_ellipse_menu, &QMenu::triggered,
+                           [this](QAction *action)
+                           {
+                               _callback(MenuType::EllipseMenu, _ellipse_menu->actions().indexOf(action));
+                               ui->ellipse_btn->setIcon(action->icon());
+                               ui->ellipse_btn->setToolTip(action->text());
+                               ui->ellipse_btn->setDefaultAction(action);
+                           });
     ui->ellipse_btn->setMenu(_ellipse_menu);
 
-    QAction *ellipse = new QAction(QIcon(":/icons/ellipse/ellipse_btn.png"),
-        "Ellipse", ui->ellipse_btn);
+    QAction *ellipse = new QAction(QIcon(":/icons/ellipse/ellipse_btn.png"), "Ellipse", ui->ellipse_btn);
     _ellipse_menu->addAction(ellipse);
     ui->ellipse_btn->setDefaultAction(ellipse);
 
-    QAction *arc = new QAction(QIcon(":/icons/ellipse/ellipse_arc_btn.png"),
-        "Ellipse Arc", ui->ellipse_btn);
+    QAction *arc = new QAction(QIcon(":/icons/ellipse/ellipse_arc_btn.png"), "Ellipse Arc", ui->ellipse_btn);
     _ellipse_menu->addAction(arc);
 }
 
 void ActionGroup::init_curve_menu()
 {
     _curve_menu = new QMenu(ui->curve_btn);
-    _curve_menu->connect(_curve_menu, &QMenu::triggered, [this](QAction *action)
-        {
-            _callback(MenuType::CurveMenu, _curve_menu->actions().indexOf(action));
-            ui->curve_btn->setIcon(action->icon());
-            ui->curve_btn->setToolTip(action->text());
-            ui->curve_btn->setDefaultAction(action);
-        });
+    _curve_menu->connect(_curve_menu, &QMenu::triggered,
+                         [this](QAction *action)
+                         {
+                             _callback(MenuType::CurveMenu, _curve_menu->actions().indexOf(action));
+                             ui->curve_btn->setIcon(action->icon());
+                             ui->curve_btn->setToolTip(action->text());
+                             ui->curve_btn->setDefaultAction(action);
+                         });
     ui->curve_btn->setMenu(_curve_menu);
 
-    QAction *bspline = new QAction(QIcon(":/icons/curve_btn.png"),
-        "BSpline", ui->curve_btn);
+    QAction *bspline = new QAction(QIcon(":/icons/curve_btn.png"), "BSpline", ui->curve_btn);
     _curve_menu->addAction(bspline);
     ui->curve_btn->setDefaultAction(bspline);
 
-    QAction *bezier = new QAction(QIcon(":/icons/bezier_btn.png"),
-        "Bezier", ui->curve_btn);
+    QAction *bezier = new QAction(QIcon(":/icons/bezier_btn.png"), "Bezier", ui->curve_btn);
     _curve_menu->addAction(bezier);
 }
 
 void ActionGroup::init_connect_menu()
 {
     _connect_menu = new QMenu(ui->connect_btn);
-    _connect_menu->connect(_connect_menu, &QMenu::triggered, [this](QAction *action)
-        {
-            _callback(MenuType::ConnectMenu, _connect_menu->actions().indexOf(action));
-            ui->connect_btn->setIcon(action->icon());
-            ui->connect_btn->setToolTip(action->text());
-            ui->connect_btn->setDefaultAction(action);
-        });
+    _connect_menu->connect(_connect_menu, &QMenu::triggered,
+                           [this](QAction *action)
+                           {
+                               _callback(MenuType::ConnectMenu, _connect_menu->actions().indexOf(action));
+                               ui->connect_btn->setIcon(action->icon());
+                               ui->connect_btn->setToolTip(action->text());
+                               ui->connect_btn->setDefaultAction(action);
+                           });
     ui->connect_btn->setMenu(_connect_menu);
 
-    QAction *connect = new QAction(QIcon(":/icons/connect_btn.png"),
-        "Connect", ui->connect_btn);
+    QAction *connect = new QAction(QIcon(":/icons/connect_btn.png"), "Connect", ui->connect_btn);
     _connect_menu->addAction(connect);
     ui->connect_btn->setDefaultAction(connect);
 
-    QAction *blend = new QAction(QIcon(":/icons/blend_btn.png"),
-        "Blend", ui->connect_btn);
+    QAction *blend = new QAction(QIcon(":/icons/blend_btn.png"), "Blend", ui->connect_btn);
     _connect_menu->addAction(blend);
 }
 
 void ActionGroup::init_trim_menu()
 {
     _trim_menu = new QMenu(ui->trim_btn);
-    _trim_menu->connect(_trim_menu, &QMenu::triggered, [this](QAction *action)
-        {
-            _callback(MenuType::TrimMenu, _trim_menu->actions().indexOf(action));
-            ui->trim_btn->setIcon(action->icon());
-            ui->trim_btn->setToolTip(action->text());
-            ui->trim_btn->setDefaultAction(action);
-        });
+    _trim_menu->connect(_trim_menu, &QMenu::triggered,
+                        [this](QAction *action)
+                        {
+                            _callback(MenuType::TrimMenu, _trim_menu->actions().indexOf(action));
+                            ui->trim_btn->setIcon(action->icon());
+                            ui->trim_btn->setToolTip(action->text());
+                            ui->trim_btn->setDefaultAction(action);
+                        });
     ui->trim_btn->setMenu(_trim_menu);
 
-    QAction *trim = new QAction(QIcon(":/icons/trim_btn.png"),
-        "Trim", ui->trim_btn);
+    QAction *trim = new QAction(QIcon(":/icons/trim_btn.png"), "Trim", ui->trim_btn);
     _trim_menu->addAction(trim);
     ui->trim_btn->setDefaultAction(trim);
 
-    QAction *extend = new QAction(QIcon(":/icons/extend_btn.png"),
-        "Extend", ui->trim_btn);
+    QAction *extend = new QAction(QIcon(":/icons/extend_btn.png"), "Extend", ui->trim_btn);
     _trim_menu->addAction(extend);
 }
 
 void ActionGroup::init_flip_menu()
 {
     _flip_menu = new QMenu(ui->flip_btn);
-    _flip_menu->connect(_flip_menu, &QMenu::triggered, [this](QAction *action)
-        {
-            _callback(MenuType::FlipMenu, _flip_menu->actions().indexOf(action));
-            ui->flip_btn->setIcon(action->icon());
-            ui->flip_btn->setToolTip(action->text());
-            ui->flip_btn->setDefaultAction(action);
-        });
+    _flip_menu->connect(_flip_menu, &QMenu::triggered,
+                        [this](QAction *action)
+                        {
+                            _callback(MenuType::FlipMenu, _flip_menu->actions().indexOf(action));
+                            ui->flip_btn->setIcon(action->icon());
+                            ui->flip_btn->setToolTip(action->text());
+                            ui->flip_btn->setDefaultAction(action);
+                        });
     ui->flip_btn->setMenu(_flip_menu);
 
-    QAction *flipx = new QAction(QIcon(":/icons/flipx_btn.png"),
-        "FlipX", ui->flip_btn);
+    QAction *flipx = new QAction(QIcon(":/icons/flipx_btn.png"), "FlipX", ui->flip_btn);
     _flip_menu->addAction(flipx);
     ui->flip_btn->setDefaultAction(flipx);
 
-    QAction *flipy = new QAction(QIcon(":/icons/flipy_btn.png"),
-        "FlipY", ui->flip_btn);
+    QAction *flipy = new QAction(QIcon(":/icons/flipy_btn.png"), "FlipY", ui->flip_btn);
     _flip_menu->addAction(flipy);
 }
 
 void ActionGroup::init_fillet_menu()
 {
     _fillet_menu = new QMenu(ui->fillet_btn);
-    _fillet_menu->connect(_fillet_menu, &QMenu::triggered, [this](QAction *action)
-        {
-            _callback(MenuType::FilletMenu, _fillet_menu->actions().indexOf(action));
-            ui->fillet_btn->setIcon(action->icon());
-            ui->fillet_btn->setToolTip(action->text());
-            ui->fillet_btn->setDefaultAction(action);
-        });
+    _fillet_menu->connect(_fillet_menu, &QMenu::triggered,
+                          [this](QAction *action)
+                          {
+                              _callback(MenuType::FilletMenu, _fillet_menu->actions().indexOf(action));
+                              ui->fillet_btn->setIcon(action->icon());
+                              ui->fillet_btn->setToolTip(action->text());
+                              ui->fillet_btn->setDefaultAction(action);
+                          });
     ui->fillet_btn->setMenu(_fillet_menu);
 
-    QAction *fillet = new QAction(QIcon(":/icons/fillet_btn.png"),
-        "Fillet", ui->fillet_btn);
+    QAction *fillet = new QAction(QIcon(":/icons/fillet_btn.png"), "Fillet", ui->fillet_btn);
     _fillet_menu->addAction(fillet);
     ui->fillet_btn->setDefaultAction(fillet);
 
-    QAction *free_fillet = new QAction(QIcon(":/icons/free_fillet_btn.png"),
-        "Free Fillet", ui->fillet_btn);
+    QAction *free_fillet = new QAction(QIcon(":/icons/free_fillet_btn.png"), "Free Fillet", ui->fillet_btn);
     _fillet_menu->addAction(free_fillet);
 
-    QAction *chamfer = new QAction(QIcon(":/icons/chamfer_btn.png"),
-        "Chamfer", ui->fillet_btn);
+    QAction *chamfer = new QAction(QIcon(":/icons/chamfer_btn.png"), "Chamfer", ui->fillet_btn);
     _fillet_menu->addAction(chamfer);
 }
-

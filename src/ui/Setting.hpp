@@ -4,7 +4,10 @@
 
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class Setting;}
+namespace Ui
+{
+class Setting;
+}
 QT_END_NAMESPACE
 
 class Setting : public QDialog
@@ -18,14 +21,14 @@ private:
     void init();
 
 public slots:
-    void accept();
+    void accept() override;
 
 public:
     Setting(QWidget *parent);
-    ~Setting();
+    ~Setting() override;
 
     void show();
-    int exec();
+    int exec() override;
 
     bool update_text_vbo() const;
 

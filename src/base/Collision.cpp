@@ -7,21 +7,12 @@
 
 using namespace Geo;
 
-Collision::DirectMode::DirectMode()
+Collision::DirectMode::DirectMode(const std::vector<Geo::Polygon *> &objects) : _objects(objects)
 {
-
 }
 
-Collision::DirectMode::DirectMode(const std::vector<Geo::Polygon *> &objects)
-    : _objects(objects)
+Collision::DirectMode::DirectMode(const std::initializer_list<Geo::Polygon *> &objects) : _objects(objects.begin(), objects.end())
 {
-
-}
-
-Collision::DirectMode::DirectMode(const std::initializer_list<Geo::Polygon *> &objects)
-    : _objects(objects.begin(), objects.end())
-{
-
 }
 
 void Collision::DirectMode::build(const std::vector<Geo::Polygon *> &objects)
@@ -53,12 +44,10 @@ void Collision::DirectMode::remove(Geo::Polygon *object)
 
 void Collision::DirectMode::update(Geo::Polygon *object)
 {
-
 }
 
 void Collision::DirectMode::update()
 {
-
 }
 
 bool Collision::DirectMode::has(Geo::Polygon *object) const
@@ -97,7 +86,8 @@ bool Collision::DirectMode::select(const Geo::AABBRect &rect, std::vector<Geo::P
     return objects.size() > size;
 }
 
-bool Collision::DirectMode::find_collision_objects(const Geo::Polygon *object, std::vector<Geo::Polygon *> &objects, const bool norepeat) const
+bool Collision::DirectMode::find_collision_objects(const Geo::Polygon *object, std::vector<Geo::Polygon *> &objects,
+                                                   const bool norepeat) const
 {
     const size_t size = objects.size();
     for (Geo::Polygon *obj : _objects)
@@ -127,21 +117,13 @@ bool Collision::DirectMode::find_collision_pairs(std::vector<std::pair<Geo::Poly
 }
 
 
-Collision::GridNode::GridNode()
+Collision::GridNode::GridNode(const Geo::AABBRect &rect) : _rect(rect)
 {
-
-}
-
-Collision::GridNode::GridNode(const Geo::AABBRect &rect)
-    : _rect(rect)
-{
-  
 }
 
 Collision::GridNode::GridNode(const double left, const double top, const double right, const double bottom)
     : _rect(left, top, right, bottom)
 {
-
 }
 
 void Collision::GridNode::set_rect(const Geo::AABBRect &rect)
@@ -168,7 +150,7 @@ bool Collision::GridNode::append(Geo::Polygon *object)
 }
 
 bool Collision::GridNode::remove(Geo::Polygon *object)
-{   
+{
     std::vector<Geo::Polygon *>::iterator it = std::find(_objects.begin(), _objects.end(), object);
     if (it == _objects.end())
     {
@@ -183,7 +165,7 @@ bool Collision::GridNode::remove(Geo::Polygon *object)
 
 bool Collision::GridNode::has(Geo::Polygon *object) const
 {
-    return std::find(_objects.begin(), _objects.end(), object) != _objects.end(); 
+    return std::find(_objects.begin(), _objects.end(), object) != _objects.end();
 }
 
 void Collision::GridNode::clear()
@@ -247,19 +229,12 @@ bool Collision::GridNode::find_collision_pairs(std::vector<std::pair<Geo::Polygo
 }
 
 
-Collision::GridMap::GridMap()
-{
-
-}
-
-Collision::GridMap::GridMap(const std::vector<Geo::Polygon *> &objects)
-    : _objects(objects)
+Collision::GridMap::GridMap(const std::vector<Geo::Polygon *> &objects) : _objects(objects)
 {
     build(_objects);
 }
 
-Collision::GridMap::GridMap(const std::initializer_list<Geo::Polygon *> &objects)
-    : _objects(objects.begin(), objects.end())
+Collision::GridMap::GridMap(const std::initializer_list<Geo::Polygon *> &objects) : _objects(objects.begin(), objects.end())
 {
     build(_objects);
 }
@@ -301,8 +276,7 @@ void Collision::GridMap::build(const std::vector<Geo::Polygon *> &objects)
         {
             for (size_t j = 0; j < 4; ++j)
             {
-                _grids.emplace_back(_left + x_step * i, _top - y_step * j,
-                    _left + x_step * i + x_step, _top - y_step * j - y_step);
+                _grids.emplace_back(_left + x_step * i, _top - y_step * j, _left + x_step * i + x_step, _top - y_step * j - y_step);
 
                 for (size_t k = 0, count = _rects.size(); k < count; ++k)
                 {
@@ -360,8 +334,7 @@ void Collision::GridMap::build(const std::vector<Geo::Polygon *> &objects, const
         {
             for (size_t j = 0; j < 4; ++j)
             {
-                _grids.emplace_back(_left + x_step * i, _top - y_step * j,
-                    _left + x_step * i + x_step, _top - y_step * j - y_step);
+                _grids.emplace_back(_left + x_step * i, _top - y_step * j, _left + x_step * i + x_step, _top - y_step * j - y_step);
 
                 for (size_t k = 0, count = rects.size(); k < count; ++k)
                 {
@@ -392,8 +365,8 @@ void Collision::GridMap::append(Geo::Polygon *object)
 
     _objects.push_back(object);
     _rects.emplace_back(object->bounding_rect());
-    if (_rects.back().left() >= _left && _rects.back().right() <= _right
-        && _rects.back().top() <= _top && _rects.back().bottom() >= _bottom)
+    if (_rects.back().left() >= _left && _rects.back().right() <= _right && _rects.back().top() <= _top &&
+        _rects.back().bottom() >= _bottom)
     {
         for (GridNode &grid : _grids)
         {
@@ -418,8 +391,7 @@ void Collision::GridMap::append(Geo::Polygon *object)
             {
                 for (size_t j = 0; j < 4; ++j)
                 {
-                    _grids.emplace_back(_left + x_step * i, _top - y_step * j,
-                        _left + x_step * i + x_step, _top - y_step * j - y_step);
+                    _grids.emplace_back(_left + x_step * i, _top - y_step * j, _left + x_step * i + x_step, _top - y_step * j - y_step);
 
                     for (size_t k = 0, count = _rects.size(); k < count; ++k)
                     {
@@ -468,8 +440,8 @@ void Collision::GridMap::update(Geo::Polygon *object)
 
     const size_t index = std::distance(_objects.begin(), it);
     _rects[index] = object->bounding_rect();
-    if (_rects[index].left() >= _left && _rects[index].right() <= _right
-        && _rects[index].top() <= _top && _rects[index].bottom() >= _bottom)
+    if (_rects[index].left() >= _left && _rects[index].right() <= _right && _rects[index].top() <= _top &&
+        _rects[index].bottom() >= _bottom)
     {
         for (GridNode &grid : _grids)
         {
@@ -559,7 +531,7 @@ bool Collision::GridMap::find_collision_objects(const Geo::Polygon *object, std:
             grid.find_collision_objects(object, objects);
         }
     }
-    
+
     if (norepeat)
     {
         std::set<Geo::Polygon *> temp(objects.begin(), objects.end());
@@ -582,8 +554,8 @@ bool Collision::GridMap::find_collision_pairs(std::vector<std::pair<Geo::Polygon
         {
             for (size_t j = count - 1; j > i; --j)
             {
-                if ((pairs[i].first == pairs[j].first && pairs[i].second == pairs[j].second)
-                    || (pairs[i].first == pairs[j].second && pairs[i].second == pairs[j].first))
+                if ((pairs[i].first == pairs[j].first && pairs[i].second == pairs[j].second) ||
+                    (pairs[i].first == pairs[j].second && pairs[i].second == pairs[j].first))
                 {
                     pairs.erase(pairs.begin() + j);
                     --count;
@@ -596,29 +568,21 @@ bool Collision::GridMap::find_collision_pairs(std::vector<std::pair<Geo::Polygon
 }
 
 
-Collision::QuadTreeNode::QuadTreeNode()
+Collision::QuadTreeNode::QuadTreeNode(const Geo::AABBRect &rect) : Collision::GridNode(rect)
 {
-
-}
-
-Collision::QuadTreeNode::QuadTreeNode(const Geo::AABBRect &rect)
-    : Collision::GridNode(rect)
-{
-
 }
 
 Collision::QuadTreeNode::QuadTreeNode(const double left, const double top, const double right, const double bottom)
     : Collision::GridNode(left, top, right, bottom)
 {
-
 }
 
 Collision::QuadTreeNode::~QuadTreeNode()
 {
     if (_nodes[0] != nullptr)
     {
-        Collision::QuadTreeNode *node;
-        std::vector<Collision::QuadTreeNode*> nodes({_nodes[0], _nodes[1], _nodes[2], _nodes[3]});
+        Collision::QuadTreeNode *node = nullptr;
+        std::vector<Collision::QuadTreeNode *> nodes({_nodes[0], _nodes[1], _nodes[2], _nodes[3]});
         while (!nodes.empty())
         {
             node = nodes.back();
@@ -632,14 +596,13 @@ Collision::QuadTreeNode::~QuadTreeNode()
             }
             node->_nodes[0] = nullptr;
             delete node;
-        }   
+        }
     }
 }
 
 void Collision::QuadTreeNode::split()
 {
-    const double left = _rect.left(), top = _rect.top(),
-        right = _rect.right(), bottom = _rect.bottom();
+    const double left = _rect.left(), top = _rect.top(), right = _rect.right(), bottom = _rect.bottom();
     _nodes[0] = new QuadTreeNode(left, top, (left + right) / 2, (top + bottom) / 2);
     _nodes[1] = new QuadTreeNode((left + right) / 2, top, right, (top + bottom) / 2);
     _nodes[2] = new QuadTreeNode(left, (top + bottom) / 2, (left + right) / 2, bottom);
@@ -670,8 +633,7 @@ bool Collision::QuadTreeNode::merge()
     {
         return true;
     }
-    else if (_nodes[0]->is_tail_node() && _nodes[1]->is_tail_node()
-        && _nodes[2]->is_tail_node() && _nodes[3]->is_tail_node())
+    else if (_nodes[0]->is_tail_node() && _nodes[1]->is_tail_node() && _nodes[2]->is_tail_node() && _nodes[3]->is_tail_node())
     {
         size_t count = _nodes[0]->_objects.size();
         count += _nodes[1]->_objects.size();
@@ -863,7 +825,8 @@ bool Collision::QuadTreeNode::select(const Geo::AABBRect &rect, std::vector<Geo:
     }
 }
 
-bool Collision::QuadTreeNode::find_collision_objects(const Geo::Polygon *object, std::vector<Geo::Polygon *> &objects, const bool norepeat) const
+bool Collision::QuadTreeNode::find_collision_objects(const Geo::Polygon *object, std::vector<Geo::Polygon *> &objects,
+                                                     const bool norepeat) const
 {
     if (_nodes[0] == nullptr)
     {
@@ -907,8 +870,8 @@ bool Collision::QuadTreeNode::find_collision_pairs(std::vector<std::pair<Geo::Po
             {
                 for (size_t j = count - 1; j > i; --j)
                 {
-                    if ((pairs[i].first == pairs[j].first && pairs[i].second == pairs[j].second)
-                        || (pairs[i].first == pairs[j].second && pairs[i].second == pairs[j].first))
+                    if ((pairs[i].first == pairs[j].first && pairs[i].second == pairs[j].second) ||
+                        (pairs[i].first == pairs[j].second && pairs[i].second == pairs[j].first))
                     {
                         pairs.erase(pairs.begin() + j);
                         --count;
@@ -922,19 +885,12 @@ bool Collision::QuadTreeNode::find_collision_pairs(std::vector<std::pair<Geo::Po
 }
 
 
-Collision::QuadTree::QuadTree()
-{
-
-}
-
-Collision::QuadTree::QuadTree(const std::vector<Geo::Polygon *> &objects)
-    : _objects(objects)
+Collision::QuadTree::QuadTree(const std::vector<Geo::Polygon *> &objects) : _objects(objects)
 {
     build(objects);
 }
 
-Collision::QuadTree::QuadTree(const std::initializer_list<Geo::Polygon *> &objects)
-    : _objects(objects)
+Collision::QuadTree::QuadTree(const std::initializer_list<Geo::Polygon *> &objects) : _objects(objects)
 {
     build(_objects);
 }
@@ -1041,9 +997,9 @@ void Collision::QuadTree::append(Geo::Polygon *object)
     }
     else
     {
-        Collision::QuadTreeNode *node;
-        double left_sapce = _left - rect.left(), top_space = rect.top() > _top,
-            right_space = rect.right() - _right, bottom_sapce = _bottom - rect.bottom();
+        Collision::QuadTreeNode *node = nullptr;
+        double left_sapce = _left - rect.left(), top_space = rect.top() > _top, right_space = rect.right() - _right,
+               bottom_sapce = _bottom - rect.bottom();
         while (left_sapce > 0 || top_space > 0 || right_space > 0 || bottom_sapce > 0)
         {
             node = _root;
@@ -1147,7 +1103,8 @@ bool Collision::QuadTree::select(const Geo::AABBRect &rect, std::vector<Geo::Pol
     return _root != nullptr && _root->select(rect, objects);
 }
 
-bool Collision::QuadTree::find_collision_objects(const Geo::Polygon *object, std::vector<Geo::Polygon *> &objects, const bool norepeat) const
+bool Collision::QuadTree::find_collision_objects(const Geo::Polygon *object, std::vector<Geo::Polygon *> &objects,
+                                                 const bool norepeat) const
 {
     return _root != nullptr && _root->find_collision_objects(object, objects, norepeat);
 }
@@ -1208,7 +1165,7 @@ void Collision::gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &
     for (size_t i = 1; i < 4; ++i)
     {
         Geo::foot_point(start, end, rect[i], point, true);
-        if (const double  value = vec * (point - start); value > max_value)
+        if (const double value = vec * (point - start); value > max_value)
         {
             max_value = value;
             result = rect[i];
@@ -1218,7 +1175,8 @@ void Collision::gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &
 
 void Collision::gjk_furthest_point(const Geo::Circle &circle, const Geo::Point &start, const Geo::Point &end, Geo::Point &result)
 {
-    result = circle;
+    result.x = circle.x;
+    result.y = circle.y;
     result += ((end - start).normalize() * circle.radius);
 }
 
@@ -1234,7 +1192,8 @@ bool Collision::is_inside(const Geo::Point &point, const Geo::Polygon &polygon)
     return false;
 }
 
-void Collision::support(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Point &start, Geo::Point &end, std::vector<Geo::Point> &points, Geo::Point &result)
+void Collision::support(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Point &start, Geo::Point &end,
+                        std::vector<Geo::Point> &points, Geo::Point &result)
 {
     Geo::Point point0, point1, vec0, vec1;
     std::mt19937 generator;
@@ -1265,10 +1224,10 @@ void Collision::support(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
     result = point0 - point1;
 }
 
-bool Collision::gjk(const Geo::Point &point01, const Geo::Point &point02, const Geo::Point &point03,
-    const Geo::Point &point11, const Geo::Point &point12, const Geo::Point &point13)
+bool Collision::gjk(const Geo::Point &point01, const Geo::Point &point02, const Geo::Point &point03, const Geo::Point &point11,
+                    const Geo::Point &point12, const Geo::Point &point13)
 {
-    const Geo::Point result[3] = { point11 - point01, point12 - point02, point13 - point03 };
+    const Geo::Point result[3] = {point11 - point01, point12 - point02, point13 - point03};
     const bool a = result[2].x * result[0].y >= result[0].x * result[2].y;
     const bool b = result[0].x * result[1].y >= result[1].x * result[0].y;
     const bool c = result[1].x * result[2].y >= result[2].x * result[1].y;
@@ -1283,8 +1242,8 @@ bool Collision::gjk(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1)
     {
         for (size_t j = 0, count1 = index1.size(); j < count1; j += 3)
         {
-            if (Collision::gjk(polygon0[index0[i]], polygon0[index0[i + 1]], polygon0[index0[i + 2]],
-                polygon1[index1[j]], polygon1[index1[j + 1]], polygon1[index1[j + 2]]))
+            if (Collision::gjk(polygon0[index0[i]], polygon0[index0[i + 1]], polygon0[index0[i + 2]], polygon1[index1[j]],
+                               polygon1[index1[j + 1]], polygon1[index1[j + 2]]))
             {
                 return true;
             }
@@ -1332,8 +1291,7 @@ bool Collision::gjk(const Geo::AABBRect &rect, const Geo::Polygon &polygon)
         {
             return true;
         }
-        else if (last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1]
-            && last_triangle[2] == triangle[2])
+        else if (last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1] && last_triangle[2] == triangle[2])
         {
             return false;
         }
@@ -1366,8 +1324,7 @@ bool Collision::gjk(const Geo::AABBRect &rect, const Geo::Polygon &polygon)
 
 bool Collision::gjk(const Geo::Circle &circle0, const Geo::Circle &circle1)
 {
-    return std::pow(circle0.x - circle1.x, 2) +  std::pow(circle0.y - circle1.y, 2)
-        <= std::pow(circle0.radius + circle1.radius, 2);
+    return std::pow(circle0.x - circle1.x, 2) + std::pow(circle0.y - circle1.y, 2) <= std::pow(circle0.radius + circle1.radius, 2);
 }
 
 bool Collision::gjk(const Geo::Circle &circle, const Geo::Polygon &polygon)
@@ -1443,8 +1400,7 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
         {
             break;
         }
-        else if (last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1]
-            && last_triangle[2] == triangle[2])
+        else if (last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1] && last_triangle[2] == triangle[2])
         {
             return -1;
         }
@@ -1484,11 +1440,10 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
         std::reverse(points.begin(), points.end());
     }
 
-    size_t index;
     while (true)
     {
         distance[0] = Geo::distance_square(end, points.front(), points.back());
-        index = points.size();
+        size_t index = points.size();
         for (size_t i = 1, count = points.size(); i < count; ++i)
         {
             distance[1] = Geo::distance_square(end, points[i - 1], points[i]);
@@ -1528,7 +1483,7 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
     }
 
     distance[0] = Geo::distance_square(end, points.front(), points.back());
-    index = points.size();
+    size_t index = points.size();
     for (size_t i = 1, count = points.size(); i < count; ++i)
     {
         distance[1] = Geo::distance_square(end, points[i - 1], points[i]);
@@ -1600,8 +1555,7 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
         {
             break;
         }
-        else if (last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1]
-            && last_triangle[2] == triangle[2])
+        else if (last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1] && last_triangle[2] == triangle[2])
         {
             return -1;
         }
@@ -1641,11 +1595,10 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
         std::reverse(points.begin(), points.end());
     }
 
-    size_t index;
     while (true)
     {
         distance[0] = Geo::distance_square(end, points.front(), points.back());
-        index = points.size();
+        size_t index = points.size();
         for (size_t i = 1, count = points.size(); i < count; ++i)
         {
             distance[1] = Geo::distance_square(end, points[i - 1], points[i]);
@@ -1685,7 +1638,7 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
     }
 
     distance[0] = Geo::distance_square(end, points.front(), points.back());
-    index = points.size();
+    size_t index = points.size();
     std::vector<size_t> indexs;
     for (size_t i = 1, count = points.size(); i < count; ++i)
     {
@@ -1702,8 +1655,7 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
     }
     if (!Geo::foot_point(points[index - 1], points[index % points.size()], end, vec))
     {
-        if (Geo::distance_square(end, points[index - 1]) <=
-            Geo::distance_square(end, points[index % points.size()]))
+        if (Geo::distance_square(end, points[index - 1]) <= Geo::distance_square(end, points[index % points.size()]))
         {
             vec = points[index - 1];
         }
@@ -1719,8 +1671,7 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
         {
             if (!Geo::foot_point(points[i - 1], points[i % points.size()], end, point2))
             {
-                if (Geo::distance_square(end, points[i - 1]) <=
-                    Geo::distance_square(end, points[i % points.size()]))
+                if (Geo::distance_square(end, points[i - 1]) <= Geo::distance_square(end, points[i % points.size()]))
                 {
                     point2 = points[i - 1];
                 }
@@ -1788,8 +1739,7 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
         {
             break;
         }
-        else if (last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1]
-            && last_triangle[2] == triangle[2])
+        else if (last_triangle[0] == triangle[0] && last_triangle[1] == triangle[1] && last_triangle[2] == triangle[2])
         {
             return -1;
         }
@@ -1833,11 +1783,10 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
         std::reverse(points.begin(), points.end());
     }
 
-    size_t index;
     while (true)
     {
         distance[0] = Geo::distance_square(end, points.front(), points.back());
-        index = points.size();
+        size_t index = points.size();
         for (size_t i = 1, count = points.size(); i < count; ++i)
         {
             distance[1] = Geo::distance_square(end, points[i - 1], points[i]);
@@ -1855,7 +1804,7 @@ double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1
         if (start0 * point2 <= 0 || points[index - 1] == point2 || points[index % points.size()] == point2)
         {
             return Geo::distance(std::get<0>(point_pairs[index - 1]), std::get<0>(point_pairs[index % points.size()]),
-                std::get<1>(point_pairs[index - 1]), std::get<1>(point_pairs[index % points.size()]), start0, end0);
+                                 std::get<1>(point_pairs[index - 1]), std::get<1>(point_pairs[index % points.size()]), start0, end0);
         }
         else
         {

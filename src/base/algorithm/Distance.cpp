@@ -22,8 +22,7 @@ double Geo::distance(const Point &point, const Point &start, const Point &end, c
         }
         else
         {
-            if ((point.y >= start.y && point.y <= end.y) ||
-                (point.y <= start.y && point.y >= end.y))
+            if ((point.y >= start.y && point.y <= end.y) || (point.y <= start.y && point.y >= end.y))
             {
                 return std::abs(point.x - start.x);
             }
@@ -41,8 +40,7 @@ double Geo::distance(const Point &point, const Point &start, const Point &end, c
         }
         else
         {
-            if ((point.x >= start.x && point.x <= end.x) ||
-                (point.x <= start.x && point.x >= end.x))
+            if ((point.x >= start.x && point.x <= end.x) || (point.x <= start.x && point.x >= end.x))
             {
                 return std::abs(point.y - start.y);
             }
@@ -52,19 +50,16 @@ double Geo::distance(const Point &point, const Point &start, const Point &end, c
             }
         }
     }
-    
-    const double a = end.y - start.y, 
-                b = start.x - end.x,
-                c = end.x * start.y - start.x * end.y;
+
+    const double a = end.y - start.y, b = start.x - end.x, c = end.x * start.y - start.x * end.y;
     if (infinite)
     {
         return std::abs(a * point.x + b * point.y + c) / std::hypot(a, b);
     }
     else
     {
-        const double k = ((point.x - start.x) * (end.x - start.x) +
-            (point.y - start.y) * (end.y - start.y)) /
-            (std::pow(end.x - start.x, 2) + std::pow(end.y - start.y, 2)); 
+        const double k = ((point.x - start.x) * (end.x - start.x) + (point.y - start.y) * (end.y - start.y)) /
+                         (std::pow(end.x - start.x, 2) + std::pow(end.y - start.y, 2));
         const double x = start.x + k * (end.x - start.x);
 
         if ((x >= start.x && x <= end.x) || (x <= start.x && x >= end.x))
@@ -113,7 +108,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
             Geo::Point point;
             for (size_t j = 0; j <= order; ++j)
             {
-                point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j))); 
+                point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             polyline.append(point);
             t += Geo::Bezier::default_step;
@@ -125,8 +120,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
         Geo::closest_point(polyline, point, points);
         temp.emplace_back(i, points, Geo::distance(point, points.front()));
     }
-    std::sort(temp.begin(), temp.end(), [](const auto &a, const auto &b)
-        { return std::get<2>(a) < std::get<2>(b); });
+    std::sort(temp.begin(), temp.end(), [](const auto &a, const auto &b) { return std::get<2>(a) < std::get<2>(b); });
     while (temp.size() > 1)
     {
         if (std::get<2>(temp.back()) - std::get<2>(temp.front()) > 1.0)
@@ -153,7 +147,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
                 Geo::Point coord;
                 for (size_t j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j))); 
+                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
                 if (double dis = Geo::distance(point, coord); dis < min_dis[1])
                 {
@@ -168,8 +162,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
             {
                 min_dis[0] = min_dis[1];
             }
-        }
-        while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
+        } while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
         lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
         step = (upper - lower) / 100;
@@ -251,7 +244,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
             }
         }
 
-        result = std::min(result, std::min(min_dis[0], min_dis[1]));
+        result = std::min({result, min_dis[0], min_dis[1]});
     }
     return result;
 }
@@ -324,8 +317,7 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
             {
                 min_dis[0] = min_dis[1];
             }
-        }
-        while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
+        } while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
         min_dis[0] = min_dis[1] = DBL_MAX;
         step = (upper - lower) / 100;
@@ -404,7 +396,7 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
             }
         }
 
-        result = std::min(result, std::min(min_dis[0], min_dis[1]));
+        result = std::min({result, min_dis[0], min_dis[1]});
     }
     return result;
 }
@@ -426,11 +418,9 @@ double Geo::distance(const Point &point, const Ellipse &ellipse)
         if (ellipse.is_arc())
         {
             const Geo::Point start(ellipse.arc_point0()), end(ellipse.arc_point1());
-            double angles[4] = { Geo::angle(start, center, ellipse.a0()),
-                Geo::angle(start, center, ellipse.a1()),
-                Geo::angle(start, center, ellipse.b0()),
-                Geo::angle(start, center, ellipse.b1()) };
-            bool mask[2] = { false, false }; // a, b
+            double angles[4] = {Geo::angle(start, center, ellipse.a0()), Geo::angle(start, center, ellipse.a1()),
+                                Geo::angle(start, center, ellipse.b0()), Geo::angle(start, center, ellipse.b1())};
+            bool mask[2] = {false, false}; // a, b
             for (int i = 0; i < 4; ++i)
             {
                 if (angles[i] < 0)
@@ -448,13 +438,13 @@ double Geo::distance(const Point &point, const Ellipse &ellipse)
             }
             else if (mask[0]) // 椭圆弧经过a轴端点
             {
-                return std::min(ellipse.lengtha(), std::min(Geo::distance(point, ellipse.arc_point0()),
-                    Geo::distance(point, ellipse.arc_point1())));
+                return std::min(
+                    {ellipse.lengtha(), Geo::distance(point, ellipse.arc_point0()), Geo::distance(point, ellipse.arc_point1())});
             }
             else if (mask[1]) // 椭圆弧经过b轴端点
             {
-                return std::min(ellipse.lengthb(), std::min(Geo::distance(point, ellipse.arc_point0()),
-                    Geo::distance(point, ellipse.arc_point1())));
+                return std::min(
+                    {ellipse.lengthb(), Geo::distance(point, ellipse.arc_point0()), Geo::distance(point, ellipse.arc_point1())});
             }
             else // 椭圆弧不经过轴端点
             {
@@ -470,11 +460,10 @@ double Geo::distance(const Point &point, const Ellipse &ellipse)
     {
         const Geo::Point coord = Geo::to_coord(point, center.x, center.y, Geo::angle(ellipse.a0(), ellipse.a1()));
         const double a = ellipse.lengtha(), b = ellipse.lengthb();
-        double degree0 = Geo::angle(Geo::Point(0, 0), coord) - Geo::PI / 2,
-            degree1 = Geo::angle(Geo::Point(0, 0), coord) + Geo::PI / 2;
+        double degree0 = Geo::angle(Geo::Point(0, 0), coord) - Geo::PI / 2, degree1 = Geo::angle(Geo::Point(0, 0), coord) + Geo::PI / 2;
         double last_degree0 = degree0 - 1, last_degree1 = degree1 - 1;
-        double m0 = (degree1 - degree0) / 3 + degree0, m1 = degree1 - (degree1 - degree0) / 3;
-        double x0, y0, x1, y1;
+        double m0, m1;
+        double x0 = 0, y0 = 0, x1 = 0, y1 = 0;
         while (degree1 * 1e16 - degree0 * 1e16 > 1 && (last_degree0 != degree0 || last_degree1 != degree1))
         {
             last_degree0 = degree0, last_degree1 = degree1;
@@ -553,12 +542,12 @@ double Geo::distance(const Point &point, const Arc &arc)
     }
     else
     {
-        return std::min(Geo::distance(point, arc.control_points[0]),
-            Geo::distance(point, arc.control_points[2]));
+        return std::min(Geo::distance(point, arc.control_points[0]), Geo::distance(point, arc.control_points[2]));
     }
 }
 
-double Geo::distance(const Geo::Point &start0, const Geo::Point &end0, const Geo::Point &start1, const Geo::Point &end1, Geo::Point &point0, Geo::Point &point1)
+double Geo::distance(const Geo::Point &start0, const Geo::Point &end0, const Geo::Point &start1, const Geo::Point &end1, Geo::Point &point0,
+                     Geo::Point &point1)
 {
     if (Geo::is_parallel(start0, end0, start1, end1))
     {
@@ -601,7 +590,7 @@ double Geo::distance(const Geo::Point &start0, const Geo::Point &end0, const Geo
             else
             {
                 double distance[5] = {Geo::distance_square(start0, start1), Geo::distance_square(start0, end1),
-                    Geo::distance_square(end0, start1), Geo::distance(end0, end1), DBL_MAX};
+                                      Geo::distance_square(end0, start1), Geo::distance(end0, end1), DBL_MAX};
                 int index = 0;
                 for (int i = 0; i < 4; ++i)
                 {
@@ -629,6 +618,8 @@ double Geo::distance(const Geo::Point &start0, const Geo::Point &end0, const Geo
                     point0 = end0;
                     point1 = end1;
                     break;
+                default:
+                    break;
                 }
             }
         }
@@ -636,8 +627,8 @@ double Geo::distance(const Geo::Point &start0, const Geo::Point &end0, const Geo
     }
     else
     {
-        double distance[5] = {Geo::distance(start0, start1, end1), Geo::distance(end0, start1, end1),
-            Geo::distance(start1, start0, end0), Geo::distance(end1, start0, end0), DBL_MAX};
+        double distance[5] = {Geo::distance(start0, start1, end1), Geo::distance(end0, start1, end1), Geo::distance(start1, start0, end0),
+                              Geo::distance(end1, start0, end0), DBL_MAX};
         int index = 0;
         for (int i = 0; i < 4; ++i)
         {
@@ -706,6 +697,8 @@ double Geo::distance(const Geo::Point &start0, const Geo::Point &end0, const Geo
                 }
             }
             break;
+        default:
+            break;
         }
         return distance[4];
     }
@@ -719,8 +712,7 @@ double Geo::distance_square(const double x0, const double y0, const double x1, c
 
 double Geo::distance_square(const Point &point0, const Point &point1)
 {
-    return (point0.x - point1.x) * (point0.x - point1.x)
-        + (point0.y - point1.y) * (point0.y - point1.y);
+    return (point0.x - point1.x) * (point0.x - point1.x) + (point0.y - point1.y) * (point0.y - point1.y);
 }
 
 double Geo::distance_square(const Point &point, const Point &start, const Point &end, const bool infinite)
@@ -733,8 +725,7 @@ double Geo::distance_square(const Point &point, const Point &start, const Point 
         }
         else
         {
-            if ((point.y >= start.y && point.y <= end.y) ||
-                (point.y <= start.y && point.y >= end.y))
+            if ((point.y >= start.y && point.y <= end.y) || (point.y <= start.y && point.y >= end.y))
             {
                 return std::pow(point.x - start.x, 2);
             }
@@ -752,8 +743,7 @@ double Geo::distance_square(const Point &point, const Point &start, const Point 
         }
         else
         {
-            if ((point.x >= start.x && point.x <= end.x) ||
-                (point.x <= start.x && point.x >= end.x))
+            if ((point.x >= start.x && point.x <= end.x) || (point.x <= start.x && point.x >= end.x))
             {
                 return std::pow(point.y - start.y, 2);
             }
@@ -763,19 +753,16 @@ double Geo::distance_square(const Point &point, const Point &start, const Point 
             }
         }
     }
-    
-    const double a = end.y - start.y, 
-                b = start.x - end.x,
-                c = end.x * start.y - start.x * end.y;
+
+    const double a = end.y - start.y, b = start.x - end.x, c = end.x * start.y - start.x * end.y;
     if (infinite)
     {
         return std::pow(a * point.x + b * point.y + c, 2) / (a * a + b * b);
     }
     else
     {
-        const double k = ((point.x - start.x) * (end.x - start.x) +
-            (point.y - start.y) * (end.y - start.y)) /
-            (std::pow(end.x - start.x, 2) + std::pow(end.y - start.y, 2)); 
+        const double k = ((point.x - start.x) * (end.x - start.x) + (point.y - start.y) * (end.y - start.y)) /
+                         (std::pow(end.x - start.x, 2) + std::pow(end.y - start.y, 2));
         const double x = start.x + k * (end.x - start.x);
 
         if ((x >= start.x && x <= end.x) || (x <= start.x && x >= end.x))

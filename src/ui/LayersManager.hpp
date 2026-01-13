@@ -10,7 +10,10 @@
 
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class LayersManager;}
+namespace Ui
+{
+class LayersManager;
+}
 QT_END_NAMESPACE
 
 class LayersManager : public QDialog
@@ -36,7 +39,7 @@ private:
     void init();
 
 protected:
-    void closeEvent(QCloseEvent *event);
+    void closeEvent(QCloseEvent *event) override;
 
 private slots:
     void show_layer();
@@ -55,7 +58,7 @@ private slots:
 
 public:
     LayersManager(QWidget *parent);
-    ~LayersManager();
+    ~LayersManager() override;
 
     void bind_editer(Editer *editer);
 
@@ -65,4 +68,3 @@ public:
 
     int exec() override;
 };
-

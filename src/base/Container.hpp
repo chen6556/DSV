@@ -16,9 +16,9 @@ public:
     unsigned long long text_count = 0;
 
 public:
-    Text(const double x, const double y, const int size, const QString &text = "Text");
+    Text(const double x, const double y, const int size, QString text = "Text");
 
-    Text(const Text &text);
+    Text(const Text &text) = default;
 
     const Geo::Type type() const override;
 
@@ -51,15 +51,15 @@ private:
     bool _visible = true;
 
 public:
-    ContainerGroup() {};
+    ContainerGroup() = default;
 
     ContainerGroup(const ContainerGroup &containers);
 
     ContainerGroup(const std::initializer_list<Geo::Geometry *> &containers);
 
-    ContainerGroup(std::vector<Geo::Geometry *>::const_iterator begin, std::vector<Geo::Geometry *>::const_iterator end);
+    ContainerGroup(const std::vector<Geo::Geometry *>::const_iterator &begin, const std::vector<Geo::Geometry *>::const_iterator &end);
 
-    ~ContainerGroup();
+    ~ContainerGroup() override;
 
     const Geo::Type type() const override;
 
@@ -168,13 +168,13 @@ private:
     Geo::AABBRect _border;
 
 public:
-    Combination() {};
+    Combination() = default;
 
-    Combination(const Combination &combination);
+    Combination(const Combination &combination) = default;
 
     Combination(const std::initializer_list<Geo::Geometry *> &containers);
 
-    Combination(std::vector<Geo::Geometry *>::const_iterator begin, std::vector<Geo::Geometry *>::const_iterator end);
+    Combination(const std::vector<Geo::Geometry *>::const_iterator &begin, const std::vector<Geo::Geometry *>::const_iterator &end);
 
     const Geo::Type type() const override;
 

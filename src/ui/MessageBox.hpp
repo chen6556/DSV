@@ -4,7 +4,10 @@
 
 
 QT_BEGIN_NAMESPACE
-namespace Ui { class MessageBox;}
+namespace Ui
+{
+class MessageBox;
+}
 QT_END_NAMESPACE
 
 class MessageBox : public QDialog
@@ -22,13 +25,16 @@ public:
 
     QDialogButtonBox::StandardButton result() const;
 
-    static QDialogButtonBox::StandardButton question(QWidget *parent, const QString &title, const QString &text,
+    static QDialogButtonBox::StandardButton question(
+        QWidget *parent, const QString &title, const QString &text,
         const QDialogButtonBox::StandardButtons buttons = QDialogButtonBox::StandardButton::Yes | QDialogButtonBox::StandardButton::No);
 
-    static QDialogButtonBox::StandardButton information(QWidget *parent, const QString &title, const QString &text,
+    static QDialogButtonBox::StandardButton information(
+        QWidget *parent, const QString &title, const QString &text,
         const QDialogButtonBox::StandardButtons buttons = QDialogButtonBox::StandardButton::Ok | QDialogButtonBox::StandardButton::Cancel);
 
-    static QDialogButtonBox::StandardButton attention(QWidget *parent, const QString &title, const QString &text,
+    static QDialogButtonBox::StandardButton attention(
+        QWidget *parent, const QString &title, const QString &text,
         const QDialogButtonBox::StandardButtons buttons = QDialogButtonBox::StandardButton::Ok | QDialogButtonBox::StandardButton::Cancel);
 
 private slots:

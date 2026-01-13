@@ -21,11 +21,11 @@ void File::write_dsv(const std::string &path, const Graph *graph)
     {
         if (group.name.isEmpty())
         {
-            output << "GROUP" << std::endl;
+            output << "GROUP" << '\n';
         }
         else
         {
-            output << "GROUP<" << group.name.toStdString() << '>' << std::endl;
+            output << "GROUP<" << group.name.toStdString() << '>' << '\n';
         }
 
         for (const Geo::Geometry *geo : group)
@@ -34,79 +34,79 @@ void File::write_dsv(const std::string &path, const Graph *graph)
             {
             case Geo::Type::TEXT:
                 text = static_cast<const Text *>(geo);
-                output << "TEXT<" << text->text().toStdString() << '>' << std::endl;
-                output << text->center().x << ',' << text->center().y << std::endl;
+                output << "TEXT<" << text->text().toStdString() << '>' << '\n';
+                output << text->center().x << ',' << text->center().y << '\n';
                 text = nullptr;
                 break;
             case Geo::Type::POLYGON:
                 polygon = static_cast<const Geo::Polygon *>(geo);
-                output << "POLYGON" << std::endl;
+                output << "POLYGON" << '\n';
                 for (const Geo::Point &point : *polygon)
                 {
                     output << point.x << ',' << point.y << ',';
                 }
                 output.seekp(-1, std::ios::cur);
-                output << std::endl;
+                output << '\n';
                 polygon = nullptr;
                 break;
             case Geo::Type::CIRCLE:
                 circle = static_cast<const Geo::Circle *>(geo);
-                output << "CIRCLE" << std::endl;
+                output << "CIRCLE" << '\n';
                 output << circle->x << ',';
                 output << circle->y << ',';
                 output << circle->radius;
-                output << std::endl;
+                output << '\n';
                 circle = nullptr;
                 break;
             case Geo::Type::ELLIPSE:
                 ellipse = static_cast<const Geo::Ellipse *>(geo);
-                output << "ELLIPSE" << std::endl;
+                output << "ELLIPSE" << '\n';
                 output << ellipse->a0().x << ',' << ellipse->a0().y << ',';
                 output << ellipse->a1().x << ',' << ellipse->a1().y << ',';
                 output << ellipse->b0().x << ',' << ellipse->b0().y << ',';
                 output << ellipse->b1().x << ',' << ellipse->b1().y << ',';
-                output << ellipse->arc_angle0() << ',' << ellipse->arc_angle1() << std::endl;
+                output << ellipse->arc_angle0() << ',' << ellipse->arc_angle1() << '\n';
                 ellipse = nullptr;
                 break;
             case Geo::Type::COMBINATION:
-                output << "COMBINATION" << std::endl;
+                output << "COMBINATION" << '\n';
                 for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
                 {
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
                         text = static_cast<const Text *>(item);
-                        output << "TEXT<" << text->text().toStdString() << '>' << std::endl;
+                        output << "TEXT<" << text->text().toStdString() << '>' << '\n';
                         output << text->center().x << ',' << text->center().y;
                         text = nullptr;
                         break;
                     case Geo::Type::POLYGON:
                         polygon = static_cast<const Geo::Polygon *>(item);
-                        output << "POLYGON" << std::endl;
+                        output << "POLYGON" << '\n';
                         for (const Geo::Point &point : *polygon)
                         {
                             output << point.x << ',' << point.y << ',';
                         }
                         output.seekp(-1, std::ios::cur);
-                        output << std::endl;
+                        output << '\n';
                         polygon = nullptr;
                         break;
                     case Geo::Type::CIRCLE:
                         circle = static_cast<const Geo::Circle *>(item);
-                        output << "CIRCLE" << std::endl;
+                        output << "CIRCLE" << '\n';
                         output << circle->x << ',';
                         output << circle->y << ',';
                         output << circle->radius;
-                        output << std::endl;
+                        output << '\n';
                         circle = nullptr;
                         break;
                     case Geo::Type::ELLIPSE:
                         ellipse = static_cast<const Geo::Ellipse *>(item);
-                        output << "ELLIPSE" << std::endl;
+                        output << "ELLIPSE" << '\n';
                         output << ellipse->a0().x << ',' << ellipse->a0().y << ',';
                         output << ellipse->a1().x << ',' << ellipse->a1().y << ',';
                         output << ellipse->b0().x << ',' << ellipse->b0().y << ',';
-                        output << ellipse->b1().x << ',' << ellipse->b1().y << std::endl;
+                        output << ellipse->b1().x << ',' << ellipse->b1().y << '\n';
                         ellipse = nullptr;
                         break;
                     case Geo::Type::POLYLINE:
@@ -115,13 +115,13 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         {
                             continue;
                         }
-                        output << "POLYLINE" << std::endl;
+                        output << "POLYLINE" << '\n';
                         for (const Geo::Point &point : *polyline)
                         {
                             output << point.x << ',' << point.y << ',';
                         }
                         output.seekp(-1, std::ios_base::cur);
-                        output << std::endl;
+                        output << '\n';
                         polyline = nullptr;
                         break;
                     case Geo::Type::BEZIER:
@@ -130,13 +130,13 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         {
                             continue;
                         }
-                        output << "BEZIER" << std::endl;
+                        output << "BEZIER" << '\n';
                         output << bezier->order();
                         for (const Geo::Point &point : *bezier)
                         {
                             output << ',' << point.x << ',' << point.y;
                         }
-                        output << std::endl;
+                        output << '\n';
                         bezier = nullptr;
                         break;
                     case Geo::Type::BSPLINE:
@@ -145,13 +145,13 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         {
                             continue;
                         }
-                        output << "BSPLINE" << std::endl;
+                        output << "BSPLINE" << '\n';
                         output << (dynamic_cast<const Geo::CubicBSpline *>(bspline) == nullptr ? '2' : '3');
                         for (const Geo::Point &point : bspline->path_points)
                         {
                             output << ',' << point.x << ',' << point.y;
                         }
-                        output << std::endl;
+                        output << '\n';
                         bspline = nullptr;
                         break;
                     case Geo::Type::ARC:
@@ -160,26 +160,26 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         {
                             continue;
                         }
-                        output << "ARC" << std::endl;
+                        output << "ARC" << '\n';
                         for (const Geo::Point &point : arc->control_points)
                         {
                             output << point.x << ',' << point.y << ',';
                         }
                         output.seekp(-1, std::ios_base::cur);
-                        output << std::endl;
+                        output << '\n';
                         arc = nullptr;
                         break;
                     case Geo::Type::POINT:
                         {
                             const Geo::Point *point = static_cast<const Geo::Point *>(item);
-                            output << "POINT" << std::endl;
-                            output << point->x << ',' << point->y << std::endl;
+                            output << "POINT" << '\n';
+                            output << point->x << ',' << point->y << '\n';
                         }
                         break;
                     default:
                         break;
                     }
-                    output << "END" << std::endl;
+                    output << "END" << '\n';
                 }
                 break;
             case Geo::Type::POLYLINE:
@@ -188,13 +188,13 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 {
                     continue;
                 }
-                output << "POLYLINE" << std::endl;
+                output << "POLYLINE" << '\n';
                 for (const Geo::Point &point : *polyline)
                 {
                     output << point.x << ',' << point.y << ',';
                 }
                 output.seekp(-1, std::ios_base::cur);
-                output << std::endl;
+                output << '\n';
                 polyline = nullptr;
                 break;
             case Geo::Type::BEZIER:
@@ -203,13 +203,13 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 {
                     continue;
                 }
-                output << "BEZIER" << std::endl;
+                output << "BEZIER" << '\n';
                 output << bezier->order();
                 for (const Geo::Point &point : *bezier)
                 {
                     output << ',' << point.x << ',' << point.y;
                 }
-                output << std::endl;
+                output << '\n';
                 bezier = nullptr;
                 break;
             case Geo::Type::BSPLINE:
@@ -218,13 +218,13 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 {
                     continue;
                 }
-                output << "BSPLINE" << std::endl;
+                output << "BSPLINE" << '\n';
                 output << (dynamic_cast<const Geo::CubicBSpline *>(bspline) == nullptr ? '2' : '3');
                 for (const Geo::Point &point : bspline->path_points)
                 {
                     output << ',' << point.x << ',' << point.y;
                 }
-                output << std::endl;
+                output << '\n';
                 bspline = nullptr;
                 break;
             case Geo::Type::ARC:
@@ -233,29 +233,29 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 {
                     continue;
                 }
-                output << "ARC" << std::endl;
+                output << "ARC" << '\n';
                 for (const Geo::Point &point : arc->control_points)
                 {
                     output << point.x << ',' << point.y << ',';
                 }
                 output.seekp(-1, std::ios_base::cur);
-                output << std::endl;
+                output << '\n';
                 arc = nullptr;
                 break;
             case Geo::Type::POINT:
                 {
                     const Geo::Point *point = static_cast<const Geo::Point *>(geo);
-                    output << "POINT" << std::endl;
-                    output << point->x << ',' << point->y << std::endl;
+                    output << "POINT" << '\n';
+                    output << point->x << ',' << point->y << '\n';
                 }
                 break;
             default:
                 break;
             }
-            output << "END" << std::endl;
+            output << "END" << '\n';
         }
 
-        output << "END" << std::endl;
+        output << "END" << '\n';
     }
     output.close();
 }
@@ -273,7 +273,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
     const double x_ratio = 40, y_ratio = 40;
 
     std::ofstream output(path);
-    output << "IN;PA;SP1;" << std::endl;
+    output << "IN;PA;SP1;" << '\n';
     for (const ContainerGroup &group : graph->container_groups())
     {
         for (const Geo::Geometry *geo : group)
@@ -283,7 +283,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
             case Geo::Type::TEXT:
                 text = static_cast<const Text *>(geo);
                 output << "PU" << text->center().x * x_ratio << ',' << text->center().y * y_ratio << ";PD";
-                output << ";LB" << QString(text->text()).remove(';').toStdString() << ';' << std::endl;
+                output << ";LB" << QString(text->text()).remove(';').toStdString() << ';' << '\n';
                 text = nullptr;
                 break;
             case Geo::Type::POLYGON:
@@ -294,14 +294,14 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                 }
                 output.seekp(-1, std::ios::cur);
-                output << ';' << std::endl;
+                output << ';' << '\n';
                 polygon = nullptr;
                 break;
             case Geo::Type::CIRCLE:
                 circle = static_cast<const Geo::Circle *>(geo);
                 output << "PU" << circle->x * x_ratio << ',' << circle->y * y_ratio << ';';
                 output << "CI" << circle->radius * x_ratio << ';';
-                output << std::endl;
+                output << '\n';
                 circle = nullptr;
                 break;
             case Geo::Type::ELLIPSE:
@@ -315,11 +315,11 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     }
                 }
                 output.seekp(-1, std::ios::cur);
-                output << ';' << std::endl;
+                output << ';' << '\n';
                 ellipse = nullptr;
                 break;
             case Geo::Type::COMBINATION:
-                output << "Block;" << std::endl;
+                output << "Block;" << '\n';
                 for (Geo::Geometry *item : *static_cast<const Combination *>(geo))
                 {
                     switch (item->type())
@@ -327,7 +327,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     case Geo::Type::TEXT:
                         text = static_cast<const Text *>(geo);
                         output << "PU" << text->center().x * x_ratio << ',' << text->center().y * y_ratio << ";PD";
-                        output << ";LB" << QString(text->text()).remove(';').toStdString() << ';' << std::endl;
+                        output << ";LB" << QString(text->text()).remove(';').toStdString() << ';' << '\n';
                         text = nullptr;
                         break;
                     case Geo::Type::POLYGON:
@@ -338,14 +338,14 @@ void File::write_plt(const std::string &path, const Graph *graph)
                             output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                         }
                         output.seekp(-1, std::ios::cur);
-                        output << ';' << std::endl;
+                        output << ';' << '\n';
                         polygon = nullptr;
                         break;
                     case Geo::Type::CIRCLE:
                         circle = static_cast<const Geo::Circle *>(item);
                         output << "PU" << circle->x * x_ratio << ',' << circle->y * y_ratio << ';';
                         output << "CI" << circle->radius * x_ratio << ';';
-                        output << std::endl;
+                        output << '\n';
                         circle = nullptr;
                         break;
                     case Geo::Type::ELLIPSE:
@@ -359,7 +359,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                             }
                         }
                         output.seekp(-1, std::ios::cur);
-                        output << ';' << std::endl;
+                        output << ';' << '\n';
                         ellipse = nullptr;
                         break;
                     case Geo::Type::POLYLINE:
@@ -374,7 +374,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                             output << point.x * y_ratio << ',' << point.y * y_ratio << ',';
                         }
                         output.seekp(-1, std::ios::cur);
-                        output << ';' << std::endl;
+                        output << ';' << '\n';
                         polyline = nullptr;
                         break;
                     case Geo::Type::BEZIER:
@@ -400,7 +400,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                             }
                         }
                         output.seekp(-1, std::ios::cur);
-                        output << ';' << std::endl;
+                        output << ';' << '\n';
                         bezier = nullptr;
                         break;
                     case Geo::Type::BSPLINE:
@@ -415,7 +415,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                             output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                         }
                         output.seekp(-1, std::ios::cur);
-                        output << ';' << std::endl;
+                        output << ';' << '\n';
                         bspline = nullptr;
                         break;
                     case Geo::Type::ARC:
@@ -426,21 +426,21 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         }
                         output << "PU" << arc->control_points[0].x * x_ratio << ',' << arc->control_points[0].y * y_ratio << ";AT";
                         output << arc->control_points[1].x * x_ratio << ',' << arc->control_points[1].y * y_ratio << ',';
-                        output << arc->control_points[2].x * x_ratio << ',' << arc->control_points[2].y * y_ratio << ';' << std::endl;
+                        output << arc->control_points[2].x * x_ratio << ',' << arc->control_points[2].y * y_ratio << ';' << '\n';
                         arc = nullptr;
                         break;
                     case Geo::Type::POINT:
                         {
                             const Geo::Point *point = static_cast<const Geo::Point *>(item);
                             output << "PU" << point->x * x_ratio << ',' << point->y * y_ratio << ";PD";
-                            output << point->x * x_ratio << ',' << point->y * y_ratio << ';' << std::endl;
+                            output << point->x * x_ratio << ',' << point->y * y_ratio << ';' << '\n';
                         }
                         break;
                     default:
                         break;
                     }
                 }
-                output << "BlockEnd;" << std::endl;
+                output << "BlockEnd;" << '\n';
                 break;
             case Geo::Type::POLYLINE:
                 polyline = static_cast<const Geo::Polyline *>(geo);
@@ -454,7 +454,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                 }
                 output.seekp(-1, std::ios::cur);
-                output << ';' << std::endl;
+                output << ';' << '\n';
                 polyline = nullptr;
                 break;
             case Geo::Type::BEZIER:
@@ -480,7 +480,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     }
                 }
                 output.seekp(-1, std::ios::cur);
-                output << ';' << std::endl;
+                output << ';' << '\n';
                 bezier = nullptr;
                 break;
             case Geo::Type::BSPLINE:
@@ -495,7 +495,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                 }
                 output.seekp(-1, std::ios::cur);
-                output << ';' << std::endl;
+                output << ';' << '\n';
                 bspline = nullptr;
                 break;
             case Geo::Type::ARC:
@@ -506,14 +506,14 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 }
                 output << "PU" << arc->control_points[0].x * x_ratio << ',' << arc->control_points[0].y * y_ratio << ";AT";
                 output << arc->control_points[1].x * x_ratio << ',' << arc->control_points[1].y * y_ratio << ',';
-                output << arc->control_points[2].x * x_ratio << ',' << arc->control_points[2].y * y_ratio << ';' << std::endl;
+                output << arc->control_points[2].x * x_ratio << ',' << arc->control_points[2].y * y_ratio << ';' << '\n';
                 arc = nullptr;
                 break;
             case Geo::Type::POINT:
                 {
                     const Geo::Point *point = static_cast<const Geo::Point *>(geo);
                     output << "PU" << point->x * x_ratio << ',' << point->y * y_ratio << ";PD";
-                    output << point->x * x_ratio << ',' << point->y * y_ratio << ';' << std::endl;
+                    output << point->x * x_ratio << ',' << point->y * y_ratio << ';' << '\n';
                 }
                 break;
             default:

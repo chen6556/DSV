@@ -14,7 +14,7 @@ public:
     bool modified = false;
 
 public:
-    Graph() {};
+    Graph() = default;
 
     Graph(const Graph &graph);
 
@@ -67,7 +67,6 @@ public:
     Geo::AABBRect bounding_rect() const override;
 
 
-
     std::list<ContainerGroup>::iterator begin();
 
     std::list<ContainerGroup>::iterator end();
@@ -99,7 +98,6 @@ public:
     ContainerGroup &back();
 
     const ContainerGroup &back() const;
-
 
 
     void append(Geo::Geometry *object, const size_t index = 0);

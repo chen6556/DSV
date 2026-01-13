@@ -5,13 +5,9 @@
 class GlobalSetting
 {
 private:
-    GlobalSetting() {}
+    GlobalSetting() = default;
 
-    GlobalSetting(const GlobalSetting &) = delete;
-
-    GlobalSetting &operator=(const GlobalSetting &) = delete;
-
-    ~GlobalSetting() {};
+    ~GlobalSetting() = default;
 
 public:
     Graph *graph = nullptr;
@@ -50,9 +46,13 @@ public:
     QString file_type = "All Files: (*.*)";
 
 public:
+    GlobalSetting(const GlobalSetting &) = delete;
+
+    GlobalSetting &operator=(const GlobalSetting &) = delete;
+
     static GlobalSetting &setting();
 
     void load_setting();
-    
+
     void save_setting();
 };

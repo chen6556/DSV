@@ -8,8 +8,18 @@
 class ActionGroup
 {
 public:
-    enum class MenuType {PolygonMenu, ArcMenu, CircleMenu, EllipseMenu, CurveMenu, FilletMenu, ConnectMenu,
-        TrimMenu, FlipMenu};
+    enum class MenuType
+    {
+        PolygonMenu,
+        ArcMenu,
+        CircleMenu,
+        EllipseMenu,
+        CurveMenu,
+        FilletMenu,
+        ConnectMenu,
+        TrimMenu,
+        FlipMenu
+    };
 
 private:
     Ui::MainWindow *ui = nullptr;
@@ -45,6 +55,6 @@ private:
     void init_trim_menu();
 
     void init_flip_menu();
-    
+
     void init_fillet_menu();
 };

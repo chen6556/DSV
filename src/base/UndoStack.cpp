@@ -74,8 +74,10 @@ ObjectCommand::ObjectCommand(Geo::Geometry *object, const size_t group, const si
 }
 
 ObjectCommand::ObjectCommand(const std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> &add_items,
-            const std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> &remove_items)
-    : _add_items(add_items), _remove_items(remove_items) {}
+                             const std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> &remove_items)
+    : _add_items(add_items), _remove_items(remove_items)
+{
+}
 
 ObjectCommand::~ObjectCommand()
 {
@@ -87,8 +89,9 @@ ObjectCommand::~ObjectCommand()
 
 void ObjectCommand::undo(Graph *graph)
 {
-    std::sort(_add_items.begin(), _add_items.end(), [](const std::tuple<Geo::Geometry *, size_t, size_t> &a,
-        const std::tuple<Geo::Geometry *, size_t, size_t> &b) { return std::get<1>(a) > std::get<1>(b) || std::get<2>(a) > std::get<2>(b); });
+    std::sort(_add_items.begin(), _add_items.end(),
+              [](const std::tuple<Geo::Geometry *, size_t, size_t> &a, const std::tuple<Geo::Geometry *, size_t, size_t> &b)
+              { return std::get<1>(a) > std::get<1>(b) || std::get<2>(a) > std::get<2>(b); });
     for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : _add_items)
     {
         if (std::get<2>(item) >= graph->container_group(std::get<1>(item)).size())
@@ -100,8 +103,9 @@ void ObjectCommand::undo(Graph *graph)
             graph->container_group(std::get<1>(item)).remove(std::get<2>(item));
         }
     }
-    std::sort(_remove_items.begin(), _remove_items.end(), [](const std::tuple<Geo::Geometry *, size_t, size_t> &a,
-        const std::tuple<Geo::Geometry *, size_t, size_t> &b) { return std::get<1>(a) < std::get<1>(b) || std::get<2>(a) < std::get<2>(b); });
+    std::sort(_remove_items.begin(), _remove_items.end(),
+              [](const std::tuple<Geo::Geometry *, size_t, size_t> &a, const std::tuple<Geo::Geometry *, size_t, size_t> &b)
+              { return std::get<1>(a) < std::get<1>(b) || std::get<2>(a) < std::get<2>(b); });
     for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : _remove_items)
     {
         if (std::get<2>(item) >= graph->container_group(std::get<1>(item)).size())
@@ -120,10 +124,13 @@ void ObjectCommand::undo(Graph *graph)
 
 // TranslateCommand
 TranslateCommand::TranslateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y)
-    : _items(objects), _dx(x), _dy(y) {}
+    : _items(objects), _dx(x), _dy(y)
+{
+}
 
-TranslateCommand::TranslateCommand(Geo::Geometry *object, const double x, const double y)
-    : _items({object}), _dx(x), _dy(y) {}
+TranslateCommand::TranslateCommand(Geo::Geometry *object, const double x, const double y) : _items({object}), _dx(x), _dy(y)
+{
+}
 
 void TranslateCommand::undo(Graph *graph)
 {
@@ -136,8 +143,7 @@ void TranslateCommand::undo(Graph *graph)
 
 
 // TransformCommand
-TransformCommand::TransformCommand(const std::vector<Geo::Geometry *> &objects, const double mat[6])
-    : _items(objects)
+TransformCommand::TransformCommand(const std::vector<Geo::Geometry *> &objects, const double mat[6]) : _items(objects)
 {
     const double k = mat[0] * mat[4] - mat[1] * mat[3];
     _invmat[0] = mat[4] / k, _invmat[1] = -mat[1] / k;
@@ -146,8 +152,7 @@ TransformCommand::TransformCommand(const std::vector<Geo::Geometry *> &objects, 
     _invmat[5] = (mat[2] * mat[3] - mat[0] * mat[5]) / k;
 }
 
-TransformCommand::TransformCommand(Geo::Geometry *object, const double mat[6])
-    : _items({object})
+TransformCommand::TransformCommand(Geo::Geometry *object, const double mat[6]) : _items({object})
 {
     const double k = mat[0] * mat[4] - mat[1] * mat[3];
     _invmat[0] = mat[4] / k, _invmat[1] = -mat[1] / k;
@@ -167,11 +172,15 @@ void TransformCommand::undo(Graph *graph)
 
 // ChangeShapeCommand
 ChangeShapeCommand::ChangeShapeCommand(Geo::Geometry *object, const std::vector<std::tuple<double, double>> &shape)
-    : _object(object), _shape(shape) {}
+    : _object(object), _shape(shape)
+{
+}
 
 ChangeShapeCommand::ChangeShapeCommand(Geo::BSpline *bspline, const std::vector<std::tuple<double, double>> &shape,
-    const std::vector<std::tuple<double, double>> &path_points, const std::vector<double> &knots)
-    : _object(bspline), _shape(shape), _path_points(path_points), _knots(knots) {}
+                                       const std::vector<std::tuple<double, double>> &path_points, const std::vector<double> &knots)
+    : _object(bspline), _shape(shape), _path_points(path_points), _knots(knots)
+{
+}
 
 void ChangeShapeCommand::undo(Graph *graph)
 {
@@ -238,8 +247,8 @@ void ChangeShapeCommand::undo(Graph *graph)
         {
             Geo::Ellipse *ellipse = static_cast<Geo::Ellipse *>(_object);
             const double parameter[10] = {std::get<0>(_shape[0]), std::get<1>(_shape[0]), std::get<0>(_shape[1]), std::get<1>(_shape[1]),
-                std::get<0>(_shape[2]), std::get<1>(_shape[2]), std::get<0>(_shape[3]), std::get<1>(_shape[3]),
-                std::get<0>(_shape[4]), std::get<1>(_shape[4])};
+                                          std::get<0>(_shape[2]), std::get<1>(_shape[2]), std::get<0>(_shape[3]), std::get<1>(_shape[3]),
+                                          std::get<0>(_shape[4]), std::get<1>(_shape[4])};
             ellipse->reset_parameter(parameter);
             ellipse->update_shape(Geo::Ellipse::default_down_sampling_value);
         }
@@ -252,10 +261,14 @@ void ChangeShapeCommand::undo(Graph *graph)
 
 // RotateCommand
 RotateCommand::RotateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad)
-    : _items(objects), _x(x), _y(y), _rad(rad) {}
+    : _items(objects), _x(x), _y(y), _rad(rad)
+{
+}
 
 RotateCommand::RotateCommand(Geo::Geometry *object, const double x, const double y, const double rad)
-    : _items({object}), _x(x), _y(y), _rad(rad) {}
+    : _items({object}), _x(x), _y(y), _rad(rad)
+{
+}
 
 void RotateCommand::undo(Graph *graph)
 {
@@ -268,10 +281,14 @@ void RotateCommand::undo(Graph *graph)
 
 // ScaleCommand
 ScaleCommand::ScaleCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double k, const bool unitary)
-    : _items(objects), _x(x), _y(y), _k(k), _unitary(unitary) {}
+    : _items(objects), _x(x), _y(y), _k(k), _unitary(unitary)
+{
+}
 
 ScaleCommand::ScaleCommand(Geo::Geometry *object, const double x, const double y, const double k)
-    : _items({object}), _x(x), _y(y), _k(k), _unitary(true) {}
+    : _items({object}), _x(x), _y(y), _k(k), _unitary(true)
+{
+}
 
 void ScaleCommand::undo(Graph *graph)
 {
@@ -301,12 +318,16 @@ CombinateCommand::CombinateCommand(const std::vector<std::tuple<Combination *, s
     for (const std::tuple<Combination *, size_t> &combiantion : combinations)
     {
         _items.emplace_back(std::get<0>(combiantion), std::get<1>(combiantion),
-            std::vector<Geo::Geometry *>(std::get<0>(combiantion)->begin(), std::get<0>(combiantion)->end()));
+                            std::vector<Geo::Geometry *>(std::get<0>(combiantion)->begin(), std::get<0>(combiantion)->end()));
     }
 }
 
-CombinateCommand::CombinateCommand(Combination *combination, const std::vector<std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>>> &items, const size_t index)
-    : _combination(combination), _items(items), _group_index(index) {}
+CombinateCommand::CombinateCommand(Combination *combination,
+                                   const std::vector<std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>>> &items,
+                                   const size_t index)
+    : _combination(combination), _items(items), _group_index(index)
+{
+}
 
 CombinateCommand::~CombinateCommand()
 {
@@ -324,8 +345,9 @@ void CombinateCommand::undo(Graph *graph)
         {
             for (Geo::Geometry *object : std::get<2>(item))
             {
-                std::get<0>(item)->append(graph->container_group(_group_index).pop(std::find(graph->container_group(_group_index).begin(),
-                    graph->container_group(_group_index).end(), object)));
+                std::get<0>(item)->append(
+                    graph->container_group(_group_index)
+                        .pop(std::find(graph->container_group(_group_index).begin(), graph->container_group(_group_index).end(), object)));
             }
             if (std::get<1>(item) >= graph->container_group(_group_index).size())
             {
@@ -339,8 +361,8 @@ void CombinateCommand::undo(Graph *graph)
     }
     else
     {
-        graph->container_group(_group_index).pop(std::find(graph->container_group(_group_index).begin(),
-            graph->container_group(_group_index).end(), _combination));
+        graph->container_group(_group_index)
+            .pop(std::find(graph->container_group(_group_index).begin(), graph->container_group(_group_index).end(), _combination));
         std::reverse(_combination->begin(), _combination->end());
         for (std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>> &item : _items)
         {
@@ -367,11 +389,16 @@ void CombinateCommand::undo(Graph *graph)
 
 
 // FlipCommand
-FlipCommand::FlipCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const bool direction, const bool unitary)
-    : _items(objects), _x(x), _y(y), _direction(direction), _unitary(unitary) {}
+FlipCommand::FlipCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const bool direction,
+                         const bool unitary)
+    : _items(objects), _x(x), _y(y), _direction(direction), _unitary(unitary)
+{
+}
 
 FlipCommand::FlipCommand(Geo::Geometry *object, const double x, const double y, const bool direction)
-    : _items({object}), _x(x), _y(y), _direction(direction), _unitary(true) {}
+    : _items({object}), _x(x), _y(y), _direction(direction), _unitary(true)
+{
+}
 
 void FlipCommand::undo(Graph *graph)
 {
@@ -424,8 +451,11 @@ void FlipCommand::undo(Graph *graph)
 
 
 // ConnectCommand
-ConnectCommand::ConnectCommand(const std::vector<std::tuple<Geo::Geometry *, size_t>> &polylines, const Geo::Polyline *polyline, const size_t index)
-    : _items(polylines), _polyline(polyline), _group_index(index) {}
+ConnectCommand::ConnectCommand(const std::vector<std::tuple<Geo::Geometry *, size_t>> &polylines, const Geo::Polyline *polyline,
+                               const size_t index)
+    : _items(polylines), _polyline(polyline), _group_index(index)
+{
+}
 
 ConnectCommand::~ConnectCommand()
 {
@@ -437,23 +467,22 @@ ConnectCommand::~ConnectCommand()
 
 void ConnectCommand::undo(Graph *graph)
 {
-    graph->container_group(_group_index).remove(std::find(graph->container_group(_group_index).begin(), 
-       graph->container_group(_group_index).end(), _polyline));
+    graph->container_group(_group_index)
+        .remove(std::find(graph->container_group(_group_index).begin(), graph->container_group(_group_index).end(), _polyline));
     for (std::tuple<Geo::Geometry *, size_t> &item : _items)
     {
-        graph->container_group(_group_index).insert(std::get<size_t>(item),
-            std::get<Geo::Geometry*>(item));
+        graph->container_group(_group_index).insert(std::get<size_t>(item), std::get<Geo::Geometry *>(item));
     }
     _items.clear();
 }
 
 
 // GroupCommand
-GroupCommand::GroupCommand(const size_t index, const bool add)
-    : _index(index), _add(add) {}
+GroupCommand::GroupCommand(const size_t index, const bool add) : _index(index), _add(add)
+{
+}
 
-GroupCommand::GroupCommand(const size_t index, const bool add, ContainerGroup &group)
-    : _index(index), _add(add)
+GroupCommand::GroupCommand(const size_t index, const bool add, ContainerGroup &group) : _index(index), _add(add)
 {
     group.transfer(_group);
 }
@@ -480,8 +509,9 @@ void GroupCommand::undo(Graph *graph)
 
 
 // ReorderGroupCommand
-ReorderGroupCommand::ReorderGroupCommand(const size_t from, const size_t to)
-    : _from(from), _to(to) {}
+ReorderGroupCommand::ReorderGroupCommand(const size_t from, const size_t to) : _from(from), _to(to)
+{
+}
 
 void ReorderGroupCommand::undo(Graph *graph)
 {
@@ -513,8 +543,9 @@ void ReorderGroupCommand::undo(Graph *graph)
 
 
 // RenameGroupCommand
-RenameGroupCommand::RenameGroupCommand(const size_t index, const QString old_name)
-    : _index(index), _old_name(old_name) {}
+RenameGroupCommand::RenameGroupCommand(const size_t index, QString old_name) : _index(index), _old_name(std::move(old_name))
+{
+}
 
 void RenameGroupCommand::undo(Graph *graph)
 {
@@ -523,8 +554,9 @@ void RenameGroupCommand::undo(Graph *graph)
 
 
 // TextChangedCommand
-TextChangedCommand::TextChangedCommand(Geo::Geometry *item, const QString &text)
-    : _item(item), _text(text) {}
+TextChangedCommand::TextChangedCommand(Geo::Geometry *item, QString text) : _item(item), _text(std::move(text))
+{
+}
 
 void TextChangedCommand::undo(Graph *graph)
 {

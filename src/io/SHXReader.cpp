@@ -86,7 +86,7 @@ void SHXFileReader::skip(const int length)
 {
     char *data = new char[length];
     _stream->read(data, length);
-    delete data;
+    delete []data;
 }
 
 uint8_t SHXFileReader::read_uint8()
@@ -543,8 +543,8 @@ int SHXShapeParser::subshape_cmd(const std::vector<uchar> &data, const int index
         if (subcode == 0)
         {
             ++i;
-            subcode = (data[i] << 8) | data[++i];
-            ++i;
+            subcode = (data[i] << 8) | data[i + 1];
+            i += 2;
             origin.x = SHXFileReader::byte_to_sbyte(data[i++]) * state.scale;
             origin.y = SHXFileReader::byte_to_sbyte(data[i++]) * state.scale;
             if (_font_data.content.extended)
@@ -560,8 +560,8 @@ int SHXShapeParser::subshape_cmd(const std::vector<uchar> &data, const int index
         break;
     case SHXFontHeaderData::SHXFontType::UNIFONT:
         ++i;
-        subcode = (data[i] << 8) | data[++i];
-        ++i;
+        subcode = (data[i] << 8) | data[i + 1];
+        i += 2;
         break;
     }
 
@@ -941,7 +941,7 @@ SHXFontContentData SHXShapeContentParser::parse(SHXFileReader &reader)
         }
     }
 
-    for (const auto [code, length] : items)
+    for (const auto &[code, length] : items)
     {
         const std::vector<uchar> bytes = reader.read_bytes(length);
         if (bytes.size() == length) 
@@ -984,7 +984,8 @@ SHXFontContentData SHXShapeContentParser::parse(SHXFileReader &reader)
 SHXFontContentData SHXBigfontContentParser::parse(SHXFileReader &reader)
 {
     SHXFontContentData result;
-    const int item_length = reader.read_int16();
+    // const int item_length = reader.read_int16();
+    reader.read_int16();
     const int count = reader.read_int16();
     const int change_number = reader.read_int16();
     if (count <= 0)
@@ -1006,7 +1007,7 @@ SHXFontContentData SHXBigfontContentParser::parse(SHXFileReader &reader)
         }
     }
 
-    for (const auto [code, length, offset] : items)
+    for (const auto &[code, length, offset] : items)
     {
         reader.set_position(offset);
         if (const std::vector<uint8_t> bytes = reader.read_bytes(length); length == bytes.size())

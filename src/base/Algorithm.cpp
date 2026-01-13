@@ -4,8 +4,7 @@
 
 bool Geo::is_parallel(const Point &point0, const Point &point1, const Point &point2, const Point &point3)
 {
-    return ((point0.y - point1.y) * (point2.x - point3.x))
-        == ((point2.y - point3.y) * (point0.x - point1.x));
+    return ((point0.y - point1.y) * (point2.x - point3.x)) == ((point2.y - point3.y) * (point0.x - point1.x));
 }
 
 bool Geo::is_coincide(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
@@ -19,14 +18,10 @@ bool Geo::is_coincide(const Point &start0, const Point &end0, const Point &start
     {
         if (start1.x == end1.x && start0.x == start1.x)
         {
-            const bool result0 = (start1.y < start0.y && start0.y < end1.y) 
-                || (end1.y < start0.y && start0.y < start1.y);
-            const bool result1 = (start1.y < end0.y && end0.y < end1.y)
-                || (end1.y < end0.y && end0.y < start1.y);
-            const bool result2 = (start0.y < start1.y && start1.y < end0.y)
-                || (end0.y < start1.y && start1.y < start0.y);
-            const bool result3 = (start0.y < end1.y && end1.y < end0.y)
-                || (end0.y < end1.y && end1.y < start0.y);
+            const bool result0 = (start1.y < start0.y && start0.y < end1.y) || (end1.y < start0.y && start0.y < start1.y);
+            const bool result1 = (start1.y < end0.y && end0.y < end1.y) || (end1.y < end0.y && end0.y < start1.y);
+            const bool result2 = (start0.y < start1.y && start1.y < end0.y) || (end0.y < start1.y && start1.y < start0.y);
+            const bool result3 = (start0.y < end1.y && end1.y < end0.y) || (end0.y < end1.y && end1.y < start0.y);
             return result0 || result1 || result2 || result3;
         }
         else
@@ -38,14 +33,10 @@ bool Geo::is_coincide(const Point &start0, const Point &end0, const Point &start
     {
         if (start1.y == end1.y && start0.y == start1.y)
         {
-            const bool result0 = (start1.x < start0.x && start0.x < end1.x)
-                || (end1.x < start0.x && start0.x < start1.x);
-            const bool result1 = (start1.x < end0.x && end0.x < end1.x)
-                || (end1.x < end0.x && end0.x < start1.x);
-            const bool result2 = (start0.x < start1.x && start1.x < end0.x)
-                || (end0.x < start1.x && start1.x < start0.x);
-            const bool result3 = (start0.x < end1.x && end1.x < end0.x)
-                || (end0.x < end1.x && end1.x < start0.x);
+            const bool result0 = (start1.x < start0.x && start0.x < end1.x) || (end1.x < start0.x && start0.x < start1.x);
+            const bool result1 = (start1.x < end0.x && end0.x < end1.x) || (end1.x < end0.x && end0.x < start1.x);
+            const bool result2 = (start0.x < start1.x && start1.x < end0.x) || (end0.x < start1.x && start1.x < start0.x);
+            const bool result3 = (start0.x < end1.x && end1.x < end0.x) || (end0.x < end1.x && end1.x < start0.x);
             return result0 || result1 || result2 || result3;
         }
         else
@@ -54,17 +45,12 @@ bool Geo::is_coincide(const Point &start0, const Point &end0, const Point &start
         }
     }
 
-    const double a0 = end0.y - start0.y, 
-                b0 = start0.x - end0.x,
-                c0 = end0.x * start0.y - start0.x * end0.y;
-    const double a1 = end1.y - start1.y, 
-                b1 = start1.x - end1.x,
-                c1 = end1.x * start1.y - start1.x * end1.y;
-    if (std::abs(a0 * b1 - a1 * b0) < Geo::EPSILON && std::abs(a0 * c1 - a1 * c0) < Geo::EPSILON
-        && std::abs(b0 * c1 - b1 * c0) < Geo::EPSILON)
+    const double a0 = end0.y - start0.y, b0 = start0.x - end0.x, c0 = end0.x * start0.y - start0.x * end0.y;
+    const double a1 = end1.y - start1.y, b1 = start1.x - end1.x, c1 = end1.x * start1.y - start1.x * end1.y;
+    if (std::abs(a0 * b1 - a1 * b0) < Geo::EPSILON && std::abs(a0 * c1 - a1 * c0) < Geo::EPSILON &&
+        std::abs(b0 * c1 - b1 * c0) < Geo::EPSILON)
     {
-        return Geo::distance((start0 + end0) / 2, (start1 + end1) / 2) * 2
-            < Geo::distance(start0, end0) + Geo::distance(start1, end1);
+        return Geo::distance((start0 + end0) / 2, (start1 + end1) / 2) * 2 < Geo::distance(start0, end0) + Geo::distance(start1, end1);
     }
     else
     {
@@ -82,13 +68,13 @@ bool Geo::is_coincide(const Point &start, const Point &end, const Polygon &polyg
 
     if (index0 < SIZE_MAX)
     {
-        return Geo::is_coincide(start, end, start, polygon.last_point(index0))
-            || Geo::is_coincide(start, end, start, polygon.next_point(index0));
+        return Geo::is_coincide(start, end, start, polygon.last_point(index0)) ||
+               Geo::is_coincide(start, end, start, polygon.next_point(index0));
     }
     else if (index1 < SIZE_MAX)
     {
-        return Geo::is_coincide(start, end, end, polygon.last_point(index1))
-            || Geo::is_coincide(start, end, end, polygon.next_point(index1));
+        return Geo::is_coincide(start, end, end, polygon.last_point(index1)) ||
+               Geo::is_coincide(start, end, end, polygon.next_point(index1));
     }
     else
     {
@@ -128,22 +114,23 @@ bool Geo::is_part(const Point &start0, const Point &end0, const Point &start1, c
 
 bool Geo::is_on_left(const Point &point, const Point &start, const Point &end)
 {
-    return (end.x - start.x) * (point.y - start.y) -
-        (end.y - start.y) * (point.x - start.x) > 0;
+    return (end.x - start.x) * (point.y - start.y) - (end.y - start.y) * (point.x - start.x) > 0;
 }
 
 
 bool Geo::is_point_on(const Point &point, const Triangle &triangle)
 {
-    return ((Geo::cross(triangle[1] - triangle[0], point - triangle[0]) == 0 &&
-        Geo::distance(point, triangle[0]) + Geo::distance(point, triangle[1]) < Geo::distance(triangle[0], triangle[1]) + Geo::EPSILON)
-        || (Geo::cross(triangle[2] - triangle[1], point - triangle[1]) == 0 &&
-        Geo::distance(point, triangle[1]) + Geo::distance(point, triangle[2]) < Geo::distance(triangle[1], triangle[2]) + Geo::EPSILON)
-        || (Geo::cross(triangle[2] - triangle[0], point - triangle[0]) == 0) &&
-        Geo::distance(point, triangle[0]) + Geo::distance(point, triangle[2]) < Geo::distance(triangle[0], triangle[2]) + Geo::EPSILON);
+    return (
+        (Geo::cross(triangle[1] - triangle[0], point - triangle[0]) == 0 &&
+         Geo::distance(point, triangle[0]) + Geo::distance(point, triangle[1]) < Geo::distance(triangle[0], triangle[1]) + Geo::EPSILON) ||
+        (Geo::cross(triangle[2] - triangle[1], point - triangle[1]) == 0 &&
+         Geo::distance(point, triangle[1]) + Geo::distance(point, triangle[2]) < Geo::distance(triangle[1], triangle[2]) + Geo::EPSILON) ||
+        (Geo::cross(triangle[2] - triangle[0], point - triangle[0]) == 0) &&
+            Geo::distance(point, triangle[0]) + Geo::distance(point, triangle[2]) < Geo::distance(triangle[0], triangle[2]) + Geo::EPSILON);
 }
 
-bool Geo::is_point_on(const Geo::Point &point, std::vector<Geo::Point>::const_iterator begin, std::vector<Geo::Point>::const_iterator end)
+bool Geo::is_point_on(const Geo::Point &point, const std::vector<Geo::Point>::const_iterator &begin,
+                      const std::vector<Geo::Point>::const_iterator &end)
 {
     for (std::vector<Geo::Point>::const_iterator it0 = begin, it1 = begin + 1; it1 != end; ++it1, ++it0)
     {
@@ -323,38 +310,38 @@ void Geo::down_sampling(Geo::Polyline &points, const double distance)
     {
         return;
     }
-	std::vector<bool> mask(points.size(), true);
-	std::vector<std::tuple<size_t, size_t>> stack;
-	mask.front() = mask.back() = false;
-	stack.emplace_back(0, mask.size() - 1);
-	while (!stack.empty())
-	{
-		const auto [index0, index1] = stack.back();
-		stack.pop_back();
-		double maxDistance = -1;
-		size_t index = index0;
-		for (size_t i = index0 + 1; i < index1; ++i)
-		{
+    std::vector<bool> mask(points.size(), true);
+    std::vector<std::tuple<size_t, size_t>> stack;
+    mask.front() = mask.back() = false;
+    stack.emplace_back(0, mask.size() - 1);
+    while (!stack.empty())
+    {
+        const auto [index0, index1] = stack.back();
+        stack.pop_back();
+        double maxDistance = -1;
+        size_t index = index0;
+        for (size_t i = index0 + 1; i < index1; ++i)
+        {
             if (const double currentDistance = Geo::distance(points[i], points[index0], points[index1], false);
                 currentDistance > distance && maxDistance < currentDistance)
             {
                 maxDistance = currentDistance;
                 index = i;
             }
-		}
-		if (index > index0)
-		{
-			mask[index] = false;
-			stack.emplace_back(index0, index);
-			stack.emplace_back(index, index1);
-		}
-	}
+        }
+        if (index > index0)
+        {
+            mask[index] = false;
+            stack.emplace_back(index0, index);
+            stack.emplace_back(index, index1);
+        }
+    }
 
-	for (size_t i = points.size() - 2; i > 0; --i)
-	{
-		if (mask[i])
-		{
-			points.remove(i);
-		}
-	}
+    for (size_t i = points.size() - 2; i > 0; --i)
+    {
+        if (mask[i])
+        {
+            points.remove(i);
+        }
+    }
 }

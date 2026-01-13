@@ -11,6 +11,13 @@ IndentWidth: 4
 TabWidth: 4
 UseTab: Never
 
+#访问声明符缩进
+AccessModifierOffset: -4
+# 缩进case语句
+IndentCaseLabels: false
+# 缩进case body
+IndentCaseBlocks: true
+
 # 大括号另起一行
 BreakBeforeBraces: Allman
 
@@ -23,5 +30,5 @@ AllowShortFunctionsOnASingleLine: None
 # 构造列表一行，一行放不下时,以冒号开头另起一行
 BreakConstructorInitializers: BeforeColon
 
-# 禁用自动换行
-ColumnLimit: 0
+# 自动换行
+ColumnLimit: 140
