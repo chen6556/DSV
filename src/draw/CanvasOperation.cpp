@@ -1111,6 +1111,30 @@ bool PolythingOperation::mouse_press(QMouseEvent *event)
         check_shape_size();
         return true;
     }
+    else if (event->button() == Qt::MouseButton::RightButton)
+    {
+        if (_points.size() < 3)
+        {
+            _points.clear();
+            shape_count = 0;
+            return false;
+        }
+        if (_points.size() > 3 && Geo::distance(_points.front(), _points.back()) <= 8 / view_ratio)
+        {
+            _points.back() = _points.front();
+            canvas->add_geometry(new Geo::Polygon(_points.begin(), _points.end()));
+        }
+        else
+        {
+            _points.pop_back();
+            canvas->add_geometry(new Geo::Polyline(_points.begin(), _points.end()));
+        }
+        _points.clear();
+        tool[0] = Tool::Select;
+        info.clear();
+        shape_count = 0;
+        return true;
+    }
     else
     {
         return false;
@@ -2544,6 +2568,26 @@ bool BSplineOperation::mouse_press(QMouseEvent *event)
 
         return true;
     }
+    else if (event->button() == Qt::MouseButton::RightButton)
+    {
+        if (_points.size() > 3)
+        {
+            _points.pop_back();
+            if (_order == 3)
+            {
+                canvas->add_geometry(new Geo::CubicBSpline(_points.begin(), _points.end(), true));
+            }
+            else
+            {
+                canvas->add_geometry(new Geo::QuadBSpline(_points.begin(), _points.end(), true));
+            }
+        }
+        tool[0] = Tool::Select;
+        shape_count = tool_lines_count = 0;
+        _points.clear();
+        info.clear();
+        return true;
+    }
     else
     {
         return false;
@@ -2788,6 +2832,19 @@ bool BezierOperation::mouse_press(QMouseEvent *event)
                 ++shape_count;
             }
         }
+        return true;
+    }
+    else if (event->button() == Qt::MouseButton::RightButton)
+    {
+        if (_points.size() > 3)
+        {
+            _points.pop_back();
+            canvas->add_geometry(new Geo::Bezier(_points.begin(), _points.end(), _order, true));
+        }
+        tool[0] = Tool::Select;
+        shape_count = tool_lines_count = 0;
+        _points.clear();
+        info.clear();
         return true;
     }
     else
