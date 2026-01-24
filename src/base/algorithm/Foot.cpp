@@ -110,7 +110,7 @@ int Geo::foot_point(const Ellipse &ellipse, const Point &point, std::vector<Poin
 int Geo::foot_point(const Point &point, const Bezier &bezier, std::vector<Point> &output,
                     std::vector<std::tuple<size_t, double, double, double>> *tvalues)
 {
-    const size_t order = bezier.order();
+    const int order = bezier.order();
     std::vector<int> nums(order, 1);
     if (order == 3)
     {
@@ -137,13 +137,13 @@ int Geo::foot_point(const Point &point, const Bezier &bezier, std::vector<Point>
         while (t1 <= 1)
         {
             Geo::Point head, tail;
-            for (size_t j = 0; j < order; ++j)
+            for (int j = 0; j < order; ++j)
             {
                 head += (bezier[i + j] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
                 tail += (bezier[i + j + 1] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
             }
             Geo::Point coord;
-            for (size_t j = 0; j <= order; ++j)
+            for (int j = 0; j <= order; ++j)
             {
                 coord += (bezier[j + i] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
             }
@@ -163,12 +163,12 @@ int Geo::foot_point(const Point &point, const Bezier &bezier, std::vector<Point>
             double last_t = -1;
             {
                 Geo::Point coord;
-                for (size_t j = 0; j <= order; ++j)
+                for (int j = 0; j <= order; ++j)
                 {
                     coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t0, order - j) * std::pow(t0, j)));
                 }
                 Geo::Point head, tail;
-                for (size_t j = 0; j < order; ++j)
+                for (int j = 0; j < order; ++j)
                 {
                     head += (bezier[i + j] * (nums[j] * std::pow(1 - t0, order - j - 1) * std::pow(t0, j)));
                     tail += (bezier[i + j + 1] * (nums[j] * std::pow(1 - t0, order - j - 1) * std::pow(t0, j)));
@@ -179,12 +179,12 @@ int Geo::foot_point(const Point &point, const Bezier &bezier, std::vector<Point>
             }
             {
                 Geo::Point coord;
-                for (size_t j = 0; j <= order; ++j)
+                for (int j = 0; j <= order; ++j)
                 {
                     coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
                 }
                 Geo::Point head, tail;
-                for (size_t j = 0; j < order; ++j)
+                for (int j = 0; j < order; ++j)
                 {
                     head += (bezier[i + j] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
                     tail += (bezier[i + j + 1] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
@@ -197,12 +197,12 @@ int Geo::foot_point(const Point &point, const Bezier &bezier, std::vector<Point>
             while (t1 - t0 > 1e-14 && last_t != t && angles[0] * angles[1] != 0)
             {
                 Geo::Point coord;
-                for (size_t j = 0; j <= order; ++j)
+                for (int j = 0; j <= order; ++j)
                 {
                     coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
                 Geo::Point head, tail;
-                for (size_t j = 0; j < order; ++j)
+                for (int j = 0; j < order; ++j)
                 {
                     head += (bezier[i + j] * (nums[j] * std::pow(1 - t, order - j - 1) * std::pow(t, j)));
                     tail += (bezier[i + j + 1] * (nums[j] * std::pow(1 - t, order - j - 1) * std::pow(t, j)));
@@ -233,12 +233,12 @@ int Geo::foot_point(const Point &point, const Bezier &bezier, std::vector<Point>
                 t1 = (t0 + t1) / 2;
             }
             Geo::Point coord;
-            for (size_t j = 0; j <= order; ++j)
+            for (int j = 0; j <= order; ++j)
             {
                 coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
             }
             Geo::Point head, tail;
-            for (size_t j = 0; j < order; ++j)
+            for (int j = 0; j < order; ++j)
             {
                 head += (bezier[i + j] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
                 tail += (bezier[i + j + 1] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));

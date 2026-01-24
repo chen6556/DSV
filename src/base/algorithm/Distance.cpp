@@ -78,14 +78,17 @@ double Geo::distance(const Point &point, const Polyline &polyline)
     double dis = Geo::distance(point, polyline.front(), polyline[1]);
     for (size_t i = 2, count = polyline.size(); i < count; ++i)
     {
-        dis = std::min(dis, Geo::distance(point, polyline[i - 1], polyline[i]));
+        if (polyline[i - 1] != polyline[i])
+        {
+            dis = std::min(dis, Geo::distance(point, polyline[i - 1], polyline[i]));
+        }
     }
     return dis;
 }
 
 double Geo::distance(const Point &point, const Bezier &bezier)
 {
-    const size_t order = bezier.order();
+    const int order = bezier.order();
     std::vector<int> nums(order + 1, 1);
     if (order == 2)
     {
@@ -106,7 +109,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
         while (t <= 1)
         {
             Geo::Point point;
-            for (size_t j = 0; j <= order; ++j)
+            for (int j = 0; j <= order; ++j)
             {
                 point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
@@ -145,7 +148,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
             {
                 x = x < upper ? x : upper;
                 Geo::Point coord;
-                for (size_t j = 0; j <= order; ++j)
+                for (int j = 0; j <= order; ++j)
                 {
                     coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
@@ -175,7 +178,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
             {
                 x = x < upper ? x : upper;
                 Geo::Point coord;
-                for (size_t j = 0; j <= order; ++j)
+                for (int j = 0; j <= order; ++j)
                 {
                     coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
@@ -246,7 +249,7 @@ double Geo::distance(const Point &point, const Bezier &bezier)
 
         result = std::min({result, min_dis[0], min_dis[1]});
     }
-    return result;
+    return result / 1e9;
 }
 
 double Geo::distance(const Point &point, const BSpline &bspline, const bool is_cubic)
@@ -406,7 +409,10 @@ double Geo::distance(const Point &point, const Polygon &polygon)
     double dis = Geo::distance(point, polygon.front(), polygon[1]);
     for (size_t i = 2, count = polygon.size(); i < count; ++i)
     {
-        dis = std::min(dis, Geo::distance(point, polygon[i - 1], polygon[i]));
+        if (polygon[i - 1] != polygon[i])
+        {
+            dis = std::min(dis, Geo::distance(point, polygon[i - 1], polygon[i]));
+        }
     }
     return dis;
 }
@@ -781,7 +787,10 @@ double Geo::distance_square(const Point &point, const Polyline &polyline)
     double dis = Geo::distance_square(point, polyline.front(), polyline[1]);
     for (size_t i = 2, count = polyline.size(); i < count; ++i)
     {
-        dis = std::min(dis, Geo::distance_square(point, polyline[i - 1], polyline[i]));
+        if (polyline[i - 1] != polyline[i])
+        {
+            dis = std::min(dis, Geo::distance_square(point, polyline[i - 1], polyline[i]));
+        }
     }
     return dis;
 }
@@ -791,7 +800,10 @@ double Geo::distance_square(const Point &point, const Polygon &polygon)
     double dis = Geo::distance_square(point, polygon.front(), polygon[1]);
     for (size_t i = 2, count = polygon.size(); i < count; ++i)
     {
-        dis = std::min(dis, Geo::distance_square(point, polygon[i - 1], polygon[i]));
+        if (polygon[i - 1] != polygon[i])
+        {
+            dis = std::min(dis, Geo::distance_square(point, polygon[i - 1], polygon[i]));
+        }
     }
     return dis;
 }

@@ -306,6 +306,7 @@ double Geo::degree_to_rad(double value)
 
 void Geo::down_sampling(Geo::Polyline &points, const double distance)
 {
+    points.remove_repeated_points();
     if (points.size() <= 2 || distance <= 0)
     {
         return;

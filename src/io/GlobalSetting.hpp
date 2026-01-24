@@ -37,10 +37,12 @@ public:
     int text_size = 16;
     int offset_join_type = 2;
     int offset_end_type = 0;
+    int offset_sample_count = 10;
 
     double catch_distance = 2.0;
     double sampling_step = 0.01;
     double down_sampling = 0.02;
+    double offset_tolerance = 0.001;
 
     QString file_path = "/";
     QString file_type = "All Files: (*.*)";

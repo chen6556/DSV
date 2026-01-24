@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdint>
 #include <numeric>
+#include <future>
 
 #include "base/Algorithm.hpp"
 #include "base/Math.hpp"
@@ -216,28 +217,12 @@ Polyline::Polyline(const Polygon &polygon) : _points(polygon.begin(), polygon.en
 {
 }
 
-Polyline::Polyline(std::vector<Point>::const_iterator begin, const std::vector<Point>::const_iterator &end)
+Polyline::Polyline(std::vector<Point>::const_iterator begin, const std::vector<Point>::const_iterator &end) : _points(begin, end)
 {
-    _points.emplace_back(*begin);
-    while (++begin != end)
-    {
-        if (*begin != _points.back())
-        {
-            _points.emplace_back(*begin);
-        }
-    }
 }
 
-Polyline::Polyline(const std::initializer_list<Point> &points)
+Polyline::Polyline(const std::initializer_list<Point> &points) : _points(points)
 {
-    _points.emplace_back(*points.begin());
-    for (const Point &point : points)
-    {
-        if (point != _points.back())
-        {
-            _points.emplace_back(point);
-        }
-    }
 }
 
 const Type Polyline::type() const
@@ -373,119 +358,47 @@ void Polyline::operator-=(const Point &point)
 
 void Polyline::append(const Point &point)
 {
-    if (_points.empty() || _points.back() != point)
-    {
-        _points.push_back(point);
-    }
+    _points.emplace_back(point);
 }
 
 void Polyline::append(const Polyline &polyline)
 {
-    if (_points.empty() || polyline.empty() || _points.back() != polyline._points.front())
-    {
-        _points.insert(_points.cend(), polyline._points.cbegin(), polyline._points.cend());
-    }
-    else
-    {
-        _points.insert(_points.cend(), polyline._points.cbegin() + 1, polyline._points.cend());
-    }
+    _points.insert(_points.cend(), polyline._points.cbegin(), polyline._points.cend());
 }
 
 void Polyline::append(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end)
 {
-    const size_t index = _points.size();
-    if (_points.empty() || _points.back() != *begin)
-    {
-        _points.insert(_points.end(), begin, end);
-    }
-    else
-    {
-        _points.insert(_points.end(), begin + 1, end);
-    }
-    for (size_t i = index <= 1 ? 1 : index - 1, count = _points.size(); i < count; ++i)
-    {
-        if (_points[i - 1] == _points[i])
-        {
-            _points.erase(_points.begin() + i--);
-            --count;
-        }
-    }
+    _points.insert(_points.end(), begin, end);
 }
 
 void Polyline::append(const std::vector<Point>::const_reverse_iterator &rbegin, const std::vector<Point>::const_reverse_iterator &rend)
 {
-    const size_t index = _points.size();
-    if (_points.empty() || _points.back() != *rbegin)
-    {
-        _points.insert(_points.end(), rbegin, rend);
-    }
-    else
-    {
-        _points.insert(_points.end(), rbegin + 1, rend);
-    }
-    for (size_t i = index <= 1 ? 1 : index - 1, count = _points.size(); i < count; ++i)
-    {
-        if (_points[i - 1] == _points[i])
-        {
-            _points.erase(_points.begin() + i--);
-            --count;
-        }
-    }
+    _points.insert(_points.end(), rbegin, rend);
 }
 
 void Polyline::insert(const size_t index, const Point &point)
 {
     assert(index < _points.size());
-    if (_points[index] == point || (index > 0 && _points[index - 1] == point))
-    {
-        return;
-    }
-    else
-    {
-        _points.insert(_points.cbegin() + index, point);
-    }
+    _points.insert(_points.cbegin() + index, point);
 }
 
 void Polyline::insert(const size_t index, const Polyline &polyline)
 {
     assert(index < _points.size());
-    if (polyline.empty())
-    {
-        return;
-    }
-    int i = (index > 0 && _points[index - 1] == polyline._points.front()), j = _points[index] == polyline._points.back();
-    _points.insert(_points.cbegin() + index, polyline._points.cbegin() + i, polyline._points.cend() - j);
+    _points.insert(_points.cbegin() + index, polyline._points.cbegin(), polyline._points.cend());
 }
 
 void Polyline::insert(const size_t index, const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end)
 {
     assert(index < _points.size());
-    int i = (index > 0 && _points[index] == *begin);
-    _points.insert(_points.begin() + index, begin + i, end);
-    for (size_t i = index <= 1 ? 1 : index - 1, count = _points.size(); i < count; ++i)
-    {
-        if (_points[i - 1] == _points[i])
-        {
-            _points.erase(_points.begin() + i--);
-            --count;
-        }
-    }
+    _points.insert(_points.cbegin() + index, begin, end);
 }
 
 void Polyline::insert(const size_t index, const std::vector<Point>::const_reverse_iterator &rbegin,
                       const std::vector<Point>::const_reverse_iterator &rend)
 {
     assert(index < _points.size());
-    int i = (index > 0 && _points[index] == *rbegin);
-    _points.insert(_points.begin() + index, rbegin + i, rend);
-    for (size_t i = index <= 1 ? 1 : index - 1, count = _points.size(); i < count; ++i)
-    {
-        if (_points[i - 1] == _points[i])
-        {
-            _points.erase(_points.begin() + i--);
-            --count;
-        }
-    }
+    _points.insert(_points.cbegin() + index, rbegin, rend);
 }
 
 void Polyline::remove(const size_t index)
@@ -757,6 +670,22 @@ Polygon Polyline::mini_bounding_rect() const
     }
     return rect;
 }
+
+void Polyline::remove_repeated_points()
+{
+    if (_points.empty())
+    {
+        return;
+    }
+    for (size_t i = _points.size() - 1; i > 0; --i)
+    {
+        if (_points[i] == _points[i - 1])
+        {
+            _points.erase(_points.begin() + i);
+        }
+    }
+}
+
 
 // AABBRect
 
@@ -2073,7 +2002,7 @@ const Polygon &Circle::shape() const
 double Bezier::default_step = 0.01;
 double Bezier::default_down_sampling_value = 0.02;
 
-Bezier::Bezier(const size_t n) : _order(n)
+Bezier::Bezier(const int n) : _order(n)
 {
     assert(n == 3 || n == 2);
     _shape.shape_fixed = true;
@@ -2084,7 +2013,7 @@ Bezier::Bezier(const Bezier &bezier) : Polyline(bezier), _order(bezier._order), 
     _shape.shape_fixed = true;
 }
 
-Bezier::Bezier(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end, const size_t n,
+Bezier::Bezier(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end, const int n,
                const bool is_path_points)
     : Polyline(begin, end), _order(n)
 {
@@ -2097,7 +2026,7 @@ Bezier::Bezier(const std::vector<Point>::const_iterator &begin, const std::vecto
     update_shape(Bezier::default_step, Bezier::default_down_sampling_value);
 }
 
-Bezier::Bezier(const std::initializer_list<Point> &points, const size_t n, const bool is_path_points) : Polyline(points), _order(n)
+Bezier::Bezier(const std::initializer_list<Point> &points, const int n, const bool is_path_points) : Polyline(points), _order(n)
 {
     assert(n == 3 || n == 2);
     _shape.shape_fixed = true;
@@ -2113,7 +2042,7 @@ const Type Bezier::type() const
     return Type::BEZIER;
 }
 
-size_t Bezier::order() const
+int Bezier::order() const
 {
     return _order;
 }
@@ -2182,7 +2111,7 @@ void Bezier::update_shape(const double step, const double down_sampling_value)
         while (t <= 1)
         {
             Geo::Point point;
-            for (size_t j = 0; j <= _order; ++j)
+            for (int j = 0; j <= _order; ++j)
             {
                 point += (_points[j + i] * (nums[j] * std::pow(1 - t, _order - j) * std::pow(t, j)));
             }
@@ -2191,6 +2120,7 @@ void Bezier::update_shape(const double step, const double down_sampling_value)
         }
     }
     _shape.append(_points.back());
+    _shape.remove_repeated_points();
     Geo::down_sampling(_shape, down_sampling_value);
 }
 
@@ -2292,48 +2222,32 @@ Point Bezier::tangent(const size_t index, const double t) const
 
 Point Bezier::vertical(const size_t index, const double t) const
 {
+    const Geo::Point tan = tangent(index, t);
+    return Geo::Point(-tan.y, tan.x);
+}
+
+Point Bezier::shape_point(const size_t index, const double t) const
+{
     if (_points.size() < _order * (index + 1) + 1)
     {
         return Point();
     }
-
-    Point start, end;
+    std::vector<int> nums(_order + 1, 1);
+    if (_order == 2)
     {
-        std::vector<int> nums(_order, 1);
-        if (_order == 3)
-        {
-            nums[1] = 2;
-        }
-        for (int i = 0; i < _order; ++i)
-        {
-            start += (_points[i + index] * (nums[i] * std::pow(1 - t, _order - i - 1) * std::pow(t, i)));
-        }
-        for (int i = 0; i < _order; ++i)
-        {
-            end += (_points[i + index + 1] * (nums[i] * std::pow(1 - t, _order - i - 1) * std::pow(t, i)));
-        }
+        nums[1] = 2;
     }
-    Point vec(end - start);
-
+    else
     {
-        std::vector<int> nums(_order + 1, 1);
-        if (_order == 2)
-        {
-            nums[1] = 2;
-        }
-        else
-        {
-            nums[1] = nums[2] = 3;
-        }
-        Point anchor;
-        for (int i = 0; i <= _order; ++i)
-        {
-            anchor += (_points[i + index] * (nums[i] * std::pow(1 - t, _order - i) * std::pow(t, i)));
-        }
-        vec.rotate(anchor.x, anchor.y, Geo::PI / 2);
+        nums[1] = nums[2] = 3;
     }
 
-    return vec;
+    Geo::Point point;
+    for (int j = 0; j <= _order; ++j)
+    {
+        point += (_points[j + index] * (nums[j] * std::pow(1 - t, _order - j) * std::pow(t, j)));
+    }
+    return point;
 }
 
 
@@ -3137,19 +3051,73 @@ void BSpline::rbspline(const int order, const size_t npts, const size_t p1, cons
     double t = knots[0];
     const double step = (knots[nplusc - 1] - t) / (p1 - 1);
 
-    for (Geo::Point &vp : p)
+    if (const size_t count = p.size(); count <= 3000)
     {
-        if (knots[nplusc - 1] - t < 5e-6)
+        for (Geo::Point &vp : p)
         {
-            t = knots[nplusc - 1];
+            if (knots[nplusc - 1] - t < 5e-6)
+            {
+                t = knots[nplusc - 1];
+            }
+            // generate the basis function for this value of t
+            std::vector<double> nbasis;
+            rbasis(order, t, npts, knots, nbasis);
+            // generate a point on the curve
+            for (size_t j = 0, count = nbasis.size(); j < count; ++j)
+            {
+                if (nbasis[j] > 0)
+                {
+                    for (int i = 0; i <= order && j < count; ++i, ++j)
+                    {
+                        vp += b[j] * nbasis[j];
+                    }
+                    break;
+                }
+            }
+            t += step;
+        }
+    }
+    else
+    {
+        std::vector<std::future<void>> futures;
+        for (size_t i = 0; i < count; i += 3000)
+        {
+            futures.emplace_back(std::async(std::launch::async, &BSpline::rbspline_subfunc, order, npts, step, i, std::min(i + 3000, count),
+                                            &knots, &b, &p));
+        }
+        for (std::future<void> &f : futures)
+        {
+            f.wait();
+        }
+    }
+}
+
+void BSpline::rbspline_subfunc(const int order, const size_t npts, const double step, const size_t start, const size_t end,
+                               const std::vector<double> *knots, const std::vector<Point> *b, std::vector<Point> *p)
+{
+    const size_t nplusc = npts + order + 1;
+    double t = knots->front() + step * start;
+    for (size_t i = start; i < end; ++i)
+    {
+        Geo::Point &vp = p->at(i);
+        if (knots->at(nplusc - 1) - t < 5e-6)
+        {
+            t = knots->at(nplusc - 1);
         }
         // generate the basis function for this value of t
         std::vector<double> nbasis;
-        rbasis(order, t, npts, knots, nbasis);
+        rbasis(order, t, npts, *knots, nbasis);
         // generate a point on the curve
-        for (size_t i = 0; i < npts; ++i)
+        for (size_t j = 0, count = nbasis.size(); j < count; ++j)
         {
-            vp += b[i] * nbasis[i];
+            if (nbasis[j] > 0)
+            {
+                for (int i = 0; i <= order && j < count; ++i, ++j)
+                {
+                    vp += b->at(j) * nbasis[j];
+                }
+                break;
+            }
         }
         t += step;
     }
@@ -3450,14 +3418,8 @@ void QuadBSpline::update_shape(const double step, const double down_sampling_val
 {
     const size_t npts = control_points.size();
 
-    double length = 0;
-    for (size_t i = 1, count = control_points.size(); i < count; ++i)
-    {
-        length += Geo::distance(control_points[i - 1], control_points[i]);
-    }
-
     // resolution:
-    const size_t points_count = std::max(npts * 8.0, length / (step * 5));
+    const size_t points_count = std::max(npts * 8.0, (npts - 2) / step);
 
     std::vector<Point> points(points_count, Point(0, 0));
     rbspline(2, npts, points_count, _knots, control_points, points);
@@ -3673,6 +3635,13 @@ CubicBSpline::CubicBSpline(const std::vector<Point>::const_iterator &begin, cons
             }
         }
         CubicBSpline::update_control_points();
+
+        // if (const size_t num = control_points.size(); num > 2)
+        // {
+        //     _knots.resize(num + 4, 0);
+        //     std::iota(_knots.begin() + 4, _knots.begin() + num + 1, 1);
+        //     std::fill(_knots.begin() + num + 1, _knots.end(), _knots[num]);
+        // }
     }
     else
     {
@@ -3884,11 +3853,9 @@ void CubicBSpline::update_control_points()
 
 void CubicBSpline::update_shape(const double step, const double down_sampling_value)
 {
-    const size_t npts = control_points.size();
-
-    if (npts == 2)
+    _shape.clear();
+    if (control_points.size() == 2)
     {
-        _shape.clear();
         _shape.append(control_points.front());
         _shape.append(control_points.back());
         if (controls_model)
@@ -3898,19 +3865,14 @@ void CubicBSpline::update_shape(const double step, const double down_sampling_va
         return;
     }
 
-    double length = 0;
-    for (size_t i = 1, count = control_points.size(); i < count; ++i)
-    {
-        length += Geo::distance(control_points[i - 1], control_points[i]);
-    }
+    const size_t npts = control_points.size();
 
     // resolution:
-    const size_t points_count = std::max(npts * 8.0, length / (step * 5));
+    const size_t points_count = std::max(npts * 8.0, (npts - 3) / step);
 
     std::vector<Point> points(points_count, Point(0, 0));
     rbspline(3, npts, points_count, _knots, control_points, points);
 
-    _shape.clear();
     _shape.append(path_points.empty() ? control_points.front() : path_points.front());
     _shape.append(points.begin(), points.end());
     _shape.append(path_points.empty() ? control_points.back() : path_points.back());

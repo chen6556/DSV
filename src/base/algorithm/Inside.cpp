@@ -11,7 +11,7 @@ bool Geo::is_inside(const Point &point, const Polyline &polyline)
 {
     for (size_t i = 1, count = polyline.size(); i < count; ++i)
     {
-        if (Geo::is_inside(point, polyline[i - 1], polyline[i]))
+        if (polyline[i - 1] != polyline[i] && Geo::is_inside(point, polyline[i - 1], polyline[i]))
         {
             return true;
         }
@@ -27,7 +27,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
         {
             for (size_t i = 1, len = polygon.size(); i < len; ++i)
             {
-                if (Geo::is_inside(point, polygon[i - 1], polygon[i]))
+                if (polygon[i - 1] != polygon[i] && Geo::is_inside(point, polygon[i - 1], polygon[i]))
                 {
                     return true;
                 }
@@ -37,7 +37,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
         {
             for (size_t i = 1, len = polygon.size(); i < len; ++i)
             {
-                if (Geo::is_inside(point, polygon[i - 1], polygon[i]))
+                if (polygon[i - 1] != polygon[i] && Geo::is_inside(point, polygon[i - 1], polygon[i]))
                 {
                     return false;
                 }
@@ -45,8 +45,10 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
         }
 
         double x = (-DBL_MAX);
+        Geo::Polygon polygon0(polygon);
+        polygon0.remove_repeated_points();
         std::vector<Geo::MarkedPoint> points;
-        for (const Geo::Point &p : polygon)
+        for (const Geo::Point &p : polygon0)
         {
             x = std::max(x, p.x);
             points.emplace_back(p.x, p.y);
@@ -74,7 +76,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
             }
         }
 
-        if (points.size() == polygon.size()) // 无交点
+        if (points.size() == polygon0.size()) // 无交点
         {
             return false;
         }
@@ -243,7 +245,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
             {
                 break;
             }
-            if (polygon.index(points[i]) == SIZE_MAX || polygon.index(points[j]) == SIZE_MAX)
+            if (polygon0.index(points[i]) == SIZE_MAX || polygon0.index(points[j]) == SIZE_MAX)
             {
                 continue; // 如果points[i]或points[j]不在polygon中,跳过
             }
@@ -426,7 +428,7 @@ bool Geo::NoAABBTest::is_inside(const Geo::Point &point, const Geo::Polygon &pol
     {
         for (size_t i = 1, len = polygon.size(); i < len; ++i)
         {
-            if (Geo::is_inside(point, polygon[i - 1], polygon[i]))
+            if (polygon[i - 1] != polygon[i] && Geo::is_inside(point, polygon[i - 1], polygon[i]))
             {
                 return true;
             }
@@ -436,7 +438,7 @@ bool Geo::NoAABBTest::is_inside(const Geo::Point &point, const Geo::Polygon &pol
     {
         for (size_t i = 1, len = polygon.size(); i < len; ++i)
         {
-            if (Geo::is_inside(point, polygon[i - 1], polygon[i]))
+            if (polygon[i - 1] != polygon[i] && Geo::is_inside(point, polygon[i - 1], polygon[i]))
             {
                 return false;
             }
@@ -444,8 +446,10 @@ bool Geo::NoAABBTest::is_inside(const Geo::Point &point, const Geo::Polygon &pol
     }
 
     double x = (-DBL_MAX);
+    Geo::Polygon polygon0(polygon);
+    polygon0.remove_repeated_points();
     std::vector<Geo::MarkedPoint> points;
-    for (const Geo::Point &p : polygon)
+    for (const Geo::Point &p : polygon0)
     {
         x = std::max(x, p.x);
         points.emplace_back(p.x, p.y);
@@ -469,7 +473,7 @@ bool Geo::NoAABBTest::is_inside(const Geo::Point &point, const Geo::Polygon &pol
         }
     }
 
-    if (points.size() == polygon.size()) // 无交点
+    if (points.size() == polygon0.size()) // 无交点
     {
         return false;
     }
@@ -638,7 +642,7 @@ bool Geo::NoAABBTest::is_inside(const Geo::Point &point, const Geo::Polygon &pol
         {
             break;
         }
-        if (polygon.index(points[i]) == SIZE_MAX || polygon.index(points[j]) == SIZE_MAX)
+        if (polygon0.index(points[i]) == SIZE_MAX || polygon0.index(points[j]) == SIZE_MAX)
         {
             continue;
         }

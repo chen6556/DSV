@@ -238,6 +238,8 @@ void remove_polygon_repeated_intersections(std::vector<Geo::MarkedPoint> &points
 bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, std::vector<Geo::Polygon> &output)
 {
     Geo::Polygon polygon2(polygon0), polygon3(polygon1);
+    polygon2.remove_repeated_points();
+    polygon3.remove_repeated_points();
     polygon2.reorder_points(false);
     polygon3.reorder_points(false);
     std::vector<MarkedPoint> points0, points1;
@@ -675,6 +677,8 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
 bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, std::vector<Geo::Polygon> &output)
 {
     Geo::Polygon polygon2(polygon0), polygon3(polygon1);
+    polygon2.remove_repeated_points();
+    polygon3.remove_repeated_points();
     polygon2.reorder_points(false);
     polygon3.reorder_points(false);
     std::vector<MarkedPoint> points0, points1;
@@ -1112,6 +1116,8 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
 bool Geo::polygon_difference(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, std::vector<Geo::Polygon> &output)
 {
     Geo::Polygon polygon2(polygon0), polygon3(polygon1);
+    polygon2.remove_repeated_points();
+    polygon3.remove_repeated_points();
     polygon2.reorder_points(true);
     polygon3.reorder_points(false);
     std::vector<Geo::MarkedPoint> points0, points1;
@@ -1536,6 +1542,8 @@ bool Geo::polygon_difference(const Geo::Polygon &polygon0, const Geo::Polygon &p
 bool Geo::polygon_xor(const Polygon &polygon0, const Polygon &polygon1, std::vector<Polygon> &output)
 {
     Geo::Polygon polygon2(polygon0), polygon3(polygon1);
+    polygon2.remove_repeated_points();
+    polygon3.remove_repeated_points();
     polygon2.reorder_points(true);
     polygon3.reorder_points(false);
     std::vector<Geo::MarkedPoint> points0, points1;
@@ -2749,6 +2757,7 @@ bool Geo::polygon_circle_union(const Polygon &polygon, const Circle &circle, std
                                std::vector<Geo::Arc> &output1)
 {
     Geo::Polygon polygon0(polygon);
+    polygon0.remove_repeated_points();
     polygon0.reorder_points(false);
     std::vector<MarkedPoint> points0, points1;
     for (const Point &point : polygon0)
@@ -2963,6 +2972,7 @@ bool Geo::polygon_circle_intersection(const Polygon &polygon, const Circle &circ
                                       std::vector<Geo::Arc> &output1)
 {
     Geo::Polygon polygon0(polygon);
+    polygon0.remove_repeated_points();
     polygon0.reorder_points(false);
     std::vector<MarkedPoint> points0, points1;
     for (const Point &point : polygon0)
@@ -3177,6 +3187,7 @@ bool Geo::polygon_circle_difference(const Polygon &polygon, const Circle &circle
                                     std::vector<Geo::Arc> &output1)
 {
     Geo::Polygon polygon0(polygon);
+    polygon0.remove_repeated_points();
     polygon0.reorder_points(false);
     std::vector<MarkedPoint> points0, points1;
     for (const Point &point : polygon0)
@@ -3391,6 +3402,7 @@ bool Geo::circle_polygon_difference(const Circle &circle, const Polygon &polygon
                                     std::vector<Geo::Polyline> &output1)
 {
     Geo::Polygon polygon0(polygon);
+    polygon0.remove_repeated_points();
     polygon0.reorder_points(true);
     std::vector<MarkedPoint> points0, points1;
     for (const Point &point : polygon0)
@@ -3605,6 +3617,7 @@ bool Geo::polygon_circle_xor(const Polygon &polygon, const Circle &circle, std::
                              std::vector<Geo::Arc> &output1)
 {
     Geo::Polygon polygon0(polygon);
+    polygon0.remove_repeated_points();
     polygon0.reorder_points(true);
     std::vector<MarkedPoint> points0, points1;
     for (const Point &point : polygon0)
@@ -3969,6 +3982,7 @@ bool Geo::polygon_ellipse_union(const Polygon &polygon, const Ellipse &ellipse, 
     }
 
     Geo::Polygon polygon0(polygon);
+    polygon0.remove_repeated_points();
     polygon0.reorder_points(false);
     std::vector<MarkedPoint> points0, points1;
     for (const Point &point : polygon0)
@@ -4192,6 +4206,7 @@ bool Geo::polygon_ellipse_intersection(const Polygon &polygon, const Ellipse &el
     }
 
     Geo::Polygon polygon0(polygon);
+    polygon0.remove_repeated_points();
     polygon0.reorder_points(false);
     std::vector<MarkedPoint> points0, points1;
     for (const Point &point : polygon0)
@@ -4415,6 +4430,7 @@ bool Geo::polygon_ellipse_difference(const Polygon &polygon, const Ellipse &elli
     }
 
     Geo::Polygon polygon0(polygon);
+    polygon0.remove_repeated_points();
     polygon0.reorder_points(false);
     std::vector<MarkedPoint> points0, points1;
     for (const Point &point : polygon0)
@@ -4638,6 +4654,7 @@ bool Geo::ellipse_polygon_difference(const Ellipse &ellipse, const Polygon &poly
     }
 
     Geo::Polygon polygon0(polygon);
+    polygon0.remove_repeated_points();
     polygon0.reorder_points(true);
     std::vector<MarkedPoint> points0, points1;
     for (const Point &point : polygon0)
@@ -4861,6 +4878,7 @@ bool Geo::polygon_ellipse_xor(const Polygon &polygon, const Ellipse &ellipse, st
     }
 
     Geo::Polygon polygon0(polygon);
+    polygon0.remove_repeated_points();
     polygon0.reorder_points(true);
     std::vector<MarkedPoint> points0, points1;
     for (const Point &point : polygon0)

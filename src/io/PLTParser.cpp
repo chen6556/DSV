@@ -39,15 +39,20 @@ void Importer::store_points()
     {
         return;
     }
-    if (_points.size() == 1)
+    else if (_points.size() < 2)
     {
-        _graph->container_groups().back().append(new Geo::Point(_last_coord));
         _points.clear();
         return;
     }
-    else if (_points.empty())
+
+    if (_points[0] == _points[1])
     {
-        return;
+        _points.erase(_points.begin());
+        if (_points.size() < 2)
+        {
+            _points.clear();
+            return;
+        }
     }
 
     if (_points.front() == _points.back() && _points.size() >= 3)
@@ -344,7 +349,10 @@ void Importer::parameter(const double value)
 void Importer::br()
 {
     store_points();
-    _points.emplace_back(_last_coord);
+    if (_last_coord.x != _parameters[0] * _x_ratio || _last_coord.y != _parameters[1] * _y_ratio)
+    {
+        _points.emplace_back(_last_coord);
+    }
     for (size_t i = 1, count = _parameters.size(); i < count; i += 2)
     {
         _points.emplace_back(_parameters[i - 1] * _x_ratio + _last_coord.x, _parameters[i] * _y_ratio + _last_coord.y);
@@ -358,7 +366,10 @@ void Importer::br()
 void Importer::bz()
 {
     store_points();
-    _points.emplace_back(_last_coord);
+    if (_last_coord.x != _parameters[0] * _x_ratio || _last_coord.y != _parameters[1] * _y_ratio)
+    {
+        _points.emplace_back(_last_coord);
+    }
     for (size_t i = 1, count = _parameters.size(); i < count; i += 2)
     {
         _points.emplace_back(_parameters[i - 1] * _x_ratio, _parameters[i] * _y_ratio);

@@ -9,6 +9,10 @@ int Geo::closest_point(const Polyline &polyline, const Point &point, std::vector
     double min_dis = Geo::distance(point, polyline[0], polyline[1], false);
     for (size_t i = 2, count = polyline.size(); i < count; ++i)
     {
+        if (polyline[i - 1] == polyline[i])
+        {
+            continue;
+        }
         if (double dis = Geo::distance(point, polyline[i - 1], polyline[i], false); dis == min_dis)
         {
             min_indexs.push_back(i);
@@ -49,6 +53,10 @@ int Geo::closest_point(const Polygon &polygon, const Point &point, std::vector<P
     double min_dis = Geo::distance(point, polygon[0], polygon[1], false);
     for (size_t i = 2, count = polygon.size(); i < count; ++i)
     {
+        if (polygon[i - 1] == polygon[i])
+        {
+            continue;
+        }
         if (double dis = Geo::distance(point, polygon[i - 1], polygon[i], false); dis == min_dis)
         {
             min_indexs.push_back(i);
@@ -320,7 +328,7 @@ int Geo::closest_point(const Ellipse &ellipse, const Point &point, std::vector<P
 int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Point> &output,
                        std::vector<std::tuple<size_t, double, double, double>> *tvalues)
 {
-    const size_t order = bezier.order();
+    const int order = bezier.order();
     std::vector<int> nums(order + 1, 1);
     if (order == 2)
     {
@@ -341,7 +349,7 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
         while (t <= 1)
         {
             Geo::Point point;
-            for (size_t j = 0; j <= order; ++j)
+            for (int j = 0; j <= order; ++j)
             {
                 point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
@@ -380,7 +388,7 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
             {
                 x = x < upper ? x : upper;
                 Geo::Point coord;
-                for (size_t j = 0; j <= order; ++j)
+                for (int j = 0; j <= order; ++j)
                 {
                     coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
@@ -410,7 +418,7 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
             {
                 x = x < upper ? x : upper;
                 Geo::Point coord;
-                for (size_t j = 0; j <= order; ++j)
+                for (int j = 0; j <= order; ++j)
                 {
                     coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
@@ -476,7 +484,7 @@ int Geo::closest_point(const Bezier &bezier, const Point &point, std::vector<Poi
         }
 
         Geo::Point coord;
-        for (size_t j = 0; j <= order; ++j)
+        for (int j = 0; j <= order; ++j)
         {
             coord += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
         }

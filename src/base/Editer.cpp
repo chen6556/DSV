@@ -1942,25 +1942,17 @@ bool Editer::offset(const std::vector<Geo::Geometry *> &objects, const double di
             }
             break;
         case Geo::Type::BEZIER:
-            bezier = static_cast<Geo::Bezier *>(object);
-            if (Geo::Polyline shape1, path_points(*static_cast<Geo::Polyline *>(bezier)); Geo::offset(path_points, shape1, distance))
             {
-                double area = 0;
-                for (size_t i = 1, count = path_points.size(); i < count; ++i)
+                bezier = static_cast<Geo::Bezier *>(object);
+                if (std::vector<Geo::Bezier> shapes; Geo::offset(*bezier, shapes, distance, GlobalSetting::setting().offset_tolerance,
+                                                                 GlobalSetting::setting().offset_sample_count))
                 {
-                    area += (path_points[i].x * (path_points[i + 1 != count ? i + 1 : 0].y - path_points[i - 1].y));
+                    for (Geo::Bezier &shape : shapes)
+                    {
+                        _graph->append(new Geo::Bezier(shape), _current_group);
+                        items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
+                    }
                 }
-                area += (path_points.front().x * (path_points[1].y - path_points.back().y));
-                if (area > 0)
-                {
-                    path_points.flip();
-                }
-                shape1.front() = (path_points.front() + (path_points[1] - path_points[0]).vertical().normalize() * distance);
-                shape1.back() =
-                    (path_points.back() + (path_points.back() - path_points[path_points.size() - 2]).vertical().normalize() * distance);
-
-                _graph->append(new Geo::Bezier(shape1.begin(), shape1.end(), bezier->order(), false), _current_group);
-                items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
             }
             break;
         case Geo::Type::ARC:
@@ -5620,7 +5612,7 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
 
 void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
 {
-    const size_t order = bezier->order();
+    const int order = bezier->order();
     std::vector<int> nums(order + 1, 1);
     if (order == 2)
     {
@@ -5644,7 +5636,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
             while (t <= 1)
             {
                 Geo::Point point;
-                for (size_t j = 0; j <= order; ++j)
+                for (int j = 0; j <= order; ++j)
                 {
                     point += ((*bezier)[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
@@ -5670,7 +5662,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
             {
                 x = x < upper ? x : upper;
                 Geo::Point coord;
-                for (size_t j = 0; j <= order; ++j)
+                for (int j = 0; j <= order; ++j)
                 {
                     coord += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
@@ -5700,7 +5692,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
             {
                 x = x < upper ? x : upper;
                 Geo::Point coord;
-                for (size_t j = 0; j <= order; ++j)
+                for (int j = 0; j <= order; ++j)
                 {
                     coord += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
@@ -5768,7 +5760,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         }
 
         anchor.clear();
-        for (size_t j = 0; j <= order; ++j)
+        for (int j = 0; j <= order; ++j)
         {
             anchor += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
         }

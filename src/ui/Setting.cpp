@@ -29,6 +29,8 @@ void Setting::init()
     ui->down_sampling->setValue(GlobalSetting::setting().down_sampling);
     ui->offset_join_type->setCurrentIndex(GlobalSetting::setting().offset_join_type);
     ui->offset_end_type->setCurrentIndex(GlobalSetting::setting().offset_end_type);
+    ui->offset_tolerance->setValue(GlobalSetting::setting().offset_tolerance);
+    ui->offset_sample_count->setValue(GlobalSetting::setting().offset_sample_count);
 
     _text_size = ui->text_size->value();
     _down_sampling_value = ui->down_sampling->value();
@@ -51,6 +53,8 @@ void Setting::accept()
     GlobalSetting::setting().down_sampling = ui->down_sampling->value();
     GlobalSetting::setting().offset_join_type = ui->offset_join_type->currentIndex();
     GlobalSetting::setting().offset_end_type = ui->offset_end_type->currentIndex();
+    GlobalSetting::setting().offset_tolerance = ui->offset_tolerance->value();
+    GlobalSetting::setting().offset_sample_count = ui->offset_sample_count->value();
 
     GlobalSetting::setting().show_text = ui->show_text->isChecked();
     GlobalSetting::setting().show_points = ui->show_points->isChecked();

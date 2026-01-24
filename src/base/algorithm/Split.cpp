@@ -12,7 +12,7 @@ bool Geo::split(const Polyline &polyline, const Point &pos, Polyline &output0, P
     output0.clear(), output1.clear();
     for (size_t i = 1, count = polyline.size(); i < count; ++i)
     {
-        if (Geo::is_inside(pos, polyline[i - 1], polyline[i], false))
+        if (polyline[i - 1] != polyline[i] && Geo::is_inside(pos, polyline[i - 1], polyline[i], false))
         {
             output0.append(polyline[i - 1]);
             output0.append(pos);
@@ -30,7 +30,7 @@ bool Geo::split(const Polyline &polyline, const Point &pos, Polyline &output0, P
 
 bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier &output1)
 {
-    const size_t order = bezier.order();
+    const int order = bezier.order();
     if (output0.order() != order || output1.order() != order || pos == bezier.front() || pos == bezier.back())
     {
         return false;
@@ -56,7 +56,7 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
         while (t <= 1)
         {
             Geo::Point point;
-            for (size_t j = 0; j <= order; ++j)
+            for (int j = 0; j <= order; ++j)
             {
                 point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
@@ -97,7 +97,7 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
             {
                 x = x < upper ? x : upper;
                 Geo::Point coord;
-                for (size_t j = 0; j <= order; ++j)
+                for (int j = 0; j <= order; ++j)
                 {
                     coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
@@ -127,7 +127,7 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
             {
                 x = x < upper ? x : upper;
                 Geo::Point coord;
-                for (size_t j = 0; j <= order; ++j)
+                for (int j = 0; j <= order; ++j)
                 {
                     coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
@@ -202,7 +202,7 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
             result_t = t;
             result_i = i;
             result_pos.clear();
-            for (size_t j = 0; j <= order; ++j)
+            for (int j = 0; j <= order; ++j)
             {
                 result_pos += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
@@ -216,12 +216,12 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
 
     output0.clear(), output1.clear();
     std::vector<Geo::Point> control_points;
-    for (size_t i = 0; i <= order; ++i)
+    for (int i = 0; i <= order; ++i)
     {
         control_points.emplace_back(bezier[result_i + i]);
     }
     std::vector<Geo::Point> temp_points, result_points0, result_points1;
-    for (size_t k = 0; k < order; ++k)
+    for (int k = 0; k < order; ++k)
     {
         for (size_t i = 1, count = control_points.size(); i < count; ++i)
         {
@@ -246,7 +246,7 @@ bool Geo::split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier 
 
 bool Geo::split(const Bezier &bezier, const size_t i, const double t, Bezier &output0, Bezier &output1)
 {
-    const size_t order = bezier.order();
+    const int order = bezier.order();
     if (output0.order() != order || output1.order() != order || (i == 0 && t == 0) || (i == (bezier.size() / (order + 1) - 1) && t == 1))
     {
         return false;
@@ -265,13 +265,13 @@ bool Geo::split(const Bezier &bezier, const size_t i, const double t, Bezier &ou
     output0.clear(), output1.clear();
     std::vector<Geo::Point> control_points;
     Geo::Point pos;
-    for (size_t j = 0; j <= order; ++j)
+    for (int j = 0; j <= order; ++j)
     {
         control_points.emplace_back(bezier[j + i]);
         pos += (control_points.back() * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
     }
     std::vector<Geo::Point> temp_points, result_points0, result_points1;
-    for (size_t k = 0; k < order; ++k)
+    for (int k = 0; k < order; ++k)
     {
         for (size_t j = 1, count = control_points.size(); j < count; ++j)
         {

@@ -307,6 +307,8 @@ public:
     AABBRect bounding_rect() const override;
 
     Polygon mini_bounding_rect() const override;
+
+    void remove_repeated_points();
 };
 
 class AABBRect : public Geometry
@@ -628,7 +630,7 @@ public:
 class Bezier : public Polyline
 {
 private:
-    size_t _order = 2;
+    int _order = 2;
     Polyline _shape;
 
 public:
@@ -636,19 +638,19 @@ public:
     static double default_down_sampling_value;
 
 public:
-    Bezier(const size_t n);
+    Bezier(const int n);
 
     Bezier(const Bezier &bezier);
 
-    Bezier(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end, const size_t n,
+    Bezier(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end, const int n,
            const bool is_path_points);
 
-    Bezier(const std::initializer_list<Point> &points, const size_t n, const bool is_path_points);
+    Bezier(const std::initializer_list<Point> &points, const int n, const bool is_path_points);
 
     const Type type() const override;
 
     // 贝塞尔曲线阶数
-    size_t order() const;
+    int order() const;
 
     const Polyline &shape() const;
 
@@ -683,6 +685,8 @@ public:
     Point tangent(const size_t index, const double t) const;
 
     Point vertical(const size_t index, const double t) const;
+
+    Point shape_point(const size_t index, const double t) const;
 };
 
 class Ellipse : public Geometry
@@ -898,6 +902,10 @@ public:
 
     static void rbspline(const int order, const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b,
                          std::vector<Point> &p);
+
+private:
+    static void rbspline_subfunc(const int order, const size_t npts, const double step, const size_t start, const size_t end,
+                         const std::vector<double> *knots, const std::vector<Point> *b, std::vector<Point> *p);
 };
 
 class QuadBSpline : public BSpline
