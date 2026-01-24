@@ -174,7 +174,7 @@ void CanvasOperation::refresh_tool_lines(const Geo::Geometry *object)
     {
     case Geo::Type::BEZIER:
         {
-            const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(object);
+            const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
             check_tool_lines_size(bezier->size() * 6);
             for (size_t i = 1, count = bezier->size(); i < count; ++i)
             {
@@ -2823,7 +2823,7 @@ bool BezierOperation::mouse_press(QMouseEvent *event)
         if (_points.size() > 3)
         {
             shape_count = 0;
-            const Geo::Polyline path = Geo::Bezier(_points.begin(), _points.end(), _order, true).shape();
+            const Geo::Polyline path = Geo::CubicBezier(_points.begin(), _points.end(), true).shape();
             check_shape_size(path.size() * 3);
             for (const Geo::Point &point : path)
             {
@@ -2839,7 +2839,7 @@ bool BezierOperation::mouse_press(QMouseEvent *event)
         if (_points.size() > 3)
         {
             _points.pop_back();
-            canvas->add_geometry(new Geo::Bezier(_points.begin(), _points.end(), _order, true));
+            canvas->add_geometry(new Geo::CubicBezier(_points.begin(), _points.end(), true));
         }
         tool[0] = Tool::Select;
         shape_count = tool_lines_count = 0;
@@ -2885,7 +2885,7 @@ bool BezierOperation::mouse_move(QMouseEvent *event)
         if (_points.size() > 3)
         {
             shape_count = 0;
-            const Geo::Polyline path = Geo::Bezier(_points.begin(), _points.end(), _order, true).shape();
+            const Geo::Polyline path = Geo::CubicBezier(_points.begin(), _points.end(), true).shape();
             check_shape_size(path.size() * 3);
             for (const Geo::Point &point : path)
             {
@@ -2909,7 +2909,7 @@ bool BezierOperation::mouse_double_click(QMouseEvent *event)
         {
             _points.pop_back();
             _points.pop_back();
-            canvas->add_geometry(new Geo::Bezier(_points.begin(), _points.end(), _order, true));
+            canvas->add_geometry(new Geo::CubicBezier(_points.begin(), _points.end(), true));
         }
         tool[0] = Tool::Select;
         shape_count = tool_lines_count = 0;
@@ -2935,21 +2935,13 @@ bool BezierOperation::read_parameters(const double *params, const int count)
         if (_points.size() > 3)
         {
             _points.pop_back();
-            canvas->add_geometry(new Geo::Bezier(_points.begin(), _points.end(), _order, true));
+            canvas->add_geometry(new Geo::CubicBezier(_points.begin(), _points.end(), true));
         }
         tool[0] = Tool::Select;
         shape_count = tool_lines_count = 0;
         _points.clear();
         info.clear();
         return true;
-    }
-    else if (count == 1 && _points.empty())
-    {
-        if (params[0] == 3 || params[0] == 2)
-        {
-            _order = params[0];
-            return true;
-        }
     }
     else if (count >= 2)
     {
@@ -2996,7 +2988,7 @@ bool BezierOperation::read_parameters(const double *params, const int count)
         if (_points.size() > 3)
         {
             shape_count = 0;
-            const Geo::Polyline path = Geo::Bezier(_points.begin(), _points.end(), _order, true).shape();
+            const Geo::Polyline path = Geo::CubicBezier(_points.begin(), _points.end(), true).shape();
             check_shape_size(path.size() * 3);
             for (const Geo::Point &point : path)
             {
@@ -3012,16 +3004,7 @@ bool BezierOperation::read_parameters(const double *params, const int count)
 
 QString BezierOperation::cmd_tips() const
 {
-    if (_order == 3)
-    {
-        return _points.empty() ? "order:3 (x, y):"
-                               : (_param_type == ParamType::LengthAngle ? "order:3 (length, angle):" : "order:3 (x, y):");
-    }
-    else
-    {
-        return _points.empty() ? "order:2 (x, y):"
-                               : (_param_type == ParamType::LengthAngle ? "order:2 (length, angle):" : "order:2 (x, y):");
-    }
+    return _param_type == ParamType::LengthAngle ? "(length, angle):" : "(x, y):";
 }
 
 void BezierOperation::switch_parameters_type()
@@ -3991,7 +3974,7 @@ bool FreeFilletOperation::mouse_move(QMouseEvent *event)
                 {
                     std::vector<std::tuple<size_t, double, double, double>> tvalues;
                     if (std::vector<Geo::Point> points;
-                        Geo::foot_point(anchor, *static_cast<const Geo::Bezier *>(object), points, &tvalues) && !points.empty())
+                        Geo::foot_point(anchor, *static_cast<const Geo::CubicBezier *>(object), points, &tvalues) && !points.empty())
                     {
                         _tvalues.emplace_back(
                             *std::min_element(tvalues.begin(), tvalues.end(),
@@ -4402,7 +4385,7 @@ bool TrimOperation::mouse_press(QMouseEvent *event)
                 result = true;
                 break;
             case Geo::Type::BEZIER:
-                editer->trim(static_cast<Geo::Bezier *>(clicked_object), real_pos[0], real_pos[1]);
+                editer->trim(static_cast<Geo::CubicBezier *>(clicked_object), real_pos[0], real_pos[1]);
                 canvas->refresh_vbo(Geo::Type::BEZIER);
                 canvas->refresh_selected_ibo();
                 result = true;
@@ -4458,7 +4441,7 @@ bool ExtendOperation::mouse_press(QMouseEvent *event)
                 canvas->refresh_vbo(Geo::Type::POLYLINE);
                 break;
             case Geo::Type::BEZIER:
-                editer->extend(static_cast<Geo::Bezier *>(clicked_object), real_pos[0], real_pos[1]);
+                editer->extend(static_cast<Geo::CubicBezier *>(clicked_object), real_pos[0], real_pos[1]);
                 canvas->refresh_vbo(Geo::Type::BEZIER);
                 break;
             case Geo::Type::BSPLINE:

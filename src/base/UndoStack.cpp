@@ -198,13 +198,13 @@ void ChangeShapeCommand::undo(Graph *graph)
         break;
     case Geo::Type::BEZIER:
         {
-            Geo::Bezier *bezier = static_cast<Geo::Bezier *>(_object);
+            Geo::CubicBezier *bezier = static_cast<Geo::CubicBezier *>(_object);
             bezier->clear();
             for (const std::tuple<double, double> &point : _shape)
             {
                 bezier->append(Geo::Point(std::get<0>(point), std::get<1>(point)));
             }
-            bezier->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
+            bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
         }
         break;
     case Geo::Type::BSPLINE:

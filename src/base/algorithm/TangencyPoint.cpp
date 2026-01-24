@@ -51,30 +51,17 @@ bool Geo::tangency_point(const Point &point, const Ellipse &ellipse, Point &outp
     return true;
 }
 
-int Geo::tangency_point(const Point &point, const Bezier &bezier, std::vector<Point> &output,
+int Geo::tangency_point(const Point &point, const CubicBezier &bezier, std::vector<Point> &output,
                         std::vector<std::tuple<size_t, double, double, double>> *tvalues)
 {
-    const int order = bezier.order();
-    std::vector<int> nums(order, 1);
-    if (order == 3)
-    {
-        nums[1] = 2;
-    }
-    std::vector<int> nums1(order + 1, 1);
-    if (order == 2)
-    {
-        nums1[1] = 2;
-    }
-    else
-    {
-        nums1[1] = nums1[2] = 3;
-    }
-
+    const int order = 3;
+    const int nums[3] = {1, 2, 1};
+    const int nums1[4] = {1, 3, 3, 1};
     std::vector<Geo::Point> result;
     std::vector<std::tuple<size_t, double, double, double>> temp;
     for (size_t i = 0, end = bezier.size() - order; i < end; i += order)
     {
-        double t0 = 0, t1 = Geo::Bezier::default_step;
+        double t0 = 0, t1 = Geo::CubicBezier::default_step;
         double angles[2] = {1, 1};
         angles[0] = Geo::angle(bezier[i], point, bezier[i], bezier[i + 1]);
         std::vector<std::tuple<double, double>> pairs;
@@ -98,7 +85,7 @@ int Geo::tangency_point(const Point &point, const Bezier &bezier, std::vector<Po
             }
             angles[0] = angles[1];
             t0 = t1;
-            t1 += Geo::Bezier::default_step;
+            t1 += Geo::CubicBezier::default_step;
         }
         for (auto [t0, t1] : pairs)
         {

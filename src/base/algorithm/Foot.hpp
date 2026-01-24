@@ -14,7 +14,7 @@ bool foot_point(const Circle &circle, const Point &point, Point &output0, Point 
 int foot_point(const Ellipse &ellipse, const Point &point, std::vector<Point> &output);
 
 // 计算贝塞尔曲线外一点到贝塞尔曲线的垂足<index, t, x, y>
-int foot_point(const Point &point, const Bezier &bezier, std::vector<Point> &output,
+int foot_point(const Point &point, const CubicBezier &bezier, std::vector<Point> &output,
                std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
 
 // 计算B样条曲线外一点到B样条曲线的垂足<t, x, y>

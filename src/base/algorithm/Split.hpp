@@ -8,10 +8,10 @@ namespace Geo
 bool split(const Polyline &polyline, const Point &pos, Polyline &output0, Polyline &output1);
 
 // 将Bezier从pos处拆分为两段Bezier
-bool split(const Bezier &bezier, const Point &pos, Bezier &output0, Bezier &output1);
+bool split(const CubicBezier &bezier, const Point &pos, CubicBezier &output0, CubicBezier &output1);
 
 // 将Bezier从i段t值处处拆分为两段Bezier
-bool split(const Bezier &bezier, const size_t i, const double t, Bezier &output0, Bezier &output1);
+bool split(const CubicBezier &bezier, const size_t i, const double t, CubicBezier &output0, CubicBezier &output1);
 
 // 将BSpline曲线从pos处拆分为两段BSpline
 bool split(const BSpline &bspline, const bool is_cubic, const Point &pos, BSpline &output0, BSpline &output1);

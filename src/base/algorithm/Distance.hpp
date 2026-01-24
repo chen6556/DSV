@@ -17,7 +17,7 @@ double distance(const Point &point, const Point &start, const Point &end, const 
 double distance(const Point &point, const Polyline &polyline);
 
 // [数值解]点到贝塞尔曲线距离,计算点到每一段曲线的距离,取最近距离
-double distance(const Point &point, const Bezier &bezier);
+double distance(const Point &point, const CubicBezier &bezier);
 
 // [数值解]点到B样条曲线的距离
 double distance(const Point &point, const BSpline &bspline, const bool is_cubic);

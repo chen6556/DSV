@@ -178,7 +178,7 @@ public:
 
     void trim(Geo::Polygon *polygon, const double x, const double y);
 
-    void trim(Geo::Bezier *bezier, const double x, const double y);
+    void trim(Geo::CubicBezier *bezier, const double x, const double y);
 
     void trim(Geo::BSpline *bspline, const double x, const double y);
 
@@ -190,7 +190,7 @@ public:
 
     void extend(Geo::Polyline *polyline, const double x, const double y);
 
-    void extend(Geo::Bezier *bezier, const double x, const double y);
+    void extend(Geo::CubicBezier *bezier, const double x, const double y);
 
     void extend(Geo::BSpline *bspline, const double x, const double y);
 
@@ -215,7 +215,7 @@ public:
 
     void text_to_polylines(Text *text);
 
-    void bezier_to_bspline(Geo::Bezier *bezier);
+    void bezier_to_bspline(Geo::CubicBezier *bezier);
 
     void bspline_to_bezier(Geo::BSpline *bspline);
 

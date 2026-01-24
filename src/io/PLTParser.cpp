@@ -358,7 +358,7 @@ void Importer::br()
         _points.emplace_back(_parameters[i - 1] * _x_ratio + _last_coord.x, _parameters[i] * _y_ratio + _last_coord.y);
         _last_coord = _points.back();
     }
-    _graph->container_groups().back().append(new Geo::Bezier(_points.cbegin(), _points.cend(), 3, false));
+    _graph->container_groups().back().append(new Geo::CubicBezier(_points.cbegin(), _points.cend(), false));
     _points.clear();
     _parameters.clear();
 }
@@ -375,7 +375,7 @@ void Importer::bz()
         _points.emplace_back(_parameters[i - 1] * _x_ratio, _parameters[i] * _y_ratio);
     }
     _last_coord = _points.back();
-    _graph->container_groups().back().append(new Geo::Bezier(_points.cbegin(), _points.cend(), 3, false));
+    _graph->container_groups().back().append(new Geo::CubicBezier(_points.cbegin(), _points.cend(), false));
     _points.clear();
     _parameters.clear();
 }

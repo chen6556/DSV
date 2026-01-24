@@ -627,10 +627,9 @@ public:
     const Polygon &shape() const;
 };
 
-class Bezier : public Polyline
+class CubicBezier : public Polyline
 {
 private:
-    int _order = 2;
     Polyline _shape;
 
 public:
@@ -638,19 +637,16 @@ public:
     static double default_down_sampling_value;
 
 public:
-    Bezier(const int n);
+    CubicBezier();
 
-    Bezier(const Bezier &bezier);
+    CubicBezier(const CubicBezier &bezier);
 
-    Bezier(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end, const int n,
+    CubicBezier(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end,
            const bool is_path_points);
 
-    Bezier(const std::initializer_list<Point> &points, const int n, const bool is_path_points);
+    CubicBezier(const std::initializer_list<Point> &points, const bool is_path_points);
 
     const Type type() const override;
-
-    // 贝塞尔曲线阶数
-    int order() const;
 
     const Polyline &shape() const;
 
@@ -662,9 +658,9 @@ public:
 
     void clear() override;
 
-    Bezier *clone() const override;
+    CubicBezier *clone() const override;
 
-    Bezier &operator=(const Bezier &bezier);
+    CubicBezier &operator=(const CubicBezier &bezier);
 
     void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
 

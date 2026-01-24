@@ -479,7 +479,7 @@ void Graph::update_curve_shape(const double step, const double down_sampling_val
             switch (object->type())
             {
             case Geo::Type::BEZIER:
-                static_cast<Geo::Bezier *>(object)->update_shape(step, down_sampling_value);
+                static_cast<Geo::CubicBezier *>(object)->update_shape(step, down_sampling_value);
                 break;
             case Geo::Type::BSPLINE:
                 static_cast<Geo::BSpline *>(object)->update_shape(step, down_sampling_value);

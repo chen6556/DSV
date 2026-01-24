@@ -86,19 +86,10 @@ double Geo::distance(const Point &point, const Polyline &polyline)
     return dis;
 }
 
-double Geo::distance(const Point &point, const Bezier &bezier)
+double Geo::distance(const Point &point, const CubicBezier &bezier)
 {
-    const int order = bezier.order();
-    std::vector<int> nums(order + 1, 1);
-    if (order == 2)
-    {
-        nums[1] = 2;
-    }
-    else
-    {
-        nums[1] = nums[2] = 3;
-    }
-
+    const int order = 3;
+    const int nums[4] = {1, 3, 3, 1};
     // index, points, distance
     std::vector<std::tuple<size_t, std::vector<Geo::Point>, double>> temp;
     for (size_t i = 0, end = bezier.size() - order; i < end; i += order)
@@ -114,10 +105,10 @@ double Geo::distance(const Point &point, const Bezier &bezier)
                 point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             polyline.append(point);
-            t += Geo::Bezier::default_step;
+            t += Geo::CubicBezier::default_step;
         }
         polyline.append(bezier[i + order]);
-        Geo::down_sampling(polyline, Geo::Bezier::default_down_sampling_value);
+        Geo::down_sampling(polyline, Geo::CubicBezier::default_down_sampling_value);
 
         std::vector<Geo::Point> points;
         Geo::closest_point(polyline, point, points);

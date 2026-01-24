@@ -238,7 +238,7 @@ public:
 private:
     void write_geometry_object(const Geo::Geometry *object);
 
-    void write_bezier(const Geo::Bezier *bezier);
+    void write_bezier(const Geo::CubicBezier *bezier);
 
     void write_bspline(const Geo::BSpline *bspline);
 

@@ -20,7 +20,7 @@ int is_intersected(const Point &point0, const Point &point1, const Ellipse &elli
 int is_intersected(const Point &point0, const Point &point1, const Arc &arc, Point &output0, Point &output1, const bool infinite = false);
 
 // [数值解]计算贝塞尔曲线与直线的交点,<index, t, x, y>
-int is_intersected(const Point &point0, const Point &point1, const Bezier &bezier, std::vector<Point> &intersections,
+int is_intersected(const Point &point0, const Point &point1, const CubicBezier &bezier, std::vector<Point> &intersections,
                    const bool infinite = false, std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
 
 // [数值解]计算B样条曲线与直线的交点,<t, x, y>
@@ -76,7 +76,7 @@ int is_intersected(const Ellipse &ellipse, const Arc &arc, Point &point0, Point 
 int is_intersected(const Arc &arc0, const Arc &arc1, Point &point0, Point &point1);
 
 // [数值解]计算圆与贝塞尔曲线交点,<index, t, x, y>
-int is_intersected(const Circle &circle, const Bezier &bezier, std::vector<Point> &intersections,
+int is_intersected(const Circle &circle, const CubicBezier &bezier, std::vector<Point> &intersections,
                    std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
 
 // [数值解]计算圆与B样条曲线交点,<t, x, y>
@@ -84,7 +84,7 @@ int is_intersected(const Circle &circle, const BSpline &bspline, const bool is_c
                    std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
 
 // [数值解]计算椭圆与贝塞尔曲线交点,<index, t, x, y>
-int is_intersected(const Ellipse &ellipse, const Bezier &bezier, std::vector<Point> &intersections,
+int is_intersected(const Ellipse &ellipse, const CubicBezier &bezier, std::vector<Point> &intersections,
                    std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
 
 // [数值解]计算椭圆与B样条曲线交点,<t, x, y>
@@ -92,7 +92,7 @@ int is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bool is
                    std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
 
 // [数值解]计算圆弧与贝塞尔曲线交点,<index, t, x, y>
-int is_intersected(const Arc &arc, const Bezier &bezier, std::vector<Point> &intersections,
+int is_intersected(const Arc &arc, const CubicBezier &bezier, std::vector<Point> &intersections,
                    std::vector<std::tuple<size_t, double, double, double>> *tvalues = nullptr);
 
 // [数值解]计算圆弧与B样条曲线交点,<t, x, y>
@@ -100,7 +100,7 @@ int is_intersected(const Arc &arc, const BSpline &bspline, const bool is_cubic, 
                    std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
 
 // [数值解]计算两贝塞尔曲线交点,<index, t, x, y>,<,<index, t, x, y>>
-int is_intersected(const Bezier &bezier0, const Bezier &bezier1, std::vector<Point> &intersections,
+int is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, std::vector<Point> &intersections,
                    std::vector<std::tuple<size_t, double, double, double>> *tvalues0 = nullptr,
                    std::vector<std::tuple<size_t, double, double, double>> *tvalues1 = nullptr);
 
@@ -110,7 +110,7 @@ int is_intersected(const BSpline &bspline0, const bool is_cubic0, const BSpline 
                    std::vector<std::tuple<double, double, double>> *tvalues1 = nullptr);
 
 // [数值解]计算贝塞尔曲线与B样条曲线交点,,<index, t, x, y>,<t, x, y>
-int is_intersected(const Bezier &bezier, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections,
+int is_intersected(const CubicBezier &bezier, const BSpline &bspline, const bool is_cubic, std::vector<Point> &intersections,
                    std::vector<std::tuple<size_t, double, double, double>> *tvalues0 = nullptr,
                    std::vector<std::tuple<double, double, double>> *tvalues1 = nullptr);
 
@@ -156,7 +156,7 @@ bool find_intersections(const Polyline &polyline0, const Polyline &polyline1, co
                         std::vector<Point> &intersections);
 
 // [数值解]找到Polyline与Bezier在pos附近的交点
-bool find_intersections(const Polyline &polyline, const Bezier &bezier, const Point &pos, const double distance,
+bool find_intersections(const Polyline &polyline, const CubicBezier &bezier, const Point &pos, const double distance,
                         std::vector<Point> &intersections);
 
 // [数值解]找到Polyline与BSpline在pos附近的交点

@@ -147,7 +147,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
     Geo::Circle *circle = nullptr;
     Geo::Ellipse *ellipse = nullptr;
     Geo::Polyline *p = nullptr;
-    Geo::Bezier *b = nullptr;
+    Geo::CubicBezier *b = nullptr;
     Geo::BSpline *bs = nullptr;
     Geo::Arc *arc = nullptr;
     Combination *cb = nullptr;
@@ -270,7 +270,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
                         p = nullptr;
                         break;
                     case Geo::Type::BEZIER:
-                        b = static_cast<Geo::Bezier *>(item);
+                        b = static_cast<Geo::CubicBezier *>(item);
                         for (size_t i = 1, count = b->shape().size(); i < count; ++i)
                         {
                             if (Geo::distance_square(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance * catch_distance)
@@ -330,7 +330,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             p = nullptr;
             break;
         case Geo::Type::BEZIER:
-            b = static_cast<Geo::Bezier *>(*it);
+            b = static_cast<Geo::CubicBezier *>(*it);
             if (b->is_selected)
             {
                 for (const Geo::Point &inner_point : *b)
@@ -419,7 +419,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
     Geo::Circle *circle = nullptr;
     Geo::Ellipse *ellipse = nullptr;
     Geo::Polyline *p = nullptr;
-    Geo::Bezier *b = nullptr;
+    Geo::CubicBezier *b = nullptr;
     Geo::BSpline *bs = nullptr;
     Combination *cb = nullptr;
     for (std::vector<Geo::Geometry *>::reverse_iterator it = _graph->container_group(_current_group).rbegin(),
@@ -531,7 +531,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
                         p = nullptr;
                         break;
                     case Geo::Type::BEZIER:
-                        b = static_cast<Geo::Bezier *>(item);
+                        b = static_cast<Geo::CubicBezier *>(item);
                         for (size_t i = 1, count = b->shape().size(); i < count; ++i)
                         {
                             if (Geo::distance_square(point, b->shape()[i - 1], b->shape()[i]) <= catch_distance * catch_distance)
@@ -577,7 +577,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
             p = nullptr;
             break;
         case Geo::Type::BEZIER:
-            b = static_cast<Geo::Bezier *>(*it);
+            b = static_cast<Geo::CubicBezier *>(*it);
             if (b->is_selected)
             {
                 for (const Geo::Point &inner_point : *b)
@@ -1014,7 +1014,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         }
         break;
     case Geo::Type::BEZIER:
-        if (Geo::Bezier *temp = static_cast<Geo::Bezier *>(points); change_shape && !temp->shape_fixed)
+        if (Geo::CubicBezier *temp = static_cast<Geo::CubicBezier *>(points); change_shape && !temp->shape_fixed)
         {
             size_t count = temp->size(), index = SIZE_MAX;
             double distance = 0, min_distance = DBL_MAX;
@@ -1039,61 +1039,22 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                 }
 
                 temp->at(index).translate(x1 - x0, y1 - y0);
-                if (index > 2 && index % temp->order() == 1)
+                if (const int order = 3; index > 2 && index % order == 1)
                 {
                     (*temp)[index - 2] = (*temp)[index - 1] + ((*temp)[index - 1] - (*temp)[index]).normalize() *
                                                                   Geo::distance((*temp)[index - 2], (*temp)[index - 1]);
-                    if (temp->order() == 2)
-                    {
-                        for (int j = index; j + 2 < count; j += 2)
-                        {
-                            (*temp)[j + 2] =
-                                (*temp)[j + 1] + ((*temp)[j + 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j + 1], (*temp)[j + 2]);
-                        }
-                        for (int j = index - 2; j > 2; j -= 2)
-                        {
-                            (*temp)[j - 2] =
-                                (*temp)[j - 1] + ((*temp)[j - 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j - 2], (*temp)[j - 1]);
-                        }
-                    }
                 }
-                else if (index + 2 < temp->size() && index % temp->order() == temp->order() - 1)
+                else if (index + 2 < temp->size() && index % order == order - 1)
                 {
                     (*temp)[index + 2] = (*temp)[index + 1] + ((*temp)[index + 1] - (*temp)[index]).normalize() *
                                                                   Geo::distance((*temp)[index + 1], (*temp)[index + 2]);
-                    if (temp->order() == 2)
-                    {
-                        for (int j = index + 2; j + 2 < count; j += 2)
-                        {
-                            (*temp)[j + 2] =
-                                (*temp)[j + 1] + ((*temp)[j + 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j + 1], (*temp)[j + 2]);
-                        }
-                        for (int j = index; j > 2; j -= 2)
-                        {
-                            (*temp)[j - 2] =
-                                (*temp)[j - 1] + ((*temp)[j - 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j - 2], (*temp)[j - 1]);
-                        }
-                    }
                 }
-                else if (index % temp->order() == 0 && index > 0 && index < count - 1)
+                else if (index % order == 0 && index > 0 && index < count - 1)
                 {
                     (*temp)[index - 1].translate(x1 - x0, y1 - y0);
                     (*temp)[index + 1].translate(x1 - x0, y1 - y0);
-                    if (temp->order() == 2)
-                    {
-                        for (int j = index + 1; j + 2 < count; j += 2)
-                        {
-                            (*temp)[j + 2] =
-                                (*temp)[j + 1] + ((*temp)[j + 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j + 1], (*temp)[j + 2]);
-                        }
-                        for (int j = index - 1; j > 2; j -= 2)
-                        {
-                            (*temp)[j - 2] =
-                                (*temp)[j - 1] + ((*temp)[j - 1] - (*temp)[j]).normalize() * Geo::distance((*temp)[j - 2], (*temp)[j - 1]);
-                        }
-                    }
                 }
-                temp->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
+                temp->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
                 _graph->modified = true;
                 return;
             }
@@ -1480,7 +1441,7 @@ bool Editer::blend(const Geo::Geometry *object0, const Geo::Geometry *object1, c
         }
         break;
     case Geo::Type::BEZIER:
-        if (const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(object0);
+        if (const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object0);
             Geo::distance_square(bezier->front(), pos0) < Geo::distance_square(bezier->back(), pos0))
         {
             point0 = bezier->front();
@@ -1600,7 +1561,7 @@ bool Editer::blend(const Geo::Geometry *object0, const Geo::Geometry *object1, c
         }
         break;
     case Geo::Type::BEZIER:
-        if (const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(object1);
+        if (const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object1);
             Geo::distance_square(bezier->front(), pos1) < Geo::distance_square(bezier->back(), pos1))
         {
             point1 = bezier->front();
@@ -1691,7 +1652,7 @@ bool Editer::blend(const Geo::Geometry *object0, const Geo::Geometry *object1, c
         break;
     }
 
-    if (Geo::Bezier *bezier = Geo::blend(pre0, point0, point1, pre1))
+    if (Geo::CubicBezier *bezier = Geo::blend(pre0, point0, point1, pre1))
     {
         bezier->is_selected = true;
         _graph->container_group(_current_group).append(bezier);
@@ -1867,7 +1828,7 @@ bool Editer::offset(const std::vector<Geo::Geometry *> &objects, const double di
     Geo::Circle *circle = nullptr;
     Geo::Ellipse *ellipse = nullptr;
     Geo::BSpline *bspline = nullptr;
-    Geo::Bezier *bezier = nullptr;
+    Geo::CubicBezier *bezier = nullptr;
     Geo::Arc *arc = nullptr;
     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> items;
     size_t index = count;
@@ -1943,13 +1904,13 @@ bool Editer::offset(const std::vector<Geo::Geometry *> &objects, const double di
             break;
         case Geo::Type::BEZIER:
             {
-                bezier = static_cast<Geo::Bezier *>(object);
-                if (std::vector<Geo::Bezier> shapes; Geo::offset(*bezier, shapes, distance, GlobalSetting::setting().offset_tolerance,
-                                                                 GlobalSetting::setting().offset_sample_count))
+                bezier = static_cast<Geo::CubicBezier *>(object);
+                if (std::vector<Geo::CubicBezier> shapes; Geo::offset(*bezier, shapes, distance, GlobalSetting::setting().offset_tolerance,
+                                                                      GlobalSetting::setting().offset_sample_count))
                 {
-                    for (Geo::Bezier &shape : shapes)
+                    for (Geo::CubicBezier &shape : shapes)
                     {
-                        _graph->append(new Geo::Bezier(shape), _current_group);
+                        _graph->append(new Geo::CubicBezier(shape), _current_group);
                         items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
                     }
                 }
@@ -2965,7 +2926,7 @@ bool Editer::fillet(Geo::Polygon *shape, const Geo::Point &point, const double r
     const size_t index1 = std::distance(polygon.cbegin(), it);
     const size_t index0 = index1 > 0 ? index1 - 1 : polygon.size() - 2;
     const size_t index2 = index1 + 1;
-    if (Geo::Bezier arc(3); Geo::angle_to_arc(polygon[index0], polygon[index1], polygon[index2], radius0, radius1, arc))
+    if (Geo::CubicBezier arc; Geo::angle_to_arc(polygon[index0], polygon[index1], polygon[index2], radius0, radius1, arc))
     {
         for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
         {
@@ -2982,7 +2943,7 @@ bool Editer::fillet(Geo::Polygon *shape, const Geo::Point &point, const double r
                 Geo::Polyline *polyline = new Geo::Polyline(points.begin(), points.end());
                 add_items.emplace_back(polyline, _current_group, i);
                 _graph->container_group(_current_group).insert(i, polyline);
-                Geo::Bezier *a = new Geo::Bezier(arc);
+                Geo::CubicBezier *a = new Geo::CubicBezier(arc);
                 a->is_selected = true;
                 add_items.emplace_back(a, _current_group, i + 1);
                 _graph->container_group(_current_group).insert(i + 1, a);
@@ -3058,7 +3019,7 @@ bool Editer::fillet(Geo::Polyline *polyline, const Geo::Point &point, const doub
         return false;
     }
     const size_t index = std::distance(polyline->cbegin(), it);
-    if (Geo::Bezier arc(3); Geo::angle_to_arc((*polyline)[index - 1], (*polyline)[index], (*polyline)[index + 1], radius0, radius1, arc))
+    if (Geo::CubicBezier arc; Geo::angle_to_arc((*polyline)[index - 1], (*polyline)[index], (*polyline)[index + 1], radius0, radius1, arc))
     {
         for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
         {
@@ -3072,7 +3033,7 @@ bool Editer::fillet(Geo::Polyline *polyline, const Geo::Point &point, const doub
                 polyline0->back() = arc.front();
                 add_items.emplace_back(polyline0, _current_group, i);
                 _graph->container_group(_current_group).insert(i, polyline0);
-                Geo::Bezier *a = new Geo::Bezier(arc);
+                Geo::CubicBezier *a = new Geo::CubicBezier(arc);
                 a->is_selected = true;
                 add_items.emplace_back(a, _current_group, i + 1);
                 _graph->container_group(_current_group).insert(i + 1, a);
@@ -3481,7 +3442,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
     }
 
     Geo::Polyline *polyline2 = nullptr, *polyline3 = nullptr;
-    Geo::Bezier *arc = nullptr;
+    Geo::CubicBezier *arc = nullptr;
     if (Geo::Point center; Geo::is_intersected(head0, tail0, head1, tail1, center, true))
     {
         if ((head0 - center) * (tail0 - center) < 0 && (head1 - center) * (tail1 - center) < 0)
@@ -3490,7 +3451,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
             {
                 if ((head1 - center) * (point1 - center) > 0)
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(head0, center, head1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, head1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(head0);
@@ -3498,12 +3459,12 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(head1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
                 else
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(head0, center, tail1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, tail1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(head0);
@@ -3511,7 +3472,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(tail1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
             }
@@ -3519,7 +3480,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
             {
                 if ((head1 - center) * (point1 - center) > 0)
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(tail0, center, head1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, head1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(tail0);
@@ -3527,12 +3488,12 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(head1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
                 else
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(tail0, center, tail1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, tail1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(tail0);
@@ -3540,7 +3501,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(tail1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
             }
@@ -3551,7 +3512,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
             {
                 if (Geo::distance(center, head1) <= Geo::distance(center, tail1))
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(head0, center, tail1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, tail1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(head0);
@@ -3559,12 +3520,12 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(tail1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
                 else
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(head0, center, head1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, head1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(head0);
@@ -3572,7 +3533,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(head1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
             }
@@ -3580,7 +3541,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
             {
                 if (Geo::distance(center, head1) <= Geo::distance(center, tail1))
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(tail0, center, tail1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, tail1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(tail0);
@@ -3588,12 +3549,12 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(tail1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
                 else
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(tail0, center, head1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, head1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(tail0);
@@ -3601,7 +3562,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(head1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
             }
@@ -3612,7 +3573,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
             {
                 if (Geo::distance(center, head0) <= Geo::distance(center, tail0))
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(tail0, center, head1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, head1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(tail0);
@@ -3620,12 +3581,12 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(head1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
                 else
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(head0, center, head1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, head1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(head0);
@@ -3633,7 +3594,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(head1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
             }
@@ -3641,7 +3602,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
             {
                 if (Geo::distance(center, head0) <= Geo::distance(center, tail0))
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(tail0, center, tail1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, tail1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(tail0);
@@ -3649,12 +3610,12 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(tail1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
                 else
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(head0, center, tail1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, tail1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(head0);
@@ -3662,7 +3623,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(tail1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
             }
@@ -3673,7 +3634,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
             {
                 if (Geo::distance(center, head1) <= Geo::distance(center, tail1))
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(tail0, center, tail1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, tail1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(tail0);
@@ -3681,12 +3642,12 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(tail1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
                 else
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(tail0, center, head1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, head1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(tail0);
@@ -3694,7 +3655,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(head1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
             }
@@ -3702,7 +3663,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
             {
                 if (Geo::distance(center, head1) <= Geo::distance(center, tail1))
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(head0, center, tail1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, tail1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(head0);
@@ -3710,12 +3671,12 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(tail1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
                 else
                 {
-                    if (Geo::Bezier arc0(3); Geo::angle_to_arc(head0, center, head1, radius0, radius1, arc0))
+                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, head1, radius0, radius1, arc0))
                     {
                         polyline2 = new Geo::Polyline();
                         polyline2->append(head0);
@@ -3723,7 +3684,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                         polyline3 = new Geo::Polyline();
                         polyline3->append(head1);
                         polyline3->append(arc0.back());
-                        arc = new Geo::Bezier(arc0);
+                        arc = new Geo::CubicBezier(arc0);
                     }
                 }
             }
@@ -3805,7 +3766,7 @@ bool Editer::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
         return false;
     }
 
-    if (Geo::Bezier curve(3); Geo::angle_to_arc(start, center, end, curve))
+    if (Geo::CubicBezier curve; Geo::angle_to_arc(start, center, end, curve))
     {
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
         switch (object0->type())
@@ -3848,8 +3809,8 @@ bool Editer::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
             }
         case Geo::Type::BEZIER:
             {
-                Geo::Bezier *bezier = static_cast<Geo::Bezier *>(object0);
-                if (Geo::Bezier bezier0(bezier->order()), bezier1(bezier->order());
+                Geo::CubicBezier *bezier = static_cast<Geo::CubicBezier *>(object0);
+                if (Geo::CubicBezier bezier0, bezier1;
                     Geo::split(*bezier, std::get<0>(tvalues.front()), std::get<1>(tvalues.front()), bezier0, bezier1))
                 {
                     size_t index = std::distance(
@@ -3863,22 +3824,22 @@ bool Editer::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
                         {
                             if (Geo::is_on_left(bezier0[1], center, start))
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
                             else
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
                         }
                         else
                         {
                             if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, start))
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
                             else
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
                         }
                     }
@@ -3888,22 +3849,22 @@ bool Editer::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
                         {
                             if (Geo::is_on_left(bezier0[1], center, start))
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
                             else
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
                         }
                         else
                         {
                             if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, start))
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
                             else
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
                         }
                     }
@@ -4144,8 +4105,8 @@ bool Editer::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
             }
         case Geo::Type::BEZIER:
             {
-                Geo::Bezier *bezier = static_cast<Geo::Bezier *>(object1);
-                if (Geo::Bezier bezier0(bezier->order()), bezier1(bezier->order());
+                Geo::CubicBezier *bezier = static_cast<Geo::CubicBezier *>(object1);
+                if (Geo::CubicBezier bezier0, bezier1;
                     Geo::split(*bezier, std::get<0>(tvalues.back()), std::get<1>(tvalues.back()), bezier0, bezier1))
                 {
                     size_t index = std::distance(
@@ -4159,22 +4120,22 @@ bool Editer::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
                         {
                             if (Geo::is_on_left(bezier0[1], center, end))
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
                             else
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
                         }
                         else
                         {
                             if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, end))
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
                             else
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
                         }
                     }
@@ -4184,22 +4145,22 @@ bool Editer::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
                         {
                             if (Geo::is_on_left(bezier0[1], center, end))
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
                             else
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
                         }
                         else
                         {
                             if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, end))
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
                             else
                             {
-                                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
                         }
                     }
@@ -4401,7 +4362,7 @@ bool Editer::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
             break;
         }
 
-        _graph->container_group(_current_group).append(new Geo::Bezier(curve));
+        _graph->container_group(_current_group).append(new Geo::CubicBezier(curve));
         append.emplace_back(_graph->container_group(_current_group).back(), _current_group,
                             _graph->container_group(_current_group).size() - 1);
         _backup.push_command(new UndoStack::ObjectCommand(append, remove));
@@ -4551,11 +4512,11 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
         break;
     case Geo::Type::BEZIER:
         {
-            Geo::Bezier *bezier = static_cast<Geo::Bezier *>(object);
+            Geo::CubicBezier *bezier = static_cast<Geo::CubicBezier *>(object);
             std::vector<Geo::Point> coords;
             std::vector<std::tuple<size_t, double, double, double>> tvalues;
             Geo::closest_point(*bezier, pos, coords, &tvalues);
-            if (Geo::Bezier bezier0(bezier->order()), bezier1(bezier->order());
+            if (Geo::CubicBezier bezier0, bezier1;
                 !tvalues.empty() && Geo::split(*bezier, std::get<0>(tvalues.front()), std::get<1>(tvalues.front()), bezier0, bezier1))
             {
                 std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
@@ -4564,8 +4525,8 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
                     std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), object));
                 remove.emplace_back(object, _current_group, index);
                 _graph->container_group(_current_group).pop(index);
-                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier1));
-                _graph->container_group(_current_group).insert(index, new Geo::Bezier(bezier0));
+                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
+                _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                 append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
                 append.emplace_back(_graph->container_group(_current_group)[index + 1], _current_group, index + 1);
                 _backup.push_command(new UndoStack::ObjectCommand(append, remove));
@@ -5046,7 +5007,7 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
             }
             break;
         case Geo::Type::BEZIER:
-            if (const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(object);
+            if (const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
                 Geo::is_intersected(bezier->bounding_rect(), head, tail))
             {
                 if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier, points))
@@ -5367,7 +5328,7 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
             }
             break;
         case Geo::Type::BEZIER:
-            if (const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(object);
+            if (const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
                 Geo::is_intersected(bezier->bounding_rect(), head, tail))
             {
                 if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier, points))
@@ -5610,18 +5571,10 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
     _graph->modified = true;
 }
 
-void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
+void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
 {
-    const int order = bezier->order();
-    std::vector<int> nums(order + 1, 1);
-    if (order == 2)
-    {
-        nums[1] = 2;
-    }
-    else
-    {
-        nums[1] = nums[2] = 3;
-    }
+    const int order = 3;
+    const int nums[4] = {1, 3, 3, 1};
     Geo::Point anchor(x, y);
     double anchor_t = 0;
     size_t anchor_index = 0;
@@ -5641,10 +5594,10 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
                     point += ((*bezier)[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
                 polyline.append(point);
-                t += Geo::Bezier::default_step;
+                t += Geo::CubicBezier::default_step;
             }
             polyline.append((*bezier)[i + order]);
-            Geo::down_sampling(polyline, Geo::Bezier::default_down_sampling_value);
+            Geo::down_sampling(polyline, Geo::CubicBezier::default_down_sampling_value);
 
             std::vector<Geo::Point> points;
             Geo::closest_point(polyline, anchor, points);
@@ -5769,7 +5722,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
 
     std::vector<std::tuple<size_t, double, double, double>> tvalues; // index, t, x, y
     // 找到自身交点
-    const Geo::Bezier anchor_bezier(bezier->begin() + anchor_index, bezier->begin() + anchor_index + order + 1, order, false);
+    const Geo::CubicBezier anchor_bezier(bezier->begin() + anchor_index, bezier->begin() + anchor_index + order + 1, false);
     /*for (size_t i = 0, end = bezier->size() - order; i < end; i += order)
     {
         if (i == anchor_index)
@@ -5804,7 +5757,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         case Geo::Type::BEZIER:
             if (object != bezier)
             {
-                Geo::is_intersected(anchor_bezier, *static_cast<const Geo::Bezier *>(object), temp, &tvalues);
+                Geo::is_intersected(anchor_bezier, *static_cast<const Geo::CubicBezier *>(object), temp, &tvalues);
             }
             break;
         case Geo::Type::BSPLINE:
@@ -5837,8 +5790,8 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
             if (_graph->container_group(_current_group)[i] == bezier)
             {
                 remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
-                Geo::Bezier *bezier0 = new Geo::Bezier(bezier->begin(), bezier->begin() + anchor_index + 1, order, false);
-                Geo::Bezier *bezier1 = new Geo::Bezier(bezier->begin() + anchor_index + order, bezier->end(), order, false);
+                Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
+                Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier->begin() + anchor_index + order, bezier->end(), false);
                 if (bezier0->size() > order)
                 {
                     _graph->container_group(_current_group).insert(i, bezier0);
@@ -5876,23 +5829,23 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
 
     if (left_t == right_t)
     {
-        Geo::Bezier bezier_left(order), bezier_right(order);
+        Geo::CubicBezier bezier_left, bezier_right;
         Geo::split(anchor_bezier, 0, left_t, bezier_left, bezier_right);
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-        Geo::Bezier *bezier0 = nullptr, *bezier1 = nullptr;
+        Geo::CubicBezier *bezier0 = nullptr, *bezier1 = nullptr;
         if (anchor_t < left_t)
         {
-            bezier0 = new Geo::Bezier(bezier->begin(), bezier->begin() + anchor_index + 1, order, false);
-            bezier1 = new Geo::Bezier(bezier_right);
+            bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
+            bezier1 = new Geo::CubicBezier(bezier_right);
             bezier1->append(bezier->begin() + anchor_index + order, bezier->end());
-            bezier1->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
+            bezier1->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
         }
         else
         {
-            bezier0 = new Geo::Bezier(bezier->begin(), bezier->begin() + anchor_index + 1, order, false);
+            bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
             bezier0->append(bezier_left);
-            bezier0->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
-            bezier1 = new Geo::Bezier(bezier->begin() + anchor_index + order, bezier->end(), order, false);
+            bezier0->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
+            bezier1 = new Geo::CubicBezier(bezier->begin() + anchor_index + order, bezier->end(), false);
         }
         if (bezier0->size() <= order)
         {
@@ -5928,7 +5881,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
     {
         if (anchor_t < left_t)
         {
-            Geo::Bezier bezier_left(order), bezier_right(order);
+            Geo::CubicBezier bezier_left, bezier_right;
             Geo::split(anchor_bezier, 0, left_t, bezier_left, bezier_right);
             std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
             for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
@@ -5936,10 +5889,10 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == bezier)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
-                    Geo::Bezier *bezier0 = new Geo::Bezier(bezier->begin(), bezier->begin() + anchor_index + 1, order, false);
-                    Geo::Bezier *bezier1 = new Geo::Bezier(bezier_right);
+                    Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
+                    Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier_right);
                     bezier1->append(bezier->begin() + anchor_index + order, bezier->end());
-                    bezier1->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
+                    bezier1->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
                     if (bezier0->size() > order)
                     {
                         _graph->container_group(_current_group).insert(i, bezier0);
@@ -5965,7 +5918,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         }
         else if (anchor_t > right_t)
         {
-            Geo::Bezier bezier_left(order), bezier_right(order);
+            Geo::CubicBezier bezier_left, bezier_right;
             Geo::split(anchor_bezier, 0, right_t, bezier_left, bezier_right);
             std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
             for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
@@ -5973,10 +5926,10 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == bezier)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
-                    Geo::Bezier *bezier0 = new Geo::Bezier(bezier->begin(), bezier->begin() + anchor_index + 1, order, false);
+                    Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
                     bezier0->append(bezier_left);
-                    bezier0->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
-                    Geo::Bezier *bezier1 = new Geo::Bezier(bezier->begin() + anchor_index + order, bezier->end(), order, false);
+                    bezier0->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
+                    Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier->begin() + anchor_index + order, bezier->end(), false);
                     if (bezier0->size() > order)
                     {
                         _graph->container_group(_current_group).insert(i, bezier0);
@@ -6002,7 +5955,7 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
         }
         else
         {
-            Geo::Bezier bezier_left(order), bezier_right(order), temp_bezier(order);
+            Geo::CubicBezier bezier_left, bezier_right, temp_bezier;
             Geo::split(anchor_bezier, 0, left_t, bezier_left, temp_bezier);
             Geo::split(anchor_bezier, 0, right_t, temp_bezier, bezier_right);
             std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
@@ -6011,12 +5964,12 @@ void Editer::trim(Geo::Bezier *bezier, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == bezier)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
-                    Geo::Bezier *bezier0 = new Geo::Bezier(bezier->begin(), bezier->begin() + anchor_index + 1, order, false);
+                    Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
                     bezier0->append(bezier_left);
-                    bezier0->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
-                    Geo::Bezier *bezier1 = new Geo::Bezier(bezier_right);
+                    bezier0->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
+                    Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier_right);
                     bezier1->append(bezier->begin() + anchor_index + order, bezier->end());
-                    bezier1->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
+                    bezier1->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
                     _graph->container_group(_current_group).insert(i, bezier1);
                     _graph->container_group(_current_group).insert(i, bezier0);
                     add_items.emplace_back(bezier0, _current_group, i);
@@ -6221,7 +6174,7 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
             Geo::is_intersected(*static_cast<const Geo::Ellipse *>(object), *bspline, is_cubic, temp, &tvalues);
             break;
         case Geo::Type::BEZIER:
-            Geo::is_intersected(*static_cast<const Geo::Bezier *>(object), *bspline, is_cubic, temp, nullptr, &tvalues);
+            Geo::is_intersected(*static_cast<const Geo::CubicBezier *>(object), *bspline, is_cubic, temp, nullptr, &tvalues);
             break;
         case Geo::Type::BSPLINE:
             if (object != bspline)
@@ -6490,7 +6443,7 @@ void Editer::trim(Geo::Circle *circle, const double x, const double y)
             }
             break;
         case Geo::Type::BEZIER:
-            Geo::is_intersected(*circle, *static_cast<const Geo::Bezier *>(object), intersections, nullptr);
+            Geo::is_intersected(*circle, *static_cast<const Geo::CubicBezier *>(object), intersections, nullptr);
             break;
         case Geo::Type::BSPLINE:
             Geo::is_intersected(*circle, *static_cast<const Geo::BSpline *>(object), dynamic_cast<const Geo::CubicBSpline *>(object),
@@ -6623,7 +6576,7 @@ void Editer::trim(Geo::Arc *arc, const double x, const double y)
             }
             break;
         case Geo::Type::BEZIER:
-            Geo::is_intersected(*arc, *static_cast<const Geo::Bezier *>(object), intersections, nullptr);
+            Geo::is_intersected(*arc, *static_cast<const Geo::CubicBezier *>(object), intersections, nullptr);
             break;
         case Geo::Type::BSPLINE:
             Geo::is_intersected(*arc, *static_cast<const Geo::BSpline *>(object), dynamic_cast<const Geo::CubicBSpline *>(object),
@@ -6830,7 +6783,7 @@ void Editer::trim(Geo::Ellipse *ellipse, const double x, const double y)
             }
             break;
         case Geo::Type::BEZIER:
-            Geo::is_intersected(*ellipse, *static_cast<const Geo::Bezier *>(object), intersections, nullptr);
+            Geo::is_intersected(*ellipse, *static_cast<const Geo::CubicBezier *>(object), intersections, nullptr);
             break;
         case Geo::Type::BSPLINE:
             Geo::is_intersected(*ellipse, *static_cast<const Geo::BSpline *>(object), dynamic_cast<const Geo::CubicBSpline *>(object),
@@ -7098,7 +7051,7 @@ void Editer::extend(Geo::Polyline *polyline, const double x, const double y)
             }
             break;
         case Geo::Type::BEZIER:
-            if (const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(object);
+            if (const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
                 Geo::is_intersected(bezier->bounding_rect(), head, tail))
             {
                 if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier, points))
@@ -7190,7 +7143,7 @@ void Editer::extend(Geo::Polyline *polyline, const double x, const double y)
     }
 }
 
-void Editer::extend(Geo::Bezier *bezier, const double x, const double y)
+void Editer::extend(Geo::CubicBezier *bezier, const double x, const double y)
 {
     Geo::Point head, tail;
     if (Geo::distance_square(bezier->front().x, bezier->front().y, x, y) <=
@@ -7276,7 +7229,7 @@ void Editer::extend(Geo::Bezier *bezier, const double x, const double y)
             }
             break;
         case Geo::Type::BEZIER:
-            if (const Geo::Bezier *bezier2 = static_cast<const Geo::Bezier *>(object);
+            if (const Geo::CubicBezier *bezier2 = static_cast<const Geo::CubicBezier *>(object);
                 bezier2 != bezier && Geo::is_intersected(bezier2->bounding_rect(), head, tail))
             {
                 if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier2, points))
@@ -7375,7 +7328,7 @@ void Editer::extend(Geo::Bezier *bezier, const double x, const double y)
         bezier->append(point1);
         bezier->append(expoint);
     }
-    bezier->update_shape(Geo::Bezier::default_step, Geo::Bezier::default_down_sampling_value);
+    bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
 }
 
 void Editer::extend(Geo::BSpline *bspline, const double x, const double y)
@@ -7466,7 +7419,7 @@ void Editer::extend(Geo::BSpline *bspline, const double x, const double y)
             }
             break;
         case Geo::Type::BEZIER:
-            if (const Geo::Bezier *bezier = static_cast<const Geo::Bezier *>(object);
+            if (const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
                 Geo::is_intersected(bezier->bounding_rect(), head, tail))
             {
                 if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier, points))
@@ -8351,7 +8304,7 @@ void Editer::auto_combinate()
                         }
                         break;
                     case Geo::Type::BEZIER:
-                        if (Geo::is_intersected(static_cast<Geo::Bezier *>(all_polylines[k])->shape(),
+                        if (Geo::is_intersected(static_cast<Geo::CubicBezier *>(all_polylines[k])->shape(),
                                                 *static_cast<Geo::Polygon *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
@@ -8405,7 +8358,7 @@ void Editer::auto_combinate()
                         }
                         break;
                     case Geo::Type::BEZIER:
-                        if (Geo::is_intersected(static_cast<Geo::Bezier *>(all_polylines[k])->shape(),
+                        if (Geo::is_intersected(static_cast<Geo::CubicBezier *>(all_polylines[k])->shape(),
                                                 *static_cast<Geo::Circle *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
@@ -8459,7 +8412,7 @@ void Editer::auto_combinate()
                         }
                         break;
                     case Geo::Type::BEZIER:
-                        if (Geo::is_intersected(static_cast<Geo::Bezier *>(all_polylines[k])->shape(),
+                        if (Geo::is_intersected(static_cast<Geo::CubicBezier *>(all_polylines[k])->shape(),
                                                 *static_cast<Geo::Ellipse *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
@@ -8469,7 +8422,7 @@ void Editer::auto_combinate()
                         }
                         break;
                     case Geo::Type::BSPLINE:
-                        if (Geo::is_intersected(static_cast<Geo::Bezier *>(all_polylines[k])->shape(),
+                        if (Geo::is_intersected(static_cast<Geo::CubicBezier *>(all_polylines[k])->shape(),
                                                 *static_cast<Geo::Ellipse *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
@@ -9019,25 +8972,23 @@ void Editer::text_to_polylines(Text *text)
     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
 }
 
-void Editer::bezier_to_bspline(Geo::Bezier *bezier)
+void Editer::bezier_to_bspline(Geo::CubicBezier *bezier)
 {
     if (bezier == nullptr)
     {
         return;
     }
-    if (Geo::BSpline *bspline = Geo::bezier_to_bspline(*bezier))
-    {
-        const size_t index = std::distance(
-            _graph->container_group(_current_group).begin(),
-            std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), bezier));
-        _graph->container_group(_current_group).pop(index);
-        _graph->container_group(_current_group).insert(index, bspline);
-        _graph->modified = true;
-        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-        add_items.emplace_back(bspline, _current_group, index);
-        remove_items.emplace_back(bezier, _current_group, index);
-        _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
-    }
+    Geo::CubicBSpline *bspline = new Geo::CubicBSpline(Geo::bezier_to_bspline(*bezier));
+    const size_t index = std::distance(
+        _graph->container_group(_current_group).begin(),
+        std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), bezier));
+    _graph->container_group(_current_group).pop(index);
+    _graph->container_group(_current_group).insert(index, bspline);
+    _graph->modified = true;
+    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    add_items.emplace_back(bspline, _current_group, index);
+    remove_items.emplace_back(bezier, _current_group, index);
+    _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
 }
 
 void Editer::bspline_to_bezier(Geo::BSpline *bspline)
@@ -9046,7 +8997,7 @@ void Editer::bspline_to_bezier(Geo::BSpline *bspline)
     {
         return;
     }
-    if (Geo::Bezier *bezier = Geo::bspline_to_bezier(*bspline))
+    if (Geo::CubicBezier *bezier = Geo::bspline_to_bezier(*bspline))
     {
         const size_t index = std::distance(
             _graph->container_group(_current_group).begin(),
@@ -9141,7 +9092,7 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
                         }
                         break;
                     case Geo::Type::BEZIER:
-                        if (Geo::is_intersected(rect, static_cast<Geo::Bezier *>(item)->shape()))
+                        if (Geo::is_intersected(rect, static_cast<Geo::CubicBezier *>(item)->shape()))
                         {
                             end = true;
                         }
@@ -9187,7 +9138,7 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const
             }
             break;
         case Geo::Type::BEZIER:
-            if (Geo::is_intersected(rect, static_cast<Geo::Bezier *>(container)->shape()))
+            if (Geo::is_intersected(rect, static_cast<Geo::CubicBezier *>(container)->shape()))
             {
                 container->is_selected = true;
                 result->push_back(container);

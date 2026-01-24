@@ -1999,121 +1999,91 @@ const Polygon &Circle::shape() const
 
 
 // Bezier
-double Bezier::default_step = 0.01;
-double Bezier::default_down_sampling_value = 0.02;
+double CubicBezier::default_step = 0.01;
+double CubicBezier::default_down_sampling_value = 0.02;
 
-Bezier::Bezier(const int n) : _order(n)
-{
-    assert(n == 3 || n == 2);
-    _shape.shape_fixed = true;
-}
-
-Bezier::Bezier(const Bezier &bezier) : Polyline(bezier), _order(bezier._order), _shape(bezier._shape)
+CubicBezier::CubicBezier()
 {
     _shape.shape_fixed = true;
 }
 
-Bezier::Bezier(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end, const int n,
-               const bool is_path_points)
-    : Polyline(begin, end), _order(n)
+CubicBezier::CubicBezier(const CubicBezier &bezier) : Polyline(bezier), _shape(bezier._shape)
 {
-    assert(n == 3 || n == 2);
+    _shape.shape_fixed = true;
+}
+
+CubicBezier::CubicBezier(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end,
+                         const bool is_path_points)
+    : Polyline(begin, end)
+{
     _shape.shape_fixed = true;
     if (is_path_points)
     {
         update_control_points();
     }
-    update_shape(Bezier::default_step, Bezier::default_down_sampling_value);
+    update_shape(CubicBezier::default_step, CubicBezier::default_down_sampling_value);
 }
 
-Bezier::Bezier(const std::initializer_list<Point> &points, const int n, const bool is_path_points) : Polyline(points), _order(n)
+CubicBezier::CubicBezier(const std::initializer_list<Point> &points, const bool is_path_points) : Polyline(points)
 {
-    assert(n == 3 || n == 2);
     _shape.shape_fixed = true;
     if (is_path_points)
     {
         update_control_points();
     }
-    update_shape(Bezier::default_step, Bezier::default_down_sampling_value);
+    update_shape(CubicBezier::default_step, CubicBezier::default_down_sampling_value);
 }
 
-const Type Bezier::type() const
+const Type CubicBezier::type() const
 {
     return Type::BEZIER;
 }
 
-int Bezier::order() const
-{
-    return _order;
-}
-
-const Polyline &Bezier::shape() const
+const Polyline &CubicBezier::shape() const
 {
     return _shape;
 }
 
-void Bezier::update_control_points()
+void CubicBezier::update_control_points()
 {
     std::vector<Geo::Point> paths(_points);
     _points.erase(_points.begin() + 1, _points.end());
     Geo::Point mid0((paths[1] + paths[2]) / 2), mid1((paths[0] + paths[1]) / 2);
     _points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
-    if (_order == 2)
+    for (size_t i = 1, count = paths.size() - 1; i < count; ++i)
     {
-        for (size_t i = 1, count = paths.size() - 1; i < count; ++i)
-        {
-            mid1 = paths[i] - _points.back();
-            const double dis = Geo::distance(_points.back(), paths[i]) / 2;
-            _points.emplace_back(paths[i]);
-            _points.emplace_back(paths[i] + mid1.normalize() * dis);
-        }
-        _points.emplace_back(paths.back());
+        mid0 = mid1;
+        mid1 = (paths[i] + paths[i + 1]) / 2;
+        _points.emplace_back(paths[i] + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) / 2);
+        _points.emplace_back(paths[i]);
+        _points.emplace_back(paths[i] + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
     }
-    else
-    {
-        for (size_t i = 1, count = paths.size() - 1; i < count; ++i)
-        {
-            mid0 = mid1;
-            mid1 = (paths[i] + paths[i + 1]) / 2;
-            _points.emplace_back(paths[i] + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) / 2);
-            _points.emplace_back(paths[i]);
-            _points.emplace_back(paths[i] + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
-        }
-        _points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
-        _points.emplace_back(paths.back());
-        _points[1] = (_points[0] + _points[2]) / 2;
-        _points[_points.size() - 2] = (_points.back() + _points[_points.size() - 3]) / 2;
-    }
+    _points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
+    _points.emplace_back(paths.back());
+    _points[1] = (_points[0] + _points[2]) / 2;
+    _points[_points.size() - 2] = (_points.back() + _points[_points.size() - 3]) / 2;
 }
 
-void Bezier::update_shape(const double step, const double down_sampling_value)
+void CubicBezier::update_shape(const double step, const double down_sampling_value)
 {
     assert(0 < step && step < 1);
     _shape.clear();
-    if (_points.size() <= _order)
+    if (_points.size() <= 3)
     {
         return;
     }
-    std::vector<int> nums(_order + 1, 1);
-    if (_order == 2)
-    {
-        nums[1] = 2;
-    }
-    else
-    {
-        nums[1] = nums[2] = 3;
-    }
+    const int nums[4] = {1, 3, 3, 1};
 
-    for (size_t i = 0, end = _points.size() - _order; i < end; i += _order)
+    for (size_t i = 0, end = _points.size() - 3; i < end; i += 3)
     {
         _shape.append(_points[i]);
         double t = 0;
         while (t <= 1)
         {
             Geo::Point point;
-            for (int j = 0; j <= _order; ++j)
+            for (int j = 0; j <= 3; ++j)
             {
-                point += (_points[j + i] * (nums[j] * std::pow(1 - t, _order - j) * std::pow(t, j)));
+                point += (_points[j + i] * (nums[j] * std::pow(1 - t, 3 - j) * std::pow(t, j)));
             }
             _shape.append(point);
             t += step;
@@ -2124,128 +2094,112 @@ void Bezier::update_shape(const double step, const double down_sampling_value)
     Geo::down_sampling(_shape, down_sampling_value);
 }
 
-const double Bezier::length() const
+const double CubicBezier::length() const
 {
     return _shape.length();
 }
 
-void Bezier::clear()
+void CubicBezier::clear()
 {
     _shape.clear();
     Polyline::clear();
 }
 
-Bezier *Bezier::clone() const
+CubicBezier *CubicBezier::clone() const
 {
-    return new Bezier(*this);
+    return new CubicBezier(*this);
 }
 
-Bezier &Bezier::operator=(const Bezier &bezier)
+CubicBezier &CubicBezier::operator=(const CubicBezier &bezier)
 {
     if (this != &bezier)
     {
         Polyline::operator=(bezier);
         _shape = bezier._shape;
-        _order = bezier._order;
     }
     return *this;
 }
 
-void Bezier::transform(const double a, const double b, const double c, const double d, const double e, const double f)
+void CubicBezier::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
     Polyline::transform(a, b, c, d, e, f);
     _shape.transform(a, b, c, d, e, f);
 }
 
-void Bezier::transform(const double mat[6])
+void CubicBezier::transform(const double mat[6])
 {
     Polyline::transform(mat);
     _shape.transform(mat);
 }
 
-void Bezier::translate(const double tx, const double ty)
+void CubicBezier::translate(const double tx, const double ty)
 {
     Polyline::translate(tx, ty);
     _shape.translate(tx, ty);
 }
 
-void Bezier::rotate(const double x, const double y, const double rad)
+void CubicBezier::rotate(const double x, const double y, const double rad)
 {
     Polyline::rotate(x, y, rad);
     _shape.rotate(x, y, rad);
 }
 
-void Bezier::scale(const double x, const double y, const double k)
+void CubicBezier::scale(const double x, const double y, const double k)
 {
     Polyline::scale(x, y, k);
     _shape.scale(x, y, k);
 }
 
-Polygon Bezier::convex_hull() const
+Polygon CubicBezier::convex_hull() const
 {
     return _shape.convex_hull();
 }
 
-AABBRect Bezier::bounding_rect() const
+AABBRect CubicBezier::bounding_rect() const
 {
     return _shape.bounding_rect();
 }
 
-Polygon Bezier::mini_bounding_rect() const
+Polygon CubicBezier::mini_bounding_rect() const
 {
     return _shape.mini_bounding_rect();
 }
 
-Point Bezier::tangent(const size_t index, const double t) const
+Point CubicBezier::tangent(const size_t index, const double t) const
 {
-    if (_points.size() < _order * (index + 1) + 1)
+    if (_points.size() < 3 * (index + 1) + 1)
     {
         return Point();
     }
-    std::vector<int> nums(_order, 1);
-    if (_order == 3)
-    {
-        nums[1] = 2;
-    }
+    const int nums[3] = {1, 2, 1};
 
     Point start, end;
-    for (int i = 0; i < _order; ++i)
+    for (int i = 0; i < 3; ++i)
     {
-        start += (_points[i + index] * (nums[i] * std::pow(1 - t, _order - i - 1) * std::pow(t, i)));
-    }
-    for (int i = 0; i < _order; ++i)
-    {
-        end += (_points[i + index + 1] * (nums[i] * std::pow(1 - t, _order - i - 1) * std::pow(t, i)));
+        start += (_points[i + index] * (nums[i] * std::pow(1 - t, 3 - i - 1) * std::pow(t, i)));
+        end += (_points[i + index + 1] * (nums[i] * std::pow(1 - t, 3 - i - 1) * std::pow(t, i)));
     }
     return end - start;
 }
 
-Point Bezier::vertical(const size_t index, const double t) const
+Point CubicBezier::vertical(const size_t index, const double t) const
 {
     const Geo::Point tan = tangent(index, t);
     return Geo::Point(-tan.y, tan.x);
 }
 
-Point Bezier::shape_point(const size_t index, const double t) const
+Point CubicBezier::shape_point(const size_t index, const double t) const
 {
-    if (_points.size() < _order * (index + 1) + 1)
+    if (_points.size() < 3 * (index + 1) + 1)
     {
         return Point();
     }
-    std::vector<int> nums(_order + 1, 1);
-    if (_order == 2)
-    {
-        nums[1] = 2;
-    }
-    else
-    {
-        nums[1] = nums[2] = 3;
-    }
+    const int nums[4] = {1, 3, 3, 1};
 
     Geo::Point point;
-    for (int j = 0; j <= _order; ++j)
+    for (int j = 0; j <= 3; ++j)
     {
-        point += (_points[j + index] * (nums[j] * std::pow(1 - t, _order - j) * std::pow(t, j)));
+        point += (_points[j + index] * (nums[j] * std::pow(1 - t, 3 - j) * std::pow(t, j)));
     }
     return point;
 }

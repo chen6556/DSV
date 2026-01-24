@@ -1039,7 +1039,7 @@ void DXFReaderWriter::write_geometry_object(const Geo::Geometry *object)
     case Geo::Type::AABBRECT:
         break;
     case Geo::Type::BEZIER:
-        write_bezier(static_cast<const Geo::Bezier *>(object));
+        write_bezier(static_cast<const Geo::CubicBezier *>(object));
         break;
     case Geo::Type::BSPLINE:
         write_bspline(static_cast<const Geo::BSpline *>(object));
@@ -1080,26 +1080,10 @@ void DXFReaderWriter::write_geometry_object(const Geo::Geometry *object)
     }
 }
 
-void DXFReaderWriter::write_bezier(const Geo::Bezier *bezier)
+void DXFReaderWriter::write_bezier(const Geo::CubicBezier *bezier)
 {
-    if (const Geo::BSpline *bspline = Geo::bezier_to_bspline(*bezier))
-    {
-        write_bspline(bspline);
-        delete bspline;
-    }
-    else
-    {
-        DRW_LWPolyline pol;
-        for (const Geo::Point &point : bezier->shape())
-        {
-            pol.addVertex(DRW_Vertex2D(point.x, point.y, 0));
-        }
-        pol.addVertex(DRW_Vertex2D(bezier->shape().back().x, bezier->shape().back().y, 0));
-        pol.vertexnum = pol.vertlist.size();
-        pol.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
-        pol.lineType = "CONTINUOUS";
-        _dxfrw->writeLWPolyline(&pol);
-    }
+    const Geo::CubicBSpline bspline = Geo::bezier_to_bspline(*bezier);
+    write_bspline(&bspline);
 }
 
 void DXFReaderWriter::write_bspline(const Geo::BSpline *bspline)

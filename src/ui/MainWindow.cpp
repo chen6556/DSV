@@ -534,10 +534,10 @@ void MainWindow::refresh_settings()
     if (_setting->update_curve_vbo())
     {
         const double value = GlobalSetting::setting().down_sampling;
-        Geo::BSpline::default_down_sampling_value = Geo::Bezier::default_down_sampling_value = Geo::Circle::default_down_sampling_value =
-            Geo::Ellipse::default_down_sampling_value = value;
+        Geo::BSpline::default_down_sampling_value = Geo::CubicBezier::default_down_sampling_value =
+            Geo::Circle::default_down_sampling_value = Geo::Ellipse::default_down_sampling_value = value;
         const double step = GlobalSetting::setting().sampling_step;
-        Geo::BSpline::default_step = step * 2, Geo::Bezier::default_step = step;
+        Geo::BSpline::default_step = step, Geo::CubicBezier::default_step = step;
         GlobalSetting::setting().graph->update_curve_shape(step, value);
         ui->canvas->refresh_vbo();
     }
@@ -554,7 +554,7 @@ void MainWindow::load_settings()
 {
     GlobalSetting::setting().load_setting();
 
-    Geo::Bezier::default_down_sampling_value = Geo::BSpline::default_down_sampling_value = Geo::Circle::default_down_sampling_value =
+    Geo::CubicBezier::default_down_sampling_value = Geo::BSpline::default_down_sampling_value = Geo::Circle::default_down_sampling_value =
         Geo::Ellipse::default_down_sampling_value = GlobalSetting::setting().down_sampling;
 
     _editer.set_path(GlobalSetting::setting().file_path);

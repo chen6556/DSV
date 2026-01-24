@@ -79,7 +79,7 @@ bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &po
 }
 
 bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius0, const double radius1,
-                       Bezier &arc)
+                       CubicBezier &arc)
 {
     if (radius0 <= 0 || radius1 <= 0)
     {
@@ -134,11 +134,11 @@ bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &po
     controls.emplace_back(array1[1]);
     controls.emplace_back(array1[0]);
 
-    arc = Geo::Bezier(controls.begin(), controls.end(), 3, false);
+    arc = Geo::CubicBezier(controls.begin(), controls.end(), false);
     return true;
 }
 
-bool Geo::angle_to_arc(const Point &start, const Point &center, const Point &end, Bezier &arc)
+bool Geo::angle_to_arc(const Point &start, const Point &center, const Point &end, CubicBezier &arc)
 {
     if (center == start || center == end || start == end)
     {
@@ -169,7 +169,7 @@ bool Geo::angle_to_arc(const Point &start, const Point &center, const Point &end
         controls.emplace_back(array1[1]);
         controls.emplace_back(array1[0]);
 
-        arc = Geo::Bezier(controls.begin(), controls.end(), 3, false);
+        arc = Geo::CubicBezier(controls.begin(), controls.end(), false);
         return true;
     }
     else
@@ -234,7 +234,7 @@ Geo::Polyline Geo::arc_to_polyline(const Geo::Arc &arc, const double down_sampli
     return arc_to_polyline(center, arc.radius, angle0, angle1, arc.is_cw(), down_sampling_value);
 }
 
-Geo::Bezier Geo::arc_to_bezier(const Geo::Arc &arc)
+Geo::CubicBezier Geo::arc_to_bezier(const Geo::Arc &arc)
 {
     std::vector<Geo::Point> points;
     points.emplace_back(arc.control_points[0]);
@@ -279,7 +279,7 @@ Geo::Bezier Geo::arc_to_bezier(const Geo::Arc &arc)
             points.emplace_back(point);
         }
     }
-    return Geo::Bezier(points.begin(), points.end(), 3, false);
+    return Geo::CubicBezier(points.begin(), points.end(), false);
 }
 
 
@@ -314,7 +314,7 @@ Geo::Polygon Geo::circle_to_polygon(const Circle &circle, const double down_samp
     return Geo::circle_to_polygon(circle.x, circle.y, circle.radius, down_sampling_value);
 }
 
-Geo::Bezier Geo::circle_to_bezier(const Geo::Circle &circle)
+Geo::CubicBezier Geo::circle_to_bezier(const Geo::Circle &circle)
 {
     std::vector<Geo::Point> points;
     const double k = 4 * (-1 + std::sqrt(2)) / 3 * circle.radius;
@@ -337,7 +337,7 @@ Geo::Bezier Geo::circle_to_bezier(const Geo::Circle &circle)
     points.emplace_back(point3.x + k, point3.y);
     points.emplace_back(point0.x, point0.y - k);
     points.emplace_back(point0);
-    return Geo::Bezier(points.begin(), points.end(), 3, false);
+    return Geo::CubicBezier(points.begin(), points.end(), false);
 }
 
 
@@ -415,7 +415,7 @@ Geo::Polyline Geo::ellipse_to_polyline(const Ellipse &ellipse, const double down
                                     ellipse.arc_param0(), ellipse.arc_param1(), down_sampling_value);
 }
 
-Geo::Bezier Geo::ellipse_to_bezier(const Geo::Ellipse &ellipse)
+Geo::CubicBezier Geo::ellipse_to_bezier(const Geo::Ellipse &ellipse)
 {
     std::vector<Geo::Point> points;
     {
@@ -452,14 +452,14 @@ Geo::Bezier Geo::ellipse_to_bezier(const Geo::Ellipse &ellipse)
     }
     if (ellipse.is_arc())
     {
-        Geo::Bezier bezier(points.begin(), points.end(), 3, false);
+        Geo::CubicBezier bezier(points.begin(), points.end(), false);
         if (std::vector<Geo::Point> output; ellipse.arc_angle0() < ellipse.arc_angle1())
         {
-            if (Geo::Bezier b0(3), b1(3);
+            if (Geo::CubicBezier b0, b1;
                 Geo::closest_point(bezier, ellipse.arc_point0(), output) && Geo::split(bezier, output.front(), b0, b1))
             {
                 output.clear();
-                if (Geo::Bezier b2(3), b3(3);
+                if (Geo::CubicBezier b2, b3;
                     Geo::closest_point(b1, ellipse.arc_point1(), output) && Geo::split(b1, output.front(), b2, b3))
                 {
                     points.assign(b2.begin(), b2.end());
@@ -468,11 +468,11 @@ Geo::Bezier Geo::ellipse_to_bezier(const Geo::Ellipse &ellipse)
         }
         else
         {
-            if (Geo::Bezier b0(3), b1(3);
+            if (Geo::CubicBezier b0, b1;
                 Geo::closest_point(bezier, ellipse.arc_point0(), output) && Geo::split(bezier, output.front(), b0, b1))
             {
                 output.clear();
-                if (Geo::Bezier b2(3), b3(3);
+                if (Geo::CubicBezier b2, b3;
                     Geo::closest_point(b0, ellipse.arc_point1(), output) && Geo::split(b0, output.front(), b2, b3))
                 {
                     points.assign(b1.begin(), b1.end());
@@ -481,49 +481,30 @@ Geo::Bezier Geo::ellipse_to_bezier(const Geo::Ellipse &ellipse)
             }
         }
     }
-    return Geo::Bezier(points.begin(), points.end(), 3, false);
+    return Geo::CubicBezier(points.begin(), points.end(), false);
 }
 
 
-Geo::BSpline *Geo::bezier_to_bspline(const Geo::Bezier &bezier)
+Geo::CubicBSpline Geo::bezier_to_bspline(const Geo::CubicBezier &bezier)
 {
-    if (bezier.order() == 3)
+    std::vector<double> knots(4, 0);
+    int value = 1;
+    for (size_t i = 1, count = bezier.size() / 3; i < count; ++i, ++value)
     {
-        std::vector<double> knots(4, 0);
-        int value = 1;
-        for (size_t i = 1, count = bezier.size() / 3; i < count; ++i, ++value)
-        {
-            knots.push_back(value);
-            knots.push_back(value);
-            knots.push_back(value);
-        }
         knots.push_back(value);
         knots.push_back(value);
         knots.push_back(value);
-        knots.push_back(value);
-        Geo::CubicBSpline *bspline = new Geo::CubicBSpline(bezier.begin(), bezier.end(), knots, false);
-        bspline->controls_model = true;
-        return bspline;
     }
-    else
-    {
-        std::vector<double> knots(3, 0);
-        int value = 1;
-        for (size_t i = 1, count = bezier.size() / 2; i < count; ++i, ++value)
-        {
-            knots.push_back(value);
-            knots.push_back(value);
-        }
-        knots.push_back(value);
-        knots.push_back(value);
-        knots.push_back(value);
-        Geo::QuadBSpline *bspline = new Geo::QuadBSpline(bezier.begin(), bezier.end(), knots, false);
-        bspline->controls_model = true;
-        return bspline;
-    }
+    knots.push_back(value);
+    knots.push_back(value);
+    knots.push_back(value);
+    knots.push_back(value);
+    Geo::CubicBSpline bspline(bezier.begin(), bezier.end(), knots, false);
+    bspline.controls_model = true;
+    return bspline;
 }
 
-Geo::Bezier *Geo::bspline_to_bezier(const Geo::BSpline &bspline)
+Geo::CubicBezier *Geo::bspline_to_bezier(const Geo::BSpline &bspline)
 {
     if (dynamic_cast<const Geo::CubicBSpline *>(&bspline) != nullptr)
     {
@@ -539,28 +520,16 @@ Geo::Bezier *Geo::bspline_to_bezier(const Geo::BSpline &bspline)
                 }
             }
         }
-        return new Geo::Bezier(temp.control_points.begin(), temp.control_points.end(), 3, false);
+        return new Geo::CubicBezier(temp.control_points.begin(), temp.control_points.end(), false);
     }
     else
     {
-        Geo::QuadBSpline temp(*static_cast<const Geo::QuadBSpline *>(&bspline));
-        for (size_t j = 0, i = temp.knots().size() - 1; i > 0; --i)
-        {
-            if (j = std::count(temp.knots().begin(), temp.knots().end(), temp.knots()[i]); j < 3)
-            {
-                const double t = temp.knots()[i];
-                while (j++ <= 3)
-                {
-                    temp.insert(t);
-                }
-            }
-        }
-        return new Geo::Bezier(temp.control_points.begin(), temp.control_points.end(), 2, false);
+        return nullptr;
     }
 }
 
 
-Geo::Bezier *Geo::blend(const Geo::Point &pre0, const Geo::Point &point0, const Geo::Point &point1, const Geo::Point &pre1)
+Geo::CubicBezier *Geo::blend(const Geo::Point &pre0, const Geo::Point &point0, const Geo::Point &point1, const Geo::Point &pre1)
 {
     if (pre0 == point0 || point1 == pre1)
     {
@@ -576,7 +545,7 @@ Geo::Bezier *Geo::blend(const Geo::Point &pre0, const Geo::Point &point0, const 
         points[1] = (points[0] + points[2]) / 2;
         points[5] = (points[4] + points[6]) / 2;
         points[3] = (points[2] + points[4]) / 2;
-        return new Geo::Bezier(points.begin(), points.end(), 3, false);
+        return new Geo::CubicBezier(points.begin(), points.end(), false);
     }
     else
     {

@@ -16,10 +16,10 @@ bool angle_to_arc(const Point &point0, const Point &point1, const Point &point2,
 bool angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius, Arc &arc);
 
 // 非对称圆角
-bool angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius0, const double radius1, Bezier &arc);
+bool angle_to_arc(const Point &point0, const Point &point1, const Point &point2, const double radius0, const double radius1, CubicBezier &arc);
 
 // 自由非对称圆角
-bool angle_to_arc(const Point &start, const Point &center, const Point &end, Bezier &arc);
+bool angle_to_arc(const Point &start, const Point &center, const Point &end, CubicBezier &arc);
 
 
 Polyline arc_to_polyline(const Point &center, const double radius, double start_angle, double end_angle, const bool is_cw,
@@ -27,14 +27,14 @@ Polyline arc_to_polyline(const Point &center, const double radius, double start_
 
 Polyline arc_to_polyline(const Arc &arc, const double down_sampling_value = 0.02);
 
-Bezier arc_to_bezier(const Arc &arc);
+CubicBezier arc_to_bezier(const Arc &arc);
 
 
 Polygon circle_to_polygon(const double x, const double y, const double r, const double down_sampling_value = 0.02);
 
 Polygon circle_to_polygon(const Circle &circle, const double down_sampling_value = 0.02);
 
-Bezier circle_to_bezier(const Circle &circle);
+CubicBezier circle_to_bezier(const Circle &circle);
 
 
 Polygon ellipse_to_polygon(const double x, const double y, const double a, const double b, const double rad,
@@ -48,13 +48,13 @@ Polyline ellipse_to_polyline(const double x, const double y, const double a, con
 
 Polyline ellipse_to_polyline(const Ellipse &ellipse, const double down_sampling_value = 0.02);
 
-Bezier ellipse_to_bezier(const Ellipse &ellipse);
+CubicBezier ellipse_to_bezier(const Ellipse &ellipse);
 
 
-BSpline *bezier_to_bspline(const Geo::Bezier &bezier);
+CubicBSpline bezier_to_bspline(const CubicBezier &bezier);
 
-Bezier *bspline_to_bezier(const Geo::BSpline &bspline);
+CubicBezier *bspline_to_bezier(const BSpline &bspline);
 
 
-Geo::Bezier *blend(const Point &pre0, const Point &point0, const Point &point1, const Point &pre1);
+CubicBezier *blend(const Point &pre0, const Point &point0, const Point &point1, const Point &pre1);
 } // namespace Geo

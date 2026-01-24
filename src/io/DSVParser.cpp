@@ -104,15 +104,12 @@ void Importer::store_bezier()
     if (_is_combination)
     {
         static_cast<Combination *>(_graph->container_groups().back().back())->append(
-            new Geo::Bezier(_points.cbegin(), _points.cend(), _parameters.back(), false));
-        static_cast<Geo::Bezier *>(static_cast<Combination *>(_graph->container_groups().back().back())
-            ->back())->update_shape();
+            new Geo::CubicBezier(_points.cbegin(), _points.cend(), false));
     }
     else
     {
         _graph->container_groups().back().append(
-            new Geo::Bezier(_points.cbegin(), _points.cend(), _parameters.back(), false));
-        static_cast<Geo::Bezier *>(_graph->container_groups().back().back())->update_shape();
+            new Geo::CubicBezier(_points.cbegin(), _points.cend(), false));
     }
     _points.clear();
     _parameters.pop_back();
@@ -268,7 +265,7 @@ static Parser<bool> polygon = str_p("POLYGON") >> !str >> !eol_p() >> list_p(coo
 static Parser<bool> circle = str_p("CIRCLE") >> !str >> !eol_p() >> coord >> separator >> parameter >> !eol_p() >> end[circle_a];
 static Parser<bool> ellipse = str_p("ELLIPSE") >> !str >> !eol_p() >> list_p(coord, separator) >> !eol_p() >> end[ellipse_a];
 static Parser<bool> polyline = str_p("POLYLINE") >> !eol_p() >> list_p(coord, separator) >> !eol_p() >> end[polyline_a];
-static Parser<bool> bezier = str_p("BEZIER") >> !eol_p() >> parameter >> separator >> list_p(coord, separator) >> !eol_p() >> end[bezier_a];
+static Parser<bool> bezier = str_p("BEZIER") >> !eol_p() >> list_p(coord, separator) >> !eol_p() >> end[bezier_a];
 static Parser<bool> bspline = str_p("BSPLINE") >> !eol_p() >> parameter >> separator >> list_p(coord, separator) >> !eol_p() >> end[bspline_a];
 static Parser<bool> text = str_p("TEXT") >> str >> !eol_p() >> coord >> !eol_p() >> end[text_a];
 static Parser<bool> arc = str_p("ARC") >> !eol_p() >> coord >> separator >> coord >> separator >> coord >> !eol_p() >> end[arc_a];

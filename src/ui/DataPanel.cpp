@@ -45,7 +45,7 @@ void DataPanel::load_draw_data(const Graph *graph)
                 break;
             case Geo::Type::BEZIER:
                 ++bezier_count;
-                point_count += static_cast<const Geo::Bezier *>(object)->shape().size();
+                point_count += static_cast<const Geo::CubicBezier *>(object)->shape().size();
                 break;
             case Geo::Type::BSPLINE:
                 ++bspline_count;
@@ -77,7 +77,7 @@ void DataPanel::load_draw_data(const Graph *graph)
                         break;
                     case Geo::Type::BEZIER:
                         ++bezier_count;
-                        point_count += static_cast<const Geo::Bezier *>(obj)->shape().size();
+                        point_count += static_cast<const Geo::CubicBezier *>(obj)->shape().size();
                         break;
                     case Geo::Type::BSPLINE:
                         ++bspline_count;

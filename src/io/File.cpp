@@ -12,7 +12,7 @@ void File::write_dsv(const std::string &path, const Graph *graph)
     const Geo::Ellipse *ellipse = nullptr;
     const Text *text = nullptr;
     const Geo::Polyline *polyline = nullptr;
-    const Geo::Bezier *bezier = nullptr;
+    const Geo::CubicBezier *bezier = nullptr;
     const Geo::BSpline *bspline = nullptr;
     const Geo::Arc *arc = nullptr;
 
@@ -125,13 +125,12 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                         polyline = nullptr;
                         break;
                     case Geo::Type::BEZIER:
-                        bezier = static_cast<const Geo::Bezier *>(item);
+                        bezier = static_cast<const Geo::CubicBezier *>(item);
                         if (bezier->empty())
                         {
                             continue;
                         }
                         output << "BEZIER" << '\n';
-                        output << bezier->order();
                         for (const Geo::Point &point : *bezier)
                         {
                             output << ',' << point.x << ',' << point.y;
@@ -198,13 +197,12 @@ void File::write_dsv(const std::string &path, const Graph *graph)
                 polyline = nullptr;
                 break;
             case Geo::Type::BEZIER:
-                bezier = static_cast<const Geo::Bezier *>(geo);
+                bezier = static_cast<const Geo::CubicBezier *>(geo);
                 if (bezier->empty())
                 {
                     continue;
                 }
                 output << "BEZIER" << '\n';
-                output << bezier->order();
                 for (const Geo::Point &point : *bezier)
                 {
                     output << ',' << point.x << ',' << point.y;
@@ -267,7 +265,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
     const Geo::Circle *circle = nullptr;
     const Geo::Ellipse *ellipse = nullptr;
     const Geo::Polyline *polyline = nullptr;
-    const Geo::Bezier *bezier = nullptr;
+    const Geo::CubicBezier *bezier = nullptr;
     const Geo::BSpline *bspline = nullptr;
     const Geo::Arc *arc = nullptr;
     const double x_ratio = 40, y_ratio = 40;
@@ -378,26 +376,15 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         polyline = nullptr;
                         break;
                     case Geo::Type::BEZIER:
-                        bezier = static_cast<const Geo::Bezier *>(item);
+                        bezier = static_cast<const Geo::CubicBezier *>(item);
                         if (bezier->empty())
                         {
                             break;
                         }
-                        if (bezier->order() == 3)
+                        output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";BZ";
+                        for (const Geo::Point &point : *bezier)
                         {
-                            output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";BZ";
-                            for (const Geo::Point &point : *bezier)
-                            {
-                                output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
-                            }
-                        }
-                        else
-                        {
-                            output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";PD";
-                            for (const Geo::Point &point : bezier->shape())
-                            {
-                                output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
-                            }
+                            output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                         }
                         output.seekp(-1, std::ios::cur);
                         output << ';' << '\n';
@@ -458,26 +445,15 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 polyline = nullptr;
                 break;
             case Geo::Type::BEZIER:
-                bezier = static_cast<const Geo::Bezier *>(geo);
+                bezier = static_cast<const Geo::CubicBezier *>(geo);
                 if (bezier->empty())
                 {
                     break;
                 }
-                if (bezier->order() == 3)
+                output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";BZ";
+                for (const Geo::Point &point : *bezier)
                 {
-                    output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";BZ";
-                    for (const Geo::Point &point : *bezier)
-                    {
-                        output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
-                    }
-                }
-                else
-                {
-                    output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";PD";
-                    for (const Geo::Point &point : bezier->shape())
-                    {
-                        output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
-                    }
+                    output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                 }
                 output.seekp(-1, std::ios::cur);
                 output << ';' << '\n';

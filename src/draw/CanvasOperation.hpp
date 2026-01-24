@@ -457,7 +457,6 @@ class BezierOperation : public CanvasOperation
 {
 private:
     std::vector<Geo::Point> _points;
-    int _order = 3;
     ParamType _param_type = ParamType::LengthAngle;
 
 public:

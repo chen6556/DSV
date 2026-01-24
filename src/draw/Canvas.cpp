@@ -877,7 +877,7 @@ void Canvas::show_menu(Geo::Geometry *object)
 {
     refresh_selected_ibo(object);
     _text_to_polylines->setVisible(dynamic_cast<Text *>(object) != nullptr);
-    _bezier_to_bspline->setVisible(dynamic_cast<Geo::Bezier *>(object) != nullptr);
+    _bezier_to_bspline->setVisible(dynamic_cast<Geo::CubicBezier *>(object) != nullptr);
     _bspline_to_bezier->setVisible(dynamic_cast<Geo::BSpline *>(object) != nullptr);
     if (const Geo::BSpline *bspline = dynamic_cast<const Geo::BSpline *>(object))
     {
@@ -908,7 +908,7 @@ void Canvas::show_menu(Geo::Geometry *object)
     }
     else if (a == _bezier_to_bspline)
     {
-        _editer->bezier_to_bspline(dynamic_cast<Geo::Bezier *>(object));
+        _editer->bezier_to_bspline(dynamic_cast<Geo::CubicBezier *>(object));
         CanvasOperations::CanvasOperation::tool_lines_count = 0;
         refresh_vbo({Geo::Type::BEZIER, Geo::Type::BSPLINE});
         refresh_selected_ibo();
@@ -1718,7 +1718,7 @@ Canvas::VBOData Canvas::refresh_circle_vbo()
 Canvas::VBOData Canvas::refresh_curve_vbo()
 {
     VBOData result;
-    Geo::Bezier *bezier = nullptr;
+    Geo::CubicBezier *bezier = nullptr;
     Geo::BSpline *bspline = nullptr;
     for (ContainerGroup &group : GlobalSetting::setting().graph->container_groups())
     {
@@ -1737,7 +1737,7 @@ Canvas::VBOData Canvas::refresh_curve_vbo()
                     switch (item->type())
                     {
                     case Geo::Type::BEZIER:
-                        bezier = static_cast<Geo::Bezier *>(item);
+                        bezier = static_cast<Geo::CubicBezier *>(item);
                         bezier->point_index = result.vbo_data.size() / 3;
                         for (const Geo::Point &point : bezier->shape())
                         {
@@ -1768,7 +1768,7 @@ Canvas::VBOData Canvas::refresh_curve_vbo()
                 }
                 break;
             case Geo::Type::BEZIER:
-                bezier = static_cast<Geo::Bezier *>(geo);
+                bezier = static_cast<Geo::CubicBezier *>(geo);
                 bezier->point_index = result.vbo_data.size() / 3;
                 for (const Geo::Point &point : bezier->shape())
                 {
@@ -2818,7 +2818,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
             case Geo::Type::BEZIER:
                 if (Geo::is_intersected(rect, geo->bounding_rect()))
                 {
-                    if (Geo::distance(pos, static_cast<const Geo::Bezier *>(geo)->shape()) < distance)
+                    if (Geo::distance(pos, static_cast<const Geo::CubicBezier *>(geo)->shape()) < distance)
                     {
                         catched_objects.push_back(geo);
                     }
@@ -3218,7 +3218,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
             break;
         case Geo::Type::BEZIER:
             {
-                const Geo::Bezier &bezier = *static_cast<const Geo::Bezier *>(object);
+                const Geo::CubicBezier &bezier = *static_cast<const Geo::CubicBezier *>(object);
                 if (catch_flags[0])
                 {
                     if (double dis0 = Geo::distance(pos, bezier.front()), dis1 = Geo::distance(pos, bezier.back()); dis0 <= dis1)

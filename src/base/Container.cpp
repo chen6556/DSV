@@ -424,7 +424,7 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
             }
             break;
         case Geo::Type::BEZIER:
-            for (const Geo::Point &point : static_cast<const Geo::Bezier *>(continer)->shape())
+            for (const Geo::Point &point : static_cast<const Geo::CubicBezier *>(continer)->shape())
             {
                 x0 = std::min(x0, point.x);
                 y0 = std::min(y0, point.y);

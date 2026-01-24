@@ -335,229 +335,218 @@ bool Geo::offset(const Geo::AABBRect &input, Geo::AABBRect &result, const double
     }
 }
 
-bool Geo::offset(const Geo::Bezier &bezier, std::vector<Geo::Bezier> &result, const double distance, const double tolerance,
+bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &result, const double distance, const double tolerance,
                  const int sample_count)
 {
     result.clear();
-    if (bezier.order() == 3)
+    std::vector<size_t> split_indexs;
+    std::vector<Geo::Point> points(bezier.rbegin(), bezier.rend()), cache, output;
+    while (points.size() > 3)
     {
-        std::vector<size_t> split_indexs;
-        std::vector<Geo::Point> points(bezier.rbegin(), bezier.rend()), cache, output;
-        while (points.size() > 3)
+        cache.clear();
+        for (int i = 0; i < 3; ++i)
         {
-            cache.clear();
-            for (int i = 0; i < 3; ++i)
-            {
-                cache.emplace_back(points.back());
-                points.pop_back();
-            }
             cache.emplace_back(points.back());
-            const Geo::Bezier shape0(cache.begin(), cache.end(), 3, false);
+            points.pop_back();
+        }
+        cache.emplace_back(points.back());
+        const Geo::CubicBezier shape0(cache.begin(), cache.end(), false);
 
-            Geo::Point anchor(shape0.shape_point(0, 0.5));
-            Geo::Point anchor_offset = anchor + shape0.vertical(0, 0.5).normalize() * distance;
+        Geo::Point anchor(shape0.shape_point(0, 0.5));
+        Geo::Point anchor_offset = anchor + shape0.vertical(0, 0.5).normalize() * distance;
 
-            const Geo::Point vec0(Geo::distance(cache[0], cache[1]) > Geo::EPSILON ? (cache[1] - cache[0]).normalize()
-                                                                                   : (cache[2] - cache[0]).normalize());
-            const Geo::Point vec1(Geo::distance(cache[2], cache[3]) > Geo::EPSILON ? (cache[3] - cache[2]).normalize()
-                                                                                   : (cache[3] - cache[1]).normalize());
-            Geo::Point temp[4];
-            temp[0] = vec0.vertical() * distance + cache[0];
-            temp[1] = vec0.vertical() * distance + cache[1];
-            temp[2] = vec1.vertical() * distance + cache[2];
-            temp[3] = vec1.vertical() * distance + cache[3];
-            if (const double delta = vec0.x * vec1.y - vec0.y * vec1.x; delta == 0)
+        const Geo::Point vec0(Geo::distance(cache[0], cache[1]) > Geo::EPSILON ? (cache[1] - cache[0]).normalize()
+                                                                                : (cache[2] - cache[0]).normalize());
+        const Geo::Point vec1(Geo::distance(cache[2], cache[3]) > Geo::EPSILON ? (cache[3] - cache[2]).normalize()
+                                                                                : (cache[3] - cache[1]).normalize());
+        Geo::Point temp[4];
+        temp[0] = vec0.vertical() * distance + cache[0];
+        temp[1] = vec0.vertical() * distance + cache[1];
+        temp[2] = vec1.vertical() * distance + cache[2];
+        temp[3] = vec1.vertical() * distance + cache[3];
+        if (const double delta = vec0.x * vec1.y - vec0.y * vec1.x; delta == 0)
+        {
+            if (output.empty() || (!split_indexs.empty() && output.size() == split_indexs.back() + 1))
             {
-                if (output.empty() || (!split_indexs.empty() && output.size() == split_indexs.back() + 1))
-                {
-                    output.emplace_back(temp[0]);
-                }
-                for (int i = 1; i <= 3; ++i)
-                {
-                    output.emplace_back(temp[i]);
-                }
+                output.emplace_back(temp[0]);
             }
-            else
+            for (int i = 1; i <= 3; ++i)
             {
-                const double a = std::abs(((8 * anchor_offset.x - 4 * cache[0].x - 4 * cache[3].x) * vec1.y -
-                                           (8 * anchor_offset.y - 4 * cache[0].y - 4 * cache[3].y) * vec1.x) /
-                                          delta);
-                const double b = std::abs(((8 * anchor_offset.x - 4 * cache[0].x - 4 * cache[3].x) * vec0.y -
-                                           (8 * anchor_offset.y - 4 * cache[0].y - 4 * cache[3].y) * vec0.x) /
-                                          delta);
-                if (Geo::Point mid; Geo::is_intersected(temp[0], temp[1], temp[2], temp[3], mid, false))
-                {
-                    temp[1] = temp[0] + vec0 * std::min({a / 3, Geo::distance(temp[0], mid), Geo::distance(cache[0], cache[1])});
-                    temp[2] = temp[3] - vec1 * std::min({b / 3, Geo::distance(temp[3], mid), Geo::distance(cache[2], cache[3])});
-                }
-                else
-                {
-                    temp[1] = temp[0] + vec0 * std::min(a / 3, Geo::distance(cache[0], cache[1]));
-                    temp[2] = temp[3] - vec1 * std::min(b / 3, Geo::distance(cache[2], cache[3]));
-                }
-                const Geo::Bezier shape1({temp[0], temp[1], temp[2], temp[3]}, 3, false);
-
-                double max_err = 0;
-                for (int i = 1; i < sample_count; ++i)
-                {
-                    const double t = static_cast<double>(i) / static_cast<double>(sample_count);
-                    anchor = shape0.shape_point(0, t);
-                    anchor_offset = anchor + shape0.vertical(0, t).normalize() * distance * 1.5;
-                    if (std::vector<Geo::Point> intersections; Geo::is_intersected(anchor, anchor_offset, shape1, intersections, false) > 0)
-                    {
-                        double min_err = DBL_MAX;
-                        for (const Geo::Point &point : intersections)
-                        {
-                            if (const double err = std::abs(Geo::distance(point, anchor) - std::abs(distance)) / std::abs(distance);
-                                err < min_err)
-                            {
-                                min_err = err;
-                            }
-                        }
-                        if (min_err > max_err)
-                        {
-                            max_err = min_err;
-                        }
-                    }
-                }
-                if (Geo::Bezier shape2(3), shape3(3); max_err >= tolerance && Geo::split(shape0, 0, 0.5, shape2, shape3))
-                {
-                    if (points.back() == shape3.back())
-                    {
-                        for (int i = 2; i >= 0; --i)
-                        {
-                            points.emplace_back(shape3[i]);
-                        }
-                        for (int i = 2; i >= 0; --i)
-                        {
-                            points.emplace_back(shape2[i]);
-                        }
-                    }
-                    else
-                    {
-                        for (int i = 2; i >= 0; --i)
-                        {
-                            points.emplace_back(shape2[i]);
-                        }
-                        for (int i = 2; i >= 0; --i)
-                        {
-                            points.emplace_back(shape3[i]);
-                        }
-                    }
-                }
-                else
-                {
-                    if ((temp[3] - temp[0]) * (cache[3] - cache[0]) > 0)
-                    {
-                        if (output.empty() || (!split_indexs.empty() && output.size() == split_indexs.back() + 1))
-                        {
-                            output.emplace_back(temp[0]);
-                        }
-                        for (int i = 1; i <= 3; ++i)
-                        {
-                            output.emplace_back(temp[i]);
-                        }
-                    }
-                    else if (!output.empty())
-                    {
-                        if (split_indexs.empty() || split_indexs.back() < output.size() - 1)
-                        {
-                            split_indexs.push_back(output.size() - 1);
-                        }
-                    }
-                }
+                output.emplace_back(temp[i]);
             }
         }
-
-        std::reverse(split_indexs.begin(), split_indexs.end());
-        for (size_t i = 0, count = output.size(); i < count; ++i)
+        else
         {
-            if (split_indexs.empty())
+            const double a = std::abs(((8 * anchor_offset.x - 4 * cache[0].x - 4 * cache[3].x) * vec1.y -
+                                        (8 * anchor_offset.y - 4 * cache[0].y - 4 * cache[3].y) * vec1.x) /
+                                        delta);
+            const double b = std::abs(((8 * anchor_offset.x - 4 * cache[0].x - 4 * cache[3].x) * vec0.y -
+                                        (8 * anchor_offset.y - 4 * cache[0].y - 4 * cache[3].y) * vec0.x) /
+                                        delta);
+            if (Geo::Point mid; Geo::is_intersected(temp[0], temp[1], temp[2], temp[3], mid, false))
             {
-                result.emplace_back(output.begin() + i, output.end(), 3, false);
-                if (result.size() > 1)
-                {
-                    if (std::vector<std::tuple<size_t, double, double, double>> tvalue0, tvalue1;
-                        Geo::is_intersected(result.back(), result[result.size() - 2], cache, &tvalue0, &tvalue1))
-                    {
-                        if (output[i] == result.back().front())
-                        {
-                            if (Geo::Bezier shape0(3), shape1(3);
-                                Geo::split(result.back(), std::get<0>(tvalue0.front()), std::get<1>(tvalue0.front()), shape0, shape1))
-                            {
-                                result[result.size() - 1] = shape1;
-                            }
-                            if (Geo::Bezier shape0(3), shape1(3); Geo::split(result[result.size() - 2], std::get<0>(tvalue1.front()),
-                                                                             std::get<1>(tvalue1.front()), shape0, shape1))
-                            {
-                                result[result.size() - 2] = shape0;
-                            }
-                        }
-                        else
-                        {
-                            if (Geo::Bezier shape0(3), shape1(3);
-                                Geo::split(result.back(), std::get<0>(tvalue0.back()), std::get<1>(tvalue0.back()), shape0, shape1))
-                            {
-                                result[result.size() - 1] = shape1;
-                            }
-                            if (Geo::Bezier shape0(3), shape1(3); Geo::split(result[result.size() - 2], std::get<0>(tvalue1.back()),
-                                                                             std::get<1>(tvalue1.back()), shape0, shape1))
-                            {
-                                result[result.size() - 2] = shape0;
-                            }
-                        }
-                    }
-                }
-                break;
+                temp[1] = temp[0] + vec0 * std::min({a / 3, Geo::distance(temp[0], mid), Geo::distance(cache[0], cache[1])});
+                temp[2] = temp[3] - vec1 * std::min({b / 3, Geo::distance(temp[3], mid), Geo::distance(cache[2], cache[3])});
             }
             else
             {
-                result.emplace_back(output.begin() + i, output.begin() + split_indexs.back() + 1, 3, false);
-                i = split_indexs.back();
-                split_indexs.pop_back();
+                temp[1] = temp[0] + vec0 * std::min(a / 3, Geo::distance(cache[0], cache[1]));
+                temp[2] = temp[3] - vec1 * std::min(b / 3, Geo::distance(cache[2], cache[3]));
+            }
+            const Geo::CubicBezier shape1({temp[0], temp[1], temp[2], temp[3]}, false);
 
-                if (result.size() > 1)
+            double max_err = 0;
+            for (int i = 1; i < sample_count; ++i)
+            {
+                const double t = static_cast<double>(i) / static_cast<double>(sample_count);
+                anchor = shape0.shape_point(0, t);
+                anchor_offset = anchor + shape0.vertical(0, t).normalize() * distance * 1.5;
+                if (std::vector<Geo::Point> intersections; Geo::is_intersected(anchor, anchor_offset, shape1, intersections, false) > 0)
                 {
-                    if (std::vector<std::tuple<size_t, double, double, double>> tvalue0, tvalue1;
-                        Geo::is_intersected(result.back(), result[result.size() - 2], cache, &tvalue0, &tvalue1))
+                    double min_err = DBL_MAX;
+                    for (const Geo::Point &point : intersections)
                     {
-                        if (output[i] == result.back().front())
+                        if (const double err = std::abs(Geo::distance(point, anchor) - std::abs(distance)) / std::abs(distance);
+                            err < min_err)
                         {
-                            if (Geo::Bezier shape0(3), shape1(3);
-                                Geo::split(result.back(), std::get<0>(tvalue0.front()), std::get<1>(tvalue0.front()), shape0, shape1))
-                            {
-                                result[result.size() - 1] = shape1;
-                            }
-                            if (Geo::Bezier shape0(3), shape1(3); Geo::split(result[result.size() - 2], std::get<0>(tvalue1.front()),
-                                                                             std::get<1>(tvalue1.front()), shape0, shape1))
-                            {
-                                result[result.size() - 2] = shape0;
-                            }
+                            min_err = err;
                         }
-                        else
-                        {
-                            if (Geo::Bezier shape0(3), shape1(3);
-                                Geo::split(result.back(), std::get<0>(tvalue0.back()), std::get<1>(tvalue0.back()), shape0, shape1))
-                            {
-                                result[result.size() - 1] = shape1;
-                            }
-                            if (Geo::Bezier shape0(3), shape1(3); Geo::split(result[result.size() - 2], std::get<0>(tvalue1.back()),
-                                                                             std::get<1>(tvalue1.back()), shape0, shape1))
-                            {
-                                result[result.size() - 2] = shape0;
-                            }
-                        }
+                    }
+                    if (min_err > max_err)
+                    {
+                        max_err = min_err;
+                    }
+                }
+            }
+            if (Geo::CubicBezier shape2, shape3; max_err >= tolerance && Geo::split(shape0, 0, 0.5, shape2, shape3))
+            {
+                if (points.back() == shape3.back())
+                {
+                    for (int i = 2; i >= 0; --i)
+                    {
+                        points.emplace_back(shape3[i]);
+                    }
+                    for (int i = 2; i >= 0; --i)
+                    {
+                        points.emplace_back(shape2[i]);
+                    }
+                }
+                else
+                {
+                    for (int i = 2; i >= 0; --i)
+                    {
+                        points.emplace_back(shape2[i]);
+                    }
+                    for (int i = 2; i >= 0; --i)
+                    {
+                        points.emplace_back(shape3[i]);
+                    }
+                }
+            }
+            else
+            {
+                if ((temp[3] - temp[0]) * (cache[3] - cache[0]) > 0)
+                {
+                    if (output.empty() || (!split_indexs.empty() && output.size() == split_indexs.back() + 1))
+                    {
+                        output.emplace_back(temp[0]);
+                    }
+                    for (int i = 1; i <= 3; ++i)
+                    {
+                        output.emplace_back(temp[i]);
+                    }
+                }
+                else if (!output.empty())
+                {
+                    if (split_indexs.empty() || split_indexs.back() < output.size() - 1)
+                    {
+                        split_indexs.push_back(output.size() - 1);
                     }
                 }
             }
         }
     }
-    else
+
+    std::reverse(split_indexs.begin(), split_indexs.end());
+    for (size_t i = 0, count = output.size(); i < count; ++i)
     {
-        Geo::Polyline polyline0(bezier.begin(), bezier.end()), polyline1;
-        if (Geo::offset(polyline0, polyline1, distance))
+        if (split_indexs.empty())
         {
-            result.emplace_back(polyline1.begin(), polyline1.end(), 2, false);
+            result.emplace_back(output.begin() + i, output.end(), false);
+            if (result.size() > 1)
+            {
+                if (std::vector<std::tuple<size_t, double, double, double>> tvalue0, tvalue1;
+                    Geo::is_intersected(result.back(), result[result.size() - 2], cache, &tvalue0, &tvalue1))
+                {
+                    if (output[i] == result.back().front())
+                    {
+                        if (Geo::CubicBezier shape0, shape1;
+                            Geo::split(result.back(), std::get<0>(tvalue0.front()), std::get<1>(tvalue0.front()), shape0, shape1))
+                        {
+                            result[result.size() - 1] = shape1;
+                        }
+                        if (Geo::CubicBezier shape0, shape1; Geo::split(result[result.size() - 2], std::get<0>(tvalue1.front()),
+                                                                        std::get<1>(tvalue1.front()), shape0, shape1))
+                        {
+                            result[result.size() - 2] = shape0;
+                        }
+                    }
+                    else
+                    {
+                        if (Geo::CubicBezier shape0, shape1;
+                            Geo::split(result.back(), std::get<0>(tvalue0.back()), std::get<1>(tvalue0.back()), shape0, shape1))
+                        {
+                            result[result.size() - 1] = shape1;
+                        }
+                        if (Geo::CubicBezier shape0, shape1; Geo::split(result[result.size() - 2], std::get<0>(tvalue1.back()),
+                                                                        std::get<1>(tvalue1.back()), shape0, shape1))
+                        {
+                            result[result.size() - 2] = shape0;
+                        }
+                    }
+                }
+            }
+            break;
+        }
+        else
+        {
+            result.emplace_back(output.begin() + i, output.begin() + split_indexs.back() + 1, false);
+            i = split_indexs.back();
+            split_indexs.pop_back();
+
+            if (result.size() > 1)
+            {
+                if (std::vector<std::tuple<size_t, double, double, double>> tvalue0, tvalue1;
+                    Geo::is_intersected(result.back(), result[result.size() - 2], cache, &tvalue0, &tvalue1))
+                {
+                    if (output[i] == result.back().front())
+                    {
+                        if (Geo::CubicBezier shape0, shape1;
+                            Geo::split(result.back(), std::get<0>(tvalue0.front()), std::get<1>(tvalue0.front()), shape0, shape1))
+                        {
+                            result[result.size() - 1] = shape1;
+                        }
+                        if (Geo::CubicBezier shape0, shape1; Geo::split(result[result.size() - 2], std::get<0>(tvalue1.front()),
+                                                                        std::get<1>(tvalue1.front()), shape0, shape1))
+                        {
+                            result[result.size() - 2] = shape0;
+                        }
+                    }
+                    else
+                    {
+                        if (Geo::CubicBezier shape0, shape1;
+                            Geo::split(result.back(), std::get<0>(tvalue0.back()), std::get<1>(tvalue0.back()), shape0, shape1))
+                        {
+                            result[result.size() - 1] = shape1;
+                        }
+                        if (Geo::CubicBezier shape0, shape1; Geo::split(result[result.size() - 2], std::get<0>(tvalue1.back()),
+                                                                        std::get<1>(tvalue1.back()), shape0, shape1))
+                        {
+                            result[result.size() - 2] = shape0;
+                        }
+                    }
+                }
+            }
         }
     }
 
