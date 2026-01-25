@@ -1873,46 +1873,30 @@ bool Editer::offset(const std::vector<Geo::Geometry *> &objects, const double di
             }
             break;
         case Geo::Type::BSPLINE:
-            bspline = static_cast<Geo::BSpline *>(object);
-            if (Geo::Polyline shape1, path_points(bspline->control_points.begin(), bspline->control_points.end());
-                Geo::offset(path_points, shape1, distance))
             {
-                double area = 0;
-                for (size_t i = 1, count = path_points.size(); i < count; ++i)
+                bspline = static_cast<Geo::BSpline *>(object);
+                const Geo::CubicBezier beziershape = Geo::bspline_to_bezier(*bspline);
+                if (std::vector<Geo::CubicBezier> shapes;
+                    Geo::offset(beziershape, shapes, distance, GlobalSetting::setting().offset_tolerance,
+                                GlobalSetting::setting().offset_sample_count))
                 {
-                    area += (path_points[i].x * (path_points[i + 1 != count ? i + 1 : 0].y - path_points[i - 1].y));
+                    for (const Geo::CubicBezier &shape : shapes)
+                    {
+                        _graph->append(new Geo::CubicBSpline(Geo::bezier_to_bspline(shape)), _current_group);
+                        items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
+                    }
                 }
-                area += (path_points.front().x * (path_points[1].y - path_points.back().y));
-                if (area > 0)
-                {
-                    path_points.flip();
-                }
-                shape1.front() = (path_points.front() + (path_points[1] - path_points[0]).vertical().normalize() * distance);
-                shape1.back() =
-                    (path_points.back() + (path_points.back() - path_points[path_points.size() - 2]).vertical().normalize() * distance);
-
-                if (dynamic_cast<const Geo::CubicBSpline *>(bspline) == nullptr)
-                {
-                    _graph->append(new Geo::QuadBSpline(shape1.begin(), shape1.end(), false), _current_group);
-                }
-                else
-                {
-                    _graph->append(new Geo::CubicBSpline(shape1.begin(), shape1.end(), false), _current_group);
-                }
-                items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
             }
             break;
         case Geo::Type::BEZIER:
+            bezier = static_cast<Geo::CubicBezier *>(object);
+            if (std::vector<Geo::CubicBezier> shapes; Geo::offset(*bezier, shapes, distance, GlobalSetting::setting().offset_tolerance,
+                                                                  GlobalSetting::setting().offset_sample_count))
             {
-                bezier = static_cast<Geo::CubicBezier *>(object);
-                if (std::vector<Geo::CubicBezier> shapes; Geo::offset(*bezier, shapes, distance, GlobalSetting::setting().offset_tolerance,
-                                                                      GlobalSetting::setting().offset_sample_count))
+                for (Geo::CubicBezier &shape : shapes)
                 {
-                    for (Geo::CubicBezier &shape : shapes)
-                    {
-                        _graph->append(new Geo::CubicBezier(shape), _current_group);
-                        items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
-                    }
+                    _graph->append(new Geo::CubicBezier(shape), _current_group);
+                    items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
                 }
             }
             break;
@@ -8979,9 +8963,9 @@ void Editer::bezier_to_bspline(Geo::CubicBezier *bezier)
         return;
     }
     Geo::CubicBSpline *bspline = new Geo::CubicBSpline(Geo::bezier_to_bspline(*bezier));
-    const size_t index = std::distance(
-        _graph->container_group(_current_group).begin(),
-        std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), bezier));
+    const size_t index =
+        std::distance(_graph->container_group(_current_group).begin(),
+                      std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), bezier));
     _graph->container_group(_current_group).pop(index);
     _graph->container_group(_current_group).insert(index, bspline);
     _graph->modified = true;
@@ -8998,9 +8982,9 @@ void Editer::bspline_to_bezier(Geo::BSpline *bspline)
         return;
     }
     Geo::CubicBezier *bezier = new Geo::CubicBezier(Geo::bspline_to_bezier(*bspline));
-    const size_t index = std::distance(
-        _graph->container_group(_current_group).begin(),
-        std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), bspline));
+    const size_t index =
+        std::distance(_graph->container_group(_current_group).begin(),
+                      std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), bspline));
     _graph->container_group(_current_group).pop(index);
     _graph->container_group(_current_group).insert(index, bezier);
     _graph->modified = true;
