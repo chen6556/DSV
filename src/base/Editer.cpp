@@ -8997,19 +8997,17 @@ void Editer::bspline_to_bezier(Geo::BSpline *bspline)
     {
         return;
     }
-    if (Geo::CubicBezier *bezier = Geo::bspline_to_bezier(*bspline))
-    {
-        const size_t index = std::distance(
-            _graph->container_group(_current_group).begin(),
-            std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), bspline));
-        _graph->container_group(_current_group).pop(index);
-        _graph->container_group(_current_group).insert(index, bezier);
-        _graph->modified = true;
-        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-        add_items.emplace_back(bezier, _current_group, index);
-        remove_items.emplace_back(bspline, _current_group, index);
-        _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
-    }
+    Geo::CubicBezier *bezier = new Geo::CubicBezier(Geo::bspline_to_bezier(*bspline));
+    const size_t index = std::distance(
+        _graph->container_group(_current_group).begin(),
+        std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), bspline));
+    _graph->container_group(_current_group).pop(index);
+    _graph->container_group(_current_group).insert(index, bezier);
+    _graph->modified = true;
+    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    add_items.emplace_back(bezier, _current_group, index);
+    remove_items.emplace_back(bspline, _current_group, index);
+    _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
 }
 
 

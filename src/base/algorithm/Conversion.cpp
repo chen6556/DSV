@@ -504,8 +504,9 @@ Geo::CubicBSpline Geo::bezier_to_bspline(const Geo::CubicBezier &bezier)
     return bspline;
 }
 
-Geo::CubicBezier *Geo::bspline_to_bezier(const Geo::BSpline &bspline)
+Geo::CubicBezier Geo::bspline_to_bezier(const Geo::BSpline &bspline)
 {
+    std::vector<Geo::Point> controls;
     if (dynamic_cast<const Geo::CubicBSpline *>(&bspline) != nullptr)
     {
         Geo::CubicBSpline temp(*static_cast<const Geo::CubicBSpline *>(&bspline));
@@ -520,12 +521,32 @@ Geo::CubicBezier *Geo::bspline_to_bezier(const Geo::BSpline &bspline)
                 }
             }
         }
-        return new Geo::CubicBezier(temp.control_points.begin(), temp.control_points.end(), false);
+        controls.assign(temp.control_points.begin(), temp.control_points.end());
     }
     else
     {
-        return nullptr;
+        Geo::QuadBSpline temp(*static_cast<const Geo::QuadBSpline *>(&bspline));
+        for (size_t j = 0, i = temp.knots().size() - 1; i > 0; --i)
+        {
+            if (j = std::count(temp.knots().begin(), temp.knots().end(), temp.knots()[i]); j < 3)
+            {
+                const double t = temp.knots()[i];
+                while (j++ <= 3)
+                {
+                    temp.insert(t);
+                }
+            }
+        }
+        controls.emplace_back(temp.control_points.front());
+        for (size_t i = 2, count = temp.control_points.size(); i < count; i += 2)
+        {
+            controls.emplace_back((temp.control_points[i - 1] * 3 + temp.control_points[i - 2]) / 4);
+            controls.emplace_back((temp.control_points[i] + temp.control_points[i - 1]) / 2);
+            controls.emplace_back(temp.control_points[i]);
+        }
     }
+    Geo::remove_repeated_point(controls);
+    return Geo::CubicBezier(controls.begin(), controls.end(), false);
 }
 
 

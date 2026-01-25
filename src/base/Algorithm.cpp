@@ -346,3 +346,15 @@ void Geo::down_sampling(Geo::Polyline &points, const double distance)
         }
     }
 }
+
+
+void Geo::remove_repeated_point(std::vector<Geo::Point> &points)
+{
+    for (size_t i = points.size() - 1; i > 0; --i)
+    {
+        if (points[i - 1] == points[i])
+        {
+            points.erase(points.begin() + i);
+        }
+    }
+}

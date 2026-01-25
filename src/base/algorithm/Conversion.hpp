@@ -53,7 +53,7 @@ CubicBezier ellipse_to_bezier(const Ellipse &ellipse);
 
 CubicBSpline bezier_to_bspline(const CubicBezier &bezier);
 
-CubicBezier *bspline_to_bezier(const BSpline &bspline);
+CubicBezier bspline_to_bezier(const BSpline &bspline);
 
 
 CubicBezier *blend(const Point &pre0, const Point &point0, const Point &point1, const Point &pre1);
