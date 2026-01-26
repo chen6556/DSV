@@ -1,3 +1,4 @@
+#include <future>
 #include <algorithm>
 #include <clipper2/clipper.h>
 #include "base/Algorithm.hpp"
@@ -335,6 +336,32 @@ bool Geo::offset(const Geo::AABBRect &input, Geo::AABBRect &result, const double
     }
 }
 
+
+namespace
+{
+    double bezier_offset_error(const double distance, const Geo::Point &point0, const Geo::Point &point1, const Geo::CubicBezier &bezier)
+    {
+        if (std::vector<Geo::Point> intersections; Geo::is_intersected(point0, point1, bezier, intersections, false) > 0)
+        {
+            double min_err = DBL_MAX;
+            for (const Geo::Point &point : intersections)
+            {
+                if (const double err = std::abs(Geo::distance(point, point0) - std::abs(distance)) / std::abs(distance);
+                    err < min_err)
+                {
+                    min_err = err;
+                }
+            }
+            return min_err;
+        }
+        else
+        {
+            return -1;
+        }
+    }
+}
+
+
 bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &result, const double distance, const double tolerance,
                  const int sample_count)
 {
@@ -396,26 +423,20 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
             const Geo::CubicBezier shape1({temp[0], temp[1], temp[2], temp[3]}, false);
 
             double max_err = 0;
+            std::vector<std::future<double>> futures;
             for (int i = 1; i < sample_count; ++i)
             {
                 const double t = static_cast<double>(i) / static_cast<double>(sample_count);
                 anchor = shape0.shape_point(0, t);
                 anchor_offset = anchor + shape0.vertical(0, t).normalize() * distance * 1.5;
-                if (std::vector<Geo::Point> intersections; Geo::is_intersected(anchor, anchor_offset, shape1, intersections, false) > 0)
+                futures.emplace_back(std::async(std::launch::async, bezier_offset_error, distance, anchor, anchor_offset, std::cref(shape1)));
+            }
+            for (std::future<double> &f : futures)
+            {
+                f.wait();
+                if (const double err = f.get(); err > max_err)
                 {
-                    double min_err = DBL_MAX;
-                    for (const Geo::Point &point : intersections)
-                    {
-                        if (const double err = std::abs(Geo::distance(point, anchor) - std::abs(distance)) / std::abs(distance);
-                            err < min_err)
-                        {
-                            min_err = err;
-                        }
-                    }
-                    if (min_err > max_err)
-                    {
-                        max_err = min_err;
-                    }
+                    max_err = err;
                 }
             }
             if (Geo::CubicBezier shape2, shape3; max_err >= tolerance && Geo::split(shape0, 0, 0.5, shape2, shape3))
