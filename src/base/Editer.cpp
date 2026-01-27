@@ -5821,13 +5821,13 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
         {
             bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
             bezier1 = new Geo::CubicBezier(bezier_right);
-            bezier1->append(bezier->begin() + anchor_index + order, bezier->end());
+            bezier1->append(bezier->begin() + anchor_index + order + 1, bezier->end());
             bezier1->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
         }
         else
         {
             bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
-            bezier0->append(bezier_left);
+            bezier0->append(bezier_left.begin() + 1, bezier_left.end());
             bezier0->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
             bezier1 = new Geo::CubicBezier(bezier->begin() + anchor_index + order, bezier->end(), false);
         }
@@ -5875,7 +5875,7 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
                     Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier_right);
-                    bezier1->append(bezier->begin() + anchor_index + order, bezier->end());
+                    bezier1->append(bezier->begin() + anchor_index + order + 1, bezier->end());
                     bezier1->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
                     if (bezier0->size() > order)
                     {
@@ -5911,7 +5911,7 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
-                    bezier0->append(bezier_left);
+                    bezier0->append(bezier_left.begin() + 1, bezier_left.end());
                     bezier0->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
                     Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier->begin() + anchor_index + order, bezier->end(), false);
                     if (bezier0->size() > order)
@@ -5949,10 +5949,10 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
-                    bezier0->append(bezier_left);
+                    bezier0->append(bezier_left.begin() + 1, bezier_left.end());
                     bezier0->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
                     Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier_right);
-                    bezier1->append(bezier->begin() + anchor_index + order, bezier->end());
+                    bezier1->append(bezier->begin() + anchor_index + order + 1, bezier->end());
                     bezier1->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
                     _graph->container_group(_current_group).insert(i, bezier1);
                     _graph->container_group(_current_group).insert(i, bezier0);

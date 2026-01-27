@@ -227,9 +227,23 @@ bool Geo::split(const CubicBezier &bezier, const Point &pos, CubicBezier &output
     std::reverse(result_points1.begin(), result_points1.end());
 
     output0.append(bezier.begin(), bezier.begin() + result_i + 1);
-    output0.append(result_points0.begin(), result_points0.end());
+    if (output0.empty() || output0.back() != result_points0.front())
+    {
+        output0.append(result_points0.begin(), result_points0.end());
+    }
+    else
+    {
+        output0.append(result_points0.begin() + 1, result_points0.end());
+    }
     output1.append(result_points1.begin(), result_points1.end());
-    output1.append(bezier.begin() + result_i + order, bezier.end());
+    if (output1.empty() || output1.back() != bezier[result_i])
+    {
+        output1.append(bezier.begin() + result_i + order, bezier.end());
+    }
+    else
+    {
+        output1.append(bezier.begin() + result_i + order + 1, bezier.end());
+    }
     output0.update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
     output1.update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
     return output0.size() > 1 && output1.size() > 1;
@@ -268,9 +282,23 @@ bool Geo::split(const CubicBezier &bezier, const size_t i, const double t, Cubic
     std::reverse(result_points1.begin(), result_points1.end());
 
     output0.append(bezier.begin(), bezier.begin() + i + 1);
-    output0.append(result_points0.begin(), result_points0.end());
+    if (output0.empty() || output0.back() != result_points0.front())
+    {
+        output0.append(result_points0.begin(), result_points0.end());
+    }
+    else
+    {
+        output0.append(result_points0.begin() + 1, result_points0.end());
+    }
     output1.append(result_points1.begin(), result_points1.end());
-    output1.append(bezier.begin() + i + order, bezier.end());
+    if (output1.empty() || output1.back() != bezier[i])
+    {
+        output1.append(bezier.begin() + i + order, bezier.end());
+    }
+    else
+    {
+        output1.append(bezier.begin() + i + order + 1, bezier.end());
+    }
     output0.update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
     output1.update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
     return output0.size() > 1 && output1.size() > 1;
