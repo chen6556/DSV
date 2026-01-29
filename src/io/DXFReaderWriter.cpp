@@ -1092,14 +1092,20 @@ void DXFReaderWriter::write_bspline(const Geo::BSpline *bspline)
 
     // dxf spline group code=70
     // bit coded: 1: closed; 2: periodic; 4: rational; 8: planar; 16:linear
-    sp.flags = 0x1000;
+    sp.flags = 0x1008;
 
     // write spline control points:
     for (const Geo::Point &v: bspline->control_points)
     {
         sp.controllist.push_back(new DRW_Coord(v.x, v.y, 0));
     }
+    // write spline fit points:
+    for (const Geo::Point &v : bspline->path_points)
+    {
+        sp.fitlist.push_back(new DRW_Coord(v.x, v.y, 0));
+    }
 
+    sp.nfit = sp.fitlist.size();
     sp.ncontrol = sp.controllist.size();
     sp.degree = dynamic_cast<const Geo::CubicBSpline *>(bspline) == nullptr ? 2 : 3;
 
