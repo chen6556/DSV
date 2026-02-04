@@ -14,6 +14,37 @@ Canvas::Canvas(QWidget *parent) : QOpenGLWidget(parent), _input_line(this)
 
 Canvas::~Canvas()
 {
+    makeCurrent();
+    {
+        unsigned int temp[4] = {_base_vbo.origin_and_select_rect, _base_vbo.catched_points, _base_vbo.operation_shape,
+                                _base_vbo.operation_tool_lines};
+        glDeleteBuffers(4, temp);
+    }
+    {
+        unsigned int temp[8] = {_shape_vbo.polyline,
+                                _shape_vbo.polygon,
+                                _shape_vbo.circle,
+                                _shape_vbo.curve,
+                                _shape_vbo.text,
+                                _shape_vbo.circle_printable_points,
+                                _shape_vbo.curve_printable_points,
+                                _shape_vbo.point};
+        glDeleteBuffers(8, temp);
+    }
+    {
+        unsigned int temp[4] = {_shape_ibo.polyline, _shape_ibo.polygon, _shape_ibo.circle, _shape_ibo.curve};
+        glDeleteBuffers(4, temp);
+    }
+    {
+        unsigned int temp[5] = {_selected_ibo.polyline, _selected_ibo.polygon, _selected_ibo.circle,
+                                _selected_ibo.curve, _selected_ibo.point};
+        glDeleteBuffers(5, temp);
+    }
+    glDeleteBuffers(1, &_text_brush_IBO);
+    glDeleteVertexArrays(1, &_VAO);
+    glDeleteProgram(_shader_program);
+    doneCurrent();
+
     delete _menu;
     delete _up;
     delete _down;
@@ -274,7 +305,7 @@ void Canvas::paintGL()
         glStencilOp(GL_KEEP, GL_KEEP, GL_INVERT); // 设置模板缓冲区更新方式(若通过则按位反转模板值)
         glClear(GL_STENCIL_BUFFER_BIT);
         glStencilFunc(GL_ALWAYS, 1, 1); // 初始模板位为0，由于一定通过测试，所以全部会被置为1，而重复绘制区域由于画了两次模板位又归0
-        glStencilMask(0x1); // 开启模板缓冲区写入
+        glStencilMask(0x1);             // 开启模板缓冲区写入
         glColorMask(GL_FALSE, GL_FALSE, GL_FALSE,
                     GL_FALSE); // 第一次绘制只是为了构造模板缓冲区，没有必要显示到屏幕上，所以设置不显示第一遍的多边形
         glDrawElements(GL_TRIANGLES, _text_brush_count, GL_UNSIGNED_INT, nullptr);
