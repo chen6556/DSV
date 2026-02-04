@@ -5,30 +5,32 @@
 #include "base/Algorithm.hpp"
 
 
-Bulge::Bulge(const Geo::Point &s, const Geo::Point &e, const double t)
-    :start(s), end(e), tangent(t) {}  
+Bulge::Bulge(const Geo::Point &s, const Geo::Point &e, const double t) : start(s), end(e), tangent(t)
+{
+}
 
-Bulge::Bulge(const double x0, const double y0, const double x1, const double y1, const double t)
-    :start(x0, y0), end(x1, y1), tangent(t) {}
+Bulge::Bulge(const double x0, const double y0, const double x1, const double y1, const double t) : start(x0, y0), end(x1, y1), tangent(t)
+{
+}
 
 double Bulge::radius() const
 {
-	return (Geo::distance(start, end) * (1 + std::pow(tangent, 2))) / (4 * std::abs(tangent));
+    return (Geo::distance(start, end) * (1 + std::pow(tangent, 2))) / (4 * std::abs(tangent));
 }
 
 Geo::Point Bulge::relative_center() const
 {
     const Geo::Point line = end - start;
-	const Geo::Point half_line = line / 2;
-	const double line_to_center_angle = Geo::PI / 2 - std::atan(tangent) * 2;
-	if (std::abs(line_to_center_angle) < Geo::EPSILON)
+    const Geo::Point half_line = line / 2;
+    const double line_to_center_angle = Geo::PI / 2 - std::atan(tangent) * 2;
+    if (std::abs(line_to_center_angle) < Geo::EPSILON)
     {
-		return half_line;
-	}
-	else
+        return half_line;
+    }
+    else
     {
-		return half_line + Geo::Point(-half_line.y, half_line.x) * std::tan(line_to_center_angle);
-	}
+        return half_line + Geo::Point(-half_line.y, half_line.x) * std::tan(line_to_center_angle);
+    }
 }
 
 Geo::Point Bulge::center() const
@@ -57,11 +59,13 @@ bool Bulge::is_line() const
 }
 
 
-DXFReaderWriter::DXFReaderWriter(Graph *graph)
-    : _graph(graph) {}
+DXFReaderWriter::DXFReaderWriter(Graph *graph) : _graph(graph)
+{
+}
 
-DXFReaderWriter::DXFReaderWriter(Graph *graph, dxfRW *dxfrw)
-    : _graph(graph), _dxfrw(dxfrw) {}
+DXFReaderWriter::DXFReaderWriter(Graph *graph, dxfRW *dxfrw) : _graph(graph), _dxfrw(dxfrw)
+{
+}
 
 DXFReaderWriter::~DXFReaderWriter()
 {
@@ -73,7 +77,8 @@ DXFReaderWriter::~DXFReaderWriter()
 }
 
 void DXFReaderWriter::addHeader(const DRW_Header *data)
-{}
+{
+}
 
 void DXFReaderWriter::addLType(const DRW_LType &data)
 {
@@ -124,24 +129,17 @@ void DXFReaderWriter::addBlock(const DRW_Block &data)
     _to_graph = false;
     _ignore_entity = (!data.visible || data.name.empty());
     const QString name = QString::fromUtf8(data.name.c_str());
-    const QString mid = name.mid(1,11);
+    const QString mid = name.mid(1, 11);
     if (!_ignore_entity && mid.toLower() != "paper_space" && mid.toLower() != "model_space")
     {
         QString layer_name = QString::fromStdString(data.layer);
         _combination = new Combination();
+        _combination->name = name;
+        _block_store.push_back(_combination);
         _block_map.insert_or_assign(_combination, data.handle);
         _block_names.insert_or_assign(_combination, name.toStdString());
         _block_name_map.insert_or_assign(name.toStdString(), _combination);
-        for (ContainerGroup &group : _graph->container_groups())
-        {
-            if (group.name == layer_name)
-            {
-                return group.append(_combination);
-            }
-        }
-        _graph->append_group();
-        _graph->container_groups().back().name = layer_name;
-        _graph->container_groups().back().append(_combination);
+        _combination->name = layer_name;
     }
     else
     {
@@ -150,7 +148,8 @@ void DXFReaderWriter::addBlock(const DRW_Block &data)
 }
 
 void DXFReaderWriter::setBlock(const int handle)
-{}
+{
+}
 
 void DXFReaderWriter::endBlock()
 {
@@ -212,8 +211,7 @@ void DXFReaderWriter::addLine(const DRW_Line &data)
         {
             if (group.name.toStdString() == data.layer)
             {
-                group.append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y},
-                    {data.secPoint.x, data.secPoint.y}}));
+                group.append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y}, {data.secPoint.x, data.secPoint.y}}));
                 _object_map[group.back()] = data.handle;
                 _handle_map[data.handle] = group.back();
                 return;
@@ -221,15 +219,14 @@ void DXFReaderWriter::addLine(const DRW_Line &data)
         }
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
-        _graph->container_groups().back().append(new Geo::Polyline({
-            {data.basePoint.x, data.basePoint.y}, {data.secPoint.x, data.secPoint.y}}));
+        _graph->container_groups().back().append(
+            new Geo::Polyline({{data.basePoint.x, data.basePoint.y}, {data.secPoint.x, data.secPoint.y}}));
         _object_map[_graph->container_groups().back().back()] = data.handle;
         _handle_map[data.handle] = _graph->container_groups().back().back();
     }
     else
     {
-        _combination->append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y},
-            {data.secPoint.x, data.secPoint.y}}));
+        _combination->append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y}, {data.secPoint.x, data.secPoint.y}}));
         _object_map[_combination->back()] = data.handle;
         _handle_map[data.handle] = _combination->back();
     }
@@ -248,8 +245,8 @@ void DXFReaderWriter::addRay(const DRW_Ray &data)
         {
             if (group.name.toStdString() == data.layer)
             {
-                group.append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y},
-                    {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
+                group.append(new Geo::Polyline(
+                    {{data.basePoint.x, data.basePoint.y}, {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
                 _object_map[group.back()] = data.handle;
                 _handle_map[data.handle] = group.back();
                 return;
@@ -257,15 +254,14 @@ void DXFReaderWriter::addRay(const DRW_Ray &data)
         }
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
-        _graph->container_groups().back().append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y},
-            {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
+        _graph->container_groups().back().append(new Geo::Polyline(
+            {{data.basePoint.x, data.basePoint.y}, {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
         _object_map[_graph->container_groups().back().back()] = data.handle;
         _handle_map[data.handle] = _graph->container_groups().back().back();
     }
     else
     {
-        _combination->append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y},
-            {data.secPoint.x, data.secPoint.y}}));
+        _combination->append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y}, {data.secPoint.x, data.secPoint.y}}));
         _object_map[_combination] = data.handle;
         _handle_map[data.handle] = _combination;
     }
@@ -284,8 +280,8 @@ void DXFReaderWriter::addXline(const DRW_Xline &data)
         {
             if (group.name.toStdString() == data.layer)
             {
-                group.append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y},
-                    {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
+                group.append(new Geo::Polyline(
+                    {{data.basePoint.x, data.basePoint.y}, {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
                 _object_map[group.back()] = data.handle;
                 _handle_map[data.handle] = group.back();
                 return;
@@ -293,15 +289,15 @@ void DXFReaderWriter::addXline(const DRW_Xline &data)
         }
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
-        _graph->container_groups().back().append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y},
-            {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
+        _graph->container_groups().back().append(new Geo::Polyline(
+            {{data.basePoint.x, data.basePoint.y}, {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
         _object_map[_graph->container_groups().back().back()] = data.handle;
         _handle_map[data.handle] = _graph->container_groups().back().back();
     }
     else
     {
-        _combination->append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y},
-            {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
+        _combination->append(new Geo::Polyline(
+            {{data.basePoint.x, data.basePoint.y}, {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
         _object_map[_combination] = data.handle;
         _handle_map[data.handle] = _combination;
     }
@@ -320,8 +316,8 @@ void DXFReaderWriter::addArc(const DRW_Arc &data)
         {
             if (group.name.toStdString() == data.layer)
             {
-                Geo::Arc *arc = new Geo::Arc(data.basePoint.x, data.basePoint.y, data.radious,
-                    data.staangle, data.endangle, static_cast<bool>(data.isccw));
+                Geo::Arc *arc = new Geo::Arc(data.basePoint.x, data.basePoint.y, data.radious, data.staangle, data.endangle,
+                                             static_cast<bool>(data.isccw));
                 group.append(arc);
                 _object_map[arc] = data.handle;
                 _handle_map[data.handle] = arc;
@@ -330,16 +326,16 @@ void DXFReaderWriter::addArc(const DRW_Arc &data)
         }
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
-        Geo::Arc *arc = new Geo::Arc(data.basePoint.x, data.basePoint.y, data.radious,
-            data.staangle, data.endangle, static_cast<bool>(data.isccw));
+        Geo::Arc *arc =
+            new Geo::Arc(data.basePoint.x, data.basePoint.y, data.radious, data.staangle, data.endangle, static_cast<bool>(data.isccw));
         _graph->container_groups().back().append(arc);
         _object_map[arc] = data.handle;
         _handle_map[data.handle] = arc;
     }
     else
     {
-        Geo::Arc *arc = new Geo::Arc(data.basePoint.x, data.basePoint.y, data.radious,
-            data.staangle, data.endangle, static_cast<bool>(data.isccw));
+        Geo::Arc *arc =
+            new Geo::Arc(data.basePoint.x, data.basePoint.y, data.radious, data.staangle, data.endangle, static_cast<bool>(data.isccw));
         _combination->append(arc);
         _object_map[arc] = data.handle;
         _handle_map[data.handle] = arc;
@@ -367,8 +363,7 @@ void DXFReaderWriter::addCircle(const DRW_Circle &data)
         }
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
-        _graph->container_groups().back().append(
-            new Geo::Circle(data.basePoint.x, data.basePoint.y, data.radious));
+        _graph->container_groups().back().append(new Geo::Circle(data.basePoint.x, data.basePoint.y, data.radious));
         _object_map[_graph->container_groups().back().back()] = data.handle;
         _handle_map[data.handle] = _graph->container_groups().back().back();
     }
@@ -394,8 +389,7 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
             if (group.name.toStdString() == data.layer)
             {
                 const double a = std::hypot(data.secPoint.x, data.secPoint.y);
-                group.append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y,
-                    a, a * data.ratio, data.staparam, data.endparam, true));
+                group.append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y, a, a * data.ratio, data.staparam, data.endparam, true));
                 group.back()->translate(-data.basePoint.x, -data.basePoint.y);
                 const double s = data.secPoint.y / a, c = data.secPoint.x / a;
                 group.back()->transform(c, -s, 0, s, c, 0);
@@ -408,8 +402,8 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
         const double a = std::hypot(data.secPoint.x, data.secPoint.y);
-        _graph->container_groups().back().append(new Geo::Ellipse(data.basePoint.x,
-            data.basePoint.y, a, a * data.ratio, data.staparam, data.endparam, true));
+        _graph->container_groups().back().append(
+            new Geo::Ellipse(data.basePoint.x, data.basePoint.y, a, a * data.ratio, data.staparam, data.endparam, true));
         _graph->container_groups().back().back()->translate(-data.basePoint.x, -data.basePoint.y);
         const double s = data.secPoint.y / a, c = data.secPoint.x / a;
         _graph->container_groups().back().back()->transform(c, -s, 0, s, c, 0);
@@ -420,8 +414,7 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
     else
     {
         const double a = std::hypot(data.secPoint.x, data.secPoint.y);
-        _combination->append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y,
-            a, a * data.ratio, data.staparam, data.endparam, true));
+        _combination->append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y, a, a * data.ratio, data.staparam, data.endparam, true));
         _combination->back()->translate(-data.basePoint.x, -data.basePoint.y);
         const double s = data.secPoint.y / a, c = data.secPoint.x / a;
         _combination->back()->transform(c, -s, 0, s, c, 0);
@@ -447,8 +440,8 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
                 Geo::Polyline *polyline = new Geo::Polyline();
                 for (size_t i = 1, count = data.vertlist.size(); i < count; ++i)
                 {
-                    const Bulge bulge(data.vertlist[i - 1]->x, data.vertlist[i - 1]->y,
-                        data.vertlist[i]->x, data.vertlist[i]->y, data.vertlist[i - 1]->bulge);
+                    const Bulge bulge(data.vertlist[i - 1]->x, data.vertlist[i - 1]->y, data.vertlist[i]->x, data.vertlist[i]->y,
+                                      data.vertlist[i - 1]->bulge);
                     if (bulge.is_line())
                     {
                         polyline->append(Geo::Point(data.vertlist[i - 1]->x, data.vertlist[i - 1]->y));
@@ -457,14 +450,15 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
                     else
                     {
                         const Geo::Point center(bulge.center());
-                        polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start), 
-                            Geo::angle(center, bulge.end), bulge.is_cw(), Geo::Circle::default_down_sampling_value));
+                        polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start),
+                                                              Geo::angle(center, bulge.end), bulge.is_cw(),
+                                                              Geo::Circle::default_down_sampling_value));
                     }
                 }
                 if (data.flags & 0x1)
                 {
-                    const Bulge bulge(data.vertlist.back()->x, data.vertlist.back()->y,
-                        data.vertlist.front()->x, data.vertlist.front()->y, data.vertlist.back()->bulge);
+                    const Bulge bulge(data.vertlist.back()->x, data.vertlist.back()->y, data.vertlist.front()->x, data.vertlist.front()->y,
+                                      data.vertlist.back()->bulge);
                     if (bulge.is_line())
                     {
                         polyline->append(Geo::Point(data.vertlist.back()->x, data.vertlist.back()->y));
@@ -473,8 +467,9 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
                     else
                     {
                         const Geo::Point center(bulge.center());
-                        polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start), 
-                            Geo::angle(center, bulge.end), bulge.is_cw(), Geo::Circle::default_down_sampling_value));
+                        polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start),
+                                                              Geo::angle(center, bulge.end), bulge.is_cw(),
+                                                              Geo::Circle::default_down_sampling_value));
                     }
                 }
                 group.append(polyline);
@@ -488,8 +483,8 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
         Geo::Polyline *polyline = new Geo::Polyline();
         for (size_t i = 1, count = data.vertlist.size(); i < count; ++i)
         {
-            const Bulge bulge(data.vertlist[i - 1]->x, data.vertlist[i - 1]->y,
-                data.vertlist[i]->x, data.vertlist[i]->y, data.vertlist[i - 1]->bulge);
+            const Bulge bulge(data.vertlist[i - 1]->x, data.vertlist[i - 1]->y, data.vertlist[i]->x, data.vertlist[i]->y,
+                              data.vertlist[i - 1]->bulge);
             if (bulge.is_line())
             {
                 polyline->append(Geo::Point(data.vertlist[i - 1]->x, data.vertlist[i - 1]->y));
@@ -499,13 +494,14 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
             {
                 const Geo::Point center(bulge.center());
                 polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start),
-                    Geo::angle(center, bulge.end), bulge.is_cw(), Geo::Circle::default_down_sampling_value));
+                                                      Geo::angle(center, bulge.end), bulge.is_cw(),
+                                                      Geo::Circle::default_down_sampling_value));
             }
         }
         if (data.flags & 0x1)
         {
-            const Bulge bulge(data.vertlist.back()->x, data.vertlist.back()->y,
-                data.vertlist.front()->x, data.vertlist.front()->y, data.vertlist.back()->bulge);
+            const Bulge bulge(data.vertlist.back()->x, data.vertlist.back()->y, data.vertlist.front()->x, data.vertlist.front()->y,
+                              data.vertlist.back()->bulge);
             if (bulge.is_line())
             {
                 polyline->append(Geo::Point(data.vertlist.back()->x, data.vertlist.back()->y));
@@ -515,7 +511,8 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
             {
                 const Geo::Point center(bulge.center());
                 polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start),
-                    Geo::angle(center, bulge.end), bulge.is_cw(), Geo::Circle::default_down_sampling_value));
+                                                      Geo::angle(center, bulge.end), bulge.is_cw(),
+                                                      Geo::Circle::default_down_sampling_value));
             }
         }
         _graph->container_groups().back().append(polyline);
@@ -527,8 +524,8 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
         Geo::Polyline *polyline = new Geo::Polyline();
         for (size_t i = 1, count = data.vertlist.size(); i < count; ++i)
         {
-            const Bulge bulge(data.vertlist[i - 1]->x, data.vertlist[i - 1]->y,
-                data.vertlist[i]->x, data.vertlist[i]->y, data.vertlist[i - 1]->bulge);
+            const Bulge bulge(data.vertlist[i - 1]->x, data.vertlist[i - 1]->y, data.vertlist[i]->x, data.vertlist[i]->y,
+                              data.vertlist[i - 1]->bulge);
             if (bulge.is_line())
             {
                 polyline->append(Geo::Point(data.vertlist[i - 1]->x, data.vertlist[i - 1]->y));
@@ -538,13 +535,14 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
             {
                 const Geo::Point center(bulge.center());
                 polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start),
-                    Geo::angle(center, bulge.end), bulge.is_cw(), Geo::Circle::default_down_sampling_value));
+                                                      Geo::angle(center, bulge.end), bulge.is_cw(),
+                                                      Geo::Circle::default_down_sampling_value));
             }
         }
         if (data.flags & 0x1)
         {
-            const Bulge bulge(data.vertlist.back()->x, data.vertlist.back()->y,
-                data.vertlist.front()->x, data.vertlist.front()->y, data.vertlist.back()->bulge);
+            const Bulge bulge(data.vertlist.back()->x, data.vertlist.back()->y, data.vertlist.front()->x, data.vertlist.front()->y,
+                              data.vertlist.back()->bulge);
             if (bulge.is_line())
             {
                 polyline->append(Geo::Point(data.vertlist.back()->x, data.vertlist.back()->y));
@@ -553,8 +551,9 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
             else
             {
                 const Geo::Point center(bulge.center());
-                polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start), 
-                    Geo::angle(center, bulge.end), bulge.is_cw(), Geo::Circle::default_down_sampling_value));
+                polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start),
+                                                      Geo::angle(center, bulge.end), bulge.is_cw(),
+                                                      Geo::Circle::default_down_sampling_value));
             }
         }
         _combination->append(polyline);
@@ -584,8 +583,8 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
                 Geo::Polyline *polyline = new Geo::Polyline();
                 for (size_t i = 1, count = data.vertlist.size(); i < count; ++i)
                 {
-                    const Bulge bulge(data.vertlist[i - 1]->basePoint.x, data.vertlist[i - 1]->basePoint.y,
-                        data.vertlist[i]->basePoint.x, data.vertlist[i]->basePoint.y, data.vertlist[i - 1]->bulge);
+                    const Bulge bulge(data.vertlist[i - 1]->basePoint.x, data.vertlist[i - 1]->basePoint.y, data.vertlist[i]->basePoint.x,
+                                      data.vertlist[i]->basePoint.y, data.vertlist[i - 1]->bulge);
                     if (bulge.is_line())
                     {
                         polyline->append(Geo::Point(data.vertlist[i - 1]->basePoint.x, data.vertlist[i - 1]->basePoint.y));
@@ -595,13 +594,14 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
                     {
                         const Geo::Point center(bulge.center());
                         polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start),
-                            Geo::angle(center, bulge.end), bulge.is_cw(), Geo::Circle::default_down_sampling_value));
+                                                              Geo::angle(center, bulge.end), bulge.is_cw(),
+                                                              Geo::Circle::default_down_sampling_value));
                     }
                 }
                 if (data.flags & 0x1)
                 {
                     const Bulge bulge(data.vertlist.back()->basePoint.x, data.vertlist.back()->basePoint.y,
-                        data.vertlist.front()->basePoint.x, data.vertlist.front()->basePoint.y, data.vertlist.back()->bulge);
+                                      data.vertlist.front()->basePoint.x, data.vertlist.front()->basePoint.y, data.vertlist.back()->bulge);
                     if (bulge.is_line())
                     {
                         polyline->append(Geo::Point(data.vertlist.back()->basePoint.x, data.vertlist.back()->basePoint.y));
@@ -611,7 +611,8 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
                     {
                         const Geo::Point center(bulge.center());
                         polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start),
-                            Geo::angle(center, bulge.end), bulge.is_cw(), Geo::Circle::default_down_sampling_value));
+                                                              Geo::angle(center, bulge.end), bulge.is_cw(),
+                                                              Geo::Circle::default_down_sampling_value));
                     }
                 }
                 group.append(polyline);
@@ -625,8 +626,8 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
         Geo::Polyline *polyline = new Geo::Polyline();
         for (size_t i = 1, count = data.vertlist.size(); i < count; ++i)
         {
-            const Bulge bulge(data.vertlist[i - 1]->basePoint.x, data.vertlist[i - 1]->basePoint.y,
-                data.vertlist[i]->basePoint.x, data.vertlist[i]->basePoint.y, data.vertlist[i - 1]->bulge);
+            const Bulge bulge(data.vertlist[i - 1]->basePoint.x, data.vertlist[i - 1]->basePoint.y, data.vertlist[i]->basePoint.x,
+                              data.vertlist[i]->basePoint.y, data.vertlist[i - 1]->bulge);
             if (bulge.is_line())
             {
                 polyline->append(Geo::Point(data.vertlist[i - 1]->basePoint.x, data.vertlist[i - 1]->basePoint.y));
@@ -636,13 +637,14 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
             {
                 const Geo::Point center(bulge.center());
                 polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start),
-                    Geo::angle(center, bulge.end), bulge.is_cw(), Geo::Circle::default_down_sampling_value));
+                                                      Geo::angle(center, bulge.end), bulge.is_cw(),
+                                                      Geo::Circle::default_down_sampling_value));
             }
         }
         if (data.flags & 0x1)
         {
-            const Bulge bulge(data.vertlist.back()->basePoint.x, data.vertlist.back()->basePoint.y,
-                data.vertlist.front()->basePoint.x, data.vertlist.front()->basePoint.y, data.vertlist.back()->bulge);
+            const Bulge bulge(data.vertlist.back()->basePoint.x, data.vertlist.back()->basePoint.y, data.vertlist.front()->basePoint.x,
+                              data.vertlist.front()->basePoint.y, data.vertlist.back()->bulge);
             if (bulge.is_line())
             {
                 polyline->append(Geo::Point(data.vertlist.back()->basePoint.x, data.vertlist.back()->basePoint.y));
@@ -652,7 +654,8 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
             {
                 const Geo::Point center(bulge.center());
                 polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start),
-                    Geo::angle(center, bulge.end), bulge.is_cw(), Geo::Circle::default_down_sampling_value));
+                                                      Geo::angle(center, bulge.end), bulge.is_cw(),
+                                                      Geo::Circle::default_down_sampling_value));
             }
         }
         _graph->container_groups().back().append(polyline);
@@ -664,8 +667,8 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
         Geo::Polyline *polyline = new Geo::Polyline();
         for (size_t i = 1, count = data.vertlist.size(); i < count; ++i)
         {
-            const Bulge bulge(data.vertlist[i - 1]->basePoint.x, data.vertlist[i - 1]->basePoint.y,
-                data.vertlist[i]->basePoint.x, data.vertlist[i]->basePoint.y, data.vertlist[i - 1]->bulge);
+            const Bulge bulge(data.vertlist[i - 1]->basePoint.x, data.vertlist[i - 1]->basePoint.y, data.vertlist[i]->basePoint.x,
+                              data.vertlist[i]->basePoint.y, data.vertlist[i - 1]->bulge);
             if (bulge.is_line())
             {
                 polyline->append(Geo::Point(data.vertlist[i - 1]->basePoint.x, data.vertlist[i - 1]->basePoint.y));
@@ -674,14 +677,15 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
             else
             {
                 const Geo::Point center(bulge.center());
-                polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start), 
-                    Geo::angle(center, bulge.end), bulge.is_cw(), Geo::Circle::default_down_sampling_value));
+                polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start),
+                                                      Geo::angle(center, bulge.end), bulge.is_cw(),
+                                                      Geo::Circle::default_down_sampling_value));
             }
         }
         if (data.flags & 0x1)
         {
-            const Bulge bulge(data.vertlist.back()->basePoint.x, data.vertlist.back()->basePoint.y,
-                data.vertlist.front()->basePoint.x, data.vertlist.front()->basePoint.y, data.vertlist.back()->bulge);
+            const Bulge bulge(data.vertlist.back()->basePoint.x, data.vertlist.back()->basePoint.y, data.vertlist.front()->basePoint.x,
+                              data.vertlist.front()->basePoint.y, data.vertlist.back()->bulge);
             if (bulge.is_line())
             {
                 polyline->append(Geo::Point(data.vertlist.back()->basePoint.x, data.vertlist.back()->basePoint.y));
@@ -690,8 +694,9 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
             else
             {
                 const Geo::Point center(bulge.center());
-                polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start), 
-                    Geo::angle(center, bulge.end), bulge.is_cw(), Geo::Circle::default_down_sampling_value));
+                polyline->append(Geo::arc_to_polyline(center, bulge.radius(), Geo::angle(center, bulge.start),
+                                                      Geo::angle(center, bulge.end), bulge.is_cw(),
+                                                      Geo::Circle::default_down_sampling_value));
             }
         }
         _combination->append(polyline);
@@ -711,9 +716,9 @@ void DXFReaderWriter::addSpline(const DRW_Spline *data)
     {
         Geo::QuadBSpline *bspline = nullptr;
         std::vector<Geo::Point> points;
-        if (data->ncontrol== 0)
+        if (data->ncontrol == 0)
         {
-            for (const DRW_Coord *vert: data->fitlist)
+            for (const DRW_Coord *vert : data->fitlist)
             {
                 points.emplace_back(vert->x, vert->y);
             }
@@ -721,7 +726,7 @@ void DXFReaderWriter::addSpline(const DRW_Spline *data)
         }
         else
         {
-            for (const DRW_Coord *vert: data->controllist)
+            for (const DRW_Coord *vert : data->controllist)
             {
                 points.emplace_back(vert->x, vert->y);
             }
@@ -756,9 +761,9 @@ void DXFReaderWriter::addSpline(const DRW_Spline *data)
     {
         Geo::CubicBSpline *bspline = nullptr;
         std::vector<Geo::Point> points;
-        if (data->ncontrol== 0)
+        if (data->ncontrol == 0)
         {
-            for (const DRW_Coord *vert: data->fitlist)
+            for (const DRW_Coord *vert : data->fitlist)
             {
                 points.emplace_back(vert->x, vert->y);
             }
@@ -766,7 +771,7 @@ void DXFReaderWriter::addSpline(const DRW_Spline *data)
         }
         else
         {
-            for (const DRW_Coord *vert: data->controllist)
+            for (const DRW_Coord *vert : data->controllist)
             {
                 points.emplace_back(vert->x, vert->y);
             }
@@ -812,21 +817,30 @@ void DXFReaderWriter::addInsert(const DRW_Insert &data)
         _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
         if (_block_name_map.find(data.name) != _block_name_map.end())
         {
-            Combination *combination = _block_name_map[data.name];
+            Combination *combination = new Combination();
+            for (const Geo::Geometry *obj : *_block_name_map[data.name])
+            {
+                combination->append(obj->clone());
+            }
             combination->scale(data.basePoint.x, data.basePoint.y, data.xscale);
             combination->translate(data.basePoint.x, data.basePoint.y);
             combination->rotate(data.basePoint.x, data.basePoint.y, data.angle);
+            _graph->append(combination);
         }
     }
     else
     {
         if (_block_name_map.find(data.name) != _block_name_map.end())
         {
-            Combination *combination = new Combination(*_block_name_map[data.name]);
-            combination->scale(data.basePoint.x, data.basePoint.y, data.xscale);
-            combination->translate(data.basePoint.x, data.basePoint.y);
-            combination->rotate(data.basePoint.x, data.basePoint.y, data.angle);
-            _combination->append(combination);
+            Combination combination;
+            for (const Geo::Geometry *obj : *_block_name_map[data.name])
+            {
+                combination.append(obj->clone());
+            }
+            combination.scale(data.basePoint.x, data.basePoint.y, data.xscale);
+            combination.translate(data.basePoint.x, data.basePoint.y);
+            combination.rotate(data.basePoint.x, data.basePoint.y, data.angle);
+            _combination->append(&combination);
         }
     }
 }
@@ -850,7 +864,7 @@ void DXFReaderWriter::addMText(const DRW_MText &data)
 {
     const QString txt = to_native_string(QString::fromUtf8(data.text.c_str()));
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    if (_ignore_entity || txt.isEmpty() || txt.count(' ')  == txt.size())
+    if (_ignore_entity || txt.isEmpty() || txt.count(' ') == txt.size())
     {
         return;
     }
@@ -860,8 +874,7 @@ void DXFReaderWriter::addMText(const DRW_MText &data)
         {
             if (group.name.toStdString() == data.layer)
             {
-                group.append(new Text(data.basePoint.x, data.basePoint.y,
-                    GlobalSetting::setting().text_size, txt));
+                group.append(new Text(data.basePoint.x, data.basePoint.y, GlobalSetting::setting().text_size, txt));
                 _object_map[group.back()] = data.handle;
                 _handle_map[data.handle] = group.back();
                 return;
@@ -869,15 +882,13 @@ void DXFReaderWriter::addMText(const DRW_MText &data)
         }
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
-        _graph->container_groups().back().append(new Text(data.basePoint.x, data.basePoint.y,
-            GlobalSetting::setting().text_size, txt));
+        _graph->container_groups().back().append(new Text(data.basePoint.x, data.basePoint.y, GlobalSetting::setting().text_size, txt));
         _object_map[_graph->container_groups().back().back()] = data.handle;
         _handle_map[data.handle] = _graph->container_groups().back().back();
     }
     else
     {
-        _combination->append(new Text(data.basePoint.x, data.basePoint.y,
-            GlobalSetting::setting().text_size, txt));
+        _combination->append(new Text(data.basePoint.x, data.basePoint.y, GlobalSetting::setting().text_size, txt));
         _object_map[_combination->back()] = data.handle;
         _handle_map[data.handle] = _combination->back();
     }
@@ -887,7 +898,7 @@ void DXFReaderWriter::addText(const DRW_Text &data)
 {
     const QString txt = to_native_string(QString::fromUtf8(data.text.c_str()));
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    if (_ignore_entity || txt.isEmpty() || txt.count(' ')  == txt.size())
+    if (_ignore_entity || txt.isEmpty() || txt.count(' ') == txt.size())
     {
         return;
     }
@@ -897,8 +908,7 @@ void DXFReaderWriter::addText(const DRW_Text &data)
         {
             if (group.name.toStdString() == data.layer)
             {
-                group.append(new Text(data.basePoint.x, data.basePoint.y,
-                    GlobalSetting::setting().text_size, txt));
+                group.append(new Text(data.basePoint.x, data.basePoint.y, GlobalSetting::setting().text_size, txt));
                 _object_map[group.back()] = data.handle;
                 _handle_map[data.handle] = group.back();
                 return;
@@ -906,15 +916,13 @@ void DXFReaderWriter::addText(const DRW_Text &data)
         }
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
-        _graph->container_groups().back().append(new Text(data.basePoint.x, data.basePoint.y,
-            GlobalSetting::setting().text_size, txt));
+        _graph->container_groups().back().append(new Text(data.basePoint.x, data.basePoint.y, GlobalSetting::setting().text_size, txt));
         _object_map[_graph->container_groups().back().back()] = data.handle;
         _handle_map[data.handle] = _graph->container_groups().back().back();
     }
     else
     {
-        _combination->append(new Text(data.basePoint.x, data.basePoint.y,
-            GlobalSetting::setting().text_size, txt));
+        _combination->append(new Text(data.basePoint.x, data.basePoint.y, GlobalSetting::setting().text_size, txt));
         _object_map[_combination->back()] = data.handle;
         _handle_map[data.handle] = _combination->back();
     }
@@ -981,16 +989,45 @@ void DXFReaderWriter::linkImage(const DRW_ImageDef *data)
 }
 
 void DXFReaderWriter::addComment(const char *comment)
-{}
+{
+}
 
 void DXFReaderWriter::writeHeader(DRW_Header &data)
-{}
+{
+}
 
 void DXFReaderWriter::writeBlocks()
-{}
+{
+    for (Combination *combination : _block_store)
+    {
+        DRW_Block block;
+        block.name = combination->name.toStdString();
+        block.basePoint.x = 0.0;
+        block.basePoint.y = 0.0;
+        block.basePoint.z = 0.0;
+        block.flags = 1; // flag for unnamed block
+        _dxfrw->writeBlock(&block);
+        const Geo::AABBRect rect = combination->bounding_rect();
+        const Geo::Point anchor(rect.left(), rect.bottom());
+        for (const Geo::Geometry *object : *combination)
+        {
+            Geo::Geometry *moved_object = object->clone();
+            moved_object->translate(-anchor.x, -anchor.y);
+            write_geometry_object(moved_object);
+            delete moved_object;
+        }
+    }
+    _block_store.clear();
+}
 
 void DXFReaderWriter::writeBlockRecords()
-{}
+{
+    prepare_blocks();
+    for (Combination *combination : _block_store)
+    {
+        _dxfrw->writeBlockRecord(combination->name.toStdString());
+    }
+}
 
 void DXFReaderWriter::writeEntities()
 {
@@ -1006,7 +1043,8 @@ void DXFReaderWriter::writeEntities()
 }
 
 void DXFReaderWriter::writeLTypes()
-{}
+{
+}
 
 void DXFReaderWriter::writeLayers()
 {
@@ -1021,16 +1059,36 @@ void DXFReaderWriter::writeLayers()
 }
 
 void DXFReaderWriter::writeTextstyles()
-{}
+{
+}
 
 void DXFReaderWriter::writeVports()
-{}
+{
+    DRW_Vport vp;
+    vp.name = "*Active";
+    vp.grid = 1;
+    vp.gridSpacing.x = 50;
+    vp.gridSpacing.y = 50;
+    {
+        const Geo::AABBRect rect = _graph->bounding_rect();
+        vp.height = rect.height() * 1.1;
+        vp.ratio = rect.width() / rect.height();
+        vp.center.x = rect.center().x;
+        vp.center.y = rect.center().y;
+    }
+    _dxfrw->writeVport(&vp);
+}
 
 void DXFReaderWriter::writeDimstyles()
-{}
+{
+}
 
 void DXFReaderWriter::writeAppId()
-{}
+{
+    DRW_AppId ai;
+    ai.name = "DSV";
+    _dxfrw->writeAppId(&ai);
+}
 
 void DXFReaderWriter::write_geometry_object(const Geo::Geometry *object)
 {
@@ -1048,10 +1106,8 @@ void DXFReaderWriter::write_geometry_object(const Geo::Geometry *object)
         write_circle(static_cast<const Geo::Circle *>(object));
         break;
     case Geo::Type::COMBINATION:
-        for (const Geo::Geometry *obj : *static_cast<const Combination *>(object))
-        {
-            write_geometry_object(obj);
-        }
+        write_insert(static_cast<const Combination *>(object),
+                     Geo::Point(object->bounding_rect().left(), object->bounding_rect().bottom()));
         break;
     case Geo::Type::CONTAINERGROUP:
         break;
@@ -1094,15 +1150,24 @@ void DXFReaderWriter::write_bspline(const Geo::BSpline *bspline)
     // bit coded: 1: closed; 2: periodic; 4: rational; 8: planar; 16:linear
     sp.flags = 0x1008;
 
-    // write spline control points:
-    for (const Geo::Point &v: bspline->control_points)
+    std::vector<DRW_Coord> control_points, path_points;
+    for (const Geo::Point &v : bspline->control_points)
     {
-        sp.controllist.push_back(new DRW_Coord(v.x, v.y, 0));
+        control_points.emplace_back(v.x, v.y, 0);
     }
-    // write spline fit points:
     for (const Geo::Point &v : bspline->path_points)
     {
-        sp.fitlist.push_back(new DRW_Coord(v.x, v.y, 0));
+        path_points.emplace_back(v.x, v.y, 0);
+    }
+    // write spline control points:
+    for (size_t i = 0, count = control_points.size(); i < count; ++i)
+    {
+        sp.controllist.push_back(&control_points[i]);
+    }
+    // write spline fit points:
+    for (size_t i = 0, count = path_points.size(); i < count; ++i)
+    {
+        sp.fitlist.push_back(&path_points[i]);
     }
 
     sp.nfit = sp.fitlist.size();
@@ -1223,6 +1288,220 @@ void DXFReaderWriter::write_point(const Geo::Point *point)
     _dxfrw->writePoint(&p);
 }
 
+void DXFReaderWriter::prepare_blocks()
+{
+    for (ContainerGroup &group : _graph->container_groups())
+    {
+        for (Geo::Geometry *object : group)
+        {
+            if (Combination *combination = dynamic_cast<Combination *>(object))
+            {
+                _block_store.push_back(combination);
+            }
+        }
+    }
+
+    std::set<QString> names;
+    for (Combination *combination : _block_store)
+    {
+        if (!combination->name.isEmpty())
+        {
+            names.insert(combination->name);
+        }
+    }
+
+    int index = 0;
+    for (Combination *combination : _block_store)
+    {
+        if (combination->name.isEmpty())
+        {
+            QString name = QString::number(index++);
+            while (names.find(name) != names.end())
+            {
+                name = QString::number(index++);
+            }
+            combination->name = name;
+        }
+    }
+
+    std::vector<Geo::AABBRect> rects;
+    for (const Combination *combination : _block_store)
+    {
+        Geo::AABBRect rect = combination->bounding_rect();
+        rect.translate(-rect.left(), -rect.bottom());
+        rects.emplace_back(rect);
+    }
+    for (size_t i = 0, count = _block_store.size(); i < count; ++i)
+    {
+        const Geo::AABBRect &rect0 = rects[i];
+        for (size_t j = i + 1; j < count; ++j)
+        {
+            if (_block_store[i]->size() != _block_store[j]->size())
+            {
+                continue;
+            }
+            const Geo::AABBRect &rect1 = rects[j];
+            if (rect0[0] != rect1[0] || rect0[2] != rect1[2])
+            {
+                continue;
+            }
+            bool is_same = true;
+            for (size_t k = 0, count1 = _block_store[i]->size(); k < count1 && is_same; ++k)
+            {
+                if (_block_store[i]->at(k)->type() != _block_store[j]->at(k)->type())
+                {
+                    is_same = false;
+                    break;
+                }
+                switch (_block_store[i]->at(k)->type())
+                {
+                case Geo::Type::ARC:
+                    if (const Geo::Arc *arc0 = static_cast<const Geo::Arc *>(_block_store[i]->at(k)),
+                        *arc1 = static_cast<const Geo::Arc *>(_block_store[j]->at(k));
+                        arc0->radius == arc1->radius && arc0->x - rect0[3].x == arc1->x - rect1[3].x &&
+                        arc0->y - rect0[3].y == arc1->y - rect1[3].y)
+                    {
+                        for (int m = 0; m < 3; ++m)
+                        {
+                            if (arc0->control_points[m].x - rect0[3].x != arc1->control_points[m].x - rect1[3].x ||
+                                arc0->control_points[m].y - rect0[3].y != arc1->control_points[m].y - rect1[3].y)
+                            {
+                                is_same = false;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        is_same = false;
+                    }
+                    break;
+                case Geo::Type::BEZIER:
+                    if (const Geo::CubicBezier *bezier0 = static_cast<const Geo::CubicBezier *>(_block_store[i]->at(k)),
+                        *bezier1 = static_cast<const Geo::CubicBezier *>(_block_store[j]->at(k));
+                        bezier0->size() == bezier1->size())
+                    {
+                        for (size_t m = 0, count2 = bezier0->size(); m < count2; ++m)
+                        {
+                            if (bezier0->at(m).x - rect0[3].x != bezier1->at(m).x - rect1[3].x ||
+                                bezier0->at(m).y - rect0[3].y != bezier1->at(m).y - rect1[3].y)
+                            {
+                                is_same = false;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        is_same = false;
+                    }
+                    break;
+                case Geo::Type::BSPLINE:
+                    if (const Geo::BSpline *bspline0 = static_cast<const Geo::BSpline *>(_block_store[i]->at(k)),
+                        *bspline1 = static_cast<const Geo::BSpline *>(_block_store[j]->at(k));
+                        bspline0->control_points.size() == bspline1->control_points.size() && bspline0->knots() == bspline1->knots())
+                    {
+                        for (size_t m = 0, count2 = bspline0->control_points.size(); m < count2; ++m)
+                        {
+                            if (bspline0->control_points[m].x - rect0[3].x != bspline1->control_points[m].x - rect1[3].x ||
+                                bspline0->control_points[m].y - rect0[3].y != bspline1->control_points[m].y - rect1[3].y)
+                            {
+                                is_same = false;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        is_same = false;
+                    }
+                    break;
+                case Geo::Type::CIRCLE:
+                    if (const Geo::Circle *circle0 = static_cast<const Geo::Circle *>(_block_store[i]->at(k)),
+                        *circle1 = static_cast<const Geo::Circle *>(_block_store[j]->at(k));
+                        circle0->radius != circle1->radius || circle0->x - rect0[3].x != circle1->x - rect1[3].x ||
+                        circle0->y - rect0[3].y != circle1->y - rect1[3].y)
+                    {
+                        is_same = false;
+                    }
+                    break;
+                case Geo::Type::ELLIPSE:
+                    if (const Geo::Ellipse *ellipse0 = static_cast<const Geo::Ellipse *>(_block_store[i]->at(k)),
+                        *ellipse1 = static_cast<const Geo::Ellipse *>(_block_store[j]->at(k));
+                        ellipse0->lengtha() != ellipse1->lengtha() || ellipse0->lengthb() != ellipse1->lengthb() ||
+                        ellipse0->arc_param0() != ellipse1->arc_param0() || ellipse0->arc_param1() != ellipse1->arc_param1() ||
+                        ellipse0->center().x - rect0[3].x != ellipse1->center().x - rect1[3].x ||
+                        ellipse0->center().y - rect0[3].y != ellipse1->center().y - rect1[3].y)
+                    {
+                        is_same = false;
+                    }
+                    break;
+                case Geo::Type::POINT:
+                    if (const Geo::Point *point0 = static_cast<const Geo::Point *>(_block_store[i]->at(k)),
+                        *point1 = static_cast<const Geo::Point *>(_block_store[j]->at(k));
+                        point0->x - rect0[3].x != point1->x - rect1[3].x || point0->y - rect0[3].y != point1->y - rect1[3].y)
+                    {
+                        is_same = false;
+                    }
+                    break;
+                case Geo::Type::POLYGON:
+                case Geo::Type::POLYLINE:
+                    if (const Geo::Polyline *polyline0 = static_cast<const Geo::Polyline *>(_block_store[i]->at(k)),
+                        *polyline1 = static_cast<const Geo::Polyline *>(_block_store[j]->at(k));
+                        polyline0->size() != polyline1->size())
+                    {
+                        is_same = false;
+                    }
+                    else
+                    {
+                        for (size_t m = 0, count2 = polyline0->size(); m < count2; ++m)
+                        {
+                            if (polyline0->at(m).x - rect0[3].x != polyline1->at(m).x - rect1[3].x ||
+                                polyline0->at(m).y - rect0[3].y != polyline1->at(m).y - rect1[3].y)
+                            {
+                                is_same = false;
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                case Geo::Type::TEXT:
+                    if (const Text *text0 = static_cast<const Text *>(_block_store[i]->at(k)),
+                        *text1 = static_cast<const Text *>(_block_store[j]->at(k));
+                        text0->text() != text1->text() || text0->height() != text1->height() ||
+                        text0->center() - rect0[3] != text1->center() - rect1[3])
+                    {
+                        is_same = false;
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+            if (is_same)
+            {
+                _block_store[j]->name = _block_store[i]->name;
+                _block_store.erase(_block_store.begin() + j);
+                rects.erase(rects.begin() + j);
+                --count;
+                --j;
+            }
+        }
+    }
+}
+
+void DXFReaderWriter::write_insert(const Combination *combination, const Geo::Point &insertion_point)
+{
+    DRW_Insert insert;
+    insert.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    insert.lineType = "CONTINUOUS";
+    insert.name = combination->name.toStdString();
+    insert.basePoint.x = insertion_point.x;
+    insert.basePoint.y = insertion_point.y;
+    insert.basePoint.z = 0.0;
+    _dxfrw->writeInsert(&insert);
+}
+
 void DXFReaderWriter::check_block()
 {
     for (const std::pair<Combination *, std::string> bpair : _block_names)
@@ -1235,7 +1514,7 @@ void DXFReaderWriter::check_block()
     }
     for (const std::pair<Combination *, int> bpair : _block_map)
     {
-        for (size_t i = bpair.first->size() - 1; i > 0;--i)
+        for (size_t i = bpair.first->size() - 1; i > 0; --i)
         {
             if (_handle_pairs.find(_object_map[(*bpair.first)[i]]) == _handle_pairs.end())
             {
@@ -1254,6 +1533,11 @@ void DXFReaderWriter::check_block()
         {
             bpair.first->update_border();
         }
+    }
+    while (!_block_store.empty())
+    {
+        delete _block_store.back();
+        _block_store.pop_back();
     }
 }
 
@@ -1283,20 +1567,20 @@ QString DXFReaderWriter::to_dxf_string(const QString &txt)
             switch (c)
             {
             case 0x0A:
-                res+="\\P";
+                res += "\\P";
                 break;
                 // diameter:
-            case 0x2205://RLZ: Empty_set, diameter is 0x2300 need to add in all fonts
+            case 0x2205: // RLZ: Empty_set, diameter is 0x2300 need to add in all fonts
             case 0x2300:
-                res+="%%C";
+                res += "%%C";
                 break;
                 // degree:
             case 0x00B0:
-                res+="%%D";
+                res += "%%D";
                 break;
                 // plus/minus
             case 0x00B1:
-                res+="%%P";
+                res += "%%P";
                 break;
             default:
                 --j;
@@ -1317,28 +1601,27 @@ QString DXFReaderWriter::to_native_string(const QString &txt)
     for (size_t i = 0, count = txt.length(); i < count; ++i)
     {
         if (txt.at(i).unicode() == 0x7B)
-        { //is '{' ?
-            if (txt.at(i+1).unicode() == 0x5c)
-            { //and is "{\" ?
-                //check known codes
-                if ( (txt.at(i+2).unicode() == 0x66) || //is "\f" ?
-                     (txt.at(i+2).unicode() == 0x48) || //is "\H" ?
-                     (txt.at(i+2).unicode() == 0x43)    //is "\C" ?
-                    )
+        { // is '{' ?
+            if (txt.at(i + 1).unicode() == 0x5c)
+            { // and is "{\" ?
+                // check known codes
+                if ((txt.at(i + 2).unicode() == 0x66) || // is "\f" ?
+                    (txt.at(i + 2).unicode() == 0x48) || // is "\H" ?
+                    (txt.at(i + 2).unicode() == 0x43)    // is "\C" ?
+                )
                 {
-                    //found tag, append parsed part
-                    res.append(txt.mid(j,i-j));
-                    qsizetype pos = txt.indexOf(QChar(0x7D), i + 3);//find '}'
-                    if (pos <0)
+                    // found tag, append parsed part
+                    res.append(txt.mid(j, i - j));
+                    qsizetype pos = txt.indexOf(QChar(0x7D), i + 3); // find '}'
+                    if (pos < 0)
                     {
                         break; //'}' not found
                     }
                     QString tmp = txt.mid(i + 1, pos - i - 1);
                     do
                     {
-                        tmp = tmp.remove(0, tmp.indexOf(QChar{0x3B}, 0) + 1);//remove to ';'
-                    }
-                    while (tmp.startsWith("\\f") || tmp.startsWith("\\H") || tmp.startsWith("\\C"));
+                        tmp = tmp.remove(0, tmp.indexOf(QChar{0x3B}, 0) + 1); // remove to ';'
+                    } while (tmp.startsWith("\\f") || tmp.startsWith("\\H") || tmp.startsWith("\\C"));
                     res.append(tmp);
                     i = j = pos;
                     ++j;
@@ -1353,9 +1636,9 @@ QString DXFReaderWriter::to_native_string(const QString &txt)
     // Space:
     res = res.replace(QRegularExpression("\\\\~"), " ");
     // Tab:
-    res = res.replace(QRegularExpression("\\^I"), "    ");//RLZ: change 4 spaces for \t when mtext have support for tab
+    res = res.replace(QRegularExpression("\\^I"), "    "); // RLZ: change 4 spaces for \t when mtext have support for tab
     // diameter:
-    res = res.replace(QRegularExpression("%%[cC]"), QChar(0x2300));//RLZ: Empty_set is 0x2205, diameter is 0x2300 need to add in all fonts
+    res = res.replace(QRegularExpression("%%[cC]"), QChar(0x2300)); // RLZ: Empty_set is 0x2205, diameter is 0x2300 need to add in all fonts
     // degree:
     res = res.replace(QRegularExpression("%%[dD]"), QChar(0x00B0));
     // plus/minus

@@ -315,6 +315,18 @@ const Geo::Geometry *ContainerGroup::operator[](const size_t index) const
     return _containers[index];
 }
 
+Geo::Geometry *ContainerGroup::at(const size_t index)
+{
+    assert(index < _containers.size());
+    return _containers[index];
+}
+
+const Geo::Geometry *ContainerGroup::at(const size_t index) const
+{
+    assert(index < _containers.size());
+    return _containers[index];
+}
+
 void ContainerGroup::clear()
 {
     for (size_t i = 0, count = _containers.size(); i < count; ++i)

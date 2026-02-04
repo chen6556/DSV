@@ -103,6 +103,10 @@ public:
 
     const Geo::Geometry *operator[](const size_t index) const;
 
+    Geo::Geometry *at(const size_t index);
+
+    const Geo::Geometry *at(const size_t index) const;
+
     void clear() override;
 
     void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;

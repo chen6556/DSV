@@ -46,6 +46,7 @@ private:
     dxfRW *_dxfrw = nullptr;
 
     std::set<std::string> _inserted_blocks;
+    std::vector<Combination *> _block_store;
     std::unordered_map<const Geo::Geometry *, int> _object_map;
     std::unordered_map<int, Geo::Geometry *> _handle_map;
     std::unordered_map<Combination *, int> _block_map;
@@ -255,6 +256,10 @@ private:
     void write_arc(const Geo::Arc *arc);
 
     void write_point(const Geo::Point *point);
+
+    void prepare_blocks();
+
+    void write_insert(const Combination *combination, const Geo::Point &insertion_point);
 
 public:
     void check_block();
