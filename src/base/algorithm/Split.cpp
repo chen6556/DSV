@@ -252,7 +252,7 @@ bool Geo::split(const CubicBezier &bezier, const Point &pos, CubicBezier &output
 bool Geo::split(const CubicBezier &bezier, const size_t i, const double t, CubicBezier &output0, CubicBezier &output1)
 {
     const int order = 3;
-    if ((i == 0 && t == 0) || (i == (bezier.size() / (order + 1) - 1) && t == 1))
+    if ((i == 0 && t == 0) || (i == (bezier.size() / order - 1) && t == 1))
     {
         return false;
     }
@@ -263,7 +263,7 @@ bool Geo::split(const CubicBezier &bezier, const size_t i, const double t, Cubic
     Geo::Point pos;
     for (int j = 0; j <= order; ++j)
     {
-        control_points.emplace_back(bezier[j + i]);
+        control_points.emplace_back(bezier[j + i * order]);
         pos += (control_points.back() * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
     }
     std::vector<Geo::Point> temp_points, result_points0, result_points1;
@@ -281,7 +281,7 @@ bool Geo::split(const CubicBezier &bezier, const size_t i, const double t, Cubic
     result_points0.back() = result_points1.back() = pos;
     std::reverse(result_points1.begin(), result_points1.end());
 
-    output0.append(bezier.begin(), bezier.begin() + i + 1);
+    output0.append(bezier.begin(), bezier.begin() + i * order + 1);
     if (output0.empty() || output0.back() != result_points0.front())
     {
         output0.append(result_points0.begin(), result_points0.end());
@@ -291,13 +291,13 @@ bool Geo::split(const CubicBezier &bezier, const size_t i, const double t, Cubic
         output0.append(result_points0.begin() + 1, result_points0.end());
     }
     output1.append(result_points1.begin(), result_points1.end());
-    if (output1.empty() || output1.back() != bezier[i])
+    if (output1.empty() || output1.back() != bezier[i * order])
     {
-        output1.append(bezier.begin() + i + order, bezier.end());
+        output1.append(bezier.begin() + i * order + order, bezier.end());
     }
     else
     {
-        output1.append(bezier.begin() + i + order + 1, bezier.end());
+        output1.append(bezier.begin() + i * order + order + 1, bezier.end());
     }
     output0.update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
     output1.update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);

@@ -2199,7 +2199,7 @@ Point CubicBezier::shape_point(const size_t index, const double t) const
     Geo::Point point;
     for (int j = 0; j <= 3; ++j)
     {
-        point += (_points[j + index] * (nums[j] * std::pow(1 - t, 3 - j) * std::pow(t, j)));
+        point += (_points[j + index * 3] * (nums[j] * std::pow(1 - t, 3 - j) * std::pow(t, j)));
     }
     return point;
 }

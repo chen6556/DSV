@@ -541,10 +541,6 @@ void MainWindow::refresh_settings()
         GlobalSetting::setting().graph->update_curve_shape(step, value);
         ui->canvas->refresh_vbo();
     }
-    if (_setting->update_text_vbo())
-    {
-        ui->canvas->refresh_text_vbo();
-    }
     _editer.set_backup_count(GlobalSetting::setting().backup_times);
     ui->canvas->set_catch_distance(GlobalSetting::setting().catch_distance);
     GlobalSetting::setting().save_setting();

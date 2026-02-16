@@ -547,7 +547,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const CubicBez
                 result.emplace_back(point);
                 if (tvalues != nullptr)
                 {
-                    tvalues->emplace_back(i, t, point.x, point.y);
+                    tvalues->emplace_back(i / order, t, point.x, point.y);
                 }
             }
         }
@@ -568,7 +568,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const CubicBez
         intersections.emplace_back(bezier.back());
         if (tvalues != nullptr)
         {
-            tvalues->emplace_back(bezier.size() / (order + 1) - 1, 1, bezier.back().x, bezier.back().y);
+            tvalues->emplace_back(bezier.size() / order - 1, 1, bezier.back().x, bezier.back().y);
         }
     }
 
@@ -1757,7 +1757,7 @@ int Geo::is_intersected(const Circle &circle, const CubicBezier &bezier, std::ve
                 result.emplace_back(point);
                 if (tvalues != nullptr)
                 {
-                    tvalues->emplace_back(i, t, point.x, point.y);
+                    tvalues->emplace_back(i / order, t, point.x, point.y);
                 }
             }
         }
@@ -1777,7 +1777,7 @@ int Geo::is_intersected(const Circle &circle, const CubicBezier &bezier, std::ve
         result.emplace_back(bezier.back());
         if (tvalues != nullptr)
         {
-            tvalues->emplace_back(bezier.size() / (order + 1) - 1, 1, bezier.back().x, bezier.back().y);
+            tvalues->emplace_back(bezier.size() / order - 1, 1, bezier.back().x, bezier.back().y);
         }
     }
 
@@ -2169,7 +2169,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const CubicBezier &bezier, std::
                 result.emplace_back(point);
                 if (tvalues != nullptr)
                 {
-                    tvalues->emplace_back(i, t, point.x, point.y);
+                    tvalues->emplace_back(i / 3, t, point.x, point.y);
                 }
             }
         }
@@ -2187,7 +2187,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const CubicBezier &bezier, std::
         result.emplace_back(bezier.back());
         if (tvalues != nullptr)
         {
-            tvalues->emplace_back(bezier.size() / (order + 1) - 1, 1, bezier.back().x, bezier.back().y);
+            tvalues->emplace_back(bezier.size() / order - 1, 1, bezier.back().x, bezier.back().y);
         }
     }
 
@@ -2610,11 +2610,11 @@ int Geo::is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, 
                     intersections.emplace_back((point0 + point1) / 2);
                     if (tvalues0 != nullptr)
                     {
-                        tvalues0->emplace_back(p, t0, point0.x, point0.y);
+                        tvalues0->emplace_back(p / order, t0, point0.x, point0.y);
                     }
                     if (tvalues1 != nullptr)
                     {
-                        tvalues1->emplace_back(q, t1, point1.x, point1.y);
+                        tvalues1->emplace_back(q / order, t1, point1.x, point1.y);
                     }
                 }
             }
@@ -2646,7 +2646,7 @@ int Geo::is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, 
             }
             if (tvalues1 != nullptr)
             {
-                tvalues1->emplace_back(bezier1.size() / (order + 1) - 1, 1, bezier1.back().x, bezier1.back().y);
+                tvalues1->emplace_back(bezier1.size() / order - 1, 1, bezier1.back().x, bezier1.back().y);
             }
         }
     }
@@ -2657,7 +2657,7 @@ int Geo::is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, 
             intersections.emplace_back(bezier0.back());
             if (tvalues0 != nullptr)
             {
-                tvalues0->emplace_back(bezier0.size() / (order + 1) - 1, 1, bezier0.back().x, bezier0.back().y);
+                tvalues0->emplace_back(bezier0.size() / order - 1, 1, bezier0.back().x, bezier0.back().y);
             }
             if (tvalues1 != nullptr)
             {
@@ -2672,11 +2672,11 @@ int Geo::is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, 
             intersections.emplace_back(bezier0.back());
             if (tvalues0 != nullptr)
             {
-                tvalues0->emplace_back(bezier0.size() / (order + 1) - 1, 1, bezier0.back().x, bezier0.back().y);
+                tvalues0->emplace_back(bezier0.size() / order - 1, 1, bezier0.back().x, bezier0.back().y);
             }
             if (tvalues1 != nullptr)
             {
-                tvalues1->emplace_back(bezier1.size() / (order + 1) - 1, 1, bezier1.back().x, bezier1.back().y);
+                tvalues1->emplace_back(bezier1.size() / order - 1, 1, bezier1.back().x, bezier1.back().y);
             }
         }
     }
@@ -3093,7 +3093,7 @@ int Geo::is_intersected(const CubicBezier &bezier, const BSpline &bspline, const
             intersections.emplace_back(point);
             if (tvalues0 != nullptr)
             {
-                tvalues0->emplace_back(std::get<0>(bezier_values[i]), t0, point0.x, point0.y);
+                tvalues0->emplace_back(std::get<0>(bezier_values[i]) / order, t0, point0.x, point0.y);
             }
             if (tvalues1 != nullptr)
             {
@@ -3124,7 +3124,7 @@ int Geo::is_intersected(const CubicBezier &bezier, const BSpline &bspline, const
             intersections.emplace_back(bezier.back());
             if (tvalues0 != nullptr)
             {
-                tvalues0->emplace_back(bezier.size() / (order + 1) - 1, 1, bezier.back().x, bezier.back().y);
+                tvalues0->emplace_back(bezier.size() / order - 1, 1, bezier.back().x, bezier.back().y);
             }
             if (tvalues1 != nullptr)
             {
@@ -3154,7 +3154,7 @@ int Geo::is_intersected(const CubicBezier &bezier, const BSpline &bspline, const
             intersections.emplace_back(bezier.back());
             if (tvalues0 != nullptr)
             {
-                tvalues0->emplace_back(bezier.size() / (order + 1) - 1, 1, bezier.back().x, bezier.back().y);
+                tvalues0->emplace_back(bezier.size() / order - 1, 1, bezier.back().x, bezier.back().y);
             }
             if (tvalues1 != nullptr)
             {

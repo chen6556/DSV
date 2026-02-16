@@ -6,6 +6,7 @@
 #include <QTextEdit>
 #include <QMenu>
 #include <QAction>
+#include <QPainter>
 #include <QOpenGLFunctions_4_5_Core>
 
 #include "base/Editer.hpp"
@@ -32,6 +33,7 @@ private:
     Editer *_editer = nullptr;
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
+    QPainter _painter;
 
     unsigned int _shader_program = 0, _VAO = 0;
 
@@ -49,7 +51,6 @@ private:
         unsigned int polygon = 0;
         unsigned int circle = 0;
         unsigned int curve = 0;
-        unsigned int text = 0;
         unsigned int circle_printable_points = 0;
         unsigned int curve_printable_points = 0;
         unsigned int point = 0;
@@ -76,10 +77,8 @@ private:
 
     struct Uniforms
     {
-        int w = 0;
-        int h = 0;
-        int vec0 = 0;
-        int vec1 = 0;
+        int window = 0;
+        int ctm = 0;
         int color = 0;
     } _uniforms;
 
@@ -284,7 +283,7 @@ public:
 
     void clear_selected_ibo();
 
-    VBOData refresh_text_vbo();
+    void paint_text();
 
 
     bool refresh_catached_points(const double x, const double y, const double distance, std::vector<const Geo::Geometry *> &catched_objects,

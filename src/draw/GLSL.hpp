@@ -5,14 +5,12 @@ namespace GLSL
 {
 const char *const base_vss = "#version 450 core\n"
                              "layout (location = 0) in dvec3 pos;\n"
-                             "uniform int w;\n"
-                             "uniform int h;\n"
-                             "uniform dvec3 vec0;\n"
-                             "uniform dvec3 vec1;\n"
+                             "uniform vec2 window;\n"
+                             "uniform dmat3 ctm;\n"
                              "void main()\n"
                              "{\n"
-                             "   gl_Position = vec4((pos.x * vec0.x + pos.y * vec0.y + vec0.z) / w - 1.0,"
-                             "1.0 - (pos.x * vec1.x + pos.y * vec1.y + vec1.z) / h, pos.z, 1.0);\n"
+                             "   const dvec3 result = ctm * dvec3(pos.x, pos.y, 1.0);\n"
+                             "   gl_Position = vec4(result.x / window.x - 1.0, 1.0 - result.y / window.y, pos.z, 1.0);\n"
                              "}\0";
 
 const char *const base_fss = "#version 450 core\n"

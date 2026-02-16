@@ -508,7 +508,7 @@ int Geo::closest_point(const CubicBezier &bezier, const Point &point, std::vecto
         for (const auto &[i, t, point] : result)
         {
             output.emplace_back(point);
-            tvalues->emplace_back(i, t, point.x, point.y);
+            tvalues->emplace_back(i / order, t, point.x, point.y);
         }
     }
     return result.size();

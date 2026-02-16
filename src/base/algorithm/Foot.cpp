@@ -236,7 +236,7 @@ int Geo::foot_point(const Point &point, const CubicBezier &bezier, std::vector<P
                 std::abs(std::abs(Geo::angle(coord, point, head, tail)) - Geo::PI) < 1e-4)
             {
                 result.emplace_back(coord);
-                temp.emplace_back(i, t1, coord.x, coord.y);
+                temp.emplace_back(i / order, t1, coord.x, coord.y);
             }
         }
     }

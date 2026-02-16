@@ -491,10 +491,6 @@ bool MoveOperation::mouse_move(QMouseEvent *event)
         }
         canvas->refresh_vbo(types);
     }
-    if (GlobalSetting::setting().show_text)
-    {
-        canvas->refresh_text_vbo();
-    }
     return true;
 }
 
