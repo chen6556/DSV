@@ -1905,6 +1905,22 @@ QComboBox QAbstractItemView::item:hover
 QComboBox QAbstractItemView::item:selected
 {
 	background-color:rgb(0, 85, 127);
+}
+QComboBox QAbstractItemView::indicator
+{
+	border:1 solid rgb(230, 230, 230);
+	border-radius:6;
+	width:10;
+	height:10;
+}
+QComboBox QAbstractItemView::indicator:checked
+{
+	background-color:qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 rgb(255, 255, 255), stop:0.479904 rgb(255, 255, 255) stop:0.522685 rgba(0,0,0,0), stop:1 rgba(0,0,0,0));
+}
+QComboBox QAbstractItemView::indicator:unchecked
+{
+	border:1 solid rgb(230, 230, 230);
+	border-radius:5;
 }</string>
    </property>
    <property name="sizeGripEnabled">

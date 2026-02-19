@@ -8,14 +8,11 @@ class File
 private:
     File() {};
 
-    static void write_dsv(const std::string &path, const Graph *graph);
-
     static void write_plt(const std::string &path, const Graph *graph);
 
 public:
     enum class FileType
     {
-        DSV,
         PLT
     };
 

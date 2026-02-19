@@ -10,9 +10,9 @@
 #include "io/File.hpp"
 #include "io/PLTParser.hpp"
 #include "io/RS274DParser.hpp"
-#include "io/DSVParser.hpp"
 #include "io/GlobalSetting.hpp"
 #include "io/DXFReaderWriter.hpp"
+#include "io/DSVReaderWriter.hpp"
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -374,7 +374,10 @@ void MainWindow::save_file()
             bool flag = false;
             if (path.toLower().endsWith(".dsv"))
             {
-                File::write(path, GlobalSetting::setting().graph, File::FileType::DSV);
+                DSVReaderWriter dsvRW(GlobalSetting::setting().graph);
+                std::ofstream file(path.toLocal8Bit());
+                dsvRW.write(file);
+                file.close();
                 flag = true;
             }
             else if (path.toLower().endsWith(".plt"))
@@ -402,7 +405,10 @@ void MainWindow::save_file()
     {
         if (label_path.toLower().endsWith(".dsv"))
         {
-            File::write(label_path, GlobalSetting::setting().graph, File::FileType::DSV);
+            DSVReaderWriter dsvRW(GlobalSetting::setting().graph);
+            std::ofstream file(label_path.toLocal8Bit());
+            dsvRW.write(file);
+            file.close();
             GlobalSetting::setting().graph->modified = false;
         }
         else if (label_path.toLower().endsWith(".plt"))
@@ -432,7 +438,10 @@ void MainWindow::auto_save()
     {
         if (_editer.path().toLower().endsWith(".dsv"))
         {
-            File::write(_editer.path(), GlobalSetting::setting().graph, File::FileType::DSV);
+            DSVReaderWriter dsvRW(GlobalSetting::setting().graph);
+            std::ofstream file(_editer.path().toLocal8Bit());
+            dsvRW.write(file);
+            file.close();
         }
         else if (_editer.path().toLower().endsWith(".plt"))
         {
@@ -462,7 +471,10 @@ void MainWindow::saveas_file()
     {
         if (path.toLower().endsWith(".dsv"))
         {
-            File::write(path, GlobalSetting::setting().graph, File::FileType::DSV);
+            DSVReaderWriter dsvRW(GlobalSetting::setting().graph);
+            std::ofstream file(path.toLocal8Bit());
+            dsvRW.write(file);
+            file.close();
         }
         else if (path.toLower().endsWith(".plt"))
         {
@@ -485,8 +497,8 @@ void MainWindow::append_file()
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
     QString path = dialog->getOpenFileName(dialog, nullptr, _editer.path(),
-                                           "All Files: (*.*);;DSV: (*.dsv *.DSV);;"
-                                           "PLT: (*.plt *.PLT);;RS274D: (*.cut *.CUT *.nc *.NC);;DXF: (*.dxf *.DXF)",
+                                           "All Files: (*.*);;DSV: (*.dsv *.DSV);;PLT: (*.plt *.PLT);;"
+                                           "RS274D: (*.cut *.CUT *.nc *.NC);;DXF: (*.dxf *.DXF)",
                                            &_file_type);
     append_file(path);
     delete dialog;
@@ -649,7 +661,8 @@ void MainWindow::open_file(const QString &path)
     if (path.toUpper().endsWith(".DSV"))
     {
         std::ifstream file(path.toLocal8Bit(), std::ios::in | std::ios::binary);
-        DSVParser::parse(file, g);
+        DSVReaderWriter dsvRW(g);
+        dsvRW.read(file);
         file.close();
 
         if (ui->remember_file_type->isChecked())
@@ -710,7 +723,8 @@ void MainWindow::open_file(const QString &path)
             {
                 file.clear();
                 file.seekg(0, std::ios::beg);
-                DSVParser::parse(file, g);
+                DSVReaderWriter dsvRW(g);
+                dsvRW.read(file);
                 break;
             }
         }
@@ -753,7 +767,8 @@ void MainWindow::append_file(const QString &path)
     if (path.toUpper().endsWith(".DSV"))
     {
         std::ifstream file(path.toLocal8Bit(), std::ios_base::in);
-        DSVParser::parse(file, g);
+        DSVReaderWriter dsvRW(g);
+        dsvRW.read(file);
         file.close();
     }
     else if (path.toUpper().endsWith(".PLT"))

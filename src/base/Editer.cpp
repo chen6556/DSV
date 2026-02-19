@@ -116,8 +116,10 @@ const size_t Editer::current_group() const
 
 void Editer::set_current_group(const size_t index)
 {
-    assert(index < _graph->container_groups().size());
-    _current_group = index;
+    if(index < _graph->container_groups().size())
+    {
+        _current_group = index;
+    }
 }
 
 const size_t Editer::groups_count() const

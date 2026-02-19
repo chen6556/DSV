@@ -3,9 +3,7 @@
 #include <QDialog>
 #include <QMenu>
 #include <QAction>
-#include <QStringListModel>
-#include <QStringList>
-
+#include <QStandardItemModel>
 #include "base/Editer.hpp"
 
 
@@ -31,8 +29,7 @@ private:
     QAction *_del = nullptr;
 
     Editer *_editer = nullptr;
-    QStringList _layers;
-    QStringListModel *_layers_model = nullptr;
+    QStandardItemModel _layers_model;
     bool _append_to_last = true;
 
 private:
@@ -64,7 +61,7 @@ public:
 
     void update_layers();
 
-    QStringListModel *model();
+    QStandardItemModel *model();
 
     int exec() override;
 };

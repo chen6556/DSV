@@ -376,9 +376,10 @@ void Graph::append_group(const ContainerGroup &group)
     _container_groups.push_back(group);
 }
 
-void Graph::append_group(const ContainerGroup &&group)
+void Graph::append_group(const QString &name)
 {
-    _container_groups.push_back(group);
+    _container_groups.emplace_back();
+    _container_groups.back().name = name;
 }
 
 void Graph::insert_group(const size_t index)

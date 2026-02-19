@@ -35,8 +35,35 @@ color: rgb(230, 230, 230);</string>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QListView" name="layers_view">
+     <property name="font">
+      <font>
+       <pointsize>11</pointsize>
+      </font>
+     </property>
      <property name="contextMenuPolicy">
       <enum>Qt::ContextMenuPolicy::CustomContextMenu</enum>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">QListView::item
+{
+	height:26;
+}
+QListView::indicator
+{
+	border:1 solid rgb(230, 230, 230);
+	border-radius:9;
+	width:16;
+	height:16;
+}
+QListView::indicator:checked
+{
+	background-color:qradialgradient(spread:pad, cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5, stop:0 rgb(255, 255, 255), stop:0.479904 rgb(255, 255, 255) stop:0.522685 rgba(0,0,0,0), stop:1 rgba(0,0,0,0));
+}
+QListView::indicator:unchecked
+{
+	border:1 solid rgb(230, 230, 230);
+	border-radius:8;
+}</string>
      </property>
      <property name="frameShape">
       <enum>QFrame::Shape::Box</enum>

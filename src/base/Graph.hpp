@@ -106,7 +106,7 @@ public:
 
     void append_group(const ContainerGroup &group);
 
-    void append_group(const ContainerGroup &&group);
+    void append_group(const QString &name);
 
     void insert_group(const size_t index);
 

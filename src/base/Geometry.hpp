@@ -233,6 +233,8 @@ public:
 
     virtual void append(const Point &point);
 
+    virtual void append(const double x, const double y);
+
     virtual void append(const Polyline &polyline);
 
     virtual void append(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end);
@@ -443,6 +445,8 @@ public:
     bool is_cw() const;
 
     void append(const Point &point) override;
+
+    void append(const double x, const double y) override;
 
     void append(const Polyline &polyline) override;
 

@@ -361,6 +361,11 @@ void Polyline::append(const Point &point)
     _points.emplace_back(point);
 }
 
+void Polyline::append(const double x, const double y)
+{
+    _points.emplace_back(x, y);
+}
+
 void Polyline::append(const Polyline &polyline)
 {
     _points.insert(_points.cend(), polyline._points.cbegin(), polyline._points.cend());
@@ -1215,6 +1220,26 @@ void Polygon::append(const Point &point)
         else
         {
             _points.emplace_back(point);
+            _points.emplace_back(_points.front());
+        }
+    }
+}
+
+void Polygon::append(const double x, const double y)
+{
+    if (size() < 2)
+    {
+        Polyline::append(x, y);
+    }
+    else
+    {
+        if (_points.front() == _points.back())
+        {
+            Polyline::insert(size() - 1, Geo::Point(x, y));
+        }
+        else
+        {
+            _points.emplace_back(x, y);
             _points.emplace_back(_points.front());
         }
     }
