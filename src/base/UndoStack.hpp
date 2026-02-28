@@ -1,11 +1,11 @@
 #pragma once
 
-#include <list>
 #include <tuple>
 #include <vector>
 #include <string>
 
 #include "base/Graph.hpp"
+#include "draw/QuadTree.hpp"
 
 
 namespace UndoStack
@@ -13,6 +13,8 @@ namespace UndoStack
 class Command
 {
 public:
+    static QuadTree *view_tree;
+
     virtual ~Command() = default;
 
     virtual void undo(Graph *graph = nullptr) = 0;
@@ -22,7 +24,7 @@ public:
 class CommandStack
 {
 private:
-    std::list<Command *> _commands;
+    std::vector<Command *> _commands;
     size_t _count = 3;
 
     Graph *_graph = nullptr;

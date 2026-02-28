@@ -123,6 +123,8 @@ public:
 
     Geo::AABBRect bounding_rect() const override;
 
+    Geo::AABBRectParams aabbrect_params() const override;
+
     const size_t size() const;
 
     const size_t count(const Geo::Type type, const bool include_combinated) const;

@@ -21,7 +21,7 @@ bool Geo::is_inside(const Point &point, const Polyline &polyline)
 
 bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coincide)
 {
-    if (!polygon.empty() && Geo::is_inside(point, polygon.bounding_rect(), coincide))
+    if (!polygon.empty() && Geo::is_inside(point, polygon.aabbrect_params(), coincide))
     {
         if (coincide)
         {
@@ -292,6 +292,18 @@ bool Geo::is_inside(const Point &point, const AABBRect &rect, const bool coincid
     else
     {
         return rect.left() < x && x < rect.right() && rect.bottom() < y && y < rect.top();
+    }
+}
+
+bool Geo::is_inside(const Point &point, const AABBRectParams &params, const bool coincide)
+{
+    if (coincide)
+    {
+        return params.left <= point.x && point.x <= params.right && params.bottom <= point.y && point.y <= params.top;
+    }
+    else
+    {
+        return params.left < point.x && point.x < params.right && params.bottom < point.y && point.y < params.top;
     }
 }
 

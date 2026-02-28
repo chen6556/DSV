@@ -30,6 +30,9 @@ int is_intersected(const Point &point0, const Point &point1, const BSpline &bspl
 // 判断两个AABB矩形是否相交,inside决定完全在AABB矩形内部是否算相交
 bool is_intersected(const AABBRect &rect0, const AABBRect &rect1, const bool inside = true);
 
+// 判断两个AABB矩形是否相交,inside决定完全在AABB矩形内部是否算相交
+bool is_intersected(const AABBRectParams &params0, const AABBRectParams &params1, const bool inside = true);
+
 // 判断两多段线是否相交
 bool is_intersected(const Polyline &polyline0, const Polyline &polyline1);
 

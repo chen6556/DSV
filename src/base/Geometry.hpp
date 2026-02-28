@@ -33,6 +33,14 @@ class AABBRect;
 
 class Polygon;
 
+struct AABBRectParams
+{
+    double left = 0;
+    double top = 0;
+    double right = 0;
+    double bottom = 0;
+};
+
 class Geometry
 {
 public:
@@ -75,6 +83,8 @@ public:
 
     // 最小外接矩形
     virtual Polygon mini_bounding_rect() const;
+
+    virtual AABBRectParams aabbrect_params() const;
 };
 
 struct MarkedPoint
@@ -157,6 +167,8 @@ public:
     AABBRect bounding_rect() const override;
 
     Polygon mini_bounding_rect() const override;
+
+    AABBRectParams aabbrect_params() const override;
 
     Point operator*(const double k) const;
 
@@ -310,6 +322,8 @@ public:
 
     Polygon mini_bounding_rect() const override;
 
+    AABBRectParams aabbrect_params() const override;
+
     void remove_repeated_points();
 };
 
@@ -380,6 +394,8 @@ public:
     AABBRect bounding_rect() const override;
 
     Polygon mini_bounding_rect() const override;
+
+    AABBRectParams aabbrect_params() const override;
 
     std::vector<Point>::const_iterator begin() const;
 
@@ -561,6 +577,8 @@ public:
 
     Polygon mini_bounding_rect() const override;
 
+    AABBRectParams aabbrect_params() const override;
+
     // 内接圆圆心
     Point inner_circle_center() const;
 
@@ -614,6 +632,8 @@ public:
 
     void translate(const double tx, const double ty) override;
 
+    void rotate(const double x_, const double y_, const double rad) override;
+
     void scale(const double x, const double y, const double k) override;
 
     Polygon convex_hull() const override;
@@ -621,6 +641,8 @@ public:
     AABBRect bounding_rect() const override;
 
     Polygon mini_bounding_rect() const override;
+
+    AABBRectParams aabbrect_params() const override;
 
     Circle operator+(const Point &point) const;
 
@@ -681,6 +703,8 @@ public:
     AABBRect bounding_rect() const override;
 
     Polygon mini_bounding_rect() const override;
+
+    AABBRectParams aabbrect_params() const override;
 
     Point tangent(const size_t index, const double t) const;
 
@@ -756,6 +780,8 @@ public:
     AABBRect bounding_rect() const override;
 
     Polygon mini_bounding_rect() const override;
+
+    AABBRectParams aabbrect_params() const override;
 
     Ellipse operator+(const Point &point) const;
 
@@ -879,6 +905,8 @@ public:
     AABBRect bounding_rect() const override;
 
     Polygon mini_bounding_rect() const override;
+
+    AABBRectParams aabbrect_params() const override;
 
     const Point &front() const;
 
@@ -1045,6 +1073,8 @@ public:
     AABBRect bounding_rect() const override;
 
     Polygon mini_bounding_rect() const override;
+
+    AABBRectParams aabbrect_params() const override;
 
     void update_shape(const double down_sampling_value);
 

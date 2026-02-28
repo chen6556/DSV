@@ -3,7 +3,6 @@
 #include <QString>
 #include <QMouseEvent>
 #include "base/Geometry.hpp"
-#include "base/Editer.hpp"
 
 
 class Canvas;
@@ -66,7 +65,6 @@ public:
     static Tool tool[2]; // current, last
     static double view_ratio;
     static QString info;
-    static Editer *editer;
     static Canvas *canvas;
     static Geo::Geometry *clicked_object;
     static bool absolute_coord;

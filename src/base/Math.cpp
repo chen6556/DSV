@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <vector>
 #include <cmath>
 #include "base/Math.hpp"
 #include <gsl/gsl_linalg.h>
@@ -333,4 +334,37 @@ double Math::solve_ellipse_foot(EllipseFootParameter &param, const double init_t
     gsl_root_fsolver_free(s);
 
     return res;
+}
+
+double Math::simpson_3_8(const CurveNorm &f, const double l, const double r)
+{
+    const double mid_l = (l + l + r) / 3.0, mid_r = (l + r + r) / 3.0;
+    return (f(l) + 3.0 * f(mid_l) +  3.0 * f(mid_r) + f(r)) * (r - l) / 8.0;
+}
+
+double Math::adaptive_simpson_3_8(const CurveNorm &f, const double l, const double r)
+{
+    std::vector<std::tuple<double, double>> params;
+    params.emplace_back(l, r);
+    double result = 0;
+    while (!params.empty())
+    {
+        const auto [ll, rr] = params.back();
+        params.pop_back();
+        const double mid = (ll + rr) / 2.0;
+        const double st = simpson_3_8(f, ll, rr);
+        const double sl = simpson_3_8(f, ll, mid);
+        const double sr = simpson_3_8(f, mid, rr);
+        const double t = sl + sr - st;
+        if(std::abs(t) <= 15.0 * Math::EPSILON)
+        {
+            result += (sl + sr + t / 15.0);
+        }
+        else
+        {   
+            params.emplace_back(ll, mid);
+            params.emplace_back(mid, rr);
+        }
+    }
+    return result;
 }

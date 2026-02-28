@@ -387,9 +387,8 @@ bool CMDWidget::work()
             line_array();
             break;
         case CMD::SelectAll_CMD:
-            CanvasOperations::CanvasOperation::editer->reset_selected_mark(true);
+            CanvasOperations::CanvasOperation::canvas->editer()->reset_selected_mark(true);
             CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
-            CanvasOperations::CanvasOperation::canvas->update();
             _current_cmd = CMD::Error_CMD;
             break;
         case CMD::Delete_CMD:
@@ -402,23 +401,22 @@ bool CMDWidget::work()
             break;
         case CMD::Cut_CMD:
             CanvasOperations::CanvasOperation::canvas->cut();
-            CanvasOperations::CanvasOperation::canvas->update();
             _current_cmd = CMD::Error_CMD;
             break;
         case CMD::Paste_CMD:
             paste();
             break;
         case CMD::Undo_CMD:
-            CanvasOperations::CanvasOperation::editer->undo();
-            CanvasOperations::CanvasOperation::canvas->refresh_vbo();
+            CanvasOperations::CanvasOperation::canvas->editer()->undo();
+            CanvasOperations::CanvasOperation::canvas->refresh_vbo(true);
             CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
-            CanvasOperations::CanvasOperation::canvas->update();
             _current_cmd = CMD::Error_CMD;
             break;
         default:
             clear();
             return false;
         }
+        CanvasOperations::CanvasOperation::canvas->update();
     }
     else
     {
@@ -557,7 +555,6 @@ void CMDWidget::paste()
         break;
     case 1:
         CanvasOperations::CanvasOperation::canvas->paste();
-        CanvasOperations::CanvasOperation::canvas->update();
         clear();
         break;
     case 2:
@@ -565,7 +562,6 @@ void CMDWidget::paste()
         break;
     default:
         CanvasOperations::CanvasOperation::canvas->paste(_parameters[1], _parameters[2]);
-        CanvasOperations::CanvasOperation::canvas->update();
         clear();
         break;
     }
@@ -574,7 +570,7 @@ void CMDWidget::paste()
 void CMDWidget::delete_selected_objects()
 {
     std::set<Geo::Type> types;
-    for (const Geo::Geometry *object : CanvasOperations::CanvasOperation::editer->selected())
+    for (const Geo::Geometry *object : CanvasOperations::CanvasOperation::canvas->editer()->selected())
     {
         if (const Combination *combination = dynamic_cast<const Combination *>(object))
         {
@@ -591,16 +587,15 @@ void CMDWidget::delete_selected_objects()
     if (!types.empty())
     {
         CanvasOperations::CanvasOperation::operation().clear();
-        CanvasOperations::CanvasOperation::editer->remove_selected();
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
+        CanvasOperations::CanvasOperation::canvas->editer()->remove_selected();
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(false, types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
-        CanvasOperations::CanvasOperation::canvas->update();
     }
 }
 
 void CMDWidget::connect_polyline()
 {
-    std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
+    std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::canvas->editer()->selected();
     std::set<Geo::Type> types;
     for (const Geo::Geometry *object : objects)
     {
@@ -609,16 +604,16 @@ void CMDWidget::connect_polyline()
             types.insert(type);
         }
     }
-    if (CanvasOperations::CanvasOperation::editer->connect(objects, GlobalSetting::setting().catch_distance))
+    if (CanvasOperations::CanvasOperation::canvas->editer()->connect(objects, GlobalSetting::setting().catch_distance))
     {
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(true, types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
     }
 }
 
 void CMDWidget::close_polyline()
 {
-    std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
+    std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::canvas->editer()->selected();
     std::set<Geo::Type> types;
     for (const Geo::Geometry *object : objects)
     {
@@ -628,17 +623,17 @@ void CMDWidget::close_polyline()
         }
     }
     types.insert(Geo::Type::POLYGON);
-    if (CanvasOperations::CanvasOperation::editer->close_polyline(objects))
+    if (CanvasOperations::CanvasOperation::canvas->editer()->close_polyline(objects))
     {
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(true, types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
     }
 }
 
 void CMDWidget::combinate()
 {
-    if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
-        CanvasOperations::CanvasOperation::editer->combinate(objects))
+    if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::canvas->editer()->selected();
+        CanvasOperations::CanvasOperation::canvas->editer()->combinate(objects))
     {
         std::set<Geo::Type> types;
         for (const Geo::Geometry *object : objects)
@@ -655,14 +650,14 @@ void CMDWidget::combinate()
                 types.insert(object->type());
             }
         }
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(false, types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
     }
 }
 
 void CMDWidget::detach()
 {
-    std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
+    std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::canvas->editer()->selected();
     std::set<Geo::Type> types;
     for (const Geo::Geometry *object : objects)
     {
@@ -676,8 +671,8 @@ void CMDWidget::detach()
     }
     if (!types.empty())
     {
-        CanvasOperations::CanvasOperation::editer->detach(objects);
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
+        CanvasOperations::CanvasOperation::canvas->editer()->detach(objects);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(false, types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
     }
 }
@@ -697,8 +692,8 @@ void CMDWidget::scale()
     default:
         if (_parameters.back() > 0)
         {
-            if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
-                CanvasOperations::CanvasOperation::editer->scale(
+            if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::canvas->editer()->selected();
+                CanvasOperations::CanvasOperation::canvas->editer()->scale(
                     objects, QApplication::keyboardModifiers() != Qt::KeyboardModifier::ControlModifier, _parameters.back()))
             {
                 std::set<Geo::Type> types;
@@ -716,12 +711,11 @@ void CMDWidget::scale()
                         types.insert(object->type());
                     }
                 }
-                CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
+                CanvasOperations::CanvasOperation::canvas->refresh_vbo(true, types);
                 if (objects.size() == 1)
                 {
                     CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo(objects.front());
                 }
-                CanvasOperations::CanvasOperation::canvas->update();
                 clear();
             }
             else
@@ -752,8 +746,8 @@ void CMDWidget::offset()
     default:
         if (_parameters.back() != 0)
         {
-            if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
-                CanvasOperations::CanvasOperation::editer->offset(
+            if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::canvas->editer()->selected();
+                CanvasOperations::CanvasOperation::canvas->editer()->offset(
                     objects, _parameters.back(), static_cast<Geo::Offset::JoinType>(GlobalSetting::setting().offset_join_type),
                     static_cast<Geo::Offset::EndType>(GlobalSetting::setting().offset_end_type)))
             {
@@ -762,8 +756,7 @@ void CMDWidget::offset()
                 {
                     types.insert(object->type());
                 }
-                CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
-                CanvasOperations::CanvasOperation::canvas->update();
+                CanvasOperations::CanvasOperation::canvas->refresh_vbo(false, types);
                 clear();
             }
             else
@@ -789,8 +782,8 @@ void CMDWidget::line_array()
         ui->parameter_label->setText("(X-count, Y-count, X-space, Y-space):");
         break;
     case 1:
-        if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
-            CanvasOperations::CanvasOperation::editer->line_array(
+        if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::canvas->editer()->selected();
+            CanvasOperations::CanvasOperation::canvas->editer()->line_array(
                 objects, GlobalSetting::setting().ui->array_x_item->value(), GlobalSetting::setting().ui->array_y_item->value(),
                 GlobalSetting::setting().ui->array_x_space->value(), GlobalSetting::setting().ui->array_y_space->value()))
         {
@@ -809,18 +802,17 @@ void CMDWidget::line_array()
                     types.insert(object->type());
                 }
             }
-            CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
+            CanvasOperations::CanvasOperation::canvas->refresh_vbo(false, types);
             CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
-            CanvasOperations::CanvasOperation::canvas->update();
         }
         clear();
         break;
     default:
         if (_parameters.size() >= 5 && std::abs(_parameters[1]) >= 1 && std::abs(_parameters[2]) >= 1)
         {
-            if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
-                CanvasOperations::CanvasOperation::editer->line_array(objects, _parameters[1], _parameters[2], _parameters[3],
-                                                                      _parameters[4]))
+            if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::canvas->editer()->selected();
+                CanvasOperations::CanvasOperation::canvas->editer()->line_array(objects, _parameters[1], _parameters[2], _parameters[3],
+                                                                                _parameters[4]))
             {
                 std::set<Geo::Type> types;
                 for (const Geo::Geometry *object : objects)
@@ -837,9 +829,8 @@ void CMDWidget::line_array()
                         types.insert(object->type());
                     }
                 }
-                CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
+                CanvasOperations::CanvasOperation::canvas->refresh_vbo(false, types);
                 CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
-                CanvasOperations::CanvasOperation::canvas->update();
             }
             clear();
         }
@@ -853,9 +844,9 @@ void CMDWidget::line_array()
 
 void CMDWidget::flip_x()
 {
-    std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
-    CanvasOperations::CanvasOperation::editer->flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier,
-                                                    GlobalSetting::setting().ui->to_all_layers->isChecked());
+    std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::canvas->editer()->selected();
+    CanvasOperations::CanvasOperation::canvas->editer()->flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier,
+                                                              GlobalSetting::setting().ui->to_all_layers->isChecked());
     std::set<Geo::Type> types;
     for (const Geo::Geometry *object : objects)
     {
@@ -873,25 +864,24 @@ void CMDWidget::flip_x()
     }
     if (types.empty())
     {
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo();
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(true);
     }
     else
     {
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(true, types);
     }
     if (objects.size() == 1)
     {
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo(objects.front());
     }
     CanvasOperations::CanvasOperation::operation().clear();
-    CanvasOperations::CanvasOperation::canvas->update();
 }
 
 void CMDWidget::flip_y()
 {
-    std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::editer->selected();
-    CanvasOperations::CanvasOperation::editer->flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier,
-                                                    GlobalSetting::setting().ui->to_all_layers->isChecked());
+    std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::canvas->editer()->selected();
+    CanvasOperations::CanvasOperation::canvas->editer()->flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier,
+                                                              GlobalSetting::setting().ui->to_all_layers->isChecked());
     std::set<Geo::Type> types;
     for (const Geo::Geometry *object : objects)
     {
@@ -909,25 +899,24 @@ void CMDWidget::flip_y()
     }
     if (types.empty())
     {
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo();
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(true);
     }
     else
     {
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(true, types);
     }
     if (objects.size() == 1)
     {
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo(objects.front());
     }
     CanvasOperations::CanvasOperation::operation().clear();
-    CanvasOperations::CanvasOperation::canvas->update();
 }
 
 void CMDWidget::shape_intersection()
 {
     Geo::Geometry *shape0 = nullptr, *shape1 = nullptr;
     std::set<Geo::Type> types;
-    for (Geo::Geometry *object : CanvasOperations::CanvasOperation::editer->selected())
+    for (Geo::Geometry *object : CanvasOperations::CanvasOperation::canvas->editer()->selected())
     {
         if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
         {
@@ -952,16 +941,15 @@ void CMDWidget::shape_intersection()
         }
     }
 
-    if (CanvasOperations::CanvasOperation::editer->shape_intersection(shape0, shape1))
+    if (CanvasOperations::CanvasOperation::canvas->editer()->shape_intersection(shape0, shape1))
     {
         if (types.find(Geo::Type::POLYGON) != types.end() &&
             (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end()))
         {
             types.insert(Geo::Type::POLYLINE);
         }
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(true, types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
-        CanvasOperations::CanvasOperation::canvas->update();
     }
 }
 
@@ -969,7 +957,7 @@ void CMDWidget::shape_union()
 {
     Geo::Geometry *shape0 = nullptr, *shape1 = nullptr;
     std::set<Geo::Type> types;
-    for (Geo::Geometry *object : CanvasOperations::CanvasOperation::editer->selected())
+    for (Geo::Geometry *object : CanvasOperations::CanvasOperation::canvas->editer()->selected())
     {
         if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
         {
@@ -994,16 +982,15 @@ void CMDWidget::shape_union()
         }
     }
 
-    if (CanvasOperations::CanvasOperation::editer->shape_union(shape0, shape1))
+    if (CanvasOperations::CanvasOperation::canvas->editer()->shape_union(shape0, shape1))
     {
         if (types.find(Geo::Type::POLYGON) != types.end() &&
             (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end()))
         {
             types.insert(Geo::Type::POLYLINE);
         }
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(true, types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
-        CanvasOperations::CanvasOperation::canvas->update();
     }
 }
 
@@ -1011,7 +998,7 @@ void CMDWidget::shape_xor()
 {
     Geo::Geometry *shape0 = nullptr, *shape1 = nullptr;
     std::set<Geo::Type> types;
-    for (Geo::Geometry *object : CanvasOperations::CanvasOperation::editer->selected())
+    for (Geo::Geometry *object : CanvasOperations::CanvasOperation::canvas->editer()->selected())
     {
         if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
         {
@@ -1036,15 +1023,14 @@ void CMDWidget::shape_xor()
         }
     }
 
-    if (CanvasOperations::CanvasOperation::editer->shape_xor(shape0, shape1))
+    if (CanvasOperations::CanvasOperation::canvas->editer()->shape_xor(shape0, shape1))
     {
         if (types.find(Geo::Type::POLYGON) != types.end() &&
             (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end()))
         {
             types.insert(Geo::Type::POLYLINE);
         }
-        CanvasOperations::CanvasOperation::canvas->refresh_vbo(types);
+        CanvasOperations::CanvasOperation::canvas->refresh_vbo(true, types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
-        CanvasOperations::CanvasOperation::canvas->update();
     }
 }

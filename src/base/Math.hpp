@@ -1,5 +1,6 @@
 #pragma once
 #include <tuple>
+#include <functional>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_multiroots.h>
 
@@ -87,4 +88,12 @@ struct EllipseFootParameter // a * cost + b * sint + c * sint * cost = 0
 double ellipse_foot_f(const double v, void *params);
 
 double solve_ellipse_foot(EllipseFootParameter &param, const double init_t);
+
+
+using CurveNorm = std::function<double(const double)>;
+
+double simpson_3_8(const CurveNorm &f, const double l, const double r);
+
+double adaptive_simpson_3_8(const CurveNorm &f, const double l, const double r);
+
 }; // namespace Math

@@ -122,7 +122,7 @@ void MainWindow::connect_btn_to_cmd()
     connect(ui->xor_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::XOR_CMD); });
     connect(ui->difference_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Difference_CMD); });
 
-    connect(ui->line_array_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::LineArray_CMD); });
+    connect(ui->line_array_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::LineArray_CMD); ui->cmd_widget->work(); });
     connect(ui->ring_array_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::RingArray_CMD); });
 }
 
@@ -165,7 +165,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
                 _layers_manager->update_layers();
                 _layers_cbx->setModel(_layers_manager->model());
             }
-            ui->canvas->refresh_vbo();
+            ui->canvas->refresh_vbo(false);
             ui->canvas->refresh_selected_ibo();
             ui->canvas->update();
         }
@@ -216,7 +216,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             {
                 CanvasOperations::CanvasOperation::operation().clear();
                 _editer.remove_selected();
-                ui->canvas->refresh_vbo(types);
+                ui->canvas->refresh_vbo(false, types);
                 ui->canvas->refresh_selected_ibo();
                 ui->canvas->update();
             }
@@ -271,7 +271,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
                 _layers_manager->update_layers();
                 _layers_cbx->setModel(_layers_manager->model());
             }
-            ui->canvas->refresh_vbo();
+            ui->canvas->refresh_vbo(true);
             ui->canvas->refresh_selected_ibo();
             ui->canvas->update();
         }
@@ -347,7 +347,7 @@ void MainWindow::close_file()
     _editer.delete_graph();
     _editer.load_graph(new Graph());
     GlobalSetting::setting().graph->modified = false;
-    ui->canvas->refresh_vbo();
+    ui->canvas->refresh_vbo(false);
     _info_labels[2]->clear();
     _layers_manager->update_layers();
     _layers_cbx->setModel(_layers_manager->model());
@@ -551,7 +551,7 @@ void MainWindow::refresh_settings()
         const double step = GlobalSetting::setting().sampling_step;
         Geo::BSpline::default_step = step, Geo::CubicBezier::default_step = step;
         GlobalSetting::setting().graph->update_curve_shape(step, value);
-        ui->canvas->refresh_vbo();
+        ui->canvas->refresh_vbo(true);
     }
     _editer.set_backup_count(GlobalSetting::setting().backup_times);
     ui->canvas->set_catch_distance(GlobalSetting::setting().catch_distance);
@@ -627,7 +627,7 @@ void MainWindow::show_layers_manager()
 void MainWindow::hide_layers_manager()
 {
     _layers_cbx->setModel(_layers_manager->model());
-    ui->canvas->refresh_vbo();
+    ui->canvas->refresh_vbo(true);
     _editer.reset_selected_mark();
 }
 
@@ -746,7 +746,7 @@ void MainWindow::open_file(const QString &path)
     }
     GlobalSetting::setting().graph->modified = false;
 
-    ui->canvas->refresh_vbo();
+    ui->canvas->refresh_vbo(false);
     _info_labels[2]->setText(path);
     _layers_manager->update_layers();
     _layers_cbx->setModel(_layers_manager->model());
@@ -810,7 +810,7 @@ void MainWindow::append_file(const QString &path)
     graph->merge(*g);
     _editer.load_graph(graph);
     delete g;
-    ui->canvas->refresh_vbo();
+    ui->canvas->refresh_vbo(false);
     ui->canvas->refresh_selected_ibo();
     _layers_manager->update_layers();
     _layers_cbx->setModel(_layers_manager->model());

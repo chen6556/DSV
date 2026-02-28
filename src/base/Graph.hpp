@@ -125,4 +125,6 @@ public:
 
 
     void update_curve_shape(const double step, const double down_sampling_value);
+
+    std::tuple<size_t, size_t> index(const Geo::Geometry *object) const;
 };

@@ -497,3 +497,22 @@ void Graph::update_curve_shape(const double step, const double down_sampling_val
         }
     }
 }
+
+std::tuple<size_t, size_t> Graph::index(const Geo::Geometry *object) const
+{
+    size_t group_index = 0;
+    for (const ContainerGroup &group : _container_groups)
+    {
+        size_t object_index = 0;
+        for (const Geo::Geometry *geo : group)
+        {
+            if (geo == object)
+            {
+                return std::make_tuple(group_index, object_index);
+            }
+            ++object_index;
+        }
+        ++group_index;
+    }
+    return std::make_tuple(SIZE_MAX, SIZE_MAX);
+}

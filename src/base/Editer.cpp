@@ -5,16 +5,6 @@
 #include "io/TextEncoding.hpp"
 
 
-Editer::Editer(Graph *graph) : _graph(graph)
-{
-    init();
-}
-
-Editer::Editer(Graph *graph, QString path) : _graph(graph), _file_path(std::move(path))
-{
-    init();
-}
-
 Editer::~Editer()
 {
     _graph = nullptr;
@@ -30,17 +20,23 @@ void Editer::init()
     GlobalSetting::setting().graph = _graph;
     if (_graph != nullptr)
     {
+        std::vector<Geo::Geometry *> objects;
         for (ContainerGroup &group : _graph->container_groups())
         {
             for (Geo::Geometry *geo : group)
             {
                 geo->is_selected = false;
             }
+            if (group.visible())
+            {
+                objects.insert(objects.end(), group.begin(), group.end());
+            }
         }
         if (_graph->container_groups().empty())
         {
             _graph->append_group();
         }
+        GlobalSetting::setting().ui->canvas->build_quadtree(_graph);
         _backup.clear();
         _backup.set_graph(_graph);
     }
@@ -116,7 +112,7 @@ const size_t Editer::current_group() const
 
 void Editer::set_current_group(const size_t index)
 {
-    if(index < _graph->container_groups().size())
+    if (index < _graph->container_groups().size())
     {
         _current_group = index;
     }
@@ -132,7 +128,7 @@ void Editer::set_view_ratio(const double value)
     _view_ratio = value;
 }
 
-Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
+Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others, const bool visible_only)
 {
     if (_graph == nullptr || _graph->empty())
     {
@@ -153,14 +149,36 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
     Geo::BSpline *bs = nullptr;
     Geo::Arc *arc = nullptr;
     Combination *cb = nullptr;
-    for (std::vector<Geo::Geometry *>::reverse_iterator it = _graph->container_group(_current_group).rbegin(),
-                                                        end = _graph->container_group(_current_group).rend();
-         it != end; ++it)
+
+    std::vector<Geo::Geometry *> objects;
+    if (visible_only)
     {
-        switch ((*it)->type())
+        GlobalSetting::setting().ui->canvas->visible_objects(objects, true);
+        std::reverse(objects.begin(), objects.end());
+    }
+    else
+    {
+        objects.assign(_graph->container_group(_current_group).rbegin(), _graph->container_group(_current_group).rend());
+    }
+
+    for (Geo::Geometry * it : objects)
+    {
+        {
+            Geo::AABBRectParams rect = it->aabbrect_params();
+            rect.left -= catch_distance;
+            rect.right += catch_distance;
+            rect.bottom -= catch_distance;
+            rect.top += catch_distance;
+            if (!Geo::is_inside(point, rect, true))
+            {
+                continue;
+            }
+        }
+
+        switch (it->type())
         {
         case Geo::Type::TEXT:
-            t = static_cast<Text *>(*it);
+            t = static_cast<Text *>(it);
             if (Geo::is_inside(point, *static_cast<const Geo::AABBRect *>(t), true))
             {
                 t->is_selected = true;
@@ -168,7 +186,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             }
             break;
         case Geo::Type::POLYGON:
-            polygon = static_cast<Geo::Polygon *>(*it);
+            polygon = static_cast<Geo::Polygon *>(it);
             for (size_t i = 1, count = polygon->size(); i < count; ++i)
             {
                 if (Geo::distance_square(point, (*polygon)[i], (*polygon)[i - 1]) <= catch_distance * catch_distance)
@@ -180,7 +198,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             polygon = nullptr;
             break;
         case Geo::Type::CIRCLE:
-            circle = static_cast<Geo::Circle *>(*it);
+            circle = static_cast<Geo::Circle *>(it);
             if (std::abs(Geo::distance(point, *circle) - circle->radius) <= catch_distance ||
                 Geo::distance(point, *circle) <= catch_distance)
             {
@@ -190,7 +208,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             circle = nullptr;
             break;
         case Geo::Type::ELLIPSE:
-            ellipse = static_cast<Geo::Ellipse *>(*it);
+            ellipse = static_cast<Geo::Ellipse *>(it);
             if (ellipse->is_arc())
             {
                 if (Geo::distance(point, *ellipse) <= catch_distance)
@@ -212,7 +230,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             ellipse = nullptr;
             break;
         case Geo::Type::COMBINATION:
-            cb = static_cast<Combination *>(*it);
+            cb = static_cast<Combination *>(it);
             if (Geo::is_inside(point, cb->border(), true))
             {
                 for (Geo::Geometry *item : *cb)
@@ -320,7 +338,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             cb = nullptr;
             break;
         case Geo::Type::POLYLINE:
-            p = static_cast<Geo::Polyline *>(*it);
+            p = static_cast<Geo::Polyline *>(it);
             for (size_t i = 1, count = p->size(); i < count; ++i)
             {
                 if (Geo::distance_square(point, (*p)[i - 1], (*p)[i]) <= catch_distance * catch_distance)
@@ -332,7 +350,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             p = nullptr;
             break;
         case Geo::Type::BEZIER:
-            b = static_cast<Geo::CubicBezier *>(*it);
+            b = static_cast<Geo::CubicBezier *>(it);
             if (b->is_selected)
             {
                 for (const Geo::Point &inner_point : *b)
@@ -354,7 +372,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             b = nullptr;
             break;
         case Geo::Type::BSPLINE:
-            bs = static_cast<Geo::BSpline *>(*it);
+            bs = static_cast<Geo::BSpline *>(it);
             if (bs->is_selected)
             {
                 for (const Geo::Point &inner_point : (bs->controls_model ? bs->control_points : bs->path_points))
@@ -376,7 +394,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             bs = nullptr;
             break;
         case Geo::Type::ARC:
-            arc = static_cast<Geo::Arc *>(*it);
+            arc = static_cast<Geo::Arc *>(it);
             if (Geo::distance(point, *arc) <= catch_distance)
             {
                 arc->is_selected = true;
@@ -385,7 +403,7 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
             arc = nullptr;
             break;
         case Geo::Type::POINT:
-            if (Geo::Point *pt = static_cast<Geo::Point *>(*it); Geo::distance_square(point, *pt) <= catch_distance * catch_distance)
+            if (Geo::Point *pt = static_cast<Geo::Point *>(it); Geo::distance_square(point, *pt) <= catch_distance * catch_distance)
             {
                 pt->is_selected = true;
                 return pt;
@@ -399,9 +417,9 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others)
     return nullptr;
 }
 
-Geo::Geometry *Editer::select(const double x, const double y, const bool reset_others)
+Geo::Geometry *Editer::select(const double x, const double y, const bool reset_others, const bool visible_only)
 {
-    return select(Geo::Point(x, y), reset_others);
+    return select(Geo::Point(x, y), reset_others, visible_only);
 }
 
 std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &point, const bool reset_others)
@@ -632,7 +650,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
     return std::make_tuple(nullptr, false);
 }
 
-std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const bool reset_others)
+std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const bool reset_others, const bool visible_only)
 {
     std::vector<Geo::Geometry *> result;
     if (rect.empty() || _graph == nullptr || _graph->empty())
@@ -645,16 +663,26 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const boo
         reset_selected_mark();
     }
 
-    if (const size_t count = _graph->container_group(_current_group).size(); count < 2000)
+    std::vector<Geo::Geometry *> objects;
+    if (visible_only)
     {
-        select_subfunc(rect, 0, count, &result);
+        GlobalSetting::setting().ui->canvas->visible_objects(objects, true);
+    }
+    else
+    {
+        objects.assign(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end());
+    }
+
+    if (const size_t count = objects.size(); count < 2000)
+    {
+        select_subfunc(rect, &objects, 0, count, &result);
     }
     else if (count < 4000)
     {
         std::vector<Geo::Geometry *> temp0, temp1;
         const size_t step = count / 2;
-        std::thread thread0(&Editer::select_subfunc, this, rect, 0, step, &temp0);
-        std::thread thread1(&Editer::select_subfunc, this, rect, step, count, &temp1);
+        std::thread thread0(&Editer::select_subfunc, rect, &objects, 0, step, &temp0);
+        std::thread thread1(&Editer::select_subfunc, rect, &objects, step, count, &temp1);
         thread0.join();
         thread1.join();
         result.insert(result.end(), temp0.begin(), temp0.end());
@@ -664,9 +692,9 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const boo
     {
         std::vector<Geo::Geometry *> temp[3];
         const size_t step = count / 3;
-        std::thread threads[3] = {std::thread(&Editer::select_subfunc, this, rect, 0, step, &temp[0]),
-                                  std::thread(&Editer::select_subfunc, this, rect, step, step * 2, &temp[1]),
-                                  std::thread(&Editer::select_subfunc, this, rect, step * 2, count, &temp[2])};
+        std::thread threads[3] = {std::thread(&Editer::select_subfunc, rect, &objects, 0, step, &temp[0]),
+                                std::thread(&Editer::select_subfunc, rect, &objects, step, step * 2, &temp[1]),
+                                std::thread(&Editer::select_subfunc, rect, &objects, step * 2, count, &temp[2])};
         for (int i = 0; i < 3; ++i)
         {
             threads[i].join();
@@ -677,10 +705,10 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const boo
     {
         std::vector<Geo::Geometry *> temp[4];
         const size_t step = count / 4;
-        std::thread threads[4] = {std::thread(&Editer::select_subfunc, this, rect, 0, step, &temp[0]),
-                                  std::thread(&Editer::select_subfunc, this, rect, step, step * 2, &temp[1]),
-                                  std::thread(&Editer::select_subfunc, this, rect, step * 2, step * 3, &temp[2]),
-                                  std::thread(&Editer::select_subfunc, this, rect, step * 3, count, &temp[3])};
+        std::thread threads[4] = {std::thread(&Editer::select_subfunc, rect, &objects, 0, step, &temp[0]),
+                                std::thread(&Editer::select_subfunc, rect, &objects, step, step * 2, &temp[1]),
+                                std::thread(&Editer::select_subfunc, rect, &objects, step * 2, step * 3, &temp[2]),
+                                std::thread(&Editer::select_subfunc, rect, &objects, step * 3, count, &temp[3])};
         for (int i = 0; i < 4; ++i)
         {
             threads[i].join();
@@ -8997,11 +9025,12 @@ void Editer::bspline_to_bezier(Geo::BSpline *bspline)
 }
 
 
-void Editer::select_subfunc(const Geo::AABBRect &rect, const size_t start, const size_t end, std::vector<Geo::Geometry *> *result)
+void Editer::select_subfunc(const Geo::AABBRect &rect, const std::vector<Geo::Geometry *> *objects, const size_t start, const size_t end,
+                            std::vector<Geo::Geometry *> *result)
 {
     for (size_t i = start; i < end; ++i)
     {
-        Geo::Geometry *container = _graph->container_group(_current_group)[i];
+        Geo::Geometry *container = objects->at(i);
         if (container->is_selected)
         {
             result->push_back(container);

@@ -476,6 +476,115 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
     return Geo::AABBRect(x0, y1, x1, y0);
 }
 
+Geo::AABBRectParams ContainerGroup::aabbrect_params() const
+{
+    Geo::AABBRectParams params;
+    if (_containers.empty())
+    {
+        return params;
+    }
+    double r = 0, x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
+    Geo::Point coord;
+    for (const Geo::Geometry *continer : _containers)
+    {
+        switch (continer->type())
+        {
+        case Geo::Type::TEXT:
+            x0 = std::min(x0, static_cast<const Text *>(continer)->left());
+            y0 = std::min(y0, static_cast<const Text *>(continer)->bottom());
+            x1 = std::max(x1, static_cast<const Text *>(continer)->right());
+            y1 = std::max(y1, static_cast<const Text *>(continer)->top());
+            break;
+        case Geo::Type::POLYGON:
+            for (const Geo::Point &point : *static_cast<const Geo::Polygon *>(continer))
+            {
+                x0 = std::min(x0, point.x);
+                y0 = std::min(y0, point.y);
+                x1 = std::max(x1, point.x);
+                y1 = std::max(y1, point.y);
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            r = static_cast<const Geo::Circle *>(continer)->radius;
+            coord.x = static_cast<const Geo::Circle *>(continer)->x;
+            coord.y = static_cast<const Geo::Circle *>(continer)->y;
+            x0 = std::min(x0, coord.x - r);
+            y0 = std::min(y0, coord.y - r);
+            x1 = std::max(x1, coord.x + r);
+            y1 = std::max(y1, coord.y + r);
+            break;
+        case Geo::Type::ELLIPSE:
+            {
+                const Geo::AABBRect rect(static_cast<const Geo::Ellipse *>(continer)->bounding_rect());
+                x0 = std::min(x0, rect.left());
+                y0 = std::min(y0, rect.bottom());
+                x1 = std::max(x1, rect.right());
+                y1 = std::max(y1, rect.top());
+            }
+            break;
+        case Geo::Type::COMBINATION:
+            {
+                const Geo::AABBRect rect(static_cast<const Combination *>(continer)->bounding_rect());
+                x0 = std::min(x0, rect.left());
+                y0 = std::min(y0, rect.bottom());
+                x1 = std::max(x1, rect.right());
+                y1 = std::max(y1, rect.top());
+            }
+            break;
+        case Geo::Type::POLYLINE:
+            for (const Geo::Point &point : *static_cast<const Geo::Polyline *>(continer))
+            {
+                x0 = std::min(x0, point.x);
+                y0 = std::min(y0, point.y);
+                x1 = std::max(x1, point.x);
+                y1 = std::max(y1, point.y);
+            }
+            break;
+        case Geo::Type::BEZIER:
+            for (const Geo::Point &point : static_cast<const Geo::CubicBezier *>(continer)->shape())
+            {
+                x0 = std::min(x0, point.x);
+                y0 = std::min(y0, point.y);
+                x1 = std::max(x1, point.x);
+                y1 = std::max(y1, point.y);
+            }
+            break;
+        case Geo::Type::BSPLINE:
+            for (const Geo::Point &point : static_cast<const Geo::BSpline *>(continer)->shape())
+            {
+                x0 = std::min(x0, point.x);
+                y0 = std::min(y0, point.y);
+                x1 = std::max(x1, point.x);
+                y1 = std::max(y1, point.y);
+            }
+            break;
+        case Geo::Type::ARC:
+            for (const Geo::Point &point : static_cast<const Geo::Arc *>(continer)->bounding_rect())
+            {
+                x0 = std::min(x0, point.x);
+                y0 = std::min(y0, point.y);
+                x1 = std::max(x1, point.x);
+                y1 = std::max(y1, point.y);
+            }
+            break;
+        case Geo::Type::POINT:
+            coord = *static_cast<const Geo::Point *>(continer);
+            x0 = std::min(x0, coord.x);
+            y0 = std::min(y0, coord.y);
+            x1 = std::max(x1, coord.x);
+            y1 = std::max(y1, coord.y);
+            break;
+        default:
+            break;
+        }
+    }
+    params.left = x0;
+    params.bottom = y0;
+    params.right = x1;
+    params.top = y1;
+    return params;
+}
+
 const size_t ContainerGroup::size() const
 {
     return _containers.size();

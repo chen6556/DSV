@@ -31,10 +31,6 @@ private:
 public:
     Editer() = default;
 
-    Editer(Graph *graph);
-
-    Editer(Graph *graph, QString path);
-
     ~Editer();
 
     void load_graph(Graph *graph, const QString &path);
@@ -59,9 +55,9 @@ public:
 
     void set_view_ratio(const double value);
 
-    Geo::Geometry *select(const Geo::Point &point, const bool reset_others = true);
+    Geo::Geometry *select(const Geo::Point &point, const bool reset_others = true, const bool visible_only = true);
 
-    Geo::Geometry *select(const double x, const double y, const bool reset_others = true);
+    Geo::Geometry *select(const double x, const double y, const bool reset_others = true, const bool visible_only = true);
 
     std::tuple<Geo::Geometry *, bool> select_with_state(const Geo::Point &point, const bool reset_others = true);
 
@@ -69,7 +65,7 @@ public:
 
     const size_t selected_count() const;
 
-    std::vector<Geo::Geometry *> select(const Geo::AABBRect &rect, const bool reset_others = true);
+    std::vector<Geo::Geometry *> select(const Geo::AABBRect &rect, const bool reset_others = true, const bool visible_only = true);
 
     void reset_selected_mark(const bool value = false);
 
@@ -220,5 +216,6 @@ public:
     void bspline_to_bezier(Geo::BSpline *bspline);
 
 private:
-    void select_subfunc(const Geo::AABBRect &rect, const size_t start, const size_t end, std::vector<Geo::Geometry *> *result);
+    static void select_subfunc(const Geo::AABBRect &rect, const std::vector<Geo::Geometry *> *objects, const size_t start, const size_t end,
+                               std::vector<Geo::Geometry *> *result);
 };

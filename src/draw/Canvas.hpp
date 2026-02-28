@@ -6,11 +6,12 @@
 #include <QTextEdit>
 #include <QMenu>
 #include <QAction>
-#include <QPainter>
+#include <QImage>
 #include <QOpenGLFunctions_4_5_Core>
 
 #include "base/Editer.hpp"
 #include "draw/CanvasOperation.hpp"
+#include "draw/QuadTree.hpp"
 
 
 class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
@@ -33,9 +34,8 @@ private:
     Editer *_editer = nullptr;
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
-    QPainter _painter;
 
-    unsigned int _shader_program = 0, _VAO = 0;
+    unsigned int _shader_program = 0;
 
     struct BaseVBO
     {
@@ -64,8 +64,6 @@ private:
         unsigned int curve = 0;
     } _shape_ibo;
 
-    unsigned int _text_brush_IBO = 0, _text_brush_count = 0;
-
     struct SelectedIBO
     {
         unsigned int polyline = 0;
@@ -75,11 +73,20 @@ private:
         unsigned int point = 0;
     } _selected_ibo;
 
+    struct TextTexture
+    {
+        unsigned int texture = 0;
+        unsigned int vbo = 0;
+        unsigned int ibo = 0;
+        QImage image;
+    } _texture;
+
     struct Uniforms
     {
         int window = 0;
         int ctm = 0;
         int color = 0;
+        int enable_tex = 0;
     } _uniforms;
 
     struct PointCount
@@ -108,7 +115,20 @@ private:
         unsigned int point = 0;
     } _selected_index_count;
 
-    double _catchline_points[24] = {};
+    struct VisibleObject
+    {
+        std::vector<Geo::Polyline *> polyline;
+        std::vector<Geo::Polygon *> polygon;
+        std::vector<Geo::Geometry *> circle;
+        std::vector<Geo::Geometry *> curve;
+        std::vector<Geo::Point *> point;
+    } _visible_objects[2];
+
+    QuadTree _view_tree;
+
+    unsigned int _cpus = 2;
+
+    double _catchline_points[16] = {};
 
     double _catch_distance = 0;
     static const int catch_count = 5;
@@ -182,6 +202,8 @@ public:
 
     void bind_editer(Editer *editer);
 
+    Editer *editer();
+
     void use_tool(const CanvasOperations::Tool tool);
 
     void show_origin();
@@ -245,11 +267,11 @@ public:
 
 
     // 直接更新所有VBO,点数量可能发生变化
-    void refresh_vbo();
+    void refresh_vbo(const bool flush);
 
-    void refresh_vbo(const Geo::Type type);
+    void refresh_vbo(const bool flush, const Geo::Type type);
 
-    void refresh_vbo(const std::set<Geo::Type> &types);
+    void refresh_vbo(const bool flush, const std::set<Geo::Type> &types);
 
     struct VBOData
     {
@@ -257,15 +279,15 @@ public:
         std::vector<unsigned int> ibo_data;
     };
 
-    VBOData refresh_polyline_vbo();
+    VBOData refresh_polyline_vbo(const bool flush);
 
-    VBOData refresh_polygon_vbo();
+    VBOData refresh_polygon_vbo(const bool flush);
 
-    VBOData refresh_circle_vbo();
+    VBOData refresh_circle_vbo(const bool flush);
 
-    VBOData refresh_curve_vbo();
+    VBOData refresh_curve_vbo(const bool flush);
 
-    VBOData refresh_point_vbo();
+    VBOData refresh_point_vbo(const bool flush);
 
     VBOData refresh_circle_printable_points();
 
@@ -290,4 +312,9 @@ public:
                                  const bool skip_selected, const bool current_group_only = true) const;
 
     bool refresh_catchline_points(const std::vector<const Geo::Geometry *> &objects, const double distance, Geo::Point &pos);
+
+
+    void build_quadtree(Graph *graph);
+
+    void visible_objects(std::vector<Geo::Geometry *> &objects, const bool current_layer_only = true);
 };

@@ -32,6 +32,11 @@ Polygon Geometry::mini_bounding_rect() const
     return Polygon();
 }
 
+AABBRectParams Geometry::aabbrect_params() const
+{
+    return AABBRectParams();
+}
+
 
 // Point
 
@@ -155,6 +160,16 @@ AABBRect Point::bounding_rect() const
 Polygon Point::mini_bounding_rect() const
 {
     return AABBRect(x, y, x, y);
+}
+
+AABBRectParams Point::aabbrect_params() const
+{
+    AABBRectParams params;
+    params.left = x;
+    params.top = y;
+    params.right = x;
+    params.bottom = y;
+    return params;
 }
 
 Point Point::operator*(const double k) const
@@ -676,6 +691,25 @@ Polygon Polyline::mini_bounding_rect() const
     return rect;
 }
 
+AABBRectParams Polyline::aabbrect_params() const
+{
+    AABBRectParams params;
+    if (_points.empty())
+    {
+        return params;
+    }
+    params.left = params.right = _points.front().x;
+    params.top = params.bottom = _points.front().y;
+    for (const Point &point : _points)
+    {
+        params.left = std::min(params.left, point.x);
+        params.bottom = std::min(params.bottom, point.y);
+        params.right = std::max(params.right, point.x);
+        params.top = std::max(params.top, point.y);
+    }
+    return params;
+}
+
 void Polyline::remove_repeated_points()
 {
     if (_points.empty())
@@ -960,6 +994,25 @@ AABBRect AABBRect::bounding_rect() const
 Polygon AABBRect::mini_bounding_rect() const
 {
     return *this;
+}
+
+AABBRectParams AABBRect::aabbrect_params() const
+{
+    AABBRectParams params;
+    if (_points.empty())
+    {
+        return params;
+    }
+    params.left = params.right = _points.front().x;
+    params.bottom = params.top = _points.front().y;
+    for (const Point &point : _points)
+    {
+        params.left = std::min(params.left, point.x);
+        params.bottom = std::min(params.bottom, point.y);
+        params.right = std::max(params.right, point.x);
+        params.top = std::max(params.top, point.y);
+    }
+    return params;
 }
 
 std::vector<Point>::const_iterator AABBRect::begin() const
@@ -1813,6 +1866,21 @@ Polygon Triangle::mini_bounding_rect() const
     return rect;
 }
 
+AABBRectParams Triangle::aabbrect_params() const
+{
+    AABBRectParams params;
+    params.left = params.right = _vecs[0].x;
+    params.bottom = params.top = _vecs[1].y;
+    for (int i = 1; i < 3; ++i)
+    {
+        params.left = std::min(params.left, _vecs[i].x);
+        params.bottom = std::min(params.bottom, _vecs[i].y);
+        params.right = std::max(params.right, _vecs[i].x);
+        params.top = std::max(params.top, _vecs[i].y);
+    }
+    return params;
+}
+
 Point Triangle::inner_circle_center() const
 {
     const double a = Geo::distance(_vecs[1], _vecs[2]);
@@ -1959,6 +2027,12 @@ void Circle::translate(const double tx, const double ty)
     _shape.translate(tx, ty);
 }
 
+void Circle::rotate(const double x_, const double y_, const double rad)
+{
+    Point::rotate(x_, y_, rad);
+    _shape.rotate(x_, y_, rad);
+}
+
 void Circle::scale(const double x, const double y, const double k)
 {
     Point::scale(x, y, k);
@@ -2000,6 +2074,16 @@ Polygon Circle::mini_bounding_rect() const
     {
         return AABBRect(x - radius, y + radius, x + radius, y - radius);
     }
+}
+
+AABBRectParams Circle::aabbrect_params() const
+{
+    AABBRectParams params;
+    params.left = x - radius;
+    params.top = y + radius;
+    params.right = x + radius;
+    params.bottom = y - radius;
+    return params;
 }
 
 Circle Circle::operator+(const Point &point) const
@@ -2121,7 +2205,13 @@ void CubicBezier::update_shape(const double step, const double down_sampling_val
 
 const double CubicBezier::length() const
 {
-    return _shape.length();
+    double result = 0;
+    for (size_t i = 0, count = _points.size() / 3; i < count; ++i)
+    {
+        Math::CurveNorm f = [this, i](const double t) { return tangent(i, t).length(); };
+        result += Math::adaptive_simpson_3_8(f, 0, 1);
+    }
+    return result;
 }
 
 void CubicBezier::clear()
@@ -2190,21 +2280,27 @@ Polygon CubicBezier::mini_bounding_rect() const
     return _shape.mini_bounding_rect();
 }
 
+AABBRectParams CubicBezier::aabbrect_params() const
+{
+    return _shape.aabbrect_params();
+}
+
 Point CubicBezier::tangent(const size_t index, const double t) const
 {
     if (_points.size() < 3 * (index + 1) + 1)
     {
         return Point();
     }
-    const int nums[3] = {1, 2, 1};
 
-    Point start, end;
+    const int nums[3] = {1, 2, 1};
+    const Geo::Point points[3] = {(_points[1 + index * 3] - _points[index * 3]) * 3, (_points[2 + index * 3] - _points[1 + index * 3]) * 3,
+                                  (_points[3 + index * 3] - _points[2 + index * 3]) * 3};
+    Geo::Point vec;
     for (int i = 0; i < 3; ++i)
     {
-        start += (_points[i + index] * (nums[i] * std::pow(1 - t, 3 - i - 1) * std::pow(t, i)));
-        end += (_points[i + index + 1] * (nums[i] * std::pow(1 - t, 3 - i - 1) * std::pow(t, i)));
+        vec += (points[i] * (nums[i] * std::pow(1 - t, 3 - i - 1) * std::pow(t, i)));
     }
-    return end - start;
+    return vec;
 }
 
 Point CubicBezier::vertical(const size_t index, const double t) const
@@ -2535,6 +2631,21 @@ Polygon Ellipse::mini_bounding_rect() const
     Geo::Polygon polygon({Geo::Point(left, top), Geo::Point(right, top), Geo::Point(right, bottom), Geo::Point(left, bottom)});
     polygon.rotate(center.x, center.y, Geo::angle(_a[0], _a[1]));
     return polygon;
+}
+
+AABBRectParams Ellipse::aabbrect_params() const
+{
+    const Geo::Point center = (_a[0] + _a[1] + _b[0] + _b[1]) / 4;
+    const double aa = Geo::distance_square(_a[0], _a[1]) / 4, bb = Geo::distance_square(_b[0], _b[1]) / 4;
+    const Geo::Vector vec = _a[0] - _a[1];
+    const double cc = std::pow(vec.x, 2) / (std::pow(vec.x, 2) + std::pow(vec.y, 2));
+    const double ss = 1 - cc;
+    AABBRectParams params;
+    params.left = center.x - std::sqrt(aa * cc + bb * ss);
+    params.top = center.y + std::sqrt(aa * ss + bb * cc);
+    params.right = center.x + std::sqrt(aa * cc + bb * ss);
+    params.bottom = center.y - std::sqrt(aa * ss + bb * cc);
+    return params;
 }
 
 Ellipse Ellipse::operator+(const Point &point) const
@@ -2882,7 +2993,8 @@ const Polyline &BSpline::shape() const
 
 const double BSpline::length() const
 {
-    return _shape.length();
+    Math::CurveNorm f = [this](const double t) { return tangent(t).length(); };
+    return Math::adaptive_simpson_3_8(f, 0, 1);
 }
 
 const bool BSpline::empty() const
@@ -2945,6 +3057,11 @@ AABBRect BSpline::bounding_rect() const
 Polygon BSpline::mini_bounding_rect() const
 {
     return _shape.mini_bounding_rect();
+}
+
+AABBRectParams BSpline::aabbrect_params() const
+{
+    return _shape.aabbrect_params();
 }
 
 const Point &BSpline::front() const
@@ -4449,6 +4566,32 @@ Polygon Arc::mini_bounding_rect() const
     {
         return AABBRect(control_points[0] + vec * (b + radius), control_points[2]);
     }
+}
+
+AABBRectParams Arc::aabbrect_params() const
+{
+    AABBRectParams params;
+    params.left = std::min({control_points[0].x, control_points[1].x, control_points[2].x});
+    if (Geo::distance(Geo::Point(x - radius, y), *this) < Geo::EPSILON)
+    {
+        params.left = x - radius;
+    }
+    params.right = std::max({control_points[0].x, control_points[1].x, control_points[2].x});
+    if (Geo::distance(Geo::Point(x + radius, y), *this) < Geo::EPSILON)
+    {
+        params.right = x + radius;
+    }
+    params.top = std::max({control_points[0].y, control_points[1].y, control_points[2].y});
+    if (Geo::distance(Geo::Point(x, y + radius), *this) < Geo::EPSILON)
+    {
+        params.top = y + radius;
+    }
+    params.bottom = std::min({control_points[0].y, control_points[1].y, control_points[2].y});
+    if (Geo::distance(Geo::Point(x, y - radius), *this) < Geo::EPSILON)
+    {
+        params.bottom = y - radius;
+    }
+    return params;
 }
 
 void Arc::update_shape(const double down_sampling_value)
