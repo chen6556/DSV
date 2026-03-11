@@ -145,6 +145,15 @@ void Point::rotate(const double x_, const double y_, const double rad)
     y += y_;
 }
 
+Point Point::rotated(const double x_, const double y_, const double rad) const
+{
+    double x0 = x - x_, y0 = y - y_;
+    const double x1 = x0, y1 = y0;
+    x0 = x1 * std::cos(rad) - y1 * std::sin(rad);
+    y0 = x1 * std::sin(rad) + y1 * std::cos(rad);
+    return Point(x0 + x_, y0 + y_);
+}
+
 void Point::scale(const double x_, const double y_, const double k)
 {
     const double x1 = x, y1 = y;
@@ -723,6 +732,39 @@ void Polyline::remove_repeated_points()
             _points.erase(_points.begin() + i);
         }
     }
+}
+
+Point Polyline::shape_point(const size_t index, const double t) const
+{
+    if (index + 1 >= _points.size() || t < 0 || t > 1)
+    {
+        return Point();
+    }
+    return _points[index] + (_points[index + 1] - _points[index]) * t;
+}
+
+Polyline *Polyline::range(const size_t index0, const double t0, const size_t index1, const double t1) const
+{
+    if (index0 > index1 || (index0 == index1 && t0 >= t1) || index1 + 1 >= _points.size() || index1 + 2 > _points.size() || t0 < 0 ||
+        t0 > 1 || t1 < 0 || t1 > 1)
+    {
+        return nullptr;
+    }
+
+    Geo::Polyline *polyline = new Geo::Polyline();
+    if (t0 < 1)
+    {
+        polyline->_points.emplace_back(_points[index0] + (_points[index0 + 1] - _points[index0]) * t0);
+    }
+    for (size_t i = index0 + 1; i <= index1; ++i)
+    {
+        polyline->_points.emplace_back(_points[i]);
+    }
+    if (t1 > 0)
+    {
+        polyline->_points.emplace_back(_points[index1] + (_points[index1 + 1] - _points[index1]) * t1);
+    }
+    return polyline;
 }
 
 
@@ -1608,6 +1650,7 @@ Point Polygon::average_point() const
     return point;
 }
 
+
 // Triangle
 
 Triangle::Triangle(const Point &point0, const Point &point1, const Point &point2)
@@ -2325,6 +2368,141 @@ Point CubicBezier::shape_point(const size_t index, const double t) const
     return point;
 }
 
+CubicBezier *CubicBezier::range(const size_t index0, const double t0, const size_t index1, const double t1) const
+{
+    const int order = 3;
+    if (index0 > index1 || (index0 == index1 && t0 >= t1) || index1 >= _points.size() / order)
+    {
+        return nullptr;
+    }
+
+    const int nums[4] = {1, 3, 3, 1};
+    std::vector<Geo::Point> result_controls;
+    if (0 < t0 && t0 < 1)
+    {
+        std::vector<Geo::Point> control_points, temp_points, result_points;
+        Geo::Point pos;
+        for (int i = 0; i <= order; ++i)
+        {
+            control_points.emplace_back(_points[i + index0 * order]);
+            pos += (control_points.back() * (nums[i] * std::pow(1 - t0, order - i) * std::pow(t0, i)));
+        }
+        for (int i = 0; i < order; ++i)
+        {
+            for (size_t j = 1, count = control_points.size(); j < count; ++j)
+            {
+                temp_points.emplace_back(control_points[j - 1] + (control_points[j] - control_points[j - 1]) * t0);
+            }
+            result_points.emplace_back(temp_points.back());
+            control_points.assign(temp_points.begin(), temp_points.end());
+            temp_points.clear();
+        }
+        result_points.back() = pos;
+        std::reverse(result_points.begin(), result_points.end());
+        if (result_points.empty() || result_points.back() != _points[index0 * order])
+        {
+            result_points.insert(result_points.end(), _points.begin() + index0 * order + order, _points.end());
+        }
+        else
+        {
+            result_points.insert(result_points.end(), _points.begin() + index0 * order + order + 1, _points.end());
+        }
+        result_controls.assign(result_points.begin(), result_points.end());
+    }
+    else
+    {
+        if (t0 == 0)
+        {
+            result_controls.assign(_points.begin() + index0 * order, _points.end());
+        }
+        else
+        {
+            result_controls.assign(_points.begin() + index0 * order + order, _points.end());
+        }
+    }
+
+    // 如果t0为1则(index0, t0)应视为(index0 + 1, 0)
+    if (const size_t index2 = index1 - index0 - (t0 == 1 ? 1 : 0); 0 < t1 && t1 < 1)
+    {
+        // 如果是同一段曲线则需要对t1进行换算
+        const double t2 = index0 == index1 ? (t1 - t0) / (1 - t0) : t1;
+        std::vector<Geo::Point> control_points, temp_points, result_points;
+        Geo::Point pos;
+        for (int i = 0; i <= order; ++i)
+        {
+            control_points.emplace_back(result_controls[i + index2 * order]);
+            pos += (control_points.back() * (nums[i] * std::pow(1 - t2, order - i) * std::pow(t2, i)));
+        }
+        for (int i = 0; i < order; ++i)
+        {
+            for (size_t j = 1, count = control_points.size(); j < count; ++j)
+            {
+                temp_points.emplace_back(control_points[j - 1] + (control_points[j] - control_points[j - 1]) * t2);
+            }
+            result_points.emplace_back(temp_points.front());
+            control_points.assign(temp_points.begin(), temp_points.end());
+            temp_points.clear();
+        }
+        result_points.back() = pos;
+
+        temp_points.assign(result_controls.begin(), result_controls.begin() + index2 * order + 1);
+        if (temp_points.empty() || temp_points.back() != result_points.front())
+        {
+            temp_points.insert(temp_points.end(), result_points.begin(), result_points.end());
+        }
+        else
+        {
+            temp_points.insert(temp_points.end(), result_points.begin() + 1, result_points.end());
+        }
+        result_controls.assign(temp_points.begin(), temp_points.end());
+    }
+    else
+    {
+        if (t1 == 0)
+        {
+            result_controls.erase(result_controls.begin() + index2 * order + 1, result_controls.end());
+        }
+        else
+        {
+            result_controls.erase(result_controls.begin() + index2 * order + order + 1, result_controls.end());
+        }
+    }
+    return new CubicBezier(result_controls.begin(), result_controls.end(), false);
+}
+
+Point CubicBezier::derivative(const size_t index, const double t, const int n) const
+{
+    Geo::Point result;
+    switch (n)
+    {
+    case 3:
+        {
+            const Geo::Point points[3] = {(_points[1 + index * 3] - _points[index * 3]) * 3,
+                                          (_points[2 + index * 3] - _points[1 + index * 3]) * 3,
+                                          (_points[3 + index * 3] - _points[2 + index * 3]) * 3};
+            result = (points[2] - points[1] * 2 + points[0]) * 2 * t;
+        }
+        break;
+    case 2:
+        {
+            const Geo::Point points[3] = {(_points[1 + index * 3] - _points[index * 3]) * 3,
+                                          (_points[2 + index * 3] - _points[1 + index * 3]) * 3,
+                                          (_points[3 + index * 3] - _points[2 + index * 3]) * 3};
+            result = (points[1] - points[0]) * 2 * t + (points[2] - points[1]) * 2 * (1 - t);
+        }
+        break;
+    case 1:
+        result = tangent(index, t);
+        break;
+    case 0:
+        result = shape_point(index, t);
+        break;
+    default:
+        break;
+    }
+    return result;
+}
+
 
 // Ellipse
 double Ellipse::default_down_sampling_value = 0.02;
@@ -2517,9 +2695,14 @@ const double Ellipse::area() const
 
 const double Ellipse::length() const
 {
-    const double a = Geo::distance(_a[0], _a[1]) / 2, b = Geo::distance(_b[0], _b[1]) / 2;
-    const double t = (a - b) / (a + b);
-    return Geo::PI * (a + b) * (1 + 3 * std::pow(t, 2) / (10 + std::sqrt(4 - 3 * std::pow(t, 2))));
+    if (const double a = Geo::distance(_a[0], _a[1]) / 2, b = Geo::distance(_b[0], _b[1]) / 2; is_arc())
+    {
+        return Math::ellipse_arc_length(a, b, _arc_angle[0], _arc_angle[1]);
+    }
+    else
+    {
+        return Math::ellipse_length(a, b);
+    }
 }
 
 const bool Ellipse::empty() const
@@ -2954,6 +3137,14 @@ Geo::Point Ellipse::angle_point(const double value) const
     return param_point(angle_to_param(value));
 }
 
+Ellipse *Ellipse::range(const double t0, const double t1) const
+{
+    const Geo::Point anchor(center());
+    Ellipse *e = new Ellipse(anchor, lengtha(), lengthb(), t0, t1, true);
+    e->rotate(anchor.x, anchor.y, angle());
+    return e;
+}
+
 
 // BSpline
 double BSpline::default_step = 0.02;
@@ -2993,8 +3184,12 @@ const Polyline &BSpline::shape() const
 
 const double BSpline::length() const
 {
+    if (_knots.empty())
+    {
+        return 0;
+    }
     Math::CurveNorm f = [this](const double t) { return tangent(t).length(); };
-    return Math::adaptive_simpson_3_8(f, 0, 1);
+    return Math::adaptive_simpson_3_8(f, _knots.front(), _knots.back());
 }
 
 const bool BSpline::empty() const
@@ -3714,6 +3909,64 @@ void QuadBSpline::extend_back(const Geo::Point &expoint)
     _path_values.push_back(_knots.back());
 }
 
+QuadBSpline *QuadBSpline::range(const double t0, const double t1) const
+{
+    if (t0 >= t1 || _knots.empty() || t0 < _knots.front() || t1 > _knots.back())
+    {
+        return nullptr;
+    }
+
+    QuadBSpline bspline(*this);
+    if (t1 < _knots.back())
+    {
+        for (int i = std::count(_knots.begin(), _knots.end(), t1); i < 2; ++i)
+        {
+            bspline.insert(t1);
+        }
+    }
+    if (t0 > _knots.front())
+    {
+        for (int i = std::count(_knots.begin(), _knots.end(), t0); i < 2; ++i)
+        {
+            bspline.insert(t0);
+        }
+    }
+
+    const size_t index0 =
+        t0 > _knots.front() ? std::distance(bspline._knots.begin(), std::find(bspline._knots.begin(), bspline._knots.end(), t0)) : 1;
+    const size_t index1 = std::distance(bspline._knots.begin(), std::find(bspline._knots.begin(), bspline._knots.end(), t1));
+
+    std::vector<double> knots;
+    knots.push_back(t0);
+    knots.insert(knots.end(), bspline._knots.begin() + index0, bspline._knots.begin() + index1);
+    knots.insert(knots.end(), 3, t1);
+    return new QuadBSpline(bspline.control_points.begin() + index0 - 1, bspline.control_points.begin() + index1, knots, false);
+}
+
+Geo::Point QuadBSpline::derivative(const double t, const int n) const
+{
+    Geo::Point result;
+    if (n > 2)
+    {
+        return result;
+    }
+    const size_t npts = control_points.size() - n;
+    std::vector<double> nbasis;
+    const std::vector<double> knots(_knots.begin() + n, _knots.end() - n); // 二阶导数的节点矢量
+    rbasis(2 - n, t, npts, knots, nbasis);
+    std::vector<Geo::Point> points;
+    for (size_t i = 0; i < npts; ++i)
+    {
+        const double denom = knots[i + 3 - n] - knots[i];
+        points.emplace_back((control_points[i + 1] - control_points[i]) * (3 - n) / denom);
+    }
+    for (size_t i = 0; i < npts; ++i)
+    {
+        result += points[i] * nbasis[i];
+    }
+    return result;
+}
+
 
 // CubicBSpline
 CubicBSpline::CubicBSpline(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end,
@@ -4166,6 +4419,64 @@ void CubicBSpline::extend_back(const Geo::Point &expoint)
     _knots.push_back(_knots.back());
     _knots.push_back(_knots.back());
     _path_values.push_back(_knots.back());
+}
+
+CubicBSpline *CubicBSpline::range(const double t0, const double t1) const
+{
+    if (t0 >= t1 || _knots.empty() || t0 < _knots.front() || t1 > _knots.back())
+    {
+        return nullptr;
+    }
+
+    CubicBSpline bspline(*this);
+    if (t1 < _knots.back())
+    {
+        for (int i = std::count(_knots.begin(), _knots.end(), t1); i < 3; ++i)
+        {
+            bspline.insert(t1);
+        }
+    }
+    if (t0 > _knots.front())
+    {
+        for (int i = std::count(_knots.begin(), _knots.end(), t0); i < 3; ++i)
+        {
+            bspline.insert(t0);
+        }
+    }
+
+    const size_t index0 =
+        t0 > _knots.front() ? std::distance(bspline._knots.begin(), std::find(bspline._knots.begin(), bspline._knots.end(), t0)) : 1;
+    const size_t index1 = std::distance(bspline._knots.begin(), std::find(bspline._knots.begin(), bspline._knots.end(), t1));
+
+    std::vector<double> knots;
+    knots.push_back(t0);
+    knots.insert(knots.end(), bspline._knots.begin() + index0, bspline._knots.begin() + index1);
+    knots.insert(knots.end(), 4, t1);
+    return new CubicBSpline(bspline.control_points.begin() + index0 - 1, bspline.control_points.begin() + index1, knots, false);
+}
+
+Geo::Point CubicBSpline::derivative(const double t, const int n) const
+{
+    Geo::Point result;
+    if (n > 3)
+    {
+        return result;
+    }
+    const size_t npts = control_points.size() - n;
+    std::vector<double> nbasis;
+    const std::vector<double> knots(_knots.begin() + n, _knots.end() - n); // 二阶导数的节点矢量
+    rbasis(3 - n, t, npts, knots, nbasis);
+    std::vector<Geo::Point> points;
+    for (size_t i = 0; i < npts; ++i)
+    {
+        const double denom = knots[i + 4 - n] - knots[i];
+        points.emplace_back((control_points[i + 1] - control_points[i]) * (4 - n) / denom);
+    }
+    for (size_t i = 0; i < npts; ++i)
+    {
+        result += points[i] * nbasis[i];
+    }
+    return result;
 }
 
 
@@ -4631,4 +4942,32 @@ double Arc::angle() const
         }
     }
     return angle;
+}
+
+Point Arc::shape_point(const double t) const
+{
+    assert(t >= 0 && t <= 1);
+    Point point(x, y);
+    if (t > 0 && t < 1)
+    {
+        point = control_points[0].rotated(x, y, angle() * t);
+    }
+    else if (t == 0)
+    {
+        point = control_points[0];
+    }
+    else if (t == 1)
+    {
+        point = control_points[2];
+    }
+    return point;
+}
+
+Arc *Arc::range(const double t0, const double t1) const
+{
+    if (t0 >= t1 || t0 < 0 || t1 > 1)
+    {
+        return nullptr;
+    }
+    return new Arc(shape_point(t0), shape_point((t0 + t1) / 2), shape_point(t1));
 }

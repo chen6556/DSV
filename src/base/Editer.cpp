@@ -161,18 +161,66 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others, 
         objects.assign(_graph->container_group(_current_group).rbegin(), _graph->container_group(_current_group).rend());
     }
 
-    for (Geo::Geometry * it : objects)
+    for (Geo::Geometry *it : objects)
     {
+        switch (it->type())
         {
-            Geo::AABBRectParams rect = it->aabbrect_params();
-            rect.left -= catch_distance;
-            rect.right += catch_distance;
-            rect.bottom -= catch_distance;
-            rect.top += catch_distance;
-            if (!Geo::is_inside(point, rect, true))
+        case Geo::Type::BEZIER:
             {
-                continue;
+                Geo::AABBRectParams rect0 = it->aabbrect_params();
+                rect0.left -= catch_distance;
+                rect0.right += catch_distance;
+                rect0.bottom -= catch_distance;
+                rect0.top += catch_distance;
+                Geo::AABBRectParams rect1 = static_cast<Geo::Polyline *>(it)->aabbrect_params();
+                rect1.left -= catch_distance;
+                rect1.right += catch_distance;
+                rect1.bottom -= catch_distance;
+                rect1.top += catch_distance;
+                if (!Geo::is_inside(point, rect0, true) && !Geo::is_inside(point, rect1, true))
+                {
+                    continue;
+                }
             }
+            break;
+        case Geo::Type::BSPLINE:
+            {
+                Geo::AABBRectParams rect0 = it->aabbrect_params();
+                rect0.left -= catch_distance;
+                rect0.right += catch_distance;
+                rect0.bottom -= catch_distance;
+                rect0.top += catch_distance;
+                Geo::AABBRectParams rect1 = static_cast<Geo::BSpline *>(it)->control_points.front().aabbrect_params();
+                for (const Geo::Point &point : static_cast<Geo::BSpline *>(it)->control_points)
+                {
+                    rect1.left = std::min(rect1.left, point.x);
+                    rect1.right = std::max(rect1.right, point.x);
+                    rect1.bottom = std::min(rect1.bottom, point.y);
+                    rect1.top = std::min(rect1.top, point.y);
+                }
+                rect1.left -= catch_distance;
+                rect1.right += catch_distance;
+                rect1.bottom -= catch_distance;
+                rect1.top += catch_distance;
+                if (!Geo::is_inside(point, rect0, true) && !Geo::is_inside(point, rect1, true))
+                {
+                    continue;
+                }
+            }
+            break;
+        default:
+            {
+                Geo::AABBRectParams rect = it->aabbrect_params();
+                rect.left -= catch_distance;
+                rect.right += catch_distance;
+                rect.bottom -= catch_distance;
+                rect.top += catch_distance;
+                if (!Geo::is_inside(point, rect, true))
+                {
+                    continue;
+                }
+            }
+            break;
         }
 
         switch (it->type())
@@ -693,8 +741,8 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const boo
         std::vector<Geo::Geometry *> temp[3];
         const size_t step = count / 3;
         std::thread threads[3] = {std::thread(&Editer::select_subfunc, rect, &objects, 0, step, &temp[0]),
-                                std::thread(&Editer::select_subfunc, rect, &objects, step, step * 2, &temp[1]),
-                                std::thread(&Editer::select_subfunc, rect, &objects, step * 2, count, &temp[2])};
+                                  std::thread(&Editer::select_subfunc, rect, &objects, step, step * 2, &temp[1]),
+                                  std::thread(&Editer::select_subfunc, rect, &objects, step * 2, count, &temp[2])};
         for (int i = 0; i < 3; ++i)
         {
             threads[i].join();
@@ -706,9 +754,9 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const boo
         std::vector<Geo::Geometry *> temp[4];
         const size_t step = count / 4;
         std::thread threads[4] = {std::thread(&Editer::select_subfunc, rect, &objects, 0, step, &temp[0]),
-                                std::thread(&Editer::select_subfunc, rect, &objects, step, step * 2, &temp[1]),
-                                std::thread(&Editer::select_subfunc, rect, &objects, step * 2, step * 3, &temp[2]),
-                                std::thread(&Editer::select_subfunc, rect, &objects, step * 3, count, &temp[3])};
+                                  std::thread(&Editer::select_subfunc, rect, &objects, step, step * 2, &temp[1]),
+                                  std::thread(&Editer::select_subfunc, rect, &objects, step * 2, step * 3, &temp[2]),
+                                  std::thread(&Editer::select_subfunc, rect, &objects, step * 3, count, &temp[3])};
         for (int i = 0; i < 4; ++i)
         {
             threads[i].join();
@@ -7535,6 +7583,495 @@ void Editer::extend(Geo::BSpline *bspline, const double x, const double y)
     bspline->update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
 }
 
+bool Editer::divide_points_n(const std::vector<Geo::Geometry *> &objects, const size_t n)
+{
+    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items;
+    ContainerGroup &group = _graph->container_group(_current_group);
+    for (const Geo::Geometry *object : objects)
+    {
+        switch (object->type())
+        {
+        case Geo::Type::ARC:
+            {
+                const Geo::Arc *arc = static_cast<const Geo::Arc *>(object);
+                for (size_t i = 1; i < n; ++i)
+                {
+                    Geo::Point *p = new Geo::Point(arc->shape_point(i * 1.0 / n));
+                    add_items.emplace_back(p, _current_group, group.size());
+                    group.append(p);
+                }
+            }
+            break;
+        case Geo::Type::BEZIER:
+            {
+                const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
+                if (std::vector<std::tuple<size_t, double>> pos; Geo::split(*bezier, n, pos))
+                {
+                    for (const auto [index, t] : pos)
+                    {
+                        Geo::Point *p = new Geo::Point(bezier->shape_point(index, t));
+                        add_items.emplace_back(p, _current_group, group.size());
+                        group.append(p);
+                    }
+                }
+            }
+            break;
+        case Geo::Type::BSPLINE:
+            {
+                const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
+                if (std::vector<double> pos; Geo::split(*bspline, n, pos))
+                {
+                    for (const double t : pos)
+                    {
+                        Geo::Point *p = new Geo::Point(bspline->at(t));
+                        add_items.emplace_back(p, _current_group, group.size());
+                        group.append(p);
+                    }
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            if (const Geo::Ellipse *ellipse = static_cast<const Geo::Ellipse *>(object); ellipse->is_arc())
+            {
+                if (std::vector<double> pos; Geo::split(*ellipse, n, pos))
+                {
+                    for (const double t : pos)
+                    {
+                        Geo::Point *p = new Geo::Point(ellipse->param_point(t));
+                        add_items.emplace_back(p, _current_group, group.size());
+                        group.append(p);
+                    }
+                }
+            }
+            break;
+        case Geo::Type::POLYLINE:
+            {
+                const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
+                if (std::vector<std::tuple<size_t, double>> pos; Geo::split(*polyline, n, pos))
+                {
+                    for (const auto [index, t] : pos)
+                    {
+                        Geo::Point *p = new Geo::Point(polyline->shape_point(index, t));
+                        add_items.emplace_back(p, _current_group, group.size());
+                        group.append(p);
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (add_items.empty())
+    {
+        return false;
+    }
+    else
+    {
+        _graph->modified = true;
+        _backup.push_command(new UndoStack::ObjectCommand(add_items, true));
+        return true;
+    }
+}
+
+bool Editer::divide_parts_n(const std::vector<Geo::Geometry *> &objects, const size_t n)
+{
+    ContainerGroup &group = _graph->container_group(_current_group);
+    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    for (Geo::Geometry *object : objects)
+    {
+        switch (object->type())
+        {
+        case Geo::Type::ARC:
+            {
+                const Geo::Arc *arc = static_cast<const Geo::Arc *>(object);
+                const size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
+                remove_items.emplace_back(group.pop(index), _current_group, index);
+                if (Geo::Arc *p = arc->range((n - 1) * 1.0 / n, 1))
+                {
+                    add_items.emplace_back(p, _current_group, index);
+                    group.insert(index, p);
+                }
+                for (size_t i = 1; i < n; ++i)
+                {
+                    if (Geo::Arc *p = arc->range((i - 1) * 1.0 / n, i * 1.0 / n))
+                    {
+                        add_items.emplace_back(p, _current_group, index);
+                        group.append(p);
+                    }
+                }
+            }
+            break;
+        case Geo::Type::BEZIER:
+            {
+                const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
+                if (std::vector<std::tuple<size_t, double>> pos; Geo::split(*bezier, n, pos))
+                {
+                    const size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
+                    remove_items.emplace_back(group.pop(index), _current_group, index);
+                    if (Geo::CubicBezier *p = bezier->range(std::get<0>(pos.back()), std::get<1>(pos.back()), bezier->size() / 3 - 1, 1))
+                    {
+                        add_items.emplace_back(p, _current_group, index);
+                        group.insert(index, p);
+                    }
+                    size_t index0 = 0;
+                    double t0 = 0;
+                    for (const auto [index1, t1] : pos)
+                    {
+                        if (Geo::CubicBezier *p = bezier->range(index0, t0, index1, t1))
+                        {
+                            add_items.emplace_back(p, _current_group, group.size());
+                            group.append(p);
+                        }
+                        index0 = index1;
+                        t0 = t1;
+                    }
+                }
+            }
+            break;
+        case Geo::Type::BSPLINE:
+            {
+                const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
+                if (std::vector<double> pos; Geo::split(*bspline, n, pos))
+                {
+                    const size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
+                    remove_items.emplace_back(group.pop(index), _current_group, index);
+                    if (Geo::BSpline *p = bspline->range(pos.back(), 1))
+                    {
+                        add_items.emplace_back(p, _current_group, index);
+                        group.insert(index, p);
+                    }
+                    double t0 = 0;
+                    for (const double t1 : pos)
+                    {
+                        if (Geo::BSpline *p = bspline->range(t0, t1))
+                        {
+                            add_items.emplace_back(p, _current_group, group.size());
+                            group.append(p);
+                        }
+                        t0 = t1;
+                    }
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            if (const Geo::Ellipse *ellipse = static_cast<const Geo::Ellipse *>(object); ellipse->is_arc())
+            {
+                if (std::vector<double> pos; Geo::split(*ellipse, n, pos))
+                {
+                    const size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
+                    remove_items.emplace_back(group.pop(index), _current_group, index);
+                    if (Geo::Ellipse *p = ellipse->range(pos.back(), ellipse->arc_param1()))
+                    {
+                        add_items.emplace_back(p, _current_group, index);
+                        group.insert(index, p);
+                    }
+                    double t0 = ellipse->arc_param0();
+                    for (const double t1 : pos)
+                    {
+                        if (Geo::Ellipse *p = ellipse->range(t0, t1))
+                        {
+                            add_items.emplace_back(p, _current_group, group.size());
+                            group.append(p);
+                        }
+                        t0 = t1;
+                    }
+                }
+            }
+            break;
+        case Geo::Type::POLYLINE:
+            {
+                const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
+                if (std::vector<std::tuple<size_t, double>> pos; Geo::split(*polyline, n, pos))
+                {
+                    const size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
+                    remove_items.emplace_back(group.pop(index), _current_group, index);
+                    if (Geo::Polyline *p = polyline->range(std::get<0>(pos.back()), std::get<1>(pos.back()), polyline->size() - 2, 1))
+                    {
+                        add_items.emplace_back(p, _current_group, index);
+                        group.insert(index, p);
+                    }
+                    size_t index0 = 0;
+                    double t0 = 0;
+                    for (const auto [index1, t1] : pos)
+                    {
+                        if (Geo::Polyline *p = polyline->range(index0, t0, index1, t1))
+                        {
+                            add_items.emplace_back(p, _current_group, group.size());
+                            group.append(p);
+                        }
+                        index0 = index1;
+                        t0 = t1;
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (add_items.empty())
+    {
+        return false;
+    }
+    else
+    {
+        _graph->modified = true;
+        _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+        return true;
+    }
+}
+
+bool Editer::divide_points_measure(const std::vector<Geo::Geometry *> &objects, const double length)
+{
+    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items;
+    ContainerGroup &group = _graph->container_group(_current_group);
+    for (Geo::Geometry *object : objects)
+    {
+        switch (object->type())
+        {
+        case Geo::Type::ARC:
+            {
+                const Geo::Arc *arc = static_cast<const Geo::Arc *>(object);
+                if (std::vector<double> pos; Geo::split(*arc, length, pos))
+                {
+                    for (const double t : pos)
+                    {
+                        Geo::Point *p = new Geo::Point(arc->shape_point(t));
+                        add_items.emplace_back(p, _current_group, group.size());
+                        group.append(p);
+                    }
+                }
+            }
+            break;
+        case Geo::Type::BEZIER:
+            {
+                const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
+                if (std::vector<std::tuple<size_t, double>> pos; Geo::split(*bezier, length, pos))
+                {
+                    for (const auto [index, t] : pos)
+                    {
+                        Geo::Point *p = new Geo::Point(bezier->shape_point(index, t));
+                        add_items.emplace_back(p, _current_group, group.size());
+                        group.append(p);
+                    }
+                }
+            }
+            break;
+        case Geo::Type::BSPLINE:
+            {
+                const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
+                if (std::vector<double> pos; Geo::split(*bspline, length, pos))
+                {
+                    for (const double t : pos)
+                    {
+                        Geo::Point *p = new Geo::Point(bspline->at(t));
+                        add_items.emplace_back(p, _current_group, group.size());
+                        group.append(p);
+                    }
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            if (const Geo::Ellipse *ellipse = static_cast<const Geo::Ellipse *>(object); ellipse->is_arc())
+            {
+                if (std::vector<double> pos; Geo::split(*ellipse, length, pos))
+                {
+                    for (const double t : pos)
+                    {
+                        Geo::Point *p = new Geo::Point(ellipse->param_point(t));
+                        add_items.emplace_back(p, _current_group, group.size());
+                        group.append(p);
+                    }
+                }
+            }
+            break;
+        case Geo::Type::POLYLINE:
+            {
+                const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
+                if (std::vector<std::tuple<size_t, double>> pos; Geo::split(*polyline, length, pos))
+                {
+                    for (const auto [index, t] : pos)
+                    {
+                        Geo::Point *p = new Geo::Point(polyline->shape_point(index, t));
+                        add_items.emplace_back(p, _current_group, group.size());
+                        group.append(p);
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (add_items.empty())
+    {
+        return false;
+    }
+    else
+    {
+        _graph->modified = true;
+        _backup.push_command(new UndoStack::ObjectCommand(add_items, true));
+        return true;
+    }
+}
+
+bool Editer::divide_parts_measure(const std::vector<Geo::Geometry *> &objects, const double length)
+{
+    ContainerGroup &group = _graph->container_group(_current_group);
+    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    for (Geo::Geometry *object : objects)
+    {
+        switch (object->type())
+        {
+        case Geo::Type::ARC:
+            {
+                const Geo::Arc *arc = static_cast<const Geo::Arc *>(object);
+                if (std::vector<double> pos; Geo::split(*arc, length, pos))
+                {
+                    const size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
+                    remove_items.emplace_back(group.pop(index), _current_group, index);
+                    if (Geo::Arc *p = arc->range(pos.back(), 1))
+                    {
+                        add_items.emplace_back(p, _current_group, index);
+                        group.insert(index, p);
+                    }
+                    double t0 = 0;
+                    for (const double t1 : pos)
+                    {
+                        if (Geo::Arc *p = arc->range(t0, t1))
+                        {
+                            add_items.emplace_back(p, _current_group, group.size());
+                            group.append(p);
+                        }
+                        t0 = t1;
+                    }
+                }
+            }
+            break;
+        case Geo::Type::BEZIER:
+            {
+                const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
+                if (std::vector<std::tuple<size_t, double>> pos; Geo::split(*bezier, length, pos))
+                {
+                    const size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
+                    remove_items.emplace_back(group.pop(index), _current_group, index); 
+                    if (Geo::CubicBezier *p = bezier->range(std::get<0>(pos.back()), std::get<1>(pos.back()), bezier->size() / 3 - 1, 1))
+                    {
+                        add_items.emplace_back(p, _current_group, index);
+                        group.insert(index, p);
+                    }
+                    size_t index0 = 0;
+                    double t0 = 0;
+                    for (const auto [index1, t1] : pos)
+                    {
+                        if (Geo::CubicBezier *p = bezier->range(index0, t0, index1, t1))
+                        {
+                            add_items.emplace_back(p, _current_group, group.size());
+                            group.append(p);
+                        }
+                        index0 = index1;
+                        t0 = t1;
+                    }
+                }
+            }
+            break;
+        case Geo::Type::BSPLINE:
+            {
+                const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
+                if (std::vector<double> pos; Geo::split(*bspline, length, pos))
+                {
+                    const size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
+                    remove_items.emplace_back(group.pop(index), _current_group, index);
+                    if (Geo::BSpline *p = bspline->range(pos.back(), 1))
+                    {
+                        add_items.emplace_back(p, _current_group, index);
+                        group.insert(index, p);
+                    }
+                    double t0 = 0;
+                    for (const double t1 : pos)
+                    {
+                        if (Geo::BSpline *p = bspline->range(t0, t1))
+                        {
+                            add_items.emplace_back(p, _current_group, group.size());
+                            group.append(p);
+                        }
+                        t0 = t1;
+                    }
+                }
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            if (const Geo::Ellipse *ellipse = static_cast<const Geo::Ellipse *>(object); ellipse->is_arc())
+            {
+                if (std::vector<double> pos; Geo::split(*ellipse, length, pos))
+                {
+                    const size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
+                    remove_items.emplace_back(group.pop(index), _current_group, index);
+                    if (Geo::Ellipse *p = ellipse->range(pos.back(), ellipse->arc_param1()))
+                    {
+                        add_items.emplace_back(p, _current_group, index);
+                        group.insert(index, p);
+                    }
+                    double t0 = ellipse->arc_param0();
+                    for (const double t1 : pos)
+                    {
+                        if (Geo::Ellipse *p = ellipse->range(t0, t1))
+                        {
+                            add_items.emplace_back(p, _current_group, group.size());
+                            group.append(p);
+                        }
+                        t0 = t1;
+                    }
+                }
+            }
+            break;
+        case Geo::Type::POLYLINE:
+            {
+                const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
+                if (std::vector<std::tuple<size_t, double>> pos; Geo::split(*polyline, length, pos))
+                {
+                    const size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
+                    remove_items.emplace_back(group.pop(index), _current_group, index);
+                    if (Geo::Polyline *p = polyline->range(std::get<0>(pos.back()), std::get<1>(pos.back()), polyline->size() - 2, 1))
+                    {
+                        add_items.emplace_back(p, _current_group, index);
+                        group.insert(index, p);
+                    }
+                    size_t index0 = 0;
+                    double t0 = 0;
+                    for (const auto [index1, t1] : pos)
+                    {
+                        if (Geo::Polyline *p = polyline->range(index0, t0, index1, t1))
+                        {
+                            add_items.emplace_back(p, _current_group, group.size());
+                            group.append(p);
+                        }
+                        index0 = index1;
+                        t0 = t1;
+                    }
+                }
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (add_items.empty())
+    {
+        return false;
+    }
+    else
+    {
+        _graph->modified = true;
+        _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+        return true;
+    }
+}
 
 bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines)
 {

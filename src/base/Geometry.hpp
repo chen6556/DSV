@@ -162,6 +162,8 @@ public:
 
     void rotate(const double x_, const double y_, const double rad) override;
 
+    Point rotated(const double x_, const double y_, const double rad) const;
+
     void scale(const double x_, const double y_, const double k) override;
 
     AABBRect bounding_rect() const override;
@@ -325,6 +327,10 @@ public:
     AABBRectParams aabbrect_params() const override;
 
     void remove_repeated_points();
+
+    Point shape_point(const size_t index, const double t) const;
+
+    Polyline *range(const size_t index0, const double t0, const size_t index1, const double t1) const;
 };
 
 class AABBRect : public Geometry
@@ -667,8 +673,7 @@ public:
 
     CubicBezier(const CubicBezier &bezier);
 
-    CubicBezier(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end,
-           const bool is_path_points);
+    CubicBezier(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end, const bool is_path_points);
 
     CubicBezier(const std::initializer_list<Point> &points, const bool is_path_points);
 
@@ -711,6 +716,10 @@ public:
     Point vertical(const size_t index, const double t) const;
 
     Point shape_point(const size_t index, const double t) const;
+
+    CubicBezier *range(const size_t index0, const double t0, const size_t index1, const double t1) const;
+
+    Point derivative(const size_t index, const double t, const int n) const;
 };
 
 class Ellipse : public Geometry
@@ -852,6 +861,9 @@ public:
 
     // 圆心角点
     Point angle_point(const double value) const;
+
+    // 参数角截取椭圆弧
+    Ellipse *range(const double t0, const double t1) const;
 };
 
 class BSpline : public Geometry
@@ -931,9 +943,13 @@ public:
     static void rbspline(const int order, const size_t npts, const size_t p1, const std::vector<double> &knots, const std::vector<Point> &b,
                          std::vector<Point> &p);
 
+    virtual BSpline *range(const double t0, const double t1) const = 0;
+
+    virtual Point derivative(const double t, const int n) const = 0;
+
 private:
     static void rbspline_subfunc(const int order, const size_t npts, const double step, const size_t start, const size_t end,
-                         const std::vector<double> *knots, const std::vector<Point> *b, std::vector<Point> *p);
+                                 const std::vector<double> *knots, const std::vector<Point> *b, std::vector<Point> *p);
 };
 
 class QuadBSpline : public BSpline
@@ -973,6 +989,10 @@ public:
     void extend_front(const Geo::Point &expoint) override;
 
     void extend_back(const Geo::Point &expoint) override;
+
+    QuadBSpline *range(const double t0, const double t1) const override;
+
+    Point derivative(const double t, const int n) const override;
 };
 
 class CubicBSpline : public BSpline
@@ -1006,6 +1026,10 @@ public:
     void extend_front(const Geo::Point &expoint) override;
 
     void extend_back(const Geo::Point &expoint) override;
+
+    CubicBSpline *range(const double t0, const double t1) const override;
+
+    Point derivative(const double t, const int n) const override;
 };
 
 class Arc : public Geometry
@@ -1083,5 +1107,9 @@ public:
     bool is_cw() const;
 
     double angle() const;
+
+    Point shape_point(const double t) const;
+
+    Arc *range(const double t0, const double t1) const;
 };
 }; // namespace Geo

@@ -96,4 +96,9 @@ double simpson_3_8(const CurveNorm &f, const double l, const double r);
 
 double adaptive_simpson_3_8(const CurveNorm &f, const double l, const double r);
 
+
+double ellipse_length(const double a, const double b);
+
+double ellipse_arc_length(const double a, const double b, const double start, const double end);
+
 }; // namespace Math

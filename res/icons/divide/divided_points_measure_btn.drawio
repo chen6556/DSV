@@ -1,0 +1,28 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.5.2 Chrome/142.0.7444.265 Electron/39.6.1 Safari/537.36" version="29.5.2">
+  <diagram name="第 1 页" id="ewl9boTtj5eG1xmZE2dz">
+    <mxGraphModel dx="870" dy="640" grid="1" gridSize="3.937" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="48" pageHeight="48" background="#464647" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="ktACBB8U2FfBJzfLgPZn-3" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=1.9685;strokeColor=#EBEBEB;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="4" y="43" as="sourcePoint" />
+            <mxPoint x="43" y="4" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="22dEQPTaeS2Q2EM1TDMN-1" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeColor=#E6E6E6;strokeWidth=2;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="11.81" y="27.56" as="sourcePoint" />
+            <mxPoint x="19.81" y="35.56" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="22dEQPTaeS2Q2EM1TDMN-2" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeColor=#E6E6E6;strokeWidth=2;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="27.557" y="11.807" as="sourcePoint" />
+            <mxPoint x="35.557" y="19.807000000000002" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

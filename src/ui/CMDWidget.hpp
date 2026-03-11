@@ -71,7 +71,11 @@ public:
         Difference_CMD,
         XOR_CMD,
         LineArray_CMD,
-        RingArray_CMD
+        RingArray_CMD,
+        DividePointsN_CMD,
+        DividePointsMeasure_CMD,
+        DividePartsN_CMD,
+        DividePartsMeasure_CMD
     };
 
     enum class SETTING
@@ -168,4 +172,12 @@ public:
     void shape_union();
 
     void shape_xor();
+
+    void divide_points_n();
+
+    void divide_points_measure();
+
+    void divide_parts_n();
+
+    void divide_parts_measure();
 };

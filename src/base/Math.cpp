@@ -6,6 +6,7 @@
 #include <gsl/gsl_linalg.h>
 #include <gsl/gsl_cblas.h>
 #include <gsl/gsl_roots.h>
+#include <gsl/gsl_sf_ellint.h>
 
 
 void Math::error_handle(const char *reason, const char *file, int line, int gsl_errno)
@@ -339,7 +340,7 @@ double Math::solve_ellipse_foot(EllipseFootParameter &param, const double init_t
 double Math::simpson_3_8(const CurveNorm &f, const double l, const double r)
 {
     const double mid_l = (l + l + r) / 3.0, mid_r = (l + r + r) / 3.0;
-    return (f(l) + 3.0 * f(mid_l) +  3.0 * f(mid_r) + f(r)) * (r - l) / 8.0;
+    return (f(l) + 3.0 * f(mid_l) + 3.0 * f(mid_r) + f(r)) * (r - l) / 8.0;
 }
 
 double Math::adaptive_simpson_3_8(const CurveNorm &f, const double l, const double r)
@@ -356,15 +357,63 @@ double Math::adaptive_simpson_3_8(const CurveNorm &f, const double l, const doub
         const double sl = simpson_3_8(f, ll, mid);
         const double sr = simpson_3_8(f, mid, rr);
         const double t = sl + sr - st;
-        if(std::abs(t) <= 15.0 * Math::EPSILON)
+        if (std::abs(t) <= 15.0 * Math::EPSILON)
         {
             result += (sl + sr + t / 15.0);
         }
         else
-        {   
+        {
             params.emplace_back(ll, mid);
             params.emplace_back(mid, rr);
         }
     }
     return result;
+}
+
+double Math::ellipse_length(const double a, const double b)
+{
+    const double k = std::sqrt(1 - (b * b) / (a * a));
+    return a * gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 4;
+}
+
+double Math::ellipse_arc_length(const double a, const double b, const double start, const double end)
+{
+    if (const double k = std::sqrt(1 - (b * b) / (a * a)); end < Math::PI)
+    {
+        if (start < Math::PI)
+        {
+            if (start < end)
+            {
+                return a * (gsl_sf_ellint_E(end, k, GSL_PREC_DOUBLE) - gsl_sf_ellint_E(start, k, GSL_PREC_DOUBLE));
+            }
+            else
+            {
+                return a * (gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 4 - gsl_sf_ellint_E(start, k, GSL_PREC_DOUBLE) +
+                            gsl_sf_ellint_E(end, k, GSL_PREC_DOUBLE));
+            }
+        }
+        else
+        {
+            return a * (gsl_sf_ellint_E(end, k, GSL_PREC_DOUBLE) + gsl_sf_ellint_E(Math::PI * 2 - start, k, GSL_PREC_DOUBLE));
+        }
+    }
+    else
+    {
+        if (start < Math::PI)
+        {
+            return a * (gsl_sf_ellint_E(Math::PI - start, k, GSL_PREC_DOUBLE) + gsl_sf_ellint_E(end - Math::PI, k, GSL_PREC_DOUBLE));
+        }
+        else
+        {
+            if (start < end)
+            {
+                return a * (gsl_sf_ellint_E(end - Math::PI, k, GSL_PREC_DOUBLE) - gsl_sf_ellint_E(start - Math::PI, k, GSL_PREC_DOUBLE));
+            }
+            else
+            {
+                return a * (gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 4 - gsl_sf_ellint_E(start - Math::PI, k, GSL_PREC_DOUBLE) +
+                            gsl_sf_ellint_E(end - Math::PI, k, GSL_PREC_DOUBLE));
+            }
+        }
+    }
 }

@@ -3249,8 +3249,8 @@ bool Ellipse1Operation::mouse_press(QMouseEvent *event)
             }
             break;
         case 2:
-            _parameters[3] = Geo::distance(Geo::Point(real_pos[0], real_pos[1]), Geo::Point(tool_lines[3], tool_lines[4]),
-                                           Geo::Point(tool_lines[0], tool_lines[1]), true);
+            _parameters[3] = Geo::distance(Geo::Point(real_pos[0], real_pos[1]), Geo::Point(tool_lines[4], tool_lines[5]),
+                                           Geo::Point(tool_lines[6], tool_lines[7]), true);
             tool_lines[0] = tool_lines[4] = _parameters[0];
             tool_lines[1] = tool_lines[5] = _parameters[1];
             tool_lines[2] = real_pos[0], tool_lines[3] = real_pos[1];
@@ -3323,8 +3323,8 @@ bool Ellipse1Operation::mouse_move(QMouseEvent *event)
         break;
     case 2:
         {
-            _parameters[3] = Geo::distance(Geo::Point(real_pos[0], real_pos[1]), Geo::Point(tool_lines[3], tool_lines[4]),
-                                           Geo::Point(tool_lines[0], tool_lines[1]), true);
+            _parameters[3] = Geo::distance(Geo::Point(real_pos[0], real_pos[1]), Geo::Point(tool_lines[4], tool_lines[5]),
+                                           Geo::Point(tool_lines[6], tool_lines[7]), true);
             Geo::Ellipse ellipse(_parameters[0], _parameters[1], _parameters[2], _parameters[3]);
             ellipse.rotate(_parameters[0], _parameters[1], _parameters[4]);
             tool_lines[8] = ellipse.b0().x, tool_lines[9] = ellipse.b0().y;

@@ -1,5 +1,6 @@
 #include <algorithm>
 #include "base/Algorithm.hpp"
+#include "base/Math.hpp"
 
 
 bool Geo::split(const Polyline &polyline, const Point &pos, Polyline &output0, Polyline &output1)
@@ -792,4 +793,344 @@ bool Geo::split(const Ellipse &ellipse, const Point &pos, Ellipse &output0, Elli
     {
         return false;
     }
+}
+
+bool Geo::split(const Polyline &polyline, const size_t n, std::vector<std::tuple<size_t, double>> &pos)
+{
+    const size_t parts = polyline.size() - 1;
+    std::vector<double> length_of_part;
+    double part_length = 0;
+    for (size_t i = 0; i < parts; ++i)
+    {
+        length_of_part.push_back(Geo::distance(polyline[i], polyline[i + 1]));
+        part_length += length_of_part.back();
+    }
+    part_length /= n;
+    for (size_t i = 1, index = 0; i < n; ++i)
+    {
+        double target_length = part_length;
+        while (index < parts && target_length > length_of_part[index])
+        {
+            target_length -= length_of_part[index];
+            length_of_part[index] = 0;
+            ++index;
+        }
+        if (pos.empty() || std::get<0>(pos.back()) < index)
+        {
+            pos.emplace_back(index, target_length / Geo::distance(polyline[index], polyline[index + 1]));
+        }
+        else
+        {
+            pos.emplace_back(index, std::get<1>(pos.back()) + target_length / Geo::distance(polyline[index], polyline[index + 1]));
+        }
+        length_of_part[index] -= target_length;
+    }
+    return !pos.empty();
+}
+
+bool Geo::split(const CubicBezier &bezier, const size_t n, std::vector<std::tuple<size_t, double>> &pos)
+{
+    const size_t parts = bezier.size() / 3;
+    std::vector<double> length_of_part;
+    double part_length = 0;
+    for (size_t i = 0; i < parts; ++i)
+    {
+        Math::CurveNorm f = [&, i](const double t) { return bezier.tangent(i, t).length(); };
+        length_of_part.push_back(Math::adaptive_simpson_3_8(f, 0, 1));
+        part_length += length_of_part.back();
+    }
+    part_length /= n;
+    const double eps = 1e-11;
+    for (size_t i = 1, index = 0; i < n; ++i)
+    {
+        double target_length = part_length;
+        while (index < parts && target_length > length_of_part[index])
+        {
+            target_length -= length_of_part[index];
+            length_of_part[index] = 0;
+            ++index;
+        }
+
+        Math::CurveNorm f = [&, index](const double t) { return bezier.tangent(index, t).length(); };
+        double last_t = 0, t = 0.5;
+        const double t0 = (!pos.empty() && std::get<0>(pos.back()) == index) ? std::get<1>(pos.back()) : 0;
+        double approx_length = 0;
+        for (int j = 0; j < 1000; ++j)
+        {
+            approx_length = Math::adaptive_simpson_3_8(f, t0, t);
+            const double d = approx_length - target_length;
+            if (std::abs(d) < eps)
+            {
+                break;
+            }
+
+            const double first_order = bezier.derivative(index, t, 1).length();
+            const double second_order = bezier.derivative(index, t, 2).length();
+            const double numerator = d * first_order;
+            const double denominator = d * second_order + first_order * first_order;
+            t -= (numerator / denominator);
+            if (std::abs(t - last_t) < eps)
+            {
+                break;
+            }
+            else
+            {
+                last_t = t;
+            }
+        }
+
+        length_of_part[index] -= approx_length;
+        pos.emplace_back(index, std::min(1.0, std::max(t0, t)));
+    }
+    return !pos.empty();
+}
+
+bool Geo::split(const BSpline &bspline, const size_t n, std::vector<double> &pos)
+{
+    const double max_t = bspline.knots().back();
+    const double step_t = max_t / n;
+    const double total_length = bspline.length();
+    const double part_length = total_length / n;
+    const double eps = 1e-11;
+    double t0 = bspline.knots().front();
+    const Math::CurveNorm f = [&](const double t) { return bspline.tangent(t).length(); };
+    for (size_t i = 1; i < n; ++i)
+    {
+        double approx_length = 0, t = t0 + step_t, last_t = t0;
+        for (int j = 0; j < 1000; ++j)
+        {
+            approx_length = Math::adaptive_simpson_3_8(f, t0, t);
+            const double d = approx_length - part_length;
+            if (std::abs(d) < eps)
+            {
+                break;
+            }
+
+            const double first_order = bspline.derivative(t, 1).length();
+            const double second_order = bspline.derivative(t, 2).length();
+            const double numerator = d * first_order;
+            const double denominator = d * second_order + first_order * first_order;
+            t -= (numerator / denominator);
+            if (std::abs(t - last_t) < eps)
+            {
+                break;
+            }
+            else
+            {
+                last_t = t;
+            }
+        }
+        pos.push_back(t);
+        t0 = t;
+    }
+    return !pos.empty();
+}
+
+bool Geo::split(const Ellipse &ellipse, const size_t n, std::vector<double> &pos)
+{
+    if (!ellipse.is_arc())
+    {
+        return false;
+    }
+
+    const double part_length = ellipse.length() / n;
+    const double eps = 1e-14;
+    const double a = ellipse.lengtha(), b = ellipse.lengthb();
+    const double angle1 = ellipse.arc_angle1();
+    double t = ellipse.arc_angle0();
+    for (size_t i = 1; i < n; ++i)
+    {
+        double low = t, high = angle1 < t ? angle1 + Math::PI * 2 : angle1;
+        while (high - low > eps)
+        {
+            const double mid = (low + high) / 2;
+            const double length_mid = Math::ellipse_arc_length(a, b, t, mid);
+            if (length_mid < part_length)
+            {
+                low = mid;
+            }
+            else
+            {
+                high = mid;
+            }
+        }
+        t = (low + high) / 2;
+        pos.push_back(ellipse.angle_to_param(t));
+    }
+    return !pos.empty();
+}
+
+bool Geo::split(const Polyline &polyline, const double step, std::vector<std::tuple<size_t, double>> &pos)
+{
+    const size_t parts = polyline.size() - 1;
+    std::vector<double> length_of_part;
+    double polyline_length = 0;
+    for (size_t i = 0; i < parts; ++i)
+    {
+        length_of_part.push_back(Geo::distance(polyline[i], polyline[i + 1]));
+        polyline_length += length_of_part.back();
+    }
+    for (size_t i = 0, index = 0, n = polyline_length / step; i < n; ++i)
+    {
+        double target_length = step;
+        while (index < parts && target_length > length_of_part[index])
+        {
+            target_length -= length_of_part[index];
+            length_of_part[index] = 0;
+            ++index;
+        }
+        if (pos.empty() || std::get<0>(pos.back()) < index)
+        {
+            pos.emplace_back(index, target_length / Geo::distance(polyline[index], polyline[index + 1]));
+        }
+        else
+        {
+            pos.emplace_back(index, std::get<1>(pos.back()) + target_length / Geo::distance(polyline[index], polyline[index + 1]));
+        }
+        length_of_part[index] -= target_length;
+    }
+    return !pos.empty();
+}
+
+bool Geo::split(const CubicBezier &bezier, const double step, std::vector<std::tuple<size_t, double>> &pos)
+{
+    const size_t parts = bezier.size() / 3;
+    std::vector<double> length_of_part;
+    double bezier_length = 0;
+    for (size_t i = 0; i < parts; ++i)
+    {
+        Math::CurveNorm f = [&, i](const double t) { return bezier.tangent(i, t).length(); };
+        length_of_part.push_back(Math::adaptive_simpson_3_8(f, 0, 1));
+        bezier_length += length_of_part.back();
+    }
+    const double eps = 1e-11;
+    for (size_t i = 0, index = 0, n = bezier_length / step; i < n; ++i)
+    {
+        double target_length = step;
+        while (index < parts && target_length > length_of_part[index])
+        {
+            target_length -= length_of_part[index];
+            length_of_part[index] = 0;
+            ++index;
+        }
+
+        Math::CurveNorm f = [&, index](const double t) { return bezier.tangent(index, t).length(); };
+        double last_t = 0, t = 0.5;
+        const double t0 = (!pos.empty() && std::get<0>(pos.back()) == index) ? std::get<1>(pos.back()) : 0;
+        double approx_length = 0;
+        for (int j = 0; j < 1000; ++j)
+        {
+            approx_length = Math::adaptive_simpson_3_8(f, t0, t);
+            const double d = approx_length - target_length;
+            if (std::abs(d) < eps)
+            {
+                break;
+            }
+
+            const double first_order = bezier.derivative(index, t, 1).length();
+            const double second_order = bezier.derivative(index, t, 2).length();
+            const double numerator = d * first_order;
+            const double denominator = d * second_order + first_order * first_order;
+            t -= (numerator / denominator);
+            if (std::abs(t - last_t) < eps)
+            {
+                break;
+            }
+            else
+            {
+                last_t = t;
+            }
+        }
+
+        length_of_part[index] -= approx_length;
+        pos.emplace_back(index, std::min(1.0, std::max(t0, t)));
+    }
+    return !pos.empty();
+}
+
+bool Geo::split(const BSpline &bspline, const double step, std::vector<double> &pos)
+{
+    const double max_t = bspline.knots().back();
+    const double total_length = bspline.length();
+    const size_t n = total_length / step;
+    const double step_t = max_t / n;
+    const double eps = 1e-11;
+    double t0 = bspline.knots().front();
+    const Math::CurveNorm f = [&](const double t) { return bspline.tangent(t).length(); };
+    for (size_t i = 0; i < n; ++i)
+    {
+        double approx_length = 0, t = t0 + step_t, last_t = t0;
+        for (int j = 0; j < 1000; ++j)
+        {
+            approx_length = Math::adaptive_simpson_3_8(f, t0, t);
+            const double d = approx_length - step;
+            if (std::abs(d) < eps)
+            {
+                break;
+            }
+
+            const double first_order = bspline.derivative(t, 1).length();
+            const double second_order = bspline.derivative(t, 2).length();
+            const double numerator = d * first_order;
+            const double denominator = d * second_order + first_order * first_order;
+            t -= (numerator / denominator);
+            if (std::abs(t - last_t) < eps)
+            {
+                break;
+            }
+            else
+            {
+                last_t = t;
+            }
+        }
+        pos.push_back(t);
+        t0 = t;
+    }
+    return !pos.empty();
+}
+
+bool Geo::split(const Arc &arc, const double step, std::vector<double> &pos)
+{
+    const double arc_length = arc.length();
+    const double step_t = step / arc_length;
+    double t = 0;
+    for (size_t i = 0, n = arc_length / step; i < n; ++i)
+    {
+        t += step_t;
+        pos.push_back(t);
+    }
+    return !pos.empty();
+}
+
+bool Geo::split(const Ellipse &ellipse, const double step, std::vector<double> &pos)
+{
+    if (!ellipse.is_arc())
+    {
+        return false;
+    }
+
+    const double eps = 1e-14;
+    const double a = ellipse.lengtha(), b = ellipse.lengthb();
+    const double angle1 = ellipse.arc_angle1();
+    double t = ellipse.arc_angle0();
+    for (size_t i = 0, n = ellipse.length() / step; i < n; ++i)
+    {
+        double low = t, high = angle1 < t ? angle1 + Math::PI * 2 : angle1;
+        while (high - low > eps)
+        {
+            const double mid = (low + high) / 2;
+            const double length_mid = Math::ellipse_arc_length(a, b, t, mid);
+            if (length_mid < step)
+            {
+                low = mid;
+            }
+            else
+            {
+                high = mid;
+            }
+        }
+        t = (low + high) / 2;
+        pos.push_back(ellipse.angle_to_param(t));
+    }
+    return !pos.empty();
 }

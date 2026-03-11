@@ -190,6 +190,14 @@ public:
 
     void extend(Geo::BSpline *bspline, const double x, const double y);
 
+    bool divide_points_n(const std::vector<Geo::Geometry *> &objects, const size_t n);
+
+    bool divide_parts_n(const std::vector<Geo::Geometry *> &objects, const size_t n);
+
+    bool divide_points_measure(const std::vector<Geo::Geometry *> &objects, const double length);
+
+    bool divide_parts_measure(const std::vector<Geo::Geometry *> &objects, const double length);
+
 
     bool auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines);
 

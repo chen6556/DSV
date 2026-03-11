@@ -961,6 +961,32 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
             break;
         }
         break;
+    case ActionGroup::MenuType::DividePointsMenu:
+        switch (index)
+        {
+        case 0: // Divided Points N
+            ui->cmd_widget->work(CMDWidget::CMD::DividePointsN_CMD);
+            break;
+        case 1: // Divided Points Measure
+            ui->cmd_widget->work(CMDWidget::CMD::DividePointsMeasure_CMD);
+            break;
+        default:
+            break;
+        }
+        break;
+    case ActionGroup::MenuType::DividePartsMenu:
+        switch (index)
+        {
+        case 0: // Divided Parts N
+            ui->cmd_widget->work(CMDWidget::CMD::DividePartsN_CMD);
+            break;
+        case 1: // Divided Parts Measure
+            ui->cmd_widget->work(CMDWidget::CMD::DividePartsMeasure_CMD);
+            break;
+        default:
+            break;
+        }
+        break;
     default:
         break;
     }

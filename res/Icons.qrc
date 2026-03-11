@@ -47,5 +47,9 @@
         <file>icons/free_fillet_btn.png</file>
         <file>icons/blend_btn.png</file>
         <file>icons/polygon/point_btn.png</file>
+        <file>icons/divide/divided_parts_measure_btn.png</file>
+        <file>icons/divide/divided_points_measure_btn.png</file>
+        <file>icons/divide/divided_points_n_btn.png</file>
+        <file>icons/divide/divided_parts_n_btn.png</file>
     </qresource>
 </RCC>

@@ -18,7 +18,9 @@ public:
         FilletMenu,
         ConnectMenu,
         TrimMenu,
-        FlipMenu
+        FlipMenu,
+        DividePointsMenu,
+        DividePartsMenu
     };
 
 private:
@@ -33,6 +35,8 @@ private:
     QMenu *_trim_menu = nullptr;
     QMenu *_flip_menu = nullptr;
     QMenu *_fillet_menu = nullptr;
+    QMenu *_divide_points_menu = nullptr;
+    QMenu *_divide_parts_menu = nullptr;
 
 public:
     ActionGroup(Ui::MainWindow *ui, std::function<void(const MenuType, const int)> callback);
@@ -57,4 +61,8 @@ private:
     void init_flip_menu();
 
     void init_fillet_menu();
+
+    void init_divide_points_menu();
+
+    void init_divide_parts_menu();
 };

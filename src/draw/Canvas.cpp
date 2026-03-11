@@ -3333,7 +3333,7 @@ void Canvas::visible_objects(std::vector<Geo::Geometry *> &objects, const bool c
             }
         }
         std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) { return std::get<0>(a) < std::get<0>(b); });
-        for (auto [index, object] : items)
+        for (const auto [index, object] : items)
         {
             objects.push_back(object);
         }
@@ -3348,7 +3348,7 @@ void Canvas::visible_objects(std::vector<Geo::Geometry *> &objects, const bool c
         }
         std::sort(items.begin(), items.end(), [](const auto &a, const auto &b)
                   { return std::get<0>(a) < std::get<0>(b) || (std::get<0>(a) == std::get<0>(b) && std::get<1>(a) < std::get<1>(b)); });
-        for (auto [group, index, object] : items)
+        for (const auto [group, index, object] : items)
         {
             objects.push_back(object);
         }

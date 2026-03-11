@@ -27,6 +27,7 @@ void CMDWidget::init()
     _cmd_list << QString() << "ALL" << "ANGLE" << "ARRAY" << "BEZIER" << "BSPLINE" << "BLEND"
               << "CCIRCLE" << "CHAMFER" << "CLOSE" << "COMBINATE" << "CONNECT" << "COPY"
               << "CPOLYGON" << "CUT" << "DCIRCLE" << "DELETE" << "DETACH" << "DIFFERENCE"
+              << "DIVIDEPARTSN" << "DIVIDEPOINTSN" << "DIVIDEPARTSMEASURE" << "DIVIDEPOINTSMEASURE"
               << "ELLIPSE" << "ELLIPSEARC"
               << "EXTEND" << "FILLET" << "FREEFILLET" << "FLIPX" << "FLIPY"
               << "IPOLYGON" << "INTERSECTION" << "LENGTH" << "LINEARRAY" << "MAIN" << "MIRROR"
@@ -79,6 +80,10 @@ void CMDWidget::init()
                  {"INTERSECTION", CMD::Intersection_CMD},
                  {"DIFFERENCE", CMD::Difference_CMD},
                  {"XOR", CMD::XOR_CMD},
+                 {"DIVIDEPARTSN", CMD::DividePartsN_CMD},
+                 {"DIVIDEPARTSMEASURE", CMD::DividePartsMeasure_CMD},
+                 {"DIVIDEPOINTSN", CMD::DividePointsN_CMD},
+                 {"DIVIDEPOINTSMEASURE", CMD::DividePointsMeasure_CMD},
                  {"DELETE", CMD::Delete_CMD},
                  {"COPY", CMD::Copy_CMD},
                  {"CUT", CMD::Cut_CMD},
@@ -181,10 +186,19 @@ void CMDWidget::init()
                       {CMD::Union_CMD, "Union"},
                       {CMD::XOR_CMD, "XOR"}};
 
-    _direct_cmd_list = {CMD::Error_CMD, CMD::Main_CMD,         CMD::Connect_CMD,   CMD::Close_CMD,  CMD::Combinate_CMD, CMD::Detach_CMD,
-                        CMD::FlipX_CMD, CMD::FlipY_CMD,        CMD::LineArray_CMD, CMD::Array_CMD,  CMD::Offset_CMD,    CMD::Scale_CMD,
-                        CMD::Union_CMD, CMD::Intersection_CMD, CMD::XOR_CMD,       CMD::Delete_CMD, CMD::Copy_CMD,      CMD::Cut_CMD,
-                        CMD::Paste_CMD, CMD::Undo_CMD,         CMD::SelectAll_CMD};
+    _direct_cmd_list = {CMD::Error_CMD,         CMD::Main_CMD,
+                        CMD::Connect_CMD,       CMD::Close_CMD,
+                        CMD::Combinate_CMD,     CMD::Detach_CMD,
+                        CMD::FlipX_CMD,         CMD::FlipY_CMD,
+                        CMD::LineArray_CMD,     CMD::Array_CMD,
+                        CMD::Offset_CMD,        CMD::Scale_CMD,
+                        CMD::Union_CMD,         CMD::Intersection_CMD,
+                        CMD::XOR_CMD,           CMD::Delete_CMD,
+                        CMD::Copy_CMD,          CMD::Cut_CMD,
+                        CMD::DividePartsN_CMD,  CMD::DividePartsMeasure_CMD,
+                        CMD::DividePointsN_CMD, CMD::DividePointsMeasure_CMD,
+                        CMD::Paste_CMD,         CMD::Undo_CMD,
+                        CMD::SelectAll_CMD};
 
     _completer = new QCompleter(_cmd_list, this);
     _completer->setCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
@@ -382,6 +396,18 @@ bool CMDWidget::work()
         case CMD::XOR_CMD:
             shape_xor();
             _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::DividePointsN_CMD:
+            divide_points_n();
+            break;
+        case CMD::DividePointsMeasure_CMD:
+            divide_points_measure();
+            break;
+        case CMD::DividePartsN_CMD:
+            divide_parts_n();
+            break;
+        case CMD::DividePartsMeasure_CMD:
+            divide_parts_measure();
             break;
         case CMD::LineArray_CMD:
             line_array();
@@ -1032,5 +1058,110 @@ void CMDWidget::shape_xor()
         }
         CanvasOperations::CanvasOperation::canvas->refresh_vbo(true, types);
         CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
+    }
+}
+
+void CMDWidget::divide_points_n()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        _parameters.emplace_back(0);
+        ui->cmd_label->setText("Divide Points N");
+        ui->parameter_label->setText("n:");
+        break;
+    case 1:
+        clear();
+        break;
+    default:
+        if (_parameters.back() > 1 && CanvasOperations::CanvasOperation::canvas->editer()->divide_points_n(
+                                          CanvasOperations::CanvasOperation::canvas->editer()->selected(), _parameters.back()))
+        {
+            CanvasOperations::CanvasOperation::canvas->refresh_vbo(true, Geo::Type::POINT);
+        }
+        clear();
+        break;
+    }
+}
+
+void CMDWidget::divide_points_measure()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        _parameters.emplace_back(0);
+        ui->cmd_label->setText("Divide Points Measure");
+        ui->parameter_label->setText("length:");
+        break;
+    case 1:
+        clear();
+        break;
+    default:
+        if (_parameters.back() > 0 && CanvasOperations::CanvasOperation::canvas->editer()->divide_points_measure(
+                                          CanvasOperations::CanvasOperation::canvas->editer()->selected(), _parameters.back()))
+        {
+            CanvasOperations::CanvasOperation::canvas->refresh_vbo(true, Geo::Type::POINT);
+        }
+        clear();
+        break;
+    }
+}
+
+void CMDWidget::divide_parts_n()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        _parameters.emplace_back(0);
+        ui->cmd_label->setText("Divide Parts N");
+        ui->parameter_label->setText("n:");
+        break;
+    case 1:
+        clear();
+        break;
+    default:
+        if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::canvas->editer()->selected();
+            _parameters.back() > 1 && CanvasOperations::CanvasOperation::canvas->editer()->divide_parts_n(objects, _parameters.back()))
+        {
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : objects)
+            {
+                types.insert(object->type());
+            }
+            CanvasOperations::CanvasOperation::canvas->refresh_vbo(true, types);
+            CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
+        }
+        clear();
+        break;
+    }
+}
+
+void CMDWidget::divide_parts_measure()
+{
+    switch (_parameters.size())
+    {
+    case 0:
+        _parameters.emplace_back(0);
+        ui->cmd_label->setText("Divide Parts Measure");
+        ui->parameter_label->setText("length:");
+        break;
+    case 1:
+        clear();
+        break;
+    default:
+        if (std::vector<Geo::Geometry *> objects = CanvasOperations::CanvasOperation::canvas->editer()->selected();
+            _parameters.back() > 0 &&
+            CanvasOperations::CanvasOperation::canvas->editer()->divide_parts_measure(objects, _parameters.back()))
+        {
+            std::set<Geo::Type> types;
+            for (const Geo::Geometry *object : objects)
+            {
+                types.insert(object->type());
+            }
+            CanvasOperations::CanvasOperation::canvas->refresh_vbo(true, types);
+            CanvasOperations::CanvasOperation::canvas->refresh_selected_ibo();
+        }
+        clear();
+        break;
     }
 }
