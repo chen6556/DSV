@@ -1007,8 +1007,8 @@ void DXFReaderWriter::writeBlocks()
         block.basePoint.z = 0.0;
         block.flags = 1; // flag for unnamed block
         _dxfrw->writeBlock(&block);
-        const Geo::AABBRect rect = combination->bounding_rect();
-        const Geo::Point anchor(rect.left(), rect.bottom());
+        const Geo::AABBRectParams rect = combination->aabbrect_params();
+        const Geo::Point anchor(rect.left, rect.bottom);
         for (const Geo::Geometry *object : *combination)
         {
             Geo::Geometry *moved_object = object->clone();
@@ -1070,11 +1070,11 @@ void DXFReaderWriter::writeVports()
     vp.gridSpacing.x = 50;
     vp.gridSpacing.y = 50;
     {
-        const Geo::AABBRect rect = _graph->bounding_rect();
-        vp.height = rect.height() * 1.1;
-        vp.ratio = rect.width() / rect.height();
-        vp.center.x = rect.center().x;
-        vp.center.y = rect.center().y;
+        const Geo::AABBRectParams rect = _graph->aabbrect_params();
+        vp.height = (rect.top - rect.bottom) * 1.1;
+        vp.ratio = (rect.right - rect.left) / (rect.top - rect.bottom);
+        vp.center.x = (rect.left + rect.right) / 2;
+        vp.center.y = (rect.top + rect.bottom) / 2;
     }
     _dxfrw->writeVport(&vp);
 }
@@ -1107,7 +1107,7 @@ void DXFReaderWriter::write_geometry_object(const Geo::Geometry *object)
         break;
     case Geo::Type::COMBINATION:
         write_insert(static_cast<const Combination *>(object),
-                     Geo::Point(object->bounding_rect().left(), object->bounding_rect().bottom()));
+                     Geo::Point(object->aabbrect_params().left, object->aabbrect_params().bottom));
         break;
     case Geo::Type::CONTAINERGROUP:
         break;

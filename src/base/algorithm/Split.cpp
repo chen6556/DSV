@@ -935,7 +935,11 @@ bool Geo::split(const Ellipse &ellipse, const size_t n, std::vector<double> &pos
 
     const double part_length = ellipse.length() / n;
     const double eps = 1e-14;
-    const double a = ellipse.lengtha(), b = ellipse.lengthb();
+    double a = ellipse.lengtha(), b = ellipse.lengthb();
+    if (a < b)
+    {
+        std::swap(a, b);
+    }
     const double angle1 = ellipse.arc_angle1();
     double t = ellipse.arc_angle0();
     for (size_t i = 1; i < n; ++i)
@@ -1110,7 +1114,11 @@ bool Geo::split(const Ellipse &ellipse, const double step, std::vector<double> &
     }
 
     const double eps = 1e-14;
-    const double a = ellipse.lengtha(), b = ellipse.lengthb();
+    double a = ellipse.lengtha(), b = ellipse.lengthb();
+    if (a < b)
+    {
+        std::swap(a, b);
+    }
     const double angle1 = ellipse.arc_angle1();
     double t = ellipse.arc_angle0();
     for (size_t i = 0, n = ellipse.length() / step; i < n; ++i)

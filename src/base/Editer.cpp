@@ -2018,7 +2018,6 @@ bool Editer::scale(const std::vector<Geo::Geometry *> &objects, const bool unita
     {
         double top = -DBL_MAX, bottom = DBL_MAX, left = DBL_MAX, right = -DBL_MAX;
         bool flag = false;
-        Geo::AABBRect rect;
         for (Geo::Geometry *object : objects)
         {
             if (object->type() == Geo::Type::TEXT)
@@ -2027,11 +2026,11 @@ bool Editer::scale(const std::vector<Geo::Geometry *> &objects, const bool unita
             }
             else
             {
-                rect = object->bounding_rect();
-                top = std::max(top, rect.top());
-                bottom = std::min(bottom, rect.bottom());
-                left = std::min(left, rect.left());
-                right = std::max(right, rect.right());
+                Geo::AABBRectParams rect = object->aabbrect_params();
+                top = std::max(top, rect.top);
+                bottom = std::min(bottom, rect.bottom);
+                left = std::min(left, rect.left);
+                right = std::max(right, rect.right);
                 flag = true;
             }
         }
@@ -2055,7 +2054,6 @@ bool Editer::scale(const std::vector<Geo::Geometry *> &objects, const bool unita
     else
     {
         bool flag = false;
-        Geo::AABBRect rect;
         for (Geo::Geometry *object : objects)
         {
             if (object->type() == Geo::Type::TEXT)
@@ -2064,8 +2062,8 @@ bool Editer::scale(const std::vector<Geo::Geometry *> &objects, const bool unita
             }
             else
             {
-                rect = object->bounding_rect();
-                object->scale((rect.left() + rect.right()) / 2, (rect.top() + rect.bottom()) / 2, k);
+                Geo::AABBRectParams rect = object->aabbrect_params();
+                object->scale((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2, k);
                 flag = true;
             }
         }
@@ -4704,11 +4702,11 @@ bool Editer::line_array(const std::vector<Geo::Geometry *> &objects, int x, int 
     double left = DBL_MAX, right = -DBL_MAX, top = -DBL_MAX, bottom = DBL_MAX;
     for (const Geo::Geometry *object : objects)
     {
-        const Geo::AABBRect rect = object->bounding_rect();
-        left = std::min(rect.left(), left);
-        right = std::max(rect.right(), right);
-        top = std::max(rect.top(), top);
-        bottom = std::min(rect.bottom(), bottom);
+        const Geo::AABBRectParams rect = object->aabbrect_params();
+        left = std::min(rect.left, left);
+        right = std::max(rect.right, right);
+        top = std::max(rect.top, top);
+        bottom = std::min(rect.bottom, bottom);
     }
 
     x_space += (right - left);
@@ -4826,7 +4824,11 @@ void Editer::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
         {
             if (all_layers)
             {
-                coord = _graph->bounding_rect().center();
+                {
+                    const Geo::AABBRectParams rect = _graph->aabbrect_params();
+                    coord.x = (rect.left + rect.right) / 2;
+                    coord.y = (rect.top + rect.bottom) / 2;
+                }
                 for (ContainerGroup &group : _graph->container_groups())
                 {
                     for (Geo::Geometry *geo : group)
@@ -4849,7 +4851,11 @@ void Editer::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
             }
             else
             {
-                coord = _graph->container_group(_current_group).bounding_rect().center();
+                {
+                    const Geo::AABBRectParams rect = _graph->container_group(_current_group).aabbrect_params();
+                    coord.x = (rect.left + rect.right) / 2;
+                    coord.y = (rect.top + rect.bottom) / 2;
+                }
                 for (Geo::Geometry *geo : _graph->container_group(_current_group))
                 {
                     if (direction)
@@ -4876,7 +4882,11 @@ void Editer::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
                 {
                     for (Geo::Geometry *geo : group)
                     {
-                        coord = geo->bounding_rect().center();
+                        {
+                            const Geo::AABBRectParams rect = geo->aabbrect_params();
+                            coord.x = (rect.left + rect.right) / 2;
+                            coord.y = (rect.top + rect.bottom) / 2;
+                        }
                         if (direction)
                         {
                             geo->translate(-coord.x, 0);
@@ -4897,7 +4907,11 @@ void Editer::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
             {
                 for (Geo::Geometry *geo : _graph->container_group(_current_group))
                 {
-                    coord = geo->bounding_rect().center();
+                    {
+                        const Geo::AABBRectParams rect = geo->aabbrect_params();
+                        coord.x = (rect.left + rect.right) / 2;
+                        coord.y = (rect.top + rect.bottom) / 2;
+                    }
                     if (direction)
                     {
                         geo->translate(-coord.x, 0);
@@ -4919,15 +4933,14 @@ void Editer::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
     {
         if (unitary)
         {
-            Geo::AABBRect rect;
             double left = DBL_MAX, top = -DBL_MAX, right = -DBL_MAX, bottom = DBL_MAX;
             for (Geo::Geometry *geo : objects)
             {
-                rect = geo->bounding_rect();
-                left = std::min(left, rect.left());
-                top = std::max(top, rect.top());
-                right = std::max(right, rect.right());
-                bottom = std::min(bottom, rect.bottom());
+                const Geo::AABBRectParams rect = geo->aabbrect_params();
+                left = std::min(left, rect.left);
+                top = std::max(top, rect.top);
+                right = std::max(right, rect.right);
+                bottom = std::min(bottom, rect.bottom);
             }
             coord.x = (left + right) / 2;
             coord.y = (top + bottom) / 2;
@@ -4952,7 +4965,11 @@ void Editer::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
         {
             for (Geo::Geometry *geo : objects)
             {
-                coord = geo->bounding_rect().center();
+                {
+                    const Geo::AABBRectParams rect = geo->aabbrect_params();
+                    coord.x = (rect.left + rect.right) / 2;
+                    coord.y = (rect.top + rect.bottom) / 2;
+                }
                 if (direction)
                 {
                     geo->translate(-coord.x, 0);
@@ -7031,15 +7048,15 @@ void Editer::extend(Geo::Polyline *polyline, const double x, const double y)
     if (Geo::distance_square(polyline->front().x, polyline->front().y, x, y) <=
         Geo::distance_square(polyline->back().x, polyline->back().y, x, y)) // 延长头
     {
-        const Geo::AABBRect rect = _graph->container_group(_current_group).bounding_rect();
+        const Geo::AABBRectParams rect = _graph->container_group(_current_group).aabbrect_params();
         head = polyline->front();
-        tail = head + (head - (*polyline)[1]).normalize() * std::hypot(rect.width(), rect.height());
+        tail = head + (head - (*polyline)[1]).normalize() * std::hypot(rect.right - rect.left, rect.top - rect.bottom);
     }
     else // 延长尾
     {
-        const Geo::AABBRect rect = _graph->container_group(_current_group).bounding_rect();
+        const Geo::AABBRectParams rect = _graph->container_group(_current_group).aabbrect_params();
         head = polyline->back();
-        tail = head + (head - (*polyline)[polyline->size() - 2]).normalize() * std::hypot(rect.width(), rect.height());
+        tail = head + (head - (*polyline)[polyline->size() - 2]).normalize() * std::hypot(rect.right - rect.left, rect.top - rect.bottom);
     }
 
     std::vector<Geo::Point> intersections;
@@ -7399,16 +7416,16 @@ void Editer::extend(Geo::BSpline *bspline, const double x, const double y)
     if (Geo::distance_square(bspline->control_points.front().x, bspline->control_points.front().y, x, y) <=
         Geo::distance_square(bspline->control_points.back().x, bspline->control_points.back().y, x, y)) // 延长头
     {
-        const Geo::AABBRect rect = _graph->container_group(_current_group).bounding_rect();
+        const Geo::AABBRectParams rect = _graph->container_group(_current_group).aabbrect_params();
         head = bspline->front();
-        tail = head + (head - bspline->control_points[1]).normalize() * std::hypot(rect.width(), rect.height());
+        tail = head + (head - bspline->control_points[1]).normalize() * std::hypot(rect.right - rect.left, rect.top - rect.bottom);
     }
     else // 延长尾
     {
-        const Geo::AABBRect rect = _graph->container_group(_current_group).bounding_rect();
+        const Geo::AABBRectParams rect = _graph->container_group(_current_group).aabbrect_params();
         head = bspline->back();
-        tail = head +
-               (head - bspline->control_points[bspline->control_points.size() - 2]).normalize() * std::hypot(rect.width(), rect.height());
+        tail = head + (head - bspline->control_points[bspline->control_points.size() - 2]).normalize() *
+                          std::hypot(rect.right - rect.left, rect.top - rect.bottom);
     }
 
     std::vector<Geo::Point> intersections;
@@ -7958,7 +7975,7 @@ bool Editer::divide_parts_measure(const std::vector<Geo::Geometry *> &objects, c
                 if (std::vector<std::tuple<size_t, double>> pos; Geo::split(*bezier, length, pos))
                 {
                     const size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
-                    remove_items.emplace_back(group.pop(index), _current_group, index); 
+                    remove_items.emplace_back(group.pop(index), _current_group, index);
                     if (Geo::CubicBezier *p = bezier->range(std::get<0>(pos.back()), std::get<1>(pos.back()), bezier->size() / 3 - 1, 1))
                     {
                         add_items.emplace_back(p, _current_group, index);
@@ -8082,14 +8099,14 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
         return false;
     }
 
-    const Geo::AABBRect rect(src->bounding_rect());
-    Geo::Point center(rect.center());
-    double left = rect.left(), top = rect.top(), right = rect.right(), bottom = rect.bottom();
+    const Geo::AABBRectParams rect(src->aabbrect_params());
+    Geo::Point center((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
+    double left = rect.left, top = rect.top, right = rect.right, bottom = rect.bottom;
 
     const size_t count = reflines.size();
-    const Geo::AABBRect dst_rect(dst->bounding_rect());
-    const Geo::Point dst_center(dst_rect.center());
-    const double dst_left = dst_rect.left(), dst_top = dst_rect.top(), dst_right = dst_rect.right(), dst_bottom = dst_rect.bottom();
+    const Geo::AABBRectParams dst_rect(dst->aabbrect_params());
+    const Geo::Point dst_center((dst_rect.left + dst_rect.right) / 2, (dst_rect.top + dst_rect.bottom) / 2);
+    const double dst_left = dst_rect.left, dst_top = dst_rect.top, dst_right = dst_rect.right, dst_bottom = dst_rect.bottom;
     const double align_distance = 2.0 / _view_ratio;
 
     if (std::abs(dst_left - center.x) < align_distance)
@@ -8253,9 +8270,9 @@ bool Editer::auto_aligning(Geo::Point &coord, const Geo::Geometry *dst, std::lis
     }
 
     const size_t count = reflines.size();
-    const Geo::AABBRect dst_rect(dst->bounding_rect());
-    const Geo::Point dst_center(dst_rect.center());
-    const double dst_left = dst_rect.left(), dst_top = dst_rect.top(), dst_right = dst_rect.right(), dst_bottom = dst_rect.bottom();
+    const Geo::AABBRectParams dst_rect(dst->aabbrect_params());
+    const Geo::Point dst_center((dst_rect.left + dst_rect.right) / 2, (dst_rect.top + dst_rect.bottom) / 2);
+    const double dst_left = dst_rect.left, dst_top = dst_rect.top, dst_right = dst_rect.right, dst_bottom = dst_rect.bottom;
     const double align_distance = 2.0 / _view_ratio;
 
     if (std::abs(dst_center.x - coord.x) < align_distance)
@@ -8299,7 +8316,12 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
         return false;
     }
 
-    const Geo::Point center(points->bounding_rect().center());
+    Geo::Point center;
+    {
+        const Geo::AABBRectParams rect = points->aabbrect_params();
+        center.x = (rect.left + rect.right) / 2;
+        center.y = (rect.top + rect.bottom) / 2;
+    }
     Geo::Geometry *dst = nullptr;
     double temp = 0, distance = DBL_MAX;
 
@@ -9454,8 +9476,8 @@ void Editer::text_to_polylines(Text *text)
     SHXReader::SHXFont cfont(&cfile), efont(&efile);
     Combination *combination = new Combination();
     const std::string result = TextEncoding::uft8_to_gbk(text->text().toStdString());
-    for (int i = 0, init_x = text->bounding_rect().left(), x = text->bounding_rect().left(),
-             y = text->bounding_rect().top() - GlobalSetting::setting().text_size, count = result.length(),
+    for (int i = 0, init_x = text->aabbrect_params().left, x = text->aabbrect_params().left,
+             y = text->aabbrect_params().top - GlobalSetting::setting().text_size, count = result.length(),
              font_size = GlobalSetting::setting().text_size;
          i < count; ++i)
     {
