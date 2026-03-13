@@ -6,7 +6,7 @@
 #include "io/GlobalSetting.hpp"
 
 
-Canvas::Canvas(QWidget *parent) : QOpenGLWidget(parent), _input_line(this)
+Canvas::Canvas(QWidget *parent) : QOpenGLWidget(parent), _input_line(this), _menu(this)
 {
     init();
 }
@@ -44,14 +44,6 @@ Canvas::~Canvas()
     }
     glDeleteProgram(_shader_program);
     doneCurrent();
-
-    delete _menu;
-    delete _up;
-    delete _down;
-    delete _text_to_polylines;
-    delete _bspline_to_bezier;
-    delete _bezier_to_bspline;
-    delete _change_bspline_model;
 }
 
 
@@ -63,25 +55,6 @@ void Canvas::init()
 
     _cpus = std::max(2u, std::thread::hardware_concurrency() / 2);
     _input_line.hide();
-    init_menu();
-}
-
-void Canvas::init_menu()
-{
-    _menu = new QMenu(this);
-    _up = new QAction("Up");
-    _down = new QAction("Down");
-    _text_to_polylines = new QAction("To Polylines");
-    _bezier_to_bspline = new QAction("To BSpline");
-    _bspline_to_bezier = new QAction("To Bezier");
-    _change_bspline_model = new QAction("Show Controls");
-
-    _menu->addAction(_up);
-    _menu->addAction(_down);
-    _menu->addAction(_text_to_polylines);
-    _menu->addAction(_bezier_to_bspline);
-    _menu->addAction(_bspline_to_bezier);
-    _menu->addAction(_change_bspline_model);
 }
 
 void Canvas::bind_editer(Editer *editer)
@@ -941,58 +914,7 @@ void Canvas::add_geometry(Geo::Geometry *object)
 void Canvas::show_menu(Geo::Geometry *object)
 {
     refresh_selected_ibo(object);
-    _text_to_polylines->setVisible(dynamic_cast<Text *>(object) != nullptr);
-    _bezier_to_bspline->setVisible(dynamic_cast<Geo::CubicBezier *>(object) != nullptr);
-    _bspline_to_bezier->setVisible(dynamic_cast<Geo::BSpline *>(object) != nullptr);
-    if (const Geo::BSpline *bspline = dynamic_cast<const Geo::BSpline *>(object))
-    {
-        _change_bspline_model->setVisible(true);
-        _change_bspline_model->setText(bspline->controls_model ? "Show Path" : "Show Controls");
-    }
-    else
-    {
-        _change_bspline_model->setVisible(false);
-    }
-    if (const QAction *a = _menu->exec(QCursor::pos()); a == _up)
-    {
-        _editer->up(object);
-        refresh_vbo(true, object->type());
-        refresh_selected_ibo();
-    }
-    else if (a == _down)
-    {
-        _editer->down(object);
-        refresh_vbo(true, object->type());
-        refresh_selected_ibo();
-    }
-    else if (a == _text_to_polylines)
-    {
-        _editer->text_to_polylines(dynamic_cast<Text *>(object));
-        refresh_vbo(true, {Geo::Type::TEXT, Geo::Type::POLYLINE});
-        refresh_selected_ibo();
-    }
-    else if (a == _bezier_to_bspline)
-    {
-        _editer->bezier_to_bspline(dynamic_cast<Geo::CubicBezier *>(object));
-        CanvasOperations::CanvasOperation::tool_lines_count = 0;
-        refresh_vbo(true, {Geo::Type::BEZIER, Geo::Type::BSPLINE});
-        refresh_selected_ibo();
-    }
-    else if (a == _change_bspline_model)
-    {
-        static_cast<Geo::BSpline *>(object)->controls_model = !static_cast<Geo::BSpline *>(object)->controls_model;
-        if (object == CanvasOperations::CanvasOperation::clicked_object)
-        {
-            CanvasOperations::CanvasOperation::refresh_tool_lines(object);
-        }
-    }
-    else if (a == _bspline_to_bezier)
-    {
-        _editer->bspline_to_bezier(dynamic_cast<Geo::BSpline *>(object));
-        CanvasOperations::CanvasOperation::tool_lines_count = 0;
-        refresh_vbo(true, {Geo::Type::BEZIER, Geo::Type::BSPLINE});
-        refresh_selected_ibo();
-    }
+    _menu.exec(object);
 }
 
 void Canvas::show_text_edit(Text *text)
@@ -1511,6 +1433,16 @@ Canvas::VBOData Canvas::refresh_polyline_vbo(const bool flush)
             {
                 _visible_objects[1].polyline.push_back(static_cast<Geo::Polyline *>(geo));
             }
+            else if (geo->type() == Geo::Type::COMBINATION)
+            {
+                for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+                {
+                    if (child->type() == Geo::Type::POLYLINE)
+                    {
+                        _visible_objects[1].polyline.push_back(static_cast<Geo::Polyline *>(child));
+                    }
+                }
+            }
         }
     }
 
@@ -1551,6 +1483,16 @@ Canvas::VBOData Canvas::refresh_polygon_vbo(const bool flush)
             {
                 _visible_objects[1].polygon.push_back(static_cast<Geo::Polygon *>(geo));
             }
+            else if (geo->type() == Geo::Type::COMBINATION)
+            {
+                for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+                {
+                    if (child->type() == Geo::Type::POLYGON)
+                    {
+                        _visible_objects[1].polygon.push_back(static_cast<Geo::Polygon *>(child));
+                    }
+                }
+            }
         }
     }
 
@@ -1590,6 +1532,16 @@ Canvas::VBOData Canvas::refresh_circle_vbo(const bool flush)
             if (geo->type() == Geo::Type::CIRCLE || geo->type() == Geo::Type::ARC || geo->type() == Geo::Type::ELLIPSE)
             {
                 _visible_objects[1].circle.push_back(geo);
+            }
+            else if (geo->type() == Geo::Type::COMBINATION)
+            {
+                for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+                {
+                    if (child->type() == Geo::Type::CIRCLE || child->type() == Geo::Type::ARC || child->type() == Geo::Type::ELLIPSE)
+                    {
+                        _visible_objects[1].circle.push_back(child);
+                    }
+                }
             }
         }
     }
@@ -1668,6 +1620,16 @@ Canvas::VBOData Canvas::refresh_curve_vbo(const bool flush)
             if (geo->type() == Geo::Type::BEZIER || geo->type() == Geo::Type::BSPLINE)
             {
                 _visible_objects[1].curve.push_back(geo);
+            }
+            else if (geo->type() == Geo::Type::COMBINATION)
+            {
+                for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+                {
+                    if (child->type() == Geo::Type::BEZIER || child->type() == Geo::Type::BSPLINE)
+                    {
+                        _visible_objects[1].curve.push_back(child);
+                    }
+                }
             }
         }
     }
@@ -1793,6 +1755,16 @@ Canvas::VBOData Canvas::refresh_circle_printable_points()
             if (geo->type() == Geo::Type::CIRCLE || geo->type() == Geo::Type::ELLIPSE || geo->type() == Geo::Type::ARC)
             {
                 output.push_back(geo);
+            }
+            else if (geo->type() == Geo::Type::COMBINATION)
+            {
+                for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+                {
+                    if (child->type() == Geo::Type::CIRCLE || child->type() == Geo::Type::ELLIPSE || child->type() == Geo::Type::ARC)
+                    {
+                        output.push_back(child);
+                    }
+                }
             }
         }
     }

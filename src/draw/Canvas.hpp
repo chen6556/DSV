@@ -4,12 +4,11 @@
 #include <QPaintEvent>
 #include <QLabel>
 #include <QTextEdit>
-#include <QMenu>
-#include <QAction>
 #include <QImage>
 #include <QOpenGLFunctions_4_5_Core>
 
 #include "base/Editer.hpp"
+#include "draw/CanvasMenu.hpp"
 #include "draw/CanvasOperation.hpp"
 #include "draw/QuadTree.hpp"
 
@@ -34,6 +33,7 @@ private:
     Editer *_editer = nullptr;
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
+    CanvasMenu _menu;
 
     unsigned int _shader_program = 0;
 
@@ -159,18 +159,8 @@ private:
     std::vector<Geo::Point> _points_cache;
     Text *_edited_text = nullptr;
 
-    QMenu *_menu = nullptr;
-    QAction *_up = nullptr;
-    QAction *_down = nullptr;
-    QAction *_text_to_polylines = nullptr;
-    QAction *_bezier_to_bspline = nullptr;
-    QAction *_bspline_to_bezier = nullptr;
-    QAction *_change_bspline_model = nullptr;
-
 private:
     void init();
-
-    void init_menu();
 
 protected:
     void initializeGL() override;
