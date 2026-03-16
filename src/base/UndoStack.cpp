@@ -323,6 +323,26 @@ void ChangeShapeCommand::undo(Graph *graph)
             ellipse->update_shape(Geo::Ellipse::default_down_sampling_value);
         }
         break;
+    case Geo::Type::ARC:
+        {
+            Geo::Arc *arc = static_cast<Geo::Arc *>(_object);
+            const double x0 = std::get<0>(_shape[0]), y0 = std::get<1>(_shape[0]);
+            const double x1 = std::get<0>(_shape[1]), y1 = std::get<1>(_shape[1]);
+            const double x2 = std::get<0>(_shape[2]), y2 = std::get<1>(_shape[2]);
+            arc->control_points[0].x = x0, arc->control_points[0].y = y0;
+            arc->control_points[1].x = x1, arc->control_points[1].y = y1;
+            arc->control_points[2].x = x2, arc->control_points[2].y = y2;
+            const double a = x0 - x1, b = y0 - y1, c = x0 - x2, d = y0 - y2;
+            const double e = (x0 * x0 - x1 * x1 + y0 * y0 - y1 * y1) / 2;
+            const double f = (x0 * x0 - x2 * x2 + y0 * y0 - y2 * y2) / 2;
+            const double t = b * c - a * d;
+            // assert(t != 0);
+            arc->x = (b * f - d * e) / t, arc->y = (c * e - a * f) / t;
+            arc->radius =
+                (std::hypot(arc->x - x0, arc->y - y0) + std::hypot(arc->x - x1, arc->y - y1) + std::hypot(arc->x - x2, arc->y - y2)) / 3;
+            arc->update_shape(Geo::Circle::default_down_sampling_value);
+        }
+        break;
     default:
         break;
     }

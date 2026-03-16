@@ -953,7 +953,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     switch (points->type())
     {
     case Geo::Type::POLYGON:
-        if (Geo::Polygon *temp = static_cast<Geo::Polygon *>(points); change_shape && !points->shape_fixed)
+        if (Geo::Polygon *temp = static_cast<Geo::Polygon *>(points); change_shape)
         {
             size_t count = 0, index = SIZE_MAX;
             double distance = 0, min_distance = DBL_MAX;
@@ -989,7 +989,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         }
         break;
     case Geo::Type::CIRCLE:
-        if (Geo::Circle *temp = static_cast<Geo::Circle *>(points); change_shape && !points->shape_fixed)
+        if (Geo::Circle *temp = static_cast<Geo::Circle *>(points); change_shape)
         {
             if (std::abs(temp->radius - Geo::distance(*temp, Geo::Point(x0, y0))) <= catch_distance ||
                 std::abs(temp->radius - Geo::distance(*temp, Geo::Point(x1, y1))) <= catch_distance)
@@ -1009,7 +1009,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         }
         break;
     case Geo::Type::ELLIPSE:
-        if (Geo::Ellipse *temp = static_cast<Geo::Ellipse *>(points); change_shape && !points->shape_fixed)
+        if (Geo::Ellipse *temp = static_cast<Geo::Ellipse *>(points); change_shape)
         {
             const Geo::Point point0(x0, y0), point1(x1, y1);
             const double disa[4] = {Geo::distance(temp->a0(), point0), Geo::distance(temp->a0(), point1), Geo::distance(temp->a1(), point0),
@@ -1050,14 +1050,66 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
             temp->translate(x1 - x0, y1 - y0);
         }
         break;
+    case Geo::Type::ARC:
+        if (Geo::Arc *temp = static_cast<Geo::Arc *>(points); change_shape)
+        {
+            const Geo::Point point0(x0, y0), point1(x1, y1);
+            int index = 0;
+            double dis = std::min(Geo::distance(point0, temp->control_points[0]), Geo::distance(point1, temp->control_points[0]));
+            for (int i = 1; i < 3; ++i)
+            {
+                if (const double dis2 =
+                        std::min(Geo::distance(point0, temp->control_points[i]), Geo::distance(point1, temp->control_points[i]));
+                    dis2 < dis)
+                {
+                    dis = dis2;
+                    index = i;
+                }
+            }
+            if (dis <= catch_distance)
+            {
+                if (edited_shape.empty())
+                {
+                    edited_shape.emplace_back(temp->control_points[0].x, temp->control_points[0].y);
+                    edited_shape.emplace_back(temp->control_points[1].x, temp->control_points[1].y);
+                    edited_shape.emplace_back(temp->control_points[2].x, temp->control_points[2].y);
+                }
+                temp->control_points[index].translate(x1 - x0, y1 - y0);
+                double parameters[6] = {std::get<0>(edited_shape[0]), std::get<1>(edited_shape[0]), std::get<0>(edited_shape[1]),
+                                        std::get<1>(edited_shape[1]), std::get<0>(edited_shape[2]), std::get<1>(edited_shape[2])};
+                parameters[index * 2] = temp->control_points[index].x;
+                parameters[index * 2 + 1] = temp->control_points[index].y;
+                temp->control_points[0].x = parameters[0], temp->control_points[0].y = parameters[1];
+                temp->control_points[2].x = parameters[4], temp->control_points[2].y = parameters[5];
+                const double a = parameters[0] - parameters[2], b = parameters[1] - parameters[3], c = parameters[0] - parameters[4],
+                             d = parameters[1] - parameters[5];
+                const double e = (parameters[0] * parameters[0] - parameters[2] * parameters[2] + parameters[1] * parameters[1] -
+                                  parameters[3] * parameters[3]) /
+                                 2;
+                const double f = (parameters[0] * parameters[0] - parameters[4] * parameters[4] + parameters[1] * parameters[1] -
+                                  parameters[5] * parameters[5]) /
+                                 2;
+                const double t = b * c - a * d;
+                temp->x = (b * f - d * e) / t, temp->y = (c * e - a * f) / t;
+                temp->radius = (std::hypot(temp->x - parameters[0], temp->y - parameters[1]) +
+                                std::hypot(temp->x - parameters[2], temp->y - parameters[3]) +
+                                std::hypot(temp->x - parameters[4], temp->y - parameters[5])) /
+                               3;
+                temp->update_shape(Geo::Circle::default_down_sampling_value);
+            }
+        }
+        else
+        {
+            temp->translate(x1 - x0, y1 - y0);
+        }
+        break;
     case Geo::Type::TEXT:
     case Geo::Type::COMBINATION:
-    case Geo::Type::ARC:
     case Geo::Type::POINT:
         points->translate(x1 - x0, y1 - y0);
         break;
     case Geo::Type::POLYLINE:
-        if (Geo::Polyline *temp = static_cast<Geo::Polyline *>(points); change_shape && !points->shape_fixed)
+        if (Geo::Polyline *temp = static_cast<Geo::Polyline *>(points); change_shape)
         {
             size_t count = 0, index = SIZE_MAX;
             double distance = 0, min_distance = DBL_MAX;
@@ -1092,7 +1144,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         }
         break;
     case Geo::Type::BEZIER:
-        if (Geo::CubicBezier *temp = static_cast<Geo::CubicBezier *>(points); change_shape && !temp->shape_fixed)
+        if (Geo::CubicBezier *temp = static_cast<Geo::CubicBezier *>(points); change_shape)
         {
             size_t count = temp->size(), index = SIZE_MAX;
             double distance = 0, min_distance = DBL_MAX;
@@ -1143,7 +1195,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         }
         break;
     case Geo::Type::BSPLINE:
-        if (Geo::BSpline *temp = static_cast<Geo::BSpline *>(points); change_shape && !temp->shape_fixed)
+        if (Geo::BSpline *temp = static_cast<Geo::BSpline *>(points); change_shape)
         {
             if (temp->controls_model)
             {

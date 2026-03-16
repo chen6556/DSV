@@ -2154,21 +2154,14 @@ const Polygon &Circle::shape() const
 double CubicBezier::default_step = 0.01;
 double CubicBezier::default_down_sampling_value = 0.02;
 
-CubicBezier::CubicBezier()
-{
-    _shape.shape_fixed = true;
-}
-
 CubicBezier::CubicBezier(const CubicBezier &bezier) : Polyline(bezier), _shape(bezier._shape)
 {
-    _shape.shape_fixed = true;
 }
 
 CubicBezier::CubicBezier(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end,
                          const bool is_path_points)
     : Polyline(begin, end)
 {
-    _shape.shape_fixed = true;
     if (is_path_points)
     {
         update_control_points();
@@ -2178,7 +2171,6 @@ CubicBezier::CubicBezier(const std::vector<Point>::const_iterator &begin, const 
 
 CubicBezier::CubicBezier(const std::initializer_list<Point> &points, const bool is_path_points) : Polyline(points)
 {
-    _shape.shape_fixed = true;
     if (is_path_points)
     {
         update_control_points();
@@ -3151,16 +3143,10 @@ Ellipse *Ellipse::range(const double t0, const double t1) const
 double BSpline::default_step = 0.02;
 double BSpline::default_down_sampling_value = 0.02;
 
-BSpline::BSpline()
-{
-    _shape.shape_fixed = true;
-}
-
 BSpline::BSpline(const BSpline &bspline)
     : Geometry(bspline), _shape(bspline._shape), control_points(bspline.control_points), path_points(bspline.path_points),
       _knots(bspline._knots), controls_model(bspline.controls_model), _path_values(bspline._path_values)
 {
-    _shape.shape_fixed = true;
 }
 
 BSpline &BSpline::operator=(const BSpline &bspline)
@@ -3420,7 +3406,6 @@ void BSpline::rbspline_subfunc(const int order, const size_t npts, const double 
 QuadBSpline::QuadBSpline(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end,
                          const bool is_path_points)
 {
-    _shape.shape_fixed = true;
     if (is_path_points)
     {
         path_points.assign(begin, end);
@@ -3453,7 +3438,6 @@ QuadBSpline::QuadBSpline(const std::vector<Point>::const_iterator &begin, const 
 QuadBSpline::QuadBSpline(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end,
                          const std::vector<double> &knots, const bool is_path_points)
 {
-    _shape.shape_fixed = true;
     if (is_path_points)
     {
         path_points.assign(begin, end);
@@ -3485,7 +3469,6 @@ QuadBSpline::QuadBSpline(const std::vector<Point>::const_iterator &begin, const 
 
 QuadBSpline::QuadBSpline(const std::initializer_list<Point> &points, const bool is_path_points)
 {
-    _shape.shape_fixed = true;
     if (is_path_points)
     {
         path_points.assign(points.begin(), points.end());
@@ -3973,7 +3956,6 @@ Geo::Point QuadBSpline::derivative(const double t, const int n) const
 CubicBSpline::CubicBSpline(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end,
                            const bool is_path_points)
 {
-    _shape.shape_fixed = true;
     if (is_path_points)
     {
         path_points.assign(begin, end);
@@ -4015,7 +3997,6 @@ CubicBSpline::CubicBSpline(const std::vector<Point>::const_iterator &begin, cons
 CubicBSpline::CubicBSpline(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end,
                            const std::vector<double> &knots, const bool is_path_points)
 {
-    _shape.shape_fixed = true;
     if (is_path_points)
     {
         path_points.assign(begin, end);
@@ -4046,7 +4027,6 @@ CubicBSpline::CubicBSpline(const std::vector<Point>::const_iterator &begin, cons
 
 CubicBSpline::CubicBSpline(const std::initializer_list<Point> &points, const bool is_path_points)
 {
-    _shape.shape_fixed = true;
     if (is_path_points)
     {
         path_points.assign(points.begin(), points.end());
@@ -4486,6 +4466,7 @@ Arc::Arc(const double x0, const double y0, const double x1, const double y1, con
 {
     assert(x0 != x2 || y0 != y2);
     control_points[0].x = x0, control_points[0].y = y0;
+    control_points[1].x = x1, control_points[1].y = y1;
     control_points[2].x = x2, control_points[2].y = y2;
     const double a = x0 - x1, b = y0 - y1, c = x0 - x2, d = y0 - y2;
     const double e = (x0 * x0 - x1 * x1 + y0 * y0 - y1 * y1) / 2;
@@ -4494,14 +4475,14 @@ Arc::Arc(const double x0, const double y0, const double x1, const double y1, con
     // assert(t != 0);
     x = (b * f - d * e) / t, y = (c * e - a * f) / t;
     radius = (std::hypot(x - x0, y - y0) + std::hypot(x - x1, y - y1) + std::hypot(x - x2, y - y2)) / 3;
-    if ((x1 - x0) * (y2 - y1) > (y1 - y0) * (x2 - x1)) // 逆时针
-    {
-        control_points[1] = Geo::Point(x, y) + (control_points[0] - control_points[2]).vertical().normalize() * radius;
-    }
-    else // 顺时针
-    {
-        control_points[1] = Geo::Point(x, y) + (control_points[2] - control_points[0]).vertical().normalize() * radius;
-    }
+    // if ((x1 - x0) * (y2 - y1) > (y1 - y0) * (x2 - x1)) // 逆时针
+    // {
+    //     control_points[1] = Geo::Point(x, y) + (control_points[0] - control_points[2]).vertical().normalize() * radius;
+    // }
+    // else // 顺时针
+    // {
+    //     control_points[1] = Geo::Point(x, y) + (control_points[2] - control_points[0]).vertical().normalize() * radius;
+    // }
     update_shape(Circle::default_down_sampling_value);
 }
 

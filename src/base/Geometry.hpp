@@ -44,7 +44,6 @@ struct AABBRectParams
 class Geometry
 {
 public:
-    bool shape_fixed = false;
     bool is_selected = false;
     unsigned long long point_index = 0;
     unsigned long long point_count = 0;
@@ -669,7 +668,7 @@ public:
     static double default_down_sampling_value;
 
 public:
-    CubicBezier();
+    CubicBezier() = default;
 
     CubicBezier(const CubicBezier &bezier);
 
@@ -882,7 +881,7 @@ public:
     static double default_down_sampling_value;
 
 public:
-    BSpline();
+    BSpline() = default;
 
     BSpline(const BSpline &bspline);
 
