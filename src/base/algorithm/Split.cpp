@@ -934,18 +934,13 @@ bool Geo::split(const Ellipse &ellipse, const size_t n, std::vector<double> &pos
     }
 
     const double part_length = ellipse.length() / n;
-    const double eps = 1e-14;
-    double a = ellipse.lengtha(), b = ellipse.lengthb();
-    if (a < b)
-    {
-        std::swap(a, b);
-    }
+    const double a = ellipse.lengtha(), b = ellipse.lengthb();
     const double angle1 = ellipse.arc_angle1();
     double t = ellipse.arc_angle0();
     for (size_t i = 1; i < n; ++i)
     {
         double low = t, high = angle1 < t ? angle1 + Math::PI * 2 : angle1;
-        while (high - low > eps)
+        while (high - low > 1e-14)
         {
             const double mid = (low + high) / 2;
             const double length_mid = Math::ellipse_arc_length(a, b, t, mid);
@@ -1113,18 +1108,13 @@ bool Geo::split(const Ellipse &ellipse, const double step, std::vector<double> &
         return false;
     }
 
-    const double eps = 1e-14;
-    double a = ellipse.lengtha(), b = ellipse.lengthb();
-    if (a < b)
-    {
-        std::swap(a, b);
-    }
+    const double a = ellipse.lengtha(), b = ellipse.lengthb();
     const double angle1 = ellipse.arc_angle1();
     double t = ellipse.arc_angle0();
     for (size_t i = 0, n = ellipse.length() / step; i < n; ++i)
     {
         double low = t, high = angle1 < t ? angle1 + Math::PI * 2 : angle1;
-        while (high - low > eps)
+        while (high - low > 1e-14)
         {
             const double mid = (low + high) / 2;
             const double length_mid = Math::ellipse_arc_length(a, b, t, mid);

@@ -372,48 +372,68 @@ double Math::adaptive_simpson_3_8(const CurveNorm &f, const double l, const doub
 
 double Math::ellipse_length(const double a, const double b)
 {
-    const double k = std::sqrt(1 - (b * b) / (a * a));
-    return a * gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 4;
+    if (a > b)
+    {
+        return a * gsl_sf_ellint_Ecomp(std::sqrt(1 - (b * b) / (a * a)), GSL_PREC_DOUBLE) * 4;
+    }
+    else
+    {
+        return b * gsl_sf_ellint_Ecomp(std::sqrt(1 - (a * a) / (b * b)), GSL_PREC_DOUBLE) * 4;
+    }
 }
 
 double Math::ellipse_arc_length(const double a, const double b, const double start, const double end)
 {
-    if (const double k = std::sqrt(1 - (b * b) / (a * a)); end < Math::PI)
+    double t[2] = {start, end};
+    if (a < b)
     {
-        if (start < Math::PI)
+        for (int i = 0; i < 2; ++i)
         {
-            if (start < end)
+            t[i] += Math::PI / 2;
+            if (t[i] > 2 * Math::PI)
             {
-                return a * (gsl_sf_ellint_E(end, k, GSL_PREC_DOUBLE) - gsl_sf_ellint_E(start, k, GSL_PREC_DOUBLE));
+                t[i] -= 2 * Math::PI;
+            }
+        }
+    }
+    double l = 0;
+    if (const double k = a > b ? std::sqrt(1 - (b * b) / (a * a)) : std::sqrt(1 - (a * a) / (b * b)); t[1] < Math::PI)
+    {
+        if (t[0] < Math::PI)
+        {
+            if (t[0] < t[1])
+            {
+                l = gsl_sf_ellint_E(t[1], k, GSL_PREC_DOUBLE) - gsl_sf_ellint_E(t[0], k, GSL_PREC_DOUBLE);
             }
             else
             {
-                return a * (gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 4 - gsl_sf_ellint_E(start, k, GSL_PREC_DOUBLE) +
-                            gsl_sf_ellint_E(end, k, GSL_PREC_DOUBLE));
+                l = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 4 - gsl_sf_ellint_E(t[0], k, GSL_PREC_DOUBLE) +
+                    gsl_sf_ellint_E(t[1], k, GSL_PREC_DOUBLE);
             }
         }
         else
         {
-            return a * (gsl_sf_ellint_E(end, k, GSL_PREC_DOUBLE) + gsl_sf_ellint_E(Math::PI * 2 - start, k, GSL_PREC_DOUBLE));
+            l = gsl_sf_ellint_E(t[1], k, GSL_PREC_DOUBLE) + gsl_sf_ellint_E(Math::PI * 2 - t[0], k, GSL_PREC_DOUBLE);
         }
     }
     else
     {
-        if (start < Math::PI)
+        if (t[0] < Math::PI)
         {
-            return a * (gsl_sf_ellint_E(Math::PI - start, k, GSL_PREC_DOUBLE) + gsl_sf_ellint_E(end - Math::PI, k, GSL_PREC_DOUBLE));
+            l = gsl_sf_ellint_E(Math::PI - t[0], k, GSL_PREC_DOUBLE) + gsl_sf_ellint_E(t[1] - Math::PI, k, GSL_PREC_DOUBLE);
         }
         else
         {
-            if (start < end)
+            if (t[0] < t[1])
             {
-                return a * (gsl_sf_ellint_E(end - Math::PI, k, GSL_PREC_DOUBLE) - gsl_sf_ellint_E(start - Math::PI, k, GSL_PREC_DOUBLE));
+                l = gsl_sf_ellint_E(t[1] - Math::PI, k, GSL_PREC_DOUBLE) - gsl_sf_ellint_E(t[0] - Math::PI, k, GSL_PREC_DOUBLE);
             }
             else
             {
-                return a * (gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 4 - gsl_sf_ellint_E(start - Math::PI, k, GSL_PREC_DOUBLE) +
-                            gsl_sf_ellint_E(end - Math::PI, k, GSL_PREC_DOUBLE));
+                l = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 4 - gsl_sf_ellint_E(t[0] - Math::PI, k, GSL_PREC_DOUBLE) +
+                    gsl_sf_ellint_E(t[1] - Math::PI, k, GSL_PREC_DOUBLE);
             }
         }
     }
+    return std::max(a, b) * l;
 }
