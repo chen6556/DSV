@@ -1,5 +1,5 @@
 #include <limits>
-
+#include <QRegularExpression>
 #include "io/DXFReaderWriter.hpp"
 #include "io/GlobalSetting.hpp"
 #include "base/Algorithm.hpp"

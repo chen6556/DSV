@@ -7,6 +7,7 @@
 
 Editer::~Editer()
 {
+    delete _graph;
     _graph = nullptr;
     _backup.clear();
     for (Geo::Geometry *geo : _paste_table)
@@ -17,26 +18,13 @@ Editer::~Editer()
 
 void Editer::init()
 {
-    GlobalSetting::setting().graph = _graph;
     if (_graph != nullptr)
     {
-        std::vector<Geo::Geometry *> objects;
-        for (ContainerGroup &group : _graph->container_groups())
-        {
-            for (Geo::Geometry *geo : group)
-            {
-                geo->is_selected = false;
-            }
-            if (group.visible())
-            {
-                objects.insert(objects.end(), group.begin(), group.end());
-            }
-        }
         if (_graph->container_groups().empty())
         {
             _graph->append_group();
         }
-        GlobalSetting::setting().ui->canvas->build_quadtree(_graph);
+        _view_tree.build(_graph);
         _backup.clear();
         _backup.set_graph(_graph);
     }
@@ -53,7 +41,8 @@ void Editer::load_graph(Graph *graph, const QString &path)
     }
     else
     {
-        GlobalSetting::setting().graph = nullptr;
+        _graph = nullptr;
+        _view_tree.clear();
     }
 }
 
@@ -68,7 +57,8 @@ void Editer::load_graph(Graph *graph)
     }
     else
     {
-        GlobalSetting::setting().graph = nullptr;
+        _graph = nullptr;
+        _view_tree.clear();
     }
 }
 
@@ -78,7 +68,6 @@ void Editer::delete_graph()
     {
         delete _graph;
         _graph = nullptr;
-        GlobalSetting::setting().graph = nullptr;
         _current_group = 0;
         _file_path.clear();
         _backup.clear();
@@ -93,6 +82,26 @@ const QString &Editer::path() const
 void Editer::set_path(const QString &path)
 {
     _file_path = path;
+}
+
+Graph *Editer::graph()
+{
+    return _graph;
+}
+
+const Graph *Editer::graph() const
+{
+    return _graph;
+}
+
+void Editer::refresh_visible_objects(const Geo::AABBRectParams &rect)
+{
+    return _view_tree.find_visible_objects(rect);
+}
+
+const std::vector<Geo::Geometry *> &Editer::visible_objects() const
+{
+    return _view_tree.visible_objects();
 }
 
 std::vector<Geo::Point> &Editer::point_cache()
@@ -153,8 +162,20 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others, 
     std::vector<Geo::Geometry *> objects;
     if (visible_only)
     {
-        GlobalSetting::setting().ui->canvas->visible_objects(objects, true);
-        std::reverse(objects.begin(), objects.end());
+        std::vector<std::tuple<size_t, Geo::Geometry *>> items;
+        const ContainerGroup &group = _graph->container_group(_current_group);
+        for (Geo::Geometry *object : _view_tree.visible_objects())
+        {
+            if (auto it = std::find(group.begin(), group.end(), object); it != group.end())
+            {
+                items.emplace_back(std::distance(group.begin(), it), object);
+            }
+        }
+        std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) { return std::get<0>(a) > std::get<0>(b); });
+        for (const auto [index, object] : items)
+        {
+            objects.push_back(object);
+        }
     }
     else
     {
@@ -714,7 +735,20 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const boo
     std::vector<Geo::Geometry *> objects;
     if (visible_only)
     {
-        GlobalSetting::setting().ui->canvas->visible_objects(objects, true);
+        std::vector<std::tuple<size_t, Geo::Geometry *>> items;
+        const ContainerGroup &group = _graph->container_group(_current_group);
+        for (Geo::Geometry *object : _view_tree.visible_objects())
+        {
+            if (auto it = std::find(group.begin(), group.end(), object); it != group.end())
+            {
+                items.emplace_back(std::distance(group.begin(), it), object);
+            }
+        }
+        std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) { return std::get<0>(a) < std::get<0>(b); });
+        for (const auto [index, object] : items)
+        {
+            objects.push_back(object);
+        }
     }
     else
     {
@@ -846,6 +880,9 @@ const std::vector<Geo::Geometry *> &Editer::paste_table() const
 void Editer::undo()
 {
     _backup.undo();
+    _view_tree.remove(_backup.removed);
+    _view_tree.append(_backup.appended);
+    _view_tree.update(_backup.updated);
 }
 
 void Editer::set_backup_count(const size_t count)
@@ -855,6 +892,12 @@ void Editer::set_backup_count(const size_t count)
 
 void Editer::push_backup_command(UndoStack::Command *command)
 {
+    _view_tree.remove(command->removed);
+    _view_tree.append(command->appended);
+    _view_tree.update(command->updated);
+    command->removed.clear();
+    command->appended.clear();
+    command->updated.clear();
     return _backup.push_command(command);
 }
 
@@ -863,6 +906,7 @@ void Editer::remove_group(const size_t index)
 {
     assert(index < _graph->container_groups().size());
     _backup.push_command(new UndoStack::GroupCommand(index, false, _graph->container_group(index)));
+    _view_tree.remove(std::vector<Geo::Geometry *>(_graph->container_group(index).begin(), _graph->container_group(index).end()));
     _graph->remove_group(index);
 }
 
@@ -915,11 +959,13 @@ bool Editer::group_is_visible(const size_t index) const
 void Editer::show_group(const size_t index)
 {
     _graph->container_group(index).show();
+    _view_tree.build(_graph);
 }
 
 void Editer::hide_group(const size_t index)
 {
     _graph->container_group(index).hide();
+    _view_tree.build(_graph);
 }
 
 QString Editer::group_name(const size_t index) const
@@ -942,6 +988,7 @@ void Editer::append(Geo::Geometry *object)
     }
     _graph->append(object, _current_group);
     _graph->modified = true;
+    _view_tree.append(object);
     _backup.push_command(new UndoStack::ObjectCommand(object, _current_group, _graph->container_group(_current_group).size(), true));
 }
 
@@ -979,8 +1026,6 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
 
                 temp->at(index).translate(x1 - x0, y1 - y0);
                 temp->back() = temp->front();
-                _graph->modified = true;
-                return;
             }
         }
         else
@@ -1134,8 +1179,6 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                 }
 
                 temp->at(index).translate(x1 - x0, y1 - y0);
-                _graph->modified = true;
-                return;
             }
         }
         else
@@ -1185,8 +1228,6 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                     (*temp)[index + 1].translate(x1 - x0, y1 - y0);
                 }
                 temp->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
-                _graph->modified = true;
-                return;
             }
         }
         else
@@ -1228,8 +1269,6 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
 
                     temp->control_points[index].translate(x1 - x0, y1 - y0);
                     temp->update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
-                    _graph->modified = true;
-                    return;
                 }
             }
             else
@@ -1264,8 +1303,6 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
                     temp->path_points[index].translate(x1 - x0, y1 - y0);
                     temp->update_control_points();
                     temp->update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
-                    _graph->modified = true;
-                    return;
                 }
             }
         }
@@ -1278,6 +1315,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
         break;
     }
     _graph->modified = true;
+    _view_tree.update(points);
 }
 
 bool Editer::remove_selected()
@@ -1292,11 +1330,13 @@ bool Editer::remove_selected()
     {
         if (_graph->container_group(_current_group)[i]->is_selected)
         {
+            _view_tree.remove(_graph->container_group(_current_group)[i]);
             items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
         }
     }
     if (_graph->container_group(_current_group).front()->is_selected)
     {
+        _view_tree.remove(_graph->container_group(_current_group).front());
         items.emplace_back(_graph->container_group(_current_group).pop_front(), _current_group, 0);
     }
 
@@ -1346,12 +1386,14 @@ bool Editer::cut_selected()
     {
         if (_graph->container_group(_current_group)[i]->is_selected)
         {
+            _view_tree.remove(_graph->container_group(_current_group)[i]);
             items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
             _paste_table.push_back(std::get<0>(items.back())->clone());
         }
     }
     if (_graph->container_group(_current_group).front()->is_selected)
     {
+        _view_tree.remove(_graph->container_group(_current_group).front());
         items.emplace_back(_graph->container_group(_current_group).pop_front(), _current_group, 0);
         _paste_table.push_back(std::get<0>(items.back())->clone());
     }
@@ -1378,6 +1420,7 @@ bool Editer::paste(const double tx, const double ty)
         _graph->container_group(_current_group).append(geo->clone());
         _graph->container_group(_current_group).back()->translate(tx, ty);
         items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
+        _view_tree.append(_graph->container_group(_current_group).back());
     }
 
     _graph->modified = true;
@@ -1520,6 +1563,7 @@ bool Editer::connect(const std::vector<Geo::Geometry *> &objects, const double c
     std::vector<std::tuple<Geo::Geometry *, size_t>> items(indexs.size());
     for (size_t i : indexs)
     {
+        _view_tree.remove(group[i]);
         items.emplace_back(group.pop(i), i);
     }
     std::reverse(items.begin(), items.end());
@@ -1532,6 +1576,7 @@ bool Editer::connect(const std::vector<Geo::Geometry *> &objects, const double c
     {
         group.insert(index, polyline);
     }
+    _view_tree.append(polyline);
 
     _graph->modified = true;
     _backup.push_command(new UndoStack::ConnectCommand(items, polyline, _current_group));
@@ -1786,6 +1831,7 @@ bool Editer::blend(const Geo::Geometry *object0, const Geo::Geometry *object1, c
     {
         bezier->is_selected = true;
         _graph->container_group(_current_group).append(bezier);
+        _view_tree.append(bezier);
         _backup.push_command(
             new UndoStack::ObjectCommand(bezier, _current_group, _graph->container_group(_current_group).size() - 1, true));
         return true;
@@ -1818,6 +1864,8 @@ bool Editer::close_polyline(const std::vector<Geo::Geometry *> &objects)
             shape->is_selected = true;
             size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
             add_items.emplace_back(shape, _current_group, index);
+            _view_tree.append(shape);
+            _view_tree.remove(group[index]);
             remove_items.emplace_back(group.pop(index), _current_group, index);
             group.insert(index, shape);
         }
@@ -1860,12 +1908,14 @@ bool Editer::combinate(const std::vector<Geo::Geometry *> &objects)
         {
             combination->append(group.pop(std::find(group.rbegin(), group.rend(), object)));
         }
+        _view_tree.remove(object);
     }
 
     std::reverse(combination->begin(), combination->end());
     combination->is_selected = true;
     combination->update_border();
     _graph->container_group(_current_group).append(combination);
+    _view_tree.append(combination);
 
     _backup.push_command(new UndoStack::CombinateCommand(combination, items, _current_group));
     _graph->modified = true;
@@ -1901,6 +1951,8 @@ bool Editer::detach(const std::vector<Geo::Geometry *> &objects)
     {
         std::reverse(std::get<0>(combination)->begin(), std::get<0>(combination)->end());
         group.pop(std::find(group.rbegin(), group.rend(), std::get<0>(combination)));
+        _view_tree.remove(std::get<0>(combination));
+        _view_tree.append(std::vector<Geo::Geometry *>(std::get<0>(combination)->begin(), std::get<0>(combination)->end()));
         group.append(*static_cast<ContainerGroup *>(std::get<0>(combination)));
     }
 
@@ -1932,6 +1984,7 @@ bool Editer::mirror(const std::vector<Geo::Geometry *> &objects, const Geo::Poin
             _graph->container_group(_current_group).back()->transform(mat);
             _graph->container_group(_current_group).back()->is_selected = true;
             items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
+            _view_tree.append(_graph->container_group(_current_group).back());
         }
         _backup.push_command(new UndoStack::ObjectCommand(items, true));
     }
@@ -1942,6 +1995,7 @@ bool Editer::mirror(const std::vector<Geo::Geometry *> &objects, const Geo::Poin
             obj->transform(mat);
             obj->is_selected = true;
         }
+        _view_tree.update(objects);
         _backup.push_command(new UndoStack::TransformCommand(objects, mat));
     }
 
@@ -2054,6 +2108,10 @@ bool Editer::offset(const std::vector<Geo::Geometry *> &objects, const double di
     else
     {
         _graph->modified = true;
+        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : items)
+        {
+            _view_tree.append(std::get<0>(item));
+        }
         _backup.push_command(new UndoStack::ObjectCommand(items, true));
         return true;
     }
@@ -2098,6 +2156,7 @@ bool Editer::scale(const std::vector<Geo::Geometry *> &objects, const bool unita
             if (object->type() != Geo::Type::TEXT)
             {
                 object->scale(x, y, k);
+                _view_tree.update(object);
             }
         }
 
@@ -2117,6 +2176,7 @@ bool Editer::scale(const std::vector<Geo::Geometry *> &objects, const bool unita
                 Geo::AABBRectParams rect = object->aabbrect_params();
                 object->scale((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2, k);
                 flag = true;
+                _view_tree.update(object);
             }
         }
 
@@ -2318,8 +2378,9 @@ bool Editer::shape_union(Geo::Geometry *shape0, Geo::Geometry *shape1)
         size_t index1 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape1));
         remove_items.emplace_back(shape0, _current_group, index0);
         remove_items.emplace_back(shape1, _current_group, index1);
-        group.pop(index1);
-        group.pop(index0);
+        _view_tree.remove(group.pop(index1));
+        _view_tree.remove(group.pop(index0));
+        _view_tree.append(result);
 
         if (index0 == group.size())
         {
@@ -2529,8 +2590,9 @@ bool Editer::shape_intersection(Geo::Geometry *shape0, Geo::Geometry *shape1)
         size_t index1 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape1));
         remove_items.emplace_back(shape0, _current_group, index0);
         remove_items.emplace_back(shape1, _current_group, index1);
-        group.pop(index1);
-        group.pop(index0);
+        _view_tree.remove(group.pop(index1));
+        _view_tree.remove(group.pop(index0));
+        _view_tree.append(result);
 
         if (index0 == group.size())
         {
@@ -2738,7 +2800,8 @@ bool Editer::shape_difference(Geo::Geometry *shape0, const Geo::Geometry *shape1
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
         size_t index0 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape0));
         remove_items.emplace_back(shape0, _current_group, index0);
-        group.pop(index0);
+        _view_tree.remove(group.pop(index0));
+        _view_tree.append(result);
 
         if (index0 == group.size())
         {
@@ -2948,8 +3011,9 @@ bool Editer::shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1)
         size_t index1 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape1));
         remove_items.emplace_back(shape0, _current_group, index0);
         remove_items.emplace_back(shape1, _current_group, index1);
-        group.pop(index1);
-        group.pop(index0);
+        _view_tree.remove(group.pop(index1));
+        _view_tree.remove(group.pop(index0));
+        _view_tree.append(result);
 
         if (index0 == group.size())
         {
@@ -2996,7 +3060,7 @@ bool Editer::fillet(Geo::Polygon *shape, const Geo::Point &point, const double r
             if (_graph->container_group(_current_group)[i] == shape)
             {
                 std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-                _graph->container_group(_current_group).pop(i);
+                _view_tree.remove(_graph->container_group(_current_group).pop(i));
                 shape->is_selected = false;
                 remove_items.emplace_back(shape, _current_group, i);
                 std::vector<Geo::Point> points(shape->begin(), shape->end() - 1);
@@ -3006,10 +3070,12 @@ bool Editer::fillet(Geo::Polygon *shape, const Geo::Point &point, const double r
                 Geo::Polyline *polyline = new Geo::Polyline(points.begin(), points.end());
                 add_items.emplace_back(polyline, _current_group, i);
                 _graph->container_group(_current_group).insert(i, polyline);
+                _view_tree.append(polyline);
                 Geo::Arc *a = new Geo::Arc(arc);
                 a->is_selected = true;
                 add_items.emplace_back(a, _current_group, i + 1);
                 _graph->container_group(_current_group).insert(i + 1, a);
+                _view_tree.append(a);
                 _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
                 break;
             }
@@ -3045,7 +3111,7 @@ bool Editer::fillet(Geo::Polygon *shape, const Geo::Point &point, const double r
             if (_graph->container_group(_current_group)[i] == shape)
             {
                 std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-                _graph->container_group(_current_group).pop(i);
+                _view_tree.remove(_graph->container_group(_current_group).pop(i));
                 shape->is_selected = false;
                 remove_items.emplace_back(shape, _current_group, i);
                 std::vector<Geo::Point> points(shape->begin(), shape->end() - 1);
@@ -3055,10 +3121,12 @@ bool Editer::fillet(Geo::Polygon *shape, const Geo::Point &point, const double r
                 Geo::Polyline *polyline = new Geo::Polyline(points.begin(), points.end());
                 add_items.emplace_back(polyline, _current_group, i);
                 _graph->container_group(_current_group).insert(i, polyline);
+                _view_tree.append(polyline);
                 Geo::CubicBezier *a = new Geo::CubicBezier(arc);
                 a->is_selected = true;
                 add_items.emplace_back(a, _current_group, i + 1);
                 _graph->container_group(_current_group).insert(i + 1, a);
+                _view_tree.append(a);
                 _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
                 break;
             }
@@ -3091,21 +3159,24 @@ bool Editer::fillet(Geo::Polyline *polyline, const Geo::Point &point, const doub
             if (_graph->container_group(_current_group)[i] == polyline)
             {
                 std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-                _graph->container_group(_current_group).pop(i);
+                _view_tree.remove(_graph->container_group(_current_group).pop(i));
                 polyline->is_selected = false;
                 remove_items.emplace_back(polyline, _current_group, i);
                 Geo::Polyline *polyline0 = new Geo::Polyline(polyline->begin(), polyline->begin() + index + 1);
                 polyline0->back() = arc.control_points[0];
                 add_items.emplace_back(polyline0, _current_group, i);
                 _graph->container_group(_current_group).insert(i, polyline0);
+                _view_tree.append(polyline0);
                 Geo::Arc *a = new Geo::Arc(arc);
                 a->is_selected = true;
                 add_items.emplace_back(a, _current_group, i + 1);
                 _graph->container_group(_current_group).insert(i + 1, a);
+                _view_tree.append(a);
                 Geo::Polyline *polyline1 = new Geo::Polyline(polyline->begin() + index, polyline->end());
                 polyline1->front() = arc.control_points[2];
                 add_items.emplace_back(polyline1, _current_group, i + 2);
                 _graph->container_group(_current_group).insert(i + 2, polyline1);
+                _view_tree.append(polyline1);
                 _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
                 break;
             }
@@ -3138,21 +3209,24 @@ bool Editer::fillet(Geo::Polyline *polyline, const Geo::Point &point, const doub
             if (_graph->container_group(_current_group)[i] == polyline)
             {
                 std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-                _graph->container_group(_current_group).pop(i);
+                _view_tree.remove(_graph->container_group(_current_group).pop(i));
                 polyline->is_selected = false;
                 remove_items.emplace_back(polyline, _current_group, i);
                 Geo::Polyline *polyline0 = new Geo::Polyline(polyline->begin(), polyline->begin() + index + 1);
                 polyline0->back() = arc.front();
                 add_items.emplace_back(polyline0, _current_group, i);
                 _graph->container_group(_current_group).insert(i, polyline0);
+                _view_tree.append(polyline0);
                 Geo::CubicBezier *a = new Geo::CubicBezier(arc);
                 a->is_selected = true;
                 add_items.emplace_back(a, _current_group, i + 1);
                 _graph->container_group(_current_group).insert(i + 1, a);
+                _view_tree.append(a);
                 Geo::Polyline *polyline1 = new Geo::Polyline(polyline->begin() + index, polyline->end());
                 polyline1->front() = arc.back();
                 add_items.emplace_back(polyline1, _current_group, i + 2);
                 _graph->container_group(_current_group).insert(i + 2, polyline1);
+                _view_tree.append(polyline1);
                 _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
                 break;
             }
@@ -3466,7 +3540,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
         if (_graph->container_group(_current_group)[i] == polyline0)
         {
             ++k;
-            _graph->container_group(_current_group).pop(i);
+            _view_tree.remove(_graph->container_group(_current_group).pop(i));
             polyline0->is_selected = false;
             remove_items.emplace_back(polyline0, _current_group, i);
             size_t j = i;
@@ -3476,6 +3550,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                 polyline->is_selected = false;
                 add_items.emplace_back(polyline, _current_group, i);
                 _graph->container_group(_current_group).insert(i, polyline);
+                _view_tree.append(polyline);
                 ++count;
             }
             else
@@ -3484,16 +3559,18 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
             }
             add_items.emplace_back(polyline2, _current_group, j + 1);
             _graph->container_group(_current_group).insert(j + 1, polyline2);
+            _view_tree.append(polyline2);
             polyline2->is_selected = false;
             add_items.emplace_back(arc, _current_group, j + 2);
             _graph->container_group(_current_group).insert(j + 2, arc);
+            _view_tree.append(arc);
             arc->is_selected = true;
             ++count;
         }
         else if (_graph->container_group(_current_group)[i] == polyline1)
         {
             ++k;
-            _graph->container_group(_current_group).pop(i);
+            _view_tree.remove(_graph->container_group(_current_group).pop(i));
             polyline1->is_selected = false;
             remove_items.emplace_back(polyline1, _current_group, i);
             size_t j = i;
@@ -3503,6 +3580,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                 polyline->is_selected = false;
                 add_items.emplace_back(polyline, _current_group, i);
                 _graph->container_group(_current_group).insert(i, polyline);
+                _view_tree.append(polyline);
                 ++count;
             }
             else
@@ -3511,6 +3589,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
             }
             add_items.emplace_back(polyline3, _current_group, j + 1);
             _graph->container_group(_current_group).insert(j + 1, polyline3);
+            _view_tree.append(polyline3);
             polyline3->is_selected = false;
         }
     }
@@ -3818,7 +3897,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
         if (_graph->container_group(_current_group)[i] == polyline0)
         {
             ++k;
-            _graph->container_group(_current_group).pop(i);
+            _view_tree.remove(_graph->container_group(_current_group).pop(i));
             polyline0->is_selected = false;
             remove_items.emplace_back(polyline0, _current_group, i);
             size_t j = i;
@@ -3828,6 +3907,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                 polyline->is_selected = false;
                 add_items.emplace_back(polyline, _current_group, i);
                 _graph->container_group(_current_group).insert(i, polyline);
+                _view_tree.append(polyline);
                 ++count;
             }
             else
@@ -3836,16 +3916,18 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
             }
             add_items.emplace_back(polyline2, _current_group, j + 1);
             _graph->container_group(_current_group).insert(j + 1, polyline2);
+            _view_tree.append(polyline2);
             polyline2->is_selected = false;
             add_items.emplace_back(arc, _current_group, j + 2);
             _graph->container_group(_current_group).insert(j + 2, arc);
+            _view_tree.append(arc);
             arc->is_selected = true;
             ++count;
         }
         else if (_graph->container_group(_current_group)[i] == polyline1)
         {
             ++k;
-            _graph->container_group(_current_group).pop(i);
+            _view_tree.remove(_graph->container_group(_current_group).pop(i));
             polyline1->is_selected = false;
             remove_items.emplace_back(polyline1, _current_group, i);
             size_t j = i;
@@ -3855,6 +3937,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
                 polyline->is_selected = false;
                 add_items.emplace_back(polyline, _current_group, i);
                 _graph->container_group(_current_group).insert(i, polyline);
+                _view_tree.append(polyline);
                 ++count;
             }
             else
@@ -3863,6 +3946,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
             }
             add_items.emplace_back(polyline3, _current_group, j + 1);
             _graph->container_group(_current_group).insert(j + 1, polyline3);
+            _view_tree.append(polyline3);
             polyline3->is_selected = false;
         }
     }
@@ -4477,6 +4561,14 @@ bool Editer::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
         _graph->container_group(_current_group).append(new Geo::CubicBezier(curve));
         append.emplace_back(_graph->container_group(_current_group).back(), _current_group,
                             _graph->container_group(_current_group).size() - 1);
+        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : remove)
+        {
+            _view_tree.remove(std::get<0>(item));
+        }
+        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : append)
+        {
+            _view_tree.append(std::get<0>(item));
+        }
         _backup.push_command(new UndoStack::ObjectCommand(append, remove));
         return true;
     }
@@ -4541,6 +4633,7 @@ bool Editer::chamfer(Geo::Polygon *shape, const Geo::Point &point, const double 
             polygon.remove(index1);
         }
 
+        _view_tree.update(shape);
         _graph->modified = true;
         return true;
     }
@@ -4587,6 +4680,7 @@ bool Editer::chamfer(Geo::Polyline *polyline, const Geo::Point &point, const dou
             polyline->remove(index);
         }
 
+        _view_tree.update(polyline);
         _graph->modified = true;
         return true;
     }
@@ -4612,9 +4706,11 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
                     _graph->container_group(_current_group).begin(),
                     std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), object));
                 remove.emplace_back(object, _current_group, index);
-                _graph->container_group(_current_group).pop(index);
+                _view_tree.remove(_graph->container_group(_current_group).pop(index));
                 _graph->container_group(_current_group).insert(index, new Geo::Polyline(polyline1));
                 _graph->container_group(_current_group).insert(index, new Geo::Polyline(polyline0));
+                _view_tree.append(_graph->container_group(_current_group)[index]);
+                _view_tree.append(_graph->container_group(_current_group)[index + 1]);
                 append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
                 append.emplace_back(_graph->container_group(_current_group)[index + 1], _current_group, index + 1);
                 _backup.push_command(new UndoStack::ObjectCommand(append, remove));
@@ -4636,9 +4732,11 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
                     _graph->container_group(_current_group).begin(),
                     std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), object));
                 remove.emplace_back(object, _current_group, index);
-                _graph->container_group(_current_group).pop(index);
+                _view_tree.remove(_graph->container_group(_current_group).pop(index));
                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
+                _view_tree.append(_graph->container_group(_current_group)[index]);
+                _view_tree.append(_graph->container_group(_current_group)[index + 1]);
                 append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
                 append.emplace_back(_graph->container_group(_current_group)[index + 1], _current_group, index + 1);
                 _backup.push_command(new UndoStack::ObjectCommand(append, remove));
@@ -4664,9 +4762,12 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
                     size_t index = std::distance(
                         _graph->container_group(_current_group).begin(),
                         std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), object));
-                    remove.emplace_back(_graph->container_group(_current_group).pop(index), _current_group, index);
+                    remove.emplace_back(object, _current_group, index);
+                    _view_tree.remove(_graph->container_group(_current_group).pop(index));
                     _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline1));
                     _graph->container_group(_current_group).insert(index, new Geo::CubicBSpline(bspline0));
+                    _view_tree.append(_graph->container_group(_current_group)[index]);
+                    _view_tree.append(_graph->container_group(_current_group)[index + 1]);
                     append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
                     append.emplace_back(_graph->container_group(_current_group)[index + 1], _current_group, index + 1);
                     _backup.push_command(new UndoStack::ObjectCommand(append, remove));
@@ -4683,9 +4784,12 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
                     size_t index = std::distance(
                         _graph->container_group(_current_group).begin(),
                         std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), object));
-                    remove.emplace_back(_graph->container_group(_current_group).pop(index), _current_group, index);
+                    remove.emplace_back(object, _current_group, index);
+                    _view_tree.remove(_graph->container_group(_current_group).pop(index));
                     _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline1));
                     _graph->container_group(_current_group).insert(index, new Geo::QuadBSpline(bspline0));
+                    _view_tree.append(_graph->container_group(_current_group)[index]);
+                    _view_tree.append(_graph->container_group(_current_group)[index + 1]);
                     append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
                     append.emplace_back(_graph->container_group(_current_group)[index + 1], _current_group, index + 1);
                     _backup.push_command(new UndoStack::ObjectCommand(append, remove));
@@ -4706,9 +4810,11 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
                     _graph->container_group(_current_group).begin(),
                     std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), object));
                 remove.emplace_back(object, _current_group, index);
-                _graph->container_group(_current_group).pop(index);
+                _view_tree.remove(_graph->container_group(_current_group).pop(index));
                 _graph->container_group(_current_group).insert(index, new Geo::Arc(arc1));
                 _graph->container_group(_current_group).insert(index, new Geo::Arc(arc0));
+                _view_tree.append(_graph->container_group(_current_group)[index]);
+                _view_tree.append(_graph->container_group(_current_group)[index + 1]);
                 append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
                 append.emplace_back(_graph->container_group(_current_group)[index + 1], _current_group, index + 1);
                 _backup.push_command(new UndoStack::ObjectCommand(append, remove));
@@ -4728,9 +4834,11 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
                     _graph->container_group(_current_group).begin(),
                     std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), object));
                 remove.emplace_back(object, _current_group, index);
-                _graph->container_group(_current_group).pop(index);
+                _view_tree.remove(_graph->container_group(_current_group).pop(index));
                 _graph->container_group(_current_group).insert(index, new Geo::Ellipse(ellipse1));
                 _graph->container_group(_current_group).insert(index, new Geo::Ellipse(ellipse0));
+                _view_tree.append(_graph->container_group(_current_group)[index]);
+                _view_tree.append(_graph->container_group(_current_group)[index + 1]);
                 append.emplace_back(_graph->container_group(_current_group)[index], _current_group, index);
                 append.emplace_back(_graph->container_group(_current_group)[index + 1], _current_group, index + 1);
                 _backup.push_command(new UndoStack::ObjectCommand(append, remove));
@@ -4789,6 +4897,7 @@ bool Editer::line_array(const std::vector<Geo::Geometry *> &objects, int x, int 
                 _graph->container_group(_current_group).append(object->clone());
                 _graph->container_group(_current_group).back()->translate(x_space * i, y_space * j);
                 _graph->container_group(_current_group).back()->is_selected = true;
+                _view_tree.append(_graph->container_group(_current_group).back());
                 items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
             }
         }
@@ -4821,6 +4930,7 @@ bool Editer::ring_array(const std::vector<Geo::Geometry *> &objects, const doubl
             _graph->container_group(_current_group).append(obj->clone());
             _graph->container_group(_current_group).back()->rotate(x, y, 2 * Geo::PI * i / n);
             _graph->container_group(_current_group).back()->is_selected = true;
+            _view_tree.append(_graph->container_group(_current_group).back());
             items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
         }
     }
@@ -4863,6 +4973,7 @@ void Editer::rotate(const std::vector<Geo::Geometry *> &objects, const double x,
     {
         geo->rotate(x, y, rad);
     }
+    _view_tree.update(objects);
     _graph->modified = true;
     _backup.push_command(new UndoStack::RotateCommand(objects, x, y, rad));
 }
@@ -5038,6 +5149,7 @@ void Editer::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
         }
     }
 
+    _view_tree.update(objects);
     _graph->modified = true;
     _backup.push_command(new UndoStack::FlipCommand(objects, coord.x, coord.y, direction, unitary));
 }
@@ -5226,6 +5338,7 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
                 {
                     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(polyline);
                     _backup.push_command(new UndoStack::ObjectCommand(remove_items, false));
                     break;
                 }
@@ -5240,6 +5353,7 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
             }
             _backup.push_command(new UndoStack::ChangeShapeCommand(polyline, shape));
             polyline->remove(0);
+            _view_tree.update(polyline);
         }
         else if (tail == polyline->back())
         {
@@ -5250,6 +5364,7 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
             }
             _backup.push_command(new UndoStack::ChangeShapeCommand(polyline, shape));
             polyline->remove(polyline->size() - 1);
+            _view_tree.update(polyline);
         }
         else
         {
@@ -5261,8 +5376,11 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == polyline)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(polyline);
                     _graph->container_group(_current_group).insert(i, polyline1);
                     _graph->container_group(_current_group).insert(i, polyline0);
+                    _view_tree.append(polyline1);
+                    _view_tree.append(polyline0);
                     add_items.emplace_back(polyline0, _current_group, i);
                     add_items.emplace_back(polyline1, _current_group, i + 1);
                     break;
@@ -5283,6 +5401,7 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
             _backup.push_command(new UndoStack::ChangeShapeCommand(polyline, shape));
             polyline->front() = point1;
             polyline->is_selected = false;
+            _view_tree.update(polyline);
         }
         else
         {
@@ -5295,8 +5414,11 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == polyline)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(polyline);
                     _graph->container_group(_current_group).insert(i, polyline1);
                     _graph->container_group(_current_group).insert(i, polyline0);
+                    _view_tree.append(polyline1);
+                    _view_tree.append(polyline0);
                     add_items.emplace_back(polyline0, _current_group, i);
                     add_items.emplace_back(polyline1, _current_group, i + 1);
                     break;
@@ -5317,6 +5439,7 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
             _backup.push_command(new UndoStack::ChangeShapeCommand(polyline, shape));
             polyline->back() = point0;
             polyline->is_selected = false;
+            _view_tree.update(polyline);
         }
         else
         {
@@ -5329,8 +5452,11 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == polyline)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(polyline);
                     _graph->container_group(_current_group).insert(i, polyline1);
                     _graph->container_group(_current_group).insert(i, polyline0);
+                    _view_tree.append(polyline1);
+                    _view_tree.append(polyline0);
                     add_items.emplace_back(polyline0, _current_group, i);
                     add_items.emplace_back(polyline1, _current_group, i + 1);
                     break;
@@ -5351,8 +5477,11 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
             if (_graph->container_group(_current_group)[i] == polyline)
             {
                 remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                _view_tree.remove(polyline);
                 _graph->container_group(_current_group).insert(i, polyline1);
                 _graph->container_group(_current_group).insert(i, polyline0);
+                _view_tree.append(polyline1);
+                _view_tree.append(polyline0);
                 add_items.emplace_back(polyline0, _current_group, i);
                 add_items.emplace_back(polyline1, _current_group, i + 1);
                 break;
@@ -5547,6 +5676,7 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
                 {
                     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(polygon);
                     _backup.push_command(new UndoStack::ObjectCommand(remove_items, false));
                     break;
                 }
@@ -5561,7 +5691,9 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
                     Geo::Polyline *polyline = new Geo::Polyline(polygon->begin() + 1, polygon->end());
                     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(polygon);
                     _graph->container_group(_current_group).insert(i, polyline);
+                    _view_tree.append(polyline);
                     add_items.emplace_back(polyline, _current_group, i);
                     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
                     break;
@@ -5577,7 +5709,9 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
                     Geo::Polyline *polyline = new Geo::Polyline(polygon->begin(), polygon->end() - 1);
                     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(polygon);
                     _graph->container_group(_current_group).insert(i, polyline);
+                    _view_tree.append(polyline);
                     add_items.emplace_back(polyline, _current_group, i);
                     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
                     break;
@@ -5594,8 +5728,11 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == polygon)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(polygon);
                     _graph->container_group(_current_group).insert(i, polyline1);
                     _graph->container_group(_current_group).insert(i, polyline0);
+                    _view_tree.append(polyline1);
+                    _view_tree.append(polyline0);
                     add_items.emplace_back(polyline0, _current_group, i);
                     add_items.emplace_back(polyline1, _current_group, i + 1);
                     break;
@@ -5616,7 +5753,9 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
                     polyline->front() = point1;
                     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(polygon);
                     _graph->container_group(_current_group).insert(i, polyline);
+                    _view_tree.append(polyline);
                     add_items.emplace_back(polyline, _current_group, i);
                     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
                     break;
@@ -5634,7 +5773,9 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
                     polyline->append(polygon->begin(), polygon->begin() + anchor_index);
                     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(polygon);
                     _graph->container_group(_current_group).insert(i, polyline);
+                    _view_tree.append(polyline);
                     add_items.emplace_back(polyline, _current_group, i);
                     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
                     break;
@@ -5654,7 +5795,9 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
                     polyline->back() = point1;
                     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(polygon);
                     _graph->container_group(_current_group).insert(i, polyline);
+                    _view_tree.remove(polyline);
                     add_items.emplace_back(polyline, _current_group, i);
                     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
                     break;
@@ -5672,7 +5815,9 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
                     polyline->back() = point0;
                     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(polygon);
                     _graph->container_group(_current_group).insert(i, polyline);
+                    _view_tree.append(polyline);
                     add_items.emplace_back(polyline, _current_group, i);
                     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
                     break;
@@ -5692,7 +5837,9 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
                 polyline->front() = point1;
                 std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
                 remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                _view_tree.remove(polygon);
                 _graph->container_group(_current_group).insert(i, polyline);
+                _view_tree.append(polyline);
                 add_items.emplace_back(polyline, _current_group, i);
                 _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
                 break;
@@ -5921,11 +6068,13 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
             if (_graph->container_group(_current_group)[i] == bezier)
             {
                 remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                _view_tree.remove(bezier);
                 Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
                 Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier->begin() + anchor_index + order, bezier->end(), false);
                 if (bezier0->size() > order)
                 {
                     _graph->container_group(_current_group).insert(i, bezier0);
+                    _view_tree.append(bezier0);
                     add_items.emplace_back(bezier0, _current_group, i++);
                 }
                 else
@@ -5935,6 +6084,7 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
                 if (bezier1->size() > order)
                 {
                     _graph->container_group(_current_group).insert(i, bezier1);
+                    _view_tree.append(bezier1);
                     add_items.emplace_back(bezier1, _current_group, i);
                 }
                 else
@@ -5993,14 +6143,17 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
             if (_graph->container_group(_current_group)[i] == bezier)
             {
                 remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                _view_tree.remove(bezier);
                 if (bezier0 != nullptr)
                 {
                     _graph->container_group(_current_group).insert(i, bezier0);
+                    _view_tree.append(bezier0);
                     add_items.emplace_back(bezier0, _current_group, i++);
                 }
                 if (bezier1 != nullptr)
                 {
                     _graph->container_group(_current_group).insert(i, bezier1);
+                    _view_tree.append(bezier1);
                     add_items.emplace_back(bezier1, _current_group, i);
                 }
                 break;
@@ -6020,6 +6173,7 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == bezier)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(bezier);
                     Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
                     Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier_right);
                     bezier1->append(bezier->begin() + anchor_index + order + 1, bezier->end());
@@ -6027,6 +6181,7 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
                     if (bezier0->size() > order)
                     {
                         _graph->container_group(_current_group).insert(i, bezier0);
+                        _view_tree.append(bezier0);
                         add_items.emplace_back(bezier0, _current_group, i++);
                     }
                     else
@@ -6036,6 +6191,7 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
                     if (bezier1->size() > order)
                     {
                         _graph->container_group(_current_group).insert(i, bezier1);
+                        _view_tree.append(bezier1);
                         add_items.emplace_back(bezier1, _current_group, i);
                     }
                     else
@@ -6057,6 +6213,7 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == bezier)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(bezier);
                     Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
                     bezier0->append(bezier_left.begin() + 1, bezier_left.end());
                     bezier0->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
@@ -6064,6 +6221,7 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
                     if (bezier0->size() > order)
                     {
                         _graph->container_group(_current_group).insert(i, bezier0);
+                        _view_tree.append(bezier0);
                         add_items.emplace_back(bezier0, _current_group, i++);
                     }
                     else
@@ -6073,6 +6231,7 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
                     if (bezier1->size() > order)
                     {
                         _graph->container_group(_current_group).insert(i, bezier1);
+                        _view_tree.append(bezier1);
                         add_items.emplace_back(bezier1, _current_group, i);
                     }
                     else
@@ -6095,6 +6254,7 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == bezier)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(bezier);
                     Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
                     bezier0->append(bezier_left.begin() + 1, bezier_left.end());
                     bezier0->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
@@ -6103,6 +6263,8 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
                     bezier1->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
                     _graph->container_group(_current_group).insert(i, bezier1);
                     _graph->container_group(_current_group).insert(i, bezier0);
+                    _view_tree.append(bezier1);
+                    _view_tree.append(bezier0);
                     add_items.emplace_back(bezier0, _current_group, i);
                     add_items.emplace_back(bezier1, _current_group, i + 1);
                     break;
@@ -6377,7 +6539,9 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
             if (_graph->container_group(_current_group)[i] == bspline)
             {
                 remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                _view_tree.remove(bspline);
                 _graph->container_group(_current_group).insert(i, result);
+                _view_tree.append(result);
                 add_items.emplace_back(result, _current_group, i);
                 break;
             }
@@ -6421,7 +6585,9 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == bspline)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(bspline);
                     _graph->container_group(_current_group).insert(i, result);
+                    _view_tree.append(result);
                     add_items.emplace_back(result, _current_group, i++);
                     break;
                 }
@@ -6451,7 +6617,9 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == bspline)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(bspline);
                     _graph->container_group(_current_group).insert(i, result);
+                    _view_tree.append(result);
                     add_items.emplace_back(result, _current_group, i++);
                     break;
                 }
@@ -6499,8 +6667,11 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == bspline)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+                    _view_tree.remove(bspline);
                     _graph->container_group(_current_group).insert(i, result_right);
                     _graph->container_group(_current_group).insert(i, result_left);
+                    _view_tree.append(result_left);
+                    _view_tree.append(result_right);
                     add_items.emplace_back(result_left, _current_group, i);
                     add_items.emplace_back(result_right, _current_group, i + 1);
                     break;
@@ -6636,7 +6807,9 @@ void Editer::trim(Geo::Circle *circle, const double x, const double y)
         if (_graph->container_group(_current_group)[i] == circle)
         {
             remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+            _view_tree.remove(circle);
             _graph->container_group(_current_group).insert(i, arc);
+            _view_tree.append(arc);
             add_items.emplace_back(arc, _current_group, i);
             break;
         }
@@ -6830,14 +7003,17 @@ void Editer::trim(Geo::Arc *arc, const double x, const double y)
         if (_graph->container_group(_current_group)[i] == arc)
         {
             remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+            _view_tree.remove(arc);
             if (arc0 != nullptr)
             {
                 _graph->container_group(_current_group).insert(i, arc0);
+                _view_tree.append(arc0);
                 add_items.emplace_back(arc0, _current_group, i++);
             }
             if (arc1 != nullptr)
             {
                 _graph->container_group(_current_group).insert(i, arc1);
+                _view_tree.append(arc1);
                 add_items.emplace_back(arc1, _current_group, i);
             }
             break;
@@ -7078,14 +7254,17 @@ void Editer::trim(Geo::Ellipse *ellipse, const double x, const double y)
         if (_graph->container_group(_current_group)[i] == ellipse)
         {
             remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
+            _view_tree.remove(ellipse);
             if (ellipse0 != nullptr)
             {
                 _graph->container_group(_current_group).insert(i, ellipse0);
+                _view_tree.append(ellipse0);
                 add_items.emplace_back(ellipse0, _current_group, i++);
             }
             if (ellipse1 != nullptr)
             {
                 _graph->container_group(_current_group).insert(i, ellipse1);
+                _view_tree.append(ellipse1);
                 add_items.emplace_back(ellipse1, _current_group, i);
             }
             break;
@@ -7272,6 +7451,7 @@ void Editer::extend(Geo::Polyline *polyline, const double x, const double y)
     {
         polyline->back() = expoint;
     }
+    _view_tree.update(polyline);
 }
 
 void Editer::extend(Geo::CubicBezier *bezier, const double x, const double y)
@@ -7460,6 +7640,7 @@ void Editer::extend(Geo::CubicBezier *bezier, const double x, const double y)
         bezier->append(expoint);
     }
     bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
+    _view_tree.append(bezier);
 }
 
 void Editer::extend(Geo::BSpline *bspline, const double x, const double y)
@@ -7650,6 +7831,7 @@ void Editer::extend(Geo::BSpline *bspline, const double x, const double y)
     }
     bspline->is_selected = true;
     bspline->update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
+    _view_tree.update(bspline);
 }
 
 bool Editer::divide_points_n(const std::vector<Geo::Geometry *> &objects, const size_t n)
@@ -7739,6 +7921,10 @@ bool Editer::divide_points_n(const std::vector<Geo::Geometry *> &objects, const 
     else
     {
         _graph->modified = true;
+        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : add_items)
+        {
+            _view_tree.append(std::get<0>(item));
+        }
         _backup.push_command(new UndoStack::ObjectCommand(add_items, true));
         return true;
     }
@@ -7888,6 +8074,14 @@ bool Editer::divide_parts_n(const std::vector<Geo::Geometry *> &objects, const s
     else
     {
         _graph->modified = true;
+        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : remove_items)
+        {
+            _view_tree.remove(std::get<0>(item));
+        }
+        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : add_items)
+        {
+            _view_tree.append(std::get<0>(item));
+        }
         _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
         return true;
     }
@@ -7983,6 +8177,10 @@ bool Editer::divide_points_measure(const std::vector<Geo::Geometry *> &objects, 
     else
     {
         _graph->modified = true;
+        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : add_items)
+        {
+            _view_tree.append(std::get<0>(item));
+        }
         _backup.push_command(new UndoStack::ObjectCommand(add_items, true));
         return true;
     }
@@ -8137,6 +8335,14 @@ bool Editer::divide_parts_measure(const std::vector<Geo::Geometry *> &objects, c
     else
     {
         _graph->modified = true;
+        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : remove_items)
+        {
+            _view_tree.remove(std::get<0>(item));
+        }
+        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : add_items)
+        {
+            _view_tree.append(std::get<0>(item));
+        }
         _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
         return true;
     }
@@ -8311,6 +8517,7 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
         // right = dst_right;
     }
 
+    _view_tree.update(src);
     return count != reflines.size();
 }
 
@@ -8448,6 +8655,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
     bool flag = false;
     if (points != _catched_points && auto_aligning(points, _catched_points, reflines))
     {
+        _view_tree.update(points);
         flag = true;
     }
     else
@@ -8456,6 +8664,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
     }
     if (dst != _catched_points && auto_aligning(points, dst, reflines))
     {
+        _view_tree.update(points);
         flag = true;
         if (_catched_points == nullptr)
         {
@@ -8549,6 +8758,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, const double x, const double y
     bool flag = false;
     if (points != _catched_points && auto_aligning(points, _catched_points, reflines))
     {
+        _view_tree.update(points);
         flag = true;
     }
     else
@@ -8557,6 +8767,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, const double x, const double y
     }
     if (dst != _catched_points && auto_aligning(points, dst, reflines))
     {
+        _view_tree.update(points);
         flag = true;
         if (_catched_points == nullptr)
         {
@@ -8719,6 +8930,7 @@ void Editer::auto_combinate()
         {
             _graph->back().append(item);
         }
+        _view_tree.build(_graph);
         return;
     }
 
@@ -9098,6 +9310,7 @@ void Editer::auto_combinate()
     {
         _graph->back().append(polyline);
     }
+    _view_tree.build(_graph);
 }
 
 void Editer::auto_layering()
@@ -9509,6 +9722,8 @@ void Editer::auto_connect()
             }
         }
     }
+
+    _view_tree.build(_graph);
 }
 
 
@@ -9588,8 +9803,9 @@ void Editer::text_to_polylines(Text *text)
     const size_t index =
         std::distance(_graph->container_group(_current_group).begin(),
                       std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), text));
-    _graph->container_group(_current_group).pop(index);
+    _view_tree.remove(_graph->container_group(_current_group).pop(index));
     _graph->container_group(_current_group).insert(index, combination);
+    _view_tree.append(combination);
     _graph->modified = true;
     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
     add_items.emplace_back(combination, _current_group, index);
@@ -9607,8 +9823,9 @@ void Editer::bezier_to_bspline(Geo::CubicBezier *bezier)
     const size_t index =
         std::distance(_graph->container_group(_current_group).begin(),
                       std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), bezier));
-    _graph->container_group(_current_group).pop(index);
+    _view_tree.remove(_graph->container_group(_current_group).pop(index));
     _graph->container_group(_current_group).insert(index, bspline);
+    _view_tree.append(bspline);
     _graph->modified = true;
     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
     add_items.emplace_back(bspline, _current_group, index);
@@ -9626,8 +9843,9 @@ void Editer::bspline_to_bezier(Geo::BSpline *bspline)
     const size_t index =
         std::distance(_graph->container_group(_current_group).begin(),
                       std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), bspline));
-    _graph->container_group(_current_group).pop(index);
+    _view_tree.remove(_graph->container_group(_current_group).pop(index));
     _graph->container_group(_current_group).insert(index, bezier);
+    _view_tree.append(bezier);
     _graph->modified = true;
     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
     add_items.emplace_back(bezier, _current_group, index);

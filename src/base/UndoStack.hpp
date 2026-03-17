@@ -5,7 +5,6 @@
 #include <string>
 
 #include "base/Graph.hpp"
-#include "draw/QuadTree.hpp"
 
 
 namespace UndoStack
@@ -13,7 +12,7 @@ namespace UndoStack
 class Command
 {
 public:
-    static QuadTree *view_tree;
+    std::vector<Geo::Geometry *> removed, appended, updated;
 
     virtual ~Command() = default;
 
@@ -28,6 +27,9 @@ private:
     size_t _count = 3;
 
     Graph *_graph = nullptr;
+
+public:
+    std::vector<Geo::Geometry *> removed, appended, updated;
 
 public:
     void set_count(const size_t count);
@@ -240,10 +242,10 @@ class TextChangedCommand : public Command
 {
 private:
     QString _text;
-    Geo::Geometry *_item = nullptr;
+    Text *_item = nullptr;
 
 public:
-    TextChangedCommand(Geo::Geometry *item, QString text);
+    TextChangedCommand(Text *item, QString text);
 
     void undo(Graph *graph = nullptr) override;
 };

@@ -2154,10 +2154,6 @@ const Polygon &Circle::shape() const
 double CubicBezier::default_step = 0.01;
 double CubicBezier::default_down_sampling_value = 0.02;
 
-CubicBezier::CubicBezier(const CubicBezier &bezier) : Polyline(bezier), _shape(bezier._shape)
-{
-}
-
 CubicBezier::CubicBezier(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end,
                          const bool is_path_points)
     : Polyline(begin, end)
@@ -3142,12 +3138,6 @@ Ellipse *Ellipse::range(const double t0, const double t1) const
 // BSpline
 double BSpline::default_step = 0.02;
 double BSpline::default_down_sampling_value = 0.02;
-
-BSpline::BSpline(const BSpline &bspline)
-    : Geometry(bspline), _shape(bspline._shape), control_points(bspline.control_points), path_points(bspline.path_points),
-      _knots(bspline._knots), controls_model(bspline.controls_model), _path_values(bspline._path_values)
-{
-}
 
 BSpline &BSpline::operator=(const BSpline &bspline)
 {

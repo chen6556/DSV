@@ -5,6 +5,7 @@
 
 #include "base/UndoStack.hpp"
 #include "base/Algorithm.hpp"
+#include "draw/QuadTree.hpp"
 
 
 class Editer
@@ -14,6 +15,7 @@ private:
     QString _file_path;
     std::vector<Geo::Point> _point_cache;
     UndoStack::CommandStack _backup;
+    QuadTree _view_tree;
     std::vector<Geo::Geometry *> _paste_table;
     size_t _current_group = 0;
     double _view_ratio = 1.0;
@@ -42,6 +44,14 @@ public:
     const QString &path() const;
 
     void set_path(const QString &path);
+
+    Graph *graph();
+
+    const Graph *graph() const;
+
+    void refresh_visible_objects(const Geo::AABBRectParams &rect);
+
+    const std::vector<Geo::Geometry *> &visible_objects() const;
 
     std::vector<Geo::Point> &point_cache();
 

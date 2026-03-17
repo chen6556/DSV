@@ -5,8 +5,6 @@
 using namespace UndoStack;
 
 
-QuadTree *Command::view_tree = nullptr;
-
 void CommandStack::set_count(const size_t count)
 {
     _count = count;
@@ -45,6 +43,9 @@ void CommandStack::undo()
     }
 
     _commands.back()->undo(_graph);
+    appended = _commands.back()->appended;
+    removed = _commands.back()->removed;
+    updated = _commands.back()->updated;
     delete _commands.back();
     _commands.pop_back();
 }
@@ -61,7 +62,6 @@ ObjectCommand::ObjectCommand(const std::vector<std::tuple<Geo::Geometry *, size_
         {
             items.push_back(std::get<0>(item));
         }
-        view_tree->append(items);
     }
     else
     {
@@ -71,7 +71,6 @@ ObjectCommand::ObjectCommand(const std::vector<std::tuple<Geo::Geometry *, size_
         {
             items.push_back(std::get<0>(item));
         }
-        view_tree->remove(items);
     }
 }
 
@@ -80,26 +79,10 @@ ObjectCommand::ObjectCommand(Geo::Geometry *object, const size_t group, const si
     if (add)
     {
         _add_items.emplace_back(object, group, index);
-        {
-            std::vector<Geo::Geometry *> objects;
-            for (const auto &item : _add_items)
-            {
-                objects.push_back(std::get<0>(item));
-            }
-            view_tree->append(objects);
-        }
     }
     else
     {
         _remove_items.emplace_back(object, group, index);
-        {
-            std::vector<Geo::Geometry *> objects;
-            for (const auto &item : _remove_items)
-            {
-                objects.push_back(std::get<0>(item));
-            }
-            view_tree->remove(objects);
-        }
     }
 }
 
@@ -107,22 +90,6 @@ ObjectCommand::ObjectCommand(const std::vector<std::tuple<Geo::Geometry *, size_
                              const std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> &remove_items)
     : _add_items(add_items), _remove_items(remove_items)
 {
-    {
-        std::vector<Geo::Geometry *> objects;
-        for (const auto &item : _add_items)
-        {
-            objects.push_back(std::get<0>(item));
-        }
-        view_tree->append(objects);
-    }
-    {
-        std::vector<Geo::Geometry *> objects;
-        for (const auto &item : _remove_items)
-        {
-            objects.push_back(std::get<0>(item));
-        }
-        view_tree->remove(objects);
-    }
 }
 
 ObjectCommand::~ObjectCommand()
@@ -140,6 +107,7 @@ void ObjectCommand::undo(Graph *graph)
               { return std::get<1>(a) > std::get<1>(b) || std::get<2>(a) > std::get<2>(b); });
     for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : _add_items)
     {
+        removed.push_back(std::get<0>(item));
         if (std::get<2>(item) >= graph->container_group(std::get<1>(item)).size())
         {
             graph->container_group(std::get<1>(item)).remove_back();
@@ -149,19 +117,12 @@ void ObjectCommand::undo(Graph *graph)
             graph->container_group(std::get<1>(item)).remove(std::get<2>(item));
         }
     }
-    {
-        std::vector<Geo::Geometry *> objects;
-        for (const auto &item : _add_items)
-        {
-            objects.push_back(std::get<0>(item));
-        }
-        view_tree->remove(objects);
-    }
     std::sort(_remove_items.begin(), _remove_items.end(),
               [](const std::tuple<Geo::Geometry *, size_t, size_t> &a, const std::tuple<Geo::Geometry *, size_t, size_t> &b)
               { return std::get<1>(a) < std::get<1>(b) || std::get<2>(a) < std::get<2>(b); });
     for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : _remove_items)
     {
+        appended.push_back(std::get<0>(item));
         if (std::get<2>(item) >= graph->container_group(std::get<1>(item)).size())
         {
             graph->container_group(std::get<1>(item)).append(std::get<0>(item));
@@ -171,15 +132,6 @@ void ObjectCommand::undo(Graph *graph)
             graph->container_group(std::get<1>(item)).insert(std::get<2>(item), std::get<0>(item));
         }
     }
-    {
-        std::vector<Geo::Geometry *> objects;
-        for (const auto &item : _remove_items)
-        {
-            objects.push_back(std::get<0>(item));
-        }
-        view_tree->append(objects);
-    }
-    _add_items.clear();
     _remove_items.clear();
 }
 
@@ -188,12 +140,10 @@ void ObjectCommand::undo(Graph *graph)
 TranslateCommand::TranslateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y)
     : _items(objects), _dx(x), _dy(y)
 {
-    view_tree->update(objects);
 }
 
 TranslateCommand::TranslateCommand(Geo::Geometry *object, const double x, const double y) : _items({object}), _dx(x), _dy(y)
 {
-    view_tree->update(object);
 }
 
 void TranslateCommand::undo(Graph *graph)
@@ -202,8 +152,7 @@ void TranslateCommand::undo(Graph *graph)
     {
         object->translate(-_dx, -_dy);
     }
-    view_tree->update(_items);
-    _items.clear();
+    updated = _items;
 }
 
 
@@ -215,7 +164,6 @@ TransformCommand::TransformCommand(const std::vector<Geo::Geometry *> &objects, 
     _invmat[2] = (mat[1] * mat[5] - mat[2] * mat[4]) / k;
     _invmat[3] = -mat[3] / k, _invmat[4] = mat[0] / k;
     _invmat[5] = (mat[2] * mat[3] - mat[0] * mat[5]) / k;
-    view_tree->update(objects);
 }
 
 TransformCommand::TransformCommand(Geo::Geometry *object, const double mat[6]) : _items({object})
@@ -225,7 +173,6 @@ TransformCommand::TransformCommand(Geo::Geometry *object, const double mat[6]) :
     _invmat[2] = (mat[1] * mat[5] - mat[2] * mat[4]) / k;
     _invmat[3] = -mat[3] / k, _invmat[4] = mat[0] / k;
     _invmat[5] = (mat[2] * mat[3] - mat[0] * mat[5]) / k;
-    view_tree->update(object);
 }
 
 void TransformCommand::undo(Graph *graph)
@@ -234,7 +181,7 @@ void TransformCommand::undo(Graph *graph)
     {
         object->transform(_invmat);
     }
-    view_tree->update(_items);
+    updated = _items;
 }
 
 
@@ -242,14 +189,12 @@ void TransformCommand::undo(Graph *graph)
 ChangeShapeCommand::ChangeShapeCommand(Geo::Geometry *object, const std::vector<std::tuple<double, double>> &shape)
     : _object(object), _shape(shape)
 {
-    view_tree->update(object);
 }
 
 ChangeShapeCommand::ChangeShapeCommand(Geo::BSpline *bspline, const std::vector<std::tuple<double, double>> &shape,
                                        const std::vector<std::tuple<double, double>> &path_points, const std::vector<double> &knots)
     : _object(bspline), _shape(shape), _path_points(path_points), _knots(knots)
 {
-    view_tree->update(bspline);
 }
 
 void ChangeShapeCommand::undo(Graph *graph)
@@ -346,7 +291,7 @@ void ChangeShapeCommand::undo(Graph *graph)
     default:
         break;
     }
-    view_tree->update(_object);
+    updated.push_back(_object);
 }
 
 
@@ -354,13 +299,11 @@ void ChangeShapeCommand::undo(Graph *graph)
 RotateCommand::RotateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad)
     : _items(objects), _x(x), _y(y), _rad(rad)
 {
-    view_tree->update(objects);
 }
 
 RotateCommand::RotateCommand(Geo::Geometry *object, const double x, const double y, const double rad)
     : _items({object}), _x(x), _y(y), _rad(rad)
 {
-    view_tree->update(object);
 }
 
 void RotateCommand::undo(Graph *graph)
@@ -369,7 +312,7 @@ void RotateCommand::undo(Graph *graph)
     {
         object->rotate(_x, _y, -_rad);
     }
-    view_tree->update(_items);
+    updated = _items;
 }
 
 
@@ -377,13 +320,11 @@ void RotateCommand::undo(Graph *graph)
 ScaleCommand::ScaleCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double k, const bool unitary)
     : _items(objects), _x(x), _y(y), _k(k), _unitary(unitary)
 {
-    view_tree->update(objects);
 }
 
 ScaleCommand::ScaleCommand(Geo::Geometry *object, const double x, const double y, const double k)
     : _items({object}), _x(x), _y(y), _k(k), _unitary(true)
 {
-    view_tree->update(object);
 }
 
 void ScaleCommand::undo(Graph *graph)
@@ -404,7 +345,7 @@ void ScaleCommand::undo(Graph *graph)
             object->scale((rect.left() + rect.right()) / 2, (rect.top() + rect.bottom()) / 2, 1.0 / _k);
         }
     }
-    view_tree->update(_items);
+    updated = _items;
 }
 
 
@@ -416,11 +357,6 @@ CombinateCommand::CombinateCommand(const std::vector<std::tuple<Combination *, s
     {
         _items.emplace_back(std::get<0>(combination), std::get<1>(combination),
                             std::vector<Geo::Geometry *>(std::get<0>(combination)->begin(), std::get<0>(combination)->end()));
-        view_tree->remove(std::get<0>(combination));
-        for (Geo::Geometry *child : *std::get<0>(combination))
-        {
-            view_tree->append(child);
-        }
     }
 }
 
@@ -429,11 +365,6 @@ CombinateCommand::CombinateCommand(Combination *combination,
                                    const size_t index)
     : _combination(combination), _items(items), _group_index(index)
 {
-    for (Geo::Geometry *child : *combination)
-    {
-        view_tree->remove(child);
-    }
-    view_tree->append(combination);
 }
 
 CombinateCommand::~CombinateCommand()
@@ -450,13 +381,12 @@ void CombinateCommand::undo(Graph *graph)
     {
         for (std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>> &item : _items)
         {
-            view_tree->append(std::get<0>(item));
             for (Geo::Geometry *object : std::get<2>(item))
             {
                 std::get<0>(item)->append(
                     graph->container_group(_group_index)
                         .pop(std::find(graph->container_group(_group_index).begin(), graph->container_group(_group_index).end(), object)));
-                view_tree->remove(object);
+                removed.push_back(object);
             }
             if (std::get<1>(item) >= graph->container_group(_group_index).size())
             {
@@ -466,6 +396,7 @@ void CombinateCommand::undo(Graph *graph)
             {
                 graph->container_group(_group_index).insert(std::get<1>(item), std::get<0>(item));
             }
+            appended.push_back(std::get<0>(item));
         }
     }
     else
@@ -473,7 +404,6 @@ void CombinateCommand::undo(Graph *graph)
         graph->container_group(_group_index)
             .pop(std::find(graph->container_group(_group_index).begin(), graph->container_group(_group_index).end(), _combination));
         std::reverse(_combination->begin(), _combination->end());
-        view_tree->remove(_combination);
         for (std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>> &item : _items)
         {
             for (Geo::Geometry *object : std::get<2>(item))
@@ -481,7 +411,7 @@ void CombinateCommand::undo(Graph *graph)
                 std::get<0>(item)->append(object);
                 _combination->pop(std::find(_combination->begin(), _combination->end(), object));
             }
-            view_tree->append(std::get<0>(item));
+            appended.push_back(std::get<0>(item));
             if (std::get<1>(item) >= graph->container_group(_group_index).size())
             {
                 graph->container_group(_group_index).append(std::get<0>(item));
@@ -491,7 +421,8 @@ void CombinateCommand::undo(Graph *graph)
                 graph->container_group(_group_index).insert(std::get<1>(item), std::get<0>(item));
             }
         }
-        view_tree->append(std::vector<Geo::Geometry *>(_combination->begin(), _combination->end()));
+        appended.assign(_combination->begin(), _combination->end());
+        removed.push_back(_combination);
         graph->container_group(_group_index).append(*static_cast<ContainerGroup *>(_combination));
         delete _combination;
         _combination = nullptr;
@@ -505,13 +436,11 @@ FlipCommand::FlipCommand(const std::vector<Geo::Geometry *> &objects, const doub
                          const bool unitary)
     : _items(objects), _x(x), _y(y), _direction(direction), _unitary(unitary)
 {
-    view_tree->update(objects);
 }
 
 FlipCommand::FlipCommand(Geo::Geometry *object, const double x, const double y, const bool direction)
     : _items({object}), _x(x), _y(y), _direction(direction), _unitary(true)
 {
-    view_tree->update(object);
 }
 
 void FlipCommand::undo(Graph *graph)
@@ -561,7 +490,7 @@ void FlipCommand::undo(Graph *graph)
             }
         }
     }
-    view_tree->update(_items);
+    updated = _items;
 }
 
 
@@ -570,13 +499,6 @@ ConnectCommand::ConnectCommand(const std::vector<std::tuple<Geo::Geometry *, siz
                                const size_t index)
     : _items(polylines), _polyline(polyline), _group_index(index)
 {
-    view_tree->append(const_cast<Geo::Polyline *>(polyline));
-    std::vector<Geo::Geometry *> objects;
-    for (auto &item : polylines)
-    {
-        objects.push_back(std::get<Geo::Geometry *>(item));
-    }
-    view_tree->remove(objects);
 }
 
 ConnectCommand::~ConnectCommand()
@@ -589,16 +511,14 @@ ConnectCommand::~ConnectCommand()
 
 void ConnectCommand::undo(Graph *graph)
 {
-    view_tree->remove(const_cast<Geo::Polyline *>(_polyline));
+    removed.push_back(const_cast<Geo::Polyline *>(_polyline));
     graph->container_group(_group_index)
         .remove(std::find(graph->container_group(_group_index).begin(), graph->container_group(_group_index).end(), _polyline));
-    std::vector<Geo::Geometry *> objects;
     for (std::tuple<Geo::Geometry *, size_t> &item : _items)
     {
         graph->container_group(_group_index).insert(std::get<size_t>(item), std::get<Geo::Geometry *>(item));
-        objects.push_back(std::get<0>(item));
+        appended.push_back(std::get<0>(item));
     }
-    view_tree->update(objects);
     _items.clear();
 }
 
@@ -617,6 +537,7 @@ void GroupCommand::undo(Graph *graph)
 {
     if (_add)
     {
+        removed.assign(graph->container_group(_index).begin(), graph->container_group(_index).end());
         graph->remove_group(_index);
     }
     else
@@ -630,6 +551,7 @@ void GroupCommand::undo(Graph *graph)
             graph->insert_group(_index);
         }
         _group.transfer(graph->container_group(_index));
+        appended.assign(graph->container_group(_index).begin(), graph->container_group(_index).end());
     }
 }
 
@@ -680,16 +602,12 @@ void RenameGroupCommand::undo(Graph *graph)
 
 
 // TextChangedCommand
-TextChangedCommand::TextChangedCommand(Geo::Geometry *item, QString text) : _item(item), _text(std::move(text))
+TextChangedCommand::TextChangedCommand(Text *item, QString text) : _item(item), _text(std::move(text))
 {
-    view_tree->update(_item);
 }
 
 void TextChangedCommand::undo(Graph *graph)
 {
-    if (dynamic_cast<Text *>(_item) != nullptr)
-    {
-        static_cast<Text *>(_item)->set_text(_text, GlobalSetting::setting().text_size);
-        view_tree->update(_item);
-    }
+    _item->set_text(_text, GlobalSetting::setting().text_size);
+    updated.push_back(_item);
 }

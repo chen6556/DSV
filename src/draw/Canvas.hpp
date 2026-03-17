@@ -10,7 +10,6 @@
 #include "base/Editer.hpp"
 #include "draw/CanvasMenu.hpp"
 #include "draw/CanvasOperation.hpp"
-#include "draw/QuadTree.hpp"
 
 
 class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
@@ -27,10 +26,12 @@ public:
         Intersection
     };
 
+    static Canvas *canvas;
+
 private:
     Geo::AABBRect _visible_area;
     std::vector<const Geo::Geometry *> _catched_objects;
-    Editer *_editer = nullptr;
+    Editer _editer;
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
     CanvasMenu _menu;
@@ -124,8 +125,6 @@ private:
         std::vector<Geo::Point *> point;
     } _visible_objects[2];
 
-    QuadTree _view_tree;
-
     unsigned int _cpus = 2;
 
     double _catchline_points[16] = {};
@@ -190,9 +189,7 @@ public:
 
     ~Canvas() override;
 
-    void bind_editer(Editer *editer);
-
-    Editer *editer();
+    Editer &editer();
 
     void use_tool(const CanvasOperations::Tool tool);
 
@@ -207,12 +204,6 @@ public:
     void set_catch_distance(const double value);
 
     void set_cursor_catch(const CatchedPointType type, const bool value);
-
-    const size_t current_group() const;
-
-    void set_current_group(const size_t index);
-
-    const size_t groups_count() const;
 
     Geo::Point center() const;
 
@@ -302,9 +293,4 @@ public:
                                  const bool skip_selected, const bool current_group_only = true) const;
 
     bool refresh_catchline_points(const std::vector<const Geo::Geometry *> &objects, const double distance, Geo::Point &pos);
-
-
-    void build_quadtree(Graph *graph);
-
-    void visible_objects(std::vector<Geo::Geometry *> &objects, const bool current_layer_only = true);
 };

@@ -1,5 +1,4 @@
 #pragma once
-#include "../ui/ui_MainWindow.h"
 
 
 class GlobalSetting
@@ -10,10 +9,9 @@ private:
     ~GlobalSetting() = default;
 
 public:
-    Graph *graph = nullptr;
-    Ui::MainWindow *ui = nullptr;
+    bool to_all_layers = true; // user input
+    bool translated_points = false; // user input
 
-    bool translated_points = false;
     bool auto_aligning = false;
     bool auto_connect = false;
     bool auto_layering = false;
@@ -39,10 +37,16 @@ public:
     int offset_end_type = 0;
     int offset_sample_count = 10;
 
+    int array_x_item = 2; // user input
+    int array_y_item = 2; // user input
+
     double catch_distance = 2.0;
     double sampling_step = 0.01;
     double down_sampling = 0.02;
     double offset_tolerance = 0.001;
+
+    double array_x_space = 0; // user input
+    double array_y_space = 0; // user input
 
     QString file_path = "/";
     QString file_type = "All Files: (*.*)";

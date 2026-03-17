@@ -670,7 +670,7 @@ public:
 public:
     CubicBezier() = default;
 
-    CubicBezier(const CubicBezier &bezier);
+    CubicBezier(const CubicBezier &bezier) = default;
 
     CubicBezier(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end, const bool is_path_points);
 
@@ -883,7 +883,7 @@ public:
 public:
     BSpline() = default;
 
-    BSpline(const BSpline &bspline);
+    BSpline(const BSpline &bspline) = default;
 
     BSpline &operator=(const BSpline &bspline);
 

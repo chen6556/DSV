@@ -58,13 +58,13 @@ void CanvasMenu::exec(Geo::Geometry *object)
 
     if (const QAction *a = _menu->exec(QCursor::pos()); a == _up)
     {
-        _canvas->editer()->up(object);
+        _canvas->editer().up(object);
         _canvas->refresh_vbo(true, object->type());
         _canvas->refresh_selected_ibo();
     }
     else if (a == _down)
     {
-        _canvas->editer()->down(object);
+        _canvas->editer().down(object);
         _canvas->refresh_vbo(true, object->type());
         _canvas->refresh_selected_ibo();
     }
@@ -74,13 +74,13 @@ void CanvasMenu::exec(Geo::Geometry *object)
     }
     else if (a == _text_to_polylines)
     {
-        _canvas->editer()->text_to_polylines(dynamic_cast<Text *>(object));
+        _canvas->editer().text_to_polylines(dynamic_cast<Text *>(object));
         _canvas->refresh_vbo(true, {Geo::Type::TEXT, Geo::Type::POLYLINE});
         _canvas->refresh_selected_ibo();
     }
     else if (a == _bezier_to_bspline)
     {
-        _canvas->editer()->bezier_to_bspline(dynamic_cast<Geo::CubicBezier *>(object));
+        _canvas->editer().bezier_to_bspline(dynamic_cast<Geo::CubicBezier *>(object));
         CanvasOperations::CanvasOperation::tool_lines_count = 0;
         _canvas->refresh_vbo(true, {Geo::Type::BEZIER, Geo::Type::BSPLINE});
         _canvas->refresh_selected_ibo();
@@ -95,7 +95,7 @@ void CanvasMenu::exec(Geo::Geometry *object)
     }
     else if (a == _bspline_to_bezier)
     {
-        _canvas->editer()->bspline_to_bezier(dynamic_cast<Geo::BSpline *>(object));
+        _canvas->editer().bspline_to_bezier(dynamic_cast<Geo::BSpline *>(object));
         CanvasOperations::CanvasOperation::tool_lines_count = 0;
         _canvas->refresh_vbo(true, {Geo::Type::BEZIER, Geo::Type::BSPLINE});
         _canvas->refresh_selected_ibo();

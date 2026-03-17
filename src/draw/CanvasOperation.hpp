@@ -5,8 +5,6 @@
 #include "base/Geometry.hpp"
 
 
-class Canvas;
-
 namespace CanvasOperations
 {
 enum class Tool
@@ -65,7 +63,6 @@ public:
     static Tool tool[2]; // current, last
     static double view_ratio;
     static QString info;
-    static Canvas *canvas;
     static Geo::Geometry *clicked_object;
     static bool absolute_coord;
 

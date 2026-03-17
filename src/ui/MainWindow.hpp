@@ -6,7 +6,6 @@
 #include <QTimer>
 #include <QString>
 
-#include "base/Editer.hpp"
 #include "ui/LayersManager.hpp"
 #include "ui/Setting.hpp"
 #include "ui/DataPanel.hpp"
@@ -26,7 +25,6 @@ class MainWindow : public QMainWindow
 
 private:
     Ui::MainWindow *ui = nullptr;
-    Editer _editer;
     Setting *_setting = nullptr;
     std::vector<Qt::Key> _keys;
     QTimer _clock;

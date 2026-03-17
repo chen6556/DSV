@@ -498,6 +498,10 @@ void QuadTree::remove(Geo::Geometry *object)
 
 void QuadTree::remove(const std::vector<Geo::Geometry *> &objects)
 {
+    if (objects.empty())
+    {
+        return;
+    }
     _root.remove(objects);
     for (Geo::Geometry *object : objects)
     {
