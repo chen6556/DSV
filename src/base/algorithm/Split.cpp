@@ -935,8 +935,8 @@ bool Geo::split(const Ellipse &ellipse, const size_t n, std::vector<double> &pos
 
     const double part_length = ellipse.length() / n;
     const double a = ellipse.lengtha(), b = ellipse.lengthb();
-    const double angle1 = ellipse.arc_angle1();
-    double t = ellipse.arc_angle0();
+    const double angle1 = ellipse.arc_param1();
+    double t = ellipse.arc_param0();
     for (size_t i = 1; i < n; ++i)
     {
         double low = t, high = angle1 < t ? angle1 + Math::PI * 2 : angle1;
@@ -954,7 +954,7 @@ bool Geo::split(const Ellipse &ellipse, const size_t n, std::vector<double> &pos
             }
         }
         t = (low + high) / 2;
-        pos.push_back(ellipse.angle_to_param(t));
+        pos.push_back(t);
     }
     return !pos.empty();
 }
@@ -1109,8 +1109,8 @@ bool Geo::split(const Ellipse &ellipse, const double step, std::vector<double> &
     }
 
     const double a = ellipse.lengtha(), b = ellipse.lengthb();
-    const double angle1 = ellipse.arc_angle1();
-    double t = ellipse.arc_angle0();
+    const double angle1 = ellipse.arc_param1();
+    double t = ellipse.arc_param0();
     for (size_t i = 0, n = ellipse.length() / step; i < n; ++i)
     {
         double low = t, high = angle1 < t ? angle1 + Math::PI * 2 : angle1;
@@ -1128,7 +1128,7 @@ bool Geo::split(const Ellipse &ellipse, const double step, std::vector<double> &
             }
         }
         t = (low + high) / 2;
-        pos.push_back(ellipse.angle_to_param(t));
+        pos.push_back(t);
     }
     return !pos.empty();
 }

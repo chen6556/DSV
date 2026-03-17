@@ -2685,7 +2685,7 @@ const double Ellipse::length() const
 {
     if (const double a = Geo::distance(_a[0], _a[1]) / 2, b = Geo::distance(_b[0], _b[1]) / 2; is_arc())
     {
-        return Math::ellipse_arc_length(a, b, _arc_angle[0], _arc_angle[1]);
+        return Math::ellipse_arc_length(a, b, _arc_param[0], _arc_param[1]);
     }
     else
     {

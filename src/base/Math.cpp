@@ -384,56 +384,60 @@ double Math::ellipse_length(const double a, const double b)
 
 double Math::ellipse_arc_length(const double a, const double b, const double start, const double end)
 {
-    double t[2] = {start, end};
-    if (a < b)
+    const double k = a > b ? std::sqrt(1 - (b * b) / (a * a)) : std::sqrt(1 - (a * a) / (b * b));
+    double length[2] = {0, 0}, angle[2] = {start, end};
+    if (a > b)
     {
         for (int i = 0; i < 2; ++i)
         {
-            t[i] += Math::PI / 2;
-            if (t[i] > 2 * Math::PI)
+            angle[i] += Math::PI / 2;
+            while (angle[i] > 2 * Math::PI)
             {
-                t[i] -= 2 * Math::PI;
+                angle[i] -= 2 * Math::PI;
+            }
+            while (angle[i] < 0)
+            {
+                angle[i] += 2 * Math::PI;
             }
         }
     }
-    double l = 0;
-    if (const double k = a > b ? std::sqrt(1 - (b * b) / (a * a)) : std::sqrt(1 - (a * a) / (b * b)); t[1] < Math::PI)
+
+    for (int i = 0; i < 2; ++i)
     {
-        if (t[0] < Math::PI)
+        if (angle[i] == 0 || angle[i] == Math::PI * 2)
         {
-            if (t[0] < t[1])
-            {
-                l = gsl_sf_ellint_E(t[1], k, GSL_PREC_DOUBLE) - gsl_sf_ellint_E(t[0], k, GSL_PREC_DOUBLE);
-            }
-            else
-            {
-                l = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 4 - gsl_sf_ellint_E(t[0], k, GSL_PREC_DOUBLE) +
-                    gsl_sf_ellint_E(t[1], k, GSL_PREC_DOUBLE);
-            }
+            length[i] = 0;
+        }
+        else if (angle[i] < Math::PI / 2)
+        {
+            length[i] = gsl_sf_ellint_E(angle[i], k, GSL_PREC_DOUBLE);
+        }
+        else if (angle[i] == Math::PI / 2)
+        {
+            length[i] = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE);
+        }
+        else if (angle[i] < Math::PI)
+        {
+            length[i] = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 2 - gsl_sf_ellint_E(Math::PI - angle[i], k, GSL_PREC_DOUBLE);
+        }
+        else if (angle[i] == Math::PI)
+        {
+            length[i] = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 2;
+        }
+        else if (angle[i] < Math::PI * 3 / 2)
+        {
+            length[i] = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 2 + gsl_sf_ellint_E(angle[i] - Math::PI, k, GSL_PREC_DOUBLE);
+        }
+        else if (angle[i] == Math::PI * 3 / 2)
+        {
+            length[i] = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 3;
         }
         else
         {
-            l = gsl_sf_ellint_E(t[1], k, GSL_PREC_DOUBLE) + gsl_sf_ellint_E(Math::PI * 2 - t[0], k, GSL_PREC_DOUBLE);
+            length[i] = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 4 - gsl_sf_ellint_E(Math::PI * 2 - angle[i], k, GSL_PREC_DOUBLE);
         }
     }
-    else
-    {
-        if (t[0] < Math::PI)
-        {
-            l = gsl_sf_ellint_E(Math::PI - t[0], k, GSL_PREC_DOUBLE) + gsl_sf_ellint_E(t[1] - Math::PI, k, GSL_PREC_DOUBLE);
-        }
-        else
-        {
-            if (t[0] < t[1])
-            {
-                l = gsl_sf_ellint_E(t[1] - Math::PI, k, GSL_PREC_DOUBLE) - gsl_sf_ellint_E(t[0] - Math::PI, k, GSL_PREC_DOUBLE);
-            }
-            else
-            {
-                l = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 4 - gsl_sf_ellint_E(t[0] - Math::PI, k, GSL_PREC_DOUBLE) +
-                    gsl_sf_ellint_E(t[1] - Math::PI, k, GSL_PREC_DOUBLE);
-            }
-        }
-    }
-    return std::max(a, b) * l;
+
+    return std::max(a, b) *
+           (angle[0] < angle[1] ? (length[1] - length[0]) : (gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 4 + length[1] - length[0]));
 }
