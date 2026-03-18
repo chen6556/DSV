@@ -196,6 +196,7 @@ void Canvas::resizeGL(int w, int h)
     _visible_area.transform(_view_ctm[0], _view_ctm[3], _view_ctm[6], _view_ctm[1], _view_ctm[4], _view_ctm[7]);
 
     _texture.image = QImage(w, h, QImage::Format::Format_RGBA8888);
+    refresh_vbo(true);
 }
 
 void Canvas::paintGL()
