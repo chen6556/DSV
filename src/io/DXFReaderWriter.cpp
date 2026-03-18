@@ -168,7 +168,7 @@ void DXFReaderWriter::endBlock()
 void DXFReaderWriter::addPoint(const DRW_Point &data)
 {
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    if (_ignore_entity)
+    if (_ignore_entity || !data.visible)
     {
         return;
     }
@@ -179,6 +179,10 @@ void DXFReaderWriter::addPoint(const DRW_Point &data)
             if (group.name.toStdString() == data.layer)
             {
                 group.append(new Geo::Point(data.basePoint.x, data.basePoint.y));
+                if (data.extPoint.z < 0)
+                {
+                    group.back()->transform(_flip_by_y_mat);
+                }
                 _object_map[group.back()] = data.handle;
                 _handle_map[data.handle] = group.back();
                 return;
@@ -187,12 +191,20 @@ void DXFReaderWriter::addPoint(const DRW_Point &data)
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
         _graph->container_groups().back().append(new Geo::Point(data.basePoint.x, data.basePoint.y));
+        if (data.extPoint.z < 0)
+        {
+            _graph->container_groups().back().back()->transform(_flip_by_y_mat);
+        }
         _object_map[_graph->container_groups().back().back()] = data.handle;
         _handle_map[data.handle] = _graph->container_groups().back().back();
     }
     else
     {
         _combination->append(new Geo::Point(data.basePoint.x, data.basePoint.y));
+        if (data.extPoint.z < 0)
+        {
+            _combination->back()->transform(_flip_by_y_mat);
+        }
         _object_map[_combination->back()] = data.handle;
         _handle_map[data.handle] = _combination->back();
     }
@@ -201,7 +213,7 @@ void DXFReaderWriter::addPoint(const DRW_Point &data)
 void DXFReaderWriter::addLine(const DRW_Line &data)
 {
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    if (_ignore_entity)
+    if (_ignore_entity || !data.visible)
     {
         return;
     }
@@ -212,6 +224,10 @@ void DXFReaderWriter::addLine(const DRW_Line &data)
             if (group.name.toStdString() == data.layer)
             {
                 group.append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y}, {data.secPoint.x, data.secPoint.y}}));
+                if (data.extPoint.z < 0)
+                {
+                    group.back()->transform(_flip_by_y_mat);
+                }
                 _object_map[group.back()] = data.handle;
                 _handle_map[data.handle] = group.back();
                 return;
@@ -221,12 +237,20 @@ void DXFReaderWriter::addLine(const DRW_Line &data)
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
         _graph->container_groups().back().append(
             new Geo::Polyline({{data.basePoint.x, data.basePoint.y}, {data.secPoint.x, data.secPoint.y}}));
+        if (data.extPoint.z < 0)
+        {
+            _graph->container_groups().back().back()->transform(_flip_by_y_mat);
+        }
         _object_map[_graph->container_groups().back().back()] = data.handle;
         _handle_map[data.handle] = _graph->container_groups().back().back();
     }
     else
     {
         _combination->append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y}, {data.secPoint.x, data.secPoint.y}}));
+        if (data.extPoint.z < 0)
+        {
+            _combination->back()->transform(_flip_by_y_mat);
+        }
         _object_map[_combination->back()] = data.handle;
         _handle_map[data.handle] = _combination->back();
     }
@@ -235,7 +259,7 @@ void DXFReaderWriter::addLine(const DRW_Line &data)
 void DXFReaderWriter::addRay(const DRW_Ray &data)
 {
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    if (_ignore_entity)
+    if (_ignore_entity || !data.visible)
     {
         return;
     }
@@ -247,6 +271,10 @@ void DXFReaderWriter::addRay(const DRW_Ray &data)
             {
                 group.append(new Geo::Polyline(
                     {{data.basePoint.x, data.basePoint.y}, {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
+                if (data.extPoint.z < 0)
+                {
+                    group.back()->transform(_flip_by_y_mat);
+                }
                 _object_map[group.back()] = data.handle;
                 _handle_map[data.handle] = group.back();
                 return;
@@ -256,12 +284,20 @@ void DXFReaderWriter::addRay(const DRW_Ray &data)
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
         _graph->container_groups().back().append(new Geo::Polyline(
             {{data.basePoint.x, data.basePoint.y}, {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
+        if (data.extPoint.z < 0)
+        {
+            _graph->container_groups().back().back()->transform(_flip_by_y_mat);
+        }
         _object_map[_graph->container_groups().back().back()] = data.handle;
         _handle_map[data.handle] = _graph->container_groups().back().back();
     }
     else
     {
         _combination->append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y}, {data.secPoint.x, data.secPoint.y}}));
+        if (data.extPoint.z < 0)
+        {
+            _combination->back()->transform(_flip_by_y_mat);
+        }
         _object_map[_combination] = data.handle;
         _handle_map[data.handle] = _combination;
     }
@@ -270,7 +306,7 @@ void DXFReaderWriter::addRay(const DRW_Ray &data)
 void DXFReaderWriter::addXline(const DRW_Xline &data)
 {
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    if (_ignore_entity)
+    if (_ignore_entity || !data.visible)
     {
         return;
     }
@@ -282,6 +318,10 @@ void DXFReaderWriter::addXline(const DRW_Xline &data)
             {
                 group.append(new Geo::Polyline(
                     {{data.basePoint.x, data.basePoint.y}, {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
+                if (data.extPoint.z < 0)
+                {
+                    group.back()->transform(_flip_by_y_mat);
+                }
                 _object_map[group.back()] = data.handle;
                 _handle_map[data.handle] = group.back();
                 return;
@@ -291,6 +331,10 @@ void DXFReaderWriter::addXline(const DRW_Xline &data)
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
         _graph->container_groups().back().append(new Geo::Polyline(
             {{data.basePoint.x, data.basePoint.y}, {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
+        if (data.extPoint.z < 0)
+        {
+            _graph->container_groups().back().back()->transform(_flip_by_y_mat);
+        }
         _object_map[_graph->container_groups().back().back()] = data.handle;
         _handle_map[data.handle] = _graph->container_groups().back().back();
     }
@@ -298,6 +342,10 @@ void DXFReaderWriter::addXline(const DRW_Xline &data)
     {
         _combination->append(new Geo::Polyline(
             {{data.basePoint.x, data.basePoint.y}, {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
+        if (data.extPoint.z < 0)
+        {
+            _combination->back()->transform(_flip_by_y_mat);
+        }
         _object_map[_combination] = data.handle;
         _handle_map[data.handle] = _combination;
     }
@@ -306,7 +354,7 @@ void DXFReaderWriter::addXline(const DRW_Xline &data)
 void DXFReaderWriter::addArc(const DRW_Arc &data)
 {
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    if (_ignore_entity)
+    if (_ignore_entity || !data.visible)
     {
         return;
     }
@@ -318,6 +366,10 @@ void DXFReaderWriter::addArc(const DRW_Arc &data)
             {
                 Geo::Arc *arc = new Geo::Arc(data.basePoint.x, data.basePoint.y, data.radious, data.staangle, data.endangle,
                                              static_cast<bool>(data.isccw));
+                if (data.extPoint.z < 0)
+                {
+                    arc->transform(_flip_by_y_mat);
+                }
                 group.append(arc);
                 _object_map[arc] = data.handle;
                 _handle_map[data.handle] = arc;
@@ -328,6 +380,10 @@ void DXFReaderWriter::addArc(const DRW_Arc &data)
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
         Geo::Arc *arc =
             new Geo::Arc(data.basePoint.x, data.basePoint.y, data.radious, data.staangle, data.endangle, static_cast<bool>(data.isccw));
+        if (data.extPoint.z < 0)
+        {
+            arc->transform(_flip_by_y_mat);
+        }
         _graph->container_groups().back().append(arc);
         _object_map[arc] = data.handle;
         _handle_map[data.handle] = arc;
@@ -336,6 +392,10 @@ void DXFReaderWriter::addArc(const DRW_Arc &data)
     {
         Geo::Arc *arc =
             new Geo::Arc(data.basePoint.x, data.basePoint.y, data.radious, data.staangle, data.endangle, static_cast<bool>(data.isccw));
+        if (data.extPoint.z < 0)
+        {
+            arc->transform(_flip_by_y_mat);
+        }
         _combination->append(arc);
         _object_map[arc] = data.handle;
         _handle_map[data.handle] = arc;
@@ -345,7 +405,7 @@ void DXFReaderWriter::addArc(const DRW_Arc &data)
 void DXFReaderWriter::addCircle(const DRW_Circle &data)
 {
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    if (_ignore_entity)
+    if (_ignore_entity || !data.visible)
     {
         return;
     }
@@ -356,6 +416,10 @@ void DXFReaderWriter::addCircle(const DRW_Circle &data)
             if (group.name.toStdString() == data.layer)
             {
                 group.append(new Geo::Circle(data.basePoint.x, data.basePoint.y, data.radious));
+                if (data.extPoint.z < 0)
+                {
+                    group.back()->transform(_flip_by_y_mat);
+                }
                 _object_map[group.back()] = data.handle;
                 _handle_map[data.handle] = group.back();
                 return;
@@ -364,12 +428,20 @@ void DXFReaderWriter::addCircle(const DRW_Circle &data)
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
         _graph->container_groups().back().append(new Geo::Circle(data.basePoint.x, data.basePoint.y, data.radious));
+        if (data.extPoint.z < 0)
+        {
+            _graph->container_groups().back().back()->transform(_flip_by_y_mat);
+        }
         _object_map[_graph->container_groups().back().back()] = data.handle;
         _handle_map[data.handle] = _graph->container_groups().back().back();
     }
     else
     {
         _combination->append(new Geo::Circle(data.basePoint.x, data.basePoint.y, data.radious));
+        if (data.extPoint.z < 0)
+        {
+            _combination->back()->transform(_flip_by_y_mat);
+        }
         _object_map[_combination->back()] = data.handle;
         _handle_map[data.handle] = _combination->back();
     }
@@ -378,7 +450,7 @@ void DXFReaderWriter::addCircle(const DRW_Circle &data)
 void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
 {
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    if (_ignore_entity)
+    if (_ignore_entity || !data.visible)
     {
         return;
     }
@@ -394,6 +466,10 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
                 const double s = data.secPoint.y / a, c = data.secPoint.x / a;
                 group.back()->transform(c, -s, 0, s, c, 0);
                 group.back()->translate(data.basePoint.x, data.basePoint.y);
+                if (data.extPoint.z < 0)
+                {
+                    group.back()->transform(_flip_by_y_mat);
+                }
                 _object_map[group.back()] = data.handle;
                 _handle_map[data.handle] = group.back();
                 return;
@@ -408,6 +484,10 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
         const double s = data.secPoint.y / a, c = data.secPoint.x / a;
         _graph->container_groups().back().back()->transform(c, -s, 0, s, c, 0);
         _graph->container_groups().back().back()->translate(data.basePoint.x, data.basePoint.y);
+        if (data.extPoint.z < 0)
+        {
+            _graph->container_groups().back().back()->transform(_flip_by_y_mat);
+        }
         _object_map[_graph->container_groups().back().back()] = data.handle;
         _handle_map[data.handle] = _graph->container_groups().back().back();
     }
@@ -419,6 +499,10 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
         const double s = data.secPoint.y / a, c = data.secPoint.x / a;
         _combination->back()->transform(c, -s, 0, s, c, 0);
         _combination->back()->translate(data.basePoint.x, data.basePoint.y);
+        if (data.extPoint.z < 0)
+        {
+            _combination->back()->transform(_flip_by_y_mat);
+        }
         _object_map[_combination->back()] = data.handle;
         _handle_map[data.handle] = _combination->back();
     }
@@ -427,7 +511,7 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
 void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
 {
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    if (_ignore_entity || data.vertlist.empty())
+    if (_ignore_entity || !data.visible || data.vertlist.empty())
     {
         return;
     }
@@ -473,6 +557,10 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
                     }
                 }
                 group.append(polyline);
+                if (data.extPoint.z < 0)
+                {
+                    polyline->transform(_flip_by_y_mat);
+                }
                 _object_map[polyline] = data.handle;
                 _handle_map[data.handle] = polyline;
                 return;
@@ -516,6 +604,10 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
             }
         }
         _graph->container_groups().back().append(polyline);
+        if (data.extPoint.z < 0)
+        {
+            polyline->transform(_flip_by_y_mat);
+        }
         _object_map[polyline] = data.handle;
         _handle_map[data.handle] = polyline;
     }
@@ -557,6 +649,10 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
             }
         }
         _combination->append(polyline);
+        if (data.extPoint.z < 0)
+        {
+            polyline->transform(_flip_by_y_mat);
+        }
         _object_map[polyline] = data.handle;
         _handle_map[data.handle] = polyline;
     }
@@ -565,7 +661,7 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
 void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
 {
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    if (_ignore_entity)
+    if (_ignore_entity || !data.visible)
     {
         return;
     }
@@ -616,6 +712,10 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
                     }
                 }
                 group.append(polyline);
+                if (data.extPoint.z < 0)
+                {
+                    polyline->transform(_flip_by_y_mat);
+                }
                 _object_map[polyline] = data.handle;
                 _handle_map[data.handle] = polyline;
                 return;
@@ -659,6 +759,10 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
             }
         }
         _graph->container_groups().back().append(polyline);
+        if (data.extPoint.z < 0)
+        {
+            polyline->transform(_flip_by_y_mat);
+        }
         _object_map[polyline] = data.handle;
         _handle_map[data.handle] = polyline;
     }
@@ -700,6 +804,10 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
             }
         }
         _combination->append(polyline);
+        if (data.extPoint.z < 0)
+        {
+            polyline->transform(_flip_by_y_mat);
+        }
         _object_map[polyline] = data.handle;
         _handle_map[data.handle] = polyline;
     }
@@ -708,7 +816,7 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
 void DXFReaderWriter::addSpline(const DRW_Spline *data)
 {
     _handle_pairs.insert_or_assign(data->handle, data->parentHandle);
-    if (_ignore_entity)
+    if (_ignore_entity || !data->visible)
     {
         return;
     }
@@ -864,7 +972,7 @@ void DXFReaderWriter::addMText(const DRW_MText &data)
 {
     const QString txt = to_native_string(QString::fromUtf8(data.text.c_str()));
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    if (_ignore_entity || txt.isEmpty() || txt.count(' ') == txt.size())
+    if (_ignore_entity || !data.visible || txt.isEmpty() || txt.count(' ') == txt.size())
     {
         return;
     }
@@ -898,7 +1006,7 @@ void DXFReaderWriter::addText(const DRW_Text &data)
 {
     const QString txt = to_native_string(QString::fromUtf8(data.text.c_str()));
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    if (_ignore_entity || txt.isEmpty() || txt.count(' ') == txt.size())
+    if (_ignore_entity || !data.visible || txt.isEmpty() || txt.count(' ') == txt.size())
     {
         return;
     }

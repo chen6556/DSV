@@ -45,6 +45,7 @@ private:
     const ContainerGroup *_current_group = nullptr;
     dxfRW *_dxfrw = nullptr;
 
+    const double _flip_by_y_mat[6] = {-1, 0, 0, 0, 1, 0};
     std::set<std::string> _inserted_blocks;
     std::vector<Combination *> _block_store;
     std::unordered_map<const Geo::Geometry *, int> _object_map;
