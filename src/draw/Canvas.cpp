@@ -331,32 +331,32 @@ void Canvas::paintGL()
         }
     }
 
-    if (CanvasOperations::CanvasOperation::shape_count > 0)
+    if (!CanvasOperations::CanvasOperation::shape.empty())
     {
         glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.operation_shape); // operation shpae
-        glBufferData(GL_ARRAY_BUFFER, CanvasOperations::CanvasOperation::shape_count * sizeof(double),
-                     CanvasOperations::CanvasOperation::shape, GL_STREAM_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, CanvasOperations::CanvasOperation::shape.size() * sizeof(double),
+                     CanvasOperations::CanvasOperation::shape.data(), GL_STREAM_DRAW);
         glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
         glEnableVertexAttribArray(0);
 
         glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线
-        glDrawArrays(GL_LINE_STRIP, 0, CanvasOperations::CanvasOperation::shape_count / 2);
+        glDrawArrays(GL_LINE_STRIP, 0, CanvasOperations::CanvasOperation::shape.size() / 2);
     }
-    if (CanvasOperations::CanvasOperation::tool_lines_count > 0)
+    if (!CanvasOperations::CanvasOperation::tool_lines.empty())
     {
         glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.operation_tool_lines); // operation tool lines
-        glBufferData(GL_ARRAY_BUFFER, CanvasOperations::CanvasOperation::tool_lines_count * sizeof(double),
-                     CanvasOperations::CanvasOperation::tool_lines, GL_STREAM_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, CanvasOperations::CanvasOperation::tool_lines.size() * sizeof(double),
+                     CanvasOperations::CanvasOperation::tool_lines.data(), GL_STREAM_DRAW);
         glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
         glEnableVertexAttribArray(0);
 
         glUniform4f(_uniforms.color, CanvasOperations::CanvasOperation::tool_line_color[0],
                     CanvasOperations::CanvasOperation::tool_line_color[1], CanvasOperations::CanvasOperation::tool_line_color[2],
                     CanvasOperations::CanvasOperation::tool_line_color[3]); // color
-        glDrawArrays(GL_LINES, 0, CanvasOperations::CanvasOperation::tool_lines_count / 2);
+        glDrawArrays(GL_LINES, 0, CanvasOperations::CanvasOperation::tool_lines.size() / 2);
 
         glUniform4f(_uniforms.color, 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
-        glDrawArrays(GL_POINTS, 0, CanvasOperations::CanvasOperation::tool_lines_count / 2);
+        glDrawArrays(GL_POINTS, 0, CanvasOperations::CanvasOperation::tool_lines.size() / 2);
     }
 
     if (_bool_flags.show_catched_points) // catched point

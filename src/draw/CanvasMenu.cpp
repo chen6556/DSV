@@ -81,7 +81,7 @@ void CanvasMenu::exec(Geo::Geometry *object)
     else if (a == _bezier_to_bspline)
     {
         _canvas->editer().bezier_to_bspline(dynamic_cast<Geo::CubicBezier *>(object));
-        CanvasOperations::CanvasOperation::tool_lines_count = 0;
+        CanvasOperations::CanvasOperation::tool_lines.clear();
         _canvas->refresh_vbo(true, {Geo::Type::BEZIER, Geo::Type::BSPLINE});
         _canvas->refresh_selected_ibo();
     }
@@ -96,7 +96,7 @@ void CanvasMenu::exec(Geo::Geometry *object)
     else if (a == _bspline_to_bezier)
     {
         _canvas->editer().bspline_to_bezier(dynamic_cast<Geo::BSpline *>(object));
-        CanvasOperations::CanvasOperation::tool_lines_count = 0;
+        CanvasOperations::CanvasOperation::tool_lines.clear();
         _canvas->refresh_vbo(true, {Geo::Type::BEZIER, Geo::Type::BSPLINE});
         _canvas->refresh_selected_ibo();
     }

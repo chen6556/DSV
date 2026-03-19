@@ -1,5 +1,6 @@
 #pragma once
 #include <set>
+#include <vector>
 #include <QString>
 #include <QMouseEvent>
 #include "base/Geometry.hpp"
@@ -49,12 +50,8 @@ enum class Tool
 class CanvasOperation
 {
 public:
-    static double *shape;
-    static double *tool_lines;
-    static unsigned int shape_len;
-    static unsigned int shape_count;
-    static unsigned int tool_lines_len;
-    static unsigned int tool_lines_count;
+    static std::vector<double> shape;
+    static std::vector<double> tool_lines;
     static float tool_line_width;
     static float tool_line_color[4];
     static double real_pos[4]; // current(x,y), last(x,y)
@@ -93,14 +90,6 @@ public:
     void clear();
 
     CanvasOperation *operator[](const Tool tool);
-
-    static void check_shape_size();
-
-    static void check_shape_size(const size_t count);
-
-    static void check_tool_lines_size();
-
-    static void check_tool_lines_size(const size_t count);
 
     static void refresh_tool_lines(const Geo::Geometry *object);
 
