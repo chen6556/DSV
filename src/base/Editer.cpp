@@ -1,4 +1,5 @@
 #include <thread>
+#include <algorithm>
 #include "base/Editer.hpp"
 #include "io/GlobalSetting.hpp"
 #include "io/SHXReader.hpp"
@@ -121,9 +122,16 @@ const size_t Editer::current_group() const
 
 void Editer::set_current_group(const size_t index)
 {
-    if (index < _graph->container_groups().size())
+    if (index < _graph->container_groups().size() && index != _current_group)
     {
         _current_group = index;
+        for (ContainerGroup &group : *_graph)
+        {
+            for (Geo::Geometry *object : group)
+            {
+                object->is_selected = false;
+            }
+        }
     }
 }
 
@@ -162,20 +170,11 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others, 
     std::vector<Geo::Geometry *> objects;
     if (visible_only)
     {
-        std::vector<std::tuple<size_t, Geo::Geometry *>> items;
-        const ContainerGroup &group = _graph->container_group(_current_group);
-        for (Geo::Geometry *object : _view_tree.visible_objects())
-        {
-            if (auto it = std::find(group.begin(), group.end(), object); it != group.end())
-            {
-                items.emplace_back(std::distance(group.begin(), it), object);
-            }
-        }
-        std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) { return std::get<0>(a) > std::get<0>(b); });
-        for (const auto [index, object] : items)
-        {
-            objects.push_back(object);
-        }
+        std::vector<Geo::Geometry *> current_group_objects(_graph->container_group(_current_group).begin(),
+                                                           _graph->container_group(_current_group).end());
+        std::sort(current_group_objects.begin(), current_group_objects.end());
+        std::set_intersection(_view_tree.visible_objects().begin(), _view_tree.visible_objects().end(), current_group_objects.begin(),
+                              current_group_objects.end(), std::back_inserter(objects));
     }
     else
     {
@@ -735,20 +734,11 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const boo
     std::vector<Geo::Geometry *> objects;
     if (visible_only)
     {
-        std::vector<std::tuple<size_t, Geo::Geometry *>> items;
-        const ContainerGroup &group = _graph->container_group(_current_group);
-        for (Geo::Geometry *object : _view_tree.visible_objects())
-        {
-            if (auto it = std::find(group.begin(), group.end(), object); it != group.end())
-            {
-                items.emplace_back(std::distance(group.begin(), it), object);
-            }
-        }
-        std::sort(items.begin(), items.end(), [](const auto &a, const auto &b) { return std::get<0>(a) < std::get<0>(b); });
-        for (const auto [index, object] : items)
-        {
-            objects.push_back(object);
-        }
+        std::vector<Geo::Geometry *> current_group_objects(_graph->container_group(_current_group).begin(),
+                                                           _graph->container_group(_current_group).end());
+        std::sort(current_group_objects.begin(), current_group_objects.end());
+        std::set_intersection(_view_tree.visible_objects().begin(), _view_tree.visible_objects().end(), current_group_objects.begin(),
+                              current_group_objects.end(), std::back_inserter(objects));
     }
     else
     {
@@ -797,6 +787,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const boo
             result.insert(result.end(), temp[i].begin(), temp[i].end());
         }
     }
+    std::sort(result.begin(), result.end());
     return result;
 }
 
@@ -837,6 +828,7 @@ std::vector<Geo::Geometry *> Editer::selected(const bool visible_only) const
             }
         }
     }
+    std::sort(result.begin(), result.end());
     return result;
 }
 

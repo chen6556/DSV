@@ -91,7 +91,12 @@ void MainWindow::init()
     ui->statusBar->addPermanentWidget(_layers_cbx);
     _layers_cbx->setModel(_layers_manager->model());
     connect(_layers_cbx, &QComboBox::currentIndexChanged,
-            [this](int index) { ui->canvas->editer().set_current_group(ui->canvas->editer().groups_count() - 1 - index); });
+            [this](int index)
+            {
+                ui->canvas->editer().set_current_group(ui->canvas->editer().groups_count() - 1 - index);
+                ui->canvas->refresh_selected_ibo();
+                ui->canvas->update();
+            });
 
 #ifdef _WIN64
     WinUITool::set_caption_color(winId(), 0x3C3C3D);

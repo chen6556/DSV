@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "draw/CanvasOperation.hpp"
 #include "base/Algorithm.hpp"
 #include "draw/Canvas.hpp"
@@ -410,6 +411,10 @@ bool MoveOperation::mouse_move(QMouseEvent *event)
             types.insert(object->type());
         }
         Canvas::canvas->refresh_vbo(false, types);
+        std::vector<Geo::Geometry *> visible_selected_objects;
+        std::set_intersection(selected_objects.begin(), selected_objects.end(), Canvas::canvas->editer().visible_objects().begin(),
+                       Canvas::canvas->editer().visible_objects().end(), std::back_inserter(visible_selected_objects));
+        Canvas::canvas->refresh_selected_ibo(visible_selected_objects);
     }
     return true;
 }
@@ -1310,8 +1315,8 @@ bool Arc0Operation::read_parameters(const double *params, const int count)
             _parameters[0] = params[0];
             _parameters[1] = params[1];
             tool_lines.resize(8);
-            tool_lines[0] = tool_lines[2] = tool_lines[4] = tool_lines[6] =params[0];
-            tool_lines[1] = tool_lines[3] = tool_lines[5] = tool_lines[7] =params[1];
+            tool_lines[0] = tool_lines[2] = tool_lines[4] = tool_lines[6] = params[0];
+            tool_lines[1] = tool_lines[3] = tool_lines[5] = tool_lines[7] = params[1];
             release_pos[0] = press_pos[0] = _parameters[0];
             release_pos[1] = press_pos[1] = _parameters[1];
             _index++;

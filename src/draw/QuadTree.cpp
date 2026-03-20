@@ -1,5 +1,5 @@
-#include <set>
 #include <future>
+#include <unordered_set>
 #include "QuadTree.hpp"
 #include "base/Algorithm.hpp"
 
@@ -321,8 +321,9 @@ void QuadTree::clear()
 void QuadTree::find_visible_objects(const Geo::AABBRectParams &rect, std::vector<Geo::Geometry *> &visible_objects)
 {
     _root.find_visible_objects(rect, visible_objects);
-    std::set<Geo::Geometry *> temp(visible_objects.begin(), visible_objects.end());
+    std::unordered_set<Geo::Geometry *> temp(visible_objects.begin(), visible_objects.end());
     visible_objects.assign(temp.begin(), temp.end());
+    std::sort(visible_objects.begin(), visible_objects.end());
 }
 
 void QuadTree::find_visible_objects(const Geo::AABBRectParams &rect)
@@ -461,7 +462,6 @@ void QuadTree::update(const std::vector<Geo::Geometry *> &objects)
         {
             _root.update(object);
         }
-        return;
     }
     else
     {
