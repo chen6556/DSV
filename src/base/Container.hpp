@@ -1,44 +1,84 @@
 #pragma once
 
+#include <QFont>
 #include <QString>
-
+#include <QPainter>
 #include "base/Geometry.hpp"
 
 
-class Text : public Geo::AABBRect
+class Text : public Geo::Geometry
 {
 private:
     QString _text;
-    int _text_size;
+    QFont _font;
+    int _anchor_index = 3;
+    double _font_size = 10;
+    Geo::Point _shape[4] = {Geo::Point(0, 10), Geo::Point(10, 10), Geo::Point(10, 0), Geo::Point(0, 0)};
 
 public:
     unsigned long long text_index = 0;
     unsigned long long text_count = 0;
 
 public:
-    Text(const double x, const double y, const int size, QString text = "Text");
+    Text(const double x, const double y, const QFont &font, QString text = "Text", const int anchor_index = 3);
 
     Text(const Text &text) = default;
 
     const Geo::Type type() const override;
 
-    Text &operator=(const Text &text);
+    const double length() const override;
 
-    void set_text(const QString &str, const int size);
+    const bool empty() const override;
 
-    void update_size(const int size);
+    Text &operator=(const Text &text) = default;
 
-    int text_size() const;
+    void set_text(const QString &str);
+
+    void set_font(const QFont &font);
+
+    const QFont &font() const;
+
+    QFont &font();
 
     const QString &text() const;
 
-    Geo::AABBRect &shape();
+    const Geo::Point &anchor() const;
 
-    const Geo::AABBRect &shape() const;
+    Geo::Point center() const;
+
+    const Geo::Point &shape(const int index) const;
+
+    const double width() const;
+
+    const double height() const;
+
+    const double angle() const;
 
     void clear() override;
 
     Text *clone() const override;
+
+    void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
+
+    void transform(const double mat[6]) override;
+
+    void translate(const double tx, const double ty) override;
+
+    void rotate(const double x, const double y, const double rad) override; // 弧度制
+
+    void scale(const double x, const double y, const double k) override;
+
+    Geo::Polygon convex_hull() const override;
+
+    // 外接AABB矩形
+    Geo::AABBRect bounding_rect() const override;
+
+    // 最小外接矩形
+    Geo::Polygon mini_bounding_rect() const override;
+
+    Geo::AABBRectParams aabbrect_params() const override;
+
+    void paint(QPainter &painter) const;
 };
 
 class Combination;

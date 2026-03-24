@@ -257,8 +257,11 @@ void PropertyWidget::show(Text *text)
     _text = text;
     ui->stackedWidget->setCurrentIndex(9);
     ui->object_type_lb->setText("Text");
-    ui->text_centerX->setValue(text->center().x);
-    ui->text_centerY->setValue(text->center().y);
+    ui->text_anchorX->setValue(text->anchor().x);
+    ui->text_anchorY->setValue(text->anchor().y);
     ui->text_width->setValue(text->width());
     ui->text_height->setValue(text->height());
+    ui->text_font->setText(text->font().family());
+    ui->text_fontSize->setValue(text->font().pointSize());
+    ui->text_angle->setValue(Geo::rad_to_degree(text->angle()));
 }

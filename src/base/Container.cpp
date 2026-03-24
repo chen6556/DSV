@@ -7,31 +7,53 @@
 
 // Text
 
-Text::Text(const double x, const double y, const int size, QString text) : _text(std::move(text)), _text_size(size)
+Text::Text(const double x, const double y, const QFont &font, QString text, const int anchor_index)
+    : _text(std::move(text)), _font(font), _anchor_index(anchor_index)
 {
-    QFont font("SimSun");
-    font.setPointSize(size);
-    const QFontMetrics font_metrics(font);
-    int width = 2;
-    int height = 2;
+    const QFontMetricsF font_metrics(_font);
+    double width = 2;
+    double height = 0;
     for (const QString &txt : _text.split('\n'))
     {
-        const QRect rect = font_metrics.tightBoundingRect(txt);
+        const QRectF rect = font_metrics.boundingRect(txt);
         width = std::max(width, rect.width());
         height += rect.height();
     }
-    if (width == 2)
+    if (width <= 2)
     {
         width = 20;
     }
-    if (height == 2)
+    if (height <= 2)
     {
         height = 20;
     }
-    set_left(x - 1 - width / 2);
-    set_right(x + 1 + width / 2);
-    set_top(y + height / 2);
-    set_bottom(y - height / 2);
+    switch (anchor_index)
+    {
+    case 0:
+        _shape[0].x = x, _shape[0].y = y;
+        _shape[1].x = x + width, _shape[1].y = y;
+        _shape[2].x = x + width, _shape[2].y = y - height;
+        _shape[3].x = x, _shape[3].y = y - height;
+        break;
+    case 1:
+        _shape[0].x = x - width, _shape[0].y = y;
+        _shape[1].x = x, _shape[1].y = y;
+        _shape[2].x = x, _shape[2].y = y - height;
+        _shape[3].x = x - width, _shape[3].y = y - height;
+        break;
+    case 2:
+        _shape[0].x = x - width, _shape[0].y = y + height;
+        _shape[1].x = x, _shape[1].y = y + height;
+        _shape[2].x = x, _shape[2].y = y;
+        _shape[3].x = x - width, _shape[3].y = y;
+        break;
+    default:
+        _shape[0].x = x, _shape[0].y = y + height;
+        _shape[1].x = x + width, _shape[1].y = y + height;
+        _shape[2].x = x + width, _shape[2].y = y;
+        _shape[3].x = x, _shape[3].y = y;
+        break;
+    }
 }
 
 const Geo::Type Text::type() const
@@ -39,84 +61,139 @@ const Geo::Type Text::type() const
     return Geo::Type::TEXT;
 }
 
-Text &Text::operator=(const Text &text)
+const double Text::length() const
 {
-    if (&text != this)
+    double result = std::hypot(_shape[0].x - _shape[3].x, _shape[0].y - _shape[3].y);
+    for (int i = 1; i < 4; ++i)
     {
-        Geo::AABBRect::operator=(text);
-        _text = text._text;
-        _text_size = text._text_size;
-        text_index = text.text_index;
-        text_count = text.text_count;
+        result += std::hypot(_shape[i].x - _shape[i - 1].x, _shape[i].y - _shape[i - 1].y);
     }
-    return *this;
+    return result;
 }
 
-void Text::set_text(const QString &str, const int size)
+const bool Text::empty() const
+{
+    return _text.isEmpty();
+}
+
+void Text::set_text(const QString &str)
 {
     _text = str;
-    _text_size = size;
-    const Geo::Point coord(center());
-    QFont font("SimSun");
-    font.setPointSize(size);
-    const QFontMetrics font_metrics(font);
-    int width = 2;
-    int height = 2;
+    const QFontMetricsF font_metrics(_font);
+    double width = 2;
+    double height = 0;
     for (const QString &txt : _text.split('\n'))
     {
-        const QRect rect = font_metrics.tightBoundingRect(txt);
+        const QRectF rect = font_metrics.boundingRect(txt);
         width = std::max(width, rect.width());
         height += rect.height();
     }
-    if (width == 2)
+    if (width <= 2)
     {
         width = 20;
     }
-    if (height == 2)
+    if (height <= 2)
     {
         height = 20;
     }
-    set_left(coord.x - 1 - width / 2);
-    set_right(coord.x + 1 + width / 2);
-    set_top(coord.y + height / 2);
-    set_bottom(coord.y - height / 2);
+    const double rad = angle();
+    switch (_anchor_index)
+    {
+    case 0:
+        _shape[1].x = _shape[0].x + width, _shape[1].y = _shape[0].y;
+        _shape[2].x = _shape[0].x + width, _shape[2].y = _shape[0].y - height;
+        _shape[3].x = _shape[0].x, _shape[3].y = _shape[0].y - height;
+        break;
+    case 1:
+        _shape[0].x = _shape[1].x - width, _shape[0].y = _shape[1].y;
+        _shape[2].x = _shape[1].x, _shape[2].y = _shape[1].y - height;
+        _shape[3].x = _shape[1].x - width, _shape[3].y = _shape[1].y - height;
+        break;
+    case 2:
+        _shape[0].x = _shape[2].x - width, _shape[0].y = _shape[2].y + height;
+        _shape[1].x = _shape[2].x, _shape[1].y = _shape[2].y + height;
+        _shape[3].x = _shape[2].x - width, _shape[3].y = _shape[2].y;
+        break;
+    default:
+        _shape[0].x = _shape[3].x, _shape[0].y = _shape[3].y + height;
+        _shape[1].x = _shape[3].x + width, _shape[1].y = _shape[3].y + height;
+        _shape[2].x = _shape[3].x + width, _shape[2].y = _shape[3].y;
+        break;
+    }
+    for (int i = 0; i < 4; ++i)
+    {
+        if (i != _anchor_index)
+        {
+            _shape[i].rotate(_shape[_anchor_index].x, _shape[_anchor_index].y, rad);
+        }
+    }
 }
 
-void Text::update_size(const int size)
+void Text::set_font(const QFont &font)
 {
-    if (_text_size == size)
+    if (_font == font)
     {
         return;
     }
-    const Geo::Point coord(center());
-    QFont font("SimSun");
-    font.setPointSize(size);
-    const QFontMetrics font_metrics(font);
-    int width = 2;
-    int height = 2;
+    _font = font;
+    const QFontMetricsF font_metrics(_font);
+    double width = 2;
+    double height = 0;
     for (const QString &txt : _text.split('\n'))
     {
-        const QRect rect = font_metrics.tightBoundingRect(txt);
+        const QRectF rect = font_metrics.boundingRect(txt);
         width = std::max(width, rect.width());
         height += rect.height();
     }
-    if (width == 2)
+    if (width <= 2)
     {
         width = 20;
     }
-    if (height == 2)
+    if (height <= 2)
     {
         height = 20;
     }
-    set_left(coord.x - 1 - width / 2);
-    set_right(coord.x + 1 + width / 2);
-    set_top(coord.y + height / 2);
-    set_bottom(coord.y - height / 2);
+    const double rad = angle();
+    switch (_anchor_index)
+    {
+    case 0:
+        _shape[1].x = _shape[0].x + width, _shape[1].y = _shape[0].y;
+        _shape[2].x = _shape[0].x + width, _shape[2].y = _shape[0].y - height;
+        _shape[3].x = _shape[0].x, _shape[3].y = _shape[0].y - height;
+        break;
+    case 1:
+        _shape[0].x = _shape[1].x - width, _shape[0].y = _shape[1].y;
+        _shape[2].x = _shape[1].x, _shape[2].y = _shape[1].y - height;
+        _shape[3].x = _shape[1].x - width, _shape[3].y = _shape[1].y - height;
+        break;
+    case 2:
+        _shape[0].x = _shape[2].x - width, _shape[0].y = _shape[2].y + height;
+        _shape[1].x = _shape[2].x, _shape[1].y = _shape[2].y + height;
+        _shape[3].x = _shape[2].x - width, _shape[3].y = _shape[2].y;
+        break;
+    default:
+        _shape[0].x = _shape[3].x, _shape[0].y = _shape[3].y + height;
+        _shape[1].x = _shape[3].x + width, _shape[1].y = _shape[3].y + height;
+        _shape[2].x = _shape[3].x + width, _shape[2].y = _shape[3].y;
+        break;
+    }
+    for (int i = 0; i < 4; ++i)
+    {
+        if (i != _anchor_index)
+        {
+            _shape[i].rotate(_shape[_anchor_index].x, _shape[_anchor_index].y, rad);
+        }
+    }
 }
 
-int Text::text_size() const
+const QFont &Text::font() const
 {
-    return _text_size;
+    return _font;
+}
+
+QFont &Text::font()
+{
+    return _font;
 }
 
 const QString &Text::text() const
@@ -124,24 +201,71 @@ const QString &Text::text() const
     return _text;
 }
 
-Geo::AABBRect &Text::shape()
+const Geo::Point &Text::anchor() const
 {
-    return *dynamic_cast<Geo::AABBRect *>(this);
+    return _shape[_anchor_index];
 }
 
-const Geo::AABBRect &Text::shape() const
+Geo::Point Text::center() const
 {
-    return *dynamic_cast<const Geo::AABBRect *>(this);
+    return (_shape[0] + _shape[1] + _shape[2] + _shape[3]) / 4;
+}
+
+const Geo::Point &Text::shape(const int index) const
+{
+    assert(0 <= index && index < 4);
+    return _shape[index];
+}
+
+const double Text::width() const
+{
+    return std::hypot(_shape[0].x - _shape[1].x, _shape[0].y - _shape[1].y);
+}
+
+const double Text::height() const
+{
+    return std::hypot(_shape[0].x - _shape[3].x, _shape[0].y - _shape[3].y);
+}
+
+const double Text::angle() const
+{
+    return std::atan2(_shape[1].y - _shape[0].y, _shape[1].x - _shape[0].x);
 }
 
 void Text::clear()
 {
     _text.clear();
-    const Geo::Point coord(center());
-    set_left(coord.x - 10);
-    set_left(coord.x + 10);
-    set_top(coord.y + 10);
-    set_bottom(coord.y + 10);
+    const double rad = angle();
+    switch (_anchor_index)
+    {
+    case 0:
+        _shape[1].x = _shape[0].x + 20, _shape[1].y = _shape[0].y;
+        _shape[2].x = _shape[0].x + 20, _shape[2].y = _shape[0].y - 20;
+        _shape[3].x = _shape[0].x, _shape[3].y = _shape[0].y - 20;
+        break;
+    case 1:
+        _shape[0].x = _shape[1].x - 20, _shape[0].y = _shape[1].y;
+        _shape[2].x = _shape[1].x, _shape[2].y = _shape[1].y - 20;
+        _shape[3].x = _shape[1].x - 20, _shape[3].y = _shape[1].y - 20;
+        break;
+    case 2:
+        _shape[0].x = _shape[2].x - 20, _shape[0].y = _shape[2].y + 20;
+        _shape[1].x = _shape[2].x, _shape[1].y = _shape[2].y + 20;
+        _shape[3].x = _shape[2].x - 20, _shape[3].y = _shape[2].y;
+        break;
+    default:
+        _shape[0].x = _shape[3].x, _shape[0].y = _shape[3].y + 20;
+        _shape[1].x = _shape[3].x + 20, _shape[1].y = _shape[3].y + 20;
+        _shape[2].x = _shape[3].x + 20, _shape[2].y = _shape[3].y;
+        break;
+    }
+    for (int i = 0; i < 4; ++i)
+    {
+        if (i != _anchor_index)
+        {
+            _shape[i].rotate(_shape[_anchor_index].x, _shape[_anchor_index].y, rad);
+        }
+    }
 }
 
 Text *Text::clone() const
@@ -149,6 +273,95 @@ Text *Text::clone() const
     return new Text(*this);
 }
 
+void Text::transform(const double a, const double b, const double c, const double d, const double e, const double f)
+{
+    Geo::Point point = center();
+    point.transform(a, b, c, d, e, f);
+    const double tx = point.x - center().x, ty = point.y - center().y;
+    for (int i = 0; i < 4; ++i)
+    {
+        _shape[i].translate(tx, ty);
+    }
+}
+
+void Text::transform(const double mat[6])
+{
+    return transform(mat[0], mat[1], mat[2], mat[3], mat[4], mat[5]);
+}
+
+void Text::translate(const double tx, const double ty)
+{
+    for (int i = 0; i < 4; ++i)
+    {
+        _shape[i].translate(tx, ty);
+    }
+}
+
+void Text::rotate(const double x, const double y, const double rad)
+{
+    for (int i = 0; i < 4; ++i)
+    {
+        _shape[i].rotate(x, y, rad);
+    }
+}
+
+void Text::scale(const double x, const double y, const double k)
+{
+    QFont font(_font);
+    font.setPointSizeF(std::max(_font.pointSizeF() * k, 1.0));
+    set_font(font);
+}
+
+Geo::Polygon Text::convex_hull() const
+{
+    return Geo::Polygon({_shape[0], _shape[1], _shape[2], _shape[3], _shape[0]});
+}
+
+Geo::AABBRect Text::bounding_rect() const
+{
+    double left = _shape[0].x, right = _shape[2].x;
+    double top = _shape[0].y, bottom = _shape[2].y;
+    for (int i = 0; i < 4; ++i)
+    {
+        left = std::min(_shape[i].x, left);
+        right = std::max(_shape[i].x, right);
+        top = std::max(_shape[i].y, top);
+        bottom = std::min(_shape[i].y, bottom);
+    }
+    return Geo::AABBRect(left, top, right, bottom);
+}
+
+Geo::Polygon Text::mini_bounding_rect() const
+{
+    return Geo::Polygon({_shape[0], _shape[1], _shape[2], _shape[3], _shape[0]});
+}
+
+Geo::AABBRectParams Text::aabbrect_params() const
+{
+    Geo::AABBRectParams param{_shape[0].x, _shape[0].y, _shape[2].x, _shape[2].y};
+    for (int i = 0; i < 4; ++i)
+    {
+        param.left = std::min(_shape[i].x, param.left);
+        param.right = std::max(_shape[i].x, param.right);
+        param.top = std::max(_shape[i].y, param.top);
+        param.bottom = std::min(_shape[i].y, param.bottom);
+    }
+    return param;
+}
+
+void Text::paint(QPainter &painter) const
+{
+    painter.setFont(_font);
+    // const double h = -QFontMetricsF(_font).height();
+    // const QStringList txts = _text.split('\n');
+    // int index = txts.size();
+    // for (const QString &txt : txts)
+    // {
+    //     painter.drawText(0, h * --index, txt);
+    // }
+    const QRectF rect(0, -height(), width(), height());
+    painter.drawText(rect, _text);
+}
 
 // ContainerGroup
 
@@ -385,10 +598,13 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
         switch (continer->type())
         {
         case Geo::Type::TEXT:
-            x0 = std::min(x0, static_cast<const Text *>(continer)->left());
-            y0 = std::min(y0, static_cast<const Text *>(continer)->bottom());
-            x1 = std::max(x1, static_cast<const Text *>(continer)->right());
-            y1 = std::max(y1, static_cast<const Text *>(continer)->top());
+            {
+                const Geo::AABBRectParams param = continer->aabbrect_params();
+                x0 = std::min(x0, param.left);
+                y0 = std::min(y0, param.bottom);
+                x1 = std::max(x1, param.right);
+                y1 = std::max(y1, param.top);
+            }
             break;
         case Geo::Type::POLYGON:
             for (const Geo::Point &point : *static_cast<const Geo::Polygon *>(continer))
@@ -419,11 +635,11 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
             break;
         case Geo::Type::COMBINATION:
             {
-                const Geo::AABBRect rect(static_cast<const Combination *>(continer)->bounding_rect());
-                x0 = std::min(x0, rect.left());
-                y0 = std::min(y0, rect.bottom());
-                x1 = std::max(x1, rect.right());
-                y1 = std::max(y1, rect.top());
+                const Geo::AABBRectParams rect = continer->aabbrect_params();
+                x0 = std::min(x0, rect.left);
+                y0 = std::min(y0, rect.bottom);
+                x1 = std::max(x1, rect.right);
+                y1 = std::max(y1, rect.top);
             }
             break;
         case Geo::Type::POLYLINE:
@@ -490,10 +706,13 @@ Geo::AABBRectParams ContainerGroup::aabbrect_params() const
         switch (continer->type())
         {
         case Geo::Type::TEXT:
-            x0 = std::min(x0, static_cast<const Text *>(continer)->left());
-            y0 = std::min(y0, static_cast<const Text *>(continer)->bottom());
-            x1 = std::max(x1, static_cast<const Text *>(continer)->right());
-            y1 = std::max(y1, static_cast<const Text *>(continer)->top());
+            {
+                const Geo::AABBRectParams param = continer->aabbrect_params();
+                x0 = std::min(x0, param.left);
+                y0 = std::min(y0, param.bottom);
+                x1 = std::max(x1, param.right);
+                y1 = std::max(y1, param.top);
+            }
             break;
         case Geo::Type::POLYGON:
             for (const Geo::Point &point : *static_cast<const Geo::Polygon *>(continer))

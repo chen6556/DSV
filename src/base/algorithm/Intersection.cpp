@@ -3358,6 +3358,29 @@ bool Geo::is_intersected(const AABBRect &rect, const Arc &arc)
     return false;
 }
 
+bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const Point &point1, const Point &point2, const Point &point3)
+{
+    if (is_inside(point0, rect) || is_inside(point1, rect) || is_inside(point2, rect) || is_inside(point3, rect))
+    {
+        return true;
+    }
+    else if (is_intersected(rect, point0, point1) || is_intersected(rect, point1, point2) || is_intersected(rect, point2, point3) ||
+             is_intersected(rect, point3, point0))
+    {
+        return true;
+    }
+    else
+    {
+        for (int i = 0; i < 4; ++i)
+        {
+            if (Geo::is_inside(rect[i], point0, point1, point2, point3, false))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+}
 
 bool Geo::is_intersected(const Point &start, const Point &end, const Triangle &triangle, Point &output0, Point &output1)
 {

@@ -608,6 +608,6 @@ TextChangedCommand::TextChangedCommand(Text *item, QString text) : _item(item), 
 
 void TextChangedCommand::undo(Graph *graph)
 {
-    _item->set_text(_text, GlobalSetting::setting().text_size);
+    _item->set_text(_text);
     updated.push_back(_item);
 }

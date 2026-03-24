@@ -247,11 +247,12 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others, 
         {
         case Geo::Type::TEXT:
             t = static_cast<Text *>(it);
-            if (Geo::is_inside(point, *static_cast<const Geo::AABBRect *>(t), true))
+            if (Geo::is_inside(point, t->shape(0), t->shape(1), t->shape(2), t->shape(3), false))
             {
                 t->is_selected = true;
                 return t;
             }
+            t = nullptr;
             break;
         case Geo::Type::POLYGON:
             polygon = static_cast<Geo::Polygon *>(it);
@@ -306,11 +307,13 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others, 
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        if (Geo::is_inside(point, *static_cast<const Geo::AABBRect *>(item), true))
+                        t = static_cast<Text *>(item);
+                        if (Geo::is_inside(point, t->shape(0), t->shape(1), t->shape(2), t->shape(3), false))
                         {
                             cb->is_selected = true;
                             return cb;
                         }
+                        t = nullptr;
                         break;
                     case Geo::Type::POLYGON:
                         polygon = static_cast<Geo::Polygon *>(item);
@@ -518,12 +521,13 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
         {
         case Geo::Type::TEXT:
             t = static_cast<Text *>(*it);
-            if (Geo::is_inside(point, *static_cast<const Geo::AABBRect *>(t), true))
+            if (Geo::is_inside(point, t->shape(0), t->shape(1), t->shape(2), t->shape(3), false))
             {
                 bool state = t->is_selected;
                 t->is_selected = true;
                 return std::make_tuple(t, state);
             }
+            t = nullptr;
             break;
         case Geo::Type::POLYGON:
             polygon = static_cast<Geo::Polygon *>(*it);
@@ -574,12 +578,14 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        if (Geo::is_inside(point, *static_cast<const Geo::AABBRect *>(item), true))
+                        t = static_cast<Text *>(item);
+                        if (Geo::is_inside(point, t->shape(0), t->shape(1), t->shape(2), t->shape(3), false))
                         {
                             bool state = cb->is_selected;
                             cb->is_selected = true;
                             return std::make_tuple(cb, state);
                         }
+                        t = nullptr;
                         break;
                     case Geo::Type::POLYGON:
                         if (Geo::is_inside(point, *static_cast<Geo::Polygon *>(item), true))
@@ -2122,19 +2128,12 @@ bool Editer::scale(const std::vector<Geo::Geometry *> &objects, const bool unita
         bool flag = false;
         for (Geo::Geometry *object : objects)
         {
-            if (object->type() == Geo::Type::TEXT)
-            {
-                object->is_selected = false;
-            }
-            else
-            {
-                Geo::AABBRectParams rect = object->aabbrect_params();
-                top = std::max(top, rect.top);
-                bottom = std::min(bottom, rect.bottom);
-                left = std::min(left, rect.left);
-                right = std::max(right, rect.right);
-                flag = true;
-            }
+            const Geo::AABBRectParams rect = object->aabbrect_params();
+            top = std::max(top, rect.top);
+            bottom = std::min(bottom, rect.bottom);
+            left = std::min(left, rect.left);
+            right = std::max(right, rect.right);
+            flag = true;
         }
 
         if (!flag)
@@ -2145,11 +2144,8 @@ bool Editer::scale(const std::vector<Geo::Geometry *> &objects, const bool unita
         const double x = (left + right) / 2, y = (top + bottom) / 2;
         for (Geo::Geometry *object : objects)
         {
-            if (object->type() != Geo::Type::TEXT)
-            {
-                object->scale(x, y, k);
-                _view_tree.update(object);
-            }
+            object->scale(x, y, k);
+            _view_tree.update(object);
         }
 
         _backup.push_command(new UndoStack::ScaleCommand(objects, x, y, k, unitary));
@@ -2159,17 +2155,10 @@ bool Editer::scale(const std::vector<Geo::Geometry *> &objects, const bool unita
         bool flag = false;
         for (Geo::Geometry *object : objects)
         {
-            if (object->type() == Geo::Type::TEXT)
-            {
-                object->is_selected = false;
-            }
-            else
-            {
-                Geo::AABBRectParams rect = object->aabbrect_params();
-                object->scale((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2, k);
-                flag = true;
-                _view_tree.update(object);
-            }
+            const Geo::AABBRectParams rect = object->aabbrect_params();
+            object->scale((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2, k);
+            flag = true;
+            _view_tree.update(object);
         }
 
         if (!flag)
@@ -9153,7 +9142,7 @@ void Editer::auto_combinate()
                         }
                         break;
                     case Geo::Type::TEXT:
-                        if (Geo::is_intersected(*static_cast<Geo::AABBRect *>(all_polylines[k]), *static_cast<Geo::Polygon *>(objects[j])))
+                        if (Geo::is_intersected(static_cast<Text *>(all_polylines[k])->convex_hull(), *static_cast<Geo::Polygon *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
@@ -9207,7 +9196,7 @@ void Editer::auto_combinate()
                         }
                         break;
                     case Geo::Type::TEXT:
-                        if (Geo::is_intersected(*static_cast<Geo::AABBRect *>(all_polylines[k]), *static_cast<Geo::Circle *>(objects[j])))
+                        if (Geo::is_intersected(static_cast<Text *>(all_polylines[k])->convex_hull(), *static_cast<Geo::Circle *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
@@ -9261,7 +9250,7 @@ void Editer::auto_combinate()
                         }
                         break;
                     case Geo::Type::TEXT:
-                        if (Geo::is_intersected(*static_cast<Geo::AABBRect *>(all_polylines[k]), *static_cast<Geo::Circle *>(objects[j])))
+                        if (Geo::is_intersected(static_cast<Text *>(all_polylines[k])->convex_hull(), *static_cast<Geo::Circle *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
@@ -9737,7 +9726,7 @@ void Editer::text_to_polylines(Text *text)
     const std::string result = TextEncoding::uft8_to_gbk(text->text().toStdString());
     for (int i = 0, init_x = text->aabbrect_params().left, x = text->aabbrect_params().left,
              y = text->aabbrect_params().top - GlobalSetting::setting().text_size, count = result.length(),
-             font_size = GlobalSetting::setting().text_size;
+             font_size = text->font().pointSize();
          i < count; ++i)
     {
         if (result[i] < 0)
@@ -9860,7 +9849,8 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const std::vector<Geo::Ge
         switch (container->type())
         {
         case Geo::Type::TEXT:
-            if (Geo::is_intersected(*static_cast<const Geo::AABBRect *>(container), rect))
+            if (const Text *text = static_cast<const Text *>(container);
+                Geo::is_intersected(rect, text->shape(0), text->shape(1), text->shape(2), text->shape(3)))
             {
                 container->is_selected = true;
                 result->push_back(container);
@@ -9896,7 +9886,8 @@ void Editer::select_subfunc(const Geo::AABBRect &rect, const std::vector<Geo::Ge
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        if (Geo::is_intersected(*static_cast<const Geo::AABBRect *>(item), rect))
+                        if (const Text *text = static_cast<const Text *>(item);
+                            Geo::is_intersected(rect, text->shape(0), text->shape(1), text->shape(2), text->shape(3)))
                         {
                             end = true;
                         }

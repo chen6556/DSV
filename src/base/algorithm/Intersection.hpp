@@ -136,6 +136,9 @@ bool is_intersected(const AABBRect &rect, const Ellipse &ellipse);
 // 判断AABB矩形是否与圆弧相交,圆弧完全在AABB矩形内也算相交
 bool is_intersected(const AABBRect &rect, const Arc &arc);
 
+// 判断AABB矩形是否与四边形相交,四边形完全在AABB矩形内也算相交
+bool is_intersected(const AABBRect &rect, const Point &point0, const Point &point1, const Point &point2, const Point &point3);
+
 
 // 判断有限长线段是否与三角形相交,线段完全在三角形内不算相交
 bool is_intersected(const Point &start, const Point &end, const Triangle &triangle, Point &output0, Point &output1);

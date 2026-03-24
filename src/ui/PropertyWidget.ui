@@ -293,8 +293,8 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>152</width>
-            <height>433</height>
+            <width>135</width>
+            <height>455</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -440,8 +440,8 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>152</width>
-            <height>433</height>
+            <width>135</width>
+            <height>455</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -587,8 +587,8 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>158</width>
-            <height>431</height>
+            <width>115</width>
+            <height>259</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -682,8 +682,8 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>158</width>
-            <height>431</height>
+            <width>115</width>
+            <height>259</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_11">
@@ -789,8 +789,8 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>152</width>
-            <height>497</height>
+            <width>132</width>
+            <height>651</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -996,8 +996,8 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>158</width>
-            <height>431</height>
+            <width>115</width>
+            <height>161</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_15">
@@ -1071,8 +1071,8 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>158</width>
-            <height>431</height>
+            <width>115</width>
+            <height>333</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_17">
@@ -1198,8 +1198,8 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>158</width>
-            <height>431</height>
+            <width>115</width>
+            <height>259</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_19">
@@ -1308,24 +1308,24 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               <enum>QFormLayout::RowWrapPolicy::WrapLongRows</enum>
              </property>
              <item row="0" column="0">
-              <widget class="QLabel" name="text_centerXLabel">
+              <widget class="QLabel" name="text_anchorXLabel">
                <property name="text">
-                <string>Center X</string>
+                <string>Anchor X</string>
                </property>
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="QDoubleSpinBox" name="text_centerX"/>
+              <widget class="QDoubleSpinBox" name="text_anchorX"/>
              </item>
              <item row="1" column="0">
-              <widget class="QLabel" name="text_centerYLabel">
+              <widget class="QLabel" name="text_anchorYLabel">
                <property name="text">
-                <string>Center Y</string>
+                <string>Anchor Y</string>
                </property>
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QDoubleSpinBox" name="text_centerY"/>
+              <widget class="QDoubleSpinBox" name="text_anchorY"/>
              </item>
              <item row="2" column="0">
               <widget class="QLabel" name="text_widthLabel">
@@ -1354,6 +1354,40 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                 <bool>true</bool>
                </property>
               </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QLabel" name="text_fontSizeLabel">
+               <property name="text">
+                <string>Font Size</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1">
+              <widget class="QSpinBox" name="text_fontSize"/>
+             </item>
+             <item row="6" column="0">
+              <widget class="QLabel" name="text_angleLabel">
+               <property name="text">
+                <string>Angle</string>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="1">
+              <widget class="QDoubleSpinBox" name="text_angle">
+               <property name="suffix">
+                <string>°</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="text_fontLabel">
+               <property name="text">
+                <string>Font</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QLineEdit" name="text_font"/>
              </item>
             </layout>
            </item>

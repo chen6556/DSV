@@ -263,8 +263,10 @@ void DSVReaderWriter::write(std::ofstream &stream, Text *text)
     stream << "0,Text" << std::endl;
     stream << "1," << _object_to_handle.at(text) << std::endl;
     stream << "3," << _current_layer << std::endl;
-    stream << "10," << text->center().x << std::endl;
-    stream << "11," << text->center().y << std::endl;
+    stream << "10," << text->shape(3).x << std::endl;
+    stream << "11," << text->shape(3).y << std::endl;
+    stream << "30, " << text->angle() << std::endl;
+    stream << "40, " << text->font().pointSize() << std::endl;
     QString txt = text->text();
     txt.replace(QChar('\n'), QChar(0x1F));
     stream << "42," << txt.toStdString() << std::endl;
@@ -1040,7 +1042,7 @@ bool DSVReaderWriter::read_cubicbezier(const std::vector<Pair> &data)
 bool DSVReaderWriter::read_text(const std::vector<Pair> &data)
 {
     bool has_x = false, has_y = false;
-    double x = 0, y = 0;
+    double x = 0, y = 0, size = 14, angle = 0;
     QString txt;
     for (const Pair &pair : data)
     {
@@ -1053,6 +1055,12 @@ bool DSVReaderWriter::read_text(const std::vector<Pair> &data)
         case code_pathy:
             has_y = true;
             y = pair.real;
+            break;
+        case code_rotateangle:
+            angle = pair.real;
+            break;
+        case code_intvalue:
+            size = pair.value;
             break;
         case code_strvalue:
             txt = QString::fromStdString(pair.str);
@@ -1069,7 +1077,13 @@ bool DSVReaderWriter::read_text(const std::vector<Pair> &data)
         {
             if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
             {
-                Text *text = new Text(x, y, GlobalSetting::setting().text_size, txt);
+                QFont font("SimSun");
+                font.setPointSize(size);
+                Text *text = new Text(x, y, font, txt);
+                if (angle != 0)
+                {
+                    text->rotate(x, y, angle);
+                }
                 combination->append(text);
                 _object_to_handle.insert_or_assign(text, _info.hanlde);
                 _handle_to_object.insert_or_assign(_info.hanlde, text);
@@ -1082,7 +1096,13 @@ bool DSVReaderWriter::read_text(const std::vector<Pair> &data)
         }
         else
         {
-            Text *text = new Text(x, y, GlobalSetting::setting().text_size, txt);
+            QFont font("SimSun");
+            font.setPointSize(size);
+            Text *text = new Text(x, y, font, txt);
+            if (angle != 0)
+            {
+                text->rotate(x, y, angle);
+            }
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(text);
             _object_to_handle.insert_or_assign(text, _info.hanlde);
             _handle_to_object.insert_or_assign(_info.hanlde, text);

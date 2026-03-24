@@ -66,6 +66,7 @@ public:
 
     Geo::AABBRect bounding_rect() const override;
 
+    Geo::AABBRectParams aabbrect_params() const override;
 
     std::list<ContainerGroup>::iterator begin();
 

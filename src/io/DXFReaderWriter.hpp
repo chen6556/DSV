@@ -53,6 +53,7 @@ private:
     std::unordered_map<Combination *, int> _block_map;
     std::unordered_map<Combination *, std::string> _block_names;
     std::unordered_map<std::string, Combination *> _block_name_map;
+    std::unordered_map<std::string, std::string> _text_style_font;
     std::unordered_map<int, int> _handle_pairs; // handle-parentHandle
 
 public:

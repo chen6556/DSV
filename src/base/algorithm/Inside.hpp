@@ -40,6 +40,8 @@ bool is_inside(const Point &point, const Arc &arc);
 // 判断一个三角形是否完全在另一个三角形内部,与三角形相交或有顶点在三角形上均不算在三角形内部
 bool is_inside(const Triangle &triangle0, const Triangle &triangle1);
 
+// 判断点是否在四边形内,coincide决定是否包含点在四边形上的情况
+bool is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2, const Point &point3, const bool coincide = false);
 
 namespace NoAABBTest
 {

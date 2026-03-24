@@ -27,7 +27,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
             {
             case Geo::Type::TEXT:
                 text = static_cast<const Text *>(geo);
-                output << "PU" << text->center().x * x_ratio << ',' << text->center().y * y_ratio << ";PD";
+                output << "PU" << text->anchor().x * x_ratio << ',' << text->anchor().y * y_ratio << ";PD";
                 output << ";LB" << QString(text->text()).remove(';').toStdString() << ';' << '\n';
                 text = nullptr;
                 break;
@@ -71,7 +71,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     {
                     case Geo::Type::TEXT:
                         text = static_cast<const Text *>(geo);
-                        output << "PU" << text->center().x * x_ratio << ',' << text->center().y * y_ratio << ";PD";
+                        output << "PU" << text->anchor().x * x_ratio << ',' << text->anchor().y * y_ratio << ";PD";
                         output << ";LB" << QString(text->text()).remove(';').toStdString() << ';' << '\n';
                         text = nullptr;
                         break;

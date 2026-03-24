@@ -1,5 +1,6 @@
 #include <future>
 #include <QPainter>
+#include <QPainterPath>
 #include "base/Algorithm.hpp"
 #include "draw/Canvas.hpp"
 #include "draw/GLSL.hpp"
@@ -912,7 +913,7 @@ void Canvas::hide_text_edit()
     {
         if (const QString text = _edited_text->text(); text != _input_line.toPlainText())
         {
-            _edited_text->set_text(_input_line.toPlainText(), GlobalSetting::setting().text_size);
+            _edited_text->set_text(_input_line.toPlainText());
             UndoStack::TextChangedCommand *cmd = new UndoStack::TextChangedCommand(_edited_text, text);
             cmd->updated.push_back(_edited_text);
             _editer.push_backup_command(cmd);
@@ -2430,18 +2431,11 @@ void Canvas::clear_selected_ibo()
 void Canvas::paint_text()
 {
     _texture.image.fill(Qt::GlobalColor::transparent);
-    QFont font("SimSun", GlobalSetting::setting().text_size);
-    const int h = -QFontMetrics(font).height();
     const QColor white(255, 255, 255), red(255, 0, 0);
     QPainter painter(&_texture.image);
-    painter.setFont(font);
     // painter.setRenderHint(QPainter::RenderHint::Antialiasing, true);
     painter.setCompositionMode(QPainter::CompositionMode::CompositionMode_Source);
 
-    Text *text = nullptr;
-    QStringList strings;
-    int index = 0;
-    double x = 0, y = 0;
     for (const ContainerGroup &group : _editer.graph()->container_groups())
     {
         if (!group.visible())
@@ -2454,46 +2448,42 @@ void Canvas::paint_text()
             switch (geo->type())
             {
             case Geo::Type::TEXT:
-                text = static_cast<Text *>(geo);
-                if (text->text().isEmpty() || !Geo::is_intersected(_visible_area, *text))
                 {
-                    continue;
+                    Text *text = static_cast<Text *>(geo);
+                    if (text->text().isEmpty() ||
+                        !Geo::is_intersected(_visible_area, text->shape(0), text->shape(1), text->shape(2), text->shape(3)))
+                    {
+                        continue;
+                    }
+                    const double x = text->shape(3).x * _canvas_ctm[0] + text->shape(3).y * _canvas_ctm[3] + _canvas_ctm[6];
+                    const double y = text->shape(3).x * _canvas_ctm[1] + text->shape(3).y * _canvas_ctm[4] + _canvas_ctm[7];
+                    painter.save();
+                    painter.setPen(text->is_selected ? red : white);
+                    painter.translate(x, y);
+                    painter.rotate(-Geo::rad_to_degree(text->angle()));
+                    painter.scale(_ratio, _ratio);
+                    text->paint(painter);
+                    painter.restore();
                 }
-                x = text->left() * _canvas_ctm[0] + text->bottom() * _canvas_ctm[3] + _canvas_ctm[6];
-                y = text->left() * _canvas_ctm[1] + text->bottom() * _canvas_ctm[4] + _canvas_ctm[7];
-                strings = text->text().split('\n');
-                index = strings.size();
-                painter.save();
-                painter.setPen(text->is_selected ? red : white);
-                painter.translate(x, y);
-                painter.scale(_ratio, _ratio);
-                for (const QString &string : strings)
-                {
-                    painter.drawText(0, h * --index, string);
-                }
-                painter.restore();
                 break;
             case Geo::Type::COMBINATION:
                 for (Geo::Geometry *item : *static_cast<const Combination *>(geo))
                 {
-                    if (text = dynamic_cast<Text *>(item); text != nullptr)
+                    if (Text *text = dynamic_cast<Text *>(item); text != nullptr)
                     {
-                        if (text->text().isEmpty() || !Geo::is_intersected(_visible_area, *text))
+                        if (text->text().isEmpty() ||
+                            !Geo::is_intersected(_visible_area, text->shape(0), text->shape(1), text->shape(2), text->shape(3)))
                         {
                             continue;
                         }
-                        x = text->left() * _canvas_ctm[0] + text->bottom() * _canvas_ctm[3] + _canvas_ctm[6];
-                        y = text->left() * _canvas_ctm[1] + text->bottom() * _canvas_ctm[4] + _canvas_ctm[7];
-                        strings = text->text().split('\n');
-                        index = strings.size();
+                        const double x = text->shape(3).x * _canvas_ctm[0] + text->shape(3).y * _canvas_ctm[3] + _canvas_ctm[6];
+                        const double y = text->shape(3).x * _canvas_ctm[1] + text->shape(3).y * _canvas_ctm[4] + _canvas_ctm[7];
                         painter.save();
                         painter.setPen(text->is_selected ? red : white);
                         painter.translate(x, y);
+                        painter.rotate(-Geo::rad_to_degree(text->angle()));
                         painter.scale(_ratio, _ratio);
-                        for (const QString &string : strings)
-                        {
-                            painter.drawText(0, h * --index, string);
-                        }
+                        text->paint(painter);
                         painter.restore();
                     }
                 }

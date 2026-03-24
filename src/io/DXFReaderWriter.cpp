@@ -116,6 +116,9 @@ void DXFReaderWriter::addVport(const DRW_Vport &data)
 void DXFReaderWriter::addTextStyle(const DRW_Textstyle &data)
 {
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
+    std::string name;
+    std::transform(data.name.begin(), data.name.end(), std::back_inserter(name), std::tolower);
+    _text_style_font.insert_or_assign(name, data.font);
 }
 
 void DXFReaderWriter::addAppId(const DRW_AppId &data)
@@ -976,13 +979,30 @@ void DXFReaderWriter::addMText(const DRW_MText &data)
     {
         return;
     }
+    
+    std::string style;
+    std::transform(data.style.begin(), data.style.end(), std::back_inserter(style), std::tolower);
     if (_to_graph)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
             if (group.name.toStdString() == data.layer)
             {
-                group.append(new Text(data.basePoint.x, data.basePoint.y, GlobalSetting::setting().text_size, txt));
+                Text *text = nullptr;
+                if (_text_style_font.find(style) == _text_style_font.end())
+                {
+                    QFont font("SimSun");
+                    font.setPointSizeF(data.height);
+                    text = new Text(data.basePoint.x, data.basePoint.y, font, txt, 0);
+                }
+                else
+                {
+                    QFont font(QString::fromStdString(_text_style_font[style]));
+                    font.setPointSizeF(data.height);
+                    text = new Text(data.basePoint.x, data.basePoint.y, font, txt, 0);
+                }
+                text->rotate(text->anchor().x, text->anchor().y, Geo::degree_to_rad(data.angle));
+                group.append(text);
                 _object_map[group.back()] = data.handle;
                 _handle_map[data.handle] = group.back();
                 return;
@@ -990,13 +1010,41 @@ void DXFReaderWriter::addMText(const DRW_MText &data)
         }
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
-        _graph->container_groups().back().append(new Text(data.basePoint.x, data.basePoint.y, GlobalSetting::setting().text_size, txt));
+        Text *text = nullptr;
+        if (_text_style_font.find(style) == _text_style_font.end())
+        {
+            QFont font("SimSun");
+            font.setPointSizeF(data.height);
+            text = new Text(data.basePoint.x, data.basePoint.y, font, txt, 0);
+        }
+        else
+        {
+            QFont font(QString::fromStdString(_text_style_font[style]));
+            font.setPointSizeF(data.height);
+            text = new Text(data.basePoint.x, data.basePoint.y, font, txt, 0);
+        }
+        text->rotate(text->anchor().x, text->anchor().y, Geo::degree_to_rad(data.angle));
+        _graph->container_groups().back().append(text);
         _object_map[_graph->container_groups().back().back()] = data.handle;
         _handle_map[data.handle] = _graph->container_groups().back().back();
     }
     else
     {
-        _combination->append(new Text(data.basePoint.x, data.basePoint.y, GlobalSetting::setting().text_size, txt));
+        Text *text = nullptr;
+        if (_text_style_font.find(style) == _text_style_font.end())
+        {
+            QFont font("SimSun");
+            font.setPointSizeF(data.height);
+            text = new Text(data.basePoint.x, data.basePoint.y, font, txt, 0);
+        }
+        else
+        {
+            QFont font(QString::fromStdString(_text_style_font[style]));
+            font.setPointSizeF(data.height);
+            text = new Text(data.basePoint.x, data.basePoint.y, font, txt, 0);
+        }
+        text->rotate(text->anchor().x, text->anchor().y, Geo::degree_to_rad(data.angle));
+        _combination->append(text);
         _object_map[_combination->back()] = data.handle;
         _handle_map[data.handle] = _combination->back();
     }
@@ -1010,13 +1058,30 @@ void DXFReaderWriter::addText(const DRW_Text &data)
     {
         return;
     }
+    
+    std::string style;
+    std::transform(data.style.begin(), data.style.end(), std::back_inserter(style), std::tolower);
     if (_to_graph)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
             if (group.name.toStdString() == data.layer)
             {
-                group.append(new Text(data.basePoint.x, data.basePoint.y, GlobalSetting::setting().text_size, txt));
+                Text *text = nullptr;
+                if (_text_style_font.find(style) == _text_style_font.end())
+                {
+                    QFont font("SimSun");
+                    font.setPointSizeF(data.height);
+                    text = new Text(data.basePoint.x, data.basePoint.y, font, txt, 3);
+                }
+                else
+                {
+                    QFont font(QString::fromStdString(_text_style_font[style]));
+                    font.setPointSizeF(data.height);
+                    text = new Text(data.basePoint.x, data.basePoint.y, font, txt, 3);
+                }
+                text->rotate(text->anchor().x, text->anchor().y, Geo::degree_to_rad(data.angle));
+                group.append(text);
                 _object_map[group.back()] = data.handle;
                 _handle_map[data.handle] = group.back();
                 return;
@@ -1024,13 +1089,41 @@ void DXFReaderWriter::addText(const DRW_Text &data)
         }
         _graph->append_group();
         _graph->container_groups().back().name = QString::fromStdString(data.layer);
-        _graph->container_groups().back().append(new Text(data.basePoint.x, data.basePoint.y, GlobalSetting::setting().text_size, txt));
+        Text *text = nullptr;
+        if (_text_style_font.find(style) == _text_style_font.end())
+        {
+            QFont font("SimSun");
+            font.setPointSizeF(data.height);
+            text = new Text(data.basePoint.x, data.basePoint.y, font, txt, 3);
+        }
+        else
+        {
+            QFont font(QString::fromStdString(_text_style_font[style]));
+            font.setPointSizeF(data.height);
+            text = new Text(data.basePoint.x, data.basePoint.y, font, txt, 3);
+        }
+        text->rotate(text->anchor().x, text->anchor().y, Geo::degree_to_rad(data.angle));
+        _graph->container_groups().back().append(text);
         _object_map[_graph->container_groups().back().back()] = data.handle;
         _handle_map[data.handle] = _graph->container_groups().back().back();
     }
     else
     {
-        _combination->append(new Text(data.basePoint.x, data.basePoint.y, GlobalSetting::setting().text_size, txt));
+        Text *text = nullptr;
+        if (_text_style_font.find(style) == _text_style_font.end())
+        {
+            QFont font("SimSun");
+            font.setPointSizeF(data.height);
+            text = new Text(data.basePoint.x, data.basePoint.y, font, txt, 3);
+        }
+        else
+        {
+            QFont font(QString::fromStdString(_text_style_font[style]));
+            font.setPointSizeF(data.height);
+            text = new Text(data.basePoint.x, data.basePoint.y, font, txt, 3);
+        }
+        text->rotate(text->anchor().x, text->anchor().y, Geo::degree_to_rad(data.angle));
+        _combination->append(text);
         _object_map[_combination->back()] = data.handle;
         _handle_map[data.handle] = _combination->back();
     }
@@ -1168,6 +1261,10 @@ void DXFReaderWriter::writeLayers()
 
 void DXFReaderWriter::writeTextstyles()
 {
+    DRW_Textstyle style;
+    style.name = "Standard";
+    style.font = "SimSun";
+    _dxfrw->writeTextstyle(&style);
 }
 
 void DXFReaderWriter::writeVports()
@@ -1351,18 +1448,42 @@ void DXFReaderWriter::write_text(const Text *text)
     {
         return;
     }
-    DRW_Text t;
-    t.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
-    t.lineType = "CONTINUOUS";
-    t.secPoint.x = t.basePoint.x = text->center().x;
-    t.secPoint.y = t.basePoint.y = text->center().y;
-    t.widthscale = 1.0;
-    t.height = text->height();
-    t.text = to_dxf_string(text->text()).toStdString();
-    t.height = text->text_size();
-    t.alignH = DRW_Text::HAlign::HCenter;
-    t.alignV = DRW_Text::VAlign::VMiddle;
-    _dxfrw->writeText(&t);
+    if (text->text().count('\n') == 0)
+    {
+        DRW_Text t;
+        t.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+        t.lineType = "CONTINUOUS";
+        t.style = "Standard";
+        t.secPoint.x = text->shape(0).x;
+        t.secPoint.y = text->shape(0).y;
+        t.basePoint.x = text->shape(3).x;
+        t.basePoint.y = text->shape(3).y;
+        t.widthscale = 1.0;
+        t.height = text->font().pointSizeF();
+        t.text = to_dxf_string(text->text()).toStdString();
+        t.angle = Geo::rad_to_degree(text->angle());
+        t.alignH = DRW_Text::HAlign::HLeft;
+        t.alignV = DRW_Text::VAlign::VBaseLine;
+        _dxfrw->writeText(&t);
+    }
+    else
+    {
+        DRW_MText t;
+        t.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+        t.lineType = "CONTINUOUS";
+        t.style = "Standard";
+        t.basePoint.x = text->shape(0).x;
+        t.basePoint.y = text->shape(0).y;
+        t.secPoint.x = text->shape(2).x;
+        t.secPoint.y = text->shape(2).y;
+        t.widthscale = 1.0;
+        t.height = text->font().pointSizeF();
+        t.text = to_dxf_string(text->text()).toStdString();
+        t.angle = Geo::rad_to_degree(text->angle());
+        t.alignH = DRW_Text::HAlign::HLeft;
+        t.alignV = DRW_Text::VAlign::VTop;
+        _dxfrw->writeMText(&t);
+    }
 }
 
 void DXFReaderWriter::write_arc(const Geo::Arc *arc)
@@ -1577,7 +1698,7 @@ void DXFReaderWriter::prepare_blocks()
                     if (const Text *text0 = static_cast<const Text *>(_block_store[i]->at(k)),
                         *text1 = static_cast<const Text *>(_block_store[j]->at(k));
                         text0->text() != text1->text() || text0->height() != text1->height() ||
-                        text0->center() - rect0[3] != text1->center() - rect1[3])
+                        text0->anchor() - rect0[3] != text1->anchor() - rect1[3])
                     {
                         is_same = false;
                     }

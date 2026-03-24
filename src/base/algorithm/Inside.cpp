@@ -428,6 +428,26 @@ bool Geo::is_inside(const Point &point, const Arc &arc)
     return std::abs(angle1) <= std::abs(angle0);
 }
 
+bool Geo::is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2, const Point &point3,
+                    const bool coincide)
+{
+    if (is_inside(point3, point0, point1, point2, false))
+    {
+        return is_inside(point, point0, point1, point3, coincide) || is_inside(point, point1, point2, point3, coincide);
+    }
+    else
+    {
+        if (is_inside(point1, point0, point2, point3, false))
+        {
+            return is_inside(point, point0, point1, point3, coincide) || is_inside(point, point1, point2, point3, coincide);
+        }
+        else
+        {
+            return is_inside(point, point0, point1, point2, coincide) || is_inside(point, point0, point3, point2, coincide);
+        }
+    }
+}
+
 bool Geo::is_inside(const Triangle &triangle0, const Triangle &triangle1)
 {
     return Geo::is_inside(triangle0[0], triangle1) && Geo::is_inside(triangle0[1], triangle1) && Geo::is_inside(triangle0[2], triangle1);

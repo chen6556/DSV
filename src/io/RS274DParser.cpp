@@ -183,8 +183,9 @@ void Importer::read_text()
 
 void Importer::store_text(const std::string &text)
 {
-    _graph->container_groups().back().append(new Text(_last_coord.x, _last_coord.y,
-        GlobalSetting::setting().text_size, QString::fromUtf8(text)));
+    QFont font("SimSun");
+    font.setPointSize(GlobalSetting::setting().text_size);
+    _graph->container_groups().back().append(new Text(_last_coord.x, _last_coord.y, font, QString::fromUtf8(text)));
 }
 
 void Importer::store_table_text(const std::string &text)
@@ -193,8 +194,9 @@ void Importer::store_table_text(const std::string &text)
     {
         _points.pop_back();
     }
-    _graph->container_groups().back().append(new Text(_last_coord.x, _last_coord.y,
-        GlobalSetting::setting().text_size, QString::fromUtf8(text)));
+    QFont font("SimSun");
+    font.setPointSize(GlobalSetting::setting().text_size);
+    _graph->container_groups().back().append(new Text(_last_coord.x, _last_coord.y, font, QString::fromUtf8(text)));
 }
 
 void Importer::print_symbol(const std::string &str)

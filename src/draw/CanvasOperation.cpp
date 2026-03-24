@@ -2925,7 +2925,9 @@ bool TextOperation::mouse_press(QMouseEvent *event)
     if (event->button() == Qt::MouseButton::LeftButton)
     {
         tool[0] = Tool::Select;
-        Canvas::canvas->add_geometry(new Text(real_pos[0], real_pos[1], GlobalSetting::setting().text_size));
+        QFont font("SimSun");
+        font.setPointSize(GlobalSetting::setting().text_size);
+        Canvas::canvas->add_geometry(new Text(real_pos[0], real_pos[1], font));
         return true;
     }
     else
@@ -2939,7 +2941,9 @@ bool TextOperation::read_parameters(const double *params, const int count)
     if (count >= 2)
     {
         tool[0] = Tool::Select;
-        Canvas::canvas->add_geometry(new Text(params[0], params[1], GlobalSetting::setting().text_size));
+        QFont font("SimSun");
+        font.setPointSize(GlobalSetting::setting().text_size);
+        Canvas::canvas->add_geometry(new Text(params[0], params[1], font));
         return true;
     }
     else

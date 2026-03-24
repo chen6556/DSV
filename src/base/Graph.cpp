@@ -273,6 +273,25 @@ Geo::AABBRect Graph::bounding_rect() const
     return Geo::AABBRect(x0, y0, x1, y1);
 }
 
+Geo::AABBRectParams Graph::aabbrect_params() const
+{
+    Geo::AABBRectParams param;
+    param.left = param.bottom = DBL_MAX;
+    param.right = param.top = -DBL_MAX;
+    for (const ContainerGroup &group : _container_groups)
+    {
+        if (group.empty())
+        {
+            continue;
+        }
+        const Geo::AABBRectParams rect = group.aabbrect_params();
+        param.left = std::min(param.left, rect.left);
+        param.bottom = std::min(param.bottom, rect.bottom);
+        param.right = std::max(param.right, rect.right);
+        param.top = std::max(param.top, rect.top);
+    }
+    return param;
+}
 
 std::list<ContainerGroup>::iterator Graph::begin()
 {
