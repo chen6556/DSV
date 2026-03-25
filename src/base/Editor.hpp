@@ -8,7 +8,7 @@
 #include "draw/QuadTree.hpp"
 
 
-class Editer
+class Editor
 {
 private:
     Graph *_graph = nullptr;
@@ -31,9 +31,9 @@ private:
     void init();
 
 public:
-    Editer() = default;
+    Editor() = default;
 
-    ~Editer();
+    ~Editor();
 
     void load_graph(Graph *graph, const QString &path);
 

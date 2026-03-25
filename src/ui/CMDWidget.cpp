@@ -415,7 +415,7 @@ bool CMDWidget::work()
             line_array();
             break;
         case CMD::SelectAll_CMD:
-            Canvas::canvas->editer().reset_selected_mark(true);
+            Canvas::canvas->editor().reset_selected_mark(true);
             Canvas::canvas->refresh_selected_ibo();
             _current_cmd = CMD::Error_CMD;
             break;
@@ -435,7 +435,7 @@ bool CMDWidget::work()
             paste();
             break;
         case CMD::Undo_CMD:
-            Canvas::canvas->editer().undo();
+            Canvas::canvas->editor().undo();
             Canvas::canvas->refresh_vbo(true);
             Canvas::canvas->refresh_selected_ibo();
             _current_cmd = CMD::Error_CMD;
@@ -598,7 +598,7 @@ void CMDWidget::paste()
 void CMDWidget::delete_selected_objects()
 {
     std::set<Geo::Type> types;
-    for (const Geo::Geometry *object : Canvas::canvas->editer().selected())
+    for (const Geo::Geometry *object : Canvas::canvas->editor().selected())
     {
         if (const Combination *combination = dynamic_cast<const Combination *>(object))
         {
@@ -615,7 +615,7 @@ void CMDWidget::delete_selected_objects()
     if (!types.empty())
     {
         CanvasOperations::CanvasOperation::operation().clear();
-        Canvas::canvas->editer().remove_selected();
+        Canvas::canvas->editor().remove_selected();
         Canvas::canvas->refresh_vbo(false, types);
         Canvas::canvas->refresh_selected_ibo();
     }
@@ -623,7 +623,7 @@ void CMDWidget::delete_selected_objects()
 
 void CMDWidget::connect_polyline()
 {
-    std::vector<Geo::Geometry *> objects = Canvas::canvas->editer().selected();
+    std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
     std::set<Geo::Type> types;
     for (const Geo::Geometry *object : objects)
     {
@@ -632,7 +632,7 @@ void CMDWidget::connect_polyline()
             types.insert(type);
         }
     }
-    if (Canvas::canvas->editer().connect(objects, GlobalSetting::setting().catch_distance))
+    if (Canvas::canvas->editor().connect(objects, GlobalSetting::setting().catch_distance))
     {
         Canvas::canvas->refresh_vbo(true, types);
         Canvas::canvas->refresh_selected_ibo();
@@ -641,7 +641,7 @@ void CMDWidget::connect_polyline()
 
 void CMDWidget::close_polyline()
 {
-    std::vector<Geo::Geometry *> objects = Canvas::canvas->editer().selected();
+    std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
     std::set<Geo::Type> types;
     for (const Geo::Geometry *object : objects)
     {
@@ -651,7 +651,7 @@ void CMDWidget::close_polyline()
         }
     }
     types.insert(Geo::Type::POLYGON);
-    if (Canvas::canvas->editer().close_polyline(objects))
+    if (Canvas::canvas->editor().close_polyline(objects))
     {
         Canvas::canvas->refresh_vbo(true, types);
         Canvas::canvas->refresh_selected_ibo();
@@ -660,7 +660,7 @@ void CMDWidget::close_polyline()
 
 void CMDWidget::combinate()
 {
-    if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editer().selected(); Canvas::canvas->editer().combinate(objects))
+    if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected(); Canvas::canvas->editor().combinate(objects))
     {
         std::set<Geo::Type> types;
         for (const Geo::Geometry *object : objects)
@@ -684,7 +684,7 @@ void CMDWidget::combinate()
 
 void CMDWidget::detach()
 {
-    std::vector<Geo::Geometry *> objects = Canvas::canvas->editer().selected();
+    std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
     std::set<Geo::Type> types;
     for (const Geo::Geometry *object : objects)
     {
@@ -698,7 +698,7 @@ void CMDWidget::detach()
     }
     if (!types.empty())
     {
-        Canvas::canvas->editer().detach(objects);
+        Canvas::canvas->editor().detach(objects);
         Canvas::canvas->refresh_vbo(false, types);
         Canvas::canvas->refresh_selected_ibo();
     }
@@ -719,7 +719,7 @@ void CMDWidget::scale()
     default:
         if (_parameters.back() > 0)
         {
-            if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editer().selected(); Canvas::canvas->editer().scale(
+            if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected(); Canvas::canvas->editor().scale(
                     objects, QApplication::keyboardModifiers() != Qt::KeyboardModifier::ControlModifier, _parameters.back()))
             {
                 std::set<Geo::Type> types;
@@ -772,7 +772,7 @@ void CMDWidget::offset()
     default:
         if (_parameters.back() != 0)
         {
-            if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editer().selected(); Canvas::canvas->editer().offset(
+            if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected(); Canvas::canvas->editor().offset(
                     objects, _parameters.back(), static_cast<Geo::Offset::JoinType>(GlobalSetting::setting().offset_join_type),
                     static_cast<Geo::Offset::EndType>(GlobalSetting::setting().offset_end_type)))
             {
@@ -807,8 +807,8 @@ void CMDWidget::line_array()
         ui->parameter_label->setText("(X-count, Y-count, X-space, Y-space):");
         break;
     case 1:
-        if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editer().selected();
-            Canvas::canvas->editer().line_array(objects, GlobalSetting::setting().array_x_item, GlobalSetting::setting().array_y_item,
+        if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
+            Canvas::canvas->editor().line_array(objects, GlobalSetting::setting().array_x_item, GlobalSetting::setting().array_y_item,
                                                 GlobalSetting::setting().array_x_space, GlobalSetting::setting().array_y_space))
         {
             std::set<Geo::Type> types;
@@ -834,8 +834,8 @@ void CMDWidget::line_array()
     default:
         if (_parameters.size() >= 5 && std::abs(_parameters[1]) >= 1 && std::abs(_parameters[2]) >= 1)
         {
-            if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editer().selected();
-                Canvas::canvas->editer().line_array(objects, _parameters[1], _parameters[2], _parameters[3], _parameters[4]))
+            if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
+                Canvas::canvas->editor().line_array(objects, _parameters[1], _parameters[2], _parameters[3], _parameters[4]))
             {
                 std::set<Geo::Type> types;
                 for (const Geo::Geometry *object : objects)
@@ -867,8 +867,8 @@ void CMDWidget::line_array()
 
 void CMDWidget::flip_x()
 {
-    std::vector<Geo::Geometry *> objects = Canvas::canvas->editer().selected();
-    Canvas::canvas->editer().flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier,
+    std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
+    Canvas::canvas->editor().flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier,
                                   GlobalSetting::setting().to_all_layers);
     std::set<Geo::Type> types;
     for (const Geo::Geometry *object : objects)
@@ -902,8 +902,8 @@ void CMDWidget::flip_x()
 
 void CMDWidget::flip_y()
 {
-    std::vector<Geo::Geometry *> objects = Canvas::canvas->editer().selected();
-    Canvas::canvas->editer().flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier,
+    std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
+    Canvas::canvas->editor().flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier,
                                   GlobalSetting::setting().to_all_layers);
     std::set<Geo::Type> types;
     for (const Geo::Geometry *object : objects)
@@ -939,7 +939,7 @@ void CMDWidget::shape_intersection()
 {
     Geo::Geometry *shape0 = nullptr, *shape1 = nullptr;
     std::set<Geo::Type> types;
-    for (Geo::Geometry *object : Canvas::canvas->editer().selected())
+    for (Geo::Geometry *object : Canvas::canvas->editor().selected())
     {
         if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
         {
@@ -964,7 +964,7 @@ void CMDWidget::shape_intersection()
         }
     }
 
-    if (Canvas::canvas->editer().shape_intersection(shape0, shape1))
+    if (Canvas::canvas->editor().shape_intersection(shape0, shape1))
     {
         if (types.find(Geo::Type::POLYGON) != types.end() &&
             (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end()))
@@ -980,7 +980,7 @@ void CMDWidget::shape_union()
 {
     Geo::Geometry *shape0 = nullptr, *shape1 = nullptr;
     std::set<Geo::Type> types;
-    for (Geo::Geometry *object : Canvas::canvas->editer().selected())
+    for (Geo::Geometry *object : Canvas::canvas->editor().selected())
     {
         if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
         {
@@ -1005,7 +1005,7 @@ void CMDWidget::shape_union()
         }
     }
 
-    if (Canvas::canvas->editer().shape_union(shape0, shape1))
+    if (Canvas::canvas->editor().shape_union(shape0, shape1))
     {
         if (types.find(Geo::Type::POLYGON) != types.end() &&
             (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end()))
@@ -1021,7 +1021,7 @@ void CMDWidget::shape_xor()
 {
     Geo::Geometry *shape0 = nullptr, *shape1 = nullptr;
     std::set<Geo::Type> types;
-    for (Geo::Geometry *object : Canvas::canvas->editer().selected())
+    for (Geo::Geometry *object : Canvas::canvas->editor().selected())
     {
         if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
         {
@@ -1046,7 +1046,7 @@ void CMDWidget::shape_xor()
         }
     }
 
-    if (Canvas::canvas->editer().shape_xor(shape0, shape1))
+    if (Canvas::canvas->editor().shape_xor(shape0, shape1))
     {
         if (types.find(Geo::Type::POLYGON) != types.end() &&
             (types.find(Geo::Type::CIRCLE) != types.end() || types.find(Geo::Type::ELLIPSE) != types.end()))
@@ -1071,7 +1071,7 @@ void CMDWidget::divide_points_n()
         clear();
         break;
     default:
-        if (_parameters.back() > 1 && Canvas::canvas->editer().divide_points_n(Canvas::canvas->editer().selected(), _parameters.back()))
+        if (_parameters.back() > 1 && Canvas::canvas->editor().divide_points_n(Canvas::canvas->editor().selected(), _parameters.back()))
         {
             Canvas::canvas->refresh_vbo(true, Geo::Type::POINT);
         }
@@ -1094,7 +1094,7 @@ void CMDWidget::divide_points_measure()
         break;
     default:
         if (_parameters.back() > 0 &&
-            Canvas::canvas->editer().divide_points_measure(Canvas::canvas->editer().selected(), _parameters.back()))
+            Canvas::canvas->editor().divide_points_measure(Canvas::canvas->editor().selected(), _parameters.back()))
         {
             Canvas::canvas->refresh_vbo(true, Geo::Type::POINT);
         }
@@ -1116,8 +1116,8 @@ void CMDWidget::divide_parts_n()
         clear();
         break;
     default:
-        if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editer().selected();
-            _parameters.back() > 1 && Canvas::canvas->editer().divide_parts_n(objects, _parameters.back()))
+        if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
+            _parameters.back() > 1 && Canvas::canvas->editor().divide_parts_n(objects, _parameters.back()))
         {
             std::set<Geo::Type> types;
             for (const Geo::Geometry *object : objects)
@@ -1145,8 +1145,8 @@ void CMDWidget::divide_parts_measure()
         clear();
         break;
     default:
-        if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editer().selected();
-            _parameters.back() > 0 && Canvas::canvas->editer().divide_parts_measure(objects, _parameters.back()))
+        if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
+            _parameters.back() > 0 && Canvas::canvas->editor().divide_parts_measure(objects, _parameters.back()))
         {
             std::set<Geo::Type> types;
             for (const Geo::Geometry *object : objects)

@@ -4,7 +4,7 @@
 #include <QMenu>
 #include <QAction>
 #include <QStandardItemModel>
-#include "base/Editer.hpp"
+#include "base/Editor.hpp"
 
 
 QT_BEGIN_NAMESPACE
@@ -28,7 +28,7 @@ private:
     QAction *_insert = nullptr;
     QAction *_del = nullptr;
 
-    Editer *_editer = nullptr;
+    Editor *_editor = nullptr;
     QStandardItemModel _layers_model;
     bool _append_to_last = true;
 
@@ -57,7 +57,7 @@ public:
     LayersManager(QWidget *parent);
     ~LayersManager() override;
 
-    void bind_editer(Editer *editer);
+    void bind_editor(Editor *editor);
 
     void update_layers();
 

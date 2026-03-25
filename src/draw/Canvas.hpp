@@ -7,7 +7,7 @@
 #include <QImage>
 #include <QOpenGLFunctions_4_5_Core>
 
-#include "base/Editer.hpp"
+#include "base/Editor.hpp"
 #include "draw/CanvasMenu.hpp"
 #include "draw/CanvasOperation.hpp"
 
@@ -31,7 +31,7 @@ public:
 private:
     Geo::AABBRect _visible_area;
     std::vector<const Geo::Geometry *> _catched_objects;
-    Editer _editer;
+    Editor _editor;
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
     CanvasMenu _menu;
@@ -189,7 +189,7 @@ public:
 
     ~Canvas() override;
 
-    Editer &editer();
+    Editor &editor();
 
     void use_tool(const CanvasOperations::Tool tool);
 

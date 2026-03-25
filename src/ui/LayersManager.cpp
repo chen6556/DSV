@@ -51,9 +51,9 @@ void LayersManager::init()
 }
 
 
-void LayersManager::bind_editer(Editer *editer)
+void LayersManager::bind_editor(Editor *editor)
 {
-    _editer = editer;
+    _editor = editor;
 }
 
 void LayersManager::closeEvent(QCloseEvent *event)
@@ -66,14 +66,14 @@ void LayersManager::closeEvent(QCloseEvent *event)
 void LayersManager::show_layer()
 {
     const int row = ui->layers_view->currentIndex().row();
-    if (const int index = _editer->groups_count() - 1 - row; _editer->group_is_visible(index))
+    if (const int index = _editor->groups_count() - 1 - row; _editor->group_is_visible(index))
     {
-        _editer->hide_group(index);
+        _editor->hide_group(index);
         _layers_model.item(row)->setCheckState(Qt::CheckState::Unchecked);
     }
     else
     {
-        _editer->show_group(index);
+        _editor->show_group(index);
         _layers_model.item(row)->setCheckState(Qt::CheckState::Checked);
     }
 }
@@ -82,8 +82,8 @@ void LayersManager::layer_up()
 {
     if (const int row = ui->layers_view->currentIndex().row(); row > 0)
     {
-        const int index = _editer->groups_count() - 1 - row;
-        _editer->reorder_group(index, index + 1);
+        const int index = _editor->groups_count() - 1 - row;
+        _editor->reorder_group(index, index + 1);
         QList<QStandardItem *> items = _layers_model.takeRow(row);
         _layers_model.insertRow(row - 1, items);
     }
@@ -93,8 +93,8 @@ void LayersManager::layer_down()
 {
     if (const int row = ui->layers_view->currentIndex().row(); row < _layers_model.rowCount() - 1)
     {
-        const int index = _editer->groups_count() - 1 - row;
-        _editer->reorder_group(index, index - 1);
+        const int index = _editor->groups_count() - 1 - row;
+        _editor->reorder_group(index, index - 1);
         QList<QStandardItem *> items = _layers_model.takeRow(row);
         _layers_model.insertRow(row + 1, items);
     }
@@ -103,20 +103,20 @@ void LayersManager::layer_down()
 void LayersManager::add_layer()
 {
     std::set<QString> names;
-    for (int i = 0, count = _editer->groups_count(); i < count; ++i)
+    for (int i = 0, count = _editor->groups_count(); i < count; ++i)
     {
-        if (QString name = _editer->group_name(i); !name.isEmpty())
+        if (QString name = _editor->group_name(i); !name.isEmpty())
         {
             names.insert(name);
         }
     }
-    _editer->append_group();
+    _editor->append_group();
     int index = 0;
     while (names.find(QString::number(index)) != names.cend())
     {
         ++index;
     }
-    _editer->set_group_name(_editer->groups_count() - 1, QString::number(index));
+    _editor->set_group_name(_editor->groups_count() - 1, QString::number(index));
 
     QStandardItem *item = new QStandardItem(QString::number(index));
     item->setCheckState(Qt::CheckState::Checked);
@@ -126,22 +126,22 @@ void LayersManager::add_layer()
 void LayersManager::insert_layer()
 {
     std::set<QString> names;
-    for (int i = 0, count = _editer->groups_count(); i < count; ++i)
+    for (int i = 0, count = _editor->groups_count(); i < count; ++i)
     {
-        if (QString name = _editer->group_name(i); !name.isEmpty())
+        if (QString name = _editor->group_name(i); !name.isEmpty())
         {
             names.insert(name);
         }
     }
-    const int count = _editer->groups_count();
+    const int count = _editor->groups_count();
     const int index = count - 1 - ui->layers_view->currentIndex().row();
-    _editer->append_group(index);
+    _editor->append_group(index);
     int j = 0;
     while (names.find(QString::number(j)) != names.cend())
     {
         ++j;
     }
-    _editer->set_group_name(index, QString::number(j));
+    _editor->set_group_name(index, QString::number(j));
 
     QStandardItem *item = new QStandardItem(QString::number(j));
     item->setCheckState(Qt::CheckState::Checked);
@@ -150,14 +150,14 @@ void LayersManager::insert_layer()
 
 void LayersManager::remove_layer()
 {
-    const int count = _editer->groups_count();
+    const int count = _editor->groups_count();
     const int index = count - 1 - ui->layers_view->currentIndex().row();
     _layers_model.removeRow(count - 1 - index);
-    _editer->remove_group(index);
-    if (_editer->groups_count() == 0)
+    _editor->remove_group(index);
+    if (_editor->groups_count() == 0)
     {
-        _editer->append_group();
-        _editer->set_group_name(0, "0");
+        _editor->append_group();
+        _editor->set_group_name(0, "0");
         QStandardItem *item = new QStandardItem("0");
         item->setCheckState(Qt::CheckState::Checked);
         _layers_model.appendRow(item);
@@ -168,27 +168,27 @@ void LayersManager::change_layer_name(const QModelIndex &row, const QModelIndex 
 {
     if (const QString name(_layers_model.index(row.row(), 0).data().toString()); name.isEmpty())
     {
-        _layers_model.setData(_layers_model.index(row.row(), 0), _editer->group_name(_editer->groups_count() - 1 - row.row()));
+        _layers_model.setData(_layers_model.index(row.row(), 0), _editor->group_name(_editor->groups_count() - 1 - row.row()));
     }
     else
     {
         std::set<QString> names;
-        const int index = _editer->groups_count() - 1 - row.row();
-        for (int i = 0, count = _editer->groups_count(); i < count; ++i)
+        const int index = _editor->groups_count() - 1 - row.row();
+        for (int i = 0, count = _editor->groups_count(); i < count; ++i)
         {
-            if (QString str = _editer->group_name(i); index != i && !str.isEmpty())
+            if (QString str = _editor->group_name(i); index != i && !str.isEmpty())
             {
                 names.insert(str);
             }
         }
         if (names.find(name) == names.cend())
         {
-            _editer->set_group_name(index, name);
+            _editor->set_group_name(index, name);
             _layers_model.setData(_layers_model.index(row.row(), 0), name);
         }
         else
         {
-            _layers_model.setData(_layers_model.index(row.row(), 0), _editer->group_name(index));
+            _layers_model.setData(_layers_model.index(row.row(), 0), _editor->group_name(index));
         }
     }
 }
@@ -196,30 +196,30 @@ void LayersManager::change_layer_name(const QModelIndex &row, const QModelIndex 
 void LayersManager::update_layers()
 {
     std::set<QString> names;
-    for (int i = 0, count = _editer->groups_count(); i < count; ++i)
+    for (int i = 0, count = _editor->groups_count(); i < count; ++i)
     {
-        if (QString name = _editer->group_name(i); !name.isEmpty())
+        if (QString name = _editor->group_name(i); !name.isEmpty())
         {
             names.insert(name);
         }
     }
     _layers_model.clear();
-    if (_editer->groups_count() == 0)
+    if (_editor->groups_count() == 0)
     {
-        _editer->append_group(0);
+        _editor->append_group(0);
     }
-    for (int i = _editer->groups_count() - 1, index = 0; i >= 0; --i)
+    for (int i = _editor->groups_count() - 1, index = 0; i >= 0; --i)
     {
-        if (_editer->group_name(i).isEmpty())
+        if (_editor->group_name(i).isEmpty())
         {
             while (names.find(QString::number(index)) != names.cend())
             {
                 ++index;
             }
-            _editer->set_group_name(i, QString::number(index++));
+            _editor->set_group_name(i, QString::number(index++));
         }
-        QStandardItem *item = new QStandardItem(_editer->group_name(i));
-        item->setCheckState(_editer->group_is_visible(i) ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
+        QStandardItem *item = new QStandardItem(_editor->group_name(i));
+        item->setCheckState(_editor->group_is_visible(i) ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
         _layers_model.appendRow(item);
     }
 }

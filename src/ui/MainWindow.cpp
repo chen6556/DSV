@@ -44,7 +44,7 @@ void MainWindow::init()
 {
     _actiongroup = new ActionGroup(ui, [this](const ActionGroup::MenuType menu, const int index) { actiongroup_callback(menu, index); });
 
-    ui->canvas->editer().load_graph(new Graph());
+    ui->canvas->editor().load_graph(new Graph());
     ui->canvas->installEventFilter(ui->cmd_widget);
 
     _clock.start(5000);
@@ -73,7 +73,7 @@ void MainWindow::init()
     ui->canvas->set_info_labels(_info_labels);
 
     _layers_manager = new LayersManager(this);
-    _layers_manager->bind_editer(&ui->canvas->editer());
+    _layers_manager->bind_editor(&ui->canvas->editor());
     _layers_manager->update_layers();
     connect(_layers_manager, &LayersManager::accepted, this, &MainWindow::hide_layers_manager);
 
@@ -93,7 +93,7 @@ void MainWindow::init()
     connect(_layers_cbx, &QComboBox::currentIndexChanged,
             [this](int index)
             {
-                ui->canvas->editer().set_current_group(ui->canvas->editer().groups_count() - 1 - index);
+                ui->canvas->editor().set_current_group(ui->canvas->editor().groups_count() - 1 - index);
                 ui->canvas->refresh_selected_ibo();
                 ui->canvas->update();
             });
@@ -142,7 +142,7 @@ void MainWindow::connect_btn_to_cmd()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if (ui->canvas->editer().graph()->modified)
+    if (ui->canvas->editor().graph()->modified)
     {
         switch (MessageBox::question(this, "File is modified", "Save or not?",
                                      QDialogButtonBox::StandardButton::Yes | QDialogButtonBox::StandardButton::No |
@@ -167,16 +167,16 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     {
     case Qt::MouseButton::BackButton:
         {
-            const size_t layers_count = ui->canvas->editer().groups_count();
-            ui->canvas->editer().undo();
-            if (ui->canvas->editer().groups_count() != layers_count)
+            const size_t layers_count = ui->canvas->editor().groups_count();
+            ui->canvas->editor().undo();
+            if (ui->canvas->editor().groups_count() != layers_count)
             {
-                if (ui->canvas->editer().groups_count() == 0)
+                if (ui->canvas->editor().groups_count() == 0)
                 {
-                    ui->canvas->editer().append_group();
+                    ui->canvas->editor().append_group();
                 }
-                ui->canvas->editer().set_current_group(
-                    std::min(ui->canvas->editer().current_group(), ui->canvas->editer().groups_count() - 1));
+                ui->canvas->editor().set_current_group(
+                    std::min(ui->canvas->editor().current_group(), ui->canvas->editor().groups_count() - 1));
                 _layers_manager->update_layers();
                 _layers_cbx->setModel(_layers_manager->model());
             }
@@ -202,7 +202,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     {
     case Qt::Key_Escape:
         ui->canvas->cancel_painting();
-        ui->canvas->editer().reset_selected_mark();
+        ui->canvas->editor().reset_selected_mark();
         ui->canvas->refresh_selected_ibo();
         ui->cmd_widget->clear();
         break;
@@ -213,7 +213,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     case Qt::Key_Backspace:
         {
             std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : ui->canvas->editer().selected())
+            for (const Geo::Geometry *object : ui->canvas->editor().selected())
             {
                 if (const Combination *combination = dynamic_cast<const Combination *>(object))
                 {
@@ -230,7 +230,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
             if (!types.empty())
             {
                 CanvasOperations::CanvasOperation::operation().clear();
-                ui->canvas->editer().remove_selected();
+                ui->canvas->editor().remove_selected();
                 ui->canvas->refresh_vbo(false, types);
                 ui->canvas->refresh_selected_ibo();
                 ui->canvas->update();
@@ -240,7 +240,7 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     case Qt::Key_A:
         if (event->modifiers() == Qt::ControlModifier)
         {
-            ui->canvas->editer().reset_selected_mark(true);
+            ui->canvas->editor().reset_selected_mark(true);
             ui->canvas->refresh_selected_ibo();
             ui->canvas->update();
         }
@@ -274,16 +274,16 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     case Qt::Key_Z:
         if (event->modifiers() == Qt::ControlModifier)
         {
-            const size_t layers_count = ui->canvas->editer().groups_count();
-            ui->canvas->editer().undo();
-            if (ui->canvas->editer().groups_count() != layers_count)
+            const size_t layers_count = ui->canvas->editor().groups_count();
+            ui->canvas->editor().undo();
+            if (ui->canvas->editor().groups_count() != layers_count)
             {
-                if (ui->canvas->editer().groups_count() == 0)
+                if (ui->canvas->editor().groups_count() == 0)
                 {
-                    ui->canvas->editer().append_group();
+                    ui->canvas->editor().append_group();
                 }
-                ui->canvas->editer().set_current_group(
-                    std::min(ui->canvas->editer().current_group(), ui->canvas->editer().groups_count() - 1));
+                ui->canvas->editor().set_current_group(
+                    std::min(ui->canvas->editor().current_group(), ui->canvas->editor().groups_count() - 1));
                 _layers_manager->update_layers();
                 _layers_cbx->setModel(_layers_manager->model());
             }
@@ -336,7 +336,7 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 
 void MainWindow::open_file()
 {
-    if (ui->canvas->editer().graph()->modified &&
+    if (ui->canvas->editor().graph()->modified &&
         MessageBox::question(this, "File is modified", "Save or not?") == QDialogButtonBox::StandardButton::Yes)
     {
         save_file();
@@ -344,7 +344,7 @@ void MainWindow::open_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, ui->canvas->editer().path(),
+    QString path = dialog->getOpenFileName(dialog, nullptr, ui->canvas->editor().path(),
                                            "All Files: (*.*);;DSV: (*.dsv *.DSV);;"
                                            "PLT: (*.plt *.PLT);;RS274D: (*.cut *.CUT *.nc *.NC);;DXF: (*.dxf *.DXF)",
                                            &_file_type);
@@ -354,15 +354,15 @@ void MainWindow::open_file()
 
 void MainWindow::close_file()
 {
-    if (ui->canvas->editer().graph()->modified &&
+    if (ui->canvas->editor().graph()->modified &&
         MessageBox::question(this, "File is modified", "Save or not?") == QDialogButtonBox::StandardButton::Yes)
     {
         save_file();
     }
 
-    ui->canvas->editer().delete_graph();
-    ui->canvas->editer().load_graph(new Graph());
-    ui->canvas->editer().graph()->modified = false;
+    ui->canvas->editor().delete_graph();
+    ui->canvas->editor().load_graph(new Graph());
+    ui->canvas->editor().graph()->modified = false;
     ui->canvas->refresh_vbo(false);
     _info_labels[2]->clear();
     _layers_manager->update_layers();
@@ -384,13 +384,13 @@ void MainWindow::save_file()
     {
         QFileDialog *dialog = new QFileDialog();
         dialog->setModal(true);
-        QString path = dialog->getSaveFileName(dialog, nullptr, ui->canvas->editer().path(), "DSV: (*.dsv);;PLT: (*.plt);;DXF: (*.dxf)");
+        QString path = dialog->getSaveFileName(dialog, nullptr, ui->canvas->editor().path(), "DSV: (*.dsv);;PLT: (*.plt);;DXF: (*.dxf)");
         if (!path.isEmpty())
         {
             bool flag = false;
             if (path.toLower().endsWith(".dsv"))
             {
-                DSVReaderWriter dsvRW(ui->canvas->editer().graph());
+                DSVReaderWriter dsvRW(ui->canvas->editor().graph());
                 std::ofstream file(path.toLocal8Bit());
                 dsvRW.write(file);
                 file.close();
@@ -398,20 +398,20 @@ void MainWindow::save_file()
             }
             else if (path.toLower().endsWith(".plt"))
             {
-                File::write(path, ui->canvas->editer().graph(), File::FileType::PLT);
+                File::write(path, ui->canvas->editor().graph(), File::FileType::PLT);
                 flag = true;
             }
             else if (path.toLower().endsWith(".dxf"))
             {
                 dxfRW dxfRW(path.toLocal8Bit());
-                DXFReaderWriter dxf_interface(ui->canvas->editer().graph(), &dxfRW);
+                DXFReaderWriter dxf_interface(ui->canvas->editor().graph(), &dxfRW);
                 dxfRW.write(&dxf_interface, DRW::Version::AC1018, false);
                 flag = true;
             }
             if (flag)
             {
-                ui->canvas->editer().set_path(path);
-                ui->canvas->editer().graph()->modified = false;
+                ui->canvas->editor().set_path(path);
+                ui->canvas->editor().graph()->modified = false;
                 _info_labels[2]->setText(path);
             }
         }
@@ -421,55 +421,55 @@ void MainWindow::save_file()
     {
         if (label_path.toLower().endsWith(".dsv"))
         {
-            DSVReaderWriter dsvRW(ui->canvas->editer().graph());
+            DSVReaderWriter dsvRW(ui->canvas->editor().graph());
             std::ofstream file(label_path.toLocal8Bit());
             dsvRW.write(file);
             file.close();
-            ui->canvas->editer().graph()->modified = false;
+            ui->canvas->editor().graph()->modified = false;
         }
         else if (label_path.toLower().endsWith(".plt"))
         {
-            File::write(label_path, ui->canvas->editer().graph(), File::FileType::PLT);
-            ui->canvas->editer().graph()->modified = false;
+            File::write(label_path, ui->canvas->editor().graph(), File::FileType::PLT);
+            ui->canvas->editor().graph()->modified = false;
         }
         else if (label_path.toLower().endsWith(".dxf"))
         {
             dxfRW dxfRW(label_path.toLocal8Bit());
-            DXFReaderWriter dxf_interface(ui->canvas->editer().graph(), &dxfRW);
+            DXFReaderWriter dxf_interface(ui->canvas->editor().graph(), &dxfRW);
             dxfRW.write(&dxf_interface, DRW::Version::AC1018, false);
-            ui->canvas->editer().graph()->modified = false;
+            ui->canvas->editor().graph()->modified = false;
         }
     }
 }
 
 void MainWindow::auto_save()
 {
-    if (!ui->auto_save->isChecked() || ui->canvas->editer().path().isEmpty() ||
-        !(ui->canvas->editer().path().toLower().endsWith(".dsv") || ui->canvas->editer().path().toLower().endsWith(".plt") ||
-          ui->canvas->editer().path().toLower().endsWith(".dxf")))
+    if (!ui->auto_save->isChecked() || ui->canvas->editor().path().isEmpty() ||
+        !(ui->canvas->editor().path().toLower().endsWith(".dsv") || ui->canvas->editor().path().toLower().endsWith(".plt") ||
+          ui->canvas->editor().path().toLower().endsWith(".dxf")))
     {
         return;
     }
-    if (ui->canvas->editer().graph()->modified)
+    if (ui->canvas->editor().graph()->modified)
     {
-        if (ui->canvas->editer().path().toLower().endsWith(".dsv"))
+        if (ui->canvas->editor().path().toLower().endsWith(".dsv"))
         {
-            DSVReaderWriter dsvRW(ui->canvas->editer().graph());
-            std::ofstream file(ui->canvas->editer().path().toLocal8Bit());
+            DSVReaderWriter dsvRW(ui->canvas->editor().graph());
+            std::ofstream file(ui->canvas->editor().path().toLocal8Bit());
             dsvRW.write(file);
             file.close();
         }
-        else if (ui->canvas->editer().path().toLower().endsWith(".plt"))
+        else if (ui->canvas->editor().path().toLower().endsWith(".plt"))
         {
-            File::write(ui->canvas->editer().path(), ui->canvas->editer().graph(), File::FileType::PLT);
+            File::write(ui->canvas->editor().path(), ui->canvas->editor().graph(), File::FileType::PLT);
         }
-        else if (ui->canvas->editer().path().toLower().endsWith(".dxf"))
+        else if (ui->canvas->editor().path().toLower().endsWith(".dxf"))
         {
-            dxfRW dxfRW(ui->canvas->editer().path().toLocal8Bit());
-            DXFReaderWriter dxf_interface(ui->canvas->editer().graph(), &dxfRW);
+            dxfRW dxfRW(ui->canvas->editor().path().toLocal8Bit());
+            DXFReaderWriter dxf_interface(ui->canvas->editor().graph(), &dxfRW);
             dxfRW.write(&dxf_interface, DRW::Version::AC1018, false);
         }
-        ui->canvas->editer().graph()->modified = false;
+        ui->canvas->editor().graph()->modified = false;
     }
 }
 
@@ -482,28 +482,28 @@ void MainWindow::saveas_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     QString path =
-        dialog->getSaveFileName(dialog, nullptr, ui->canvas->editer().path().isEmpty() ? "D:/output.dsv" : ui->canvas->editer().path(),
+        dialog->getSaveFileName(dialog, nullptr, ui->canvas->editor().path().isEmpty() ? "D:/output.dsv" : ui->canvas->editor().path(),
                                 "DSV: (*.dsv);;PLT: (*.plt);;DXF: (*.dxf)");
     if (!path.isEmpty())
     {
         if (path.toLower().endsWith(".dsv"))
         {
-            DSVReaderWriter dsvRW(ui->canvas->editer().graph());
+            DSVReaderWriter dsvRW(ui->canvas->editor().graph());
             std::ofstream file(path.toLocal8Bit());
             dsvRW.write(file);
             file.close();
         }
         else if (path.toLower().endsWith(".plt"))
         {
-            File::write(path, ui->canvas->editer().graph(), File::FileType::PLT);
+            File::write(path, ui->canvas->editor().graph(), File::FileType::PLT);
         }
         else if (path.toLower().endsWith(".dxf"))
         {
             dxfRW dxfRW(path.toLocal8Bit());
-            DXFReaderWriter dxf_interface(ui->canvas->editer().graph(), &dxfRW);
+            DXFReaderWriter dxf_interface(ui->canvas->editor().graph(), &dxfRW);
             dxfRW.write(&dxf_interface, DRW::Version::AC1018, false);
         }
-        ui->canvas->editer().graph()->modified = false;
+        ui->canvas->editor().graph()->modified = false;
     }
     delete dialog;
 }
@@ -513,7 +513,7 @@ void MainWindow::append_file()
     QFileDialog *dialog = new QFileDialog();
     dialog->setModal(true);
     dialog->setFileMode(QFileDialog::ExistingFile);
-    QString path = dialog->getOpenFileName(dialog, nullptr, ui->canvas->editer().path(),
+    QString path = dialog->getOpenFileName(dialog, nullptr, ui->canvas->editor().path(),
                                            "All Files: (*.*);;DSV: (*.dsv *.DSV);;PLT: (*.plt *.PLT);;"
                                            "RS274D: (*.cut *.CUT *.nc *.NC);;DXF: (*.dxf *.DXF)",
                                            &_file_type);
@@ -567,10 +567,10 @@ void MainWindow::refresh_settings()
             Geo::Circle::default_down_sampling_value = Geo::Ellipse::default_down_sampling_value = value;
         const double step = GlobalSetting::setting().sampling_step;
         Geo::BSpline::default_step = step, Geo::CubicBezier::default_step = step;
-        ui->canvas->editer().graph()->update_curve_shape(step, value);
+        ui->canvas->editor().graph()->update_curve_shape(step, value);
         ui->canvas->refresh_vbo(true);
     }
-    ui->canvas->editer().set_backup_count(GlobalSetting::setting().backup_times);
+    ui->canvas->editor().set_backup_count(GlobalSetting::setting().backup_times);
     ui->canvas->set_catch_distance(GlobalSetting::setting().catch_distance);
     GlobalSetting::setting().save_setting();
 }
@@ -582,8 +582,8 @@ void MainWindow::load_settings()
     Geo::CubicBezier::default_down_sampling_value = Geo::BSpline::default_down_sampling_value = Geo::Circle::default_down_sampling_value =
         Geo::Ellipse::default_down_sampling_value = GlobalSetting::setting().down_sampling;
 
-    ui->canvas->editer().set_path(GlobalSetting::setting().file_path);
-    ui->canvas->editer().set_backup_count(GlobalSetting::setting().backup_times);
+    ui->canvas->editor().set_path(GlobalSetting::setting().file_path);
+    ui->canvas->editor().set_backup_count(GlobalSetting::setting().backup_times);
     ui->auto_save->setChecked(GlobalSetting::setting().auto_save);
     ui->auto_layering->setChecked(GlobalSetting::setting().auto_layering);
     ui->auto_combinate->setChecked(GlobalSetting::setting().auto_combinate);
@@ -645,7 +645,7 @@ void MainWindow::hide_layers_manager()
 {
     _layers_cbx->setModel(_layers_manager->model());
     ui->canvas->refresh_vbo(true);
-    ui->canvas->editer().reset_selected_mark();
+    ui->canvas->editor().reset_selected_mark();
 }
 
 void MainWindow::to_main_page()
@@ -660,7 +660,7 @@ void MainWindow::to_array_page()
 
 void MainWindow::show_data_panel()
 {
-    _panel->load_draw_data(ui->canvas->editer().graph());
+    _panel->load_draw_data(ui->canvas->editor().graph());
     _panel->exec();
 }
 
@@ -673,7 +673,7 @@ void MainWindow::open_file(const QString &path)
     }
     GlobalSetting::setting().file_path = path;
 
-    ui->canvas->editer().delete_graph();
+    ui->canvas->editor().delete_graph();
     Graph *g = new Graph;
     if (path.toUpper().endsWith(".DSV"))
     {
@@ -748,20 +748,20 @@ void MainWindow::open_file(const QString &path)
         file.close();
     }
 
-    ui->canvas->editer().load_graph(g, path);
+    ui->canvas->editor().load_graph(g, path);
     if (ui->auto_connect->isChecked())
     {
-        ui->canvas->editer().auto_connect();
+        ui->canvas->editor().auto_connect();
     }
     if (ui->auto_layering->isChecked())
     {
-        ui->canvas->editer().auto_layering();
+        ui->canvas->editor().auto_layering();
     }
     else if (ui->auto_combinate->isChecked())
     {
-        ui->canvas->editer().auto_combinate();
+        ui->canvas->editor().auto_combinate();
     }
-    ui->canvas->editer().graph()->modified = false;
+    ui->canvas->editor().graph()->modified = false;
 
     ui->canvas->refresh_vbo(false);
     _info_labels[2]->setText(path);
@@ -807,25 +807,25 @@ void MainWindow::append_file(const QString &path)
         dxfRW.read(&dxf_interface, false);
     }
 
-    Graph *graph = ui->canvas->editer().graph();
+    Graph *graph = ui->canvas->editor().graph();
     graph->modified = true;
-    ui->canvas->editer().load_graph(g);
+    ui->canvas->editor().load_graph(g);
     if (ui->auto_connect->isChecked())
     {
-        ui->canvas->editer().auto_connect();
+        ui->canvas->editor().auto_connect();
     }
     if (ui->auto_layering->isChecked())
     {
-        ui->canvas->editer().auto_layering();
+        ui->canvas->editor().auto_layering();
     }
     else if (ui->auto_combinate->isChecked())
     {
-        ui->canvas->editer().auto_combinate();
+        ui->canvas->editor().auto_combinate();
     }
     Geo::AABBRectParams rect0(graph->aabbrect_params()), rect1(g->aabbrect_params());
     g->translate(rect0.right + 10 - rect1.left, rect0.bottom - rect1.bottom);
     graph->merge(*g);
-    ui->canvas->editer().load_graph(graph);
+    ui->canvas->editor().load_graph(graph);
     delete g;
     ui->canvas->refresh_vbo(false);
     ui->canvas->refresh_selected_ibo();

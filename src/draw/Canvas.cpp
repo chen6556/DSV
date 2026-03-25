@@ -48,7 +48,7 @@ Canvas::~Canvas()
     }
     glDeleteProgram(_shader_program);
     doneCurrent();
-    _editer.delete_graph();
+    _editor.delete_graph();
 }
 
 
@@ -59,9 +59,9 @@ void Canvas::init()
     _input_line.hide();
 }
 
-Editer &Canvas::editer()
+Editor &Canvas::editor()
 {
-    return _editer;
+    return _editor;
 }
 
 
@@ -455,7 +455,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         break;
     case Qt::RightButton:
         cancel_painting();
-        _editer.reset_selected_mark();
+        _editor.reset_selected_mark();
         refresh_selected_ibo();
         break;
     case Qt::MiddleButton:
@@ -626,7 +626,7 @@ void Canvas::wheelEvent(QWheelEvent *event)
     doneCurrent();
     refresh_vbo(false);
     refresh_selected_ibo();
-    _editer.set_view_ratio(_ratio);
+    _editor.set_view_ratio(_ratio);
     CanvasOperations::CanvasOperation::view_ratio = _ratio;
     update();
 }
@@ -668,10 +668,10 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
 
 void Canvas::show_overview()
 {
-    _editer.set_view_ratio(1.0);
+    _editor.set_view_ratio(1.0);
     _bool_flags.show_catched_points = false;
 
-    Graph *graph = _editer.graph();
+    Graph *graph = _editor.graph();
     if (graph->empty())
     {
         _ratio = 1.0;
@@ -704,7 +704,7 @@ void Canvas::show_overview()
     // 缩放减少2%，使其与边界留出一些空间
     _ratio = std::isinf(_ratio) ? 1 : _ratio * 0.98;
 
-    _editer.set_view_ratio(_ratio);
+    _editor.set_view_ratio(_ratio);
     CanvasOperations::CanvasOperation::view_ratio = _ratio;
 
     // 置于控件中间
@@ -800,18 +800,18 @@ void Canvas::set_cursor_catch(const CatchedPointType type, const bool value)
 
 Geo::Point Canvas::center() const
 {
-    if (_editer.graph() == nullptr || _editer.graph()->empty())
+    if (_editor.graph() == nullptr || _editor.graph()->empty())
     {
         return Geo::Point();
     }
 
     double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
-    if (_editer.graph() == nullptr || _editer.graph()->empty())
+    if (_editor.graph() == nullptr || _editor.graph()->empty())
     {
         return Geo::Point((x0 + x1) / 2, (y0 + y1) / 2);
     }
 
-    for (const ContainerGroup &group : _editer.graph()->container_groups())
+    for (const ContainerGroup &group : _editor.graph()->container_groups())
     {
         for (const Geo::Point &point : group.bounding_rect())
         {
@@ -827,14 +827,14 @@ Geo::Point Canvas::center() const
 
 Geo::AABBRect Canvas::bounding_rect() const
 {
-    if (_editer.graph() == nullptr || _editer.graph()->empty())
+    if (_editor.graph() == nullptr || _editor.graph()->empty())
     {
         return Geo::AABBRect();
     }
 
     double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
 
-    for (const ContainerGroup &group : _editer.graph()->container_groups())
+    for (const ContainerGroup &group : _editor.graph()->container_groups())
     {
         for (const Geo::Point &point : group.bounding_rect())
         {
@@ -863,12 +863,12 @@ Geo::Point Canvas::mouse_position(const bool to_real_coord) const
 
 const bool Canvas::empty() const
 {
-    return _editer.graph() == nullptr || _editer.graph()->empty();
+    return _editor.graph() == nullptr || _editor.graph()->empty();
 }
 
 void Canvas::cancel_painting()
 {
-    _editer.point_cache().clear();
+    _editor.point_cache().clear();
     CanvasOperations::CanvasOperation::operation().clear();
     _info_labels[1]->clear();
     emit tool_changed(CanvasOperations::CanvasOperation::tool[0]);
@@ -882,7 +882,7 @@ void Canvas::set_info_labels(QLabel **labels)
 
 void Canvas::add_geometry(Geo::Geometry *object)
 {
-    _editer.append(object);
+    _editor.append(object);
     refresh_vbo(true, object->type());
     refresh_selected_ibo();
     update();
@@ -916,7 +916,7 @@ void Canvas::hide_text_edit()
             _edited_text->set_text(_input_line.toPlainText());
             UndoStack::TextChangedCommand *cmd = new UndoStack::TextChangedCommand(_edited_text, text);
             cmd->updated.push_back(_edited_text);
-            _editer.push_backup_command(cmd);
+            _editor.push_backup_command(cmd);
             refresh_vbo(true, Geo::Type::TEXT);
             update();
         }
@@ -931,7 +931,7 @@ void Canvas::copy()
     _points_cache.clear();
     _points_cache.emplace_back(_mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6],
                                _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
-    _editer.copy_selected();
+    _editor.copy_selected();
 }
 
 void Canvas::cut()
@@ -939,9 +939,9 @@ void Canvas::cut()
     _points_cache.clear();
     _points_cache.emplace_back(_mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6],
                                _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
-    _editer.cut_selected();
+    _editor.cut_selected();
     std::set<Geo::Type> types;
-    for (const Geo::Geometry *object : _editer.paste_table())
+    for (const Geo::Geometry *object : _editor.paste_table())
     {
         if (const Combination *combination = dynamic_cast<const Combination *>(object))
         {
@@ -963,10 +963,10 @@ void Canvas::paste()
 {
     const double x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
     const double y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
-    if (!_points_cache.empty() && _editer.paste(x - _points_cache.back().x, y - _points_cache.back().y))
+    if (!_points_cache.empty() && _editor.paste(x - _points_cache.back().x, y - _points_cache.back().y))
     {
         std::set<Geo::Type> types;
-        for (const Geo::Geometry *object : _editer.paste_table())
+        for (const Geo::Geometry *object : _editor.paste_table())
         {
             if (const Combination *combination = dynamic_cast<const Combination *>(object))
             {
@@ -988,10 +988,10 @@ void Canvas::paste()
 
 void Canvas::paste(const double x, const double y)
 {
-    if (!_points_cache.empty() && _editer.paste(x - _points_cache.back().x, y - _points_cache.back().y))
+    if (!_points_cache.empty() && _editor.paste(x - _points_cache.back().x, y - _points_cache.back().y))
     {
         std::set<Geo::Type> types;
-        for (const Geo::Geometry *object : _editer.paste_table())
+        for (const Geo::Geometry *object : _editor.paste_table())
         {
             if (const Combination *combination = dynamic_cast<const Combination *>(object))
             {
@@ -1086,7 +1086,7 @@ bool Canvas::catch_point(const double x, const double y, Geo::Point &coord, cons
 
 void Canvas::refresh_vbo(const bool flush)
 {
-    _editer.refresh_visible_objects(_visible_area.aabbrect_params());
+    _editor.refresh_visible_objects(_visible_area.aabbrect_params());
     std::future<VBOData> polyline_vbo = std::async(std::launch::async, &Canvas::refresh_polyline_vbo, this, flush),
                          polygon_vbo = std::async(std::launch::async, &Canvas::refresh_polygon_vbo, this, flush),
                          circle_vbo = std::async(std::launch::async, &Canvas::refresh_circle_vbo, this, flush),
@@ -1165,7 +1165,7 @@ void Canvas::refresh_vbo(const bool flush)
 
 void Canvas::refresh_vbo(const bool flush, const Geo::Type type)
 {
-    _editer.refresh_visible_objects(_visible_area.aabbrect_params());
+    _editor.refresh_visible_objects(_visible_area.aabbrect_params());
     switch (type)
     {
     case Geo::Type::POLYLINE:
@@ -1275,7 +1275,7 @@ void Canvas::refresh_vbo(const bool flush, const std::set<Geo::Type> &types)
         return refresh_vbo(flush);
     }
 
-    _editer.refresh_visible_objects(_visible_area.aabbrect_params());
+    _editor.refresh_visible_objects(_visible_area.aabbrect_params());
     std::future<VBOData> polyline_vbo, polygon_vbo, circle_vbo, curve_vbo, circle_printable_points, curve_printable_points, point_vbo;
 
     if (types.find(Geo::Type::POLYLINE) != types.end())
@@ -1402,7 +1402,7 @@ Canvas::VBOData Canvas::refresh_polyline_vbo(const bool flush)
     VBOData result;
     _visible_objects[0].polyline = _visible_objects[1].polyline;
     _visible_objects[1].polyline.clear();
-    for (Geo::Geometry *geo : _editer.visible_objects())
+    for (Geo::Geometry *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::POLYLINE)
         {
@@ -1448,7 +1448,7 @@ Canvas::VBOData Canvas::refresh_polygon_vbo(const bool flush)
     VBOData result;
     _visible_objects[0].polygon = _visible_objects[1].polygon;
     _visible_objects[1].polygon.clear();
-    for (Geo::Geometry *geo : _editer.visible_objects())
+    for (Geo::Geometry *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::POLYGON)
         {
@@ -1494,7 +1494,7 @@ Canvas::VBOData Canvas::refresh_circle_vbo(const bool flush)
     VBOData result;
     _visible_objects[0].circle = _visible_objects[1].circle;
     _visible_objects[1].circle.clear();
-    for (Geo::Geometry *geo : _editer.visible_objects())
+    for (Geo::Geometry *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::CIRCLE || geo->type() == Geo::Type::ARC || geo->type() == Geo::Type::ELLIPSE)
         {
@@ -1578,7 +1578,7 @@ Canvas::VBOData Canvas::refresh_curve_vbo(const bool flush)
     VBOData result;
     _visible_objects[0].curve = _visible_objects[1].curve;
     _visible_objects[1].curve.clear();
-    for (Geo::Geometry *geo : _editer.visible_objects())
+    for (Geo::Geometry *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::BEZIER || geo->type() == Geo::Type::BSPLINE)
         {
@@ -1654,7 +1654,7 @@ Canvas::VBOData Canvas::refresh_point_vbo(const bool flush)
     _visible_objects[0].point = _visible_objects[1].point;
     _visible_objects[1].point.clear();
 
-    for (const ContainerGroup &group : _editer.graph()->container_groups())
+    for (const ContainerGroup &group : _editor.graph()->container_groups())
     {
         if (!group.visible())
         {
@@ -1709,7 +1709,7 @@ Canvas::VBOData Canvas::refresh_circle_printable_points()
 {
     VBOData result;
     std::vector<Geo::Geometry *> output;
-    for (Geo::Geometry *geo : _editer.visible_objects())
+    for (Geo::Geometry *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::CIRCLE || geo->type() == Geo::Type::ELLIPSE || geo->type() == Geo::Type::ARC)
         {
@@ -1795,7 +1795,7 @@ Canvas::VBOData Canvas::refresh_curve_printable_points()
     visible_area_params.top = _visible_area.top() + 2;
     visible_area_params.bottom = _visible_area.bottom() - 2;
 
-    for (ContainerGroup &group : _editer.graph()->container_groups())
+    for (ContainerGroup &group : _editor.graph()->container_groups())
     {
         if (!group.visible())
         {
@@ -1859,7 +1859,7 @@ void Canvas::refresh_selected_ibo()
     visible_area_params.top = _visible_area.top() + 2;
     visible_area_params.bottom = _visible_area.bottom() - 2;
     std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
-    for (const Geo::Geometry *geo : _editer.visible_objects())
+    for (const Geo::Geometry *geo : _editor.visible_objects())
     {
         if (!geo->is_selected)
         {
@@ -2268,7 +2268,7 @@ void Canvas::refresh_selected_vbo()
 {
     std::future<VBOData> polyline_vbo, polygon_vbo, circle_vbo, curve_vbo, circle_point, curve_point, point_vbo;
     bool refresh[5] = {false, false, false, false, false};
-    for (const ContainerGroup &group : _editer.graph()->container_groups())
+    for (const ContainerGroup &group : _editor.graph()->container_groups())
     {
         for (const Geo::Geometry *object : group)
         {
@@ -2436,7 +2436,7 @@ void Canvas::paint_text()
     // painter.setRenderHint(QPainter::RenderHint::Antialiasing, true);
     painter.setCompositionMode(QPainter::CompositionMode::CompositionMode_Source);
 
-    for (const ContainerGroup &group : _editer.graph()->container_groups())
+    for (const ContainerGroup &group : _editor.graph()->container_groups())
     {
         if (!group.visible())
         {
@@ -2513,7 +2513,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
 
     if (current_group_only)
     {
-        for (const Geo::Geometry *geo : _editer.graph()->container_group(_editer.current_group()))
+        for (const Geo::Geometry *geo : _editor.graph()->container_group(_editor.current_group()))
         {
             if (skip_selected && geo->is_selected)
             {
@@ -2595,7 +2595,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
     }
     else
     {
-        for (const ContainerGroup &group : _editer.graph()->container_groups())
+        for (const ContainerGroup &group : _editor.graph()->container_groups())
         {
             if (!group.visible())
             {
@@ -3069,27 +3069,27 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
         }
     }
 
-    if (_editer.point_cache().size() > 2)
+    if (_editor.point_cache().size() > 2)
     {
-        if (const double d = Geo::distance(pos, _editer.point_cache().front()); catch_flags[0] && d < dis[0])
+        if (const double d = Geo::distance(pos, _editor.point_cache().front()); catch_flags[0] && d < dis[0])
         {
             dis[0] = d;
-            result[0] = _editer.point_cache().front();
+            result[0] = _editor.point_cache().front();
         }
-        for (size_t i = 1, count = _editer.point_cache().size() - 1; i < count; ++i)
+        for (size_t i = 1, count = _editor.point_cache().size() - 1; i < count; ++i)
         {
-            if (const double d = Geo::distance(pos, _editer.point_cache()[i]); catch_flags[0] && d < dis[0])
+            if (const double d = Geo::distance(pos, _editor.point_cache()[i]); catch_flags[0] && d < dis[0])
             {
-                result[0] = _editer.point_cache()[i];
+                result[0] = _editor.point_cache()[i];
                 dis[0] = d;
             }
-            const Geo::Point center((_editer.point_cache()[i - 1] + _editer.point_cache()[i]) / 2);
+            const Geo::Point center((_editor.point_cache()[i - 1] + _editor.point_cache()[i]) / 2);
             if (const double d = Geo::distance(pos, center); catch_flags[1] && d < dis[1])
             {
                 dis[1] = d;
                 result[1] = center;
             }
-            if (Geo::Point foot; catch_flags[2] && Geo::foot_point(_editer.point_cache()[i - 1], _editer.point_cache()[i], press_pos, foot))
+            if (Geo::Point foot; catch_flags[2] && Geo::foot_point(_editor.point_cache()[i - 1], _editor.point_cache()[i], press_pos, foot))
             {
                 if (const double d = Geo::distance(pos, foot); d < dis[2])
                 {
@@ -3101,16 +3101,16 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
 
         if (catch_flags[4])
         {
-            for (size_t i = 1, count = _editer.point_cache().size() - 1; i < count; ++i)
+            for (size_t i = 1, count = _editor.point_cache().size() - 1; i < count; ++i)
             {
-                if (Geo::distance(pos, _editer.point_cache()[i - 1], _editer.point_cache()[i], false) > distance)
+                if (Geo::distance(pos, _editor.point_cache()[i - 1], _editor.point_cache()[i], false) > distance)
                 {
                     continue;
                 }
                 for (size_t j = i + 2; j < count; ++j)
                 {
-                    if (Geo::Point point; Geo::is_intersected(_editer.point_cache()[i - 1], _editer.point_cache()[i],
-                                                              _editer.point_cache()[j - 1], _editer.point_cache()[j], point, false))
+                    if (Geo::Point point; Geo::is_intersected(_editor.point_cache()[i - 1], _editor.point_cache()[i],
+                                                              _editor.point_cache()[j - 1], _editor.point_cache()[j], point, false))
                     {
                         if (const double d = Geo::distance(pos, point); d < dis[4])
                         {

@@ -1,12 +1,12 @@
 #include <thread>
 #include <algorithm>
-#include "base/Editer.hpp"
+#include "base/Editor.hpp"
 #include "io/GlobalSetting.hpp"
 #include "io/SHXReader.hpp"
 #include "io/TextEncoding.hpp"
 
 
-Editer::~Editer()
+Editor::~Editor()
 {
     delete _graph;
     _graph = nullptr;
@@ -17,7 +17,7 @@ Editer::~Editer()
     }
 }
 
-void Editer::init()
+void Editor::init()
 {
     if (_graph != nullptr)
     {
@@ -31,7 +31,7 @@ void Editer::init()
     }
 }
 
-void Editer::load_graph(Graph *graph, const QString &path)
+void Editor::load_graph(Graph *graph, const QString &path)
 {
     if (graph != nullptr)
     {
@@ -47,7 +47,7 @@ void Editer::load_graph(Graph *graph, const QString &path)
     }
 }
 
-void Editer::load_graph(Graph *graph)
+void Editor::load_graph(Graph *graph)
 {
     if (graph != nullptr)
     {
@@ -63,7 +63,7 @@ void Editer::load_graph(Graph *graph)
     }
 }
 
-void Editer::delete_graph()
+void Editor::delete_graph()
 {
     if (_graph != nullptr)
     {
@@ -75,52 +75,52 @@ void Editer::delete_graph()
     }
 }
 
-const QString &Editer::path() const
+const QString &Editor::path() const
 {
     return _file_path;
 }
 
-void Editer::set_path(const QString &path)
+void Editor::set_path(const QString &path)
 {
     _file_path = path;
 }
 
-Graph *Editer::graph()
+Graph *Editor::graph()
 {
     return _graph;
 }
 
-const Graph *Editer::graph() const
+const Graph *Editor::graph() const
 {
     return _graph;
 }
 
-void Editer::refresh_visible_objects(const Geo::AABBRectParams &rect)
+void Editor::refresh_visible_objects(const Geo::AABBRectParams &rect)
 {
     return _view_tree.find_visible_objects(rect);
 }
 
-const std::vector<Geo::Geometry *> &Editer::visible_objects() const
+const std::vector<Geo::Geometry *> &Editor::visible_objects() const
 {
     return _view_tree.visible_objects();
 }
 
-std::vector<Geo::Point> &Editer::point_cache()
+std::vector<Geo::Point> &Editor::point_cache()
 {
     return _point_cache;
 }
 
-const std::vector<Geo::Point> &Editer::point_cache() const
+const std::vector<Geo::Point> &Editor::point_cache() const
 {
     return _point_cache;
 }
 
-const size_t Editer::current_group() const
+const size_t Editor::current_group() const
 {
     return _current_group;
 }
 
-void Editer::set_current_group(const size_t index)
+void Editor::set_current_group(const size_t index)
 {
     if (index < _graph->container_groups().size() && index != _current_group)
     {
@@ -135,17 +135,17 @@ void Editer::set_current_group(const size_t index)
     }
 }
 
-const size_t Editer::groups_count() const
+const size_t Editor::groups_count() const
 {
     return _graph->container_groups().size();
 }
 
-void Editer::set_view_ratio(const double value)
+void Editor::set_view_ratio(const double value)
 {
     _view_ratio = value;
 }
 
-Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others, const bool visible_only)
+Geo::Geometry *Editor::select(const Geo::Point &point, const bool reset_others, const bool visible_only)
 {
     if (_graph == nullptr || _graph->empty())
     {
@@ -488,12 +488,12 @@ Geo::Geometry *Editer::select(const Geo::Point &point, const bool reset_others, 
     return nullptr;
 }
 
-Geo::Geometry *Editer::select(const double x, const double y, const bool reset_others, const bool visible_only)
+Geo::Geometry *Editor::select(const double x, const double y, const bool reset_others, const bool visible_only)
 {
     return select(Geo::Point(x, y), reset_others, visible_only);
 }
 
-std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &point, const bool reset_others)
+std::tuple<Geo::Geometry *, bool> Editor::select_with_state(const Geo::Point &point, const bool reset_others)
 {
     if (_graph == nullptr || _graph->empty())
     {
@@ -724,7 +724,7 @@ std::tuple<Geo::Geometry *, bool> Editer::select_with_state(const Geo::Point &po
     return std::make_tuple(nullptr, false);
 }
 
-std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const bool reset_others, const bool visible_only)
+std::vector<Geo::Geometry *> Editor::select(const Geo::AABBRect &rect, const bool reset_others, const bool visible_only)
 {
     std::vector<Geo::Geometry *> result;
     if (rect.empty() || _graph == nullptr || _graph->empty())
@@ -759,8 +759,8 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const boo
     {
         std::vector<Geo::Geometry *> temp0, temp1;
         const size_t step = count / 2;
-        std::thread thread0(&Editer::select_subfunc, rect, &objects, 0, step, &temp0);
-        std::thread thread1(&Editer::select_subfunc, rect, &objects, step, count, &temp1);
+        std::thread thread0(&Editor::select_subfunc, rect, &objects, 0, step, &temp0);
+        std::thread thread1(&Editor::select_subfunc, rect, &objects, step, count, &temp1);
         thread0.join();
         thread1.join();
         result.insert(result.end(), temp0.begin(), temp0.end());
@@ -770,9 +770,9 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const boo
     {
         std::vector<Geo::Geometry *> temp[3];
         const size_t step = count / 3;
-        std::thread threads[3] = {std::thread(&Editer::select_subfunc, rect, &objects, 0, step, &temp[0]),
-                                  std::thread(&Editer::select_subfunc, rect, &objects, step, step * 2, &temp[1]),
-                                  std::thread(&Editer::select_subfunc, rect, &objects, step * 2, count, &temp[2])};
+        std::thread threads[3] = {std::thread(&Editor::select_subfunc, rect, &objects, 0, step, &temp[0]),
+                                  std::thread(&Editor::select_subfunc, rect, &objects, step, step * 2, &temp[1]),
+                                  std::thread(&Editor::select_subfunc, rect, &objects, step * 2, count, &temp[2])};
         for (int i = 0; i < 3; ++i)
         {
             threads[i].join();
@@ -783,10 +783,10 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const boo
     {
         std::vector<Geo::Geometry *> temp[4];
         const size_t step = count / 4;
-        std::thread threads[4] = {std::thread(&Editer::select_subfunc, rect, &objects, 0, step, &temp[0]),
-                                  std::thread(&Editer::select_subfunc, rect, &objects, step, step * 2, &temp[1]),
-                                  std::thread(&Editer::select_subfunc, rect, &objects, step * 2, step * 3, &temp[2]),
-                                  std::thread(&Editer::select_subfunc, rect, &objects, step * 3, count, &temp[3])};
+        std::thread threads[4] = {std::thread(&Editor::select_subfunc, rect, &objects, 0, step, &temp[0]),
+                                  std::thread(&Editor::select_subfunc, rect, &objects, step, step * 2, &temp[1]),
+                                  std::thread(&Editor::select_subfunc, rect, &objects, step * 2, step * 3, &temp[2]),
+                                  std::thread(&Editor::select_subfunc, rect, &objects, step * 3, count, &temp[3])};
         for (int i = 0; i < 4; ++i)
         {
             threads[i].join();
@@ -797,7 +797,7 @@ std::vector<Geo::Geometry *> Editer::select(const Geo::AABBRect &rect, const boo
     return result;
 }
 
-std::vector<Geo::Geometry *> Editer::selected(const bool visible_only) const
+std::vector<Geo::Geometry *> Editor::selected(const bool visible_only) const
 {
     std::vector<Geo::Geometry *> result;
     if (_graph == nullptr)
@@ -838,7 +838,7 @@ std::vector<Geo::Geometry *> Editer::selected(const bool visible_only) const
     return result;
 }
 
-const size_t Editer::selected_count() const
+const size_t Editor::selected_count() const
 {
     if (_graph == nullptr)
     {
@@ -858,7 +858,7 @@ const size_t Editer::selected_count() const
     return count;
 }
 
-void Editer::reset_selected_mark(const bool value)
+void Editor::reset_selected_mark(const bool value)
 {
     if (_graph == nullptr || _graph->empty())
     {
@@ -870,12 +870,12 @@ void Editer::reset_selected_mark(const bool value)
     }
 }
 
-const std::vector<Geo::Geometry *> &Editer::paste_table() const
+const std::vector<Geo::Geometry *> &Editor::paste_table() const
 {
     return _paste_table;
 }
 
-void Editer::undo()
+void Editor::undo()
 {
     _backup.undo();
     _view_tree.remove(_backup.removed);
@@ -883,12 +883,12 @@ void Editer::undo()
     _view_tree.update(_backup.updated);
 }
 
-void Editer::set_backup_count(const size_t count)
+void Editor::set_backup_count(const size_t count)
 {
     _backup.set_count(count);
 }
 
-void Editer::push_backup_command(UndoStack::Command *command)
+void Editor::push_backup_command(UndoStack::Command *command)
 {
     _view_tree.remove(command->removed);
     _view_tree.append(command->appended);
@@ -900,7 +900,7 @@ void Editer::push_backup_command(UndoStack::Command *command)
 }
 
 
-void Editer::remove_group(const size_t index)
+void Editor::remove_group(const size_t index)
 {
     assert(index < _graph->container_groups().size());
     _backup.push_command(new UndoStack::GroupCommand(index, false, _graph->container_group(index)));
@@ -908,7 +908,7 @@ void Editer::remove_group(const size_t index)
     _graph->remove_group(index);
 }
 
-void Editer::append_group(const size_t index)
+void Editor::append_group(const size_t index)
 {
     if (index >= _graph->container_groups().size())
     {
@@ -922,7 +922,7 @@ void Editer::append_group(const size_t index)
     }
 }
 
-void Editer::reorder_group(size_t from, size_t to)
+void Editor::reorder_group(size_t from, size_t to)
 {
     if (from < to)
     {
@@ -949,36 +949,36 @@ void Editer::reorder_group(size_t from, size_t to)
     _graph->remove_group(from);
 }
 
-bool Editer::group_is_visible(const size_t index) const
+bool Editor::group_is_visible(const size_t index) const
 {
     return _graph->container_group(index).visible();
 }
 
-void Editer::show_group(const size_t index)
+void Editor::show_group(const size_t index)
 {
     _graph->container_group(index).show();
     _view_tree.build(_graph);
 }
 
-void Editer::hide_group(const size_t index)
+void Editor::hide_group(const size_t index)
 {
     _graph->container_group(index).hide();
     _view_tree.build(_graph);
 }
 
-QString Editer::group_name(const size_t index) const
+QString Editor::group_name(const size_t index) const
 {
     return _graph->container_group(index).name;
 }
 
-void Editer::set_group_name(const size_t index, const QString &name)
+void Editor::set_group_name(const size_t index, const QString &name)
 {
     _backup.push_command(new UndoStack::RenameGroupCommand(index, _graph->container_group(index).name));
     _graph->container_group(index).name = name;
 }
 
 
-void Editer::append(Geo::Geometry *object)
+void Editor::append(Geo::Geometry *object)
 {
     if (object->type() != Geo::Type::POINT && object->empty())
     {
@@ -990,7 +990,7 @@ void Editer::append(Geo::Geometry *object)
     _backup.push_command(new UndoStack::ObjectCommand(object, _current_group, _graph->container_group(_current_group).size(), true));
 }
 
-void Editer::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1,
+void Editor::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1,
                               const bool change_shape)
 {
     const double catch_distance = std::max(GlobalSetting::setting().catch_distance, std::pow(GlobalSetting::setting().catch_distance, 2));
@@ -1316,7 +1316,7 @@ void Editer::translate_points(Geo::Geometry *points, const double x0, const doub
     _view_tree.update(points);
 }
 
-bool Editer::remove_selected()
+bool Editor::remove_selected()
 {
     if (_graph == nullptr || _graph->empty() || selected_count() == 0)
     {
@@ -1343,7 +1343,7 @@ bool Editer::remove_selected()
     return true;
 }
 
-bool Editer::copy_selected()
+bool Editor::copy_selected()
 {
     while (!_paste_table.empty())
     {
@@ -1367,7 +1367,7 @@ bool Editer::copy_selected()
     return true;
 }
 
-bool Editer::cut_selected()
+bool Editor::cut_selected()
 {
     while (!_paste_table.empty())
     {
@@ -1403,7 +1403,7 @@ bool Editer::cut_selected()
     return true;
 }
 
-bool Editer::paste(const double tx, const double ty)
+bool Editor::paste(const double tx, const double ty)
 {
     if (_paste_table.empty() || _graph == nullptr)
     {
@@ -1427,7 +1427,7 @@ bool Editer::paste(const double tx, const double ty)
     return true;
 }
 
-bool Editer::connect(const std::vector<Geo::Geometry *> &objects, const double connect_distance)
+bool Editor::connect(const std::vector<Geo::Geometry *> &objects, const double connect_distance)
 {
     if (_graph == nullptr || objects.empty())
     {
@@ -1581,7 +1581,7 @@ bool Editer::connect(const std::vector<Geo::Geometry *> &objects, const double c
     return true;
 }
 
-bool Editer::blend(const Geo::Geometry *object0, const Geo::Geometry *object1, const Geo::Point &pos0, const Geo::Point &pos1)
+bool Editor::blend(const Geo::Geometry *object0, const Geo::Geometry *object1, const Geo::Point &pos0, const Geo::Point &pos1)
 {
     Geo::Point pre0, point0, pre1, point1;
     switch (object0->type())
@@ -1840,7 +1840,7 @@ bool Editer::blend(const Geo::Geometry *object0, const Geo::Geometry *object1, c
     }
 }
 
-bool Editer::close_polyline(const std::vector<Geo::Geometry *> &objects)
+bool Editor::close_polyline(const std::vector<Geo::Geometry *> &objects)
 {
     if (_graph == nullptr || objects.empty())
     {
@@ -1882,7 +1882,7 @@ bool Editer::close_polyline(const std::vector<Geo::Geometry *> &objects)
     }
 }
 
-bool Editer::combinate(const std::vector<Geo::Geometry *> &objects)
+bool Editor::combinate(const std::vector<Geo::Geometry *> &objects)
 {
     if (_graph == nullptr || objects.size() < 2)
     {
@@ -1921,7 +1921,7 @@ bool Editer::combinate(const std::vector<Geo::Geometry *> &objects)
     return true;
 }
 
-bool Editer::detach(const std::vector<Geo::Geometry *> &objects)
+bool Editor::detach(const std::vector<Geo::Geometry *> &objects)
 {
     if (_graph == nullptr || objects.empty())
     {
@@ -1959,7 +1959,7 @@ bool Editer::detach(const std::vector<Geo::Geometry *> &objects)
     return true;
 }
 
-bool Editer::mirror(const std::vector<Geo::Geometry *> &objects, const Geo::Point &start, const Geo::Point &end, const bool copy)
+bool Editor::mirror(const std::vector<Geo::Geometry *> &objects, const Geo::Point &start, const Geo::Point &end, const bool copy)
 {
     if (objects.empty() || start == end)
     {
@@ -2002,7 +2002,7 @@ bool Editer::mirror(const std::vector<Geo::Geometry *> &objects, const Geo::Poin
     return true;
 }
 
-bool Editer::offset(const std::vector<Geo::Geometry *> &objects, const double distance, const Geo::Offset::JoinType join_type,
+bool Editor::offset(const std::vector<Geo::Geometry *> &objects, const double distance, const Geo::Offset::JoinType join_type,
                     const Geo::Offset::EndType end_type)
 {
     const size_t count = _graph->container_group(_current_group).size();
@@ -2115,7 +2115,7 @@ bool Editer::offset(const std::vector<Geo::Geometry *> &objects, const double di
     }
 }
 
-bool Editer::scale(const std::vector<Geo::Geometry *> &objects, const bool unitary, const double k)
+bool Editor::scale(const std::vector<Geo::Geometry *> &objects, const bool unitary, const double k)
 {
     if (objects.empty() || k == 0 || k == 1)
     {
@@ -2174,7 +2174,7 @@ bool Editer::scale(const std::vector<Geo::Geometry *> &objects, const bool unita
     return true;
 }
 
-bool Editer::shape_union(Geo::Geometry *shape0, Geo::Geometry *shape1)
+bool Editor::shape_union(Geo::Geometry *shape0, Geo::Geometry *shape1)
 {
     if (_graph == nullptr || _graph->empty() || shape0 == nullptr || shape1 == nullptr || shape0 == shape1)
     {
@@ -2386,7 +2386,7 @@ bool Editer::shape_union(Geo::Geometry *shape0, Geo::Geometry *shape1)
     }
 }
 
-bool Editer::shape_intersection(Geo::Geometry *shape0, Geo::Geometry *shape1)
+bool Editor::shape_intersection(Geo::Geometry *shape0, Geo::Geometry *shape1)
 {
     if (_graph == nullptr || _graph->empty() || shape0 == nullptr || shape1 == nullptr || shape0 == shape1)
     {
@@ -2598,7 +2598,7 @@ bool Editer::shape_intersection(Geo::Geometry *shape0, Geo::Geometry *shape1)
     }
 }
 
-bool Editer::shape_difference(Geo::Geometry *shape0, const Geo::Geometry *shape1)
+bool Editor::shape_difference(Geo::Geometry *shape0, const Geo::Geometry *shape1)
 {
     if (shape0 == nullptr || shape1 == nullptr || shape0 == shape1)
     {
@@ -2807,7 +2807,7 @@ bool Editer::shape_difference(Geo::Geometry *shape0, const Geo::Geometry *shape1
     }
 }
 
-bool Editer::shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1)
+bool Editor::shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1)
 {
     if (shape0 == nullptr || shape1 == nullptr || shape0 == shape1)
     {
@@ -3019,7 +3019,7 @@ bool Editer::shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1)
     }
 }
 
-bool Editer::fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius)
+bool Editor::fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius)
 {
     if (radius <= 0)
     {
@@ -3070,7 +3070,7 @@ bool Editer::fillet(Geo::Polygon *shape, const Geo::Point &point, const double r
     }
 }
 
-bool Editer::fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius0, const double radius1)
+bool Editor::fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius0, const double radius1)
 {
     if (radius0 <= 0 || radius1 <= 0)
     {
@@ -3121,7 +3121,7 @@ bool Editer::fillet(Geo::Polygon *shape, const Geo::Point &point, const double r
     }
 }
 
-bool Editer::fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius)
+bool Editor::fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius)
 {
     if (radius <= 0 || point == polyline->front() || point == polyline->back())
     {
@@ -3171,7 +3171,7 @@ bool Editer::fillet(Geo::Polyline *polyline, const Geo::Point &point, const doub
     }
 }
 
-bool Editer::fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius0, const double radius1)
+bool Editor::fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius0, const double radius1)
 {
     if (radius0 <= 0 || radius1 <= 0 || point == polyline->front() || point == polyline->back())
     {
@@ -3221,7 +3221,7 @@ bool Editer::fillet(Geo::Polyline *polyline, const Geo::Point &point, const doub
     }
 }
 
-bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1,
+bool Editor::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1,
                     const double radius)
 {
     if (radius <= 0 || polyline0 == polyline1 || polyline0->empty() || polyline1->empty())
@@ -3578,7 +3578,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
     return true;
 }
 
-bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1,
+bool Editor::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1,
                     const double radius0, const double radius1)
 {
     if (radius0 <= 0 || radius1 <= 0 || polyline0 == polyline1 || polyline0->empty() || polyline1->empty())
@@ -3935,7 +3935,7 @@ bool Editer::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
     return true;
 }
 
-bool Editer::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::Point &start, const Geo::Point &center,
+bool Editor::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::Point &start, const Geo::Point &center,
                     const Geo::Point &end, const std::vector<std::tuple<size_t, double, double, double>> &tvalues)
 {
     if (object0 == object1 || start == center || center == end || start == end)
@@ -4559,7 +4559,7 @@ bool Editer::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
     }
 }
 
-bool Editer::chamfer(Geo::Polygon *shape, const Geo::Point &point, const double distance)
+bool Editor::chamfer(Geo::Polygon *shape, const Geo::Point &point, const double distance)
 {
     if (distance <= 0)
     {
@@ -4624,7 +4624,7 @@ bool Editer::chamfer(Geo::Polygon *shape, const Geo::Point &point, const double 
     }
 }
 
-bool Editer::chamfer(Geo::Polyline *polyline, const Geo::Point &point, const double distance)
+bool Editor::chamfer(Geo::Polyline *polyline, const Geo::Point &point, const double distance)
 {
     if (distance <= 0 || point == polyline->front() || point == polyline->back())
     {
@@ -4671,7 +4671,7 @@ bool Editer::chamfer(Geo::Polyline *polyline, const Geo::Point &point, const dou
     }
 }
 
-bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
+bool Editor::split(Geo::Geometry *object, const Geo::Point &pos)
 {
     switch (object->type())
     {
@@ -4833,7 +4833,7 @@ bool Editer::split(Geo::Geometry *object, const Geo::Point &pos)
     return false;
 }
 
-bool Editer::line_array(const std::vector<Geo::Geometry *> &objects, int x, int y, double x_space, double y_space)
+bool Editor::line_array(const std::vector<Geo::Geometry *> &objects, int x, int y, double x_space, double y_space)
 {
     if (objects.empty() || x == 0 || y == 0 || (x == 1 && y == 1))
     {
@@ -4890,7 +4890,7 @@ bool Editer::line_array(const std::vector<Geo::Geometry *> &objects, int x, int 
     return true;
 }
 
-bool Editer::ring_array(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const int n)
+bool Editor::ring_array(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const int n)
 {
     if (n <= 1 || objects.empty())
     {
@@ -4922,7 +4922,7 @@ bool Editer::ring_array(const std::vector<Geo::Geometry *> &objects, const doubl
     return true;
 }
 
-void Editer::up(Geo::Geometry *item)
+void Editor::up(Geo::Geometry *item)
 {
     for (size_t i = 0, count = _graph->container_group(_current_group).size() - 1; i < count; ++i)
     {
@@ -4935,7 +4935,7 @@ void Editer::up(Geo::Geometry *item)
     }
 }
 
-void Editer::down(Geo::Geometry *item)
+void Editor::down(Geo::Geometry *item)
 {
     for (size_t i = 1, count = _graph->container_group(_current_group).size(); i < count; ++i)
     {
@@ -4948,7 +4948,7 @@ void Editer::down(Geo::Geometry *item)
     }
 }
 
-void Editer::rotate(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad)
+void Editor::rotate(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad)
 {
     for (Geo::Geometry *geo : objects)
     {
@@ -4959,7 +4959,7 @@ void Editer::rotate(const std::vector<Geo::Geometry *> &objects, const double x,
     _backup.push_command(new UndoStack::RotateCommand(objects, x, y, rad));
 }
 
-void Editer::flip(std::vector<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers)
+void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers)
 {
     Geo::Point coord;
     if (objects.empty())
@@ -5135,7 +5135,7 @@ void Editer::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
     _backup.push_command(new UndoStack::FlipCommand(objects, coord.x, coord.y, direction, unitary));
 }
 
-void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
+void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
 {
     Geo::Point anchor(x, y);
     double dis0 = Geo::distance_square(anchor, (*polyline)[0], (*polyline)[1]);
@@ -5473,7 +5473,7 @@ void Editer::trim(Geo::Polyline *polyline, const double x, const double y)
     _graph->modified = true;
 }
 
-void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
+void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
 {
     Geo::Point anchor(x, y);
     double dis0 = Geo::distance_square(anchor, (*polygon)[0], (*polygon)[1]);
@@ -5830,7 +5830,7 @@ void Editer::trim(Geo::Polygon *polygon, const double x, const double y)
     _graph->modified = true;
 }
 
-void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
+void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
 {
     const int order = 3;
     const int nums[4] = {1, 3, 3, 1};
@@ -6256,7 +6256,7 @@ void Editer::trim(Geo::CubicBezier *bezier, const double x, const double y)
     }
 }
 
-void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
+void Editor::trim(Geo::BSpline *bspline, const double x, const double y)
 {
     if (bspline == nullptr)
     {
@@ -6663,7 +6663,7 @@ void Editer::trim(Geo::BSpline *bspline, const double x, const double y)
     }
 }
 
-void Editer::trim(Geo::Circle *circle, const double x, const double y)
+void Editor::trim(Geo::Circle *circle, const double x, const double y)
 {
     std::vector<Geo::Point> intersections;
     for (const Geo::Geometry *object : _graph->container_group(_current_group))
@@ -6798,7 +6798,7 @@ void Editer::trim(Geo::Circle *circle, const double x, const double y)
     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
 }
 
-void Editer::trim(Geo::Arc *arc, const double x, const double y)
+void Editor::trim(Geo::Arc *arc, const double x, const double y)
 {
     std::vector<Geo::Point> intersections;
     for (const Geo::Geometry *object : _graph->container_group(_current_group))
@@ -7003,7 +7003,7 @@ void Editer::trim(Geo::Arc *arc, const double x, const double y)
     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
 }
 
-void Editer::trim(Geo::Ellipse *ellipse, const double x, const double y)
+void Editor::trim(Geo::Ellipse *ellipse, const double x, const double y)
 {
     std::vector<Geo::Point> intersections;
     for (const Geo::Geometry *object : _graph->container_group(_current_group))
@@ -7254,7 +7254,7 @@ void Editer::trim(Geo::Ellipse *ellipse, const double x, const double y)
     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
 }
 
-void Editer::extend(Geo::Polyline *polyline, const double x, const double y)
+void Editor::extend(Geo::Polyline *polyline, const double x, const double y)
 {
     Geo::Point head, tail;
     if (Geo::distance_square(polyline->front().x, polyline->front().y, x, y) <=
@@ -7435,7 +7435,7 @@ void Editer::extend(Geo::Polyline *polyline, const double x, const double y)
     _view_tree.update(polyline);
 }
 
-void Editer::extend(Geo::CubicBezier *bezier, const double x, const double y)
+void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
 {
     Geo::Point head, tail;
     if (Geo::distance_square(bezier->front().x, bezier->front().y, x, y) <=
@@ -7624,7 +7624,7 @@ void Editer::extend(Geo::CubicBezier *bezier, const double x, const double y)
     _view_tree.append(bezier);
 }
 
-void Editer::extend(Geo::BSpline *bspline, const double x, const double y)
+void Editor::extend(Geo::BSpline *bspline, const double x, const double y)
 {
     Geo::Point head, tail;
     if (Geo::distance_square(bspline->control_points.front().x, bspline->control_points.front().y, x, y) <=
@@ -7815,7 +7815,7 @@ void Editer::extend(Geo::BSpline *bspline, const double x, const double y)
     _view_tree.update(bspline);
 }
 
-bool Editer::divide_points_n(const std::vector<Geo::Geometry *> &objects, const size_t n)
+bool Editor::divide_points_n(const std::vector<Geo::Geometry *> &objects, const size_t n)
 {
     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items;
     ContainerGroup &group = _graph->container_group(_current_group);
@@ -7911,7 +7911,7 @@ bool Editer::divide_points_n(const std::vector<Geo::Geometry *> &objects, const 
     }
 }
 
-bool Editer::divide_parts_n(const std::vector<Geo::Geometry *> &objects, const size_t n)
+bool Editor::divide_parts_n(const std::vector<Geo::Geometry *> &objects, const size_t n)
 {
     ContainerGroup &group = _graph->container_group(_current_group);
     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
@@ -8068,7 +8068,7 @@ bool Editer::divide_parts_n(const std::vector<Geo::Geometry *> &objects, const s
     }
 }
 
-bool Editer::divide_points_measure(const std::vector<Geo::Geometry *> &objects, const double length)
+bool Editor::divide_points_measure(const std::vector<Geo::Geometry *> &objects, const double length)
 {
     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items;
     ContainerGroup &group = _graph->container_group(_current_group);
@@ -8167,7 +8167,7 @@ bool Editer::divide_points_measure(const std::vector<Geo::Geometry *> &objects, 
     }
 }
 
-bool Editer::divide_parts_measure(const std::vector<Geo::Geometry *> &objects, const double length)
+bool Editor::divide_parts_measure(const std::vector<Geo::Geometry *> &objects, const double length)
 {
     ContainerGroup &group = _graph->container_group(_current_group);
     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
@@ -8329,7 +8329,7 @@ bool Editer::divide_parts_measure(const std::vector<Geo::Geometry *> &objects, c
     }
 }
 
-bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines)
+bool Editor::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines)
 {
     if (src == nullptr || dst == nullptr ||
         !(src->type() == Geo::Type::POLYGON || src->type() == Geo::Type::CIRCLE || src->type() == Geo::Type::ELLIPSE) ||
@@ -8502,7 +8502,7 @@ bool Editer::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::li
     return count != reflines.size();
 }
 
-bool Editer::auto_aligning(Geo::Point &coord, const Geo::Geometry *dst, std::list<QLineF> &reflines)
+bool Editor::auto_aligning(Geo::Point &coord, const Geo::Geometry *dst, std::list<QLineF> &reflines)
 {
     if (dst == nullptr || !(dst->type() == Geo::Type::POLYGON || dst->type() == Geo::Type::CIRCLE || dst->type() == Geo::Type::ELLIPSE))
     {
@@ -8549,7 +8549,7 @@ bool Editer::auto_aligning(Geo::Point &coord, const Geo::Geometry *dst, std::lis
     return count != reflines.size();
 }
 
-bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, const bool current_group_only)
+bool Editor::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, const bool current_group_only)
 {
     if (points == nullptr || _graph == nullptr || _graph->empty())
     {
@@ -8655,7 +8655,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, c
     return flag;
 }
 
-bool Editer::auto_aligning(Geo::Geometry *points, const double x, const double y, std::list<QLineF> &reflines,
+bool Editor::auto_aligning(Geo::Geometry *points, const double x, const double y, std::list<QLineF> &reflines,
                            const bool current_group_only)
 {
     if (points == nullptr || _graph == nullptr || _graph->empty())
@@ -8758,7 +8758,7 @@ bool Editer::auto_aligning(Geo::Geometry *points, const double x, const double y
     return flag;
 }
 
-bool Editer::auto_aligning(Geo::Point &coord, std::list<QLineF> &reflines, const bool current_group_only)
+bool Editor::auto_aligning(Geo::Point &coord, std::list<QLineF> &reflines, const bool current_group_only)
 {
     if (_graph == nullptr || _graph->empty())
     {
@@ -8858,7 +8858,7 @@ bool Editer::auto_aligning(Geo::Point &coord, std::list<QLineF> &reflines, const
     return flag;
 }
 
-void Editer::auto_combinate()
+void Editor::auto_combinate()
 {
     if (_graph == nullptr || _graph->empty())
     {
@@ -9294,7 +9294,7 @@ void Editer::auto_combinate()
     _view_tree.build(_graph);
 }
 
-void Editer::auto_layering()
+void Editor::auto_layering()
 {
     if (_graph == nullptr || _graph->empty())
     {
@@ -9513,7 +9513,7 @@ void Editer::auto_layering()
     }
 }
 
-void Editer::auto_connect()
+void Editor::auto_connect()
 {
     if (_graph == nullptr || _graph->empty())
     {
@@ -9708,7 +9708,7 @@ void Editer::auto_connect()
 }
 
 
-void Editer::text_to_polylines(Text *text)
+void Editor::text_to_polylines(Text *text)
 {
     if (text == nullptr)
     {
@@ -9794,7 +9794,7 @@ void Editer::text_to_polylines(Text *text)
     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
 }
 
-void Editer::bezier_to_bspline(Geo::CubicBezier *bezier)
+void Editor::bezier_to_bspline(Geo::CubicBezier *bezier)
 {
     if (bezier == nullptr)
     {
@@ -9814,7 +9814,7 @@ void Editer::bezier_to_bspline(Geo::CubicBezier *bezier)
     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
 }
 
-void Editer::bspline_to_bezier(Geo::BSpline *bspline)
+void Editor::bspline_to_bezier(Geo::BSpline *bspline)
 {
     if (bspline == nullptr)
     {
@@ -9835,7 +9835,7 @@ void Editer::bspline_to_bezier(Geo::BSpline *bspline)
 }
 
 
-void Editer::select_subfunc(const Geo::AABBRect &rect, const std::vector<Geo::Geometry *> *objects, const size_t start, const size_t end,
+void Editor::select_subfunc(const Geo::AABBRect &rect, const std::vector<Geo::Geometry *> *objects, const size_t start, const size_t end,
                             std::vector<Geo::Geometry *> *result)
 {
     for (size_t i = start; i < end; ++i)
