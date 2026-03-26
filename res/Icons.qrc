@@ -51,5 +51,6 @@
         <file>icons/divide/divided_points_measure_btn.png</file>
         <file>icons/divide/divided_points_n_btn.png</file>
         <file>icons/divide/divided_parts_n_btn.png</file>
+        <file>icons/reverse_btn.png</file>
     </qresource>
 </RCC>

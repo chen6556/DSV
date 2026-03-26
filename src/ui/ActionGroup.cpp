@@ -18,6 +18,7 @@ void ActionGroup::init()
     init_trim_menu();
     init_flip_menu();
     init_fillet_menu();
+    init_mirror_menu();
     init_divide_points_menu();
     init_divide_parts_menu();
 }
@@ -236,24 +237,46 @@ void ActionGroup::init_fillet_menu()
     _fillet_menu->addAction(chamfer);
 }
 
+void ActionGroup::init_mirror_menu()
+{
+    _mirror_menu = new QMenu(ui->mirror_btn);
+    _mirror_menu->connect(_mirror_menu, &QMenu::triggered,
+                          [this](QAction *action)
+                          {
+                              _callback(MenuType::MirrorMenu, _mirror_menu->actions().indexOf(action));
+                              ui->mirror_btn->setIcon(action->icon());
+                              ui->mirror_btn->setToolTip(action->text());
+                              ui->mirror_btn->setDefaultAction(action);
+                          });
+    ui->mirror_btn->setMenu(_mirror_menu);
+
+    QAction *mirror = new QAction(QIcon(":/icons/mirror_btn.png"), "Mirror", ui->mirror_btn);
+    _mirror_menu->addAction(mirror);
+    ui->mirror_btn->setDefaultAction(mirror);
+
+    QAction *reverse = new QAction(QIcon(":/icons/reverse_btn.png"), "Reverse", ui->mirror_btn);
+    _mirror_menu->addAction(reverse);
+}
+
 void ActionGroup::init_divide_points_menu()
 {
     _divide_points_menu = new QMenu(ui->divided_points_btn);
     _divide_points_menu->connect(_divide_points_menu, &QMenu::triggered,
-                          [this](QAction *action)
-                          {
-                              _callback(MenuType::DividePointsMenu, _divide_points_menu->actions().indexOf(action));
-                              ui->divided_points_btn->setIcon(action->icon());
-                              ui->divided_points_btn->setToolTip(action->text());
-                              ui->divided_points_btn->setDefaultAction(action);
-                          });
+                                 [this](QAction *action)
+                                 {
+                                     _callback(MenuType::DividePointsMenu, _divide_points_menu->actions().indexOf(action));
+                                     ui->divided_points_btn->setIcon(action->icon());
+                                     ui->divided_points_btn->setToolTip(action->text());
+                                     ui->divided_points_btn->setDefaultAction(action);
+                                 });
     ui->divided_points_btn->setMenu(_divide_points_menu);
 
     QAction *divide_n = new QAction(QIcon(":/icons/divide/divided_points_n_btn.png"), "Divided Points N", ui->divided_points_btn);
     _divide_points_menu->addAction(divide_n);
     ui->divided_points_btn->setDefaultAction(divide_n);
 
-    QAction *divide_measure = new QAction(QIcon(":/icons/divide/divided_points_measure_btn.png"), "Divided Points Measure", ui->divided_points_btn);
+    QAction *divide_measure =
+        new QAction(QIcon(":/icons/divide/divided_points_measure_btn.png"), "Divided Points Measure", ui->divided_points_btn);
     _divide_points_menu->addAction(divide_measure);
 }
 
@@ -261,19 +284,20 @@ void ActionGroup::init_divide_parts_menu()
 {
     _divide_parts_menu = new QMenu(ui->divided_parts_btn);
     _divide_parts_menu->connect(_divide_parts_menu, &QMenu::triggered,
-                          [this](QAction *action)
-                          {
-                              _callback(MenuType::DividePartsMenu, _divide_parts_menu->actions().indexOf(action));
-                              ui->divided_parts_btn->setIcon(action->icon());
-                              ui->divided_parts_btn->setToolTip(action->text());
-                              ui->divided_parts_btn->setDefaultAction(action);
-                          });
+                                [this](QAction *action)
+                                {
+                                    _callback(MenuType::DividePartsMenu, _divide_parts_menu->actions().indexOf(action));
+                                    ui->divided_parts_btn->setIcon(action->icon());
+                                    ui->divided_parts_btn->setToolTip(action->text());
+                                    ui->divided_parts_btn->setDefaultAction(action);
+                                });
     ui->divided_parts_btn->setMenu(_divide_parts_menu);
 
     QAction *divide_n = new QAction(QIcon(":/icons/divide/divided_parts_n_btn.png"), "Divided Parts N", ui->divided_parts_btn);
     _divide_parts_menu->addAction(divide_n);
     ui->divided_parts_btn->setDefaultAction(divide_n);
 
-    QAction *divide_measure = new QAction(QIcon(":/icons/divide/divided_parts_measure_btn.png"), "Divided Parts Measure", ui->divided_parts_btn);
+    QAction *divide_measure =
+        new QAction(QIcon(":/icons/divide/divided_parts_measure_btn.png"), "Divided Parts Measure", ui->divided_parts_btn);
     _divide_parts_menu->addAction(divide_measure);
 }

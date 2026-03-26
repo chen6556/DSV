@@ -927,6 +927,8 @@ public:
 
     void set_knots(const std::vector<double>::const_iterator &begin, const std::vector<double>::const_iterator &end);
 
+    void reverse();
+
     virtual Point at(const double t) const = 0;
 
     virtual Point tangent(const double t) const = 0;

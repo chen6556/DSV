@@ -19,6 +19,7 @@ public:
         ConnectMenu,
         TrimMenu,
         FlipMenu,
+        MirrorMenu,
         DividePointsMenu,
         DividePartsMenu
     };
@@ -35,6 +36,7 @@ private:
     QMenu *_trim_menu = nullptr;
     QMenu *_flip_menu = nullptr;
     QMenu *_fillet_menu = nullptr;
+    QMenu *_mirror_menu = nullptr;
     QMenu *_divide_points_menu = nullptr;
     QMenu *_divide_parts_menu = nullptr;
 
@@ -61,6 +63,8 @@ private:
     void init_flip_menu();
 
     void init_fillet_menu();
+
+    void init_mirror_menu();
 
     void init_divide_points_menu();
 

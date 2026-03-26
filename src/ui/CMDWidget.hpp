@@ -58,6 +58,7 @@ public:
         FlipX_CMD,
         FlipY_CMD,
         Mirror_CMD,
+        Reverse_CMD,
         Offset_CMD,
         Scale_CMD,
         Fillet_CMD,

@@ -249,4 +249,17 @@ public:
 
     void undo(Graph *graph = nullptr) override;
 };
+
+
+class ReverseCommand : public Command
+{
+private:
+    std::vector<Geo::Geometry *> _objects;
+
+public:
+    ReverseCommand(const std::vector<Geo::Geometry *> &objects);
+
+    void undo(Graph *graph = nullptr) override;
+};
+
 } // namespace UndoStack

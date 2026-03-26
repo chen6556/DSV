@@ -3255,6 +3255,15 @@ void BSpline::set_knots(const std::vector<double>::const_iterator &begin, const 
     _knots.assign(begin, end);
 }
 
+void BSpline::reverse()
+{
+    std::reverse(_shape.begin(), _shape.end());
+    std::reverse(_path_values.begin(), _path_values.end());
+    std::reverse(control_points.begin(), control_points.end());
+    std::reverse(path_points.begin(), path_points.end());
+    update_shape(Geo::BSpline::default_step, Geo::BSpline::default_down_sampling_value);
+}
+
 void BSpline::rbasis(const int order, const double t, const size_t npts, const std::vector<double> &x, std::vector<double> &output)
 {
     const size_t nplusc = npts + order + 1;

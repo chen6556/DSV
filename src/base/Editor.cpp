@@ -8329,6 +8329,47 @@ bool Editor::divide_parts_measure(const std::vector<Geo::Geometry *> &objects, c
     }
 }
 
+void Editor::reverse(const std::vector<Geo::Geometry *> &objects)
+{
+    std::vector<Geo::Geometry *> reversed;
+    for (Geo::Geometry *object : objects)
+    {
+        switch (object->type())
+        {
+        case Geo::Type::ARC:
+            {
+                Geo::Arc *arc = static_cast<Geo::Arc *>(object);
+                std::swap(arc->control_points[0], arc->control_points[2]);
+                arc->update_shape(Geo::Circle::default_down_sampling_value);
+            }
+            break;
+        case Geo::Type::BEZIER:
+            {
+                Geo::CubicBezier *bezier = static_cast<Geo::CubicBezier *>(object);
+                std::reverse(bezier->begin(), bezier->end());
+                bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
+            }
+            break;
+        case Geo::Type::BSPLINE:
+            static_cast<Geo::BSpline *>(object)->reverse();
+            break;
+        case Geo::Type::POLYGON:
+        case Geo::Type::POLYLINE:
+            std::reverse(static_cast<Geo::Polyline *>(object)->begin(), static_cast<Geo::Polyline *>(object)->end());
+            break;
+        default:
+            continue;
+        }
+        reversed.push_back(object);
+    }
+    if (!reversed.empty())
+    {
+        _graph->modified = true;
+        _backup.push_command(new UndoStack::ReverseCommand(reversed));
+    }
+}
+
+
 bool Editor::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines)
 {
     if (src == nullptr || dst == nullptr ||

@@ -34,7 +34,7 @@ void CMDWidget::init()
               << "EXTEND" << "FILLET" << "FREEFILLET" << "FLIPX" << "FLIPY"
               << "IPOLYGON" << "INTERSECTION" << "LENGTH" << "LINEARRAY" << "MAIN" << "MIRROR"
               << "OFFSET" << "PASTE" << "PARC" << "PCIRCLE" << "POLYLINE" << "POINT" << "RECTANGLE"
-              << "SEAARC" << "SERARC"
+              << "REVERSE" << "SEAARC" << "SERARC"
               << "RINGARRAY" << "ROTATE" << "SCALE" << "SCAARC" << "SAVE" << "SPLIT" << "TEXT"
               << "TRIM" << "UNDO" << "UNION" << "XOR";
     _cmd_list.sort();
@@ -70,6 +70,7 @@ void CMDWidget::init()
                  {"TRIM", CMD::Trim_CMD},
                  {"EXTEND", CMD::Extend_CMD},
                  {"MIRROR", CMD::Mirror_CMD},
+                 {"REVERSE", CMD::Reverse_CMD},
                  {"ARRAY", CMD::Array_CMD},
                  {"LINEARRAY", CMD::LineArray_CMD},
                  {"RINGARRAY", CMD::RingArray_CMD},
@@ -200,7 +201,7 @@ void CMDWidget::init()
                         CMD::DividePartsN_CMD,  CMD::DividePartsMeasure_CMD,
                         CMD::DividePointsN_CMD, CMD::DividePointsMeasure_CMD,
                         CMD::Paste_CMD,         CMD::Undo_CMD,
-                        CMD::SelectAll_CMD};
+                        CMD::Reverse_CMD,       CMD::SelectAll_CMD};
 
     _completer = new QCompleter(_cmd_list, this);
     _completer->setCaseSensitivity(Qt::CaseSensitivity::CaseInsensitive);
@@ -379,6 +380,10 @@ bool CMDWidget::work()
             break;
         case CMD::FlipY_CMD:
             flip_y();
+            _current_cmd = CMD::Error_CMD;
+            break;
+        case CMD::Reverse_CMD:
+            Canvas::canvas->editor().reverse(Canvas::canvas->editor().selected());
             _current_cmd = CMD::Error_CMD;
             break;
         case CMD::Scale_CMD:

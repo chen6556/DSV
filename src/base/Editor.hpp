@@ -208,6 +208,8 @@ public:
 
     bool divide_parts_measure(const std::vector<Geo::Geometry *> &objects, const double length);
 
+    void reverse(const std::vector<Geo::Geometry *> &objects);
+
 
     bool auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines);
 

@@ -121,7 +121,6 @@ void MainWindow::connect_btn_to_cmd()
     connect(ui->detach_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Detach_CMD); });
 
     connect(ui->split_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Split_CMD); });
-    connect(ui->mirror_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Mirror_CMD); });
     connect(ui->rotate_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Rotate_CMD); });
     connect(ui->scale_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Scale_CMD); });
     connect(ui->offset_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Offset_CMD); });
@@ -973,6 +972,19 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
             break;
         case 1: // flip y
             ui->cmd_widget->work(CMDWidget::CMD::FlipY_CMD);
+            break;
+        default:
+            break;
+        }
+        break;
+    case ActionGroup::MenuType::MirrorMenu:
+        switch (index)
+        {
+        case 0: // mirror
+            ui->cmd_widget->work(CMDWidget::CMD::Mirror_CMD);
+            break;
+        case 1: // reverse
+            ui->cmd_widget->work(CMDWidget::CMD::Reverse_CMD);
             break;
         default:
             break;
