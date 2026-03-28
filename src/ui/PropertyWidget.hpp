@@ -1,5 +1,6 @@
 #pragma once
-
+#include <tuple>
+#include <vector>
 #include <QDialog>
 #include "base/Container.hpp"
 
@@ -12,10 +13,13 @@ class PropertyWidget;
 QT_END_NAMESPACE
 
 
+class Canvas;
+
 class PropertyWidget : public QDialog
 {
 private:
     Ui::PropertyWidget *ui = nullptr;
+    Canvas *_canvas = nullptr;
     Geo::Arc *_arc = nullptr;
     Geo::CubicBezier *_bezier = nullptr;
     Geo::BSpline *_bspline = nullptr;
@@ -26,9 +30,11 @@ private:
     Geo::Polygon *_polygon = nullptr;
     Geo::Polyline *_polyline = nullptr;
     Text *_text = nullptr;
+    std::vector<std::tuple<double, double>> _shape, _path_points;
+    std::vector<double> _knots;
 
 public:
-    PropertyWidget(QWidget *parent);
+    PropertyWidget(Canvas *canvas);
 
     ~PropertyWidget() override;
 
@@ -37,23 +43,71 @@ public:
 private:
     void init();
 
-    void show(Geo::Arc *arc);
+    void init_arc_widget();
 
-    void show(Geo::CubicBezier *bezier);
+    void init_bezier_widget();
 
-    void show(Geo::BSpline *bspline);
+    void init_bspline_widget();
 
-    void show(Geo::Circle *circle);
+    void init_circle_widget();
 
-    void show(Combination *combination);
+    void init_combination_widget();
 
-    void show(Geo::Ellipse *ellipse);
+    void init_ellipse_widget();
 
-    void show(Geo::Point *point);
+    void init_point_widget();
 
-    void show(Geo::Polygon *polygon);
+    void init_polygon_widget();
 
-    void show(Geo::Polyline *polyline);
+    void init_polyline_widget();
 
-    void show(Text *text);
+    void init_text_widget();
+
+    void read(Geo::Geometry *object);
+
+    void read(Geo::Arc *arc);
+
+    void read(Geo::CubicBezier *bezier);
+
+    void read(Geo::BSpline *bspline);
+
+    void read(Geo::Circle *circle);
+
+    void read(Combination *combination);
+
+    void read(Geo::Ellipse *ellipse);
+
+    void read(Geo::Point *point);
+
+    void read(Geo::Polygon *polygon);
+
+    void read(Geo::Polyline *polyline);
+
+    void read(Text *text);
+
+    void check(Geo::Geometry *object);
+
+    void check(Geo::Arc *arc);
+
+    void check(Geo::CubicBezier *bezier);
+
+    void check(Geo::BSpline *bspline);
+
+    void check(Geo::Circle *circle);
+
+    void check(Combination *combination);
+
+    void check(Geo::Ellipse *ellipse);
+
+    void check(Geo::Point *point);
+
+    void check(Geo::Polygon *polygon);
+
+    void check(Geo::Polyline *polyline);
+
+    void check(Text *text);
+
+    void move_bezier_point(int index, double x0, double y0);
+
+    void move_bspline_point(int index, double x0, double y0);
 };

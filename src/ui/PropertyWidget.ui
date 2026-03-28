@@ -55,7 +55,7 @@ QWidget
 {
 	background-color: rgb(70, 70, 71);
 }
-QLineEdit, QSpinBox, QDoubleSpinBox
+QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox
 {
 	background-color: rgb(50, 50, 51);
 	border: 1px solid rgb(100, 100, 101);
@@ -132,7 +132,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="QDoubleSpinBox" name="arc_startX"/>
+              <widget class="QDoubleSpinBox" name="arc_startX">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
              <item row="1" column="0">
               <widget class="QLabel" name="arc_startYLabel">
@@ -142,7 +146,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QDoubleSpinBox" name="arc_startY"/>
+              <widget class="QDoubleSpinBox" name="arc_startY">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
              <item row="2" column="0">
               <widget class="QLabel" name="arc_centerXLabel">
@@ -172,7 +180,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </widget>
              </item>
              <item row="4" column="1">
-              <widget class="QDoubleSpinBox" name="arc_endX"/>
+              <widget class="QDoubleSpinBox" name="arc_endX">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
              <item row="5" column="0">
               <widget class="QLabel" name="arc_endYLabel">
@@ -182,7 +194,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </widget>
              </item>
              <item row="5" column="1">
-              <widget class="QDoubleSpinBox" name="arc_endY"/>
+              <widget class="QDoubleSpinBox" name="arc_endY">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
              <item row="6" column="0">
               <widget class="QLabel" name="arc_startAngleLabel">
@@ -232,7 +248,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </widget>
              </item>
              <item row="8" column="1">
-              <widget class="QLineEdit" name="arc_clockwise"/>
+              <widget class="QLineEdit" name="arc_clockwise">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
              <item row="9" column="0">
               <widget class="QLabel" name="arc_radiusLabel">
@@ -293,8 +313,8 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>135</width>
-            <height>455</height>
+            <width>158</width>
+            <height>431</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_4">
@@ -304,101 +324,57 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               <enum>QFormLayout::RowWrapPolicy::WrapLongRows</enum>
              </property>
              <item row="0" column="0">
-              <widget class="QLabel" name="bezier_controlPointCountLabel">
+              <widget class="QLabel" name="bezier_pointCountLabel">
                <property name="text">
-                <string>Control Point Count</string>
+                <string>Point Count</string>
                </property>
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="QSpinBox" name="bezier_controlPointCount">
+              <widget class="QSpinBox" name="bezier_pointCount">
                <property name="readOnly">
                 <bool>true</bool>
                </property>
               </widget>
              </item>
              <item row="1" column="0">
-              <widget class="QLabel" name="bezier_controlPointLabel">
+              <widget class="QLabel" name="bezier_pointLabel">
                <property name="text">
-                <string>Control Point</string>
+                <string>Point</string>
                </property>
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QSpinBox" name="bezier_controlPoint"/>
+              <widget class="QSpinBox" name="bezier_point"/>
              </item>
              <item row="2" column="0">
-              <widget class="QLabel" name="bezier_controlPointXLabel">
+              <widget class="QLabel" name="bezier_pointXLabel">
                <property name="text">
-                <string>Control Point X</string>
+                <string>Point X</string>
                </property>
               </widget>
              </item>
              <item row="2" column="1">
-              <widget class="QDoubleSpinBox" name="bezier_controlPointX"/>
+              <widget class="QDoubleSpinBox" name="bezier_pointX"/>
              </item>
              <item row="3" column="0">
-              <widget class="QLabel" name="bezier_controlPointYLabel">
+              <widget class="QLabel" name="bezier_pointYLabel">
                <property name="text">
-                <string>Control Point Y</string>
+                <string>Point Y</string>
                </property>
               </widget>
              </item>
              <item row="3" column="1">
-              <widget class="QDoubleSpinBox" name="bezier_controlPointY"/>
+              <widget class="QDoubleSpinBox" name="bezier_pointY"/>
              </item>
              <item row="4" column="0">
-              <widget class="QLabel" name="bezier_pathPointCountLabel">
-               <property name="text">
-                <string>Path Point Count</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="1">
-              <widget class="QSpinBox" name="bezier_pathPointCount">
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="0">
-              <widget class="QLabel" name="bezier_pathPointLabel">
-               <property name="text">
-                <string>Path Point</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="1">
-              <widget class="QSpinBox" name="bezier_pathPoint"/>
-             </item>
-             <item row="6" column="0">
-              <widget class="QLabel" name="bezier_pathPointXLabel">
-               <property name="text">
-                <string>Path Point X</string>
-               </property>
-              </widget>
-             </item>
-             <item row="6" column="1">
-              <widget class="QDoubleSpinBox" name="bezier_pathPointX"/>
-             </item>
-             <item row="7" column="0">
-              <widget class="QLabel" name="bezier_pathPointYLabel">
-               <property name="text">
-                <string>Path Point Y</string>
-               </property>
-              </widget>
-             </item>
-             <item row="7" column="1">
-              <widget class="QDoubleSpinBox" name="bezier_pathPointY"/>
-             </item>
-             <item row="8" column="0">
               <widget class="QLabel" name="bezier_lengthLabel">
                <property name="text">
                 <string>Length</string>
                </property>
               </widget>
              </item>
-             <item row="8" column="1">
+             <item row="4" column="1">
               <widget class="QDoubleSpinBox" name="bezier_length">
                <property name="readOnly">
                 <bool>true</bool>
@@ -440,8 +416,8 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>135</width>
-            <height>455</height>
+            <width>121</width>
+            <height>307</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_7">
@@ -450,106 +426,83 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
              <property name="rowWrapPolicy">
               <enum>QFormLayout::RowWrapPolicy::WrapLongRows</enum>
              </property>
-             <item row="0" column="0">
-              <widget class="QLabel" name="bspline_controlPointCountLabel">
-               <property name="text">
-                <string>Control Point Count</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QSpinBox" name="bspline_controlPointCount">
-               <property name="readOnly">
-                <bool>true</bool>
-               </property>
-              </widget>
-             </item>
              <item row="1" column="0">
-              <widget class="QLabel" name="bspline_controlPointLabel">
+              <widget class="QLabel" name="bspline_pointCountLabel">
                <property name="text">
-                <string>Control Point</string>
+                <string>Point Count</string>
                </property>
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QSpinBox" name="bspline_controlPoint"/>
-             </item>
-             <item row="2" column="0">
-              <widget class="QLabel" name="bspline_controlPointXLabel">
-               <property name="text">
-                <string>Control Point X</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="1">
-              <widget class="QDoubleSpinBox" name="bspline_controlPointX"/>
-             </item>
-             <item row="3" column="0">
-              <widget class="QLabel" name="bspline_controlPointYLabel">
-               <property name="text">
-                <string>Control Point Y</string>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
-              <widget class="QDoubleSpinBox" name="bspline_controlPointY"/>
-             </item>
-             <item row="4" column="0">
-              <widget class="QLabel" name="bspline_pathPointCountLabel">
-               <property name="text">
-                <string>Path Point Count</string>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="1">
-              <widget class="QSpinBox" name="bspline_pathPointCount">
+              <widget class="QSpinBox" name="bspline_pointCount">
                <property name="readOnly">
                 <bool>true</bool>
                </property>
               </widget>
              </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="bspline_pointLabel">
+               <property name="text">
+                <string>Point</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QSpinBox" name="bspline_point"/>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="bspline_pointXLabel">
+               <property name="text">
+                <string>Point X</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QDoubleSpinBox" name="bspline_pointX"/>
+             </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="bspline_pointYLabel">
+               <property name="text">
+                <string>Point Y</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QDoubleSpinBox" name="bspline_pointY"/>
+             </item>
              <item row="5" column="0">
-              <widget class="QLabel" name="bspline_pathPointLabel">
-               <property name="text">
-                <string>Path Point</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="1">
-              <widget class="QSpinBox" name="bspline_pathPoint"/>
-             </item>
-             <item row="6" column="0">
-              <widget class="QLabel" name="bspline_pathPointXLabel">
-               <property name="text">
-                <string>Path Point X</string>
-               </property>
-              </widget>
-             </item>
-             <item row="6" column="1">
-              <widget class="QDoubleSpinBox" name="bspline_pathPointX"/>
-             </item>
-             <item row="7" column="0">
-              <widget class="QLabel" name="bspline_pathPointYLabel">
-               <property name="text">
-                <string>Path Point Y</string>
-               </property>
-              </widget>
-             </item>
-             <item row="7" column="1">
-              <widget class="QDoubleSpinBox" name="bspline_pathPointY"/>
-             </item>
-             <item row="8" column="0">
               <widget class="QLabel" name="bspline_lengthLabel">
                <property name="text">
                 <string>Length</string>
                </property>
               </widget>
              </item>
-             <item row="8" column="1">
+             <item row="5" column="1">
               <widget class="QDoubleSpinBox" name="bspline_length">
                <property name="readOnly">
                 <bool>true</bool>
                </property>
+              </widget>
+             </item>
+             <item row="0" column="0">
+              <widget class="QLabel" name="bspline_pointTypeLabel">
+               <property name="text">
+                <string>Type</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QComboBox" name="bspline_pointTypeCbx">
+               <item>
+                <property name="text">
+                 <string>Path Point</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Control Point</string>
+                </property>
+               </item>
               </widget>
              </item>
             </layout>
@@ -635,7 +588,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </widget>
              </item>
              <item row="3" column="1">
-              <widget class="QDoubleSpinBox" name="circle_length"/>
+              <widget class="QDoubleSpinBox" name="circle_length">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
              <item row="4" column="0">
               <widget class="QLabel" name="circle_areaLabel">
@@ -645,7 +602,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </widget>
              </item>
              <item row="4" column="1">
-              <widget class="QDoubleSpinBox" name="circle_area"/>
+              <widget class="QDoubleSpinBox" name="circle_area">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -790,7 +751,7 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
             <x>0</x>
             <y>0</y>
             <width>132</width>
-            <height>651</height>
+            <height>700</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_13">
@@ -807,7 +768,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </widget>
              </item>
              <item row="0" column="1">
-              <widget class="QDoubleSpinBox" name="ellipse_startX"/>
+              <widget class="QDoubleSpinBox" name="ellipse_startX">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
              <item row="1" column="0">
               <widget class="QLabel" name="ellipse_startYLabel">
@@ -817,7 +782,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QDoubleSpinBox" name="ellipse_startY"/>
+              <widget class="QDoubleSpinBox" name="ellipse_startY">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
              <item row="2" column="0">
               <widget class="QLabel" name="ellipse_centerXLabel">
@@ -847,7 +816,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </widget>
              </item>
              <item row="4" column="1">
-              <widget class="QDoubleSpinBox" name="ellipse_endX"/>
+              <widget class="QDoubleSpinBox" name="ellipse_endX">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
              <item row="5" column="0">
               <widget class="QLabel" name="ellipse_endYLabel">
@@ -857,7 +830,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </widget>
              </item>
              <item row="5" column="1">
-              <widget class="QDoubleSpinBox" name="ellipse_endY"/>
+              <widget class="QDoubleSpinBox" name="ellipse_endY">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
              <item row="6" column="0">
               <widget class="QLabel" name="ellipse_startAngleLabel">
@@ -870,9 +847,6 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               <widget class="QDoubleSpinBox" name="ellipse_startAngle">
                <property name="suffix">
                 <string>°</string>
-               </property>
-               <property name="minimum">
-                <double>-360.000000000000000</double>
                </property>
                <property name="maximum">
                 <double>360.000000000000000</double>
@@ -891,73 +865,90 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                <property name="suffix">
                 <string>°</string>
                </property>
-               <property name="minimum">
-                <double>-360.000000000000000</double>
-               </property>
                <property name="maximum">
                 <double>360.000000000000000</double>
                </property>
               </widget>
              </item>
-             <item row="8" column="0">
+             <item row="9" column="0">
               <widget class="QLabel" name="ellipse_radiusALabel">
                <property name="text">
                 <string>Radius A</string>
                </property>
               </widget>
              </item>
-             <item row="8" column="1">
+             <item row="9" column="1">
               <widget class="QDoubleSpinBox" name="ellipse_radiusA"/>
              </item>
-             <item row="9" column="0">
+             <item row="10" column="0">
               <widget class="QLabel" name="ellipse_radiusBLabel">
                <property name="text">
                 <string>Radius B</string>
                </property>
               </widget>
              </item>
-             <item row="9" column="1">
+             <item row="10" column="1">
               <widget class="QDoubleSpinBox" name="ellipse_radiusB"/>
              </item>
-             <item row="10" column="0">
+             <item row="11" column="0">
               <widget class="QLabel" name="ellipse_ratioLabel">
                <property name="text">
                 <string>Ratio</string>
                </property>
               </widget>
              </item>
-             <item row="10" column="1">
+             <item row="11" column="1">
               <widget class="QDoubleSpinBox" name="ellipse_ratio">
                <property name="readOnly">
                 <bool>true</bool>
                </property>
               </widget>
              </item>
-             <item row="11" column="0">
+             <item row="12" column="0">
               <widget class="QLabel" name="ellipse_lengthLabel">
                <property name="text">
                 <string>Length</string>
                </property>
               </widget>
              </item>
-             <item row="11" column="1">
+             <item row="12" column="1">
               <widget class="QDoubleSpinBox" name="ellipse_length">
                <property name="readOnly">
                 <bool>true</bool>
                </property>
               </widget>
              </item>
-             <item row="12" column="0">
+             <item row="13" column="0">
               <widget class="QLabel" name="ellipse_areaLabel">
                <property name="text">
                 <string>Area</string>
                </property>
               </widget>
              </item>
-             <item row="12" column="1">
+             <item row="13" column="1">
               <widget class="QDoubleSpinBox" name="ellipse_area">
                <property name="readOnly">
                 <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="0">
+              <widget class="QLabel" name="ellipse_angleLabel">
+               <property name="text">
+                <string>Angle</string>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="1">
+              <widget class="QDoubleSpinBox" name="ellipse_angle">
+               <property name="suffix">
+                <string>°</string>
+               </property>
+               <property name="minimum">
+                <double>-360.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>360.000000000000000</double>
                </property>
               </widget>
              </item>
@@ -1034,7 +1025,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </widget>
              </item>
              <item row="2" column="1">
-              <widget class="QDoubleSpinBox" name="point_length"/>
+              <widget class="QDoubleSpinBox" name="point_length">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -1133,7 +1128,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </widget>
              </item>
              <item row="4" column="1">
-              <widget class="QLineEdit" name="polygon_clockwise"/>
+              <widget class="QLineEdit" name="polygon_clockwise">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
              <item row="5" column="0">
               <widget class="QLabel" name="polygon_lengthLabel">
@@ -1260,7 +1259,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </widget>
              </item>
              <item row="4" column="1">
-              <widget class="QDoubleSpinBox" name="polyline_length"/>
+              <widget class="QDoubleSpinBox" name="polyline_length">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>
@@ -1297,8 +1300,8 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>158</width>
-            <height>431</height>
+            <width>132</width>
+            <height>333</height>
            </rect>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_21">
@@ -1377,6 +1380,12 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
                <property name="suffix">
                 <string>°</string>
                </property>
+               <property name="minimum">
+                <double>-360.000000000000000</double>
+               </property>
+               <property name="maximum">
+                <double>360.000000000000000</double>
+               </property>
               </widget>
              </item>
              <item row="4" column="0">
@@ -1387,7 +1396,11 @@ QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical
               </widget>
              </item>
              <item row="4" column="1">
-              <widget class="QLineEdit" name="text_font"/>
+              <widget class="QLineEdit" name="text_font">
+               <property name="readOnly">
+                <bool>true</bool>
+               </property>
+              </widget>
              </item>
             </layout>
            </item>

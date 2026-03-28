@@ -71,6 +71,8 @@ void CanvasMenu::exec(Geo::Geometry *object)
     else if (a == _property)
     {
         _dialog->show(object);
+        _canvas->refresh_vbo(true, object->type());
+        _canvas->refresh_selected_ibo();
     }
     else if (a == _text_to_polylines)
     {

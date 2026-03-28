@@ -455,8 +455,6 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         break;
     case Qt::RightButton:
         cancel_painting();
-        _editor.reset_selected_mark();
-        refresh_selected_ibo();
         break;
     case Qt::MiddleButton:
         _bool_flags.view_movable = true; // view moveable
@@ -892,6 +890,7 @@ void Canvas::show_menu(Geo::Geometry *object)
 {
     refresh_selected_ibo(object);
     _menu.exec(object);
+    return;
 }
 
 void Canvas::show_text_edit(Text *text)
@@ -1853,11 +1852,6 @@ void Canvas::refresh_select_rect(const double x0, const double y0, const double 
 
 void Canvas::refresh_selected_ibo()
 {
-    Geo::AABBRectParams visible_area_params;
-    visible_area_params.left = _visible_area.left() - 2;
-    visible_area_params.right = _visible_area.right() + 2;
-    visible_area_params.top = _visible_area.top() + 2;
-    visible_area_params.bottom = _visible_area.bottom() - 2;
     std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
     for (const Geo::Geometry *geo : _editor.visible_objects())
     {
