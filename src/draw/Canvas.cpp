@@ -469,7 +469,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
 
 void Canvas::mouseReleaseEvent(QMouseEvent *event)
 {
-    std::swap(_mouse_pos_0, _mouse_pos_1);
+    _mouse_pos_0 = _mouse_pos_1;
     _mouse_pos_1 = event->position();
     double x = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
     double y = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
@@ -514,7 +514,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
 
 void Canvas::mouseMoveEvent(QMouseEvent *event)
 {
-    std::swap(_mouse_pos_0, _mouse_pos_1);
+    _mouse_pos_0 = _mouse_pos_1;
     _mouse_pos_1 = event->position();
     double real_x1 = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
     double real_y1 = _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7];
@@ -2507,7 +2507,13 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
 
     if (current_group_only)
     {
-        for (const Geo::Geometry *geo : _editor.graph()->container_group(_editor.current_group()))
+        std::vector<Geo::Geometry *> objects;
+        std::vector<Geo::Geometry *> current_group_objects(_editor.graph()->container_group(_editor.current_group()).begin(),
+                                                           _editor.graph()->container_group(_editor.current_group()).end());
+        std::sort(current_group_objects.begin(), current_group_objects.end());
+        std::set_intersection(_editor.visible_objects().begin(), _editor.visible_objects().end(), current_group_objects.begin(),
+                              current_group_objects.end(), std::back_inserter(objects));
+        for (const Geo::Geometry *geo : objects)
         {
             if (skip_selected && geo->is_selected)
             {
@@ -2589,74 +2595,66 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
     }
     else
     {
-        for (const ContainerGroup &group : _editor.graph()->container_groups())
+        for (const Geo::Geometry *geo : _editor.visible_objects())
         {
-            if (!group.visible())
+            if (skip_selected && geo->is_selected)
             {
                 continue;
             }
-
-            for (const Geo::Geometry *geo : group)
+            switch (geo->type())
             {
-                if (skip_selected && geo->is_selected)
+            case Geo::Type::POLYGON:
+                if (Geo::is_intersected(rect, geo->bounding_rect()))
                 {
-                    continue;
+                    if (Geo::distance(pos, *static_cast<const Geo::Polygon *>(geo)) * _ratio < distance)
+                    {
+                        catched_objects.push_back(geo);
+                    }
                 }
-                switch (geo->type())
+                break;
+            case Geo::Type::CIRCLE:
+                if (Geo::distance(pos, *static_cast<const Geo::Circle *>(geo)) * _ratio < distance ||
+                    std::abs(Geo::distance(pos, *static_cast<const Geo::Circle *>(geo)) -
+                                static_cast<const Geo::Circle *>(geo)->radius) *
+                            _ratio <
+                        distance)
                 {
-                case Geo::Type::POLYGON:
-                    if (Geo::is_intersected(rect, geo->bounding_rect()))
-                    {
-                        if (Geo::distance(pos, *static_cast<const Geo::Polygon *>(geo)) * _ratio < distance)
-                        {
-                            catched_objects.push_back(geo);
-                        }
-                    }
-                    break;
-                case Geo::Type::CIRCLE:
-                    if (Geo::distance(pos, *static_cast<const Geo::Circle *>(geo)) * _ratio < distance ||
-                        std::abs(Geo::distance(pos, *static_cast<const Geo::Circle *>(geo)) -
-                                 static_cast<const Geo::Circle *>(geo)->radius) *
-                                _ratio <
-                            distance)
-                    {
-                        catched_objects.push_back(geo);
-                    }
-                    break;
-                case Geo::Type::ELLIPSE:
-                    if (Geo::is_intersected(rect, geo->bounding_rect()))
-                    {
-                        const Geo::Ellipse *e = static_cast<const Geo::Ellipse *>(geo);
-                        if (Geo::distance(pos, e->center()) * _ratio < distance || Geo::distance(pos, *e) * _ratio < distance)
-                        {
-                            catched_objects.push_back(geo);
-                        }
-                    }
-                    break;
-                case Geo::Type::POLYLINE:
-                    if (Geo::is_intersected(rect, geo->bounding_rect()))
-                    {
-                        if (Geo::distance(pos, *static_cast<const Geo::Polyline *>(geo)) * _ratio < distance)
-                        {
-                            catched_objects.push_back(geo);
-                        }
-                    }
-                    break;
-                case Geo::Type::ARC:
-                    if (Geo::is_intersected(rect, *static_cast<const Geo::Arc *>(geo)))
-                    {
-                        catched_objects.push_back(geo);
-                    }
-                    break;
-                case Geo::Type::POINT:
-                    if (Geo::distance(pos, *static_cast<const Geo::Point *>(geo)) * _ratio < distance)
-                    {
-                        catched_objects.push_back(geo);
-                    }
-                    break;
-                default:
-                    break;
+                    catched_objects.push_back(geo);
                 }
+                break;
+            case Geo::Type::ELLIPSE:
+                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                {
+                    const Geo::Ellipse *e = static_cast<const Geo::Ellipse *>(geo);
+                    if (Geo::distance(pos, e->center()) * _ratio < distance || Geo::distance(pos, *e) * _ratio < distance)
+                    {
+                        catched_objects.push_back(geo);
+                    }
+                }
+                break;
+            case Geo::Type::POLYLINE:
+                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                {
+                    if (Geo::distance(pos, *static_cast<const Geo::Polyline *>(geo)) * _ratio < distance)
+                    {
+                        catched_objects.push_back(geo);
+                    }
+                }
+                break;
+            case Geo::Type::ARC:
+                if (Geo::is_intersected(rect, *static_cast<const Geo::Arc *>(geo)))
+                {
+                    catched_objects.push_back(geo);
+                }
+                break;
+            case Geo::Type::POINT:
+                if (Geo::distance(pos, *static_cast<const Geo::Point *>(geo)) * _ratio < distance)
+                {
+                    catched_objects.push_back(geo);
+                }
+                break;
+            default:
+                break;
             }
         }
     }
