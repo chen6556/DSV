@@ -431,6 +431,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         coord = real_coord_to_view_coord(coord.x, coord.y);
         _mouse_pos_1.setX(coord.x);
         _mouse_pos_1.setY(coord.y);
+        _ignore_mouse_move = true;
         QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
     }
     if (event->button() == Qt::MouseButton::LeftButton)
@@ -480,6 +481,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
         coord = real_coord_to_view_coord(coord.x, coord.y);
         _mouse_pos_1.setX(coord.x);
         _mouse_pos_1.setY(coord.y);
+        _ignore_mouse_move = true;
         QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
     }
     CanvasOperations::CanvasOperation::real_pos[0] = x, CanvasOperations::CanvasOperation::real_pos[1] = y;
@@ -514,6 +516,11 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
 
 void Canvas::mouseMoveEvent(QMouseEvent *event)
 {
+    if (_ignore_mouse_move)
+    {
+        _ignore_mouse_move = false;
+        return QOpenGLWidget::mouseMoveEvent(event);
+    }
     _mouse_pos_0 = _mouse_pos_1;
     _mouse_pos_1 = event->position();
     double real_x1 = _mouse_pos_1.x() * _view_ctm[0] + _mouse_pos_1.y() * _view_ctm[3] + _view_ctm[6];
@@ -529,7 +536,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
         coord = real_coord_to_view_coord(coord.x, coord.y);
         _mouse_pos_1.setX(coord.x);
         _mouse_pos_1.setY(coord.y);
-        QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
+        // QCursor::setPos(this->mapToGlobal(_mouse_pos_1).x(), this->mapToGlobal(_mouse_pos_1).y());
         canvas_x1 = real_x1 * _canvas_ctm[0] + real_y1 * _canvas_ctm[3] + _canvas_ctm[6];
         canvas_y1 = real_x1 * _canvas_ctm[1] + real_y1 * _canvas_ctm[4] + _canvas_ctm[7];
         update();

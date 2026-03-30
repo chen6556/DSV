@@ -35,6 +35,7 @@ private:
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
     CanvasMenu _menu;
+    bool _ignore_mouse_move = false;
 
     unsigned int _shader_program = 0;
 

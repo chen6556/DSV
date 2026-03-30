@@ -175,6 +175,13 @@ Geo::Geometry *Editor::select(const Geo::Point &point, const bool reset_others, 
         std::sort(current_group_objects.begin(), current_group_objects.end());
         std::set_intersection(_view_tree.visible_objects().begin(), _view_tree.visible_objects().end(), current_group_objects.begin(),
                               current_group_objects.end(), std::back_inserter(objects));
+        std::unordered_map<const Geo::Geometry *, size_t> orders;
+        for (Geo::Geometry *object : objects)
+        {
+            orders.insert_or_assign(object, std::distance(current_group_objects.begin(),
+                                                          std::find(current_group_objects.begin(), current_group_objects.end(), object)));
+        }
+        std::sort(objects.begin(), objects.end(), [&](const Geo::Geometry *a, const Geo::Geometry *b) { return orders[a] > orders[b]; });
     }
     else
     {
@@ -9183,7 +9190,8 @@ void Editor::auto_combinate()
                         }
                         break;
                     case Geo::Type::TEXT:
-                        if (Geo::is_intersected(static_cast<Text *>(all_polylines[k])->convex_hull(), *static_cast<Geo::Polygon *>(objects[j])))
+                        if (Geo::is_intersected(static_cast<Text *>(all_polylines[k])->convex_hull(),
+                                                *static_cast<Geo::Polygon *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
@@ -9237,7 +9245,8 @@ void Editor::auto_combinate()
                         }
                         break;
                     case Geo::Type::TEXT:
-                        if (Geo::is_intersected(static_cast<Text *>(all_polylines[k])->convex_hull(), *static_cast<Geo::Circle *>(objects[j])))
+                        if (Geo::is_intersected(static_cast<Text *>(all_polylines[k])->convex_hull(),
+                                                *static_cast<Geo::Circle *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
@@ -9291,7 +9300,8 @@ void Editor::auto_combinate()
                         }
                         break;
                     case Geo::Type::TEXT:
-                        if (Geo::is_intersected(static_cast<Text *>(all_polylines[k])->convex_hull(), *static_cast<Geo::Circle *>(objects[j])))
+                        if (Geo::is_intersected(static_cast<Text *>(all_polylines[k])->convex_hull(),
+                                                *static_cast<Geo::Circle *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
