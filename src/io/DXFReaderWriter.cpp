@@ -117,7 +117,7 @@ void DXFReaderWriter::addTextStyle(const DRW_Textstyle &data)
 {
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
     std::string name;
-    std::transform(data.name.begin(), data.name.end(), std::back_inserter(name), std::tolower);
+    std::transform(data.name.begin(), data.name.end(), std::back_inserter(name), [](char c) { return std::tolower(c); });
     _text_style_font.insert_or_assign(name, data.font);
 }
 
@@ -979,9 +979,9 @@ void DXFReaderWriter::addMText(const DRW_MText &data)
     {
         return;
     }
-    
+
     std::string style;
-    std::transform(data.style.begin(), data.style.end(), std::back_inserter(style), std::tolower);
+    std::transform(data.style.begin(), data.style.end(), std::back_inserter(style), [](char c) { return std::tolower(c); });
     if (_to_graph)
     {
         for (ContainerGroup &group : _graph->container_groups())
@@ -1058,9 +1058,9 @@ void DXFReaderWriter::addText(const DRW_Text &data)
     {
         return;
     }
-    
+
     std::string style;
-    std::transform(data.style.begin(), data.style.end(), std::back_inserter(style), std::tolower);
+    std::transform(data.style.begin(), data.style.end(), std::back_inserter(style), [](char c) { return std::tolower(c); });
     if (_to_graph)
     {
         for (ContainerGroup &group : _graph->container_groups())
