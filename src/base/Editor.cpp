@@ -1,5 +1,6 @@
 #include <thread>
 #include <algorithm>
+#include <unordered_map>
 #include "base/Editor.hpp"
 #include "io/GlobalSetting.hpp"
 #include "io/SHXReader.hpp"
@@ -178,8 +179,9 @@ Geo::Geometry *Editor::select(const Geo::Point &point, const bool reset_others, 
         std::unordered_map<const Geo::Geometry *, size_t> orders;
         for (Geo::Geometry *object : objects)
         {
-            orders.insert_or_assign(object, std::distance(current_group_objects.begin(),
-                                                          std::find(current_group_objects.begin(), current_group_objects.end(), object)));
+            orders.insert_or_assign(object, std::distance(_graph->container_group(_current_group).begin(),
+                                                          std::find(_graph->container_group(_current_group).begin(),
+                                                                    _graph->container_group(_current_group).end(), object)));
         }
         std::sort(objects.begin(), objects.end(), [&](const Geo::Geometry *a, const Geo::Geometry *b) { return orders[a] > orders[b]; });
     }
