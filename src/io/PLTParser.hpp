@@ -13,6 +13,7 @@ class Importer
 {
 private:
     Graph *_graph = nullptr;
+    Combination *_combination = nullptr;
     std::vector<Geo::Point> _points;
     std::vector<Geo::Polygon> _polygon_cache;
     std::vector<double> _parameters;
@@ -93,6 +94,10 @@ public:
     void store_text(const std::string &text);
 
     void print_symbol(const std::string& str);
+
+    void block_start();
+
+    void block_end();
 
     void end();
 

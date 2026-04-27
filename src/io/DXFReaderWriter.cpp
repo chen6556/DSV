@@ -69,7 +69,11 @@ DXFReaderWriter::DXFReaderWriter(Graph *graph, dxfRW *dxfrw) : _graph(graph), _d
 
 DXFReaderWriter::~DXFReaderWriter()
 {
-    check_block();
+    while (!_block_store.empty())
+    {
+        delete _block_store.back();
+        _block_store.pop_back();
+    }
     if (_dxfrw == nullptr)
     {
         clear_empty_group();
@@ -140,7 +144,7 @@ void DXFReaderWriter::addBlock(const DRW_Block &data)
         _combination->name = name;
         _block_store.push_back(_combination);
         _block_map.insert_or_assign(_combination, data.handle);
-        _block_names.insert_or_assign(_combination, name.toStdString());
+        // _block_names.insert_or_assign(_combination, name.toStdString());
         _block_name_map.insert_or_assign(name.toStdString(), _combination);
         _combination->name = layer_name;
     }
@@ -924,7 +928,6 @@ void DXFReaderWriter::addInsert(const DRW_Insert &data)
 {
     if (_to_graph)
     {
-        _inserted_blocks.insert(data.name);
         _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
         if (_block_name_map.find(data.name) != _block_name_map.end())
         {
@@ -936,6 +939,7 @@ void DXFReaderWriter::addInsert(const DRW_Insert &data)
             combination->scale(data.basePoint.x, data.basePoint.y, data.xscale);
             combination->translate(data.basePoint.x, data.basePoint.y);
             combination->rotate(data.basePoint.x, data.basePoint.y, data.angle);
+            combination->update_border();
             _graph->append(combination);
         }
     }
@@ -952,6 +956,7 @@ void DXFReaderWriter::addInsert(const DRW_Insert &data)
             combination.translate(data.basePoint.x, data.basePoint.y);
             combination.rotate(data.basePoint.x, data.basePoint.y, data.angle);
             _combination->append(&combination);
+            _combination->update_border();
         }
     }
 }
@@ -1132,36 +1137,282 @@ void DXFReaderWriter::addText(const DRW_Text &data)
 void DXFReaderWriter::addDimAlign(const DRW_DimAligned *data)
 {
     _handle_pairs.insert_or_assign(data->handle, data->parentHandle);
+    if (_ignore_entity || !data->visible)
+    {
+        return;
+    }
+    if (const DRW_Coord coords[] = {data->getDef1Point(), data->getDef2Point(), data->getDimPoint()}; _to_graph)
+    {
+        const Geo::Point points[3] = {Geo::Point(coords[0].x, coords[0].y), Geo::Point(coords[1].x, coords[1].y),
+                                      Geo::Point(coords[2].x, coords[2].y)};
+        const double height = Geo::distance(points[2], points[0], points[1], true);
+        for (ContainerGroup &group : _graph->container_groups())
+        {
+            if (group.name.toStdString() == data->layer)
+            {
+                group.append(
+                    new Dim::DimAligned(points[0], points[1], Geo::is_on_left(points[2], points[0], points[1]) ? height : -height));
+                _object_map[group.back()] = data->handle;
+                _handle_map[data->handle] = group.back();
+                return;
+            }
+        }
+        _graph->append_group();
+        _graph->container_groups().back().name = QString::fromStdString(data->layer);
+        _graph->container_groups().back().append(
+            new Dim::DimAligned(points[0], points[1], Geo::is_on_left(points[2], points[0], points[1]) ? height : -height));
+        _object_map[_graph->container_groups().back().back()] = data->handle;
+        _handle_map[data->handle] = _graph->container_groups().back().back();
+    }
+    else
+    {
+        const Geo::Point points[3] = {Geo::Point(coords[0].x, coords[0].y), Geo::Point(coords[1].x, coords[1].y),
+                                      Geo::Point(coords[2].x, coords[2].y)};
+        const double height = Geo::distance(points[2], points[0], points[1], true);
+        _combination->append(
+            new Dim::DimAligned(points[0], points[1], Geo::is_on_left(points[2], points[0], points[1]) ? height : -height));
+        _object_map[_combination->back()] = data->handle;
+        _handle_map[data->handle] = _combination->back();
+    }
 }
 
 void DXFReaderWriter::addDimLinear(const DRW_DimLinear *data)
 {
     _handle_pairs.insert_or_assign(data->handle, data->parentHandle);
+    if (_ignore_entity || !data->visible)
+    {
+        return;
+    }
+    if (const DRW_Coord coords[] = {data->getDef1Point(), data->getDef2Point(), data->getDimPoint()}; _to_graph)
+    {
+        const Geo::Point points[3] = {Geo::Point(coords[0].x, coords[0].y), Geo::Point(coords[1].x, coords[1].y),
+                                      Geo::Point(coords[2].x, coords[2].y)};
+        const bool horizontal = data->getAngle() == 0;
+        const double height =
+            horizontal ? (coords[2].y - (coords[0].y + coords[1].y) / 2) : (coords[2].x - (coords[0].x + coords[1].x) / 2);
+        for (ContainerGroup &group : _graph->container_groups())
+        {
+            if (group.name.toStdString() == data->layer)
+            {
+                group.append(new Dim::DimLinear(points[0], points[1], horizontal, height));
+                _object_map[group.back()] = data->handle;
+                _handle_map[data->handle] = group.back();
+                return;
+            }
+        }
+        _graph->append_group();
+        _graph->container_groups().back().name = QString::fromStdString(data->layer);
+        _graph->container_groups().back().append(new Dim::DimLinear(points[0], points[1], horizontal, height));
+        _object_map[_graph->container_groups().back().back()] = data->handle;
+        _handle_map[data->handle] = _graph->container_groups().back().back();
+    }
+    else
+    {
+        const Geo::Point points[3] = {Geo::Point(coords[0].x, coords[0].y), Geo::Point(coords[1].x, coords[1].y),
+                                      Geo::Point(coords[2].x, coords[2].y)};
+        const bool horizontal = data->getAngle() == 0;
+        const double height =
+            horizontal ? (coords[2].y - (coords[0].y + coords[1].y) / 2) : (coords[2].x - (coords[0].x + coords[1].x) / 2);
+        _combination->append(new Dim::DimLinear(points[0], points[1], horizontal, height));
+        _object_map[_combination->back()] = data->handle;
+        _handle_map[data->handle] = _combination->back();
+    }
 }
 
 void DXFReaderWriter::addDimRadial(const DRW_DimRadial *data)
 {
     _handle_pairs.insert_or_assign(data->handle, data->parentHandle);
+    if (_ignore_entity || !data->visible)
+    {
+        return;
+    }
+    if (const DRW_Coord coords[] = {data->getCenterPoint(), data->getDiameterPoint(), data->getTextPoint()}; _to_graph)
+    {
+        const Geo::Point points[3] = {Geo::Point(coords[0].x, coords[0].y), Geo::Point(coords[1].x, coords[1].y),
+                                      Geo::Point(coords[2].x, coords[2].y)};
+        for (ContainerGroup &group : _graph->container_groups())
+        {
+            if (group.name.toStdString() == data->layer)
+            {
+                group.append(new Dim::DimRadius(points[0], points[1], Geo::distance(points[0], points[2])));
+                _object_map[group.back()] = data->handle;
+                _handle_map[data->handle] = group.back();
+                return;
+            }
+        }
+        _graph->append_group();
+        _graph->container_groups().back().name = QString::fromStdString(data->layer);
+        _graph->container_groups().back().append(new Dim::DimRadius(points[0], points[1], Geo::distance(points[0], points[2])));
+        _object_map[_graph->container_groups().back().back()] = data->handle;
+        _handle_map[data->handle] = _graph->container_groups().back().back();
+    }
+    else
+    {
+        const Geo::Point points[3] = {Geo::Point(coords[0].x, coords[0].y), Geo::Point(coords[1].x, coords[1].y),
+                                      Geo::Point(coords[2].x, coords[2].y)};
+        _combination->append(new Dim::DimRadius(points[0], points[1], Geo::distance(points[0], points[2])));
+        _object_map[_combination->back()] = data->handle;
+        _handle_map[data->handle] = _combination->back();
+    }
 }
 
 void DXFReaderWriter::addDimDiametric(const DRW_DimDiametric *data)
 {
     _handle_pairs.insert_or_assign(data->handle, data->parentHandle);
+    if (_ignore_entity || !data->visible)
+    {
+        return;
+    }
+    if (const DRW_Coord coords[] = {data->getTextPoint(), data->getDiameter1Point(), data->getDiameter2Point()}; _to_graph)
+    {
+        const Geo::Point points[] = {Geo::Point(coords[0].x, coords[0].y), Geo::Point(coords[1].x, coords[1].y),
+                                     Geo::Point(coords[2].x, coords[2].y),
+                                     Geo::Point((coords[1].x + coords[2].x) / 2, (coords[1].y + coords[2].y) / 2)};
+        for (ContainerGroup &group : _graph->container_groups())
+        {
+            if (group.name.toStdString() == data->layer)
+            {
+                group.append(new Dim::DimDiameter(
+                    points[3], Geo::distance(points[3], points[1]) < Geo::distance(points[3], points[2]) ? points[1] : points[2],
+                    Geo::distance(points[0], points[3])));
+                _object_map[group.back()] = data->handle;
+                _handle_map[data->handle] = group.back();
+                return;
+            }
+        }
+        _graph->append_group();
+        _graph->container_groups().back().name = QString::fromStdString(data->layer);
+        _graph->container_groups().back().append(new Dim::DimDiameter(
+            points[3], Geo::distance(points[3], points[1]) < Geo::distance(points[3], points[2]) ? points[1] : points[2],
+            Geo::distance(points[0], points[3])));
+        _object_map[_graph->container_groups().back().back()] = data->handle;
+        _handle_map[data->handle] = _graph->container_groups().back().back();
+    }
+    else
+    {
+        const Geo::Point points[] = {Geo::Point(coords[0].x, coords[0].y), Geo::Point(coords[2].x, coords[2].y),
+                                     Geo::Point(coords[1].x, coords[1].y),
+                                     Geo::Point((coords[1].x + coords[2].x) / 2, (coords[1].y + coords[2].y) / 2)};
+        _combination->append(new Dim::DimDiameter(
+            points[3], Geo::distance(points[3], points[1]) < Geo::distance(points[3], points[2]) ? points[1] : points[2],
+            Geo::distance(points[0], points[3])));
+        _object_map[_combination->back()] = data->handle;
+        _handle_map[data->handle] = _combination->back();
+    }
 }
 
 void DXFReaderWriter::addDimAngular(const DRW_DimAngular *data)
 {
     _handle_pairs.insert_or_assign(data->handle, data->parentHandle);
+    const Geo::Point line1[2] = {Geo::Point(data->getFirstLine1().x, data->getFirstLine1().y),
+                                 Geo::Point(data->getFirstLine2().x, data->getFirstLine2().y)};
+    const Geo::Point line2[2] = {Geo::Point(data->getSecondLine1().x, data->getSecondLine1().y),
+                                 Geo::Point(data->getSecondLine2().x, data->getSecondLine2().y)};
+    const Geo::Point arc_anchor(data->getDimPoint().x, data->getDimPoint().y);
+    if (_to_graph)
+    {
+        for (ContainerGroup &group : _graph->container_groups())
+        {
+            if (group.name.toStdString() == data->layer)
+            {
+                group.append(new Dim::DimAngle(line1[0], line1[1], line2[0], line2[1], arc_anchor));
+                _object_map[group.back()] = data->handle;
+                _handle_map[data->handle] = group.back();
+                return;
+            }
+        }
+        _graph->append_group();
+        _graph->container_groups().back().name = QString::fromStdString(data->layer);
+        _graph->container_groups().back().append(new Dim::DimAngle(line1[0], line1[1], line2[0], line2[1], arc_anchor));
+        _object_map[_graph->container_groups().back().back()] = data->handle;
+        _handle_map[data->handle] = _graph->container_groups().back().back();
+    }
+    else
+    {
+        _combination->append(new Dim::DimAngle(line1[0], line1[1], line2[0], line2[1], arc_anchor));
+        _object_map[_combination->back()] = data->handle;
+        _handle_map[data->handle] = _combination->back();
+    }
 }
 
 void DXFReaderWriter::addDimAngular3P(const DRW_DimAngular3p *data)
 {
     _handle_pairs.insert_or_assign(data->handle, data->parentHandle);
+    const Geo::Point vertexes[3] = {Geo::Point(data->getFirstLine().x, data->getFirstLine().y),
+                                    Geo::Point(data->getVertexPoint().x, data->getVertexPoint().y),
+                                    Geo::Point(data->getSecondLine().x, data->getSecondLine().y)};
+    const Geo::Point arc_anchor(data->getDefPoint().x, data->getDefPoint().y);
+    const double radius = Geo::distance(vertexes[1], arc_anchor);
+    const double extend_ratio = 1.0 / std::cos(std::abs(Geo::angle(vertexes[0], vertexes[1], vertexes[2])) / 2.0);
+    const Geo::Point extend_vertexes[2] = {vertexes[0] + (vertexes[0] - vertexes[1]).normalize() * radius * extend_ratio,
+                                           vertexes[2] + (vertexes[2] - vertexes[1]).normalize() * radius * extend_ratio};
+    if (_to_graph)
+    {
+        for (ContainerGroup &group : _graph->container_groups())
+        {
+            if (group.name.toStdString() == data->layer)
+            {
+                Dim::DimAngle *dim = new Dim::DimAngle(vertexes[0], vertexes[1], vertexes[2], radius, vertexes[0], vertexes[2]);
+                dim->set_minor_arc(Geo::is_inside(arc_anchor, extend_vertexes[0], vertexes[1], extend_vertexes[1]));
+                group.append(dim);
+                _object_map[group.back()] = data->handle;
+                _handle_map[data->handle] = group.back();
+                return;
+            }
+        }
+        _graph->append_group();
+        _graph->container_groups().back().name = QString::fromStdString(data->layer);
+        Dim::DimAngle *dim = new Dim::DimAngle(vertexes[0], vertexes[1], vertexes[2], radius, vertexes[0], vertexes[2]);
+        dim->set_minor_arc(Geo::is_inside(arc_anchor, extend_vertexes[0], vertexes[1], extend_vertexes[1]));
+        _graph->container_groups().back().append(dim);
+        _object_map[_graph->container_groups().back().back()] = data->handle;
+        _handle_map[data->handle] = _graph->container_groups().back().back();
+    }
+    else
+    {
+        Dim::DimAngle *dim = new Dim::DimAngle(vertexes[0], vertexes[1], vertexes[2], radius, vertexes[0], vertexes[2]);
+        dim->set_minor_arc(Geo::is_inside(arc_anchor, extend_vertexes[0], vertexes[1], extend_vertexes[1]));
+        _combination->append(dim);
+        _object_map[_combination->back()] = data->handle;
+        _handle_map[data->handle] = _combination->back();
+    }
 }
 
 void DXFReaderWriter::addDimOrdinate(const DRW_DimOrdinate *data)
 {
     _handle_pairs.insert_or_assign(data->handle, data->parentHandle);
+    if (_ignore_entity || !data->visible)
+    {
+        return;
+    }
+    const DRW_Coord coords[2] = {data->getFirstLine(), data->getSecondLine()};
+    if (const Geo::Point points[2] = {Geo::Point(coords[0].x, coords[0].y), Geo::Point(coords[1].x, coords[1].y)}; _to_graph)
+    {
+        for (ContainerGroup &group : _graph->container_groups())
+        {
+            if (group.name.toStdString() == data->layer)
+            {
+                Dim::DimOrdinate *dim = new Dim::DimOrdinate(points[0], points[1]);
+                group.append(dim);
+                _object_map[group.back()] = data->handle;
+                _handle_map[data->handle] = group.back();
+                return;
+            }
+        }
+        _graph->append_group();
+        _graph->container_groups().back().name = QString::fromStdString(data->layer);
+        Dim::DimOrdinate *dim = new Dim::DimOrdinate(points[0], points[1]);
+        _graph->container_groups().back().append(dim);
+        _object_map[_graph->container_groups().back().back()] = data->handle;
+        _handle_map[data->handle] = _graph->container_groups().back().back();
+    }
+    else
+    {
+        Dim::DimOrdinate *dim = new Dim::DimOrdinate(points[0], points[1]);
+        _combination->append(dim);
+        _object_map[_combination->back()] = data->handle;
+        _handle_map[data->handle] = _combination->back();
+    }
 }
 
 void DXFReaderWriter::addLeader(const DRW_Leader *data)
@@ -1335,6 +1586,34 @@ void DXFReaderWriter::write_geometry_object(const Geo::Geometry *object)
         write_text(static_cast<const Text *>(object));
         break;
     case Geo::Type::TRIANGLE:
+        break;
+    case Geo::Type::DIMENSION:
+        {
+            const Dim::Dimension *dim = static_cast<const Dim::Dimension *>(object);
+            switch (dim->dim_type())
+            {
+            case Dim::Type::ALIGNED:
+                write_aligned_dim(static_cast<const Dim::DimAligned *>(dim));
+                break;
+            case Dim::Type::LINEAR:
+                write_linear_dim(static_cast<const Dim::DimLinear *>(dim));
+                break;
+            case Dim::Type::ANGLE:
+                write_angle_dim(static_cast<const Dim::DimAngle *>(dim));
+                break;
+            case Dim::Type::DIAMETER:
+                write_diameter_dim(static_cast<const Dim::DimDiameter *>(dim));
+                break;
+            case Dim::Type::ORDINATE:
+                write_ordinate_dim(static_cast<const Dim::DimOrdinate *>(dim));
+                break;
+            case Dim::Type::RADIUS:
+                write_radius_dim(static_cast<const Dim::DimRadius *>(dim));
+                break;
+            default:
+                break;
+            }
+        }
         break;
     default:
         break;
@@ -1731,43 +2010,80 @@ void DXFReaderWriter::write_insert(const Combination *combination, const Geo::Po
     _dxfrw->writeInsert(&insert);
 }
 
-void DXFReaderWriter::check_block()
+void DXFReaderWriter::write_aligned_dim(const Dim::DimAligned *dim)
 {
-    for (const std::pair<Combination *, std::string> bpair : _block_names)
+    DRW_DimAligned d;
+    d.type = 1;
+    d.setDef1Point(DRW_Coord(dim->anchor[0].x, dim->anchor[0].y, 0));
+    d.setDef2Point(DRW_Coord(dim->anchor[1].x, dim->anchor[1].y, 0));
+    d.setDimPoint(DRW_Coord(dim->label.x, dim->label.y, 0));
+    _dxfrw->writeDimension(&d);
+}
+
+void DXFReaderWriter::write_linear_dim(const Dim::DimLinear *dim)
+{
+    DRW_DimLinear d;
+    d.type = 0;
+    d.setDef1Point(DRW_Coord(dim->anchor[0].x, dim->anchor[0].y, 0));
+    d.setDef2Point(DRW_Coord(dim->anchor[1].x, dim->anchor[1].y, 0));
+    d.setDimPoint(DRW_Coord(dim->label.x, dim->label.y, 0));
+    d.setAngle(dim->is_horizontal() ? 0.0 : 90.0);
+    _dxfrw->writeDimension(&d);
+}
+
+void DXFReaderWriter::write_angle_dim(const Dim::DimAngle *dim)
+{
+    if (dim->point(1) == dim->point(2))
     {
-        if (_inserted_blocks.find(bpair.second) == _inserted_blocks.end())
-        {
-            _block_map.erase(bpair.first);
-            _graph->remove_object(bpair.first);
-        }
+        DRW_DimAngular3p d;
+        d.type = 5;
+        d.setFirstLine(DRW_Coord(dim->point(0).x, dim->anchor[0].y, 0));
+        d.setSecondLine(DRW_Coord(dim->point(3).x, dim->point(3).y, 0));
+        d.SetVertexPoint(DRW_Coord(dim->point(1).x, dim->point(1).y, 0));
+        d.setDimPoint(DRW_Coord(dim->label.x, dim->label.y, 0));
+        _dxfrw->writeDimension(&d);
     }
-    for (const std::pair<Combination *, int> bpair : _block_map)
+    else
     {
-        for (size_t i = bpair.first->size() - 1; i > 0; --i)
-        {
-            if (_handle_pairs.find(_object_map[(*bpair.first)[i]]) == _handle_pairs.end())
-            {
-                bpair.first->remove(i);
-            }
-        }
-        if (_handle_pairs.find(_object_map[bpair.first->front()]) == _handle_pairs.end())
-        {
-            bpair.first->remove(bpair.first->begin());
-        }
-        if (bpair.first->empty())
-        {
-            _graph->remove_object(bpair.first);
-        }
-        else
-        {
-            bpair.first->update_border();
-        }
+        DRW_DimAngular d;
+        d.type = 2;
+        d.setFirstLine1(DRW_Coord(dim->point(0).x, dim->point(0).y, 0));
+        d.setFirstLine2(DRW_Coord(dim->point(1).x, dim->point(1).y, 0));
+        d.setSecondLine1(DRW_Coord(dim->point(2).x, dim->point(2).y, 0));
+        d.setSecondLine2(DRW_Coord(dim->point(3).x, dim->point(3).y, 0));
+        d.setDimPoint(DRW_Coord(dim->label.x, dim->label.y, 0));
+        _dxfrw->writeDimension(&d);
     }
-    while (!_block_store.empty())
-    {
-        delete _block_store.back();
-        _block_store.pop_back();
-    }
+}
+
+void DXFReaderWriter::write_diameter_dim(const Dim::DimDiameter *dim)
+{
+    DRW_DimDiametric d;
+    d.type = 3;
+    d.setDiameter1Point(DRW_Coord(dim->anchor[0].x * 2 - dim->anchor[1].x, dim->anchor[0].y * 2 - dim->anchor[1].y, 0));
+    d.setDiameter2Point(DRW_Coord(dim->anchor[1].x, dim->anchor[1].y, 0));
+    d.setTextPoint(DRW_Coord(dim->label.x, dim->label.y, 0));
+    _dxfrw->writeDimension(&d);
+}
+
+void DXFReaderWriter::write_radius_dim(const Dim::DimRadius *dim)
+{
+    DRW_DimRadial d;
+    d.type = 4;
+    d.setCenterPoint(DRW_Coord(dim->anchor[0].x, dim->anchor[0].y, 0));
+    d.setDiameterPoint(DRW_Coord(dim->anchor[1].x, dim->anchor[1].y, 0));
+    d.setTextPoint(DRW_Coord(dim->label.x, dim->label.y, 0));
+    _dxfrw->writeDimension(&d);
+}
+
+void DXFReaderWriter::write_ordinate_dim(const Dim::DimOrdinate *dim)
+{
+    DRW_DimOrdinate d;
+    d.type = 6;
+    d.setOriginPoint(DRW_Coord(0, 0, 0));
+    d.setFirstLine(DRW_Coord(dim->root(1).x, dim->root(1).y, 0));
+    d.setSecondLine(DRW_Coord(dim->anchor[1].x, dim->anchor[1].y, 0));
+    _dxfrw->writeDimension(&d);
 }
 
 void DXFReaderWriter::clear_empty_group()

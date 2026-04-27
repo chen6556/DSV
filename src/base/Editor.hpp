@@ -1,8 +1,4 @@
 #pragma once
-
-#include <QLineF>
-#include <QPolygonF>
-
 #include "base/UndoStack.hpp"
 #include "base/Algorithm.hpp"
 #include "draw/QuadTree.hpp"

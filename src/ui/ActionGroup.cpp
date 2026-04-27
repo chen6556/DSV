@@ -21,6 +21,8 @@ void ActionGroup::init()
     init_mirror_menu();
     init_divide_points_menu();
     init_divide_parts_menu();
+    init_length_dimension_menu();
+    init_angle_dimension_menu();
 }
 
 void ActionGroup::init_polygon_menu()
@@ -300,4 +302,55 @@ void ActionGroup::init_divide_parts_menu()
     QAction *divide_measure =
         new QAction(QIcon(":/icons/divide/divided_parts_measure_btn.png"), "Divided Parts Measure", ui->divided_parts_btn);
     _divide_parts_menu->addAction(divide_measure);
+}
+
+void ActionGroup::init_length_dimension_menu()
+{
+    _length_dimension_menu = new QMenu(ui->aligned_dim_btn);
+    _length_dimension_menu->connect(_length_dimension_menu, &QMenu::triggered,
+                                    [this](QAction *action)
+                                    {
+                                        _callback(MenuType::AlignedDimensionMenu, _length_dimension_menu->actions().indexOf(action));
+                                        ui->aligned_dim_btn->setIcon(action->icon());
+                                        ui->aligned_dim_btn->setToolTip(action->text());
+                                        ui->aligned_dim_btn->setDefaultAction(action);
+                                    });
+    ui->aligned_dim_btn->setMenu(_length_dimension_menu);
+
+    QAction *aligned = new QAction(QIcon(":/icons/dimension/aligneddim_btn.png"), "Aligned", ui->aligned_dim_btn);
+    _length_dimension_menu->addAction(aligned);
+    ui->aligned_dim_btn->setDefaultAction(aligned);
+
+    QAction *linear = new QAction(QIcon(":/icons/dimension/lineardim_btn.png"), "Linear", ui->aligned_dim_btn);
+    _length_dimension_menu->addAction(linear);
+
+    QAction *radius = new QAction(QIcon(":/icons/dimension/radiusdim_btn.png"), "Radius", ui->aligned_dim_btn);
+    _length_dimension_menu->addAction(radius);
+
+    QAction *diameter = new QAction(QIcon(":/icons/dimension/diameterdim_btn.png"), "Diameter", ui->aligned_dim_btn);
+    _length_dimension_menu->addAction(diameter);
+
+    QAction *ordinate = new QAction(QIcon(":/icons/dimension/ordinatedim_btn.png"), "Ordinate", ui->aligned_dim_btn);
+    _length_dimension_menu->addAction(ordinate);
+}
+
+void ActionGroup::init_angle_dimension_menu()
+{
+    _angle_dimension_menu = new QMenu(ui->angle_dim_btn);
+    _angle_dimension_menu->connect(_angle_dimension_menu, &QMenu::triggered,
+                                   [this](QAction *action)
+                                   {
+                                       _callback(MenuType::AngleDimensionMenu, _angle_dimension_menu->actions().indexOf(action));
+                                       ui->angle_dim_btn->setIcon(action->icon());
+                                       ui->angle_dim_btn->setToolTip(action->text());
+                                       ui->angle_dim_btn->setDefaultAction(action);
+                                   });
+    ui->angle_dim_btn->setMenu(_angle_dimension_menu);
+
+    QAction *angle = new QAction(QIcon(":/icons/dimension/angledim_btn.png"), "Angle", ui->angle_dim_btn);
+    _angle_dimension_menu->addAction(angle);
+    ui->angle_dim_btn->setDefaultAction(angle);
+
+    QAction *arc = new QAction(QIcon(":/icons/dimension/arcdim_btn.png"), "Arc", ui->angle_dim_btn);
+    _angle_dimension_menu->addAction(arc);
 }

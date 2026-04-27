@@ -4,6 +4,7 @@
 #include <QString>
 #include <QMouseEvent>
 #include "base/Geometry.hpp"
+#include "base/Dimension.hpp"
 
 
 namespace CanvasOperations
@@ -44,6 +45,14 @@ enum class Tool
     Split,
     Blend,
 
+    AlignedDim,
+    LinearDim,
+    RadiusDim,
+    DiameterDim,
+    AngleDim,
+    ArcDim,
+    OrdinateDim,
+
     End
 };
 
@@ -52,6 +61,7 @@ class CanvasOperation
 public:
     static std::vector<double> shape;
     static std::vector<double> tool_lines;
+    static std::vector<double> dim_lines, dim_arrows;
     static float tool_line_width;
     static float tool_line_color[4];
     static double real_pos[4]; // current(x,y), last(x,y)
@@ -60,6 +70,7 @@ public:
     static Tool tool[2]; // current, last
     static double view_ratio;
     static QString info;
+    static Dim::Dimension *current_dimension;
     static Geo::Geometry *clicked_object;
     static bool absolute_coord;
 
@@ -663,4 +674,124 @@ public:
 
     QString cmd_tips() const override;
 };
+
+
+class AlignedDimOperation : public CanvasOperation
+{
+private:
+    int _index = 0;
+    Dim::DimAligned *_dim = nullptr;
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    QString cmd_tips() const override;
+};
+
+
+class LinearDimOperation : public CanvasOperation
+{
+private:
+    int _index = 0;
+    Dim::DimLinear *_dim = nullptr;
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    QString cmd_tips() const override;
+};
+
+
+class RadiusDimOperation : public CanvasOperation
+{
+private:
+    int _index = 0;
+    Dim::DimRadius *_dim = nullptr;
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    QString cmd_tips() const override;
+};
+
+class DiameterDimOperation : public CanvasOperation
+{
+private:
+    int _index = 0;
+    Dim::DimDiameter *_dim = nullptr;
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    QString cmd_tips() const override;
+};
+
+class AngleDimOperation : public CanvasOperation
+{
+private:
+    int _index = 0;
+    Dim::DimAngle *_dim = nullptr;
+    const Geo::Geometry *_object = nullptr;
+    Geo::Point _points[4];
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    QString cmd_tips() const override;
+};
+
+class ArcDimOperation : public CanvasOperation
+{
+private:
+    int _index = 0;
+    Dim::DimArc *_dim = nullptr;
+    const Geo::Geometry *_object = nullptr;
+    Geo::Point _points[2];
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    QString cmd_tips() const override;
+};
+
+class OrdinateDimOperation : public CanvasOperation
+{
+private:
+    int _index = 0;
+    Dim::DimOrdinate *_dim = nullptr;
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    QString cmd_tips() const override;
+};
+
 } // namespace CanvasOperations

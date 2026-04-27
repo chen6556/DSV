@@ -24,6 +24,10 @@ Canvas::~Canvas()
         glDeleteBuffers(4, temp);
     }
     {
+        unsigned int temp[4] = {_dimension_vbo.lines, _dimension_vbo.arrows, _dimension_vbo.selected_lines, _dimension_vbo.selected_arrows};
+        glDeleteBuffers(4, temp);
+    }
+    {
         unsigned int temp[7] = {_shape_vbo.polyline,
                                 _shape_vbo.polygon,
                                 _shape_vbo.circle,
@@ -116,6 +120,14 @@ void Canvas::initializeGL()
         _base_vbo.operation_tool_lines = temp[3];
     }
     {
+        unsigned int temp[4];
+        glCreateBuffers(4, temp);
+        _dimension_vbo.lines = temp[0];
+        _dimension_vbo.arrows = temp[1];
+        _dimension_vbo.selected_lines = temp[2];
+        _dimension_vbo.selected_arrows = temp[3];
+    }
+    {
         unsigned int temp[7];
         glCreateBuffers(7, temp);
         _shape_vbo.polyline = temp[0];
@@ -196,16 +208,21 @@ void Canvas::resizeGL(int w, int h)
     _visible_area = Geo::AABBRect(0, 0, w, h);
     _visible_area.transform(_view_ctm[0], _view_ctm[3], _view_ctm[6], _view_ctm[1], _view_ctm[4], _view_ctm[7]);
 
-    _texture.image = QImage(w, h, QImage::Format::Format_RGBA8888);
+    _texture.text_image = QImage(w, h, QImage::Format::Format_RGBA8888);
+    _texture.dim_image = QImage(w, h, QImage::Format::Format_RGBA8888);
     refresh_vbo(true);
 }
 
 void Canvas::paintGL()
 {
-    std::future<void> text_furture;
+    std::future<void> text_furture, dim_text_furture;
     if (GlobalSetting::setting().show_text)
     {
         text_furture = std::async(std::launch::async, &Canvas::paint_text, this);
+    }
+    if (CanvasOperations::CanvasOperation::current_dimension != nullptr || _point_count.dim_lines > 0 || _point_count.dim_arrows > 0)
+    {
+        dim_text_furture = std::async(std::launch::async, &Canvas::paint_dim_text, this);
     }
 
     glUseProgram(_shader_program);
@@ -299,6 +316,36 @@ void Canvas::paintGL()
         }
     }
 
+    if (_point_count.dim_lines > 0 || _point_count.dim_arrows > 0)
+    {
+        glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
+
+        glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.lines); // points
+        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
+        glEnableVertexAttribArray(0);
+        glDrawArrays(GL_LINES, 0, _point_count.dim_lines);
+
+        glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.arrows);
+        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
+        glEnableVertexAttribArray(0);
+        glDrawArrays(GL_TRIANGLES, 0, _point_count.dim_arrows);
+
+        if (_point_count.selected_dim_lines > 0 || _point_count.selected_dim_arrows > 0)
+        {
+            glUniform4f(_uniforms.color, 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
+
+            glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.selected_lines); // points
+            glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
+            glEnableVertexAttribArray(0);
+            glDrawArrays(GL_LINES, 0, _point_count.selected_dim_lines);
+
+            glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.selected_arrows);
+            glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
+            glEnableVertexAttribArray(0);
+            glDrawArrays(GL_TRIANGLES, 0, _point_count.selected_dim_arrows);
+        }
+    }
+
     if (GlobalSetting::setting().show_points)
     {
         glUniform4f(_uniforms.color, 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
@@ -359,6 +406,25 @@ void Canvas::paintGL()
         glUniform4f(_uniforms.color, 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
         glDrawArrays(GL_POINTS, 0, CanvasOperations::CanvasOperation::tool_lines.size() / 2);
     }
+    if (!CanvasOperations::CanvasOperation::dim_lines.empty() || !CanvasOperations::CanvasOperation::dim_arrows.empty())
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.operation_shape); // operation shpae
+        glBufferData(GL_ARRAY_BUFFER, CanvasOperations::CanvasOperation::dim_lines.size() * sizeof(double),
+                     CanvasOperations::CanvasOperation::dim_lines.data(), GL_STREAM_DRAW);
+        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
+        glEnableVertexAttribArray(0);
+
+        glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线
+        glDrawArrays(GL_LINES, 0, CanvasOperations::CanvasOperation::dim_lines.size() / 2);
+
+        glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.operation_shape); // operation shpae
+        glBufferData(GL_ARRAY_BUFFER, CanvasOperations::CanvasOperation::dim_arrows.size() * sizeof(double),
+                     CanvasOperations::CanvasOperation::dim_arrows.data(), GL_STREAM_DRAW);
+        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
+        glEnableVertexAttribArray(0);
+
+        glDrawArrays(GL_TRIANGLES, 0, CanvasOperations::CanvasOperation::dim_arrows.size() / 2);
+    }
 
     if (_bool_flags.show_catched_points) // catched point
     {
@@ -412,7 +478,27 @@ void Canvas::paintGL()
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _texture.ibo);
 
         text_furture.wait();
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _canvas_width, _canvas_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, _texture.image.constBits());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _canvas_width, _canvas_height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                     _texture.text_image.constBits());
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        glUniform1i(_uniforms.enable_tex, 0);
+    }
+    if (CanvasOperations::CanvasOperation::current_dimension != nullptr || _point_count.dim_lines > 0 || _point_count.dim_arrows > 0)
+    {
+        glUniform1i(_uniforms.enable_tex, 1);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, _texture.texture);
+        glBindBuffer(GL_ARRAY_BUFFER, _texture.vbo);
+        glVertexAttribLPointer(0, 2, GL_DOUBLE, 4 * sizeof(double), nullptr);
+        glEnableVertexAttribArray(0);
+        glVertexAttribLPointer(1, 2, GL_DOUBLE, 4 * sizeof(double), (void *)(2 * sizeof(double)));
+        glEnableVertexAttribArray(1);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _texture.ibo);
+
+        dim_text_furture.wait();
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _canvas_width, _canvas_height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+                     _texture.dim_image.constBits());
         glGenerateMipmap(GL_TEXTURE_2D);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
         glUniform1i(_uniforms.enable_tex, 0);
@@ -920,7 +1006,7 @@ void Canvas::hide_text_edit()
         if (const QString text = _edited_text->text(); text != _input_line.toPlainText())
         {
             _edited_text->set_text(_input_line.toPlainText());
-            UndoStack::TextChangedCommand *cmd = new UndoStack::TextChangedCommand(_edited_text, text);
+            UndoStack::TextChangedCommand *cmd = new UndoStack::TextChangedCommand(_edited_text, text, _edited_text->font());
             cmd->updated.push_back(_edited_text);
             _editor.push_backup_command(cmd);
             refresh_vbo(true, Geo::Type::TEXT);
@@ -1050,7 +1136,7 @@ Geo::Point Canvas::canvas_coord_to_real_coord(const double x, const double y) co
 bool Canvas::catch_cursor(const double x, const double y, Geo::Point &coord, const double distance, const bool skip_selected)
 {
     _catched_objects.clear();
-    refresh_catached_points(x, y, distance, _catched_objects, skip_selected);
+    refresh_catached_points(x, y, distance, _catched_objects, skip_selected, !GlobalSetting::setting().to_all_layers);
     Geo::Point pos(x, y);
     if (refresh_catchline_points(_catched_objects, distance, pos))
     {
@@ -1067,7 +1153,7 @@ bool Canvas::catch_cursor(const double x, const double y, Geo::Point &coord, con
 bool Canvas::catch_point(const double x, const double y, Geo::Point &coord, const double distance)
 {
     _catched_objects.clear();
-    if (refresh_catached_points(x, y, distance, _catched_objects, false))
+    if (refresh_catached_points(x, y, distance, _catched_objects, false, !GlobalSetting::setting().to_all_layers))
     {
         Geo::Point pos(x, y);
         if (refresh_catchline_points(_catched_objects, distance, pos))
@@ -1098,6 +1184,7 @@ void Canvas::refresh_vbo(const bool flush)
                          circle_vbo = std::async(std::launch::async, &Canvas::refresh_circle_vbo, this, flush),
                          curve_vbo = std::async(std::launch::async, &Canvas::refresh_curve_vbo, this, flush),
                          point_vbo = std::async(std::launch::async, &Canvas::refresh_point_vbo, this, flush);
+    std::future<DimVBOData> dim_vbo = std::async(std::launch::async, &Canvas::refresh_dimension_vbo, this, flush);
     std::future<VBOData> circle_printable_points, curve_printable_points;
     if (GlobalSetting::setting().show_points)
     {
@@ -1164,6 +1251,15 @@ void Canvas::refresh_vbo(const bool flush)
     {
         glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.point); // point
         glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
+    }
+
+    dim_vbo.wait();
+    if (DimVBOData data = dim_vbo.get(); !data.lines.empty() || !data.arrows.empty())
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.lines);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.lines.size(), data.lines.data(), GL_DYNAMIC_DRAW);
+        glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.arrows);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.arrows.size(), data.arrows.data(), GL_DYNAMIC_DRAW);
     }
 
     doneCurrent();
@@ -1268,6 +1364,17 @@ void Canvas::refresh_vbo(const bool flush, const Geo::Type type)
             doneCurrent();
         }
         break;
+    case Geo::Type::DIMENSION:
+        if (DimVBOData data = refresh_dimension_vbo(flush); !data.lines.empty() || !data.arrows.empty())
+        {
+            makeCurrent();
+            glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.lines);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.lines.size(), data.lines.data(), GL_DYNAMIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.arrows);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.arrows.size(), data.arrows.data(), GL_DYNAMIC_DRAW);
+            doneCurrent();
+        }
+        break;
     default:
         refresh_vbo(flush);
         break;
@@ -1283,6 +1390,7 @@ void Canvas::refresh_vbo(const bool flush, const std::set<Geo::Type> &types)
 
     _editor.refresh_visible_objects(_visible_area.aabbrect_params());
     std::future<VBOData> polyline_vbo, polygon_vbo, circle_vbo, curve_vbo, circle_printable_points, curve_printable_points, point_vbo;
+    std::future<DimVBOData> dimension_vbo;
 
     if (types.find(Geo::Type::POLYLINE) != types.end())
     {
@@ -1304,6 +1412,10 @@ void Canvas::refresh_vbo(const bool flush, const std::set<Geo::Type> &types)
     if (types.find(Geo::Type::POINT) != types.end())
     {
         point_vbo = std::async(std::launch::async, &Canvas::refresh_point_vbo, this, flush);
+    }
+    if (types.find(Geo::Type::DIMENSION) != types.end())
+    {
+        dimension_vbo = std::async(std::launch::async, &Canvas::refresh_dimension_vbo, this, flush);
     }
     if (GlobalSetting::setting().show_points)
     {
@@ -1397,6 +1509,18 @@ void Canvas::refresh_vbo(const bool flush, const std::set<Geo::Type> &types)
         {
             glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.point); // point
             glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.vbo_data.size(), data.vbo_data.data(), GL_DYNAMIC_DRAW);
+        }
+    }
+
+    if (dimension_vbo.valid())
+    {
+        dimension_vbo.wait();
+        if (DimVBOData data = dimension_vbo.get(); !data.lines.empty() || !data.arrows.empty())
+        {
+            glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.lines);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.lines.size(), data.lines.data(), GL_DYNAMIC_DRAW);
+            glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.arrows);
+            glBufferData(GL_ARRAY_BUFFER, sizeof(double) * data.arrows.size(), data.arrows.data(), GL_DYNAMIC_DRAW);
         }
     }
 
@@ -1848,6 +1972,45 @@ Canvas::VBOData Canvas::refresh_curve_printable_points()
     return result;
 }
 
+Canvas::DimVBOData Canvas::refresh_dimension_vbo(const bool flush)
+{
+    DimVBOData result;
+    _visible_objects[0].dimensions = _visible_objects[1].dimensions;
+    _visible_objects[1].dimensions.clear();
+    for (Geo::Geometry *geo : _editor.visible_objects())
+    {
+        if (geo->type() == Geo::Type::DIMENSION)
+        {
+            _visible_objects[1].dimensions.push_back(static_cast<Dim::Dimension *>(geo));
+        }
+        else if (geo->type() == Geo::Type::COMBINATION)
+        {
+            for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+            {
+                if (child->type() == Geo::Type::DIMENSION)
+                {
+                    _visible_objects[1].dimensions.push_back(static_cast<Dim::Dimension *>(child));
+                }
+            }
+        }
+    }
+
+    if (CanvasOperations::CanvasOperation::tool[0] == CanvasOperations::Tool::Select && !flush &&
+        _visible_objects[0].dimensions == _visible_objects[1].dimensions)
+    {
+        return result;
+    }
+
+    for (const Dim::Dimension *dim : _visible_objects[1].dimensions)
+    {
+        dim->paintable_lines(result.lines);
+        dim->paintable_arrows(result.arrows);
+    }
+    _point_count.dim_lines = result.lines.size();
+    _point_count.dim_arrows = result.arrows.size();
+    return result;
+}
+
 
 void Canvas::refresh_select_rect(const double x0, const double y0, const double x1, const double y1)
 {
@@ -1859,6 +2022,8 @@ void Canvas::refresh_select_rect(const double x0, const double y0, const double 
 
 void Canvas::refresh_selected_ibo()
 {
+    refresh_selected_dimension_vbo();
+
     std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
     for (const Geo::Geometry *geo : _editor.visible_objects())
     {
@@ -2078,6 +2243,10 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
         }
         doneCurrent();
     }
+    else if (object->type() == Geo::Type::DIMENSION)
+    {
+        refresh_selected_dimension_vbo();
+    }
     else
     {
         std::vector<unsigned int> indexs;
@@ -2133,6 +2302,7 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
         return;
     }
 
+    refresh_selected_dimension_vbo();
     Geo::AABBRectParams visible_area_params;
     visible_area_params.left = _visible_area.left() - 2;
     visible_area_params.right = _visible_area.right() + 2;
@@ -2374,6 +2544,8 @@ void Canvas::refresh_selected_vbo()
         }
     }
 
+    refresh_selected_dimension_vbo();
+
     makeCurrent();
     if (refresh[4])
     {
@@ -2423,17 +2595,52 @@ void Canvas::refresh_selected_vbo()
     doneCurrent();
 }
 
+void Canvas::refresh_selected_dimension_vbo()
+{
+    DimVBOData data;
+    for (const ContainerGroup &group : _editor.graph()->container_groups())
+    {
+        if (!group.visible())
+        {
+            continue;
+        }
+        for (const Geo::Geometry *object : group)
+        {
+            if (object->is_selected && object->type() == Geo::Type::DIMENSION)
+            {
+                static_cast<const Dim::Dimension *>(object)->paintable_lines(data.lines);
+                static_cast<const Dim::Dimension *>(object)->paintable_arrows(data.arrows);
+            }
+        }
+    }
+
+    _point_count.selected_dim_lines = data.lines.size();
+    _point_count.selected_dim_arrows = data.arrows.size();
+    makeCurrent();
+    if (!data.lines.empty())
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.selected_lines);
+        glBufferData(GL_ARRAY_BUFFER, data.lines.size() * sizeof(double), data.lines.data(), GL_DYNAMIC_DRAW);
+    }
+    if (!data.arrows.empty())
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.selected_arrows);
+        glBufferData(GL_ARRAY_BUFFER, data.arrows.size() * sizeof(double), data.arrows.data(), GL_DYNAMIC_DRAW);
+    }
+    doneCurrent();
+}
+
 void Canvas::clear_selected_ibo()
 {
     _selected_index_count.polyline = _selected_index_count.polygon = _selected_index_count.circle = _selected_index_count.curve =
-        _selected_index_count.point = 0;
+        _selected_index_count.point = _point_count.selected_dim_lines = _point_count.selected_dim_arrows = 0;
 }
 
 void Canvas::paint_text()
 {
-    _texture.image.fill(Qt::GlobalColor::transparent);
+    _texture.text_image.fill(Qt::GlobalColor::transparent);
     const QColor white(255, 255, 255), red(255, 0, 0);
-    QPainter painter(&_texture.image);
+    QPainter painter(&_texture.text_image);
     // painter.setRenderHint(QPainter::RenderHint::Antialiasing, true);
     painter.setCompositionMode(QPainter::CompositionMode::CompositionMode_Source);
 
@@ -2461,7 +2668,6 @@ void Canvas::paint_text()
                     painter.save();
                     painter.setPen(text->is_selected ? red : white);
                     painter.translate(x, y);
-                    painter.rotate(-Geo::rad_to_degree(text->angle()));
                     painter.scale(_ratio, _ratio);
                     text->paint(painter);
                     painter.restore();
@@ -2482,7 +2688,6 @@ void Canvas::paint_text()
                         painter.save();
                         painter.setPen(text->is_selected ? red : white);
                         painter.translate(x, y);
-                        painter.rotate(-Geo::rad_to_degree(text->angle()));
                         painter.scale(_ratio, _ratio);
                         text->paint(painter);
                         painter.restore();
@@ -2495,7 +2700,85 @@ void Canvas::paint_text()
         }
     }
 
-    _texture.image.mirror(false, true);
+    _texture.text_image.mirror(false, true);
+}
+
+void Canvas::paint_dim_text()
+{
+    _texture.dim_image.fill(Qt::GlobalColor::transparent);
+    const QColor white(255, 255, 255), red(255, 0, 0);
+    QPainter painter(&_texture.dim_image);
+    // painter.setRenderHint(QPainter::RenderHint::Antialiasing, true);
+    painter.setCompositionMode(QPainter::CompositionMode::CompositionMode_Source);
+
+    for (const ContainerGroup &group : _editor.graph()->container_groups())
+    {
+        if (!group.visible())
+        {
+            continue;
+        }
+
+        for (const Geo::Geometry *geo : group)
+        {
+            switch (geo->type())
+            {
+            case Geo::Type::DIMENSION:
+                {
+                    const Dim::Dimension *dim = static_cast<const Dim::Dimension *>(geo);
+                    if (dim->txt.isEmpty())
+                    {
+                        continue;
+                    }
+                    const double x = dim->label.x * _canvas_ctm[0] + dim->label.y * _canvas_ctm[3] + _canvas_ctm[6];
+                    const double y = dim->label.x * _canvas_ctm[1] + dim->label.y * _canvas_ctm[4] + _canvas_ctm[7];
+                    painter.save();
+                    painter.translate(x, y);
+                    painter.scale(_ratio, _ratio);
+                    painter.setPen(dim->is_selected ? red : white);
+                    dim->paint(painter);
+                    painter.restore();
+                }
+                break;
+            case Geo::Type::COMBINATION:
+                for (Geo::Geometry *item : *static_cast<const Combination *>(geo))
+                {
+                    if (const Dim::Dimension *dim = dynamic_cast<Dim::Dimension *>(item); dim != nullptr)
+                    {
+                        if (dim->txt.isEmpty())
+                        {
+                            continue;
+                        }
+                        const double x = dim->label.x * _canvas_ctm[0] + dim->label.y * _canvas_ctm[3] + _canvas_ctm[6];
+                        const double y = dim->label.x * _canvas_ctm[1] + dim->label.y * _canvas_ctm[4] + _canvas_ctm[7];
+                        painter.save();
+                        painter.translate(x, y);
+                        painter.scale(_ratio, _ratio);
+                        painter.setPen(geo->is_selected ? red : white);
+                        dim->paint(painter);
+                        painter.restore();
+                    }
+                }
+                break;
+            default:
+                break;
+            }
+        }
+    }
+    if (CanvasOperations::CanvasOperation::current_dimension != nullptr)
+    {
+        const double x = CanvasOperations::CanvasOperation::current_dimension->label.x * _canvas_ctm[0] +
+                         CanvasOperations::CanvasOperation::current_dimension->label.y * _canvas_ctm[3] + _canvas_ctm[6];
+        const double y = CanvasOperations::CanvasOperation::current_dimension->label.x * _canvas_ctm[1] +
+                         CanvasOperations::CanvasOperation::current_dimension->label.y * _canvas_ctm[4] + _canvas_ctm[7];
+        painter.save();
+        painter.translate(x, y);
+        painter.scale(_ratio, _ratio);
+        painter.setPen(white);
+        CanvasOperations::CanvasOperation::current_dimension->paint(painter);
+        painter.restore();
+    }
+
+    _texture.dim_image.mirror(false, true);
 }
 
 

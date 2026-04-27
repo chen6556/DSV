@@ -75,12 +75,20 @@ private:
         unsigned int point = 0;
     } _selected_ibo;
 
+    struct DimensionVBO
+    {
+        unsigned int lines = 0;
+        unsigned int arrows = 0;
+        unsigned int selected_lines = 0;
+        unsigned int selected_arrows = 0;
+    } _dimension_vbo;
+
     struct TextTexture
     {
         unsigned int texture = 0;
         unsigned int vbo = 0;
         unsigned int ibo = 0;
-        QImage image;
+        QImage text_image, dim_image;
     } _texture;
 
     struct Uniforms
@@ -98,6 +106,10 @@ private:
         unsigned int circle = 0;
         unsigned int curve = 0;
         unsigned int point = 0;
+        unsigned int dim_lines = 0;
+        unsigned int dim_arrows = 0;
+        unsigned int selected_dim_lines = 0;
+        unsigned int selected_dim_arrows = 0;
     } _point_count;
 
     struct ShapeIndexCount
@@ -124,6 +136,7 @@ private:
         std::vector<Geo::Geometry *> circle;
         std::vector<Geo::Geometry *> curve;
         std::vector<Geo::Point *> point;
+        std::vector<Dim::Dimension *> dimensions;
     } _visible_objects[2];
 
     unsigned int _cpus = 2;
@@ -261,6 +274,11 @@ public:
         std::vector<unsigned int> ibo_data;
     };
 
+    struct DimVBOData
+    {
+        std::vector<double> lines, arrows;
+    };
+
     VBOData refresh_polyline_vbo(const bool flush);
 
     VBOData refresh_polygon_vbo(const bool flush);
@@ -275,6 +293,8 @@ public:
 
     VBOData refresh_curve_printable_points();
 
+    DimVBOData refresh_dimension_vbo(const bool flush);
+
     void refresh_select_rect(const double x0, const double y0, const double x1, const double y1);
 
     void refresh_selected_ibo();
@@ -285,9 +305,13 @@ public:
 
     void refresh_selected_vbo();
 
+    void refresh_selected_dimension_vbo();
+
     void clear_selected_ibo();
 
     void paint_text();
+
+    void paint_dim_text();
 
 
     bool refresh_catached_points(const double x, const double y, const double distance, std::vector<const Geo::Geometry *> &catched_objects,

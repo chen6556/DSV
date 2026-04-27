@@ -68,6 +68,7 @@ void PropertyWidget::init()
     init_polygon_widget();
     init_polyline_widget();
     init_text_widget();
+    init_dimension_widget();
 }
 
 void PropertyWidget::init_arc_widget()
@@ -483,6 +484,23 @@ void PropertyWidget::init_text_widget()
             });
 }
 
+void PropertyWidget::init_dimension_widget()
+{
+    connect(ui->dim_fontSize, &QSpinBox::valueChanged,
+            [this](int value)
+            {
+                _dim->font_size = value;
+                _canvas->update();
+            });
+    connect(ui->dim_arrowSize, &QDoubleSpinBox::valueChanged,
+            [this](double value)
+            {
+                _dim->arrow_size = value;
+                _canvas->refresh_vbo(true, Geo::Type::DIMENSION);
+                _canvas->update();
+            });
+}
+
 void PropertyWidget::show(Geo::Geometry *object)
 {
     read(object);
@@ -532,6 +550,9 @@ void PropertyWidget::read(Geo::Geometry *object)
         break;
     case Geo::Type::TEXT:
         read(static_cast<Text *>(object));
+        break;
+    case Geo::Type::DIMENSION:
+        read(static_cast<Dim::Dimension *>(object));
         break;
     default:
         break;
@@ -787,6 +808,49 @@ void PropertyWidget::read(Text *text)
     ui->text_font->setText(text->font().family());
     ui->text_fontSize->setValue(text->font().pointSize());
     ui->text_angle->setValue(Geo::rad_to_degree(text->angle()));
+
+    _font = text->font();
+    _txt = text->text();
+}
+
+void PropertyWidget::read(Dim::Dimension *dim)
+{
+    _dim = dim;
+    ui->stackedWidget->setCurrentIndex(10);
+    switch (dim->dim_type())
+    {
+    case Dim::Type::ALIGNED:
+        ui->object_type_lb->setText("Aligned Dimension");
+        break;
+    case Dim::Type::LINEAR:
+        ui->object_type_lb->setText("Linear Dimension");
+        break;
+    case Dim::Type::RADIUS:
+        ui->object_type_lb->setText("Radius Dimension");
+        break;
+    case Dim::Type::DIAMETER:
+        ui->object_type_lb->setText("Diameter Dimension");
+        break;
+    case Dim::Type::ANGLE:
+        ui->object_type_lb->setText("Angle Dimension");
+        break;
+    case Dim::Type::ARC:
+        ui->object_type_lb->setText("Arc Dimension");
+        break;
+    case Dim::Type::ORDINATE:
+        ui->object_type_lb->setText("Ordinate Dimension");
+        break;
+    default:
+        break;
+    }
+
+    ui->dim_value->setText(dim->txt);
+    ui->dim_fontSize->blockSignals(true);
+    ui->dim_arrowSize->blockSignals(true);
+    ui->dim_fontSize->setValue(dim->font_size);
+    ui->dim_arrowSize->setValue(dim->arrow_size);
+    ui->dim_fontSize->blockSignals(false);
+    ui->dim_arrowSize->blockSignals(false);
 }
 
 void PropertyWidget::check(Geo::Geometry *object)
@@ -978,6 +1042,12 @@ void PropertyWidget::check(Geo::Polyline *polyline)
 
 void PropertyWidget::check(Text *text)
 {
+    if (text->font() != _font || text->text() != _txt)
+    {
+        UndoStack::TextChangedCommand *cmd = new UndoStack::TextChangedCommand(text, _txt, _font);
+        cmd->updated.push_back(text);
+        _canvas->editor().push_backup_command(cmd);
+    }
 }
 
 void PropertyWidget::move_bezier_point(int index, double x0, double y0)

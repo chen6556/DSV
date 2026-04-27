@@ -9,6 +9,8 @@ using namespace CanvasOperations;
 
 std::vector<double> CanvasOperation::shape;
 std::vector<double> CanvasOperation::tool_lines;
+std::vector<double> CanvasOperation::dim_lines;
+std::vector<double> CanvasOperation::dim_arrows;
 float CanvasOperation::tool_line_width = 1.4f;
 float CanvasOperation::tool_line_color[4] = {1.0f, 0.549f, 0.0f, 1.0f};
 double CanvasOperation::real_pos[4];
@@ -17,6 +19,7 @@ double CanvasOperation::release_pos[2];
 Tool CanvasOperation::tool[2] = {Tool::Select, Tool::Select};
 double CanvasOperation::view_ratio = 1;
 QString CanvasOperation::info;
+Dim::Dimension *CanvasOperation::current_dimension = nullptr;
 Geo::Geometry *CanvasOperation::clicked_object = nullptr;
 bool CanvasOperation::absolute_coord = true;
 
@@ -62,6 +65,13 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::Extend)] = new ExtendOperation();
     operations[static_cast<int>(Tool::Split)] = new SplitOperation();
     operations[static_cast<int>(Tool::Blend)] = new BlendOperation();
+    operations[static_cast<int>(Tool::AlignedDim)] = new AlignedDimOperation();
+    operations[static_cast<int>(Tool::LinearDim)] = new LinearDimOperation();
+    operations[static_cast<int>(Tool::RadiusDim)] = new RadiusDimOperation();
+    operations[static_cast<int>(Tool::DiameterDim)] = new DiameterDimOperation();
+    operations[static_cast<int>(Tool::AngleDim)] = new AngleDimOperation();
+    operations[static_cast<int>(Tool::ArcDim)] = new ArcDimOperation();
+    operations[static_cast<int>(Tool::OrdinateDim)] = new OrdinateDimOperation();
 }
 
 void CanvasOperation::clear()
@@ -78,6 +88,11 @@ void CanvasOperation::clear()
     shape.shrink_to_fit();
     tool_lines.clear();
     tool_lines.shrink_to_fit();
+    dim_lines.clear();
+    dim_lines.shrink_to_fit();
+    dim_arrows.clear();
+    dim_arrows.shrink_to_fit();
+    current_dimension = nullptr;
     tool[0] = Tool::Select;
     info.clear();
     clicked_object = nullptr;
@@ -345,6 +360,19 @@ bool MoveOperation::mouse_release(QMouseEvent *event)
         if (std::vector<Geo::Geometry *> selected_objects = Canvas::canvas->editor().selected();
             !selected_objects.empty() && (press_pos[0] != release_pos[0] || press_pos[1] != release_pos[1]))
         {
+            for (size_t i = 0; i < selected_objects.size(); ++i)
+            {
+                if (selected_objects[i]->type() == Geo::Type::DIMENSION)
+                {
+                    selected_objects.erase(selected_objects.begin() + i--);
+                }
+            }
+
+            if (selected_objects.empty())
+            {
+                return false;
+            }
+
             if (Canvas::canvas->editor().edited_shape.empty())
             {
                 Canvas::canvas->editor().push_backup_command(
@@ -413,7 +441,7 @@ bool MoveOperation::mouse_move(QMouseEvent *event)
         Canvas::canvas->refresh_vbo(false, types);
         std::vector<Geo::Geometry *> visible_selected_objects;
         std::set_intersection(selected_objects.begin(), selected_objects.end(), Canvas::canvas->editor().visible_objects().begin(),
-                       Canvas::canvas->editor().visible_objects().end(), std::back_inserter(visible_selected_objects));
+                              Canvas::canvas->editor().visible_objects().end(), std::back_inserter(visible_selected_objects));
         Canvas::canvas->refresh_selected_ibo(visible_selected_objects);
     }
     return true;
@@ -2240,7 +2268,7 @@ bool CircumscribedPolygonOperation::read_parameters(const double *params, const 
             }
             else if (count >= 2 && params[0] > 0)
             {
-                _parameters[2] = params[0], _parameters[3] = params[1];
+                _parameters[2] = params[0], _parameters[3] = Geo::degree_to_rad(params[1]);
                 Canvas::canvas->add_geometry(new Geo::Polygon(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], true));
                 info.clear();
                 tool[0] = Tool::Select;
@@ -2388,7 +2416,7 @@ bool InscribedPolygonOperation::read_parameters(const double *params, const int 
             }
             else if (count >= 2 && params[0] > 0)
             {
-                _parameters[2] = params[0], _parameters[3] = params[1];
+                _parameters[2] = params[0], _parameters[3] = Geo::degree_to_rad(params[1]);
                 Canvas::canvas->add_geometry(new Geo::Polygon(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], false));
                 info.clear();
                 tool[0] = Tool::Select;
@@ -4443,4 +4471,865 @@ QString BlendOperation::cmd_tips() const
     {
         return QString();
     }
+}
+
+
+bool AlignedDimOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index++)
+        {
+        case 0:
+            {
+                const Geo::Point point(real_pos[0], real_pos[1]);
+                _dim = new Dim::DimAligned(point, point, 1);
+                current_dimension = _dim;
+                dim_lines.clear();
+                dim_arrows.clear();
+            }
+            break;
+        case 1:
+            _dim->set_anchor(1, real_pos[0], real_pos[1]);
+            break;
+        case 2:
+            {
+                _index = 0;
+                const Geo::Point point(real_pos[0], real_pos[1]);
+                const double height = Geo::distance(point, _dim->anchor[0], _dim->anchor[1], true);
+                _dim->set_height(Geo::is_on_left(point, _dim->anchor[0], _dim->anchor[1]) ? height : -height);
+                Canvas::canvas->add_geometry(_dim);
+                _dim = nullptr;
+            }
+            break;
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool AlignedDimOperation::mouse_move(QMouseEvent *event)
+{
+    switch (_index)
+    {
+    case 1:
+        dim_lines.clear();
+        dim_arrows.clear();
+        _dim->set_anchor(1, real_pos[0], real_pos[1]);
+        _dim->paintable_lines(dim_lines);
+        _dim->paintable_arrows(dim_arrows);
+        break;
+    case 2:
+        {
+            const Geo::Point point(real_pos[0], real_pos[1]);
+            const double height = Geo::distance(point, _dim->anchor[0], _dim->anchor[1], true);
+            _dim->set_height(Geo::is_on_left(point, _dim->anchor[0], _dim->anchor[1]) ? height : -height);
+            dim_lines.clear();
+            dim_arrows.clear();
+            _dim->paintable_lines(dim_lines);
+            _dim->paintable_arrows(dim_arrows);
+        }
+        break;
+    default:
+        break;
+    }
+    return true;
+}
+
+void AlignedDimOperation::reset()
+{
+    delete _dim;
+    _dim = nullptr;
+    _index = 0;
+}
+
+QString AlignedDimOperation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "Select first point.";
+    case 1:
+        return "Select second point.";
+    default:
+        return QString();
+    }
+}
+
+
+bool LinearDimOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index++)
+        {
+        case 0:
+            {
+                const Geo::Point point(real_pos[0], real_pos[1]);
+                _dim = new Dim::DimLinear(point, point, true, 1);
+                current_dimension = _dim;
+                dim_lines.clear();
+                dim_arrows.clear();
+            }
+            break;
+        case 1:
+            _dim->set_anchor(1, real_pos[0], real_pos[1]);
+            break;
+        case 2:
+            _index = 0;
+            if (const Geo::Point mid((_dim->anchor[0] + _dim->anchor[1]) / 2);
+                std::abs(mid.x - real_pos[0]) <= std::abs(mid.y - real_pos[1]))
+            { // 水平测量
+                _dim->set_horizontal(true);
+                _dim->set_distance(real_pos[1] - mid.y);
+            }
+            else // 垂直测量
+            {
+                _dim->set_horizontal(false);
+                _dim->set_distance(real_pos[0] - mid.x);
+            }
+            Canvas::canvas->add_geometry(_dim);
+            _dim = nullptr;
+            break;
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool LinearDimOperation::mouse_move(QMouseEvent *event)
+{
+    switch (_index)
+    {
+    case 1:
+        dim_lines.clear();
+        dim_arrows.clear();
+        _dim->set_anchor(1, real_pos[0], real_pos[1]);
+        _dim->paintable_lines(dim_lines);
+        _dim->paintable_arrows(dim_arrows);
+        break;
+    case 2:
+        if (const Geo::Point mid((_dim->anchor[0] + _dim->anchor[1]) / 2); std::abs(mid.x - real_pos[0]) <= std::abs(mid.y - real_pos[1]))
+        { // 水平测量
+            _dim->set_horizontal(true);
+            _dim->set_distance(real_pos[1] - mid.y);
+            dim_lines.clear();
+            dim_arrows.clear();
+            _dim->paintable_lines(dim_lines);
+            _dim->paintable_arrows(dim_arrows);
+        }
+        else // 垂直测量
+        {
+            _dim->set_horizontal(false);
+            _dim->set_distance(real_pos[0] - mid.x);
+            dim_lines.clear();
+            dim_arrows.clear();
+            _dim->paintable_lines(dim_lines);
+            _dim->paintable_arrows(dim_arrows);
+        }
+        qDebug() << _dim->label.x << ',' << _dim->label.y;
+        break;
+    default:
+        break;
+    }
+    return true;
+}
+
+void LinearDimOperation::reset()
+{
+    delete _dim;
+    _dim = nullptr;
+    _index = 0;
+}
+
+QString LinearDimOperation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "Select first point.";
+    case 1:
+        return "Select second point.";
+    default:
+        return QString();
+    }
+}
+
+
+bool RadiusDimOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        if (_index == 0)
+        {
+            if (clicked_object = Canvas::canvas->editor().select(real_pos[0], real_pos[1], true, true);
+                clicked_object != nullptr && (clicked_object->type() == Geo::Type::CIRCLE || clicked_object->type() == Geo::Type::ARC))
+            {
+                switch (clicked_object->type())
+                {
+                case Geo::Type::ARC:
+                    {
+                        const Geo::Arc *arc = static_cast<const Geo::Arc *>(clicked_object);
+                        _dim = new Dim::DimRadius(Geo::Point(arc->x, arc->y), arc->control_points[0], arc->radius * 0.5);
+                    }
+                    break;
+                case Geo::Type::CIRCLE:
+                    {
+                        const Geo::Circle *circle = static_cast<const Geo::Circle *>(clicked_object);
+                        _dim = new Dim::DimRadius(*circle, Geo::Point(circle->x + circle->radius, circle->y), circle->radius * 0.5);
+                    }
+                    break;
+                default:
+                    return false;
+                }
+                current_dimension = _dim;
+                dim_lines.clear();
+                dim_arrows.clear();
+                _dim->paintable_lines(dim_lines);
+                _dim->paintable_arrows(dim_arrows);
+                _index = 1;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            _dim->set_label(real_pos[0], real_pos[1]);
+            Canvas::canvas->add_geometry(_dim);
+            _dim = nullptr;
+            _index = 0;
+            return true;
+        }
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool RadiusDimOperation::mouse_move(QMouseEvent *event)
+{
+    if (_index == 1)
+    {
+        _dim->set_label(real_pos[0], real_pos[1]);
+        dim_lines.clear();
+        dim_arrows.clear();
+        _dim->paintable_lines(dim_lines);
+        _dim->paintable_arrows(dim_arrows);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void RadiusDimOperation::reset()
+{
+    delete _dim;
+    _dim = nullptr;
+    _index = 0;
+}
+
+QString RadiusDimOperation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "Select circle or arc.";
+    case 1:
+        return "Set label pos.";
+    default:
+        return QString();
+    }
+}
+
+
+bool DiameterDimOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        if (_index == 0)
+        {
+            if (clicked_object = Canvas::canvas->editor().select(real_pos[0], real_pos[1], true, true);
+                clicked_object != nullptr && (clicked_object->type() == Geo::Type::CIRCLE || clicked_object->type() == Geo::Type::ARC))
+            {
+                switch (clicked_object->type())
+                {
+                case Geo::Type::ARC:
+                    {
+                        const Geo::Arc *arc = static_cast<const Geo::Arc *>(clicked_object);
+                        _dim = new Dim::DimDiameter(Geo::Point(arc->x, arc->y), arc->control_points[0], arc->radius * 0.5);
+                    }
+                    break;
+                case Geo::Type::CIRCLE:
+                    {
+                        const Geo::Circle *circle = static_cast<const Geo::Circle *>(clicked_object);
+                        _dim = new Dim::DimDiameter(*circle, Geo::Point(circle->x + circle->radius, circle->y), circle->radius * 0.5);
+                    }
+                    break;
+                default:
+                    return false;
+                }
+                current_dimension = _dim;
+                dim_lines.clear();
+                dim_arrows.clear();
+                _dim->paintable_lines(dim_lines);
+                _dim->paintable_arrows(dim_arrows);
+                _index = 1;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            _dim->set_label(real_pos[0], real_pos[1]);
+            Canvas::canvas->add_geometry(_dim);
+            _dim = nullptr;
+            _index = 0;
+            return true;
+        }
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool DiameterDimOperation::mouse_move(QMouseEvent *event)
+{
+    if (_index == 1)
+    {
+        _dim->set_label(real_pos[0], real_pos[1]);
+        dim_lines.clear();
+        dim_arrows.clear();
+        _dim->paintable_lines(dim_lines);
+        _dim->paintable_arrows(dim_arrows);
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+void DiameterDimOperation::reset()
+{
+    delete _dim;
+    _dim = nullptr;
+    _index = 0;
+}
+
+QString DiameterDimOperation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "Select circle or arc.";
+    case 1:
+        return "Set label pos.";
+    default:
+        return QString();
+    }
+}
+
+
+bool AngleDimOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index)
+        {
+        case 0:
+            if (clicked_object = Canvas::canvas->editor().select(real_pos[0], real_pos[1], true, true))
+            {
+                const Geo::Point pos(real_pos[0], real_pos[1]);
+                switch (clicked_object->type())
+                {
+                case Geo::Type::POLYLINE:
+                case Geo::Type::POLYGON:
+                    {
+                        const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(clicked_object);
+                        _points[0] = polyline->at(0), _points[1] = polyline->at(1);
+                        double min_dis = Geo::distance(pos, polyline->at(0), polyline->at(1), false);
+                        for (size_t i = 2, count = polyline->size(); i < count; ++i)
+                        {
+                            if (const double d = Geo::distance(pos, polyline->at(i - 1), polyline->at(i), false); d < min_dis)
+                            {
+                                min_dis = d;
+                                _points[0] = polyline->at(i - 1), _points[1] = polyline->at(i);
+                            }
+                        }
+                        break;
+                    }
+                case Geo::Type::CIRCLE:
+                    {
+                        const Geo::Circle *circle = static_cast<const Geo::Circle *>(clicked_object);
+                        _points[1] = _points[3] = (*circle);
+                        if (Geo::Point temp[2]; Geo::is_intersected(pos, _points[1], *circle, temp[0], temp[1], true))
+                        {
+                            if (Geo::distance(temp[0], pos) < Geo::distance(temp[1], pos))
+                            {
+                                _points[0] = temp[0];
+                            }
+                            else
+                            {
+                                _points[0] = temp[1];
+                            }
+                        }
+                        break;
+                    }
+                case Geo::Type::ARC:
+                    {
+                        const Geo::Arc *arc = static_cast<const Geo::Arc *>(clicked_object);
+                        _points[1].x = _points[3].x = arc->x;
+                        _points[1].y = _points[3].y = arc->y;
+                        if (Geo::Point temp[2]; Geo::is_intersected(pos, _points[1], *arc, temp[0], temp[1], true))
+                        {
+                            if (Geo::distance(temp[0], pos) < Geo::distance(temp[1], pos))
+                            {
+                                _points[0] = temp[0];
+                            }
+                            else
+                            {
+                                _points[0] = temp[1];
+                            }
+                        }
+                        break;
+                    }
+                default:
+                    return false;
+                }
+                _index = 1;
+                _object = clicked_object;
+                Canvas::canvas->refresh_selected_ibo();
+            }
+            break;
+        case 1:
+            if (clicked_object = Canvas::canvas->editor().select(real_pos[0], real_pos[1], true, true))
+            {
+                const Geo::Point pos(real_pos[0], real_pos[1]);
+                switch (clicked_object->type())
+                {
+                case Geo::Type::POLYLINE:
+                case Geo::Type::POLYGON:
+                    {
+                        const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(clicked_object);
+                        _points[2] = polyline->at(0), _points[3] = polyline->at(1);
+                        double min_dis = Geo::distance(pos, polyline->at(0), polyline->at(1), false);
+                        for (size_t i = 2, count = polyline->size(); i < count; ++i)
+                        {
+                            if (const double d = Geo::distance(pos, polyline->at(i - 1), polyline->at(i), false); d < min_dis)
+                            {
+                                min_dis = d;
+                                _points[2] = polyline->at(i - 1), _points[3] = polyline->at(i);
+                            }
+                        }
+                        break;
+                    }
+                case Geo::Type::CIRCLE:
+                    if (clicked_object == _object)
+                    {
+                        const Geo::Circle *circle = static_cast<const Geo::Circle *>(clicked_object);
+                        if (Geo::Point temp[2]; Geo::is_intersected(pos, _points[3], *circle, temp[0], temp[1], true))
+                        {
+                            if (Geo::distance(temp[0], pos) < Geo::distance(temp[1], pos))
+                            {
+                                _points[2] = temp[0];
+                            }
+                            else
+                            {
+                                _points[2] = temp[1];
+                            }
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    break;
+                case Geo::Type::ARC:
+                    if (clicked_object == _object)
+                    {
+                        const Geo::Arc *arc = static_cast<const Geo::Arc *>(clicked_object);
+                        if (Geo::Point temp[2]; Geo::is_intersected(pos, _points[3], *arc, temp[0], temp[1], true))
+                        {
+                            if (Geo::distance(temp[0], pos) < Geo::distance(temp[1], pos))
+                            {
+                                _points[2] = temp[0];
+                            }
+                            else
+                            {
+                                _points[2] = temp[1];
+                            }
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    break;
+                default:
+                    return false;
+                }
+                _index = 2;
+                if (Geo::Point center; Geo::is_intersected(_points[0], _points[1], _points[2], _points[3], center, true))
+                {
+                    if (clicked_object->type() == Geo::Type::POLYLINE || clicked_object->type() == Geo::Type::POLYGON)
+                    {
+                        _dim = new Dim::DimAngle(_points[0], _points[1], _points[2], _points[3], pos);
+                    }
+                    else
+                    {
+                        _dim = new Dim::DimAngle(
+                            Geo::distance(center, _points[0]) > Geo::distance(center, _points[1]) ? _points[0] : _points[1], center,
+                            Geo::distance(center, _points[2]) > Geo::distance(center, _points[3]) ? _points[2] : _points[3],
+                            Geo::distance(center, pos), _points[0], _points[2]);
+                    }
+                    current_dimension = _dim;
+                    dim_lines.clear();
+                    dim_arrows.clear();
+                    _dim->paintable_lines(dim_lines);
+                    _dim->paintable_arrows(dim_arrows);
+                    _points[0] = center;
+                    Canvas::canvas->refresh_selected_ibo();
+                }
+                else
+                {
+                    reset();
+                    return false;
+                }
+            }
+            break;
+        case 2:
+            {
+                dim_lines.clear();
+                dim_arrows.clear();
+                if (_object->type() == Geo::Type::ARC || _object->type() == Geo::Type::CIRCLE)
+                {
+                    const double dis = Geo::distance(_points[0].x, _points[0].y, real_pos[0], real_pos[1]);
+                    _dim->set_distance(dis);
+                    const double extend_ratio =
+                        1.2 / std::min(std::cos(std::abs(Geo::angle(_dim->anchor[0], _points[0], _dim->anchor[1])) / 2.0),
+                                       std::cos((Geo::PI - std::abs(Geo::angle(_dim->anchor[0], _points[0], _dim->anchor[1]))) / 2.0));
+                    _dim->set_minor_arc(Geo::is_inside(Geo::Point(real_pos[0], real_pos[1]), _points[0],
+                                                       _dim->anchor[0] + (_dim->anchor[0] - _points[0]).normalize() * dis * extend_ratio,
+                                                       _dim->anchor[1] + (_dim->anchor[1] - _points[0]).normalize() * dis * extend_ratio));
+                }
+                else
+                {
+                    _dim->set_arc_pos(Geo::Point(real_pos[0], real_pos[1]));
+                }
+                Canvas::canvas->add_geometry(_dim);
+                _dim = nullptr;
+                _object = nullptr;
+                _index = 0;
+            }
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool AngleDimOperation::mouse_move(QMouseEvent *event)
+{
+    if (_index == 2)
+    {
+        dim_lines.clear();
+        dim_arrows.clear();
+        if (_object->type() == Geo::Type::ARC || _object->type() == Geo::Type::CIRCLE)
+        {
+            const double dis = Geo::distance(_points[0].x, _points[0].y, real_pos[0], real_pos[1]);
+            _dim->set_distance(dis);
+            const double extend_ratio =
+                1.0 / std::min(std::cos(std::abs(Geo::angle(_dim->anchor[0], _points[0], _dim->anchor[1])) / 2.0),
+                               std::cos((Geo::PI - std::abs(Geo::angle(_dim->anchor[0], _points[0], _dim->anchor[1]))) / 2.0));
+            _dim->set_minor_arc(Geo::is_inside(Geo::Point(real_pos[0], real_pos[1]), _points[0],
+                                               _dim->anchor[0] + (_dim->anchor[0] - _points[0]).normalize() * dis * extend_ratio,
+                                               _dim->anchor[1] + (_dim->anchor[1] - _points[0]).normalize() * dis * extend_ratio));
+        }
+        else
+        {
+            _dim->set_arc_pos(Geo::Point(real_pos[0], real_pos[1]));
+        }
+        _dim->paintable_lines(dim_lines);
+        _dim->paintable_arrows(dim_arrows);
+        return true;
+    }
+    return false;
+}
+
+void AngleDimOperation::reset()
+{
+    delete _dim;
+    _dim = nullptr;
+    _object = nullptr;
+    _index = 0;
+}
+
+QString AngleDimOperation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "Select first line, circle or arc.";
+    case 1:
+        return "Select second line, circle or arc.";
+    case 2:
+        return "Set label pos.";
+    default:
+        return QString();
+    }
+}
+
+
+bool ArcDimOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index)
+        {
+        case 0:
+            if (clicked_object = Canvas::canvas->editor().select(real_pos[0], real_pos[1], true, true))
+            {
+                const Geo::Point pos(real_pos[0], real_pos[1]);
+                switch (clicked_object->type())
+                {
+                case Geo::Type::CIRCLE:
+                    {
+                        const Geo::Circle *circle = static_cast<const Geo::Circle *>(clicked_object);
+                        if (Geo::Point temp[2]; Geo::is_intersected(pos, _points[1], *circle, temp[0], temp[1], true))
+                        {
+                            if (Geo::distance(temp[0], pos) < Geo::distance(temp[1], pos))
+                            {
+                                _points[0] = temp[0];
+                            }
+                            else
+                            {
+                                _points[0] = temp[1];
+                            }
+                        }
+                        break;
+                    }
+                case Geo::Type::ARC:
+                    {
+                        const Geo::Arc *arc = static_cast<const Geo::Arc *>(clicked_object);
+                        if (Geo::Point temp[2]; Geo::is_intersected(pos, _points[1], *arc, temp[0], temp[1], true))
+                        {
+                            if (Geo::distance(temp[0], pos) < Geo::distance(temp[1], pos))
+                            {
+                                _points[0] = temp[0];
+                            }
+                            else
+                            {
+                                _points[0] = temp[1];
+                            }
+                        }
+                        break;
+                    }
+                default:
+                    return false;
+                }
+                _index = 1;
+                _object = clicked_object;
+            }
+            break;
+        case 1:
+            if (clicked_object = Canvas::canvas->editor().select(real_pos[0], real_pos[1], true, true))
+            {
+                const Geo::Point pos(real_pos[0], real_pos[1]);
+                switch (clicked_object->type())
+                {
+                case Geo::Type::CIRCLE:
+                    if (clicked_object == _object)
+                    {
+                        const Geo::Circle *circle = static_cast<const Geo::Circle *>(clicked_object);
+                        if (Geo::Point temp[2]; Geo::is_intersected(pos, _points[3], *circle, temp[0], temp[1], true))
+                        {
+                            if (Geo::distance(temp[0], pos) < Geo::distance(temp[1], pos))
+                            {
+                                _points[1] = temp[0];
+                            }
+                            else
+                            {
+                                _points[1] = temp[1];
+                            }
+                            _dim = new Dim::DimArc(_points[0], *circle, _points[1], Geo::distance(*circle, pos), _points[0], _points[1],
+                                                   circle->radius);
+                            _points[0].x = circle->x, _points[0].y = circle->y;
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    break;
+                case Geo::Type::ARC:
+                    if (clicked_object == _object)
+                    {
+                        const Geo::Arc *arc = static_cast<const Geo::Arc *>(clicked_object);
+                        if (Geo::Point temp[2]; Geo::is_intersected(pos, _points[3], *arc, temp[0], temp[1], true))
+                        {
+                            if (Geo::distance(temp[0], pos) < Geo::distance(temp[1], pos))
+                            {
+                                _points[1] = temp[0];
+                            }
+                            else
+                            {
+                                _points[1] = temp[1];
+                            }
+                            const Geo::Point center(arc->x, arc->y);
+                            _dim = new Dim::DimArc(_points[0], center, _points[1], Geo::distance(center, pos), _points[0], _points[1],
+                                                   arc->radius);
+                            _points[0] = center;
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    break;
+                default:
+                    return false;
+                }
+                _index = 2;
+                current_dimension = _dim;
+                dim_lines.clear();
+                dim_arrows.clear();
+                _dim->paintable_lines(dim_lines);
+                _dim->paintable_arrows(dim_arrows);
+            }
+            break;
+        case 2:
+            {
+                dim_lines.clear();
+                dim_arrows.clear();
+                const double dis = Geo::distance(_points[0].x, _points[0].y, real_pos[0], real_pos[1]);
+                _dim->set_distance(dis);
+                const double extend_ratio =
+                    1.2 / std::min(std::cos(std::abs(Geo::angle(_dim->anchor[0], _points[0], _dim->anchor[1])) / 2.0),
+                                   std::cos((Geo::PI - std::abs(Geo::angle(_dim->anchor[0], _points[0], _dim->anchor[1]))) / 2.0));
+                _dim->set_minor_arc(Geo::is_inside(Geo::Point(real_pos[0], real_pos[1]), _points[0],
+                                                   _dim->anchor[0] + (_dim->anchor[0] - _points[0]).normalize() * dis * extend_ratio,
+                                                   _dim->anchor[1] + (_dim->anchor[1] - _points[0]).normalize() * dis * extend_ratio));
+                Canvas::canvas->add_geometry(_dim);
+                _dim = nullptr;
+                _object = nullptr;
+                _index = 0;
+            }
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool ArcDimOperation::mouse_move(QMouseEvent *event)
+{
+    if (_index == 2)
+    {
+        dim_lines.clear();
+        dim_arrows.clear();
+        const double dis = Geo::distance(_points[0].x, _points[0].y, real_pos[0], real_pos[1]);
+        _dim->set_distance(dis);
+        const double extend_ratio =
+            1.2 / std::min(std::cos(std::abs(Geo::angle(_dim->anchor[0], _points[0], _dim->anchor[1])) / 2.0),
+                           std::cos((Geo::PI - std::abs(Geo::angle(_dim->anchor[0], _points[0], _dim->anchor[1]))) / 2.0));
+        _dim->set_minor_arc(Geo::is_inside(Geo::Point(real_pos[0], real_pos[1]), _points[0],
+                                           _dim->anchor[0] + (_dim->anchor[0] - _points[0]).normalize() * dis * extend_ratio,
+                                           _dim->anchor[1] + (_dim->anchor[1] - _points[0]).normalize() * dis * extend_ratio));
+        _dim->paintable_lines(dim_lines);
+        _dim->paintable_arrows(dim_arrows);
+        return true;
+    }
+    return false;
+}
+
+void ArcDimOperation::reset()
+{
+    delete _dim;
+    _dim = nullptr;
+    _index = 0;
+}
+
+QString ArcDimOperation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "Select first point of circle or arc.";
+    case 1:
+        return "Select second point of circle or arc.";
+    case 2:
+        return "Set label pos.";
+    default:
+        return QString();
+    }
+}
+
+
+bool OrdinateDimOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        if (_index++ == 0)
+        {
+            const Geo::Point pos(real_pos[0], real_pos[1]);
+            _dim = new Dim::DimOrdinate(pos, pos);
+            dim_lines.clear();
+            dim_arrows.clear();
+        }
+        else
+        {
+            _dim->set_label(real_pos[0], real_pos[1]);
+            Canvas::canvas->add_geometry(_dim);
+            _index = 0;
+            _dim = nullptr;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool OrdinateDimOperation::mouse_move(QMouseEvent *event)
+{
+    if (_index == 1)
+    {
+        _dim->set_label(real_pos[0], real_pos[1]);
+        dim_lines.clear();
+        dim_arrows.clear();
+        _dim->paintable_lines(dim_lines);
+        _dim->paintable_arrows(dim_arrows);
+        return true;
+    }
+    return false;
+}
+
+void OrdinateDimOperation::reset()
+{
+    delete _dim;
+    _dim = nullptr;
+    _index = 0;
+}
+
+QString OrdinateDimOperation::cmd_tips() const
+{
+    return _index == 0 ? "Select first point." : "Set label pos.";
 }

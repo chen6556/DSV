@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "base/Geometry.hpp"
+#include "base/Dimension.hpp"
 #include "base/Graph.hpp"
 
 

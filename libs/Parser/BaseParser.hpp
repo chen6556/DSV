@@ -261,7 +261,7 @@ struct Parser<double>
             if (index < stream.length() && !num.empty() && (stream[index] == 'e' || stream[index] == 'E'))
             {
                 num.emplace_back(stream[index++]);
-                if (index < stream.length() && stream[index] == '-')
+                if (index < stream.length() && (stream[index] == '-' || stream[index] == '+'))
                 {
                     num.emplace_back(stream[index++]);
                 }

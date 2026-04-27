@@ -243,9 +243,10 @@ class TextChangedCommand : public Command
 private:
     QString _text;
     Text *_item = nullptr;
+    QFont _font;
 
 public:
-    TextChangedCommand(Text *item, QString text);
+    TextChangedCommand(Text *item, QString text, const QFont &font);
 
     void undo(Graph *graph = nullptr) override;
 };

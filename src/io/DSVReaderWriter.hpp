@@ -4,15 +4,16 @@
 #include <vector>
 #include <unordered_map>
 #include "base/Graph.hpp"
+#include "base/Dimension.hpp"
 
 
 class DSVReaderWriter
 {
 private:
     static constexpr int code_type = 0, code_hanlde = 1, code_name = 2, code_layer = 3, code_pathx = 10, code_pathy = 11,
-                         code_controlx = 12, code_controly = 13, code_xlength = 20, code_ylength = 21, code_rotateangle = 30,
-                         code_startangle = 31, code_endangle = 32, code_intvalue = 40, code_floatvalue = 41, code_strvalue = 42,
-                         code_pointer = 80;
+                         code_controlx = 12, code_controly = 13, code_labelx = 14, code_labley = 15, code_xlength = 20, code_ylength = 21,
+                         code_rotateangle = 30, code_startangle = 31, code_endangle = 32, code_intvalue = 40, code_floatvalue = 41,
+                         code_strvalue = 42, code_minor_arc = 43, code_pointer = 80;
 
     Graph *_graph = nullptr;
     int _global_handle = 0;
@@ -71,6 +72,20 @@ private:
 
     void write(std::ofstream &stream, Combination *combination);
 
+    void write(std::ofstream &stream, Dim::DimAligned *dim);
+
+    void write(std::ofstream &stream, Dim::DimAngle *dim);
+
+    void write(std::ofstream &stream, Dim::DimArc *dim);
+
+    void write(std::ofstream &stream, Dim::DimDiameter *dim);
+
+    void write(std::ofstream &stream, Dim::DimLinear *dim);
+
+    void write(std::ofstream &stream, Dim::DimRadius *dim);
+
+    void write(std::ofstream &stream, Dim::DimOrdinate *dim);
+
     bool read_code(std::ifstream &stream);
 
     bool read_value(std::ifstream &stream);
@@ -104,4 +119,18 @@ private:
     bool read_text(const std::vector<Pair> &data);
 
     bool read_combination(const std::vector<Pair> &data);
+
+    bool read_aligned_dim(const std::vector<Pair> &data);
+
+    bool read_angle_dim(const std::vector<Pair> &data);
+
+    bool read_arc_dim(const std::vector<Pair> &data);
+
+    bool read_diameter_dim(const std::vector<Pair> &data);
+
+    bool read_linear_dim(const std::vector<Pair> &data);
+
+    bool read_radius_dim(const std::vector<Pair> &data);
+
+    bool read_ordinate_dim(const std::vector<Pair> &data);
 };

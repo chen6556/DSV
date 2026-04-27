@@ -76,7 +76,14 @@ public:
         DividePointsN_CMD,
         DividePointsMeasure_CMD,
         DividePartsN_CMD,
-        DividePartsMeasure_CMD
+        DividePartsMeasure_CMD,
+        AlignedDim_CMD,
+        LinearDim_CMD,
+        RadiusDim_CMD,
+        DiameterDim_CMD,
+        AngleDim_CMD,
+        ArcDim_CMD,
+        OrdinateDim_CMD
     };
 
     enum class SETTING

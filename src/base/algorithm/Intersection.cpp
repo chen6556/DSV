@@ -884,7 +884,7 @@ bool Geo::is_intersected(const Polyline &polyline, const Polygon &polygon, const
 bool Geo::is_intersected(const Polyline &polyline, const Circle &circle)
 {
     const double length = circle.radius * circle.radius;
-    for (size_t i = 0, count = polyline.size(); i < count; ++i)
+    for (size_t i = 1, count = polyline.size(); i < count; ++i)
     {
         if (polyline[i - 1] != polyline[i] && Geo::distance_square(circle, polyline[i - 1], polyline[i]) < length)
         {

@@ -26,29 +26,36 @@ void CMDWidget::init()
     ui->cmd->setValidator(new QRegularExpressionValidator(QRegularExpression("([A-Za-z]+)|((-?[0-9]+(.[0-9]+)?,?)+)$")));
     ui->cmd->installEventFilter(this);
 
-    _cmd_list << QString() << "ALL" << "ANGLE" << "ARRAY" << "BEZIER" << "BSPLINE" << "BLEND"
+    _cmd_list << QString() << "ALL" << "ANGLE" << "ANGLEDIMENSION" << "ARRAY" << "ALIGNEDMENSION"
+              << "ARCDIMENSION" << "BEZIER" << "BSPLINE" << "BLEND"
               << "CCIRCLE" << "CHAMFER" << "CLOSE" << "COMBINATE" << "CONNECT" << "COPY"
-              << "CPOLYGON" << "CUT" << "DCIRCLE" << "DELETE" << "DETACH" << "DIFFERENCE"
+              << "CPOLYGON" << "CUT" << "DCIRCLE" << "DELETE" << "DETACH" << "DIAMETERDIMENSION" << "DIFFERENCE"
               << "DIVIDEPARTSN" << "DIVIDEPOINTSN" << "DIVIDEPARTSMEASURE" << "DIVIDEPOINTSMEASURE"
               << "ELLIPSE" << "ELLIPSEARC"
               << "EXTEND" << "FILLET" << "FREEFILLET" << "FLIPX" << "FLIPY"
-              << "IPOLYGON" << "INTERSECTION" << "LENGTH" << "LINEARRAY" << "MAIN" << "MIRROR"
-              << "OFFSET" << "PASTE" << "PARC" << "PCIRCLE" << "POLYLINE" << "POINT" << "RECTANGLE"
-              << "REVERSE" << "SEAARC" << "SERARC"
+              << "IPOLYGON" << "INTERSECTION" << "LENGTH" << "LINEARRAY"
+              << "LINEARDIMENSION" << "MAIN" << "MIRROR" << "OFFSET" << "ORDINATEDIMENSION"
+              << "PASTE" << "PARC" << "PCIRCLE" << "POLYLINE" << "POINT"
+              << "RADIUSDIMENSION" << "RECTANGLE" << "REVERSE" << "SEAARC" << "SERARC"
               << "RINGARRAY" << "ROTATE" << "SCALE" << "SCAARC" << "SAVE" << "SPLIT" << "TEXT"
               << "TRIM" << "UNDO" << "UNION" << "XOR";
     _cmd_list.sort();
 
     _cmd_dict = {{"LENGTH", CMD::Length_CMD},
                  {"ANGLE", CMD::Angle_CMD},
+                 {"ANGLEDIMENSION", CMD::AngleDim_CMD},
+                 {"ALIGNEDDIMENSION", CMD::AlignedDim_CMD},
+                 {"ARCDIMENSION", CMD::ArcDim_CMD},
                  {"MAIN", CMD::Main_CMD},
                  {"CCIRCLE", CMD::CCircle_CMD},
                  {"DCIRCLE", CMD::DCircle_CMD},
+                 {"DIAMETERDIMENSION", CMD::DiameterDim_CMD},
                  {"PCIRCLE", CMD::PCircle_CMD},
                  {"ELLIPSE", CMD::Ellipse_CMD},
                  {"ELLIPSEARC", CMD::EllipseArc_CMD},
                  {"POLYLINE", CMD::Polyline_CMD},
                  {"RECTANGLE", CMD::Rectangle_CMD},
+                 {"RADIUSDIMENSION", CMD::RadiusDim_CMD},
                  {"POINT", CMD::Point_CMD},
                  {"PARC", CMD::PArc_CMD},
                  {"SCAARC", CMD::SCAArc_CMD},
@@ -75,6 +82,8 @@ void CMDWidget::init()
                  {"LINEARRAY", CMD::LineArray_CMD},
                  {"RINGARRAY", CMD::RingArray_CMD},
                  {"OFFSET", CMD::Offset_CMD},
+                 {"ORDINATEDIMENSION", CMD::OrdinateDim_CMD},
+                 {"LINEARDIMENSION", CMD::LinearDim_CMD},
                  {"SCALE", CMD::Scale_CMD},
                  {"FILLET", CMD::Fillet_CMD},
                  {"CHAMFER", CMD::Chamfer_CMD},
@@ -111,7 +120,11 @@ void CMDWidget::init()
         {CMD::Trim_CMD, CanvasOperations::Tool::Trim},           {CMD::Extend_CMD, CanvasOperations::Tool::Extend},
         {CMD::Fillet_CMD, CanvasOperations::Tool::Fillet},       {CMD::FreeFillet_CMD, CanvasOperations::Tool::FreeFillet},
         {CMD::Blend_CMD, CanvasOperations::Tool::Blend},         {CMD::Chamfer_CMD, CanvasOperations::Tool::Chamfer},
-        {CMD::Split_CMD, CanvasOperations::Tool::Split},         {CMD::Difference_CMD, CanvasOperations::Tool::ShapeDifference}};
+        {CMD::Split_CMD, CanvasOperations::Tool::Split},         {CMD::Difference_CMD, CanvasOperations::Tool::ShapeDifference},
+        {CMD::AlignedDim_CMD, CanvasOperations::Tool::AlignedDim}, {CMD::LinearDim_CMD, CanvasOperations::Tool::LinearDim},
+        {CMD::RadiusDim_CMD, CanvasOperations::Tool::RadiusDim}, {CMD::DiameterDim_CMD, CanvasOperations::Tool::DiameterDim},
+        {CMD::AngleDim_CMD, CanvasOperations::Tool::AngleDim},   {CMD::ArcDim_CMD, CanvasOperations::Tool::ArcDim},
+        {CMD::OrdinateDim_CMD, CanvasOperations::Tool::OrdinateDim}};
 
     _tool_cmd_dict = {{CanvasOperations::Tool::Measure, CMD::Length_CMD},
                       {CanvasOperations::Tool::Angle, CMD::Angle_CMD},
@@ -142,7 +155,14 @@ void CMDWidget::init()
                       {CanvasOperations::Tool::Blend, CMD::Blend_CMD},
                       {CanvasOperations::Tool::ShapeDifference, CMD::Difference_CMD},
                       {CanvasOperations::Tool::Rotate, CMD::Rotate_CMD},
-                      {CanvasOperations::Tool::RingArray, CMD::RingArray_CMD}};
+                      {CanvasOperations::Tool::RingArray, CMD::RingArray_CMD},
+                      {CanvasOperations::Tool::AlignedDim, CMD::AlignedDim_CMD},
+                      {CanvasOperations::Tool::LinearDim, CMD::LinearDim_CMD},
+                      {CanvasOperations::Tool::RadiusDim, CMD::RadiusDim_CMD},
+                      {CanvasOperations::Tool::DiameterDim, CMD::DiameterDim_CMD},
+                      {CanvasOperations::Tool::AngleDim, CMD::AngleDim_CMD},
+                      {CanvasOperations::Tool::ArcDim, CMD::ArcDim_CMD},
+                      {CanvasOperations::Tool::OrdinateDim, CMD::OrdinateDim_CMD}};
 
     _cmd_tips_dict = {{CMD::Angle_CMD, "Angle"},
                       {CMD::Bezier_CMD, "Bezier"},
@@ -187,7 +207,14 @@ void CMDWidget::init()
                       {CMD::Text_CMD, "Text"},
                       {CMD::Trim_CMD, "Trim"},
                       {CMD::Union_CMD, "Union"},
-                      {CMD::XOR_CMD, "XOR"}};
+                      {CMD::XOR_CMD, "XOR"},
+                      {CMD::AlignedDim_CMD, "Aligned Dimension"},
+                      {CMD::LinearDim_CMD, "Linear Dimension"},
+                      {CMD::RadiusDim_CMD, "Radius Dimension"},
+                      {CMD::DiameterDim_CMD, "Diameter Dimension"},
+                      {CMD::AngleDim_CMD, "Angle Dimension"},
+                      {CMD::ArcDim_CMD, "Arc Dimension"},
+                      {CMD::OrdinateDim_CMD, "Ordinate Dimension"}};
 
     _direct_cmd_list = {CMD::Error_CMD,         CMD::Main_CMD,
                         CMD::Connect_CMD,       CMD::Close_CMD,

@@ -21,7 +21,9 @@ public:
         FlipMenu,
         MirrorMenu,
         DividePointsMenu,
-        DividePartsMenu
+        DividePartsMenu,
+        AlignedDimensionMenu,
+        AngleDimensionMenu
     };
 
 private:
@@ -39,6 +41,8 @@ private:
     QMenu *_mirror_menu = nullptr;
     QMenu *_divide_points_menu = nullptr;
     QMenu *_divide_parts_menu = nullptr;
+    QMenu *_length_dimension_menu = nullptr;
+    QMenu *_angle_dimension_menu = nullptr;
 
 public:
     ActionGroup(Ui::MainWindow *ui, std::function<void(const MenuType, const int)> callback);
@@ -69,4 +73,8 @@ private:
     void init_divide_points_menu();
 
     void init_divide_parts_menu();
+
+    void init_length_dimension_menu();
+
+    void init_angle_dimension_menu();
 };

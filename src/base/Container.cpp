@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "base/Container.hpp"
+#include "base/Dimension.hpp"
 
 
 // Text
@@ -12,12 +13,20 @@ Text::Text(const double x, const double y, const QFont &font, QString text, cons
 {
     const QFontMetricsF font_metrics(_font);
     double width = 2;
-    double height = 0;
+    double height = -font_metrics.leading();
+    const double base_width = font_metrics.boundingRect("0").width();
     for (const QString &txt : _text.split('\n'))
     {
         const QRectF rect = font_metrics.boundingRect(txt);
-        width = std::max(width, rect.width());
-        height += rect.height();
+        if (std::any_of(txt.begin(), txt.end(), [](QChar c) { return c > QChar(256); }))
+        {
+            width = std::max(width, rect.width() + base_width);
+        }
+        else
+        {
+            width = std::max(width, rect.width());
+        }
+        height += (rect.height() + font_metrics.leading());
     }
     if (width <= 2)
     {
@@ -81,12 +90,20 @@ void Text::set_text(const QString &str)
     _text = str;
     const QFontMetricsF font_metrics(_font);
     double width = 2;
-    double height = 0;
+    double height = -font_metrics.leading();
+    const double base_width = font_metrics.boundingRect("0").width();
     for (const QString &txt : _text.split('\n'))
     {
         const QRectF rect = font_metrics.boundingRect(txt);
-        width = std::max(width, rect.width());
-        height += rect.height();
+        if (std::any_of(txt.begin(), txt.end(), [](QChar c) { return c > QChar(256); }))
+        {
+            width = std::max(width, rect.width() + base_width);
+        }
+        else
+        {
+            width = std::max(width, rect.width());
+        }
+        height += (rect.height() + font_metrics.leading());
     }
     if (width <= 2)
     {
@@ -138,12 +155,20 @@ void Text::set_font(const QFont &font)
     _font = font;
     const QFontMetricsF font_metrics(_font);
     double width = 2;
-    double height = 0;
+    double height = -font_metrics.leading();
+    const double base_width = font_metrics.boundingRect("0").width();
     for (const QString &txt : _text.split('\n'))
     {
         const QRectF rect = font_metrics.boundingRect(txt);
-        width = std::max(width, rect.width());
-        height += rect.height();
+        if (std::any_of(txt.begin(), txt.end(), [](QChar c) { return c > QChar(256); }))
+        {
+            width = std::max(width, rect.width() + base_width);
+        }
+        else
+        {
+            width = std::max(width, rect.width());
+        }
+        height += (rect.height() + font_metrics.leading());
     }
     if (width <= 2)
     {
@@ -351,6 +376,7 @@ Geo::AABBRectParams Text::aabbrect_params() const
 
 void Text::paint(QPainter &painter) const
 {
+    painter.rotate(-angle() * 180 / Geo::PI);
     painter.setFont(_font);
     // const double h = -QFontMetricsF(_font).height();
     // const QStringList txts = _text.split('\n');
@@ -359,7 +385,7 @@ void Text::paint(QPainter &painter) const
     // {
     //     painter.drawText(0, h * --index, txt);
     // }
-    const QRectF rect(0, -height(), width(), height());
+    const QRectF rect(0, -height(), width() + 2, height());
     painter.drawText(rect, _text);
 }
 
@@ -685,6 +711,15 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
             x1 = std::max(x1, coord.x);
             y1 = std::max(y1, coord.y);
             break;
+        case Geo::Type::DIMENSION:
+            {
+                const Geo::AABBRectParams param = static_cast<const Dim::Dimension *>(continer)->aabbrect_params();
+                x0 = std::min(x0, param.left);
+                y0 = std::min(y0, param.bottom);
+                x1 = std::max(x1, param.right);
+                y1 = std::max(y1, param.top);
+            }
+            break;
         default:
             break;
         }
@@ -792,6 +827,15 @@ Geo::AABBRectParams ContainerGroup::aabbrect_params() const
             y0 = std::min(y0, coord.y);
             x1 = std::max(x1, coord.x);
             y1 = std::max(y1, coord.y);
+            break;
+        case Geo::Type::DIMENSION:
+            {
+                const Geo::AABBRectParams param = static_cast<const Dim::Dimension *>(continer)->aabbrect_params();
+                x0 = std::min(x0, param.left);
+                y0 = std::min(y0, param.bottom);
+                x1 = std::max(x1, param.right);
+                y1 = std::max(y1, param.top);
+            }
             break;
         default:
             break;

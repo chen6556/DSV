@@ -1,0 +1,40 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.6 Chrome/144.0.7559.236 Electron/40.8.4 Safari/537.36">
+  <diagram name="第 1 页" id="ewl9boTtj5eG1xmZE2dz">
+    <mxGraphModel dx="240" dy="205" grid="1" gridSize="1" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="48" pageHeight="48" background="#464647" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="R_bnljP_nnDlVehmtBGl-1" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=3;strokeColor=#E6E6E6;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="8" y="40" as="sourcePoint" />
+            <mxPoint x="88" y="40" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="R_bnljP_nnDlVehmtBGl-2" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeWidth=3;strokeColor=#E6E6E6;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="8" y="-42" as="sourcePoint" />
+            <mxPoint x="8" y="41" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="R_bnljP_nnDlVehmtBGl-3" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeColor=#E6E6E6;strokeWidth=2;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="10" as="sourcePoint" />
+            <mxPoint x="60" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="R_bnljP_nnDlVehmtBGl-4" edge="1" parent="1" style="endArrow=none;html=1;rounded=0;strokeColor=#E6E6E6;strokeWidth=2;" value="">
+          <mxGeometry height="50" relative="1" width="50" as="geometry">
+            <mxPoint x="48" y="40" as="sourcePoint" />
+            <mxPoint x="48" y="-13" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="R_bnljP_nnDlVehmtBGl-5" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontColor=#E6E6E6;" value="X" vertex="1">
+          <mxGeometry height="15" width="11" x="43" y="-29" as="geometry" />
+        </mxCell>
+        <mxCell id="R_bnljP_nnDlVehmtBGl-6" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontColor=#E6E6E6;" value="Y" vertex="1">
+          <mxGeometry height="15" width="11" x="61" y="-9" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

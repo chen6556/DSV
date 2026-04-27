@@ -489,6 +489,13 @@ Geo::Geometry *Editor::select(const Geo::Point &point, const bool reset_others, 
                 return pt;
             }
             break;
+        case Geo::Type::DIMENSION:
+            if (static_cast<Dim::Dimension *>(it)->select(point, catch_distance))
+            {
+                it->is_selected = true;
+                return it;
+            }
+            break;
         default:
             break;
         }
@@ -1366,7 +1373,7 @@ bool Editor::copy_selected()
 
     for (const Geo::Geometry *container : _graph->container_group(_current_group))
     {
-        if (container->is_selected)
+        if (container->is_selected && container->type() != Geo::Type::DIMENSION)
         {
             _paste_table.push_back(container->clone());
         }
@@ -1391,7 +1398,8 @@ bool Editor::cut_selected()
     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> items;
     for (size_t i = _graph->container_group(_current_group).size() - 1; i > 0; --i)
     {
-        if (_graph->container_group(_current_group)[i]->is_selected)
+        if (_graph->container_group(_current_group)[i]->is_selected &&
+            _graph->container_group(_current_group)[i]->type() != Geo::Type::DIMENSION)
         {
             _view_tree.remove(_graph->container_group(_current_group)[i]);
             items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
@@ -1903,6 +1911,10 @@ bool Editor::combinate(const std::vector<Geo::Geometry *> &objects)
     std::vector<std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>>> items;
     for (Geo::Geometry *object : objects)
     {
+        if (object->type() == Geo::Type::DIMENSION)
+        {
+            continue;
+        }
         if (object->type() == Geo::Type::COMBINATION)
         {
             std::vector<Geo::Geometry *>::iterator it = std::find(group.begin(), group.end(), object);
@@ -1987,23 +1999,31 @@ bool Editor::mirror(const std::vector<Geo::Geometry *> &objects, const Geo::Poin
         size_t index = _graph->container_group(_current_group).size();
         for (Geo::Geometry *obj : objects)
         {
-            _graph->container_group(_current_group).append(obj->clone());
-            _graph->container_group(_current_group).back()->transform(mat);
-            _graph->container_group(_current_group).back()->is_selected = true;
-            items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
-            _view_tree.append(_graph->container_group(_current_group).back());
+            if (obj->type() != Geo::Type::DIMENSION)
+            {
+                _graph->container_group(_current_group).append(obj->clone());
+                _graph->container_group(_current_group).back()->transform(mat);
+                _graph->container_group(_current_group).back()->is_selected = true;
+                items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
+                _view_tree.append(_graph->container_group(_current_group).back());
+            }
         }
         _backup.push_command(new UndoStack::ObjectCommand(items, true));
     }
     else
     {
+        std::vector<Geo::Geometry *> items;
         for (Geo::Geometry *obj : objects)
         {
-            obj->transform(mat);
-            obj->is_selected = true;
+            if (obj->type() != Geo::Type::DIMENSION)
+            {
+                obj->transform(mat);
+                obj->is_selected = true;
+                items.push_back(obj);
+            }
         }
-        _view_tree.update(objects);
-        _backup.push_command(new UndoStack::TransformCommand(objects, mat));
+        _view_tree.update(items);
+        _backup.push_command(new UndoStack::TransformCommand(items, mat));
     }
 
     _graph->modified = true;
@@ -2134,48 +2154,54 @@ bool Editor::scale(const std::vector<Geo::Geometry *> &objects, const bool unita
     if (unitary)
     {
         double top = -DBL_MAX, bottom = DBL_MAX, left = DBL_MAX, right = -DBL_MAX;
-        bool flag = false;
+        std::vector<Geo::Geometry *> items;
         for (Geo::Geometry *object : objects)
         {
-            const Geo::AABBRectParams rect = object->aabbrect_params();
-            top = std::max(top, rect.top);
-            bottom = std::min(bottom, rect.bottom);
-            left = std::min(left, rect.left);
-            right = std::max(right, rect.right);
-            flag = true;
+            if (object->type() != Geo::Type::DIMENSION)
+            {
+                items.push_back(object);
+                const Geo::AABBRectParams rect = object->aabbrect_params();
+                top = std::max(top, rect.top);
+                bottom = std::min(bottom, rect.bottom);
+                left = std::min(left, rect.left);
+                right = std::max(right, rect.right);
+            }
         }
 
-        if (!flag)
+        if (items.empty())
         {
             return false;
         }
 
         const double x = (left + right) / 2, y = (top + bottom) / 2;
-        for (Geo::Geometry *object : objects)
+        for (Geo::Geometry *object : items)
         {
             object->scale(x, y, k);
             _view_tree.update(object);
         }
 
-        _backup.push_command(new UndoStack::ScaleCommand(objects, x, y, k, unitary));
+        _backup.push_command(new UndoStack::ScaleCommand(items, x, y, k, unitary));
     }
     else
     {
-        bool flag = false;
+        std::vector<Geo::Geometry *> items;
         for (Geo::Geometry *object : objects)
         {
-            const Geo::AABBRectParams rect = object->aabbrect_params();
-            object->scale((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2, k);
-            flag = true;
-            _view_tree.update(object);
+            if (object->type() != Geo::Type::DIMENSION)
+            {
+                items.push_back(object);
+                const Geo::AABBRectParams rect = object->aabbrect_params();
+                object->scale((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2, k);
+                _view_tree.update(object);
+            }
         }
 
-        if (!flag)
+        if (items.empty())
         {
             return false;
         }
 
-        _backup.push_command(new UndoStack::ScaleCommand(objects, 0, 0, k, unitary));
+        _backup.push_command(new UndoStack::ScaleCommand(items, 0, 0, k, unitary));
     }
 
     _graph->modified = true;
@@ -4852,11 +4878,14 @@ bool Editor::line_array(const std::vector<Geo::Geometry *> &objects, int x, int 
     double left = DBL_MAX, right = -DBL_MAX, top = -DBL_MAX, bottom = DBL_MAX;
     for (const Geo::Geometry *object : objects)
     {
-        const Geo::AABBRectParams rect = object->aabbrect_params();
-        left = std::min(rect.left, left);
-        right = std::max(rect.right, right);
-        top = std::max(rect.top, top);
-        bottom = std::min(rect.bottom, bottom);
+        if (object->type() != Geo::Type::DIMENSION)
+        {
+            const Geo::AABBRectParams rect = object->aabbrect_params();
+            left = std::min(rect.left, left);
+            right = std::max(rect.right, right);
+            top = std::max(rect.top, top);
+            bottom = std::min(rect.bottom, bottom);
+        }
     }
 
     x_space += (right - left);
@@ -4884,11 +4913,14 @@ bool Editor::line_array(const std::vector<Geo::Geometry *> &objects, int x, int 
             }
             for (Geo::Geometry *object : objects)
             {
-                _graph->container_group(_current_group).append(object->clone());
-                _graph->container_group(_current_group).back()->translate(x_space * i, y_space * j);
-                _graph->container_group(_current_group).back()->is_selected = true;
-                _view_tree.append(_graph->container_group(_current_group).back());
-                items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
+                if (object->type() != Geo::Type::DIMENSION)
+                {
+                    _graph->container_group(_current_group).append(object->clone());
+                    _graph->container_group(_current_group).back()->translate(x_space * i, y_space * j);
+                    _graph->container_group(_current_group).back()->is_selected = true;
+                    _view_tree.append(_graph->container_group(_current_group).back());
+                    items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
+                }
             }
         }
     }
@@ -4908,7 +4940,10 @@ bool Editor::ring_array(const std::vector<Geo::Geometry *> &objects, const doubl
 
     for (Geo::Geometry *obj : objects)
     {
-        obj->is_selected = true;
+        if (obj->type() != Geo::Type::DIMENSION)
+        {
+            obj->is_selected = true;
+        }
     }
 
     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> items;
@@ -4917,11 +4952,14 @@ bool Editor::ring_array(const std::vector<Geo::Geometry *> &objects, const doubl
     {
         for (Geo::Geometry *obj : objects)
         {
-            _graph->container_group(_current_group).append(obj->clone());
-            _graph->container_group(_current_group).back()->rotate(x, y, 2 * Geo::PI * i / n);
-            _graph->container_group(_current_group).back()->is_selected = true;
-            _view_tree.append(_graph->container_group(_current_group).back());
-            items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
+            if (obj->type() != Geo::Type::DIMENSION)
+            {
+                _graph->container_group(_current_group).append(obj->clone());
+                _graph->container_group(_current_group).back()->rotate(x, y, 2 * Geo::PI * i / n);
+                _graph->container_group(_current_group).back()->is_selected = true;
+                _view_tree.append(_graph->container_group(_current_group).back());
+                items.emplace_back(_graph->container_group(_current_group).back(), _current_group, index++);
+            }
         }
     }
 
@@ -4959,17 +4997,23 @@ void Editor::down(Geo::Geometry *item)
 
 void Editor::rotate(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad)
 {
+    std::vector<Geo::Geometry *> items;
     for (Geo::Geometry *geo : objects)
     {
-        geo->rotate(x, y, rad);
+        if (geo->type() != Geo::Type::DIMENSION)
+        {
+            geo->rotate(x, y, rad);
+            items.push_back(geo);
+        }
     }
-    _view_tree.update(objects);
+    _view_tree.update(items);
     _graph->modified = true;
-    _backup.push_command(new UndoStack::RotateCommand(objects, x, y, rad));
+    _backup.push_command(new UndoStack::RotateCommand(items, x, y, rad));
 }
 
 void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers)
 {
+    std::vector<Geo::Geometry *> items;
     Geo::Point coord;
     if (objects.empty())
     {
@@ -4986,6 +5030,14 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
                 {
                     for (Geo::Geometry *geo : group)
                     {
+                        if (geo->type() == Geo::Type::DIMENSION)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            items.push_back(geo);
+                        }
                         if (direction)
                         {
                             geo->translate(-coord.x, 0);
@@ -4999,7 +5051,6 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
                             geo->translate(0, coord.y);
                         }
                     }
-                    objects.insert(objects.end(), group.begin(), group.end());
                 }
             }
             else
@@ -5011,6 +5062,14 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
                 }
                 for (Geo::Geometry *geo : _graph->container_group(_current_group))
                 {
+                    if (geo->type() == Geo::Type::DIMENSION)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        items.push_back(geo);
+                    }
                     if (direction)
                     {
                         geo->translate(-coord.x, 0);
@@ -5024,7 +5083,6 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
                         geo->translate(0, coord.y);
                     }
                 }
-                objects.assign(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end());
             }
         }
         else
@@ -5089,16 +5147,20 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
             double left = DBL_MAX, top = -DBL_MAX, right = -DBL_MAX, bottom = DBL_MAX;
             for (Geo::Geometry *geo : objects)
             {
-                const Geo::AABBRectParams rect = geo->aabbrect_params();
-                left = std::min(left, rect.left);
-                top = std::max(top, rect.top);
-                right = std::max(right, rect.right);
-                bottom = std::min(bottom, rect.bottom);
+                if (geo->type() != Geo::Type::DIMENSION)
+                {
+                    items.push_back(geo);
+                    const Geo::AABBRectParams rect = geo->aabbrect_params();
+                    left = std::min(left, rect.left);
+                    top = std::max(top, rect.top);
+                    right = std::max(right, rect.right);
+                    bottom = std::min(bottom, rect.bottom);
+                }
             }
             coord.x = (left + right) / 2;
             coord.y = (top + bottom) / 2;
 
-            for (Geo::Geometry *geo : objects)
+            for (Geo::Geometry *geo : items)
             {
                 if (direction)
                 {
@@ -5118,6 +5180,14 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
         {
             for (Geo::Geometry *geo : objects)
             {
+                if (geo->type() == Geo::Type::DIMENSION)
+                {
+                    continue;
+                }
+                else
+                {
+                    items.push_back(geo);
+                }
                 {
                     const Geo::AABBRectParams rect = geo->aabbrect_params();
                     coord.x = (rect.left + rect.right) / 2;
@@ -5139,9 +5209,9 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
         }
     }
 
-    _view_tree.update(objects);
+    _view_tree.update(items);
     _graph->modified = true;
-    _backup.push_command(new UndoStack::FlipCommand(objects, coord.x, coord.y, direction, unitary));
+    _backup.push_command(new UndoStack::FlipCommand(items, coord.x, coord.y, direction, unitary));
 }
 
 void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
@@ -10038,6 +10108,13 @@ void Editor::select_subfunc(const Geo::AABBRect &rect, const std::vector<Geo::Ge
             break;
         case Geo::Type::POINT:
             if (Geo::is_inside(*static_cast<Geo::Point *>(container), rect, true))
+            {
+                container->is_selected = true;
+                result->push_back(container);
+            }
+            break;
+        case Geo::Type::DIMENSION:
+            if (static_cast<const Dim::Dimension *>(container)->select(rect))
             {
                 container->is_selected = true;
                 result->push_back(container);

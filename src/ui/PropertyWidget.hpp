@@ -2,7 +2,9 @@
 #include <tuple>
 #include <vector>
 #include <QDialog>
+#include <QFont>
 #include "base/Container.hpp"
+#include "base/Dimension.hpp"
 
 
 QT_BEGIN_NAMESPACE
@@ -30,6 +32,9 @@ private:
     Geo::Polygon *_polygon = nullptr;
     Geo::Polyline *_polyline = nullptr;
     Text *_text = nullptr;
+    Dim::Dimension *_dim = nullptr;
+    QFont _font;
+    QString _txt;
     std::vector<std::tuple<double, double>> _shape, _path_points;
     std::vector<double> _knots;
 
@@ -63,6 +68,8 @@ private:
 
     void init_text_widget();
 
+    void init_dimension_widget();
+
     void read(Geo::Geometry *object);
 
     void read(Geo::Arc *arc);
@@ -84,6 +91,8 @@ private:
     void read(Geo::Polyline *polyline);
 
     void read(Text *text);
+
+    void read(Dim::Dimension *dim);
 
     void check(Geo::Geometry *object);
 

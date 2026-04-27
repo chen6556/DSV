@@ -602,13 +602,14 @@ void RenameGroupCommand::undo(Graph *graph)
 
 
 // TextChangedCommand
-TextChangedCommand::TextChangedCommand(Text *item, QString text) : _item(item), _text(std::move(text))
+TextChangedCommand::TextChangedCommand(Text *item, QString text, const QFont &font) : _item(item), _text(std::move(text)), _font(font)
 {
 }
 
 void TextChangedCommand::undo(Graph *graph)
 {
     _item->set_text(_text);
+    _item->set_font(_font);
     updated.push_back(_item);
 }
 

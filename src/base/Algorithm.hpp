@@ -16,19 +16,38 @@
 
 namespace Geo
 {
-// 判断两直线是否平行
+/**
+ * @brief Checks if two lines are parallel.
+ * @param point0 Start point of first line.
+ * @param point1 End point of first line.
+ * @param point2 Start point of second line.
+ * @param point3 End point of second line.
+ * @return True if parallel.
+ */
 bool is_parallel(const Point &point0, const Point &point1, const Point &point2, const Point &point3);
 
-// 判断两线段是否有重合,仅有一个端点重合不算两线段重合
+/**
+ * @brief Checks if two line segments coincide (more than one endpoint).
+ * @param start0 Start of first segment.
+ * @param end0 End of first segment.
+ * @param start1 Start of second segment.
+ * @param end1 End of second segment.
+ * @return True if coincide.
+ */
 bool is_coincide(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
 
-// 判断有限长线段是否与多边形某一边重合
 bool is_coincide(const Point &start, const Point &end, const Polygon &polygon);
 
 // 判断一个有限长线段是否是另一个有限长线段的一部分
 bool is_part(const Point &start0, const Point &end0, const Point &start1, const Point &end1);
 
-// 判断点是否在直线的左侧
+/**
+ * @brief Checks if a point is on the left side of a line.
+ * @param point The point to check.
+ * @param start Start of the line.
+ * @param end End of the line.
+ * @return True if on left.
+ */
 bool is_on_left(const Point &point, const Point &start, const Point &end);
 
 

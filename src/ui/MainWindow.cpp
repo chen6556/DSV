@@ -1016,6 +1016,41 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
             break;
         }
         break;
+    case ActionGroup::MenuType::AlignedDimensionMenu:
+        switch (index)
+        {
+        case 0: // aligned
+            ui->cmd_widget->work(CMDWidget::CMD::AlignedDim_CMD);
+            break;
+        case 1: // linear
+            ui->cmd_widget->work(CMDWidget::CMD::LinearDim_CMD);
+            break;
+        case 2: // radius
+            ui->cmd_widget->work(CMDWidget::CMD::RadiusDim_CMD);
+            break;
+        case 3: // diameter
+            ui->cmd_widget->work(CMDWidget::CMD::DiameterDim_CMD);
+            break;
+        case 4: // ordinate
+            ui->cmd_widget->work(CMDWidget::CMD::OrdinateDim_CMD);
+            break;
+        default:
+            break;
+        }
+        break;
+    case ActionGroup::MenuType::AngleDimensionMenu:
+        switch (index)
+        {
+        case 0: // angle
+            ui->cmd_widget->work(CMDWidget::CMD::AngleDim_CMD);
+            break;
+        case 1: // arc
+            ui->cmd_widget->work(CMDWidget::CMD::ArcDim_CMD);
+            break;
+        default:
+            break;
+        }
+        break;
     default:
         break;
     }

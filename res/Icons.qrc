@@ -52,5 +52,12 @@
         <file>icons/divide/divided_points_n_btn.png</file>
         <file>icons/divide/divided_parts_n_btn.png</file>
         <file>icons/reverse_btn.png</file>
+        <file>icons/dimension/radiusdim_btn.png</file>
+        <file>icons/dimension/aligneddim_btn.png</file>
+        <file>icons/dimension/lineardim_btn.png</file>
+        <file>icons/dimension/diameterdim_btn.png</file>
+        <file>icons/dimension/angledim_btn.png</file>
+        <file>icons/dimension/arcdim_btn.png</file>
+        <file>icons/dimension/ordinatedim_btn.png</file>
     </qresource>
 </RCC>

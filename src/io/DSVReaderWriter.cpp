@@ -91,6 +91,34 @@ void DSVReaderWriter::write(std::ofstream &stream)
                 write(stream, static_cast<Combination *>(object));
                 temp.insert(temp.end(), static_cast<Combination *>(object)->rbegin(), static_cast<Combination *>(object)->rend());
                 break;
+            case Geo::Type::DIMENSION:
+                switch (static_cast<Dim::Dimension *>(object)->dim_type())
+                {
+                case Dim::Type::ALIGNED:
+                    write(stream, static_cast<Dim::DimAligned *>(object));
+                    break;
+                case Dim::Type::ANGLE:
+                    write(stream, static_cast<Dim::DimAngle *>(object));
+                    break;
+                case Dim::Type::ARC:
+                    write(stream, static_cast<Dim::DimArc *>(object));
+                    break;
+                case Dim::Type::DIAMETER:
+                    write(stream, static_cast<Dim::DimDiameter *>(object));
+                    break;
+                case Dim::Type::LINEAR:
+                    write(stream, static_cast<Dim::DimLinear *>(object));
+                    break;
+                case Dim::Type::ORDINATE:
+                    write(stream, static_cast<Dim::DimOrdinate *>(object));
+                    break;
+                case Dim::Type::RADIUS:
+                    write(stream, static_cast<Dim::DimRadius *>(object));
+                    break;
+                default:
+                    break;
+                }
+                break;
             default:
                 break;
             }
@@ -283,6 +311,130 @@ void DSVReaderWriter::write(std::ofstream &stream, Combination *combination)
     }
 }
 
+void DSVReaderWriter::write(std::ofstream &stream, Dim::DimAligned *dim)
+{
+    stream << "0,AlignedDim" << std::endl;
+    stream << "1," << _object_to_handle.at(dim) << std::endl;
+    stream << "3," << _current_layer << std::endl;
+    stream << "12," << dim->anchor[0].x << std::endl;
+    stream << "13," << dim->anchor[0].y << std::endl;
+    stream << "12," << dim->anchor[1].x << std::endl;
+    stream << "13," << dim->anchor[1].y << std::endl;
+    stream << "14," << dim->label.x << std::endl;
+    stream << "15," << dim->label.y << std::endl;
+    stream << "21," << dim->height() << std::endl;
+    stream << "40," << dim->font_size << std::endl;
+    stream << "41," << dim->arrow_size << std::endl;
+}
+
+void DSVReaderWriter::write(std::ofstream &stream, Dim::DimAngle *dim)
+{
+    stream << "0,AngleDim" << std::endl;
+    stream << "1," << _object_to_handle.at(dim) << std::endl;
+    stream << "3," << _current_layer << std::endl;
+    stream << "10," << dim->root(0).x << std::endl;
+    stream << "11," << dim->root(0).y << std::endl;
+    stream << "10," << dim->root(1).x << std::endl;
+    stream << "11," << dim->root(1).y << std::endl;
+    stream << "12," << dim->anchor[0].x << std::endl;
+    stream << "13," << dim->anchor[0].y << std::endl;
+    stream << "12," << dim->center().x << std::endl;
+    stream << "13," << dim->center().y << std::endl;
+    stream << "12," << dim->anchor[1].x << std::endl;
+    stream << "13," << dim->anchor[1].y << std::endl;
+    stream << "14," << dim->label.x << std::endl;
+    stream << "15," << dim->label.y << std::endl;
+    stream << "20," << dim->distance() << std::endl;
+    stream << "40," << dim->font_size << std::endl;
+    stream << "41," << dim->arrow_size << std::endl;
+    stream << "43," << (dim->is_minor_arc() ? 1 : 0) << std::endl;
+}
+
+void DSVReaderWriter::write(std::ofstream &stream, Dim::DimArc *dim)
+{
+    stream << "0,ArcDim" << std::endl;
+    stream << "1," << _object_to_handle.at(dim) << std::endl;
+    stream << "3," << _current_layer << std::endl;
+    stream << "10," << dim->root(0).x << std::endl;
+    stream << "11," << dim->root(0).y << std::endl;
+    stream << "10," << dim->root(1).x << std::endl;
+    stream << "11," << dim->root(1).y << std::endl;
+    stream << "12," << dim->anchor[0].x << std::endl;
+    stream << "13," << dim->anchor[0].y << std::endl;
+    stream << "12," << dim->center().x << std::endl;
+    stream << "13," << dim->center().y << std::endl;
+    stream << "12," << dim->anchor[1].x << std::endl;
+    stream << "13," << dim->anchor[1].y << std::endl;
+    stream << "14," << dim->label.x << std::endl;
+    stream << "15," << dim->label.y << std::endl;
+    stream << "20," << dim->distance() << std::endl;
+    stream << "21," << dim->radius() << std::endl;
+    stream << "40," << dim->font_size << std::endl;
+    stream << "41," << dim->arrow_size << std::endl;
+    stream << "43," << (dim->is_minor_arc() ? 1 : 0) << std::endl;
+}
+
+void DSVReaderWriter::write(std::ofstream &stream, Dim::DimDiameter *dim)
+{
+    stream << "0,DiameterDim" << std::endl;
+    stream << "1," << _object_to_handle.at(dim) << std::endl;
+    stream << "3," << _current_layer << std::endl;
+    stream << "12," << dim->anchor[0].x << std::endl;
+    stream << "13," << dim->anchor[0].y << std::endl;
+    stream << "12," << dim->anchor[1].x << std::endl;
+    stream << "13," << dim->anchor[1].y << std::endl;
+    stream << "14," << dim->label.x << std::endl;
+    stream << "15," << dim->label.y << std::endl;
+    stream << "20," << dim->distance() << std::endl;
+    stream << "40," << dim->font_size << std::endl;
+    stream << "41," << dim->arrow_size << std::endl;
+}
+
+void DSVReaderWriter::write(std::ofstream &stream, Dim::DimLinear *dim)
+{
+    stream << "0,LinearDim" << std::endl;
+    stream << "1," << _object_to_handle.at(dim) << std::endl;
+    stream << "3," << _current_layer << std::endl;
+    stream << "12," << dim->anchor[0].x << std::endl;
+    stream << "13," << dim->anchor[0].y << std::endl;
+    stream << "12," << dim->anchor[1].x << std::endl;
+    stream << "13," << dim->anchor[1].y << std::endl;
+    stream << "14," << dim->label.x << std::endl;
+    stream << "15," << dim->label.y << std::endl;
+    stream << "21," << dim->height() << std::endl;
+    stream << "30," << (dim->is_horizontal() ? 0 : 90) << std::endl;
+    stream << "40," << dim->font_size << std::endl;
+    stream << "41," << dim->arrow_size << std::endl;
+}
+
+void DSVReaderWriter::write(std::ofstream &stream, Dim::DimRadius *dim)
+{
+    stream << "0,RadiusDim" << std::endl;
+    stream << "1," << _object_to_handle.at(dim) << std::endl;
+    stream << "3," << _current_layer << std::endl;
+    stream << "12," << dim->anchor[0].x << std::endl;
+    stream << "13," << dim->anchor[0].y << std::endl;
+    stream << "12," << dim->anchor[1].x << std::endl;
+    stream << "13," << dim->anchor[1].y << std::endl;
+    stream << "14," << dim->label.x << std::endl;
+    stream << "15," << dim->label.y << std::endl;
+    stream << "20," << dim->distance() << std::endl;
+    stream << "40," << dim->font_size << std::endl;
+    stream << "41," << dim->arrow_size << std::endl;
+}
+
+void DSVReaderWriter::write(std::ofstream &stream, Dim::DimOrdinate *dim)
+{
+    stream << "0,OrdinateDim" << std::endl;
+    stream << "1," << _object_to_handle.at(dim) << std::endl;
+    stream << "3," << _current_layer << std::endl;
+    stream << "10," << dim->root(1).x << std::endl;
+    stream << "11," << dim->root(1).y << std::endl;
+    stream << "14," << dim->anchor[1].x << std::endl;
+    stream << "15," << dim->anchor[1].y << std::endl;
+    stream << "40," << dim->font_size << std::endl;
+}
+
 bool DSVReaderWriter::read_code(std::ifstream &stream)
 {
     std::string value;
@@ -338,7 +490,7 @@ bool DSVReaderWriter::read_value(std::ifstream &stream)
     {
         return false;
     }
-    if (_pair.code == code_hanlde || _pair.code == code_intvalue || _pair.code == code_pointer)
+    if (_pair.code == code_hanlde || _pair.code == code_intvalue || _pair.code == code_pointer || _pair.code == code_minor_arc)
     {
         _pair.value = std::stoi(value);
     }
@@ -423,6 +575,34 @@ bool DSVReaderWriter::read_data(const std::vector<Pair> &data)
     else if (_info.type == "Combination")
     {
         return read_combination(data);
+    }
+    else if (_info.type == "AlignedDim")
+    {
+        return read_aligned_dim(data);
+    }
+    else if (_info.type == "LinearDim")
+    {
+        return read_linear_dim(data);
+    }
+    else if (_info.type == "RadiusDim")
+    {
+        return read_radius_dim(data);
+    }
+    else if (_info.type == "DiameterDim")
+    {
+        return read_diameter_dim(data);
+    }
+    else if (_info.type == "AngleDim")
+    {
+        return read_angle_dim(data);
+    }
+    else if (_info.type == "ArcDim")
+    {
+        return read_arc_dim(data);
+    }
+    else if (_info.type == "OrdinateDim")
+    {
+        return read_ordinate_dim(data);
     }
     else
     {
@@ -1150,4 +1330,627 @@ bool DSVReaderWriter::read_combination(const std::vector<Pair> &data)
         _handle_to_object.insert_or_assign(_info.hanlde, combi);
     }
     return true;
+}
+
+bool DSVReaderWriter::read_aligned_dim(const std::vector<Pair> &data)
+{
+    bool has_controlx = false, has_controly = false, has_labelx = false, has_labely = false, has_height = false, has_font_size = false,
+         has_arrow_size = false;
+    double controlx, controly, labelx, labely, height, arrow_size;
+    int font_size;
+    std::vector<Geo::Point> anchors;
+    for (const Pair &pair : data)
+    {
+        switch (pair.code)
+        {
+        case code_controlx:
+            has_controlx = true;
+            controlx = pair.real;
+            break;
+        case code_controly:
+            has_controly = true;
+            controly = pair.real;
+            break;
+        case code_labelx:
+            labelx = pair.real;
+            has_labelx = true;
+            break;
+        case code_labley:
+            labely = pair.real;
+            has_labely = true;
+            break;
+        case code_ylength:
+            height = pair.real;
+            has_height = true;
+            break;
+        case code_intvalue:
+            font_size = pair.value;
+            has_font_size = true;
+            break;
+        case code_floatvalue:
+            arrow_size = pair.real;
+            has_arrow_size = true;
+            break;
+        default:
+            break;
+        }
+        if (has_controlx && has_controly)
+        {
+            anchors.emplace_back(controlx, controly);
+            has_controlx = has_controly = false;
+        }
+    }
+
+    if (has_labelx && has_labely && has_height && has_font_size && has_arrow_size && anchors.size() == 2)
+    {
+        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        {
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            {
+                Dim::DimAligned *dim = new Dim::DimAligned(anchors[0], anchors[1], height);
+                dim->set_height(height);
+                dim->arrow_size = arrow_size;
+                dim->font_size = font_size;
+                combination->append(dim);
+                _object_to_handle.insert_or_assign(dim, _info.hanlde);
+                _handle_to_object.insert_or_assign(_info.hanlde, dim);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            Dim::DimAligned *dim = new Dim::DimAligned(anchors[0], anchors[1], height);
+            dim->set_height(height);
+            dim->arrow_size = arrow_size;
+            dim->font_size = font_size;
+            _graph->container_group(_group_name_to_index.at(_info.layer)).append(dim);
+            _object_to_handle.insert_or_assign(dim, _info.hanlde);
+            _handle_to_object.insert_or_assign(_info.hanlde, dim);
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool DSVReaderWriter::read_angle_dim(const std::vector<Pair> &data)
+{
+    bool has_pathx = false, has_pathy = false, has_controlx = false, has_controly = false, has_labelx = false, has_labely = false,
+         has_height = false, has_font_size = false, has_arrow_size = false, is_minor_arc = true;
+    double pathx, pathy, controlx, controly, labelx, labely, height, arrow_size;
+    int font_size;
+    std::vector<Geo::Point> roots, anchors;
+    for (const Pair &pair : data)
+    {
+        switch (pair.code)
+        {
+        case code_pathx:
+            has_pathx = true;
+            pathx = pair.real;
+            break;
+        case code_pathy:
+            has_pathy = true;
+            pathy = pair.real;
+            break;
+        case code_controlx:
+            has_controlx = true;
+            controlx = pair.real;
+            break;
+        case code_controly:
+            has_controly = true;
+            controly = pair.real;
+            break;
+        case code_labelx:
+            labelx = pair.real;
+            has_labelx = true;
+            break;
+        case code_labley:
+            labely = pair.real;
+            has_labely = true;
+            break;
+        case code_xlength:
+            height = pair.real;
+            has_height = true;
+            break;
+        case code_intvalue:
+            font_size = pair.value;
+            has_font_size = true;
+            break;
+        case code_floatvalue:
+            arrow_size = pair.real;
+            has_arrow_size = true;
+            break;
+        case code_minor_arc:
+            is_minor_arc = pair.value == 1;
+            break;
+        default:
+            break;
+        }
+        if (has_pathx && has_pathy)
+        {
+            roots.emplace_back(pathx, pathy);
+            has_pathx = has_pathy = false;
+        }
+        if (has_controlx && has_controly)
+        {
+            anchors.emplace_back(controlx, controly);
+            has_controlx = has_controly = false;
+        }
+    }
+
+    if (has_labelx && has_labely && has_height && has_font_size && has_arrow_size && roots.size() == 2 && anchors.size() == 3)
+    {
+        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        {
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            {
+                Dim::DimAngle *dim = new Dim::DimAngle(anchors[0], anchors[1], anchors[2], height, roots[0], roots[1]);
+                dim->set_minor_arc(is_minor_arc);
+                dim->arrow_size = arrow_size;
+                dim->font_size = font_size;
+                combination->append(dim);
+                _object_to_handle.insert_or_assign(dim, _info.hanlde);
+                _handle_to_object.insert_or_assign(_info.hanlde, dim);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            Dim::DimAngle *dim = new Dim::DimAngle(anchors[0], anchors[1], anchors[2], height, roots[0], roots[1]);
+            dim->set_minor_arc(is_minor_arc);
+            dim->arrow_size = arrow_size;
+            dim->font_size = font_size;
+            _graph->container_group(_group_name_to_index.at(_info.layer)).append(dim);
+            _object_to_handle.insert_or_assign(dim, _info.hanlde);
+            _handle_to_object.insert_or_assign(_info.hanlde, dim);
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool DSVReaderWriter::read_arc_dim(const std::vector<Pair> &data)
+{
+    bool has_pathx = false, has_pathy = false, has_controlx = false, has_controly = false, has_labelx = false, has_labely = false,
+         has_height = false, has_font_size = false, has_arrow_size = false, has_radius = false, is_minor_arc = true;
+    double pathx, pathy, controlx, controly, labelx, labely, height, arrow_size, radius;
+    int font_size;
+    std::vector<Geo::Point> roots, anchors;
+    for (const Pair &pair : data)
+    {
+        switch (pair.code)
+        {
+        case code_pathx:
+            has_pathx = true;
+            pathx = pair.real;
+            break;
+        case code_pathy:
+            has_pathy = true;
+            pathy = pair.real;
+            break;
+        case code_controlx:
+            has_controlx = true;
+            controlx = pair.real;
+            break;
+        case code_controly:
+            has_controly = true;
+            controly = pair.real;
+            break;
+        case code_labelx:
+            labelx = pair.real;
+            has_labelx = true;
+            break;
+        case code_labley:
+            labely = pair.real;
+            has_labely = true;
+            break;
+        case code_xlength:
+            height = pair.real;
+            has_height = true;
+            break;
+        case code_ylength:
+            radius = pair.real;
+            has_radius = true;
+            break;
+        case code_intvalue:
+            font_size = pair.value;
+            has_font_size = true;
+            break;
+        case code_floatvalue:
+            arrow_size = pair.real;
+            has_arrow_size = true;
+            break;
+        case code_minor_arc:
+            is_minor_arc = pair.value == 1;
+            break;
+        default:
+            break;
+        }
+        if (has_pathx && has_pathy)
+        {
+            roots.emplace_back(pathx, pathy);
+            has_pathx = has_pathy = false;
+        }
+        if (has_controlx && has_controly)
+        {
+            anchors.emplace_back(controlx, controly);
+            has_controlx = has_controly = false;
+        }
+    }
+
+    if (has_labelx && has_labely && has_height && has_font_size && has_arrow_size && has_radius && roots.size() == 2 && anchors.size() == 3)
+    {
+        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        {
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            {
+                Dim::DimArc *dim = new Dim::DimArc(anchors[0], anchors[1], anchors[2], height, roots[0], roots[1], radius);
+                dim->set_minor_arc(is_minor_arc);
+                dim->arrow_size = arrow_size;
+                dim->font_size = font_size;
+                combination->append(dim);
+                _object_to_handle.insert_or_assign(dim, _info.hanlde);
+                _handle_to_object.insert_or_assign(_info.hanlde, dim);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            Dim::DimArc *dim = new Dim::DimArc(anchors[0], anchors[1], anchors[2], height, roots[0], roots[1], radius);
+            dim->set_minor_arc(is_minor_arc);
+            dim->arrow_size = arrow_size;
+            dim->font_size = font_size;
+            _graph->container_group(_group_name_to_index.at(_info.layer)).append(dim);
+            _object_to_handle.insert_or_assign(dim, _info.hanlde);
+            _handle_to_object.insert_or_assign(_info.hanlde, dim);
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool DSVReaderWriter::read_diameter_dim(const std::vector<Pair> &data)
+{
+    bool has_controlx = false, has_controly = false, has_labelx = false, has_labely = false, has_height = false, has_font_size = false,
+         has_arrow_size = false;
+    double pathx, pathy, controlx, controly, labelx, labely, height, arrow_size;
+    int font_size;
+    std::vector<Geo::Point> anchors;
+    for (const Pair &pair : data)
+    {
+        switch (pair.code)
+        {
+        case code_controlx:
+            has_controlx = true;
+            controlx = pair.real;
+            break;
+        case code_controly:
+            has_controly = true;
+            controly = pair.real;
+            break;
+        case code_labelx:
+            labelx = pair.real;
+            has_labelx = true;
+            break;
+        case code_labley:
+            labely = pair.real;
+            has_labely = true;
+            break;
+        case code_xlength:
+            height = pair.real;
+            has_height = true;
+            break;
+        case code_intvalue:
+            font_size = pair.value;
+            has_font_size = true;
+            break;
+        case code_floatvalue:
+            arrow_size = pair.real;
+            has_arrow_size = true;
+            break;
+        default:
+            break;
+        }
+        if (has_controlx && has_controly)
+        {
+            anchors.emplace_back(controlx, controly);
+            has_controlx = has_controly = false;
+        }
+    }
+
+    if (has_labelx && has_labely && has_height && has_font_size && has_arrow_size && anchors.size() == 2)
+    {
+        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        {
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            {
+                Dim::DimDiameter *dim = new Dim::DimDiameter(anchors[0], anchors[1], height);
+                dim->arrow_size = arrow_size;
+                dim->font_size = font_size;
+                combination->append(dim);
+                _object_to_handle.insert_or_assign(dim, _info.hanlde);
+                _handle_to_object.insert_or_assign(_info.hanlde, dim);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            Dim::DimDiameter *dim = new Dim::DimDiameter(anchors[0], anchors[1], height);
+            dim->arrow_size = arrow_size;
+            dim->font_size = font_size;
+            _graph->container_group(_group_name_to_index.at(_info.layer)).append(dim);
+            _object_to_handle.insert_or_assign(dim, _info.hanlde);
+            _handle_to_object.insert_or_assign(_info.hanlde, dim);
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool DSVReaderWriter::read_linear_dim(const std::vector<Pair> &data)
+{
+    bool has_controlx = false, has_controly = false, has_labelx = false, has_labely = false, has_height = false, has_font_size = false,
+         has_arrow_size = false, is_horizontal = true;
+    double pathx, pathy, controlx, controly, labelx, labely, height, arrow_size;
+    int font_size;
+    std::vector<Geo::Point> anchors;
+    for (const Pair &pair : data)
+    {
+        switch (pair.code)
+        {
+        case code_controlx:
+            has_controlx = true;
+            controlx = pair.real;
+            break;
+        case code_controly:
+            has_controly = true;
+            controly = pair.real;
+            break;
+        case code_labelx:
+            labelx = pair.real;
+            has_labelx = true;
+            break;
+        case code_labley:
+            labely = pair.real;
+            has_labely = true;
+            break;
+        case code_ylength:
+            height = pair.real;
+            has_height = true;
+            break;
+        case code_rotateangle:
+            is_horizontal = pair.real == 0;
+            break;
+        case code_intvalue:
+            font_size = pair.value;
+            has_font_size = true;
+            break;
+        case code_floatvalue:
+            arrow_size = pair.real;
+            has_arrow_size = true;
+            break;
+        default:
+            break;
+        }
+        if (has_controlx && has_controly)
+        {
+            anchors.emplace_back(controlx, controly);
+            has_controlx = has_controly = false;
+        }
+    }
+
+    if (has_labelx && has_labely && has_height && has_font_size && has_arrow_size && anchors.size() == 2)
+    {
+        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        {
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            {
+                Dim::DimLinear *dim = new Dim::DimLinear(anchors[0], anchors[1], is_horizontal, height);
+                dim->arrow_size = arrow_size;
+                dim->font_size = font_size;
+                combination->append(dim);
+                _object_to_handle.insert_or_assign(dim, _info.hanlde);
+                _handle_to_object.insert_or_assign(_info.hanlde, dim);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            Dim::DimLinear *dim = new Dim::DimLinear(anchors[0], anchors[1], is_horizontal, height);
+            dim->arrow_size = arrow_size;
+            dim->font_size = font_size;
+            _graph->container_group(_group_name_to_index.at(_info.layer)).append(dim);
+            _object_to_handle.insert_or_assign(dim, _info.hanlde);
+            _handle_to_object.insert_or_assign(_info.hanlde, dim);
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool DSVReaderWriter::read_radius_dim(const std::vector<Pair> &data)
+{
+    bool has_controlx = false, has_controly = false, has_labelx = false, has_labely = false, has_height = false, has_font_size = false,
+         has_arrow_size = false;
+    double pathx, pathy, controlx, controly, labelx, labely, height, arrow_size;
+    int font_size;
+    std::vector<Geo::Point> anchors;
+    for (const Pair &pair : data)
+    {
+        switch (pair.code)
+        {
+        case code_controlx:
+            has_controlx = true;
+            controlx = pair.real;
+            break;
+        case code_controly:
+            has_controly = true;
+            controly = pair.real;
+            break;
+        case code_labelx:
+            labelx = pair.real;
+            has_labelx = true;
+            break;
+        case code_labley:
+            labely = pair.real;
+            has_labely = true;
+            break;
+        case code_xlength:
+            height = pair.real;
+            has_height = true;
+            break;
+        case code_intvalue:
+            font_size = pair.value;
+            has_font_size = true;
+            break;
+        case code_floatvalue:
+            arrow_size = pair.real;
+            has_arrow_size = true;
+            break;
+        default:
+            break;
+        }
+        if (has_controlx && has_controly)
+        {
+            anchors.emplace_back(controlx, controly);
+            has_controlx = has_controly = false;
+        }
+    }
+
+    if (has_labelx && has_labely && has_height && has_font_size && has_arrow_size && anchors.size() == 2)
+    {
+        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        {
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            {
+                Dim::DimRadius *dim = new Dim::DimRadius(anchors[0], anchors[1], height);
+                dim->arrow_size = arrow_size;
+                dim->font_size = font_size;
+                combination->append(dim);
+                _object_to_handle.insert_or_assign(dim, _info.hanlde);
+                _handle_to_object.insert_or_assign(_info.hanlde, dim);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            Dim::DimRadius *dim = new Dim::DimRadius(anchors[0], anchors[1], height);
+            dim->arrow_size = arrow_size;
+            dim->font_size = font_size;
+            _graph->container_group(_group_name_to_index.at(_info.layer)).append(dim);
+            _object_to_handle.insert_or_assign(dim, _info.hanlde);
+            _handle_to_object.insert_or_assign(_info.hanlde, dim);
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool DSVReaderWriter::read_ordinate_dim(const std::vector<Pair> &data)
+{
+    bool has_posx = false, has_posy = false, has_labelx = false, has_labely = false, has_font_size = false;
+    double posx, posy, labelx, labely;
+    int font_size;
+    for (const Pair &pair : data)
+    {
+        switch (pair.code)
+        {
+        case code_pathx:
+            has_posx = true;
+            posx = pair.real;
+            break;
+        case code_pathy:
+            has_posy = true;
+            posy = pair.real;
+            break;
+        case code_labelx:
+            labelx = pair.real;
+            has_labelx = true;
+            break;
+        case code_labley:
+            labely = pair.real;
+            has_labely = true;
+            break;
+        case code_intvalue:
+            font_size = pair.value;
+            has_font_size = true;
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (has_labelx && has_labely && has_posx && has_posy && has_font_size)
+    {
+        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        {
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            {
+                Dim::DimOrdinate *dim = new Dim::DimOrdinate(Geo::Point(posx, posy), Geo::Point(labelx, labely));
+                dim->font_size = font_size;
+                combination->append(dim);
+                _object_to_handle.insert_or_assign(dim, _info.hanlde);
+                _handle_to_object.insert_or_assign(_info.hanlde, dim);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            Dim::DimOrdinate *dim = new Dim::DimOrdinate(Geo::Point(posx, posy), Geo::Point(labelx, labely));
+            dim->font_size = font_size;
+            _graph->container_group(_group_name_to_index.at(_info.layer)).append(dim);
+            _object_to_handle.insert_or_assign(dim, _info.hanlde);
+            _handle_to_object.insert_or_assign(_info.hanlde, dim);
+        }
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }

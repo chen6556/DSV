@@ -45,8 +45,8 @@ public:
     double down_sampling = 0.02;
     double offset_tolerance = 0.001;
 
-    double array_x_space = 0; // user input
-    double array_y_space = 0; // user input
+    double array_x_space = 10; // user input
+    double array_y_space = 10; // user input
 
     QString file_path = "/";
     QString file_type = "All Files: (*.*)";

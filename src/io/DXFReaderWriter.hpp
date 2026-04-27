@@ -5,6 +5,7 @@
 #include <QString>
 #include "libdxfrw/libdxfrw.h"
 #include "base/Graph.hpp"
+#include "base/Dimension.hpp"
 
 
 class Bulge
@@ -46,7 +47,6 @@ private:
     dxfRW *_dxfrw = nullptr;
 
     const double _flip_by_y_mat[6] = {-1, 0, 0, 0, 1, 0};
-    std::set<std::string> _inserted_blocks;
     std::vector<Combination *> _block_store;
     std::unordered_map<const Geo::Geometry *, int> _object_map;
     std::unordered_map<int, Geo::Geometry *> _handle_map;
@@ -263,9 +263,19 @@ private:
 
     void write_insert(const Combination *combination, const Geo::Point &insertion_point);
 
-public:
-    void check_block();
+    void write_aligned_dim(const Dim::DimAligned *dim);
 
+    void write_linear_dim(const Dim::DimLinear *dim);
+
+    void write_angle_dim(const Dim::DimAngle *dim);
+
+    void write_diameter_dim(const Dim::DimDiameter *dim);
+
+    void write_radius_dim(const Dim::DimRadius *dim);
+
+    void write_ordinate_dim(const Dim::DimOrdinate *dim);
+
+public:
     void clear_empty_group();
 
     static QString to_dxf_string(const QString &txt);

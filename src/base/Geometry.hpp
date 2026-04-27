@@ -26,7 +26,9 @@ enum class Type
     TEXT,
     CONTAINERGROUP,
     COMBINATION,
-    GRAPH
+    GRAPH,
+
+    DIMENSION
 };
 
 class AABBRect;
