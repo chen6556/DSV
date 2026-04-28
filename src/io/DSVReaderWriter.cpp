@@ -186,7 +186,7 @@ void DSVReaderWriter::write(std::ofstream &stream, Geo::Point *point)
 
 void DSVReaderWriter::write(std::ofstream &stream, Geo::Polyline *polyline)
 {
-    stream << "0,Polyline" << std::endl;
+    stream << (polyline->size() == 2 ? "0,Line" : "0,Polyline") << std::endl;
     stream << "1," << _object_to_handle.at(polyline) << std::endl;
     stream << "3," << _current_layer << std::endl;
     for (const Geo::Point &point : *polyline)
