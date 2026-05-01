@@ -256,7 +256,6 @@ void Importer::sp(const int value)
 
 void Importer::x_coord(const double value)
 {
-    qDebug() << value;
     switch (_rotate_coord)
     {
     case 90:
