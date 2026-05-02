@@ -41,7 +41,7 @@ void QuadTreeNode::find_visible_objects(const Geo::AABBRectParams &rect, std::ve
 
     if (_nodes[0] != nullptr && _nodes[1] != nullptr && _nodes[2] != nullptr && _nodes[3] != nullptr)
     {
-        if (std::vector<Geo::Geometry *> temp_objects[4]; _depth % 2 == 1) //> multithreading_depth)
+        if (std::vector<Geo::Geometry *> temp_objects[4]; _depth % 2 == 0) //> multithreading_depth)
         {
             std::future<void> threads[4];
             for (int i = 0; i < 4; ++i)
@@ -150,18 +150,18 @@ void QuadTreeNode::build(const Geo::AABBRectParams &rect, const std::vector<Geo:
     }
 }
 
-void QuadTreeNode::update(Geo::Geometry *object)
+void QuadTreeNode::update(const Geo::AABBRectParams &rect, Geo::Geometry *object)
 {
     if (_nodes[0] != nullptr || _nodes[1] != nullptr || _nodes[2] != nullptr || _nodes[3] != nullptr)
     {
-        if (Geo::is_intersected(_rect, object->aabbrect_params()))
+        if (Geo::is_intersected(_rect, rect))
         {
             if (_depth %  2 == 1) // > multithreading_depth)
             {
                 std::future<void> threads[4];
                 for (int i = 0; i < 4; ++i)
                 {
-                    threads[i] = std::async(std::launch::async, [this, i, object]() { _nodes[i]->update(object); });
+                    threads[i] = std::async(std::launch::async, [this, i, &rect, object]() { _nodes[i]->update(rect, object); });
                 }
                 for (int i = 0; i < 4; ++i)
                 {
@@ -172,7 +172,7 @@ void QuadTreeNode::update(Geo::Geometry *object)
             {
                 for (int i = 0; i < 4; ++i)
                 {
-                    _nodes[i]->update(object);
+                    _nodes[i]->update(rect, object);
                 }
             }
             if (_nodes[0]->empty() && _nodes[1]->empty() && _nodes[2]->empty() && _nodes[3]->empty())
@@ -191,7 +191,7 @@ void QuadTreeNode::update(Geo::Geometry *object)
     }
     else
     {
-        if (Geo::is_intersected(_rect, object->aabbrect_params()))
+        if (Geo::is_intersected(_rect, rect))
         {
             if (std::find(_objects.begin(), _objects.end(), object) == _objects.end())
             {
@@ -399,7 +399,7 @@ void QuadTree::update(Geo::Geometry *object)
     if (Geo::AABBRectParams rect = object->aabbrect_params(); rect.left >= _root.rect().left && rect.right <= _root.rect().right &&
                                                               rect.bottom >= _root.rect().bottom && rect.top <= _root.rect().top)
     {
-        _root.update(object);
+        _root.update(rect, object);
     }
     else
     {
@@ -435,9 +435,11 @@ void QuadTree::update(const std::vector<Geo::Geometry *> &objects)
         return;
     }
     Geo::AABBRectParams rect = objects.front()->aabbrect_params();
+    std::vector<Geo::AABBRectParams> rects({rect});
     for (Geo::Geometry *object : objects)
     {
-        Geo::AABBRectParams temp = object->aabbrect_params();
+        const Geo::AABBRectParams temp = object->aabbrect_params();
+        rects.emplace_back(temp);
         if (temp.left < rect.left)
         {
             rect.left = temp.left;
@@ -458,9 +460,9 @@ void QuadTree::update(const std::vector<Geo::Geometry *> &objects)
     if (rect.left >= _root.rect().left && rect.right <= _root.rect().right && rect.bottom >= _root.rect().bottom &&
         rect.top <= _root.rect().top)
     {
-        for (Geo::Geometry *object : objects)
+        for (size_t i = 0, count = objects.size(); i < count; ++i)
         {
-            _root.update(object);
+            _root.update(rects[i], objects[i]);
         }
     }
     else

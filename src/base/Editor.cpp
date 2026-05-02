@@ -174,8 +174,15 @@ Geo::Geometry *Editor::select(const Geo::Point &point, const bool reset_others, 
         std::vector<Geo::Geometry *> current_group_objects(_graph->container_group(_current_group).begin(),
                                                            _graph->container_group(_current_group).end());
         std::sort(current_group_objects.begin(), current_group_objects.end());
-        std::set_intersection(_view_tree.visible_objects().begin(), _view_tree.visible_objects().end(), current_group_objects.begin(),
-                              current_group_objects.end(), std::back_inserter(objects));
+        std::vector<Geo::Geometry *> visible_objects;
+        Geo::AABBRectParams rect;
+        rect.left = point.x - catch_distance - 1;
+        rect.right = point.x + catch_distance + 1;
+        rect.bottom = point.y - catch_distance - 1;
+        rect.top = point.y + catch_distance + 1;
+        _view_tree.find_visible_objects(rect, visible_objects);
+        std::set_intersection(visible_objects.begin(), visible_objects.end(), current_group_objects.begin(), current_group_objects.end(),
+                              std::back_inserter(objects));
         std::unordered_map<const Geo::Geometry *, size_t> orders;
         for (Geo::Geometry *object : objects)
         {
@@ -759,8 +766,10 @@ std::vector<Geo::Geometry *> Editor::select(const Geo::AABBRect &rect, const boo
         std::vector<Geo::Geometry *> current_group_objects(_graph->container_group(_current_group).begin(),
                                                            _graph->container_group(_current_group).end());
         std::sort(current_group_objects.begin(), current_group_objects.end());
-        std::set_intersection(_view_tree.visible_objects().begin(), _view_tree.visible_objects().end(), current_group_objects.begin(),
-                              current_group_objects.end(), std::back_inserter(objects));
+        std::vector<Geo::Geometry *> visible_objects;
+        _view_tree.find_visible_objects(rect.aabbrect_params(), visible_objects);
+        std::set_intersection(visible_objects.begin(), visible_objects.end(), current_group_objects.begin(), current_group_objects.end(),
+                              std::back_inserter(objects));
     }
     else
     {

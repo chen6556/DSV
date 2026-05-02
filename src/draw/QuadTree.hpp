@@ -8,7 +8,7 @@
 class QuadTreeNode
 {
 private:
-    static const int min_height = 60, min_width = 80, max_depth = 8, multithreading_depth = 5, min_size = 128;
+    static const int min_height = 60, min_width = 80, max_depth = 5, multithreading_depth = 5, min_size = 64;
     int _depth = 1;
     Geo::AABBRectParams _rect;
     std::vector<Geo::Geometry *> _objects;
@@ -29,7 +29,7 @@ public:
 
     void build(const Geo::AABBRectParams &rect, const std::vector<Geo::Geometry *> &objects);
 
-    void update(Geo::Geometry *object);
+    void update(const Geo::AABBRectParams &rect, Geo::Geometry *object);
 
     void remove(Geo::Geometry *object);
 
@@ -48,8 +48,6 @@ private:
     std::vector<Geo::Geometry *> _objects, _visible_objects;
 
 public:
-    QuadTree() = default;
-
     void clear();
 
     void find_visible_objects(const Geo::AABBRectParams &rect, std::vector<Geo::Geometry *> &visible_objects);
