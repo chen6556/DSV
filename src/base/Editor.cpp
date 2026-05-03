@@ -766,10 +766,8 @@ std::vector<Geo::Geometry *> Editor::select(const Geo::AABBRect &rect, const boo
         std::vector<Geo::Geometry *> current_group_objects(_graph->container_group(_current_group).begin(),
                                                            _graph->container_group(_current_group).end());
         std::sort(current_group_objects.begin(), current_group_objects.end());
-        std::vector<Geo::Geometry *> visible_objects;
-        _view_tree.find_visible_objects(rect.aabbrect_params(), visible_objects);
-        std::set_intersection(visible_objects.begin(), visible_objects.end(), current_group_objects.begin(), current_group_objects.end(),
-                              std::back_inserter(objects));
+        std::set_intersection(_view_tree.visible_objects().begin(), _view_tree.visible_objects().end(), current_group_objects.begin(),
+                              current_group_objects.end(), std::back_inserter(objects));
     }
     else
     {
