@@ -434,7 +434,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const CubicBez
         for (Geo::Point &point : temp)
         {
             t = 0;
-            double step = 1e-3, lower = 0, upper = 1;
+            double step = 1e-4, lower = 0, upper = 1;
             double min_dis = DBL_MAX;
             while (min_dis > 1e-4 && step > 1e-12)
             {
@@ -457,7 +457,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const CubicBez
                 step = (upper - lower) / 100;
             }
 
-            lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
+            lower = std::max(0.0, t - 8e-4), upper = std::min(1.0, t + 8e-4);
             step = (upper - lower) / 100;
             min_dis = DBL_MAX;
             std::vector<double> stored_t;
@@ -1663,7 +1663,7 @@ int Geo::is_intersected(const Circle &circle, const CubicBezier &bezier, std::ve
         for (Geo::Point &point : temp)
         {
             t = 0;
-            double step = 1e-3, lower = 0, upper = 1;
+            double step = 1e-4, lower = 0, upper = 1;
             double min_dis = DBL_MAX;
             while (min_dis > 1e-4 && step > 1e-12)
             {
@@ -1686,7 +1686,7 @@ int Geo::is_intersected(const Circle &circle, const CubicBezier &bezier, std::ve
                 step = (upper - lower) / 100;
             }
 
-            lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
+            lower = std::max(0.0, t - 8e-4), upper = std::min(1.0, t + 8e-4);
             step = (upper - lower) / 100;
             min_dis = DBL_MAX;
             std::vector<double> stored_t;
@@ -2076,7 +2076,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const CubicBezier &bezier, std::
         for (Geo::Point &point : temp)
         {
             t = 0;
-            double step = 1e-3, lower = 0, upper = 1;
+            double step = 1e-4, lower = 0, upper = 1;
             double min_dis = DBL_MAX;
             while (min_dis > 1e-4 && step > 1e-12)
             {
@@ -2099,7 +2099,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const CubicBezier &bezier, std::
                 step = (upper - lower) / 100;
             }
 
-            lower = std::max(0.0, t - 1e-4), upper = std::min(1.0, t + 1e-4);
+            lower = std::max(0.0, t - 8e-4), upper = std::min(1.0, t + 8e-4);
             step = (upper - lower) / 100;
             min_dis = DBL_MAX;
             std::vector<double> stored_t;
