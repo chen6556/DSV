@@ -9861,7 +9861,7 @@ void Editor::text_to_polylines(Text *text)
     {
         if (result[i] < 0)
         {
-            const int code = (static_cast<uint8_t>(result[i]) << 8) | static_cast<uint8_t>(result[i + 1]);
+            const int code = ((result[i] & 0xFF) << 8) | (result[i + 1] & 0xFF);
             ++i;
             SHXReader::SHXShape shape = cfont.char_shape(code, font_size);
             for (Geo::Polyline &polyline : shape.polylines)
