@@ -198,7 +198,7 @@ std::string TextEncoding::gbk_to_utf8(const std::string &str)
 #endif
 }
 
-std::string TextEncoding::uft8_to_gbk(const std::string &str)
+std::string TextEncoding::utf8_to_gbk(const std::string &str)
 {
 #if defined(_MSC_VER) || defined(WIN64)
     UErrorCode err = UErrorCode::U_ZERO_ERROR;

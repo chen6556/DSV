@@ -16,6 +16,6 @@ bool encoding_convert(const char *charset_src, const char *charset_dest, const c
 
 std::string gbk_to_utf8(const std::string &str);
 
-std::string uft8_to_gbk(const std::string &str);
+std::string utf8_to_gbk(const std::string &str);
 
 } // namespace TextEncoding

@@ -9853,7 +9853,7 @@ void Editor::text_to_polylines(Text *text)
 
     SHXReader::SHXFont cfont(&cfile), efont(&efile);
     Combination *combination = new Combination();
-    const std::string result = TextEncoding::uft8_to_gbk(text->text().toStdString());
+    const std::string result = TextEncoding::utf8_to_gbk(text->text().toUtf8().toStdString());
     for (int i = 0, init_x = text->aabbrect_params().left, x = text->aabbrect_params().left,
              y = text->aabbrect_params().top - GlobalSetting::setting().text_size, count = result.length(),
              font_size = text->font().pointSize();
