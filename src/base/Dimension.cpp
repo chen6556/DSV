@@ -11,12 +11,12 @@ void Dimension::clear()
     this->txt.clear();
 }
 
-const Geo::Type Dimension::type() const
+Geo::Type Dimension::type() const
 {
     return Geo::Type::DIMENSION;
 }
 
-const bool Dimension::empty() const
+bool Dimension::empty() const
 {
     return this->txt.isEmpty();
 }
@@ -104,7 +104,7 @@ void DimAligned::set_height(const double height)
     qDebug() << this->label.x << ',' << this->label.y;
 }
 
-const Type DimAligned::dim_type() const
+Type DimAligned::dim_type() const
 {
     return Type::ALIGNED;
 }
@@ -368,7 +368,7 @@ void DimLinear::set_distance(const double dis)
     }
 }
 
-const Type DimLinear::dim_type() const
+Type DimLinear::dim_type() const
 {
     return Type::LINEAR;
 }
@@ -806,7 +806,7 @@ void DimRadius::set_distance(const double dis)
     _distance = dis;
 }
 
-const Type DimRadius::dim_type() const
+Type DimRadius::dim_type() const
 {
     return Type::RADIUS;
 }
@@ -982,7 +982,7 @@ DimDiameter::DimDiameter(const Geo::Point &start, const Geo::Point &end, const d
     this->txt = "⌀" + QString::number(Geo::distance(start, end) * 2, 'f', 4);
 }
 
-const Type DimDiameter::dim_type() const
+Type DimDiameter::dim_type() const
 {
     return Type::DIAMETER;
 }
@@ -1154,7 +1154,7 @@ void DimAngle::set_arc_pos(const Geo::Point &pos)
     }
 }
 
-const Type DimAngle::dim_type() const
+Type DimAngle::dim_type() const
 {
     return Type::ANGLE;
 }
@@ -1363,7 +1363,7 @@ void DimArc::set_minor_arc(const bool value)
     }
 }
 
-const Type DimArc::dim_type() const
+Type DimArc::dim_type() const
 {
     return Type::ARC;
 }
@@ -1406,7 +1406,7 @@ DimOrdinate::DimOrdinate(const Geo::Point &point, const Geo::Point &pos)
     this->label = this->anchor[0];
 }
 
-const Type DimOrdinate::dim_type() const
+Type DimOrdinate::dim_type() const
 {
     return Type::ORDINATE;
 }

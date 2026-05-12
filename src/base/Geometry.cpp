@@ -12,7 +12,7 @@
 using namespace Geo;
 
 
-const double Geometry::length() const
+double Geometry::length() const
 {
     return 0;
 }
@@ -59,17 +59,17 @@ Point &Point::operator=(const Point &point)
     return *this;
 }
 
-const Type Point::type() const
+Type Point::type() const
 {
     return Type::POINT;
 }
 
-const bool Point::operator==(const Point &point) const
+bool Point::operator==(const Point &point) const
 {
     return x == point.x && y == point.y;
 }
 
-const bool Point::operator!=(const Point &point) const
+bool Point::operator!=(const Point &point) const
 {
     return x != point.x || y != point.y;
 }
@@ -93,12 +93,12 @@ Point Point::vertical() const
     return Point(-y, x);
 }
 
-const double Point::length() const
+double Point::length() const
 {
     return std::hypot(x, y);
 }
 
-const bool Point::empty() const
+bool Point::empty() const
 {
     return x == 0 && y == 0;
 }
@@ -249,22 +249,22 @@ Polyline::Polyline(const std::initializer_list<Point> &points) : _points(points)
 {
 }
 
-const Type Polyline::type() const
+Type Polyline::type() const
 {
     return Type::POLYLINE;
 }
 
-const size_t Polyline::size() const
+size_t Polyline::size() const
 {
     return _points.size();
 }
 
-const bool Polyline::empty() const
+bool Polyline::empty() const
 {
     return _points.empty();
 }
 
-const double Polyline::length() const
+double Polyline::length() const
 {
     double reuslt = 0;
     for (size_t i = 1, count = _points.size(); i < count; ++i)
@@ -828,27 +828,27 @@ AABBRect::AABBRect(const Point &point0, const Point &point1)
     }
 }
 
-const Type AABBRect::type() const
+Type AABBRect::type() const
 {
     return Type::AABBRECT;
 }
 
-const double AABBRect::left() const
+double AABBRect::left() const
 {
     return _points.front().x;
 }
 
-const double AABBRect::top() const
+double AABBRect::top() const
 {
     return _points.front().y;
 }
 
-const double AABBRect::right() const
+double AABBRect::right() const
 {
     return _points[2].x;
 }
 
-const double AABBRect::bottom() const
+double AABBRect::bottom() const
 {
     return _points[2].y;
 }
@@ -889,12 +889,12 @@ AABBRect &AABBRect::operator=(const AABBRect &rect)
     return *this;
 }
 
-const bool AABBRect::empty() const
+bool AABBRect::empty() const
 {
     return _points.size() < 5;
 }
 
-const double AABBRect::length() const
+double AABBRect::length() const
 {
     double reuslt = 0;
     for (size_t i = 1, count = _points.size(); i < count; ++i)
@@ -914,7 +914,7 @@ AABBRect *AABBRect::clone() const
     return new AABBRect(*this);
 }
 
-const double AABBRect::area() const
+double AABBRect::area() const
 {
     if (empty())
     {
@@ -926,7 +926,7 @@ const double AABBRect::area() const
     }
 }
 
-const double AABBRect::width() const
+double AABBRect::width() const
 {
     if (!_points.empty())
     {
@@ -938,7 +938,7 @@ const double AABBRect::width() const
     }
 }
 
-const double AABBRect::height() const
+double AABBRect::height() const
 {
     if (!_points.empty())
     {
@@ -1165,7 +1165,7 @@ void AABBRect::operator+=(const AABBRect &rect)
     }
 }
 
-const Point AABBRect::center() const
+Point AABBRect::center() const
 {
     return (_points[0] + _points[2]) / 2;
 }
@@ -1247,7 +1247,7 @@ Polygon &Polygon::operator=(const Polygon &polygon)
     return *this;
 }
 
-const Type Polygon::type() const
+Type Polygon::type() const
 {
     return Type::POLYGON;
 }
@@ -1512,7 +1512,7 @@ Polygon Polygon::operator-(const Point &point) const
     return Polygon(temp.cbegin(), temp.cend());
 }
 
-const double Polygon::area() const
+double Polygon::area() const
 {
     if (size() < 4)
     {
@@ -1677,17 +1677,17 @@ Triangle::Triangle(const Triangle &triangle) : Geometry(triangle)
     _vecs[2] = triangle._vecs[2];
 }
 
-const Type Triangle::type() const
+Type Triangle::type() const
 {
     return Type::TRIANGLE;
 }
 
-const bool Triangle::empty() const
+bool Triangle::empty() const
 {
     return _vecs[0] == _vecs[1] || _vecs[1] == _vecs[2] || _vecs[0] == _vecs[2];
 }
 
-const double Triangle::length() const
+double Triangle::length() const
 {
     return Geo::distance(_vecs[0], _vecs[1]) + Geo::distance(_vecs[1], _vecs[2]) + Geo::distance(_vecs[0], _vecs[2]);
 }
@@ -1995,22 +1995,22 @@ Circle &Circle::operator=(const Circle &circle)
     return *this;
 }
 
-const Type Circle::type() const
+Type Circle::type() const
 {
     return Type::CIRCLE;
 }
 
-const double Circle::area() const
+double Circle::area() const
 {
     return Geo::PI * radius * radius;
 }
 
-const double Circle::length() const
+double Circle::length() const
 {
     return 2.0 * Geo::PI * radius;
 }
 
-const bool Circle::empty() const
+bool Circle::empty() const
 {
     return radius <= 0;
 }
@@ -2174,7 +2174,7 @@ CubicBezier::CubicBezier(const std::initializer_list<Point> &points, const bool 
     update_shape(CubicBezier::default_step, CubicBezier::default_down_sampling_value);
 }
 
-const Type CubicBezier::type() const
+Type CubicBezier::type() const
 {
     return Type::BEZIER;
 }
@@ -2234,7 +2234,7 @@ void CubicBezier::update_shape(const double step, const double down_sampling_val
     Geo::down_sampling(_shape, down_sampling_value);
 }
 
-const double CubicBezier::length() const
+double CubicBezier::length() const
 {
     double result = 0;
     for (size_t i = 0, count = _points.size() / 3; i < count; ++i)
@@ -2671,17 +2671,17 @@ void Ellipse::update_angle_param(const double start, const double end, const boo
     }
 }
 
-const Type Ellipse::type() const
+Type Ellipse::type() const
 {
     return Geo::Type::ELLIPSE;
 }
 
-const double Ellipse::area() const
+double Ellipse::area() const
 {
     return Geo::PI * Geo::distance(_a[0], _a[1]) * Geo::distance(_b[0], _b[1]) / 4;
 }
 
-const double Ellipse::length() const
+double Ellipse::length() const
 {
     if (const double a = Geo::distance(_a[0], _a[1]) / 2, b = Geo::distance(_b[0], _b[1]) / 2; is_arc())
     {
@@ -2693,7 +2693,7 @@ const double Ellipse::length() const
     }
 }
 
-const bool Ellipse::empty() const
+bool Ellipse::empty() const
 {
     return _a[0] == _a[1] || _b[0] == _b[1];
 }
@@ -3158,7 +3158,7 @@ const Polyline &BSpline::shape() const
     return _shape;
 }
 
-const double BSpline::length() const
+double BSpline::length() const
 {
     if (_knots.empty())
     {
@@ -3168,7 +3168,7 @@ const double BSpline::length() const
     return Math::adaptive_simpson_3_8(f, _knots.front(), _knots.back());
 }
 
-const bool BSpline::empty() const
+bool BSpline::empty() const
 {
     return control_points.empty() && path_points.empty();
 }
@@ -3496,7 +3496,7 @@ QuadBSpline::QuadBSpline(const std::initializer_list<Point> &points, const bool 
     QuadBSpline::update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
 
-const Type QuadBSpline::type() const
+Type QuadBSpline::type() const
 {
     return Type::BSPLINE;
 }
@@ -4056,7 +4056,7 @@ CubicBSpline::CubicBSpline(const std::initializer_list<Point> &points, const boo
     CubicBSpline::update_shape(BSpline::default_step, BSpline::default_down_sampling_value);
 }
 
-const Type CubicBSpline::type() const
+Type CubicBSpline::type() const
 {
     return Geo::Type::BSPLINE;
 }
@@ -4666,12 +4666,12 @@ Arc &Arc::operator=(const Arc &arc)
     return *this;
 }
 
-const Type Arc::type() const
+Type Arc::type() const
 {
     return Type::ARC;
 }
 
-const double Arc::area() const
+double Arc::area() const
 {
     double angle = Geo::angle(control_points[0], Geo::Point(x, y), control_points[2]);
     if (is_cw())
@@ -4691,7 +4691,7 @@ const double Arc::area() const
     return radius * radius * std::abs(angle) / 2;
 }
 
-const double Arc::length() const
+double Arc::length() const
 {
     double angle = Geo::angle(control_points[0], Geo::Point(x, y), control_points[2]);
     if (is_cw())
@@ -4711,7 +4711,7 @@ const double Arc::length() const
     return radius * std::abs(angle);
 }
 
-const bool Arc::empty() const
+bool Arc::empty() const
 {
     return radius == 0 || control_points[0] == control_points[2];
 }

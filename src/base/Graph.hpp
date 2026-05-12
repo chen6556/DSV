@@ -18,7 +18,7 @@ public:
 
     Graph(const Graph &graph);
 
-    const Geo::Type type() const override;
+    Geo::Type type() const override;
 
     Graph *clone() const override;
 
@@ -40,13 +40,13 @@ public:
 
     const ContainerGroup &operator[](const size_t index) const;
 
-    const bool empty() const override;
+    bool empty() const override;
 
-    const bool empty(const size_t index) const;
+    bool empty(const size_t index) const;
 
-    const size_t size() const;
+    size_t size() const;
 
-    const size_t count(const Geo::Type type, const bool include_combinated) const;
+    size_t count(const Geo::Type type, const bool include_combinated) const;
 
     void clear() override;
 

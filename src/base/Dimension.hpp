@@ -27,11 +27,11 @@ public:
 
     void clear() override;
 
-    const Geo::Type type() const override;
+    Geo::Type type() const override;
 
-    virtual const Type dim_type() const = 0;
+    virtual Type dim_type() const = 0;
 
-    const bool empty() const override;
+    bool empty() const override;
 
     void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
 
@@ -68,7 +68,7 @@ public:
     // label到(anchor[0], anchor[1])的距离
     void set_height(const double height);
 
-    const Type dim_type() const override;
+    Type dim_type() const override;
 
     DimAligned *clone() const override;
 
@@ -108,7 +108,7 @@ public:
 
     void set_distance(const double dis);
 
-    const Type dim_type() const override;
+    Type dim_type() const override;
 
     DimLinear *clone() const override;
 
@@ -153,7 +153,7 @@ public:
 
     void set_distance(const double dis);
 
-    const Type dim_type() const override;
+    Type dim_type() const override;
 
     DimRadius *clone() const override;
 
@@ -189,7 +189,7 @@ class DimDiameter : public DimRadius
 public:
     DimDiameter(const Geo::Point &start, const Geo::Point &end, const double dis);
 
-    const Type dim_type() const override;
+    Type dim_type() const override;
 
     DimDiameter *clone() const override;
 
@@ -221,7 +221,7 @@ public:
 
     void set_arc_pos(const Geo::Point &pos);
 
-    const Type dim_type() const override;
+    Type dim_type() const override;
 
     DimAngle *clone() const override;
 
@@ -267,7 +267,7 @@ public:
 
     void set_minor_arc(const bool value);
 
-    const Type dim_type() const override;
+    Type dim_type() const override;
 
     DimArc *clone() const override;
 
@@ -283,7 +283,7 @@ private:
 public:
     DimOrdinate(const Geo::Point &point, const Geo::Point &pos);
 
-    const Type dim_type() const override;
+    Type dim_type() const override;
 
     DimOrdinate *clone() const override;
 

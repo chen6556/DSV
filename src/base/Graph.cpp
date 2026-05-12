@@ -9,7 +9,7 @@ Graph::Graph(const Graph &graph) : Geo::Geometry(graph), modified(graph.modified
     }
 }
 
-const Geo::Type Graph::type() const
+Geo::Type Graph::type() const
 {
     return Geo::Type::GRAPH;
 }
@@ -167,24 +167,24 @@ const ContainerGroup &Graph::operator[](const size_t index) const
     }
 }
 
-const bool Graph::empty() const
+bool Graph::empty() const
 {
     return _container_groups.empty() ||
            std::all_of(_container_groups.begin(), _container_groups.end(), [](const ContainerGroup &g) { return g.empty(); });
 }
 
-const bool Graph::empty(const size_t index) const
+bool Graph::empty(const size_t index) const
 {
     assert(index < _container_groups.size());
     return container_group(index).empty();
 }
 
-const size_t Graph::size() const
+size_t Graph::size() const
 {
     return _container_groups.size();
 }
 
-const size_t Graph::count(const Geo::Type type, const bool include_combinated) const
+size_t Graph::count(const Geo::Type type, const bool include_combinated) const
 {
     size_t num = 0;
     for (const ContainerGroup &group : _container_groups)

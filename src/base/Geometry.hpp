@@ -56,11 +56,11 @@ public:
 
     virtual ~Geometry() = default;
 
-    virtual const Type type() const = 0;
+    virtual Type type() const = 0;
 
-    virtual const double length() const;
+    virtual double length() const;
 
-    virtual const bool empty() const = 0;
+    virtual bool empty() const = 0;
 
     virtual void clear() = 0;
 
@@ -131,11 +131,11 @@ public:
 
     Point &operator=(const Point &point);
 
-    const Type type() const override;
+    Type type() const override;
 
-    const bool operator==(const Point &point) const;
+    bool operator==(const Point &point) const;
 
-    const bool operator!=(const Point &point) const;
+    bool operator!=(const Point &point) const;
 
     Point &normalize();
 
@@ -145,10 +145,10 @@ public:
     Point vertical() const;
 
     // 向量模长
-    const double length() const override;
+    double length() const override;
 
     // 判断是否为零向量
-    const bool empty() const override;
+    bool empty() const override;
 
     // 变为零向量
     void clear() override;
@@ -214,13 +214,13 @@ public:
 
     Polyline(const std::initializer_list<Point> &points);
 
-    const Type type() const override;
+    Type type() const override;
 
-    const size_t size() const;
+    size_t size() const;
 
-    const bool empty() const override;
+    bool empty() const override;
 
-    const double length() const override;
+    double length() const override;
 
     void clear() override;
 
@@ -348,15 +348,15 @@ public:
 
     AABBRect(const AABBRect &rect) = default;
 
-    const Type type() const override;
+    Type type() const override;
 
-    const double left() const;
+    double left() const;
 
-    const double top() const;
+    double top() const;
 
-    const double right() const;
+    double right() const;
 
-    const double bottom() const;
+    double bottom() const;
 
     void set_left(const double value);
 
@@ -368,19 +368,19 @@ public:
 
     AABBRect &operator=(const AABBRect &reac);
 
-    const bool empty() const override;
+    bool empty() const override;
 
-    const double length() const override;
+    double length() const override;
 
     void clear() override;
 
     AABBRect *clone() const override;
 
-    const double area() const;
+    double area() const;
 
-    const double width() const;
+    double width() const;
 
-    const double height() const;
+    double height() const;
 
     void set_width(const double value);
 
@@ -434,7 +434,7 @@ public:
 
     void operator+=(const AABBRect &rect);
 
-    const Point center() const;
+    Point center() const;
 
     const Point &operator[](const size_t index) const;
 };
@@ -458,7 +458,7 @@ public:
 
     Polygon &operator=(const Polygon &polygon);
 
-    const Type type() const override;
+    Type type() const override;
 
     Polygon *clone() const override;
 
@@ -497,7 +497,7 @@ public:
 
     Polygon operator-(const Point &point) const;
 
-    const double area() const;
+    double area() const;
 
     size_t next_point_index(const size_t index) const;
 
@@ -534,11 +534,11 @@ public:
 
     Triangle(const Triangle &triangle);
 
-    const Type type() const override;
+    Type type() const override;
 
-    const bool empty() const override;
+    bool empty() const override;
 
-    const double length() const override;
+    double length() const override;
 
     void clear() override;
 
@@ -621,13 +621,13 @@ public:
 
     Circle &operator=(const Circle &circle);
 
-    const Type type() const override;
+    Type type() const override;
 
-    const double area() const;
+    double area() const;
 
-    const double length() const override;
+    double length() const override;
 
-    const bool empty() const override;
+    bool empty() const override;
 
     void clear() override;
 
@@ -678,7 +678,7 @@ public:
 
     CubicBezier(const std::initializer_list<Point> &points, const bool is_path_points);
 
-    const Type type() const override;
+    Type type() const override;
 
     const Polyline &shape() const;
 
@@ -686,7 +686,7 @@ public:
 
     void update_shape(const double step = 0.01, const double down_sampling_value = 0.02);
 
-    const double length() const override;
+    double length() const override;
 
     void clear() override;
 
@@ -763,13 +763,13 @@ public:
 
     void update_angle_param(const double start, const double end, const bool is_param);
 
-    const Type type() const override;
+    Type type() const override;
 
-    const double area() const;
+    double area() const;
 
-    const double length() const override;
+    double length() const override;
 
-    const bool empty() const override;
+    bool empty() const override;
 
     void clear() override;
 
@@ -897,9 +897,9 @@ public:
 
     const Polyline &shape() const;
 
-    const double length() const override;
+    double length() const override;
 
-    const bool empty() const override;
+    bool empty() const override;
 
     void clear() override;
 
@@ -967,7 +967,7 @@ public:
 
     QuadBSpline(const std::initializer_list<Point> &points, const bool is_path_points);
 
-    const Type type() const override;
+    Type type() const override;
 
     void update_control_points() override;
 
@@ -1010,7 +1010,7 @@ public:
 
     CubicBSpline(const std::initializer_list<Point> &points, const bool is_path_points);
 
-    const Type type() const override;
+    Type type() const override;
 
     void update_control_points() override;
 
@@ -1073,13 +1073,13 @@ public:
 
     Arc &operator=(const Arc &arc);
 
-    const Type type() const override;
+    Type type() const override;
 
-    const double area() const;
+    double area() const;
 
-    const double length() const override;
+    double length() const override;
 
-    const bool empty() const override;
+    bool empty() const override;
 
     void clear() override;
 

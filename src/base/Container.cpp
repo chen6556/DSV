@@ -65,12 +65,12 @@ Text::Text(const double x, const double y, const QFont &font, QString text, cons
     }
 }
 
-const Geo::Type Text::type() const
+Geo::Type Text::type() const
 {
     return Geo::Type::TEXT;
 }
 
-const double Text::length() const
+double Text::length() const
 {
     double result = std::hypot(_shape[0].x - _shape[3].x, _shape[0].y - _shape[3].y);
     for (int i = 1; i < 4; ++i)
@@ -80,7 +80,7 @@ const double Text::length() const
     return result;
 }
 
-const bool Text::empty() const
+bool Text::empty() const
 {
     return _text.isEmpty();
 }
@@ -242,17 +242,17 @@ const Geo::Point &Text::shape(const int index) const
     return _shape[index];
 }
 
-const double Text::width() const
+double Text::width() const
 {
     return std::hypot(_shape[0].x - _shape[1].x, _shape[0].y - _shape[1].y);
 }
 
-const double Text::height() const
+double Text::height() const
 {
     return std::hypot(_shape[0].x - _shape[3].x, _shape[0].y - _shape[3].y);
 }
 
-const double Text::angle() const
+double Text::angle() const
 {
     return std::atan2(_shape[1].y - _shape[0].y, _shape[1].x - _shape[0].x);
 }
@@ -418,12 +418,12 @@ ContainerGroup::~ContainerGroup()
     }
 }
 
-const Geo::Type ContainerGroup::type() const
+Geo::Type ContainerGroup::type() const
 {
     return Geo::Type::CONTAINERGROUP;
 }
 
-const bool ContainerGroup::visible() const
+bool ContainerGroup::visible() const
 {
     return _visible;
 }
@@ -848,12 +848,12 @@ Geo::AABBRectParams ContainerGroup::aabbrect_params() const
     return params;
 }
 
-const size_t ContainerGroup::size() const
+size_t ContainerGroup::size() const
 {
     return _containers.size();
 }
 
-const size_t ContainerGroup::count(const Geo::Type type, const bool include_combinated) const
+size_t ContainerGroup::count(const Geo::Type type, const bool include_combinated) const
 {
     if (include_combinated)
     {
@@ -973,7 +973,7 @@ Geo::Geometry *ContainerGroup::pop_back()
     return container;
 }
 
-const bool ContainerGroup::empty() const
+bool ContainerGroup::empty() const
 {
     return _containers.empty();
 }
@@ -1033,7 +1033,7 @@ Combination::Combination(const std::vector<Geo::Geometry *>::const_iterator &beg
     update_border();
 }
 
-const Geo::Type Combination::type() const
+Geo::Type Combination::type() const
 {
     return Geo::Type::COMBINATION;
 }

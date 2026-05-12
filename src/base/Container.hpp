@@ -24,11 +24,11 @@ public:
 
     Text(const Text &text) = default;
 
-    const Geo::Type type() const override;
+    Geo::Type type() const override;
 
-    const double length() const override;
+    double length() const override;
 
-    const bool empty() const override;
+    bool empty() const override;
 
     Text &operator=(const Text &text) = default;
 
@@ -48,11 +48,11 @@ public:
 
     const Geo::Point &shape(const int index) const;
 
-    const double width() const;
+    double width() const;
 
-    const double height() const;
+    double height() const;
 
-    const double angle() const;
+    double angle() const;
 
     void clear() override;
 
@@ -101,9 +101,9 @@ public:
 
     ~ContainerGroup() override;
 
-    const Geo::Type type() const override;
+    Geo::Type type() const override;
 
-    const bool visible() const;
+    bool visible() const;
 
     void show();
 
@@ -165,9 +165,9 @@ public:
 
     Geo::AABBRectParams aabbrect_params() const override;
 
-    const size_t size() const;
+    size_t size() const;
 
-    const size_t count(const Geo::Type type, const bool include_combinated) const;
+    size_t count(const Geo::Type type, const bool include_combinated) const;
 
     void append(ContainerGroup &group, const bool merge = true);
 
@@ -193,7 +193,7 @@ public:
 
     Geo::Geometry *pop_back();
 
-    const bool empty() const override;
+    bool empty() const override;
 
     Geo::Geometry *front();
 
@@ -222,7 +222,7 @@ public:
 
     Combination(const std::vector<Geo::Geometry *>::const_iterator &begin, const std::vector<Geo::Geometry *>::const_iterator &end);
 
-    const Geo::Type type() const override;
+    Geo::Type type() const override;
 
     void append(Combination *combination);
 
