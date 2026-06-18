@@ -174,13 +174,7 @@ Geo::Geometry *Editor::select(const Geo::Point &point, const bool reset_others, 
         std::vector<Geo::Geometry *> current_group_objects(_graph->container_group(_current_group).begin(),
                                                            _graph->container_group(_current_group).end());
         std::sort(current_group_objects.begin(), current_group_objects.end());
-        std::vector<Geo::Geometry *> visible_objects;
-        Geo::AABBRectParams rect;
-        rect.left = point.x - catch_distance - 1;
-        rect.right = point.x + catch_distance + 1;
-        rect.bottom = point.y - catch_distance - 1;
-        rect.top = point.y + catch_distance + 1;
-        _view_tree.find_visible_objects(rect, visible_objects);
+        std::vector<Geo::Geometry *> visible_objects(_view_tree.visible_objects());
         std::set_intersection(visible_objects.begin(), visible_objects.end(), current_group_objects.begin(), current_group_objects.end(),
                               std::back_inserter(objects));
         std::unordered_map<const Geo::Geometry *, size_t> orders;
@@ -208,7 +202,7 @@ Geo::Geometry *Editor::select(const Geo::Point &point, const bool reset_others, 
                 rect0.right += catch_distance;
                 rect0.bottom -= catch_distance;
                 rect0.top += catch_distance;
-                Geo::AABBRectParams rect1 = static_cast<Geo::Polyline *>(it)->aabbrect_params();
+                Geo::AABBRectParams rect1 = static_cast<Geo::CubicBezier *>(it)->Geo::Polyline::aabbrect_params();
                 rect1.left -= catch_distance;
                 rect1.right += catch_distance;
                 rect1.bottom -= catch_distance;
