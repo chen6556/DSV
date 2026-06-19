@@ -177,6 +177,18 @@ Geo::Geometry *Editor::select(const Geo::Point &point, const bool reset_others, 
         std::vector<Geo::Geometry *> visible_objects(_view_tree.visible_objects());
         std::set_intersection(visible_objects.begin(), visible_objects.end(), current_group_objects.begin(), current_group_objects.end(),
                               std::back_inserter(objects));
+        objects.erase(std::remove_if(objects.begin(), objects.end(), [&](Geo::Geometry *object)
+                                     { return object->type() != Geo::Type::BEZIER && object->type() != Geo::Type::BSPLINE; }),
+                      objects.end());
+        Geo::AABBRectParams rect;
+        rect.left = point.x - catch_distance - 1;
+        rect.right = point.x + catch_distance + 1;
+        rect.bottom = point.y - catch_distance - 1;
+        rect.top = point.y + catch_distance + 1;
+        visible_objects.clear();
+        _view_tree.find_visible_objects(rect, visible_objects);
+        std::set_intersection(visible_objects.begin(), visible_objects.end(), current_group_objects.begin(), current_group_objects.end(),
+                              std::back_inserter(objects));
         std::unordered_map<const Geo::Geometry *, size_t> orders;
         for (Geo::Geometry *object : objects)
         {
@@ -193,66 +205,6 @@ Geo::Geometry *Editor::select(const Geo::Point &point, const bool reset_others, 
 
     for (Geo::Geometry *it : objects)
     {
-        switch (it->type())
-        {
-        case Geo::Type::BEZIER:
-            {
-                Geo::AABBRectParams rect0 = it->aabbrect_params();
-                rect0.left -= catch_distance;
-                rect0.right += catch_distance;
-                rect0.bottom -= catch_distance;
-                rect0.top += catch_distance;
-                Geo::AABBRectParams rect1 = static_cast<Geo::CubicBezier *>(it)->Geo::Polyline::aabbrect_params();
-                rect1.left -= catch_distance;
-                rect1.right += catch_distance;
-                rect1.bottom -= catch_distance;
-                rect1.top += catch_distance;
-                if (!Geo::is_inside(point, rect0, true) && !Geo::is_inside(point, rect1, true))
-                {
-                    continue;
-                }
-            }
-            break;
-        case Geo::Type::BSPLINE:
-            {
-                Geo::AABBRectParams rect0 = it->aabbrect_params();
-                rect0.left -= catch_distance;
-                rect0.right += catch_distance;
-                rect0.bottom -= catch_distance;
-                rect0.top += catch_distance;
-                Geo::AABBRectParams rect1 = static_cast<Geo::BSpline *>(it)->control_points.front().aabbrect_params();
-                for (const Geo::Point &point : static_cast<Geo::BSpline *>(it)->control_points)
-                {
-                    rect1.left = std::min(rect1.left, point.x);
-                    rect1.right = std::max(rect1.right, point.x);
-                    rect1.bottom = std::min(rect1.bottom, point.y);
-                    rect1.top = std::min(rect1.top, point.y);
-                }
-                rect1.left -= catch_distance;
-                rect1.right += catch_distance;
-                rect1.bottom -= catch_distance;
-                rect1.top += catch_distance;
-                if (!Geo::is_inside(point, rect0, true) && !Geo::is_inside(point, rect1, true))
-                {
-                    continue;
-                }
-            }
-            break;
-        default:
-            {
-                Geo::AABBRectParams rect = it->aabbrect_params();
-                rect.left -= catch_distance;
-                rect.right += catch_distance;
-                rect.bottom -= catch_distance;
-                rect.top += catch_distance;
-                if (!Geo::is_inside(point, rect, true))
-                {
-                    continue;
-                }
-            }
-            break;
-        }
-
         switch (it->type())
         {
         case Geo::Type::TEXT:
@@ -9849,7 +9801,7 @@ void Editor::text_to_polylines(Text *text)
     Combination *combination = new Combination();
     const std::string result = TextEncoding::utf8_to_gbk(text->text().toUtf8().toStdString());
     const int font_size = text->font().pointSize();
-    const double init_x =  text->aabbrect_params().left;
+    const double init_x = text->aabbrect_params().left;
     double x = init_x, y = text->aabbrect_params().top - font_size;
     for (size_t i = 0, count = result.length(); i < count; ++i)
     {
