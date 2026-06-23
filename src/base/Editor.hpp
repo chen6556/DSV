@@ -231,6 +231,9 @@ public:
 
     void bspline_to_bezier(Geo::BSpline *bspline);
 
+
+    void ear_cut(Geo::Polygon *polygon);
+
 private:
     static void select_subfunc(const Geo::AABBRect &rect, const std::vector<Geo::Geometry *> *objects, const size_t start, const size_t end,
                                std::vector<Geo::Geometry *> *result);

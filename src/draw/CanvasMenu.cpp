@@ -31,6 +31,7 @@ void CanvasMenu::init(Canvas *parent)
     _bezier_to_bspline = new QAction("To BSpline");
     _bspline_to_bezier = new QAction("To Bezier");
     _change_bspline_model = new QAction("Show Controls");
+    _ear_cut = new QAction("Ear Cut");
 
     _menu->addAction(_up);
     _menu->addAction(_down);
@@ -39,6 +40,7 @@ void CanvasMenu::init(Canvas *parent)
     _menu->addAction(_bezier_to_bspline);
     _menu->addAction(_bspline_to_bezier);
     _menu->addAction(_change_bspline_model);
+    _menu->addAction(_ear_cut);
 }
 
 void CanvasMenu::exec(Geo::Geometry *object)
@@ -100,6 +102,12 @@ void CanvasMenu::exec(Geo::Geometry *object)
         _canvas->editor().bspline_to_bezier(dynamic_cast<Geo::BSpline *>(object));
         CanvasOperations::CanvasOperation::tool_lines.clear();
         _canvas->refresh_vbo(true, {Geo::Type::BEZIER, Geo::Type::BSPLINE});
+        _canvas->refresh_selected_ibo();
+    }
+    else if (a == _ear_cut)
+    {
+        _canvas->editor().ear_cut(dynamic_cast<Geo::Polygon *>(object));
+        _canvas->refresh_vbo(true, {Geo::Type::POLYGON});
         _canvas->refresh_selected_ibo();
     }
 }

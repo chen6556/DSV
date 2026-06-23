@@ -9912,6 +9912,31 @@ void Editor::bspline_to_bezier(Geo::BSpline *bspline)
 }
 
 
+void Editor::ear_cut(Geo::Polygon *polygon)
+{
+    if (polygon == nullptr)
+    {
+        return;
+    }
+
+    std::vector<Geo::Triangle> result = Geo::ear_cut_to_triangles(*polygon);
+    size_t index =
+        std::distance(_graph->container_group(_current_group).begin(),
+                      std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), polygon));
+    _view_tree.remove(_graph->container_group(_current_group).pop(index));
+    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    remove_items.emplace_back(polygon, _current_group, index);
+    for (const Geo::Triangle &triangle : result)
+    {
+        Geo::Polygon *temp = new Geo::Polygon({triangle[0], triangle[1], triangle[2]});
+        _graph->container_group(_current_group).insert(index, temp);
+        _view_tree.append(temp);
+        add_items.emplace_back(temp, _current_group, index++);
+    }
+    _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+}
+
+
 void Editor::select_subfunc(const Geo::AABBRect &rect, const std::vector<Geo::Geometry *> *objects, const size_t start, const size_t end,
                             std::vector<Geo::Geometry *> *result)
 {
