@@ -5,6 +5,7 @@
 #include "draw/Canvas.hpp"
 #include "draw/GLSL.hpp"
 #include "io/GlobalSetting.hpp"
+#include "base/Collision.hpp"
 
 
 Canvas *Canvas::canvas = nullptr;
@@ -61,6 +62,21 @@ void Canvas::init()
     CanvasOperations::CanvasOperation::operation().init();
     _cpus = std::max(2u, std::thread::hardware_concurrency() / 2);
     _input_line.hide();
+
+    connect(&_timer, &QTimer::timeout, this, &Canvas::gjk);
+    // _timer.start(3000);
+}
+
+void Canvas::gjk()
+{
+    if (_visible_objects[0].polygon.size() > 1)
+    {
+        Geo::Polygon *polygon0 = _visible_objects[0].polygon.front();
+        Geo::Polygon *polygon1 = _visible_objects[0].polygon.back();
+        polygon0->is_selected = polygon1->is_selected = Geo::Collision::gjk2(*polygon0, *polygon1);
+        refresh_selected_ibo();
+        update();
+    }
 }
 
 Editor &Canvas::editor()

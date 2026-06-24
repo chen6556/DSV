@@ -1180,6 +1180,25 @@ void Collision::gjk_furthest_point(const Geo::Circle &circle, const Geo::Point &
     result += ((end - start).normalize() * circle.radius);
 }
 
+Geo::Point Collision::gjk_furthest_point(const Geo::Polygon &polygon, const Geo::Point &start, const Geo::Point &end)
+{
+    Geo::Point result = polygon.front();
+    Geo::Point point;
+    Geo::foot_point(start, end, polygon.front(), point, true);
+    const Geo::Vector vec = end - start;
+    double max_value = vec * (point - start);
+    for (size_t i = 1, count = polygon.size() - 1; i < count; ++i)
+    {
+        Geo::foot_point(start, end, polygon[i], point, true);
+        if (const double value = vec * (point - start); value > max_value)
+        {
+            max_value = value;
+            result = polygon[i];
+        }
+    }
+    return result;
+}
+
 bool Collision::is_inside(const Geo::Point &point, const Geo::Polygon &polygon)
 {
     for (size_t i = 2, count = polygon.size(); i < count; ++i)
@@ -1222,6 +1241,11 @@ void Collision::support(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
     Collision::gjk_furthest_point(polygon0, start, end, point0);
     Collision::gjk_furthest_point(polygon1, end, start, point1);
     result = point0 - point1;
+}
+
+Geo::Point Collision::support(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, const Geo::Point &start, const Geo::Point &end)
+{
+    return gjk_furthest_point(polygon0, start, end) - gjk_furthest_point(polygon1, end, start);
 }
 
 bool Collision::gjk(const Geo::Point &point01, const Geo::Point &point02, const Geo::Point &point03, const Geo::Point &point11,
@@ -1351,6 +1375,93 @@ bool Collision::gjk(const Geo::Polygon &polygon, const Geo::Circle &circle)
         }
     }
     return false;
+}
+
+bool Collision::gjk2(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1)
+{
+    Geo::Point anchor[2] = {Geo::Point(0, 0), Geo::Point(0, 0)};
+    for (size_t i = 1, count = polygon0.size(); i < count; ++i)
+    {
+        anchor[0] += polygon0[i];
+    }
+    anchor[0] /= (polygon0.size() - 1);
+    for (size_t i = 1, count = polygon1.size(); i < count; ++i)
+    {
+        anchor[1] += polygon1[i];
+    }
+    anchor[1] /= (polygon1.size() - 1);
+    if (anchor[0] == anchor[1])
+    {
+        anchor[1].x += 1;
+        anchor[1].y += 1;
+    }
+
+    const Geo::Point origin(0, 0);
+    int index = 0;
+    Geo::Point simplex[3];
+    simplex[0] = support(polygon0, polygon1, anchor[0], anchor[1]);
+    std::swap(anchor[0], anchor[1]);
+    simplex[1] = support(polygon0, polygon1, anchor[0], anchor[1]);
+    if (simplex[0] * (origin - simplex[1]) < 0)
+    {
+        return false;
+    }
+    if (Geo::is_on_left(origin, anchor[0], anchor[1]))
+    {
+        anchor[1] = anchor[0] + (anchor[1] - anchor[0]).vertical();
+    }
+    else
+    {
+        anchor[1] = anchor[0] + (anchor[0] - anchor[1]).vertical();
+    }
+    simplex[2] = support(polygon0, polygon1, anchor[0], anchor[1]);
+    if (simplex[0] * (origin - simplex[2]) < 0 && simplex[1] * (origin - simplex[2]) < 0)
+    {
+        return false;
+    }
+
+    for (size_t i = 0, count = polygon0.size() + polygon1.size(); i < count; ++i) // Prevent infinite loop
+    {
+        if (Geo::is_inside(origin, simplex[0], simplex[1], simplex[2], false))
+        {
+            return true;
+        }
+
+        const double dis0 = Geo::distance(origin, simplex[0], simplex[1], true);
+        const double dis1 = Geo::distance(origin, simplex[1], simplex[2], true);
+        const double dis2 = Geo::distance(origin, simplex[0], simplex[2], true);
+        int indexs[2] = {0, 1};
+        if (dis0 > dis1)
+        {
+            indexs[0] = 1, indexs[1] = 2;
+        }
+        if (dis1 > dis2)
+        {
+            indexs[0] = 0, indexs[1] = 2;
+        }
+        anchor[0] = simplex[indexs[0]], anchor[1] = simplex[indexs[1]];
+
+        if (Geo::is_on_left(origin, anchor[0], anchor[1]))
+        {
+            anchor[1] = anchor[0] + (anchor[1] - anchor[0]).vertical();
+        }
+        else
+        {
+            anchor[1] = anchor[0] + (anchor[0] - anchor[1]).vertical();
+        }
+
+        const Geo::Point point = support(polygon0, polygon1, anchor[0], anchor[1]);
+        if (simplex[0] == point || simplex[1] == point || simplex[2] == point)
+        {
+            return false;
+        }
+        if (anchor[0] * (origin - point) < 0 && anchor[1] * (origin - point) < 0)
+        {
+            return false;
+        }
+        simplex[0] = anchor[0], simplex[1] = anchor[1], simplex[2] = point;
+    }
+    return Geo::is_inside(origin, simplex[0], simplex[1], simplex[2], false);
 }
 
 double Collision::epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Vector &vec)

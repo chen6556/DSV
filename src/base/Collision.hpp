@@ -210,8 +210,12 @@ void gjk_furthest_point(const Geo::AABBRect &rect, const Geo::Point &start, cons
 
 void gjk_furthest_point(const Geo::Circle &circle, const Geo::Point &start, const Geo::Point &end, Geo::Point &result);
 
+Geo::Point gjk_furthest_point(const Geo::Polygon &polygon, const Geo::Point &start, const Geo::Point &end);
+
 void support(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Point &start, Geo::Point &end,
              std::vector<Geo::Point> &points, Geo::Point &result);
+
+Geo::Point support(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, const Geo::Point &start, const Geo::Point &end);
 
 bool is_inside(const Geo::Point &point, const Geo::Polygon &polygon);
 
@@ -227,6 +231,8 @@ bool gjk(const Geo::Circle &circle0, const Geo::Circle &circle1);
 bool gjk(const Geo::Circle &circle, const Geo::Polygon &polygon);
 
 bool gjk(const Geo::Polygon &polygon, const Geo::Circle &circle);
+
+bool gjk2(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1);
 
 double epa(const Geo::Polygon &polygon0, const Geo::Polygon &polygon1, Geo::Vector &vec);
 

@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QTextEdit>
 #include <QImage>
+#include <QTimer>
 #include <QOpenGLFunctions_4_5_Core>
 
 #include "base/Editor.hpp"
@@ -36,6 +37,7 @@ private:
     QTextEdit _input_line;
     CanvasMenu _menu;
     bool _ignore_mouse_move = false;
+    QTimer _timer;
 
     unsigned int _shader_program = 0;
 
@@ -174,6 +176,8 @@ private:
 
 private:
     void init();
+
+    void gjk();
 
 protected:
     void initializeGL() override;
