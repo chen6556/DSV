@@ -226,6 +226,22 @@ bool Geo::split(const CubicBezier &bezier, const Point &pos, CubicBezier &output
     }
     result_points0.back() = result_points1.back() = result_pos;
     std::reverse(result_points1.begin(), result_points1.end());
+    while (result_points0.size() > 1 && result_points0.back() == result_points0[result_points0.size() - 2])
+    {
+        result_points0.pop_back();
+    }
+    if (result_points0.size() == 2 && result_points0.front() == result_points0.back())
+    {
+        result_points0.clear();
+    }
+    while (result_points1.size() > 1 && result_points1.back() == result_points1[result_points1.size() - 2])
+    {
+        result_points1.pop_back();
+    }
+    if (result_points1.size() == 2 && result_points1.front() == result_points1.back())
+    {
+        result_points1.clear();
+    }
 
     output0.append(bezier.begin(), bezier.begin() + result_i + 1);
     if (output0.empty() || output0.back() != result_points0.front())
@@ -281,6 +297,22 @@ bool Geo::split(const CubicBezier &bezier, const size_t i, const double t, Cubic
     }
     result_points0.back() = result_points1.back() = pos;
     std::reverse(result_points1.begin(), result_points1.end());
+    while (result_points0.size() > 2 && result_points0.back() == result_points0[result_points0.size() - 2])
+    {
+        result_points0.pop_back();
+    }
+    if (result_points0.size() == 2 && result_points0.front() == result_points0.back())
+    {
+        result_points0.clear();
+    }
+    while (result_points1.size() > 2 && result_points1.back() == result_points1[result_points1.size() - 2])
+    {
+        result_points1.pop_back();
+    }
+    if (result_points1.size() == 2 && result_points1.front() == result_points1.back())
+    {
+        result_points1.clear();
+    }
 
     output0.append(bezier.begin(), bezier.begin() + i * order + 1);
     if (output0.empty() || output0.back() != result_points0.front())
