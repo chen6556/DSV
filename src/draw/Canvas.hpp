@@ -91,6 +91,28 @@ private:
         QImage text_image, dim_image;
     } _texture;
 
+    // 每个顶点缓冲对象对应一个 VAO,在 initializeGL 中预记录属性格式与 VBO 绑定,
+    // paintGL 只需 glBindVertexArray 即可,免去每帧重复的 glVertexAttribLPointer/glEnableVertexAttribArray。
+    struct VAO
+    {
+        unsigned int polyline = 0;
+        unsigned int polygon = 0;
+        unsigned int circle = 0;
+        unsigned int curve = 0;
+        unsigned int point = 0;
+        unsigned int circle_printable_points = 0;
+        unsigned int curve_printable_points = 0;
+        unsigned int dim_lines = 0;
+        unsigned int dim_arrows = 0;
+        unsigned int dim_selected_lines = 0;
+        unsigned int dim_selected_arrows = 0;
+        unsigned int operation_shape = 0;
+        unsigned int operation_tool_lines = 0;
+        unsigned int catched_points = 0;
+        unsigned int origin_and_select_rect = 0;
+        unsigned int text = 0; // 位置+纹理坐标双属性
+    } _vao;
+
     struct Uniforms
     {
         int window = 0;

@@ -50,6 +50,14 @@ Canvas::~Canvas()
         unsigned int temp[2] = {_texture.vbo, _texture.ibo};
         glDeleteBuffers(2, temp);
     }
+    {
+        unsigned int temp[16] = {_vao.polyline, _vao.polygon, _vao.circle, _vao.curve, _vao.point,
+                                 _vao.circle_printable_points, _vao.curve_printable_points,
+                                 _vao.dim_lines, _vao.dim_arrows, _vao.dim_selected_lines, _vao.dim_selected_arrows,
+                                 _vao.operation_shape, _vao.operation_tool_lines, _vao.catched_points,
+                                 _vao.origin_and_select_rect, _vao.text};
+        glDeleteVertexArrays(16, temp);
+    }
     glDeleteProgram(_shader_program);
     doneCurrent();
     _editor.delete_graph();
@@ -193,6 +201,43 @@ void Canvas::initializeGL()
     double data[16] = {-10, 0, 10, 0, 0, -10, 0, 10};
     glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.origin_and_select_rect); // origin and select rect
     glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(double), data, GL_STREAM_DRAW);
+
+    // 创建 VAO:仅位置属性(stride = 2*sizeof(double))。VAO 在此处记录 VBO 绑定与属性格式,
+    // 之后 glBindBuffer + glBufferData 重新上传数据不会改变 VAO 的属性来源。
+    auto make_pos_vao = [this](unsigned int &vao, const unsigned int vbo) {
+        glGenVertexArrays(1, &vao);
+        glBindVertexArray(vao);
+        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        glEnableVertexAttribArray(0);
+        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
+    };
+    make_pos_vao(_vao.polyline, _shape_vbo.polyline);
+    make_pos_vao(_vao.polygon, _shape_vbo.polygon);
+    make_pos_vao(_vao.circle, _shape_vbo.circle);
+    make_pos_vao(_vao.curve, _shape_vbo.curve);
+    make_pos_vao(_vao.point, _shape_vbo.point);
+    make_pos_vao(_vao.circle_printable_points, _shape_vbo.circle_printable_points);
+    make_pos_vao(_vao.curve_printable_points, _shape_vbo.curve_printable_points);
+    make_pos_vao(_vao.dim_lines, _dimension_vbo.lines);
+    make_pos_vao(_vao.dim_arrows, _dimension_vbo.arrows);
+    make_pos_vao(_vao.dim_selected_lines, _dimension_vbo.selected_lines);
+    make_pos_vao(_vao.dim_selected_arrows, _dimension_vbo.selected_arrows);
+    make_pos_vao(_vao.operation_shape, _base_vbo.operation_shape);
+    make_pos_vao(_vao.operation_tool_lines, _base_vbo.operation_tool_lines);
+    make_pos_vao(_vao.catched_points, _base_vbo.catched_points);
+    make_pos_vao(_vao.origin_and_select_rect, _base_vbo.origin_and_select_rect);
+
+    // 文本四边形:位置 + 纹理坐标(stride = 4*sizeof(double)),并绑定固定的 IBO。
+    glGenVertexArrays(1, &_vao.text);
+    glBindVertexArray(_vao.text);
+    glBindBuffer(GL_ARRAY_BUFFER, _texture.vbo);
+    glEnableVertexAttribArray(0);
+    glVertexAttribLPointer(0, 2, GL_DOUBLE, 4 * sizeof(double), nullptr);
+    glEnableVertexAttribArray(1);
+    glVertexAttribLPointer(1, 2, GL_DOUBLE, 4 * sizeof(double), (void *)(2 * sizeof(double)));
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _texture.ibo);
+
+    glBindVertexArray(0); // 解绑,避免 refresh 路径在 paintGL 之外修改 VAO 状态
 }
 
 void Canvas::resizeGL(int w, int h)
@@ -230,9 +275,7 @@ void Canvas::paintGL()
 
     if (_shape_index_count.polyline > 0) // polyline
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polyline); // points
-        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-        glEnableVertexAttribArray(0);
+        glBindVertexArray(_vao.polyline);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polyline); // polyline
         glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f);       // color 绘制线 normal
@@ -248,9 +291,7 @@ void Canvas::paintGL()
 
     if (_shape_index_count.polygon > 0) // polygon
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polygon); // points
-        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-        glEnableVertexAttribArray(0);
+        glBindVertexArray(_vao.polygon);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.polygon); // polygon
         glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f);      // color 绘制线 normal
@@ -266,9 +307,7 @@ void Canvas::paintGL()
 
     if (_shape_index_count.circle > 0) // circle
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle); // points
-        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-        glEnableVertexAttribArray(0);
+        glBindVertexArray(_vao.circle);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.circle); // circle
         glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f);     // color 绘制线 normal
@@ -284,9 +323,7 @@ void Canvas::paintGL()
 
     if (_shape_index_count.curve > 0) // curve
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve); // points
-        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-        glEnableVertexAttribArray(0);
+        glBindVertexArray(_vao.curve);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _shape_ibo.curve); // curve
         glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f);    // color 绘制线 normal
@@ -302,9 +339,7 @@ void Canvas::paintGL()
 
     if (_point_count.point > 0) // point
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.point); // points
-        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-        glEnableVertexAttribArray(0);
+        glBindVertexArray(_vao.point);
         glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
         glDrawArrays(GL_POINTS, 0, _point_count.point);
 
@@ -320,28 +355,20 @@ void Canvas::paintGL()
     {
         glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线 normal
 
-        glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.lines); // points
-        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-        glEnableVertexAttribArray(0);
+        glBindVertexArray(_vao.dim_lines);
         glDrawArrays(GL_LINES, 0, _point_count.dim_lines);
 
-        glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.arrows);
-        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-        glEnableVertexAttribArray(0);
+        glBindVertexArray(_vao.dim_arrows);
         glDrawArrays(GL_TRIANGLES, 0, _point_count.dim_arrows);
 
         if (_point_count.selected_dim_lines > 0 || _point_count.selected_dim_arrows > 0)
         {
             glUniform4f(_uniforms.color, 1.0f, 0.0f, 0.0f, 1.0f); // color 绘制线 selected
 
-            glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.selected_lines); // points
-            glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-            glEnableVertexAttribArray(0);
+            glBindVertexArray(_vao.dim_selected_lines);
             glDrawArrays(GL_LINES, 0, _point_count.selected_dim_lines);
 
-            glBindBuffer(GL_ARRAY_BUFFER, _dimension_vbo.selected_arrows);
-            glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-            glEnableVertexAttribArray(0);
+            glBindVertexArray(_vao.dim_selected_arrows);
             glDrawArrays(GL_TRIANGLES, 0, _point_count.selected_dim_arrows);
         }
     }
@@ -351,52 +378,42 @@ void Canvas::paintGL()
         glUniform4f(_uniforms.color, 0.031372f, 0.572549f, 0.815686f, 1.0f); // color
         if (_point_count.polyline > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polyline); // polyline points
-            glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-            glEnableVertexAttribArray(0);
+            glBindVertexArray(_vao.polyline);
             glDrawArrays(GL_POINTS, 0, _point_count.polyline);
         }
         if (_point_count.polygon > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.polygon); // polygon points
-            glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-            glEnableVertexAttribArray(0);
+            glBindVertexArray(_vao.polygon);
             glDrawArrays(GL_POINTS, 0, _point_count.polygon);
         }
         if (_point_count.circle > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.circle_printable_points); // circle points
-            glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-            glEnableVertexAttribArray(0);
+            glBindVertexArray(_vao.circle_printable_points);
             glDrawArrays(GL_POINTS, 0, _point_count.circle);
         }
         if (_point_count.curve > 0)
         {
-            glBindBuffer(GL_ARRAY_BUFFER, _shape_vbo.curve_printable_points); // curve points
-            glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-            glEnableVertexAttribArray(0);
+            glBindVertexArray(_vao.curve_printable_points);
             glDrawArrays(GL_POINTS, 0, _point_count.curve);
         }
     }
 
     if (!CanvasOperations::CanvasOperation::shape.empty())
     {
+        glBindVertexArray(_vao.operation_shape);
         glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.operation_shape); // operation shpae
         glBufferData(GL_ARRAY_BUFFER, CanvasOperations::CanvasOperation::shape.size() * sizeof(double),
                      CanvasOperations::CanvasOperation::shape.data(), GL_STREAM_DRAW);
-        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-        glEnableVertexAttribArray(0);
 
         glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线
         glDrawArrays(GL_LINE_STRIP, 0, CanvasOperations::CanvasOperation::shape.size() / 2);
     }
     if (!CanvasOperations::CanvasOperation::tool_lines.empty())
     {
+        glBindVertexArray(_vao.operation_tool_lines);
         glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.operation_tool_lines); // operation tool lines
         glBufferData(GL_ARRAY_BUFFER, CanvasOperations::CanvasOperation::tool_lines.size() * sizeof(double),
                      CanvasOperations::CanvasOperation::tool_lines.data(), GL_STREAM_DRAW);
-        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-        glEnableVertexAttribArray(0);
 
         glUniform4f(_uniforms.color, CanvasOperations::CanvasOperation::tool_line_color[0],
                     CanvasOperations::CanvasOperation::tool_line_color[1], CanvasOperations::CanvasOperation::tool_line_color[2],
@@ -408,11 +425,10 @@ void Canvas::paintGL()
     }
     if (!CanvasOperations::CanvasOperation::dim_lines.empty() || !CanvasOperations::CanvasOperation::dim_arrows.empty())
     {
+        glBindVertexArray(_vao.operation_shape);
         glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.operation_shape); // operation shpae
         glBufferData(GL_ARRAY_BUFFER, CanvasOperations::CanvasOperation::dim_lines.size() * sizeof(double),
                      CanvasOperations::CanvasOperation::dim_lines.data(), GL_STREAM_DRAW);
-        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-        glEnableVertexAttribArray(0);
 
         glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线
         glDrawArrays(GL_LINES, 0, CanvasOperations::CanvasOperation::dim_lines.size() / 2);
@@ -420,17 +436,14 @@ void Canvas::paintGL()
         glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.operation_shape); // operation shpae
         glBufferData(GL_ARRAY_BUFFER, CanvasOperations::CanvasOperation::dim_arrows.size() * sizeof(double),
                      CanvasOperations::CanvasOperation::dim_arrows.data(), GL_STREAM_DRAW);
-        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-        glEnableVertexAttribArray(0);
 
         glDrawArrays(GL_TRIANGLES, 0, CanvasOperations::CanvasOperation::dim_arrows.size() / 2);
     }
 
     if (_bool_flags.show_catched_points) // catched point
     {
+        glBindVertexArray(_vao.catched_points);
         glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.catched_points); // catched point
-        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-        glEnableVertexAttribArray(0);
         glBufferSubData(GL_ARRAY_BUFFER, 0, 16 * sizeof(double), _catchline_points);
 
         glUniform4f(_uniforms.color, 0.0f, 1.0f, 0.0f, 0.649f); // color
@@ -442,9 +455,7 @@ void Canvas::paintGL()
 
     if (_bool_flags.show_origin || _select_rect[0] != _select_rect[6] || _select_rect[1] != _select_rect[7])
     {
-        glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.origin_and_select_rect); // origin and select rect
-        glVertexAttribLPointer(0, 2, GL_DOUBLE, 2 * sizeof(double), nullptr);
-        glEnableVertexAttribArray(0);
+        glBindVertexArray(_vao.origin_and_select_rect);
 
         if (_bool_flags.show_origin) // origin
         {
@@ -454,6 +465,7 @@ void Canvas::paintGL()
 
         if (_select_rect[0] != _select_rect[6] || _select_rect[1] != _select_rect[7])
         {
+            glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.origin_and_select_rect); // origin and select rect
             glBufferSubData(GL_ARRAY_BUFFER, 8 * sizeof(double), 8 * sizeof(double), _select_rect);
 
             glUniform4f(_uniforms.color, 0.0f, 0.47f, 0.843f, 0.1f); // color
@@ -470,12 +482,7 @@ void Canvas::paintGL()
         glUniform1i(_uniforms.enable_tex, 1);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, _texture.texture);
-        glBindBuffer(GL_ARRAY_BUFFER, _texture.vbo);
-        glVertexAttribLPointer(0, 2, GL_DOUBLE, 4 * sizeof(double), nullptr);
-        glEnableVertexAttribArray(0);
-        glVertexAttribLPointer(1, 2, GL_DOUBLE, 4 * sizeof(double), (void *)(2 * sizeof(double)));
-        glEnableVertexAttribArray(1);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _texture.ibo);
+        glBindVertexArray(_vao.text);
 
         text_furture.wait();
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _canvas_width, _canvas_height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
@@ -489,12 +496,7 @@ void Canvas::paintGL()
         glUniform1i(_uniforms.enable_tex, 1);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, _texture.texture);
-        glBindBuffer(GL_ARRAY_BUFFER, _texture.vbo);
-        glVertexAttribLPointer(0, 2, GL_DOUBLE, 4 * sizeof(double), nullptr);
-        glEnableVertexAttribArray(0);
-        glVertexAttribLPointer(1, 2, GL_DOUBLE, 4 * sizeof(double), (void *)(2 * sizeof(double)));
-        glEnableVertexAttribArray(1);
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _texture.ibo);
+        glBindVertexArray(_vao.text);
 
         dim_text_furture.wait();
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _canvas_width, _canvas_height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
@@ -503,6 +505,8 @@ void Canvas::paintGL()
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
         glUniform1i(_uniforms.enable_tex, 0);
     }
+
+    glBindVertexArray(0); // 解绑,避免 refresh 路径在 paintGL 之外修改 VAO 状态
 }
 
 void Canvas::mousePressEvent(QMouseEvent *event)
