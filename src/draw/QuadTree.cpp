@@ -1,4 +1,3 @@
-#include <future>
 #include <unordered_set>
 #include "QuadTree.hpp"
 #include "base/Algorithm.hpp"
@@ -41,34 +40,16 @@ void QuadTreeNode::find_visible_objects(const Geo::AABBRectParams &rect, std::ve
 
     if (_nodes[0] != nullptr && _nodes[1] != nullptr && _nodes[2] != nullptr && _nodes[3] != nullptr)
     {
-        if (std::vector<Geo::Geometry *> temp_objects[4]; _depth % 2 == 0) //> multithreading_depth)
+        for (int i = 0; i < 4; ++i)
         {
-            std::future<void> threads[4];
-            for (int i = 0; i < 4; ++i)
-            {
-                threads[i] = std::async(std::launch::async,
-                                        [&temp_objects, i, &rect, this]() { _nodes[i]->find_visible_objects(rect, temp_objects[i]); });
-            }
-            for (int i = 0; i < 4; ++i)
-            {
-                threads[i].wait();
-                visible_objects.insert(visible_objects.end(), temp_objects[i].begin(), temp_objects[i].end());
-            }
-        }
-        else
-        {
-            for (int i = 0; i < 4; ++i)
-            {
-                _nodes[i]->find_visible_objects(rect, temp_objects[i]);
-                visible_objects.insert(visible_objects.end(), temp_objects[i].begin(), temp_objects[i].end());
-            }
+            _nodes[i]->find_visible_objects(rect, visible_objects);
         }
     }
     else
     {
         if (rect.bottom <= _rect.bottom && rect.left <= _rect.left && rect.right >= _rect.right && rect.top >= _rect.top)
         {
-            visible_objects.assign(_objects.begin(), _objects.end());
+            visible_objects.insert(visible_objects.end(), _objects.begin(), _objects.end());
         }
         else
         {
@@ -122,26 +103,10 @@ void QuadTreeNode::build(const Geo::AABBRectParams &rect, const std::vector<Geo:
                 }
             }
         }
-        if (_depth % 2 == 1) // > multithreading_depth)
+        for (int i = 0; i < 4; ++i)
         {
-            std::future<void> threads[4];
-            for (int i = 0; i < 4; ++i)
-            {
-                _nodes[i] = new QuadTreeNode(_depth + 1);
-                threads[i] = std::async(std::launch::async, [this, i, &rects, &children]() { _nodes[i]->build(rects[i], children[i]); });
-            }
-            for (int i = 0; i < 4; ++i)
-            {
-                threads[i].wait();
-            }
-        }
-        else
-        {
-            for (int i = 0; i < 4; ++i)
-            {
-                _nodes[i] = new QuadTreeNode(_depth + 1);
-                _nodes[i]->build(rects[i], children[i]);
-            }
+            _nodes[i] = new QuadTreeNode(_depth + 1);
+            _nodes[i]->build(rects[i], children[i]);
         }
     }
     else
@@ -156,24 +121,9 @@ void QuadTreeNode::update(const Geo::AABBRectParams &rect, Geo::Geometry *object
     {
         if (Geo::is_intersected(_rect, rect))
         {
-            if (_depth %  2 == 1) // > multithreading_depth)
+            for (int i = 0; i < 4; ++i)
             {
-                std::future<void> threads[4];
-                for (int i = 0; i < 4; ++i)
-                {
-                    threads[i] = std::async(std::launch::async, [this, i, &rect, object]() { _nodes[i]->update(rect, object); });
-                }
-                for (int i = 0; i < 4; ++i)
-                {
-                    threads[i].wait();
-                }
-            }
-            else
-            {
-                for (int i = 0; i < 4; ++i)
-                {
-                    _nodes[i]->update(rect, object);
-                }
+                _nodes[i]->update(rect, object);
             }
             if (_nodes[0]->empty() && _nodes[1]->empty() && _nodes[2]->empty() && _nodes[3]->empty())
             {
@@ -267,24 +217,9 @@ void QuadTreeNode::append(const Geo::AABBRectParams &rect, Geo::Geometry *object
     }
     if (_nodes[0] != nullptr || _nodes[1] != nullptr || _nodes[2] != nullptr || _nodes[3] != nullptr)
     {
-        if (_depth % 2 == 1) // > multithreading_depth)
+        for (QuadTreeNode *node : _nodes)
         {
-            std::future<void> threads[4];
-            for (int i = 0; i < 4; ++i)
-            {
-                threads[i] = std::async(std::launch::async, [this, i, rect, object]() { _nodes[i]->append(rect, object); });
-            }
-            for (int i = 0; i < 4; ++i)
-            {
-                threads[i].wait();
-            }
-        }
-        else
-        {
-            for (QuadTreeNode *node : _nodes)
-            {
-                node->append(rect, object);
-            }
+            node->append(rect, object);
         }
     }
     else if (_depth >= max_depth || _objects.size() < min_size)
