@@ -23,7 +23,9 @@ public:
         DividePointsMenu,
         DividePartsMenu,
         AlignedDimensionMenu,
-        AngleDimensionMenu
+        AngleDimensionMenu,
+        SpiralStepMenu,
+        SpiralNMenu
     };
 
 private:
@@ -43,6 +45,8 @@ private:
     QMenu *_divide_parts_menu = nullptr;
     QMenu *_length_dimension_menu = nullptr;
     QMenu *_angle_dimension_menu = nullptr;
+    QMenu *_spiral_step_menu = nullptr;
+    QMenu *_spiral_n_menu = nullptr;
 
 public:
     ActionGroup(Ui::MainWindow *ui, std::function<void(const MenuType, const int)> callback);
@@ -77,4 +81,8 @@ private:
     void init_length_dimension_menu();
 
     void init_angle_dimension_menu();
+
+    void init_spiral_step_menu();
+
+    void init_spiral_n_menu();
 };

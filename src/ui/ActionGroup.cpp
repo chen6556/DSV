@@ -23,6 +23,8 @@ void ActionGroup::init()
     init_divide_parts_menu();
     init_length_dimension_menu();
     init_angle_dimension_menu();
+    init_spiral_step_menu();
+    init_spiral_n_menu();
 }
 
 void ActionGroup::init_polygon_menu()
@@ -353,4 +355,58 @@ void ActionGroup::init_angle_dimension_menu()
 
     QAction *arc = new QAction(QIcon(":/icons/dimension/arcdim_btn.png"), "Arc", ui->angle_dim_btn);
     _angle_dimension_menu->addAction(arc);
+}
+
+void ActionGroup::init_spiral_step_menu()
+{
+    _spiral_step_menu = new QMenu(ui->spiral_step_btn);
+    _spiral_step_menu->connect(_spiral_step_menu, &QMenu::triggered,
+                          [this](QAction *action)
+                          {
+                              _callback(MenuType::SpiralStepMenu, _spiral_step_menu->actions().indexOf(action));
+                              ui->spiral_step_btn->setIcon(action->icon());
+                              ui->spiral_step_btn->setToolTip(action->text());
+                              ui->spiral_step_btn->setDefaultAction(action);
+                          });
+    ui->spiral_step_btn->setMenu(_spiral_step_menu);
+
+    QAction *points = new QAction(QIcon(":/icons/spiral/spiral_step_points_btn.png"), "Points Spiral by Step", ui->spiral_step_btn);
+    _spiral_step_menu->addAction(points);
+    ui->spiral_step_btn->setDefaultAction(points);
+
+    QAction *polyline = new QAction(QIcon(":/icons/spiral/spiral_step_polyline_btn.png"), "Polyline Spiral by Step", ui->spiral_step_btn);
+    _spiral_step_menu->addAction(polyline);
+
+    QAction *bezier = new QAction(QIcon(":/icons/spiral/spiral_step_curve_btn.png"), "Bezier Spiral by Step", ui->spiral_step_btn);
+    _spiral_step_menu->addAction(bezier);
+
+    QAction *bspline = new QAction(QIcon(":/icons/spiral/spiral_step_curve_btn.png"), "BSpline Spiral by Step", ui->spiral_step_btn);
+    _spiral_step_menu->addAction(bspline);
+}
+
+void ActionGroup::init_spiral_n_menu()
+{
+    _spiral_n_menu = new QMenu(ui->spiral_n_btn);
+    _spiral_n_menu->connect(_spiral_n_menu, &QMenu::triggered,
+                         [this](QAction *action)
+                         {
+                             _callback(MenuType::SpiralNMenu, _spiral_n_menu->actions().indexOf(action));
+                             ui->spiral_n_btn->setIcon(action->icon());
+                             ui->spiral_n_btn->setToolTip(action->text());
+                             ui->spiral_n_btn->setDefaultAction(action);
+                         });
+    ui->spiral_n_btn->setMenu(_spiral_n_menu);
+
+    QAction *points = new QAction(QIcon(":/icons/spiral/spiral_n_points_btn.png"), "Points Spiral by N", ui->spiral_n_btn);
+    _spiral_n_menu->addAction(points);
+    ui->spiral_n_btn->setDefaultAction(points);
+
+    QAction *polyline = new QAction(QIcon(":/icons/spiral/spiral_n_polyline_btn.png"), "Polyline Spiral by N", ui->spiral_n_btn);
+    _spiral_n_menu->addAction(polyline);
+
+    QAction *bezier = new QAction(QIcon(":/icons/spiral/spiral_n_curve_btn.png"), "Bezier Spiral by N", ui->spiral_n_btn);
+    _spiral_n_menu->addAction(bezier);
+
+    QAction *bspline = new QAction(QIcon(":/icons/spiral/spiral_n_curve_btn.png"), "BSpline Spiral by N", ui->spiral_n_btn);
+    _spiral_n_menu->addAction(bspline);
 }

@@ -12,6 +12,7 @@
 #include "algorithm/Inside.hpp"
 #include "algorithm/Intersection.hpp"
 #include "algorithm/TangencyPoint.hpp"
+#include "algorithm/ArchimedeanSpiral.hpp"
 
 
 namespace Geo

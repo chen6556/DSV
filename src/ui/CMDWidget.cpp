@@ -36,6 +36,8 @@ void CMDWidget::init()
               << "IPOLYGON" << "INTERSECTION" << "LENGTH" << "LINEARRAY"
               << "LINEARDIMENSION" << "MAIN" << "MIRROR" << "OFFSET" << "ORDINATEDIMENSION"
               << "PASTE" << "PARC" << "PCIRCLE" << "POLYLINE" << "POINT"
+              << "POINTSSPIRALSTEP" << "POLYLINESSPIRALSTEP" << "BEZIERSPIRALSTEP" << "BSPLINESPIRALSTEP"
+              << "POINTSSPIRALN" << "POLYLINESSPIRALN" << "BEZIERSPIRALN" << "BSPLINESPIRALN"
               << "RADIUSDIMENSION" << "RECTANGLE" << "REVERSE" << "SEAARC" << "SERARC"
               << "RINGARRAY" << "ROTATE" << "SCALE" << "SCAARC" << "SAVE" << "SPLIT" << "TEXT"
               << "TRIM" << "UNDO" << "UNION" << "XOR";
@@ -57,6 +59,14 @@ void CMDWidget::init()
                  {"RECTANGLE", CMD::Rectangle_CMD},
                  {"RADIUSDIMENSION", CMD::RadiusDim_CMD},
                  {"POINT", CMD::Point_CMD},
+                 {"POINTSSPIRALSTEP", CMD::PointsSpiralStep_CMD},
+                 {"POLYLINESSPIRALSTEP", CMD::PolylineSpiralStep_CMD},
+                 {"BEZIERSPIRALSTEP", CMD::BezierSpiralStep_CMD},
+                 {"BSPLINESPIRALSTEP", CMD::BSplineSpiralStep_CMD},
+                 {"POINTSSPIRALN", CMD::PointsSpiralN_CMD},
+                 {"POLYLINESSPIRALN", CMD::PolylineSpiralN_CMD},
+                 {"BEZIERSPIRALN", CMD::BezierSpiralN_CMD},
+                 {"BSPLINESPIRALN", CMD::BSplineSpiralN_CMD},
                  {"PARC", CMD::PArc_CMD},
                  {"SCAARC", CMD::SCAArc_CMD},
                  {"SEAARC", CMD::SEAArc_CMD},
@@ -105,26 +115,51 @@ void CMDWidget::init()
 
     _setting_dict = {{"RELATIVE", SETTING::Relative_SETTING}, {"ABSOLUTE", SETTING::Absolute_SETTING}};
 
-    _cmd_tool_dict = {
-        {CMD::Length_CMD, CanvasOperations::Tool::Measure},      {CMD::Angle_CMD, CanvasOperations::Tool::Angle},
-        {CMD::Polyline_CMD, CanvasOperations::Tool::Polyline},   {CMD::Rectangle_CMD, CanvasOperations::Tool::Rectangle},
-        {CMD::CPolygon_CMD, CanvasOperations::Tool::Polygon0},   {CMD::IPolygon_CMD, CanvasOperations::Tool::Polygon1},
-        {CMD::RingArray_CMD, CanvasOperations::Tool::RingArray}, {CMD::Rotate_CMD, CanvasOperations::Tool::Rotate},
-        {CMD::Text_CMD, CanvasOperations::Tool::Text},           {CMD::PArc_CMD, CanvasOperations::Tool::Arc0},
-        {CMD::SCAArc_CMD, CanvasOperations::Tool::Arc1},         {CMD::SEAArc_CMD, CanvasOperations::Tool::Arc2},
-        {CMD::SERArc_CMD, CanvasOperations::Tool::Arc3},         {CMD::Point_CMD, CanvasOperations::Tool::Point},
-        {CMD::Bezier_CMD, CanvasOperations::Tool::Bezier},       {CMD::BSpline_CMD, CanvasOperations::Tool::BSpline},
-        {CMD::CCircle_CMD, CanvasOperations::Tool::Circle0},     {CMD::DCircle_CMD, CanvasOperations::Tool::Circle1},
-        {CMD::PCircle_CMD, CanvasOperations::Tool::Circle2},     {CMD::Ellipse_CMD, CanvasOperations::Tool::Ellipse0},
-        {CMD::EllipseArc_CMD, CanvasOperations::Tool::Ellipse1}, {CMD::Mirror_CMD, CanvasOperations::Tool::Mirror},
-        {CMD::Trim_CMD, CanvasOperations::Tool::Trim},           {CMD::Extend_CMD, CanvasOperations::Tool::Extend},
-        {CMD::Fillet_CMD, CanvasOperations::Tool::Fillet},       {CMD::FreeFillet_CMD, CanvasOperations::Tool::FreeFillet},
-        {CMD::Blend_CMD, CanvasOperations::Tool::Blend},         {CMD::Chamfer_CMD, CanvasOperations::Tool::Chamfer},
-        {CMD::Split_CMD, CanvasOperations::Tool::Split},         {CMD::Difference_CMD, CanvasOperations::Tool::ShapeDifference},
-        {CMD::AlignedDim_CMD, CanvasOperations::Tool::AlignedDim}, {CMD::LinearDim_CMD, CanvasOperations::Tool::LinearDim},
-        {CMD::RadiusDim_CMD, CanvasOperations::Tool::RadiusDim}, {CMD::DiameterDim_CMD, CanvasOperations::Tool::DiameterDim},
-        {CMD::AngleDim_CMD, CanvasOperations::Tool::AngleDim},   {CMD::ArcDim_CMD, CanvasOperations::Tool::ArcDim},
-        {CMD::OrdinateDim_CMD, CanvasOperations::Tool::OrdinateDim}};
+    _cmd_tool_dict = {{CMD::Length_CMD, CanvasOperations::Tool::Measure},
+                      {CMD::Angle_CMD, CanvasOperations::Tool::Angle},
+                      {CMD::Polyline_CMD, CanvasOperations::Tool::Polyline},
+                      {CMD::Rectangle_CMD, CanvasOperations::Tool::Rectangle},
+                      {CMD::CPolygon_CMD, CanvasOperations::Tool::Polygon0},
+                      {CMD::IPolygon_CMD, CanvasOperations::Tool::Polygon1},
+                      {CMD::RingArray_CMD, CanvasOperations::Tool::RingArray},
+                      {CMD::Rotate_CMD, CanvasOperations::Tool::Rotate},
+                      {CMD::Text_CMD, CanvasOperations::Tool::Text},
+                      {CMD::PArc_CMD, CanvasOperations::Tool::Arc0},
+                      {CMD::SCAArc_CMD, CanvasOperations::Tool::Arc1},
+                      {CMD::SEAArc_CMD, CanvasOperations::Tool::Arc2},
+                      {CMD::SERArc_CMD, CanvasOperations::Tool::Arc3},
+                      {CMD::Point_CMD, CanvasOperations::Tool::Point},
+                      {CMD::Bezier_CMD, CanvasOperations::Tool::Bezier},
+                      {CMD::BSpline_CMD, CanvasOperations::Tool::BSpline},
+                      {CMD::CCircle_CMD, CanvasOperations::Tool::Circle0},
+                      {CMD::DCircle_CMD, CanvasOperations::Tool::Circle1},
+                      {CMD::PCircle_CMD, CanvasOperations::Tool::Circle2},
+                      {CMD::Ellipse_CMD, CanvasOperations::Tool::Ellipse0},
+                      {CMD::EllipseArc_CMD, CanvasOperations::Tool::Ellipse1},
+                      {CMD::Mirror_CMD, CanvasOperations::Tool::Mirror},
+                      {CMD::Trim_CMD, CanvasOperations::Tool::Trim},
+                      {CMD::Extend_CMD, CanvasOperations::Tool::Extend},
+                      {CMD::Fillet_CMD, CanvasOperations::Tool::Fillet},
+                      {CMD::FreeFillet_CMD, CanvasOperations::Tool::FreeFillet},
+                      {CMD::Blend_CMD, CanvasOperations::Tool::Blend},
+                      {CMD::Chamfer_CMD, CanvasOperations::Tool::Chamfer},
+                      {CMD::Split_CMD, CanvasOperations::Tool::Split},
+                      {CMD::Difference_CMD, CanvasOperations::Tool::ShapeDifference},
+                      {CMD::AlignedDim_CMD, CanvasOperations::Tool::AlignedDim},
+                      {CMD::LinearDim_CMD, CanvasOperations::Tool::LinearDim},
+                      {CMD::RadiusDim_CMD, CanvasOperations::Tool::RadiusDim},
+                      {CMD::DiameterDim_CMD, CanvasOperations::Tool::DiameterDim},
+                      {CMD::AngleDim_CMD, CanvasOperations::Tool::AngleDim},
+                      {CMD::ArcDim_CMD, CanvasOperations::Tool::ArcDim},
+                      {CMD::OrdinateDim_CMD, CanvasOperations::Tool::OrdinateDim},
+                      {CMD::PointsSpiralStep_CMD, CanvasOperations::Tool::PointsSpiralStep},
+                      {CMD::PointsSpiralN_CMD, CanvasOperations::Tool::PointsSpiralN},
+                      {CMD::PolylineSpiralStep_CMD, CanvasOperations::Tool::PolylineSpiralStep},
+                      {CMD::PolylineSpiralN_CMD, CanvasOperations::Tool::PolylineSpiralN},
+                      {CMD::BezierSpiralStep_CMD, CanvasOperations::Tool::BezierSpiralStep},
+                      {CMD::BezierSpiralN_CMD, CanvasOperations::Tool::BezierSpiralN},
+                      {CMD::BSplineSpiralStep_CMD, CanvasOperations::Tool::BSplineSpiralStep},
+                      {CMD::BSplineSpiralN_CMD, CanvasOperations::Tool::BSplineSpiralN}};
 
     _tool_cmd_dict = {{CanvasOperations::Tool::Measure, CMD::Length_CMD},
                       {CanvasOperations::Tool::Angle, CMD::Angle_CMD},
@@ -162,7 +197,13 @@ void CMDWidget::init()
                       {CanvasOperations::Tool::DiameterDim, CMD::DiameterDim_CMD},
                       {CanvasOperations::Tool::AngleDim, CMD::AngleDim_CMD},
                       {CanvasOperations::Tool::ArcDim, CMD::ArcDim_CMD},
-                      {CanvasOperations::Tool::OrdinateDim, CMD::OrdinateDim_CMD}};
+                      {CanvasOperations::Tool::OrdinateDim, CMD::OrdinateDim_CMD},
+                      {CanvasOperations::Tool::PointsSpiralStep, CMD::PointsSpiralStep_CMD},
+                      {CanvasOperations::Tool::BezierSpiralStep, CMD::BezierSpiralStep_CMD},
+                      {CanvasOperations::Tool::BSplineSpiralStep, CMD::BSplineSpiralStep_CMD},
+                      {CanvasOperations::Tool::PointsSpiralN, CMD::PointsSpiralN_CMD},
+                      {CanvasOperations::Tool::BezierSpiralN, CMD::BezierSpiralN_CMD},
+                      {CanvasOperations::Tool::BSplineSpiralN, CMD::BSplineSpiralN_CMD}};
 
     _cmd_tips_dict = {{CMD::Angle_CMD, "Angle"},
                       {CMD::Bezier_CMD, "Bezier"},
@@ -214,7 +255,15 @@ void CMDWidget::init()
                       {CMD::DiameterDim_CMD, "Diameter Dimension"},
                       {CMD::AngleDim_CMD, "Angle Dimension"},
                       {CMD::ArcDim_CMD, "Arc Dimension"},
-                      {CMD::OrdinateDim_CMD, "Ordinate Dimension"}};
+                      {CMD::OrdinateDim_CMD, "Ordinate Dimension"},
+                      {CMD::PointsSpiralStep_CMD, "Points Spiral Step"},
+                      {CMD::PolylineSpiralStep_CMD, "Polyline Spiral Step"},
+                      {CMD::BezierSpiralStep_CMD, "Bezier Spiral Step"},
+                      {CMD::BSplineSpiralStep_CMD, "BSpline Spiral Step"},
+                      {CMD::PointsSpiralN_CMD, "Points Spiral N"},
+                      {CMD::PolylineSpiralN_CMD, "Polyline Spiral N"},
+                      {CMD::BezierSpiralN_CMD, "Bezier Spiral N"},
+                      {CMD::BSplineSpiralN_CMD, "BSpline Spiral N"}};
 
     _direct_cmd_list = {CMD::Error_CMD,         CMD::Main_CMD,
                         CMD::Connect_CMD,       CMD::Close_CMD,

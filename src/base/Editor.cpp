@@ -959,6 +959,19 @@ void Editor::append(Geo::Geometry *object)
     _backup.push_command(new UndoStack::ObjectCommand(object, _current_group, _graph->container_group(_current_group).size(), true));
 }
 
+void Editor::append(const std::vector<Geo::Geometry *> &objects)
+{
+    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> items;
+    for (Geo::Geometry *object : objects)
+    {
+        _graph->append(object, _current_group);
+        items.emplace_back(object, _current_group, _graph->container_group(_current_group).size());
+    }
+    _graph->modified = true;
+    _view_tree.append(objects);
+    _backup.push_command(new UndoStack::ObjectCommand(items, true));
+}
+
 void Editor::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1,
                               const bool change_shape)
 {

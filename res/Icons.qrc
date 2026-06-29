@@ -59,5 +59,11 @@
         <file>icons/dimension/angledim_btn.png</file>
         <file>icons/dimension/arcdim_btn.png</file>
         <file>icons/dimension/ordinatedim_btn.png</file>
+        <file>icons/spiral/spiral_n_points_btn.png</file>
+        <file>icons/spiral/spiral_step_points_btn.png</file>
+        <file>icons/spiral/spiral_n_polyline_btn.png</file>
+        <file>icons/spiral/spiral_step_polyline_btn.png</file>
+        <file>icons/spiral/spiral_step_curve_btn.png</file>
+        <file>icons/spiral/spiral_n_curve_btn.png</file>
     </qresource>
 </RCC>

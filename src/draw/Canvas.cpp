@@ -987,6 +987,19 @@ void Canvas::add_geometry(Geo::Geometry *object)
     update();
 }
 
+void Canvas::add_geometry(const std::vector<Geo::Geometry *> &objects)
+{
+    _editor.append(objects);
+    std::set<Geo::Type> types;
+    for (const Geo::Geometry *object : objects)
+    {
+        types.insert(object->type());
+    }
+    refresh_vbo(true, types);
+    refresh_selected_ibo();
+    update();
+}
+
 void Canvas::show_menu(Geo::Geometry *object)
 {
     refresh_selected_ibo(object);

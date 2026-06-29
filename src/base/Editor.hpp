@@ -103,6 +103,8 @@ public:
 
     void append(Geo::Geometry *object);
 
+    void append(const std::vector<Geo::Geometry *> &objects);
+
     void translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1,
                           const bool change_shape = true);
 

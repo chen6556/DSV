@@ -65,6 +65,14 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::Extend)] = new ExtendOperation();
     operations[static_cast<int>(Tool::Split)] = new SplitOperation();
     operations[static_cast<int>(Tool::Blend)] = new BlendOperation();
+    operations[static_cast<int>(Tool::PointsSpiralStep)] = new PointsSpiralStepOperation();
+    operations[static_cast<int>(Tool::PolylineSpiralStep)] = new PolylineSpiralStepOperation();
+    operations[static_cast<int>(Tool::BezierSpiralStep)] = new BezierSpiralStepOperation();
+    operations[static_cast<int>(Tool::BSplineSpiralStep)] = new BSplineSpiralStepOperation();
+    operations[static_cast<int>(Tool::PointsSpiralN)] = new PointsSpiralNOperation();
+    operations[static_cast<int>(Tool::PolylineSpiralN)] = new PolylineSpiralNOperation();
+    operations[static_cast<int>(Tool::BezierSpiralN)] = new BezierSpiralNOperation();
+    operations[static_cast<int>(Tool::BSplineSpiralN)] = new BSplineSpiralNOperation();
     operations[static_cast<int>(Tool::AlignedDim)] = new AlignedDimOperation();
     operations[static_cast<int>(Tool::LinearDim)] = new LinearDimOperation();
     operations[static_cast<int>(Tool::RadiusDim)] = new RadiusDimOperation();
@@ -5332,4 +5340,1118 @@ void OrdinateDimOperation::reset()
 QString OrdinateDimOperation::cmd_tips() const
 {
     return _index == 0 ? "Select first point." : "Set label pos.";
+}
+
+
+bool PointsSpiralStepOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index)
+        {
+        case 0:
+            _center.x = real_pos[0];
+            _center.y = real_pos[1];
+            shape.clear();
+            for (const Geo::Point &point : Geo::circle_to_polygon(_center.x, _center.y, 10, Geo::Circle::default_down_sampling_value))
+            {
+                shape.push_back(point.x);
+                shape.push_back(point.y);
+            }
+            _index = 1;
+            break;
+        case 1:
+            _start.x = real_pos[0];
+            _start.y = real_pos[1];
+            _index = 2;
+            break;
+        case 2:
+            _end.x = real_pos[0];
+            _end.y = real_pos[1];
+            shape.clear();
+            _index = 3;
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool PointsSpiralStepOperation::mouse_move(QMouseEvent *event)
+{
+    switch (_index)
+    {
+    case 1:
+        _start.x = real_pos[0];
+        _start.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _start), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    case 2:
+        _end.x = real_pos[0];
+        _end.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _end), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    default:
+        return false;
+    }
+}
+
+void PointsSpiralStepOperation::reset()
+{
+    _index = 0;
+}
+
+bool PointsSpiralStepOperation::read_parameters(const double *params, const int count)
+{
+    switch (_index)
+    {
+    case 0:
+        if (count >= 2)
+        {
+            _center.x = params[0];
+            _center.y = params[1];
+            ++_index;
+        }
+        break;
+    case 1:
+        if (count >= 1)
+        {
+            _start.x = _center.x + params[0];
+            _start.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 2:
+        if (count >= 1 && params[0] > 0)
+        {
+            _end.x = _center.x + params[0];
+            _end.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 3:
+        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        {
+            const bool clockwise = params[0] != 0;
+            const size_t turns = params[1];
+            const double step = params[2];
+            _index = 0;
+            std::vector<Geo::Geometry *> points;
+            for (const Geo::Point &point : Geo::archimedean_spiral_points(_center,
+                Geo::distance(_center, _start), Geo::distance(_center, _end), step, turns, clockwise))
+            {
+                points.push_back(new Geo::Point(point));
+            }
+            Canvas::canvas->add_geometry(points);
+            tool[0] = Tool::Select;
+            info.clear();
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+QString PointsSpiralStepOperation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "(x, y):";
+    case 1:
+        return "Inner Radius:";
+    case 2:
+        return "Outer Radius:";
+    case 3:
+        return "(Clockwise (0: false, 1: true), Turns, Step):";
+    default:
+        return QString();
+    }
+}
+
+
+bool PolylineSpiralStepOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index)
+        {
+        case 0:
+            _center.x = real_pos[0];
+            _center.y = real_pos[1];
+            shape.clear();
+            for (const Geo::Point &point : Geo::circle_to_polygon(_center.x, _center.y, 10, Geo::Circle::default_down_sampling_value))
+            {
+                shape.push_back(point.x);
+                shape.push_back(point.y);
+            }
+            _index = 1;
+            break;
+        case 1:
+            _start.x = real_pos[0];
+            _start.y = real_pos[1];
+            _index = 2;
+            break;
+        case 2:
+            _end.x = real_pos[0];
+            _end.y = real_pos[1];
+            shape.clear();
+            _index = 3;
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool PolylineSpiralStepOperation::mouse_move(QMouseEvent *event)
+{
+    switch (_index)
+    {
+    case 1:
+        _start.x = real_pos[0];
+        _start.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _start), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    case 2:
+        _end.x = real_pos[0];
+        _end.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _end), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    default:
+        return false;
+    }
+}
+
+void PolylineSpiralStepOperation::reset()
+{
+    _index = 0;
+}
+
+bool PolylineSpiralStepOperation::read_parameters(const double *params, const int count)
+{
+    switch (_index)
+    {
+    case 0:
+        if (count >= 2)
+        {
+            _center.x = params[0];
+            _center.y = params[1];
+            ++_index;
+        }
+        break;
+    case 1:
+        if (count >= 1)
+        {
+            _start.x = _center.x + params[0];
+            _start.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 2:
+        if (count >= 1 && params[0] > 0)
+        {
+            _end.x = _center.x + params[0];
+            _end.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 3:
+        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        {
+            const bool clockwise = params[0] != 0;
+            const size_t turns = params[1];
+            const double step = params[2];
+            _index = 0;
+            std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center,
+                Geo::distance(_center, _start), Geo::distance(_center, _end), step, turns, clockwise));
+            Canvas::canvas->add_geometry(new Geo::Polyline(points.begin(), points.end()));
+            tool[0] = Tool::Select;
+            info.clear();
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+QString PolylineSpiralStepOperation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "(x, y):";
+    case 1:
+        return "Inner Radius:";
+    case 2:
+        return "Outer Radius:";
+    case 3:
+        return "(Clockwise (0: false, 1: true), Turns, Step):";
+    default:
+        return QString();
+    }
+}
+
+
+bool BezierSpiralStepOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index)
+        {
+        case 0:
+            _center.x = real_pos[0];
+            _center.y = real_pos[1];
+            shape.clear();
+            for (const Geo::Point &point : Geo::circle_to_polygon(_center.x, _center.y, 10, Geo::Circle::default_down_sampling_value))
+            {
+                shape.push_back(point.x);
+                shape.push_back(point.y);
+            }
+            _index = 1;
+            break;
+        case 1:
+            _start.x = real_pos[0];
+            _start.y = real_pos[1];
+            _index = 2;
+            break;
+        case 2:
+            _end.x = real_pos[0];
+            _end.y = real_pos[1];
+            shape.clear();
+            _index = 3;
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool BezierSpiralStepOperation::mouse_move(QMouseEvent *event)
+{
+    switch (_index)
+    {
+    case 1:
+        _start.x = real_pos[0];
+        _start.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _start), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    case 2:
+        _end.x = real_pos[0];
+        _end.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _end), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    default:
+        return false;
+    }
+}
+
+void BezierSpiralStepOperation::reset()
+{
+    _index = 0;
+}
+
+bool BezierSpiralStepOperation::read_parameters(const double *params, const int count)
+{
+    switch (_index)
+    {
+    case 0:
+        if (count >= 2)
+        {
+            _center.x = params[0];
+            _center.y = params[1];
+            ++_index;
+        }
+        break;
+    case 1:
+        if (count >= 1)
+        {
+            _start.x = _center.x + params[0];
+            _start.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 2:
+        if (count >= 1 && params[0] > 0)
+        {
+            _end.x = _center.x + params[0];
+            _end.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 3:
+        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        {
+            const bool clockwise = params[0] != 0;
+            const size_t turns = params[1];
+            const double step = params[2];
+            _index = 0;
+            std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center,
+                Geo::distance(_center, _start), Geo::distance(_center, _end), step, turns, clockwise));
+            std::vector<Geo::Point> controls(Geo::archimedean_spiral_bezier(points));
+            Canvas::canvas->add_geometry(new Geo::CubicBezier(controls.begin(), controls.end(), false));
+            tool[0] = Tool::Select;
+            info.clear();
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+QString BezierSpiralStepOperation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "(x, y):";
+    case 1:
+        return "Inner Radius:";
+    case 2:
+        return "Outer Radius:";
+    case 3:
+        return "(Clockwise (0: false, 1: true), Turns, Step):";
+    default:
+        return QString();
+    }
+}
+
+
+bool BSplineSpiralStepOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index)
+        {
+        case 0:
+            _center.x = real_pos[0];
+            _center.y = real_pos[1];
+            shape.clear();
+            for (const Geo::Point &point : Geo::circle_to_polygon(_center.x, _center.y, 10, Geo::Circle::default_down_sampling_value))
+            {
+                shape.push_back(point.x);
+                shape.push_back(point.y);
+            }
+            _index = 1;
+            break;
+        case 1:
+            _start.x = real_pos[0];
+            _start.y = real_pos[1];
+            _index = 2;
+            break;
+        case 2:
+            _end.x = real_pos[0];
+            _end.y = real_pos[1];
+            shape.clear();
+            _index = 3;
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool BSplineSpiralStepOperation::mouse_move(QMouseEvent *event)
+{
+    switch (_index)
+    {
+    case 1:
+        _start.x = real_pos[0];
+        _start.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _start), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    case 2:
+        _end.x = real_pos[0];
+        _end.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _end), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    default:
+        return false;
+    }
+}
+
+void BSplineSpiralStepOperation::reset()
+{
+    _index = 0;
+}
+
+bool BSplineSpiralStepOperation::read_parameters(const double *params, const int count)
+{
+    switch (_index)
+    {
+    case 0:
+        if (count >= 2)
+        {
+            _center.x = params[0];
+            _center.y = params[1];
+            ++_index;
+        }
+        break;
+    case 1:
+        if (count >= 1)
+        {
+            _start.x = _center.x + params[0];
+            _start.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 2:
+        if (count >= 1 && params[0] > 0)
+        {
+            _end.x = _center.x + params[0];
+            _end.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 3:
+        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        {
+            const bool clockwise = params[0] != 0;
+            const size_t turns = params[1];
+            const double step = params[2];
+            _index = 0;
+            std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center,
+                Geo::distance(_center, _start), Geo::distance(_center, _end), step, turns, clockwise));
+            Canvas::canvas->add_geometry(new Geo::CubicBSpline(points.begin(), points.end(), true));
+            tool[0] = Tool::Select;
+            info.clear();
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+QString BSplineSpiralStepOperation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "(x, y):";
+    case 1:
+        return "Inner Radius:";
+    case 2:
+        return "Outer Radius:";
+    case 3:
+        return "(Clockwise (0: false, 1: true), Turns, Step):";
+    default:
+        return QString();
+    }
+}
+
+
+bool PointsSpiralNOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index)
+        {
+        case 0:
+            _center.x = real_pos[0];
+            _center.y = real_pos[1];
+            shape.clear();
+            for (const Geo::Point &point : Geo::circle_to_polygon(_center.x, _center.y, 10, Geo::Circle::default_down_sampling_value))
+            {
+                shape.push_back(point.x);
+                shape.push_back(point.y);
+            }
+            _index = 1;
+            break;
+        case 1:
+            _start.x = real_pos[0];
+            _start.y = real_pos[1];
+            _index = 2;
+            break;
+        case 2:
+            _end.x = real_pos[0];
+            _end.y = real_pos[1];
+            shape.clear();
+            _index = 3;
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool PointsSpiralNOperation::mouse_move(QMouseEvent *event)
+{
+    switch (_index)
+    {
+    case 1:
+        _start.x = real_pos[0];
+        _start.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _start), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    case 2:
+        _end.x = real_pos[0];
+        _end.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _end), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    default:
+        return false;
+    }
+}
+
+void PointsSpiralNOperation::reset()
+{
+    _index = 0;
+}
+
+bool PointsSpiralNOperation::read_parameters(const double *params, const int count)
+{
+    switch (_index)
+    {
+    case 0:
+        if (count >= 2)
+        {
+            _center.x = params[0];
+            _center.y = params[1];
+            ++_index;
+        }
+        break;
+    case 1:
+        if (count >= 1)
+        {
+            _start.x = _center.x + params[0];
+            _start.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 2:
+        if (count >= 1 && params[0] > 0)
+        {
+            _end.x = _center.x + params[0];
+            _end.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 3:
+        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        {
+            const bool clockwise = params[0] != 0;
+            const size_t turns = params[1];
+            const size_t n = params[2];
+            _index = 0;
+            std::vector<Geo::Geometry *> points;
+            for (const Geo::Point &point : Geo::archimedean_spiral_points(_center,
+                Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise))
+            {
+                points.push_back(new Geo::Point(point));
+            }
+            Canvas::canvas->add_geometry(points);
+            tool[0] = Tool::Select;
+            info.clear();
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+QString PointsSpiralNOperation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "(x, y):";
+    case 1:
+        return "Inner Radius:";
+    case 2:
+        return "Outer Radius:";
+    case 3:
+        return "(Clockwise (0: false, 1: true), Turns, N):";
+    default:
+        return QString();
+    }
+}
+
+
+bool PolylineSpiralNOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index)
+        {
+        case 0:
+            _center.x = real_pos[0];
+            _center.y = real_pos[1];
+            shape.clear();
+            for (const Geo::Point &point : Geo::circle_to_polygon(_center.x, _center.y, 10, Geo::Circle::default_down_sampling_value))
+            {
+                shape.push_back(point.x);
+                shape.push_back(point.y);
+            }
+            _index = 1;
+            break;
+        case 1:
+            _start.x = real_pos[0];
+            _start.y = real_pos[1];
+            _index = 2;
+            break;
+        case 2:
+            _end.x = real_pos[0];
+            _end.y = real_pos[1];
+            shape.clear();
+            _index = 3;
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool PolylineSpiralNOperation::mouse_move(QMouseEvent *event)
+{
+    switch (_index)
+    {
+    case 1:
+        _start.x = real_pos[0];
+        _start.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _start), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    case 2:
+        _end.x = real_pos[0];
+        _end.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _end), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    default:
+        return false;
+    }
+}
+
+void PolylineSpiralNOperation::reset()
+{
+    _index = 0;
+}
+
+bool PolylineSpiralNOperation::read_parameters(const double *params, const int count)
+{
+    switch (_index)
+    {
+    case 0:
+        if (count >= 2)
+        {
+            _center.x = params[0];
+            _center.y = params[1];
+            ++_index;
+        }
+        break;
+    case 1:
+        if (count >= 1)
+        {
+            _start.x = _center.x + params[0];
+            _start.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 2:
+        if (count >= 1 && params[0] > 0)
+        {
+            _end.x = _center.x + params[0];
+            _end.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 3:
+        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        {
+            const bool clockwise = params[0] != 0;
+            const size_t turns = params[1];
+            const size_t n = params[2];
+            _index = 0;
+            std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center,
+                Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise));
+            Canvas::canvas->add_geometry(new Geo::Polyline(points.begin(), points.end()));
+            tool[0] = Tool::Select;
+            info.clear();
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+QString PolylineSpiralNOperation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "(x, y):";
+    case 1:
+        return "Inner Radius:";
+    case 2:
+        return "Outer Radius:";
+    case 3:
+        return "(Clockwise (0: false, 1: true), Turns, N):";
+    default:
+        return QString();
+    }
+}
+
+
+bool BezierSpiralNOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index)
+        {
+        case 0:
+            _center.x = real_pos[0];
+            _center.y = real_pos[1];
+            shape.clear();
+            for (const Geo::Point &point : Geo::circle_to_polygon(_center.x, _center.y, 10, Geo::Circle::default_down_sampling_value))
+            {
+                shape.push_back(point.x);
+                shape.push_back(point.y);
+            }
+            _index = 1;
+            break;
+        case 1:
+            _start.x = real_pos[0];
+            _start.y = real_pos[1];
+            _index = 2;
+            break;
+        case 2:
+            _end.x = real_pos[0];
+            _end.y = real_pos[1];
+            shape.clear();
+            _index = 3;
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool BezierSpiralNOperation::mouse_move(QMouseEvent *event)
+{
+    switch (_index)
+    {
+    case 1:
+        _start.x = real_pos[0];
+        _start.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _start), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    case 2:
+        _end.x = real_pos[0];
+        _end.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _end), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    default:
+        return false;
+    }
+}
+
+void BezierSpiralNOperation::reset()
+{
+    _index = 0;
+}
+
+bool BezierSpiralNOperation::read_parameters(const double *params, const int count)
+{
+    switch (_index)
+    {
+    case 0:
+        if (count >= 2)
+        {
+            _center.x = params[0];
+            _center.y = params[1];
+            ++_index;
+        }
+        break;
+    case 1:
+        if (count >= 1)
+        {
+            _start.x = _center.x + params[0];
+            _start.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 2:
+        if (count >= 1 && params[0] > 0)
+        {
+            _end.x = _center.x + params[0];
+            _end.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 3:
+        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        {
+            const bool clockwise = params[0] != 0;
+            const size_t turns = params[1];
+            const size_t n = params[2];
+            _index = 0;
+            std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center,
+                Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise));
+            std::vector<Geo::Point> controls(Geo::archimedean_spiral_bezier(points));
+            Canvas::canvas->add_geometry(new Geo::CubicBezier(controls.begin(), controls.end(), false));
+            tool[0] = Tool::Select;
+            info.clear();
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+QString BezierSpiralNOperation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "(x, y):";
+    case 1:
+        return "Inner Radius:";
+    case 2:
+        return "Outer Radius:";
+    case 3:
+        return "(Clockwise (0: false, 1: true), Turns, N):";
+    default:
+        return QString();
+    }
+}
+
+
+bool BSplineSpiralNOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        switch (_index)
+        {
+        case 0:
+            _center.x = real_pos[0];
+            _center.y = real_pos[1];
+            shape.clear();
+            for (const Geo::Point &point : Geo::circle_to_polygon(_center.x, _center.y, 10, Geo::Circle::default_down_sampling_value))
+            {
+                shape.push_back(point.x);
+                shape.push_back(point.y);
+            }
+            _index = 1;
+            break;
+        case 1:
+            _start.x = real_pos[0];
+            _start.y = real_pos[1];
+            _index = 2;
+            break;
+        case 2:
+            _end.x = real_pos[0];
+            _end.y = real_pos[1];
+            shape.clear();
+            _index = 3;
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    return false;
+}
+
+bool BSplineSpiralNOperation::mouse_move(QMouseEvent *event)
+{
+    switch (_index)
+    {
+    case 1:
+        _start.x = real_pos[0];
+        _start.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _start), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    case 2:
+        _end.x = real_pos[0];
+        _end.y = real_pos[1];
+        shape.clear();
+        for (const Geo::Point &point :
+             Geo::circle_to_polygon(_center.x, _center.y, Geo::distance(_center, _end), Geo::Circle::default_down_sampling_value))
+        {
+            shape.push_back(point.x);
+            shape.push_back(point.y);
+        }
+        return true;
+    default:
+        return false;
+    }
+}
+
+void BSplineSpiralNOperation::reset()
+{
+    _index = 0;
+}
+
+bool BSplineSpiralNOperation::read_parameters(const double *params, const int count)
+{
+    switch (_index)
+    {
+    case 0:
+        if (count >= 2)
+        {
+            _center.x = params[0];
+            _center.y = params[1];
+            ++_index;
+        }
+        break;
+    case 1:
+        if (count >= 1)
+        {
+            _start.x = _center.x + params[0];
+            _start.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 2:
+        if (count >= 1 && params[0] > 0)
+        {
+            _end.x = _center.x + params[0];
+            _end.y = _center.y;
+            ++_index;
+        }
+        break;
+    case 3:
+        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        {
+            const bool clockwise = params[0] != 0;
+            const size_t turns = params[1];
+            const size_t n = params[2];
+            _index = 0;
+            std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center,
+                Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise));
+            Canvas::canvas->add_geometry(new Geo::CubicBSpline(points.begin(), points.end(), true));
+            tool[0] = Tool::Select;
+            info.clear();
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+QString BSplineSpiralNOperation::cmd_tips() const
+{
+    switch (_index)
+    {
+    case 0:
+        return "(x, y):";
+    case 1:
+        return "Inner Radius:";
+    case 2:
+        return "Outer Radius:";
+    case 3:
+        return "(Clockwise (0: false, 1: true), Turns, N):";
+    default:
+        return QString();
+    }
 }

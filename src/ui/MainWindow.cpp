@@ -1051,6 +1051,44 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
             break;
         }
         break;
+    case ActionGroup::MenuType::SpiralStepMenu:
+        switch (index)
+        {
+        case 0: // points
+            ui->cmd_widget->work(CMDWidget::CMD::PointsSpiralStep_CMD);
+            break;
+        case 1: // polyline
+            ui->cmd_widget->work(CMDWidget::CMD::PolylineSpiralStep_CMD);
+            break;
+        case 2: // bezier
+            ui->cmd_widget->work(CMDWidget::CMD::BezierSpiralStep_CMD);
+            break;
+        case 3: // bspline
+            ui->cmd_widget->work(CMDWidget::CMD::BSplineSpiralStep_CMD);
+            break;
+        default:
+            break;
+        }
+        break;
+    case ActionGroup::MenuType::SpiralNMenu:
+        switch (index)
+        {
+        case 0: // points
+            ui->cmd_widget->work(CMDWidget::CMD::PointsSpiralN_CMD);
+            break;
+        case 1: // polyline
+            ui->cmd_widget->work(CMDWidget::CMD::PolylineSpiralN_CMD);
+            break;
+        case 2: // Bezier
+            ui->cmd_widget->work(CMDWidget::CMD::BezierSpiralN_CMD);
+            break;
+        case 3: // BSpline
+            ui->cmd_widget->work(CMDWidget::CMD::BSplineSpiralN_CMD);
+            break;
+        default:
+            break;
+        }
+        break;
     default:
         break;
     }

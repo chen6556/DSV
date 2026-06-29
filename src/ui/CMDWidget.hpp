@@ -83,7 +83,15 @@ public:
         DiameterDim_CMD,
         AngleDim_CMD,
         ArcDim_CMD,
-        OrdinateDim_CMD
+        OrdinateDim_CMD,
+        PointsSpiralStep_CMD,
+        PolylineSpiralStep_CMD,
+        BezierSpiralStep_CMD,
+        BSplineSpiralStep_CMD,
+        PointsSpiralN_CMD,
+        PolylineSpiralN_CMD,
+        BezierSpiralN_CMD,
+        BSplineSpiralN_CMD
     };
 
     enum class SETTING

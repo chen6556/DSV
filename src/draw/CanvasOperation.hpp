@@ -44,6 +44,14 @@ enum class Tool
     Extend,
     Split,
     Blend,
+    PointsSpiralStep,
+    PolylineSpiralStep,
+    BezierSpiralStep,
+    BSplineSpiralStep,
+    PointsSpiralN,
+    PolylineSpiralN,
+    BezierSpiralN,
+    BSplineSpiralN,
 
     AlignedDim,
     LinearDim,
@@ -790,6 +798,158 @@ public:
     bool mouse_move(QMouseEvent *event) override;
 
     void reset() override;
+
+    QString cmd_tips() const override;
+};
+
+
+class PointsSpiralStepOperation : public CanvasOperation
+{
+private:
+    int _index = 0;
+    Geo::Point _center, _start, _end;
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    bool read_parameters(const double *params, const int count) override;
+
+    QString cmd_tips() const override;
+};
+
+
+class PolylineSpiralStepOperation : public CanvasOperation
+{
+private:
+    int _index = 0;
+    Geo::Point _center, _start, _end;
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    bool read_parameters(const double *params, const int count) override;
+
+    QString cmd_tips() const override;
+};
+
+
+class BezierSpiralStepOperation : public CanvasOperation
+{
+private:
+    int _index = 0;
+    Geo::Point _center, _start, _end;
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    bool read_parameters(const double *params, const int count) override;
+
+    QString cmd_tips() const override;
+};
+
+
+class BSplineSpiralStepOperation : public CanvasOperation
+{
+private:
+    int _index = 0;
+    Geo::Point _center, _start, _end;
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    bool read_parameters(const double *params, const int count) override;
+
+    QString cmd_tips() const override;
+};
+
+
+class PointsSpiralNOperation : public CanvasOperation
+{
+private:
+    int _index = 0;
+    Geo::Point _center, _start, _end;
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    bool read_parameters(const double *params, const int count) override;
+
+    QString cmd_tips() const override;
+};
+
+
+class PolylineSpiralNOperation : public CanvasOperation
+{
+private:
+    int _index = 0;
+    Geo::Point _center, _start, _end;
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    bool read_parameters(const double *params, const int count) override;
+
+    QString cmd_tips() const override;
+};
+
+
+class BezierSpiralNOperation : public CanvasOperation
+{
+private:
+    int _index = 0;
+    Geo::Point _center, _start, _end;
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    bool read_parameters(const double *params, const int count) override;
+
+    QString cmd_tips() const override;
+};
+
+
+class BSplineSpiralNOperation : public CanvasOperation
+{
+private:
+    int _index = 0;
+    Geo::Point _center, _start, _end;
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    bool read_parameters(const double *params, const int count) override;
 
     QString cmd_tips() const override;
 };

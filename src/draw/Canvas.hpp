@@ -255,6 +255,8 @@ public:
 
     void add_geometry(Geo::Geometry *object);
 
+    void add_geometry(const std::vector<Geo::Geometry *> &objects);
+
     void show_menu(Geo::Geometry *object);
 
     void show_text_edit(Text *text);
