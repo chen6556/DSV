@@ -709,7 +709,7 @@ static Action<void> block_end_a(&importer, &Importer::block_end);
 static Action<void> end_a(&importer, &Importer::end);
 
 static Parser<char> separator = ch_p(',') | ch_p(' ');
-static Parser<char> end = ch_p(';') | ch_p('\n') | eol_p();
+static Parser<char> end = ch_p(';') | eol_p();
 static Parser<double> parameter = float_p()[parameter_a];
 static Parser<bool> coord = float_p()[x_coord_a] >> separator >> float_p()[y_coord_a];
 static Parser<std::string> df = str_p("DF")[in_a] >> *end;
@@ -735,13 +735,13 @@ static Parser<std::string> ep = str_p("EP")[ep_a] >> *end;
 static Parser<std::string> block_start = str_p("Block")[block_start_a] >> *end;
 static Parser<std::string> block_end = str_p("BlockEnd")[block_end_a] >> *end;
 
-static Parser<std::string> unkown_cmds = confix_p(alphaa_p() | ch_p(28), +end)[unkown_a];
+static Parser<bool> unkown_cmds = ((+alphaa_p())[unkown_a] >> !list_p(parameter, separator)) | confix_p(alphaa_p() | ch_p(28), +end)[unkown_a];
 static Parser<char> text_end = ch_p('\x3') | ch_p('\x4') | end;
 static Parser<std::string> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], text_end) >> !separator >> *end;
 static Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | br | bz | ci | aa | ar | at | ea | er | pm | ep | in | ip | sc | df | ro |
                                block_end | block_start | unkown_cmds;
 
-static Parser<std::string> dci = confix_p(ch_p(27), end);
+static Parser<std::string> dci = confix_p(ch_p(27), +end);
 static Parser<bool> plt = (*(all_cmds | dci))[end_a];
 
 
