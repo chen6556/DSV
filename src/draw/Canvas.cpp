@@ -255,6 +255,12 @@ void Canvas::resizeGL(int w, int h)
 
     _texture.text_image = QImage(w, h, QImage::Format::Format_RGBA8888);
     _texture.dim_image = QImage(w, h, QImage::Format::Format_RGBA8888);
+
+    // 文本纹理存储随画布尺寸分配一次(分辨率变化时才重分配),paintGL 仅用 glTexSubImage2D 上传。
+    // 文本四边形为 1:1 屏幕对齐且使用 GL_LINEAR 过滤,无需 mipmap。
+    glBindTexture(GL_TEXTURE_2D, _texture.texture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+
     refresh_vbo(true);
 }
 
@@ -485,9 +491,8 @@ void Canvas::paintGL()
         glBindVertexArray(_vao.text);
 
         text_furture.wait();
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _canvas_width, _canvas_height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                     _texture.text_image.constBits());
-        glGenerateMipmap(GL_TEXTURE_2D);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _canvas_width, _canvas_height, GL_RGBA, GL_UNSIGNED_BYTE,
+                        _texture.text_image.constBits());
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
         glUniform1i(_uniforms.enable_tex, 0);
     }
@@ -499,9 +504,8 @@ void Canvas::paintGL()
         glBindVertexArray(_vao.text);
 
         dim_text_furture.wait();
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _canvas_width, _canvas_height, 0, GL_RGBA, GL_UNSIGNED_BYTE,
-                     _texture.dim_image.constBits());
-        glGenerateMipmap(GL_TEXTURE_2D);
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _canvas_width, _canvas_height, GL_RGBA, GL_UNSIGNED_BYTE,
+                        _texture.dim_image.constBits());
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
         glUniform1i(_uniforms.enable_tex, 0);
     }
