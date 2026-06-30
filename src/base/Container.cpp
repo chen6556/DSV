@@ -440,7 +440,7 @@ void ContainerGroup::hide()
 
 ContainerGroup *ContainerGroup::clone() const
 {
-    std::vector<Geo::Geometry *> containers(_containers.size());
+    std::vector<Geo::Geometry *> containers;
     for (const Geo::Geometry *geo : _containers)
     {
         containers.push_back(geo->clone());
