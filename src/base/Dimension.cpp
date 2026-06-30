@@ -1078,7 +1078,7 @@ void DimAngle::set_minor_arc(const bool value)
     }
     else
     {
-        this->label = _center + ((_center - this->anchor[0] + this->anchor[1]) / 2).normalize() * _distance;
+        this->label = _center + (_center - (this->anchor[0] + this->anchor[1]) / 2).normalize() * _distance;
         this->txt = QString::number(Geo::rad_to_degree(Geo::PI * 2 - rad), 'f', 4) + "°";
     }
     if (this->txt == "180.0000°")

@@ -872,8 +872,12 @@ void Editor::push_backup_command(UndoStack::Command *command)
 void Editor::remove_group(const size_t index)
 {
     assert(index < _graph->container_groups().size());
-    _backup.push_command(new UndoStack::GroupCommand(index, false, _graph->container_group(index)));
+    if (_current_group >= index && _current_group > 0)
+    {
+        _current_group--;
+    }
     _view_tree.remove(std::vector<Geo::Geometry *>(_graph->container_group(index).begin(), _graph->container_group(index).end()));
+    _backup.push_command(new UndoStack::GroupCommand(index, false, _graph->container_group(index)));
     _graph->remove_group(index);
 }
 
@@ -1541,7 +1545,7 @@ bool Editor::connect(const std::vector<Geo::Geometry *> &objects, const double c
         indexs.erase(indexs.begin());
     }
     std::sort(indexs.begin(), indexs.end(), std::greater<>());
-    std::vector<std::tuple<Geo::Geometry *, size_t>> items(indexs.size());
+    std::vector<std::tuple<Geo::Geometry *, size_t>> items;
     for (size_t i : indexs)
     {
         _view_tree.remove(group[i]);
@@ -5059,6 +5063,14 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
                 {
                     for (Geo::Geometry *geo : group)
                     {
+                        if (geo->type() == Geo::Type::DIMENSION)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            items.push_back(geo);
+                        }
                         {
                             const Geo::AABBRectParams rect = geo->aabbrect_params();
                             coord.x = (rect.left + rect.right) / 2;
@@ -5084,6 +5096,14 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
             {
                 for (Geo::Geometry *geo : _graph->container_group(_current_group))
                 {
+                    if (geo->type() == Geo::Type::DIMENSION)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        items.push_back(geo);
+                    }
                     {
                         const Geo::AABBRectParams rect = geo->aabbrect_params();
                         coord.x = (rect.left + rect.right) / 2;
@@ -5818,12 +5838,12 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == polygon)
                 {
                     Geo::Polyline *polyline = new Geo::Polyline(polygon->begin(), polygon->end());
-                    polyline->back() = point1;
+                    polyline->back() = point0;
                     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(polygon);
                     _graph->container_group(_current_group).insert(i, polyline);
-                    _view_tree.remove(polyline);
+                    _view_tree.append(polyline);
                     add_items.emplace_back(polyline, _current_group, i);
                     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
                     break;
@@ -6634,7 +6654,7 @@ void Editor::trim(Geo::BSpline *bspline, const double x, const double y)
             {
                 Geo::QuadBSpline bspline_left(*static_cast<const Geo::QuadBSpline *>(bspline)),
                     bspline_right(*static_cast<const Geo::QuadBSpline *>(bspline));
-                Geo::split(*bspline, false, left_t, bspline_left, bspline_right);
+                Geo::split(*bspline, false, right_t, bspline_left, bspline_right);
                 result = new Geo::QuadBSpline(bspline_left);
             }
             std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
@@ -7666,7 +7686,7 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
         bezier->append(expoint);
     }
     bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
-    _view_tree.append(bezier);
+    _view_tree.update(bezier);
 }
 
 void Editor::extend(Geo::BSpline *bspline, const double x, const double y)
@@ -7978,7 +7998,7 @@ bool Editor::divide_parts_n(const std::vector<Geo::Geometry *> &objects, const s
                 {
                     if (Geo::Arc *p = arc->range((i - 1) * 1.0 / n, i * 1.0 / n))
                     {
-                        add_items.emplace_back(p, _current_group, index);
+                        add_items.emplace_back(p, _current_group, group.size());
                         group.append(p);
                     }
                 }

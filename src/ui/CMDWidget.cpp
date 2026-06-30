@@ -23,10 +23,10 @@ CMDWidget::~CMDWidget()
 
 void CMDWidget::init()
 {
-    ui->cmd->setValidator(new QRegularExpressionValidator(QRegularExpression("([A-Za-z]+)|((-?[0-9]+(.[0-9]+)?,?)+)$")));
+    ui->cmd->setValidator(new QRegularExpressionValidator(QRegularExpression("([A-Za-z]+)|((-?[0-9]+(\\.[0-9]+)?,?)+)$")));
     ui->cmd->installEventFilter(this);
 
-    _cmd_list << QString() << "ALL" << "ANGLE" << "ANGLEDIMENSION" << "ARRAY" << "ALIGNEDMENSION"
+    _cmd_list << QString() << "ALL" << "ANGLE" << "ANGLEDIMENSION" << "ARRAY" << "ALIGNEDDIMENSION"
               << "ARCDIMENSION" << "BEZIER" << "BSPLINE" << "BLEND"
               << "CCIRCLE" << "CHAMFER" << "CLOSE" << "COMBINATE" << "CONNECT" << "COPY"
               << "CPOLYGON" << "CUT" << "DCIRCLE" << "DELETE" << "DETACH" << "DIAMETERDIMENSION" << "DIFFERENCE"

@@ -153,7 +153,7 @@ int Geo::closest_point(const Ellipse &ellipse, const Point &point, std::vector<P
                         output.emplace_back(ellipse.arc_point0());
                         return 1;
                     }
-                    else if (Geo::distance(point, ellipse.arc_point0()) < Geo::distance(point, ellipse.arc_point1()))
+                    else if (Geo::distance(point, ellipse.arc_point0()) > Geo::distance(point, ellipse.arc_point1()))
                     {
                         output.emplace_back(ellipse.arc_point1());
                         return 1;
@@ -168,7 +168,7 @@ int Geo::closest_point(const Ellipse &ellipse, const Point &point, std::vector<P
             }
             else if (mask[2] || mask[3]) // 椭圆弧经过b轴端点
             {
-                if (ellipse.lengthb(), std::min(Geo::distance(point, ellipse.arc_point0()), Geo::distance(point, ellipse.arc_point1())))
+                if (ellipse.lengthb() < std::min(Geo::distance(point, ellipse.arc_point0()), Geo::distance(point, ellipse.arc_point1())))
                 {
                     output.emplace_back(mask[2] ? ellipse.b0() : ellipse.b1());
                     return 1;
@@ -180,7 +180,7 @@ int Geo::closest_point(const Ellipse &ellipse, const Point &point, std::vector<P
                         output.emplace_back(ellipse.arc_point0());
                         return 1;
                     }
-                    else if (Geo::distance(point, ellipse.arc_point0()) < Geo::distance(point, ellipse.arc_point1()))
+                    else if (Geo::distance(point, ellipse.arc_point0()) > Geo::distance(point, ellipse.arc_point1()))
                     {
                         output.emplace_back(ellipse.arc_point1());
                         return 1;

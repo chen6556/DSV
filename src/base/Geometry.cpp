@@ -961,7 +961,7 @@ void AABBRect::set_height(const double value)
 {
     const double d = (value - height()) / 2;
     _points[0].y = _points[1].y = _points[4].y = _points[0].y + d;
-    _points[2].x = _points[3].x = _points[2].x + d;
+    _points[2].y = _points[3].y = _points[2].y + d;
 }
 
 void AABBRect::transform(const double a, const double b, const double c, const double d, const double e, const double f)

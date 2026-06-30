@@ -317,6 +317,11 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 
 void MainWindow::dropEvent(QDropEvent *event)
 {
+    if (ui->canvas->editor().graph()->modified &&
+        MessageBox::question(this, "File is modified", "Save or not?") == QDialogButtonBox::StandardButton::Yes)
+    {
+        save_file();
+    }
     const QString suffixs = "dsv DSV plt PLT cut CUT dxf DXF nc NC";
     QFileInfo file_info(event->mimeData()->urls().front().toLocalFile());
     if (file_info.isFile() && suffixs.contains(file_info.suffix()))

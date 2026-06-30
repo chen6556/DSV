@@ -587,7 +587,7 @@ double Geo::distance(const Geo::Point &start0, const Geo::Point &end0, const Geo
             else
             {
                 double distance[5] = {Geo::distance_square(start0, start1), Geo::distance_square(start0, end1),
-                                      Geo::distance_square(end0, start1), Geo::distance(end0, end1), DBL_MAX};
+                                      Geo::distance_square(end0, start1), Geo::distance_square(end0, end1), DBL_MAX};
                 int index = 0;
                 for (int i = 0; i < 4; ++i)
                 {

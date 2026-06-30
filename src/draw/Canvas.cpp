@@ -58,6 +58,10 @@ Canvas::~Canvas()
                                  _vao.origin_and_select_rect, _vao.text};
         glDeleteVertexArrays(16, temp);
     }
+    {
+        unsigned int temp[1] = {_texture.texture};
+        glDeleteTextures(1, temp);
+    }
     glDeleteProgram(_shader_program);
     doneCurrent();
     _editor.delete_graph();

@@ -1072,6 +1072,7 @@ void Combination::transfer(Combination &combination)
 Combination &Combination::operator=(const Combination &combination)
 {
     ContainerGroup::operator=(combination);
+    _border = combination._border;
     return *this;
 }
 

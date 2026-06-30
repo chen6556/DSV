@@ -98,9 +98,9 @@ int Geo::foot_point(const Ellipse &ellipse, const Point &point, std::vector<Poin
         {
             if (!Geo::is_inside(output[i], ellipse, true))
             {
+                ts.erase(ts.begin() + i);
                 output.erase(output.begin() + i--);
                 --count;
-                ts.pop_back();
             }
         }
     }

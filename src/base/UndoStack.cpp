@@ -17,7 +17,7 @@ void CommandStack::set_graph(Graph *graph)
 
 void CommandStack::push_command(Command *command)
 {
-    if (_commands.size() > _count)
+    if (_commands.size() >= _count)
     {
         delete _commands.front();
         _commands.erase(_commands.begin());
@@ -104,7 +104,7 @@ void ObjectCommand::undo(Graph *graph)
 {
     std::sort(_add_items.begin(), _add_items.end(),
               [](const std::tuple<Geo::Geometry *, size_t, size_t> &a, const std::tuple<Geo::Geometry *, size_t, size_t> &b)
-              { return std::get<1>(a) > std::get<1>(b) || std::get<2>(a) > std::get<2>(b); });
+              { return std::get<1>(a) > std::get<1>(b) || (std::get<1>(a) == std::get<1>(b) && std::get<2>(a) > std::get<2>(b)); });
     for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : _add_items)
     {
         removed.push_back(std::get<0>(item));
@@ -119,7 +119,7 @@ void ObjectCommand::undo(Graph *graph)
     }
     std::sort(_remove_items.begin(), _remove_items.end(),
               [](const std::tuple<Geo::Geometry *, size_t, size_t> &a, const std::tuple<Geo::Geometry *, size_t, size_t> &b)
-              { return std::get<1>(a) < std::get<1>(b) || std::get<2>(a) < std::get<2>(b); });
+              { return std::get<1>(a) < std::get<1>(b) || (std::get<1>(a) == std::get<1>(b) && std::get<2>(a) < std::get<2>(b)); });
     for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : _remove_items)
     {
         appended.push_back(std::get<0>(item));

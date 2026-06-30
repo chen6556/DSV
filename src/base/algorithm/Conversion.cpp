@@ -183,7 +183,7 @@ Geo::Polyline Geo::arc_to_polyline(const Geo::Point &center, const double radius
                                    const double down_sampling_value)
 {
     const double v = std::asin(1 / radius);
-    const double step = std::isnan(v) ? Geo::PI / 32 : std::min(v, Geo::PI / 32);
+    const double step = std::isnan(v) ? Geo::PI / 32 : std::max(std::min(v, Geo::PI / 32), Geo::PI / 4096);
     std::vector<Geo::Point> points;
     if (is_cw)
     {
@@ -345,7 +345,7 @@ Geo::Polygon Geo::ellipse_to_polygon(const double x, const double y, const doubl
                                      const double down_sampling_value)
 {
     const double v = std::asin(1 / std::max(a, b));
-    const double step = std::isnan(v) ? Geo::PI / 32 : std::min(v, Geo::PI / 32);
+    const double step = std::isnan(v) ? Geo::PI / 32 : std::max(std::min(v, Geo::PI / 32), Geo::PI / 4096);
     double degree = 0;
     std::vector<Geo::Point> points;
     while (degree < Geo::PI * 2)
@@ -379,7 +379,7 @@ Geo::Polyline Geo::ellipse_to_polyline(const double x, const double y, const dou
                                        const double start_angle, double end_angle, const double down_sampling_value)
 {
     const double v = std::asin(1 / std::max(a, b));
-    const double step = std::isnan(v) ? Geo::PI / 32 : std::min(v, Geo::PI / 32);
+    const double step = std::isnan(v) ? Geo::PI / 32 : std::max(std::min(v, Geo::PI / 32), Geo::PI / 4096);
     double degree = start_angle;
     if (end_angle < degree)
     {

@@ -78,10 +78,10 @@ int Setting::exec()
 
 bool Setting::update_text_vbo() const
 {
-    return _text_size == ui->text_size->value();
+    return _text_size != ui->text_size->value();
 }
 
 bool Setting::update_curve_vbo() const
 {
-    return _down_sampling_value == ui->down_sampling->value();
+    return _down_sampling_value != ui->down_sampling->value();
 }

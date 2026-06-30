@@ -188,14 +188,14 @@ void PropertyWidget::init_bspline_widget()
                     ui->bspline_pointCount->setValue(_bspline->path_points.size());
                     ui->bspline_point->setRange(0, _bspline->path_points.size() - 1);
                     ui->bspline_pointX->setValue(_bspline->path_points[0].x);
-                    ui->bspline_pointX->setValue(_bspline->path_points[0].y);
+                    ui->bspline_pointY->setValue(_bspline->path_points[0].y);
                 }
                 else
                 {
                     ui->bspline_pointCount->setValue(_bspline->control_points.size());
                     ui->bspline_point->setRange(0, _bspline->control_points.size() - 1);
                     ui->bspline_pointX->setValue(_bspline->control_points[0].x);
-                    ui->bspline_pointX->setValue(_bspline->control_points[0].y);
+                    ui->bspline_pointY->setValue(_bspline->control_points[0].y);
                 }
                 ui->bspline_pointX->blockSignals(false);
                 ui->bspline_pointY->blockSignals(false);
