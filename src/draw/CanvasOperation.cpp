@@ -770,7 +770,7 @@ bool Circle1Operation::read_parameters(const double *params, const int count)
                     return false;
                 }
                 _parameters[2] = std::cos(Geo::degree_to_rad(params[1])) * params[0] + _parameters[0];
-                _parameters[3] = std::sin(Geo::degree_to_rad(params[1])) * params[0] + _parameters[0];
+                _parameters[3] = std::sin(Geo::degree_to_rad(params[1])) * params[0] + _parameters[1];
             }
             else
             {
@@ -939,8 +939,8 @@ bool Circle2Operation::read_parameters(const double *params, const int count)
                 {
                     return false;
                 }
-                _parameters[2] = _parameters[0] + std::cos(Geo::rad_to_degree(params[1])) * params[0];
-                _parameters[3] = _parameters[1] + std::sin(Geo::rad_to_degree(params[1])) * params[0];
+                _parameters[2] = _parameters[0] + std::cos(Geo::degree_to_rad(params[1])) * params[0];
+                _parameters[3] = _parameters[1] + std::sin(Geo::degree_to_rad(params[1])) * params[0];
             }
             else
             {
@@ -978,8 +978,8 @@ bool Circle2Operation::read_parameters(const double *params, const int count)
                 {
                     return false;
                 }
-                _parameters[4] = _parameters[2] + std::cos(Geo::rad_to_degree(params[1])) * params[0];
-                _parameters[5] = _parameters[3] + std::sin(Geo::rad_to_degree(params[1])) * params[0];
+                _parameters[4] = _parameters[2] + std::cos(Geo::degree_to_rad(params[1])) * params[0];
+                _parameters[5] = _parameters[3] + std::sin(Geo::degree_to_rad(params[1])) * params[0];
             }
             else
             {
@@ -1368,8 +1368,8 @@ bool Arc0Operation::read_parameters(const double *params, const int count)
                 {
                     return false;
                 }
-                _parameters[2] = _parameters[0] + std::cos(Geo::rad_to_degree(params[1])) * params[0];
-                _parameters[3] = _parameters[1] + std::sin(Geo::rad_to_degree(params[1])) * params[0];
+                _parameters[2] = _parameters[0] + std::cos(Geo::degree_to_rad(params[1])) * params[0];
+                _parameters[3] = _parameters[1] + std::sin(Geo::degree_to_rad(params[1])) * params[0];
             }
             else
             {
@@ -1407,8 +1407,8 @@ bool Arc0Operation::read_parameters(const double *params, const int count)
                 {
                     return false;
                 }
-                _parameters[4] = _parameters[2] + std::cos(Geo::rad_to_degree(params[1])) * params[0];
-                _parameters[5] = _parameters[3] + std::sin(Geo::rad_to_degree(params[1])) * params[0];
+                _parameters[4] = _parameters[2] + std::cos(Geo::degree_to_rad(params[1])) * params[0];
+                _parameters[5] = _parameters[3] + std::sin(Geo::degree_to_rad(params[1])) * params[0];
             }
             else
             {
@@ -1583,8 +1583,8 @@ bool Arc1Operation::read_parameters(const double *params, const int count)
                 {
                     return false;
                 }
-                _parameters[2] = _parameters[0] + std::cos(Geo::rad_to_degree(params[1])) * params[0];
-                _parameters[3] = _parameters[1] + std::sin(Geo::rad_to_degree(params[1])) * params[0];
+                _parameters[2] = _parameters[0] + std::cos(Geo::degree_to_rad(params[1])) * params[0];
+                _parameters[3] = _parameters[1] + std::sin(Geo::degree_to_rad(params[1])) * params[0];
             }
             else
             {
@@ -1742,8 +1742,8 @@ bool Arc2Operation::read_parameters(const double *params, const int count)
                 {
                     return false;
                 }
-                _parameters[2] = _parameters[0] + std::cos(Geo::rad_to_degree(params[1])) * params[0];
-                _parameters[3] = _parameters[1] + std::sin(Geo::rad_to_degree(params[1])) * params[0];
+                _parameters[2] = _parameters[0] + std::cos(Geo::degree_to_rad(params[1])) * params[0];
+                _parameters[3] = _parameters[1] + std::sin(Geo::degree_to_rad(params[1])) * params[0];
             }
             else
             {
@@ -1897,8 +1897,8 @@ bool Arc3Operation::read_parameters(const double *params, const int count)
                 {
                     return false;
                 }
-                _parameters[2] = _parameters[0] + std::cos(Geo::rad_to_degree(params[1])) * params[0];
-                _parameters[3] = _parameters[1] + std::sin(Geo::rad_to_degree(params[1])) * params[0];
+                _parameters[2] = _parameters[0] + std::cos(Geo::degree_to_rad(params[1])) * params[0];
+                _parameters[3] = _parameters[1] + std::sin(Geo::degree_to_rad(params[1])) * params[0];
             }
             else
             {
@@ -3849,8 +3849,8 @@ bool FreeFilletOperation::mouse_press(QMouseEvent *event)
         }
         else
         {
-            if (Canvas::canvas->editor().fillet(_object0, _object1, _points.front(), Geo::Point(_pos[0], _pos[1]), _points.back(),
-                                                _tvalues))
+            if (_points.size() > 1 && Canvas::canvas->editor().fillet(_object0, _object1, _points.front(), Geo::Point(_pos[0], _pos[1]),
+                                                                      _points.back(), _tvalues))
             {
                 std::set<Geo::Type> types;
                 types.insert(Geo::Type::BEZIER);
@@ -5181,6 +5181,10 @@ bool ArcDimOperation::mouse_press(QMouseEvent *event)
                                                    circle->radius);
                             _points[0].x = circle->x, _points[0].y = circle->y;
                         }
+                        else
+                        {
+                            return false;
+                        }
                     }
                     else
                     {
@@ -5205,6 +5209,10 @@ bool ArcDimOperation::mouse_press(QMouseEvent *event)
                             _dim = new Dim::DimArc(_points[0], center, _points[1], Geo::distance(center, pos), _points[0], _points[1],
                                                    arc->radius);
                             _points[0] = center;
+                        }
+                        else
+                        {
+                            return false;
                         }
                     }
                     else
@@ -5301,6 +5309,7 @@ bool OrdinateDimOperation::mouse_press(QMouseEvent *event)
         {
             const Geo::Point pos(real_pos[0], real_pos[1]);
             _dim = new Dim::DimOrdinate(pos, pos);
+            current_dimension = _dim;
             dim_lines.clear();
             dim_arrows.clear();
         }
@@ -5368,8 +5377,11 @@ bool PointsSpiralStepOperation::mouse_press(QMouseEvent *event)
         case 2:
             _end.x = real_pos[0];
             _end.y = real_pos[1];
-            shape.clear();
-            _index = 3;
+            if (Geo::distance(_center, _start) < Geo::distance(_center, _end))
+            {
+                shape.clear();
+                _index = 3;
+            }
             break;
         default:
             break;
@@ -5428,7 +5440,7 @@ bool PointsSpiralStepOperation::read_parameters(const double *params, const int 
         }
         break;
     case 1:
-        if (count >= 1)
+        if (count >= 1 && params[0] > 0)
         {
             _start.x = _center.x + params[0];
             _start.y = _center.y;
@@ -5436,7 +5448,7 @@ bool PointsSpiralStepOperation::read_parameters(const double *params, const int 
         }
         break;
     case 2:
-        if (count >= 1 && params[0] > 0)
+        if (count >= 1 && params[0] > _start.x - _center.x)
         {
             _end.x = _center.x + params[0];
             _end.y = _center.y;
@@ -5444,15 +5456,15 @@ bool PointsSpiralStepOperation::read_parameters(const double *params, const int 
         }
         break;
     case 3:
-        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        if (count >= 3 && params[1] >= 1 && params[2] > 0)
         {
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const double step = params[2];
             _index = 0;
             std::vector<Geo::Geometry *> points;
-            for (const Geo::Point &point : Geo::archimedean_spiral_points(_center,
-                Geo::distance(_center, _start), Geo::distance(_center, _end), step, turns, clockwise))
+            for (const Geo::Point &point : Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start),
+                                                                          Geo::distance(_center, _end), step, turns, clockwise))
             {
                 points.push_back(new Geo::Point(point));
             }
@@ -5510,8 +5522,11 @@ bool PolylineSpiralStepOperation::mouse_press(QMouseEvent *event)
         case 2:
             _end.x = real_pos[0];
             _end.y = real_pos[1];
-            shape.clear();
-            _index = 3;
+            if (Geo::distance(_center, _start) < Geo::distance(_center, _end))
+            {
+                shape.clear();
+                _index = 3;
+            }
             break;
         default:
             break;
@@ -5570,7 +5585,7 @@ bool PolylineSpiralStepOperation::read_parameters(const double *params, const in
         }
         break;
     case 1:
-        if (count >= 1)
+        if (count >= 1 && params[0] > 0)
         {
             _start.x = _center.x + params[0];
             _start.y = _center.y;
@@ -5578,7 +5593,7 @@ bool PolylineSpiralStepOperation::read_parameters(const double *params, const in
         }
         break;
     case 2:
-        if (count >= 1 && params[0] > 0)
+        if (count >= 1 && params[0] > _start.x - _center.x)
         {
             _end.x = _center.x + params[0];
             _end.y = _center.y;
@@ -5586,14 +5601,14 @@ bool PolylineSpiralStepOperation::read_parameters(const double *params, const in
         }
         break;
     case 3:
-        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        if (count >= 3 && params[1] >= 1 && params[2] > 0)
         {
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const double step = params[2];
             _index = 0;
-            std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center,
-                Geo::distance(_center, _start), Geo::distance(_center, _end), step, turns, clockwise));
+            std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start),
+                                                                          Geo::distance(_center, _end), step, turns, clockwise));
             Canvas::canvas->add_geometry(new Geo::Polyline(points.begin(), points.end()));
             tool[0] = Tool::Select;
             info.clear();
@@ -5708,7 +5723,7 @@ bool BezierSpiralStepOperation::read_parameters(const double *params, const int 
         }
         break;
     case 1:
-        if (count >= 1)
+        if (count >= 1 && params[0] > 0)
         {
             _start.x = _center.x + params[0];
             _start.y = _center.y;
@@ -5716,7 +5731,7 @@ bool BezierSpiralStepOperation::read_parameters(const double *params, const int 
         }
         break;
     case 2:
-        if (count >= 1 && params[0] > 0)
+        if (count >= 1 && params[0] > _start.x - _center.x)
         {
             _end.x = _center.x + params[0];
             _end.y = _center.y;
@@ -5724,14 +5739,14 @@ bool BezierSpiralStepOperation::read_parameters(const double *params, const int 
         }
         break;
     case 3:
-        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        if (count >= 3 && params[1] >= 1 && params[2] > 0)
         {
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const double step = params[2];
             _index = 0;
-            std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center,
-                Geo::distance(_center, _start), Geo::distance(_center, _end), step, turns, clockwise));
+            std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start),
+                                                                          Geo::distance(_center, _end), step, turns, clockwise));
             std::vector<Geo::Point> controls(Geo::archimedean_spiral_bezier(points));
             Canvas::canvas->add_geometry(new Geo::CubicBezier(controls.begin(), controls.end(), false));
             tool[0] = Tool::Select;
@@ -5787,8 +5802,11 @@ bool BSplineSpiralStepOperation::mouse_press(QMouseEvent *event)
         case 2:
             _end.x = real_pos[0];
             _end.y = real_pos[1];
-            shape.clear();
-            _index = 3;
+            if (Geo::distance(_center, _start) < Geo::distance(_center, _end))
+            {
+                shape.clear();
+                _index = 3;
+            }
             break;
         default:
             break;
@@ -5847,7 +5865,7 @@ bool BSplineSpiralStepOperation::read_parameters(const double *params, const int
         }
         break;
     case 1:
-        if (count >= 1)
+        if (count >= 1 && params[0] > 0)
         {
             _start.x = _center.x + params[0];
             _start.y = _center.y;
@@ -5855,7 +5873,7 @@ bool BSplineSpiralStepOperation::read_parameters(const double *params, const int
         }
         break;
     case 2:
-        if (count >= 1 && params[0] > 0)
+        if (count >= 1 && params[0] > _start.x - _center.x)
         {
             _end.x = _center.x + params[0];
             _end.y = _center.y;
@@ -5863,14 +5881,14 @@ bool BSplineSpiralStepOperation::read_parameters(const double *params, const int
         }
         break;
     case 3:
-        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        if (count >= 3 && params[1] >= 1 && params[2] > 0)
         {
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const double step = params[2];
             _index = 0;
-            std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center,
-                Geo::distance(_center, _start), Geo::distance(_center, _end), step, turns, clockwise));
+            std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start),
+                                                                          Geo::distance(_center, _end), step, turns, clockwise));
             Canvas::canvas->add_geometry(new Geo::CubicBSpline(points.begin(), points.end(), true));
             tool[0] = Tool::Select;
             info.clear();
@@ -5985,7 +6003,7 @@ bool PointsSpiralNOperation::read_parameters(const double *params, const int cou
         }
         break;
     case 1:
-        if (count >= 1)
+        if (count >= 1 && params[0] > 0)
         {
             _start.x = _center.x + params[0];
             _start.y = _center.y;
@@ -5993,7 +6011,7 @@ bool PointsSpiralNOperation::read_parameters(const double *params, const int cou
         }
         break;
     case 2:
-        if (count >= 1 && params[0] > 0)
+        if (count >= 1 && params[0] > _start.x - _center.x)
         {
             _end.x = _center.x + params[0];
             _end.y = _center.y;
@@ -6001,15 +6019,15 @@ bool PointsSpiralNOperation::read_parameters(const double *params, const int cou
         }
         break;
     case 3:
-        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        if (count >= 3 && params[1] >= 1 && params[2] >= 1)
         {
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const size_t n = params[2];
             _index = 0;
             std::vector<Geo::Geometry *> points;
-            for (const Geo::Point &point : Geo::archimedean_spiral_points(_center,
-                Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise))
+            for (const Geo::Point &point :
+                 Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise))
             {
                 points.push_back(new Geo::Point(point));
             }
@@ -6067,8 +6085,11 @@ bool PolylineSpiralNOperation::mouse_press(QMouseEvent *event)
         case 2:
             _end.x = real_pos[0];
             _end.y = real_pos[1];
-            shape.clear();
-            _index = 3;
+            if (Geo::distance(_center, _start) < Geo::distance(_center, _end))
+            {
+                shape.clear();
+                _index = 3;
+            }
             break;
         default:
             break;
@@ -6127,7 +6148,7 @@ bool PolylineSpiralNOperation::read_parameters(const double *params, const int c
         }
         break;
     case 1:
-        if (count >= 1)
+        if (count >= 1 && params[0] > 0)
         {
             _start.x = _center.x + params[0];
             _start.y = _center.y;
@@ -6135,7 +6156,7 @@ bool PolylineSpiralNOperation::read_parameters(const double *params, const int c
         }
         break;
     case 2:
-        if (count >= 1 && params[0] > 0)
+        if (count >= 1 && params[0] > _start.x - _center.x)
         {
             _end.x = _center.x + params[0];
             _end.y = _center.y;
@@ -6143,14 +6164,14 @@ bool PolylineSpiralNOperation::read_parameters(const double *params, const int c
         }
         break;
     case 3:
-        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        if (count >= 3 && params[1] >= 1 && params[2] >= 1)
         {
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const size_t n = params[2];
             _index = 0;
-            std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center,
-                Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise));
+            std::vector<Geo::Point> points(
+                Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise));
             Canvas::canvas->add_geometry(new Geo::Polyline(points.begin(), points.end()));
             tool[0] = Tool::Select;
             info.clear();
@@ -6205,8 +6226,11 @@ bool BezierSpiralNOperation::mouse_press(QMouseEvent *event)
         case 2:
             _end.x = real_pos[0];
             _end.y = real_pos[1];
-            shape.clear();
-            _index = 3;
+            if (Geo::distance(_center, _start) < Geo::distance(_center, _end))
+            {
+                shape.clear();
+                _index = 3;
+            }
             break;
         default:
             break;
@@ -6265,7 +6289,7 @@ bool BezierSpiralNOperation::read_parameters(const double *params, const int cou
         }
         break;
     case 1:
-        if (count >= 1)
+        if (count >= 1 && params[0] > 0)
         {
             _start.x = _center.x + params[0];
             _start.y = _center.y;
@@ -6273,7 +6297,7 @@ bool BezierSpiralNOperation::read_parameters(const double *params, const int cou
         }
         break;
     case 2:
-        if (count >= 1 && params[0] > 0)
+        if (count >= 1 && params[0] > _start.x - _center.x)
         {
             _end.x = _center.x + params[0];
             _end.y = _center.y;
@@ -6281,14 +6305,14 @@ bool BezierSpiralNOperation::read_parameters(const double *params, const int cou
         }
         break;
     case 3:
-        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        if (count >= 3 && params[1] >= 1 && params[2] >= 1)
         {
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const size_t n = params[2];
             _index = 0;
-            std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center,
-                Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise));
+            std::vector<Geo::Point> points(
+                Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise));
             std::vector<Geo::Point> controls(Geo::archimedean_spiral_bezier(points));
             Canvas::canvas->add_geometry(new Geo::CubicBezier(controls.begin(), controls.end(), false));
             tool[0] = Tool::Select;
@@ -6344,8 +6368,11 @@ bool BSplineSpiralNOperation::mouse_press(QMouseEvent *event)
         case 2:
             _end.x = real_pos[0];
             _end.y = real_pos[1];
-            shape.clear();
-            _index = 3;
+            if (Geo::distance(_center, _start) < Geo::distance(_center, _end))
+            {
+                shape.clear();
+                _index = 3;
+            }
             break;
         default:
             break;
@@ -6404,7 +6431,7 @@ bool BSplineSpiralNOperation::read_parameters(const double *params, const int co
         }
         break;
     case 1:
-        if (count >= 1)
+        if (count >= 1 && params[0] > 0)
         {
             _start.x = _center.x + params[0];
             _start.y = _center.y;
@@ -6412,7 +6439,7 @@ bool BSplineSpiralNOperation::read_parameters(const double *params, const int co
         }
         break;
     case 2:
-        if (count >= 1 && params[0] > 0)
+        if (count >= 1 && params[0] > _start.x - _center.x)
         {
             _end.x = _center.x + params[0];
             _end.y = _center.y;
@@ -6420,14 +6447,14 @@ bool BSplineSpiralNOperation::read_parameters(const double *params, const int co
         }
         break;
     case 3:
-        if (count >= 3 && params[1] > 0 && params[2] > 0)
+        if (count >= 3 && params[1] >= 1 && params[2] >= 1)
         {
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const size_t n = params[2];
             _index = 0;
-            std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center,
-                Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise));
+            std::vector<Geo::Point> points(
+                Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise));
             Canvas::canvas->add_geometry(new Geo::CubicBSpline(points.begin(), points.end(), true));
             tool[0] = Tool::Select;
             info.clear();
