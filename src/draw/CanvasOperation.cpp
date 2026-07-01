@@ -5121,7 +5121,7 @@ bool ArcDimOperation::mouse_press(QMouseEvent *event)
                 case Geo::Type::CIRCLE:
                     {
                         const Geo::Circle *circle = static_cast<const Geo::Circle *>(clicked_object);
-                        if (Geo::Point temp[2]; Geo::is_intersected(pos, _points[1], *circle, temp[0], temp[1], true))
+                        if (Geo::Point temp[2]; Geo::is_intersected(pos, *circle, *circle, temp[0], temp[1], true))
                         {
                             if (Geo::distance(temp[0], pos) < Geo::distance(temp[1], pos))
                             {
@@ -5137,7 +5137,7 @@ bool ArcDimOperation::mouse_press(QMouseEvent *event)
                 case Geo::Type::ARC:
                     {
                         const Geo::Arc *arc = static_cast<const Geo::Arc *>(clicked_object);
-                        if (Geo::Point temp[2]; Geo::is_intersected(pos, _points[1], *arc, temp[0], temp[1], true))
+                        if (Geo::Point temp[2]; Geo::is_intersected(pos, Geo::Point(arc->x, arc->y), *arc, temp[0], temp[1], true))
                         {
                             if (Geo::distance(temp[0], pos) < Geo::distance(temp[1], pos))
                             {
@@ -5167,7 +5167,7 @@ bool ArcDimOperation::mouse_press(QMouseEvent *event)
                     if (clicked_object == _object)
                     {
                         const Geo::Circle *circle = static_cast<const Geo::Circle *>(clicked_object);
-                        if (Geo::Point temp[2]; Geo::is_intersected(pos, _points[3], *circle, temp[0], temp[1], true))
+                        if (Geo::Point temp[2]; Geo::is_intersected(pos, *circle, *circle, temp[0], temp[1], true))
                         {
                             if (Geo::distance(temp[0], pos) < Geo::distance(temp[1], pos))
                             {
@@ -5195,7 +5195,7 @@ bool ArcDimOperation::mouse_press(QMouseEvent *event)
                     if (clicked_object == _object)
                     {
                         const Geo::Arc *arc = static_cast<const Geo::Arc *>(clicked_object);
-                        if (Geo::Point temp[2]; Geo::is_intersected(pos, _points[3], *arc, temp[0], temp[1], true))
+                        if (Geo::Point temp[2]; Geo::is_intersected(pos, Geo::Point(arc->x, arc->y), *arc, temp[0], temp[1], true))
                         {
                             if (Geo::distance(temp[0], pos) < Geo::distance(temp[1], pos))
                             {
