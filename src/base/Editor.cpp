@@ -9348,7 +9348,7 @@ void Editor::auto_combinate()
                         }
                         break;
                     case Geo::Type::BSPLINE:
-                        if (Geo::is_intersected(static_cast<Geo::CubicBezier *>(all_polylines[k])->shape(),
+                        if (Geo::is_intersected(static_cast<Geo::BSpline *>(all_polylines[k])->shape(),
                                                 *static_cast<Geo::Ellipse *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);

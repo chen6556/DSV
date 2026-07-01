@@ -3178,6 +3178,8 @@ void BSpline::clear()
     _shape.clear();
     control_points.clear();
     path_points.clear();
+    _knots.clear();
+    _path_values.clear();
 }
 
 void BSpline::transform(const double a, const double b, const double c, const double d, const double e, const double f)

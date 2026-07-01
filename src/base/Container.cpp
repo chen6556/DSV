@@ -448,6 +448,8 @@ ContainerGroup *ContainerGroup::clone() const
 
     ContainerGroup *g = new ContainerGroup(containers.cbegin(), containers.cend());
     g->name = name;
+    g->_ratio = _ratio;
+    g->_visible = _visible;
     return g;
 }
 
