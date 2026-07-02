@@ -515,7 +515,7 @@ Geo::CubicBezier Geo::bspline_to_bezier(const Geo::BSpline &bspline)
             if (j = std::count(temp.knots().begin(), temp.knots().end(), temp.knots()[i]); j < 4)
             {
                 const double t = temp.knots()[i];
-                while (j++ <= 4)
+                while (++j <= 4)
                 {
                     temp.insert(t);
                 }
@@ -531,7 +531,7 @@ Geo::CubicBezier Geo::bspline_to_bezier(const Geo::BSpline &bspline)
             if (j = std::count(temp.knots().begin(), temp.knots().end(), temp.knots()[i]); j < 3)
             {
                 const double t = temp.knots()[i];
-                while (j++ <= 3)
+                while (++j <= 3)
                 {
                     temp.insert(t);
                 }
