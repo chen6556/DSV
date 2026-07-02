@@ -2789,6 +2789,7 @@ bool Geo::polygon_circle_union(const Polygon &polygon, const Circle &circle, std
                 points0[i - 1].value = -1;
                 points1.back().value = 1;
             }
+            [[fallthrough]];
         case 1:
             points0.insert(points0.begin() + i++, MarkedPoint(point0.x, point0.y, false));
             points1.emplace_back(point0.x, point0.y, false);
