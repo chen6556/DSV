@@ -2624,6 +2624,7 @@ bool Editor::shape_intersection(Geo::Geometry *shape0, Geo::Geometry *shape1)
             _view_tree.remove(group.pop(index1));
             index0 = index1;
         }
+        _view_tree.append(result);
 
         if (index0 == group.size())
         {
@@ -3055,6 +3056,7 @@ bool Editor::shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1)
             _view_tree.remove(group.pop(index1));
             index0 = index1;
         }
+        _view_tree.append(result);
 
         if (index0 == group.size())
         {
