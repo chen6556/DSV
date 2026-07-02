@@ -2704,6 +2704,8 @@ void Ellipse::clear()
     _a[1].clear();
     _b[0].clear();
     _b[1].clear();
+    _arc_angle[0] = _arc_angle[1] = 0;
+    _arc_param[0] = _arc_param[1] = 0;
 }
 
 Ellipse *Ellipse::clone() const
@@ -4720,6 +4722,7 @@ bool Arc::empty() const
 
 void Arc::clear()
 {
+    _shape.clear();
     x = y = radius = 0;
     control_points[0].x = control_points[1].x = control_points[2].x = 0;
     control_points[0].y = control_points[1].y = control_points[2].y = 0;
