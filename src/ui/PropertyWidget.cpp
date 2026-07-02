@@ -627,7 +627,7 @@ void PropertyWidget::read(Geo::BSpline *bspline)
     {
         ui->bspline_pointCount->setValue(bspline->path_points.size());
         ui->bspline_point->setValue(0);
-        ui->bspline_point->setRange(0, bspline->path_points.size());
+        ui->bspline_point->setRange(0, bspline->path_points.size() - 1);
         ui->bspline_pointX->setValue(bspline->path_points[0].x);
         ui->bspline_pointY->setValue(bspline->path_points[0].y);
     }
