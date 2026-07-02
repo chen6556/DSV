@@ -188,7 +188,7 @@ private:
         bool show_origin = true;
         bool show_catched_points = false;
     } _bool_flags;
-    double _select_rect[12] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+    double _select_rect[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
     QPointF _mouse_pos_0, _mouse_pos_1;
     std::vector<Geo::Point> _points_cache;
