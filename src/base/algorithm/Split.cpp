@@ -416,6 +416,7 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const Point &pos, B
                 }
             } while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
+            t = v;
             step = 1e-3, lower = std::max(knots[0], t - 0.1), upper = std::min(knots[nplusc - 1], t + 0.1);
             min_dis[0] = min_dis[1] = DBL_MAX;
             std::vector<double> stored_t;
