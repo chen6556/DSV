@@ -5349,7 +5349,6 @@ void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
     }
 
     // 在anchor左侧(认为从head到tail指向右)的点距离记为负值
-    std::vector<double> distance_to_anchor;
     dis0 = DBL_MAX;
     double dis1 = DBL_MAX;
     Geo::Point point0, point1; // 要插入的两个点
@@ -5687,7 +5686,6 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
     }
 
     // 在anchor左侧(认为从head到tail指向右)的点距离记为负值
-    std::vector<double> distance_to_anchor;
     dis0 = DBL_MAX;
     double dis1 = DBL_MAX;
     Geo::Point point0, point1; // 要插入的两个点
@@ -7797,7 +7795,7 @@ void Editor::extend(Geo::BSpline *bspline, const double x, const double y)
                 bspline2 != bspline && Geo::is_intersected(bspline2->bounding_rect(), head, tail))
             {
                 if (std::vector<Geo::Point> points;
-                    Geo::is_intersected(head, tail, *bspline, dynamic_cast<const Geo::CubicBSpline *>(bspline2), points))
+                    Geo::is_intersected(head, tail, *bspline2, dynamic_cast<const Geo::CubicBSpline *>(bspline2), points))
                 {
                     for (const Geo::Point &point : points)
                     {

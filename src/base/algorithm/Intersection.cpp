@@ -2476,7 +2476,7 @@ int Geo::is_intersected(const Arc &arc, const BSpline &bspline, const bool is_cu
             auto it =
                 std::find_if(temp_tvalues.begin(), temp_tvalues.end(), [&](const std::tuple<double, double, double> &item)
                              { return std::get<1>(item) == temp_intersections[i].x && std::get<2>(item) == temp_intersections[i].y; });
-            while (it != tvalues->end())
+            while (it != temp_tvalues.end())
             {
                 temp_tvalues.erase(it);
                 it = std::find_if(temp_tvalues.begin(), temp_tvalues.end(), [&](const std::tuple<double, double, double> &item)
@@ -3583,13 +3583,15 @@ bool Geo::find_intersections(const Geo::Polyline &polyline, const Geo::Circle &c
         switch (Geo::is_intersected(polyline[i - 1], polyline[i], circle, point0, point1, false))
         {
         case 2:
-            if (Geo::distance(pos, point1) <= distance)
+            if (Geo::distance(pos, point1) <= distance &&
+                std::find(intersections.begin(), intersections.end(), point1) == intersections.end())
             {
                 intersections.emplace_back(point1);
             }
             [[fallthrough]];
         case 1:
-            if (Geo::distance(pos, point0) <= distance)
+            if (Geo::distance(pos, point0) <= distance &&
+                std::find(intersections.begin(), intersections.end(), point0) == intersections.end())
             {
                 intersections.emplace_back(point0);
             }
@@ -3620,13 +3622,15 @@ bool Geo::find_intersections(const Geo::Polyline &polyline, const Geo::Ellipse &
         switch (Geo::is_intersected(polyline[i - 1], polyline[i], ellipse, point0, point1, true))
         {
         case 2:
-            if (Geo::distance(pos, point1) <= distance)
+            if (Geo::distance(pos, point1) <= distance &&
+                std::find(intersections.begin(), intersections.end(), point1) == intersections.end())
             {
                 intersections.emplace_back(point1);
             }
             [[fallthrough]];
         case 1:
-            if (Geo::distance(pos, point0) <= distance)
+            if (Geo::distance(pos, point0) <= distance &&
+                std::find(intersections.begin(), intersections.end(), point0) == intersections.end())
             {
                 intersections.emplace_back(point0);
             }
@@ -3777,8 +3781,11 @@ bool Geo::find_intersections(const Geo::Ellipse &ellipse0, const Geo::Ellipse &e
     {
         auto [x, y] = Math::solve_ellipse_ellipse_intersection(param, point.x, point.y);
         point.x = x, point.y = y;
+        if (std::find(intersections.begin(), intersections.end(), point) == intersections.end())
+        {
+            intersections.emplace_back(x, y);
+        }
     }
-    intersections.insert(intersections.end(), points.begin(), points.end());
     return true;
 }
 
@@ -4303,6 +4310,7 @@ bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *
         case Geo::Type::CIRCLE:
             {
                 Geo::Point points[2];
+                const size_t count = intersections.size();
                 switch (Geo::is_intersected(*static_cast<const Geo::Circle *>(object1), *static_cast<const Geo::Arc *>(object0), points[0],
                                             points[1]))
                 {
@@ -4319,7 +4327,7 @@ bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *
                     {
                         intersections.emplace_back(points[0]);
                     }
-                    return true;
+                    return intersections.size() > count;
                 default:
                     return false;
                 }
@@ -4327,6 +4335,7 @@ bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *
         case Geo::Type::ELLIPSE:
             {
                 Geo::Point points[4];
+                const size_t count = intersections.size();
                 switch (Geo::is_intersected(*static_cast<const Geo::Ellipse *>(object1), *static_cast<const Geo::Arc *>(object0), points[0],
                                             points[1], points[2], points[3]))
                 {
@@ -4357,7 +4366,7 @@ bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *
                     {
                         intersections.emplace_back(points[0]);
                     }
-                    return true;
+                    return intersections.size() > count;
                 default:
                     return false;
                 }
@@ -4404,6 +4413,7 @@ bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *
         case Geo::Type::ARC:
             {
                 Geo::Point points[2];
+                const size_t count = intersections.size();
                 switch (Geo::is_intersected(*static_cast<const Geo::Arc *>(object0), *static_cast<const Geo::Arc *>(object1), points[0],
                                             points[1]))
                 {
@@ -4420,7 +4430,7 @@ bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *
                     {
                         intersections.emplace_back(points[0]);
                     }
-                    return true;
+                    return intersections.size() > count;
                 default:
                     return false;
                 }

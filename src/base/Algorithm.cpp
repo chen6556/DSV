@@ -157,7 +157,7 @@ bool Geo::is_Rectangle(const Polygon &polygon)
             }
         }
     }
-    if (polygon.size() != 5)
+    if (points.size() != 5)
     {
         return false;
     }

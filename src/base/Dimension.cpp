@@ -1,4 +1,3 @@
-#include <QDebug>
 #include "Dimension.hpp"
 #include "Algorithm.hpp"
 
@@ -101,7 +100,6 @@ void DimAligned::set_height(const double height)
     vec.normalize();
     vec *= _height;
     this->label = (this->anchor[0] + this->anchor[1]) / 2 + vec;
-    qDebug() << this->label.x << ',' << this->label.y;
 }
 
 Type DimAligned::dim_type() const
@@ -196,7 +194,6 @@ void DimAligned::set_anchor(const int index, const double x, const double y)
     vec.normalize();
     vec *= _height;
     this->label = (this->anchor[0] + this->anchor[1]) / 2 + vec;
-    qDebug() << this->label.x << ',' << this->label.y;
 }
 
 void DimAligned::paintable_lines(std::vector<double> &data) const

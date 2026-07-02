@@ -538,10 +538,10 @@ Geo::CubicBezier Geo::bspline_to_bezier(const Geo::BSpline &bspline)
             }
         }
         controls.emplace_back(temp.control_points.front());
-        for (size_t i = 2, count = temp.control_points.size(); i < count; i += 2)
+        for (size_t i = 2, count = temp.control_points.size(); i < count; i += 3)
         {
-            controls.emplace_back((temp.control_points[i - 1] * 3 + temp.control_points[i - 2]) / 4);
-            controls.emplace_back((temp.control_points[i] + temp.control_points[i - 1]) / 2);
+            controls.emplace_back((temp.control_points[i - 2] + temp.control_points[i - 1] * 2 ) / 3);
+            controls.emplace_back((temp.control_points[i - 1] * 2 + temp.control_points[i]) / 3);
             controls.emplace_back(temp.control_points[i]);
         }
     }

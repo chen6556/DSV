@@ -8,10 +8,20 @@ bool Geo::tangency_point(const Point &point, const Circle &circle, Point &output
     {
         return false;
     }
-    const Geo::Point point1(-100,
-                            (std::pow(circle.radius, 2) - (point.x - circle.x) * (-100 - circle.x)) / (point.y - circle.y) + circle.y);
-    const Geo::Point point2(100, (std::pow(circle.radius, 2) - (point.x - circle.x) * (100 - circle.x)) / (point.y - circle.y) + circle.y);
-    return Geo::is_intersected(point1, point2, circle, output0, output1, true);
+    if (point.y == circle.y)
+    {
+        const Geo::Point point1(std::pow(circle.radius, 2) / (point.x - circle.x) + circle.x, -100);
+        const Geo::Point point2(std::pow(circle.radius, 2) / (point.x - circle.x) + circle.x, 100);
+        return Geo::is_intersected(point1, point2, circle, output0, output1, true);
+    }
+    else
+    {
+        const Geo::Point point1(-100,
+                                (std::pow(circle.radius, 2) - (point.x - circle.x) * (-100 - circle.x)) / (point.y - circle.y) + circle.y);
+        const Geo::Point point2(100,
+                                (std::pow(circle.radius, 2) - (point.x - circle.x) * (100 - circle.x)) / (point.y - circle.y) + circle.y);
+        return Geo::is_intersected(point1, point2, circle, output0, output1, true);
+    }
 }
 
 bool Geo::tangency_point(const Point &point, const Ellipse &ellipse, Point &output0, Point &output1)

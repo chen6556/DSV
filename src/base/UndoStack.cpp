@@ -57,20 +57,10 @@ ObjectCommand::ObjectCommand(const std::vector<std::tuple<Geo::Geometry *, size_
     if (add)
     {
         _add_items.assign(objects.begin(), objects.end());
-        std::vector<Geo::Geometry *> items;
-        for (const auto &item : _add_items)
-        {
-            items.push_back(std::get<0>(item));
-        }
     }
     else
     {
         _remove_items.assign(objects.begin(), objects.end());
-        std::vector<Geo::Geometry *> items;
-        for (const auto &item : _remove_items)
-        {
-            items.push_back(std::get<0>(item));
-        }
     }
 }
 
