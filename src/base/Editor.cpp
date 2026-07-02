@@ -2362,10 +2362,21 @@ bool Editor::shape_union(Geo::Geometry *shape0, Geo::Geometry *shape1)
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
         size_t index0 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape0));
         size_t index1 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape1));
-        remove_items.emplace_back(shape0, _current_group, index0);
-        remove_items.emplace_back(shape1, _current_group, index1);
-        _view_tree.remove(group.pop(index1));
-        _view_tree.remove(group.pop(index0));
+        if (index0 < index1)
+        {
+            remove_items.emplace_back(shape0, _current_group, index0);
+            remove_items.emplace_back(shape1, _current_group, index1);
+            _view_tree.remove(group.pop(index1));
+            _view_tree.remove(group.pop(index0));
+        }
+        else
+        {
+            remove_items.emplace_back(shape1, _current_group, index1);
+            remove_items.emplace_back(shape0, _current_group, index0);
+            _view_tree.remove(group.pop(index0));
+            _view_tree.remove(group.pop(index1));
+            index0 = index1;
+        }
         _view_tree.append(result);
 
         if (index0 == group.size())
@@ -2574,11 +2585,21 @@ bool Editor::shape_intersection(Geo::Geometry *shape0, Geo::Geometry *shape1)
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
         size_t index0 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape0));
         size_t index1 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape1));
-        remove_items.emplace_back(shape0, _current_group, index0);
-        remove_items.emplace_back(shape1, _current_group, index1);
-        _view_tree.remove(group.pop(index1));
-        _view_tree.remove(group.pop(index0));
-        _view_tree.append(result);
+        if (index0 < index1)
+        {
+            remove_items.emplace_back(shape0, _current_group, index0);
+            remove_items.emplace_back(shape1, _current_group, index1);
+            _view_tree.remove(group.pop(index1));
+            _view_tree.remove(group.pop(index0));
+        }
+        else
+        {
+            remove_items.emplace_back(shape1, _current_group, index1);
+            remove_items.emplace_back(shape0, _current_group, index0);
+            _view_tree.remove(group.pop(index0));
+            _view_tree.remove(group.pop(index1));
+            index0 = index1;
+        }
 
         if (index0 == group.size())
         {
@@ -2995,11 +3016,21 @@ bool Editor::shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1)
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
         size_t index0 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape0));
         size_t index1 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape1));
-        remove_items.emplace_back(shape0, _current_group, index0);
-        remove_items.emplace_back(shape1, _current_group, index1);
-        _view_tree.remove(group.pop(index1));
-        _view_tree.remove(group.pop(index0));
-        _view_tree.append(result);
+        if (index0 < index1)
+        {
+            remove_items.emplace_back(shape0, _current_group, index0);
+            remove_items.emplace_back(shape1, _current_group, index1);
+            _view_tree.remove(group.pop(index1));
+            _view_tree.remove(group.pop(index0));
+        }
+        else
+        {
+            remove_items.emplace_back(shape1, _current_group, index1);
+            remove_items.emplace_back(shape0, _current_group, index0);
+            _view_tree.remove(group.pop(index0));
+            _view_tree.remove(group.pop(index1));
+            index0 = index1;
+        }
 
         if (index0 == group.size())
         {
