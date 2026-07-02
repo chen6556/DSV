@@ -27,7 +27,7 @@ void CMDWidget::init()
     ui->cmd->installEventFilter(this);
 
     _cmd_list << QString() << "ALL" << "ANGLE" << "ANGLEDIMENSION" << "ARRAY" << "ALIGNEDDIMENSION"
-              << "ARCDIMENSION" << "BEZIER" << "BSPLINE" << "BLEND"
+              << "ARCDIMENSION" << "BEZIER" << "BSPLINE" << "BLEND" << "ABSOLUTE" << "RELATIVE"
               << "CCIRCLE" << "CHAMFER" << "CLOSE" << "COMBINATE" << "CONNECT" << "COPY"
               << "CPOLYGON" << "CUT" << "DCIRCLE" << "DELETE" << "DETACH" << "DIAMETERDIMENSION" << "DIFFERENCE"
               << "DIVIDEPARTSN" << "DIVIDEPOINTSN" << "DIVIDEPARTSMEASURE" << "DIVIDEPOINTSMEASURE"
