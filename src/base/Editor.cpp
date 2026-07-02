@@ -868,6 +868,30 @@ void Editor::push_backup_command(UndoStack::Command *command)
     return _backup.push_command(command);
 }
 
+void Editor::moved_objects(const std::vector<Geo::Geometry *> &objects, const double dx, const double dy)
+{
+    _view_tree.update(objects);
+    if (this->edited_shape.empty() || objects.size() > 1)
+    {
+        _backup.push_command(new UndoStack::TranslateCommand(objects, dx, dy));
+    }
+    else
+    {
+        if (objects.front()->type() == Geo::Type::BSPLINE)
+        {
+            _backup.push_command(new UndoStack::ChangeShapeCommand(static_cast<Geo::BSpline *>(objects.front()), this->edited_shape,
+                                                                   this->edited_path, this->edited_knots));
+            this->edited_path.clear();
+            this->edited_knots.clear();
+        }
+        else
+        {
+            _backup.push_command(new UndoStack::ChangeShapeCommand(objects.front(), this->edited_shape));
+        }
+        this->edited_shape.clear();
+    }
+}
+
 
 void Editor::remove_group(const size_t index)
 {

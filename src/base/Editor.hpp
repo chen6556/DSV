@@ -83,6 +83,8 @@ public:
 
     void push_backup_command(UndoStack::Command *command);
 
+    void moved_objects(const std::vector<Geo::Geometry *> &objects, const double dx, const double dy);
+
     // Layer Operation
     void remove_group(const size_t index);
 

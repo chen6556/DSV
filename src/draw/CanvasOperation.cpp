@@ -380,29 +380,7 @@ bool MoveOperation::mouse_release(QMouseEvent *event)
             {
                 return false;
             }
-
-            if (Canvas::canvas->editor().edited_shape.empty())
-            {
-                Canvas::canvas->editor().push_backup_command(
-                    new UndoStack::TranslateCommand(selected_objects, release_pos[0] - press_pos[0], release_pos[1] - press_pos[1]));
-            }
-            else
-            {
-                if (selected_objects.front()->type() == Geo::Type::BSPLINE)
-                {
-                    Canvas::canvas->editor().push_backup_command(new UndoStack::ChangeShapeCommand(
-                        static_cast<Geo::BSpline *>(selected_objects.front()), Canvas::canvas->editor().edited_shape,
-                        Canvas::canvas->editor().edited_path, Canvas::canvas->editor().edited_knots));
-                    Canvas::canvas->editor().edited_path.clear();
-                    Canvas::canvas->editor().edited_knots.clear();
-                }
-                else
-                {
-                    Canvas::canvas->editor().push_backup_command(
-                        new UndoStack::ChangeShapeCommand(selected_objects.front(), Canvas::canvas->editor().edited_shape));
-                }
-                Canvas::canvas->editor().edited_shape.clear();
-            }
+            Canvas::canvas->editor().moved_objects(selected_objects, release_pos[0] - press_pos[0], release_pos[1] - press_pos[1]);
         }
     }
     return false;
