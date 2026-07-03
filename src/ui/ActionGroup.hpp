@@ -20,6 +20,8 @@ public:
         TrimMenu,
         FlipMenu,
         MirrorMenu,
+        CombinationMenu,
+        BooleanMenu,
         DividePointsMenu,
         DividePartsMenu,
         AlignedDimensionMenu,
@@ -41,6 +43,8 @@ private:
     QMenu *_flip_menu = nullptr;
     QMenu *_fillet_menu = nullptr;
     QMenu *_mirror_menu = nullptr;
+    QMenu *_combination_menu = nullptr;
+    QMenu *_boolean_menu = nullptr;
     QMenu *_divide_points_menu = nullptr;
     QMenu *_divide_parts_menu = nullptr;
     QMenu *_length_dimension_menu = nullptr;
@@ -73,6 +77,10 @@ private:
     void init_fillet_menu();
 
     void init_mirror_menu();
+
+    void init_combination_menu();
+
+    void init_boolean_menu();
 
     void init_divide_points_menu();
 

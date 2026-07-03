@@ -116,18 +116,11 @@ void MainWindow::connect_btn_to_cmd()
 
     connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Text_CMD); });
     connect(ui->close_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Close_CMD); });
-    connect(ui->combinate_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Combinate_CMD); });
-    connect(ui->detach_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Detach_CMD); });
 
     connect(ui->split_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Split_CMD); });
     connect(ui->rotate_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Rotate_CMD); });
     connect(ui->scale_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Scale_CMD); });
     connect(ui->offset_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Offset_CMD); });
-
-    connect(ui->intersection_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Intersection_CMD); });
-    connect(ui->union_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Union_CMD); });
-    connect(ui->xor_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::XOR_CMD); });
-    connect(ui->difference_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Difference_CMD); });
 
     connect(ui->line_array_btn, &QPushButton::clicked,
             [this]()
@@ -977,6 +970,38 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
             break;
         case 1: // reverse
             ui->cmd_widget->work(CMDWidget::CMD::Reverse_CMD);
+            break;
+        default:
+            break;
+        }
+        break;
+    case ActionGroup::MenuType::CombinationMenu:
+        switch (index)
+        {
+        case 0: // Combinate
+            ui->cmd_widget->work(CMDWidget::CMD::Combinate_CMD);
+            break;
+        case 1: // Detach
+            ui->cmd_widget->work(CMDWidget::CMD::Detach_CMD);
+            break;
+        default:
+            break;
+        }
+        break;
+    case ActionGroup::MenuType::BooleanMenu:
+        switch (index)
+        {
+        case 0: // Intersection
+            ui->cmd_widget->work(CMDWidget::CMD::Intersection_CMD);
+            break;
+        case 1: // Union
+            ui->cmd_widget->work(CMDWidget::CMD::Union_CMD);
+            break;
+        case 2: // XOR
+            ui->cmd_widget->work(CMDWidget::CMD::XOR_CMD);
+            break;
+        case 3: // Difference
+            ui->cmd_widget->work(CMDWidget::CMD::Difference_CMD);
             break;
         default:
             break;

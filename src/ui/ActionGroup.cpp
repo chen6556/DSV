@@ -19,6 +19,8 @@ void ActionGroup::init()
     init_flip_menu();
     init_fillet_menu();
     init_mirror_menu();
+    init_combination_menu();
+    init_boolean_menu();
     init_divide_points_menu();
     init_divide_parts_menu();
     init_length_dimension_menu();
@@ -260,6 +262,54 @@ void ActionGroup::init_mirror_menu()
 
     QAction *reverse = new QAction(QIcon(":/icons/reverse_btn.png"), "Reverse", ui->mirror_btn);
     _mirror_menu->addAction(reverse);
+}
+
+void ActionGroup::init_combination_menu()
+{
+    _combination_menu = new QMenu(ui->combinate_btn);
+    _combination_menu->connect(_combination_menu, &QMenu::triggered,
+                               [this](QAction *action)
+                               {
+                                  _callback(MenuType::CombinationMenu, _combination_menu->actions().indexOf(action));
+                                  ui->combinate_btn->setIcon(action->icon());
+                                  ui->combinate_btn->setToolTip(action->text());
+                                  ui->combinate_btn->setDefaultAction(action);
+                               });
+    ui->combinate_btn->setMenu(_combination_menu);
+
+    QAction *combinate = new QAction(QIcon(":/icons/combinate_btn.png"), "Combinate", ui->combinate_btn);
+    _combination_menu->addAction(combinate);
+    ui->combinate_btn->setDefaultAction(combinate);
+
+    QAction *detach = new QAction(QIcon(":/icons/detach_btn.png"), "Detach", ui->combinate_btn);
+    _combination_menu->addAction(detach);
+}
+
+void ActionGroup::init_boolean_menu()
+{
+    _boolean_menu = new QMenu(ui->boolean_btn);
+    _boolean_menu->connect(_boolean_menu, &QMenu::triggered,
+                           [this](QAction *action)
+                           {
+                               _callback(MenuType::BooleanMenu, _boolean_menu->actions().indexOf(action));
+                               ui->boolean_btn->setIcon(action->icon());
+                               ui->boolean_btn->setToolTip(action->text());
+                               ui->boolean_btn->setDefaultAction(action);
+                           });
+    ui->boolean_btn->setMenu(_boolean_menu);
+
+    QAction *intersection = new QAction(QIcon(":/icons/boolean/intersection_btn.png"), "Intersection", ui->boolean_btn);
+    _boolean_menu->addAction(intersection);
+    ui->boolean_btn->setDefaultAction(intersection);
+
+    QAction *union_action = new QAction(QIcon(":/icons/boolean/union_btn.png"), "Union", ui->boolean_btn);
+    _boolean_menu->addAction(union_action);
+
+    QAction *xor_action = new QAction(QIcon(":/icons/boolean/xor_btn.png"), "Xor", ui->boolean_btn);
+    _boolean_menu->addAction(xor_action);
+
+    QAction *difference = new QAction(QIcon(":/icons/boolean/difference_btn.png"), "Difference", ui->boolean_btn);
+    _boolean_menu->addAction(difference);
 }
 
 void ActionGroup::init_divide_points_menu()
