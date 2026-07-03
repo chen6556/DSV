@@ -51,7 +51,6 @@ void MainWindow::init()
     connect_btn_to_cmd();
     connect(&_clock, &QTimer::timeout, this, &MainWindow::auto_save);
 
-    connect(ui->auto_aligning, &QAction::triggered, [this]() { GlobalSetting::setting().auto_aligning = ui->auto_aligning->isChecked(); });
     connect(ui->actionadvanced, &QAction::triggered, _setting, &Setting::exec);
     connect(ui->show_origin, &QAction::triggered,
             [this]() { ui->show_origin->isChecked() ? ui->canvas->show_origin() : ui->canvas->hide_origin(); });
@@ -317,6 +316,11 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 
 void MainWindow::dropEvent(QDropEvent *event)
 {
+    if (ui->canvas->editor().graph()->modified &&
+        MessageBox::question(this, "File is modified", "Save or not?") == QDialogButtonBox::StandardButton::Yes)
+    {
+        save_file();
+    }
     const QString suffixs = "dsv DSV plt PLT cut CUT dxf DXF nc NC";
     QFileInfo file_info(event->mimeData()->urls().front().toLocalFile());
     if (file_info.isFile() && suffixs.contains(file_info.suffix()))
@@ -586,8 +590,6 @@ void MainWindow::load_settings()
     ui->auto_save->setChecked(GlobalSetting::setting().auto_save);
     ui->auto_layering->setChecked(GlobalSetting::setting().auto_layering);
     ui->auto_combinate->setChecked(GlobalSetting::setting().auto_combinate);
-    ui->auto_connect->setChecked(GlobalSetting::setting().auto_connect);
-    ui->auto_aligning->setChecked(GlobalSetting::setting().auto_aligning);
     ui->remember_file_type->setChecked(GlobalSetting::setting().remember_file_type);
     ui->show_cmdline->setChecked(GlobalSetting::setting().show_cmdline);
     ui->show_cmdline->isChecked() ? ui->cmd_widget->show() : ui->cmd_widget->hide();
@@ -616,8 +618,6 @@ void MainWindow::save_settings()
     GlobalSetting::setting().auto_save = ui->auto_save->isChecked();
     GlobalSetting::setting().auto_layering = ui->auto_layering->isChecked();
     GlobalSetting::setting().auto_combinate = ui->auto_combinate->isChecked();
-    GlobalSetting::setting().auto_connect = ui->auto_connect->isChecked();
-    GlobalSetting::setting().auto_aligning = ui->auto_aligning->isChecked();
     GlobalSetting::setting().remember_file_type = ui->remember_file_type->isChecked();
     GlobalSetting::setting().show_cmdline = ui->show_cmdline->isChecked();
     GlobalSetting::setting().show_origin = ui->show_origin->isChecked();
@@ -748,10 +748,6 @@ void MainWindow::open_file(const QString &path)
     }
 
     ui->canvas->editor().load_graph(g, path);
-    if (ui->auto_connect->isChecked())
-    {
-        ui->canvas->editor().auto_connect();
-    }
     if (ui->auto_layering->isChecked())
     {
         ui->canvas->editor().auto_layering();
@@ -809,10 +805,6 @@ void MainWindow::append_file(const QString &path)
     Graph *graph = ui->canvas->editor().graph();
     graph->modified = true;
     ui->canvas->editor().load_graph(g);
-    if (ui->auto_connect->isChecked())
-    {
-        ui->canvas->editor().auto_connect();
-    }
     if (ui->auto_layering->isChecked())
     {
         ui->canvas->editor().auto_layering();

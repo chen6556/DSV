@@ -2037,9 +2037,7 @@ QScrollArea
     <addaction name="show_cmdline"/>
     <addaction name="auto_layering"/>
     <addaction name="auto_combinate"/>
-    <addaction name="auto_connect"/>
     <addaction name="remember_file_type"/>
-    <addaction name="auto_aligning"/>
     <addaction name="actionadvanced"/>
    </widget>
    <widget class="QMenu" name="menuCursorCatch">
@@ -2188,14 +2186,6 @@ QComboBox QAbstractItemView::indicator:unchecked
     <string>Remeber file type</string>
    </property>
   </action>
-  <action name="auto_aligning">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Auto align</string>
-   </property>
-  </action>
   <action name="actionadvanced">
    <property name="text">
     <string>Advanced Settings</string>
@@ -2225,17 +2215,6 @@ QComboBox QAbstractItemView::indicator:unchecked
   <action name="append_file">
    <property name="text">
     <string>Append</string>
-   </property>
-  </action>
-  <action name="auto_connect">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="text">
-    <string>Auto connect</string>
    </property>
   </action>
   <action name="actionVertex">

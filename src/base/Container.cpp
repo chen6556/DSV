@@ -440,7 +440,7 @@ void ContainerGroup::hide()
 
 ContainerGroup *ContainerGroup::clone() const
 {
-    std::vector<Geo::Geometry *> containers(_containers.size());
+    std::vector<Geo::Geometry *> containers;
     for (const Geo::Geometry *geo : _containers)
     {
         containers.push_back(geo->clone());
@@ -448,6 +448,8 @@ ContainerGroup *ContainerGroup::clone() const
 
     ContainerGroup *g = new ContainerGroup(containers.cbegin(), containers.cend());
     g->name = name;
+    g->_ratio = _ratio;
+    g->_visible = _visible;
     return g;
 }
 
@@ -1072,6 +1074,7 @@ void Combination::transfer(Combination &combination)
 Combination &Combination::operator=(const Combination &combination)
 {
     ContainerGroup::operator=(combination);
+    _border = combination._border;
     return *this;
 }
 

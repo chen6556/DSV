@@ -123,14 +123,12 @@ void Math::solve(const double *mat, const size_t n, const double *b, double *out
     std::move(mat, mat + n * n, a);
     gsl_matrix_view aa = gsl_matrix_view_array(a, n, n);
     gsl_vector_const_view bb = gsl_vector_const_view_array(b, n);
-    gsl_matrix *aa2 = gsl_matrix_alloc(n, n);
     int sign = n % 2 == 0 ? 1 : -1;
     gsl_permutation *p = gsl_permutation_alloc(n);
     gsl_linalg_LU_decomp(&aa.matrix, p, &sign);
     gsl_vector_view x = gsl_vector_view_array(output, n);
     gsl_linalg_LU_solve(&aa.matrix, p, &bb.vector, &x.vector);
     gsl_permutation_free(p);
-    gsl_matrix_free(aa2);
     delete[] a;
 }
 

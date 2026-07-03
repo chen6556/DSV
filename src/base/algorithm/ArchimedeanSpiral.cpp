@@ -99,17 +99,20 @@ std::vector<Geo::Point> Geo::archimedean_spiral_bezier(const std::vector<Geo::Po
 {
     std::vector<Geo::Point> points;
     points.emplace_back(path.front());
-    Geo::Point mid0((path[1] + path[2]) / 2), mid1((path[0] + path[1]) / 2);
-    points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 3);
-    for (size_t i = 1, count = path.size() - 1; i < count; ++i)
+    if (path.size() > 2)
     {
-        mid0 = mid1;
-        mid1 = (path[i] + path[i + 1]) / 2;
-        points.emplace_back(path[i] + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) / 3);
-        points.emplace_back(path[i]);
-        points.emplace_back(path[i] + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 3);
+        Geo::Point mid0((path[1] + path[2]) / 2), mid1((path[0] + path[1]) / 2);
+        points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 3);
+        for (size_t i = 1, count = path.size() - 1; i < count; ++i)
+        {
+            mid0 = mid1;
+            mid1 = (path[i] + path[i + 1]) / 2;
+            points.emplace_back(path[i] + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) / 3);
+            points.emplace_back(path[i]);
+            points.emplace_back(path[i] + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 3);
+        }
+        points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 3);
     }
-    points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 3);
     points.emplace_back(path.back());
     return points;
 }

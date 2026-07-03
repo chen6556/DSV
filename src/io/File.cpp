@@ -70,7 +70,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     switch (item->type())
                     {
                     case Geo::Type::TEXT:
-                        text = static_cast<const Text *>(geo);
+                        text = static_cast<const Text *>(item);
                         output << "PU" << text->anchor().x * x_ratio << ',' << text->anchor().y * y_ratio << ";PD";
                         output << ";LB" << QString(text->text()).remove(';').toStdString() << ';' << '\n';
                         text = nullptr;
@@ -116,7 +116,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                         output << "PU" << polyline->front().x * x_ratio << ',' << polyline->front().y * y_ratio << ";PD";
                         for (const Geo::Point &point : *polyline)
                         {
-                            output << point.x * y_ratio << ',' << point.y * y_ratio << ',';
+                            output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                         }
                         output.seekp(-1, std::ios::cur);
                         output << ';' << '\n';

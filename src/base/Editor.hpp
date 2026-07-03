@@ -83,6 +83,8 @@ public:
 
     void push_backup_command(UndoStack::Command *command);
 
+    void moved_objects(const std::vector<Geo::Geometry *> &objects, const double dx, const double dy);
+
     // Layer Operation
     void remove_group(const size_t index);
 
@@ -209,22 +211,9 @@ public:
     void reverse(const std::vector<Geo::Geometry *> &objects);
 
 
-    bool auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines);
-
-    bool auto_aligning(Geo::Point &coord, const Geo::Geometry *dst, std::list<QLineF> &reflines);
-
-    bool auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, const bool current_group_only = true);
-
-    bool auto_aligning(Geo::Geometry *points, const double x, const double y, std::list<QLineF> &reflines,
-                       const bool current_group_only = true);
-
-    bool auto_aligning(Geo::Point &coord, std::list<QLineF> &reflines, const bool current_group_only = true);
-
     void auto_combinate();
 
     void auto_layering();
-
-    void auto_connect();
 
 
     void text_to_polylines(Text *text);
@@ -232,8 +221,4 @@ public:
     void bezier_to_bspline(Geo::CubicBezier *bezier);
 
     void bspline_to_bezier(Geo::BSpline *bspline);
-
-private:
-    static void select_subfunc(const Geo::AABBRect &rect, const std::vector<Geo::Geometry *> *objects, const size_t start, const size_t end,
-                               std::vector<Geo::Geometry *> *result);
 };

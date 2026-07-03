@@ -153,7 +153,7 @@ int Geo::closest_point(const Ellipse &ellipse, const Point &point, std::vector<P
                         output.emplace_back(ellipse.arc_point0());
                         return 1;
                     }
-                    else if (Geo::distance(point, ellipse.arc_point0()) < Geo::distance(point, ellipse.arc_point1()))
+                    else if (Geo::distance(point, ellipse.arc_point0()) > Geo::distance(point, ellipse.arc_point1()))
                     {
                         output.emplace_back(ellipse.arc_point1());
                         return 1;
@@ -168,7 +168,7 @@ int Geo::closest_point(const Ellipse &ellipse, const Point &point, std::vector<P
             }
             else if (mask[2] || mask[3]) // 椭圆弧经过b轴端点
             {
-                if (ellipse.lengthb(), std::min(Geo::distance(point, ellipse.arc_point0()), Geo::distance(point, ellipse.arc_point1())))
+                if (ellipse.lengthb() < std::min(Geo::distance(point, ellipse.arc_point0()), Geo::distance(point, ellipse.arc_point1())))
                 {
                     output.emplace_back(mask[2] ? ellipse.b0() : ellipse.b1());
                     return 1;
@@ -180,7 +180,7 @@ int Geo::closest_point(const Ellipse &ellipse, const Point &point, std::vector<P
                         output.emplace_back(ellipse.arc_point0());
                         return 1;
                     }
-                    else if (Geo::distance(point, ellipse.arc_point0()) < Geo::distance(point, ellipse.arc_point1()))
+                    else if (Geo::distance(point, ellipse.arc_point0()) > Geo::distance(point, ellipse.arc_point1()))
                     {
                         output.emplace_back(ellipse.arc_point1());
                         return 1;
@@ -581,6 +581,7 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
             }
         } while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
+        t = v;
         step = 1e-3, lower = std::max(knots[0], t - 0.1), upper = std::min(knots[nplusc - 1], t + 0.1);
         min_dis[0] = min_dis[1] = DBL_MAX;
         std::vector<double> stored_t;
@@ -663,13 +664,13 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
         }
 
         std::vector<double> nbasis;
-        Geo::BSpline::rbasis(is_cubic ? 3 : 2, v, npts, knots, nbasis);
+        Geo::BSpline::rbasis(is_cubic ? 3 : 2, t, npts, knots, nbasis);
         Geo::Point coord;
         for (size_t i = 0; i < npts; ++i)
         {
             coord += bspline.control_points[i] * nbasis[i];
         }
-        result.emplace_back(std::min(min_dis[0], min_dis[1]), v, coord);
+        result.emplace_back(std::min(min_dis[0], min_dis[1]), t, coord);
     }
 
     std::sort(result.begin(), result.end(), [](const auto &a, const auto &b) { return std::get<0>(a) < std::get<0>(b); });

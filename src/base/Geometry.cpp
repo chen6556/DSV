@@ -961,7 +961,7 @@ void AABBRect::set_height(const double value)
 {
     const double d = (value - height()) / 2;
     _points[0].y = _points[1].y = _points[4].y = _points[0].y + d;
-    _points[2].x = _points[3].x = _points[2].x + d;
+    _points[2].y = _points[3].y = _points[2].y + d;
 }
 
 void AABBRect::transform(const double a, const double b, const double c, const double d, const double e, const double f)
@@ -1913,7 +1913,7 @@ AABBRectParams Triangle::aabbrect_params() const
 {
     AABBRectParams params;
     params.left = params.right = _vecs[0].x;
-    params.bottom = params.top = _vecs[1].y;
+    params.bottom = params.top = _vecs[0].y;
     for (int i = 1; i < 3; ++i)
     {
         params.left = std::min(params.left, _vecs[i].x);
@@ -2704,6 +2704,8 @@ void Ellipse::clear()
     _a[1].clear();
     _b[0].clear();
     _b[1].clear();
+    _arc_angle[0] = _arc_angle[1] = 0;
+    _arc_param[0] = _arc_param[1] = 0;
 }
 
 Ellipse *Ellipse::clone() const
@@ -2929,7 +2931,7 @@ void Ellipse::reset_parameter(const Geo::Point &a0, const Geo::Point &a1, const 
 void Ellipse::reset_parameter(const double parameters[10])
 {
     _a[0].x = parameters[0], _a[0].y = parameters[1];
-    _a[1].y = parameters[2], _a[1].y = parameters[3];
+    _a[1].x = parameters[2], _a[1].y = parameters[3];
     _b[0].x = parameters[4], _b[0].y = parameters[5];
     _b[1].x = parameters[6], _b[1].y = parameters[7];
     _arc_angle[0] = parameters[8], _arc_angle[1] = parameters[9];
@@ -3178,6 +3180,8 @@ void BSpline::clear()
     _shape.clear();
     control_points.clear();
     path_points.clear();
+    _knots.clear();
+    _path_values.clear();
 }
 
 void BSpline::transform(const double a, const double b, const double c, const double d, const double e, const double f)
@@ -4341,7 +4345,7 @@ Geo::Point CubicBSpline::tangent(const double t) const
     }
     const size_t npts = control_points.size() - 1;
     std::vector<double> nbasis;
-    const std::vector<double> knots(_knots.begin() + 1, _knots.end() - 1); // 二阶导数的节点矢量
+    const std::vector<double> knots(_knots.begin() + 1, _knots.end() - 1); // 导数的节点矢量
     rbasis(2, t, npts, knots, nbasis);
     std::vector<Geo::Point> points;
     for (size_t i = 0; i < npts; ++i)
@@ -4443,7 +4447,7 @@ Geo::Point CubicBSpline::derivative(const double t, const int n) const
     }
     const size_t npts = control_points.size() - n;
     std::vector<double> nbasis;
-    const std::vector<double> knots(_knots.begin() + n, _knots.end() - n); // 二阶导数的节点矢量
+    const std::vector<double> knots(_knots.begin() + n, _knots.end() - n); // 导数的节点矢量
     rbasis(3 - n, t, npts, knots, nbasis);
     std::vector<Geo::Point> points;
     for (size_t i = 0; i < npts; ++i)
@@ -4718,6 +4722,7 @@ bool Arc::empty() const
 
 void Arc::clear()
 {
+    _shape.clear();
     x = y = radius = 0;
     control_points[0].x = control_points[1].x = control_points[2].x = 0;
     control_points[0].y = control_points[1].y = control_points[2].y = 0;

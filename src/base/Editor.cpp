@@ -720,48 +720,169 @@ std::vector<Geo::Geometry *> Editor::select(const Geo::AABBRect &rect, const boo
         objects.assign(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end());
     }
 
-    if (const size_t count = objects.size(); count < 2000)
+    for (Geo::Geometry *container : objects)
     {
-        select_subfunc(rect, &objects, 0, count, &result);
-    }
-    else if (count < 4000)
-    {
-        std::vector<Geo::Geometry *> temp0, temp1;
-        const size_t step = count / 2;
-        std::thread thread0(&Editor::select_subfunc, rect, &objects, 0, step, &temp0);
-        std::thread thread1(&Editor::select_subfunc, rect, &objects, step, count, &temp1);
-        thread0.join();
-        thread1.join();
-        result.insert(result.end(), temp0.begin(), temp0.end());
-        result.insert(result.end(), temp1.begin(), temp1.end());
-    }
-    else if (count < 6000)
-    {
-        std::vector<Geo::Geometry *> temp[3];
-        const size_t step = count / 3;
-        std::thread threads[3] = {std::thread(&Editor::select_subfunc, rect, &objects, 0, step, &temp[0]),
-                                  std::thread(&Editor::select_subfunc, rect, &objects, step, step * 2, &temp[1]),
-                                  std::thread(&Editor::select_subfunc, rect, &objects, step * 2, count, &temp[2])};
-        for (int i = 0; i < 3; ++i)
+        if (container->is_selected)
         {
-            threads[i].join();
-            result.insert(result.end(), temp[i].begin(), temp[i].end());
+            result.push_back(container);
+            continue;
+        }
+        switch (container->type())
+        {
+        case Geo::Type::TEXT:
+            if (const Text *text = static_cast<const Text *>(container);
+                Geo::is_intersected(rect, text->shape(0), text->shape(1), text->shape(2), text->shape(3)))
+            {
+                container->is_selected = true;
+                result.push_back(container);
+            }
+            break;
+        case Geo::Type::POLYGON:
+            if (Geo::is_intersected(rect, *static_cast<Geo::Polygon *>(container)))
+            {
+                container->is_selected = true;
+                result.push_back(container);
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            if (Geo::is_intersected(rect, *static_cast<Geo::Circle *>(container)))
+            {
+                container->is_selected = true;
+                result.push_back(container);
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            if (Geo::is_intersected(rect, *static_cast<Geo::Ellipse *>(container)))
+            {
+                container->is_selected = true;
+                result.push_back(container);
+            }
+            break;
+        case Geo::Type::COMBINATION:
+            if (Geo::is_intersected(rect, static_cast<Combination *>(container)->border(), true))
+            {
+                bool end = false;
+                for (Geo::Geometry *item : *static_cast<Combination *>(container))
+                {
+                    switch (item->type())
+                    {
+                    case Geo::Type::TEXT:
+                        if (const Text *text = static_cast<const Text *>(item);
+                            Geo::is_intersected(rect, text->shape(0), text->shape(1), text->shape(2), text->shape(3)))
+                        {
+                            end = true;
+                        }
+                        break;
+                    case Geo::Type::POLYGON:
+                        if (Geo::is_intersected(rect, *static_cast<Geo::Polygon *>(item)))
+                        {
+                            end = true;
+                        }
+                        break;
+                    case Geo::Type::CIRCLE:
+                        if (Geo::is_intersected(rect, *static_cast<Geo::Circle *>(item)))
+                        {
+                            end = true;
+                        }
+                        break;
+                    case Geo::Type::ELLIPSE:
+                        if (Geo::is_intersected(rect, *static_cast<Geo::Ellipse *>(item)))
+                        {
+                            end = true;
+                        }
+                        break;
+                    case Geo::Type::POLYLINE:
+                        if (Geo::is_intersected(rect, *static_cast<Geo::Polyline *>(item)))
+                        {
+                            end = true;
+                        }
+                        break;
+                    case Geo::Type::BEZIER:
+                        if (Geo::is_intersected(rect, static_cast<Geo::CubicBezier *>(item)->shape()))
+                        {
+                            end = true;
+                        }
+                        break;
+                    case Geo::Type::BSPLINE:
+                        if (Geo::is_intersected(rect, static_cast<Geo::BSpline *>(item)->shape()))
+                        {
+                            end = true;
+                        }
+                        break;
+                    case Geo::Type::ARC:
+                        if (Geo::is_intersected(rect, *static_cast<Geo::Arc *>(item)))
+                        {
+                            end = true;
+                        }
+                        break;
+                    case Geo::Type::POINT:
+                        if (Geo::is_inside(*static_cast<Geo::Point *>(item), rect, true))
+                        {
+                            end = true;
+                        }
+                        break;
+                    default:
+                        break;
+                    }
+                    if (end)
+                    {
+                        break;
+                    }
+                }
+                if (end)
+                {
+                    container->is_selected = true;
+                    result.push_back(container);
+                }
+            }
+            break;
+        case Geo::Type::POLYLINE:
+            if (Geo::is_intersected(rect, *static_cast<Geo::Polyline *>(container)))
+            {
+                container->is_selected = true;
+                result.push_back(container);
+            }
+            break;
+        case Geo::Type::BEZIER:
+            if (Geo::is_intersected(rect, static_cast<Geo::CubicBezier *>(container)->shape()))
+            {
+                container->is_selected = true;
+                result.push_back(container);
+            }
+            break;
+        case Geo::Type::BSPLINE:
+            if (Geo::is_intersected(rect, static_cast<Geo::BSpline *>(container)->shape()))
+            {
+                container->is_selected = true;
+                result.push_back(container);
+            }
+            break;
+        case Geo::Type::ARC:
+            if (Geo::is_intersected(rect, *static_cast<Geo::Arc *>(container)))
+            {
+                container->is_selected = true;
+                result.push_back(container);
+            }
+            break;
+        case Geo::Type::POINT:
+            if (Geo::is_inside(*static_cast<Geo::Point *>(container), rect, true))
+            {
+                container->is_selected = true;
+                result.push_back(container);
+            }
+            break;
+        case Geo::Type::DIMENSION:
+            if (static_cast<const Dim::Dimension *>(container)->select(rect))
+            {
+                container->is_selected = true;
+                result.push_back(container);
+            }
+            break;
+        default:
+            break;
         }
     }
-    else
-    {
-        std::vector<Geo::Geometry *> temp[4];
-        const size_t step = count / 4;
-        std::thread threads[4] = {std::thread(&Editor::select_subfunc, rect, &objects, 0, step, &temp[0]),
-                                  std::thread(&Editor::select_subfunc, rect, &objects, step, step * 2, &temp[1]),
-                                  std::thread(&Editor::select_subfunc, rect, &objects, step * 2, step * 3, &temp[2]),
-                                  std::thread(&Editor::select_subfunc, rect, &objects, step * 3, count, &temp[3])};
-        for (int i = 0; i < 4; ++i)
-        {
-            threads[i].join();
-            result.insert(result.end(), temp[i].begin(), temp[i].end());
-        }
-    }
+
     std::sort(result.begin(), result.end());
     return result;
 }
@@ -868,12 +989,40 @@ void Editor::push_backup_command(UndoStack::Command *command)
     return _backup.push_command(command);
 }
 
+void Editor::moved_objects(const std::vector<Geo::Geometry *> &objects, const double dx, const double dy)
+{
+    _view_tree.update(objects);
+    if (this->edited_shape.empty() || objects.size() > 1)
+    {
+        _backup.push_command(new UndoStack::TranslateCommand(objects, dx, dy));
+    }
+    else
+    {
+        if (objects.front()->type() == Geo::Type::BSPLINE)
+        {
+            _backup.push_command(new UndoStack::ChangeShapeCommand(static_cast<Geo::BSpline *>(objects.front()), this->edited_shape,
+                                                                   this->edited_path, this->edited_knots));
+            this->edited_path.clear();
+            this->edited_knots.clear();
+        }
+        else
+        {
+            _backup.push_command(new UndoStack::ChangeShapeCommand(objects.front(), this->edited_shape));
+        }
+        this->edited_shape.clear();
+    }
+}
+
 
 void Editor::remove_group(const size_t index)
 {
     assert(index < _graph->container_groups().size());
-    _backup.push_command(new UndoStack::GroupCommand(index, false, _graph->container_group(index)));
+    if (_current_group >= index && _current_group > 0)
+    {
+        _current_group--;
+    }
     _view_tree.remove(std::vector<Geo::Geometry *>(_graph->container_group(index).begin(), _graph->container_group(index).end()));
+    _backup.push_command(new UndoStack::GroupCommand(index, false, _graph->container_group(index)));
     _graph->remove_group(index);
 }
 
@@ -1541,7 +1690,7 @@ bool Editor::connect(const std::vector<Geo::Geometry *> &objects, const double c
         indexs.erase(indexs.begin());
     }
     std::sort(indexs.begin(), indexs.end(), std::greater<>());
-    std::vector<std::tuple<Geo::Geometry *, size_t>> items(indexs.size());
+    std::vector<std::tuple<Geo::Geometry *, size_t>> items;
     for (size_t i : indexs)
     {
         _view_tree.remove(group[i]);
@@ -2358,10 +2507,21 @@ bool Editor::shape_union(Geo::Geometry *shape0, Geo::Geometry *shape1)
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
         size_t index0 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape0));
         size_t index1 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape1));
-        remove_items.emplace_back(shape0, _current_group, index0);
-        remove_items.emplace_back(shape1, _current_group, index1);
-        _view_tree.remove(group.pop(index1));
-        _view_tree.remove(group.pop(index0));
+        if (index0 < index1)
+        {
+            remove_items.emplace_back(shape0, _current_group, index0);
+            remove_items.emplace_back(shape1, _current_group, index1);
+            _view_tree.remove(group.pop(index1));
+            _view_tree.remove(group.pop(index0));
+        }
+        else
+        {
+            remove_items.emplace_back(shape1, _current_group, index1);
+            remove_items.emplace_back(shape0, _current_group, index0);
+            _view_tree.remove(group.pop(index0));
+            _view_tree.remove(group.pop(index1));
+            index0 = index1;
+        }
         _view_tree.append(result);
 
         if (index0 == group.size())
@@ -2570,10 +2730,21 @@ bool Editor::shape_intersection(Geo::Geometry *shape0, Geo::Geometry *shape1)
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
         size_t index0 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape0));
         size_t index1 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape1));
-        remove_items.emplace_back(shape0, _current_group, index0);
-        remove_items.emplace_back(shape1, _current_group, index1);
-        _view_tree.remove(group.pop(index1));
-        _view_tree.remove(group.pop(index0));
+        if (index0 < index1)
+        {
+            remove_items.emplace_back(shape0, _current_group, index0);
+            remove_items.emplace_back(shape1, _current_group, index1);
+            _view_tree.remove(group.pop(index1));
+            _view_tree.remove(group.pop(index0));
+        }
+        else
+        {
+            remove_items.emplace_back(shape1, _current_group, index1);
+            remove_items.emplace_back(shape0, _current_group, index0);
+            _view_tree.remove(group.pop(index0));
+            _view_tree.remove(group.pop(index1));
+            index0 = index1;
+        }
         _view_tree.append(result);
 
         if (index0 == group.size())
@@ -2991,10 +3162,21 @@ bool Editor::shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1)
         std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
         size_t index0 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape0));
         size_t index1 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape1));
-        remove_items.emplace_back(shape0, _current_group, index0);
-        remove_items.emplace_back(shape1, _current_group, index1);
-        _view_tree.remove(group.pop(index1));
-        _view_tree.remove(group.pop(index0));
+        if (index0 < index1)
+        {
+            remove_items.emplace_back(shape0, _current_group, index0);
+            remove_items.emplace_back(shape1, _current_group, index1);
+            _view_tree.remove(group.pop(index1));
+            _view_tree.remove(group.pop(index0));
+        }
+        else
+        {
+            remove_items.emplace_back(shape1, _current_group, index1);
+            remove_items.emplace_back(shape0, _current_group, index0);
+            _view_tree.remove(group.pop(index0));
+            _view_tree.remove(group.pop(index1));
+            index0 = index1;
+        }
         _view_tree.append(result);
 
         if (index0 == group.size())
@@ -5059,6 +5241,14 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
                 {
                     for (Geo::Geometry *geo : group)
                     {
+                        if (geo->type() == Geo::Type::DIMENSION)
+                        {
+                            continue;
+                        }
+                        else
+                        {
+                            items.push_back(geo);
+                        }
                         {
                             const Geo::AABBRectParams rect = geo->aabbrect_params();
                             coord.x = (rect.left + rect.right) / 2;
@@ -5084,6 +5274,14 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
             {
                 for (Geo::Geometry *geo : _graph->container_group(_current_group))
                 {
+                    if (geo->type() == Geo::Type::DIMENSION)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        items.push_back(geo);
+                    }
                     {
                         const Geo::AABBRectParams rect = geo->aabbrect_params();
                         coord.x = (rect.left + rect.right) / 2;
@@ -5329,7 +5527,6 @@ void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
     }
 
     // 在anchor左侧(认为从head到tail指向右)的点距离记为负值
-    std::vector<double> distance_to_anchor;
     dis0 = DBL_MAX;
     double dis1 = DBL_MAX;
     Geo::Point point0, point1; // 要插入的两个点
@@ -5667,7 +5864,6 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
     }
 
     // 在anchor左侧(认为从head到tail指向右)的点距离记为负值
-    std::vector<double> distance_to_anchor;
     dis0 = DBL_MAX;
     double dis1 = DBL_MAX;
     Geo::Point point0, point1; // 要插入的两个点
@@ -5818,12 +6014,12 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == polygon)
                 {
                     Geo::Polyline *polyline = new Geo::Polyline(polygon->begin(), polygon->end());
-                    polyline->back() = point1;
+                    polyline->back() = point0;
                     std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(polygon);
                     _graph->container_group(_current_group).insert(i, polyline);
-                    _view_tree.remove(polyline);
+                    _view_tree.append(polyline);
                     add_items.emplace_back(polyline, _current_group, i);
                     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
                     break;
@@ -6634,7 +6830,7 @@ void Editor::trim(Geo::BSpline *bspline, const double x, const double y)
             {
                 Geo::QuadBSpline bspline_left(*static_cast<const Geo::QuadBSpline *>(bspline)),
                     bspline_right(*static_cast<const Geo::QuadBSpline *>(bspline));
-                Geo::split(*bspline, false, left_t, bspline_left, bspline_right);
+                Geo::split(*bspline, false, right_t, bspline_left, bspline_right);
                 result = new Geo::QuadBSpline(bspline_left);
             }
             std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
@@ -7666,7 +7862,7 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
         bezier->append(expoint);
     }
     bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
-    _view_tree.append(bezier);
+    _view_tree.update(bezier);
 }
 
 void Editor::extend(Geo::BSpline *bspline, const double x, const double y)
@@ -7777,7 +7973,7 @@ void Editor::extend(Geo::BSpline *bspline, const double x, const double y)
                 bspline2 != bspline && Geo::is_intersected(bspline2->bounding_rect(), head, tail))
             {
                 if (std::vector<Geo::Point> points;
-                    Geo::is_intersected(head, tail, *bspline, dynamic_cast<const Geo::CubicBSpline *>(bspline2), points))
+                    Geo::is_intersected(head, tail, *bspline2, dynamic_cast<const Geo::CubicBSpline *>(bspline2), points))
                 {
                     for (const Geo::Point &point : points)
                     {
@@ -7978,7 +8174,7 @@ bool Editor::divide_parts_n(const std::vector<Geo::Geometry *> &objects, const s
                 {
                     if (Geo::Arc *p = arc->range((i - 1) * 1.0 / n, i * 1.0 / n))
                     {
-                        add_items.emplace_back(p, _current_group, index);
+                        add_items.emplace_back(p, _current_group, group.size());
                         group.append(p);
                     }
                 }
@@ -8415,535 +8611,6 @@ void Editor::reverse(const std::vector<Geo::Geometry *> &objects)
 }
 
 
-bool Editor::auto_aligning(Geo::Geometry *src, const Geo::Geometry *dst, std::list<QLineF> &reflines)
-{
-    if (src == nullptr || dst == nullptr ||
-        !(src->type() == Geo::Type::POLYGON || src->type() == Geo::Type::CIRCLE || src->type() == Geo::Type::ELLIPSE) ||
-        !(dst->type() == Geo::Type::POLYGON || dst->type() == Geo::Type::CIRCLE || dst->type() == Geo::Type::ELLIPSE))
-    {
-        return false;
-    }
-
-    const Geo::AABBRectParams rect(src->aabbrect_params());
-    Geo::Point center((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2);
-    double left = rect.left, top = rect.top, right = rect.right, bottom = rect.bottom;
-
-    const size_t count = reflines.size();
-    const Geo::AABBRectParams dst_rect(dst->aabbrect_params());
-    const Geo::Point dst_center((dst_rect.left + dst_rect.right) / 2, (dst_rect.top + dst_rect.bottom) / 2);
-    const double dst_left = dst_rect.left, dst_top = dst_rect.top, dst_right = dst_rect.right, dst_bottom = dst_rect.bottom;
-    const double align_distance = 2.0 / _view_ratio;
-
-    if (std::abs(dst_left - center.x) < align_distance)
-    {
-        reflines.emplace_back(dst_left, std::max(top, dst_top), dst_left, std::min(bottom, dst_bottom));
-        src->translate(dst_left - center.x, 0);
-        left += (dst_left - center.x);
-        right += (dst_left - center.x);
-        center.x = dst_left;
-    }
-    if (std::abs(dst_center.x - center.x) < align_distance)
-    {
-        reflines.emplace_back(dst_center.x, std::max(top, dst_top), dst_center.x, std::min(bottom, dst_bottom));
-        src->translate(dst_center.x - center.x, 0);
-        left += (dst_center.x - center.x);
-        right += (dst_center.x - center.x);
-        center.x = dst_center.x;
-    }
-    if (std::abs(dst_right - center.x) < align_distance)
-    {
-        reflines.emplace_back(dst_right, std::max(top, dst_top), dst_right, std::min(bottom, dst_bottom));
-        src->translate(dst_right - center.x, 0);
-        left += (dst_right - center.x);
-        right += (dst_right - center.x);
-        center.x = dst_right;
-    }
-
-    if (std::abs(dst_top - center.y) < align_distance)
-    {
-        reflines.emplace_back(std::min(left, dst_left), dst_top, std::max(right, dst_right), dst_top);
-        src->translate(0, dst_top - center.y);
-        top += (dst_top - center.y);
-        bottom += (dst_top - center.y);
-        center.y = dst_top;
-    }
-    if (std::abs(dst_center.y - center.y) < align_distance)
-    {
-        reflines.emplace_back(std::min(left, dst_left), dst_center.y, std::max(right, dst_right), dst_center.y);
-        src->translate(0, dst_center.y - center.y);
-        top += (dst_center.y - center.y);
-        bottom += (dst_center.y - center.y);
-        center.y = dst_center.y;
-    }
-    if (std::abs(dst_bottom - center.y) < align_distance)
-    {
-        reflines.emplace_back(std::min(left, dst_left), dst_bottom, std::max(right, dst_right), dst_bottom);
-        src->translate(0, dst_bottom - center.y);
-        top += (dst_bottom - center.y);
-        bottom += (dst_bottom - center.y);
-        center.y = dst_bottom;
-    }
-
-    if (std::abs(dst_top - top) < align_distance)
-    {
-        reflines.emplace_back(std::min(left, dst_left), dst_top, std::max(right, dst_right), dst_top);
-        src->translate(0, dst_top - top);
-        center.y += (dst_top - top);
-        bottom += (dst_top - top);
-        top = dst_top;
-    }
-    if (std::abs(dst_center.y - top) < align_distance)
-    {
-        reflines.emplace_back(std::min(left, dst_left), dst_center.y, std::max(right, dst_right), dst_center.y);
-        src->translate(0, dst_center.y - top);
-        center.y += (dst_center.y - top);
-        bottom += (dst_center.y - top);
-        top = dst_center.y;
-    }
-    if (std::abs(dst_bottom - top) < align_distance)
-    {
-        reflines.emplace_back(std::min(left, dst_left), dst_bottom, std::max(right, dst_right), dst_bottom);
-        src->translate(0, dst_bottom - top);
-        center.y += (dst_bottom - top);
-        bottom += (dst_bottom - top);
-        top = dst_bottom;
-    }
-
-    if (std::abs(dst_top - bottom) < align_distance)
-    {
-        reflines.emplace_back(std::min(left, dst_left), dst_top, std::max(right, dst_right), dst_top);
-        src->translate(0, dst_top - bottom);
-        center.y += (dst_top - bottom);
-        top += (dst_top - bottom);
-        bottom = dst_top;
-    }
-    if (std::abs(dst_center.y - bottom) < align_distance)
-    {
-        reflines.emplace_back(std::min(left, dst_left), dst_center.y, std::max(right, dst_right), dst_center.y);
-        src->translate(0, dst_center.y - bottom);
-        center.y += (dst_center.y - bottom);
-        top += (dst_center.y - bottom);
-        bottom = dst_center.y;
-    }
-    if (std::abs(dst_bottom - bottom) < align_distance)
-    {
-        reflines.emplace_back(std::min(left, dst_left), dst_bottom, std::max(right, dst_right), dst_bottom);
-        src->translate(0, dst_bottom - bottom);
-        center.y += (dst_bottom - bottom);
-        top += (dst_bottom - bottom);
-        bottom = dst_bottom;
-    }
-
-    if (std::abs(dst_left - left) < align_distance)
-    {
-        reflines.emplace_back(dst_left, std::min(bottom, dst_bottom), dst_left, std::max(top, dst_top));
-        src->translate(dst_left - left, 0);
-        center.x += (dst_left - left);
-        right += (dst_left - left);
-        left = dst_left;
-    }
-    if (std::abs(dst_center.x - left) < align_distance)
-    {
-        reflines.emplace_back(dst_center.x, std::min(bottom, dst_bottom), dst_center.x, std::max(top, dst_top));
-        src->translate(dst_center.x - left, 0);
-        center.x += (dst_center.x - left);
-        right += (dst_center.x - left);
-        left = dst_center.x;
-    }
-    if (std::abs(dst_right - left) < align_distance)
-    {
-        reflines.emplace_back(dst_right, std::min(bottom, dst_bottom), dst_right, std::max(top, dst_top));
-        src->translate(dst_right - left, 0);
-        center.x += (dst_right - left);
-        right += (dst_right - left);
-        // left = dst_right;
-    }
-
-    if (std::abs(dst_left - right) < align_distance)
-    {
-        reflines.emplace_back(dst_left, std::min(bottom, dst_bottom), dst_left, std::max(top, dst_top));
-        src->translate(dst_left - right, 0);
-        center.x += (dst_left - right);
-        // left += (dst_left - right);
-        right = dst_left;
-    }
-    if (std::abs(dst_center.x - right) < align_distance)
-    {
-        reflines.emplace_back(dst_center.x, std::min(bottom, dst_bottom), dst_center.x, std::max(top, dst_top));
-        src->translate(dst_center.x - right, 0);
-        center.x += (dst_center.x - right);
-        // left += (dst_center.x - right);
-        right = dst_center.x;
-    }
-    if (std::abs(dst_right - right) < align_distance)
-    {
-        reflines.emplace_back(dst_right, std::min(bottom, dst_bottom), dst_right, std::max(top, dst_top));
-        src->translate(dst_right - right, 0);
-        center.x += (dst_right - right);
-        // left += (dst_right - right);
-        // right = dst_right;
-    }
-
-    _view_tree.update(src);
-    return count != reflines.size();
-}
-
-bool Editor::auto_aligning(Geo::Point &coord, const Geo::Geometry *dst, std::list<QLineF> &reflines)
-{
-    if (dst == nullptr || !(dst->type() == Geo::Type::POLYGON || dst->type() == Geo::Type::CIRCLE || dst->type() == Geo::Type::ELLIPSE))
-    {
-        return false;
-    }
-
-    const size_t count = reflines.size();
-    const Geo::AABBRectParams dst_rect(dst->aabbrect_params());
-    const Geo::Point dst_center((dst_rect.left + dst_rect.right) / 2, (dst_rect.top + dst_rect.bottom) / 2);
-    const double dst_left = dst_rect.left, dst_top = dst_rect.top, dst_right = dst_rect.right, dst_bottom = dst_rect.bottom;
-    const double align_distance = 2.0 / _view_ratio;
-
-    if (std::abs(dst_center.x - coord.x) < align_distance)
-    {
-        reflines.emplace_back(dst_center.x, std::max(coord.y, dst_top), dst_center.x, std::min(coord.y, dst_bottom));
-        coord.x = dst_center.x;
-    }
-    if (std::abs(dst_center.y - coord.y) < align_distance)
-    {
-        reflines.emplace_back(std::min(coord.x, dst_left), dst_center.y, std::max(coord.x, dst_right), dst_center.y);
-        coord.y = dst_center.y;
-    }
-    if (std::abs(dst_top - coord.y) < align_distance)
-    {
-        reflines.emplace_back(std::min(coord.x, dst_left), dst_top, std::max(coord.x, dst_right), dst_top);
-        coord.y = dst_top;
-    }
-    if (std::abs(dst_bottom - coord.y) < align_distance)
-    {
-        reflines.emplace_back(std::min(coord.x, dst_left), dst_bottom, std::max(coord.x, dst_right), dst_bottom);
-        coord.y = dst_bottom;
-    }
-    if (std::abs(dst_left - coord.x) < align_distance)
-    {
-        reflines.emplace_back(dst_left, std::min(coord.y, dst_bottom), dst_left, std::max(coord.y, dst_top));
-        coord.x = dst_left;
-    }
-    if (std::abs(dst_right - coord.x) < align_distance)
-    {
-        reflines.emplace_back(dst_right, std::min(coord.y, dst_bottom), dst_right, std::max(coord.y, dst_top));
-        coord.x = dst_right;
-    }
-
-    return count != reflines.size();
-}
-
-bool Editor::auto_aligning(Geo::Geometry *points, std::list<QLineF> &reflines, const bool current_group_only)
-{
-    if (points == nullptr || _graph == nullptr || _graph->empty())
-    {
-        return false;
-    }
-
-    Geo::Point center;
-    {
-        const Geo::AABBRectParams rect = points->aabbrect_params();
-        center.x = (rect.left + rect.right) / 2;
-        center.y = (rect.top + rect.bottom) / 2;
-    }
-    Geo::Geometry *dst = nullptr;
-    double temp = 0, distance = DBL_MAX;
-
-    if (current_group_only)
-    {
-        for (Geo::Geometry *geo : _graph->container_group(_current_group))
-        {
-            if (!(geo->type() == Geo::Type::POLYGON || geo->type() == Geo::Type::CIRCLE || geo->type() == Geo::Type::ELLIPSE) ||
-                geo == points)
-            {
-                continue;
-            }
-
-            switch (geo->type())
-            {
-            case Geo::Type::POLYGON:
-                temp = Geo::distance(center, *static_cast<Geo::Polygon *>(geo));
-                break;
-            case Geo::Type::CIRCLE:
-                temp = Geo::distance(center, *static_cast<Geo::Circle *>(geo));
-                break;
-            case Geo::Type::ELLIPSE:
-                temp = Geo::distance(center, *static_cast<Geo::Ellipse *>(geo));
-                break;
-            default:
-                break;
-            }
-
-            if (temp < distance)
-            {
-                dst = geo;
-                distance = temp;
-            }
-        }
-    }
-    else
-    {
-        for (ContainerGroup &group : _graph->container_groups())
-        {
-            for (Geo::Geometry *geo : group)
-            {
-                if (!(geo->type() == Geo::Type::POLYGON || geo->type() == Geo::Type::CIRCLE || geo->type() == Geo::Type::ELLIPSE) ||
-                    geo == points)
-                {
-                    continue;
-                }
-
-                switch (geo->type())
-                {
-                case Geo::Type::POLYGON:
-                    temp = Geo::distance(center, *static_cast<Geo::Polygon *>(geo));
-                    break;
-                case Geo::Type::CIRCLE:
-                    temp = Geo::distance(center, *static_cast<Geo::Circle *>(geo));
-                    break;
-                case Geo::Type::ELLIPSE:
-                    temp = Geo::distance(center, *static_cast<Geo::Ellipse *>(geo));
-                    break;
-                default:
-                    break;
-                }
-
-                if (temp < distance)
-                {
-                    dst = geo;
-                    distance = temp;
-                }
-            }
-        }
-    }
-
-    bool flag = false;
-    if (points != _catched_points && auto_aligning(points, _catched_points, reflines))
-    {
-        _view_tree.update(points);
-        flag = true;
-    }
-    else
-    {
-        _catched_points = nullptr;
-    }
-    if (dst != _catched_points && auto_aligning(points, dst, reflines))
-    {
-        _view_tree.update(points);
-        flag = true;
-        if (_catched_points == nullptr)
-        {
-            _catched_points = dst;
-        }
-    }
-    return flag;
-}
-
-bool Editor::auto_aligning(Geo::Geometry *points, const double x, const double y, std::list<QLineF> &reflines,
-                           const bool current_group_only)
-{
-    if (points == nullptr || _graph == nullptr || _graph->empty())
-    {
-        return false;
-    }
-
-    const Geo::Point anchor(x, y);
-    Geo::Geometry *dst = nullptr;
-    double temp = 0, distance = DBL_MAX;
-
-    if (current_group_only)
-    {
-        for (Geo::Geometry *geo : _graph->container_group(_current_group))
-        {
-            if (!(geo->type() == Geo::Type::POLYGON || geo->type() == Geo::Type::CIRCLE || geo->type() == Geo::Type::ELLIPSE) ||
-                geo == points)
-            {
-                continue;
-            }
-
-            switch (geo->type())
-            {
-            case Geo::Type::POLYGON:
-                temp = Geo::distance(anchor, *static_cast<Geo::Polygon *>(geo));
-                break;
-            case Geo::Type::CIRCLE:
-                temp = Geo::distance(anchor, *static_cast<Geo::Circle *>(geo));
-                break;
-            case Geo::Type::ELLIPSE:
-                temp = Geo::distance(anchor, *static_cast<Geo::Ellipse *>(geo));
-                break;
-            default:
-                break;
-            }
-
-            if (temp < distance)
-            {
-                dst = geo;
-                distance = temp;
-            }
-        }
-    }
-    else
-    {
-        for (ContainerGroup &group : _graph->container_groups())
-        {
-            for (Geo::Geometry *geo : group)
-            {
-                if (!(geo->type() == Geo::Type::POLYGON || geo->type() == Geo::Type::CIRCLE || geo->type() == Geo::Type::ELLIPSE) ||
-                    geo == points)
-                {
-                    continue;
-                }
-
-                switch (geo->type())
-                {
-                case Geo::Type::POLYGON:
-                    temp = Geo::distance(anchor, *static_cast<Geo::Polygon *>(geo));
-                    break;
-                case Geo::Type::CIRCLE:
-                    temp = Geo::distance(anchor, *static_cast<Geo::Circle *>(geo));
-                    break;
-                case Geo::Type::ELLIPSE:
-                    temp = Geo::distance(anchor, *static_cast<Geo::Ellipse *>(geo));
-                    break;
-                default:
-                    break;
-                }
-
-                if (temp < distance)
-                {
-                    dst = geo;
-                    distance = temp;
-                }
-            }
-        }
-    }
-
-    _catched_points = nullptr;
-    bool flag = false;
-    if (points != _catched_points && auto_aligning(points, _catched_points, reflines))
-    {
-        _view_tree.update(points);
-        flag = true;
-    }
-    else
-    {
-        _catched_points = nullptr;
-    }
-    if (dst != _catched_points && auto_aligning(points, dst, reflines))
-    {
-        _view_tree.update(points);
-        flag = true;
-        if (_catched_points == nullptr)
-        {
-            _catched_points = dst;
-        }
-    }
-    return flag;
-}
-
-bool Editor::auto_aligning(Geo::Point &coord, std::list<QLineF> &reflines, const bool current_group_only)
-{
-    if (_graph == nullptr || _graph->empty())
-    {
-        return false;
-    }
-
-    const Geo::Point anchor(coord);
-    Geo::Geometry *dst = nullptr;
-    double temp = 0, distance = DBL_MAX;
-
-    if (current_group_only)
-    {
-        for (Geo::Geometry *geo : _graph->container_group(_current_group))
-        {
-            if (!(geo->type() == Geo::Type::POLYGON || geo->type() == Geo::Type::CIRCLE || geo->type() == Geo::Type::ELLIPSE) ||
-                geo->is_selected)
-            {
-                continue;
-            }
-
-            switch (geo->type())
-            {
-            case Geo::Type::POLYGON:
-                temp = Geo::distance(anchor, *static_cast<Geo::Polygon *>(geo));
-                break;
-            case Geo::Type::CIRCLE:
-                temp = Geo::distance(anchor, *static_cast<Geo::Circle *>(geo));
-                break;
-            case Geo::Type::ELLIPSE:
-                temp = Geo::distance(anchor, *static_cast<Geo::Ellipse *>(geo));
-                break;
-            default:
-                break;
-            }
-
-            if (temp < distance)
-            {
-                dst = geo;
-                distance = temp;
-            }
-        }
-    }
-    else
-    {
-        for (ContainerGroup &group : _graph->container_groups())
-        {
-            for (Geo::Geometry *geo : group)
-            {
-                if (!(geo->type() == Geo::Type::POLYGON || geo->type() == Geo::Type::CIRCLE || geo->type() == Geo::Type::ELLIPSE) ||
-                    geo->is_selected)
-                {
-                    continue;
-                }
-
-                switch (geo->type())
-                {
-                case Geo::Type::POLYGON:
-                    temp = Geo::distance(anchor, *static_cast<Geo::Polygon *>(geo));
-                    break;
-                case Geo::Type::CIRCLE:
-                    temp = Geo::distance(anchor, *static_cast<Geo::Circle *>(geo));
-                    break;
-                case Geo::Type::ELLIPSE:
-                    temp = Geo::distance(anchor, *static_cast<Geo::Ellipse *>(geo));
-                    break;
-                default:
-                    break;
-                }
-
-                if (temp < distance)
-                {
-                    dst = geo;
-                    distance = temp;
-                }
-            }
-        }
-    }
-
-    _catched_points = nullptr;
-    bool flag = false;
-    if (auto_aligning(coord, _catched_points, reflines))
-    {
-        flag = true;
-    }
-    else
-    {
-        _catched_points = nullptr;
-    }
-    if (dst != _catched_points && auto_aligning(coord, dst, reflines))
-    {
-        flag = true;
-        if (_catched_points == nullptr)
-        {
-            _catched_points = dst;
-        }
-    }
-    return flag;
-}
-
 void Editor::auto_combinate()
 {
     if (_graph == nullptr || _graph->empty())
@@ -9328,7 +8995,7 @@ void Editor::auto_combinate()
                         }
                         break;
                     case Geo::Type::BSPLINE:
-                        if (Geo::is_intersected(static_cast<Geo::CubicBezier *>(all_polylines[k])->shape(),
+                        if (Geo::is_intersected(static_cast<Geo::BSpline *>(all_polylines[k])->shape(),
                                                 *static_cast<Geo::Ellipse *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
@@ -9602,200 +9269,6 @@ void Editor::auto_layering()
     }
 }
 
-void Editor::auto_connect()
-{
-    if (_graph == nullptr || _graph->empty())
-    {
-        return;
-    }
-
-    std::unordered_map<Geo::Polyline *, size_t> object_order;
-    std::unordered_map<int, std::vector<Geo::Polyline *>> distance_object_map0,
-        distance_object_map1; // front distance, back distance
-    {
-        size_t index = 0;
-        for (Geo::Geometry *object : _graph->container_group())
-        {
-            if (object->type() == Geo::Type::POLYLINE)
-            {
-                Geo::Polyline *polyline = static_cast<Geo::Polyline *>(object);
-                double distance0 = std::hypot(polyline->front().x, polyline->front().y);
-                double distance1 = std::hypot(polyline->back().x, polyline->back().y);
-                object_order.insert_or_assign(polyline, index++);
-                if (distance_object_map0.find(distance0) == distance_object_map0.end())
-                {
-                    distance_object_map0.insert_or_assign(distance0, std::vector<Geo::Polyline *>{polyline});
-                }
-                else
-                {
-                    distance_object_map0[distance0].push_back(polyline);
-                }
-                if (distance_object_map1.find(distance1) == distance_object_map1.end())
-                {
-                    distance_object_map1.insert_or_assign(distance1, std::vector<Geo::Polyline *>{polyline});
-                }
-                else
-                {
-                    distance_object_map1[distance1].push_back(polyline);
-                }
-            }
-        }
-    }
-
-    for (size_t i = 0, count = _graph->container_group().size(); i < count; ++i)
-    {
-        Geo::Polyline *polyline0 = nullptr;
-        Geo::Point front_i, back_i;
-        if (_graph->container_group()[i]->type() == Geo::Type::POLYLINE)
-        {
-            polyline0 = static_cast<Geo::Polyline *>(_graph->container_group()[i]);
-            front_i = polyline0->front();
-            back_i = polyline0->back();
-        }
-        else
-        {
-            continue;
-        }
-        {
-            const double distance0 = std::hypot(front_i.x, front_i.y), distance1 = std::hypot(back_i.x, back_i.y);
-            distance_object_map0[distance0].erase(
-                std::find(distance_object_map0[distance0].begin(), distance_object_map0[distance0].end(), polyline0));
-            distance_object_map1[distance1].erase(
-                std::find(distance_object_map1[distance1].begin(), distance_object_map1[distance1].end(), polyline0));
-        }
-
-        while (true)
-        {
-            size_t j = SIZE_MAX;
-            Geo::Polyline *polyline1 = nullptr;
-            Geo::Point front_j, back_j;
-
-            {
-                const double distance0 = std::hypot(front_i.x, front_i.y);
-                const double distance1 = std::hypot(back_i.x, back_i.y);
-                Geo::Polyline *object_j = nullptr;
-
-                if (distance_object_map0.find(distance0) != distance_object_map0.end())
-                {
-                    for (Geo::Polyline *object : distance_object_map0[distance0])
-                    {
-                        polyline1 = object;
-                        front_j = polyline1->front();
-                        if (front_i == front_j && object_order[object] < j)
-                        {
-                            object_j = object;
-                            j = object_order[object_j];
-                        }
-                    }
-                }
-
-                if (distance_object_map1.find(distance0) != distance_object_map1.end())
-                {
-                    for (Geo::Polyline *object : distance_object_map1[distance0])
-                    {
-                        polyline1 = object;
-                        back_j = polyline1->back();
-                        if (front_i == back_j && object_order[object] < j)
-                        {
-                            object_j = object;
-                            j = object_order[object_j];
-                        }
-                    }
-                }
-
-                if (distance_object_map0.find(distance1) != distance_object_map0.end())
-                {
-                    for (Geo::Polyline *object : distance_object_map0[distance1])
-                    {
-                        polyline1 = static_cast<Geo::Polyline *>(object);
-                        front_j = polyline1->front();
-                        if (back_i == front_j && object_order[object] < j)
-                        {
-                            object_j = object;
-                            j = object_order[object_j];
-                        }
-                    }
-                }
-
-                if (distance_object_map1.find(distance1) != distance_object_map1.end())
-                {
-                    for (Geo::Polyline *object : distance_object_map1[distance1])
-                    {
-                        polyline1 = object;
-                        back_j = polyline1->back();
-                        if (back_i == back_j && object_order[object] < j)
-                        {
-                            object_j = object;
-                            j = object_order[object_j];
-                        }
-                    }
-                }
-
-                polyline1 = object_j;
-            }
-
-            if (polyline1 == nullptr)
-            {
-                break;
-            }
-
-            front_j = polyline1->front();
-            back_j = polyline1->back();
-
-            if (const double distance = std::hypot(front_j.x, front_j.y); distance_object_map0.find(distance) != distance_object_map0.end())
-            {
-                distance_object_map0[distance].erase(
-                    std::find(distance_object_map0[distance].begin(), distance_object_map0[distance].end(), polyline1));
-            }
-            if (const double distance = std::hypot(back_j.x, back_j.y); distance_object_map1.find(distance) != distance_object_map1.end())
-            {
-                distance_object_map1[distance].erase(
-                    std::find(distance_object_map1[distance].begin(), distance_object_map1[distance].end(), polyline1));
-            }
-            j = std::distance(_graph->container_group().begin(),
-                              std::find(_graph->container_group().begin(), _graph->container_group().end(), polyline1));
-
-            if (front_i == front_j)
-            {
-                polyline0->insert(0, polyline1->rbegin(), polyline1->rend());
-                front_i = polyline0->front();
-                _graph->container_group().remove(j--);
-                --count;
-            }
-            else if (front_i == back_j)
-            {
-                polyline0->insert(0, polyline1->begin(), polyline1->end());
-                front_i = polyline0->front();
-                _graph->container_group().remove(j--);
-                --count;
-            }
-            else if (back_i == front_j)
-            {
-                polyline0->append(polyline1->begin(), polyline1->end());
-                back_i = polyline0->back();
-                _graph->container_group().remove(j--);
-                --count;
-            }
-            else if (back_i == back_j)
-            {
-                polyline0->append(polyline1->rbegin(), polyline1->rend());
-                back_i = polyline0->back();
-                _graph->container_group().remove(j--);
-                --count;
-            }
-
-            if (front_i == back_i)
-            {
-                _graph->container_group().insert(i, new Geo::Polygon(polyline0->begin(), polyline0->end()));
-                _graph->container_group().remove(i + 1);
-                break;
-            }
-        }
-    }
-
-    _view_tree.build(_graph);
-}
-
 
 void Editor::text_to_polylines(Text *text)
 {
@@ -9924,171 +9397,3 @@ void Editor::bspline_to_bezier(Geo::BSpline *bspline)
     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
 }
 
-
-void Editor::select_subfunc(const Geo::AABBRect &rect, const std::vector<Geo::Geometry *> *objects, const size_t start, const size_t end,
-                            std::vector<Geo::Geometry *> *result)
-{
-    for (size_t i = start; i < end; ++i)
-    {
-        Geo::Geometry *container = objects->at(i);
-        if (container->is_selected)
-        {
-            result->push_back(container);
-            continue;
-        }
-        switch (container->type())
-        {
-        case Geo::Type::TEXT:
-            if (const Text *text = static_cast<const Text *>(container);
-                Geo::is_intersected(rect, text->shape(0), text->shape(1), text->shape(2), text->shape(3)))
-            {
-                container->is_selected = true;
-                result->push_back(container);
-            }
-            break;
-        case Geo::Type::POLYGON:
-            if (Geo::is_intersected(rect, *static_cast<Geo::Polygon *>(container)))
-            {
-                container->is_selected = true;
-                result->push_back(container);
-            }
-            break;
-        case Geo::Type::CIRCLE:
-            if (Geo::is_intersected(rect, *static_cast<Geo::Circle *>(container)))
-            {
-                container->is_selected = true;
-                result->push_back(container);
-            }
-            break;
-        case Geo::Type::ELLIPSE:
-            if (Geo::is_intersected(rect, *static_cast<Geo::Ellipse *>(container)))
-            {
-                container->is_selected = true;
-                result->push_back(container);
-            }
-            break;
-        case Geo::Type::COMBINATION:
-            if (Geo::is_intersected(rect, static_cast<Combination *>(container)->border(), true))
-            {
-                bool end = false;
-                for (Geo::Geometry *item : *static_cast<Combination *>(container))
-                {
-                    switch (item->type())
-                    {
-                    case Geo::Type::TEXT:
-                        if (const Text *text = static_cast<const Text *>(item);
-                            Geo::is_intersected(rect, text->shape(0), text->shape(1), text->shape(2), text->shape(3)))
-                        {
-                            end = true;
-                        }
-                        break;
-                    case Geo::Type::POLYGON:
-                        if (Geo::is_intersected(rect, *static_cast<Geo::Polygon *>(item)))
-                        {
-                            end = true;
-                        }
-                        break;
-                    case Geo::Type::CIRCLE:
-                        if (Geo::is_intersected(rect, *static_cast<Geo::Circle *>(item)))
-                        {
-                            end = true;
-                        }
-                        break;
-                    case Geo::Type::ELLIPSE:
-                        if (Geo::is_intersected(rect, *static_cast<Geo::Ellipse *>(item)))
-                        {
-                            end = true;
-                        }
-                        break;
-                    case Geo::Type::POLYLINE:
-                        if (Geo::is_intersected(rect, *static_cast<Geo::Polyline *>(item)))
-                        {
-                            end = true;
-                        }
-                        break;
-                    case Geo::Type::BEZIER:
-                        if (Geo::is_intersected(rect, static_cast<Geo::CubicBezier *>(item)->shape()))
-                        {
-                            end = true;
-                        }
-                        break;
-                    case Geo::Type::BSPLINE:
-                        if (Geo::is_intersected(rect, static_cast<Geo::BSpline *>(item)->shape()))
-                        {
-                            end = true;
-                        }
-                        break;
-                    case Geo::Type::ARC:
-                        if (Geo::is_intersected(rect, *static_cast<Geo::Arc *>(item)))
-                        {
-                            end = true;
-                        }
-                        break;
-                    case Geo::Type::POINT:
-                        if (Geo::is_inside(*static_cast<Geo::Point *>(item), rect, true))
-                        {
-                            end = true;
-                        }
-                        break;
-                    default:
-                        break;
-                    }
-                    if (end)
-                    {
-                        break;
-                    }
-                }
-                if (end)
-                {
-                    container->is_selected = true;
-                    result->push_back(container);
-                }
-            }
-            break;
-        case Geo::Type::POLYLINE:
-            if (Geo::is_intersected(rect, *static_cast<Geo::Polyline *>(container)))
-            {
-                container->is_selected = true;
-                result->push_back(container);
-            }
-            break;
-        case Geo::Type::BEZIER:
-            if (Geo::is_intersected(rect, static_cast<Geo::CubicBezier *>(container)->shape()))
-            {
-                container->is_selected = true;
-                result->push_back(container);
-            }
-            break;
-        case Geo::Type::BSPLINE:
-            if (Geo::is_intersected(rect, static_cast<Geo::BSpline *>(container)->shape()))
-            {
-                container->is_selected = true;
-                result->push_back(container);
-            }
-            break;
-        case Geo::Type::ARC:
-            if (Geo::is_intersected(rect, *static_cast<Geo::Arc *>(container)))
-            {
-                container->is_selected = true;
-                result->push_back(container);
-            }
-            break;
-        case Geo::Type::POINT:
-            if (Geo::is_inside(*static_cast<Geo::Point *>(container), rect, true))
-            {
-                container->is_selected = true;
-                result->push_back(container);
-            }
-            break;
-        case Geo::Type::DIMENSION:
-            if (static_cast<const Dim::Dimension *>(container)->select(rect))
-            {
-                container->is_selected = true;
-                result->push_back(container);
-            }
-            break;
-        default:
-            break;
-        }
-    }
-}

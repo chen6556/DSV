@@ -9,7 +9,7 @@ bool Geo::is_parallel(const Point &point0, const Point &point1, const Point &poi
 
 bool Geo::is_coincide(const Point &start0, const Point &end0, const Point &start1, const Point &end1)
 {
-    if ((start0 == start1 && end0 == end1) || (start0 == end1 && end0 == start0))
+    if ((start0 == start1 && end0 == end1) || (start0 == end1 && end0 == start1))
     {
         return true;
     }
@@ -157,7 +157,7 @@ bool Geo::is_Rectangle(const Polygon &polygon)
             }
         }
     }
-    if (polygon.size() != 5)
+    if (points.size() != 5)
     {
         return false;
     }

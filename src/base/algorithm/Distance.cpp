@@ -587,7 +587,7 @@ double Geo::distance(const Geo::Point &start0, const Geo::Point &end0, const Geo
             else
             {
                 double distance[5] = {Geo::distance_square(start0, start1), Geo::distance_square(start0, end1),
-                                      Geo::distance_square(end0, start1), Geo::distance(end0, end1), DBL_MAX};
+                                      Geo::distance_square(end0, start1), Geo::distance_square(end0, end1), DBL_MAX};
                 int index = 0;
                 for (int i = 0; i < 4; ++i)
                 {
@@ -682,7 +682,7 @@ double Geo::distance(const Geo::Point &start0, const Geo::Point &end0, const Geo
             break;
         case 3:
             point1 = end1;
-            if (Geo::foot_point(start0, end0, end1, point0))
+            if (!Geo::foot_point(start0, end0, end1, point0))
             {
                 if (Geo::distance_square(end1, start0) <= Geo::distance_square(end1, end0))
                 {

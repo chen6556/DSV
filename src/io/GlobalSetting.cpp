@@ -26,14 +26,6 @@ void GlobalSetting::load_setting()
     const QJsonObject values = QJsonDocument::fromJson(file.readAll(), &jerr).object();
     file.close();
 
-    if (values.contains("auto_aligning"))
-    {
-        this->auto_aligning = values.value("auto_aligning").toBool();
-    }
-    if (values.contains("auto_connect"))
-    {
-        this->auto_connect = values.value("auto_connect").toBool();
-    }
     if (values.contains("auto_layering"))
     {
         this->auto_layering = values.value("auto_layering").toBool();
@@ -139,8 +131,6 @@ void GlobalSetting::load_setting()
 void GlobalSetting::save_setting()
 {
     QJsonObject values;
-    values.insert("auto_aligning", this->auto_aligning);
-    values.insert("auto_connect", this->auto_connect);
     values.insert("auto_layering", this->auto_layering);
     values.insert("auto_combinate", this->auto_combinate);
     values.insert("auto_save", this->auto_save);

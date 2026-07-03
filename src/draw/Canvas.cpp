@@ -58,6 +58,10 @@ Canvas::~Canvas()
                                  _vao.origin_and_select_rect, _vao.text};
         glDeleteVertexArrays(16, temp);
     }
+    {
+        unsigned int temp[1] = {_texture.texture};
+        glDeleteTextures(1, temp);
+    }
     glDeleteProgram(_shader_program);
     doneCurrent();
     _editor.delete_graph();
@@ -2881,7 +2885,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
             case Geo::Type::BEZIER:
                 if (Geo::is_intersected(rect, geo->bounding_rect()))
                 {
-                    if (Geo::distance(pos, static_cast<const Geo::CubicBezier *>(geo)->shape()) < distance)
+                    if (Geo::distance(pos, static_cast<const Geo::CubicBezier *>(geo)->shape()) * _ratio < distance)
                     {
                         catched_objects.push_back(geo);
                     }
@@ -3222,10 +3226,16 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
         case Geo::Type::BSPLINE:
             {
                 const Geo::BSpline &bspline = *static_cast<const Geo::BSpline *>(object);
-                if (const double d = Geo::distance(pos, bspline.path_points.front()); catch_vertex && d < vertex_catch_distance)
+                if (catch_vertex)
                 {
-                    vertex_catch_distance = d;
-                    vertex_catch_point = bspline.path_points.front();
+                    for (size_t i = 0, count = bspline.path_points.size(); i < count; ++i)
+                    {
+                        if (const double d = Geo::distance(pos, bspline.path_points[i]); d < vertex_catch_distance)
+                        {
+                            vertex_catch_distance = d;
+                            vertex_catch_point = bspline.path_points[i];
+                        }
+                    }
                 }
                 if (std::vector<Geo::Point> points; catch_foot && Geo::foot_point(press_pos, bspline, points, nullptr))
                 {
@@ -3249,14 +3259,6 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                         }
                     }
                 }
-                for (size_t i = 1, count = bspline.path_points.size(); i < count; ++i)
-                {
-                    if (const double d = Geo::distance(pos, bspline.path_points[i]); catch_vertex && d < vertex_catch_distance)
-                    {
-                        vertex_catch_distance = d;
-                        vertex_catch_point = bspline.path_points[i];
-                    }
-                }
             }
             break;
         case Geo::Type::BEZIER:
@@ -3264,15 +3266,13 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                 const Geo::CubicBezier &bezier = *static_cast<const Geo::CubicBezier *>(object);
                 if (catch_vertex)
                 {
-                    if (double dis0 = Geo::distance(pos, bezier.front()), dis1 = Geo::distance(pos, bezier.back()); dis0 <= dis1)
+                    for (size_t i = 0, count = bezier.size(); i < count; i += 3)
                     {
-                        vertex_catch_distance = dis0;
-                        vertex_catch_point = bezier.front();
-                    }
-                    else
-                    {
-                        vertex_catch_distance = dis1;
-                        vertex_catch_point = bezier.back();
+                        if (const double d = Geo::distance(pos, bezier[i]); d < vertex_catch_distance)
+                        {
+                            vertex_catch_distance = d;
+                            vertex_catch_point = bezier[i];
+                        }
                     }
                 }
                 if (std::vector<Geo::Point> points; catch_foot && Geo::foot_point(press_pos, bezier, points, nullptr))
@@ -3302,17 +3302,15 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
         case Geo::Type::ARC:
             {
                 const Geo::Arc *arc = static_cast<const Geo::Arc *>(object);
-                if (const double d = Geo::distance(pos, arc->control_points[0]); catch_vertex && d < vertex_catch_distance)
+                if (catch_vertex)
                 {
-                    vertex_catch_distance = d;
-                    vertex_catch_point = arc->control_points[0];
-                }
-                for (int i = 1; i < 3; ++i)
-                {
-                    if (double d = Geo::distance(pos, arc->control_points[i]); d < vertex_catch_distance)
+                    for (int i = 0; i < 3; ++i)
                     {
-                        vertex_catch_distance = d;
-                        vertex_catch_point = arc->control_points[i];
+                        if (double d = Geo::distance(pos, arc->control_points[i]); d < vertex_catch_distance)
+                        {
+                            vertex_catch_distance = d;
+                            vertex_catch_point = arc->control_points[i];
+                        }
                     }
                 }
             }

@@ -183,7 +183,7 @@ Geo::Polyline Geo::arc_to_polyline(const Geo::Point &center, const double radius
                                    const double down_sampling_value)
 {
     const double v = std::asin(1 / radius);
-    const double step = std::isnan(v) ? Geo::PI / 32 : std::min(v, Geo::PI / 32);
+    const double step = std::isnan(v) ? Geo::PI / 32 : std::max(std::min(v, Geo::PI / 32), Geo::PI / 4096);
     std::vector<Geo::Point> points;
     if (is_cw)
     {
@@ -345,7 +345,7 @@ Geo::Polygon Geo::ellipse_to_polygon(const double x, const double y, const doubl
                                      const double down_sampling_value)
 {
     const double v = std::asin(1 / std::max(a, b));
-    const double step = std::isnan(v) ? Geo::PI / 32 : std::min(v, Geo::PI / 32);
+    const double step = std::isnan(v) ? Geo::PI / 32 : std::max(std::min(v, Geo::PI / 32), Geo::PI / 4096);
     double degree = 0;
     std::vector<Geo::Point> points;
     while (degree < Geo::PI * 2)
@@ -379,7 +379,7 @@ Geo::Polyline Geo::ellipse_to_polyline(const double x, const double y, const dou
                                        const double start_angle, double end_angle, const double down_sampling_value)
 {
     const double v = std::asin(1 / std::max(a, b));
-    const double step = std::isnan(v) ? Geo::PI / 32 : std::min(v, Geo::PI / 32);
+    const double step = std::isnan(v) ? Geo::PI / 32 : std::max(std::min(v, Geo::PI / 32), Geo::PI / 4096);
     double degree = start_angle;
     if (end_angle < degree)
     {
@@ -515,7 +515,7 @@ Geo::CubicBezier Geo::bspline_to_bezier(const Geo::BSpline &bspline)
             if (j = std::count(temp.knots().begin(), temp.knots().end(), temp.knots()[i]); j < 4)
             {
                 const double t = temp.knots()[i];
-                while (j++ <= 4)
+                while (++j <= 4)
                 {
                     temp.insert(t);
                 }
@@ -531,17 +531,17 @@ Geo::CubicBezier Geo::bspline_to_bezier(const Geo::BSpline &bspline)
             if (j = std::count(temp.knots().begin(), temp.knots().end(), temp.knots()[i]); j < 3)
             {
                 const double t = temp.knots()[i];
-                while (j++ <= 3)
+                while (++j <= 3)
                 {
                     temp.insert(t);
                 }
             }
         }
         controls.emplace_back(temp.control_points.front());
-        for (size_t i = 2, count = temp.control_points.size(); i < count; i += 2)
+        for (size_t i = 2, count = temp.control_points.size(); i < count; i += 3)
         {
-            controls.emplace_back((temp.control_points[i - 1] * 3 + temp.control_points[i - 2]) / 4);
-            controls.emplace_back((temp.control_points[i] + temp.control_points[i - 1]) / 2);
+            controls.emplace_back((temp.control_points[i - 2] + temp.control_points[i - 1] * 2 ) / 3);
+            controls.emplace_back((temp.control_points[i - 1] * 2 + temp.control_points[i]) / 3);
             controls.emplace_back(temp.control_points[i]);
         }
     }
