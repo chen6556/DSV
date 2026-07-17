@@ -114,6 +114,8 @@ struct MarkedPoint
     }
 };
 
+class Circle;
+
 class Point : public Geometry
 {
 public:
@@ -128,6 +130,8 @@ public:
     Point(const Point &point) = default;
 
     Point(const MarkedPoint &point);
+
+    Point(const Circle &circle);
 
     Point &operator=(const Point &point);
 
@@ -593,10 +597,10 @@ public:
     double inner_circle_radius() const;
 };
 
-class Circle : public Point
+class Circle : public Geometry
 {
 public:
-    double radius = 0;
+    double x = 0, y = 0, radius = 0;
     static double default_down_sampling_value;
 
 private:
@@ -1044,8 +1048,7 @@ public:
     enum class ParameterType
     {
         StartCenterAngle,
-        StartEndAngle,
-        StartEndRadius
+        StartEndAngle
     };
 
 private:
@@ -1058,10 +1061,20 @@ public:
 
     Arc(const Point &point0, const Point &point1, const Point &point2);
 
+    Arc(const double startx, const double starty, const double centerx, const double centery, const double endx, const double endy,
+        const bool counterclockwise);
+
+    Arc(const Point &start, const Point &center, const Point &end, const bool counterclockwise);
+
     Arc(const double x0, const double y0, const double x1, const double y1, const double param, const ParameterType type,
         const bool counterclockwise);
 
     Arc(const Point &point0, const Point &point1, const double param, const ParameterType type, const bool counterclockwise);
+
+    Arc(const double startx, const double starty, const double endx, const double endy, const double radius, const bool left_center,
+        const bool counterclockwise);
+
+    Arc(const Point &start, const Point &end, const double radius, const bool left_center, const bool counterclockwise);
 
     Arc(const double x, const double y, const double radius, const double start_angle, const double end_angle, const bool counterclockwise);
 
@@ -1114,5 +1127,9 @@ public:
     Point shape_point(const double t) const;
 
     Arc *range(const double t0, const double t1) const;
+
+    Point start_direction() const;
+
+    Point end_direction() const;
 };
 }; // namespace Geo

@@ -71,7 +71,6 @@ Canvas::~Canvas()
 void Canvas::init()
 {
     CanvasOperations::CanvasOperation::operation().init();
-    _cpus = std::max(2u, std::thread::hardware_concurrency() / 2);
     _input_line.hide();
 }
 
@@ -909,11 +908,6 @@ Geo::Point Canvas::center() const
     }
 
     double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
-    if (_editor.graph() == nullptr || _editor.graph()->empty())
-    {
-        return Geo::Point((x0 + x1) / 2, (y0 + y1) / 2);
-    }
-
     for (const ContainerGroup &group : _editor.graph()->container_groups())
     {
         for (const Geo::Point &point : group.bounding_rect())
@@ -1173,31 +1167,6 @@ bool Canvas::catch_cursor(const double x, const double y, Geo::Point &coord, con
         _bool_flags.show_catched_points = false;
     }
     return _bool_flags.show_catched_points;
-}
-
-bool Canvas::catch_point(const double x, const double y, Geo::Point &coord, const double distance)
-{
-    _catched_objects.clear();
-    if (refresh_catached_points(x, y, distance, _catched_objects, false, !GlobalSetting::setting().to_all_layers))
-    {
-        Geo::Point pos(x, y);
-        if (refresh_catchline_points(_catched_objects, distance, pos))
-        {
-            coord.x = pos.x;
-            coord.y = pos.y;
-            _bool_flags.show_catched_points = true;
-        }
-        else
-        {
-            _bool_flags.show_catched_points = false;
-        }
-        return _bool_flags.show_catched_points;
-    }
-    else
-    {
-        _bool_flags.show_catched_points = false;
-        return false;
-    }
 }
 
 
@@ -2950,6 +2919,24 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                 if (Geo::is_intersected(rect, geo->bounding_rect()))
                 {
                     if (Geo::distance(pos, *static_cast<const Geo::Polyline *>(geo)) * _ratio < distance)
+                    {
+                        catched_objects.push_back(geo);
+                    }
+                }
+                break;
+            case Geo::Type::BEZIER:
+                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                {
+                    if (Geo::distance(pos, static_cast<const Geo::CubicBezier *>(geo)->shape()) * _ratio < distance)
+                    {
+                        catched_objects.push_back(geo);
+                    }
+                }
+                break;
+            case Geo::Type::BSPLINE:
+                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                {
+                    if (Geo::distance(pos, static_cast<const Geo::BSpline *>(geo)->shape()) * _ratio < distance)
                     {
                         catched_objects.push_back(geo);
                     }

@@ -1788,6 +1788,19 @@ bool Arc3Operation::mouse_press(QMouseEvent *event)
             tool_lines[2] = real_pos[0];
             tool_lines[3] = real_pos[1];
             break;
+        case 3:
+            {
+                const Geo::Point pos(real_pos[0], real_pos[1]);
+                const Geo::Point start(_parameters[0], _parameters[1]), end(_parameters[2], _parameters[3]);
+                Canvas::canvas->add_geometry(
+                    new Geo::Arc(start, end, std::abs(_parameters[4]), Geo::is_on_left(pos, start, end), _parameters[4] > 0));
+                shape.clear();
+                tool_lines.clear();
+                _index = 0;
+                tool[0] = Tool::Select;
+                info.clear();
+            }
+            break;
         default:
             break;
         }
@@ -1878,14 +1891,8 @@ bool Arc3Operation::read_parameters(const double *params, const int count)
     case 2:
         if (count >= 1 && std::abs(params[0]) * 2 >= std::hypot(_parameters[0] - _parameters[2], _parameters[1] - _parameters[3]))
         {
-            _parameters[4] = std::abs(params[0]);
-            Canvas::canvas->add_geometry(new Geo::Arc(_parameters[0], _parameters[1], _parameters[2], _parameters[3], _parameters[4],
-                                                      Geo::Arc::ParameterType::StartEndRadius, params[0] > 0));
-            shape.clear();
-            tool_lines.clear();
-            _index = 0;
-            tool[0] = Tool::Select;
-            info.clear();
+            _parameters[4] = params[0];
+            _index++;
             return true;
         }
         break;
@@ -1903,8 +1910,10 @@ QString Arc3Operation::cmd_tips() const
         return "(x, y):";
     case 1:
         return _param_type == ParamType::LengthAngle ? "(length, angle):" : "(x, y):";
+    case 2:
+        return "radius:";
     default:
-        return "length:";
+        return "Choose center side.";
     }
 }
 
@@ -3635,15 +3644,13 @@ bool FilletOperation::mouse_press(QMouseEvent *event)
                             point = p;
                         }
                     }
-                    if (_radius0 == _radius1 &&
-                        Canvas::canvas->editor().fillet(dynamic_cast<Geo::Polygon *>(clicked_object), point, _radius0))
+                    if (_radius0 == _radius1 && Canvas::canvas->editor().fillet(clicked_object, point, _radius0))
                     {
                         Canvas::canvas->refresh_vbo(true, {Geo::Type::POLYGON, Geo::Type::POLYLINE, Geo::Type::ARC});
                         Canvas::canvas->refresh_selected_ibo();
                         result = true;
                     }
-                    else if (_radius0 != _radius1 &&
-                             Canvas::canvas->editor().fillet(dynamic_cast<Geo::Polygon *>(clicked_object), point, _radius0, _radius1))
+                    else if (_radius0 != _radius1 && Canvas::canvas->editor().fillet(clicked_object, point, _radius0, _radius1))
                     {
                         Canvas::canvas->refresh_vbo(true, {Geo::Type::POLYGON, Geo::Type::POLYLINE, Geo::Type::BEZIER});
                         Canvas::canvas->refresh_selected_ibo();
@@ -3659,15 +3666,13 @@ bool FilletOperation::mouse_press(QMouseEvent *event)
                             point = p;
                         }
                     }
-                    if (_radius0 == _radius1 &&
-                        Canvas::canvas->editor().fillet(dynamic_cast<Geo::Polyline *>(clicked_object), point, _radius0))
+                    if (_radius0 == _radius1 && Canvas::canvas->editor().fillet(clicked_object, point, _radius0))
                     {
                         Canvas::canvas->refresh_vbo(true, {Geo::Type::POLYLINE, Geo::Type::ARC});
                         Canvas::canvas->refresh_selected_ibo();
                         result = true;
                     }
-                    else if (_radius0 != _radius1 &&
-                             Canvas::canvas->editor().fillet(dynamic_cast<Geo::Polyline *>(clicked_object), point, _radius0, _radius1))
+                    else if (_radius0 != _radius1 && Canvas::canvas->editor().fillet(clicked_object, point, _radius0, _radius1))
                     {
                         Canvas::canvas->refresh_vbo(true, {Geo::Type::POLYLINE, Geo::Type::BEZIER});
                         Canvas::canvas->refresh_selected_ibo();
@@ -3684,27 +3689,25 @@ bool FilletOperation::mouse_press(QMouseEvent *event)
         {
             if (_object0 == nullptr)
             {
-                if (_object0 = Canvas::canvas->editor().select(real_pos[0], real_pos[1], true, true);
-                    dynamic_cast<Geo::Polyline *>(_object0) != nullptr)
+                if (_object0 = Canvas::canvas->editor().select(real_pos[0], real_pos[1], true, true))
                 {
                     _pos0.x = real_pos[0], _pos0.y = real_pos[1];
                     _object0->is_selected = true;
                     Canvas::canvas->refresh_selected_ibo();
                 }
-                else
-                {
-                    _object0 = nullptr;
-                }
             }
             else if (_object1 = Canvas::canvas->editor().select(real_pos[0], real_pos[1], true, true);
-                     dynamic_cast<Geo::Polyline *>(_object1) != nullptr)
+                     _object1 != nullptr && _object1 != _object0)
             {
                 _pos1.x = real_pos[0], _pos1.y = real_pos[1];
-                if (_radius0 == _radius1 && Canvas::canvas->editor().fillet(dynamic_cast<Geo::Polyline *>(_object0), _pos0,
-                                                                            dynamic_cast<Geo::Polyline *>(_object1), _pos1, _radius0))
+                if (_radius0 == _radius1 && Canvas::canvas->editor().fillet(_object0, _pos0, _object1, _pos1, _radius0))
                 {
+                    std::set<Geo::Type> types;
+                    types.insert(Geo::Type::ARC);
+                    types.insert(_object0->type());
+                    types.insert(_object1->type());
                     _object0 = _object1 = nullptr;
-                    Canvas::canvas->refresh_vbo(true, {Geo::Type::POLYLINE, Geo::Type::ARC});
+                    Canvas::canvas->refresh_vbo(true, types);
                     Canvas::canvas->refresh_selected_ibo();
                     return true;
                 }

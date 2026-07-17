@@ -101,4 +101,13 @@ double ellipse_length(const double a, const double b);
 
 double ellipse_arc_length(const double a, const double b, const double start, const double end);
 
+
+using TartgetFunc = std::function<double(const double)>;
+
+// 三分法计算函数取最小值时的参数
+double min_x_trichotomy(const TartgetFunc &f, double l, double r);
+
+// 三分法计算函数取最大值时的参数
+double max_x_trichotomy(const TartgetFunc &f, double l, double r);
+
 }; // namespace Math

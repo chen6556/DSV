@@ -144,22 +144,17 @@ public:
 
     bool shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1);
 
-    bool fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius);
-
-    bool fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius0, const double radius1);
-
-    bool fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius);
-
-    bool fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius0, const double radius1);
-
-    bool fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1,
-                const double radius);
-
     bool fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1,
                 const double radius0, const double radius1);
 
     bool fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::Point &start, const Geo::Point &center, const Geo::Point &end,
                 const std::vector<std::tuple<size_t, double, double, double>> &tvalues);
+
+    bool fillet(Geo::Geometry *object, const Geo::Point &point, const double radius);
+
+    bool fillet(Geo::Geometry *object, const Geo::Point &point, const double radius0, const double radius1);
+
+    bool fillet(Geo::Geometry *object0, const Geo::Point &point0, Geo::Geometry *object1, const Geo::Point &point1, const double radius);
 
     bool chamfer(Geo::Polygon *shape, const Geo::Point &point, const double distance);
 
@@ -221,4 +216,5 @@ public:
     void bezier_to_bspline(Geo::CubicBezier *bezier);
 
     void bspline_to_bezier(Geo::BSpline *bspline);
+
 };

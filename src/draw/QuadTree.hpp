@@ -8,7 +8,7 @@
 class QuadTreeNode
 {
 private:
-    static const int min_height = 60, min_width = 80, max_depth = 5, multithreading_depth = 5, min_size = 64;
+    static const int min_height = 60, min_width = 80, max_depth = 5, min_size = 64;
     int _depth = 1;
     Geo::AABBRectParams _rect;
     std::vector<Geo::Geometry *> _objects;

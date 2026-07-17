@@ -1,7 +1,10 @@
 #include <thread>
+#include <QDebug>
+#include <chrono>
 #include <algorithm>
 #include <unordered_map>
 #include "base/Editor.hpp"
+#include "base/Math.hpp"
 #include "io/GlobalSetting.hpp"
 #include "io/SHXReader.hpp"
 #include "io/TextEncoding.hpp"
@@ -3202,856 +3205,27 @@ bool Editor::shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1)
     }
 }
 
-bool Editor::fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius)
-{
-    if (radius <= 0)
-    {
-        return false;
-    }
-    Geo::Polygon &polygon = *shape;
-    std::vector<Geo::Point>::const_iterator it = std::find(polygon.begin(), polygon.end(), point);
-    if (it == polygon.end())
-    {
-        return false;
-    }
-    const size_t index1 = std::distance(polygon.cbegin(), it);
-    const size_t index0 = index1 > 0 ? index1 - 1 : polygon.size() - 2;
-    const size_t index2 = index1 + 1;
-    if (Geo::Arc arc; Geo::angle_to_arc(polygon[index0], polygon[index1], polygon[index2], radius, arc))
-    {
-        for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
-        {
-            if (_graph->container_group(_current_group)[i] == shape)
-            {
-                std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-                _view_tree.remove(_graph->container_group(_current_group).pop(i));
-                shape->is_selected = false;
-                remove_items.emplace_back(shape, _current_group, i);
-                std::vector<Geo::Point> points(shape->begin(), shape->end() - 1);
-                std::rotate(points.begin(), points.begin() + index1, points.end());
-                points.front() = arc.control_points[2];
-                points.emplace_back(arc.control_points[0]);
-                Geo::Polyline *polyline = new Geo::Polyline(points.begin(), points.end());
-                add_items.emplace_back(polyline, _current_group, i);
-                _graph->container_group(_current_group).insert(i, polyline);
-                _view_tree.append(polyline);
-                Geo::Arc *a = new Geo::Arc(arc);
-                a->is_selected = true;
-                add_items.emplace_back(a, _current_group, i + 1);
-                _graph->container_group(_current_group).insert(i + 1, a);
-                _view_tree.append(a);
-                _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
-                break;
-            }
-        }
-        _graph->modified = true;
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool Editor::fillet(Geo::Polygon *shape, const Geo::Point &point, const double radius0, const double radius1)
-{
-    if (radius0 <= 0 || radius1 <= 0)
-    {
-        return false;
-    }
-    Geo::Polygon &polygon = *shape;
-    std::vector<Geo::Point>::const_iterator it = std::find(polygon.begin(), polygon.end(), point);
-    if (it == polygon.end())
-    {
-        return false;
-    }
-    const size_t index1 = std::distance(polygon.cbegin(), it);
-    const size_t index0 = index1 > 0 ? index1 - 1 : polygon.size() - 2;
-    const size_t index2 = index1 + 1;
-    if (Geo::CubicBezier arc; Geo::angle_to_arc(polygon[index0], polygon[index1], polygon[index2], radius0, radius1, arc))
-    {
-        for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
-        {
-            if (_graph->container_group(_current_group)[i] == shape)
-            {
-                std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-                _view_tree.remove(_graph->container_group(_current_group).pop(i));
-                shape->is_selected = false;
-                remove_items.emplace_back(shape, _current_group, i);
-                std::vector<Geo::Point> points(shape->begin(), shape->end() - 1);
-                std::rotate(points.begin(), points.begin() + index1, points.end());
-                points.front() = arc.back();
-                points.emplace_back(arc.front());
-                Geo::Polyline *polyline = new Geo::Polyline(points.begin(), points.end());
-                add_items.emplace_back(polyline, _current_group, i);
-                _graph->container_group(_current_group).insert(i, polyline);
-                _view_tree.append(polyline);
-                Geo::CubicBezier *a = new Geo::CubicBezier(arc);
-                a->is_selected = true;
-                add_items.emplace_back(a, _current_group, i + 1);
-                _graph->container_group(_current_group).insert(i + 1, a);
-                _view_tree.append(a);
-                _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
-                break;
-            }
-        }
-        _graph->modified = true;
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool Editor::fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius)
-{
-    if (radius <= 0 || point == polyline->front() || point == polyline->back())
-    {
-        return false;
-    }
-    std::vector<Geo::Point>::const_iterator it = std::find(polyline->begin(), polyline->end(), point);
-    if (it == polyline->end())
-    {
-        return false;
-    }
-    const size_t index = std::distance(polyline->cbegin(), it);
-    if (Geo::Arc arc; Geo::angle_to_arc((*polyline)[index - 1], (*polyline)[index], (*polyline)[index + 1], radius, arc))
-    {
-        for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
-        {
-            if (_graph->container_group(_current_group)[i] == polyline)
-            {
-                std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-                _view_tree.remove(_graph->container_group(_current_group).pop(i));
-                polyline->is_selected = false;
-                remove_items.emplace_back(polyline, _current_group, i);
-                Geo::Polyline *polyline0 = new Geo::Polyline(polyline->begin(), polyline->begin() + index + 1);
-                polyline0->back() = arc.control_points[0];
-                add_items.emplace_back(polyline0, _current_group, i);
-                _graph->container_group(_current_group).insert(i, polyline0);
-                _view_tree.append(polyline0);
-                Geo::Arc *a = new Geo::Arc(arc);
-                a->is_selected = true;
-                add_items.emplace_back(a, _current_group, i + 1);
-                _graph->container_group(_current_group).insert(i + 1, a);
-                _view_tree.append(a);
-                Geo::Polyline *polyline1 = new Geo::Polyline(polyline->begin() + index, polyline->end());
-                polyline1->front() = arc.control_points[2];
-                add_items.emplace_back(polyline1, _current_group, i + 2);
-                _graph->container_group(_current_group).insert(i + 2, polyline1);
-                _view_tree.append(polyline1);
-                _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
-                break;
-            }
-        }
-        _graph->modified = true;
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool Editor::fillet(Geo::Polyline *polyline, const Geo::Point &point, const double radius0, const double radius1)
-{
-    if (radius0 <= 0 || radius1 <= 0 || point == polyline->front() || point == polyline->back())
-    {
-        return false;
-    }
-    std::vector<Geo::Point>::const_iterator it = std::find(polyline->begin(), polyline->end(), point);
-    if (it == polyline->end())
-    {
-        return false;
-    }
-    const size_t index = std::distance(polyline->cbegin(), it);
-    if (Geo::CubicBezier arc; Geo::angle_to_arc((*polyline)[index - 1], (*polyline)[index], (*polyline)[index + 1], radius0, radius1, arc))
-    {
-        for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
-        {
-            if (_graph->container_group(_current_group)[i] == polyline)
-            {
-                std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-                _view_tree.remove(_graph->container_group(_current_group).pop(i));
-                polyline->is_selected = false;
-                remove_items.emplace_back(polyline, _current_group, i);
-                Geo::Polyline *polyline0 = new Geo::Polyline(polyline->begin(), polyline->begin() + index + 1);
-                polyline0->back() = arc.front();
-                add_items.emplace_back(polyline0, _current_group, i);
-                _graph->container_group(_current_group).insert(i, polyline0);
-                _view_tree.append(polyline0);
-                Geo::CubicBezier *a = new Geo::CubicBezier(arc);
-                a->is_selected = true;
-                add_items.emplace_back(a, _current_group, i + 1);
-                _graph->container_group(_current_group).insert(i + 1, a);
-                _view_tree.append(a);
-                Geo::Polyline *polyline1 = new Geo::Polyline(polyline->begin() + index, polyline->end());
-                polyline1->front() = arc.back();
-                add_items.emplace_back(polyline1, _current_group, i + 2);
-                _graph->container_group(_current_group).insert(i + 2, polyline1);
-                _view_tree.append(polyline1);
-                _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
-                break;
-            }
-        }
-        _graph->modified = true;
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool Editor::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1,
-                    const double radius)
-{
-    if (radius <= 0 || polyline0 == polyline1 || polyline0->empty() || polyline1->empty())
-    {
-        return false;
-    }
-
-    Geo::Point head0, tail0, head1, tail1;
-    Geo::Polyline polyline0_copy(*polyline0), polyline1_copy(*polyline1);
-    if (Geo::distance(polyline0->front(), point0) <= Geo::distance(polyline0->back(), point0))
-    {
-        head0 = polyline0->front();
-        tail0 = polyline0->at(1);
-        polyline0_copy.remove(0);
-    }
-    else
-    {
-        head0 = polyline0->back();
-        tail0 = polyline0->at(polyline0->size() - 2);
-        polyline0_copy.remove(polyline0_copy.size() - 1);
-    }
-    if (Geo::distance(polyline1->front(), point1) <= Geo::distance(polyline1->back(), point1))
-    {
-        head1 = polyline1->front();
-        tail1 = polyline1->at(1);
-        polyline1_copy.remove(0);
-    }
-    else
-    {
-        head1 = polyline1->back();
-        tail1 = polyline1->at(polyline1->size() - 2);
-        polyline1_copy.remove(polyline1_copy.size() - 1);
-    }
-
-    Geo::Polyline *polyline2 = nullptr, *polyline3 = nullptr;
-    Geo::Arc *arc = nullptr;
-    if (Geo::Point center; Geo::is_intersected(head0, tail0, head1, tail1, center, true))
-    {
-        if ((head0 - center) * (tail0 - center) < 0 && (head1 - center) * (tail1 - center) < 0)
-        {
-            if ((head0 - center) * (point0 - center) > 0)
-            {
-                if ((head1 - center) * (point1 - center) > 0)
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(head0, center, head1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(head0, center, tail1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-            }
-            else
-            {
-                if ((head1 - center) * (point1 - center) > 0)
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(tail0, center, head1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(tail0, center, tail1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-            }
-        }
-        else if ((head0 - center) * (tail0 - center) < 0)
-        {
-            if ((head0 - center) * (point0 - center) > 0)
-            {
-                if (Geo::distance(center, head1) <= Geo::distance(center, tail1))
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(head0, center, tail1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(head0, center, head1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-            }
-            else
-            {
-                if (Geo::distance(center, head1) <= Geo::distance(center, tail1))
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(tail0, center, tail1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(tail0, center, head1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-            }
-        }
-        else if ((head1 - center) * (tail1 - center) < 0)
-        {
-            if ((head1 - center) * (point1 - center) > 0)
-            {
-                if (Geo::distance(center, head0) <= Geo::distance(center, tail0))
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(tail0, center, head1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(head0, center, head1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-            }
-            else
-            {
-                if (Geo::distance(center, head0) <= Geo::distance(center, tail0))
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(tail0, center, tail1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(head0, center, tail1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-            }
-        }
-        else
-        {
-            if (Geo::distance(center, head0) <= Geo::distance(center, tail0))
-            {
-                if (Geo::distance(center, head1) <= Geo::distance(center, tail1))
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(tail0, center, tail1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(tail0, center, head1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-            }
-            else
-            {
-                if (Geo::distance(center, head1) <= Geo::distance(center, tail1))
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(head0, center, tail1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::Arc arc0; Geo::angle_to_arc(head0, center, head1, radius, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.control_points[0]);
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.control_points[2]);
-                        arc = new Geo::Arc(arc0);
-                    }
-                }
-            }
-        }
-    }
-    else
-    {
-        return false;
-    }
-
-    if (arc == nullptr)
-    {
-        return false;
-    }
-
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-    for (size_t i = 0, k = 0, count = _graph->container_group(_current_group).size(); i < count && k < 2; ++i)
-    {
-        if (_graph->container_group(_current_group)[i] == polyline0)
-        {
-            ++k;
-            _view_tree.remove(_graph->container_group(_current_group).pop(i));
-            polyline0->is_selected = false;
-            remove_items.emplace_back(polyline0, _current_group, i);
-            size_t j = i;
-            if (polyline0_copy.size() > 1)
-            {
-                Geo::Polyline *polyline = new Geo::Polyline(polyline0_copy);
-                polyline->is_selected = false;
-                add_items.emplace_back(polyline, _current_group, i);
-                _graph->container_group(_current_group).insert(i, polyline);
-                _view_tree.append(polyline);
-                ++count;
-            }
-            else
-            {
-                --j;
-            }
-            add_items.emplace_back(polyline2, _current_group, j + 1);
-            _graph->container_group(_current_group).insert(j + 1, polyline2);
-            _view_tree.append(polyline2);
-            polyline2->is_selected = false;
-            add_items.emplace_back(arc, _current_group, j + 2);
-            _graph->container_group(_current_group).insert(j + 2, arc);
-            _view_tree.append(arc);
-            arc->is_selected = true;
-            ++count;
-        }
-        else if (_graph->container_group(_current_group)[i] == polyline1)
-        {
-            ++k;
-            _view_tree.remove(_graph->container_group(_current_group).pop(i));
-            polyline1->is_selected = false;
-            remove_items.emplace_back(polyline1, _current_group, i);
-            size_t j = i;
-            if (polyline1_copy.size() > 1)
-            {
-                Geo::Polyline *polyline = new Geo::Polyline(polyline1_copy);
-                polyline->is_selected = false;
-                add_items.emplace_back(polyline, _current_group, i);
-                _graph->container_group(_current_group).insert(i, polyline);
-                _view_tree.append(polyline);
-                ++count;
-            }
-            else
-            {
-                --j;
-            }
-            add_items.emplace_back(polyline3, _current_group, j + 1);
-            _graph->container_group(_current_group).insert(j + 1, polyline3);
-            _view_tree.append(polyline3);
-            polyline3->is_selected = false;
-        }
-    }
-    _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
-    return true;
-}
-
 bool Editor::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1,
                     const double radius0, const double radius1)
 {
-    if (radius0 <= 0 || radius1 <= 0 || polyline0 == polyline1 || polyline0->empty() || polyline1->empty())
+    if (polyline0 == polyline1)
     {
         return false;
     }
 
-    Geo::Point head0, tail0, head1, tail1;
-    Geo::Polyline polyline0_copy(*polyline0), polyline1_copy(*polyline1);
-    if (Geo::distance(polyline0->front(), point0) <= Geo::distance(polyline0->back(), point0))
-    {
-        head0 = polyline0->front();
-        tail0 = polyline0->at(1);
-        polyline0_copy.remove(0);
-    }
-    else
-    {
-        head0 = polyline0->back();
-        tail0 = polyline0->at(polyline0->size() - 2);
-        polyline0_copy.remove(polyline0_copy.size() - 1);
-    }
-    if (Geo::distance(polyline1->front(), point1) <= Geo::distance(polyline1->back(), point1))
-    {
-        head1 = polyline1->front();
-        tail1 = polyline1->at(1);
-        polyline1_copy.remove(0);
-    }
-    else
-    {
-        head1 = polyline1->back();
-        tail1 = polyline1->at(polyline1->size() - 2);
-        polyline1_copy.remove(polyline1_copy.size() - 1);
-    }
+    Geo::Polyline *result0 = new Geo::Polyline();
+    Geo::Polyline *result1 = new Geo::Polyline();
+    Geo::Polyline *result2 = new Geo::Polyline();
+    Geo::Polyline *result3 = new Geo::Polyline();
+    Geo::CubicBezier *arc = new Geo::CubicBezier();
 
-    Geo::Polyline *polyline2 = nullptr, *polyline3 = nullptr;
-    Geo::CubicBezier *arc = nullptr;
-    if (Geo::Point center; Geo::is_intersected(head0, tail0, head1, tail1, center, true))
+    if (!Geo::fillet(*polyline0, point0, *polyline1, point1, radius0, radius1, *arc, *result0, *result1, *result2, *result3))
     {
-        if ((head0 - center) * (tail0 - center) < 0 && (head1 - center) * (tail1 - center) < 0)
-        {
-            if ((head0 - center) * (point0 - center) > 0)
-            {
-                if ((head1 - center) * (point1 - center) > 0)
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, head1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, tail1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-            }
-            else
-            {
-                if ((head1 - center) * (point1 - center) > 0)
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, head1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, tail1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-            }
-        }
-        else if ((head0 - center) * (tail0 - center) < 0)
-        {
-            if ((head0 - center) * (point0 - center) > 0)
-            {
-                if (Geo::distance(center, head1) <= Geo::distance(center, tail1))
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, tail1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, head1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-            }
-            else
-            {
-                if (Geo::distance(center, head1) <= Geo::distance(center, tail1))
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, tail1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, head1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-            }
-        }
-        else if ((head1 - center) * (tail1 - center) < 0)
-        {
-            if ((head1 - center) * (point1 - center) > 0)
-            {
-                if (Geo::distance(center, head0) <= Geo::distance(center, tail0))
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, head1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, head1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-            }
-            else
-            {
-                if (Geo::distance(center, head0) <= Geo::distance(center, tail0))
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, tail1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, tail1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-            }
-        }
-        else
-        {
-            if (Geo::distance(center, head0) <= Geo::distance(center, tail0))
-            {
-                if (Geo::distance(center, head1) <= Geo::distance(center, tail1))
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, tail1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(tail0, center, head1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(tail0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-            }
-            else
-            {
-                if (Geo::distance(center, head1) <= Geo::distance(center, tail1))
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, tail1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(tail1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-                else
-                {
-                    if (Geo::CubicBezier arc0; Geo::angle_to_arc(head0, center, head1, radius0, radius1, arc0))
-                    {
-                        polyline2 = new Geo::Polyline();
-                        polyline2->append(head0);
-                        polyline2->append(arc0.front());
-                        polyline3 = new Geo::Polyline();
-                        polyline3->append(head1);
-                        polyline3->append(arc0.back());
-                        arc = new Geo::CubicBezier(arc0);
-                    }
-                }
-            }
-        }
-    }
-    else
-    {
-        return false;
-    }
-
-    if (arc == nullptr)
-    {
+        delete result0;
+        delete result1;
+        delete result2;
+        delete result3;
+        delete arc;
         return false;
     }
 
@@ -4065,23 +3239,23 @@ bool Editor::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
             polyline0->is_selected = false;
             remove_items.emplace_back(polyline0, _current_group, i);
             size_t j = i;
-            if (polyline0_copy.size() > 1)
+            if (result2->size() > 1)
             {
-                Geo::Polyline *polyline = new Geo::Polyline(polyline0_copy);
-                polyline->is_selected = false;
-                add_items.emplace_back(polyline, _current_group, i);
-                _graph->container_group(_current_group).insert(i, polyline);
-                _view_tree.append(polyline);
+                result2->is_selected = false;
+                add_items.emplace_back(result2, _current_group, i);
+                _graph->container_group(_current_group).insert(i, result2);
+                _view_tree.append(result2);
                 ++count;
             }
             else
             {
+                delete result2;
                 --j;
             }
-            add_items.emplace_back(polyline2, _current_group, j + 1);
-            _graph->container_group(_current_group).insert(j + 1, polyline2);
-            _view_tree.append(polyline2);
-            polyline2->is_selected = false;
+            add_items.emplace_back(result0, _current_group, j + 1);
+            _graph->container_group(_current_group).insert(j + 1, result0);
+            _view_tree.append(result0);
+            result0->is_selected = false;
             add_items.emplace_back(arc, _current_group, j + 2);
             _graph->container_group(_current_group).insert(j + 2, arc);
             _view_tree.append(arc);
@@ -4095,23 +3269,23 @@ bool Editor::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
             polyline1->is_selected = false;
             remove_items.emplace_back(polyline1, _current_group, i);
             size_t j = i;
-            if (polyline1_copy.size() > 1)
+            if (result3->size() > 1)
             {
-                Geo::Polyline *polyline = new Geo::Polyline(polyline1_copy);
-                polyline->is_selected = false;
-                add_items.emplace_back(polyline, _current_group, i);
-                _graph->container_group(_current_group).insert(i, polyline);
-                _view_tree.append(polyline);
+                result3->is_selected = false;
+                add_items.emplace_back(result3, _current_group, i);
+                _graph->container_group(_current_group).insert(i, result3);
+                _view_tree.append(result3);
                 ++count;
             }
             else
             {
+                delete result3;
                 --j;
             }
-            add_items.emplace_back(polyline3, _current_group, j + 1);
-            _graph->container_group(_current_group).insert(j + 1, polyline3);
-            _view_tree.append(polyline3);
-            polyline3->is_selected = false;
+            add_items.emplace_back(result1, _current_group, j + 1);
+            _graph->container_group(_current_group).insert(j + 1, result1);
+            _view_tree.append(result1);
+            result1->is_selected = false;
         }
     }
     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
@@ -4740,6 +3914,552 @@ bool Editor::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
     {
         return false;
     }
+}
+
+bool Editor::fillet(Geo::Geometry *object, const Geo::Point &point, const double radius)
+{
+    std::vector<Geo::Geometry *> objects;
+    switch (object->type())
+    {
+    case Geo::Type::POLYGON:
+        {
+            Geo::Polygon &polygon = *static_cast<Geo::Polygon *>(object);
+            std::vector<Geo::Point>::const_iterator it = std::find(polygon.begin(), polygon.end(), point);
+            if (it != polygon.end())
+            {
+                Geo::Arc *arc = new Geo::Arc();
+                Geo::Polyline *polyline = new Geo::Polyline();
+                const size_t index = std::distance(polygon.cbegin(), it);
+                if (Geo::fillet(polygon, index, radius, *arc, *polyline))
+                {
+                    objects.push_back(arc);
+                    objects.push_back(polyline);
+                }
+                else
+                {
+                    delete arc;
+                    delete polyline;
+                }
+            }
+        }
+        break;
+    case Geo::Type::POLYLINE:
+        {
+            Geo::Polyline &polyline = *static_cast<Geo::Polyline *>(object);
+            if (point == polyline.front() || point == polyline.back())
+            {
+                return false;
+            }
+            std::vector<Geo::Point>::const_iterator it = std::find(polyline.begin(), polyline.end(), point);
+            if (it != polyline.end())
+            {
+                Geo::Arc *arc = new Geo::Arc();
+                Geo::Polyline *polyline0 = new Geo::Polyline();
+                Geo::Polyline *polyline1 = new Geo::Polyline();
+                const size_t index = std::distance(polyline.cbegin(), it);
+                if (Geo::fillet(polyline, index, radius, *arc, *polyline0, *polyline1))
+                {
+                    objects.push_back(arc);
+                    objects.push_back(polyline0);
+                    objects.push_back(polyline1);
+                }
+                else
+                {
+                    delete arc;
+                    delete polyline0;
+                    delete polyline1;
+                }
+            }
+        }
+        break;
+    default:
+        return false;
+    }
+
+    if (objects.empty())
+    {
+        return false;
+    }
+    for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
+    {
+        if (_graph->container_group(_current_group)[i] == object)
+        {
+            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            _view_tree.remove(_graph->container_group(_current_group).pop(i));
+            object->is_selected = false;
+            remove_items.emplace_back(object, _current_group, i);
+            size_t j = i - 1;
+            for (Geo::Geometry *item : objects)
+            {
+                add_items.emplace_back(item, _current_group, ++j);
+                _graph->container_group(_current_group).insert(i, item);
+                _view_tree.append(item);
+                item->is_selected = true;
+            }
+            _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+            break;
+        }
+    }
+    _graph->modified = true;
+    return true;
+}
+
+bool Editor::fillet(Geo::Geometry *object, const Geo::Point &point, const double radius0, const double radius1)
+{
+    std::vector<Geo::Geometry *> objects;
+    switch (object->type())
+    {
+    case Geo::Type::POLYGON:
+        {
+            Geo::Polygon &polygon = *static_cast<Geo::Polygon *>(object);
+            std::vector<Geo::Point>::const_iterator it = std::find(polygon.begin(), polygon.end(), point);
+            if (it != polygon.end())
+            {
+                Geo::CubicBezier *arc = new Geo::CubicBezier();
+                Geo::Polyline *polyline = new Geo::Polyline();
+                const size_t index = std::distance(polygon.cbegin(), it);
+                if (Geo::fillet(polygon, index, radius0, radius1, *arc, *polyline))
+                {
+                    objects.push_back(arc);
+                    objects.push_back(polyline);
+                }
+                else
+                {
+                    delete arc;
+                    delete polyline;
+                }
+            }
+        }
+        break;
+    case Geo::Type::POLYLINE:
+        {
+            Geo::Polyline &polyline = *static_cast<Geo::Polyline *>(object);
+            if (point == polyline.front() || point == polyline.back())
+            {
+                return false;
+            }
+            std::vector<Geo::Point>::const_iterator it = std::find(polyline.begin(), polyline.end(), point);
+            if (it != polyline.end())
+            {
+                Geo::CubicBezier *arc = new Geo::CubicBezier();
+                Geo::Polyline *polyline0 = new Geo::Polyline();
+                Geo::Polyline *polyline1 = new Geo::Polyline();
+                const size_t index = std::distance(polyline.cbegin(), it);
+                if (Geo::fillet(polyline, index, radius0, radius1, *arc, *polyline0, *polyline1))
+                {
+                    objects.push_back(arc);
+                    objects.push_back(polyline0);
+                    objects.push_back(polyline1);
+                }
+                else
+                {
+                    delete arc;
+                    delete polyline0;
+                    delete polyline1;
+                }
+            }
+        }
+        break;
+    default:
+        return false;
+    }
+
+    if (objects.empty())
+    {
+        return false;
+    }
+    for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
+    {
+        if (_graph->container_group(_current_group)[i] == object)
+        {
+            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            _view_tree.remove(_graph->container_group(_current_group).pop(i));
+            object->is_selected = false;
+            remove_items.emplace_back(object, _current_group, i);
+            size_t j = i - 1;
+            for (Geo::Geometry *item : objects)
+            {
+                add_items.emplace_back(item, _current_group, ++j);
+                _graph->container_group(_current_group).insert(j, item);
+                _view_tree.append(item);
+                item->is_selected = true;
+            }
+            _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+            break;
+        }
+    }
+    _graph->modified = true;
+    return true;
+}
+
+bool Editor::fillet(Geo::Geometry *object0, const Geo::Point &point0, Geo::Geometry *object1, const Geo::Point &point1, const double radius)
+{
+    std::vector<Geo::Geometry *> objects;
+    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    switch (object0->type())
+    {
+    case Geo::Type::POLYLINE:
+        switch (object1->type())
+        {
+        case Geo::Type::POLYLINE:
+            {
+                Geo::Polyline *result0 = new Geo::Polyline();
+                Geo::Polyline *result1 = new Geo::Polyline();
+                Geo::Polyline *result2 = new Geo::Polyline();
+                Geo::Polyline *result3 = new Geo::Polyline();
+                Geo::Arc *arc = new Geo::Arc();
+                if (Geo::fillet(*static_cast<Geo::Polyline *>(object0), point0, *static_cast<Geo::Polyline *>(object1), point1, radius,
+                                *arc, *result0, *result1, *result2, *result3))
+                {
+                    objects.push_back(arc);
+                    objects.push_back(result0);
+                    objects.push_back(result1);
+                    if (result2->size() > 1)
+                    {
+                        objects.push_back(result2);
+                    }
+                    else
+                    {
+                        delete result2;
+                    }
+                    if (result3->size() > 1)
+                    {
+                        objects.push_back(result3);
+                    }
+                    else
+                    {
+                        delete result3;
+                    }
+                }
+                else
+                {
+                    delete arc;
+                    delete result0;
+                    delete result1;
+                    delete result2;
+                    delete result3;
+                }
+            }
+            break;
+        case Geo::Type::ARC:
+            {
+                Geo::Polyline *result0 = new Geo::Polyline();
+                Geo::Polyline *result1 = new Geo::Polyline();
+                Geo::Arc *result_arc = new Geo::Arc();
+                Geo::Arc *result2 = new Geo::Arc();
+                if (Geo::fillet(*static_cast<Geo::Polyline *>(object0), point0, *static_cast<Geo::Arc *>(object1), point1, radius,
+                                *result_arc, *result0, *result1, *result2))
+                {
+                    objects.push_back(result_arc);
+                    objects.push_back(result0);
+                    if (result1->size() > 1)
+                    {
+                        objects.push_back(result1);
+                    }
+                    else
+                    {
+                        delete result1;
+                    }
+                    objects.push_back(result2);
+                }
+                else
+                {
+                    delete result0;
+                    delete result1;
+                    delete result2;
+                    delete result_arc;
+                }
+            }
+            break;
+        case Geo::Type::BEZIER:
+            {
+                Geo::Arc *result_arc = new Geo::Arc();
+                Geo::Polyline *result0 = new Geo::Polyline();
+                Geo::Polyline *result1 = new Geo::Polyline();
+                Geo::CubicBezier *result2 = new Geo::CubicBezier();
+                if (Geo::fillet(*static_cast<Geo::Polyline *>(object0), point0, *static_cast<Geo::CubicBezier *>(object1), point1, radius,
+                                *result_arc, *result0, *result1, *result2))
+                {
+                    objects.push_back(result_arc);
+                    objects.push_back(result0);
+                    if (result1->size() > 1)
+                    {
+                        objects.push_back(result1);
+                    }
+                    else
+                    {
+                        delete result1;
+                    }
+                    objects.push_back(result2);
+                }
+                else
+                {
+                    delete result_arc;
+                    delete result0;
+                    delete result1;
+                    delete result2;
+                }
+            }
+            break;
+        case Geo::Type::BSPLINE:
+            {
+                Geo::Arc *result_arc = new Geo::Arc();
+                Geo::Polyline *result0 = new Geo::Polyline();
+                Geo::Polyline *result1 = new Geo::Polyline();
+                Geo::BSpline *result2 = nullptr;
+                const bool is_cubic = dynamic_cast<Geo::CubicBSpline *>(object1) != nullptr;
+                if (is_cubic)
+                {
+                    result2 = new Geo::CubicBSpline();
+                }
+                else
+                {
+                    result2 = new Geo::QuadBSpline();
+                }
+                if (Geo::fillet(*static_cast<Geo::Polyline *>(object0), point0, *static_cast<Geo::BSpline *>(object1), point1, is_cubic,
+                                radius, *result_arc, *result0, *result1, *result2))
+                {
+                    objects.push_back(result_arc);
+                    objects.push_back(result0);
+                    if (result1->size() > 1)
+                    {
+                        objects.push_back(result1);
+                    }
+                    else
+                    {
+                        delete result1;
+                    }
+                    objects.push_back(result2);
+                }
+                else
+                {
+                    delete result_arc;
+                    delete result0;
+                    delete result1;
+                    delete result2;
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::ARC:
+        switch (object1->type())
+        {
+        case Geo::Type::POLYLINE:
+            {
+                Geo::Polyline *result0 = new Geo::Polyline();
+                Geo::Polyline *result1 = new Geo::Polyline();
+                Geo::Arc *result_arc = new Geo::Arc();
+                Geo::Arc *result2 = new Geo::Arc();
+                if (Geo::fillet(*static_cast<Geo::Polyline *>(object1), point1, *static_cast<Geo::Arc *>(object0), point0, radius,
+                                *result_arc, *result0, *result1, *result2))
+                {
+                    objects.push_back(result_arc);
+                    objects.push_back(result0);
+                    if (result1->size() > 1)
+                    {
+                        objects.push_back(result1);
+                    }
+                    else
+                    {
+                        delete result1;
+                    }
+                    objects.push_back(result2);
+                }
+                else
+                {
+                    delete result0;
+                    delete result1;
+                    delete result2;
+                    delete result_arc;
+                }
+            }
+            break;
+        case Geo::Type::ARC:
+            {
+                Geo::Arc *arc0 = new Geo::Arc();
+                Geo::Arc *arc1 = new Geo::Arc();
+                Geo::Arc *arc2 = new Geo::Arc();
+                if (Geo::fillet(*static_cast<Geo::Arc *>(object0), point0, *static_cast<Geo::Arc *>(object1), point1, radius, *arc0, *arc1,
+                                *arc2))
+                {
+                    objects.push_back(arc2);
+                    objects.push_back(arc0);
+                    objects.push_back(arc1);
+                }
+                else
+                {
+                    delete arc0;
+                    delete arc1;
+                    delete arc2;
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::BEZIER:
+        switch (object1->type())
+        {
+        case Geo::Type::POLYLINE:
+            {
+                Geo::Arc *result_arc = new Geo::Arc();
+                Geo::Polyline *result0 = new Geo::Polyline();
+                Geo::Polyline *result1 = new Geo::Polyline();
+                Geo::CubicBezier *result2 = new Geo::CubicBezier();
+                if (Geo::fillet(*static_cast<Geo::Polyline *>(object1), point1, *static_cast<Geo::CubicBezier *>(object0), point0, radius,
+                                *result_arc, *result0, *result1, *result2))
+                {
+                    objects.push_back(result_arc);
+                    objects.push_back(result0);
+                    if (result1->size() > 1)
+                    {
+                        objects.push_back(result1);
+                    }
+                    else
+                    {
+                        delete result1;
+                    }
+                    objects.push_back(result2);
+                }
+                else
+                {
+                    delete result_arc;
+                    delete result0;
+                    delete result1;
+                    delete result2;
+                }
+            }
+            break;
+        case Geo::Type::BEZIER:
+            {
+                Geo::CubicBezier *result0 = new Geo::CubicBezier();
+                Geo::CubicBezier *result1 = new Geo::CubicBezier();
+                Geo::Arc *arc = new Geo::Arc();
+                if (Geo::fillet(*static_cast<Geo::CubicBezier *>(object0), point0, *static_cast<Geo::CubicBezier *>(object1), point1,
+                                radius, *arc, *result0, *result1))
+                {
+                    objects.push_back(arc);
+                    objects.push_back(result0);
+                    objects.push_back(result1);
+                }
+                else
+                {
+                    delete arc;
+                    delete result0;
+                    delete result1;
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::BSPLINE:
+        switch (object1->type())
+        {
+        case Geo::Type::POLYLINE:
+            {
+                Geo::Arc *result_arc = new Geo::Arc();
+                Geo::Polyline *result0 = new Geo::Polyline();
+                Geo::Polyline *result1 = new Geo::Polyline();
+                Geo::BSpline *result2 = nullptr;
+                const bool is_cubic = dynamic_cast<Geo::CubicBSpline *>(object0) != nullptr;
+                if (is_cubic)
+                {
+                    result2 = new Geo::CubicBSpline();
+                }
+                else
+                {
+                    result2 = new Geo::QuadBSpline();
+                }
+                if (Geo::fillet(*static_cast<Geo::Polyline *>(object1), point1, *static_cast<Geo::BSpline *>(object0), point0, is_cubic,
+                                radius, *result_arc, *result0, *result1, *result2))
+                {
+                    objects.push_back(result_arc);
+                    objects.push_back(result0);
+                    if (result1->size() > 1)
+                    {
+                        objects.push_back(result1);
+                    }
+                    else
+                    {
+                        delete result1;
+                    }
+                    objects.push_back(result2);
+                }
+                else
+                {
+                    delete result_arc;
+                    delete result0;
+                    delete result1;
+                    delete result2;
+                }
+            }
+            break;
+        default:
+            break;
+        }
+        break;
+    default:
+        break;
+    }
+    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+    qDebug() << std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+    if (objects.empty())
+    {
+        return false;
+    }
+    bool added = false;
+    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    for (size_t i = 0, k = 0, count = _graph->container_group(_current_group).size(); i < count && k < 2; ++i)
+    {
+        if (_graph->container_group(_current_group)[i] == object0)
+        {
+            ++k;
+            _view_tree.remove(_graph->container_group(_current_group).pop(i));
+            object0->is_selected = false;
+            remove_items.emplace_back(object0, _current_group, i);
+            --count;
+            size_t j = i - 1;
+            while ((added && !objects.empty()) || objects.size() > 1)
+            {
+                add_items.emplace_back(objects.back(), _current_group, ++j);
+                _graph->container_group(_current_group).insert(j, objects.back());
+                _view_tree.append(objects.back());
+                objects.back()->is_selected = false;
+                objects.pop_back();
+                ++count;
+            }
+            added = true;
+        }
+        else if (_graph->container_group(_current_group)[i] == object1)
+        {
+            ++k;
+            _view_tree.remove(_graph->container_group(_current_group).pop(i));
+            object1->is_selected = false;
+            remove_items.emplace_back(object1, _current_group, i);
+            --count;
+            size_t j = i - 1;
+            while ((added && !objects.empty()) || objects.size() > 1)
+            {
+                add_items.emplace_back(objects.back(), _current_group, ++j);
+                _graph->container_group(_current_group).insert(j, objects.back());
+                _view_tree.append(objects.back());
+                objects.back()->is_selected = false;
+                objects.pop_back();
+                ++count;
+            }
+            added = true;
+        }
+    }
+    _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+    _graph->modified = true;
+    return true;
 }
 
 bool Editor::chamfer(Geo::Polygon *shape, const Geo::Point &point, const double distance)
@@ -6134,83 +5854,31 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
             }
         } while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
-        lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
-        step = (upper - lower) / 100;
-        min_dis[0] = min_dis[1] = DBL_MAX;
-        std::vector<double> stored_t;
-        while ((upper - lower) * 1e15 > 1)
+        lower = std::max(0.0, t - 1e-3), upper = std::min(1.0, t + 1e-3);
+        const std::function<double(const double)> f = [&](const double t)
         {
-            int flag = 0;
-            for (double x = lower, dis0 = 0; x < upper + step; x += step)
+            Geo::Point coord;
+            for (int j = 0; j <= order; ++j)
             {
-                x = x < upper ? x : upper;
-                Geo::Point coord;
-                for (int j = 0; j <= order; ++j)
-                {
-                    coord += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
-                }
-                if (const double dis = Geo::distance(coord, anchor) * 1e9; dis < min_dis[1])
-                {
-                    min_dis[1] = dis;
-                    t = x;
-                }
-                else if (dis == min_dis[1]) // 需要扩大搜索范围
-                {
-                    flag = -1;
-                    break;
-                }
-                else
-                {
-                    if (dis == dis0)
-                    {
-                        if (++flag == 10)
-                        {
-                            break; // 连续10次相等就退出循环
-                        }
-                    }
-                    else
-                    {
-                        flag = 0;
-                    }
-                    dis0 = dis;
-                }
+                coord += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
-            if (min_dis[1] < 2e-5)
-            {
-                break;
-            }
-            else if (flag == -1) // 需要扩大搜索范围
-            {
-                if (t - lower < upper - t)
-                {
-                    lower = std::max(0.0, lower - step * 2);
-                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                    {
-                        lower += (upper - lower) / 4;
-                    }
-                }
-                else
-                {
-                    upper = std::min(1.0, upper + step * 2);
-                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                    {
-                        upper += (upper - lower) / 4;
-                    }
-                }
-                stored_t.push_back(t);
-                if (stored_t.size() > 4)
-                {
-                    stored_t.erase(stored_t.begin(), stored_t.end() - 4);
-                }
-                step = (upper - lower) / 100;
-            }
-            else
-            {
-                lower = std::max(0.0, t - step * 2);
-                upper = std::min(1.0, t + step * 2);
-                step = (upper - lower) / 100;
-            }
+            return Geo::distance(coord, anchor) * 1e9;
+        };
+        min_dis[0] = f(lower), min_dis[1] = f(t);
+        while (lower > 0 && min_dis[0] < min_dis[1])
+        {
+            lower -= 0.001;
+            min_dis[0] = f(lower);
         }
+        lower = std::max(0.0, lower);
+        min_dis[0] = f(upper);
+        while (upper < 1.0 && min_dis[0] < min_dis[1])
+        {
+            upper += 0.001;
+            min_dis[0] = f(upper);
+        }
+        upper = std::min(1.0, upper);
+        t = Math::min_x_trichotomy(f, lower, upper);
 
         anchor.clear();
         for (int j = 0; j <= order; ++j)
@@ -6570,86 +6238,33 @@ void Editor::trim(Geo::BSpline *bspline, const double x, const double y)
                 }
             } while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
-            step = 1e-3, lower = std::max(knots[0], anchor_t - 0.1), upper = std::min(knots[nplusc - 1], anchor_t + 0.1);
-            min_dis[0] = min_dis[1] = DBL_MAX;
-            std::vector<double> stored_t;
-            while ((upper - lower) * 1e15 > 1)
+            lower = std::max(knots[0], anchor_t - 1e-3), upper = std::min(knots[nplusc - 1], anchor_t + 1e-3);
+            const std::function<double(const double)> f = [&](const double t)
             {
-                int flag = 0;
-                for (double x = lower, dis0 = 0; x < upper + step; x += step)
+                std::vector<double> nbasis;
+                Geo::BSpline::rbasis(is_cubic ? 3 : 2, t, npts, knots, nbasis);
+                Geo::Point coord;
+                for (size_t i = 0; i < npts; ++i)
                 {
-                    x = x < upper ? x : upper;
-                    std::vector<double> nbasis;
-                    Geo::BSpline::rbasis(is_cubic ? 3 : 2, x, npts, knots, nbasis);
-                    Geo::Point coord;
-                    for (size_t i = 0; i < npts; ++i)
-                    {
-                        coord += bspline->control_points[i] * nbasis[i];
-                    }
-                    if (const double dis = Geo::distance(coord, anchor) * 1e9; dis < min_dis[1])
-                    {
-                        min_dis[1] = dis;
-                        anchor_t = x;
-                    }
-                    else if (dis == min_dis[1]) // 需要扩大搜索范围
-                    {
-                        flag = -1;
-                        break;
-                    }
-                    else
-                    {
-                        if (dis == dis0)
-                        {
-                            if (++flag == 10)
-                            {
-                                break; // 连续10次相等就退出循环
-                            }
-                        }
-                        else
-                        {
-                            flag = 0;
-                        }
-                        dis0 = dis;
-                    }
+                    coord += bspline->control_points[i] * nbasis[i];
                 }
-                if (min_dis[1] < 2e-5)
-                {
-                    break;
-                }
-                else if (flag == -1) // 需要扩大搜索范围
-                {
-                    if (anchor_t - lower < upper - anchor_t)
-                    {
-                        lower = std::max(0.0, lower - step * 2);
-                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                        {
-                            stored_t.clear();
-                            lower += (upper - lower) / 4;
-                        }
-                    }
-                    else
-                    {
-                        upper = std::min(1.0, upper + step * 2);
-                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                        {
-                            stored_t.clear();
-                            upper -= (upper - lower) / 4;
-                        }
-                    }
-                    stored_t.push_back(anchor_t);
-                    if (stored_t.size() > 4)
-                    {
-                        stored_t.erase(stored_t.begin(), stored_t.end() - 4);
-                    }
-                    step = (upper - lower) / 100;
-                }
-                else
-                {
-                    lower = std::max(0.0, anchor_t - step * 2);
-                    upper = std::min(1.0, anchor_t + step * 2);
-                    step = (upper - lower) / 100;
-                }
+                return Geo::distance(coord, anchor) * 1e9;
+            };
+            min_dis[0] = f(lower), min_dis[1] = f(v);
+            while (lower > knots[0] && min_dis[0] < min_dis[1])
+            {
+                lower -= 1e-3;
+                min_dis[0] = f(lower);
             }
+            lower = std::max(knots[0], lower);
+            min_dis[0] = f(upper);
+            while (upper < knots[nplusc - 1] && min_dis[0] < min_dis[1])
+            {
+                upper += 1e-3;
+                min_dis[0] = f(upper);
+            }
+            upper = std::min(knots[nplusc - 1], upper);
+            v = Math::min_x_trichotomy(f, lower, upper);
 
             std::vector<double> nbasis;
             Geo::BSpline::rbasis(is_cubic ? 3 : 2, v, npts, knots, nbasis);
@@ -6658,7 +6273,7 @@ void Editor::trim(Geo::BSpline *bspline, const double x, const double y)
             {
                 coord += bspline->control_points[i] * nbasis[i];
             }
-            result.emplace_back(std::min(min_dis[0], min_dis[1]), v, coord);
+            result.emplace_back(f(v), v, coord);
         }
 
         std::sort(result.begin(), result.end(), [](const auto &a, const auto &b) { return std::get<0>(a) < std::get<0>(b); });
@@ -9396,4 +9011,3 @@ void Editor::bspline_to_bezier(Geo::BSpline *bspline)
     remove_items.emplace_back(bspline, _current_group, index);
     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
 }
-

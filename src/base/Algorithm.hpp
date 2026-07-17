@@ -8,6 +8,7 @@
 #include "algorithm/EarCut.hpp"
 #include "algorithm/Foot.hpp"
 #include "algorithm/Split.hpp"
+#include "algorithm/Fillet.hpp"
 #include "algorithm/Offset.hpp"
 #include "algorithm/Inside.hpp"
 #include "algorithm/Intersection.hpp"

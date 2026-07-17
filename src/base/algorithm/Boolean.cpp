@@ -1481,8 +1481,8 @@ bool Geo::circle_union(const Circle &circle0, const Circle &circle1, std::vector
 {
     if (Geo::Point point0, point1; Geo::is_intersected(circle0, circle1, point0, point1) == 2)
     {
-        output.emplace_back(point0, circle0 + (circle0 - circle1).normalized() * circle0.radius, point1);
-        output.emplace_back(point1, circle1 + (circle1 - circle0).normalized() * circle1.radius, point0);
+        output.emplace_back(point0, circle0 + Geo::Point(circle0 - circle1).normalized() * circle0.radius, point1);
+        output.emplace_back(point1, circle1 + Geo::Point(circle1 - circle0).normalized() * circle1.radius, point0);
         return true;
     }
     else
@@ -1495,8 +1495,8 @@ bool Geo::circle_intersection(const Circle &circle0, const Circle &circle1, std:
 {
     if (Geo::Point point0, point1; Geo::is_intersected(circle0, circle1, point0, point1) == 2)
     {
-        output.emplace_back(point0, circle0 + (circle1 - circle0).normalized() * circle0.radius, point1);
-        output.emplace_back(point1, circle1 + (circle0 - circle1).normalized() * circle1.radius, point0);
+        output.emplace_back(point0, circle0 + Geo::Point(circle1 - circle0).normalized() * circle0.radius, point1);
+        output.emplace_back(point1, circle1 + Geo::Point(circle0 - circle1).normalized() * circle1.radius, point0);
         return true;
     }
     else
@@ -1509,8 +1509,8 @@ bool Geo::circle_difference(const Circle &circle0, const Circle &circle1, std::v
 {
     if (Geo::Point point0, point1; Geo::is_intersected(circle0, circle1, point0, point1) == 2)
     {
-        output.emplace_back(point0, circle0 + (circle0 - circle1).normalized() * circle0.radius, point1);
-        output.emplace_back(point0, circle1 + (circle0 - circle1).normalized() * circle1.radius, point1);
+        output.emplace_back(point0, circle0 + Geo::Point(circle0 - circle1).normalized() * circle0.radius, point1);
+        output.emplace_back(point0, circle1 + Geo::Point(circle0 - circle1).normalized() * circle1.radius, point1);
         return true;
     }
     else
@@ -1523,10 +1523,10 @@ bool Geo::circle_xor(const Circle &circle0, const Circle &circle1, std::vector<A
 {
     if (Geo::Point point0, point1; Geo::is_intersected(circle0, circle1, point0, point1) == 2)
     {
-        output.emplace_back(point0, circle0 + (circle1 - circle0).normalized() * circle0.radius, point1);
-        output.emplace_back(point0, circle1 + (circle1 - circle0).normalized() * circle1.radius, point1);
-        output.emplace_back(point1, circle0 + (circle0 - circle1).normalized() * circle0.radius, point0);
-        output.emplace_back(point1, circle1 + (circle0 - circle1).normalized() * circle1.radius, point0);
+        output.emplace_back(point0, circle0 + Geo::Point(circle1 - circle0).normalized() * circle0.radius, point1);
+        output.emplace_back(point0, circle1 + Geo::Point(circle1 - circle0).normalized() * circle1.radius, point1);
+        output.emplace_back(point1, circle0 + Geo::Point(circle0 - circle1).normalized() * circle0.radius, point0);
+        output.emplace_back(point1, circle1 + Geo::Point(circle0 - circle1).normalized() * circle1.radius, point0);
         return true;
     }
     else

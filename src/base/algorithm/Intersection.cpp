@@ -458,84 +458,31 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const CubicBez
             }
 
             lower = std::max(0.0, t - 8e-4), upper = std::min(1.0, t + 8e-4);
-            step = (upper - lower) / 100;
-            min_dis = DBL_MAX;
-            std::vector<double> stored_t;
-            while ((upper - lower) * 1e15 > 1)
+            std::function<double(const double)> f = [&](const double t)
             {
-                int flag = 0;
-                for (double x = lower, dis0 = 0; x < upper + step; x += step)
+                Geo::Point coord;
+                for (int j = 0; j <= order; ++j)
                 {
-                    x = x < upper ? x : upper;
-                    Geo::Point coord;
-                    for (int j = 0; j <= order; ++j)
-                    {
-                        coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
-                    }
-                    if (const double dis = Geo::distance(coord, point0, point1, infinite) * 1e9; dis < min_dis)
-                    {
-                        min_dis = dis;
-                        t = x;
-                    }
-                    else if (dis == min_dis) // 需要扩大搜索范围
-                    {
-                        flag = -1;
-                        break;
-                    }
-                    else
-                    {
-                        if (dis == dis0)
-                        {
-                            if (++flag == 10)
-                            {
-                                break; // 连续10次相等就退出循环
-                            }
-                        }
-                        else
-                        {
-                            flag = 0;
-                        }
-                        dis0 = dis;
-                    }
+                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
-                if (min_dis < 2e-5)
-                {
-                    break;
-                }
-                else if (flag == -1) // 需要扩大搜索范围
-                {
-                    if (t - lower < upper - t)
-                    {
-                        lower = std::max(0.0, lower - step * 2);
-                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                        {
-                            stored_t.clear();
-                            lower += (upper - lower) / 4;
-                        }
-                    }
-                    else
-                    {
-                        upper = std::min(1.0, upper + step * 2);
-                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                        {
-                            stored_t.clear();
-                            upper -= (upper - lower) / 4;
-                        }
-                    }
-                    stored_t.push_back(t);
-                    if (stored_t.size() > 4)
-                    {
-                        stored_t.erase(stored_t.begin(), stored_t.end() - 4);
-                    }
-                    step = (upper - lower) / 100;
-                }
-                else
-                {
-                    lower = std::max(0.0, t - step * 2);
-                    upper = std::min(1.0, t + step * 2);
-                    step = (upper - lower) / 100;
-                }
+                return Geo::distance(coord, point0, point1, infinite) * 1e9;
+            };
+            const double tdis = f(t);
+            min_dis = f(lower);
+            while (lower > 0.0 && min_dis < tdis)
+            {
+                lower -= 1e-4;
+                min_dis = f(lower);
             }
+            lower = std::max(0.0, lower);
+            min_dis = f(upper);
+            while (upper < 1.0 && min_dis < tdis)
+            {
+                upper += 1e-4;
+                min_dis = f(upper);
+            }
+            upper = std::min(1.0, upper);
+            t = Math::min_x_trichotomy(f, lower, upper);
 
             point.clear();
             for (int j = 0; j <= order; ++j)
@@ -650,86 +597,32 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
             continue;
         }
 
-        min_dis[0] = 0, min_dis[1] = DBL_MAX;
-        step = (upper - lower) / 100;
-        std::vector<double> stored_t;
-        while ((upper - lower) * 1e15 > 1)
+        const std::function<double(const double)> f = [&](const double t)
         {
-            int flag = 0;
-            for (double x = lower, dis0 = 0; x < upper + step; x += step)
+            std::vector<double> nbasis;
+            Geo::BSpline::rbasis(is_cubic ? 3 : 2, t, npts, knots, nbasis);
+            Geo::Point coord;
+            for (size_t i = 0; i < npts; ++i)
             {
-                x = x < upper ? x : upper;
-                std::vector<double> nbasis;
-                Geo::BSpline::rbasis(is_cubic ? 3 : 2, x, npts, knots, nbasis);
-                Geo::Point coord;
-                for (size_t i = 0; i < npts; ++i)
-                {
-                    coord += bspline.control_points[i] * nbasis[i];
-                }
-                if (const double dis = Geo::distance(coord, point0, point1, infinite) * 1e9; dis < min_dis[1])
-                {
-                    min_dis[1] = dis;
-                    t = x;
-                }
-                else if (dis == min_dis[1])
-                {
-                    flag = -1; // 需要扩大搜索范围
-                    break;
-                }
-                else
-                {
-                    if (dis0 == dis)
-                    {
-                        if (++flag == 10)
-                        {
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        flag = 0;
-                    }
-                    dis0 = dis;
-                }
+                coord += bspline.control_points[i] * nbasis[i];
             }
-            if (min_dis[1] < 2e-5)
-            {
-                break;
-            }
-            else if (flag == -1) // 需要扩大搜索范围
-            {
-                if (t - lower < upper - t)
-                {
-                    lower = std::max(min_lower, lower - step * 2);
-                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                    {
-                        stored_t.clear();
-                        lower += (upper - lower) / 4;
-                    }
-                }
-                else
-                {
-                    upper = std::min(max_upper, upper + step * 2);
-                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                    {
-                        stored_t.clear();
-                        upper -= (upper - lower) / 4;
-                    }
-                }
-                stored_t.push_back(t);
-                if (stored_t.size() > 4)
-                {
-                    stored_t.erase(stored_t.begin(), stored_t.end() - 4);
-                }
-                step = (upper - lower) / 100;
-            }
-            else
-            {
-                lower = std::max(min_lower, t - step * 2);
-                upper = std::min(max_upper, t + step * 2);
-                step = (upper - lower) / 100;
-            }
+            return Geo::distance(coord, point0, point1, infinite) * 1e9;
+        };
+        min_dis[0] = f(lower), min_dis[1] = f(t);
+        while (lower > 0.0 && min_dis[0] < min_dis[1])
+        {
+            lower -= 1e-4;
+            min_dis[0] = f(lower);
         }
+        lower = std::max(0.0, lower);
+        min_dis[0] = f(upper);
+        while (upper < 1.0 && min_dis[0] < min_dis[1])
+        {
+            upper += 1e-4;
+            min_dis[0] = f(upper);
+        }
+        upper = std::min(1.0, upper);
+        t = Math::min_x_trichotomy(f, lower, upper);
 
         std::vector<double> nbasis;
         Geo::BSpline::rbasis(is_cubic ? 3 : 2, t, npts, knots, nbasis);
@@ -1057,7 +950,7 @@ int Geo::is_intersected(const Circle &circle0, const Circle &circle1, Point &poi
         const double y = circle0.y + (a / d) * (circle1.y - circle0.y);
         if (distance == circle0.radius + circle1.radius || distance == std::abs(circle0.radius - circle1.radius))
         {
-            if (circle0 == circle1)
+            if (circle0.x == circle1.x && circle0.y == circle1.y)
             {
                 return 0;
             }
@@ -1687,84 +1580,31 @@ int Geo::is_intersected(const Circle &circle, const CubicBezier &bezier, std::ve
             }
 
             lower = std::max(0.0, t - 8e-4), upper = std::min(1.0, t + 8e-4);
-            step = (upper - lower) / 100;
-            min_dis = DBL_MAX;
-            std::vector<double> stored_t;
-            while ((upper - lower) * 1e15 > 1)
+            const std::function<double(const double)> f = [&](const double t)
             {
-                int flag = 0;
-                for (double x = lower, dis0 = 0; x < upper + step; x += step)
+                Geo::Point coord;
+                for (int j = 0; j <= order; ++j)
                 {
-                    x = x < upper ? x : upper;
-                    Geo::Point coord;
-                    for (int j = 0; j <= order; ++j)
-                    {
-                        coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
-                    }
-                    if (const double dis = std::abs(Geo::distance(coord, circle) - circle.radius) * 1e9; dis < min_dis)
-                    {
-                        min_dis = dis;
-                        t = x;
-                    }
-                    else if (dis == min_dis) // 需要扩大搜索范围
-                    {
-                        flag = -1;
-                        break;
-                    }
-                    else
-                    {
-                        if (dis == dis0)
-                        {
-                            if (++flag == 10)
-                            {
-                                break; // 连续10次相等就退出循环
-                            }
-                        }
-                        else
-                        {
-                            flag = 0;
-                        }
-                        dis0 = dis;
-                    }
+                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
-                if (min_dis < 2e-5)
-                {
-                    break;
-                }
-                else if (flag == -1) // 需要扩大搜索范围
-                {
-                    if (t - lower < upper - t)
-                    {
-                        lower = std::max(0.0, lower - step * 2);
-                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                        {
-                            stored_t.clear();
-                            lower += (upper - lower) / 4;
-                        }
-                    }
-                    else
-                    {
-                        upper = std::min(1.0, upper + step * 2);
-                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                        {
-                            stored_t.clear();
-                            upper -= (upper - lower) / 4;
-                        }
-                    }
-                    stored_t.push_back(t);
-                    if (stored_t.size() > 4)
-                    {
-                        stored_t.erase(stored_t.begin(), stored_t.end() - 4);
-                    }
-                    step = (upper - lower) / 100;
-                }
-                else
-                {
-                    lower = std::max(0.0, t - step * 2);
-                    upper = std::min(1.0, t + step * 2);
-                    step = (upper - lower) / 100;
-                }
+                return std::abs(Geo::distance(coord, circle) - circle.radius) * 1e9;
+            };
+            const double tdis = f(t);
+            min_dis = f(lower);
+            while (lower > 0.0 && min_dis < tdis)
+            {
+                lower -= 1e-4;
+                min_dis = f(lower);
             }
+            lower = std::max(0.0, lower);
+            min_dis = f(upper);
+            while (upper < 1.0 && min_dis < tdis)
+            {
+                upper += 1e-4;
+                min_dis = f(upper);
+            }
+            upper = std::min(1.0, upper);
+            t = Math::min_x_trichotomy(f, lower, upper);
 
             point.clear();
             for (int j = 0; j <= order; ++j)
@@ -1903,86 +1743,33 @@ int Geo::is_intersected(const Circle &circle, const BSpline &bspline, const bool
 
         lower = std::max(min_lower, t - 1e-4);
         upper = std::min(max_upper, t + 1e-4);
-        step = (upper - lower) / 100;
-        min_dis = DBL_MAX;
-        std::vector<double> stored_t;
-        while ((upper - lower) * 1e15 > 1)
+        const std::function<double(const double)> f = [&](const double t)
         {
-            int flag = 0;
-            for (double x = lower, dis0 = 0; x < upper + step; x += step)
+            std::vector<double> nbasis;
+            Geo::BSpline::rbasis(is_cubic ? 3 : 2, t, npts, knots, nbasis);
+            Geo::Point coord;
+            for (size_t i = 0; i < npts; ++i)
             {
-                x = x < upper ? x : upper;
-                std::vector<double> nbasis;
-                Geo::BSpline::rbasis(is_cubic ? 3 : 2, x, npts, knots, nbasis);
-                Geo::Point coord;
-                for (size_t i = 0; i < npts; ++i)
-                {
-                    coord += bspline.control_points[i] * nbasis[i];
-                }
-                if (const double dis = std::abs(Geo::distance(coord, circle) - circle.radius) * 1e9; dis < min_dis)
-                {
-                    min_dis = dis;
-                    t = x;
-                }
-                else if (dis == min_dis)
-                {
-                    flag = -1; // 需要扩大搜索范围
-                    break;
-                }
-                else
-                {
-                    if (dis0 == dis)
-                    {
-                        if (++flag == 10)
-                        {
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        flag = 0;
-                    }
-                    dis0 = dis;
-                }
+                coord += bspline.control_points[i] * nbasis[i];
             }
-            if (min_dis < 2e-5)
-            {
-                break;
-            }
-            else if (flag == -1) // 需要扩大搜索范围
-            {
-                if (t - lower < upper - t)
-                {
-                    lower = std::max(min_lower, lower - step * 2);
-                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                    {
-                        stored_t.clear();
-                        lower += (upper - lower) / 4;
-                    }
-                }
-                else
-                {
-                    upper = std::min(max_upper, upper + step * 2);
-                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                    {
-                        stored_t.clear();
-                        upper -= (upper - lower) / 4;
-                    }
-                }
-                stored_t.push_back(t);
-                if (stored_t.size() > 4)
-                {
-                    stored_t.erase(stored_t.begin(), stored_t.end() - 4);
-                }
-                step = (upper - lower) / 100;
-            }
-            else
-            {
-                lower = std::max(min_lower, t - step * 2);
-                upper = std::min(max_upper, t + step * 2);
-                step = (upper - lower) / 100;
-            }
+            return std::abs(Geo::distance(coord, circle) - circle.radius) * 1e9;
+        };
+        const double tdis = f(t);
+        min_dis = f(lower);
+        while (lower > 0.0 && min_dis < tdis)
+        {
+            lower -= 1e-4;
+            min_dis = f(lower);
         }
+        lower = std::max(0.0, lower);
+        min_dis = f(upper);
+        while (upper < 1.0 && min_dis < tdis)
+        {
+            upper += 1e-4;
+            min_dis = f(upper);
+        }
+        upper = std::min(1.0, upper);
+        t = Math::min_x_trichotomy(f, lower, upper);
 
         std::vector<double> nbasis;
         Geo::BSpline::rbasis(is_cubic ? 3 : 2, t, npts, knots, nbasis);
@@ -2100,84 +1887,31 @@ int Geo::is_intersected(const Ellipse &ellipse, const CubicBezier &bezier, std::
             }
 
             lower = std::max(0.0, t - 8e-4), upper = std::min(1.0, t + 8e-4);
-            step = (upper - lower) / 100;
-            min_dis = DBL_MAX;
-            std::vector<double> stored_t;
-            while ((upper - lower) * 1e15 > 1)
+            const std::function<double(const double)> f = [&](const double t)
             {
-                int flag = 0;
-                for (double x = lower, dis0 = 0; x < upper + step; x += step)
+                Geo::Point coord;
+                for (int j = 0; j <= order; ++j)
                 {
-                    x = x < upper ? x : upper;
-                    Geo::Point coord;
-                    for (int j = 0; j <= order; ++j)
-                    {
-                        coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
-                    }
-                    if (const double dis = Geo::distance(coord, ellipse) * 1e18; dis < min_dis)
-                    {
-                        min_dis = dis;
-                        t = x;
-                    }
-                    else if (dis == min_dis) // 需要扩大搜索范围
-                    {
-                        flag = -1;
-                        break;
-                    }
-                    else
-                    {
-                        if (dis == dis0)
-                        {
-                            if (++flag == 10)
-                            {
-                                break; // 连续10次相等就退出循环
-                            }
-                        }
-                        else
-                        {
-                            flag = 0;
-                        }
-                        dis0 = dis;
-                    }
+                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
-                if (min_dis < 2e-5)
-                {
-                    break;
-                }
-                else if (flag == -1) // 需要扩大搜索范围
-                {
-                    if (t - lower < upper - t)
-                    {
-                        lower = std::max(0.0, lower - step * 2);
-                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                        {
-                            stored_t.clear();
-                            lower += (upper - lower) / 4;
-                        }
-                    }
-                    else
-                    {
-                        upper = std::min(1.0, upper + step * 2);
-                        if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                        {
-                            stored_t.clear();
-                            upper -= (upper - lower) / 4;
-                        }
-                    }
-                    stored_t.push_back(t);
-                    if (stored_t.size() > 4)
-                    {
-                        stored_t.erase(stored_t.begin(), stored_t.end() - 4);
-                    }
-                    step = (upper - lower) / 100;
-                }
-                else
-                {
-                    lower = std::max(0.0, t - step * 2);
-                    upper = std::min(1.0, t + step * 2);
-                    step = (upper - lower) / 100;
-                }
+                return Geo::distance(coord, ellipse) * 1e18;
+            };
+            const double tdis = f(t);
+            min_dis = f(lower);
+            while (lower > 0.0 && min_dis < tdis)
+            {
+                lower -= 1e-4;
+                min_dis = f(lower);
             }
+            lower = std::max(0.0, lower);
+            min_dis = f(upper);
+            while (upper < 1.0 && min_dis < tdis)
+            {
+                upper += 1e-4;
+                min_dis = f(upper);
+            }
+            upper = std::min(1.0, upper);
+            t = Math::min_x_trichotomy(f, lower, upper);
 
             point.clear();
             for (int j = 0; j <= order; ++j)
@@ -2313,86 +2047,33 @@ int Geo::is_intersected(const Ellipse &ellipse, const BSpline &bspline, const bo
 
         lower = std::max(min_lower, t - 1e-4);
         upper = std::min(max_upper, t + 1e-4);
-        step = (upper - lower) / 100;
-        min_dis = DBL_MAX;
-        std::vector<double> stored_t;
-        while ((upper - lower) * 1e15 > 1)
+        const std::function<double(const double)> f = [&](const double t)
         {
-            int flag = 0;
-            for (double x = lower, dis0 = 0; x < upper + step; x += step)
+            std::vector<double> nbasis;
+            Geo::BSpline::rbasis(is_cubic ? 3 : 2, t, npts, knots, nbasis);
+            Geo::Point coord;
+            for (size_t i = 0; i < npts; ++i)
             {
-                x = x < upper ? x : upper;
-                std::vector<double> nbasis;
-                Geo::BSpline::rbasis(is_cubic ? 3 : 2, x, npts, knots, nbasis);
-                Geo::Point coord;
-                for (size_t i = 0; i < npts; ++i)
-                {
-                    coord += bspline.control_points[i] * nbasis[i];
-                }
-                if (const double dis = Geo::distance(coord, ellipse) * 1e9; dis < min_dis)
-                {
-                    min_dis = dis;
-                    t = x;
-                }
-                else if (dis == min_dis)
-                {
-                    flag = -1; // 需要扩大搜索范围
-                    break;
-                }
-                else
-                {
-                    if (dis0 == dis)
-                    {
-                        if (++flag == 10)
-                        {
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        flag = 0;
-                    }
-                    dis0 = dis;
-                }
+                coord += bspline.control_points[i] * nbasis[i];
             }
-            if (min_dis < 2e-5)
-            {
-                break;
-            }
-            else if (flag == -1) // 需要扩大搜索范围
-            {
-                if (t - lower < upper - t)
-                {
-                    lower = std::max(min_lower, lower - step * 2);
-                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                    {
-                        stored_t.clear();
-                        lower += (upper - lower) / 4;
-                    }
-                }
-                else
-                {
-                    upper = std::min(max_upper, upper + step * 2);
-                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                    {
-                        stored_t.clear();
-                        upper -= (upper - lower) / 4;
-                    }
-                }
-                stored_t.push_back(t);
-                if (stored_t.size() > 4)
-                {
-                    stored_t.erase(stored_t.begin(), stored_t.end() - 4);
-                }
-                step = (upper - lower) / 100;
-            }
-            else
-            {
-                lower = std::max(min_lower, t - step * 2);
-                upper = std::min(max_upper, t + step * 2);
-                step = (upper - lower) / 100;
-            }
+            return Geo::distance(coord, ellipse) * 1e9;
+        };
+        const double tdis = f(t);
+        min_dis = f(lower);
+        while (lower > 0.0 && min_dis < tdis)
+        {
+            lower -= 1e-4;
+            min_dis = f(lower);
         }
+        lower = std::max(0.0, lower);
+        min_dis = f(upper);
+        while (upper < 1.0 && min_dis < tdis)
+        {
+            upper += 1e-4;
+            min_dis = f(upper);
+        }
+        upper = std::min(1.0, upper);
+        t = Math::min_x_trichotomy(f, lower, upper);
 
         std::vector<double> nbasis;
         Geo::BSpline::rbasis(is_cubic ? 3 : 2, t, npts, knots, nbasis);

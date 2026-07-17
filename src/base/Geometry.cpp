@@ -48,6 +48,10 @@ Point::Point(const MarkedPoint &point) : x(point.x), y(point.y)
 {
 }
 
+Point::Point(const Circle &circle) : x(circle.x), y(circle.y)
+{
+}
+
 Point &Point::operator=(const Point &point)
 {
     if (this != &point)
@@ -1945,20 +1949,20 @@ double Triangle::inner_circle_radius() const
 // Circle
 double Circle::default_down_sampling_value = 0.02;
 
-Circle::Circle(const double x, const double y, const double r) : Point(x, y), radius(r)
+Circle::Circle(const double x_, const double y_, const double r) : x(x_), y(y_), radius(r)
 {
     assert(r >= 0);
     update_shape(Geo::Circle::default_down_sampling_value);
 }
 
-Circle::Circle(const Point &point, const double r) : Point(point), radius(r)
+Circle::Circle(const Point &point, const double r) : x(point.x), y(point.y), radius(r)
 {
     assert(r >= 0);
     update_shape(Geo::Circle::default_down_sampling_value);
 }
 
 Circle::Circle(const double x0, const double y0, const double x1, const double y1)
-    : Point((x0 + x1) / 2, (y0 + y1) / 2), radius(std::hypot(x0 - x1, y0 - y1) / 2)
+    : x((x0 + x1) / 2), y((y0 + y1) / 2), radius(std::hypot(x0 - x1, y0 - y1) / 2)
 {
     update_shape(Geo::Circle::default_down_sampling_value);
 }
@@ -1988,7 +1992,8 @@ Circle &Circle::operator=(const Circle &circle)
 {
     if (this != &circle)
     {
-        Point::operator=(circle);
+        x = circle.x;
+        y = circle.y;
         radius = circle.radius;
         _shape = circle._shape;
     }
@@ -2017,8 +2022,7 @@ bool Circle::empty() const
 
 void Circle::clear()
 {
-    radius = 0;
-    Point::clear();
+    radius = x = y = 0;
 }
 
 Circle *Circle::clone() const
@@ -2034,7 +2038,9 @@ void Circle::transform(const double a, const double b, const double c, const dou
         point.transform(a, b, c, d, e, f);
     }
     radius = (Geo::distance(points[0], points[2]) + Geo::distance(points[1], points[3])) / 4;
-    Point::transform(a, b, c, d, e, f);
+    const double x_ = x, y_ = y;
+    x = a * x_ + b * y_ + c;
+    y = d * x_ + e * y_ + f;
     if (std::abs(a) == 1 && std::abs(e) == 1)
     {
         _shape.transform(a, b, c, d, e, f);
@@ -2053,7 +2059,9 @@ void Circle::transform(const double mat[6])
         point.transform(mat);
     }
     radius = (Geo::distance(points[0], points[2]) + Geo::distance(points[1], points[3])) / 4;
-    Point::transform(mat);
+    const double x_ = x, y_ = y;
+    x = mat[0] * x_ + mat[1] * y_ + mat[2];
+    y = mat[3] * x_ + mat[4] * y_ + mat[5];
     if (std::abs(mat[0]) == 1 && std::abs(mat[4]) == 1)
     {
         _shape.transform(mat);
@@ -2066,19 +2074,28 @@ void Circle::transform(const double mat[6])
 
 void Circle::translate(const double tx, const double ty)
 {
-    Point::translate(tx, ty);
+    x += tx;
+    y += ty;
     _shape.translate(tx, ty);
 }
 
 void Circle::rotate(const double x_, const double y_, const double rad)
 {
-    Point::rotate(x_, y_, rad);
+    x -= x_;
+    y -= y_;
+    const double x1 = x, y1 = y;
+    x = x1 * std::cos(rad) - y1 * std::sin(rad);
+    y = x1 * std::sin(rad) + y1 * std::cos(rad);
+    x += x_;
+    y += y_;
     _shape.rotate(x_, y_, rad);
 }
 
-void Circle::scale(const double x, const double y, const double k)
+void Circle::scale(const double x_, const double y_, const double k)
 {
-    Point::scale(x, y, k);
+    const double x1 = x, y1 = y;
+    x = k * x1 + x_ * (1 - k);
+    y = k * y1 + y_ * (1 - k);
     radius *= k;
     update_shape(Geo::Circle::default_down_sampling_value);
 }
@@ -4492,6 +4509,30 @@ Arc::Arc(const Point &point0, const Point &point1, const Point &point2) : Arc(po
 {
 }
 
+Arc::Arc(const double startx, const double starty, const double centerx, const double centery, const double endx, const double endy,
+         const bool counterclockwise)
+{
+    x = centerx, y = centery;
+    control_points[0].x = startx, control_points[0].y = starty;
+    control_points[1].x = centerx, control_points[1].y = centery;
+    control_points[2].x = endx, control_points[2].y = endy;
+    radius = (std::hypot(centerx - startx, centery - starty) + std::hypot(centerx - endx, centery - endy)) / 2;
+    if (counterclockwise)
+    {
+        control_points[1] += (control_points[0] - control_points[2]).vertical().normalize() * radius;
+    }
+    else
+    {
+        control_points[1] += (control_points[2] - control_points[0]).vertical().normalize() * radius;
+    }
+    update_shape(Circle::default_down_sampling_value);
+}
+
+Arc::Arc(const Point &start, const Point &center, const Point &end, const bool counterclockwise)
+    : Arc(start.x, start.y, center.x, center.y, end.x, end.y, counterclockwise)
+{
+}
+
 Arc::Arc(const double x0, const double y0, const double x1, const double y1, const double param, const ParameterType type,
          const bool counterclockwise)
 {
@@ -4504,16 +4545,9 @@ Arc::Arc(const double x0, const double y0, const double x1, const double y1, con
             x = x1, y = y1, radius = std::hypot(x1 - x0, y1 - y0);
             assert(radius != 0 && param != 0);
             control_points[2].rotate(x, y, param);
-            if (counterclockwise)
-            {
-                Geo::Vector vec = (control_points[0] - control_points[2]).vertical().normalize() * radius;
-                control_points[1].x = x + vec.x, control_points[1].y = y + vec.y;
-            }
-            else
-            {
-                Geo::Vector vec = (control_points[2] - control_points[0]).vertical().normalize() * radius;
-                control_points[1].x = x + vec.x, control_points[1].y = y + vec.y;
-            }
+            const Geo::Vector vec(
+                (control_points[counterclockwise ? 0 : 2] - control_points[counterclockwise ? 2 : 0]).vertical().normalize() * radius);
+            control_points[1].x = x + vec.x, control_points[1].y = y + vec.y;
         }
         break;
     case ParameterType::StartEndAngle:
@@ -4522,65 +4556,16 @@ Arc::Arc(const double x0, const double y0, const double x1, const double y1, con
             control_points[2].x = x1, control_points[2].y = y1;
             radius = param == Geo::PI ? std::hypot(x0 - x1, y0 - y1) / 2
                                       : std::hypot(x0 - x1, y0 - y1) / std::sin(param) * std::sin((Geo::PI - param) / 2);
-            assert(radius > 0);
-            const Geo::Point temp = (control_points[0] + control_points[2]) / 2;
-            if (counterclockwise)
-            {
-                if (param <= Geo::PI)
-                {
-                    Geo::Vector vec = (control_points[0] - control_points[2]).vertical().normalize() * radius;
-                    x = temp.x + vec.x * std::cos(param / 2), y = temp.y + vec.y * std::cos(param / 2);
-                    control_points[1].x = x - vec.x, control_points[1].y = y - vec.y;
-                }
-                else
-                {
-                    Geo::Vector vec = (control_points[2] - control_points[0]).vertical().normalize() * radius;
-                    x = temp.x + vec.x * std::cos(param / 2), y = temp.y + vec.y * std::cos(param / 2);
-                    control_points[1].x = x + vec.x, control_points[1].y = y + vec.y;
-                }
-            }
-            else
-            {
-                if (param <= Geo::PI)
-                {
-                    Geo::Vector vec = (control_points[2] - control_points[0]).vertical().normalize() * radius;
-                    x = temp.x + vec.x * std::cos(param / 2), y = temp.y + vec.y * std::cos(param / 2);
-                    control_points[1].x = x - vec.x, control_points[1].y = y - vec.y;
-                }
-                else
-                {
-                    Geo::Vector vec = (control_points[0] - control_points[2]).vertical().normalize() * radius;
-                    x = temp.x + vec.x * std::cos(param / 2), y = temp.y + vec.y * std::cos(param / 2);
-                    control_points[1].x = x + vec.x, control_points[1].y = y + vec.y;
-                }
-            }
-        }
-        break;
-    case ParameterType::StartEndRadius:
-        {
-            control_points[0].x = x0, control_points[0].y = y0;
-            control_points[2].x = x1, control_points[2].y = y1;
-            radius = param;
-            assert(radius > 0);
-            const double a = std::hypot(x1 - x0, y1 - y0) / 2;
-            const double b = std::sqrt(radius * radius - a * a);
-            const Geo::Point temp = (control_points[0] + control_points[2]) / 2;
-            if (counterclockwise)
-            {
-                Geo::Vector vec = (control_points[0] - control_points[2]).vertical().normalize();
-                x = temp.x + vec.x * b, y = temp.y + vec.y * b;
-                control_points[1].x = x - vec.x * radius, control_points[1].y = y - vec.y * radius;
-            }
-            else
-            {
-                Geo::Vector vec = (control_points[2] - control_points[0]).vertical().normalize();
-                x = temp.x + vec.x * b, y = temp.y + vec.y * b;
-                control_points[1].x = x - vec.x * radius, control_points[1].y = y - vec.y * radius;
-            }
+            assert(radius > 0 && param > 0);
+            const Geo::Point temp((control_points[0] + control_points[2]) / 2);
+            const Geo::Vector vec(
+                (control_points[counterclockwise ? 2 : 0] - control_points[counterclockwise ? 0 : 2]).vertical().normalize() * radius);
+            x = temp.x + vec.x * std::cos(param / 2), y = temp.y + vec.y * std::cos(param / 2);
+            control_points[1].x = x - vec.x, control_points[1].y = y - vec.y;
         }
         break;
     default:
-        assert(type == ParameterType::StartCenterAngle || type == ParameterType::StartEndAngle || type == ParameterType::StartEndRadius);
+        assert(type == ParameterType::StartCenterAngle || type == ParameterType::StartEndAngle);
         break;
     }
     update_shape(Circle::default_down_sampling_value);
@@ -4588,6 +4573,51 @@ Arc::Arc(const double x0, const double y0, const double x1, const double y1, con
 
 Arc::Arc(const Point &point0, const Point &point1, const double param, const ParameterType type, const bool counterclockwise)
     : Arc(point0.x, point0.y, point1.x, point1.y, param, type, counterclockwise)
+{
+}
+
+Arc::Arc(const double startx, const double starty, const double endx, const double endy, const double radius_, const bool left_center,
+        const bool counterclockwise)
+{
+    control_points[0].x = startx, control_points[0].y = starty;
+    control_points[2].x = endx, control_points[2].y = endy;
+    radius = radius_;
+    const double b = std::sqrt(radius * radius - (std::pow(startx - endx, 2) + std::pow(starty - endy, 2)) / 4);
+    if (const Geo::Point mid((control_points[0] + control_points[2]) / 2); left_center)
+    {
+        const Geo::Vector vec((control_points[2] - control_points[0]).vertical().normalize());
+        x = mid.x + vec.x * b, y = mid.y + vec.y * b;
+        if (counterclockwise)
+        {
+            control_points[1].x = x - vec.x * radius;
+            control_points[1].y = y - vec.y * radius;
+        }
+        else
+        {
+            control_points[1].x = x + vec.x * radius;
+            control_points[1].y = y + vec.y * radius;
+        }
+    }
+    else
+    {
+        const Geo::Vector vec((control_points[0] - control_points[2]).vertical().normalize());
+        x = mid.x + vec.x * b, y = mid.y + vec.y * b;
+        if (counterclockwise)
+        {
+            control_points[1].x = x + vec.x * radius;
+            control_points[1].y = y + vec.y * radius;
+        }
+        else
+        {
+            control_points[1].x = x - vec.x * radius;
+            control_points[1].y = y - vec.y * radius;
+        }
+    }
+    update_shape(Circle::default_down_sampling_value);
+}
+
+Arc::Arc(const Point &start, const Point &end, const double radius_, const bool left_center, const bool counterclockwise)
+    : Arc(start.x, start.y, end.x, end.y, radius_, left_center, counterclockwise)
 {
 }
 
@@ -4896,6 +4926,14 @@ void Arc::update_shape(const double down_sampling_value)
     const double angle0 = Geo::angle(center, control_points[0]);
     const double angle1 = Geo::angle(center, control_points[2]);
     _shape = Geo::arc_to_polyline(center, radius, angle0, angle1, is_cw(), down_sampling_value);
+    if (_shape.front() != control_points[0])
+    {
+        _shape.insert(0, control_points[0]);
+    }
+    if (_shape.back() != control_points[2])
+    {
+        _shape.append(control_points[2]);
+    }
 }
 
 const Polyline &Arc::shape() const
@@ -4955,4 +4993,14 @@ Arc *Arc::range(const double t0, const double t1) const
         return nullptr;
     }
     return new Arc(shape_point(t0), shape_point((t0 + t1) / 2), shape_point(t1));
+}
+
+Geo::Point Arc::start_direction() const
+{
+    return (is_cw() ? Geo::Point(x, y) - control_points[0] : control_points[0] - Geo::Point(x, y)).vertical();
+}
+
+Geo::Point Arc::end_direction() const
+{
+    return (is_cw() ? Geo::Point(x, y) - control_points[2] : control_points[2] - Geo::Point(x, y)).vertical();
 }

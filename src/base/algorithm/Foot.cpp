@@ -9,14 +9,7 @@ bool Geo::foot_point(const Point &start, const Point &end, const Point &point, P
     {
         foot.x = start.x;
         foot.y = point.y;
-        if (infinite)
-        {
-            return true;
-        }
-        else
-        {
-            return foot.y >= std::min(start.y, end.y) && foot.y <= std::max(start.y, end.y);
-        }
+        return infinite || (foot.y >= std::min(start.y, end.y) && foot.y <= std::max(start.y, end.y));
     }
     else
     {
@@ -24,14 +17,7 @@ bool Geo::foot_point(const Point &start, const Point &end, const Point &point, P
         const double b = start.y - k * start.x;
         foot.x = (point.x - k * b + k * point.y) / (1 + k * k);
         foot.y = (k * point.x + k * k * point.y + b) / (1 + k * k);
-        if (infinite)
-        {
-            return true;
-        }
-        else
-        {
-            return foot.x >= std::min(start.x, end.x) && foot.x <= std::max(start.x, end.x);
-        }
+        return infinite || (foot.x >= std::min(start.x, end.x) && foot.x <= std::max(start.x, end.x));
     }
 }
 

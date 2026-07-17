@@ -1,5 +1,6 @@
 #include <algorithm>
 #include "base/Algorithm.hpp"
+#include "base/Math.hpp"
 
 
 double Geo::distance(const double x0, const double y0, const double x1, const double y1)
@@ -158,87 +159,33 @@ double Geo::distance(const Point &point, const CubicBezier &bezier)
             }
         } while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
-        lower = std::max(0.0, t - 0.1), upper = std::min(1.0, t + 0.1);
-        step = (upper - lower) / 100;
-        min_dis[0] = min_dis[1] = DBL_MAX;
-        std::vector<double> stored_t;
-        while ((upper - lower) * 1e15 > 1)
+        lower = std::max(0.0, t - 0.001), upper = std::min(1.0, t + 0.001);
+        const std::function<double(const double)> f = [&](const double t)
         {
-            int flag = 0;
-            for (double x = lower, dis0 = 0; x < upper + step; x += step)
+            Geo::Point coord;
+            for (int j = 0; j <= order; ++j)
             {
-                x = x < upper ? x : upper;
-                Geo::Point coord;
-                for (int j = 0; j <= order; ++j)
-                {
-                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
-                }
-                if (const double dis = Geo::distance(coord, point) * 1e9; dis < min_dis[1])
-                {
-                    min_dis[1] = dis;
-                    t = x;
-                }
-                else if (dis == min_dis[1]) // 需要扩大搜索范围
-                {
-                    flag = -1;
-                    break;
-                }
-                else
-                {
-                    if (dis == dis0)
-                    {
-                        if (++flag == 10)
-                        {
-                            break; // 连续10次相等就退出循环
-                        }
-                    }
-                    else
-                    {
-                        flag = 0;
-                    }
-                    dis0 = dis;
-                }
+                coord += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
-            if (min_dis[1] < 2e-5)
-            {
-                break;
-            }
-            else if (flag == -1) // 需要扩大搜索范围
-            {
-                if (t - lower < upper - t)
-                {
-                    lower = std::max(0.0, lower - step * 2);
-                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                    {
-                        stored_t.clear();
-                        lower += (upper - lower) / 4;
-                    }
-                }
-                else
-                {
-                    upper = std::min(1.0, upper + step * 2);
-                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                    {
-                        stored_t.clear();
-                        upper -= (upper - lower) / 4;
-                    }
-                }
-                stored_t.push_back(t);
-                if (stored_t.size() > 4)
-                {
-                    stored_t.erase(stored_t.begin(), stored_t.end() - 4);
-                }
-                step = (upper - lower) / 100;
-            }
-            else
-            {
-                lower = std::max(0.0, t - step * 2);
-                upper = std::min(1.0, t + step * 2);
-                step = (upper - lower) / 100;
-            }
+            return Geo::distance(coord, point) * 1e9;
+        };
+        min_dis[0] = f(lower), min_dis[1] = f(t);
+        while (lower > 0.0 && min_dis[0] < min_dis[1])
+        {
+            lower -= 0.001;
+            min_dis[0] = f(lower);
         }
+        lower = std::max(0.0, lower);
+        min_dis[0] = f(upper);
+        while (upper < 1.0 && min_dis[0] < min_dis[1])
+        {
+            upper += 0.001;
+            min_dis[0] = f(upper);
+        }
+        upper = std::min(1.0, upper);
+        t = Math::min_x_trichotomy(f, lower, upper);
 
-        result = std::min({result, min_dis[0], min_dis[1]});
+        result = std::min(result, f(t));
     }
     return result / 1e9;
 }
@@ -313,86 +260,35 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
             }
         } while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
-        min_dis[0] = min_dis[1] = DBL_MAX;
-        step = (upper - lower) / 100;
-        std::vector<double> stored_t;
-        while ((upper - lower) * 1e15 > 1)
+        const std::function<double(const double)> f = [&](const double t)
         {
-            int flag = 0;
-            for (double x = lower, dis0 = 0; x < upper + step; x += step)
+            std::vector<double> nbasis;
+            Geo::BSpline::rbasis(is_cubic ? 3 : 2, t, npts, knots, nbasis);
+            Geo::Point coord;
+            for (size_t i = 0; i < npts; ++i)
             {
-                x = x < upper ? x : upper;
-                std::vector<double> nbasis;
-                Geo::BSpline::rbasis(is_cubic ? 3 : 2, x, npts, knots, nbasis);
-                Geo::Point coord;
-                for (size_t i = 0; i < npts; ++i)
-                {
-                    coord += bspline.control_points[i] * nbasis[i];
-                }
-                if (double dis = Geo::distance(coord, point); dis < min_dis[1])
-                {
-                    min_dis[1] = dis;
-                    t = x;
-                }
-                else if (dis == min_dis[1])
-                {
-                    flag = -1; // 需要扩大搜索范围
-                    break;
-                }
-                else
-                {
-                    if (dis0 == dis)
-                    {
-                        if (++flag == 10)
-                        {
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        flag = 0;
-                    }
-                    dis0 = dis;
-                }
+                coord += bspline.control_points[i] * nbasis[i];
             }
-            if (flag == -1) // 需要扩大搜索范围
-            {
-                if (t - lower < upper - t)
-                {
-                    lower = std::max(min_lower, lower - step * 2);
-                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                    {
-                        stored_t.clear();
-                        lower += (upper - lower) / 4;
-                    }
-                }
-                else
-                {
-                    upper = std::min(max_upper, upper + step * 2);
-                    if (stored_t.size() > 3 && stored_t[0] == stored_t[2] && stored_t[1] == stored_t[3])
-                    {
-                        stored_t.clear();
-                        upper -= (upper - lower) / 4;
-                    }
-                }
-                stored_t.push_back(t);
-                if (stored_t.size() > 4)
-                {
-                    stored_t.erase(stored_t.begin(), stored_t.end() - 4);
-                }
-                step = (upper - lower) / 100;
-            }
-            else
-            {
-                lower = std::max(min_lower, t - step * 2);
-                upper = std::min(max_upper, t + step * 2);
-                step = (upper - lower) / 100;
-            }
+            return Geo::distance(coord, point) * 1e9;
+        };
+        min_dis[0] = f(lower), min_dis[1] = f(t);
+        while (lower > 0.0 && min_dis[0] < min_dis[1])
+        {
+            lower -= 0.001;
+            min_dis[0] = f(lower);
         }
+        lower = std::max(0.0, lower);
+        min_dis[0] = f(upper);
+        while (upper < 1.0 && min_dis[0] < min_dis[1])
+        {
+            upper += 0.001;
+            min_dis[0] = f(upper);
+        }
+        t = Math::min_x_trichotomy(f, lower, upper);
 
-        result = std::min({result, min_dis[0], min_dis[1]});
+        result = std::min(result, f(t));
     }
-    return result;
+    return result / 1e9;
 }
 
 double Geo::distance(const Point &point, const Polygon &polygon)

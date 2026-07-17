@@ -161,8 +161,6 @@ private:
         std::vector<Dim::Dimension *> dimensions;
     } _visible_objects[2];
 
-    unsigned int _cpus = 2;
-
     double _catchline_points[16] = {};
 
     double _catch_distance = 0;
@@ -281,8 +279,6 @@ public:
     Geo::Point canvas_coord_to_real_coord(const double x, const double y) const;
 
     bool catch_cursor(const double x, const double y, Geo::Point &coord, const double distance, const bool skip_selected);
-
-    bool catch_point(const double x, const double y, Geo::Point &coord, const double distance);
 
 
     // 直接更新所有VBO,点数量可能发生变化

@@ -439,3 +439,43 @@ double Math::ellipse_arc_length(const double a, const double b, const double sta
     return std::max(a, b) *
            (angle[0] < angle[1] ? (length[1] - length[0]) : (gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 4 + length[1] - length[0]));
 }
+
+double Math::min_x_trichotomy(const TartgetFunc &f, double l, double r)
+{
+    while (r - l > Math::EPSILON)
+    {
+        const double ml = (r + l + l) / 3;
+        const double mr = (l + r + r) / 3;
+        const double lvalue = f(ml);
+        const double rvalue = f(mr);
+        if (lvalue > rvalue)
+        {
+            l = ml;
+        }
+        else
+        {
+            r = mr;
+        }
+    }
+    return (l + r) / 2;
+}
+
+double Math::max_x_trichotomy(const TartgetFunc &f, double l, double r)
+{
+    while (r - l > Math::EPSILON)
+    {
+        const double ml = (l * l + r) / 3;
+        const double mr = (l + r + r) / 3;
+        const double lvalue = f(ml);
+        const double rvalue = f(mr);
+        if (lvalue < rvalue)
+        {
+            r = mr;
+        }
+        else
+        {
+            l = ml;
+        }
+    }
+    return (l + r) / 2;
+}
