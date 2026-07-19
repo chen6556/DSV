@@ -43,14 +43,16 @@ struct AABBRectParams
     double bottom = 0;
 };
 
-class DObject
+struct Drawable
 {
-public:
     bool is_selected = false;
     unsigned long long point_index = 0;
     unsigned long long point_count = 0;
     QString name;
+};
 
+class DObject : public Drawable
+{
 public:
     DObject() = default;
 

@@ -211,7 +211,7 @@ public:
 class Combination : public ContainerGroup
 {
 private:
-    Geo::AABBRect _border;
+    Geo::AABBRectParams _border;
 
 public:
     Combination() = default;
@@ -248,5 +248,5 @@ public:
 
     void update_border();
 
-    const Geo::AABBRect &border() const;
+    const Geo::AABBRectParams &border() const;
 };

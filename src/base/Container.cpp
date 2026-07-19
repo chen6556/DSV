@@ -1081,52 +1081,59 @@ Combination &Combination::operator=(const Combination &combination)
 void Combination::clear()
 {
     ContainerGroup::clear();
-    _border.clear();
+    _border.left = _border.top = _border.right = _border.bottom = 0;
 }
 
 void Combination::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
     ContainerGroup::transform(a, b, c, d, e, f);
-    _border.transform(a, b, c, d, e, f);
+    update_border();
 }
 
 void Combination::transform(const double mat[6])
 {
     ContainerGroup::transform(mat);
-    _border.transform(mat);
+    update_border();
 }
 
 void Combination::translate(const double tx, const double ty)
 {
     ContainerGroup::translate(tx, ty);
-    _border.translate(tx, ty);
+    _border.left += tx;
+    _border.right += tx;
+    _border.bottom += ty;
+    _border.top += ty;
 }
 
 void Combination::rotate(const double x, const double y, const double rad)
 {
     ContainerGroup::rotate(x, y, rad);
-    _border.rotate(x, y, rad);
+    update_border();
 }
 
 void Combination::scale(const double x, const double y, const double k)
 {
     ContainerGroup::scale(x, y, k);
-    _border.scale(x, y, k);
+    const double left1 = _border.left, top1 = _border.top, right1 = _border.right, bottom1 = _border.bottom;
+    _border.left = k * left1 + x * (1 - k);
+    _border.top = k * top1 + y * (1 - k);
+    _border.right = k * right1 + x * (1 - k);
+    _border.bottom = k * bottom1 + y * (1 - k);
 }
 
 void Combination::update_border()
 {
     if (empty())
     {
-        _border.clear();
+        _border.left = _border.top = _border.right = _border.bottom = 0;
     }
     else
     {
-        _border = bounding_rect();
+        _border = aabbrect_params();
     }
 }
 
-const Geo::AABBRect &Combination::border() const
+const Geo::AABBRectParams &Combination::border() const
 {
     return _border;
 }

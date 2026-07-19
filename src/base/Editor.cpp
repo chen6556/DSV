@@ -762,7 +762,7 @@ std::vector<Geo::DObject *> Editor::select(const Geo::AABBRect &rect, const bool
             }
             break;
         case Geo::Type::COMBINATION:
-            if (Geo::is_intersected(rect, static_cast<Combination *>(container)->border(), true))
+            if (Geo::is_intersected(rect.aabbrect_params(), static_cast<Combination *>(container)->border(), true))
             {
                 bool end = false;
                 for (Geo::DObject *item : *static_cast<Combination *>(container))
