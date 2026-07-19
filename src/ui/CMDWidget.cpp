@@ -679,11 +679,11 @@ void CMDWidget::paste()
 void CMDWidget::delete_selected_objects()
 {
     std::set<Geo::Type> types;
-    for (const Geo::Geometry *object : Canvas::canvas->editor().selected())
+    for (const Geo::DObject *object : Canvas::canvas->editor().selected())
     {
         if (const Combination *combination = dynamic_cast<const Combination *>(object))
         {
-            for (const Geo::Geometry *item : *combination)
+            for (const Geo::DObject *item : *combination)
             {
                 types.insert(item->type());
             }
@@ -704,9 +704,9 @@ void CMDWidget::delete_selected_objects()
 
 void CMDWidget::connect_polyline()
 {
-    std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
+    std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected();
     std::set<Geo::Type> types;
-    for (const Geo::Geometry *object : objects)
+    for (const Geo::DObject *object : objects)
     {
         if (Geo::Type type = object->type(); type == Geo::Type::POLYLINE || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE)
         {
@@ -722,9 +722,9 @@ void CMDWidget::connect_polyline()
 
 void CMDWidget::close_polyline()
 {
-    std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
+    std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected();
     std::set<Geo::Type> types;
-    for (const Geo::Geometry *object : objects)
+    for (const Geo::DObject *object : objects)
     {
         if (Geo::Type type = object->type(); type == Geo::Type::POLYLINE || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE)
         {
@@ -741,14 +741,14 @@ void CMDWidget::close_polyline()
 
 void CMDWidget::combinate()
 {
-    if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected(); Canvas::canvas->editor().combinate(objects))
+    if (std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected(); Canvas::canvas->editor().combinate(objects))
     {
         std::set<Geo::Type> types;
-        for (const Geo::Geometry *object : objects)
+        for (const Geo::DObject *object : objects)
         {
             if (const Combination *combination = dynamic_cast<const Combination *>(object))
             {
-                for (const Geo::Geometry *item : *combination)
+                for (const Geo::DObject *item : *combination)
                 {
                     types.insert(item->type());
                 }
@@ -765,13 +765,13 @@ void CMDWidget::combinate()
 
 void CMDWidget::detach()
 {
-    std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
+    std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected();
     std::set<Geo::Type> types;
-    for (const Geo::Geometry *object : objects)
+    for (const Geo::DObject *object : objects)
     {
         if (const Combination *combination = dynamic_cast<const Combination *>(object))
         {
-            for (const Geo::Geometry *item : *combination)
+            for (const Geo::DObject *item : *combination)
             {
                 types.insert(item->type());
             }
@@ -800,15 +800,15 @@ void CMDWidget::scale()
     default:
         if (_parameters.back() > 0)
         {
-            if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected(); Canvas::canvas->editor().scale(
+            if (std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected(); Canvas::canvas->editor().scale(
                     objects, QApplication::keyboardModifiers() != Qt::KeyboardModifier::ControlModifier, _parameters.back()))
             {
                 std::set<Geo::Type> types;
-                for (const Geo::Geometry *object : objects)
+                for (const Geo::DObject *object : objects)
                 {
                     if (const Combination *combination = dynamic_cast<const Combination *>(object))
                     {
-                        for (const Geo::Geometry *item : *combination)
+                        for (const Geo::DObject *item : *combination)
                         {
                             types.insert(item->type());
                         }
@@ -853,12 +853,12 @@ void CMDWidget::offset()
     default:
         if (_parameters.back() != 0)
         {
-            if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected(); Canvas::canvas->editor().offset(
+            if (std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected(); Canvas::canvas->editor().offset(
                     objects, _parameters.back(), static_cast<Geo::Offset::JoinType>(GlobalSetting::setting().offset_join_type),
                     static_cast<Geo::Offset::EndType>(GlobalSetting::setting().offset_end_type)))
             {
                 std::set<Geo::Type> types;
-                for (const Geo::Geometry *object : objects)
+                for (const Geo::DObject *object : objects)
                 {
                     types.insert(object->type());
                 }
@@ -888,16 +888,16 @@ void CMDWidget::line_array()
         ui->parameter_label->setText("(X-count, Y-count, X-space, Y-space):");
         break;
     case 1:
-        if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
+        if (std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected();
             Canvas::canvas->editor().line_array(objects, GlobalSetting::setting().array_x_item, GlobalSetting::setting().array_y_item,
                                                 GlobalSetting::setting().array_x_space, GlobalSetting::setting().array_y_space))
         {
             std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : objects)
+            for (const Geo::DObject *object : objects)
             {
                 if (const Combination *combination = dynamic_cast<const Combination *>(object))
                 {
-                    for (const Geo::Geometry *item : *combination)
+                    for (const Geo::DObject *item : *combination)
                     {
                         types.insert(item->type());
                     }
@@ -915,15 +915,15 @@ void CMDWidget::line_array()
     default:
         if (_parameters.size() >= 5 && std::abs(_parameters[1]) >= 1 && std::abs(_parameters[2]) >= 1)
         {
-            if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
+            if (std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected();
                 Canvas::canvas->editor().line_array(objects, _parameters[1], _parameters[2], _parameters[3], _parameters[4]))
             {
                 std::set<Geo::Type> types;
-                for (const Geo::Geometry *object : objects)
+                for (const Geo::DObject *object : objects)
                 {
                     if (const Combination *combination = dynamic_cast<const Combination *>(object))
                     {
-                        for (const Geo::Geometry *item : *combination)
+                        for (const Geo::DObject *item : *combination)
                         {
                             types.insert(item->type());
                         }
@@ -948,15 +948,15 @@ void CMDWidget::line_array()
 
 void CMDWidget::flip_x()
 {
-    std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
+    std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected();
     Canvas::canvas->editor().flip(objects, true, QApplication::keyboardModifiers() != Qt::ControlModifier,
                                   GlobalSetting::setting().to_all_layers);
     std::set<Geo::Type> types;
-    for (const Geo::Geometry *object : objects)
+    for (const Geo::DObject *object : objects)
     {
         if (const Combination *combination = dynamic_cast<const Combination *>(object))
         {
-            for (const Geo::Geometry *item : *combination)
+            for (const Geo::DObject *item : *combination)
             {
                 types.insert(item->type());
             }
@@ -983,15 +983,15 @@ void CMDWidget::flip_x()
 
 void CMDWidget::flip_y()
 {
-    std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
+    std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected();
     Canvas::canvas->editor().flip(objects, false, QApplication::keyboardModifiers() != Qt::ControlModifier,
                                   GlobalSetting::setting().to_all_layers);
     std::set<Geo::Type> types;
-    for (const Geo::Geometry *object : objects)
+    for (const Geo::DObject *object : objects)
     {
         if (const Combination *combination = dynamic_cast<const Combination *>(object))
         {
-            for (const Geo::Geometry *item : *combination)
+            for (const Geo::DObject *item : *combination)
             {
                 types.insert(item->type());
             }
@@ -1018,9 +1018,9 @@ void CMDWidget::flip_y()
 
 void CMDWidget::shape_intersection()
 {
-    Geo::Geometry *shape0 = nullptr, *shape1 = nullptr;
+    Geo::DObject *shape0 = nullptr, *shape1 = nullptr;
     std::set<Geo::Type> types;
-    for (Geo::Geometry *object : Canvas::canvas->editor().selected())
+    for (Geo::DObject *object : Canvas::canvas->editor().selected())
     {
         if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
         {
@@ -1059,9 +1059,9 @@ void CMDWidget::shape_intersection()
 
 void CMDWidget::shape_union()
 {
-    Geo::Geometry *shape0 = nullptr, *shape1 = nullptr;
+    Geo::DObject *shape0 = nullptr, *shape1 = nullptr;
     std::set<Geo::Type> types;
-    for (Geo::Geometry *object : Canvas::canvas->editor().selected())
+    for (Geo::DObject *object : Canvas::canvas->editor().selected())
     {
         if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
         {
@@ -1100,9 +1100,9 @@ void CMDWidget::shape_union()
 
 void CMDWidget::shape_xor()
 {
-    Geo::Geometry *shape0 = nullptr, *shape1 = nullptr;
+    Geo::DObject *shape0 = nullptr, *shape1 = nullptr;
     std::set<Geo::Type> types;
-    for (Geo::Geometry *object : Canvas::canvas->editor().selected())
+    for (Geo::DObject *object : Canvas::canvas->editor().selected())
     {
         if (const Geo::Type type = object->type(); type != Geo::Type::POLYGON && type != Geo::Type::CIRCLE && type != Geo::Type::ELLIPSE)
         {
@@ -1197,11 +1197,11 @@ void CMDWidget::divide_parts_n()
         clear();
         break;
     default:
-        if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
+        if (std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected();
             _parameters.back() > 1 && Canvas::canvas->editor().divide_parts_n(objects, _parameters.back()))
         {
             std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : objects)
+            for (const Geo::DObject *object : objects)
             {
                 types.insert(object->type());
             }
@@ -1226,11 +1226,11 @@ void CMDWidget::divide_parts_measure()
         clear();
         break;
     default:
-        if (std::vector<Geo::Geometry *> objects = Canvas::canvas->editor().selected();
+        if (std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected();
             _parameters.back() > 0 && Canvas::canvas->editor().divide_parts_measure(objects, _parameters.back()))
         {
             std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : objects)
+            for (const Geo::DObject *object : objects)
             {
                 types.insert(object->type());
             }

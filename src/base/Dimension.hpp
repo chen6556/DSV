@@ -17,7 +17,7 @@ enum class Type
     ORDINATE
 };
 
-class Dimension : public Geo::Geometry
+class Dimension : public Geo::DObject
 {
 public:
     Geo::Point anchor[2], label;

@@ -392,20 +392,20 @@ void Text::paint(QPainter &painter) const
 // ContainerGroup
 
 ContainerGroup::ContainerGroup(const ContainerGroup &containers)
-    : Geo::Geometry(containers), _ratio(containers._ratio), _visible(containers._visible)
+    : Geo::DObject(containers), _ratio(containers._ratio), _visible(containers._visible)
 {
-    for (const Geo::Geometry *geo : containers)
+    for (const Geo::DObject *geo : containers)
     {
         _containers.push_back(geo->clone());
     }
 }
 
-ContainerGroup::ContainerGroup(const std::initializer_list<Geo::Geometry *> &containers) : _containers(containers.begin(), containers.end())
+ContainerGroup::ContainerGroup(const std::initializer_list<Geo::DObject *> &containers) : _containers(containers.begin(), containers.end())
 {
 }
 
-ContainerGroup::ContainerGroup(const std::vector<Geo::Geometry *>::const_iterator &begin,
-                               const std::vector<Geo::Geometry *>::const_iterator &end)
+ContainerGroup::ContainerGroup(const std::vector<Geo::DObject *>::const_iterator &begin,
+                               const std::vector<Geo::DObject *>::const_iterator &end)
     : _containers(begin, end)
 {
 }
@@ -440,8 +440,8 @@ void ContainerGroup::hide()
 
 ContainerGroup *ContainerGroup::clone() const
 {
-    std::vector<Geo::Geometry *> containers;
-    for (const Geo::Geometry *geo : _containers)
+    std::vector<Geo::DObject *> containers;
+    for (const Geo::DObject *geo : _containers)
     {
         containers.push_back(geo->clone());
     }
@@ -466,7 +466,7 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
 {
     if (this != &group)
     {
-        Geo::Geometry::operator=(group);
+        Geo::DObject::operator=(group);
         name = group.name;
         for (size_t i = 0, count = _containers.size(); i < count; ++i)
         {
@@ -474,7 +474,7 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
         }
         _containers.clear();
         _containers.shrink_to_fit();
-        for (const Geo::Geometry *geo : group._containers)
+        for (const Geo::DObject *geo : group._containers)
         {
             _containers.push_back(geo->clone());
         }
@@ -484,85 +484,85 @@ ContainerGroup &ContainerGroup::operator=(const ContainerGroup &group)
     return *this;
 }
 
-std::vector<Geo::Geometry *>::iterator ContainerGroup::begin()
+std::vector<Geo::DObject *>::iterator ContainerGroup::begin()
 {
     return _containers.begin();
 }
 
-std::vector<Geo::Geometry *>::const_iterator ContainerGroup::begin() const
+std::vector<Geo::DObject *>::const_iterator ContainerGroup::begin() const
 {
     return _containers.begin();
 }
 
-std::vector<Geo::Geometry *>::const_iterator ContainerGroup::cbegin() const
+std::vector<Geo::DObject *>::const_iterator ContainerGroup::cbegin() const
 {
     return _containers.cbegin();
 }
 
-std::vector<Geo::Geometry *>::iterator ContainerGroup::end()
+std::vector<Geo::DObject *>::iterator ContainerGroup::end()
 {
     return _containers.end();
 }
 
-std::vector<Geo::Geometry *>::const_iterator ContainerGroup::end() const
+std::vector<Geo::DObject *>::const_iterator ContainerGroup::end() const
 {
     return _containers.end();
 }
 
-std::vector<Geo::Geometry *>::const_iterator ContainerGroup::cend() const
+std::vector<Geo::DObject *>::const_iterator ContainerGroup::cend() const
 {
     return _containers.cend();
 }
 
-std::vector<Geo::Geometry *>::reverse_iterator ContainerGroup::rbegin()
+std::vector<Geo::DObject *>::reverse_iterator ContainerGroup::rbegin()
 {
     return _containers.rbegin();
 }
 
-std::vector<Geo::Geometry *>::const_reverse_iterator ContainerGroup::rbegin() const
+std::vector<Geo::DObject *>::const_reverse_iterator ContainerGroup::rbegin() const
 {
     return _containers.rbegin();
 }
 
-std::vector<Geo::Geometry *>::const_reverse_iterator ContainerGroup::crbegin() const
+std::vector<Geo::DObject *>::const_reverse_iterator ContainerGroup::crbegin() const
 {
     return _containers.crbegin();
 }
 
-std::vector<Geo::Geometry *>::reverse_iterator ContainerGroup::rend()
+std::vector<Geo::DObject *>::reverse_iterator ContainerGroup::rend()
 {
     return _containers.rend();
 }
 
-std::vector<Geo::Geometry *>::const_reverse_iterator ContainerGroup::rend() const
+std::vector<Geo::DObject *>::const_reverse_iterator ContainerGroup::rend() const
 {
     return _containers.rend();
 }
 
-std::vector<Geo::Geometry *>::const_reverse_iterator ContainerGroup::crend() const
+std::vector<Geo::DObject *>::const_reverse_iterator ContainerGroup::crend() const
 {
     return _containers.crend();
 }
 
-Geo::Geometry *ContainerGroup::operator[](const size_t index)
+Geo::DObject *ContainerGroup::operator[](const size_t index)
 {
     assert(index < _containers.size());
     return _containers[index];
 }
 
-const Geo::Geometry *ContainerGroup::operator[](const size_t index) const
+const Geo::DObject *ContainerGroup::operator[](const size_t index) const
 {
     assert(index < _containers.size());
     return _containers[index];
 }
 
-Geo::Geometry *ContainerGroup::at(const size_t index)
+Geo::DObject *ContainerGroup::at(const size_t index)
 {
     assert(index < _containers.size());
     return _containers[index];
 }
 
-const Geo::Geometry *ContainerGroup::at(const size_t index) const
+const Geo::DObject *ContainerGroup::at(const size_t index) const
 {
     assert(index < _containers.size());
     return _containers[index];
@@ -580,35 +580,35 @@ void ContainerGroup::clear()
 
 void ContainerGroup::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
-    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container) { container->transform(a, b, c, d, e, f); });
+    std::for_each(_containers.begin(), _containers.end(), [=](Geo::DObject *container) { container->transform(a, b, c, d, e, f); });
 }
 
 void ContainerGroup::transform(const double mat[6])
 {
-    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container) { container->transform(mat); });
+    std::for_each(_containers.begin(), _containers.end(), [=](Geo::DObject *container) { container->transform(mat); });
 }
 
 void ContainerGroup::translate(const double tx, const double ty)
 {
-    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container) { container->translate(tx, ty); });
+    std::for_each(_containers.begin(), _containers.end(), [=](Geo::DObject *container) { container->translate(tx, ty); });
 }
 
 void ContainerGroup::rotate(const double x, const double y, const double rad)
 {
-    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container) { container->rotate(x, y, rad); });
+    std::for_each(_containers.begin(), _containers.end(), [=](Geo::DObject *container) { container->rotate(x, y, rad); });
 }
 
 void ContainerGroup::scale(const double x, const double y, const double k)
 {
     _ratio *= k;
-    std::for_each(_containers.begin(), _containers.end(), [=](Geo::Geometry *container) { container->scale(x, y, k); });
+    std::for_each(_containers.begin(), _containers.end(), [=](Geo::DObject *container) { container->scale(x, y, k); });
 }
 
 void ContainerGroup::rescale(const double x, const double y)
 {
     if (_ratio != 1)
     {
-        std::for_each(_containers.begin(), _containers.end(), [this, x, y](Geo::Geometry *c) { c->scale(x, y, 1.0 / _ratio); });
+        std::for_each(_containers.begin(), _containers.end(), [this, x, y](Geo::DObject *c) { c->scale(x, y, 1.0 / _ratio); });
         _ratio = 1;
     }
 }
@@ -621,7 +621,7 @@ Geo::AABBRect ContainerGroup::bounding_rect() const
     }
     double r = 0, x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
     Geo::Point coord;
-    for (const Geo::Geometry *continer : _containers)
+    for (const Geo::DObject *continer : _containers)
     {
         switch (continer->type())
         {
@@ -738,7 +738,7 @@ Geo::AABBRectParams ContainerGroup::aabbrect_params() const
     }
     double r = 0, x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
     Geo::Point coord;
-    for (const Geo::Geometry *continer : _containers)
+    for (const Geo::DObject *continer : _containers)
     {
         switch (continer->type())
         {
@@ -860,20 +860,20 @@ size_t ContainerGroup::count(const Geo::Type type, const bool include_combinated
     if (include_combinated)
     {
         size_t num =
-            std::count_if(_containers.begin(), _containers.end(), [=](const Geo::Geometry *object) { return object->type() == type; });
-        for (const Geo::Geometry *object : _containers)
+            std::count_if(_containers.begin(), _containers.end(), [=](const Geo::DObject *object) { return object->type() == type; });
+        for (const Geo::DObject *object : _containers)
         {
             if (const Combination *combination = dynamic_cast<const Combination *>(object))
             {
                 num += std::count_if(combination->begin(), combination->end(),
-                                     [=](const Geo::Geometry *object) { return object->type() == type; });
+                                     [=](const Geo::DObject *object) { return object->type() == type; });
             }
         }
         return num;
     }
     else
     {
-        return std::count_if(_containers.begin(), _containers.end(), [=](const Geo::Geometry *object) { return object->type() == type; });
+        return std::count_if(_containers.begin(), _containers.end(), [=](const Geo::DObject *object) { return object->type() == type; });
     }
 }
 
@@ -886,44 +886,44 @@ void ContainerGroup::append(ContainerGroup &group, const bool merge)
     }
     else
     {
-        for (Geo::Geometry *geo : group)
+        for (Geo::DObject *geo : group)
         {
             _containers.emplace_back(geo->clone());
         }
     }
 }
 
-void ContainerGroup::append(Geo::Geometry *object)
+void ContainerGroup::append(Geo::DObject *object)
 {
     _containers.push_back(object);
 }
 
-void ContainerGroup::insert(const size_t index, Geo::Geometry *object)
+void ContainerGroup::insert(const size_t index, Geo::DObject *object)
 {
     _containers.insert(_containers.begin() + index, object);
 }
 
-void ContainerGroup::insert(const std::vector<Geo::Geometry *>::iterator &it, Geo::Geometry *object)
+void ContainerGroup::insert(const std::vector<Geo::DObject *>::iterator &it, Geo::DObject *object)
 {
     _containers.insert(it, object);
 }
 
-std::vector<Geo::Geometry *>::iterator ContainerGroup::remove(const size_t index)
+std::vector<Geo::DObject *>::iterator ContainerGroup::remove(const size_t index)
 {
     assert(index < _containers.size());
     delete _containers[index];
     return _containers.erase(_containers.begin() + index);
 }
 
-std::vector<Geo::Geometry *>::iterator ContainerGroup::remove(const std::vector<Geo::Geometry *>::iterator &it)
+std::vector<Geo::DObject *>::iterator ContainerGroup::remove(const std::vector<Geo::DObject *>::iterator &it)
 {
     delete *it;
     return _containers.erase(it);
 }
 
-std::vector<Geo::Geometry *>::iterator ContainerGroup::remove(const std::vector<Geo::Geometry *>::reverse_iterator &it)
+std::vector<Geo::DObject *>::iterator ContainerGroup::remove(const std::vector<Geo::DObject *>::reverse_iterator &it)
 {
-    std::vector<Geo::Geometry *>::iterator b = _containers.begin();
+    std::vector<Geo::DObject *>::iterator b = _containers.begin();
     while (*b != *it)
     {
         ++b;
@@ -932,45 +932,45 @@ std::vector<Geo::Geometry *>::iterator ContainerGroup::remove(const std::vector<
     return _containers.erase(b);
 }
 
-Geo::Geometry *ContainerGroup::pop(const size_t index)
+Geo::DObject *ContainerGroup::pop(const size_t index)
 {
     assert(index < _containers.size());
-    Geo::Geometry *container = _containers[index];
+    Geo::DObject *container = _containers[index];
     _containers.erase(_containers.begin() + index);
     return container;
 }
 
-Geo::Geometry *ContainerGroup::pop(const std::vector<Geo::Geometry *>::iterator &it)
+Geo::DObject *ContainerGroup::pop(const std::vector<Geo::DObject *>::iterator &it)
 {
-    Geo::Geometry *container = *it;
+    Geo::DObject *container = *it;
     _containers.erase(it);
     return container;
 }
 
-Geo::Geometry *ContainerGroup::pop(const std::vector<Geo::Geometry *>::reverse_iterator &it)
+Geo::DObject *ContainerGroup::pop(const std::vector<Geo::DObject *>::reverse_iterator &it)
 {
-    std::vector<Geo::Geometry *>::iterator b = _containers.begin();
+    std::vector<Geo::DObject *>::iterator b = _containers.begin();
     while (*b != *it)
     {
         ++b;
     }
-    Geo::Geometry *container = *b;
+    Geo::DObject *container = *b;
     _containers.erase(b);
     return container;
 }
 
-Geo::Geometry *ContainerGroup::pop_front()
+Geo::DObject *ContainerGroup::pop_front()
 {
     assert(!_containers.empty());
-    Geo::Geometry *container = _containers.front();
+    Geo::DObject *container = _containers.front();
     _containers.erase(_containers.begin());
     return container;
 }
 
-Geo::Geometry *ContainerGroup::pop_back()
+Geo::DObject *ContainerGroup::pop_back()
 {
     assert(!_containers.empty());
-    Geo::Geometry *container = _containers.back();
+    Geo::DObject *container = _containers.back();
     _containers.pop_back();
     return container;
 }
@@ -980,25 +980,25 @@ bool ContainerGroup::empty() const
     return _containers.empty();
 }
 
-Geo::Geometry *ContainerGroup::front()
+Geo::DObject *ContainerGroup::front()
 {
     assert(!_containers.empty());
     return _containers.front();
 }
 
-const Geo::Geometry *ContainerGroup::front() const
+const Geo::DObject *ContainerGroup::front() const
 {
     assert(!_containers.empty());
     return _containers.front();
 }
 
-Geo::Geometry *ContainerGroup::back()
+Geo::DObject *ContainerGroup::back()
 {
     assert(!_containers.empty());
     return _containers.back();
 }
 
-const Geo::Geometry *ContainerGroup::back() const
+const Geo::DObject *ContainerGroup::back() const
 {
     assert(!_containers.empty());
     return _containers.back();
@@ -1024,12 +1024,12 @@ void ContainerGroup::remove_back()
 
 // Combination
 
-Combination::Combination(const std::initializer_list<Geo::Geometry *> &containers) : ContainerGroup(containers)
+Combination::Combination(const std::initializer_list<Geo::DObject *> &containers) : ContainerGroup(containers)
 {
     update_border();
 }
 
-Combination::Combination(const std::vector<Geo::Geometry *>::const_iterator &begin, const std::vector<Geo::Geometry *>::const_iterator &end)
+Combination::Combination(const std::vector<Geo::DObject *>::const_iterator &begin, const std::vector<Geo::DObject *>::const_iterator &end)
     : ContainerGroup(begin, end)
 {
     update_border();
@@ -1048,7 +1048,7 @@ void Combination::append(Combination *combination)
     }
 }
 
-void Combination::append(Geo::Geometry *geo)
+void Combination::append(Geo::DObject *geo)
 {
     if (geo->type() == Geo::Type::COMBINATION)
     {

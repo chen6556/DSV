@@ -6,7 +6,7 @@
 #include "base/Geometry.hpp"
 
 
-class Text : public Geo::Geometry
+class Text : public Geo::DObject
 {
 private:
     QString _text;
@@ -83,10 +83,10 @@ public:
 
 class Combination;
 
-class ContainerGroup : public Geo::Geometry
+class ContainerGroup : public Geo::DObject
 {
 private:
-    std::vector<Geo::Geometry *> _containers;
+    std::vector<Geo::DObject *> _containers;
     double _ratio = 1; // 缩放系数
     bool _visible = true;
 
@@ -95,9 +95,9 @@ public:
 
     ContainerGroup(const ContainerGroup &containers);
 
-    ContainerGroup(const std::initializer_list<Geo::Geometry *> &containers);
+    ContainerGroup(const std::initializer_list<Geo::DObject *> &containers);
 
-    ContainerGroup(const std::vector<Geo::Geometry *>::const_iterator &begin, const std::vector<Geo::Geometry *>::const_iterator &end);
+    ContainerGroup(const std::vector<Geo::DObject *>::const_iterator &begin, const std::vector<Geo::DObject *>::const_iterator &end);
 
     ~ContainerGroup() override;
 
@@ -115,37 +115,37 @@ public:
 
     ContainerGroup &operator=(const ContainerGroup &group);
 
-    std::vector<Geo::Geometry *>::iterator begin();
+    std::vector<Geo::DObject *>::iterator begin();
 
-    std::vector<Geo::Geometry *>::const_iterator begin() const;
+    std::vector<Geo::DObject *>::const_iterator begin() const;
 
-    std::vector<Geo::Geometry *>::const_iterator cbegin() const;
+    std::vector<Geo::DObject *>::const_iterator cbegin() const;
 
-    std::vector<Geo::Geometry *>::iterator end();
+    std::vector<Geo::DObject *>::iterator end();
 
-    std::vector<Geo::Geometry *>::const_iterator end() const;
+    std::vector<Geo::DObject *>::const_iterator end() const;
 
-    std::vector<Geo::Geometry *>::const_iterator cend() const;
+    std::vector<Geo::DObject *>::const_iterator cend() const;
 
-    std::vector<Geo::Geometry *>::reverse_iterator rbegin();
+    std::vector<Geo::DObject *>::reverse_iterator rbegin();
 
-    std::vector<Geo::Geometry *>::const_reverse_iterator rbegin() const;
+    std::vector<Geo::DObject *>::const_reverse_iterator rbegin() const;
 
-    std::vector<Geo::Geometry *>::const_reverse_iterator crbegin() const;
+    std::vector<Geo::DObject *>::const_reverse_iterator crbegin() const;
 
-    std::vector<Geo::Geometry *>::reverse_iterator rend();
+    std::vector<Geo::DObject *>::reverse_iterator rend();
 
-    std::vector<Geo::Geometry *>::const_reverse_iterator rend() const;
+    std::vector<Geo::DObject *>::const_reverse_iterator rend() const;
 
-    std::vector<Geo::Geometry *>::const_reverse_iterator crend() const;
+    std::vector<Geo::DObject *>::const_reverse_iterator crend() const;
 
-    Geo::Geometry *operator[](const size_t index);
+    Geo::DObject *operator[](const size_t index);
 
-    const Geo::Geometry *operator[](const size_t index) const;
+    const Geo::DObject *operator[](const size_t index) const;
 
-    Geo::Geometry *at(const size_t index);
+    Geo::DObject *at(const size_t index);
 
-    const Geo::Geometry *at(const size_t index) const;
+    const Geo::DObject *at(const size_t index) const;
 
     void clear() override;
 
@@ -171,37 +171,37 @@ public:
 
     void append(ContainerGroup &group, const bool merge = true);
 
-    void append(Geo::Geometry *object);
+    void append(Geo::DObject *object);
 
-    void insert(const size_t index, Geo::Geometry *object);
+    void insert(const size_t index, Geo::DObject *object);
 
-    void insert(const std::vector<Geo::Geometry *>::iterator &it, Geo::Geometry *object);
+    void insert(const std::vector<Geo::DObject *>::iterator &it, Geo::DObject *object);
 
-    std::vector<Geo::Geometry *>::iterator remove(const size_t index);
+    std::vector<Geo::DObject *>::iterator remove(const size_t index);
 
-    std::vector<Geo::Geometry *>::iterator remove(const std::vector<Geo::Geometry *>::iterator &it);
+    std::vector<Geo::DObject *>::iterator remove(const std::vector<Geo::DObject *>::iterator &it);
 
-    std::vector<Geo::Geometry *>::iterator remove(const std::vector<Geo::Geometry *>::reverse_iterator &it);
+    std::vector<Geo::DObject *>::iterator remove(const std::vector<Geo::DObject *>::reverse_iterator &it);
 
-    Geo::Geometry *pop(const size_t index);
+    Geo::DObject *pop(const size_t index);
 
-    Geo::Geometry *pop(const std::vector<Geo::Geometry *>::iterator &it);
+    Geo::DObject *pop(const std::vector<Geo::DObject *>::iterator &it);
 
-    Geo::Geometry *pop(const std::vector<Geo::Geometry *>::reverse_iterator &it);
+    Geo::DObject *pop(const std::vector<Geo::DObject *>::reverse_iterator &it);
 
-    Geo::Geometry *pop_front();
+    Geo::DObject *pop_front();
 
-    Geo::Geometry *pop_back();
+    Geo::DObject *pop_back();
 
     bool empty() const override;
 
-    Geo::Geometry *front();
+    Geo::DObject *front();
 
-    const Geo::Geometry *front() const;
+    const Geo::DObject *front() const;
 
-    Geo::Geometry *back();
+    Geo::DObject *back();
 
-    const Geo::Geometry *back() const;
+    const Geo::DObject *back() const;
 
     void remove_front();
 
@@ -218,15 +218,15 @@ public:
 
     Combination(const Combination &combination) = default;
 
-    Combination(const std::initializer_list<Geo::Geometry *> &containers);
+    Combination(const std::initializer_list<Geo::DObject *> &containers);
 
-    Combination(const std::vector<Geo::Geometry *>::const_iterator &begin, const std::vector<Geo::Geometry *>::const_iterator &end);
+    Combination(const std::vector<Geo::DObject *>::const_iterator &begin, const std::vector<Geo::DObject *>::const_iterator &end);
 
     Geo::Type type() const override;
 
     void append(Combination *combination);
 
-    void append(Geo::Geometry *geo);
+    void append(Geo::DObject *geo);
 
     Combination *clone() const override;
 

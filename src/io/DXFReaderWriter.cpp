@@ -932,7 +932,7 @@ void DXFReaderWriter::addInsert(const DRW_Insert &data)
         if (_block_name_map.find(data.name) != _block_name_map.end())
         {
             Combination *combination = new Combination();
-            for (const Geo::Geometry *obj : *_block_name_map[data.name])
+            for (const Geo::DObject *obj : *_block_name_map[data.name])
             {
                 combination->append(obj->clone());
             }
@@ -948,7 +948,7 @@ void DXFReaderWriter::addInsert(const DRW_Insert &data)
         if (_block_name_map.find(data.name) != _block_name_map.end())
         {
             Combination combination;
-            for (const Geo::Geometry *obj : *_block_name_map[data.name])
+            for (const Geo::DObject *obj : *_block_name_map[data.name])
             {
                 combination.append(obj->clone());
             }
@@ -1461,11 +1461,11 @@ void DXFReaderWriter::writeBlocks()
         _dxfrw->writeBlock(&block);
         const Geo::AABBRectParams rect = combination->aabbrect_params();
         const Geo::Point anchor(rect.left, rect.bottom);
-        for (const Geo::Geometry *object : *combination)
+        for (const Geo::DObject *object : *combination)
         {
-            Geo::Geometry *moved_object = object->clone();
+            Geo::DObject *moved_object = object->clone();
             moved_object->translate(-anchor.x, -anchor.y);
-            write_geometry_object(moved_object);
+            write_dobject(moved_object);
             delete moved_object;
         }
     }
@@ -1486,9 +1486,9 @@ void DXFReaderWriter::writeEntities()
     for (const ContainerGroup &group : _graph->container_groups())
     {
         _current_group = &group;
-        for (const Geo::Geometry *object : group)
+        for (const Geo::DObject *object : group)
         {
-            write_geometry_object(object);
+            write_dobject(object);
         }
         _current_group = nullptr;
     }
@@ -1546,7 +1546,7 @@ void DXFReaderWriter::writeAppId()
     _dxfrw->writeAppId(&ai);
 }
 
-void DXFReaderWriter::write_geometry_object(const Geo::Geometry *object)
+void DXFReaderWriter::write_dobject(const Geo::DObject *object)
 {
     switch (object->type())
     {
@@ -1800,7 +1800,7 @@ void DXFReaderWriter::prepare_blocks()
 {
     for (ContainerGroup &group : _graph->container_groups())
     {
-        for (Geo::Geometry *object : group)
+        for (Geo::DObject *object : group)
         {
             if (Combination *combination = dynamic_cast<Combination *>(object))
             {

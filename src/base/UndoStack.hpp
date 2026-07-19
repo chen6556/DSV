@@ -12,7 +12,7 @@ namespace UndoStack
 class Command
 {
 public:
-    std::vector<Geo::Geometry *> removed, appended, updated;
+    std::vector<Geo::DObject *> removed, appended, updated;
 
     virtual ~Command() = default;
 
@@ -29,7 +29,7 @@ private:
     Graph *_graph = nullptr;
 
 public:
-    std::vector<Geo::Geometry *> removed, appended, updated;
+    std::vector<Geo::DObject *> removed, appended, updated;
 
 public:
     void set_count(const size_t count);
@@ -48,16 +48,16 @@ class ObjectCommand : public Command
 {
 private:
     // object, group index, object index
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> _add_items;
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> _remove_items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> _add_items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> _remove_items;
 
 public:
-    ObjectCommand(const std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> &items, const bool add);
+    ObjectCommand(const std::vector<std::tuple<Geo::DObject *, size_t, size_t>> &items, const bool add);
 
-    ObjectCommand(Geo::Geometry *object, const size_t group, const size_t index, const bool add);
+    ObjectCommand(Geo::DObject *object, const size_t group, const size_t index, const bool add);
 
-    ObjectCommand(const std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> &add_items,
-                  const std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> &remove_items);
+    ObjectCommand(const std::vector<std::tuple<Geo::DObject *, size_t, size_t>> &add_items,
+                  const std::vector<std::tuple<Geo::DObject *, size_t, size_t>> &remove_items);
 
     ~ObjectCommand() override;
 
@@ -68,13 +68,13 @@ public:
 class TranslateCommand : public Command
 {
 private:
-    std::vector<Geo::Geometry *> _items;
+    std::vector<Geo::DObject *> _items;
     double _dx = 0, _dy = 0;
 
 public:
-    TranslateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y);
+    TranslateCommand(const std::vector<Geo::DObject *> &objects, const double x, const double y);
 
-    TranslateCommand(Geo::Geometry *object, const double x, const double y);
+    TranslateCommand(Geo::DObject *object, const double x, const double y);
 
     void undo(Graph *graph = nullptr) override;
 };
@@ -83,13 +83,13 @@ public:
 class TransformCommand : public Command
 {
 private:
-    std::vector<Geo::Geometry *> _items;
+    std::vector<Geo::DObject *> _items;
     double _invmat[6]{};
 
 public:
-    TransformCommand(const std::vector<Geo::Geometry *> &objects, const double mat[6]);
+    TransformCommand(const std::vector<Geo::DObject *> &objects, const double mat[6]);
 
-    TransformCommand(Geo::Geometry *object, const double mat[6]);
+    TransformCommand(Geo::DObject *object, const double mat[6]);
 
     void undo(Graph *graph = nullptr) override;
 };
@@ -101,10 +101,10 @@ private:
     std::vector<std::tuple<double, double>> _shape;
     std::vector<std::tuple<double, double>> _path_points;
     std::vector<double> _knots;
-    Geo::Geometry *_object;
+    Geo::DObject *_object;
 
 public:
-    ChangeShapeCommand(Geo::Geometry *object, const std::vector<std::tuple<double, double>> &shape);
+    ChangeShapeCommand(Geo::DObject *object, const std::vector<std::tuple<double, double>> &shape);
 
     ChangeShapeCommand(Geo::BSpline *bspline, const std::vector<std::tuple<double, double>> &shape,
                        const std::vector<std::tuple<double, double>> &path_points, const std::vector<double> &knots);
@@ -116,13 +116,13 @@ public:
 class RotateCommand : public Command
 {
 private:
-    std::vector<Geo::Geometry *> _items;
+    std::vector<Geo::DObject *> _items;
     double _x, _y, _rad;
 
 public:
-    RotateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad);
+    RotateCommand(const std::vector<Geo::DObject *> &objects, const double x, const double y, const double rad);
 
-    RotateCommand(Geo::Geometry *object, const double x, const double y, const double rad);
+    RotateCommand(Geo::DObject *object, const double x, const double y, const double rad);
 
     void undo(Graph *graph = nullptr) override;
 };
@@ -131,14 +131,14 @@ public:
 class ScaleCommand : public Command
 {
 private:
-    std::vector<Geo::Geometry *> _items;
+    std::vector<Geo::DObject *> _items;
     double _x, _y, _k;
     bool _unitary;
 
 public:
-    ScaleCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double k, const bool unitary);
+    ScaleCommand(const std::vector<Geo::DObject *> &objects, const double x, const double y, const double k, const bool unitary);
 
-    ScaleCommand(Geo::Geometry *object, const double x, const double y, const double k);
+    ScaleCommand(Geo::DObject *object, const double x, const double y, const double k);
 
     void undo(Graph *graph = nullptr) override;
 };
@@ -148,14 +148,14 @@ class CombinateCommand : public Command
 {
 public:
     // combination, object index, objects in combination
-    std::vector<std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>>> _items;
+    std::vector<std::tuple<Combination *, size_t, std::vector<Geo::DObject *>>> _items;
     Combination *_combination = nullptr;
     size_t _group_index = 0;
 
 public:
     CombinateCommand(const std::vector<std::tuple<Combination *, size_t>> &combinations, const size_t index);
 
-    CombinateCommand(Combination *combination, const std::vector<std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>>> &items,
+    CombinateCommand(Combination *combination, const std::vector<std::tuple<Combination *, size_t, std::vector<Geo::DObject *>>> &items,
                      const size_t index);
 
     ~CombinateCommand() override;
@@ -167,15 +167,15 @@ public:
 class FlipCommand : public Command
 {
 private:
-    std::vector<Geo::Geometry *> _items;
+    std::vector<Geo::DObject *> _items;
     double _x, _y;
     bool _direction;
     bool _unitary;
 
 public:
-    FlipCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const bool direction, const bool unitary);
+    FlipCommand(const std::vector<Geo::DObject *> &objects, const double x, const double y, const bool direction, const bool unitary);
 
-    FlipCommand(Geo::Geometry *object, const double x, const double y, const bool direction);
+    FlipCommand(Geo::DObject *object, const double x, const double y, const bool direction);
 
     void undo(Graph *graph = nullptr) override;
 };
@@ -184,12 +184,12 @@ public:
 class ConnectCommand : public Command
 {
 private:
-    std::vector<std::tuple<Geo::Geometry *, size_t>> _items;
+    std::vector<std::tuple<Geo::DObject *, size_t>> _items;
     const Geo::Polyline *_polyline = nullptr;
     size_t _group_index = 0;
 
 public:
-    ConnectCommand(const std::vector<std::tuple<Geo::Geometry *, size_t>> &polylines, const Geo::Polyline *polyline, const size_t index);
+    ConnectCommand(const std::vector<std::tuple<Geo::DObject *, size_t>> &polylines, const Geo::Polyline *polyline, const size_t index);
 
     ~ConnectCommand() override;
 
@@ -255,10 +255,10 @@ public:
 class ReverseCommand : public Command
 {
 private:
-    std::vector<Geo::Geometry *> _objects;
+    std::vector<Geo::DObject *> _objects;
 
 public:
-    ReverseCommand(const std::vector<Geo::Geometry *> &objects);
+    ReverseCommand(const std::vector<Geo::DObject *> &objects);
 
     void undo(Graph *graph = nullptr) override;
 };

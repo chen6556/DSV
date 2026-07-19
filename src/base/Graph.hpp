@@ -5,7 +5,7 @@
 #include "base/Container.hpp"
 
 
-class Graph : public Geo::Geometry
+class Graph : public Geo::DObject
 {
 private:
     std::list<ContainerGroup> _container_groups;
@@ -101,7 +101,7 @@ public:
     const ContainerGroup &back() const;
 
 
-    void append(Geo::Geometry *object, const size_t index = 0);
+    void append(Geo::DObject *object, const size_t index = 0);
 
     void append_group();
 
@@ -122,10 +122,10 @@ public:
 
     bool has_object(const QString &name) const;
 
-    bool remove_object(const Geo::Geometry *object);
+    bool remove_object(const Geo::DObject *object);
 
 
     void update_curve_shape(const double step, const double down_sampling_value);
 
-    std::tuple<size_t, size_t> index(const Geo::Geometry *object) const;
+    std::tuple<size_t, size_t> index(const Geo::DObject *object) const;
 };

@@ -194,6 +194,6 @@ bool find_intersections(const Ellipse &ellipse, const Circle &circle, const Poin
                         std::vector<Point> &intersections);
 
 // 找到pos附近的交点
-bool find_intersections(const Geometry *object0, const Geometry *object1, const Point &pos, const double distance,
+bool find_intersections(const DObject *object0, const DObject *object1, const Point &pos, const double distance,
                         std::vector<Point> &intersections);
 } // namespace Geo

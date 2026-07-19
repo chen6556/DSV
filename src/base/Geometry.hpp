@@ -12,7 +12,7 @@ const static double EPSILON = 1e-10;
 
 enum class Type
 {
-    GEOMETRY,
+    DOBJECT,
     POINT,
     POLYLINE,
     AABBRECT,
@@ -43,7 +43,7 @@ struct AABBRectParams
     double bottom = 0;
 };
 
-class Geometry
+class DObject
 {
 public:
     bool is_selected = false;
@@ -52,9 +52,9 @@ public:
     QString name;
 
 public:
-    Geometry() = default;
+    DObject() = default;
 
-    virtual ~Geometry() = default;
+    virtual ~DObject() = default;
 
     virtual Type type() const = 0;
 
@@ -64,7 +64,7 @@ public:
 
     virtual void clear() = 0;
 
-    virtual Geo::Geometry *clone() const = 0;
+    virtual Geo::DObject *clone() const = 0;
 
     virtual void transform(const double a, const double b, const double c, const double d, const double e, const double f) = 0;
 
@@ -116,7 +116,7 @@ struct MarkedPoint
 
 class Circle;
 
-class Point : public Geometry
+class Point : public DObject
 {
 public:
     double x = 0;
@@ -202,7 +202,7 @@ public:
 
 using Vector = Point;
 
-class Polyline : public Geometry
+class Polyline : public DObject
 {
 protected:
     std::vector<Point> _points;
@@ -338,7 +338,7 @@ public:
     Polyline *range(const size_t index0, const double t0, const size_t index1, const double t1) const;
 };
 
-class AABBRect : public Geometry
+class AABBRect : public DObject
 {
 private:
     std::vector<Point> _points;
@@ -524,7 +524,7 @@ public:
     Point average_point() const;
 };
 
-class Triangle : public Geometry
+class Triangle : public DObject
 {
 private:
     Point _vecs[3] = {Point()};
@@ -597,7 +597,7 @@ public:
     double inner_circle_radius() const;
 };
 
-class Circle : public Geometry
+class Circle : public DObject
 {
 public:
     double x = 0, y = 0, radius = 0;
@@ -727,7 +727,7 @@ public:
     Point derivative(const size_t index, const double t, const int n) const;
 };
 
-class Ellipse : public Geometry
+class Ellipse : public DObject
 {
 public:
     static double default_down_sampling_value;
@@ -871,7 +871,7 @@ public:
     Ellipse *range(const double t0, const double t1) const;
 };
 
-class BSpline : public Geometry
+class BSpline : public DObject
 {
 protected:
     Polyline _shape;
@@ -1039,7 +1039,7 @@ public:
     Point derivative(const double t, const int n) const override;
 };
 
-class Arc : public Geometry
+class Arc : public DObject
 {
 public:
     double x = 0, y = 0, radius = 0;

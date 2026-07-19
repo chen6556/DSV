@@ -3517,7 +3517,7 @@ bool Geo::find_intersections(const Geo::Ellipse &ellipse, const Geo::Circle &cir
     }
 }
 
-bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *object1, const Geo::Point &pos, const double distance,
+bool Geo::find_intersections(const Geo::DObject *object0, const Geo::DObject *object1, const Geo::Point &pos, const double distance,
                              std::vector<Geo::Point> &intersections)
 {
     switch (object0->type())

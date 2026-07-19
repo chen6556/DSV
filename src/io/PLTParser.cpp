@@ -631,12 +631,12 @@ void Importer::end()
 {
     store_points();
     /*const int text_size = GlobalSetting::setting().text_size;
-    std::vector<Geo::Geometry *> group(_graph->container_group().begin(), _graph->container_group().end());
-    std::sort(group.begin(), group.end(), [](const Geo::Geometry *a, const Geo::Geometry *b)
+    std::vector<Geo::DObject *> group(_graph->container_group().begin(), _graph->container_group().end());
+    std::sort(group.begin(), group.end(), [](const Geo::DObject *a, const Geo::DObject *b)
               { return a->bounding_rect().area() < b->bounding_rect().area(); });
     for (Txt &text : _texts)
     {
-        for (Geo::Geometry *geo : group)
+        for (Geo::DObject *geo : group)
         {
             if (geo->type() == Geo::Type::POLYGON && Geo::is_inside(text.pos, dynamic_cast<Container<Geo::Polygon> *>(geo)->shape(), true))
             {

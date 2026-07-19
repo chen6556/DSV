@@ -12,11 +12,11 @@ private:
     std::vector<Geo::Point> _point_cache;
     UndoStack::CommandStack _backup;
     QuadTree _view_tree;
-    std::vector<Geo::Geometry *> _paste_table;
+    std::vector<Geo::DObject *> _paste_table;
     size_t _current_group = 0;
     double _view_ratio = 1.0;
 
-    Geo::Geometry *_catched_points = nullptr;
+    Geo::DObject *_catched_points = nullptr;
 
 public:
     std::vector<std::tuple<double, double>> edited_shape;
@@ -47,7 +47,7 @@ public:
 
     void refresh_visible_objects(const Geo::AABBRectParams &rect);
 
-    const std::vector<Geo::Geometry *> &visible_objects() const;
+    const std::vector<Geo::DObject *> &visible_objects() const;
 
     std::vector<Geo::Point> &point_cache();
 
@@ -61,21 +61,21 @@ public:
 
     void set_view_ratio(const double value);
 
-    Geo::Geometry *select(const Geo::Point &point, const bool reset_others = true, const bool visible_only = true);
+    Geo::DObject *select(const Geo::Point &point, const bool reset_others = true, const bool visible_only = true);
 
-    Geo::Geometry *select(const double x, const double y, const bool reset_others = true, const bool visible_only = true);
+    Geo::DObject *select(const double x, const double y, const bool reset_others = true, const bool visible_only = true);
 
-    std::tuple<Geo::Geometry *, bool> select_with_state(const Geo::Point &point, const bool reset_others = true);
+    std::tuple<Geo::DObject *, bool> select_with_state(const Geo::Point &point, const bool reset_others = true);
 
-    std::vector<Geo::Geometry *> selected(const bool visible_only = true) const;
+    std::vector<Geo::DObject *> selected(const bool visible_only = true) const;
 
     const size_t selected_count() const;
 
-    std::vector<Geo::Geometry *> select(const Geo::AABBRect &rect, const bool reset_others = true, const bool visible_only = true);
+    std::vector<Geo::DObject *> select(const Geo::AABBRect &rect, const bool reset_others = true, const bool visible_only = true);
 
     void reset_selected_mark(const bool value = false);
 
-    const std::vector<Geo::Geometry *> &paste_table() const;
+    const std::vector<Geo::DObject *> &paste_table() const;
 
     void undo();
 
@@ -83,7 +83,7 @@ public:
 
     void push_backup_command(UndoStack::Command *command);
 
-    void moved_objects(const std::vector<Geo::Geometry *> &objects, const double dx, const double dy);
+    void moved_objects(const std::vector<Geo::DObject *> &objects, const double dx, const double dy);
 
     // Layer Operation
     void remove_group(const size_t index);
@@ -103,11 +103,11 @@ public:
     void set_group_name(const size_t index, const QString &name);
 
 
-    void append(Geo::Geometry *object);
+    void append(Geo::DObject *object);
 
-    void append(const std::vector<Geo::Geometry *> &objects);
+    void append(const std::vector<Geo::DObject *> &objects);
 
-    void translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1,
+    void translate_points(Geo::DObject *points, const double x0, const double y0, const double x1, const double y1,
                           const bool change_shape = true);
 
     bool remove_selected();
@@ -118,62 +118,62 @@ public:
 
     bool paste(const double tx, const double ty);
 
-    bool connect(const std::vector<Geo::Geometry *> &objects, const double connect_distance);
+    bool connect(const std::vector<Geo::DObject *> &objects, const double connect_distance);
 
-    bool blend(const Geo::Geometry *object0, const Geo::Geometry *object1, const Geo::Point &pos0, const Geo::Point &pos1);
+    bool blend(const Geo::DObject *object0, const Geo::DObject *object1, const Geo::Point &pos0, const Geo::Point &pos1);
 
-    bool close_polyline(const std::vector<Geo::Geometry *> &objects);
+    bool close_polyline(const std::vector<Geo::DObject *> &objects);
 
-    bool combinate(const std::vector<Geo::Geometry *> &objects);
+    bool combinate(const std::vector<Geo::DObject *> &objects);
 
-    bool detach(const std::vector<Geo::Geometry *> &objects);
+    bool detach(const std::vector<Geo::DObject *> &objects);
 
-    bool mirror(const std::vector<Geo::Geometry *> &objects, const Geo::Point &start, const Geo::Point &end, const bool copy);
+    bool mirror(const std::vector<Geo::DObject *> &objects, const Geo::Point &start, const Geo::Point &end, const bool copy);
 
-    bool offset(const std::vector<Geo::Geometry *> &objects, const double distance,
+    bool offset(const std::vector<Geo::DObject *> &objects, const double distance,
                 const Geo::Offset::JoinType join_type = Geo::Offset::JoinType::Round,
                 const Geo::Offset::EndType end_type = Geo::Offset::EndType::Polygon);
 
-    bool scale(const std::vector<Geo::Geometry *> &objects, const bool unitary, const double k);
+    bool scale(const std::vector<Geo::DObject *> &objects, const bool unitary, const double k);
 
-    bool shape_union(Geo::Geometry *shape0, Geo::Geometry *shape1);
+    bool shape_union(Geo::DObject *shape0, Geo::DObject *shape1);
 
-    bool shape_intersection(Geo::Geometry *shape0, Geo::Geometry *shape1);
+    bool shape_intersection(Geo::DObject *shape0, Geo::DObject *shape1);
 
-    bool shape_difference(Geo::Geometry *shape0, const Geo::Geometry *shape1);
+    bool shape_difference(Geo::DObject *shape0, const Geo::DObject *shape1);
 
-    bool shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1);
+    bool shape_xor(Geo::DObject *shape0, Geo::DObject *shape1);
 
     bool fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1,
                 const double radius0, const double radius1);
 
-    bool fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::Point &start, const Geo::Point &center, const Geo::Point &end,
+    bool fillet(Geo::DObject *object0, Geo::DObject *object1, const Geo::Point &start, const Geo::Point &center, const Geo::Point &end,
                 const std::vector<std::tuple<size_t, double, double, double>> &tvalues);
 
-    bool fillet(Geo::Geometry *object, const Geo::Point &point, const double radius);
+    bool fillet(Geo::DObject *object, const Geo::Point &point, const double radius);
 
-    bool fillet(Geo::Geometry *object, const Geo::Point &point, const double radius0, const double radius1);
+    bool fillet(Geo::DObject *object, const Geo::Point &point, const double radius0, const double radius1);
 
-    bool fillet(Geo::Geometry *object0, const Geo::Point &point0, Geo::Geometry *object1, const Geo::Point &point1, const double radius);
+    bool fillet(Geo::DObject *object0, const Geo::Point &point0, Geo::DObject *object1, const Geo::Point &point1, const double radius);
 
     bool chamfer(Geo::Polygon *shape, const Geo::Point &point, const double distance);
 
     bool chamfer(Geo::Polyline *polyline, const Geo::Point &point, const double distance);
 
-    bool split(Geo::Geometry *object, const Geo::Point &pos);
+    bool split(Geo::DObject *object, const Geo::Point &pos);
 
-    bool line_array(const std::vector<Geo::Geometry *> &objects, int x, int y, double x_space, double y_space);
+    bool line_array(const std::vector<Geo::DObject *> &objects, int x, int y, double x_space, double y_space);
 
-    bool ring_array(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const int n);
+    bool ring_array(const std::vector<Geo::DObject *> &objects, const double x, const double y, const int n);
 
-    void up(Geo::Geometry *item);
+    void up(Geo::DObject *item);
 
-    void down(Geo::Geometry *item);
+    void down(Geo::DObject *item);
 
-    void rotate(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad);
+    void rotate(const std::vector<Geo::DObject *> &objects, const double x, const double y, const double rad);
 
     // true:X false:Y
-    void flip(std::vector<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers);
+    void flip(std::vector<Geo::DObject *> objects, const bool direction, const bool unitary, const bool all_layers);
 
     void trim(Geo::Polyline *polyline, const double x, const double y);
 
@@ -195,15 +195,15 @@ public:
 
     void extend(Geo::BSpline *bspline, const double x, const double y);
 
-    bool divide_points_n(const std::vector<Geo::Geometry *> &objects, const size_t n);
+    bool divide_points_n(const std::vector<Geo::DObject *> &objects, const size_t n);
 
-    bool divide_parts_n(const std::vector<Geo::Geometry *> &objects, const size_t n);
+    bool divide_parts_n(const std::vector<Geo::DObject *> &objects, const size_t n);
 
-    bool divide_points_measure(const std::vector<Geo::Geometry *> &objects, const double length);
+    bool divide_points_measure(const std::vector<Geo::DObject *> &objects, const double length);
 
-    bool divide_parts_measure(const std::vector<Geo::Geometry *> &objects, const double length);
+    bool divide_parts_measure(const std::vector<Geo::DObject *> &objects, const double length);
 
-    void reverse(const std::vector<Geo::Geometry *> &objects);
+    void reverse(const std::vector<Geo::DObject *> &objects);
 
 
     void auto_combinate();

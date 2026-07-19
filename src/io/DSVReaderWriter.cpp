@@ -31,10 +31,10 @@ void DSVReaderWriter::read(std::ifstream &stream)
     {
         // update combination border
         _current_layer = group.name.toStdString();
-        std::vector<Geo::Geometry *> temp(group.rbegin(), group.rend());
+        std::vector<Geo::DObject *> temp(group.rbegin(), group.rend());
         while (!temp.empty())
         {
-            Geo::Geometry *object = temp.back();
+            Geo::DObject *object = temp.back();
             temp.pop_back();
             if (object->type() == Geo::Type::COMBINATION)
             {
@@ -53,10 +53,10 @@ void DSVReaderWriter::write(std::ofstream &stream)
     for (ContainerGroup &group : *_graph)
     {
         _current_layer = group.name.toStdString();
-        std::vector<Geo::Geometry *> temp(group.rbegin(), group.rend());
+        std::vector<Geo::DObject *> temp(group.rbegin(), group.rend());
         while (!temp.empty())
         {
-            Geo::Geometry *object = temp.back();
+            Geo::DObject *object = temp.back();
             temp.pop_back();
             switch (object->type())
             {
@@ -160,10 +160,10 @@ void DSVReaderWriter::record_handle(Graph *graph)
     _object_to_handle.clear();
     for (ContainerGroup &group : *graph)
     {
-        std::vector<Geo::Geometry *> temp(group.rbegin(), group.rend());
+        std::vector<Geo::DObject *> temp(group.rbegin(), group.rend());
         while (!temp.empty())
         {
-            Geo::Geometry *object = temp.back();
+            Geo::DObject *object = temp.back();
             temp.pop_back();
             _handle_to_object.insert_or_assign(_global_handle++, object);
             _object_to_handle.insert_or_assign(object, _global_handle);
@@ -305,7 +305,7 @@ void DSVReaderWriter::write(std::ofstream &stream, Combination *combination)
     stream << "0,Combination" << std::endl;
     stream << "1," << _object_to_handle.at(combination) << std::endl;
     stream << "3," << _current_layer << std::endl;
-    for (Geo::Geometry *object : *combination)
+    for (Geo::DObject *object : *combination)
     {
         stream << "80," << _object_to_handle.at(object) << std::endl;
     }

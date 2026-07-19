@@ -12,27 +12,27 @@
 using namespace Geo;
 
 
-double Geometry::length() const
+double DObject::length() const
 {
     return 0;
 }
 
-Polygon Geometry::convex_hull() const
+Polygon DObject::convex_hull() const
 {
     return Polygon();
 }
 
-AABBRect Geometry::bounding_rect() const
+AABBRect DObject::bounding_rect() const
 {
     return AABBRect();
 }
 
-Polygon Geometry::mini_bounding_rect() const
+Polygon DObject::mini_bounding_rect() const
 {
     return Polygon();
 }
 
-AABBRectParams Geometry::aabbrect_params() const
+AABBRectParams DObject::aabbrect_params() const
 {
     return AABBRectParams();
 }
@@ -56,7 +56,7 @@ Point &Point::operator=(const Point &point)
 {
     if (this != &point)
     {
-        Geometry::operator=(point);
+        DObject::operator=(point);
         x = point.x;
         y = point.y;
     }
@@ -342,7 +342,7 @@ Polyline &Polyline::operator=(const Polyline &polyline)
 {
     if (this != &polyline)
     {
-        Geometry::operator=(polyline);
+        DObject::operator=(polyline);
         _points = polyline._points;
     }
     return *this;
@@ -887,7 +887,7 @@ AABBRect &AABBRect::operator=(const AABBRect &rect)
 {
     if (this != &rect)
     {
-        Geometry::operator=(rect);
+        DObject::operator=(rect);
         _points = rect._points;
     }
     return *this;
@@ -1674,7 +1674,7 @@ Triangle::Triangle(const double x0, const double y0, const double x1, const doub
     _vecs[2].y = y2;
 }
 
-Triangle::Triangle(const Triangle &triangle) : Geometry(triangle)
+Triangle::Triangle(const Triangle &triangle) : DObject(triangle)
 {
     _vecs[0] = triangle._vecs[0];
     _vecs[1] = triangle._vecs[1];
@@ -1786,7 +1786,7 @@ Triangle &Triangle::operator=(const Triangle &triangle)
 {
     if (this != &triangle)
     {
-        Geometry::operator=(triangle);
+        DObject::operator=(triangle);
         _vecs[0] = triangle._vecs[0];
         _vecs[1] = triangle._vecs[1];
         _vecs[2] = triangle._vecs[2];
@@ -2578,7 +2578,7 @@ Ellipse::Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point 
     update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
-Ellipse::Ellipse(const Ellipse &ellipse) : Geometry(ellipse), _shape(ellipse._shape)
+Ellipse::Ellipse(const Ellipse &ellipse) : DObject(ellipse), _shape(ellipse._shape)
 {
     _a[0] = ellipse._a[0];
     _a[1] = ellipse._a[1];
@@ -2594,7 +2594,7 @@ Ellipse &Ellipse::operator=(const Ellipse &ellipse)
 {
     if (this != &ellipse)
     {
-        Geometry::operator=(ellipse);
+        DObject::operator=(ellipse);
         _a[0] = ellipse._a[0];
         _a[1] = ellipse._a[1];
         _b[0] = ellipse._b[0];
@@ -3161,7 +3161,7 @@ BSpline &BSpline::operator=(const BSpline &bspline)
 {
     if (this != &bspline)
     {
-        Geometry::operator=(bspline);
+        DObject::operator=(bspline);
         _shape = bspline._shape;
         controls_model = bspline.controls_model;
         control_points = bspline.control_points;
@@ -4677,7 +4677,7 @@ Arc::Arc(const Point &point0, const Point &point1, const double bulge) : Arc(poi
 {
 }
 
-Arc::Arc(const Arc &arc) : Geometry(arc), x(arc.x), y(arc.y), radius(arc.radius), _shape(arc._shape)
+Arc::Arc(const Arc &arc) : DObject(arc), x(arc.x), y(arc.y), radius(arc.radius), _shape(arc._shape)
 {
     control_points[0] = arc.control_points[0];
     control_points[1] = arc.control_points[1];
@@ -4688,7 +4688,7 @@ Arc &Arc::operator=(const Arc &arc)
 {
     if (this != &arc)
     {
-        Geometry::operator=(arc);
+        DObject::operator=(arc);
         x = arc.x;
         y = arc.y;
         radius = arc.radius;

@@ -204,11 +204,11 @@ void MainWindow::keyPressEvent(QKeyEvent *event)
     case Qt::Key_Backspace:
         {
             std::set<Geo::Type> types;
-            for (const Geo::Geometry *object : ui->canvas->editor().selected())
+            for (const Geo::DObject *object : ui->canvas->editor().selected())
             {
                 if (const Combination *combination = dynamic_cast<const Combination *>(object))
                 {
-                    for (const Geo::Geometry *item : *combination)
+                    for (const Geo::DObject *item : *combination)
                     {
                         types.insert(item->type());
                     }

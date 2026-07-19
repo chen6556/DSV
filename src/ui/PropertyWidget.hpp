@@ -43,7 +43,7 @@ public:
 
     ~PropertyWidget() override;
 
-    void show(Geo::Geometry *object);
+    void show(Geo::DObject *object);
 
 private:
     void init();
@@ -70,7 +70,7 @@ private:
 
     void init_dimension_widget();
 
-    void read(Geo::Geometry *object);
+    void read(Geo::DObject *object);
 
     void read(Geo::Arc *arc);
 
@@ -94,7 +94,7 @@ private:
 
     void read(Dim::Dimension *dim);
 
-    void check(Geo::Geometry *object);
+    void check(Geo::DObject *object);
 
     void check(Geo::Arc *arc);
 

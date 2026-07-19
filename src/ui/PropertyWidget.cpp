@@ -501,7 +501,7 @@ void PropertyWidget::init_dimension_widget()
             });
 }
 
-void PropertyWidget::show(Geo::Geometry *object)
+void PropertyWidget::show(Geo::DObject *object)
 {
     read(object);
 
@@ -513,7 +513,7 @@ void PropertyWidget::show(Geo::Geometry *object)
     check(object);
 }
 
-void PropertyWidget::read(Geo::Geometry *object)
+void PropertyWidget::read(Geo::DObject *object)
 {
     _shape.clear();
     CanvasOperations::CanvasOperation::refresh_tool_lines(object);
@@ -853,7 +853,7 @@ void PropertyWidget::read(Dim::Dimension *dim)
     ui->dim_arrowSize->blockSignals(false);
 }
 
-void PropertyWidget::check(Geo::Geometry *object)
+void PropertyWidget::check(Geo::DObject *object)
 {
     switch (object->type())
     {

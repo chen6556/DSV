@@ -17,8 +17,8 @@ private:
 
     Graph *_graph = nullptr;
     int _global_handle = 0;
-    std::unordered_map<int, Geo::Geometry *> _handle_to_object;
-    std::unordered_map<Geo::Geometry *, int> _object_to_handle;
+    std::unordered_map<int, Geo::DObject *> _handle_to_object;
+    std::unordered_map<Geo::DObject *, int> _object_to_handle;
     std::unordered_map<int, std::vector<int>> _parent_to_children;
     std::unordered_map<int, int> _child_to_parent;
     std::unordered_map<std::string, size_t> _group_name_to_index;

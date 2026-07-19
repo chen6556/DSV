@@ -30,7 +30,7 @@ public:
 
 private:
     Geo::AABBRect _visible_area;
-    std::vector<const Geo::Geometry *> _catched_objects;
+    std::vector<const Geo::DObject *> _catched_objects;
     Editor _editor;
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
@@ -155,8 +155,8 @@ private:
     {
         std::vector<Geo::Polyline *> polyline;
         std::vector<Geo::Polygon *> polygon;
-        std::vector<Geo::Geometry *> circle;
-        std::vector<Geo::Geometry *> curve;
+        std::vector<Geo::DObject *> circle;
+        std::vector<Geo::DObject *> curve;
         std::vector<Geo::Point *> point;
         std::vector<Dim::Dimension *> dimensions;
     } _visible_objects[2];
@@ -251,11 +251,11 @@ public:
 
     void set_info_labels(QLabel **labels);
 
-    void add_geometry(Geo::Geometry *object);
+    void add_object(Geo::DObject *object);
 
-    void add_geometry(const std::vector<Geo::Geometry *> &objects);
+    void add_object(const std::vector<Geo::DObject *> &objects);
 
-    void show_menu(Geo::Geometry *object);
+    void show_menu(Geo::DObject *object);
 
     void show_text_edit(Text *text);
 
@@ -319,9 +319,9 @@ public:
 
     void refresh_selected_ibo();
 
-    void refresh_selected_ibo(const Geo::Geometry *object);
+    void refresh_selected_ibo(const Geo::DObject *object);
 
-    void refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects);
+    void refresh_selected_ibo(const std::vector<Geo::DObject *> &objects);
 
     void refresh_selected_vbo();
 
@@ -334,8 +334,8 @@ public:
     void paint_dim_text();
 
 
-    bool refresh_catached_points(const double x, const double y, const double distance, std::vector<const Geo::Geometry *> &catched_objects,
+    bool refresh_catached_points(const double x, const double y, const double distance, std::vector<const Geo::DObject *> &catched_objects,
                                  const bool skip_selected, const bool current_group_only = true) const;
 
-    bool refresh_catchline_points(const std::vector<const Geo::Geometry *> &objects, const double distance, Geo::Point &pos);
+    bool refresh_catchline_points(const std::vector<const Geo::DObject *> &objects, const double distance, Geo::Point &pos);
 };

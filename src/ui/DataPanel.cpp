@@ -20,7 +20,7 @@ void DataPanel::load_draw_data(const Graph *graph)
            text_count = 0;
     for (const ContainerGroup &group : *graph)
     {
-        for (const Geo::Geometry *object : group)
+        for (const Geo::DObject *object : group)
         {
             switch (object->type())
             {
@@ -52,7 +52,7 @@ void DataPanel::load_draw_data(const Graph *graph)
                 point_count += static_cast<const Geo::BSpline *>(object)->shape().size();
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *obj : *dynamic_cast<const Combination *>(object))
+                for (Geo::DObject *obj : *dynamic_cast<const Combination *>(object))
                 {
                     switch (obj->type())
                     {

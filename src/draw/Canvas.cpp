@@ -977,7 +977,7 @@ void Canvas::set_info_labels(QLabel **labels)
     _info_labels = labels;
 }
 
-void Canvas::add_geometry(Geo::Geometry *object)
+void Canvas::add_object(Geo::DObject *object)
 {
     _editor.append(object);
     refresh_vbo(true, object->type());
@@ -985,11 +985,11 @@ void Canvas::add_geometry(Geo::Geometry *object)
     update();
 }
 
-void Canvas::add_geometry(const std::vector<Geo::Geometry *> &objects)
+void Canvas::add_object(const std::vector<Geo::DObject *> &objects)
 {
     _editor.append(objects);
     std::set<Geo::Type> types;
-    for (const Geo::Geometry *object : objects)
+    for (const Geo::DObject *object : objects)
     {
         types.insert(object->type());
     }
@@ -998,7 +998,7 @@ void Canvas::add_geometry(const std::vector<Geo::Geometry *> &objects)
     update();
 }
 
-void Canvas::show_menu(Geo::Geometry *object)
+void Canvas::show_menu(Geo::DObject *object)
 {
     refresh_selected_ibo(object);
     _menu.exec(object);
@@ -1052,11 +1052,11 @@ void Canvas::cut()
                                _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
     _editor.cut_selected();
     std::set<Geo::Type> types;
-    for (const Geo::Geometry *object : _editor.paste_table())
+    for (const Geo::DObject *object : _editor.paste_table())
     {
         if (const Combination *combination = dynamic_cast<const Combination *>(object))
         {
-            for (const Geo::Geometry *item : *combination)
+            for (const Geo::DObject *item : *combination)
             {
                 types.insert(item->type());
             }
@@ -1077,11 +1077,11 @@ void Canvas::paste()
     if (!_points_cache.empty() && _editor.paste(x - _points_cache.back().x, y - _points_cache.back().y))
     {
         std::set<Geo::Type> types;
-        for (const Geo::Geometry *object : _editor.paste_table())
+        for (const Geo::DObject *object : _editor.paste_table())
         {
             if (const Combination *combination = dynamic_cast<const Combination *>(object))
             {
-                for (const Geo::Geometry *item : *combination)
+                for (const Geo::DObject *item : *combination)
                 {
                     types.insert(item->type());
                 }
@@ -1102,11 +1102,11 @@ void Canvas::paste(const double x, const double y)
     if (!_points_cache.empty() && _editor.paste(x - _points_cache.back().x, y - _points_cache.back().y))
     {
         std::set<Geo::Type> types;
-        for (const Geo::Geometry *object : _editor.paste_table())
+        for (const Geo::DObject *object : _editor.paste_table())
         {
             if (const Combination *combination = dynamic_cast<const Combination *>(object))
             {
-                for (const Geo::Geometry *item : *combination)
+                for (const Geo::DObject *item : *combination)
                 {
                     types.insert(item->type());
                 }
@@ -1526,7 +1526,7 @@ Canvas::VBOData Canvas::refresh_polyline_vbo(const bool flush)
     VBOData result;
     _visible_objects[0].polyline = _visible_objects[1].polyline;
     _visible_objects[1].polyline.clear();
-    for (Geo::Geometry *geo : _editor.visible_objects())
+    for (Geo::DObject *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::POLYLINE)
         {
@@ -1534,7 +1534,7 @@ Canvas::VBOData Canvas::refresh_polyline_vbo(const bool flush)
         }
         else if (geo->type() == Geo::Type::COMBINATION)
         {
-            for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+            for (Geo::DObject *child : *static_cast<Combination *>(geo))
             {
                 if (child->type() == Geo::Type::POLYLINE)
                 {
@@ -1572,7 +1572,7 @@ Canvas::VBOData Canvas::refresh_polygon_vbo(const bool flush)
     VBOData result;
     _visible_objects[0].polygon = _visible_objects[1].polygon;
     _visible_objects[1].polygon.clear();
-    for (Geo::Geometry *geo : _editor.visible_objects())
+    for (Geo::DObject *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::POLYGON)
         {
@@ -1580,7 +1580,7 @@ Canvas::VBOData Canvas::refresh_polygon_vbo(const bool flush)
         }
         else if (geo->type() == Geo::Type::COMBINATION)
         {
-            for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+            for (Geo::DObject *child : *static_cast<Combination *>(geo))
             {
                 if (child->type() == Geo::Type::POLYGON)
                 {
@@ -1618,7 +1618,7 @@ Canvas::VBOData Canvas::refresh_circle_vbo(const bool flush)
     VBOData result;
     _visible_objects[0].circle = _visible_objects[1].circle;
     _visible_objects[1].circle.clear();
-    for (Geo::Geometry *geo : _editor.visible_objects())
+    for (Geo::DObject *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::CIRCLE || geo->type() == Geo::Type::ARC || geo->type() == Geo::Type::ELLIPSE)
         {
@@ -1626,7 +1626,7 @@ Canvas::VBOData Canvas::refresh_circle_vbo(const bool flush)
         }
         else if (geo->type() == Geo::Type::COMBINATION)
         {
-            for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+            for (Geo::DObject *child : *static_cast<Combination *>(geo))
             {
                 if (child->type() == Geo::Type::CIRCLE || child->type() == Geo::Type::ARC || child->type() == Geo::Type::ELLIPSE)
                 {
@@ -1642,7 +1642,7 @@ Canvas::VBOData Canvas::refresh_circle_vbo(const bool flush)
         return result;
     }
 
-    for (Geo::Geometry *item : _visible_objects[1].circle)
+    for (Geo::DObject *item : _visible_objects[1].circle)
     {
         switch (item->type())
         {
@@ -1702,7 +1702,7 @@ Canvas::VBOData Canvas::refresh_curve_vbo(const bool flush)
     VBOData result;
     _visible_objects[0].curve = _visible_objects[1].curve;
     _visible_objects[1].curve.clear();
-    for (Geo::Geometry *geo : _editor.visible_objects())
+    for (Geo::DObject *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::BEZIER || geo->type() == Geo::Type::BSPLINE)
         {
@@ -1710,7 +1710,7 @@ Canvas::VBOData Canvas::refresh_curve_vbo(const bool flush)
         }
         else if (geo->type() == Geo::Type::COMBINATION)
         {
-            for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+            for (Geo::DObject *child : *static_cast<Combination *>(geo))
             {
                 if (child->type() == Geo::Type::BEZIER || child->type() == Geo::Type::BSPLINE)
                 {
@@ -1726,7 +1726,7 @@ Canvas::VBOData Canvas::refresh_curve_vbo(const bool flush)
         return result;
     }
 
-    for (Geo::Geometry *item : _visible_objects[1].curve)
+    for (Geo::DObject *item : _visible_objects[1].curve)
     {
         switch (item->type())
         {
@@ -1785,7 +1785,7 @@ Canvas::VBOData Canvas::refresh_point_vbo(const bool flush)
             continue;
         }
 
-        for (Geo::Geometry *geo : group)
+        for (Geo::DObject *geo : group)
         {
             if (geo->type() == Geo::Type::POINT)
             {
@@ -1796,7 +1796,7 @@ Canvas::VBOData Canvas::refresh_point_vbo(const bool flush)
             }
             else if (geo->type() == Geo::Type::COMBINATION)
             {
-                for (Geo::Geometry *item : *static_cast<Combination *>(geo))
+                for (Geo::DObject *item : *static_cast<Combination *>(geo))
                 {
                     if (item->type() == Geo::Type::POINT)
                     {
@@ -1832,8 +1832,8 @@ Canvas::VBOData Canvas::refresh_point_vbo(const bool flush)
 Canvas::VBOData Canvas::refresh_circle_printable_points()
 {
     VBOData result;
-    std::vector<Geo::Geometry *> output;
-    for (Geo::Geometry *geo : _editor.visible_objects())
+    std::vector<Geo::DObject *> output;
+    for (Geo::DObject *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::CIRCLE || geo->type() == Geo::Type::ELLIPSE || geo->type() == Geo::Type::ARC)
         {
@@ -1841,7 +1841,7 @@ Canvas::VBOData Canvas::refresh_circle_printable_points()
         }
         else if (geo->type() == Geo::Type::COMBINATION)
         {
-            for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+            for (Geo::DObject *child : *static_cast<Combination *>(geo))
             {
                 if (child->type() == Geo::Type::CIRCLE || child->type() == Geo::Type::ELLIPSE || child->type() == Geo::Type::ARC)
                 {
@@ -1851,7 +1851,7 @@ Canvas::VBOData Canvas::refresh_circle_printable_points()
         }
     }
 
-    for (const Geo::Geometry *geo : output)
+    for (const Geo::DObject *geo : output)
     {
         switch (geo->type())
         {
@@ -1926,12 +1926,12 @@ Canvas::VBOData Canvas::refresh_curve_printable_points()
             continue;
         }
 
-        for (Geo::Geometry *geo : group)
+        for (Geo::DObject *geo : group)
         {
             switch (geo->type())
             {
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *static_cast<Combination *>(geo))
+                for (Geo::DObject *item : *static_cast<Combination *>(geo))
                 {
                     if (const Geo::BSpline *bspline = dynamic_cast<const Geo::BSpline *>(item))
                     {
@@ -1971,7 +1971,7 @@ Canvas::DimVBOData Canvas::refresh_dimension_vbo(const bool flush)
     DimVBOData result;
     _visible_objects[0].dimensions = _visible_objects[1].dimensions;
     _visible_objects[1].dimensions.clear();
-    for (Geo::Geometry *geo : _editor.visible_objects())
+    for (Geo::DObject *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::DIMENSION)
         {
@@ -1979,7 +1979,7 @@ Canvas::DimVBOData Canvas::refresh_dimension_vbo(const bool flush)
         }
         else if (geo->type() == Geo::Type::COMBINATION)
         {
-            for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+            for (Geo::DObject *child : *static_cast<Combination *>(geo))
             {
                 if (child->type() == Geo::Type::DIMENSION)
                 {
@@ -2019,7 +2019,7 @@ void Canvas::refresh_selected_ibo()
     refresh_selected_dimension_vbo();
 
     std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
-    for (const Geo::Geometry *geo : _editor.visible_objects())
+    for (const Geo::DObject *geo : _editor.visible_objects())
     {
         if (!geo->is_selected)
         {
@@ -2059,7 +2059,7 @@ void Canvas::refresh_selected_ibo()
             curve_indexs.push_back(UINT_MAX);
             break;
         case Geo::Type::COMBINATION:
-            for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
+            for (const Geo::DObject *item : *static_cast<const Combination *>(geo))
             {
                 switch (item->type())
                 {
@@ -2145,7 +2145,7 @@ void Canvas::refresh_selected_ibo()
     doneCurrent();
 }
 
-void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
+void Canvas::refresh_selected_ibo(const Geo::DObject *object)
 {
     {
         Geo::AABBRectParams visible_area_params;
@@ -2161,7 +2161,7 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
     if (object->type() == Geo::Type::COMBINATION)
     {
         std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
-        for (const Geo::Geometry *item : *static_cast<const Combination *>(object))
+        for (const Geo::DObject *item : *static_cast<const Combination *>(object))
         {
             switch (item->type())
             {
@@ -2289,7 +2289,7 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
     }
 }
 
-void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
+void Canvas::refresh_selected_ibo(const std::vector<Geo::DObject *> &objects)
 {
     if (objects.empty())
     {
@@ -2303,7 +2303,7 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
     visible_area_params.top = _visible_area.top() + 2;
     visible_area_params.bottom = _visible_area.bottom() - 2;
     std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
-    for (const Geo::Geometry *geo : objects)
+    for (const Geo::DObject *geo : objects)
     {
         if (!Geo::is_intersected(visible_area_params, geo->aabbrect_params()))
         {
@@ -2343,7 +2343,7 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
             curve_indexs.push_back(UINT_MAX);
             break;
         case Geo::Type::COMBINATION:
-            for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
+            for (const Geo::DObject *item : *static_cast<const Combination *>(geo))
             {
                 switch (item->type())
                 {
@@ -2435,7 +2435,7 @@ void Canvas::refresh_selected_vbo()
     bool refresh[5] = {false, false, false, false, false};
     for (const ContainerGroup &group : _editor.graph()->container_groups())
     {
-        for (const Geo::Geometry *object : group)
+        for (const Geo::DObject *object : group)
         {
             if (object->is_selected)
             {
@@ -2475,7 +2475,7 @@ void Canvas::refresh_selected_vbo()
                     }
                     break;
                 case Geo::Type::COMBINATION:
-                    for (const Geo::Geometry *item : *static_cast<const Combination *>(object))
+                    for (const Geo::DObject *item : *static_cast<const Combination *>(object))
                     {
                         switch (item->type())
                         {
@@ -2598,7 +2598,7 @@ void Canvas::refresh_selected_dimension_vbo()
         {
             continue;
         }
-        for (const Geo::Geometry *object : group)
+        for (const Geo::DObject *object : group)
         {
             if (object->is_selected && object->type() == Geo::Type::DIMENSION)
             {
@@ -2645,7 +2645,7 @@ void Canvas::paint_text()
             continue;
         }
 
-        for (Geo::Geometry *geo : group)
+        for (Geo::DObject *geo : group)
         {
             switch (geo->type())
             {
@@ -2668,7 +2668,7 @@ void Canvas::paint_text()
                 }
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *static_cast<const Combination *>(geo))
+                for (Geo::DObject *item : *static_cast<const Combination *>(geo))
                 {
                     if (Text *text = dynamic_cast<Text *>(item); text != nullptr)
                     {
@@ -2712,7 +2712,7 @@ void Canvas::paint_dim_text()
             continue;
         }
 
-        for (const Geo::Geometry *geo : group)
+        for (const Geo::DObject *geo : group)
         {
             switch (geo->type())
             {
@@ -2734,7 +2734,7 @@ void Canvas::paint_dim_text()
                 }
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *static_cast<const Combination *>(geo))
+                for (Geo::DObject *item : *static_cast<const Combination *>(geo))
                 {
                     if (const Dim::Dimension *dim = dynamic_cast<Dim::Dimension *>(item); dim != nullptr)
                     {
@@ -2777,7 +2777,7 @@ void Canvas::paint_dim_text()
 
 
 bool Canvas::refresh_catached_points(const double x, const double y, const double distance,
-                                     std::vector<const Geo::Geometry *> &catched_objects, const bool skip_selected,
+                                     std::vector<const Geo::DObject *> &catched_objects, const bool skip_selected,
                                      const bool current_group_only) const
 {
     if (!(_catch_types.vertex || _catch_types.center || _catch_types.foot || _catch_types.tangency || _catch_types.intersection))
@@ -2791,13 +2791,13 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
 
     if (current_group_only)
     {
-        std::vector<Geo::Geometry *> objects;
-        std::vector<Geo::Geometry *> current_group_objects(_editor.graph()->container_group(_editor.current_group()).begin(),
+        std::vector<Geo::DObject *> objects;
+        std::vector<Geo::DObject *> current_group_objects(_editor.graph()->container_group(_editor.current_group()).begin(),
                                                            _editor.graph()->container_group(_editor.current_group()).end());
         std::sort(current_group_objects.begin(), current_group_objects.end());
         std::set_intersection(_editor.visible_objects().begin(), _editor.visible_objects().end(), current_group_objects.begin(),
                               current_group_objects.end(), std::back_inserter(objects));
-        for (const Geo::Geometry *geo : objects)
+        for (const Geo::DObject *geo : objects)
         {
             if (skip_selected && geo->is_selected)
             {
@@ -2879,7 +2879,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
     }
     else
     {
-        for (const Geo::Geometry *geo : _editor.visible_objects())
+        for (const Geo::DObject *geo : _editor.visible_objects())
         {
             if (skip_selected && geo->is_selected)
             {
@@ -2963,7 +2963,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
     return catched_objects.size() > count;
 }
 
-bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &objects, const double distance, Geo::Point &pos)
+bool Canvas::refresh_catchline_points(const std::vector<const Geo::DObject *> &objects, const double distance, Geo::Point &pos)
 {
     const CanvasOperations::Tool tool = CanvasOperations::CanvasOperation::tool[0];
     const bool catch_vertex = _catch_types.vertex;
@@ -2980,7 +2980,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
     double vertex_catch_distance = DBL_MAX, center_catch_distance = DBL_MAX, foot_catch_distance = DBL_MAX,
            tangency_catch_distance = DBL_MAX, intersection_catch_distance = DBL_MAX;
     const Geo::Point press_pos(CanvasOperations::CanvasOperation::press_pos[0], CanvasOperations::CanvasOperation::press_pos[1]);
-    for (const Geo::Geometry *object : objects)
+    for (const Geo::DObject *object : objects)
     {
         switch (object->type())
         {

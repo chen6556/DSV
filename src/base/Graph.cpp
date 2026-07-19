@@ -1,7 +1,7 @@
 #include "base/Graph.hpp"
 
 
-Graph::Graph(const Graph &graph) : Geo::Geometry(graph), modified(graph.modified)
+Graph::Graph(const Graph &graph) : Geo::DObject(graph), modified(graph.modified)
 {
     for (const ContainerGroup &group : graph._container_groups)
     {
@@ -50,7 +50,7 @@ Graph &Graph::operator=(const Graph &graph)
 {
     if (this != &graph)
     {
-        Geo::Geometry::operator=(graph);
+        Geo::DObject::operator=(graph);
         modified = graph.modified;
         _container_groups.clear();
         for (const ContainerGroup &group : graph._container_groups)
@@ -378,7 +378,7 @@ const ContainerGroup &Graph::back() const
 }
 
 
-void Graph::append(Geo::Geometry *object, const size_t index)
+void Graph::append(Geo::DObject *object, const size_t index)
 {
     assert(index < _container_groups.size());
     container_group(index).append(object);
@@ -462,7 +462,7 @@ bool Graph::has_object(const QString &name) const
 {
     for (const ContainerGroup &group : _container_groups)
     {
-        for (const Geo::Geometry *object : group)
+        for (const Geo::DObject *object : group)
         {
             if (object->name == name)
             {
@@ -473,7 +473,7 @@ bool Graph::has_object(const QString &name) const
     return false;
 }
 
-bool Graph::remove_object(const Geo::Geometry *object)
+bool Graph::remove_object(const Geo::DObject *object)
 {
     for (ContainerGroup &group : _container_groups)
     {
@@ -494,7 +494,7 @@ void Graph::update_curve_shape(const double step, const double down_sampling_val
 {
     for (ContainerGroup &group : _container_groups)
     {
-        for (Geo::Geometry *object : group)
+        for (Geo::DObject *object : group)
         {
             switch (object->type())
             {
@@ -520,13 +520,13 @@ void Graph::update_curve_shape(const double step, const double down_sampling_val
     }
 }
 
-std::tuple<size_t, size_t> Graph::index(const Geo::Geometry *object) const
+std::tuple<size_t, size_t> Graph::index(const Geo::DObject *object) const
 {
     size_t group_index = 0;
     for (const ContainerGroup &group : _container_groups)
     {
         size_t object_index = 0;
-        for (const Geo::Geometry *geo : group)
+        for (const Geo::DObject *geo : group)
         {
             if (geo == object)
             {
