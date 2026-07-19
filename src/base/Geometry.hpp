@@ -46,8 +46,8 @@ struct AABBRectParams
 struct Drawable
 {
     bool is_selected = false;
-    unsigned long long point_index = 0;
-    unsigned long long point_count = 0;
+    unsigned int point_index = 0;
+    unsigned int point_count = 0;
     QString name;
 };
 
