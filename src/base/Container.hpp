@@ -16,10 +16,6 @@ private:
     Geo::Point _shape[4] = {Geo::Point(0, 10), Geo::Point(10, 10), Geo::Point(10, 0), Geo::Point(0, 0)};
 
 public:
-    unsigned long long text_index = 0;
-    unsigned long long text_count = 0;
-
-public:
     Text(const double x, const double y, const QFont &font, QString text = "Text", const int anchor_index = 3);
 
     Text(const Text &text) = default;
