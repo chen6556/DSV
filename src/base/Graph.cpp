@@ -184,12 +184,12 @@ size_t Graph::size() const
     return _container_groups.size();
 }
 
-size_t Graph::count(const Geo::Type type, const bool include_combinated) const
+size_t Graph::count(const Geo::Type type, const bool include_combined) const
 {
     size_t num = 0;
     for (const ContainerGroup &group : _container_groups)
     {
-        num += group.count(type, include_combinated);
+        num += group.count(type, include_combined);
     }
     return num;
 }

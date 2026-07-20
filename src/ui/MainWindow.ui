@@ -946,7 +946,7 @@ QScrollArea
                </widget>
               </item>
               <item row="5" column="0">
-               <widget class="QToolButton" name="combinate_btn">
+               <widget class="QToolButton" name="combine_btn">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -963,11 +963,11 @@ QScrollArea
                  <enum>Qt::FocusPolicy::NoFocus</enum>
                 </property>
                 <property name="toolTip">
-                 <string>Combinate</string>
+                 <string>Combine</string>
                 </property>
                 <property name="icon">
                  <iconset resource="../../res/Icons.qrc">
-                  <normaloff>:/icons/combinate_btn.png</normaloff>:/icons/combinate_btn.png</iconset>
+                  <normaloff>:/icons/combine_btn.png</normaloff>:/icons/combine_btn.png</iconset>
                 </property>
                 <property name="iconSize">
                  <size>
@@ -1915,7 +1915,7 @@ QScrollArea
     <addaction name="show_origin"/>
     <addaction name="show_cmdline"/>
     <addaction name="auto_layering"/>
-    <addaction name="auto_combinate"/>
+    <addaction name="auto_combine"/>
     <addaction name="remember_file_type"/>
     <addaction name="actionadvanced"/>
    </widget>
@@ -2136,12 +2136,12 @@ QComboBox QAbstractItemView::indicator:unchecked
     <string>Intersection</string>
    </property>
   </action>
-  <action name="auto_combinate">
+  <action name="auto_combine">
    <property name="checkable">
     <bool>true</bool>
    </property>
    <property name="text">
-    <string>Auto combinate</string>
+    <string>Auto combine</string>
    </property>
   </action>
   <action name="show_cmdline">

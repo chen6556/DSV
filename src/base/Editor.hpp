@@ -124,7 +124,7 @@ public:
 
     bool close_polyline(const std::vector<Geo::DObject *> &objects);
 
-    bool combinate(const std::vector<Geo::DObject *> &objects);
+    bool combine(const std::vector<Geo::DObject *> &objects);
 
     bool detach(const std::vector<Geo::DObject *> &objects);
 
@@ -206,7 +206,7 @@ public:
     void reverse(const std::vector<Geo::DObject *> &objects);
 
 
-    void auto_combinate();
+    void auto_combine();
 
     void auto_layering();
 

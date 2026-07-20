@@ -266,22 +266,22 @@ void ActionGroup::init_mirror_menu()
 
 void ActionGroup::init_combination_menu()
 {
-    _combination_menu = new QMenu(ui->combinate_btn);
+    _combination_menu = new QMenu(ui->combine_btn);
     _combination_menu->connect(_combination_menu, &QMenu::triggered,
                                [this](QAction *action)
                                {
                                   _callback(MenuType::CombinationMenu, _combination_menu->actions().indexOf(action));
-                                  ui->combinate_btn->setIcon(action->icon());
-                                  ui->combinate_btn->setToolTip(action->text());
-                                  ui->combinate_btn->setDefaultAction(action);
+                                  ui->combine_btn->setIcon(action->icon());
+                                  ui->combine_btn->setToolTip(action->text());
+                                  ui->combine_btn->setDefaultAction(action);
                                });
-    ui->combinate_btn->setMenu(_combination_menu);
+    ui->combine_btn->setMenu(_combination_menu);
 
-    QAction *combinate = new QAction(QIcon(":/icons/combinate_btn.png"), "Combinate", ui->combinate_btn);
-    _combination_menu->addAction(combinate);
-    ui->combinate_btn->setDefaultAction(combinate);
+    QAction *combine = new QAction(QIcon(":/icons/combine_btn.png"), "Combine", ui->combine_btn);
+    _combination_menu->addAction(combine);
+    ui->combine_btn->setDefaultAction(combine);
 
-    QAction *detach = new QAction(QIcon(":/icons/detach_btn.png"), "Detach", ui->combinate_btn);
+    QAction *detach = new QAction(QIcon(":/icons/detach_btn.png"), "Detach", ui->combine_btn);
     _combination_menu->addAction(detach);
 }
 

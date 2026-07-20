@@ -2017,7 +2017,7 @@ bool Editor::close_polyline(const std::vector<Geo::DObject *> &objects)
     }
 }
 
-bool Editor::combinate(const std::vector<Geo::DObject *> &objects)
+bool Editor::combine(const std::vector<Geo::DObject *> &objects)
 {
     if (_graph == nullptr || objects.size() < 2)
     {
@@ -2054,7 +2054,7 @@ bool Editor::combinate(const std::vector<Geo::DObject *> &objects)
     _graph->container_group(_current_group).append(combination);
     _view_tree.append(combination);
 
-    _backup.push_command(new UndoStack::CombinateCommand(combination, items, _current_group));
+    _backup.push_command(new UndoStack::CombineCommand(combination, items, _current_group));
     _graph->modified = true;
 
     return true;
@@ -2083,7 +2083,7 @@ bool Editor::detach(const std::vector<Geo::DObject *> &objects)
     }
 
     std::reverse(combiantions.begin(), combiantions.end());
-    _backup.push_command(new UndoStack::CombinateCommand(combiantions, _current_group));
+    _backup.push_command(new UndoStack::CombineCommand(combiantions, _current_group));
     for (std::tuple<Combination *, size_t> &combination : combiantions)
     {
         std::reverse(std::get<0>(combination)->begin(), std::get<0>(combination)->end());
@@ -8226,7 +8226,7 @@ void Editor::reverse(const std::vector<Geo::DObject *> &objects)
 }
 
 
-void Editor::auto_combinate()
+void Editor::auto_combine()
 {
     if (_graph == nullptr || _graph->empty())
     {

@@ -28,7 +28,7 @@ void CMDWidget::init()
 
     _cmd_list << QString() << "ALL" << "ANGLE" << "ANGLEDIMENSION" << "ARRAY" << "ALIGNEDDIMENSION"
               << "ARCDIMENSION" << "BEZIER" << "BSPLINE" << "BLEND" << "ABSOLUTE" << "RELATIVE"
-              << "CCIRCLE" << "CHAMFER" << "CLOSE" << "COMBINATE" << "CONNECT" << "COPY"
+              << "CCIRCLE" << "CHAMFER" << "CLOSE" << "COMBINE" << "CONNECT" << "COPY"
               << "CPOLYGON" << "CUT" << "DCIRCLE" << "DELETE" << "DETACH" << "DIAMETERDIMENSION" << "DIFFERENCE"
               << "DIVIDEPARTSN" << "DIVIDEPOINTSN" << "DIVIDEPARTSMEASURE" << "DIVIDEPOINTSMEASURE"
               << "ELLIPSE" << "ELLIPSEARC"
@@ -77,7 +77,7 @@ void CMDWidget::init()
                  {"BEZIER", CMD::Bezier_CMD},
                  {"CONNECT", CMD::Connect_CMD},
                  {"BLEND", CMD::Blend_CMD},
-                 {"COMBINATE", CMD::Combinate_CMD},
+                 {"COMBINE", CMD::Combine_CMD},
                  {"CLOSE", CMD::Close_CMD},
                  {"DETACH", CMD::Detach_CMD},
                  {"ROTATE", CMD::Rotate_CMD},
@@ -209,7 +209,7 @@ void CMDWidget::init()
                       {CMD::Bezier_CMD, "Bezier"},
                       {CMD::BSpline_CMD, "BSpline"},
                       {CMD::CCircle_CMD, "Center-Radius Circle"},
-                      {CMD::Combinate_CMD, "Combinate"},
+                      {CMD::Combine_CMD, "Combine"},
                       {CMD::Connect_CMD, "Connect"},
                       {CMD::Copy_CMD, "Copy"},
                       {CMD::Cut_CMD, "Cut"},
@@ -267,7 +267,7 @@ void CMDWidget::init()
 
     _direct_cmd_list = {CMD::Error_CMD,         CMD::Main_CMD,
                         CMD::Connect_CMD,       CMD::Close_CMD,
-                        CMD::Combinate_CMD,     CMD::Detach_CMD,
+                        CMD::Combine_CMD,       CMD::Detach_CMD,
                         CMD::FlipX_CMD,         CMD::FlipY_CMD,
                         CMD::LineArray_CMD,     CMD::Array_CMD,
                         CMD::Offset_CMD,        CMD::Scale_CMD,
@@ -442,8 +442,8 @@ bool CMDWidget::work()
             close_polyline();
             _current_cmd = CMD::Error_CMD;
             break;
-        case CMD::Combinate_CMD:
-            combinate();
+        case CMD::Combine_CMD:
+            combine();
             _current_cmd = CMD::Error_CMD;
             break;
         case CMD::Detach_CMD:
@@ -739,9 +739,9 @@ void CMDWidget::close_polyline()
     }
 }
 
-void CMDWidget::combinate()
+void CMDWidget::combine()
 {
-    if (std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected(); Canvas::canvas->editor().combinate(objects))
+    if (std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected(); Canvas::canvas->editor().combine(objects))
     {
         std::set<Geo::Type> types;
         for (const Geo::DObject *object : objects)

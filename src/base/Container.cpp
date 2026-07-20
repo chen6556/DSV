@@ -855,9 +855,9 @@ size_t ContainerGroup::size() const
     return _containers.size();
 }
 
-size_t ContainerGroup::count(const Geo::Type type, const bool include_combinated) const
+size_t ContainerGroup::count(const Geo::Type type, const bool include_combined) const
 {
-    if (include_combinated)
+    if (include_combined)
     {
         size_t num =
             std::count_if(_containers.begin(), _containers.end(), [=](const Geo::DObject *object) { return object->type() == type; });

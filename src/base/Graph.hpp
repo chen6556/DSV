@@ -46,7 +46,7 @@ public:
 
     size_t size() const;
 
-    size_t count(const Geo::Type type, const bool include_combinated) const;
+    size_t count(const Geo::Type type, const bool include_combined) const;
 
     void clear() override;
 

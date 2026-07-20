@@ -522,19 +522,19 @@ void MainWindow::set_catch(QAction *action)
     switch (ui->menuCursorCatch->actions().indexOf(action))
     {
     case 0:
-        ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Vertex, action->isChecked());
+        ui->canvas->set_cursor_catch(Canvas::CaughtPointType::Vertex, action->isChecked());
         break;
     case 1:
-        ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Center, action->isChecked());
+        ui->canvas->set_cursor_catch(Canvas::CaughtPointType::Center, action->isChecked());
         break;
     case 2:
-        ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Foot, action->isChecked());
+        ui->canvas->set_cursor_catch(Canvas::CaughtPointType::Foot, action->isChecked());
         break;
     case 3:
-        ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Tangency, action->isChecked());
+        ui->canvas->set_cursor_catch(Canvas::CaughtPointType::Tangency, action->isChecked());
         break;
     case 4:
-        ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Intersection, action->isChecked());
+        ui->canvas->set_cursor_catch(Canvas::CaughtPointType::Intersection, action->isChecked());
         break;
     default:
         break;
@@ -582,7 +582,7 @@ void MainWindow::load_settings()
     ui->canvas->editor().set_backup_count(GlobalSetting::setting().backup_times);
     ui->auto_save->setChecked(GlobalSetting::setting().auto_save);
     ui->auto_layering->setChecked(GlobalSetting::setting().auto_layering);
-    ui->auto_combinate->setChecked(GlobalSetting::setting().auto_combinate);
+    ui->auto_combine->setChecked(GlobalSetting::setting().auto_combine);
     ui->remember_file_type->setChecked(GlobalSetting::setting().remember_file_type);
     ui->show_cmdline->setChecked(GlobalSetting::setting().show_cmdline);
     ui->show_cmdline->isChecked() ? ui->cmd_widget->show() : ui->cmd_widget->hide();
@@ -595,22 +595,22 @@ void MainWindow::load_settings()
 
     ui->canvas->set_catch_distance(GlobalSetting::setting().catch_distance);
     ui->actionVertex->setChecked(GlobalSetting::setting().catch_vertex);
-    ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Vertex, ui->actionVertex->isChecked());
+    ui->canvas->set_cursor_catch(Canvas::CaughtPointType::Vertex, ui->actionVertex->isChecked());
     ui->actionCenter->setChecked(GlobalSetting::setting().catch_center);
-    ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Center, ui->actionCenter->isChecked());
+    ui->canvas->set_cursor_catch(Canvas::CaughtPointType::Center, ui->actionCenter->isChecked());
     ui->actionFoot->setChecked(GlobalSetting::setting().catch_foot);
-    ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Foot, ui->actionFoot->isChecked());
+    ui->canvas->set_cursor_catch(Canvas::CaughtPointType::Foot, ui->actionFoot->isChecked());
     ui->actionTangency->setChecked(GlobalSetting::setting().catch_tangency);
-    ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Tangency, ui->actionTangency->isChecked());
+    ui->canvas->set_cursor_catch(Canvas::CaughtPointType::Tangency, ui->actionTangency->isChecked());
     ui->actionIntersection->setChecked(GlobalSetting::setting().catch_intersection);
-    ui->canvas->set_cursor_catch(Canvas::CatchedPointType::Intersection, ui->actionIntersection->isChecked());
+    ui->canvas->set_cursor_catch(Canvas::CaughtPointType::Intersection, ui->actionIntersection->isChecked());
 }
 
 void MainWindow::save_settings()
 {
     GlobalSetting::setting().auto_save = ui->auto_save->isChecked();
     GlobalSetting::setting().auto_layering = ui->auto_layering->isChecked();
-    GlobalSetting::setting().auto_combinate = ui->auto_combinate->isChecked();
+    GlobalSetting::setting().auto_combine = ui->auto_combine->isChecked();
     GlobalSetting::setting().remember_file_type = ui->remember_file_type->isChecked();
     GlobalSetting::setting().show_cmdline = ui->show_cmdline->isChecked();
     GlobalSetting::setting().show_origin = ui->show_origin->isChecked();
@@ -745,9 +745,9 @@ void MainWindow::open_file(const QString &path)
     {
         ui->canvas->editor().auto_layering();
     }
-    else if (ui->auto_combinate->isChecked())
+    else if (ui->auto_combine->isChecked())
     {
-        ui->canvas->editor().auto_combinate();
+        ui->canvas->editor().auto_combine();
     }
     ui->canvas->editor().graph()->modified = false;
 
@@ -802,9 +802,9 @@ void MainWindow::append_file(const QString &path)
     {
         ui->canvas->editor().auto_layering();
     }
-    else if (ui->auto_combinate->isChecked())
+    else if (ui->auto_combine->isChecked())
     {
-        ui->canvas->editor().auto_combinate();
+        ui->canvas->editor().auto_combine();
     }
     Geo::AABBRectParams rect0(graph->aabbrect_params()), rect1(g->aabbrect_params());
     g->translate(rect0.right + 10 - rect1.left, rect0.bottom - rect1.bottom);
@@ -978,8 +978,8 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
     case ActionGroup::MenuType::CombinationMenu:
         switch (index)
         {
-        case 0: // Combinate
-            ui->cmd_widget->work(CMDWidget::CMD::Combinate_CMD);
+        case 0: // Combine
+            ui->cmd_widget->work(CMDWidget::CMD::Combine_CMD);
             break;
         case 1: // Detach
             ui->cmd_widget->work(CMDWidget::CMD::Detach_CMD);

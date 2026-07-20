@@ -19,7 +19,7 @@ Canvas::~Canvas()
 {
     makeCurrent();
     {
-        unsigned int temp[4] = {_base_vbo.origin_and_select_rect, _base_vbo.catched_points, _base_vbo.operation_shape,
+        unsigned int temp[4] = {_base_vbo.origin_and_select_rect, _base_vbo.caught_points, _base_vbo.operation_shape,
                                 _base_vbo.operation_tool_lines};
         glDeleteBuffers(4, temp);
     }
@@ -54,7 +54,7 @@ Canvas::~Canvas()
         unsigned int temp[16] = {_vao.polyline, _vao.polygon, _vao.circle, _vao.curve, _vao.point,
                                  _vao.circle_printable_points, _vao.curve_printable_points,
                                  _vao.dim_lines, _vao.dim_arrows, _vao.dim_selected_lines, _vao.dim_selected_arrows,
-                                 _vao.operation_shape, _vao.operation_tool_lines, _vao.catched_points,
+                                 _vao.operation_shape, _vao.operation_tool_lines, _vao.caught_points,
                                  _vao.origin_and_select_rect, _vao.text};
         glDeleteVertexArrays(16, temp);
     }
@@ -126,7 +126,7 @@ void Canvas::initializeGL()
         unsigned int temp[4];
         glCreateBuffers(4, temp);
         _base_vbo.origin_and_select_rect = temp[0];
-        _base_vbo.catched_points = temp[1];
+        _base_vbo.caught_points = temp[1];
         _base_vbo.operation_shape = temp[2];
         _base_vbo.operation_tool_lines = temp[3];
     }
@@ -198,7 +198,7 @@ void Canvas::initializeGL()
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.catched_points); // catcheline points
+    glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.caught_points); // catcheline points
     glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(double), _catchline_points, GL_STREAM_DRAW);
 
     double data[16] = {-10, 0, 10, 0, 0, -10, 0, 10};
@@ -227,7 +227,7 @@ void Canvas::initializeGL()
     make_pos_vao(_vao.dim_selected_arrows, _dimension_vbo.selected_arrows);
     make_pos_vao(_vao.operation_shape, _base_vbo.operation_shape);
     make_pos_vao(_vao.operation_tool_lines, _base_vbo.operation_tool_lines);
-    make_pos_vao(_vao.catched_points, _base_vbo.catched_points);
+    make_pos_vao(_vao.caught_points, _base_vbo.caught_points);
     make_pos_vao(_vao.origin_and_select_rect, _base_vbo.origin_and_select_rect);
 
     // 文本四边形:位置 + 纹理坐标(stride = 4*sizeof(double)),并绑定固定的 IBO。
@@ -449,10 +449,10 @@ void Canvas::paintGL()
         glDrawArrays(GL_TRIANGLES, 0, CanvasOperations::CanvasOperation::dim_arrows.size() / 2);
     }
 
-    if (_bool_flags.show_catched_points) // catched point
+    if (_bool_flags.show_caught_points) // caught point
     {
-        glBindVertexArray(_vao.catched_points);
-        glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.catched_points); // catched point
+        glBindVertexArray(_vao.caught_points);
+        glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.caught_points); // caught point
         glBufferSubData(GL_ARRAY_BUFFER, 0, 16 * sizeof(double), _catchline_points);
 
         glUniform4f(_uniforms.color, 0.0f, 1.0f, 0.0f, 0.649f); // color
@@ -626,7 +626,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     const double real_y0 = _mouse_pos_0.x() * _view_ctm[1] + _mouse_pos_0.y() * _view_ctm[4] + _view_ctm[7];
     double canvas_x1 = real_x1 * _canvas_ctm[0] + real_y1 * _canvas_ctm[3] + _canvas_ctm[6];
     double canvas_y1 = real_x1 * _canvas_ctm[1] + real_y1 * _canvas_ctm[4] + _canvas_ctm[7];
-    const bool catched_point = _bool_flags.show_catched_points;
+    const bool catched_point = _bool_flags.show_caught_points;
     if (Geo::Point coord; catch_cursor(real_x1, real_y1, coord, _catch_distance, event->buttons() & Qt::MouseButton::LeftButton))
     {
         real_x1 = coord.x, real_y1 = coord.y;
@@ -640,7 +640,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     }
     else
     {
-        _bool_flags.show_catched_points = false;
+        _bool_flags.show_caught_points = false;
         if (catched_point)
         {
             update();
@@ -718,7 +718,7 @@ void Canvas::wheelEvent(QWheelEvent *event)
     }
     {
         Geo::Point pos(real_x, real_y);
-        refresh_catchline_points(_catched_objects, _catch_distance, pos);
+        refresh_catchline_points(_caught_objects, _catch_distance, pos);
     }
     makeCurrent();
     glUniformMatrix3dv(_uniforms.ctm, 1, GL_FALSE, _canvas_ctm); // ctm
@@ -771,7 +771,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
 void Canvas::show_overview()
 {
     _editor.set_view_ratio(1.0);
-    _bool_flags.show_catched_points = false;
+    _bool_flags.show_caught_points = false;
 
     Graph *graph = _editor.graph();
     if (graph->empty())
@@ -875,23 +875,23 @@ void Canvas::set_catch_distance(const double value)
     _catch_distance = value;
 }
 
-void Canvas::set_cursor_catch(const CatchedPointType type, const bool value)
+void Canvas::set_cursor_catch(const CaughtPointType type, const bool value)
 {
     switch (type)
     {
-    case CatchedPointType::Vertex:
+    case CaughtPointType::Vertex:
         _catch_types.vertex = value;
         break;
-    case CatchedPointType::Center:
+    case CaughtPointType::Center:
         _catch_types.center = value;
         break;
-    case CatchedPointType::Foot:
+    case CaughtPointType::Foot:
         _catch_types.foot = value;
         break;
-    case CatchedPointType::Tangency:
+    case CaughtPointType::Tangency:
         _catch_types.tangency = value;
         break;
-    case CatchedPointType::Intersection:
+    case CaughtPointType::Intersection:
         _catch_types.intersection = value;
         break;
     default:
@@ -1154,19 +1154,19 @@ Geo::Point Canvas::canvas_coord_to_real_coord(const double x, const double y) co
 
 bool Canvas::catch_cursor(const double x, const double y, Geo::Point &coord, const double distance, const bool skip_selected)
 {
-    _catched_objects.clear();
-    refresh_catached_points(x, y, distance, _catched_objects, skip_selected, !GlobalSetting::setting().to_all_layers);
+    _caught_objects.clear();
+    refresh_caught_points(x, y, distance, _caught_objects, skip_selected, !GlobalSetting::setting().to_all_layers);
     Geo::Point pos(x, y);
-    if (refresh_catchline_points(_catched_objects, distance, pos))
+    if (refresh_catchline_points(_caught_objects, distance, pos))
     {
         coord = pos;
-        _bool_flags.show_catched_points = true;
+        _bool_flags.show_caught_points = true;
     }
     else
     {
-        _bool_flags.show_catched_points = false;
+        _bool_flags.show_caught_points = false;
     }
-    return _bool_flags.show_catched_points;
+    return _bool_flags.show_caught_points;
 }
 
 
@@ -2776,8 +2776,8 @@ void Canvas::paint_dim_text()
 }
 
 
-bool Canvas::refresh_catached_points(const double x, const double y, const double distance,
-                                     std::vector<const Geo::DObject *> &catched_objects, const bool skip_selected,
+bool Canvas::refresh_caught_points(const double x, const double y, const double distance,
+                                     std::vector<const Geo::DObject *> &caught_objects, const bool skip_selected,
                                      const bool current_group_only) const
 {
     if (!(_catch_types.vertex || _catch_types.center || _catch_types.foot || _catch_types.tangency || _catch_types.intersection))
@@ -2787,7 +2787,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
 
     const Geo::AABBRect rect(x - distance / _ratio, y + distance / _ratio, x + distance / _ratio, y - distance / _ratio);
     const Geo::Point pos(x, y);
-    const size_t count = catched_objects.size();
+    const size_t count = caught_objects.size();
 
     if (current_group_only)
     {
@@ -2810,7 +2810,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                 {
                     if (Geo::distance(pos, *static_cast<const Geo::Polygon *>(geo)) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
@@ -2820,7 +2820,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                             _ratio <
                         distance)
                 {
-                    catched_objects.push_back(geo);
+                    caught_objects.push_back(geo);
                 }
                 break;
             case Geo::Type::ELLIPSE:
@@ -2829,7 +2829,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                     const Geo::Ellipse *e = static_cast<const Geo::Ellipse *>(geo);
                     if (Geo::distance(pos, e->center()) * _ratio < distance || Geo::distance(pos, *e) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
@@ -2838,7 +2838,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                 {
                     if (Geo::distance(pos, *static_cast<const Geo::Polyline *>(geo)) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
@@ -2847,7 +2847,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                 {
                     if (Geo::distance(pos, static_cast<const Geo::BSpline *>(geo)->shape()) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
@@ -2856,20 +2856,20 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                 {
                     if (Geo::distance(pos, static_cast<const Geo::CubicBezier *>(geo)->shape()) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
             case Geo::Type::ARC:
                 if (Geo::is_intersected(rect, *static_cast<const Geo::Arc *>(geo)))
                 {
-                    catched_objects.push_back(geo);
+                    caught_objects.push_back(geo);
                 }
                 break;
             case Geo::Type::POINT:
                 if (Geo::distance(pos, *static_cast<const Geo::Point *>(geo)) * _ratio < distance)
                 {
-                    catched_objects.push_back(geo);
+                    caught_objects.push_back(geo);
                 }
                 break;
             default:
@@ -2892,7 +2892,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                 {
                     if (Geo::distance(pos, *static_cast<const Geo::Polygon *>(geo)) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
@@ -2902,7 +2902,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                             _ratio <
                         distance)
                 {
-                    catched_objects.push_back(geo);
+                    caught_objects.push_back(geo);
                 }
                 break;
             case Geo::Type::ELLIPSE:
@@ -2911,7 +2911,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                     const Geo::Ellipse *e = static_cast<const Geo::Ellipse *>(geo);
                     if (Geo::distance(pos, e->center()) * _ratio < distance || Geo::distance(pos, *e) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
@@ -2920,7 +2920,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                 {
                     if (Geo::distance(pos, *static_cast<const Geo::Polyline *>(geo)) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
@@ -2929,7 +2929,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                 {
                     if (Geo::distance(pos, static_cast<const Geo::CubicBezier *>(geo)->shape()) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
@@ -2938,20 +2938,20 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                 {
                     if (Geo::distance(pos, static_cast<const Geo::BSpline *>(geo)->shape()) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
             case Geo::Type::ARC:
                 if (Geo::is_intersected(rect, *static_cast<const Geo::Arc *>(geo)))
                 {
-                    catched_objects.push_back(geo);
+                    caught_objects.push_back(geo);
                 }
                 break;
             case Geo::Type::POINT:
                 if (Geo::distance(pos, *static_cast<const Geo::Point *>(geo)) * _ratio < distance)
                 {
-                    catched_objects.push_back(geo);
+                    caught_objects.push_back(geo);
                 }
                 break;
             default:
@@ -2960,7 +2960,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
         }
     }
 
-    return catched_objects.size() > count;
+    return caught_objects.size() > count;
 }
 
 bool Canvas::refresh_catchline_points(const std::vector<const Geo::DObject *> &objects, const double distance, Geo::Point &pos)
@@ -3401,10 +3401,10 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::DObject *> &o
 
     const double all_catch_distance[] = {vertex_catch_distance, center_catch_distance, foot_catch_distance, tangency_catch_distance,
                                          intersection_catch_distance};
-    switch (static_cast<CatchedPointType>(
+    switch (static_cast<CaughtPointType>(
         std::distance(all_catch_distance, std::min_element(all_catch_distance, all_catch_distance + Canvas::catch_count))))
     {
-    case CatchedPointType::Vertex:
+    case CaughtPointType::Vertex:
         {
             const double w = 6 / _ratio;
             pos = vertex_catch_point;
@@ -3421,7 +3421,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::DObject *> &o
             _catchline_points[14] = pos.x - w, _catchline_points[15] = pos.y + w;
         }
         break;
-    case CatchedPointType::Center:
+    case CaughtPointType::Center:
         {
             const double w = 4.8 / _ratio;
             pos = center_catch_point;
@@ -3438,7 +3438,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::DObject *> &o
             _catchline_points[14] = pos.x, _catchline_points[15] = pos.y + w * 2.5;
         }
         break;
-    case CatchedPointType::Foot:
+    case CaughtPointType::Foot:
         {
             const double w = 6 / _ratio;
             pos = foot_catch_point;
@@ -3455,7 +3455,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::DObject *> &o
             _catchline_points[14] = pos.x - w, _catchline_points[15] = pos.y + w * 1.2;
         }
         break;
-    case CatchedPointType::Tangency:
+    case CaughtPointType::Tangency:
         {
             const double w = 8 / _ratio, h = 3 / _ratio;
             pos = tangency_catch_point;
@@ -3472,7 +3472,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::DObject *> &o
             _catchline_points[14] = pos.x - w, _catchline_points[15] = pos.y - h;
         }
         break;
-    case Canvas::CatchedPointType::Intersection:
+    case CaughtPointType::Intersection:
         {
             const double w = 7 / _ratio;
             pos = intersection_catch_point;

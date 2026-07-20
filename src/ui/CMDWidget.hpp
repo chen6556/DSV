@@ -52,7 +52,7 @@ public:
         Connect_CMD,
         Blend_CMD,
         Close_CMD,
-        Combinate_CMD,
+        Combine_CMD,
         Detach_CMD,
         Rotate_CMD,
         FlipX_CMD,
@@ -169,7 +169,7 @@ public:
 
     void close_polyline();
 
-    void combinate();
+    void combine();
 
     void detach();
 

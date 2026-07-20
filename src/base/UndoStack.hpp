@@ -144,7 +144,7 @@ public:
 };
 
 
-class CombinateCommand : public Command
+class CombineCommand : public Command
 {
 public:
     // combination, object index, objects in combination
@@ -153,12 +153,12 @@ public:
     size_t _group_index = 0;
 
 public:
-    CombinateCommand(const std::vector<std::tuple<Combination *, size_t>> &combinations, const size_t index);
+    CombineCommand(const std::vector<std::tuple<Combination *, size_t>> &combinations, const size_t index);
 
-    CombinateCommand(Combination *combination, const std::vector<std::tuple<Combination *, size_t, std::vector<Geo::DObject *>>> &items,
+    CombineCommand(Combination *combination, const std::vector<std::tuple<Combination *, size_t, std::vector<Geo::DObject *>>> &items,
                      const size_t index);
 
-    ~CombinateCommand() override;
+    ~CombineCommand() override;
 
     void undo(Graph *graph = nullptr) override;
 };

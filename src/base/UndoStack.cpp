@@ -339,8 +339,8 @@ void ScaleCommand::undo(Graph *graph)
 }
 
 
-// CombinateCommand
-CombinateCommand::CombinateCommand(const std::vector<std::tuple<Combination *, size_t>> &combinations, const size_t index)
+// CombineCommand
+CombineCommand::CombineCommand(const std::vector<std::tuple<Combination *, size_t>> &combinations, const size_t index)
     : _group_index(index)
 {
     for (const std::tuple<Combination *, size_t> &combination : combinations)
@@ -350,14 +350,14 @@ CombinateCommand::CombinateCommand(const std::vector<std::tuple<Combination *, s
     }
 }
 
-CombinateCommand::CombinateCommand(Combination *combination,
+CombineCommand::CombineCommand(Combination *combination,
                                    const std::vector<std::tuple<Combination *, size_t, std::vector<Geo::DObject *>>> &items,
                                    const size_t index)
     : _combination(combination), _items(items), _group_index(index)
 {
 }
 
-CombinateCommand::~CombinateCommand()
+CombineCommand::~CombineCommand()
 {
     for (std::tuple<Combination *, size_t, std::vector<Geo::DObject *>> &item : _items)
     {
@@ -365,7 +365,7 @@ CombinateCommand::~CombinateCommand()
     }
 }
 
-void CombinateCommand::undo(Graph *graph)
+void CombineCommand::undo(Graph *graph)
 {
     if (_combination == nullptr)
     {

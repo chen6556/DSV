@@ -17,7 +17,7 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions_4_5_Core
     Q_OBJECT
 
 public:
-    enum class CatchedPointType
+    enum class CaughtPointType
     {
         Vertex,
         Center,
@@ -30,7 +30,7 @@ public:
 
 private:
     Geo::AABBRect _visible_area;
-    std::vector<const Geo::DObject *> _catched_objects;
+    std::vector<const Geo::DObject *> _caught_objects;
     Editor _editor;
     QLabel **_info_labels = nullptr;
     QTextEdit _input_line;
@@ -42,7 +42,7 @@ private:
     struct BaseVBO
     {
         unsigned int origin_and_select_rect = 0;
-        unsigned int catched_points = 0;
+        unsigned int caught_points = 0;
         unsigned int operation_shape = 0;
         unsigned int operation_tool_lines = 0;
     } _base_vbo;
@@ -108,7 +108,7 @@ private:
         unsigned int dim_selected_arrows = 0;
         unsigned int operation_shape = 0;
         unsigned int operation_tool_lines = 0;
-        unsigned int catched_points = 0;
+        unsigned int caught_points = 0;
         unsigned int origin_and_select_rect = 0;
         unsigned int text = 0; // 位置+纹理坐标双属性
     } _vao;
@@ -184,7 +184,7 @@ private:
     {
         bool view_movable = false;
         bool show_origin = true;
-        bool show_catched_points = false;
+        bool show_caught_points = false;
     } _bool_flags;
     double _select_rect[8] = {0, 0, 0, 0, 0, 0, 0, 0};
 
@@ -237,7 +237,7 @@ public:
 
     void set_catch_distance(const double value);
 
-    void set_cursor_catch(const CatchedPointType type, const bool value);
+    void set_cursor_catch(const CaughtPointType type, const bool value);
 
     Geo::Point center() const;
 
@@ -334,7 +334,7 @@ public:
     void paint_dim_text();
 
 
-    bool refresh_catached_points(const double x, const double y, const double distance, std::vector<const Geo::DObject *> &catched_objects,
+    bool refresh_caught_points(const double x, const double y, const double distance, std::vector<const Geo::DObject *> &caught_objects,
                                  const bool skip_selected, const bool current_group_only = true) const;
 
     bool refresh_catchline_points(const std::vector<const Geo::DObject *> &objects, const double distance, Geo::Point &pos);
