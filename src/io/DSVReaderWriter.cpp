@@ -279,7 +279,7 @@ void DSVReaderWriter::write(std::ofstream &stream, Geo::CubicBezier *bezier)
     stream << "0,CubicBezier" << std::endl;
     stream << "1," << _object_to_handle.at(bezier) << std::endl;
     stream << "3," << _current_layer << std::endl;
-    for (const Geo::Point &point : *bezier)
+    for (const Geo::Point &point : bezier->control_points)
     {
         stream << "12," << point.x << std::endl;
         stream << "13," << point.y << std::endl;

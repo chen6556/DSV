@@ -129,7 +129,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                             break;
                         }
                         output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";BZ";
-                        for (const Geo::Point &point : *bezier)
+                        for (const Geo::Point &point : bezier->control_points)
                         {
                             output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                         }
@@ -198,7 +198,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     break;
                 }
                 output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";BZ";
-                for (const Geo::Point &point : *bezier)
+                for (const Geo::Point &point : bezier->control_points)
                 {
                     output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                 }

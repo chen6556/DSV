@@ -462,7 +462,7 @@ Geo::CubicBezier Geo::ellipse_to_bezier(const Geo::Ellipse &ellipse)
                 if (Geo::CubicBezier b2, b3;
                     Geo::closest_point(b1, ellipse.arc_point1(), output) && Geo::split(b1, output.front(), b2, b3))
                 {
-                    points.assign(b2.begin(), b2.end());
+                    points.assign(b2.control_points.begin(), b2.control_points.end());
                 }
             }
         }
@@ -475,8 +475,8 @@ Geo::CubicBezier Geo::ellipse_to_bezier(const Geo::Ellipse &ellipse)
                 if (Geo::CubicBezier b2, b3;
                     Geo::closest_point(b0, ellipse.arc_point1(), output) && Geo::split(b0, output.front(), b2, b3))
                 {
-                    points.assign(b1.begin(), b1.end());
-                    points.insert(points.end(), b2.begin(), b2.end());
+                    points.assign(b1.control_points.begin(), b1.control_points.end());
+                    points.insert(points.end(), b2.control_points.begin(), b2.control_points.end());
                 }
             }
         }
@@ -489,7 +489,7 @@ Geo::CubicBSpline Geo::bezier_to_bspline(const Geo::CubicBezier &bezier)
 {
     std::vector<double> knots(4, 0);
     int value = 1;
-    for (size_t i = 1, count = bezier.size() / 3; i < count; ++i, ++value)
+    for (size_t i = 1, count = bezier.control_points.size() / 3; i < count; ++i, ++value)
     {
         knots.push_back(value);
         knots.push_back(value);
@@ -499,7 +499,7 @@ Geo::CubicBSpline Geo::bezier_to_bspline(const Geo::CubicBezier &bezier)
     knots.push_back(value);
     knots.push_back(value);
     knots.push_back(value);
-    Geo::CubicBSpline bspline(bezier.begin(), bezier.end(), knots, false);
+    Geo::CubicBSpline bspline(bezier.control_points.begin(), bezier.control_points.end(), knots, false);
     bspline.controls_model = true;
     return bspline;
 }

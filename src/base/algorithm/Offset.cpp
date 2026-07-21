@@ -339,27 +339,26 @@ bool Geo::offset(const Geo::AABBRect &input, Geo::AABBRect &result, const double
 
 namespace
 {
-    double bezier_offset_error(const double distance, const Geo::Point &point0, const Geo::Point &point1, const Geo::CubicBezier &bezier)
+double bezier_offset_error(const double distance, const Geo::Point &point0, const Geo::Point &point1, const Geo::CubicBezier &bezier)
+{
+    if (std::vector<Geo::Point> intersections; Geo::is_intersected(point0, point1, bezier, intersections, false) > 0)
     {
-        if (std::vector<Geo::Point> intersections; Geo::is_intersected(point0, point1, bezier, intersections, false) > 0)
+        double min_err = DBL_MAX;
+        for (const Geo::Point &point : intersections)
         {
-            double min_err = DBL_MAX;
-            for (const Geo::Point &point : intersections)
+            if (const double err = std::abs(Geo::distance(point, point0) - std::abs(distance)) / std::abs(distance); err < min_err)
             {
-                if (const double err = std::abs(Geo::distance(point, point0) - std::abs(distance)) / std::abs(distance);
-                    err < min_err)
-                {
-                    min_err = err;
-                }
+                min_err = err;
             }
-            return min_err;
         }
-        else
-        {
-            return -1;
-        }
+        return min_err;
+    }
+    else
+    {
+        return -1;
     }
 }
+} // namespace
 
 
 bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &result, const double distance, const double tolerance,
@@ -367,7 +366,7 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
 {
     result.clear();
     std::vector<size_t> split_indexs;
-    std::vector<Geo::Point> points(bezier.rbegin(), bezier.rend()), cache, output;
+    std::vector<Geo::Point> points(bezier.control_points.rbegin(), bezier.control_points.rend()), cache, output;
     while (points.size() > 3)
     {
         cache.clear();
@@ -383,9 +382,9 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
         Geo::Point anchor_offset = anchor + shape0.vertical(0, 0.5).normalize() * distance;
 
         const Geo::Point vec0(Geo::distance(cache[0], cache[1]) > Geo::EPSILON ? (cache[1] - cache[0]).normalize()
-                                                                                : (cache[2] - cache[0]).normalize());
+                                                                               : (cache[2] - cache[0]).normalize());
         const Geo::Point vec1(Geo::distance(cache[2], cache[3]) > Geo::EPSILON ? (cache[3] - cache[2]).normalize()
-                                                                                : (cache[3] - cache[1]).normalize());
+                                                                               : (cache[3] - cache[1]).normalize());
         Geo::Point temp[4];
         temp[0] = vec0.vertical() * distance + cache[0];
         temp[1] = vec0.vertical() * distance + cache[1];
@@ -405,11 +404,11 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
         else
         {
             const double a = std::abs(((8 * anchor_offset.x - 4 * cache[0].x - 4 * cache[3].x) * vec1.y -
-                                        (8 * anchor_offset.y - 4 * cache[0].y - 4 * cache[3].y) * vec1.x) /
-                                        delta);
+                                       (8 * anchor_offset.y - 4 * cache[0].y - 4 * cache[3].y) * vec1.x) /
+                                      delta);
             const double b = std::abs(((8 * anchor_offset.x - 4 * cache[0].x - 4 * cache[3].x) * vec0.y -
-                                        (8 * anchor_offset.y - 4 * cache[0].y - 4 * cache[3].y) * vec0.x) /
-                                        delta);
+                                       (8 * anchor_offset.y - 4 * cache[0].y - 4 * cache[3].y) * vec0.x) /
+                                      delta);
             if (Geo::Point mid; Geo::is_intersected(temp[0], temp[1], temp[2], temp[3], mid, false))
             {
                 temp[1] = temp[0] + vec0 * std::min({a / 3, Geo::distance(temp[0], mid), Geo::distance(cache[0], cache[1])});
@@ -429,7 +428,8 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
                 const double t = static_cast<double>(i) / static_cast<double>(sample_count);
                 anchor = shape0.shape_point(0, t);
                 anchor_offset = anchor + shape0.vertical(0, t).normalize() * distance * 1.5;
-                futures.emplace_back(std::async(std::launch::async, bezier_offset_error, distance, anchor, anchor_offset, std::cref(shape1)));
+                futures.emplace_back(
+                    std::async(std::launch::async, bezier_offset_error, distance, anchor, anchor_offset, std::cref(shape1)));
             }
             for (std::future<double> &f : futures)
             {
@@ -445,22 +445,22 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
                 {
                     for (int i = 2; i >= 0; --i)
                     {
-                        points.emplace_back(shape3[i]);
+                        points.emplace_back(shape3.control_points[i]);
                     }
                     for (int i = 2; i >= 0; --i)
                     {
-                        points.emplace_back(shape2[i]);
+                        points.emplace_back(shape2.control_points[i]);
                     }
                 }
                 else
                 {
                     for (int i = 2; i >= 0; --i)
                     {
-                        points.emplace_back(shape2[i]);
+                        points.emplace_back(shape2.control_points[i]);
                     }
                     for (int i = 2; i >= 0; --i)
                     {
-                        points.emplace_back(shape3[i]);
+                        points.emplace_back(shape3.control_points[i]);
                     }
                 }
             }
@@ -519,8 +519,8 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
                         {
                             result[result.size() - 1] = shape1;
                         }
-                        if (Geo::CubicBezier shape0, shape1; Geo::split(result[result.size() - 2], std::get<0>(tvalue1.back()),
-                                                                        std::get<1>(tvalue1.back()), shape0, shape1))
+                        if (Geo::CubicBezier shape0, shape1;
+                            Geo::split(result[result.size() - 2], std::get<0>(tvalue1.back()), std::get<1>(tvalue1.back()), shape0, shape1))
                         {
                             result[result.size() - 2] = shape0;
                         }
@@ -560,8 +560,8 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
                         {
                             result[result.size() - 1] = shape1;
                         }
-                        if (Geo::CubicBezier shape0, shape1; Geo::split(result[result.size() - 2], std::get<0>(tvalue1.back()),
-                                                                        std::get<1>(tvalue1.back()), shape0, shape1))
+                        if (Geo::CubicBezier shape0, shape1;
+                            Geo::split(result[result.size() - 2], std::get<0>(tvalue1.back()), std::get<1>(tvalue1.back()), shape0, shape1))
                         {
                             result[result.size() - 2] = shape0;
                         }

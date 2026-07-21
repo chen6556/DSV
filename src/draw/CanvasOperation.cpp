@@ -132,12 +132,12 @@ void CanvasOperation::refresh_tool_lines(const Geo::DObject *object)
     case Geo::Type::BEZIER:
         {
             const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
-            for (size_t i = 1, count = bezier->size(); i < count; ++i)
+            for (size_t i = 1, count = bezier->control_points.size(); i < count; ++i)
             {
-                tool_lines.push_back((*bezier)[i - 1].x);
-                tool_lines.push_back((*bezier)[i - 1].y);
-                tool_lines.push_back((*bezier)[i].x);
-                tool_lines.push_back((*bezier)[i].y);
+                tool_lines.push_back(bezier->control_points[i - 1].x);
+                tool_lines.push_back(bezier->control_points[i - 1].y);
+                tool_lines.push_back(bezier->control_points[i].x);
+                tool_lines.push_back(bezier->control_points[i].y);
             }
         }
         break;

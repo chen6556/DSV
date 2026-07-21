@@ -2590,7 +2590,7 @@ double CubicBezier::default_down_sampling_value = 0.02;
 
 CubicBezier::CubicBezier(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end,
                          const bool is_path_points)
-    : Polyline(begin, end)
+    : control_points(begin, end)
 {
     if (is_path_points)
     {
@@ -2599,7 +2599,7 @@ CubicBezier::CubicBezier(const std::vector<Point>::const_iterator &begin, const 
     update_shape(CubicBezier::default_step, CubicBezier::default_down_sampling_value);
 }
 
-CubicBezier::CubicBezier(const std::initializer_list<Point> &points, const bool is_path_points) : Polyline(points)
+CubicBezier::CubicBezier(const std::initializer_list<Point> &points, const bool is_path_points) : control_points(points)
 {
     if (is_path_points)
     {
@@ -2618,52 +2618,62 @@ const Polyline &CubicBezier::shape() const
     return _shape;
 }
 
+const Point &CubicBezier::front() const
+{
+    return control_points.front();
+}
+
+const Point &CubicBezier::back() const
+{
+    return control_points.back();
+}
+
 void CubicBezier::update_control_points()
 {
-    std::vector<Geo::Point> paths(_points);
-    _points.erase(_points.begin() + 1, _points.end());
+    std::vector<Geo::Point> paths(control_points);
+    control_points.erase(control_points.begin() + 1, control_points.end());
     Geo::Point mid0((paths[1] + paths[2]) / 2), mid1((paths[0] + paths[1]) / 2);
-    _points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
+    control_points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
     for (size_t i = 1, count = paths.size() - 1; i < count; ++i)
     {
         mid0 = mid1;
         mid1 = (paths[i] + paths[i + 1]) / 2;
-        _points.emplace_back(paths[i] + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) / 2);
-        _points.emplace_back(paths[i]);
-        _points.emplace_back(paths[i] + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
+        control_points.emplace_back(paths[i] + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) / 2);
+        control_points.emplace_back(paths[i]);
+        control_points.emplace_back(paths[i] + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
     }
-    _points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
-    _points.emplace_back(paths.back());
-    _points[1] = (_points[0] + _points[2]) / 2;
-    _points[_points.size() - 2] = (_points.back() + _points[_points.size() - 3]) / 2;
+    control_points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
+    control_points.emplace_back(paths.back());
+    control_points[1] = (control_points[0] + control_points[2]) / 2;
+    control_points[control_points.size() - 2] = (control_points.back() + control_points[control_points.size() - 3]) / 2;
 }
 
 void CubicBezier::update_shape(const double step, const double down_sampling_value)
 {
     assert(0 < step && step < 1);
     _shape.clear();
-    if (_points.size() <= 3)
+    if (control_points.size() <= 3)
     {
         return;
     }
     const int nums[4] = {1, 3, 3, 1};
 
-    for (size_t i = 0, end = _points.size() - 3; i < end; i += 3)
+    for (size_t i = 0, end = control_points.size() - 3; i < end; i += 3)
     {
-        _shape.append(_points[i]);
+        _shape.append(control_points[i]);
         double t = 0;
         while (t <= 1)
         {
             Geo::Point point;
             for (int j = 0; j <= 3; ++j)
             {
-                point += (_points[j + i] * (nums[j] * std::pow(1 - t, 3 - j) * std::pow(t, j)));
+                point += (control_points[j + i] * (nums[j] * std::pow(1 - t, 3 - j) * std::pow(t, j)));
             }
             _shape.append(point);
             t += step;
         }
     }
-    _shape.append(_points.back());
+    _shape.append(control_points.back());
     _shape.remove_repeated_points();
     Geo::down_sampling(_shape, down_sampling_value);
 }
@@ -2671,7 +2681,7 @@ void CubicBezier::update_shape(const double step, const double down_sampling_val
 double CubicBezier::length() const
 {
     double result = 0;
-    for (size_t i = 0, count = _points.size() / 3; i < count; ++i)
+    for (size_t i = 0, count = control_points.size() / 3; i < count; ++i)
     {
         Math::CurveNorm f = [this, i](const double t) { return tangent(i, t).length(); };
         result += Math::adaptive_simpson_3_8(f, 0, 1);
@@ -2679,10 +2689,15 @@ double CubicBezier::length() const
     return result;
 }
 
+bool CubicBezier::empty() const
+{
+    return control_points.empty();
+}
+
 void CubicBezier::clear()
 {
     _shape.clear();
-    Polyline::clear();
+    control_points.clear();
 }
 
 CubicBezier *CubicBezier::clone() const
@@ -2694,7 +2709,8 @@ CubicBezier &CubicBezier::operator=(const CubicBezier &bezier)
 {
     if (this != &bezier)
     {
-        Polyline::operator=(bezier);
+        DObject::operator=(bezier);
+        control_points = bezier.control_points;
         _shape = bezier._shape;
     }
     return *this;
@@ -2702,32 +2718,32 @@ CubicBezier &CubicBezier::operator=(const CubicBezier &bezier)
 
 void CubicBezier::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
-    Polyline::transform(a, b, c, d, e, f);
     _shape.transform(a, b, c, d, e, f);
+    std::for_each(control_points.begin(), control_points.end(), [=](Point &point) { point.transform(a, b, c, d, e, f); });
 }
 
 void CubicBezier::transform(const double mat[6])
 {
-    Polyline::transform(mat);
     _shape.transform(mat);
+    std::for_each(control_points.begin(), control_points.end(), [=](Point &point) { point.transform(mat); });
 }
 
 void CubicBezier::translate(const double tx, const double ty)
 {
-    Polyline::translate(tx, ty);
     _shape.translate(tx, ty);
+    std::for_each(control_points.begin(), control_points.end(), [=](Point &point) { point.translate(tx, ty); });
 }
 
 void CubicBezier::rotate(const double x, const double y, const double rad)
 {
-    Polyline::rotate(x, y, rad);
     _shape.rotate(x, y, rad);
+    std::for_each(control_points.begin(), control_points.end(), [=](Point &point) { point.rotate(x, y, rad); });
 }
 
 void CubicBezier::scale(const double x, const double y, const double k)
 {
-    Polyline::scale(x, y, k);
     _shape.scale(x, y, k);
+    std::for_each(control_points.begin(), control_points.end(), [=](Point &point) { point.scale(x, y, k); });
 }
 
 Polygon CubicBezier::convex_hull() const
@@ -2752,14 +2768,15 @@ AABBRectParams CubicBezier::aabbrect_params() const
 
 Point CubicBezier::tangent(const size_t index, const double t) const
 {
-    if (_points.size() < 3 * (index + 1) + 1)
+    if (control_points.size() < 3 * (index + 1) + 1)
     {
         return Point();
     }
 
     const int nums[3] = {1, 2, 1};
-    const Geo::Point points[3] = {(_points[1 + index * 3] - _points[index * 3]) * 3, (_points[2 + index * 3] - _points[1 + index * 3]) * 3,
-                                  (_points[3 + index * 3] - _points[2 + index * 3]) * 3};
+    const Geo::Point points[3] = {(control_points[1 + index * 3] - control_points[index * 3]) * 3,
+                                  (control_points[2 + index * 3] - control_points[1 + index * 3]) * 3,
+                                  (control_points[3 + index * 3] - control_points[2 + index * 3]) * 3};
     Geo::Point vec;
     for (int i = 0; i < 3; ++i)
     {
@@ -2776,7 +2793,7 @@ Point CubicBezier::vertical(const size_t index, const double t) const
 
 Point CubicBezier::shape_point(const size_t index, const double t) const
 {
-    if (_points.size() < 3 * (index + 1) + 1)
+    if (control_points.size() < 3 * (index + 1) + 1)
     {
         return Point();
     }
@@ -2785,7 +2802,7 @@ Point CubicBezier::shape_point(const size_t index, const double t) const
     Geo::Point point;
     for (int j = 0; j <= 3; ++j)
     {
-        point += (_points[j + index * 3] * (nums[j] * std::pow(1 - t, 3 - j) * std::pow(t, j)));
+        point += (control_points[j + index * 3] * (nums[j] * std::pow(1 - t, 3 - j) * std::pow(t, j)));
     }
     return point;
 }
@@ -2793,7 +2810,7 @@ Point CubicBezier::shape_point(const size_t index, const double t) const
 CubicBezier *CubicBezier::range(const size_t index0, const double t0, const size_t index1, const double t1) const
 {
     const int order = 3;
-    if (index0 > index1 || (index0 == index1 && t0 >= t1) || index1 >= _points.size() / order)
+    if (index0 > index1 || (index0 == index1 && t0 >= t1) || index1 >= control_points.size() / order)
     {
         return nullptr;
     }
@@ -2802,32 +2819,32 @@ CubicBezier *CubicBezier::range(const size_t index0, const double t0, const size
     std::vector<Geo::Point> result_controls;
     if (0 < t0 && t0 < 1)
     {
-        std::vector<Geo::Point> control_points, temp_points, result_points;
+        std::vector<Geo::Point> temp_controls, temp_points, result_points;
         Geo::Point pos;
         for (int i = 0; i <= order; ++i)
         {
-            control_points.emplace_back(_points[i + index0 * order]);
-            pos += (control_points.back() * (nums[i] * std::pow(1 - t0, order - i) * std::pow(t0, i)));
+            temp_controls.emplace_back(control_points[i + index0 * order]);
+            pos += (temp_controls.back() * (nums[i] * std::pow(1 - t0, order - i) * std::pow(t0, i)));
         }
         for (int i = 0; i < order; ++i)
         {
-            for (size_t j = 1, count = control_points.size(); j < count; ++j)
+            for (size_t j = 1, count = temp_controls.size(); j < count; ++j)
             {
-                temp_points.emplace_back(control_points[j - 1] + (control_points[j] - control_points[j - 1]) * t0);
+                temp_points.emplace_back(temp_controls[j - 1] + (temp_controls[j] - temp_controls[j - 1]) * t0);
             }
             result_points.emplace_back(temp_points.back());
-            control_points.assign(temp_points.begin(), temp_points.end());
+            temp_controls.assign(temp_points.begin(), temp_points.end());
             temp_points.clear();
         }
         result_points.back() = pos;
         std::reverse(result_points.begin(), result_points.end());
-        if (result_points.empty() || result_points.back() != _points[index0 * order])
+        if (result_points.empty() || result_points.back() != control_points[index0 * order])
         {
-            result_points.insert(result_points.end(), _points.begin() + index0 * order + order, _points.end());
+            result_points.insert(result_points.end(), control_points.begin() + index0 * order + order, control_points.end());
         }
         else
         {
-            result_points.insert(result_points.end(), _points.begin() + index0 * order + order + 1, _points.end());
+            result_points.insert(result_points.end(), control_points.begin() + index0 * order + order + 1, control_points.end());
         }
         result_controls.assign(result_points.begin(), result_points.end());
     }
@@ -2835,11 +2852,11 @@ CubicBezier *CubicBezier::range(const size_t index0, const double t0, const size
     {
         if (t0 == 0)
         {
-            result_controls.assign(_points.begin() + index0 * order, _points.end());
+            result_controls.assign(control_points.begin() + index0 * order, control_points.end());
         }
         else
         {
-            result_controls.assign(_points.begin() + index0 * order + order, _points.end());
+            result_controls.assign(control_points.begin() + index0 * order + order, control_points.end());
         }
     }
 
@@ -2848,21 +2865,21 @@ CubicBezier *CubicBezier::range(const size_t index0, const double t0, const size
     {
         // 如果是同一段曲线则需要对t1进行换算
         const double t2 = index0 == index1 ? (t1 - t0) / (1 - t0) : t1;
-        std::vector<Geo::Point> control_points, temp_points, result_points;
+        std::vector<Geo::Point> temp_controls, temp_points, result_points;
         Geo::Point pos;
         for (int i = 0; i <= order; ++i)
         {
-            control_points.emplace_back(result_controls[i + index2 * order]);
-            pos += (control_points.back() * (nums[i] * std::pow(1 - t2, order - i) * std::pow(t2, i)));
+            temp_controls.emplace_back(result_controls[i + index2 * order]);
+            pos += (temp_controls.back() * (nums[i] * std::pow(1 - t2, order - i) * std::pow(t2, i)));
         }
         for (int i = 0; i < order; ++i)
         {
-            for (size_t j = 1, count = control_points.size(); j < count; ++j)
+            for (size_t j = 1, count = temp_controls.size(); j < count; ++j)
             {
-                temp_points.emplace_back(control_points[j - 1] + (control_points[j] - control_points[j - 1]) * t2);
+                temp_points.emplace_back(temp_controls[j - 1] + (temp_controls[j] - temp_controls[j - 1]) * t2);
             }
             result_points.emplace_back(temp_points.front());
-            control_points.assign(temp_points.begin(), temp_points.end());
+            temp_controls.assign(temp_points.begin(), temp_points.end());
             temp_points.clear();
         }
         result_points.back() = pos;
@@ -2899,17 +2916,17 @@ Point CubicBezier::derivative(const size_t index, const double t, const int n) c
     {
     case 3:
         {
-            const Geo::Point points[3] = {(_points[1 + index * 3] - _points[index * 3]) * 3,
-                                          (_points[2 + index * 3] - _points[1 + index * 3]) * 3,
-                                          (_points[3 + index * 3] - _points[2 + index * 3]) * 3};
+            const Geo::Point points[3] = {(control_points[1 + index * 3] - control_points[index * 3]) * 3,
+                                          (control_points[2 + index * 3] - control_points[1 + index * 3]) * 3,
+                                          (control_points[3 + index * 3] - control_points[2 + index * 3]) * 3};
             result = (points[2] - points[1] * 2 + points[0]) * 2 * t;
         }
         break;
     case 2:
         {
-            const Geo::Point points[3] = {(_points[1 + index * 3] - _points[index * 3]) * 3,
-                                          (_points[2 + index * 3] - _points[1 + index * 3]) * 3,
-                                          (_points[3 + index * 3] - _points[2 + index * 3]) * 3};
+            const Geo::Point points[3] = {(control_points[1 + index * 3] - control_points[index * 3]) * 3,
+                                          (control_points[2 + index * 3] - control_points[1 + index * 3]) * 3,
+                                          (control_points[3 + index * 3] - control_points[2 + index * 3]) * 3};
             result = (points[1] - points[0]) * 2 * t + (points[2] - points[1]) * 2 * (1 - t);
         }
         break;
@@ -4994,7 +5011,7 @@ Arc::Arc(const Point &point0, const Point &point1, const double param, const Par
 }
 
 Arc::Arc(const double startx, const double starty, const double endx, const double endy, const double radius_, const bool left_center,
-        const bool counterclockwise)
+         const bool counterclockwise)
 {
     control_points[0].x = startx, control_points[0].y = starty;
     control_points[2].x = endx, control_points[2].y = endy;

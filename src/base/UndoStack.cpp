@@ -207,7 +207,7 @@ void ChangeShapeCommand::undo(Graph *graph)
             bezier->clear();
             for (const std::tuple<double, double> &point : _shape)
             {
-                bezier->append(Geo::Point(std::get<0>(point), std::get<1>(point)));
+                bezier->control_points.emplace_back(std::get<0>(point), std::get<1>(point));
             }
             bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
         }
@@ -626,7 +626,7 @@ void ReverseCommand::undo(Graph *graph)
         case Geo::Type::BEZIER:
             {
                 Geo::CubicBezier *bezier = static_cast<Geo::CubicBezier *>(object);
-                std::reverse(bezier->begin(), bezier->end());
+                std::reverse(bezier->control_points.begin(), bezier->control_points.end());
                 bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
             }
             break;

@@ -69,24 +69,24 @@ int Geo::tangency_point(const Point &point, const CubicBezier &bezier, std::vect
     const int nums1[4] = {1, 3, 3, 1};
     std::vector<Geo::Point> result;
     std::vector<std::tuple<size_t, double, double, double>> temp;
-    for (size_t i = 0, end = bezier.size() - order; i < end; i += order)
+    for (size_t i = 0, end = bezier.control_points.size() - order; i < end; i += order)
     {
         double t0 = 0, t1 = Geo::CubicBezier::default_step;
         double angles[2] = {1, 1};
-        angles[0] = Geo::angle(bezier[i], point, bezier[i], bezier[i + 1]);
+        angles[0] = Geo::angle(bezier.control_points[i], point, bezier.control_points[i], bezier.control_points[i + 1]);
         std::vector<std::tuple<double, double>> pairs;
         while (t1 <= 1)
         {
             Geo::Point head, tail;
             for (int j = 0; j < order; ++j)
             {
-                head += (bezier[i + j] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
-                tail += (bezier[i + j + 1] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
+                head += (bezier.control_points[i + j] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
+                tail += (bezier.control_points[i + j + 1] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
             }
             Geo::Point coord;
             for (int j = 0; j <= order; ++j)
             {
-                coord += (bezier[j + i] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
+                coord += (bezier.control_points[j + i] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
             }
             angles[1] = Geo::cross(coord, point, head, tail);
             if (angles[0] * angles[1] <= 0)
@@ -104,13 +104,13 @@ int Geo::tangency_point(const Point &point, const CubicBezier &bezier, std::vect
                 Geo::Point coord;
                 for (int j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t0, order - j) * std::pow(t0, j)));
+                    coord += (bezier.control_points[i + j] * (nums1[j] * std::pow(1 - t0, order - j) * std::pow(t0, j)));
                 }
                 Geo::Point head, tail;
                 for (int j = 0; j < order; ++j)
                 {
-                    head += (bezier[i + j] * (nums[j] * std::pow(1 - t0, order - j - 1) * std::pow(t0, j)));
-                    tail += (bezier[i + j + 1] * (nums[j] * std::pow(1 - t0, order - j - 1) * std::pow(t0, j)));
+                    head += (bezier.control_points[i + j] * (nums[j] * std::pow(1 - t0, order - j - 1) * std::pow(t0, j)));
+                    tail += (bezier.control_points[i + j + 1] * (nums[j] * std::pow(1 - t0, order - j - 1) * std::pow(t0, j)));
                 }
                 angles[0] = Geo::cross(coord, point, head, tail);
             }
@@ -118,13 +118,13 @@ int Geo::tangency_point(const Point &point, const CubicBezier &bezier, std::vect
                 Geo::Point coord;
                 for (int j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
+                    coord += (bezier.control_points[i + j] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
                 }
                 Geo::Point head, tail;
                 for (int j = 0; j < order; ++j)
                 {
-                    head += (bezier[i + j] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
-                    tail += (bezier[i + j + 1] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
+                    head += (bezier.control_points[i + j] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
+                    tail += (bezier.control_points[i + j + 1] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
                 }
                 angles[1] = Geo::cross(coord, point, head, tail);
             }
@@ -134,13 +134,13 @@ int Geo::tangency_point(const Point &point, const CubicBezier &bezier, std::vect
                 Geo::Point coord;
                 for (int j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                    coord += (bezier.control_points[i + j] * (nums1[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
                 Geo::Point head, tail;
                 for (int j = 0; j < order; ++j)
                 {
-                    head += (bezier[i + j] * (nums[j] * std::pow(1 - t, order - j - 1) * std::pow(t, j)));
-                    tail += (bezier[i + j + 1] * (nums[j] * std::pow(1 - t, order - j - 1) * std::pow(t, j)));
+                    head += (bezier.control_points[i + j] * (nums[j] * std::pow(1 - t, order - j - 1) * std::pow(t, j)));
+                    tail += (bezier.control_points[i + j + 1] * (nums[j] * std::pow(1 - t, order - j - 1) * std::pow(t, j)));
                 }
                 const double angle = Geo::angle(coord, point, head, tail);
                 if (angle * angles[0] <= 0)
@@ -168,13 +168,13 @@ int Geo::tangency_point(const Point &point, const CubicBezier &bezier, std::vect
             Geo::Point coord;
             for (int j = 0; j <= order; ++j)
             {
-                coord += (bezier[i + j] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
+                coord += (bezier.control_points[i + j] * (nums1[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
             }
             Geo::Point head, tail;
             for (int j = 0; j < order; ++j)
             {
-                head += (bezier[i + j] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
-                tail += (bezier[i + j + 1] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
+                head += (bezier.control_points[i + j] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
+                tail += (bezier.control_points[i + j + 1] * (nums[j] * std::pow(1 - t1, order - j - 1) * std::pow(t1, j)));
             }
             if (std::abs(Geo::angle(coord, point, head, tail)) < 1e-4 ||
                 std::abs(std::abs(Geo::angle(coord, point, head, tail)) - Geo::PI) < 1e-4)

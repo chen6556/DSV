@@ -498,15 +498,17 @@ bool Geo::fillet(const Geo::Polyline &polyline0, const Geo::Point &point0, const
 
     if (Geo::CubicBezier temp_bezier; Geo::split(bezier1, mid_i, mid_t, result2, temp_bezier))
     {
-        if ((controls[0] == result2.front() && arc.start_direction() * (result2[0] - result2[1]) < 0) ||
-            (controls[0] == result2.back() && arc.start_direction() * (result2.back() - result2[result2.size() - 2]) < 0))
+        if ((controls[0] == result2.front() &&
+             arc.start_direction() * (result2.control_points[0] - result2.control_points[1]) < 0) ||
+            (controls[0] == result2.back() &&
+             arc.start_direction() * (result2.back() - result2.control_points[result2.control_points.size() - 2]) < 0))
         {
             result2 = temp_bezier;
         }
     }
     else
     {
-        result0 = bezier1;
+        result2 = bezier1;
     }
     return true;
 }
@@ -1128,13 +1130,15 @@ bool Geo::fillet(const Geo::CubicBezier &bezier0, const Geo::Point &point0, cons
     const Geo::Point center1(controls[1] + bezier1.vertical(index1, t1).normalize() * offset_distance1);
     init_center = (center0 + center1) / 2;
     arc = Geo::Arc(controls[0], init_center, controls[1], true);
-    if (Geo::distance(arc.control_points[0], result0.front()) < Geo::distance(arc.control_points[0], result0.back()) &&
-        arc.start_direction() * (result0[0] - result0[1]) < 0)
+    if (Geo::distance(arc.control_points[0], result0.front()) <
+            Geo::distance(arc.control_points[0], result0.back()) &&
+        arc.start_direction() * (result0.control_points[0] - result0.control_points[1]) < 0)
     {
         arc = Geo::Arc(controls[0], init_center, controls[1], false);
     }
-    else if (Geo::distance(arc.control_points[0], result0.back()) < Geo::distance(arc.control_points[0], result0.front()) &&
-             arc.start_direction() * (result0.back() - result0[result0.size() - 2]) < 0)
+    else if (Geo::distance(arc.control_points[0], result0.back()) <
+                 Geo::distance(arc.control_points[0], result0.front()) &&
+             arc.start_direction() * (result0.back() - result0.control_points[result0.control_points.size() - 2]) < 0)
     {
         arc = Geo::Arc(controls[0], init_center, controls[1], false);
     }
@@ -1143,17 +1147,20 @@ bool Geo::fillet(const Geo::CubicBezier &bezier0, const Geo::Point &point0, cons
     {
         if (intersection_t1 < 0)
         {
-            if (Geo::distance(part0.front(), arc.control_points[2]) < Geo::distance(part0.back(), arc.control_points[2]) &&
-                (part0[1] - part0[0]) * arc.start_direction() > 0)
+            if (Geo::distance(part0.front(), arc.control_points[2]) <
+                    Geo::distance(part0.back(), arc.control_points[2]) &&
+                (part0.control_points[1] - part0.control_points[0]) * arc.start_direction() > 0)
             {
                 result1 = part0;
             }
-            else if (Geo::distance(part1.front(), arc.control_points[2]) < Geo::distance(part1.back(), arc.control_points[2]) &&
-                     (part1[1] - part1[0]) * arc.start_direction() > 0)
+            else if (Geo::distance(part1.front(), arc.control_points[2]) <
+                         Geo::distance(part1.back(), arc.control_points[2]) &&
+                     (part1.control_points[1] - part1.control_points[0]) * arc.start_direction() > 0)
             {
                 result1 = part1;
             }
-            else if (Geo::distance(part0.back(), arc.control_points[2]) < Geo::distance(part0.front(), arc.control_points[2]) &&
+            else if (Geo::distance(part0.back(), arc.control_points[2]) <
+                         Geo::distance(part0.front(), arc.control_points[2]) &&
                      (part0.back() - part0.front()) * arc.start_direction() > 0)
             {
                 result1 = part0;
@@ -1436,7 +1443,8 @@ bool Geo::fillet(const Geo::Arc &arc0, const Geo::Point &point0, const Geo::Arc 
         const Geo::Circle circle1(
             arc1.x, arc1.y, Geo::distance(point0, Geo::Point(arc1.x, arc1.y)) > arc1.radius ? arc1.radius + radius : arc1.radius - radius);
         Geo::Point controls[2], center, intersection;
-        switch (Geo::is_intersected(Geo::Circle(arc0.x, arc0.y, arc0.radius), Geo::Circle(arc1.x, arc1.y, arc1.radius), controls[0], controls[1]))
+        switch (Geo::is_intersected(Geo::Circle(arc0.x, arc0.y, arc0.radius), Geo::Circle(arc1.x, arc1.y, arc1.radius), controls[0],
+                                    controls[1]))
         {
         case 2:
             if (std::min(Geo::distance(point0, controls[0]), Geo::distance(point1, controls[0])) <

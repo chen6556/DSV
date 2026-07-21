@@ -40,22 +40,22 @@ bool Geo::split(const CubicBezier &bezier, const Point &pos, CubicBezier &output
     const int nums[4] = {1, 3, 3, 1};
     // index, points, distance
     std::vector<std::tuple<size_t, std::vector<Geo::Point>, double>> temp;
-    for (size_t i = 0, end = bezier.size() - order; i < end; i += order)
+    for (size_t i = 0, end = bezier.control_points.size() - order; i < end; i += order)
     {
         Geo::Polyline polyline;
-        polyline.append(bezier[i]);
+        polyline.append(bezier.control_points[i]);
         double t = 0;
         while (t <= 1)
         {
             Geo::Point point;
             for (int j = 0; j <= order; ++j)
             {
-                point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                point += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             polyline.append(point);
             t += Geo::CubicBezier::default_step;
         }
-        polyline.append(bezier[i + order]);
+        polyline.append(bezier.control_points[i + order]);
         Geo::down_sampling(polyline, Geo::CubicBezier::default_down_sampling_value);
 
         std::vector<Geo::Point> points;
@@ -91,7 +91,7 @@ bool Geo::split(const CubicBezier &bezier, const Point &pos, CubicBezier &output
                 Geo::Point coord;
                 for (int j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
+                    coord += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
                 if (double dis = Geo::distance(pos, coord); dis < min_dis[1])
                 {
@@ -114,7 +114,7 @@ bool Geo::split(const CubicBezier &bezier, const Point &pos, CubicBezier &output
             Geo::Point coord;
             for (int j = 0; j <= order; ++j)
             {
-                coord += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                coord += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             return Geo::distance(coord, pos) * 1e9;
         };
@@ -142,7 +142,7 @@ bool Geo::split(const CubicBezier &bezier, const Point &pos, CubicBezier &output
             result_pos.clear();
             for (int j = 0; j <= order; ++j)
             {
-                result_pos += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                result_pos += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
         }
     }
@@ -156,7 +156,7 @@ bool Geo::split(const CubicBezier &bezier, const Point &pos, CubicBezier &output
     std::vector<Geo::Point> control_points;
     for (int i = 0; i <= order; ++i)
     {
-        control_points.emplace_back(bezier[result_i + i]);
+        control_points.emplace_back(bezier.control_points[result_i + i]);
     }
     std::vector<Geo::Point> temp_points, result_points0, result_points1;
     for (int k = 0; k < order; ++k)
@@ -189,33 +189,36 @@ bool Geo::split(const CubicBezier &bezier, const Point &pos, CubicBezier &output
         result_points1.clear();
     }
 
-    output0.append(bezier.begin(), bezier.begin() + result_i + 1);
+    output0.control_points.insert(output0.control_points.end(), bezier.control_points.begin(),
+                                  bezier.control_points.begin() + result_i + 1);
     if (output0.empty() || output0.back() != result_points0.front())
     {
-        output0.append(result_points0.begin(), result_points0.end());
+        output0.control_points.insert(output0.control_points.end(), result_points0.begin(), result_points0.end());
     }
     else
     {
-        output0.append(result_points0.begin() + 1, result_points0.end());
+        output0.control_points.insert(output0.control_points.end(), result_points0.begin() + 1, result_points0.end());
     }
-    output1.append(result_points1.begin(), result_points1.end());
-    if (output1.empty() || output1.back() != bezier[result_i])
+    output1.control_points.insert(output1.control_points.end(), result_points1.begin(), result_points1.end());
+    if (output1.empty() || output1.back() != bezier.control_points[result_i])
     {
-        output1.append(bezier.begin() + result_i + order, bezier.end());
+        output1.control_points.insert(output1.control_points.end(), bezier.control_points.begin() + result_i + order,
+                                      bezier.control_points.end());
     }
     else
     {
-        output1.append(bezier.begin() + result_i + order + 1, bezier.end());
+        output1.control_points.insert(output1.control_points.end(), bezier.control_points.begin() + result_i + order + 1,
+                                      bezier.control_points.end());
     }
     output0.update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
     output1.update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
-    return output0.size() > 1 && output1.size() > 1;
+    return output0.control_points.size() > 1 && output1.control_points.size() > 1;
 }
 
 bool Geo::split(const CubicBezier &bezier, const size_t i, const double t, CubicBezier &output0, CubicBezier &output1)
 {
     const int order = 3;
-    if ((i == 0 && t == 0) || (i == (bezier.size() / order - 1) && t == 1))
+    if ((i == 0 && t == 0) || (i == (bezier.control_points.size() / order - 1) && t == 1))
     {
         return false;
     }
@@ -226,7 +229,7 @@ bool Geo::split(const CubicBezier &bezier, const size_t i, const double t, Cubic
     Geo::Point pos;
     for (int j = 0; j <= order; ++j)
     {
-        control_points.emplace_back(bezier[j + i * order]);
+        control_points.emplace_back(bezier.control_points[j + i * order]);
         pos += (control_points.back() * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
     }
     std::vector<Geo::Point> temp_points, result_points0, result_points1;
@@ -260,27 +263,30 @@ bool Geo::split(const CubicBezier &bezier, const size_t i, const double t, Cubic
         result_points1.clear();
     }
 
-    output0.append(bezier.begin(), bezier.begin() + i * order + 1);
+    output0.control_points.insert(output0.control_points.end(), bezier.control_points.begin(),
+                                  bezier.control_points.begin() + i * order + 1);
     if (output0.empty() || output0.back() != result_points0.front())
     {
-        output0.append(result_points0.begin(), result_points0.end());
+        output0.control_points.insert(output0.control_points.end(), result_points0.begin(), result_points0.end());
     }
     else
     {
-        output0.append(result_points0.begin() + 1, result_points0.end());
+        output0.control_points.insert(output0.control_points.end(), result_points0.begin() + 1, result_points0.end());
     }
-    output1.append(result_points1.begin(), result_points1.end());
-    if (output1.empty() || output1.back() != bezier[i * order])
+    output1.control_points.insert(output1.control_points.end(), result_points1.begin(), result_points1.end());
+    if (output1.empty() || output1.back() != bezier.control_points[i * order])
     {
-        output1.append(bezier.begin() + i * order + order, bezier.end());
+        output1.control_points.insert(output1.control_points.end(), bezier.control_points.begin() + i * order + order,
+                                      bezier.control_points.end());
     }
     else
     {
-        output1.append(bezier.begin() + i * order + order + 1, bezier.end());
+        output1.control_points.insert(output1.control_points.end(), bezier.control_points.begin() + i * order + order + 1,
+                                      bezier.control_points.end());
     }
     output0.update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
     output1.update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
-    return output0.size() > 1 && output1.size() > 1;
+    return output0.control_points.size() > 1 && output1.control_points.size() > 1;
 }
 
 bool Geo::split(const BSpline &bspline, const bool is_cubic, const Point &pos, BSpline &output0, BSpline &output1)
@@ -756,7 +762,7 @@ bool Geo::split(const Polyline &polyline, const size_t n, std::vector<std::tuple
 
 bool Geo::split(const CubicBezier &bezier, const size_t n, std::vector<std::tuple<size_t, double>> &pos)
 {
-    const size_t parts = bezier.size() / 3;
+    const size_t parts = bezier.control_points.size() / 3;
     std::vector<double> length_of_part;
     double part_length = 0;
     for (size_t i = 0; i < parts; ++i)
@@ -919,7 +925,7 @@ bool Geo::split(const Polyline &polyline, const double step, std::vector<std::tu
 
 bool Geo::split(const CubicBezier &bezier, const double step, std::vector<std::tuple<size_t, double>> &pos)
 {
-    const size_t parts = bezier.size() / 3;
+    const size_t parts = bezier.control_points.size() / 3;
     std::vector<double> length_of_part;
     double bezier_length = 0;
     for (size_t i = 0; i < parts; ++i)

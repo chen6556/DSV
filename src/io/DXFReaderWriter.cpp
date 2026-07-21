@@ -1887,12 +1887,12 @@ void DXFReaderWriter::prepare_blocks()
                 case Geo::Type::BEZIER:
                     if (const Geo::CubicBezier *bezier0 = static_cast<const Geo::CubicBezier *>(_block_store[i]->at(k)),
                         *bezier1 = static_cast<const Geo::CubicBezier *>(_block_store[j]->at(k));
-                        bezier0->size() == bezier1->size())
+                        bezier0->control_points.size() == bezier1->control_points.size())
                     {
-                        for (size_t m = 0, count2 = bezier0->size(); m < count2; ++m)
+                        for (size_t m = 0, count2 = bezier0->control_points.size(); m < count2; ++m)
                         {
-                            if (bezier0->at(m).x - rect0[3].x != bezier1->at(m).x - rect1[3].x ||
-                                bezier0->at(m).y - rect0[3].y != bezier1->at(m).y - rect1[3].y)
+                            if (bezier0->control_points.at(m).x - rect0[3].x != bezier1->control_points.at(m).x - rect1[3].x ||
+                                bezier0->control_points.at(m).y - rect0[3].y != bezier1->control_points.at(m).y - rect1[3].y)
                             {
                                 is_same = false;
                                 break;

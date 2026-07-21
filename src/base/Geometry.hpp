@@ -753,12 +753,13 @@ public:
     const Polygon &shape() const;
 };
 
-class CubicBezier : public Polyline
+class CubicBezier : public DObject
 {
 private:
     Polyline _shape;
 
 public:
+    std::vector<Point> control_points;
     static double default_step;
     static double default_down_sampling_value;
 
@@ -775,11 +776,17 @@ public:
 
     const Polyline &shape() const;
 
+    const Point &front() const;
+
+    const Point &back() const;
+
     void update_control_points();
 
     void update_shape(const double step = 0.01, const double down_sampling_value = 0.02);
 
     double length() const override;
+
+    bool empty() const override;
 
     void clear() override;
 

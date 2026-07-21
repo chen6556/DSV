@@ -3253,12 +3253,12 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::DObject *> &o
                 const Geo::CubicBezier &bezier = *static_cast<const Geo::CubicBezier *>(object);
                 if (catch_vertex)
                 {
-                    for (size_t i = 0, count = bezier.size(); i < count; i += 3)
+                    for (size_t i = 0, count = bezier.control_points.size(); i < count; i += 3)
                     {
-                        if (const double d = Geo::distance(pos, bezier[i]); d < vertex_catch_distance)
+                        if (const double d = Geo::distance(pos, bezier.control_points[i]); d < vertex_catch_distance)
                         {
                             vertex_catch_distance = d;
-                            vertex_catch_point = bezier[i];
+                            vertex_catch_point = bezier.control_points[i];
                         }
                     }
                 }

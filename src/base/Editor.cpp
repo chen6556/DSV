@@ -175,7 +175,7 @@ Geo::DObject *Editor::select(const Geo::Point &point, const bool reset_others, c
     if (visible_only)
     {
         std::vector<Geo::DObject *> current_group_objects(_graph->container_group(_current_group).begin(),
-                                                           _graph->container_group(_current_group).end());
+                                                          _graph->container_group(_current_group).end());
         std::sort(current_group_objects.begin(), current_group_objects.end());
         std::vector<Geo::DObject *> visible_objects(_view_tree.visible_objects());
         std::set_intersection(visible_objects.begin(), visible_objects.end(), current_group_objects.begin(), current_group_objects.end(),
@@ -389,7 +389,7 @@ Geo::DObject *Editor::select(const Geo::Point &point, const bool reset_others, c
             b = static_cast<Geo::CubicBezier *>(it);
             if (b->is_selected)
             {
-                for (const Geo::Point &inner_point : *b)
+                for (const Geo::Point &inner_point : b->control_points)
                 {
                     if (Geo::distance_square(point, inner_point) <= catch_distance * catch_distance * 2.25)
                     {
@@ -486,7 +486,7 @@ std::tuple<Geo::DObject *, bool> Editor::select_with_state(const Geo::Point &poi
     Geo::BSpline *bs = nullptr;
     Combination *cb = nullptr;
     for (std::vector<Geo::DObject *>::reverse_iterator it = _graph->container_group(_current_group).rbegin(),
-                                                        end = _graph->container_group(_current_group).rend();
+                                                       end = _graph->container_group(_current_group).rend();
          it != end; ++it)
     {
         switch ((*it)->type())
@@ -646,7 +646,7 @@ std::tuple<Geo::DObject *, bool> Editor::select_with_state(const Geo::Point &poi
             b = static_cast<Geo::CubicBezier *>(*it);
             if (b->is_selected)
             {
-                for (const Geo::Point &inner_point : *b)
+                for (const Geo::Point &inner_point : b->control_points)
                 {
                     if (Geo::distance_square(point, inner_point) <= catch_distance * catch_distance * 2.25)
                     {
@@ -713,7 +713,7 @@ std::vector<Geo::DObject *> Editor::select(const Geo::AABBRect &rect, const bool
     if (visible_only)
     {
         std::vector<Geo::DObject *> current_group_objects(_graph->container_group(_current_group).begin(),
-                                                           _graph->container_group(_current_group).end());
+                                                          _graph->container_group(_current_group).end());
         std::sort(current_group_objects.begin(), current_group_objects.end());
         std::set_intersection(_view_tree.visible_objects().begin(), _view_tree.visible_objects().end(), current_group_objects.begin(),
                               current_group_objects.end(), std::back_inserter(objects));
@@ -1321,12 +1321,12 @@ void Editor::translate_points(Geo::DObject *points, const double x0, const doubl
     case Geo::Type::BEZIER:
         if (Geo::CubicBezier *temp = static_cast<Geo::CubicBezier *>(points); change_shape)
         {
-            size_t count = temp->size(), index = SIZE_MAX;
+            size_t count = temp->control_points.size(), index = SIZE_MAX;
             double distance = 0, min_distance = DBL_MAX;
             for (size_t i = 0; i < count; ++i)
             {
-                distance = std::min(Geo::distance_square(x0, y0, (*temp)[i].x, (*temp)[i].y),
-                                    Geo::distance_square(x1, y1, (*temp)[i].x, (*temp)[i].y));
+                distance = std::min(Geo::distance_square(x0, y0, temp->control_points[i].x, temp->control_points[i].y),
+                                    Geo::distance_square(x1, y1, temp->control_points[i].x, temp->control_points[i].y));
                 if (distance <= catch_distance * catch_distance && distance < min_distance)
                 {
                     index = i;
@@ -1337,27 +1337,29 @@ void Editor::translate_points(Geo::DObject *points, const double x0, const doubl
             {
                 if (edited_shape.empty())
                 {
-                    for (const Geo::Point &point : *temp)
+                    for (const Geo::Point &point : temp->control_points)
                     {
                         edited_shape.emplace_back(point.x, point.y);
                     }
                 }
 
-                temp->at(index).translate(x1 - x0, y1 - y0);
+                temp->control_points.at(index).translate(x1 - x0, y1 - y0);
                 if (const int order = 3; index > 2 && index % order == 1)
                 {
-                    (*temp)[index - 2] = (*temp)[index - 1] + ((*temp)[index - 1] - (*temp)[index]).normalize() *
-                                                                  Geo::distance((*temp)[index - 2], (*temp)[index - 1]);
+                    temp->control_points[index - 2] = temp->control_points[index - 1] +
+                                                      (temp->control_points[index - 1] - temp->control_points[index]).normalize() *
+                                                          Geo::distance(temp->control_points[index - 2], temp->control_points[index - 1]);
                 }
-                else if (index + 2 < temp->size() && index % order == order - 1)
+                else if (index + 2 < temp->control_points.size() && index % order == order - 1)
                 {
-                    (*temp)[index + 2] = (*temp)[index + 1] + ((*temp)[index + 1] - (*temp)[index]).normalize() *
-                                                                  Geo::distance((*temp)[index + 1], (*temp)[index + 2]);
+                    temp->control_points[index + 2] = temp->control_points[index + 1] +
+                                                      (temp->control_points[index + 1] - temp->control_points[index]).normalize() *
+                                                          Geo::distance(temp->control_points[index + 1], temp->control_points[index + 2]);
                 }
                 else if (index % order == 0 && index > 0 && index < count - 1)
                 {
-                    (*temp)[index - 1].translate(x1 - x0, y1 - y0);
-                    (*temp)[index + 1].translate(x1 - x0, y1 - y0);
+                    temp->control_points[index - 1].translate(x1 - x0, y1 - y0);
+                    temp->control_points[index + 1].translate(x1 - x0, y1 - y0);
                 }
                 temp->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
             }
@@ -1753,12 +1755,12 @@ bool Editor::blend(const Geo::DObject *object0, const Geo::DObject *object1, con
             Geo::distance_square(bezier->front(), pos0) < Geo::distance_square(bezier->back(), pos0))
         {
             point0 = bezier->front();
-            pre0 = bezier->at(1);
+            pre0 = bezier->control_points.at(1);
         }
         else
         {
             point0 = bezier->back();
-            pre0 = bezier->at(bezier->size() - 2);
+            pre0 = bezier->control_points.at(bezier->control_points.size() - 2);
         }
         break;
     case Geo::Type::BSPLINE:
@@ -1873,12 +1875,12 @@ bool Editor::blend(const Geo::DObject *object0, const Geo::DObject *object1, con
             Geo::distance_square(bezier->front(), pos1) < Geo::distance_square(bezier->back(), pos1))
         {
             point1 = bezier->front();
-            pre1 = bezier->at(1);
+            pre1 = bezier->control_points.at(1);
         }
         else
         {
             point1 = bezier->back();
-            pre1 = bezier->at(bezier->size() - 2);
+            pre1 = bezier->control_points.at(bezier->control_points.size() - 2);
         }
         break;
     case Geo::Type::BSPLINE:
@@ -3292,8 +3294,8 @@ bool Editor::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
     return true;
 }
 
-bool Editor::fillet(Geo::DObject *object0, Geo::DObject *object1, const Geo::Point &start, const Geo::Point &center,
-                    const Geo::Point &end, const std::vector<std::tuple<size_t, double, double, double>> &tvalues)
+bool Editor::fillet(Geo::DObject *object0, Geo::DObject *object1, const Geo::Point &start, const Geo::Point &center, const Geo::Point &end,
+                    const std::vector<std::tuple<size_t, double, double, double>> &tvalues)
 {
     if (object0 == object1 || start == center || center == end || start == end)
     {
@@ -3356,7 +3358,7 @@ bool Editor::fillet(Geo::DObject *object0, Geo::DObject *object1, const Geo::Poi
                     {
                         if (Geo::distance(bezier0.front(), start) < Geo::distance(bezier0.back(), start))
                         {
-                            if (Geo::is_on_left(bezier0[1], center, start))
+                            if (Geo::is_on_left(bezier0.control_points[1], center, start))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
@@ -3367,7 +3369,7 @@ bool Editor::fillet(Geo::DObject *object0, Geo::DObject *object1, const Geo::Poi
                         }
                         else
                         {
-                            if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, start))
+                            if (Geo::is_on_left(bezier0.control_points[bezier0.control_points.size() - 2], center, start))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
@@ -3381,7 +3383,7 @@ bool Editor::fillet(Geo::DObject *object0, Geo::DObject *object1, const Geo::Poi
                     {
                         if (Geo::distance(bezier0.front(), start) < Geo::distance(bezier0.back(), start))
                         {
-                            if (Geo::is_on_left(bezier0[1], center, start))
+                            if (Geo::is_on_left(bezier0.control_points[1], center, start))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
@@ -3392,7 +3394,7 @@ bool Editor::fillet(Geo::DObject *object0, Geo::DObject *object1, const Geo::Poi
                         }
                         else
                         {
-                            if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, start))
+                            if (Geo::is_on_left(bezier0.control_points[bezier0.control_points.size() - 2], center, start))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
@@ -3652,7 +3654,7 @@ bool Editor::fillet(Geo::DObject *object0, Geo::DObject *object1, const Geo::Poi
                     {
                         if (Geo::distance(bezier0.front(), end) < Geo::distance(bezier0.back(), end))
                         {
-                            if (Geo::is_on_left(bezier0[1], center, end))
+                            if (Geo::is_on_left(bezier0.control_points[1], center, end))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
@@ -3663,7 +3665,7 @@ bool Editor::fillet(Geo::DObject *object0, Geo::DObject *object1, const Geo::Poi
                         }
                         else
                         {
-                            if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, end))
+                            if (Geo::is_on_left(bezier0.control_points[bezier0.control_points.size() - 2], center, end))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
@@ -3677,7 +3679,7 @@ bool Editor::fillet(Geo::DObject *object0, Geo::DObject *object1, const Geo::Poi
                     {
                         if (Geo::distance(bezier0.front(), end) < Geo::distance(bezier0.back(), end))
                         {
-                            if (Geo::is_on_left(bezier0[1], center, end))
+                            if (Geo::is_on_left(bezier0.control_points[1], center, end))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
@@ -3688,7 +3690,7 @@ bool Editor::fillet(Geo::DObject *object0, Geo::DObject *object1, const Geo::Poi
                         }
                         else
                         {
-                            if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, end))
+                            if (Geo::is_on_left(bezier0.control_points[bezier0.control_points.size() - 2], center, end))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
@@ -5801,22 +5803,22 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
 
     {
         std::vector<std::tuple<size_t, double>> temp;
-        for (size_t i = 0, end = bezier->size() - order; i < end; i += order)
+        for (size_t i = 0, end = bezier->control_points.size() - order; i < end; i += order)
         {
             Geo::Polyline polyline;
-            polyline.append((*bezier)[i]);
+            polyline.append(bezier->control_points[i]);
             double t = 0;
             while (t <= 1)
             {
                 Geo::Point point;
                 for (int j = 0; j <= order; ++j)
                 {
-                    point += ((*bezier)[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                    point += (bezier->control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
                 polyline.append(point);
                 t += Geo::CubicBezier::default_step;
             }
-            polyline.append((*bezier)[i + order]);
+            polyline.append(bezier->control_points[i + order]);
             Geo::down_sampling(polyline, Geo::CubicBezier::default_down_sampling_value);
 
             std::vector<Geo::Point> points;
@@ -5837,7 +5839,7 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
                 Geo::Point coord;
                 for (int j = 0; j <= order; ++j)
                 {
-                    coord += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
+                    coord += (bezier->control_points[j + anchor_index] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
                 if (double dis = Geo::distance(anchor, coord); dis < min_dis[1])
                 {
@@ -5860,7 +5862,7 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
             Geo::Point coord;
             for (int j = 0; j <= order; ++j)
             {
-                coord += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                coord += (bezier->control_points[j + anchor_index] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             return Geo::distance(coord, anchor) * 1e9;
         };
@@ -5883,21 +5885,22 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
         anchor.clear();
         for (int j = 0; j <= order; ++j)
         {
-            anchor += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+            anchor += (bezier->control_points[j + anchor_index] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
         }
         anchor_t = t;
     }
 
     std::vector<std::tuple<size_t, double, double, double>> tvalues; // index, t, x, y
     // 找到自身交点
-    const Geo::CubicBezier anchor_bezier(bezier->begin() + anchor_index, bezier->begin() + anchor_index + order + 1, false);
-    /*for (size_t i = 0, end = bezier->size() - order; i < end; i += order)
+    const Geo::CubicBezier anchor_bezier(bezier->control_points.begin() + anchor_index,
+                                         bezier->control_points.begin() + anchor_index + order + 1, false);
+    /*for (size_t i = 0, end = bezier->control_points.size() - order; i < end; i += order)
     {
         if (i == anchor_index)
         {
             continue;
         }
-        Geo::Bezier temp_bezier(bezier->begin() + i, bezier->begin() + i + order + 1, order, false);
+        Geo::Bezier temp_bezier(bezier->control_points.begin() + i, bezier->control_points.begin() + i + order + 1, order, false);
         std::vector<Geo::Point> temp;
         Geo::is_intersected(anchor_bezier, temp_bezier, temp, &tvalues);
     }*/
@@ -5967,9 +5970,11 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
             {
                 remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                 _view_tree.remove(bezier);
-                Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
-                Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier->begin() + anchor_index + order, bezier->end(), false);
-                if (bezier0->size() > order)
+                Geo::CubicBezier *bezier0 =
+                    new Geo::CubicBezier(bezier->control_points.begin(), bezier->control_points.begin() + anchor_index + 1, false);
+                Geo::CubicBezier *bezier1 =
+                    new Geo::CubicBezier(bezier->control_points.begin() + anchor_index + order, bezier->control_points.end(), false);
+                if (bezier0->control_points.size() > order)
                 {
                     _graph->container_group(_current_group).insert(i, bezier0);
                     _view_tree.append(bezier0);
@@ -5979,7 +5984,7 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
                 {
                     delete bezier0;
                 }
-                if (bezier1->size() > order)
+                if (bezier1->control_points.size() > order)
                 {
                     _graph->container_group(_current_group).insert(i, bezier1);
                     _view_tree.append(bezier1);
@@ -6014,24 +6019,26 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
         Geo::CubicBezier *bezier0 = nullptr, *bezier1 = nullptr;
         if (anchor_t < left_t)
         {
-            bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
+            bezier0 = new Geo::CubicBezier(bezier->control_points.begin(), bezier->control_points.begin() + anchor_index + 1, false);
             bezier1 = new Geo::CubicBezier(bezier_right);
-            bezier1->append(bezier->begin() + anchor_index + order + 1, bezier->end());
+            bezier1->control_points.insert(bezier1->control_points.end(), bezier->control_points.begin() + anchor_index + order + 1,
+                                           bezier->control_points.end());
             bezier1->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
         }
         else
         {
-            bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
-            bezier0->append(bezier_left.begin() + 1, bezier_left.end());
+            bezier0 = new Geo::CubicBezier(bezier->control_points.begin(), bezier->control_points.begin() + anchor_index + 1, false);
+            bezier0->control_points.insert(bezier0->control_points.end(), bezier_left.control_points.begin() + 1,
+                                           bezier_left.control_points.end());
             bezier0->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
-            bezier1 = new Geo::CubicBezier(bezier->begin() + anchor_index + order, bezier->end(), false);
+            bezier1 = new Geo::CubicBezier(bezier->control_points.begin() + anchor_index + order, bezier->control_points.end(), false);
         }
-        if (bezier0->size() <= order)
+        if (bezier0->control_points.size() <= order)
         {
             delete bezier0;
             bezier0 = nullptr;
         }
-        if (bezier1->size() <= order)
+        if (bezier1->control_points.size() <= order)
         {
             delete bezier1;
             bezier1 = nullptr;
@@ -6072,11 +6079,13 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(bezier);
-                    Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
+                    Geo::CubicBezier *bezier0 =
+                        new Geo::CubicBezier(bezier->control_points.begin(), bezier->control_points.begin() + anchor_index + 1, false);
                     Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier_right);
-                    bezier1->append(bezier->begin() + anchor_index + order + 1, bezier->end());
+                    bezier1->control_points.insert(bezier1->control_points.end(), bezier->control_points.begin() + anchor_index + order + 1,
+                                                   bezier->control_points.end());
                     bezier1->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
-                    if (bezier0->size() > order)
+                    if (bezier0->control_points.size() > order)
                     {
                         _graph->container_group(_current_group).insert(i, bezier0);
                         _view_tree.append(bezier0);
@@ -6086,7 +6095,7 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
                     {
                         delete bezier0;
                     }
-                    if (bezier1->size() > order)
+                    if (bezier1->control_points.size() > order)
                     {
                         _graph->container_group(_current_group).insert(i, bezier1);
                         _view_tree.append(bezier1);
@@ -6112,11 +6121,14 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(bezier);
-                    Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
-                    bezier0->append(bezier_left.begin() + 1, bezier_left.end());
+                    Geo::CubicBezier *bezier0 =
+                        new Geo::CubicBezier(bezier->control_points.begin(), bezier->control_points.begin() + anchor_index + 1, false);
+                    bezier0->control_points.insert(bezier0->control_points.end(), bezier_left.control_points.begin() + 1,
+                                                   bezier_left.control_points.end());
                     bezier0->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
-                    Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier->begin() + anchor_index + order, bezier->end(), false);
-                    if (bezier0->size() > order)
+                    Geo::CubicBezier *bezier1 =
+                        new Geo::CubicBezier(bezier->control_points.begin() + anchor_index + order, bezier->control_points.end(), false);
+                    if (bezier0->control_points.size() > order)
                     {
                         _graph->container_group(_current_group).insert(i, bezier0);
                         _view_tree.append(bezier0);
@@ -6126,7 +6138,7 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
                     {
                         delete bezier0;
                     }
-                    if (bezier1->size() > order)
+                    if (bezier1->control_points.size() > order)
                     {
                         _graph->container_group(_current_group).insert(i, bezier1);
                         _view_tree.append(bezier1);
@@ -6153,11 +6165,14 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(bezier);
-                    Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
-                    bezier0->append(bezier_left.begin() + 1, bezier_left.end());
+                    Geo::CubicBezier *bezier0 =
+                        new Geo::CubicBezier(bezier->control_points.begin(), bezier->control_points.begin() + anchor_index + 1, false);
+                    bezier0->control_points.insert(bezier0->control_points.end(), bezier_left.control_points.begin() + 1,
+                                                   bezier_left.control_points.end());
                     bezier0->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
                     Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier_right);
-                    bezier1->append(bezier->begin() + anchor_index + order + 1, bezier->end());
+                    bezier1->control_points.insert(bezier1->control_points.end(), bezier->control_points.begin() + anchor_index + order + 1,
+                                                   bezier->control_points.end());
                     bezier1->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
                     _graph->container_group(_current_group).insert(i, bezier1);
                     _graph->container_group(_current_group).insert(i, bezier0);
@@ -7369,13 +7384,14 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
     {
         const Geo::AABBRect rect = _graph->container_group(_current_group).bounding_rect();
         head = bezier->front();
-        tail = head + (head - (*bezier)[1]).normalize() * std::hypot(rect.width(), rect.height());
+        tail = head + (head - bezier->control_points[1]).normalize() * std::hypot(rect.width(), rect.height());
     }
     else // 延长尾
     {
         const Geo::AABBRect rect = _graph->container_group(_current_group).bounding_rect();
         head = bezier->back();
-        tail = head + (head - (*bezier)[bezier->size() - 2]).normalize() * std::hypot(rect.width(), rect.height());
+        tail =
+            head + (head - bezier->control_points[bezier->control_points.size() - 2]).normalize() * std::hypot(rect.width(), rect.height());
     }
 
     std::vector<Geo::Point> intersections;
@@ -7524,7 +7540,7 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
     }
 
     std::vector<std::tuple<double, double>> shape;
-    for (const Geo::Point &point : *bezier)
+    for (const Geo::Point &point : bezier->control_points)
     {
         shape.emplace_back(point.x, point.y);
     }
@@ -7534,17 +7550,17 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
     {
         const Geo::Point point0((bezier->front() + expoint * 2) / 3);
         const Geo::Point point1((bezier->front() * 2 + expoint) / 3);
-        bezier->insert(0, point0);
-        bezier->insert(0, point1);
-        bezier->insert(0, expoint);
+        bezier->control_points.insert(bezier->control_points.cbegin(), point0);
+        bezier->control_points.insert(bezier->control_points.cbegin(), point1);
+        bezier->control_points.insert(bezier->control_points.cbegin(), expoint);
     }
     else // 延长尾
     {
         const Geo::Point point0((bezier->back() + expoint * 2) / 3);
         const Geo::Point point1((bezier->back() * 2 + expoint) / 3);
-        bezier->append(point0);
-        bezier->append(point1);
-        bezier->append(expoint);
+        bezier->control_points.push_back(point0);
+        bezier->control_points.push_back(point1);
+        bezier->control_points.push_back(expoint);
     }
     bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
     _view_tree.update(bezier);
@@ -7872,7 +7888,8 @@ bool Editor::divide_parts_n(const std::vector<Geo::DObject *> &objects, const si
                 {
                     const size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
                     remove_items.emplace_back(group.pop(index), _current_group, index);
-                    if (Geo::CubicBezier *p = bezier->range(std::get<0>(pos.back()), std::get<1>(pos.back()), bezier->size() / 3 - 1, 1))
+                    if (Geo::CubicBezier *p =
+                            bezier->range(std::get<0>(pos.back()), std::get<1>(pos.back()), bezier->control_points.size() / 3 - 1, 1))
                     {
                         add_items.emplace_back(p, _current_group, index);
                         group.insert(index, p);
@@ -8133,7 +8150,8 @@ bool Editor::divide_parts_measure(const std::vector<Geo::DObject *> &objects, co
                 {
                     const size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
                     remove_items.emplace_back(group.pop(index), _current_group, index);
-                    if (Geo::CubicBezier *p = bezier->range(std::get<0>(pos.back()), std::get<1>(pos.back()), bezier->size() / 3 - 1, 1))
+                    if (Geo::CubicBezier *p =
+                            bezier->range(std::get<0>(pos.back()), std::get<1>(pos.back()), bezier->control_points.size() / 3 - 1, 1))
                     {
                         add_items.emplace_back(p, _current_group, index);
                         group.insert(index, p);
@@ -8272,7 +8290,7 @@ void Editor::reverse(const std::vector<Geo::DObject *> &objects)
         case Geo::Type::BEZIER:
             {
                 Geo::CubicBezier *bezier = static_cast<Geo::CubicBezier *>(object);
-                std::reverse(bezier->begin(), bezier->end());
+                std::reverse(bezier->control_points.begin(), bezier->control_points.end());
                 bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
             }
             break;
