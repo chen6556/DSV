@@ -583,7 +583,7 @@ void ReorderGroupCommand::undo(Graph *graph)
 
 
 // RenameGroupCommand
-RenameGroupCommand::RenameGroupCommand(const size_t index, QString old_name) : _index(index), _old_name(std::move(old_name))
+RenameGroupCommand::RenameGroupCommand(const size_t index, std::string old_name) : _index(index), _old_name(std::move(old_name))
 {
 }
 

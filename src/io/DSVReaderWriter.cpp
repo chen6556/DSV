@@ -30,7 +30,7 @@ void DSVReaderWriter::read(std::ifstream &stream)
     for (ContainerGroup &group : *_graph)
     {
         // update combination border
-        _current_layer = group.name.toStdString();
+        _current_layer = group.name;
         std::vector<Geo::DObject *> temp(group.rbegin(), group.rend());
         while (!temp.empty())
         {
@@ -52,7 +52,7 @@ void DSVReaderWriter::write(std::ofstream &stream)
     record_handle(_graph);
     for (ContainerGroup &group : *_graph)
     {
-        _current_layer = group.name.toStdString();
+        _current_layer = group.name;
         std::vector<Geo::DObject *> temp(group.rbegin(), group.rend());
         while (!temp.empty())
         {
@@ -128,10 +128,10 @@ void DSVReaderWriter::write(std::ofstream &stream)
 
 void DSVReaderWriter::check_group_name(Graph *graph)
 {
-    std::set<QString> names;
+    std::set<std::string> names;
     for (ContainerGroup &group : *graph)
     {
-        if (!group.name.isEmpty() && names.find(group.name) == names.cend())
+        if (!group.name.empty() && names.find(group.name) == names.cend())
         {
             names.insert(group.name);
         }
@@ -143,13 +143,13 @@ void DSVReaderWriter::check_group_name(Graph *graph)
     int index = 0;
     for (ContainerGroup &group : *graph)
     {
-        if (group.name.isEmpty())
+        if (group.name.empty())
         {
-            while (names.find(QString::number(index)) != names.cend())
+            while (names.find(std::to_string(index)) != names.cend())
             {
                 ++index;
             }
-            group.name = QString::number(index++);
+            group.name = std::to_string(index++);
         }
     }
 }
@@ -642,9 +642,9 @@ bool DSVReaderWriter::check_data(const std::vector<Pair> &data)
 
 void DSVReaderWriter::check_group(const std::string &name)
 {
-    if (!_graph->has_group(QString::fromStdString(name)))
+    if (!_graph->has_group(name))
     {
-        _graph->append_group(QString::fromStdString(name));
+        _graph->append_group(name);
         _group_name_to_index.insert_or_assign(name, _graph->container_groups().size() - 1);
     }
     else if (_group_name_to_index.find(name) == _group_name_to_index.cend())

@@ -98,9 +98,9 @@ public:
 
     void hide_group(const size_t index);
 
-    QString group_name(const size_t index) const;
+    std::string group_name(const size_t index) const;
 
-    void set_group_name(const size_t index, const QString &name);
+    void set_group_name(const size_t index, const std::string &name);
 
 
     void append(Geo::DObject *object);

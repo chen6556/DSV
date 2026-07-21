@@ -61,7 +61,7 @@ struct Drawable
     bool is_selected = false;
     unsigned int point_index = 0;
     unsigned int point_count = 0;
-    QString name;
+    // QString name;
 };
 
 class DObject : public Drawable

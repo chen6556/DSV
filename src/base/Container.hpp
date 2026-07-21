@@ -1,7 +1,7 @@
 #pragma once
 
+#include <string>
 #include <QFont>
-#include <QString>
 #include <QPainter>
 #include "base/Geometry.hpp"
 
@@ -82,6 +82,9 @@ private:
     std::vector<Geo::DObject *> _containers;
     double _ratio = 1; // 缩放系数
     bool _visible = true;
+
+public:
+    std::string name;
 
 public:
     ContainerGroup() = default;

@@ -105,7 +105,7 @@ public:
 
     void append_group(const ContainerGroup &group);
 
-    void append_group(const QString &name);
+    void append_group(const std::string &name);
 
     void insert_group(const size_t index);
 
@@ -116,9 +116,7 @@ public:
     void remove_group(const size_t index);
 
 
-    bool has_group(const QString &name) const;
-
-    bool has_object(const QString &name) const;
+    bool has_group(const std::string &name) const;
 
     bool remove_object(const Geo::DObject *object);
 

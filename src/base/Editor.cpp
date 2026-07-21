@@ -1087,12 +1087,12 @@ void Editor::hide_group(const size_t index)
     _view_tree.build(_graph);
 }
 
-QString Editor::group_name(const size_t index) const
+std::string Editor::group_name(const size_t index) const
 {
     return _graph->container_group(index).name;
 }
 
-void Editor::set_group_name(const size_t index, const QString &name)
+void Editor::set_group_name(const size_t index, const std::string &name)
 {
     _backup.push_command(new UndoStack::RenameGroupCommand(index, _graph->container_group(index).name));
     _graph->container_group(index).name = name;

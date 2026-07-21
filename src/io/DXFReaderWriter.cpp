@@ -92,15 +92,14 @@ void DXFReaderWriter::addLType(const DRW_LType &data)
 void DXFReaderWriter::addLayer(const DRW_Layer &data)
 {
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
-    const QString name = QString::fromUtf8(data.name.c_str());
-    if (name != "0" && _graph->has_group(name))
+    if (data.name != "0" && _graph->has_group(data.name))
     {
         return;
     }
 
     _graph->append_group();
     ContainerGroup &group = _graph->container_groups().back();
-    group.name = QString::fromUtf8(data.name.c_str());
+    group.name = data.name;
     if (!data.plotF || (data.flags & 0x01))
     {
         group.hide();
@@ -139,14 +138,13 @@ void DXFReaderWriter::addBlock(const DRW_Block &data)
     const QString mid = name.mid(1, 11);
     if (!_ignore_entity && mid.toLower() != "paper_space" && mid.toLower() != "model_space")
     {
-        QString layer_name = QString::fromStdString(data.layer);
         _combination = new Combination();
-        _combination->name = name;
+        _combination->name = data.layer;
         _block_store.push_back(_combination);
         _block_map.insert_or_assign(_combination, data.handle);
         // _block_names.insert_or_assign(_combination, name.toStdString());
-        _block_name_map.insert_or_assign(name.toStdString(), _combination);
-        _combination->name = layer_name;
+        _block_name_map.insert_or_assign(data.layer, _combination);
+        _combination->name = data.layer;
     }
     else
     {
@@ -183,7 +181,7 @@ void DXFReaderWriter::addPoint(const DRW_Point &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data.layer)
+            if (group.name == data.layer)
             {
                 group.append(new Geo::Point(data.basePoint.x, data.basePoint.y));
                 if (data.extPoint.z < 0)
@@ -196,7 +194,7 @@ void DXFReaderWriter::addPoint(const DRW_Point &data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data.layer);
+        _graph->container_groups().back().name = data.layer;
         _graph->container_groups().back().append(new Geo::Point(data.basePoint.x, data.basePoint.y));
         if (data.extPoint.z < 0)
         {
@@ -228,7 +226,7 @@ void DXFReaderWriter::addLine(const DRW_Line &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data.layer)
+            if (group.name == data.layer)
             {
                 group.append(new Geo::Polyline({{data.basePoint.x, data.basePoint.y}, {data.secPoint.x, data.secPoint.y}}));
                 if (data.extPoint.z < 0)
@@ -241,7 +239,7 @@ void DXFReaderWriter::addLine(const DRW_Line &data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data.layer);
+        _graph->container_groups().back().name = data.layer;
         _graph->container_groups().back().append(
             new Geo::Polyline({{data.basePoint.x, data.basePoint.y}, {data.secPoint.x, data.secPoint.y}}));
         if (data.extPoint.z < 0)
@@ -274,7 +272,7 @@ void DXFReaderWriter::addRay(const DRW_Ray &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data.layer)
+            if (group.name == data.layer)
             {
                 group.append(new Geo::Polyline(
                     {{data.basePoint.x, data.basePoint.y}, {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
@@ -288,7 +286,7 @@ void DXFReaderWriter::addRay(const DRW_Ray &data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data.layer);
+        _graph->container_groups().back().name = data.layer;
         _graph->container_groups().back().append(new Geo::Polyline(
             {{data.basePoint.x, data.basePoint.y}, {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
         if (data.extPoint.z < 0)
@@ -321,7 +319,7 @@ void DXFReaderWriter::addXline(const DRW_Xline &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data.layer)
+            if (group.name == data.layer)
             {
                 group.append(new Geo::Polyline(
                     {{data.basePoint.x, data.basePoint.y}, {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
@@ -335,7 +333,7 @@ void DXFReaderWriter::addXline(const DRW_Xline &data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data.layer);
+        _graph->container_groups().back().name = data.layer;
         _graph->container_groups().back().append(new Geo::Polyline(
             {{data.basePoint.x, data.basePoint.y}, {data.basePoint.x + data.secPoint.x, data.basePoint.y + data.secPoint.y}}));
         if (data.extPoint.z < 0)
@@ -369,7 +367,7 @@ void DXFReaderWriter::addArc(const DRW_Arc &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data.layer)
+            if (group.name == data.layer)
             {
                 Geo::Arc *arc = new Geo::Arc(data.basePoint.x, data.basePoint.y, data.radious, data.staangle, data.endangle,
                                              static_cast<bool>(data.isccw));
@@ -384,7 +382,7 @@ void DXFReaderWriter::addArc(const DRW_Arc &data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data.layer);
+        _graph->container_groups().back().name = data.layer;
         Geo::Arc *arc =
             new Geo::Arc(data.basePoint.x, data.basePoint.y, data.radious, data.staangle, data.endangle, static_cast<bool>(data.isccw));
         if (data.extPoint.z < 0)
@@ -420,7 +418,7 @@ void DXFReaderWriter::addCircle(const DRW_Circle &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data.layer)
+            if (group.name == data.layer)
             {
                 group.append(new Geo::Circle(data.basePoint.x, data.basePoint.y, data.radious));
                 if (data.extPoint.z < 0)
@@ -433,7 +431,7 @@ void DXFReaderWriter::addCircle(const DRW_Circle &data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data.layer);
+        _graph->container_groups().back().name = data.layer;
         _graph->container_groups().back().append(new Geo::Circle(data.basePoint.x, data.basePoint.y, data.radious));
         if (data.extPoint.z < 0)
         {
@@ -465,7 +463,7 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data.layer)
+            if (group.name == data.layer)
             {
                 const double a = std::hypot(data.secPoint.x, data.secPoint.y);
                 group.append(new Geo::Ellipse(data.basePoint.x, data.basePoint.y, a, a * data.ratio, data.staparam, data.endparam, true));
@@ -483,7 +481,7 @@ void DXFReaderWriter::addEllipse(const DRW_Ellipse &data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data.layer);
+        _graph->container_groups().back().name = data.layer;
         const double a = std::hypot(data.secPoint.x, data.secPoint.y);
         _graph->container_groups().back().append(
             new Geo::Ellipse(data.basePoint.x, data.basePoint.y, a, a * data.ratio, data.staparam, data.endparam, true));
@@ -526,7 +524,7 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data.layer)
+            if (group.name == data.layer)
             {
                 Geo::Polyline *polyline = new Geo::Polyline();
                 for (size_t i = 1, count = data.vertlist.size(); i < count; ++i)
@@ -574,7 +572,7 @@ void DXFReaderWriter::addLWPolyline(const DRW_LWPolyline &data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data.layer);
+        _graph->container_groups().back().name = data.layer;
         Geo::Polyline *polyline = new Geo::Polyline();
         for (size_t i = 1, count = data.vertlist.size(); i < count; ++i)
         {
@@ -681,7 +679,7 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data.layer)
+            if (group.name == data.layer)
             {
                 Geo::Polyline *polyline = new Geo::Polyline();
                 for (size_t i = 1, count = data.vertlist.size(); i < count; ++i)
@@ -729,7 +727,7 @@ void DXFReaderWriter::addPolyline(const DRW_Polyline &data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data.layer);
+        _graph->container_groups().back().name = data.layer;
         Geo::Polyline *polyline = new Geo::Polyline();
         for (size_t i = 1, count = data.vertlist.size(); i < count; ++i)
         {
@@ -851,7 +849,7 @@ void DXFReaderWriter::addSpline(const DRW_Spline *data)
         {
             for (ContainerGroup &group : _graph->container_groups())
             {
-                if (group.name.toStdString() == data->layer)
+                if (group.name == data->layer)
                 {
                     group.append(bspline);
                     _object_map[bspline] = data->handle;
@@ -860,7 +858,7 @@ void DXFReaderWriter::addSpline(const DRW_Spline *data)
                 }
             }
             _graph->append_group();
-            _graph->container_groups().back().name = QString::fromStdString(data->layer);
+            _graph->container_groups().back().name = data->layer;
             _graph->container_groups().back().append(bspline);
             _object_map[bspline] = data->handle;
             _handle_map[data->handle] = bspline;
@@ -896,7 +894,7 @@ void DXFReaderWriter::addSpline(const DRW_Spline *data)
         {
             for (ContainerGroup &group : _graph->container_groups())
             {
-                if (group.name.toStdString() == data->layer)
+                if (group.name == data->layer)
                 {
                     group.append(bspline);
                     _object_map[bspline] = data->handle;
@@ -905,7 +903,7 @@ void DXFReaderWriter::addSpline(const DRW_Spline *data)
                 }
             }
             _graph->append_group();
-            _graph->container_groups().back().name = QString::fromStdString(data->layer);
+            _graph->container_groups().back().name = data->layer;
             _graph->container_groups().back().append(bspline);
             _object_map[bspline] = data->handle;
             _handle_map[data->handle] = bspline;
@@ -991,7 +989,7 @@ void DXFReaderWriter::addMText(const DRW_MText &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data.layer)
+            if (group.name == data.layer)
             {
                 Text *text = nullptr;
                 if (_text_style_font.find(style) == _text_style_font.end())
@@ -1014,7 +1012,7 @@ void DXFReaderWriter::addMText(const DRW_MText &data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data.layer);
+        _graph->container_groups().back().name = data.layer;
         Text *text = nullptr;
         if (_text_style_font.find(style) == _text_style_font.end())
         {
@@ -1070,7 +1068,7 @@ void DXFReaderWriter::addText(const DRW_Text &data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data.layer)
+            if (group.name == data.layer)
             {
                 Text *text = nullptr;
                 if (_text_style_font.find(style) == _text_style_font.end())
@@ -1093,7 +1091,7 @@ void DXFReaderWriter::addText(const DRW_Text &data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data.layer);
+        _graph->container_groups().back().name = data.layer;
         Text *text = nullptr;
         if (_text_style_font.find(style) == _text_style_font.end())
         {
@@ -1148,7 +1146,7 @@ void DXFReaderWriter::addDimAlign(const DRW_DimAligned *data)
         const double height = Geo::distance(points[2], points[0], points[1], true);
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data->layer)
+            if (group.name == data->layer)
             {
                 group.append(
                     new Dim::DimAligned(points[0], points[1], Geo::is_on_left(points[2], points[0], points[1]) ? height : -height));
@@ -1158,7 +1156,7 @@ void DXFReaderWriter::addDimAlign(const DRW_DimAligned *data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data->layer);
+        _graph->container_groups().back().name = data->layer;
         _graph->container_groups().back().append(
             new Dim::DimAligned(points[0], points[1], Geo::is_on_left(points[2], points[0], points[1]) ? height : -height));
         _object_map[_graph->container_groups().back().back()] = data->handle;
@@ -1192,7 +1190,7 @@ void DXFReaderWriter::addDimLinear(const DRW_DimLinear *data)
             horizontal ? (coords[2].y - (coords[0].y + coords[1].y) / 2) : (coords[2].x - (coords[0].x + coords[1].x) / 2);
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data->layer)
+            if (group.name == data->layer)
             {
                 group.append(new Dim::DimLinear(points[0], points[1], horizontal, height));
                 _object_map[group.back()] = data->handle;
@@ -1201,7 +1199,7 @@ void DXFReaderWriter::addDimLinear(const DRW_DimLinear *data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data->layer);
+        _graph->container_groups().back().name = data->layer;
         _graph->container_groups().back().append(new Dim::DimLinear(points[0], points[1], horizontal, height));
         _object_map[_graph->container_groups().back().back()] = data->handle;
         _handle_map[data->handle] = _graph->container_groups().back().back();
@@ -1232,7 +1230,7 @@ void DXFReaderWriter::addDimRadial(const DRW_DimRadial *data)
                                       Geo::Point(coords[2].x, coords[2].y)};
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data->layer)
+            if (group.name == data->layer)
             {
                 group.append(new Dim::DimRadius(points[0], points[1], Geo::distance(points[0], points[2])));
                 _object_map[group.back()] = data->handle;
@@ -1241,7 +1239,7 @@ void DXFReaderWriter::addDimRadial(const DRW_DimRadial *data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data->layer);
+        _graph->container_groups().back().name = data->layer;
         _graph->container_groups().back().append(new Dim::DimRadius(points[0], points[1], Geo::distance(points[0], points[2])));
         _object_map[_graph->container_groups().back().back()] = data->handle;
         _handle_map[data->handle] = _graph->container_groups().back().back();
@@ -1270,7 +1268,7 @@ void DXFReaderWriter::addDimDiametric(const DRW_DimDiametric *data)
                                      Geo::Point((coords[1].x + coords[2].x) / 2, (coords[1].y + coords[2].y) / 2)};
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data->layer)
+            if (group.name == data->layer)
             {
                 group.append(new Dim::DimDiameter(
                     points[3], Geo::distance(points[3], points[1]) < Geo::distance(points[3], points[2]) ? points[1] : points[2],
@@ -1281,7 +1279,7 @@ void DXFReaderWriter::addDimDiametric(const DRW_DimDiametric *data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data->layer);
+        _graph->container_groups().back().name = data->layer;
         _graph->container_groups().back().append(new Dim::DimDiameter(
             points[3], Geo::distance(points[3], points[1]) < Geo::distance(points[3], points[2]) ? points[1] : points[2],
             Geo::distance(points[0], points[3])));
@@ -1313,7 +1311,7 @@ void DXFReaderWriter::addDimAngular(const DRW_DimAngular *data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data->layer)
+            if (group.name == data->layer)
             {
                 group.append(new Dim::DimAngle(line1[0], line1[1], line2[0], line2[1], arc_anchor));
                 _object_map[group.back()] = data->handle;
@@ -1322,7 +1320,7 @@ void DXFReaderWriter::addDimAngular(const DRW_DimAngular *data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data->layer);
+        _graph->container_groups().back().name = data->layer;
         _graph->container_groups().back().append(new Dim::DimAngle(line1[0], line1[1], line2[0], line2[1], arc_anchor));
         _object_map[_graph->container_groups().back().back()] = data->handle;
         _handle_map[data->handle] = _graph->container_groups().back().back();
@@ -1350,7 +1348,7 @@ void DXFReaderWriter::addDimAngular3P(const DRW_DimAngular3p *data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data->layer)
+            if (group.name == data->layer)
             {
                 Dim::DimAngle *dim = new Dim::DimAngle(vertexes[0], vertexes[1], vertexes[2], radius, vertexes[0], vertexes[2]);
                 dim->set_minor_arc(Geo::is_inside(arc_anchor, extend_vertexes[0], vertexes[1], extend_vertexes[1]));
@@ -1361,7 +1359,7 @@ void DXFReaderWriter::addDimAngular3P(const DRW_DimAngular3p *data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data->layer);
+        _graph->container_groups().back().name = data->layer;
         Dim::DimAngle *dim = new Dim::DimAngle(vertexes[0], vertexes[1], vertexes[2], radius, vertexes[0], vertexes[2]);
         dim->set_minor_arc(Geo::is_inside(arc_anchor, extend_vertexes[0], vertexes[1], extend_vertexes[1]));
         _graph->container_groups().back().append(dim);
@@ -1390,7 +1388,7 @@ void DXFReaderWriter::addDimOrdinate(const DRW_DimOrdinate *data)
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            if (group.name.toStdString() == data->layer)
+            if (group.name == data->layer)
             {
                 Dim::DimOrdinate *dim = new Dim::DimOrdinate(points[0], points[1]);
                 group.append(dim);
@@ -1400,7 +1398,7 @@ void DXFReaderWriter::addDimOrdinate(const DRW_DimOrdinate *data)
             }
         }
         _graph->append_group();
-        _graph->container_groups().back().name = QString::fromStdString(data->layer);
+        _graph->container_groups().back().name = data->layer;
         Dim::DimOrdinate *dim = new Dim::DimOrdinate(points[0], points[1]);
         _graph->container_groups().back().append(dim);
         _object_map[_graph->container_groups().back().back()] = data->handle;
@@ -1453,7 +1451,7 @@ void DXFReaderWriter::writeBlocks()
     for (Combination *combination : _block_store)
     {
         DRW_Block block;
-        block.name = combination->name.toStdString();
+        block.name = combination->name;
         block.basePoint.x = 0.0;
         block.basePoint.y = 0.0;
         block.basePoint.z = 0.0;
@@ -1477,7 +1475,7 @@ void DXFReaderWriter::writeBlockRecords()
     prepare_blocks();
     for (Combination *combination : _block_store)
     {
-        _dxfrw->writeBlockRecord(combination->name.toStdString());
+        _dxfrw->writeBlockRecord(combination->name);
     }
 }
 
@@ -1505,7 +1503,7 @@ void DXFReaderWriter::writeLayers()
     {
         lay.reset();
 
-        lay.name = group.name.toStdString();
+        lay.name = group.name;
         _dxfrw->writeLayer(&lay);
     }
 }
@@ -1659,7 +1657,7 @@ void DXFReaderWriter::write_bspline(const Geo::BSpline *bspline)
     sp.knotslist = bspline->knots();
     sp.nknots = sp.knotslist.size();
 
-    sp.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    sp.layer = _current_group == nullptr ? "0" : _current_group->name;
     sp.lineType = "CONTINUOUS";
     _dxfrw->writeSpline(&sp);
 }
@@ -1667,7 +1665,7 @@ void DXFReaderWriter::write_bspline(const Geo::BSpline *bspline)
 void DXFReaderWriter::write_circle(const Geo::Circle *circle)
 {
     DRW_Circle c;
-    c.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    c.layer = _current_group == nullptr ? "0" : _current_group->name;
     c.lineType = "CONTINUOUS";
     c.basePoint.x = circle->x;
     c.basePoint.y = circle->y;
@@ -1678,7 +1676,7 @@ void DXFReaderWriter::write_circle(const Geo::Circle *circle)
 void DXFReaderWriter::write_ellipse(const Geo::Ellipse *ellipse)
 {
     DRW_Ellipse el;
-    el.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    el.layer = _current_group == nullptr ? "0" : _current_group->name;
     el.lineType = "CONTINUOUS";
     el.basePoint.x = ellipse->center().x;
     el.basePoint.y = ellipse->center().y;
@@ -1699,7 +1697,7 @@ void DXFReaderWriter::write_polygon(const Geo::Polygon *polygon)
     }
     pol.flags = 1;
     pol.vertexnum = pol.vertlist.size();
-    pol.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    pol.layer = _current_group == nullptr ? "0" : _current_group->name;
     pol.lineType = "CONTINUOUS";
     _dxfrw->writeLWPolyline(&pol);
 }
@@ -1713,7 +1711,7 @@ void DXFReaderWriter::write_polyline(const Geo::Polyline *polyline)
     }
     pol.addVertex(DRW_Vertex2D(polyline->back().x, polyline->back().y, 0));
     pol.vertexnum = pol.vertlist.size();
-    pol.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    pol.layer = _current_group == nullptr ? "0" : _current_group->name;
     pol.lineType = "CONTINUOUS";
     _dxfrw->writeLWPolyline(&pol);
 }
@@ -1727,7 +1725,7 @@ void DXFReaderWriter::write_text(const Text *text)
     if (text->text().count('\n') == 0)
     {
         DRW_Text t;
-        t.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+        t.layer = _current_group == nullptr ? "0" : _current_group->name;
         t.lineType = "CONTINUOUS";
         t.style = "Standard";
         t.secPoint.x = text->shape(0).x;
@@ -1745,7 +1743,7 @@ void DXFReaderWriter::write_text(const Text *text)
     else
     {
         DRW_MText t;
-        t.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+        t.layer = _current_group == nullptr ? "0" : _current_group->name;
         t.lineType = "CONTINUOUS";
         t.style = "Standard";
         t.basePoint.x = text->shape(0).x;
@@ -1765,7 +1763,7 @@ void DXFReaderWriter::write_text(const Text *text)
 void DXFReaderWriter::write_arc(const Geo::Arc *arc)
 {
     DRW_Arc a;
-    a.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    a.layer = _current_group == nullptr ? "0" : _current_group->name;
     a.lineType = "CONTINUOUS";
     a.basePoint.x = arc->x;
     a.basePoint.y = arc->y;
@@ -1787,7 +1785,7 @@ void DXFReaderWriter::write_arc(const Geo::Arc *arc)
 void DXFReaderWriter::write_point(const Geo::Point *point)
 {
     DRW_Point p;
-    p.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    p.layer = _current_group == nullptr ? "0" : _current_group->name;
     p.basePoint.x = point->x;
     p.basePoint.y = point->y;
     _dxfrw->writePoint(&p);
@@ -1806,10 +1804,10 @@ void DXFReaderWriter::prepare_blocks()
         }
     }
 
-    std::set<QString> names;
+    std::set<std::string> names;
     for (Combination *combination : _block_store)
     {
-        if (!combination->name.isEmpty())
+        if (!combination->name.empty())
         {
             names.insert(combination->name);
         }
@@ -1818,12 +1816,12 @@ void DXFReaderWriter::prepare_blocks()
     int index = 0;
     for (Combination *combination : _block_store)
     {
-        if (combination->name.isEmpty())
+        if (combination->name.empty())
         {
-            QString name = QString::number(index++);
+            std::string name = std::to_string(index++);
             while (names.find(name) != names.end())
             {
-                name = QString::number(index++);
+                name = std::to_string(index++);
             }
             combination->name = name;
         }
@@ -2017,9 +2015,9 @@ void DXFReaderWriter::prepare_blocks()
 void DXFReaderWriter::write_insert(const Combination *combination, const Geo::Point &insertion_point)
 {
     DRW_Insert insert;
-    insert.layer = _current_group == nullptr ? "0" : _current_group->name.toStdString();
+    insert.layer = _current_group == nullptr ? "0" : _current_group->name;
     insert.lineType = "CONTINUOUS";
-    insert.name = combination->name.toStdString();
+    insert.name = combination->name;
     insert.basePoint.x = insertion_point.x;
     insert.basePoint.y = insertion_point.y;
     insert.basePoint.z = 0.0;

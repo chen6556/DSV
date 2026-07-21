@@ -375,7 +375,7 @@ void Graph::append_group(const ContainerGroup &group)
     _container_groups.push_back(group);
 }
 
-void Graph::append_group(const QString &name)
+void Graph::append_group(const std::string &name)
 {
     _container_groups.emplace_back();
     _container_groups.back().name = name;
@@ -426,28 +426,13 @@ void Graph::remove_group(const size_t index)
 }
 
 
-bool Graph::has_group(const QString &name) const
+bool Graph::has_group(const std::string &name) const
 {
     for (const ContainerGroup &group : _container_groups)
     {
         if (group.name == name)
         {
             return true;
-        }
-    }
-    return false;
-}
-
-bool Graph::has_object(const QString &name) const
-{
-    for (const ContainerGroup &group : _container_groups)
-    {
-        for (const Geo::DObject *object : group)
-        {
-            if (object->name == name)
-            {
-                return true;
-            }
         }
     }
     return false;

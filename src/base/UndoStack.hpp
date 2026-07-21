@@ -229,10 +229,10 @@ class RenameGroupCommand : public Command
 {
 private:
     size_t _index;
-    QString _old_name;
+    std::string _old_name;
 
 public:
-    RenameGroupCommand(const size_t index, QString old_name);
+    RenameGroupCommand(const size_t index, std::string old_name);
 
     void undo(Graph *graph = nullptr) override;
 };
