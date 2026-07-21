@@ -278,23 +278,6 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
     }
 }
 
-bool Geo::is_inside(const Point &point, const AABBRect &rect, const bool coincide)
-{
-    if (rect.empty())
-    {
-        return false;
-    }
-    const double x = point.x, y = point.y;
-    if (coincide)
-    {
-        return rect.left() <= x && x <= rect.right() && rect.bottom() <= y && y <= rect.top();
-    }
-    else
-    {
-        return rect.left() < x && x < rect.right() && rect.bottom() < y && y < rect.top();
-    }
-}
-
 bool Geo::is_inside(const Point &point, const AABBRectParams &params, const bool coincide)
 {
     if (coincide)

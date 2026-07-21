@@ -103,10 +103,10 @@ void DataPanel::load_draw_data(const Graph *graph)
     ui->ellipse_label->setText(QString::number(ellipse_count));
     ui->text_label->setText(QString::number(text_count));
 
-    const Geo::AABBRect rect(graph->bounding_rect());
-    ui->width_label->setText(QString::number(rect.width()));
-    ui->height_label->setText(QString::number(rect.height()));
-    ui->area_label->setText(QString::number(rect.area(), 'f', 4));
+    const Geo::AABBRectParams rect(graph->aabbrect_params());
+    ui->width_label->setText(QString::number(rect.right - rect.left));
+    ui->height_label->setText(QString::number(rect.top - rect.bottom));
+    ui->area_label->setText(QString::number((rect.right - rect.left) * (rect.top - rect.bottom), 'f', 4));
 }
 
 int DataPanel::exec()

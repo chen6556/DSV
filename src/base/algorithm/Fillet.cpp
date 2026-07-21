@@ -941,7 +941,7 @@ bool Geo::fillet(const Geo::CubicBezier &bezier0, const Geo::Point &point0, cons
         {
             for (size_t j = 0, count1 = offseted1.size(); j < count1; ++j)
             {
-                if (Geo::is_intersected(offseted0[i].bounding_rect(), offseted1[j].bounding_rect()))
+                if (Geo::is_intersected(offseted0[i].aabbrect_params(), offseted1[j].aabbrect_params()))
                 {
                     Geo::is_intersected(offseted0[i], offseted1[j], points);
                 }

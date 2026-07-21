@@ -1550,8 +1550,6 @@ void DXFReaderWriter::write_dobject(const Geo::DObject *object)
 {
     switch (object->type())
     {
-    case Geo::Type::AABBRECT:
-        break;
     case Geo::Type::BEZIER:
         write_bezier(static_cast<const Geo::CubicBezier *>(object));
         break;
@@ -1832,23 +1830,23 @@ void DXFReaderWriter::prepare_blocks()
         }
     }
 
-    std::vector<Geo::AABBRect> rects;
+    std::vector<Geo::AABBRectParams> rects;
     for (const Combination *combination : _block_store)
     {
-        Geo::AABBRect rect = combination->bounding_rect();
-        rect.translate(-rect.left(), -rect.bottom());
+        Geo::AABBRectParams rect = combination->aabbrect_params();
+        rect.translate(-rect.left, -rect.bottom);
         rects.emplace_back(rect);
     }
     for (size_t i = 0, count = _block_store.size(); i < count; ++i)
     {
-        const Geo::AABBRect &rect0 = rects[i];
+        const Geo::AABBRectParams &rect0 = rects[i];
         for (size_t j = i + 1; j < count; ++j)
         {
             if (_block_store[i]->size() != _block_store[j]->size())
             {
                 continue;
             }
-            const Geo::AABBRect &rect1 = rects[j];
+            const Geo::AABBRectParams &rect1 = rects[j];
             if (rect0[0] != rect1[0] || rect0[2] != rect1[2])
             {
                 continue;

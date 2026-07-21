@@ -241,7 +241,7 @@ public:
 
     Geo::Point center() const;
 
-    Geo::AABBRect bounding_rect() const;
+    Geo::AABBRectParams bounding_rect() const;
 
     Geo::Point mouse_position(const bool to_real_coord = true) const;
 

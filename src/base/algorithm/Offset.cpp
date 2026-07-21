@@ -320,14 +320,14 @@ bool Geo::offset(const Geo::Circle &input, Geo::Circle &result, const double dis
     }
 }
 
-bool Geo::offset(const Geo::AABBRect &input, Geo::AABBRect &result, const double distance)
+bool Geo::offset(const Geo::AABBRectParams &input, Geo::AABBRectParams &result, const double distance)
 {
-    if (distance >= 0 || -distance * 2 < std::min(input.width(), input.height()))
+    if (distance >= 0 || -distance * 2 < std::min(input.right - input.left, input.top - input.bottom))
     {
-        result.set_top(input.top() + distance);
-        result.set_right(input.right() + distance);
-        result.set_bottom(input.bottom() + distance);
-        result.set_left(input.left() + distance);
+        result.top = input.top + distance;
+        result.right = input.right + distance;
+        result.bottom = input.bottom + distance;
+        result.left = input.left + distance;
         return true;
     }
     else

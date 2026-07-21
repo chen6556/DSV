@@ -15,7 +15,6 @@ enum class Type
     DOBJECT,
     POINT,
     POLYLINE,
-    AABBRECT,
     POLYGON,
     TRIANGLE,
     CIRCLE,
@@ -30,8 +29,6 @@ enum class Type
 
     DIMENSION
 };
-
-class AABBRect;
 
 class Polygon;
 
@@ -55,6 +52,8 @@ struct AABBRectParams
     void transform(const double a, const double b, const double c, const double d, const double e, const double f);
 
     void scale(const double x, const double y, const double k);
+
+    void operator+=(const AABBRectParams &rect);
 };
 
 struct Drawable
@@ -94,9 +93,6 @@ public:
 
     // 凸包
     virtual Polygon convex_hull() const;
-
-    // 外接AABB矩形
-    virtual AABBRect bounding_rect() const;
 
     // 最小外接矩形
     virtual Polygon mini_bounding_rect() const;
@@ -186,8 +182,6 @@ public:
     Point rotated(const double x_, const double y_, const double rad) const;
 
     void scale(const double x_, const double y_, const double k) override;
-
-    AABBRect bounding_rect() const override;
 
     Polygon mini_bounding_rect() const override;
 
@@ -341,8 +335,6 @@ public:
 
     Polygon convex_hull() const override;
 
-    AABBRect bounding_rect() const override;
-
     Polygon mini_bounding_rect() const override;
 
     AABBRectParams aabbrect_params() const override;
@@ -352,111 +344,6 @@ public:
     Point shape_point(const size_t index, const double t) const;
 
     Polyline *range(const size_t index0, const double t0, const size_t index1, const double t1) const;
-};
-
-class AABBRect : public DObject
-{
-private:
-    std::vector<Point> _points;
-
-public:
-    AABBRect();
-
-    AABBRect(const double x0, const double y0, const double x1, const double y1);
-
-    AABBRect(const Point &point0, const Point &point1);
-
-    AABBRect(const AABBRect &rect) = default;
-
-    Type type() const override;
-
-    double left() const;
-
-    double top() const;
-
-    double right() const;
-
-    double bottom() const;
-
-    void set_left(const double value);
-
-    void set_top(const double value);
-
-    void set_right(const double value);
-
-    void set_bottom(const double value);
-
-    AABBRect &operator=(const AABBRect &reac);
-
-    bool empty() const override;
-
-    double length() const override;
-
-    void clear() override;
-
-    AABBRect *clone() const override;
-
-    double area() const;
-
-    double width() const;
-
-    double height() const;
-
-    void set_width(const double value);
-
-    void set_height(const double value);
-
-    void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
-
-    void transform(const double mat[6]) override;
-
-    void translate(const double tx, const double ty) override;
-
-    void rotate(const double x, const double y, const double rad) override; // 弧度制
-
-    void scale(const double x, const double y, const double k) override;
-
-    Polygon convex_hull() const override;
-
-    AABBRect bounding_rect() const override;
-
-    Polygon mini_bounding_rect() const override;
-
-    AABBRectParams aabbrect_params() const override;
-
-    std::vector<Point>::const_iterator begin() const;
-
-    std::vector<Point>::const_iterator cbegin() const;
-
-    std::vector<Point>::const_iterator end() const;
-
-    std::vector<Point>::const_iterator cend() const;
-
-    std::vector<Point>::const_reverse_iterator rbegin() const;
-
-    std::vector<Point>::const_reverse_iterator crbegin() const;
-
-    std::vector<Point>::const_reverse_iterator rend() const;
-
-    std::vector<Point>::const_reverse_iterator crend() const;
-
-    std::vector<Point>::const_iterator find(const Point &point) const;
-
-    AABBRect operator+(const Point &point) const;
-
-    AABBRect operator-(const Point &point) const;
-
-    AABBRect operator+(const AABBRect &rect) const;
-
-    void operator+=(const Point &point);
-
-    void operator-=(const Point &point);
-
-    void operator+=(const AABBRect &rect);
-
-    Point center() const;
-
-    const Point &operator[](const size_t index) const;
 };
 
 class Polygon : public DObject
@@ -475,7 +362,7 @@ public:
 
     Polygon(const Polyline &polyline);
 
-    Polygon(const AABBRect &rect);
+    Polygon(const AABBRectParams &rect);
 
     Polygon(const double x, const double y, const double radius, const int n, const double rad, const bool circumscribed);
 
@@ -592,8 +479,6 @@ public:
 
     Polygon convex_hull() const override;
 
-    AABBRect bounding_rect() const override;
-
     Polygon mini_bounding_rect() const override;
 
     AABBRectParams aabbrect_params() const override;
@@ -687,8 +572,6 @@ public:
 
     Polygon convex_hull() const override;
 
-    AABBRect bounding_rect() const override;
-
     Polygon mini_bounding_rect() const override;
 
     AABBRectParams aabbrect_params() const override;
@@ -751,8 +634,6 @@ public:
     void scale(const double x, const double y, const double k) override;
 
     Polygon convex_hull() const override;
-
-    AABBRect bounding_rect() const override;
 
     Polygon mini_bounding_rect() const override;
 
@@ -819,8 +700,6 @@ public:
     void scale(const double x, const double y, const double k) override;
 
     Polygon convex_hull() const override;
-
-    AABBRect bounding_rect() const override;
 
     Polygon mini_bounding_rect() const override;
 
@@ -900,8 +779,6 @@ public:
     void scale(const double x, const double y, const double k) override;
 
     Polygon convex_hull() const override;
-
-    AABBRect bounding_rect() const override;
 
     Polygon mini_bounding_rect() const override;
 
@@ -1028,8 +905,6 @@ public:
     void scale(const double x, const double y, const double k) override;
 
     Polygon convex_hull() const override;
-
-    AABBRect bounding_rect() const override;
 
     Polygon mini_bounding_rect() const override;
 
@@ -1219,8 +1094,6 @@ public:
     void rotate(const double x, const double y, const double rad) override;
 
     Polygon convex_hull() const override;
-
-    AABBRect bounding_rect() const override;
 
     Polygon mini_bounding_rect() const override;
 

@@ -120,31 +120,6 @@ Geo::Polygon DimAligned::convex_hull() const
     return Geo::Polygon({this->anchor[0], this->anchor[0] + vec, this->anchor[1] + vec, this->anchor[1]});
 }
 
-Geo::AABBRect DimAligned::bounding_rect() const
-{
-    Geo::Vector vec((this->anchor[1] - this->anchor[0]).vertical());
-    vec.normalize();
-    vec *= _height;
-    Geo::Point point0(this->anchor[0] + vec), point1(this->anchor[1] + vec);
-    vec.normalize();
-    vec *= (std::abs(_height) + 5);
-    if (Geo::distance(point0, point1) <= 10)
-    {
-        const Geo::Vector dir(point1 - point0);
-        point0 -= dir.normalized() * 7 * this->arrow_size;
-        point1 += dir.normalized() * 7 * this->arrow_size;
-    }
-    const double left =
-        std::min({this->anchor[0].x, this->anchor[1].x, this->anchor[0].x + vec.x, this->anchor[1].x + vec.x, point0.x, point1.x});
-    const double top =
-        std::max({this->anchor[0].y, this->anchor[1].y, this->anchor[0].y + vec.y, this->anchor[1].y + vec.y, point0.y, point1.y});
-    const double right =
-        std::max({this->anchor[0].x, this->anchor[1].x, this->anchor[0].x + vec.x, this->anchor[1].x + vec.x, point0.x, point1.x});
-    const double bottom =
-        std::min({this->anchor[0].y, this->anchor[1].y, this->anchor[0].y + vec.y, this->anchor[1].y + vec.y, point0.y, point1.y});
-    return Geo::AABBRect(left, top, right, bottom);
-}
-
 Geo::Polygon DimAligned::mini_bounding_rect() const
 {
     Geo::Vector vec((this->anchor[1] - this->anchor[0]).vertical());
@@ -395,38 +370,6 @@ Geo::Polygon DimLinear::convex_hull() const
     return Geo::Polygon(points.begin(), points.end());
 }
 
-Geo::AABBRect DimLinear::bounding_rect() const
-{
-    if (const Geo::Point mid((this->anchor[0] + this->anchor[1]) / 2); _horizontal)
-    {
-        const int width = this->anchor[0].x < this->anchor[1].x ? 7 : -7;
-        const double left = std::min({this->anchor[0].x, this->anchor[1].x, this->anchor[0].x - width * this->arrow_size,
-                                      this->anchor[1].x + width * this->arrow_size});
-        const double top = std::max({this->anchor[0].y, this->anchor[1].y, mid.y + _distance,
-                                     mid.y + _distance + (this->anchor[0].y <= mid.y + _distance ? 5 : -5),
-                                     mid.y + _distance + (this->anchor[1].y <= mid.y + _distance ? 5 : -5)});
-        const double right = std::max({this->anchor[0].x, this->anchor[1].x, this->anchor[0].x - width * this->arrow_size,
-                                       this->anchor[1].x + width * this->arrow_size});
-        const double bottom = std::min({this->anchor[0].y, this->anchor[1].y, mid.y + _distance,
-                                        mid.y + _distance + (this->anchor[0].y <= mid.y + _distance ? 5 : -5),
-                                        mid.y + _distance + (this->anchor[1].y <= mid.y + _distance ? 5 : -5)});
-        return Geo::AABBRect(left, top, right, bottom);
-    }
-    else
-    {
-        const int width = this->anchor[0].y < this->anchor[1].y ? 7 : -7;
-        const double left = std::min({this->anchor[0].x, this->anchor[1].x, mid.x + _distance,
-                                      mid.x + _distance + (this->anchor[0].x <= mid.x + _distance ? 5 : -5)});
-        const double top = std::max({this->anchor[0].y, this->anchor[1].y, mid.y + _distance, this->anchor[0].y - width * this->arrow_size,
-                                     this->anchor[1].y + width * this->arrow_size});
-        const double right = std::max({this->anchor[0].x, this->anchor[1].x, mid.x + _distance,
-                                       mid.x + _distance + (this->anchor[0].x <= mid.x + _distance ? 5 : -5)});
-        const double bottom = std::min({this->anchor[0].y, this->anchor[1].y, mid.y + _distance,
-                                        this->anchor[0].y - width * this->arrow_size, this->anchor[1].y + width * this->arrow_size});
-        return Geo::AABBRect(left, top, right, bottom);
-    }
-}
-
 Geo::Polygon DimLinear::mini_bounding_rect() const
 {
     if (const Geo::Point mid((this->anchor[0] + this->anchor[1]) / 2); _horizontal)
@@ -435,7 +378,7 @@ Geo::Polygon DimLinear::mini_bounding_rect() const
         const double top = std::max({this->anchor[0].y, this->anchor[1].y, mid.y + _distance});
         const double right = std::max(this->anchor[0].x, this->anchor[1].x);
         const double bottom = std::min({this->anchor[0].y, this->anchor[1].y, mid.y + _distance});
-        return Geo::AABBRect(left, top, right, bottom);
+        return Geo::AABBRectParams(left, top, right, bottom);
     }
     else
     {
@@ -443,7 +386,7 @@ Geo::Polygon DimLinear::mini_bounding_rect() const
         const double top = std::max(this->anchor[0].y, this->anchor[1].y);
         const double right = std::max({this->anchor[0].x, this->anchor[1].x, mid.x + _distance});
         const double bottom = std::min(this->anchor[0].y, this->anchor[1].y);
-        return Geo::AABBRect(left, top, right, bottom);
+        return Geo::AABBRectParams(left, top, right, bottom);
     }
 }
 
@@ -825,26 +768,6 @@ Geo::Polygon DimRadius::convex_hull() const
     }
 }
 
-Geo::AABBRect DimRadius::bounding_rect() const
-{
-    if (_distance <= Geo::distance(this->anchor[0], this->anchor[1]))
-    {
-        const double left = std::min(this->label.x, this->anchor[1].x);
-        const double top = std::max(this->label.y, this->anchor[1].y);
-        const double right = std::max(this->label.x, this->anchor[1].x);
-        const double bottom = std::min(this->label.y, this->anchor[1].y);
-        return Geo::AABBRect(left, top, right, bottom);
-    }
-    else
-    {
-        const double left = std::min(this->label.x, this->anchor[0].x);
-        const double top = std::max(this->label.y, this->anchor[0].y);
-        const double right = std::max(this->label.x, this->anchor[0].x);
-        const double bottom = std::min(this->label.y, this->anchor[0].y);
-        return Geo::AABBRect(left, top, right, bottom);
-    }
-}
-
 Geo::Polygon DimRadius::mini_bounding_rect() const
 {
     if (_distance <= Geo::distance(this->anchor[0], this->anchor[1]))
@@ -853,7 +776,7 @@ Geo::Polygon DimRadius::mini_bounding_rect() const
         const double top = std::max(this->label.y, this->anchor[1].y);
         const double right = std::max(this->label.x, this->anchor[1].x);
         const double bottom = std::min(this->label.y, this->anchor[1].y);
-        return Geo::AABBRect(left, top, right, bottom);
+        return Geo::AABBRectParams(left, top, right, bottom);
     }
     else
     {
@@ -861,7 +784,7 @@ Geo::Polygon DimRadius::mini_bounding_rect() const
         const double top = std::max(this->label.y, this->anchor[0].y);
         const double right = std::max(this->label.x, this->anchor[0].x);
         const double bottom = std::min(this->label.y, this->anchor[0].y);
-        return Geo::AABBRect(left, top, right, bottom);
+        return Geo::AABBRectParams(left, top, right, bottom);
     }
 }
 
@@ -1166,16 +1089,6 @@ Geo::Polygon DimAngle::convex_hull() const
     return Geo::Polygon({_center, this->anchor[0], this->label, this->anchor[1]});
 }
 
-Geo::AABBRect DimAngle::bounding_rect() const
-{
-    const Geo::AABBRectParams param(Geo::Arc(this->anchor[0], this->label, this->anchor[1]).aabbrect_params());
-    const double left = std::min({param.left, _root[0].x, _root[1].x});
-    const double top = std::max({param.top, _root[0].y, _root[1].y});
-    const double right = std::max({param.right, _root[0].x, _root[1].x});
-    const double bottom = std::min({param.bottom, _root[0].y, _root[1].y});
-    return Geo::AABBRect(left, top, right, bottom);
-}
-
 Geo::Polygon DimAngle::mini_bounding_rect() const
 {
     if (const double dis = Geo::distance(this->anchor[1], _center, this->anchor[0], true);
@@ -1416,15 +1329,6 @@ DimOrdinate *DimOrdinate::clone() const
 Geo::Polygon DimOrdinate::convex_hull() const
 {
     return Geo::Polygon({this->anchor[0], this->anchor[1], _root[1], _root[0]});
-}
-
-Geo::AABBRect DimOrdinate::bounding_rect() const
-{
-    const double left = std::min({this->anchor[0].x, this->anchor[1].x, _root[0].x, _root[1].x});
-    const double top = std::max({this->anchor[0].y, this->anchor[1].y, _root[0].y, _root[1].y});
-    const double right = std::max({this->anchor[0].x, this->anchor[1].x, _root[0].x, _root[1].x});
-    const double bottom = std::min({this->anchor[0].y, this->anchor[1].y, _root[0].y, _root[1].y});
-    return Geo::AABBRect(left, top, right, bottom);
 }
 
 Geo::Polygon DimOrdinate::mini_bounding_rect() const

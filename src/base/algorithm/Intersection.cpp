@@ -665,31 +665,6 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
     return result.size();
 }
 
-bool Geo::is_intersected(const AABBRect &rect0, const AABBRect &rect1, const bool inside)
-{
-    if (rect0.empty() || rect1.empty())
-    {
-        return false;
-    }
-
-    if (rect0.right() < rect1.left() || rect0.left() > rect1.right() || rect0.bottom() > rect1.top() || rect0.top() < rect1.bottom())
-    {
-        return false;
-    }
-
-    if (inside)
-    {
-        return true;
-    }
-    else
-    {
-        return !(
-            (rect0.top() < rect1.top() && rect0.right() < rect1.right() && rect0.bottom() > rect1.bottom() &&
-             rect0.left() > rect1.left()) ||
-            (rect1.top() < rect0.top() && rect1.right() < rect0.right() && rect1.bottom() > rect0.bottom() && rect1.left() > rect0.left()));
-    }
-}
-
 bool Geo::is_intersected(const AABBRectParams &params0, const AABBRectParams &params1, const bool inside)
 {
     if (params0.right < params1.left || params0.left > params1.right || params0.bottom > params1.top || params0.top < params1.bottom)

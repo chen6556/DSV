@@ -33,7 +33,7 @@ bool offset(const Polygon &input, std::vector<Polygon> &result, const double dis
 
 bool offset(const Circle &input, Circle &result, const double distance);
 
-bool offset(const AABBRect &input, AABBRect &result, const double distance);
+bool offset(const AABBRectParams &input, AABBRectParams &result, const double distance);
 
 bool offset(const CubicBezier &bezier, std::vector<CubicBezier> &result, const double distance, const double tolerance, const int sample_count);
 } // namespace Geo

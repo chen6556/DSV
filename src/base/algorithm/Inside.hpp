@@ -14,9 +14,6 @@ bool is_inside(const Point &point, const Polyline &polyline);
 bool is_inside(const Point &point, const Polygon &polygon, const bool coincide = false);
 
 // 判断点是否在AABB矩形内,coincide决定是否包含点在AABB矩形上的情况
-bool is_inside(const Point &point, const AABBRect &rect, const bool coincide = false);
-
-// 判断点是否在AABB矩形内,coincide决定是否包含点在AABB矩形上的情况
 bool is_inside(const Point &point, const AABBRectParams &params, const bool coincide = false);
 
 // 判断点是否在圆内,coincide决定是否包含点在圆上的情况

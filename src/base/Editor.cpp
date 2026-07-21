@@ -7382,16 +7382,16 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
     if (Geo::distance_square(bezier->front().x, bezier->front().y, x, y) <=
         Geo::distance_square(bezier->back().x, bezier->back().y, x, y)) // 延长头
     {
-        const Geo::AABBRect rect = _graph->container_group(_current_group).bounding_rect();
+        const Geo::AABBRectParams rect(_graph->container_group(_current_group).aabbrect_params());
         head = bezier->front();
-        tail = head + (head - bezier->control_points[1]).normalize() * std::hypot(rect.width(), rect.height());
+        tail = head + (head - bezier->control_points[1]).normalize() * std::hypot(rect.right - rect.left, rect.bottom - rect.top);
     }
     else // 延长尾
     {
-        const Geo::AABBRect rect = _graph->container_group(_current_group).bounding_rect();
+        const Geo::AABBRectParams rect(_graph->container_group(_current_group).aabbrect_params());
         head = bezier->back();
-        tail =
-            head + (head - bezier->control_points[bezier->control_points.size() - 2]).normalize() * std::hypot(rect.width(), rect.height());
+        tail = head + (head - bezier->control_points[bezier->control_points.size() - 2]).normalize() *
+                          std::hypot(rect.right - rect.left, rect.bottom - rect.top);
     }
 
     std::vector<Geo::Point> intersections;
@@ -8378,21 +8378,21 @@ void Editor::auto_combine()
     std::sort(all_polylines.begin(), all_polylines.end(),
               [&](const Geo::DObject *a, const Geo::DObject *b) { return lengths[a] > lengths[b]; });
 
-    std::unordered_map<const Geo::DObject *, Geo::AABBRect> container_rects, polyline_rects;
+    std::unordered_map<const Geo::DObject *, Geo::AABBRectParams> container_rects, polyline_rects;
     for (const Geo::DObject *object : all_containers)
     {
-        container_rects.insert_or_assign(object, object->bounding_rect());
+        container_rects.insert_or_assign(object, object->aabbrect_params());
     }
     for (const Geo::DObject *object : all_polylines)
     {
-        polyline_rects.insert_or_assign(object, object->bounding_rect());
+        polyline_rects.insert_or_assign(object, object->aabbrect_params());
     }
 
     _graph->append_group();
     for (size_t i = 0, count = all_containers.size(); i < count; ++i)
     {
-        Geo::AABBRect current_rect = container_rects[all_containers[i]];
-        std::vector<Geo::AABBRect> current_rects({current_rect});
+        Geo::AABBRectParams current_rect = container_rects[all_containers[i]];
+        std::vector<Geo::AABBRectParams> current_rects({current_rect});
         std::vector<Geo::DObject *> objects({all_containers[i]});
         for (size_t j = i + 1; j < count; ++j)
         {
@@ -8401,7 +8401,7 @@ void Editor::auto_combine()
                 continue;
             }
 
-            const Geo::AABBRect &container_rect = container_rects[all_containers[j]];
+            const Geo::AABBRectParams &container_rect = container_rects[all_containers[j]];
             for (size_t k = 0, object_count = objects.size(); k < object_count; ++k)
             {
                 if (!Geo::is_intersected(current_rects[k], container_rect))
@@ -8763,7 +8763,7 @@ void Editor::auto_layering()
     }
 
     std::vector<Geo::DObject *> all_containers, all_polylines;
-    std::unordered_map<const Geo::DObject *, Geo::AABBRect> rects;
+    std::unordered_map<const Geo::DObject *, Geo::AABBRectParams> rects;
     for (ContainerGroup &group : _graph->container_groups())
     {
         while (!group.empty())
@@ -8780,7 +8780,7 @@ void Editor::auto_layering()
                 break;
             default:
                 all_containers.emplace_back(group.pop_back());
-                rects.insert_or_assign(all_containers.back(), all_containers.back()->bounding_rect());
+                rects.insert_or_assign(all_containers.back(), all_containers.back()->aabbrect_params());
                 break;
             }
         }
@@ -8826,7 +8826,7 @@ void Editor::auto_layering()
     {
         _graph->back().append(all_containers.front());
         all_containers.erase(all_containers.begin());
-        std::unordered_map<const Geo::DObject *, Geo::AABBRect> current_rects;
+        std::unordered_map<const Geo::DObject *, Geo::AABBRectParams> current_rects;
         current_rects.insert_or_assign(_graph->back().front(), rects[_graph->back().front()]);
         for (size_t i = 0, count = all_containers.size(); i < count; ++i)
         {
@@ -8836,7 +8836,7 @@ void Editor::auto_layering()
             case Geo::Type::POLYGON:
                 {
                     const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(all_containers[i]);
-                    const Geo::AABBRect &rect = rects[polygon];
+                    const Geo::AABBRectParams &rect = rects[polygon];
                     for (Geo::DObject *geo : _graph->back())
                     {
                         switch (geo->type())

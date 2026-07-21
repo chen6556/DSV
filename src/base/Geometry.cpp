@@ -66,6 +66,13 @@ void AABBRectParams::scale(const double x, const double y, const double k)
     bottom = k * bottom + y * (1 - k);
 }
 
+void AABBRectParams::operator+=(const AABBRectParams &rect)
+{
+    this->left = std::min(this->left, rect.left);
+    this->top = std::max(this->top, rect.top);
+    this->right = std::max(this->right, rect.right);
+    this->bottom = std::min(this->bottom, rect.bottom);
+}
 
 
 double DObject::length() const
@@ -76,11 +83,6 @@ double DObject::length() const
 Polygon DObject::convex_hull() const
 {
     return Polygon();
-}
-
-AABBRect DObject::bounding_rect() const
-{
-    return AABBRect();
 }
 
 Polygon DObject::mini_bounding_rect() const
@@ -221,14 +223,9 @@ void Point::scale(const double x_, const double y_, const double k)
     y = k * y1 + y_ * (1 - k);
 }
 
-AABBRect Point::bounding_rect() const
-{
-    return AABBRect(x, y, x, y);
-}
-
 Polygon Point::mini_bounding_rect() const
 {
-    return AABBRect(x, y, x, y);
+    return Polygon({*this, *this, *this, *this});
 }
 
 AABBRectParams Point::aabbrect_params() const
@@ -716,24 +713,6 @@ Polygon Polyline::convex_hull() const
     return Polygon(hull.cbegin(), hull.cend());
 }
 
-AABBRect Polyline::bounding_rect() const
-{
-    if (_points.empty())
-    {
-        return AABBRect();
-    }
-
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
-    for (const Point &point : _points)
-    {
-        x0 = std::min(x0, point.x);
-        y0 = std::min(y0, point.y);
-        x1 = std::max(x1, point.x);
-        y1 = std::max(y1, point.y);
-    }
-    return AABBRect(x0, y1, x1, y0);
-}
-
 Polygon Polyline::mini_bounding_rect() const
 {
     if (_points.empty())
@@ -749,7 +728,7 @@ Polygon Polyline::mini_bounding_rect() const
         Polygon polygon(hull);
         cs = (polygon[i - 1].x * polygon[i].y - polygon[i].x * polygon[i - 1].y) / (polygon[i].length() * polygon[i - 1].length());
         polygon.rotate(polygon[i - 1].x, polygon[i - 1].y, std::acos(cs));
-        temp = polygon.bounding_rect();
+        temp = polygon.aabbrect_params();
         if (temp.area() < area)
         {
             rect = temp;
@@ -828,415 +807,6 @@ Polyline *Polyline::range(const size_t index0, const double t0, const size_t ind
 }
 
 
-// AABBRect
-
-AABBRect::AABBRect()
-{
-    _points.assign({Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0)});
-}
-
-AABBRect::AABBRect(const double x0, const double y0, const double x1, const double y1)
-{
-    if (x0 < x1)
-    {
-        if (y0 > y1)
-        {
-            _points.assign({Point(x0, y0), Point(x1, y0), Point(x1, y1), Point(x0, y1), Point(x0, y0)});
-        }
-        else
-        {
-            _points.assign({Point(x0, y1), Point(x1, y1), Point(x1, y0), Point(x0, y0), Point(x0, y1)});
-        }
-    }
-    else
-    {
-        if (y0 > y1)
-        {
-            _points.assign({Point(x1, y0), Point(x0, y0), Point(x0, y1), Point(x1, y1), Point(x1, y0)});
-        }
-        else
-        {
-            _points.assign({Point(x1, y1), Point(x0, y1), Point(x0, y0), Point(x1, y0), Point(x1, y1)});
-        }
-    }
-}
-
-AABBRect::AABBRect(const Point &point0, const Point &point1)
-{
-    const double x0 = point0.x, y0 = point0.y, x1 = point1.x, y1 = point1.y;
-    if (x0 < x1)
-    {
-        if (y0 > y1)
-        {
-            _points.assign({Point(x0, y0), Point(x1, y0), Point(x1, y1), Point(x0, y1), Point(x0, y0)});
-        }
-        else
-        {
-            _points.assign({Point(x0, y1), Point(x1, y1), Point(x1, y0), Point(x0, y0), Point(x0, y1)});
-        }
-    }
-    else
-    {
-        if (y0 > y1)
-        {
-            _points.assign({Point(x1, y0), Point(x0, y0), Point(x0, y1), Point(x1, y1), Point(x1, y0)});
-        }
-        else
-        {
-            _points.assign({Point(x1, y1), Point(x0, y1), Point(x0, y0), Point(x1, y0), Point(x1, y1)});
-        }
-    }
-}
-
-Type AABBRect::type() const
-{
-    return Type::AABBRECT;
-}
-
-double AABBRect::left() const
-{
-    return _points.front().x;
-}
-
-double AABBRect::top() const
-{
-    return _points.front().y;
-}
-
-double AABBRect::right() const
-{
-    return _points[2].x;
-}
-
-double AABBRect::bottom() const
-{
-    return _points[2].y;
-}
-
-void AABBRect::set_left(const double value)
-{
-    _points.front().x = value;
-    _points[3].x = value;
-    _points.back().x = value;
-}
-
-void AABBRect::set_top(const double value)
-{
-    _points.front().y = value;
-    _points[1].y = value;
-    _points.back().y = value;
-}
-
-void AABBRect::set_right(const double value)
-{
-    _points[1].x = value;
-    _points[2].x = value;
-}
-
-void AABBRect::set_bottom(const double value)
-{
-    _points[2].y = value;
-    _points[3].y = value;
-}
-
-AABBRect &AABBRect::operator=(const AABBRect &rect)
-{
-    if (this != &rect)
-    {
-        DObject::operator=(rect);
-        _points = rect._points;
-    }
-    return *this;
-}
-
-bool AABBRect::empty() const
-{
-    return _points.size() < 5;
-}
-
-double AABBRect::length() const
-{
-    double reuslt = 0;
-    for (size_t i = 1, count = _points.size(); i < count; ++i)
-    {
-        reuslt += Geo::distance(_points[i], _points[i - 1]);
-    }
-    return reuslt;
-}
-
-void AABBRect::clear()
-{
-    _points.clear();
-}
-
-AABBRect *AABBRect::clone() const
-{
-    return new AABBRect(*this);
-}
-
-double AABBRect::area() const
-{
-    if (empty())
-    {
-        return 0;
-    }
-    else
-    {
-        return distance(_points[0], _points[1]) * distance(_points[1], _points[2]);
-    }
-}
-
-double AABBRect::width() const
-{
-    if (!_points.empty())
-    {
-        return Geo::distance(_points.front(), _points[1]);
-    }
-    else
-    {
-        return -1;
-    }
-}
-
-double AABBRect::height() const
-{
-    if (!_points.empty())
-    {
-        return Geo::distance(_points[1], _points[2]);
-    }
-    else
-    {
-        return -1;
-    }
-}
-
-void AABBRect::set_width(const double value)
-{
-    const double d = (value - width()) / 2;
-    _points[0].x = _points[3].x = _points[4].x = _points[0].x - d;
-    _points[1].x = _points[2].x = _points[1].x + d;
-}
-
-void AABBRect::set_height(const double value)
-{
-    const double d = (value - height()) / 2;
-    _points[0].y = _points[1].y = _points[4].y = _points[0].y + d;
-    _points[2].y = _points[3].y = _points[2].y + d;
-}
-
-void AABBRect::transform(const double a, const double b, const double c, const double d, const double e, const double f)
-{
-    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.transform(a, b, c, d, e, f); });
-    if (_points[0].x > _points[1].x)
-    {
-        std::swap(_points[0], _points[1]);
-        std::swap(_points[2], _points[3]);
-    }
-    if (_points[0].y < _points[2].y)
-    {
-        std::swap(_points[0], _points[3]);
-        std::swap(_points[1], _points[2]);
-    }
-    _points[4] = _points[0];
-}
-
-void AABBRect::transform(const double mat[6])
-{
-    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.transform(mat); });
-    if (_points[0].x > _points[1].x)
-    {
-        std::swap(_points[0], _points[1]);
-        std::swap(_points[2], _points[3]);
-    }
-    if (_points[0].y < _points[2].y)
-    {
-        std::swap(_points[0], _points[3]);
-        std::swap(_points[1], _points[2]);
-    }
-    _points[4] = _points[0];
-}
-
-void AABBRect::translate(const double tx, const double ty)
-{
-    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.translate(tx, ty); });
-}
-
-void AABBRect::rotate(const double x, const double y, const double rad)
-{
-    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.rotate(x, y, rad); });
-}
-
-void AABBRect::scale(const double x, const double y, const double k)
-{
-    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.scale(x, y, k); });
-}
-
-Polygon AABBRect::convex_hull() const
-{
-    return Polygon(_points.cbegin(), _points.cend());
-}
-
-AABBRect AABBRect::bounding_rect() const
-{
-    if (_points.empty())
-    {
-        return AABBRect();
-    }
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
-    for (const Point &point : _points)
-    {
-        x0 = std::min(x0, point.x);
-        y0 = std::min(y0, point.y);
-        x1 = std::max(x1, point.x);
-        y1 = std::max(y1, point.y);
-    }
-    return AABBRect(x0, y0, x1, y1);
-}
-
-Polygon AABBRect::mini_bounding_rect() const
-{
-    return *this;
-}
-
-AABBRectParams AABBRect::aabbrect_params() const
-{
-    AABBRectParams params;
-    if (_points.empty())
-    {
-        return params;
-    }
-    params.left = params.right = _points.front().x;
-    params.bottom = params.top = _points.front().y;
-    for (const Point &point : _points)
-    {
-        params.left = std::min(params.left, point.x);
-        params.bottom = std::min(params.bottom, point.y);
-        params.right = std::max(params.right, point.x);
-        params.top = std::max(params.top, point.y);
-    }
-    return params;
-}
-
-std::vector<Point>::const_iterator AABBRect::begin() const
-{
-    return _points.cbegin();
-}
-
-std::vector<Point>::const_iterator AABBRect::cbegin() const
-{
-    return _points.cbegin();
-}
-
-std::vector<Point>::const_iterator AABBRect::end() const
-{
-    return _points.cend();
-}
-
-std::vector<Point>::const_iterator AABBRect::cend() const
-{
-    return _points.cend();
-}
-
-std::vector<Point>::const_reverse_iterator AABBRect::rbegin() const
-{
-    return _points.crbegin();
-}
-
-std::vector<Point>::const_reverse_iterator AABBRect::crbegin() const
-{
-    return _points.crbegin();
-}
-
-std::vector<Point>::const_reverse_iterator AABBRect::rend() const
-{
-    return _points.crend();
-}
-
-std::vector<Point>::const_reverse_iterator AABBRect::crend() const
-{
-    return _points.crend();
-}
-
-std::vector<Point>::const_iterator AABBRect::find(const Point &point) const
-{
-    return std::find(_points.cbegin(), _points.cend(), point);
-}
-
-AABBRect AABBRect::operator+(const Point &point) const
-{
-    return AABBRect(_points[0].x + point.x, _points[0].y + point.y, _points[2].x + point.x, _points[2].y + point.y);
-}
-
-AABBRect AABBRect::operator-(const Point &point) const
-{
-    return AABBRect(_points[0].x - point.x, _points[0].y - point.y, _points[2].x - point.x, _points[2].y - point.y);
-}
-
-AABBRect AABBRect::operator+(const AABBRect &rect) const
-{
-    return AABBRect(std::min(left(), rect.left()), std::max(top(), rect.top()), std::max(right(), rect.right()),
-                    std::min(bottom(), rect.bottom()));
-}
-
-void AABBRect::operator+=(const Point &point)
-{
-    for (Point &p : _points)
-    {
-        p += point;
-    }
-}
-
-void AABBRect::operator-=(const Point &point)
-{
-    for (Point &p : _points)
-    {
-        p -= point;
-    }
-}
-
-void AABBRect::operator+=(const AABBRect &rect)
-{
-    if (rect.empty())
-    {
-        return;
-    }
-    if (_points.empty())
-    {
-        _points.assign(rect._points.begin(), rect._points.end());
-    }
-    else
-    {
-        if (_points[0].x > rect[0].x)
-        {
-            _points[0].x = _points[3].x = _points[4].x = rect[0].x;
-        }
-        if (_points[0].y < rect[0].y)
-        {
-            _points[0].y = _points[1].y = _points[4].y = rect[0].y;
-        }
-        if (_points[2].x < rect[2].x)
-        {
-            _points[1].x = _points[2].x = rect[2].x;
-        }
-        if (_points[2].y > rect[2].y)
-        {
-            _points[2].y = _points[3].y = rect[2].y;
-        }
-    }
-}
-
-Point AABBRect::center() const
-{
-    return (_points[0] + _points[2]) / 2;
-}
-
-const Point &AABBRect::operator[](const size_t index) const
-{
-    assert(!_points.empty() && index <= 4);
-    return _points[index];
-}
-
-
 // Polygon
 
 Polygon::Polygon(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end) : _points(begin, end)
@@ -1263,8 +833,13 @@ Polygon::Polygon(const Polyline &polyline) : _points(polyline.begin(), polyline.
     }
 }
 
-Polygon::Polygon(const AABBRect &rect) : _points(rect.cbegin(), rect.cend())
+Polygon::Polygon(const AABBRectParams &rect)
 {
+    _points.emplace_back(rect.left, rect.top);
+    _points.emplace_back(rect.right, rect.top);
+    _points.emplace_back(rect.right, rect.bottom);
+    _points.emplace_back(rect.left, rect.bottom);
+    _points.emplace_back(rect.left, rect.top);
 }
 
 Polygon::Polygon(const double x, const double y, const double radius, const int n, const double rad, const bool circumscribed)
@@ -1615,24 +1190,6 @@ Polygon Polygon::convex_hull() const
     return Polygon(hull.cbegin(), hull.cend());
 }
 
-AABBRect Polygon::bounding_rect() const
-{
-    if (_points.empty())
-    {
-        return AABBRect();
-    }
-
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
-    for (const Point &point : _points)
-    {
-        x0 = std::min(x0, point.x);
-        y0 = std::min(y0, point.y);
-        x1 = std::max(x1, point.x);
-        y1 = std::max(y1, point.y);
-    }
-    return AABBRect(x0, y1, x1, y0);
-}
-
 Polygon Polygon::mini_bounding_rect() const
 {
     if (_points.empty())
@@ -1648,7 +1205,7 @@ Polygon Polygon::mini_bounding_rect() const
         Polygon polygon(hull);
         cs = (polygon[i - 1].x * polygon[i].y - polygon[i].x * polygon[i - 1].y) / (polygon[i].length() * polygon[i - 1].length());
         polygon.rotate(polygon[i - 1].x, polygon[i - 1].y, std::acos(cs));
-        temp = polygon.bounding_rect();
+        temp = polygon.aabbrect_params();
         if (temp.area() < area)
         {
             rect = temp;
@@ -2346,20 +1903,6 @@ Polygon Triangle::convex_hull() const
     }
 }
 
-AABBRect Triangle::bounding_rect() const
-{
-    if (empty())
-    {
-        return AABBRect();
-    }
-
-    const double left = std::min({_vecs[0].x, _vecs[1].x, _vecs[2].x});
-    const double right = std::max({_vecs[0].x, _vecs[1].x, _vecs[2].x});
-    const double top = std::max({_vecs[0].y, _vecs[1].y, _vecs[2].y});
-    const double bottom = std::min({_vecs[0].y, _vecs[1].y, _vecs[2].y});
-    return AABBRect(left, top, right, bottom);
-}
-
 Polygon Triangle::mini_bounding_rect() const
 {
     if (empty())
@@ -2375,7 +1918,7 @@ Polygon Triangle::mini_bounding_rect() const
         cs = (triangle[i].x * triangle[i < 2 ? i + 1 : 0].y - triangle[i < 2 ? i + 1 : 0].x * triangle[i].y) /
              (triangle[i < 2 ? i + 1 : 0].length() * triangle[i].length());
         triangle.rotate(triangle[i].x, triangle[i].y, std::acos(cs));
-        temp = triangle.bounding_rect();
+        temp = triangle.aabbrect_params();
         if (temp.area() < area)
         {
             rect = temp;
@@ -2581,19 +2124,7 @@ Polygon Circle::convex_hull() const
     }
     else
     {
-        return AABBRect(x - radius, y + radius, x + radius, y - radius);
-    }
-}
-
-AABBRect Circle::bounding_rect() const
-{
-    if (radius == 0)
-    {
-        return AABBRect();
-    }
-    else
-    {
-        return AABBRect(x - radius, y + radius, x + radius, y - radius);
+        return AABBRectParams(x - radius, y + radius, x + radius, y - radius);
     }
 }
 
@@ -2605,7 +2136,7 @@ Polygon Circle::mini_bounding_rect() const
     }
     else
     {
-        return AABBRect(x - radius, y + radius, x + radius, y - radius);
+        return AABBRectParams(x - radius, y + radius, x + radius, y - radius);
     }
 }
 
@@ -2805,11 +2336,6 @@ void CubicBezier::scale(const double x, const double y, const double k)
 Polygon CubicBezier::convex_hull() const
 {
     return _shape.convex_hull();
-}
-
-AABBRect CubicBezier::bounding_rect() const
-{
-    return _shape.bounding_rect();
 }
 
 Polygon CubicBezier::mini_bounding_rect() const
@@ -3289,20 +2815,6 @@ Polygon Ellipse::convex_hull() const
     return polygon;
 }
 
-AABBRect Ellipse::bounding_rect() const
-{
-    const Geo::Point center = (_a[0] + _a[1] + _b[0] + _b[1]) / 4;
-    const double aa = Geo::distance_square(_a[0], _a[1]) / 4, bb = Geo::distance_square(_b[0], _b[1]) / 4;
-    const Geo::Vector vec = _a[0] - _a[1];
-    const double cc = std::pow(vec.x, 2) / (std::pow(vec.x, 2) + std::pow(vec.y, 2));
-    const double ss = 1 - cc;
-    const double left = center.x - std::sqrt(aa * cc + bb * ss);
-    const double top = center.y + std::sqrt(aa * ss + bb * cc);
-    const double right = center.x + std::sqrt(aa * cc + bb * ss);
-    const double bottom = center.y - std::sqrt(aa * ss + bb * cc);
-    return AABBRect(left, top, right, bottom);
-}
-
 Polygon Ellipse::mini_bounding_rect() const
 {
     const Geo::Point center = (_a[0] + _a[1] + _b[0] + _b[1]) / 4;
@@ -3729,11 +3241,6 @@ void BSpline::scale(const double x, const double y, const double k)
 Polygon BSpline::convex_hull() const
 {
     return _shape.convex_hull();
-}
-
-AABBRect BSpline::bounding_rect() const
-{
-    return _shape.bounding_rect();
 }
 
 Polygon BSpline::mini_bounding_rect() const
@@ -5344,44 +4851,31 @@ Polygon Arc::convex_hull() const
     return mini_bounding_rect();
 }
 
-AABBRect Arc::bounding_rect() const
-{
-    double left = std::min({control_points[0].x, control_points[1].x, control_points[2].x});
-    if (Geo::distance(Geo::Point(x - radius, y), *this) < Geo::EPSILON)
-    {
-        left = x - radius;
-    }
-    double right = std::max({control_points[0].x, control_points[1].x, control_points[2].x});
-    if (Geo::distance(Geo::Point(x + radius, y), *this) < Geo::EPSILON)
-    {
-        right = x + radius;
-    }
-    double top = std::max({control_points[0].y, control_points[1].y, control_points[2].y});
-    if (Geo::distance(Geo::Point(x, y + radius), *this) < Geo::EPSILON)
-    {
-        top = y + radius;
-    }
-    double bottom = std::min({control_points[0].y, control_points[1].y, control_points[2].y});
-    if (Geo::distance(Geo::Point(x, y - radius), *this) < Geo::EPSILON)
-    {
-        bottom = y - radius;
-    }
-    return AABBRect(left, top, right, bottom);
-}
-
 Polygon Arc::mini_bounding_rect() const
 {
     const double a = Geo::distance(control_points[0], control_points[2]) / 2;
     const double b = std::sqrt(radius * radius - a * a);
     const Geo::Vector vec = (control_points[1] - Geo::Point(x, y)).normalize();
+    std::vector<Point> points;
     if (Geo::distance(control_points[1], control_points[0], control_points[2]) <= radius)
     {
-        return AABBRect(control_points[0] + vec * b, control_points[2]);
+        points.emplace_back(control_points[0]);
+        points.emplace_back(control_points[0] + vec * b);
+        points.emplace_back(control_points[2]);
+        points.emplace_back(control_points[2] + vec * b);
+        points.emplace_back(control_points[0]);
     }
     else
     {
-        return AABBRect(control_points[0] + vec * (b + radius), control_points[2]);
+        const Point left(Point(x, y) + (control_points[0] - control_points[2]).normalize() * radius);
+        const Point right(Point(x, y) + (control_points[2] - control_points[1]).normalize() * radius);
+        points.emplace_back(left - vec * b);
+        points.emplace_back(left + vec * radius);
+        points.emplace_back(right + vec * radius);
+        points.emplace_back(right - vec * b);
+        points.emplace_back(points.front());
     }
+    return Polygon(points.begin(), points.end());
 }
 
 AABBRectParams Arc::aabbrect_params() const

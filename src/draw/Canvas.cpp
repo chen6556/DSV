@@ -798,10 +798,12 @@ void Canvas::show_overview()
         return;
     }
     // 获取graph的边界
-    Geo::AABBRect bounding_area = graph->bounding_rect();
+    const Geo::AABBRectParams bounding_area(graph->aabbrect_params());
+    const double width = bounding_area.right - bounding_area.left;
+    const double height = bounding_area.top - bounding_area.bottom;
     // 选择合适的缩放倍率
-    double height_ratio = _canvas_height / bounding_area.height();
-    double width_ratio = _canvas_width / bounding_area.width();
+    double height_ratio = _canvas_height / height;
+    double width_ratio = _canvas_width / width;
     _ratio = std::min(height_ratio, width_ratio);
     // 缩放减少2%，使其与边界留出一些空间
     _ratio = std::isinf(_ratio) ? 1 : _ratio * 0.98;
@@ -810,8 +812,8 @@ void Canvas::show_overview()
     CanvasOperations::CanvasOperation::view_ratio = _ratio;
 
     // 置于控件中间
-    double x_offset = (_canvas_width - bounding_area.width() * _ratio) / 2 - bounding_area.left() * _ratio;
-    double y_offset = (bounding_area.height() * _ratio - _canvas_height) / 2 + bounding_area.bottom() * _ratio + _canvas_height;
+    double x_offset = (_canvas_width - width * _ratio) / 2 - bounding_area.left * _ratio;
+    double y_offset = (height * _ratio - _canvas_height) / 2 + bounding_area.bottom * _ratio + _canvas_height;
 
     _canvas_ctm[0] = _ratio;
     _canvas_ctm[4] = -_ratio;
@@ -910,39 +912,35 @@ Geo::Point Canvas::center() const
     double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
     for (const ContainerGroup &group : _editor.graph()->container_groups())
     {
-        for (const Geo::Point &point : group.bounding_rect())
-        {
-            x0 = std::min(x0, point.x);
-            y0 = std::min(y0, point.y);
-            x1 = std::max(x1, point.x);
-            y1 = std::max(y1, point.y);
-        }
+        const Geo::AABBRectParams rect(group.aabbrect_params());
+        x0 = std::min(x0, rect.left);
+        y0 = std::min(y0, rect.bottom);
+        x1 = std::max(x1, rect.right);
+        y1 = std::max(y1, rect.top);
     }
 
     return Geo::Point((x0 + x1) / 2, (y0 + y1) / 2);
 }
 
-Geo::AABBRect Canvas::bounding_rect() const
+Geo::AABBRectParams Canvas::bounding_rect() const
 {
     if (_editor.graph() == nullptr || _editor.graph()->empty())
     {
-        return Geo::AABBRect();
+        return Geo::AABBRectParams();
     }
 
     double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
 
     for (const ContainerGroup &group : _editor.graph()->container_groups())
     {
-        for (const Geo::Point &point : group.bounding_rect())
-        {
-            x0 = std::min(x0, point.x);
-            y0 = std::min(y0, point.y);
-            x1 = std::max(x1, point.x);
-            y1 = std::max(y1, point.y);
-        }
+        const Geo::AABBRectParams rect(group.aabbrect_params());
+        x0 = std::min(x0, rect.left);
+        y0 = std::min(y0, rect.bottom);
+        x1 = std::max(x1, rect.right);
+        y1 = std::max(y1, rect.top);
     }
 
-    return Geo::AABBRect(x0, y0, x1, y1);
+    return Geo::AABBRectParams(x0, y0, x1, y1);
 }
 
 Geo::Point Canvas::mouse_position(const bool to_real_coord) const
@@ -1008,10 +1006,11 @@ void Canvas::show_menu(Geo::DObject *object)
 void Canvas::show_text_edit(Text *text)
 {
     _edited_text = text;
-    Geo::AABBRect rect(text->bounding_rect());
+    Geo::AABBRectParams rect(text->aabbrect_params());
+    const double center_x = (rect.left + rect.right) / 2, center_y = (rect.top + rect.bottom) / 2; 
     rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
-    _input_line.setMaximumSize(std::max(100.0, rect.width()), std::max(100.0, rect.height()));
-    _input_line.move(rect.center().x - _input_line.rect().center().x(), rect.center().y - _input_line.rect().center().y());
+    _input_line.setMaximumSize(std::max(100.0, rect.right - rect.left), std::max(100.0, rect.top - rect.bottom));
+    _input_line.move(center_x - _input_line.rect().center().x(), center_y - _input_line.rect().center().y());
     _input_line.setFocus();
     _input_line.setText(text->text());
     _input_line.moveCursor(QTextCursor::End);
@@ -2806,7 +2805,7 @@ bool Canvas::refresh_caught_points(const double x, const double y, const double 
             switch (geo->type())
             {
             case Geo::Type::POLYGON:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect_params()))
                 {
                     if (Geo::distance(pos, *static_cast<const Geo::Polygon *>(geo)) * _ratio < distance)
                     {
@@ -2824,7 +2823,7 @@ bool Canvas::refresh_caught_points(const double x, const double y, const double 
                 }
                 break;
             case Geo::Type::ELLIPSE:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect_params()))
                 {
                     const Geo::Ellipse *e = static_cast<const Geo::Ellipse *>(geo);
                     if (Geo::distance(pos, e->center()) * _ratio < distance || Geo::distance(pos, *e) * _ratio < distance)
@@ -2834,7 +2833,7 @@ bool Canvas::refresh_caught_points(const double x, const double y, const double 
                 }
                 break;
             case Geo::Type::POLYLINE:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect_params()))
                 {
                     if (Geo::distance(pos, *static_cast<const Geo::Polyline *>(geo)) * _ratio < distance)
                     {
@@ -2843,7 +2842,7 @@ bool Canvas::refresh_caught_points(const double x, const double y, const double 
                 }
                 break;
             case Geo::Type::BSPLINE:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect_params()))
                 {
                     if (Geo::distance(pos, static_cast<const Geo::BSpline *>(geo)->shape()) * _ratio < distance)
                     {
@@ -2852,7 +2851,7 @@ bool Canvas::refresh_caught_points(const double x, const double y, const double 
                 }
                 break;
             case Geo::Type::BEZIER:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect_params()))
                 {
                     if (Geo::distance(pos, static_cast<const Geo::CubicBezier *>(geo)->shape()) * _ratio < distance)
                     {
@@ -2888,7 +2887,7 @@ bool Canvas::refresh_caught_points(const double x, const double y, const double 
             switch (geo->type())
             {
             case Geo::Type::POLYGON:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect_params()))
                 {
                     if (Geo::distance(pos, *static_cast<const Geo::Polygon *>(geo)) * _ratio < distance)
                     {
@@ -2906,7 +2905,7 @@ bool Canvas::refresh_caught_points(const double x, const double y, const double 
                 }
                 break;
             case Geo::Type::ELLIPSE:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect_params()))
                 {
                     const Geo::Ellipse *e = static_cast<const Geo::Ellipse *>(geo);
                     if (Geo::distance(pos, e->center()) * _ratio < distance || Geo::distance(pos, *e) * _ratio < distance)
@@ -2916,7 +2915,7 @@ bool Canvas::refresh_caught_points(const double x, const double y, const double 
                 }
                 break;
             case Geo::Type::POLYLINE:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect_params()))
                 {
                     if (Geo::distance(pos, *static_cast<const Geo::Polyline *>(geo)) * _ratio < distance)
                     {
@@ -2925,7 +2924,7 @@ bool Canvas::refresh_caught_points(const double x, const double y, const double 
                 }
                 break;
             case Geo::Type::BEZIER:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect_params()))
                 {
                     if (Geo::distance(pos, static_cast<const Geo::CubicBezier *>(geo)->shape()) * _ratio < distance)
                     {
@@ -2934,7 +2933,7 @@ bool Canvas::refresh_caught_points(const double x, const double y, const double 
                 }
                 break;
             case Geo::Type::BSPLINE:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect_params()))
                 {
                     if (Geo::distance(pos, static_cast<const Geo::BSpline *>(geo)->shape()) * _ratio < distance)
                     {

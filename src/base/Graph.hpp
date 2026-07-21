@@ -64,8 +64,6 @@ public:
 
     void rescale(const double x, const double y);
 
-    Geo::AABBRect bounding_rect() const override;
-
     Geo::AABBRectParams aabbrect_params() const override;
 
     std::list<ContainerGroup>::iterator begin();

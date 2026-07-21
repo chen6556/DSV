@@ -328,11 +328,11 @@ void ScaleCommand::undo(Graph *graph)
     }
     else
     {
-        Geo::AABBRect rect;
+        Geo::AABBRectParams rect;
         for (Geo::DObject *object : _items)
         {
-            rect = object->bounding_rect();
-            object->scale((rect.left() + rect.right()) / 2, (rect.top() + rect.bottom()) / 2, 1.0 / _k);
+            rect = object->aabbrect_params();
+            object->scale((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2, 1.0 / _k);
         }
     }
     updated = _items;
@@ -463,7 +463,9 @@ void FlipCommand::undo(Graph *graph)
         {
             for (Geo::DObject *object : _items)
             {
-                coord = object->bounding_rect().center();
+                const Geo::AABBRectParams rect(object->aabbrect_params());
+                coord.x = (rect.left + rect.right) / 2;
+                coord.y = (rect.top + rect.bottom) / 2;
                 object->translate(-coord.x, 0);
                 object->transform(-1, 0, 0, 0, 1, 0);
                 object->translate(coord.x, 0);
@@ -473,7 +475,9 @@ void FlipCommand::undo(Graph *graph)
         {
             for (Geo::DObject *object : _items)
             {
-                coord = object->bounding_rect().center();
+                const Geo::AABBRectParams rect(object->aabbrect_params());
+                coord.x = (rect.left + rect.right) / 2;
+                coord.y = (rect.top + rect.bottom) / 2;
                 object->translate(0, -coord.y);
                 object->transform(1, 0, 0, 0, -1, 0);
                 object->translate(0, coord.y);

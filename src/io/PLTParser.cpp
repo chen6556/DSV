@@ -487,13 +487,13 @@ void Importer::ea()
         if (_combination == nullptr)
         {
             _graph->container_groups().back().append(
-                new Geo::Polygon(Geo::AABBRect(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio + _last_coord.x,
+                new Geo::Polygon(Geo::AABBRectParams(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio + _last_coord.x,
                                                _parameters.back() * _y_ratio + _last_coord.y)));
         }
         else
         {
             _combination->append(
-                new Geo::Polygon(Geo::AABBRect(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio + _last_coord.x,
+                new Geo::Polygon(Geo::AABBRectParams(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio + _last_coord.x,
                                                _parameters.back() * _y_ratio + _last_coord.y)));
         }
     }
@@ -509,13 +509,13 @@ void Importer::er()
         if (_combination == nullptr)
         {
             _graph->container_groups().back().append(
-                new Geo::Polygon(Geo::AABBRect(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio + _last_coord.x,
+                new Geo::Polygon(Geo::AABBRectParams(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio + _last_coord.x,
                                                _parameters.back() * _y_ratio + _last_coord.y)));
         }
         else
         {
             _combination->append(
-                new Geo::Polygon(Geo::AABBRect(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio + _last_coord.x,
+                new Geo::Polygon(Geo::AABBRectParams(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio + _last_coord.x,
                                                _parameters.back() * _y_ratio + _last_coord.y)));
         }
     }

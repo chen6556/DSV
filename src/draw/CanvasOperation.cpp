@@ -1982,7 +1982,7 @@ bool RectangleOperation::mouse_press(QMouseEvent *event)
                 _parameters[2] = real_pos[0];
                 _parameters[3] = real_pos[1];
             }
-            Canvas::canvas->add_object(new Geo::Polygon(Geo::AABBRect(_parameters[0], _parameters[1], _parameters[2], _parameters[3])));
+            Canvas::canvas->add_object(new Geo::Polygon(Geo::AABBRectParams(_parameters[0], _parameters[1], _parameters[2], _parameters[3])));
             shape.clear();
             tool[0] = Tool::Select;
             info.clear();
@@ -2086,7 +2086,7 @@ bool RectangleOperation::read_parameters(const double *params, const int count)
                 }
                 _parameters[2] = _parameters[0] + params[0], _parameters[3] = _parameters[1] + params[1];
             }
-            Canvas::canvas->add_object(new Geo::Polygon(Geo::AABBRect(_parameters[0], _parameters[1], _parameters[2], _parameters[3])));
+            Canvas::canvas->add_object(new Geo::Polygon(Geo::AABBRectParams(_parameters[0], _parameters[1], _parameters[2], _parameters[3])));
             release_pos[0] = press_pos[0] = _parameters[2];
             release_pos[1] = press_pos[1] = _parameters[3];
             shape.clear();

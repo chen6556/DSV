@@ -66,9 +66,6 @@ public:
 
     Geo::Polygon convex_hull() const override;
 
-    // 外接AABB矩形
-    Geo::AABBRect bounding_rect() const override;
-
     // 最小外接矩形
     Geo::Polygon mini_bounding_rect() const override;
 
@@ -156,8 +153,6 @@ public:
     void scale(const double x, const double y, const double k) override;
 
     void rescale(const double x, const double y);
-
-    Geo::AABBRect bounding_rect() const override;
 
     Geo::AABBRectParams aabbrect_params() const override;
 

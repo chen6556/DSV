@@ -253,26 +253,6 @@ void Graph::rescale(const double x, const double y)
     }
 }
 
-Geo::AABBRect Graph::bounding_rect() const
-{
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
-    for (const ContainerGroup &group : _container_groups)
-    {
-        if (group.empty())
-        {
-            continue;
-        }
-        for (const Geo::Point &point : group.bounding_rect())
-        {
-            x0 = std::min(x0, point.x);
-            y0 = std::min(y0, point.y);
-            x1 = std::max(x1, point.x);
-            y1 = std::max(y1, point.y);
-        }
-    }
-    return Geo::AABBRect(x0, y0, x1, y1);
-}
-
 Geo::AABBRectParams Graph::aabbrect_params() const
 {
     Geo::AABBRectParams param;
