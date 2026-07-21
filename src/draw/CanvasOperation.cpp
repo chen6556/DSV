@@ -300,7 +300,7 @@ bool SelectOperation::mouse_move(QMouseEvent *event)
     {
         Canvas::canvas->refresh_select_rect(_pos[0], _pos[1], real_pos[0], real_pos[1]);
         if (std::vector<Geo::DObject *> selected_objects =
-                Canvas::canvas->editor().select(Geo::AABBRect(_pos[0], _pos[1], real_pos[0], real_pos[1]), false, true);
+                Canvas::canvas->editor().select(Geo::AABBRectParams(_pos[0], _pos[1], real_pos[0], real_pos[1]), false, true);
             selected_objects.empty())
         {
             Canvas::canvas->clear_selected_ibo();

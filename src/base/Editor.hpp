@@ -71,7 +71,7 @@ public:
 
     const size_t selected_count() const;
 
-    std::vector<Geo::DObject *> select(const Geo::AABBRect &rect, const bool reset_others = true, const bool visible_only = true);
+    std::vector<Geo::DObject *> select(const Geo::AABBRectParams &rect, const bool reset_others = true, const bool visible_only = true);
 
     void reset_selected_mark(const bool value = false);
 

@@ -53,7 +53,7 @@ public:
 
     virtual bool select(const Geo::Point &point, const double distance) const = 0;
 
-    virtual bool select(const Geo::AABBRect &rect) const = 0;
+    virtual bool select(const Geo::AABBRectParams &rect) const = 0;
 };
 
 
@@ -91,7 +91,7 @@ public:
 
     bool select(const Geo::Point &point, const double distance) const override;
 
-    bool select(const Geo::AABBRect &rect) const override;
+    bool select(const Geo::AABBRectParams &rect) const override;
 
     double height() const;
 };
@@ -137,7 +137,7 @@ public:
 
     bool select(const Geo::Point &point, const double distance) const override;
 
-    bool select(const Geo::AABBRect &rect) const override;
+    bool select(const Geo::AABBRectParams &rect) const override;
 
     double height() const;
 };
@@ -178,7 +178,7 @@ public:
 
     bool select(const Geo::Point &point, const double distance) const override;
 
-    bool select(const Geo::AABBRect &rect) const override;
+    bool select(const Geo::AABBRectParams &rect) const override;
 
     double distance() const;
 };
@@ -242,7 +242,7 @@ public:
 
     bool select(const Geo::Point &point, const double distance) const override;
 
-    bool select(const Geo::AABBRect &rect) const override;
+    bool select(const Geo::AABBRectParams &rect) const override;
 
     const Geo::Point &root(const int index) const;
 
@@ -308,7 +308,7 @@ public:
 
     bool select(const Geo::Point &point, const double distance) const override;
 
-    bool select(const Geo::AABBRect &rect) const override;
+    bool select(const Geo::AABBRectParams &rect) const override;
 
     const Geo::Point &root(const int index) const;
 };

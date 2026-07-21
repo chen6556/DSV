@@ -119,25 +119,25 @@ int is_intersected(const CubicBezier &bezier, const BSpline &bspline, const bool
 
 
 // 判断AABB矩形是否与有限长线段相交,线段完全在AABB矩形内也算相交
-bool is_intersected(const AABBRect &rect, const Point &point0, const Point &point1);
+bool is_intersected(const AABBRectParams &rect, const Point &point0, const Point &point1);
 
 // 判断AABB矩形是否与多段线相交,多段线完全在AABB矩形内也算相交
-bool is_intersected(const AABBRect &rect, const Polyline &polyline);
+bool is_intersected(const AABBRectParams &rect, const Polyline &polyline);
 
 // 判断AABB矩形是否与多边形相交,多边形完全在AABB矩形内或AABB矩形完全在多边形内也算相交
-bool is_intersected(const AABBRect &rect, const Polygon &polygon);
+bool is_intersected(const AABBRectParams &rect, const Polygon &polygon);
 
 // 判断AABB矩形是否与圆相交,圆完全在AABB矩形内或AABB矩形完全在圆内也算相交
-bool is_intersected(const AABBRect &rect, const Circle &circle);
+bool is_intersected(const AABBRectParams &rect, const Circle &circle);
 
 // 判断AABB矩形是否与椭圆相交,椭圆完全在AABB矩形内或AABB矩形完全在圆内也算相交
-bool is_intersected(const AABBRect &rect, const Ellipse &ellipse);
+bool is_intersected(const AABBRectParams &rect, const Ellipse &ellipse);
 
 // 判断AABB矩形是否与圆弧相交,圆弧完全在AABB矩形内也算相交
-bool is_intersected(const AABBRect &rect, const Arc &arc);
+bool is_intersected(const AABBRectParams &rect, const Arc &arc);
 
 // 判断AABB矩形是否与四边形相交,四边形完全在AABB矩形内也算相交
-bool is_intersected(const AABBRect &rect, const Point &point0, const Point &point1, const Point &point2, const Point &point3);
+bool is_intersected(const AABBRectParams &rect, const Point &point0, const Point &point1, const Point &point2, const Point &point3);
 
 
 // 判断有限长线段是否与三角形相交,线段完全在三角形内不算相交

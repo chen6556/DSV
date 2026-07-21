@@ -696,10 +696,10 @@ std::tuple<Geo::DObject *, bool> Editor::select_with_state(const Geo::Point &poi
     return std::make_tuple(nullptr, false);
 }
 
-std::vector<Geo::DObject *> Editor::select(const Geo::AABBRect &rect, const bool reset_others, const bool visible_only)
+std::vector<Geo::DObject *> Editor::select(const Geo::AABBRectParams &rect, const bool reset_others, const bool visible_only)
 {
     std::vector<Geo::DObject *> result;
-    if (rect.empty() || _graph == nullptr || _graph->empty())
+    if (_graph == nullptr || _graph->empty())
     {
         return result;
     }
@@ -762,7 +762,7 @@ std::vector<Geo::DObject *> Editor::select(const Geo::AABBRect &rect, const bool
             }
             break;
         case Geo::Type::COMBINATION:
-            if (Geo::is_intersected(rect.aabbrect_params(), static_cast<Combination *>(container)->border(), true))
+            if (Geo::is_intersected(rect, static_cast<Combination *>(container)->border(), true))
             {
                 bool end = false;
                 for (Geo::DObject *item : *static_cast<Combination *>(container))
@@ -5141,7 +5141,7 @@ void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
         {
         case Geo::Type::POLYGON:
             if (const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
-                Geo::is_intersected(polygon->bounding_rect(), head, tail))
+                Geo::is_intersected(polygon->aabbrect_params(), head, tail))
             {
                 for (size_t i = 1, count = polygon->size(); i < count; ++i)
                 {
@@ -5154,7 +5154,7 @@ void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
             break;
         case Geo::Type::POLYLINE:
             if (const Geo::Polyline *polyline2 = static_cast<const Geo::Polyline *>(object);
-                polyline2 != polyline && Geo::is_intersected(polyline2->bounding_rect(), head, tail))
+                polyline2 != polyline && Geo::is_intersected(polyline2->aabbrect_params(), head, tail))
             {
                 for (size_t i = 1, count = polyline2->size(); i < count; ++i)
                 {
@@ -5197,7 +5197,7 @@ void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
             break;
         case Geo::Type::BEZIER:
             if (const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
-                Geo::is_intersected(bezier->bounding_rect(), head, tail))
+                Geo::is_intersected(bezier->aabbrect_params(), head, tail))
             {
                 if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier, points))
                 {
@@ -5213,7 +5213,7 @@ void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
             break;
         case Geo::Type::BSPLINE:
             if (const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
-                Geo::is_intersected(bspline->bounding_rect(), head, tail))
+                Geo::is_intersected(bspline->aabbrect_params(), head, tail))
             {
                 if (std::vector<Geo::Point> points;
                     Geo::is_intersected(head, tail, *bspline, dynamic_cast<const Geo::CubicBSpline *>(bspline), points))
@@ -5478,7 +5478,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
         {
         case Geo::Type::POLYGON:
             if (const Geo::Polygon *polygon2 = static_cast<const Geo::Polygon *>(object);
-                polygon2 != polygon && Geo::is_intersected(polygon2->bounding_rect(), head, tail))
+                polygon2 != polygon && Geo::is_intersected(polygon2->aabbrect_params(), head, tail))
             {
                 for (size_t i = 1, count = polygon2->size(); i < count; ++i)
                 {
@@ -5491,7 +5491,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
             break;
         case Geo::Type::POLYLINE:
             if (const Geo::Polyline *polyline2 = static_cast<const Geo::Polyline *>(object);
-                Geo::is_intersected(polyline2->bounding_rect(), head, tail))
+                Geo::is_intersected(polyline2->aabbrect_params(), head, tail))
             {
                 for (size_t i = 1, count = polyline2->size(); i < count; ++i)
                 {
@@ -5534,7 +5534,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
             break;
         case Geo::Type::BEZIER:
             if (const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
-                Geo::is_intersected(bezier->bounding_rect(), head, tail))
+                Geo::is_intersected(bezier->aabbrect_params(), head, tail))
             {
                 if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier, points))
                 {
@@ -5550,7 +5550,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
             break;
         case Geo::Type::BSPLINE:
             if (const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
-                Geo::is_intersected(bspline->bounding_rect(), head, tail))
+                Geo::is_intersected(bspline->aabbrect_params(), head, tail))
             {
                 if (std::vector<Geo::Point> points;
                     Geo::is_intersected(head, tail, *bspline, dynamic_cast<const Geo::CubicBSpline *>(bspline), points))
@@ -7228,7 +7228,7 @@ void Editor::extend(Geo::Polyline *polyline, const double x, const double y)
         {
         case Geo::Type::POLYGON:
             if (const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
-                Geo::is_intersected(polygon->bounding_rect(), head, tail))
+                Geo::is_intersected(polygon->aabbrect_params(), head, tail))
             {
                 for (size_t i = 1, count = polygon->size(); i < count; ++i)
                 {
@@ -7241,7 +7241,7 @@ void Editor::extend(Geo::Polyline *polyline, const double x, const double y)
             break;
         case Geo::Type::POLYLINE:
             if (const Geo::Polyline *polyline2 = static_cast<const Geo::Polyline *>(object);
-                polyline2 != polyline && Geo::is_intersected(polyline2->bounding_rect(), head, tail))
+                polyline2 != polyline && Geo::is_intersected(polyline2->aabbrect_params(), head, tail))
             {
                 for (size_t i = 1, count = polyline2->size(); i < count; ++i)
                 {
@@ -7284,7 +7284,7 @@ void Editor::extend(Geo::Polyline *polyline, const double x, const double y)
             break;
         case Geo::Type::BEZIER:
             if (const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
-                Geo::is_intersected(bezier->bounding_rect(), head, tail))
+                Geo::is_intersected(bezier->aabbrect_params(), head, tail))
             {
                 if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier, points))
                 {
@@ -7300,7 +7300,7 @@ void Editor::extend(Geo::Polyline *polyline, const double x, const double y)
             break;
         case Geo::Type::BSPLINE:
             if (const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
-                Geo::is_intersected(bspline->bounding_rect(), head, tail))
+                Geo::is_intersected(bspline->aabbrect_params(), head, tail))
             {
                 if (std::vector<Geo::Point> points;
                     Geo::is_intersected(head, tail, *bspline, dynamic_cast<const Geo::CubicBSpline *>(bspline), points))
@@ -7408,7 +7408,7 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
         {
         case Geo::Type::POLYGON:
             if (const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
-                Geo::is_intersected(polygon->bounding_rect(), head, tail))
+                Geo::is_intersected(polygon->aabbrect_params(), head, tail))
             {
                 for (size_t i = 1, count = polygon->size(); i < count; ++i)
                 {
@@ -7421,7 +7421,7 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
             break;
         case Geo::Type::POLYLINE:
             if (const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
-                Geo::is_intersected(polyline->bounding_rect(), head, tail))
+                Geo::is_intersected(polyline->aabbrect_params(), head, tail))
             {
                 for (size_t i = 1, count = polyline->size(); i < count; ++i)
                 {
@@ -7464,7 +7464,7 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
             break;
         case Geo::Type::BEZIER:
             if (const Geo::CubicBezier *bezier2 = static_cast<const Geo::CubicBezier *>(object);
-                bezier2 != bezier && Geo::is_intersected(bezier2->bounding_rect(), head, tail))
+                bezier2 != bezier && Geo::is_intersected(bezier2->aabbrect_params(), head, tail))
             {
                 if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier2, points))
                 {
@@ -7480,7 +7480,7 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
             break;
         case Geo::Type::BSPLINE:
             if (const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
-                Geo::is_intersected(bspline->bounding_rect(), head, tail))
+                Geo::is_intersected(bspline->aabbrect_params(), head, tail))
             {
                 if (std::vector<Geo::Point> points;
                     Geo::is_intersected(head, tail, *bspline, dynamic_cast<const Geo::CubicBSpline *>(bspline), points))
@@ -7599,7 +7599,7 @@ void Editor::extend(Geo::BSpline *bspline, const double x, const double y)
         {
         case Geo::Type::POLYGON:
             if (const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
-                Geo::is_intersected(polygon->bounding_rect(), head, tail))
+                Geo::is_intersected(polygon->aabbrect_params(), head, tail))
             {
                 for (size_t i = 1, count = polygon->size(); i < count; ++i)
                 {
@@ -7612,7 +7612,7 @@ void Editor::extend(Geo::BSpline *bspline, const double x, const double y)
             break;
         case Geo::Type::POLYLINE:
             if (const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
-                Geo::is_intersected(polyline->bounding_rect(), head, tail))
+                Geo::is_intersected(polyline->aabbrect_params(), head, tail))
             {
                 for (size_t i = 1, count = polyline->size(); i < count; ++i)
                 {
@@ -7655,7 +7655,7 @@ void Editor::extend(Geo::BSpline *bspline, const double x, const double y)
             break;
         case Geo::Type::BEZIER:
             if (const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
-                Geo::is_intersected(bezier->bounding_rect(), head, tail))
+                Geo::is_intersected(bezier->aabbrect_params(), head, tail))
             {
                 if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier, points))
                 {
@@ -7671,7 +7671,7 @@ void Editor::extend(Geo::BSpline *bspline, const double x, const double y)
             break;
         case Geo::Type::BSPLINE:
             if (const Geo::BSpline *bspline2 = static_cast<const Geo::BSpline *>(object);
-                bspline2 != bspline && Geo::is_intersected(bspline2->bounding_rect(), head, tail))
+                bspline2 != bspline && Geo::is_intersected(bspline2->aabbrect_params(), head, tail))
             {
                 if (std::vector<Geo::Point> points;
                     Geo::is_intersected(head, tail, *bspline2, dynamic_cast<const Geo::CubicBSpline *>(bspline2), points))

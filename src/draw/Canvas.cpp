@@ -253,7 +253,7 @@ void Canvas::resizeGL(int w, int h)
     _view_ctm[7] += (h - _canvas_height) / _ratio;
     _canvas_width = w, _canvas_height = h;
 
-    _visible_area = Geo::AABBRect(0, 0, w, h);
+    _visible_area = Geo::AABBRectParams(0, 0, w, h);
     _visible_area.transform(_view_ctm[0], _view_ctm[3], _view_ctm[6], _view_ctm[1], _view_ctm[4], _view_ctm[7]);
 
     _texture.text_image = QImage(w, h, QImage::Format::Format_RGBA8888);
@@ -793,7 +793,7 @@ void Canvas::show_overview()
         _view_ctm[7] = _canvas_height;
 
         // 可视区域为显示控件区域的反变换
-        _visible_area = Geo::AABBRect(0, 0, _canvas_width, _canvas_height);
+        _visible_area = Geo::AABBRectParams(0, 0, _canvas_width, _canvas_height);
         update();
         return;
     }
@@ -830,7 +830,7 @@ void Canvas::show_overview()
     // 可视区域为显示控件区域的反变换
     double x0 = 0, y0 = 0, x1 = _canvas_width, y1 = _canvas_height;
     _visible_area =
-        Geo::AABBRect(x0 * _view_ctm[0] + y0 * _view_ctm[3] + _view_ctm[6], x0 * _view_ctm[1] + y0 * _view_ctm[4] + _view_ctm[7],
+        Geo::AABBRectParams(x0 * _view_ctm[0] + y0 * _view_ctm[3] + _view_ctm[6], x0 * _view_ctm[1] + y0 * _view_ctm[4] + _view_ctm[7],
                       x1 * _view_ctm[0] + y1 * _view_ctm[3] + _view_ctm[6], x1 * _view_ctm[1] + y1 * _view_ctm[4] + _view_ctm[7]);
 
     makeCurrent();
@@ -1172,7 +1172,7 @@ bool Canvas::catch_cursor(const double x, const double y, Geo::Point &coord, con
 
 void Canvas::refresh_vbo(const bool flush)
 {
-    _editor.refresh_visible_objects(_visible_area.aabbrect_params());
+    _editor.refresh_visible_objects(_visible_area);
     std::future<VBOData> polyline_vbo = std::async(std::launch::async, &Canvas::refresh_polyline_vbo, this, flush),
                          polygon_vbo = std::async(std::launch::async, &Canvas::refresh_polygon_vbo, this, flush),
                          circle_vbo = std::async(std::launch::async, &Canvas::refresh_circle_vbo, this, flush),
@@ -1261,7 +1261,7 @@ void Canvas::refresh_vbo(const bool flush)
 
 void Canvas::refresh_vbo(const bool flush, const Geo::Type type)
 {
-    _editor.refresh_visible_objects(_visible_area.aabbrect_params());
+    _editor.refresh_visible_objects(_visible_area);
     switch (type)
     {
     case Geo::Type::POLYLINE:
@@ -1382,7 +1382,7 @@ void Canvas::refresh_vbo(const bool flush, const std::set<Geo::Type> &types)
         return refresh_vbo(flush);
     }
 
-    _editor.refresh_visible_objects(_visible_area.aabbrect_params());
+    _editor.refresh_visible_objects(_visible_area);
     std::future<VBOData> polyline_vbo, polygon_vbo, circle_vbo, curve_vbo, circle_printable_points, curve_printable_points, point_vbo;
     std::future<DimVBOData> dimension_vbo;
 
@@ -1771,10 +1771,10 @@ Canvas::VBOData Canvas::refresh_point_vbo(const bool flush)
 {
     VBOData result;
     Geo::AABBRectParams visible_area_params;
-    visible_area_params.left = _visible_area.left() - 2;
-    visible_area_params.right = _visible_area.right() + 2;
-    visible_area_params.bottom = _visible_area.bottom() - 2;
-    visible_area_params.top = _visible_area.top() + 2;
+    visible_area_params.left = _visible_area.left - 2;
+    visible_area_params.right = _visible_area.right + 2;
+    visible_area_params.bottom = _visible_area.bottom - 2;
+    visible_area_params.top = _visible_area.top + 2;
     _visible_objects[0].point = _visible_objects[1].point;
     _visible_objects[1].point.clear();
 
@@ -1914,10 +1914,10 @@ Canvas::VBOData Canvas::refresh_curve_printable_points()
 {
     VBOData result;
     Geo::AABBRectParams visible_area_params;
-    visible_area_params.left = _visible_area.left() - 2;
-    visible_area_params.right = _visible_area.right() + 2;
-    visible_area_params.top = _visible_area.top() + 2;
-    visible_area_params.bottom = _visible_area.bottom() - 2;
+    visible_area_params.left = _visible_area.left - 2;
+    visible_area_params.right = _visible_area.right + 2;
+    visible_area_params.top = _visible_area.top + 2;
+    visible_area_params.bottom = _visible_area.bottom - 2;
 
     for (ContainerGroup &group : _editor.graph()->container_groups())
     {
@@ -2149,10 +2149,10 @@ void Canvas::refresh_selected_ibo(const Geo::DObject *object)
 {
     {
         Geo::AABBRectParams visible_area_params;
-        visible_area_params.left = _visible_area.left() - 2;
-        visible_area_params.right = _visible_area.right() + 2;
-        visible_area_params.top = _visible_area.top() + 2;
-        visible_area_params.bottom = _visible_area.bottom() - 2;
+        visible_area_params.left = _visible_area.left - 2;
+        visible_area_params.right = _visible_area.right + 2;
+        visible_area_params.top = _visible_area.top + 2;
+        visible_area_params.bottom = _visible_area.bottom - 2;
         if (!Geo::is_intersected(visible_area_params, object->aabbrect_params()))
         {
             return;
@@ -2298,10 +2298,10 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::DObject *> &objects)
 
     refresh_selected_dimension_vbo();
     Geo::AABBRectParams visible_area_params;
-    visible_area_params.left = _visible_area.left() - 2;
-    visible_area_params.right = _visible_area.right() + 2;
-    visible_area_params.top = _visible_area.top() + 2;
-    visible_area_params.bottom = _visible_area.bottom() - 2;
+    visible_area_params.left = _visible_area.left - 2;
+    visible_area_params.right = _visible_area.right + 2;
+    visible_area_params.top = _visible_area.top + 2;
+    visible_area_params.bottom = _visible_area.bottom - 2;
     std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
     for (const Geo::DObject *geo : objects)
     {
@@ -2785,7 +2785,7 @@ bool Canvas::refresh_caught_points(const double x, const double y, const double 
         return false;
     }
 
-    const Geo::AABBRect rect(x - distance / _ratio, y + distance / _ratio, x + distance / _ratio, y - distance / _ratio);
+    const Geo::AABBRectParams rect(x - distance / _ratio, y + distance / _ratio, x + distance / _ratio, y - distance / _ratio);
     const Geo::Point pos(x, y);
     const size_t count = caught_objects.size();
 

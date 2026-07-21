@@ -12,6 +12,62 @@
 using namespace Geo;
 
 
+AABBRectParams::AABBRectParams(const double x0, const double y0, const double x1, const double y1)
+{
+    left = std::min(x0, x1);
+    right = std::max(x0, x1);
+    top = std::max(y0, y1);
+    bottom = std::min(y0, y1);
+}
+
+Point AABBRectParams::operator[](const int index) const
+{
+    switch (index)
+    {
+    case 1:
+        return Point(right, top);
+    case 2:
+        return Point(right, bottom);
+    case 3:
+        return Point(left, bottom);
+    case 0:
+        [[fallthrough]];
+    default:
+        return Point(left, top);
+    }
+}
+
+void AABBRectParams::translate(const double tx, const double ty)
+{
+    left += tx;
+    right += tx;
+    top += ty;
+    bottom += ty;
+}
+
+void AABBRectParams::transform(const double a, const double b, const double c, const double d, const double e, const double f)
+{
+    // 变换四个角点后重新计算外接矩形,避免反射/旋转后 top<bottom 或 left>right
+    const double x0 = a * left + b * top + c, y0 = d * left + e * top + f;
+    const double x1 = a * right + b * top + c, y1 = d * right + e * top + f;
+    const double x2 = a * right + b * bottom + c, y2 = d * right + e * bottom + f;
+    const double x3 = a * left + b * bottom + c, y3 = d * left + e * bottom + f;
+    left = std::min({x0, x1, x2, x3});
+    right = std::max({x0, x1, x2, x3});
+    top = std::max({y0, y1, y2, y3});
+    bottom = std::min({y0, y1, y2, y3});
+}
+
+void AABBRectParams::scale(const double x, const double y, const double k)
+{
+    left = k * left + x * (1 - k);
+    right = k * right + x * (1 - k);
+    top = k * top + y * (1 - k);
+    bottom = k * bottom + y * (1 - k);
+}
+
+
+
 double DObject::length() const
 {
     return 0;
@@ -686,7 +742,7 @@ Polygon Polyline::mini_bounding_rect() const
     }
 
     double cs = 0, area = DBL_MAX;
-    AABBRect rect, temp;
+    Polygon rect, temp;
     const Polygon hull(convex_hull());
     for (size_t i = 1, count = hull.size(); i < count; ++i)
     {
@@ -1585,7 +1641,7 @@ Polygon Polygon::mini_bounding_rect() const
     }
 
     double cs = 0, area = DBL_MAX;
-    AABBRect rect, temp;
+    Polygon rect, temp;
     const Polygon hull(convex_hull());
     for (size_t i = 1, count = hull.size(); i < count; ++i)
     {
@@ -2312,7 +2368,7 @@ Polygon Triangle::mini_bounding_rect() const
     }
 
     double cs = 0, area = DBL_MAX;
-    AABBRect rect, temp;
+    Polygon rect, temp;
     for (size_t i = 0; i < 3; ++i)
     {
         Triangle triangle(*this);

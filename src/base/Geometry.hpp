@@ -35,12 +35,26 @@ class AABBRect;
 
 class Polygon;
 
+class Point;
+
 struct AABBRectParams
 {
     double left = 0;
     double top = 0;
     double right = 0;
     double bottom = 0;
+
+    AABBRectParams() = default;
+
+    AABBRectParams(const double x0, const double y0, const double x1, const double y1);
+
+    Point operator[](const int index) const;
+
+    void translate(const double tx, const double ty);
+
+    void transform(const double a, const double b, const double c, const double d, const double e, const double f);
+
+    void scale(const double x, const double y, const double k);
 };
 
 struct Drawable

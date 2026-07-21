@@ -297,7 +297,7 @@ bool DimAligned::select(const Geo::Point &point, const double distance) const
     return false;
 }
 
-bool DimAligned::select(const Geo::AABBRect &rect) const
+bool DimAligned::select(const Geo::AABBRectParams &rect) const
 {
     Geo::Vector vec((this->anchor[1] - this->anchor[0]).vertical());
     vec.normalize();
@@ -712,7 +712,7 @@ bool DimLinear::select(const Geo::Point &point, const double distance) const
     return false;
 }
 
-bool DimLinear::select(const Geo::AABBRect &rect) const
+bool DimLinear::select(const Geo::AABBRectParams &rect) const
 {
     if (const Geo::Point mid((this->anchor[0] + this->anchor[1]) / 2); _horizontal)
     {
@@ -956,7 +956,7 @@ bool DimRadius::select(const Geo::Point &point, const double distance) const
     }
 }
 
-bool DimRadius::select(const Geo::AABBRect &rect) const
+bool DimRadius::select(const Geo::AABBRectParams &rect) const
 {
     if (_distance <= Geo::distance(this->anchor[0], this->anchor[1]))
     {
@@ -1273,7 +1273,7 @@ bool DimAngle::select(const Geo::Point &point, const double distance) const
     }
 }
 
-bool DimAngle::select(const Geo::AABBRect &rect) const
+bool DimAngle::select(const Geo::AABBRectParams &rect) const
 {
     if (Geo::is_intersected(rect, this->anchor[0], _root[0]) || Geo::is_intersected(rect, this->anchor[1], _root[1]))
     {
@@ -1509,7 +1509,7 @@ bool DimOrdinate::select(const Geo::Point &point, const double distance) const
         || Geo::distance(point, _root[0], _root[1], false) <= distance;
 }
 
-bool DimOrdinate::select(const Geo::AABBRect &rect) const
+bool DimOrdinate::select(const Geo::AABBRectParams &rect) const
 {
     return Geo::is_intersected(rect, this->anchor[0], this->anchor[1])
         || Geo::is_intersected(rect, this->anchor[1], _root[0])

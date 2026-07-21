@@ -29,7 +29,7 @@ public:
     static Canvas *canvas;
 
 private:
-    Geo::AABBRect _visible_area;
+    Geo::AABBRectParams _visible_area;
     std::vector<const Geo::DObject *> _caught_objects;
     Editor _editor;
     QLabel **_info_labels = nullptr;
