@@ -3208,7 +3208,7 @@ bool Editor::shape_xor(Geo::DObject *shape0, Geo::DObject *shape1)
 bool Editor::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1,
                     const double radius0, const double radius1)
 {
-    if (polyline0 == polyline1)
+    if (polyline0 == nullptr || polyline1 == nullptr || polyline0 == polyline1)
     {
         return false;
     }
@@ -5907,6 +5907,14 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
         switch (object->type())
         {
         case Geo::Type::POLYGON:
+            {
+                const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
+                for (size_t i = 1, count = polygon->size(); i < count; ++i)
+                {
+                    Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], anchor_bezier, temp, false, &tvalues);
+                }
+            }
+            break;
         case Geo::Type::POLYLINE:
             {
                 const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
@@ -6288,6 +6296,14 @@ void Editor::trim(Geo::BSpline *bspline, const double x, const double y)
         switch (object->type())
         {
         case Geo::Type::POLYGON:
+            {
+                const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
+                for (size_t i = 1, count = polygon->size(); i < count; ++i)
+                {
+                    Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], *bspline, is_cubic, temp, false, &tvalues);
+                }
+            }
+            break;
         case Geo::Type::POLYLINE:
             {
                 const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
@@ -6528,6 +6544,24 @@ void Editor::trim(Geo::Circle *circle, const double x, const double y)
         switch (object->type())
         {
         case Geo::Type::POLYGON:
+            {
+                const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
+                Geo::Point point0, point1;
+                for (size_t i = 1, count = polygon->size(); i < count; ++i)
+                {
+                    switch (Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], *circle, point0, point1))
+                    {
+                    case 2:
+                        intersections.emplace_back(point1);
+                    case 1:
+                        intersections.emplace_back(point0);
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            break;
         case Geo::Type::POLYLINE:
             {
                 const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
@@ -6663,6 +6697,24 @@ void Editor::trim(Geo::Arc *arc, const double x, const double y)
         switch (object->type())
         {
         case Geo::Type::POLYGON:
+            {
+                const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
+                Geo::Point point0, point1;
+                for (size_t i = 1, count = polygon->size(); i < count; ++i)
+                {
+                    switch (Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], *arc, point0, point1))
+                    {
+                    case 2:
+                        intersections.emplace_back(point1);
+                    case 1:
+                        intersections.emplace_back(point0);
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            break;
         case Geo::Type::POLYLINE:
             {
                 const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
@@ -6868,6 +6920,24 @@ void Editor::trim(Geo::Ellipse *ellipse, const double x, const double y)
         switch (object->type())
         {
         case Geo::Type::POLYGON:
+            {
+                const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
+                Geo::Point point0, point1;
+                for (size_t i = 1, count = polygon->size(); i < count; ++i)
+                {
+                    switch (Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], *ellipse, point0, point1))
+                    {
+                    case 2:
+                        intersections.emplace_back(point1);
+                    case 1:
+                        intersections.emplace_back(point0);
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            break;
         case Geo::Type::POLYLINE:
             {
                 const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
@@ -8210,6 +8280,8 @@ void Editor::reverse(const std::vector<Geo::DObject *> &objects)
             static_cast<Geo::BSpline *>(object)->reverse();
             break;
         case Geo::Type::POLYGON:
+            std::reverse(static_cast<Geo::Polygon *>(object)->begin(), static_cast<Geo::Polygon *>(object)->end());
+            break;
         case Geo::Type::POLYLINE:
             std::reverse(static_cast<Geo::Polyline *>(object)->begin(), static_cast<Geo::Polyline *>(object)->end());
             break;

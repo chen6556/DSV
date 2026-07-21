@@ -1183,7 +1183,7 @@ const Point &AABBRect::operator[](const size_t index) const
 
 // Polygon
 
-Polygon::Polygon(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end) : Polyline(begin, end)
+Polygon::Polygon(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end) : _points(begin, end)
 {
     if (!_points.empty() && _points.back() != _points.front())
     {
@@ -1191,7 +1191,7 @@ Polygon::Polygon(const std::vector<Point>::const_iterator &begin, const std::vec
     }
 }
 
-Polygon::Polygon(const std::initializer_list<Point> &points) : Polyline(points)
+Polygon::Polygon(const std::initializer_list<Point> &points) : _points(points)
 {
     if (!_points.empty() && _points.back() != _points.front())
     {
@@ -1199,7 +1199,7 @@ Polygon::Polygon(const std::initializer_list<Point> &points) : Polyline(points)
     }
 }
 
-Polygon::Polygon(const Polyline &polyline) : Polyline(polyline)
+Polygon::Polygon(const Polyline &polyline) : _points(polyline.begin(), polyline.end())
 {
     if (!_points.empty() && _points.back() != _points.front())
     {
@@ -1207,7 +1207,7 @@ Polygon::Polygon(const Polyline &polyline) : Polyline(polyline)
     }
 }
 
-Polygon::Polygon(const AABBRect &rect) : Polyline(rect.cbegin(), rect.cend())
+Polygon::Polygon(const AABBRect &rect) : _points(rect.cbegin(), rect.cend())
 {
 }
 
@@ -1246,7 +1246,8 @@ Polygon &Polygon::operator=(const Polygon &polygon)
 {
     if (this != &polygon)
     {
-        Polyline::operator=(polygon);
+        DObject::operator=(polygon);
+        _points = polygon._points;
     }
     return *this;
 }
@@ -1259,6 +1260,414 @@ Type Polygon::type() const
 Polygon *Polygon::clone() const
 {
     return new Polygon(*this);
+}
+
+size_t Polygon::size() const
+{
+    return _points.size();
+}
+
+bool Polygon::empty() const
+{
+    return _points.empty();
+}
+
+double Polygon::length() const
+{
+    double reuslt = 0;
+    for (size_t i = 1, count = _points.size(); i < count; ++i)
+    {
+        reuslt += Geo::distance(_points[i], _points[i - 1]);
+    }
+    return reuslt;
+}
+
+void Polygon::clear()
+{
+    _points.clear();
+}
+
+bool Polygon::is_self_intersected() const
+{
+    if (_points.size() < 4)
+    {
+        return false;
+    }
+
+    Point point;
+    for (size_t j = 2, count = _points.size() - 2; j < count; ++j)
+    {
+        if (Geo::is_intersected(_points[0], _points[1], _points[j], _points[j + 1], point))
+        {
+            return true;
+        }
+    }
+    for (size_t i = 1, count = _points.size() - 1; i < count; ++i)
+    {
+        for (size_t j = i + 2; j < count; ++j)
+        {
+            if (Geo::is_intersected(_points[i], _points[i + 1], _points[j], _points[j + 1], point))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+Point &Polygon::operator[](const size_t index)
+{
+    assert(index < _points.size());
+    return _points[index];
+}
+
+const Point &Polygon::operator[](const size_t index) const
+{
+    assert(index < _points.size());
+    return _points[index];
+}
+
+Point &Polygon::at(const size_t index)
+{
+    return _points.at(index);
+}
+
+const Point &Polygon::at(const size_t index) const
+{
+    return _points.at(index);
+}
+
+void Polygon::operator+=(const Point &point)
+{
+    for (Point &p : _points)
+    {
+        p += point;
+    }
+}
+
+void Polygon::operator-=(const Point &point)
+{
+    for (Point &p : _points)
+    {
+        p -= point;
+    }
+}
+
+void Polygon::flip()
+{
+    std::reverse(_points.begin(), _points.end());
+}
+
+Point &Polygon::front()
+{
+    assert(!_points.empty());
+    return _points.front();
+}
+
+const Point &Polygon::front() const
+{
+    assert(!_points.empty());
+    return _points.front();
+}
+
+Point &Polygon::back()
+{
+    assert(!_points.empty());
+    return _points.back();
+}
+
+const Point &Polygon::back() const
+{
+    assert(!_points.empty());
+    return _points.back();
+}
+
+std::vector<Point>::iterator Polygon::begin()
+{
+    return _points.begin();
+}
+
+std::vector<Point>::const_iterator Polygon::begin() const
+{
+    return _points.begin();
+}
+
+std::vector<Point>::const_iterator Polygon::cbegin() const
+{
+    return _points.cbegin();
+}
+
+std::vector<Point>::iterator Polygon::end()
+{
+    return _points.end();
+}
+
+std::vector<Point>::const_iterator Polygon::end() const
+{
+    return _points.end();
+}
+
+std::vector<Point>::const_iterator Polygon::cend() const
+{
+    return _points.cend();
+}
+
+std::vector<Point>::reverse_iterator Polygon::rbegin()
+{
+    return _points.rbegin();
+}
+
+std::vector<Point>::const_reverse_iterator Polygon::rbegin() const
+{
+    return _points.rbegin();
+}
+
+std::vector<Point>::const_reverse_iterator Polygon::crbegin() const
+{
+    return _points.crbegin();
+}
+
+std::vector<Point>::reverse_iterator Polygon::rend()
+{
+    return _points.rend();
+}
+
+std::vector<Point>::const_reverse_iterator Polygon::rend() const
+{
+    return _points.rend();
+}
+
+std::vector<Point>::const_reverse_iterator Polygon::crend() const
+{
+    return _points.crend();
+}
+
+std::vector<Point>::iterator Polygon::find(const Point &point)
+{
+    return std::find(_points.begin(), _points.end(), point);
+}
+
+std::vector<Point>::const_iterator Polygon::find(const Point &point) const
+{
+    return std::find(_points.cbegin(), _points.cend(), point);
+}
+
+void Polygon::transform(const double a, const double b, const double c, const double d, const double e, const double f)
+{
+    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.transform(a, b, c, d, e, f); });
+}
+
+void Polygon::transform(const double mat[6])
+{
+    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.transform(mat); });
+}
+
+void Polygon::translate(const double tx, const double ty)
+{
+    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.translate(tx, ty); });
+}
+
+void Polygon::rotate(const double x, const double y, const double rad)
+{
+    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.rotate(x, y, rad); });
+}
+
+void Polygon::scale(const double x, const double y, const double k)
+{
+    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.scale(x, y, k); });
+}
+
+Polygon Polygon::convex_hull() const
+{
+    std::vector<Point> points(_points);
+    std::sort(points.begin(), points.end(), [](const Point &a, const Point &b) { return a.y < b.y; });
+    const Point origin(points.front());
+    std::for_each(points.begin(), points.end(), [=](Point &p) { p -= origin; });
+    std::sort(points.begin() + 1, points.end(),
+              [](const Point &a, const Point &b)
+              {
+                  if (a.x / a.length() != b.x / b.length())
+                  {
+                      return a.x / a.length() > b.x / b.length();
+                  }
+                  else
+                  {
+                      return a.length() < b.length();
+                  }
+              });
+    std::for_each(points.begin(), points.end(), [=](Point &p) { p += origin; });
+
+    std::vector<Point> hull(points.begin(), points.begin() + 2);
+    size_t count = hull.size(), index = 0;
+    Geo::Vector vec0, vec1;
+    std::vector<bool> used(points.size(), false);
+    for (size_t i = 2, end = points.size(); i < end; ++i)
+    {
+        vec0 = hull.back() - hull[count - 2];
+        vec1 = vec0 + points[i] - hull.back();
+        while (count >= 2 && vec0.x * vec1.y - vec1.x * vec0.y < 0)
+        {
+            hull.pop_back();
+            --count;
+            vec0 = hull.back() - hull[count - 2];
+            vec1 = vec0 + points[i] - hull.back();
+        }
+        ++count;
+        hull.emplace_back(points[i]);
+        used[i] = true;
+    }
+
+    for (size_t i = 1; count < 2; ++i)
+    {
+        if (used[i])
+        {
+            continue;
+        }
+        hull.emplace_back(points[points.size() - i]);
+        ++count;
+        used[points.size() - i] = true;
+    }
+
+    for (size_t i = points.size() - 1; i > 0; --i)
+    {
+        if (used[i])
+        {
+            continue;
+        }
+
+        vec0 = hull.back() - hull[count - 2];
+        vec1 = vec0 + points[i] - hull.back();
+        while (count >= 2 && vec0.x * vec1.y - vec1.x * vec0.y < 0)
+        {
+            hull.pop_back();
+            --count;
+            vec0 = hull.back() - hull[count - 2];
+            vec1 = vec0 + points[i] - hull.back();
+        }
+        ++count;
+        hull.emplace_back(points[i]);
+    }
+
+    vec0 = hull.back() - hull[count - 2];
+    vec1 = vec0 + points.front() - hull.back();
+    if (count >= 2 && vec0.x * vec1.y - vec0.y * vec1.x < 0)
+    {
+        hull.pop_back();
+    }
+
+    hull.emplace_back(points.front());
+    return Polygon(hull.cbegin(), hull.cend());
+}
+
+AABBRect Polygon::bounding_rect() const
+{
+    if (_points.empty())
+    {
+        return AABBRect();
+    }
+
+    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
+    for (const Point &point : _points)
+    {
+        x0 = std::min(x0, point.x);
+        y0 = std::min(y0, point.y);
+        x1 = std::max(x1, point.x);
+        y1 = std::max(y1, point.y);
+    }
+    return AABBRect(x0, y1, x1, y0);
+}
+
+Polygon Polygon::mini_bounding_rect() const
+{
+    if (_points.empty())
+    {
+        return Polygon();
+    }
+
+    double cs = 0, area = DBL_MAX;
+    AABBRect rect, temp;
+    const Polygon hull(convex_hull());
+    for (size_t i = 1, count = hull.size(); i < count; ++i)
+    {
+        Polygon polygon(hull);
+        cs = (polygon[i - 1].x * polygon[i].y - polygon[i].x * polygon[i - 1].y) / (polygon[i].length() * polygon[i - 1].length());
+        polygon.rotate(polygon[i - 1].x, polygon[i - 1].y, std::acos(cs));
+        temp = polygon.bounding_rect();
+        if (temp.area() < area)
+        {
+            rect = temp;
+            area = temp.area();
+            rect.rotate(polygon[i - 1].x, polygon[i - 1].y, -std::acos(cs));
+        }
+    }
+    return rect;
+}
+
+AABBRectParams Polygon::aabbrect_params() const
+{
+    AABBRectParams params;
+    if (_points.empty())
+    {
+        return params;
+    }
+    params.left = params.right = _points.front().x;
+    params.top = params.bottom = _points.front().y;
+    for (const Point &point : _points)
+    {
+        params.left = std::min(params.left, point.x);
+        params.bottom = std::min(params.bottom, point.y);
+        params.right = std::max(params.right, point.x);
+        params.top = std::max(params.top, point.y);
+    }
+    return params;
+}
+
+void Polygon::remove_repeated_points()
+{
+    if (_points.empty())
+    {
+        return;
+    }
+    for (size_t i = _points.size() - 1; i > 0; --i)
+    {
+        if (_points[i] == _points[i - 1])
+        {
+            _points.erase(_points.begin() + i);
+        }
+    }
+}
+
+Point Polygon::shape_point(const size_t index, const double t) const
+{
+    if (index + 1 >= _points.size() || t < 0 || t > 1)
+    {
+        return Point();
+    }
+    return _points[index] + (_points[index + 1] - _points[index]) * t;
+}
+
+Polyline *Polygon::range(const size_t index0, const double t0, const size_t index1, const double t1) const
+{
+    if (index0 > index1 || (index0 == index1 && t0 >= t1) || index1 + 1 >= _points.size() || index1 + 2 > _points.size() || t0 < 0 ||
+        t0 > 1 || t1 < 0 || t1 > 1)
+    {
+        return nullptr;
+    }
+
+    Geo::Polyline *polyline = new Geo::Polyline();
+    if (t0 < 1)
+    {
+        polyline->append(_points[index0] + (_points[index0 + 1] - _points[index0]) * t0);
+    }
+    for (size_t i = index0 + 1; i <= index1; ++i)
+    {
+        polyline->append(_points[i]);
+    }
+    if (t1 > 0)
+    {
+        polyline->append(_points[index1] + (_points[index1 + 1] - _points[index1]) * t1);
+    }
+    return polyline;
 }
 
 void Polygon::reorder_points(const bool cw)
@@ -1308,13 +1717,13 @@ void Polygon::append(const Point &point)
 {
     if (size() < 2)
     {
-        Polyline::append(point);
+        _points.emplace_back(point);
     }
     else
     {
         if (_points.front() == _points.back())
         {
-            Polyline::insert(size() - 1, point);
+            _points.insert(_points.end() - 1, point);
         }
         else
         {
@@ -1328,13 +1737,13 @@ void Polygon::append(const double x, const double y)
 {
     if (size() < 2)
     {
-        Polyline::append(x, y);
+        _points.emplace_back(x, y);
     }
     else
     {
         if (_points.front() == _points.back())
         {
-            Polyline::insert(size() - 1, Geo::Point(x, y));
+            _points.insert(_points.end() - 1, Geo::Point(x, y));
         }
         else
         {
@@ -1348,7 +1757,7 @@ void Polygon::append(const Polyline &polyline)
 {
     if (empty())
     {
-        Polyline::append(polyline);
+        _points.insert(_points.end(), polyline.begin(), polyline.end());
         if (_points.front() != _points.back())
         {
             _points.emplace_back(_points.front());
@@ -1358,11 +1767,11 @@ void Polygon::append(const Polyline &polyline)
     {
         if (_points.front() == _points.back())
         {
-            Polyline::insert(size() - 1, polyline);
+            _points.insert(_points.end() - 1, polyline.begin(), polyline.end());
         }
         else
         {
-            Polyline::append(polyline);
+            _points.insert(_points.end(), polyline.begin(), polyline.end());
             _points.emplace_back(_points.front());
         }
     }
@@ -1372,7 +1781,7 @@ void Polygon::append(const std::vector<Point>::const_iterator &begin, const std:
 {
     if (empty())
     {
-        Polyline::append(begin, end);
+        _points.insert(_points.end(), begin, end);
         if (_points.front() != _points.back())
         {
             _points.emplace_back(_points.front());
@@ -1382,7 +1791,7 @@ void Polygon::append(const std::vector<Point>::const_iterator &begin, const std:
     {
         if (_points.front() == _points.back())
         {
-            Polyline::insert(size() - 1, begin, end);
+            _points.insert(_points.end() - 1, begin, end);
         }
         else
         {
@@ -1396,7 +1805,7 @@ void Polygon::append(const std::vector<Point>::const_reverse_iterator &rbegin, c
 {
     if (empty())
     {
-        Polyline::append(rbegin, rend);
+        _points.insert(_points.end(), rbegin, rend);
         if (_points.front() != _points.back())
         {
             _points.emplace_back(_points.front());
@@ -1406,7 +1815,7 @@ void Polygon::append(const std::vector<Point>::const_reverse_iterator &rbegin, c
     {
         if (_points.front() == _points.back())
         {
-            Polyline::insert(size() - 1, rbegin, rend);
+            _points.insert(_points.end() - 1, rbegin, rend);
         }
         else
         {
@@ -1418,7 +1827,8 @@ void Polygon::append(const std::vector<Point>::const_reverse_iterator &rbegin, c
 
 void Polygon::insert(const size_t index, const Point &point)
 {
-    Polyline::insert(index, point);
+    assert(index < _points.size());
+    _points.insert(_points.begin() + index, point);
     if (index == 0)
     {
         _points.back() = _points.front();
@@ -1427,7 +1837,8 @@ void Polygon::insert(const size_t index, const Point &point)
 
 void Polygon::insert(const size_t index, const Polyline &polyline)
 {
-    Polyline::insert(index, polyline);
+    assert(index < _points.size());
+    _points.insert(_points.begin() + index, polyline.begin(), polyline.end());
     if (index == 0)
     {
         _points.back() = _points.front();
@@ -1436,7 +1847,8 @@ void Polygon::insert(const size_t index, const Polyline &polyline)
 
 void Polygon::insert(const size_t index, const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end)
 {
-    Polyline::insert(index, begin, end);
+    assert(index < _points.size());
+    _points.insert(_points.begin() + index, begin, end);
     if (index == 0)
     {
         _points.back() = _points.front();
@@ -1446,7 +1858,8 @@ void Polygon::insert(const size_t index, const std::vector<Point>::const_iterato
 void Polygon::insert(const size_t index, const std::vector<Point>::const_reverse_iterator &rbegin,
                      const std::vector<Point>::const_reverse_iterator &rend)
 {
-    Polyline::insert(index, rbegin, rend);
+    assert(index < _points.size());
+    _points.insert(_points.begin() + index, rbegin, rend);
     if (index == 0)
     {
         _points.back() = _points.front();
@@ -1455,7 +1868,8 @@ void Polygon::insert(const size_t index, const std::vector<Point>::const_reverse
 
 void Polygon::remove(const size_t index)
 {
-    Polyline::remove(index);
+    assert(index < _points.size());
+    _points.erase(_points.begin() + index);
     if (index == 0)
     {
         _points.back() = _points.front();
@@ -1468,7 +1882,8 @@ void Polygon::remove(const size_t index)
 
 void Polygon::remove(const size_t index, const size_t count)
 {
-    Polyline::remove(index, count);
+    assert(index < _points.size());
+    _points.erase(_points.begin() + index, _points.begin() + index + count);
     if (size() > 2)
     {
         if (index == 0)
@@ -1484,7 +1899,9 @@ void Polygon::remove(const size_t index, const size_t count)
 
 Point Polygon::pop(const size_t index)
 {
-    Geo::Point point = Polyline::pop(index);
+    assert(index < _points.size());
+    Geo::Point point(_points[index]);
+    _points.erase(_points.begin() + index);
     if (index == 0)
     {
         _points.back() = _points.front();

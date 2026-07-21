@@ -4813,8 +4813,22 @@ bool AngleDimOperation::mouse_press(QMouseEvent *event)
                 const Geo::Point pos(real_pos[0], real_pos[1]);
                 switch (clicked_object->type())
                 {
-                case Geo::Type::POLYLINE:
                 case Geo::Type::POLYGON:
+                    {
+                        const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(clicked_object);
+                        _points[0] = polygon->at(0), _points[1] = polygon->at(1);
+                        double min_dis = Geo::distance(pos, polygon->at(0), polygon->at(1), false);
+                        for (size_t i = 2, count = polygon->size(); i < count; ++i)
+                        {
+                            if (const double d = Geo::distance(pos, polygon->at(i - 1), polygon->at(i), false); d < min_dis)
+                            {
+                                min_dis = d;
+                                _points[0] = polygon->at(i - 1), _points[1] = polygon->at(i);
+                            }
+                        }
+                        break;
+                    }
+                case Geo::Type::POLYLINE:
                     {
                         const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(clicked_object);
                         _points[0] = polyline->at(0), _points[1] = polyline->at(1);
@@ -4878,8 +4892,22 @@ bool AngleDimOperation::mouse_press(QMouseEvent *event)
                 const Geo::Point pos(real_pos[0], real_pos[1]);
                 switch (clicked_object->type())
                 {
-                case Geo::Type::POLYLINE:
                 case Geo::Type::POLYGON:
+                    {
+                        const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(clicked_object);
+                        _points[2] = polygon->at(0), _points[3] = polygon->at(1);
+                        double min_dis = Geo::distance(pos, polygon->at(0), polygon->at(1), false);
+                        for (size_t i = 2, count = polygon->size(); i < count; ++i)
+                        {
+                            if (const double d = Geo::distance(pos, polygon->at(i - 1), polygon->at(i), false); d < min_dis)
+                            {
+                                min_dis = d;
+                                _points[2] = polygon->at(i - 1), _points[3] = polygon->at(i);
+                            }
+                        }
+                        break;
+                    }
+                case Geo::Type::POLYLINE:
                     {
                         const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(clicked_object);
                         _points[2] = polyline->at(0), _points[3] = polyline->at(1);

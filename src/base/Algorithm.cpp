@@ -348,6 +348,50 @@ void Geo::down_sampling(Geo::Polyline &points, const double distance)
 }
 
 
+void Geo::down_sampling(Geo::Polygon &points, const double distance)
+{
+    points.remove_repeated_points();
+    if (points.size() <= 2 || distance <= 0)
+    {
+        return;
+    }
+    std::vector<bool> mask(points.size(), true);
+    std::vector<std::tuple<size_t, size_t>> stack;
+    mask.front() = mask.back() = false;
+    stack.emplace_back(0, mask.size() - 1);
+    while (!stack.empty())
+    {
+        const auto [index0, index1] = stack.back();
+        stack.pop_back();
+        double maxDistance = -1;
+        size_t index = index0;
+        for (size_t i = index0 + 1; i < index1; ++i)
+        {
+            if (const double currentDistance = Geo::distance(points[i], points[index0], points[index1], false);
+                currentDistance > distance && maxDistance < currentDistance)
+            {
+                maxDistance = currentDistance;
+                index = i;
+            }
+        }
+        if (index > index0)
+        {
+            mask[index] = false;
+            stack.emplace_back(index0, index);
+            stack.emplace_back(index, index1);
+        }
+    }
+
+    for (size_t i = points.size() - 2; i > 0; --i)
+    {
+        if (mask[i])
+        {
+            points.remove(i);
+        }
+    }
+}
+
+
 void Geo::remove_repeated_point(std::vector<Geo::Point> &points)
 {
     for (size_t i = points.size() - 1; i > 0; --i)

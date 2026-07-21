@@ -445,8 +445,11 @@ public:
     const Point &operator[](const size_t index) const;
 };
 
-class Polygon : public Polyline
+class Polygon : public DObject
 {
+private:
+    std::vector<Point> _points;
+
 public:
     Polygon() = default;
 
@@ -466,42 +469,126 @@ public:
 
     Type type() const override;
 
+    size_t size() const;
+
+    bool empty() const override;
+
+    double length() const override;
+
+    void clear() override;
+
     Polygon *clone() const override;
+
+    bool is_self_intersected() const;
+
+    Point &operator[](const size_t index);
+
+    const Point &operator[](const size_t index) const;
+
+    Point &at(const size_t index);
+
+    const Point &at(const size_t index) const;
 
     void reorder_points(const bool cw = true);
 
     // 判断点顺序是否为顺时针
     bool is_cw() const;
 
-    void append(const Point &point) override;
+    void append(const Point &point);
 
-    void append(const double x, const double y) override;
+    void append(const double x, const double y);
 
-    void append(const Polyline &polyline) override;
+    void append(const Polyline &polyline);
 
-    void append(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end) override;
+    void append(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end);
 
-    void append(const std::vector<Point>::const_reverse_iterator &rbegin, const std::vector<Point>::const_reverse_iterator &rend) override;
+    void append(const std::vector<Point>::const_reverse_iterator &rbegin, const std::vector<Point>::const_reverse_iterator &rend);
 
-    void insert(const size_t index, const Point &point) override;
+    void insert(const size_t index, const Point &point);
 
-    void insert(const size_t index, const Polyline &polyline) override;
+    void insert(const size_t index, const Polyline &polyline);
 
     void insert(const size_t index, const std::vector<Point>::const_iterator &begin,
-                const std::vector<Point>::const_iterator &end) override;
+                const std::vector<Point>::const_iterator &end);
 
     void insert(const size_t index, const std::vector<Point>::const_reverse_iterator &rbegin,
-                const std::vector<Point>::const_reverse_iterator &rend) override;
+                const std::vector<Point>::const_reverse_iterator &rend);
 
-    void remove(const size_t index) override;
+    void remove(const size_t index);
 
-    void remove(const size_t index, const size_t count) override;
+    void remove(const size_t index, const size_t count);
 
-    Point pop(const size_t index) override;
+    Point pop(const size_t index);
 
     Polygon operator+(const Point &point) const;
 
     Polygon operator-(const Point &point) const;
+
+    void operator+=(const Point &point);
+
+    void operator-=(const Point &point);
+
+    void flip();
+
+    Point &front();
+
+    const Point &front() const;
+
+    Point &back();
+
+    const Point &back() const;
+
+    std::vector<Point>::iterator begin();
+
+    std::vector<Point>::const_iterator begin() const;
+
+    std::vector<Point>::const_iterator cbegin() const;
+
+    std::vector<Point>::iterator end();
+
+    std::vector<Point>::const_iterator end() const;
+
+    std::vector<Point>::const_iterator cend() const;
+
+    std::vector<Point>::reverse_iterator rbegin();
+
+    std::vector<Point>::const_reverse_iterator rbegin() const;
+
+    std::vector<Point>::const_reverse_iterator crbegin() const;
+
+    std::vector<Point>::reverse_iterator rend();
+
+    std::vector<Point>::const_reverse_iterator rend() const;
+
+    std::vector<Point>::const_reverse_iterator crend() const;
+
+    std::vector<Point>::iterator find(const Point &point);
+
+    std::vector<Point>::const_iterator find(const Point &point) const;
+
+    void transform(const double a, const double b, const double c, const double d, const double e, const double f) override;
+
+    void transform(const double mat[6]) override;
+
+    void translate(const double tx, const double ty) override;
+
+    void rotate(const double x, const double y, const double rad) override;
+
+    void scale(const double x, const double y, const double k) override;
+
+    Polygon convex_hull() const override;
+
+    AABBRect bounding_rect() const override;
+
+    Polygon mini_bounding_rect() const override;
+
+    AABBRectParams aabbrect_params() const override;
+
+    void remove_repeated_points();
+
+    Point shape_point(const size_t index, const double t) const;
+
+    Polyline *range(const size_t index0, const double t0, const size_t index1, const double t1) const;
 
     double area() const;
 

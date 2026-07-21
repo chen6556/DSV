@@ -105,6 +105,8 @@ double degree_to_rad(double value);
 
 void down_sampling(Geo::Polyline &points, const double distance);
 
+void down_sampling(Geo::Polygon &points, const double distance);
+
 
 void remove_repeated_point(std::vector<Geo::Point> &points);
 

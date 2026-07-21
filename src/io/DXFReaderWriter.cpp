@@ -1953,6 +1953,25 @@ void DXFReaderWriter::prepare_blocks()
                     }
                     break;
                 case Geo::Type::POLYGON:
+                    if (const Geo::Polygon *polygon0 = static_cast<const Geo::Polygon *>(_block_store[i]->at(k)),
+                        *polygon1 = static_cast<const Geo::Polygon *>(_block_store[j]->at(k));
+                        polygon0->size() != polygon1->size())
+                    {
+                        is_same = false;
+                    }
+                    else
+                    {
+                        for (size_t m = 0, count2 = polygon0->size(); m < count2; ++m)
+                        {
+                            if (polygon0->at(m).x - rect0[3].x != polygon1->at(m).x - rect1[3].x ||
+                                polygon0->at(m).y - rect0[3].y != polygon1->at(m).y - rect1[3].y)
+                            {
+                                is_same = false;
+                                break;
+                            }
+                        }
+                    }
+                    break;
                 case Geo::Type::POLYLINE:
                     if (const Geo::Polyline *polyline0 = static_cast<const Geo::Polyline *>(_block_store[i]->at(k)),
                         *polyline1 = static_cast<const Geo::Polyline *>(_block_store[j]->at(k));

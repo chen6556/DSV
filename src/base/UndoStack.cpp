@@ -634,6 +634,8 @@ void ReverseCommand::undo(Graph *graph)
             static_cast<Geo::BSpline *>(object)->reverse();
             break;
         case Geo::Type::POLYGON:
+            std::reverse(static_cast<Geo::Polygon *>(object)->begin(), static_cast<Geo::Polygon *>(object)->end());
+            break;
         case Geo::Type::POLYLINE:
             std::reverse(static_cast<Geo::Polyline *>(object)->begin(), static_cast<Geo::Polyline *>(object)->end());
             break;
