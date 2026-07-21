@@ -347,9 +347,9 @@ Geo::Polygon Text::mini_bounding_rect() const
     return Geo::Polygon({_shape[0], _shape[1], _shape[2], _shape[3], _shape[0]});
 }
 
-Geo::AABBRectParams Text::aabbrect_params() const
+Geo::AABBRect Text::aabbrect() const
 {
-    Geo::AABBRectParams param{_shape[0].x, _shape[0].y, _shape[2].x, _shape[2].y};
+    Geo::AABBRect param{_shape[0].x, _shape[0].y, _shape[2].x, _shape[2].y};
     for (int i = 0; i < 4; ++i)
     {
         param.left = std::min(_shape[i].x, param.left);
@@ -599,9 +599,9 @@ void ContainerGroup::rescale(const double x, const double y)
     }
 }
 
-Geo::AABBRectParams ContainerGroup::aabbrect_params() const
+Geo::AABBRect ContainerGroup::aabbrect() const
 {
-    Geo::AABBRectParams params;
+    Geo::AABBRect params;
     if (_containers.empty())
     {
         return params;
@@ -614,7 +614,7 @@ Geo::AABBRectParams ContainerGroup::aabbrect_params() const
         {
         case Geo::Type::TEXT:
             {
-                const Geo::AABBRectParams param = continer->aabbrect_params();
+                const Geo::AABBRect param = continer->aabbrect();
                 x0 = std::min(x0, param.left);
                 y0 = std::min(y0, param.bottom);
                 x1 = std::max(x1, param.right);
@@ -641,7 +641,7 @@ Geo::AABBRectParams ContainerGroup::aabbrect_params() const
             break;
         case Geo::Type::ELLIPSE:
             {
-                const Geo::AABBRectParams rect(static_cast<const Geo::Ellipse *>(continer)->aabbrect_params());
+                const Geo::AABBRect rect(static_cast<const Geo::Ellipse *>(continer)->aabbrect());
                 x0 = std::min(x0, rect.left);
                 y0 = std::min(y0, rect.bottom);
                 x1 = std::max(x1, rect.right);
@@ -650,7 +650,7 @@ Geo::AABBRectParams ContainerGroup::aabbrect_params() const
             break;
         case Geo::Type::COMBINATION:
             {
-                const Geo::AABBRectParams rect(static_cast<const Combination *>(continer)->aabbrect_params());
+                const Geo::AABBRect rect(static_cast<const Combination *>(continer)->aabbrect());
                 x0 = std::min(x0, rect.left);
                 y0 = std::min(y0, rect.bottom);
                 x1 = std::max(x1, rect.right);
@@ -686,7 +686,7 @@ Geo::AABBRectParams ContainerGroup::aabbrect_params() const
             break;
         case Geo::Type::ARC:
             {
-                const Geo::AABBRectParams rect(static_cast<const Geo::Arc *>(continer)->aabbrect_params());
+                const Geo::AABBRect rect(static_cast<const Geo::Arc *>(continer)->aabbrect());
                 x0 = std::min(x0, rect.left);
                 y0 = std::min(y0, rect.bottom);
                 x1 = std::max(x1, rect.right);
@@ -702,7 +702,7 @@ Geo::AABBRectParams ContainerGroup::aabbrect_params() const
             break;
         case Geo::Type::DIMENSION:
             {
-                const Geo::AABBRectParams param = static_cast<const Dim::Dimension *>(continer)->aabbrect_params();
+                const Geo::AABBRect param = static_cast<const Dim::Dimension *>(continer)->aabbrect();
                 x0 = std::min(x0, param.left);
                 y0 = std::min(y0, param.bottom);
                 x1 = std::max(x1, param.right);
@@ -999,11 +999,11 @@ void Combination::update_border()
     }
     else
     {
-        _border = aabbrect_params();
+        _border = aabbrect();
     }
 }
 
-const Geo::AABBRectParams &Combination::border() const
+const Geo::AABBRect &Combination::border() const
 {
     return _border;
 }

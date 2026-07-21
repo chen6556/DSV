@@ -10,7 +10,7 @@ class QuadTreeNode
 private:
     static const int min_height = 60, min_width = 80, max_depth = 5, min_size = 64;
     int _depth = 1;
-    Geo::AABBRectParams _rect;
+    Geo::AABBRect _rect;
     std::vector<Geo::DObject *> _objects;
     QuadTreeNode *_nodes[4] = {nullptr, nullptr, nullptr, nullptr};
 
@@ -23,19 +23,19 @@ public:
 
     void clear();
 
-    Geo::AABBRectParams &rect();
+    Geo::AABBRect &rect();
 
-    void find_visible_objects(const Geo::AABBRectParams &rect, std::vector<Geo::DObject *> &visible_objects);
+    void find_visible_objects(const Geo::AABBRect &rect, std::vector<Geo::DObject *> &visible_objects);
 
-    void build(const Geo::AABBRectParams &rect, const std::vector<Geo::DObject *> &objects);
+    void build(const Geo::AABBRect &rect, const std::vector<Geo::DObject *> &objects);
 
-    void update(const Geo::AABBRectParams &rect, Geo::DObject *object);
+    void update(const Geo::AABBRect &rect, Geo::DObject *object);
 
     void remove(Geo::DObject *object);
 
     void remove(const std::vector<Geo::DObject *> &objects);
 
-    void append(const Geo::AABBRectParams &rect, Geo::DObject *object);
+    void append(const Geo::AABBRect &rect, Geo::DObject *object);
 
     bool empty() const;
 };
@@ -50,9 +50,9 @@ private:
 public:
     void clear();
 
-    void find_visible_objects(const Geo::AABBRectParams &rect, std::vector<Geo::DObject *> &visible_objects);
+    void find_visible_objects(const Geo::AABBRect &rect, std::vector<Geo::DObject *> &visible_objects);
 
-    void find_visible_objects(const Geo::AABBRectParams &rect);
+    void find_visible_objects(const Geo::AABBRect &rect);
 
     const std::vector<Geo::DObject *> &visible_objects() const;
 

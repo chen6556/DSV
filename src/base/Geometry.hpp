@@ -34,16 +34,16 @@ class Polygon;
 
 class Point;
 
-struct AABBRectParams
+struct AABBRect
 {
     double left = 0;
     double top = 0;
     double right = 0;
     double bottom = 0;
 
-    AABBRectParams() = default;
+    AABBRect() = default;
 
-    AABBRectParams(const double x0, const double y0, const double x1, const double y1);
+    AABBRect(const double x0, const double y0, const double x1, const double y1);
 
     Point operator[](const int index) const;
 
@@ -53,7 +53,7 @@ struct AABBRectParams
 
     void scale(const double x, const double y, const double k);
 
-    void operator+=(const AABBRectParams &rect);
+    void operator+=(const AABBRect &rect);
 };
 
 struct Drawable
@@ -97,7 +97,7 @@ public:
     // 最小外接矩形
     virtual Polygon mini_bounding_rect() const;
 
-    virtual AABBRectParams aabbrect_params() const;
+    virtual AABBRect aabbrect() const;
 };
 
 struct MarkedPoint
@@ -185,7 +185,7 @@ public:
 
     Polygon mini_bounding_rect() const override;
 
-    AABBRectParams aabbrect_params() const override;
+    AABBRect aabbrect() const override;
 
     Point operator*(const double k) const;
 
@@ -337,7 +337,7 @@ public:
 
     Polygon mini_bounding_rect() const override;
 
-    AABBRectParams aabbrect_params() const override;
+    AABBRect aabbrect() const override;
 
     void remove_repeated_points();
 
@@ -362,7 +362,7 @@ public:
 
     Polygon(const Polyline &polyline);
 
-    Polygon(const AABBRectParams &rect);
+    Polygon(const AABBRect &rect);
 
     Polygon(const double x, const double y, const double radius, const int n, const double rad, const bool circumscribed);
 
@@ -409,8 +409,7 @@ public:
 
     void insert(const size_t index, const Polyline &polyline);
 
-    void insert(const size_t index, const std::vector<Point>::const_iterator &begin,
-                const std::vector<Point>::const_iterator &end);
+    void insert(const size_t index, const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end);
 
     void insert(const size_t index, const std::vector<Point>::const_reverse_iterator &rbegin,
                 const std::vector<Point>::const_reverse_iterator &rend);
@@ -481,7 +480,7 @@ public:
 
     Polygon mini_bounding_rect() const override;
 
-    AABBRectParams aabbrect_params() const override;
+    AABBRect aabbrect() const override;
 
     void remove_repeated_points();
 
@@ -574,7 +573,7 @@ public:
 
     Polygon mini_bounding_rect() const override;
 
-    AABBRectParams aabbrect_params() const override;
+    AABBRect aabbrect() const override;
 
     // 内接圆圆心
     Point inner_circle_center() const;
@@ -637,7 +636,7 @@ public:
 
     Polygon mini_bounding_rect() const override;
 
-    AABBRectParams aabbrect_params() const override;
+    AABBRect aabbrect() const override;
 
     Circle operator+(const Point &point) const;
 
@@ -703,7 +702,7 @@ public:
 
     Polygon mini_bounding_rect() const override;
 
-    AABBRectParams aabbrect_params() const override;
+    AABBRect aabbrect() const override;
 
     Point tangent(const size_t index, const double t) const;
 
@@ -782,7 +781,7 @@ public:
 
     Polygon mini_bounding_rect() const override;
 
-    AABBRectParams aabbrect_params() const override;
+    AABBRect aabbrect() const override;
 
     Ellipse operator+(const Point &point) const;
 
@@ -908,7 +907,7 @@ public:
 
     Polygon mini_bounding_rect() const override;
 
-    AABBRectParams aabbrect_params() const override;
+    AABBRect aabbrect() const override;
 
     const Point &front() const;
 
@@ -1097,7 +1096,7 @@ public:
 
     Polygon mini_bounding_rect() const override;
 
-    AABBRectParams aabbrect_params() const override;
+    AABBRect aabbrect() const override;
 
     void update_shape(const double down_sampling_value);
 

@@ -1459,7 +1459,7 @@ void DXFReaderWriter::writeBlocks()
         block.basePoint.z = 0.0;
         block.flags = 1; // flag for unnamed block
         _dxfrw->writeBlock(&block);
-        const Geo::AABBRectParams rect = combination->aabbrect_params();
+        const Geo::AABBRect rect = combination->aabbrect();
         const Geo::Point anchor(rect.left, rect.bottom);
         for (const Geo::DObject *object : *combination)
         {
@@ -1526,7 +1526,7 @@ void DXFReaderWriter::writeVports()
     vp.gridSpacing.x = 50;
     vp.gridSpacing.y = 50;
     {
-        const Geo::AABBRectParams rect = _graph->aabbrect_params();
+        const Geo::AABBRect rect = _graph->aabbrect();
         vp.height = (rect.top - rect.bottom) * 1.1;
         vp.ratio = (rect.right - rect.left) / (rect.top - rect.bottom);
         vp.center.x = (rect.left + rect.right) / 2;
@@ -1560,8 +1560,7 @@ void DXFReaderWriter::write_dobject(const Geo::DObject *object)
         write_circle(static_cast<const Geo::Circle *>(object));
         break;
     case Geo::Type::COMBINATION:
-        write_insert(static_cast<const Combination *>(object),
-                     Geo::Point(object->aabbrect_params().left, object->aabbrect_params().bottom));
+        write_insert(static_cast<const Combination *>(object), Geo::Point(object->aabbrect().left, object->aabbrect().bottom));
         break;
     case Geo::Type::CONTAINERGROUP:
         break;
@@ -1830,23 +1829,23 @@ void DXFReaderWriter::prepare_blocks()
         }
     }
 
-    std::vector<Geo::AABBRectParams> rects;
+    std::vector<Geo::AABBRect> rects;
     for (const Combination *combination : _block_store)
     {
-        Geo::AABBRectParams rect = combination->aabbrect_params();
+        Geo::AABBRect rect = combination->aabbrect();
         rect.translate(-rect.left, -rect.bottom);
         rects.emplace_back(rect);
     }
     for (size_t i = 0, count = _block_store.size(); i < count; ++i)
     {
-        const Geo::AABBRectParams &rect0 = rects[i];
+        const Geo::AABBRect &rect0 = rects[i];
         for (size_t j = i + 1; j < count; ++j)
         {
             if (_block_store[i]->size() != _block_store[j]->size())
             {
                 continue;
             }
-            const Geo::AABBRectParams &rect1 = rects[j];
+            const Geo::AABBRect &rect1 = rects[j];
             if (rect0[0] != rect1[0] || rect0[2] != rect1[2])
             {
                 continue;

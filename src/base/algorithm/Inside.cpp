@@ -21,7 +21,7 @@ bool Geo::is_inside(const Point &point, const Polyline &polyline)
 
 bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coincide)
 {
-    if (!polygon.empty() && Geo::is_inside(point, polygon.aabbrect_params(), coincide))
+    if (!polygon.empty() && Geo::is_inside(point, polygon.aabbrect(), coincide))
     {
         if (coincide)
         {
@@ -278,7 +278,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
     }
 }
 
-bool Geo::is_inside(const Point &point, const AABBRectParams &params, const bool coincide)
+bool Geo::is_inside(const Point &point, const AABBRect &params, const bool coincide)
 {
     if (coincide)
     {

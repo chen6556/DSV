@@ -53,7 +53,7 @@ public:
 
     virtual bool select(const Geo::Point &point, const double distance) const = 0;
 
-    virtual bool select(const Geo::AABBRectParams &rect) const = 0;
+    virtual bool select(const Geo::AABBRect &rect) const = 0;
 };
 
 
@@ -78,7 +78,7 @@ public:
     // 最小外接矩形
     Geo::Polygon mini_bounding_rect() const override;
 
-    Geo::AABBRectParams aabbrect_params() const override;
+    Geo::AABBRect aabbrect() const override;
 
     void set_anchor(const int index, const double x, const double y);
 
@@ -88,7 +88,7 @@ public:
 
     bool select(const Geo::Point &point, const double distance) const override;
 
-    bool select(const Geo::AABBRectParams &rect) const override;
+    bool select(const Geo::AABBRect &rect) const override;
 
     double height() const;
 };
@@ -115,7 +115,7 @@ public:
     // 最小外接矩形
     Geo::Polygon mini_bounding_rect() const override;
 
-    Geo::AABBRectParams aabbrect_params() const override;
+    Geo::AABBRect aabbrect() const override;
 
     void set_anchor(const int index, const double x, const double y);
 
@@ -131,7 +131,7 @@ public:
 
     bool select(const Geo::Point &point, const double distance) const override;
 
-    bool select(const Geo::AABBRectParams &rect) const override;
+    bool select(const Geo::AABBRect &rect) const override;
 
     double height() const;
 };
@@ -157,7 +157,7 @@ public:
     // 最小外接矩形
     Geo::Polygon mini_bounding_rect() const override;
 
-    Geo::AABBRectParams aabbrect_params() const override;
+    Geo::AABBRect aabbrect() const override;
 
     void set_anchor(const int index, const double x, const double y);
 
@@ -169,7 +169,7 @@ public:
 
     bool select(const Geo::Point &point, const double distance) const override;
 
-    bool select(const Geo::AABBRectParams &rect) const override;
+    bool select(const Geo::AABBRect &rect) const override;
 
     double distance() const;
 };
@@ -222,7 +222,7 @@ public:
     // 最小外接矩形
     Geo::Polygon mini_bounding_rect() const override;
 
-    Geo::AABBRectParams aabbrect_params() const override;
+    Geo::AABBRect aabbrect() const override;
 
     void paintable_lines(std::vector<double> &data) const override;
 
@@ -230,7 +230,7 @@ public:
 
     bool select(const Geo::Point &point, const double distance) const override;
 
-    bool select(const Geo::AABBRectParams &rect) const override;
+    bool select(const Geo::AABBRect &rect) const override;
 
     const Geo::Point &root(const int index) const;
 
@@ -281,7 +281,7 @@ public:
     // 最小外接矩形
     Geo::Polygon mini_bounding_rect() const override;
 
-    Geo::AABBRectParams aabbrect_params() const override;
+    Geo::AABBRect aabbrect() const override;
 
     void set_label(const double x, const double y);
 
@@ -293,7 +293,7 @@ public:
 
     bool select(const Geo::Point &point, const double distance) const override;
 
-    bool select(const Geo::AABBRectParams &rect) const override;
+    bool select(const Geo::AABBRect &rect) const override;
 
     const Geo::Point &root(const int index) const;
 };

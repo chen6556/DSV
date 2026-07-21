@@ -328,10 +328,10 @@ void ScaleCommand::undo(Graph *graph)
     }
     else
     {
-        Geo::AABBRectParams rect;
+        Geo::AABBRect rect;
         for (Geo::DObject *object : _items)
         {
-            rect = object->aabbrect_params();
+            rect = object->aabbrect();
             object->scale((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2, 1.0 / _k);
         }
     }
@@ -340,8 +340,7 @@ void ScaleCommand::undo(Graph *graph)
 
 
 // CombineCommand
-CombineCommand::CombineCommand(const std::vector<std::tuple<Combination *, size_t>> &combinations, const size_t index)
-    : _group_index(index)
+CombineCommand::CombineCommand(const std::vector<std::tuple<Combination *, size_t>> &combinations, const size_t index) : _group_index(index)
 {
     for (const std::tuple<Combination *, size_t> &combination : combinations)
     {
@@ -351,8 +350,7 @@ CombineCommand::CombineCommand(const std::vector<std::tuple<Combination *, size_
 }
 
 CombineCommand::CombineCommand(Combination *combination,
-                                   const std::vector<std::tuple<Combination *, size_t, std::vector<Geo::DObject *>>> &items,
-                                   const size_t index)
+                               const std::vector<std::tuple<Combination *, size_t, std::vector<Geo::DObject *>>> &items, const size_t index)
     : _combination(combination), _items(items), _group_index(index)
 {
 }
@@ -463,7 +461,7 @@ void FlipCommand::undo(Graph *graph)
         {
             for (Geo::DObject *object : _items)
             {
-                const Geo::AABBRectParams rect(object->aabbrect_params());
+                const Geo::AABBRect rect(object->aabbrect());
                 coord.x = (rect.left + rect.right) / 2;
                 coord.y = (rect.top + rect.bottom) / 2;
                 object->translate(-coord.x, 0);
@@ -475,7 +473,7 @@ void FlipCommand::undo(Graph *graph)
         {
             for (Geo::DObject *object : _items)
             {
-                const Geo::AABBRectParams rect(object->aabbrect_params());
+                const Geo::AABBRect rect(object->aabbrect());
                 coord.x = (rect.left + rect.right) / 2;
                 coord.y = (rect.top + rect.bottom) / 2;
                 object->translate(0, -coord.y);

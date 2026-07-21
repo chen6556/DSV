@@ -14,7 +14,7 @@ bool is_inside(const Point &point, const Polyline &polyline);
 bool is_inside(const Point &point, const Polygon &polygon, const bool coincide = false);
 
 // 判断点是否在AABB矩形内,coincide决定是否包含点在AABB矩形上的情况
-bool is_inside(const Point &point, const AABBRectParams &params, const bool coincide = false);
+bool is_inside(const Point &point, const AABBRect &params, const bool coincide = false);
 
 // 判断点是否在圆内,coincide决定是否包含点在圆上的情况
 bool is_inside(const Point &point, const Circle &circle, const bool coincide = false);
@@ -38,7 +38,8 @@ bool is_inside(const Point &point, const Arc &arc);
 bool is_inside(const Triangle &triangle0, const Triangle &triangle1);
 
 // 判断点是否在四边形内,coincide决定是否包含点在四边形上的情况
-bool is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2, const Point &point3, const bool coincide = false);
+bool is_inside(const Point &point, const Point &point0, const Point &point1, const Point &point2, const Point &point3,
+               const bool coincide = false);
 
 namespace NoAABBTest
 {

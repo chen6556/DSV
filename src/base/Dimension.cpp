@@ -128,7 +128,7 @@ Geo::Polygon DimAligned::mini_bounding_rect() const
     return Geo::Polygon({this->anchor[1], this->anchor[0], this->anchor[0] + vec, this->anchor[1] + vec});
 }
 
-Geo::AABBRectParams DimAligned::aabbrect_params() const
+Geo::AABBRect DimAligned::aabbrect() const
 {
     Geo::Vector vec((this->anchor[1] - this->anchor[0]).vertical());
     vec.normalize();
@@ -143,7 +143,7 @@ Geo::AABBRectParams DimAligned::aabbrect_params() const
         point1 += dir.normalized() * 7 * this->arrow_size;
     }
 
-    Geo::AABBRectParams param;
+    Geo::AABBRect param;
     param.left = std::min({this->anchor[0].x, this->anchor[1].x, this->anchor[0].x + vec.x, this->anchor[1].x + vec.x, point0.x, point1.x});
     param.top = std::max({this->anchor[0].y, this->anchor[1].y, this->anchor[0].y + vec.y, this->anchor[1].y + vec.y, point0.y, point1.y});
     param.right =
@@ -272,7 +272,7 @@ bool DimAligned::select(const Geo::Point &point, const double distance) const
     return false;
 }
 
-bool DimAligned::select(const Geo::AABBRectParams &rect) const
+bool DimAligned::select(const Geo::AABBRect &rect) const
 {
     Geo::Vector vec((this->anchor[1] - this->anchor[0]).vertical());
     vec.normalize();
@@ -378,7 +378,7 @@ Geo::Polygon DimLinear::mini_bounding_rect() const
         const double top = std::max({this->anchor[0].y, this->anchor[1].y, mid.y + _distance});
         const double right = std::max(this->anchor[0].x, this->anchor[1].x);
         const double bottom = std::min({this->anchor[0].y, this->anchor[1].y, mid.y + _distance});
-        return Geo::AABBRectParams(left, top, right, bottom);
+        return Geo::AABBRect(left, top, right, bottom);
     }
     else
     {
@@ -386,13 +386,13 @@ Geo::Polygon DimLinear::mini_bounding_rect() const
         const double top = std::max(this->anchor[0].y, this->anchor[1].y);
         const double right = std::max({this->anchor[0].x, this->anchor[1].x, mid.x + _distance});
         const double bottom = std::min(this->anchor[0].y, this->anchor[1].y);
-        return Geo::AABBRectParams(left, top, right, bottom);
+        return Geo::AABBRect(left, top, right, bottom);
     }
 }
 
-Geo::AABBRectParams DimLinear::aabbrect_params() const
+Geo::AABBRect DimLinear::aabbrect() const
 {
-    Geo::AABBRectParams param;
+    Geo::AABBRect param;
     if (const Geo::Point mid((this->anchor[0] + this->anchor[1]) / 2); _horizontal)
     {
         const int width = this->anchor[0].x < this->anchor[1].x ? 7 : -7;
@@ -655,7 +655,7 @@ bool DimLinear::select(const Geo::Point &point, const double distance) const
     return false;
 }
 
-bool DimLinear::select(const Geo::AABBRectParams &rect) const
+bool DimLinear::select(const Geo::AABBRect &rect) const
 {
     if (const Geo::Point mid((this->anchor[0] + this->anchor[1]) / 2); _horizontal)
     {
@@ -776,7 +776,7 @@ Geo::Polygon DimRadius::mini_bounding_rect() const
         const double top = std::max(this->label.y, this->anchor[1].y);
         const double right = std::max(this->label.x, this->anchor[1].x);
         const double bottom = std::min(this->label.y, this->anchor[1].y);
-        return Geo::AABBRectParams(left, top, right, bottom);
+        return Geo::AABBRect(left, top, right, bottom);
     }
     else
     {
@@ -784,13 +784,13 @@ Geo::Polygon DimRadius::mini_bounding_rect() const
         const double top = std::max(this->label.y, this->anchor[0].y);
         const double right = std::max(this->label.x, this->anchor[0].x);
         const double bottom = std::min(this->label.y, this->anchor[0].y);
-        return Geo::AABBRectParams(left, top, right, bottom);
+        return Geo::AABBRect(left, top, right, bottom);
     }
 }
 
-Geo::AABBRectParams DimRadius::aabbrect_params() const
+Geo::AABBRect DimRadius::aabbrect() const
 {
-    Geo::AABBRectParams param;
+    Geo::AABBRect param;
     if (_distance <= Geo::distance(this->anchor[0], this->anchor[1]))
     {
         param.left = std::min(this->label.x, this->anchor[1].x);
@@ -879,7 +879,7 @@ bool DimRadius::select(const Geo::Point &point, const double distance) const
     }
 }
 
-bool DimRadius::select(const Geo::AABBRectParams &rect) const
+bool DimRadius::select(const Geo::AABBRect &rect) const
 {
     if (_distance <= Geo::distance(this->anchor[0], this->anchor[1]))
     {
@@ -1104,9 +1104,9 @@ Geo::Polygon DimAngle::mini_bounding_rect() const
     }
 }
 
-Geo::AABBRectParams DimAngle::aabbrect_params() const
+Geo::AABBRect DimAngle::aabbrect() const
 {
-    Geo::AABBRectParams param(Geo::Arc(this->anchor[0], this->label, this->anchor[1]).aabbrect_params());
+    Geo::AABBRect param(Geo::Arc(this->anchor[0], this->label, this->anchor[1]).aabbrect());
     param.left = std::min({param.left, _root[0].x, _root[1].x});
     param.top = std::max({param.top, _root[0].y, _root[1].y});
     param.right = std::max({param.right, _root[0].x, _root[1].x});
@@ -1186,7 +1186,7 @@ bool DimAngle::select(const Geo::Point &point, const double distance) const
     }
 }
 
-bool DimAngle::select(const Geo::AABBRectParams &rect) const
+bool DimAngle::select(const Geo::AABBRect &rect) const
 {
     if (Geo::is_intersected(rect, this->anchor[0], _root[0]) || Geo::is_intersected(rect, this->anchor[1], _root[1]))
     {
@@ -1293,7 +1293,7 @@ DimOrdinate::DimOrdinate(const Geo::Point &point, const Geo::Point &pos)
 {
     _root[1] = _root[0] = point;
     this->anchor[0] = this->anchor[1] = pos;
-    if (std::abs(point.x - pos.x) > std::abs(point. y - pos.y))
+    if (std::abs(point.x - pos.x) > std::abs(point.y - pos.y))
     {
         this->txt = QString::number(point.y, 'f', 4);
         this->anchor[0].x = this->anchor[1].x - (_root[1].x > this->anchor[1].x ? 10 : -10);
@@ -1336,9 +1336,9 @@ Geo::Polygon DimOrdinate::mini_bounding_rect() const
     return Geo::Polygon({this->anchor[0], this->anchor[1], _root[1], _root[0]});
 }
 
-Geo::AABBRectParams DimOrdinate::aabbrect_params() const
+Geo::AABBRect DimOrdinate::aabbrect() const
 {
-    Geo::AABBRectParams param;
+    Geo::AABBRect param;
     param.left = std::min({this->anchor[0].x, this->anchor[1].x, _root[0].x, _root[1].x});
     param.top = std::max({this->anchor[0].y, this->anchor[1].y, _root[0].y, _root[1].y});
     param.right = std::max({this->anchor[0].x, this->anchor[1].x, _root[0].x, _root[1].x});
@@ -1408,16 +1408,15 @@ void DimOrdinate::paintable_arrows(std::vector<double> &data) const
 
 bool DimOrdinate::select(const Geo::Point &point, const double distance) const
 {
-    return Geo::distance(point, this->anchor[0], this->anchor[1], false) <= distance
-        || Geo::distance(point, this->anchor[1], _root[0], false) <= distance
-        || Geo::distance(point, _root[0], _root[1], false) <= distance;
+    return Geo::distance(point, this->anchor[0], this->anchor[1], false) <= distance ||
+           Geo::distance(point, this->anchor[1], _root[0], false) <= distance ||
+           Geo::distance(point, _root[0], _root[1], false) <= distance;
 }
 
-bool DimOrdinate::select(const Geo::AABBRectParams &rect) const
+bool DimOrdinate::select(const Geo::AABBRect &rect) const
 {
-    return Geo::is_intersected(rect, this->anchor[0], this->anchor[1])
-        || Geo::is_intersected(rect, this->anchor[1], _root[0])
-        || Geo::is_intersected(rect, _root[0], _root[1]);
+    return Geo::is_intersected(rect, this->anchor[0], this->anchor[1]) || Geo::is_intersected(rect, this->anchor[1], _root[0]) ||
+           Geo::is_intersected(rect, _root[0], _root[1]);
 }
 
 const Geo::Point &DimOrdinate::root(const int index) const

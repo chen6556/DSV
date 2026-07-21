@@ -300,7 +300,7 @@ bool SelectOperation::mouse_move(QMouseEvent *event)
     {
         Canvas::canvas->refresh_select_rect(_pos[0], _pos[1], real_pos[0], real_pos[1]);
         if (std::vector<Geo::DObject *> selected_objects =
-                Canvas::canvas->editor().select(Geo::AABBRectParams(_pos[0], _pos[1], real_pos[0], real_pos[1]), false, true);
+                Canvas::canvas->editor().select(Geo::AABBRect(_pos[0], _pos[1], real_pos[0], real_pos[1]), false, true);
             selected_objects.empty())
         {
             Canvas::canvas->clear_selected_ibo();
@@ -1445,8 +1445,8 @@ bool Arc1Operation::mouse_press(QMouseEvent *event)
             _parameters[4] = Geo::angle(Geo::Point(_parameters[0], _parameters[1]), Geo::Point(_parameters[2], _parameters[3]),
                                         Geo::Point(real_pos[0], real_pos[1]));
             Canvas::canvas->add_object(new Geo::Arc(_parameters[0], _parameters[1], _parameters[2], _parameters[3], _parameters[4],
-                                                      Geo::Arc::ParameterType::StartCenterAngle,
-                                                      event->modifiers() != Qt::KeyboardModifier::ControlModifier));
+                                                    Geo::Arc::ParameterType::StartCenterAngle,
+                                                    event->modifiers() != Qt::KeyboardModifier::ControlModifier));
             shape.clear();
             tool_lines.clear();
             _index = 0;
@@ -1566,7 +1566,7 @@ bool Arc1Operation::read_parameters(const double *params, const int count)
         {
             _parameters[4] = std::abs(Geo::degree_to_rad(params[0]));
             Canvas::canvas->add_object(new Geo::Arc(_parameters[0], _parameters[1], _parameters[2], _parameters[3], _parameters[4],
-                                                      Geo::Arc::ParameterType::StartCenterAngle, params[0] > 0));
+                                                    Geo::Arc::ParameterType::StartCenterAngle, params[0] > 0));
             shape.clear();
             tool_lines.clear();
             _index = 0;
@@ -1725,7 +1725,7 @@ bool Arc2Operation::read_parameters(const double *params, const int count)
         {
             _parameters[4] = std::abs(Geo::degree_to_rad(params[0]));
             Canvas::canvas->add_object(new Geo::Arc(_parameters[0], _parameters[1], _parameters[2], _parameters[3], _parameters[4],
-                                                      Geo::Arc::ParameterType::StartEndAngle, params[0] > 0));
+                                                    Geo::Arc::ParameterType::StartEndAngle, params[0] > 0));
             shape.clear();
             tool_lines.clear();
             _index = 0;
@@ -1982,7 +1982,7 @@ bool RectangleOperation::mouse_press(QMouseEvent *event)
                 _parameters[2] = real_pos[0];
                 _parameters[3] = real_pos[1];
             }
-            Canvas::canvas->add_object(new Geo::Polygon(Geo::AABBRectParams(_parameters[0], _parameters[1], _parameters[2], _parameters[3])));
+            Canvas::canvas->add_object(new Geo::Polygon(Geo::AABBRect(_parameters[0], _parameters[1], _parameters[2], _parameters[3])));
             shape.clear();
             tool[0] = Tool::Select;
             info.clear();
@@ -2086,7 +2086,7 @@ bool RectangleOperation::read_parameters(const double *params, const int count)
                 }
                 _parameters[2] = _parameters[0] + params[0], _parameters[3] = _parameters[1] + params[1];
             }
-            Canvas::canvas->add_object(new Geo::Polygon(Geo::AABBRectParams(_parameters[0], _parameters[1], _parameters[2], _parameters[3])));
+            Canvas::canvas->add_object(new Geo::Polygon(Geo::AABBRect(_parameters[0], _parameters[1], _parameters[2], _parameters[3])));
             release_pos[0] = press_pos[0] = _parameters[2];
             release_pos[1] = press_pos[1] = _parameters[3];
             shape.clear();

@@ -806,7 +806,7 @@ void MainWindow::append_file(const QString &path)
     {
         ui->canvas->editor().auto_combine();
     }
-    Geo::AABBRectParams rect0(graph->aabbrect_params()), rect1(g->aabbrect_params());
+    Geo::AABBRect rect0(graph->aabbrect()), rect1(g->aabbrect());
     g->translate(rect0.right + 10 - rect1.left, rect0.bottom - rect1.bottom);
     graph->merge(*g);
     ui->canvas->editor().load_graph(graph);

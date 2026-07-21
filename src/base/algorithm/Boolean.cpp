@@ -4,7 +4,7 @@
 
 namespace
 {
-void calc_polygon_points(std::vector<Geo::MarkedPoint> &points0, std::vector<Geo::MarkedPoint> &points1, const Geo::AABBRectParams &rect)
+void calc_polygon_points(std::vector<Geo::MarkedPoint> &points0, std::vector<Geo::MarkedPoint> &points1, const Geo::AABBRect &rect)
 {
     for (size_t i = 1, count0 = points0.size(); i < count0; ++i)
     {
@@ -496,7 +496,7 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
     }
 
     // 找到交点并计算其几何数
-    calc_polygon_points(points0, points1, polygon1.aabbrect_params());
+    calc_polygon_points(points0, points1, polygon1.aabbrect());
 
     if (points0.size() == polygon0.size()) // 无交点
     {
@@ -711,7 +711,7 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
     }
 
     // 找到交点并计算其几何数
-    calc_polygon_points(points0, points1, polygon1.aabbrect_params());
+    calc_polygon_points(points0, points1, polygon1.aabbrect());
 
     if (points0.size() == polygon0.size()) // 无交点
     {
@@ -926,7 +926,7 @@ bool Geo::polygon_difference(const Geo::Polygon &polygon0, const Geo::Polygon &p
     }
 
     // 找到交点并计算其几何数
-    calc_polygon_points(points0, points1, polygon1.aabbrect_params());
+    calc_polygon_points(points0, points1, polygon1.aabbrect());
 
     if (points0.size() == polygon0.size()) // 无交点
     {
@@ -1128,7 +1128,7 @@ bool Geo::polygon_xor(const Polygon &polygon0, const Polygon &polygon1, std::vec
     }
 
     // 找到交点并计算其几何数
-    calc_polygon_points(points0, points1, polygon1.aabbrect_params());
+    calc_polygon_points(points0, points1, polygon1.aabbrect());
 
     if (points0.size() == polygon0.size()) // 无交点
     {

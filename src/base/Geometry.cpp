@@ -12,7 +12,7 @@
 using namespace Geo;
 
 
-AABBRectParams::AABBRectParams(const double x0, const double y0, const double x1, const double y1)
+AABBRect::AABBRect(const double x0, const double y0, const double x1, const double y1)
 {
     left = std::min(x0, x1);
     right = std::max(x0, x1);
@@ -20,7 +20,7 @@ AABBRectParams::AABBRectParams(const double x0, const double y0, const double x1
     bottom = std::min(y0, y1);
 }
 
-Point AABBRectParams::operator[](const int index) const
+Point AABBRect::operator[](const int index) const
 {
     switch (index)
     {
@@ -37,7 +37,7 @@ Point AABBRectParams::operator[](const int index) const
     }
 }
 
-void AABBRectParams::translate(const double tx, const double ty)
+void AABBRect::translate(const double tx, const double ty)
 {
     left += tx;
     right += tx;
@@ -45,7 +45,7 @@ void AABBRectParams::translate(const double tx, const double ty)
     bottom += ty;
 }
 
-void AABBRectParams::transform(const double a, const double b, const double c, const double d, const double e, const double f)
+void AABBRect::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
     // 变换四个角点后重新计算外接矩形,避免反射/旋转后 top<bottom 或 left>right
     const double x0 = a * left + b * top + c, y0 = d * left + e * top + f;
@@ -58,7 +58,7 @@ void AABBRectParams::transform(const double a, const double b, const double c, c
     bottom = std::min({y0, y1, y2, y3});
 }
 
-void AABBRectParams::scale(const double x, const double y, const double k)
+void AABBRect::scale(const double x, const double y, const double k)
 {
     left = k * left + x * (1 - k);
     right = k * right + x * (1 - k);
@@ -66,7 +66,7 @@ void AABBRectParams::scale(const double x, const double y, const double k)
     bottom = k * bottom + y * (1 - k);
 }
 
-void AABBRectParams::operator+=(const AABBRectParams &rect)
+void AABBRect::operator+=(const AABBRect &rect)
 {
     this->left = std::min(this->left, rect.left);
     this->top = std::max(this->top, rect.top);
@@ -90,9 +90,9 @@ Polygon DObject::mini_bounding_rect() const
     return Polygon();
 }
 
-AABBRectParams DObject::aabbrect_params() const
+AABBRect DObject::aabbrect() const
 {
-    return AABBRectParams();
+    return AABBRect();
 }
 
 
@@ -228,9 +228,9 @@ Polygon Point::mini_bounding_rect() const
     return Polygon({*this, *this, *this, *this});
 }
 
-AABBRectParams Point::aabbrect_params() const
+AABBRect Point::aabbrect() const
 {
-    AABBRectParams params;
+    AABBRect params;
     params.left = x;
     params.top = y;
     params.right = x;
@@ -728,7 +728,7 @@ Polygon Polyline::mini_bounding_rect() const
         Polygon polygon(hull);
         cs = (polygon[i - 1].x * polygon[i].y - polygon[i].x * polygon[i - 1].y) / (polygon[i].length() * polygon[i - 1].length());
         polygon.rotate(polygon[i - 1].x, polygon[i - 1].y, std::acos(cs));
-        temp = polygon.aabbrect_params();
+        temp = polygon.aabbrect();
         if (temp.area() < area)
         {
             rect = temp;
@@ -739,9 +739,9 @@ Polygon Polyline::mini_bounding_rect() const
     return rect;
 }
 
-AABBRectParams Polyline::aabbrect_params() const
+AABBRect Polyline::aabbrect() const
 {
-    AABBRectParams params;
+    AABBRect params;
     if (_points.empty())
     {
         return params;
@@ -833,7 +833,7 @@ Polygon::Polygon(const Polyline &polyline) : _points(polyline.begin(), polyline.
     }
 }
 
-Polygon::Polygon(const AABBRectParams &rect)
+Polygon::Polygon(const AABBRect &rect)
 {
     _points.emplace_back(rect.left, rect.top);
     _points.emplace_back(rect.right, rect.top);
@@ -1205,7 +1205,7 @@ Polygon Polygon::mini_bounding_rect() const
         Polygon polygon(hull);
         cs = (polygon[i - 1].x * polygon[i].y - polygon[i].x * polygon[i - 1].y) / (polygon[i].length() * polygon[i - 1].length());
         polygon.rotate(polygon[i - 1].x, polygon[i - 1].y, std::acos(cs));
-        temp = polygon.aabbrect_params();
+        temp = polygon.aabbrect();
         if (temp.area() < area)
         {
             rect = temp;
@@ -1216,9 +1216,9 @@ Polygon Polygon::mini_bounding_rect() const
     return rect;
 }
 
-AABBRectParams Polygon::aabbrect_params() const
+AABBRect Polygon::aabbrect() const
 {
-    AABBRectParams params;
+    AABBRect params;
     if (_points.empty())
     {
         return params;
@@ -1918,7 +1918,7 @@ Polygon Triangle::mini_bounding_rect() const
         cs = (triangle[i].x * triangle[i < 2 ? i + 1 : 0].y - triangle[i < 2 ? i + 1 : 0].x * triangle[i].y) /
              (triangle[i < 2 ? i + 1 : 0].length() * triangle[i].length());
         triangle.rotate(triangle[i].x, triangle[i].y, std::acos(cs));
-        temp = triangle.aabbrect_params();
+        temp = triangle.aabbrect();
         if (temp.area() < area)
         {
             rect = temp;
@@ -1929,9 +1929,9 @@ Polygon Triangle::mini_bounding_rect() const
     return rect;
 }
 
-AABBRectParams Triangle::aabbrect_params() const
+AABBRect Triangle::aabbrect() const
 {
-    AABBRectParams params;
+    AABBRect params;
     params.left = params.right = _vecs[0].x;
     params.bottom = params.top = _vecs[0].y;
     for (int i = 1; i < 3; ++i)
@@ -2124,7 +2124,7 @@ Polygon Circle::convex_hull() const
     }
     else
     {
-        return AABBRectParams(x - radius, y + radius, x + radius, y - radius);
+        return AABBRect(x - radius, y + radius, x + radius, y - radius);
     }
 }
 
@@ -2136,13 +2136,13 @@ Polygon Circle::mini_bounding_rect() const
     }
     else
     {
-        return AABBRectParams(x - radius, y + radius, x + radius, y - radius);
+        return AABBRect(x - radius, y + radius, x + radius, y - radius);
     }
 }
 
-AABBRectParams Circle::aabbrect_params() const
+AABBRect Circle::aabbrect() const
 {
-    AABBRectParams params;
+    AABBRect params;
     params.left = x - radius;
     params.top = y + radius;
     params.right = x + radius;
@@ -2343,9 +2343,9 @@ Polygon CubicBezier::mini_bounding_rect() const
     return _shape.mini_bounding_rect();
 }
 
-AABBRectParams CubicBezier::aabbrect_params() const
+AABBRect CubicBezier::aabbrect() const
 {
-    return _shape.aabbrect_params();
+    return _shape.aabbrect();
 }
 
 Point CubicBezier::tangent(const size_t index, const double t) const
@@ -2825,14 +2825,14 @@ Polygon Ellipse::mini_bounding_rect() const
     return polygon;
 }
 
-AABBRectParams Ellipse::aabbrect_params() const
+AABBRect Ellipse::aabbrect() const
 {
     const Geo::Point center = (_a[0] + _a[1] + _b[0] + _b[1]) / 4;
     const double aa = Geo::distance_square(_a[0], _a[1]) / 4, bb = Geo::distance_square(_b[0], _b[1]) / 4;
     const Geo::Vector vec = _a[0] - _a[1];
     const double cc = std::pow(vec.x, 2) / (std::pow(vec.x, 2) + std::pow(vec.y, 2));
     const double ss = 1 - cc;
-    AABBRectParams params;
+    AABBRect params;
     params.left = center.x - std::sqrt(aa * cc + bb * ss);
     params.top = center.y + std::sqrt(aa * ss + bb * cc);
     params.right = center.x + std::sqrt(aa * cc + bb * ss);
@@ -3248,9 +3248,9 @@ Polygon BSpline::mini_bounding_rect() const
     return _shape.mini_bounding_rect();
 }
 
-AABBRectParams BSpline::aabbrect_params() const
+AABBRect BSpline::aabbrect() const
 {
-    return _shape.aabbrect_params();
+    return _shape.aabbrect();
 }
 
 const Point &BSpline::front() const
@@ -4878,9 +4878,9 @@ Polygon Arc::mini_bounding_rect() const
     return Polygon(points.begin(), points.end());
 }
 
-AABBRectParams Arc::aabbrect_params() const
+AABBRect Arc::aabbrect() const
 {
-    AABBRectParams params;
+    AABBRect params;
     params.left = std::min({control_points[0].x, control_points[1].x, control_points[2].x});
     if (Geo::distance(Geo::Point(x - radius, y), *this) < Geo::EPSILON)
     {

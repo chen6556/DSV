@@ -45,7 +45,7 @@ public:
 
     const Graph *graph() const;
 
-    void refresh_visible_objects(const Geo::AABBRectParams &rect);
+    void refresh_visible_objects(const Geo::AABBRect &rect);
 
     const std::vector<Geo::DObject *> &visible_objects() const;
 
@@ -71,7 +71,7 @@ public:
 
     const size_t selected_count() const;
 
-    std::vector<Geo::DObject *> select(const Geo::AABBRectParams &rect, const bool reset_others = true, const bool visible_only = true);
+    std::vector<Geo::DObject *> select(const Geo::AABBRect &rect, const bool reset_others = true, const bool visible_only = true);
 
     void reset_selected_mark(const bool value = false);
 
@@ -216,5 +216,4 @@ public:
     void bezier_to_bspline(Geo::CubicBezier *bezier);
 
     void bspline_to_bezier(Geo::BSpline *bspline);
-
 };

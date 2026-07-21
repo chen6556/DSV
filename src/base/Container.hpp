@@ -69,7 +69,7 @@ public:
     // 最小外接矩形
     Geo::Polygon mini_bounding_rect() const override;
 
-    Geo::AABBRectParams aabbrect_params() const override;
+    Geo::AABBRect aabbrect() const override;
 
     void paint(QPainter &painter) const;
 };
@@ -154,7 +154,7 @@ public:
 
     void rescale(const double x, const double y);
 
-    Geo::AABBRectParams aabbrect_params() const override;
+    Geo::AABBRect aabbrect() const override;
 
     size_t size() const;
 
@@ -202,7 +202,7 @@ public:
 class Combination : public ContainerGroup
 {
 private:
-    Geo::AABBRectParams _border;
+    Geo::AABBRect _border;
 
 public:
     Combination() = default;
@@ -239,5 +239,5 @@ public:
 
     void update_border();
 
-    const Geo::AABBRectParams &border() const;
+    const Geo::AABBRect &border() const;
 };

@@ -270,7 +270,7 @@ void PropertyWidget::init_combination_widget()
     connect(ui->combination_centerX, &QDoubleSpinBox::valueChanged,
             [this](double value)
             {
-                const Geo::AABBRectParams rect = _combination->aabbrect_params();
+                const Geo::AABBRect rect = _combination->aabbrect();
                 _combination->translate(value - (rect.left + rect.right) / 2, 0);
                 _canvas->refresh_vbo(true, Geo::Type::COMBINATION);
                 _canvas->update();
@@ -278,7 +278,7 @@ void PropertyWidget::init_combination_widget()
     connect(ui->combination_centerY, &QDoubleSpinBox::valueChanged,
             [this](double value)
             {
-                const Geo::AABBRectParams rect = _combination->aabbrect_params();
+                const Geo::AABBRect rect = _combination->aabbrect();
                 _combination->translate(0, value - (rect.top + rect.bottom) / 2);
                 _canvas->refresh_vbo(true, Geo::Type::COMBINATION);
                 _canvas->update();
@@ -673,7 +673,7 @@ void PropertyWidget::read(Combination *combination)
     ui->stackedWidget->setCurrentIndex(4);
     ui->object_type_lb->setText("Combination");
     ui->combination_itemCount->setValue(combination->size());
-    const Geo::AABBRectParams rect = combination->aabbrect_params();
+    const Geo::AABBRect rect = combination->aabbrect();
     ui->combination_centerX->blockSignals(true);
     ui->combination_centerY->blockSignals(true);
     ui->combination_centerX->setValue((rect.left + rect.right) / 2);
@@ -962,7 +962,7 @@ void PropertyWidget::check(Geo::Circle *circle)
 
 void PropertyWidget::check(Combination *combination)
 {
-    const Geo::AABBRectParams rect = combination->aabbrect_params();
+    const Geo::AABBRect rect = combination->aabbrect();
     const double x = (rect.left + rect.right) / 2, y = (rect.top + rect.bottom) / 2;
     if (std::get<0>(_shape.front()) == x && std::get<1>(_shape.front()) == y)
     {
@@ -1056,13 +1056,15 @@ void PropertyWidget::move_bezier_point(int index, double x0, double y0)
     const double y1 = _bezier->control_points.at(index).y;
     if (const int order = 3; index > 2 && index % order == 1)
     {
-        _bezier->control_points[index - 2] = _bezier->control_points[index - 1] + (_bezier->control_points[index - 1] - _bezier->control_points[index]).normalize() *
-                                                            Geo::distance(_bezier->control_points[index - 2], _bezier->control_points[index - 1]);
+        _bezier->control_points[index - 2] =
+            _bezier->control_points[index - 1] + (_bezier->control_points[index - 1] - _bezier->control_points[index]).normalize() *
+                                                     Geo::distance(_bezier->control_points[index - 2], _bezier->control_points[index - 1]);
     }
     else if (index + 2 < _bezier->control_points.size() && index % order == order - 1)
     {
-        _bezier->control_points[index + 2] = _bezier->control_points[index + 1] + (_bezier->control_points[index + 1] - _bezier->control_points[index]).normalize() *
-                                                            Geo::distance(_bezier->control_points[index + 1], _bezier->control_points[index + 2]);
+        _bezier->control_points[index + 2] =
+            _bezier->control_points[index + 1] + (_bezier->control_points[index + 1] - _bezier->control_points[index]).normalize() *
+                                                     Geo::distance(_bezier->control_points[index + 1], _bezier->control_points[index + 2]);
     }
     else if (index % order == 0 && index > 0 && index < _bezier->control_points.size() - 1)
     {

@@ -253,9 +253,9 @@ void Graph::rescale(const double x, const double y)
     }
 }
 
-Geo::AABBRectParams Graph::aabbrect_params() const
+Geo::AABBRect Graph::aabbrect() const
 {
-    Geo::AABBRectParams param;
+    Geo::AABBRect param;
     param.left = param.bottom = DBL_MAX;
     param.right = param.top = -DBL_MAX;
     for (const ContainerGroup &group : _container_groups)
@@ -264,7 +264,7 @@ Geo::AABBRectParams Graph::aabbrect_params() const
         {
             continue;
         }
-        const Geo::AABBRectParams rect = group.aabbrect_params();
+        const Geo::AABBRect rect = group.aabbrect();
         param.left = std::min(param.left, rect.left);
         param.bottom = std::min(param.bottom, rect.bottom);
         param.right = std::max(param.right, rect.right);

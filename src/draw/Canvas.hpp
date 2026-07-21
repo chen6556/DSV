@@ -29,7 +29,7 @@ public:
     static Canvas *canvas;
 
 private:
-    Geo::AABBRectParams _visible_area;
+    Geo::AABBRect _visible_area;
     std::vector<const Geo::DObject *> _caught_objects;
     Editor _editor;
     QLabel **_info_labels = nullptr;
@@ -241,7 +241,7 @@ public:
 
     Geo::Point center() const;
 
-    Geo::AABBRectParams bounding_rect() const;
+    Geo::AABBRect bounding_rect() const;
 
     Geo::Point mouse_position(const bool to_real_coord = true) const;
 
@@ -335,7 +335,7 @@ public:
 
 
     bool refresh_caught_points(const double x, const double y, const double distance, std::vector<const Geo::DObject *> &caught_objects,
-                                 const bool skip_selected, const bool current_group_only = true) const;
+                               const bool skip_selected, const bool current_group_only = true) const;
 
     bool refresh_catchline_points(const std::vector<const Geo::DObject *> &objects, const double distance, Geo::Point &pos);
 };
