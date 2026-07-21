@@ -1,5 +1,5 @@
 #pragma once
-
+#include <cmath>
 #include "base/Geometry.hpp"
 #include "algorithm/Boolean.hpp"
 #include "algorithm/Conversion.hpp"

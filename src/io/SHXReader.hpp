@@ -77,7 +77,7 @@ public:
 
     SHXFileReader(std::ifstream *stream);
 
-    std::vector<uchar> read_bytes(const int length = 1);
+    std::vector<uint8_t> read_bytes(const int length = 1);
 
     void skip(const int length);
 
@@ -156,29 +156,29 @@ private:
 
     static void scale(SHXShape &shape, const double height, const double width);
 
-    SHXShape parse_shape(const std::vector<uchar> &data);
+    SHXShape parse_shape(const std::vector<uint8_t> &data);
 
-    int special_cmd(const int cmd, const std::vector<uchar> &data, const int index, State &state);
+    int special_cmd(const int cmd, const std::vector<uint8_t> &data, const int index, State &state);
 
     static void vector_cmd(const int cmd, State &state);
 
     static Geo::Point vector_direction(const int dir);
 
-    int subshape_cmd(const std::vector<uchar> &data, const int index, State &state);
+    int subshape_cmd(const std::vector<uint8_t> &data, const int index, State &state);
 
-    static int xy_displacement(const std::vector<uchar> &data, const int index, State &state);
+    static int xy_displacement(const std::vector<uint8_t> &data, const int index, State &state);
 
-    static int multiple_xy_displacement(const std::vector<uchar> &data, const int index, State &state);
+    static int multiple_xy_displacement(const std::vector<uint8_t> &data, const int index, State &state);
 
-    static int octant_arc(const std::vector<uchar> &data, const int index, State &state);
+    static int octant_arc(const std::vector<uint8_t> &data, const int index, State &state);
 
-    static int fractional_arc(const std::vector<uchar> &data, const int index, State &state);
+    static int fractional_arc(const std::vector<uint8_t> &data, const int index, State &state);
 
-    static int bulge_arc(const std::vector<uchar> &data, const int index, State &state);
+    static int bulge_arc(const std::vector<uint8_t> &data, const int index, State &state);
 
-    static int multiple_bulge_arcs(const std::vector<uchar> &data, const int index, State &state);
+    static int multiple_bulge_arcs(const std::vector<uint8_t> &data, const int index, State &state);
 
-    int skip_code(const std::vector<uchar> &data, int index);
+    int skip_code(const std::vector<uint8_t> &data, int index);
 
     SHXShape scale_subshape_at_insert_point(const int code, const double width, const double height, const Geo::Point &point);
 

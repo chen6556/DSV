@@ -1,3 +1,4 @@
+#include <cassert>
 #include <algorithm>
 #include "base/Algorithm.hpp"
 #include "base/Math.hpp"
