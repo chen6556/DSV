@@ -400,6 +400,11 @@ double Math::ellipse_arc_length(const double a, const double b, const double sta
         }
     }
 
+    if (angle[0] == angle[1])
+    {
+        return 0;
+    }
+
     for (int i = 0; i < 2; ++i)
     {
         if (angle[i] == 0 || angle[i] == Math::PI * 2)
@@ -475,6 +480,28 @@ double Math::max_x_trichotomy(const TartgetFunc &f, double l, double r)
         else
         {
             l = ml;
+        }
+    }
+    return (l + r) / 2;
+}
+
+double Math::zero_x_bisection(const TartgetFunc &f, double l, double r)
+{
+    while (r - l > Math::EPSILON)
+    {
+        const double m = (l + r) / 2;
+        const double lvalue = f(l), rvalue = f(r);
+        if (const double mvalue = f(m); mvalue == 0)
+        {
+            return m;
+        }
+        else if (f(l) * mvalue < 0)
+        {
+            r = m;
+        }
+        else
+        {
+            l = m;
         }
     }
     return (l + r) / 2;
