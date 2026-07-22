@@ -134,17 +134,17 @@ void DXFReaderWriter::addBlock(const DRW_Block &data)
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
     _to_graph = false;
     _ignore_entity = (!data.visible || data.name.empty());
-    const QString name = QString::fromUtf8(data.name.c_str());
+    const QString name = QString::fromStdString(data.name);
     const QString mid = name.mid(1, 11);
     if (!_ignore_entity && mid.toLower() != "paper_space" && mid.toLower() != "model_space")
     {
         _combination = new Combination();
-        _combination->name = data.layer;
+        _combination->name = data.name;
         _block_store.push_back(_combination);
         _block_map.insert_or_assign(_combination, data.handle);
         // _block_names.insert_or_assign(_combination, name.toStdString());
-        _block_name_map.insert_or_assign(data.layer, _combination);
-        _combination->name = data.layer;
+        _block_name_map.insert_or_assign(data.name, _combination);
+        // _combination->name = data.layer;
     }
     else
     {
@@ -976,7 +976,7 @@ void DXFReaderWriter::addSolid(const DRW_Solid &data)
 
 void DXFReaderWriter::addMText(const DRW_MText &data)
 {
-    const QString txt = to_native_string(QString::fromUtf8(data.text.c_str()));
+    const QString txt = to_native_string(QString::fromStdString(data.text));
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
     if (_ignore_entity || !data.visible || txt.isEmpty() || txt.count(' ') == txt.size())
     {
@@ -1055,7 +1055,7 @@ void DXFReaderWriter::addMText(const DRW_MText &data)
 
 void DXFReaderWriter::addText(const DRW_Text &data)
 {
-    const QString txt = to_native_string(QString::fromUtf8(data.text.c_str()));
+    const QString txt = to_native_string(QString::fromStdString(data.text));
     _handle_pairs.insert_or_assign(data.handle, data.parentHandle);
     if (_ignore_entity || !data.visible || txt.isEmpty() || txt.count(' ') == txt.size())
     {
