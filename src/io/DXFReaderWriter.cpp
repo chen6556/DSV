@@ -2190,6 +2190,26 @@ QString DXFReaderWriter::to_native_string(const QString &txt)
     }
     res.append(txt.mid(j));
 
+    for (int i = 1, j = 3, count = res.length(); i < count; ++i)
+    {
+        if (j = i + 2; j < count && res.at(i) == '\\' && res.at(i + 1) == 'f')
+        {
+            while (j < count && res.at(j) != ';')
+            {
+                ++j;
+            }
+            if (j < count && res.at(j) == ';')
+            {
+                res.remove(i, j - i + 1);
+                count -= (j - i + 1);
+            }
+            else
+            {
+                i = j;
+            }
+        }
+    }
+
     // Line feed:
     res = res.replace(QRegularExpression("\\\\P"), "\n");
     // Space:
