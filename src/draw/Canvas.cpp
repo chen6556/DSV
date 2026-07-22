@@ -1017,8 +1017,8 @@ void Canvas::show_text_edit(Text *text)
 {
     _edited_text = text;
     Geo::AABBRect rect(text->aabbrect());
-    const double center_x = (rect.left + rect.right) / 2, center_y = (rect.top + rect.bottom) / 2;
     rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
+    const double center_x = (rect.left + rect.right) / 2, center_y = (rect.top + rect.bottom) / 2;
     _input_line.setMaximumSize(std::max(100.0, rect.right - rect.left), std::max(100.0, rect.top - rect.bottom));
     _input_line.move(center_x - _input_line.rect().center().x(), center_y - _input_line.rect().center().y());
     _input_line.setFocus();
