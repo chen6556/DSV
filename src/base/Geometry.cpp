@@ -3946,19 +3946,28 @@ QuadBSpline *QuadBSpline::range(const double t0, const double t1) const
 Geo::Point QuadBSpline::derivative(const double t, const int n) const
 {
     Geo::Point result;
-    if (n > 2)
+    if (n < 0 || n > 2)
     {
         return result;
     }
     const size_t npts = control_points.size() - n;
     std::vector<double> nbasis;
-    const std::vector<double> knots(_knots.begin() + n, _knots.end() - n); // 二阶导数的节点矢量
+    const std::vector<double> knots(_knots.begin() + n, _knots.end() - n); // 导数的节点矢量
     rbasis(2 - n, t, npts, knots, nbasis);
-    std::vector<Geo::Point> points;
-    for (size_t i = 0; i < npts; ++i)
+    // 递推求 n 阶导数的控制点: 第 k 阶对第 k-1 阶控制点做差分, 而非对原始控制点只差分一次
+    // P^(k)_i = (3 - k) / (u[i+3] - u[i+k]) * (P^(k-1)_[i+1] - P^(k-1)_i)
+    std::vector<Geo::Point> points(control_points);
+    for (int k = 1; k <= n; ++k)
     {
-        const double denom = knots[i + 3 - n] - knots[i];
-        points.emplace_back((control_points[i + 1] - control_points[i]) * (3 - n) / denom);
+        const size_t count = points.size() - 1;
+        std::vector<Geo::Point> next;
+        next.reserve(count);
+        for (size_t i = 0; i < count; ++i)
+        {
+            const double denom = _knots[i + 3] - _knots[i + k];
+            next.emplace_back((points[i + 1] - points[i]) * (3 - k) / denom);
+        }
+        points = std::move(next);
     }
     for (size_t i = 0; i < npts; ++i)
     {
@@ -4455,7 +4464,7 @@ CubicBSpline *CubicBSpline::range(const double t0, const double t1) const
 Geo::Point CubicBSpline::derivative(const double t, const int n) const
 {
     Geo::Point result;
-    if (n > 3)
+    if (n < 0 || n > 3)
     {
         return result;
     }
@@ -4463,11 +4472,20 @@ Geo::Point CubicBSpline::derivative(const double t, const int n) const
     std::vector<double> nbasis;
     const std::vector<double> knots(_knots.begin() + n, _knots.end() - n); // 导数的节点矢量
     rbasis(3 - n, t, npts, knots, nbasis);
-    std::vector<Geo::Point> points;
-    for (size_t i = 0; i < npts; ++i)
+    // 递推求 n 阶导数的控制点: 第 k 阶对第 k-1 阶控制点做差分, 而非对原始控制点只差分一次
+    // P^(k)_i = (4 - k) / (u[i+4] - u[i+k]) * (P^(k-1)_[i+1] - P^(k-1)_i)
+    std::vector<Geo::Point> points(control_points);
+    for (int k = 1; k <= n; ++k)
     {
-        const double denom = knots[i + 4 - n] - knots[i];
-        points.emplace_back((control_points[i + 1] - control_points[i]) * (4 - n) / denom);
+        const size_t count = points.size() - 1;
+        std::vector<Geo::Point> next;
+        next.reserve(count);
+        for (size_t i = 0; i < count; ++i)
+        {
+            const double denom = _knots[i + 4] - _knots[i + k];
+            next.emplace_back((points[i + 1] - points[i]) * (4 - k) / denom);
+        }
+        points = std::move(next);
     }
     for (size_t i = 0; i < npts; ++i)
     {
