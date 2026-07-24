@@ -503,7 +503,8 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
     for (double v : temp)
     {
         step = 1e-3;
-        double lower = knots[0], upper = knots[nplusc - 1];
+        const double domain_min = knots[0], domain_max = knots[nplusc - 1];
+        double lower = domain_min, upper = domain_max;
         min_dis[0] = min_dis[1] = DBL_MAX;
         do
         {
@@ -523,8 +524,8 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
                     v = x;
                 }
             }
-            lower = std::max(0.0, v - step);
-            upper = std::min(1.0, v + step);
+            lower = std::max(domain_min, v - step);
+            upper = std::min(domain_max, v + step);
             step = (upper - lower) / 100;
             if (min_dis[0] > min_dis[1])
             {
@@ -532,7 +533,7 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
             }
         } while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
-        t = v, lower = std::max(knots[0], t - 0.001), upper = std::min(knots[nplusc - 1], t + 0.001);
+        t = v, lower = std::max(domain_min, t - 0.001), upper = std::min(domain_max, t + 0.001);
         const std::function<double(const double)> f = [&](const double t)
         {
             std::vector<double> nbasis;
@@ -545,13 +546,13 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
             return Geo::distance(coord, point) * 1e9;
         };
         min_dis[0] = f(lower), min_dis[1] = f(t);
-        while (lower > 0.0 && min_dis[0] < min_dis[1])
+        while (lower > domain_min && min_dis[0] < min_dis[1])
         {
             lower -= 0.001;
             min_dis[0] = f(lower);
         }
         min_dis[0] = f(upper);
-        while (upper < 1.0 && min_dis[0] < min_dis[1])
+        while (upper < domain_max && min_dis[0] < min_dis[1])
         {
             upper += 0.001;
             min_dis[0] = f(upper);

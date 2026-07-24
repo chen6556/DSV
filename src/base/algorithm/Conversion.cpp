@@ -39,8 +39,8 @@ bool Geo::angle_to_arc(const Point &point0, const Point &point1, const Point &po
     }
 
     arc.clear();
-    const double c = std::atan(len / radius) * radius * 2;
-    const size_t slice_num = std::max(c / step, 10.0);
+    const double arc_length = std::abs(rad2) * radius;
+    const size_t slice_num = std::max(arc_length / step, 10.0);
     const double d_rad = rad2 / slice_num;
     for (size_t i = 0; i <= slice_num; i++)
     {

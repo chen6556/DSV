@@ -272,14 +272,14 @@ double Geo::distance(const Point &point, const BSpline &bspline, const bool is_c
             return Geo::distance(coord, point) * 1e9;
         };
         min_dis[0] = f(lower), min_dis[1] = f(t);
-        while (lower > 0.0 && min_dis[0] < min_dis[1])
+        while (lower > knots[0] && min_dis[0] < min_dis[1])
         {
             lower -= 0.001;
             min_dis[0] = f(lower);
         }
-        lower = std::max(0.0, lower);
+        lower = std::max(knots[0], lower);
         min_dis[0] = f(upper);
-        while (upper < 1.0 && min_dis[0] < min_dis[1])
+        while (upper < knots[nplusc - 1] && min_dis[0] < min_dis[1])
         {
             upper += 0.001;
             min_dis[0] = f(upper);
@@ -405,6 +405,7 @@ double Geo::distance(const Point &point, const Arc &arc)
     {
         return arc.radius;
     }
+
     double angle0 = Geo::angle(arc.control_points[0], center, arc.control_points[2]);
     double angle1 = Geo::angle(arc.control_points[0], center, point);
     if (arc.is_cw())
