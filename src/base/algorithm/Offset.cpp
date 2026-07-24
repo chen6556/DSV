@@ -326,8 +326,8 @@ bool Geo::offset(const Geo::AABBRect &input, Geo::AABBRect &result, const double
     {
         result.top = input.top + distance;
         result.right = input.right + distance;
-        result.bottom = input.bottom + distance;
-        result.left = input.left + distance;
+        result.bottom = input.bottom - distance;
+        result.left = input.left - distance;
         return true;
     }
     else

@@ -6261,7 +6261,7 @@ void Editor::trim(Geo::BSpline *bspline, const double x, const double y)
                 }
             } while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
-            lower = std::max(knots[0], anchor_t - 1e-3), upper = std::min(knots[nplusc - 1], anchor_t + 1e-3);
+            lower = std::max(knots[0], v - 1e-3), upper = std::min(knots[nplusc - 1], v + 1e-3);
             const std::function<double(const double)> f = [&](const double t)
             {
                 std::vector<double> nbasis;
@@ -8711,7 +8711,7 @@ void Editor::auto_combine()
                         break;
                     case Geo::Type::TEXT:
                         if (Geo::is_intersected(static_cast<Text *>(all_polylines[k])->convex_hull(),
-                                                *static_cast<Geo::Circle *>(objects[j])))
+                                                *static_cast<Geo::Ellipse *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
