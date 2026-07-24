@@ -113,7 +113,7 @@ void Math::mul(const double *mat0, const size_t m0, const size_t n0, const doubl
 {
     gsl_matrix_const_view a = gsl_matrix_const_view_array(mat0, m0, n0);
     gsl_matrix_const_view b = gsl_matrix_const_view_array(mat1, n0, n1);
-    gsl_matrix_view c = gsl_matrix_view_array(output, n0, n1);
+    gsl_matrix_view c = gsl_matrix_view_array(output, m0, n1);
     gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &a.matrix, &b.matrix, 0.0, &c.matrix);
 }
 
@@ -437,17 +437,17 @@ double Math::max_x_trichotomy(const TartgetFunc &f, double l, double r)
 {
     while (r - l > Math::EPSILON)
     {
-        const double ml = (l * l + r) / 3;
+        const double ml = (l + l + r) / 3;
         const double mr = (l + r + r) / 3;
         const double lvalue = f(ml);
         const double rvalue = f(mr);
         if (lvalue < rvalue)
         {
-            r = mr;
+            l = ml;
         }
         else
         {
-            l = ml;
+            r = mr;
         }
     }
     return (l + r) / 2;

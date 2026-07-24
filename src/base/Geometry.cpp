@@ -2501,7 +2501,7 @@ Point CubicBezier::derivative(const size_t index, const double t, const int n) c
             const Geo::Point points[3] = {(control_points[1 + index * 3] - control_points[index * 3]) * 3,
                                           (control_points[2 + index * 3] - control_points[1 + index * 3]) * 3,
                                           (control_points[3 + index * 3] - control_points[2 + index * 3]) * 3};
-            result = (points[2] - points[1] * 2 + points[0]) * 2 * t;
+            result = (points[2] - points[1] * 2 + points[0]) * 2;
         }
         break;
     case 2:
@@ -2509,7 +2509,7 @@ Point CubicBezier::derivative(const size_t index, const double t, const int n) c
             const Geo::Point points[3] = {(control_points[1 + index * 3] - control_points[index * 3]) * 3,
                                           (control_points[2 + index * 3] - control_points[1 + index * 3]) * 3,
                                           (control_points[3 + index * 3] - control_points[2 + index * 3]) * 3};
-            result = (points[1] - points[0]) * 2 * t + (points[2] - points[1]) * 2 * (1 - t);
+            result = (points[1] - points[0]) * 2 * (1 - t) + (points[2] - points[1]) * 2 * t;
         }
         break;
     case 1:

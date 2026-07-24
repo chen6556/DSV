@@ -718,7 +718,9 @@ bool Geo::split(const Ellipse &ellipse, const Point &pos, Ellipse &output0, Elli
         const double angle2 = Geo::rad_to_2PI(Geo::angle(center, pos)) - ellipse.angle();
         const double a = ellipse.lengtha(), b = ellipse.lengthb();
         output0 = Geo::Ellipse(center, a, b, angle0, angle2, false);
+        output0.rotate(center.x, center.y, ellipse.angle());
         output1 = Geo::Ellipse(center, a, b, angle2, angle1, false);
+        output1.rotate(center.x, center.y, ellipse.angle());
         return true;
     }
     else

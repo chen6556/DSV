@@ -1321,7 +1321,7 @@ bool Geo::fillet(const Geo::Arc &arc0, const Geo::Point &point0, const Geo::Arc 
                     angle1 = Geo::angle(arc0.control_points[2], circle0, temp1.control_points[1]);
                     if (angle1 < 0)
                     {
-                        angle0 += Geo::PI * 2;
+                        angle1 += Geo::PI * 2;
                     }
                 }
                 else
