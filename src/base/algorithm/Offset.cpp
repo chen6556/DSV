@@ -403,12 +403,12 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
         }
         else
         {
-            const double a = std::abs(((8 * anchor_offset.x - 4 * cache[0].x - 4 * cache[3].x) * vec1.y -
-                                       (8 * anchor_offset.y - 4 * cache[0].y - 4 * cache[3].y) * vec1.x) /
-                                      delta);
-            const double b = std::abs(((8 * anchor_offset.x - 4 * cache[0].x - 4 * cache[3].x) * vec0.y -
-                                       (8 * anchor_offset.y - 4 * cache[0].y - 4 * cache[3].y) * vec0.x) /
-                                      delta);
+            // 偏移贝塞尔控制点为 temp[0..3], 其中 temp[1]=temp[0]+(a/3)vec0, temp[2]=temp[3]-(b/3)vec1
+            // 令 B(0.5) = anchor_offset, 解 a*vec0 - b*vec1 = rhs 用克莱姆法则(行列式为 delta)
+            // rhs 应为偏移后端点 temp[0]/temp[3], 而非原始端点 cache[0]/cache[3]
+            const Geo::Point rhs(8 * anchor_offset.x - 4 * temp[0].x - 4 * temp[3].x, 8 * anchor_offset.y - 4 * temp[0].y - 4 * temp[3].y);
+            const double a = std::abs((rhs.x * vec1.y - rhs.y * vec1.x) / delta);
+            const double b = std::abs((rhs.x * vec0.y - rhs.y * vec0.x) / delta);
             if (Geo::Point mid; Geo::is_intersected(temp[0], temp[1], temp[2], temp[3], mid, false))
             {
                 temp[1] = temp[0] + vec0 * std::min({a / 3, Geo::distance(temp[0], mid), Geo::distance(cache[0], cache[1])});

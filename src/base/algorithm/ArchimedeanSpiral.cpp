@@ -23,7 +23,7 @@ std::vector<Geo::Point> Geo::archimedean_spiral_points(const Geo::Point &center,
     {
         double angle0 = start_angle, angle1 = total_angle;
         const double start_length = archimedean_spiral_length(inner_radius, b, angle0);
-        double length = archimedean_spiral_length(inner_radius, b, angle1) - start_length;
+        double length = archimedean_spiral_length(inner_radius, b, (angle0 + angle1) / 2) - start_length;
         while (std::abs(length - step) > Geo::EPSILON && std::abs(angle1 - angle0) > Geo::EPSILON)
         {
             if (length < step)
@@ -67,7 +67,7 @@ std::vector<Geo::Point> Geo::archimedean_spiral_points(const Geo::Point &center,
     {
         double angle0 = start_angle, angle1 = total_angle;
         const double start_length = archimedean_spiral_length(inner_radius, b, angle0);
-        double length = archimedean_spiral_length(inner_radius, b, angle1) - start_length;
+        double length = archimedean_spiral_length(inner_radius, b, (angle0 + angle1) / 2) - start_length;
         while (std::abs(length - step) > Geo::EPSILON && std::abs(angle1 - angle0) > Geo::EPSILON)
         {
             if (length < step)
