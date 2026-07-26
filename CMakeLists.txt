@@ -69,6 +69,18 @@ set_target_properties(DSV PROPERTIES
 
 qt_finalize_executable(DSV)
 
+aux_source_directory(tests _TEST_FILES)
+add_executable(tests
+    tests/tests.cpp
+    ${_TEST_FILES}
+    ${_DRAW_SOURCES}
+    ${_BASE_SOURCES}
+    ${_UI_SOURCES}
+    ${_IO_SOURCES}
+    ${_LIBRARY_SOURCES}
+)
+target_link_libraries(tests PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGLWidgets Qt6::OpenGL GSL::gsl)
+
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
 include(CPack)
