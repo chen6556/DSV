@@ -349,14 +349,7 @@ bool Polyline::is_self_intersected() const
     }
 
     Point point;
-    for (size_t j = 2, count = _points.size() - 2; j < count; ++j)
-    {
-        if (Geo::is_intersected(_points[0], _points[1], _points[j], _points[j + 1], point))
-        {
-            return true;
-        }
-    }
-    for (size_t i = 1, count = _points.size() - 1; i < count; ++i)
+    for (size_t i = 0, count = _points.size() - 1; i < count; ++i)
     {
         for (size_t j = i + 2; j < count; ++j)
         {
@@ -926,17 +919,15 @@ bool Polygon::is_self_intersected() const
     }
 
     Point point;
-    for (size_t j = 2, count = _points.size() - 2; j < count; ++j)
-    {
-        if (Geo::is_intersected(_points[0], _points[1], _points[j], _points[j + 1], point))
-        {
-            return true;
-        }
-    }
-    for (size_t i = 1, count = _points.size() - 1; i < count; ++i)
+    const size_t count = _points.size() - 1;
+    for (size_t i = 0; i < count; ++i)
     {
         for (size_t j = i + 2; j < count; ++j)
         {
+            if (i == 0 && j == count - 1)
+            {
+                continue; // 跳过首尾相邻的闭合边
+            }
             if (Geo::is_intersected(_points[i], _points[i + 1], _points[j], _points[j + 1], point))
             {
                 return true;

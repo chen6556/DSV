@@ -235,7 +235,7 @@ int Geo::closest_point(const Ellipse &ellipse, const Point &point, std::vector<P
         double degree0 = Geo::angle(Geo::Point(0, 0), coord) - Geo::PI / 2, degree1 = Geo::angle(Geo::Point(0, 0), coord) + Geo::PI / 2;
         double last_degree0 = degree0 - 1, last_degree1 = degree1 - 1;
         double m0, m1, x0 = 0, y0 = 0, x1 = 0, y1 = 0;
-        while (degree1 * 1e16 - degree0 * 1e16 > 1 && (last_degree0 != degree0 || last_degree1 != degree1))
+        while ((degree1 - degree0) > 1e-15 && (last_degree0 != degree0 || last_degree1 != degree1))
         {
             last_degree0 = degree0, last_degree1 = degree1;
             m0 = (degree1 - degree0) / 3 + degree0, m1 = degree1 - (degree1 - degree0) / 3;

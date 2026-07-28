@@ -392,13 +392,48 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
         temp[3] = vec1.vertical() * distance + cache[3];
         if (const double delta = vec0.x * vec1.y - vec0.y * vec1.x; delta == 0)
         {
-            if (output.empty() || (!split_indexs.empty() && output.size() == split_indexs.back() + 1))
+            // 切线平行时克莱姆法则无解，需判断曲线是否退化为直线
+            const bool collinear = std::abs((cache[1] - cache[0]).cross(cache[3] - cache[0])) == 0 &&
+                                   std::abs((cache[2] - cache[0]).cross(cache[3] - cache[0])) == 0;
+            if (collinear)
             {
-                output.emplace_back(temp[0]);
+                if (output.empty() || (!split_indexs.empty() && output.size() == split_indexs.back() + 1))
+                {
+                    output.emplace_back(temp[0]);
+                }
+                for (int i = 1; i <= 3; ++i)
+                {
+                    output.emplace_back(temp[i]);
+                }
             }
-            for (int i = 1; i <= 3; ++i)
+            else
             {
-                output.emplace_back(temp[i]);
+                // 非直线但切线平行（如 S 形曲线），需分割递归
+                if (Geo::CubicBezier shape2, shape3; Geo::split(shape0, 0, 0.5, shape2, shape3))
+                {
+                    if (points.back() == shape3.back())
+                    {
+                        for (int i = 2; i >= 0; --i)
+                        {
+                            points.emplace_back(shape3.control_points[i]);
+                        }
+                        for (int i = 2; i >= 0; --i)
+                        {
+                            points.emplace_back(shape2.control_points[i]);
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 2; i >= 0; --i)
+                        {
+                            points.emplace_back(shape2.control_points[i]);
+                        }
+                        for (int i = 2; i >= 0; --i)
+                        {
+                            points.emplace_back(shape3.control_points[i]);
+                        }
+                    }
+                }
             }
         }
         else
