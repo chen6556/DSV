@@ -181,4 +181,43 @@ void OffsetTest::test_bezier()
         const double avg_value = std::accumulate(tolerances.begin(), tolerances.end(), 0.0) / count;
         TEST(mid_value / 34.0 <= 1e-4 && avg_value / 34.0 <= 1e-4, "Bezier offset is within tolerance")
     }
+
+    {
+        const Geo::CubicBezier bezier({Geo::Point(-100, -100), Geo::Point(-100, 100), Geo::Point(100, 100), Geo::Point(100, -100)}, true);
+        std::vector<Geo::CubicBezier> result;
+        Geo::offset(bezier, result, 34.0, 1e-4, 50);
+        TEST(!result.empty(), "Bezier offset succeeded")
+        std::vector<double> tolerances;
+        for (size_t i = 0, count = bezier.control_points.size() / 3; i < count; ++i)
+        {
+            for (double t = 0; t <= 1; t += 0.01)
+            {
+                const Geo::Point point0 = bezier.shape_point(i, t);
+                const Geo::Point point1 = point0 + bezier.vertical(i, t).normalize() * 70.0;
+                double min_err = DBL_MAX;
+                for (const Geo::CubicBezier &b : result)
+                {
+                    std::vector<Geo::Point> points;
+                    Geo::is_intersected(point0, point1, b, points, false);
+                    for (const Geo::Point &point : points)
+                    {
+                        min_err = std::min(min_err, std::abs(Geo::distance(point, point0) - 34.0));
+                    }
+                    if (!points.empty())
+                    {
+                        break;
+                    }
+                }
+                if (min_err < DBL_MAX)
+                {
+                    tolerances.push_back(min_err);
+                }
+            }
+        }
+        std::sort(tolerances.begin(), tolerances.end());
+        const size_t count = tolerances.size();
+        const double mid_value = count % 2 == 0 ? (tolerances[count / 2 - 1] + tolerances[count / 2]) / 2 : tolerances[count / 2];
+        const double avg_value = std::accumulate(tolerances.begin(), tolerances.end(), 0.0) / count;
+        TEST(mid_value / 34.0 <= 1e-4 && avg_value / 34.0 <= 1e-4, "Bezier offset is within tolerance")
+    }
 }
