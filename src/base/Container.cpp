@@ -378,7 +378,7 @@ void Text::paint(QPainter &painter) const
 // ContainerGroup
 
 ContainerGroup::ContainerGroup(const ContainerGroup &containers)
-    : Geo::DObject(containers), _ratio(containers._ratio), _visible(containers._visible)
+    : Geo::DObject(containers), _ratio(containers._ratio), _visible(containers._visible), name(containers.name)
 {
     for (const Geo::DObject *geo : containers)
     {

@@ -1999,6 +1999,7 @@ Circle &Circle::operator=(const Circle &circle)
 {
     if (this != &circle)
     {
+        DObject::operator=(circle);
         x = circle.x;
         y = circle.y;
         radius = circle.radius;
