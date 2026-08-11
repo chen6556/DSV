@@ -165,8 +165,8 @@ void DSVReaderWriter::record_handle(Graph *graph)
         {
             Geo::DObject *object = temp.back();
             temp.pop_back();
-            _handle_to_object.insert_or_assign(_global_handle++, object);
-            _object_to_handle.insert_or_assign(object, _global_handle);
+            _handle_to_object.insert_or_assign(_global_handle, object);
+            _object_to_handle.insert_or_assign(object, _global_handle++);
             if (Combination *combination = dynamic_cast<Combination *>(object))
             {
                 temp.insert(temp.end(), combination->rbegin(), combination->rend());
