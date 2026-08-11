@@ -4588,7 +4588,6 @@ bool LinearDimOperation::mouse_move(QMouseEvent *event)
             _dim->paintable_lines(dim_lines);
             _dim->paintable_arrows(dim_arrows);
         }
-        qDebug() << _dim->label.x << ',' << _dim->label.y;
         break;
     default:
         break;

@@ -1,6 +1,4 @@
 #include <thread>
-#include <QDebug>
-#include <chrono>
 #include <algorithm>
 #include <unordered_map>
 #include "base/Editor.hpp"
@@ -4097,7 +4095,6 @@ bool Editor::fillet(Geo::DObject *object, const Geo::Point &point, const double 
 bool Editor::fillet(Geo::DObject *object0, const Geo::Point &point0, Geo::DObject *object1, const Geo::Point &point1, const double radius)
 {
     std::vector<Geo::DObject *> objects;
-    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     switch (object0->type())
     {
     case Geo::Type::POLYLINE:
@@ -4409,8 +4406,6 @@ bool Editor::fillet(Geo::DObject *object0, const Geo::Point &point0, Geo::DObjec
     default:
         break;
     }
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    qDebug() << std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
     if (objects.empty())
     {

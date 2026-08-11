@@ -106,7 +106,6 @@ void Canvas::initializeGL()
     glEnable(GL_MULTISAMPLE); // 抗锯齿
     glEnable(GL_POINT_SMOOTH);
     glEnable(GL_LINE_SMOOTH);
-    glEnable(GL_POLYGON_SMOOTH);
 
     int maxUniformBlockSize = 0;
     glGetIntegerv(GL_MAX_VERTEX_ATTRIB_BINDINGS, &maxUniformBlockSize);
@@ -490,7 +489,7 @@ void Canvas::paintGL()
             glBufferSubData(GL_ARRAY_BUFFER, 8 * sizeof(double), 8 * sizeof(double), _select_rect);
 
             glUniform4f(_uniforms.color, 0.0f, 0.47f, 0.843f, 0.1f); // color
-            glDrawArrays(GL_POLYGON, 4, 4);
+            glDrawArrays(GL_TRIANGLE_FAN, 4, 4);
 
             glUniform4f(_uniforms.color, 0.0f, 1.0f, 0.0f, 0.549f); // color
             glDrawArrays(GL_LINE_LOOP, 4, 4);
