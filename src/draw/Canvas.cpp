@@ -280,14 +280,14 @@ void Canvas::resizeGL(int w, int h)
 
 void Canvas::paintGL()
 {
-    std::future<void> text_furture, dim_text_furture;
+    std::future<void> text_future, dim_text_future;
     if (GlobalSetting::setting().show_text)
     {
-        text_furture = std::async(std::launch::async, &Canvas::paint_text, this);
+        text_future = std::async(std::launch::async, &Canvas::paint_text, this);
     }
     if (CanvasOperations::CanvasOperation::current_dimension != nullptr || _point_count.dim_lines > 0 || _point_count.dim_arrows > 0)
     {
-        dim_text_furture = std::async(std::launch::async, &Canvas::paint_dim_text, this);
+        dim_text_future = std::async(std::launch::async, &Canvas::paint_dim_text, this);
     }
 
     glUseProgram(_shader_program);
@@ -504,7 +504,7 @@ void Canvas::paintGL()
         glBindTexture(GL_TEXTURE_2D, _texture.texture);
         glBindVertexArray(_vao.text);
 
-        text_furture.wait();
+        text_future.wait();
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _canvas_width, _canvas_height, GL_RGBA, GL_UNSIGNED_BYTE, _texture.text_image.constBits());
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
         glUniform1i(_uniforms.enable_tex, 0);
@@ -516,7 +516,7 @@ void Canvas::paintGL()
         glBindTexture(GL_TEXTURE_2D, _texture.texture);
         glBindVertexArray(_vao.text);
 
-        dim_text_furture.wait();
+        dim_text_future.wait();
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _canvas_width, _canvas_height, GL_RGBA, GL_UNSIGNED_BYTE, _texture.dim_image.constBits());
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
         glUniform1i(_uniforms.enable_tex, 0);

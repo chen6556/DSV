@@ -15,7 +15,7 @@ namespace RS274DParser
 
 double Importer::unit_scale(int value)
 {
-    return (double)value * (UNIT_SACLES[static_cast<int>(this->unit)]) / 10;
+    return (double)value * (UNIT_SCALES[static_cast<int>(this->unit)]) / 10;
 }
 
 void Importer::set_x_coord(const int value)

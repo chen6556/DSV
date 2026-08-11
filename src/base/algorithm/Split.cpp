@@ -425,10 +425,10 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const Point &pos, B
     std::vector<Geo::Point> path_points(bspline.path_points);
     {
         const Geo::Polyline &shape = bspline.shape();
-        std::vector<double> lenghts({0});
+        std::vector<double> lengths({0});
         for (size_t i = 1, count = shape.size(); i < count; ++i)
         {
-            lenghts.push_back(lenghts.back() + Geo::distance(shape[i - 1], shape[i]));
+            lengths.push_back(lengths.back() + Geo::distance(shape[i - 1], shape[i]));
         }
         std::vector<double> distances;
         for (const Geo::Point &point : path_points)
@@ -443,7 +443,7 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const Point &pos, B
                     index = i;
                 }
             }
-            distances.push_back(lenghts[index]);
+            distances.push_back(lengths[index]);
         }
         double anchor_dis = 0, min_dis = DBL_MAX;
         size_t index = 0;
@@ -455,7 +455,7 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const Point &pos, B
                 index = i;
             }
         }
-        anchor_dis = lenghts[index];
+        anchor_dis = lengths[index];
         for (size_t i = 1, count = path_points.size(); i < count; ++i)
         {
             if (distances[i - 1] <= anchor_dis && anchor_dis <= distances[i])
@@ -578,10 +578,10 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const double t, BSp
     std::vector<Geo::Point> path_points(bspline.path_points);
     {
         const Geo::Polyline &shape = bspline.shape();
-        std::vector<double> lenghts({0});
+        std::vector<double> lengths({0});
         for (size_t i = 1, count = shape.size(); i < count; ++i)
         {
-            lenghts.push_back(lenghts.back() + Geo::distance(shape[i - 1], shape[i]));
+            lengths.push_back(lengths.back() + Geo::distance(shape[i - 1], shape[i]));
         }
         std::vector<double> distances;
         for (const Geo::Point &point : path_points)
@@ -596,7 +596,7 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const double t, BSp
                     index = i;
                 }
             }
-            distances.push_back(lenghts[index]);
+            distances.push_back(lengths[index]);
         }
         double anchor_dis = 0, min_dis = DBL_MAX;
         size_t index = 0;
@@ -608,7 +608,7 @@ bool Geo::split(const BSpline &bspline, const bool is_cubic, const double t, BSp
                 index = i;
             }
         }
-        anchor_dis = lenghts[index];
+        anchor_dis = lengths[index];
         for (size_t i = 1, count = path_points.size(); i < count; ++i)
         {
             if (distances[i - 1] <= anchor_dis && anchor_dis <= distances[i])

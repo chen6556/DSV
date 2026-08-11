@@ -22,7 +22,7 @@ void DSVReaderWriter::read(std::ifstream &stream)
     {
         if (!read_data(data))
         {
-            qDebug() << "Error object handle: " << _info.hanlde;
+            qDebug() << "Error object handle: " << _info.handle;
             break;
         }
     }
@@ -490,7 +490,7 @@ bool DSVReaderWriter::read_value(std::ifstream &stream)
     {
         return false;
     }
-    if (_pair.code == code_hanlde || _pair.code == code_intvalue || _pair.code == code_pointer || _pair.code == code_minor_arc)
+    if (_pair.code == code_handle || _pair.code == code_intvalue || _pair.code == code_pointer || _pair.code == code_minor_arc)
     {
         _pair.value = std::stoi(value);
     }
@@ -621,9 +621,9 @@ bool DSVReaderWriter::check_data(const std::vector<Pair> &data)
             has_type = true;
             _info.type = pair.str;
             break;
-        case code_hanlde:
+        case code_handle:
             has_handle = true;
-            _info.hanlde = pair.value;
+            _info.handle = pair.value;
             break;
         case code_layer:
             has_layer = true;
@@ -679,14 +679,14 @@ bool DSVReaderWriter::read_point(const std::vector<Pair> &data)
     }
     if (has_x && has_y)
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 Geo::Point *point = new Geo::Point(x, y);
                 combination->append(point);
-                _object_to_handle.insert_or_assign(point, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, point);
+                _object_to_handle.insert_or_assign(point, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, point);
                 return true;
             }
             else
@@ -698,8 +698,8 @@ bool DSVReaderWriter::read_point(const std::vector<Pair> &data)
         {
             Geo::Point *point = new Geo::Point(x, y);
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(point);
-            _object_to_handle.insert_or_assign(point, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, point);
+            _object_to_handle.insert_or_assign(point, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, point);
         }
         return true;
     }
@@ -734,13 +734,13 @@ bool DSVReaderWriter::read_line(const std::vector<Pair> &data)
     }
     if (polyline->size() == 2)
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 combination->append(polyline);
-                _object_to_handle.insert_or_assign(polyline, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, polyline);
+                _object_to_handle.insert_or_assign(polyline, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, polyline);
                 return true;
             }
             else
@@ -752,8 +752,8 @@ bool DSVReaderWriter::read_line(const std::vector<Pair> &data)
         else
         {
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(polyline);
-            _object_to_handle.insert_or_assign(polyline, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, polyline);
+            _object_to_handle.insert_or_assign(polyline, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, polyline);
         }
         return true;
     }
@@ -789,13 +789,13 @@ bool DSVReaderWriter::read_polyline(const std::vector<Pair> &data)
     }
     if (polyline->size() >= 2)
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 combination->append(polyline);
-                _object_to_handle.insert_or_assign(polyline, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, polyline);
+                _object_to_handle.insert_or_assign(polyline, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, polyline);
                 return true;
             }
             else
@@ -807,8 +807,8 @@ bool DSVReaderWriter::read_polyline(const std::vector<Pair> &data)
         else
         {
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(polyline);
-            _object_to_handle.insert_or_assign(polyline, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, polyline);
+            _object_to_handle.insert_or_assign(polyline, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, polyline);
         }
         return true;
     }
@@ -844,13 +844,13 @@ bool DSVReaderWriter::read_polygon(const std::vector<Pair> &data)
     }
     if (polygon->size() >= 3)
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 combination->append(polygon);
-                _object_to_handle.insert_or_assign(polygon, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, polygon);
+                _object_to_handle.insert_or_assign(polygon, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, polygon);
                 return true;
             }
             else
@@ -862,8 +862,8 @@ bool DSVReaderWriter::read_polygon(const std::vector<Pair> &data)
         else
         {
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(polygon);
-            _object_to_handle.insert_or_assign(polygon, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, polygon);
+            _object_to_handle.insert_or_assign(polygon, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, polygon);
         }
         return true;
     }
@@ -900,14 +900,14 @@ bool DSVReaderWriter::read_circle(const std::vector<Pair> &data)
     }
     if (has_x && has_y && has_r)
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 Geo::Circle *circle = new Geo::Circle(x, y, r);
                 combination->append(circle);
-                _object_to_handle.insert_or_assign(circle, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, circle);
+                _object_to_handle.insert_or_assign(circle, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, circle);
                 return true;
             }
             else
@@ -919,8 +919,8 @@ bool DSVReaderWriter::read_circle(const std::vector<Pair> &data)
         {
             Geo::Circle *circle = new Geo::Circle(x, y, r);
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(circle);
-            _object_to_handle.insert_or_assign(circle, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, circle);
+            _object_to_handle.insert_or_assign(circle, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, circle);
         }
         return true;
     }
@@ -955,14 +955,14 @@ bool DSVReaderWriter::read_arc(const std::vector<Pair> &data)
     }
     if (points.size() == 3)
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 Geo::Arc *arc = new Geo::Arc(points[0], points[1], points[2]);
                 combination->append(arc);
-                _object_to_handle.insert_or_assign(arc, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, arc);
+                _object_to_handle.insert_or_assign(arc, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, arc);
                 return true;
             }
             else
@@ -974,8 +974,8 @@ bool DSVReaderWriter::read_arc(const std::vector<Pair> &data)
         {
             Geo::Arc *arc = new Geo::Arc(points[0], points[1], points[2]);
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(arc);
-            _object_to_handle.insert_or_assign(arc, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, arc);
+            _object_to_handle.insert_or_assign(arc, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, arc);
         }
         return true;
     }
@@ -1024,9 +1024,9 @@ bool DSVReaderWriter::read_ellipse(const std::vector<Pair> &data)
     }
     if (has_x && has_y && has_rx && has_ry)
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 Geo::Ellipse *ellipse =
                     startangle == endangle ? new Geo::Ellipse(x, y, rx, ry) : new Geo::Ellipse(x, y, rx, ry, startangle, endangle, true);
@@ -1035,8 +1035,8 @@ bool DSVReaderWriter::read_ellipse(const std::vector<Pair> &data)
                     ellipse->rotate(x, y, angle);
                 }
                 combination->append(ellipse);
-                _object_to_handle.insert_or_assign(ellipse, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, ellipse);
+                _object_to_handle.insert_or_assign(ellipse, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, ellipse);
                 return true;
             }
             else
@@ -1053,8 +1053,8 @@ bool DSVReaderWriter::read_ellipse(const std::vector<Pair> &data)
                 ellipse->rotate(x, y, angle);
             }
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(ellipse);
-            _object_to_handle.insert_or_assign(ellipse, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, ellipse);
+            _object_to_handle.insert_or_assign(ellipse, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, ellipse);
         }
         return true;
     }
@@ -1139,13 +1139,13 @@ bool DSVReaderWriter::read_bspline(const std::vector<Pair> &data)
         return false;
     }
 
-    if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+    if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
     {
-        if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+        if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
         {
             combination->append(bspline);
-            _object_to_handle.insert_or_assign(bspline, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, bspline);
+            _object_to_handle.insert_or_assign(bspline, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, bspline);
             return true;
         }
         else
@@ -1157,8 +1157,8 @@ bool DSVReaderWriter::read_bspline(const std::vector<Pair> &data)
     else
     {
         _graph->container_group(_group_name_to_index.at(_info.layer)).append(bspline);
-        _object_to_handle.insert_or_assign(bspline, _info.hanlde);
-        _handle_to_object.insert_or_assign(_info.hanlde, bspline);
+        _object_to_handle.insert_or_assign(bspline, _info.handle);
+        _handle_to_object.insert_or_assign(_info.handle, bspline);
     }
     return true;
 }
@@ -1189,14 +1189,14 @@ bool DSVReaderWriter::read_cubicbezier(const std::vector<Pair> &data)
 
     if (points.size() % 3 == 1)
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 Geo::CubicBezier *bezier = new Geo::CubicBezier(points.begin(), points.end(), false);
                 combination->append(bezier);
-                _object_to_handle.insert_or_assign(bezier, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, bezier);
+                _object_to_handle.insert_or_assign(bezier, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, bezier);
                 return true;
             }
             else
@@ -1208,8 +1208,8 @@ bool DSVReaderWriter::read_cubicbezier(const std::vector<Pair> &data)
         {
             Geo::CubicBezier *bezier = new Geo::CubicBezier(points.begin(), points.end(), false);
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(bezier);
-            _object_to_handle.insert_or_assign(bezier, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, bezier);
+            _object_to_handle.insert_or_assign(bezier, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, bezier);
         }
         return true;
     }
@@ -1253,9 +1253,9 @@ bool DSVReaderWriter::read_text(const std::vector<Pair> &data)
 
     if (has_x && has_y && !txt.isEmpty())
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 QFont font("SimSun");
                 font.setPointSize(size);
@@ -1265,8 +1265,8 @@ bool DSVReaderWriter::read_text(const std::vector<Pair> &data)
                     text->rotate(x, y, angle);
                 }
                 combination->append(text);
-                _object_to_handle.insert_or_assign(text, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, text);
+                _object_to_handle.insert_or_assign(text, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, text);
                 return true;
             }
             else
@@ -1284,8 +1284,8 @@ bool DSVReaderWriter::read_text(const std::vector<Pair> &data)
                 text->rotate(x, y, angle);
             }
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(text);
-            _object_to_handle.insert_or_assign(text, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, text);
+            _object_to_handle.insert_or_assign(text, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, text);
         }
         return true;
     }
@@ -1303,18 +1303,18 @@ bool DSVReaderWriter::read_combination(const std::vector<Pair> &data)
         if (pair.code == code_pointer)
         {
             children.push_back(pair.value);
-            _child_to_parent.insert_or_assign(pair.value, _info.hanlde);
+            _child_to_parent.insert_or_assign(pair.value, _info.handle);
         }
     }
-    _parent_to_children.insert_or_assign(_info.hanlde, children);
-    if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+    _parent_to_children.insert_or_assign(_info.handle, children);
+    if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
     {
-        if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+        if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
         {
             Combination *combi = new Combination();
             combination->append(combi);
-            _object_to_handle.insert_or_assign(combi, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, combi);
+            _object_to_handle.insert_or_assign(combi, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, combi);
             return true;
         }
         else
@@ -1326,8 +1326,8 @@ bool DSVReaderWriter::read_combination(const std::vector<Pair> &data)
     {
         Combination *combi = new Combination();
         _graph->container_group(_group_name_to_index.at(_info.layer)).append(combi);
-        _object_to_handle.insert_or_assign(combi, _info.hanlde);
-        _handle_to_object.insert_or_assign(_info.hanlde, combi);
+        _object_to_handle.insert_or_assign(combi, _info.handle);
+        _handle_to_object.insert_or_assign(_info.handle, combi);
     }
     return true;
 }
@@ -1383,17 +1383,17 @@ bool DSVReaderWriter::read_aligned_dim(const std::vector<Pair> &data)
 
     if (has_labelx && has_labely && has_height && has_font_size && has_arrow_size && anchors.size() == 2)
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 Dim::DimAligned *dim = new Dim::DimAligned(anchors[0], anchors[1], height);
                 dim->set_height(height);
                 dim->arrow_size = arrow_size;
                 dim->font_size = font_size;
                 combination->append(dim);
-                _object_to_handle.insert_or_assign(dim, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, dim);
+                _object_to_handle.insert_or_assign(dim, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, dim);
                 return true;
             }
             else
@@ -1408,8 +1408,8 @@ bool DSVReaderWriter::read_aligned_dim(const std::vector<Pair> &data)
             dim->arrow_size = arrow_size;
             dim->font_size = font_size;
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(dim);
-            _object_to_handle.insert_or_assign(dim, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, dim);
+            _object_to_handle.insert_or_assign(dim, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, dim);
         }
         return true;
     }
@@ -1486,17 +1486,17 @@ bool DSVReaderWriter::read_angle_dim(const std::vector<Pair> &data)
 
     if (has_labelx && has_labely && has_height && has_font_size && has_arrow_size && roots.size() == 2 && anchors.size() == 3)
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 Dim::DimAngle *dim = new Dim::DimAngle(anchors[0], anchors[1], anchors[2], height, roots[0], roots[1]);
                 dim->set_minor_arc(is_minor_arc);
                 dim->arrow_size = arrow_size;
                 dim->font_size = font_size;
                 combination->append(dim);
-                _object_to_handle.insert_or_assign(dim, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, dim);
+                _object_to_handle.insert_or_assign(dim, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, dim);
                 return true;
             }
             else
@@ -1511,8 +1511,8 @@ bool DSVReaderWriter::read_angle_dim(const std::vector<Pair> &data)
             dim->arrow_size = arrow_size;
             dim->font_size = font_size;
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(dim);
-            _object_to_handle.insert_or_assign(dim, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, dim);
+            _object_to_handle.insert_or_assign(dim, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, dim);
         }
         return true;
     }
@@ -1593,17 +1593,17 @@ bool DSVReaderWriter::read_arc_dim(const std::vector<Pair> &data)
 
     if (has_labelx && has_labely && has_height && has_font_size && has_arrow_size && has_radius && roots.size() == 2 && anchors.size() == 3)
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 Dim::DimArc *dim = new Dim::DimArc(anchors[0], anchors[1], anchors[2], height, roots[0], roots[1], radius);
                 dim->set_minor_arc(is_minor_arc);
                 dim->arrow_size = arrow_size;
                 dim->font_size = font_size;
                 combination->append(dim);
-                _object_to_handle.insert_or_assign(dim, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, dim);
+                _object_to_handle.insert_or_assign(dim, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, dim);
                 return true;
             }
             else
@@ -1618,8 +1618,8 @@ bool DSVReaderWriter::read_arc_dim(const std::vector<Pair> &data)
             dim->arrow_size = arrow_size;
             dim->font_size = font_size;
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(dim);
-            _object_to_handle.insert_or_assign(dim, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, dim);
+            _object_to_handle.insert_or_assign(dim, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, dim);
         }
         return true;
     }
@@ -1680,16 +1680,16 @@ bool DSVReaderWriter::read_diameter_dim(const std::vector<Pair> &data)
 
     if (has_labelx && has_labely && has_height && has_font_size && has_arrow_size && anchors.size() == 2)
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 Dim::DimDiameter *dim = new Dim::DimDiameter(anchors[0], anchors[1], height);
                 dim->arrow_size = arrow_size;
                 dim->font_size = font_size;
                 combination->append(dim);
-                _object_to_handle.insert_or_assign(dim, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, dim);
+                _object_to_handle.insert_or_assign(dim, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, dim);
                 return true;
             }
             else
@@ -1703,8 +1703,8 @@ bool DSVReaderWriter::read_diameter_dim(const std::vector<Pair> &data)
             dim->arrow_size = arrow_size;
             dim->font_size = font_size;
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(dim);
-            _object_to_handle.insert_or_assign(dim, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, dim);
+            _object_to_handle.insert_or_assign(dim, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, dim);
         }
         return true;
     }
@@ -1768,16 +1768,16 @@ bool DSVReaderWriter::read_linear_dim(const std::vector<Pair> &data)
 
     if (has_labelx && has_labely && has_height && has_font_size && has_arrow_size && anchors.size() == 2)
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 Dim::DimLinear *dim = new Dim::DimLinear(anchors[0], anchors[1], is_horizontal, height);
                 dim->arrow_size = arrow_size;
                 dim->font_size = font_size;
                 combination->append(dim);
-                _object_to_handle.insert_or_assign(dim, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, dim);
+                _object_to_handle.insert_or_assign(dim, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, dim);
                 return true;
             }
             else
@@ -1791,8 +1791,8 @@ bool DSVReaderWriter::read_linear_dim(const std::vector<Pair> &data)
             dim->arrow_size = arrow_size;
             dim->font_size = font_size;
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(dim);
-            _object_to_handle.insert_or_assign(dim, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, dim);
+            _object_to_handle.insert_or_assign(dim, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, dim);
         }
         return true;
     }
@@ -1853,16 +1853,16 @@ bool DSVReaderWriter::read_radius_dim(const std::vector<Pair> &data)
 
     if (has_labelx && has_labely && has_height && has_font_size && has_arrow_size && anchors.size() == 2)
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 Dim::DimRadius *dim = new Dim::DimRadius(anchors[0], anchors[1], height);
                 dim->arrow_size = arrow_size;
                 dim->font_size = font_size;
                 combination->append(dim);
-                _object_to_handle.insert_or_assign(dim, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, dim);
+                _object_to_handle.insert_or_assign(dim, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, dim);
                 return true;
             }
             else
@@ -1876,8 +1876,8 @@ bool DSVReaderWriter::read_radius_dim(const std::vector<Pair> &data)
             dim->arrow_size = arrow_size;
             dim->font_size = font_size;
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(dim);
-            _object_to_handle.insert_or_assign(dim, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, dim);
+            _object_to_handle.insert_or_assign(dim, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, dim);
         }
         return true;
     }
@@ -1923,15 +1923,15 @@ bool DSVReaderWriter::read_ordinate_dim(const std::vector<Pair> &data)
 
     if (has_labelx && has_labely && has_posx && has_posy && has_font_size)
     {
-        if (_child_to_parent.find(_info.hanlde) != _child_to_parent.cend())
+        if (_child_to_parent.find(_info.handle) != _child_to_parent.cend())
         {
-            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.hanlde))))
+            if (Combination *combination = dynamic_cast<Combination *>(_handle_to_object.at(_child_to_parent.at(_info.handle))))
             {
                 Dim::DimOrdinate *dim = new Dim::DimOrdinate(Geo::Point(posx, posy), Geo::Point(labelx, labely));
                 dim->font_size = font_size;
                 combination->append(dim);
-                _object_to_handle.insert_or_assign(dim, _info.hanlde);
-                _handle_to_object.insert_or_assign(_info.hanlde, dim);
+                _object_to_handle.insert_or_assign(dim, _info.handle);
+                _handle_to_object.insert_or_assign(_info.handle, dim);
                 return true;
             }
             else
@@ -1944,8 +1944,8 @@ bool DSVReaderWriter::read_ordinate_dim(const std::vector<Pair> &data)
             Dim::DimOrdinate *dim = new Dim::DimOrdinate(Geo::Point(posx, posy), Geo::Point(labelx, labely));
             dim->font_size = font_size;
             _graph->container_group(_group_name_to_index.at(_info.layer)).append(dim);
-            _object_to_handle.insert_or_assign(dim, _info.hanlde);
-            _handle_to_object.insert_or_assign(_info.hanlde, dim);
+            _object_to_handle.insert_or_assign(dim, _info.handle);
+            _handle_to_object.insert_or_assign(_info.handle, dim);
         }
         return true;
     }

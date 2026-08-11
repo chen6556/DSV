@@ -3768,10 +3768,10 @@ void QuadBSpline::insert(const double t)
     control_points.insert(control_points.begin() + k, array[1]);
     _knots.insert(_knots.begin() + k + 1, t);
 
-    std::vector<double> lenghts({0});
+    std::vector<double> lengths({0});
     for (size_t i = 1, count = _shape.size(); i < count; ++i)
     {
-        lenghts.push_back(lenghts.back() + Geo::distance(_shape[i - 1], _shape[i]));
+        lengths.push_back(lengths.back() + Geo::distance(_shape[i - 1], _shape[i]));
     }
     std::vector<double> distances;
     for (const Geo::Point &point : path_points)
@@ -3786,7 +3786,7 @@ void QuadBSpline::insert(const double t)
                 index = i;
             }
         }
-        distances.push_back(lenghts[index]);
+        distances.push_back(lengths[index]);
     }
 
     double anchor_dis = 0;
@@ -3801,7 +3801,7 @@ void QuadBSpline::insert(const double t)
                 index = i;
             }
         }
-        anchor_dis = lenghts[index];
+        anchor_dis = lengths[index];
     }
 
     for (size_t i = 1, count = path_points.size(); i < count; ++i)
@@ -4280,10 +4280,10 @@ void CubicBSpline::insert(const double t)
     control_points.insert(control_points.begin() + k, array[2]);
     _knots.insert(_knots.begin() + k + 1, t);
 
-    std::vector<double> lenghts({0});
+    std::vector<double> lengths({0});
     for (size_t i = 1, count = _shape.size(); i < count; ++i)
     {
-        lenghts.push_back(lenghts.back() + Geo::distance(_shape[i - 1], _shape[i]));
+        lengths.push_back(lengths.back() + Geo::distance(_shape[i - 1], _shape[i]));
     }
     std::vector<double> distances;
     for (const Geo::Point &point : path_points)
@@ -4298,7 +4298,7 @@ void CubicBSpline::insert(const double t)
                 index = i;
             }
         }
-        distances.push_back(lenghts[index]);
+        distances.push_back(lengths[index]);
     }
 
     double anchor_dis = 0;
@@ -4313,7 +4313,7 @@ void CubicBSpline::insert(const double t)
                 index = i;
             }
         }
-        anchor_dis = lenghts[index];
+        anchor_dis = lengths[index];
     }
 
     for (size_t i = 1, count = path_points.size(); i < count; ++i)
