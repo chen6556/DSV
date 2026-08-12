@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <cassert>
 #include <algorithm>
 #include <cmath>
@@ -138,16 +137,26 @@ bool Point::operator!=(const Point &point) const
 
 Point &Point::normalize()
 {
-    const double len = std::hypot(x, y);
-    x /= len;
-    y /= len;
+    if (x != 0 || y != 0)
+    {
+        const double len = std::hypot(x, y);
+        x /= len;
+        y /= len;
+    }
     return *this;
 }
 
 Point Point::normalized() const
 {
-    const double len = std::hypot(x, y);
-    return Point(x / len, y / len);
+    if (x == 0 && y == 0)
+    {
+        return Point(0, 0);
+    }
+    else
+    {
+        const double len = std::hypot(x, y);
+        return Point(x / len, y / len);
+    }
 }
 
 Point Point::vertical() const
