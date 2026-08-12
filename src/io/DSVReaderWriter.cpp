@@ -293,8 +293,8 @@ void DSVReaderWriter::write(std::ofstream &stream, Text *text)
     stream << "3," << _current_layer << std::endl;
     stream << "10," << text->shape(3).x << std::endl;
     stream << "11," << text->shape(3).y << std::endl;
-    stream << "30, " << text->angle() << std::endl;
-    stream << "40, " << text->font().pointSize() << std::endl;
+    stream << "30," << text->angle() << std::endl;
+    stream << "40," << text->font().pointSize() << std::endl;
     QString txt = text->text();
     txt.replace(QChar('\n'), QChar(0x1F));
     stream << "42," << txt.toStdString() << std::endl;
@@ -1355,7 +1355,7 @@ bool DSVReaderWriter::read_aligned_dim(const std::vector<Pair> &data)
             labelx = pair.real;
             has_labelx = true;
             break;
-        case code_labley:
+        case code_labely:
             labely = pair.real;
             has_labely = true;
             break;
@@ -1450,7 +1450,7 @@ bool DSVReaderWriter::read_angle_dim(const std::vector<Pair> &data)
             labelx = pair.real;
             has_labelx = true;
             break;
-        case code_labley:
+        case code_labely:
             labely = pair.real;
             has_labely = true;
             break;
@@ -1553,7 +1553,7 @@ bool DSVReaderWriter::read_arc_dim(const std::vector<Pair> &data)
             labelx = pair.real;
             has_labelx = true;
             break;
-        case code_labley:
+        case code_labely:
             labely = pair.real;
             has_labely = true;
             break;
@@ -1652,7 +1652,7 @@ bool DSVReaderWriter::read_diameter_dim(const std::vector<Pair> &data)
             labelx = pair.real;
             has_labelx = true;
             break;
-        case code_labley:
+        case code_labely:
             labely = pair.real;
             has_labely = true;
             break;
@@ -1737,7 +1737,7 @@ bool DSVReaderWriter::read_linear_dim(const std::vector<Pair> &data)
             labelx = pair.real;
             has_labelx = true;
             break;
-        case code_labley:
+        case code_labely:
             labely = pair.real;
             has_labely = true;
             break;
@@ -1825,7 +1825,7 @@ bool DSVReaderWriter::read_radius_dim(const std::vector<Pair> &data)
             labelx = pair.real;
             has_labelx = true;
             break;
-        case code_labley:
+        case code_labely:
             labely = pair.real;
             has_labely = true;
             break;
@@ -1908,7 +1908,7 @@ bool DSVReaderWriter::read_ordinate_dim(const std::vector<Pair> &data)
             labelx = pair.real;
             has_labelx = true;
             break;
-        case code_labley:
+        case code_labely:
             labely = pair.real;
             has_labely = true;
             break;

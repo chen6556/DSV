@@ -11,7 +11,7 @@ class DSVReaderWriter
 {
 private:
     static constexpr int code_type = 0, code_handle = 1, code_name = 2, code_layer = 3, code_pathx = 10, code_pathy = 11,
-                         code_controlx = 12, code_controly = 13, code_labelx = 14, code_labley = 15, code_xlength = 20, code_ylength = 21,
+                         code_controlx = 12, code_controly = 13, code_labelx = 14, code_labely = 15, code_xlength = 20, code_ylength = 21,
                          code_rotateangle = 30, code_startangle = 31, code_endangle = 32, code_intvalue = 40, code_floatvalue = 41,
                          code_strvalue = 42, code_minor_arc = 43, code_pointer = 80;
 

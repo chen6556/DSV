@@ -1709,7 +1709,6 @@ void DXFReaderWriter::write_polyline(const Geo::Polyline *polyline)
     {
         pol.addVertex(DRW_Vertex2D(point.x, point.y, 0));
     }
-    pol.addVertex(DRW_Vertex2D(polyline->back().x, polyline->back().y, 0));
     pol.vertexnum = pol.vertlist.size();
     pol.layer = _current_group == nullptr ? "0" : _current_group->name;
     pol.lineType = "CONTINUOUS";
