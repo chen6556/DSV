@@ -1704,13 +1704,6 @@ Triangle::Triangle(const double x0, const double y0, const double x1, const doub
     _vecs[2].y = y2;
 }
 
-Triangle::Triangle(const Triangle &triangle) : DObject(triangle)
-{
-    _vecs[0] = triangle._vecs[0];
-    _vecs[1] = triangle._vecs[1];
-    _vecs[2] = triangle._vecs[2];
-}
-
 Type Triangle::type() const
 {
     return Type::TRIANGLE;

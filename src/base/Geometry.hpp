@@ -521,7 +521,7 @@ public:
 
     Triangle(const double x0, const double y0, const double x1, const double y1, const double x2, const double y2);
 
-    Triangle(const Triangle &triangle);
+    Triangle(const Triangle &triangle) = default;
 
     Type type() const override;
 
