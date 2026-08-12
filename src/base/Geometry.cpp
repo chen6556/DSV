@@ -332,12 +332,12 @@ bool Polyline::empty() const
 
 double Polyline::length() const
 {
-    double reuslt = 0;
+    double result = 0;
     for (size_t i = 1, count = _points.size(); i < count; ++i)
     {
-        reuslt += Geo::distance(_points[i], _points[i - 1]);
+        result += Geo::distance(_points[i], _points[i - 1]);
     }
-    return reuslt;
+    return result;
 }
 
 void Polyline::clear()
@@ -907,12 +907,12 @@ bool Polygon::empty() const
 
 double Polygon::length() const
 {
-    double reuslt = 0;
+    double result = 0;
     for (size_t i = 1, count = _points.size(); i < count; ++i)
     {
-        reuslt += Geo::distance(_points[i], _points[i - 1]);
+        result += Geo::distance(_points[i], _points[i - 1]);
     }
-    return reuslt;
+    return result;
 }
 
 void Polygon::clear()
@@ -2928,11 +2928,11 @@ void Ellipse::set_center(const double x, const double y)
 }
 
 void Ellipse::reset_parameter(const Geo::Point &a0, const Geo::Point &a1, const Geo::Point &b0, const Geo::Point &b1,
-                              const double start_anlge, const double end_angle)
+                              const double start_angle, const double end_angle)
 {
     _a[0] = a0, _a[1] = a1;
     _b[0] = b0, _b[1] = b1;
-    _arc_angle[0] = start_anlge, _arc_angle[1] = end_angle;
+    _arc_angle[0] = start_angle, _arc_angle[1] = end_angle;
     for (int i = 0; i < 2; ++i)
     {
         while (_arc_angle[i] > Geo::PI * 2)

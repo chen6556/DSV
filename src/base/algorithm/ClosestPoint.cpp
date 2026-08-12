@@ -5,7 +5,7 @@
 
 int Geo::closest_point(const Polyline &polyline, const Point &point, std::vector<Point> &output)
 {
-    std::vector<size_t> min_indexs({1});
+    std::vector<size_t> min_indices({1});
     double min_dis = Geo::distance(point, polyline[0], polyline[1], false);
     for (size_t i = 2, count = polyline.size(); i < count; ++i)
     {
@@ -15,17 +15,17 @@ int Geo::closest_point(const Polyline &polyline, const Point &point, std::vector
         }
         if (double dis = Geo::distance(point, polyline[i - 1], polyline[i], false); dis == min_dis)
         {
-            min_indexs.push_back(i);
+            min_indices.push_back(i);
         }
         else if (dis < min_dis)
         {
-            min_indexs.clear();
+            min_indices.clear();
             min_dis = dis;
-            min_indexs.push_back(i);
+            min_indices.push_back(i);
         }
     }
     std::vector<Point> temp;
-    for (size_t i : min_indexs)
+    for (size_t i : min_indices)
     {
         if (Geo::Point foot; Geo::foot_point(polyline[i - 1], polyline[i], point, foot, false))
         {
@@ -49,7 +49,7 @@ int Geo::closest_point(const Polyline &polyline, const Point &point, std::vector
 
 int Geo::closest_point(const Polygon &polygon, const Point &point, std::vector<Point> &output)
 {
-    std::vector<size_t> min_indexs({1});
+    std::vector<size_t> min_indices({1});
     double min_dis = Geo::distance(point, polygon[0], polygon[1], false);
     for (size_t i = 2, count = polygon.size(); i < count; ++i)
     {
@@ -59,17 +59,17 @@ int Geo::closest_point(const Polygon &polygon, const Point &point, std::vector<P
         }
         if (double dis = Geo::distance(point, polygon[i - 1], polygon[i], false); dis == min_dis)
         {
-            min_indexs.push_back(i);
+            min_indices.push_back(i);
         }
         else if (dis < min_dis)
         {
-            min_indexs.clear();
+            min_indices.clear();
             min_dis = dis;
-            min_indexs.push_back(i);
+            min_indices.push_back(i);
         }
     }
     std::vector<Point> temp;
-    for (size_t i : min_indexs)
+    for (size_t i : min_indices)
     {
         if (Geo::Point foot; Geo::foot_point(polygon[i - 1], polygon[i], point, foot, false))
         {

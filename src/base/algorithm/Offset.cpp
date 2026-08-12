@@ -365,7 +365,7 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
                  const int sample_count)
 {
     result.clear();
-    std::vector<size_t> split_indexs;
+    std::vector<size_t> split_indices;
     std::vector<Geo::Point> points(bezier.control_points.rbegin(), bezier.control_points.rend()), cache, output;
     while (points.size() > 3)
     {
@@ -395,7 +395,7 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
             // 切线平行时克莱姆法则无解，需判断曲线是否退化为直线
             if ((cache[1] - cache[0]).cross(cache[3] - cache[0]) == 0 && (cache[2] - cache[0]).cross(cache[3] - cache[0]) == 0)
             {
-                if (output.empty() || (!split_indexs.empty() && output.size() == split_indexs.back() + 1))
+                if (output.empty() || (!split_indices.empty() && output.size() == split_indices.back() + 1))
                 {
                     output.emplace_back(temp[0]);
                 }
@@ -498,7 +498,7 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
             {
                 if ((temp[3] - temp[0]) * (cache[3] - cache[0]) > 0)
                 {
-                    if (output.empty() || (!split_indexs.empty() && output.size() == split_indexs.back() + 1))
+                    if (output.empty() || (!split_indices.empty() && output.size() == split_indices.back() + 1))
                     {
                         output.emplace_back(temp[0]);
                     }
@@ -509,19 +509,19 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
                 }
                 else if (!output.empty())
                 {
-                    if (split_indexs.empty() || split_indexs.back() < output.size() - 1)
+                    if (split_indices.empty() || split_indices.back() < output.size() - 1)
                     {
-                        split_indexs.push_back(output.size() - 1);
+                        split_indices.push_back(output.size() - 1);
                     }
                 }
             }
         }
     }
 
-    std::reverse(split_indexs.begin(), split_indexs.end());
+    std::reverse(split_indices.begin(), split_indices.end());
     for (size_t i = 0, count = output.size(); i < count; ++i)
     {
-        if (split_indexs.empty())
+        if (split_indices.empty())
         {
             result.emplace_back(output.begin() + i, output.end(), false);
             if (result.size() > 1)
@@ -561,9 +561,9 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
         }
         else
         {
-            result.emplace_back(output.begin() + i, output.begin() + split_indexs.back() + 1, false);
-            i = split_indexs.back();
-            split_indexs.pop_back();
+            result.emplace_back(output.begin() + i, output.begin() + split_indices.back() + 1, false);
+            i = split_indices.back();
+            split_indices.pop_back();
 
             if (result.size() > 1)
             {

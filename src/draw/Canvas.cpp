@@ -2026,7 +2026,7 @@ void Canvas::refresh_selected_ibo()
 {
     refresh_selected_dimension_vbo();
 
-    std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
+    std::vector<unsigned int> polyline_indices, polygon_indices, circle_indices, curve_indices, point_indices;
     for (const Geo::DObject *geo : _editor.visible_objects())
     {
         if (!geo->is_selected)
@@ -2038,33 +2038,33 @@ void Canvas::refresh_selected_ibo()
         case Geo::Type::POLYLINE:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                polyline_indexs.push_back(index++);
+                polyline_indices.push_back(index++);
             }
-            polyline_indexs.push_back(UINT_MAX);
+            polyline_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::POLYGON:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                polygon_indexs.push_back(index++);
+                polygon_indices.push_back(index++);
             }
-            polygon_indexs.push_back(UINT_MAX);
+            polygon_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::CIRCLE:
         case Geo::Type::ELLIPSE:
         case Geo::Type::ARC:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                circle_indexs.push_back(index++);
+                circle_indices.push_back(index++);
             }
-            circle_indexs.push_back(UINT_MAX);
+            circle_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::BEZIER:
         case Geo::Type::BSPLINE:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                curve_indexs.push_back(index++);
+                curve_indices.push_back(index++);
             }
-            curve_indexs.push_back(UINT_MAX);
+            curve_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::COMBINATION:
             for (const Geo::DObject *item : *static_cast<const Combination *>(geo))
@@ -2074,36 +2074,36 @@ void Canvas::refresh_selected_ibo()
                 case Geo::Type::POLYLINE:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        polyline_indexs.push_back(index++);
+                        polyline_indices.push_back(index++);
                     }
-                    polyline_indexs.push_back(UINT_MAX);
+                    polyline_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::POLYGON:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        polygon_indexs.push_back(index++);
+                        polygon_indices.push_back(index++);
                     }
-                    polygon_indexs.push_back(UINT_MAX);
+                    polygon_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::CIRCLE:
                 case Geo::Type::ELLIPSE:
                 case Geo::Type::ARC:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        circle_indexs.push_back(index++);
+                        circle_indices.push_back(index++);
                     }
-                    circle_indexs.push_back(UINT_MAX);
+                    circle_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::BEZIER:
                 case Geo::Type::BSPLINE:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        curve_indexs.push_back(index++);
+                        curve_indices.push_back(index++);
                     }
-                    curve_indexs.push_back(UINT_MAX);
+                    curve_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::POINT:
-                    point_indexs.push_back(item->point_index);
+                    point_indices.push_back(item->point_index);
                     break;
                 default:
                     break;
@@ -2111,44 +2111,44 @@ void Canvas::refresh_selected_ibo()
             }
             break;
         case Geo::Type::POINT:
-            point_indexs.push_back(geo->point_index);
+            point_indices.push_back(geo->point_index);
             break;
         default:
             continue;
         }
     }
 
-    _selected_index_count.polyline = polyline_indexs.size();
-    _selected_index_count.polygon = polygon_indexs.size();
-    _selected_index_count.circle = circle_indexs.size();
-    _selected_index_count.curve = curve_indexs.size();
-    _selected_index_count.point = point_indexs.size();
+    _selected_index_count.polyline = polyline_indices.size();
+    _selected_index_count.polygon = polygon_indices.size();
+    _selected_index_count.circle = circle_indices.size();
+    _selected_index_count.curve = curve_indices.size();
+    _selected_index_count.point = point_indices.size();
 
     makeCurrent();
-    if (!polyline_indexs.empty())
+    if (!polyline_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polyline);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_indexs.size() * sizeof(unsigned int), polyline_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_indices.size() * sizeof(unsigned int), polyline_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!polygon_indexs.empty())
+    if (!polygon_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polygon);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_indexs.size() * sizeof(unsigned int), polygon_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_indices.size() * sizeof(unsigned int), polygon_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!circle_indexs.empty())
+    if (!circle_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.circle);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indexs.size() * sizeof(unsigned int), circle_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indices.size() * sizeof(unsigned int), circle_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!curve_indexs.empty())
+    if (!curve_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.curve);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_indexs.size() * sizeof(unsigned int), curve_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_indices.size() * sizeof(unsigned int), curve_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!point_indexs.empty())
+    if (!point_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.point);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_indexs.size() * sizeof(unsigned int), point_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_indices.size() * sizeof(unsigned int), point_indices.data(), GL_DYNAMIC_DRAW);
     }
     doneCurrent();
 }
@@ -2168,7 +2168,7 @@ void Canvas::refresh_selected_ibo(const Geo::DObject *object)
     }
     if (object->type() == Geo::Type::COMBINATION)
     {
-        std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
+        std::vector<unsigned int> polyline_indices, polygon_indices, circle_indices, curve_indices, point_indices;
         for (const Geo::DObject *item : *static_cast<const Combination *>(object))
         {
             switch (item->type())
@@ -2176,72 +2176,72 @@ void Canvas::refresh_selected_ibo(const Geo::DObject *object)
             case Geo::Type::POLYLINE:
                 for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                 {
-                    polyline_indexs.push_back(index++);
+                    polyline_indices.push_back(index++);
                 }
-                polyline_indexs.push_back(UINT_MAX);
+                polyline_indices.push_back(UINT_MAX);
                 break;
             case Geo::Type::POLYGON:
                 for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                 {
-                    polygon_indexs.push_back(index++);
+                    polygon_indices.push_back(index++);
                 }
-                polygon_indexs.push_back(UINT_MAX);
+                polygon_indices.push_back(UINT_MAX);
                 break;
             case Geo::Type::CIRCLE:
             case Geo::Type::ELLIPSE:
             case Geo::Type::ARC:
                 for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                 {
-                    circle_indexs.push_back(index++);
+                    circle_indices.push_back(index++);
                 }
-                circle_indexs.push_back(UINT_MAX);
+                circle_indices.push_back(UINT_MAX);
                 break;
             case Geo::Type::BEZIER:
             case Geo::Type::BSPLINE:
                 for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                 {
-                    curve_indexs.push_back(index++);
+                    curve_indices.push_back(index++);
                 }
-                curve_indexs.push_back(UINT_MAX);
+                curve_indices.push_back(UINT_MAX);
                 break;
             case Geo::Type::POINT:
-                point_indexs.push_back(item->point_index);
+                point_indices.push_back(item->point_index);
                 break;
             default:
                 break;
             }
         }
 
-        _selected_index_count.polyline = polyline_indexs.size();
-        _selected_index_count.polygon = polygon_indexs.size();
-        _selected_index_count.circle = circle_indexs.size();
-        _selected_index_count.curve = curve_indexs.size();
-        _selected_index_count.point = point_indexs.size();
+        _selected_index_count.polyline = polyline_indices.size();
+        _selected_index_count.polygon = polygon_indices.size();
+        _selected_index_count.circle = circle_indices.size();
+        _selected_index_count.curve = curve_indices.size();
+        _selected_index_count.point = point_indices.size();
         makeCurrent();
-        if (!polyline_indexs.empty())
+        if (!polyline_indices.empty())
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polyline);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_indexs.size() * sizeof(unsigned int), polyline_indexs.data(), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_indices.size() * sizeof(unsigned int), polyline_indices.data(), GL_DYNAMIC_DRAW);
         }
-        if (!polygon_indexs.empty())
+        if (!polygon_indices.empty())
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polygon);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_indexs.size() * sizeof(unsigned int), polygon_indexs.data(), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_indices.size() * sizeof(unsigned int), polygon_indices.data(), GL_DYNAMIC_DRAW);
         }
-        if (!circle_indexs.empty())
+        if (!circle_indices.empty())
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.circle);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indexs.size() * sizeof(unsigned int), circle_indexs.data(), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indices.size() * sizeof(unsigned int), circle_indices.data(), GL_DYNAMIC_DRAW);
         }
-        if (!curve_indexs.empty())
+        if (!curve_indices.empty())
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.curve);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_indexs.size() * sizeof(unsigned int), curve_indexs.data(), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_indices.size() * sizeof(unsigned int), curve_indices.data(), GL_DYNAMIC_DRAW);
         }
-        if (!point_indexs.empty())
+        if (!point_indices.empty())
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.point);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_indexs.size() * sizeof(unsigned int), point_indexs.data(), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_indices.size() * sizeof(unsigned int), point_indices.data(), GL_DYNAMIC_DRAW);
         }
         doneCurrent();
     }
@@ -2251,47 +2251,47 @@ void Canvas::refresh_selected_ibo(const Geo::DObject *object)
     }
     else
     {
-        std::vector<unsigned int> indexs;
+        std::vector<unsigned int> indices;
         for (size_t i = 0, index = object->point_index, count = object->point_count; i < count; ++i)
         {
-            indexs.push_back(index++);
+            indices.push_back(index++);
         }
-        indexs.push_back(UINT_MAX);
+        indices.push_back(UINT_MAX);
         clear_selected_ibo();
         unsigned int IBO_index = 0;
         switch (object->type())
         {
         case Geo::Type::POLYLINE:
             IBO_index = _selected_ibo.polyline;
-            _selected_index_count.polyline = indexs.size();
+            _selected_index_count.polyline = indices.size();
             break;
         case Geo::Type::POLYGON:
             IBO_index = _selected_ibo.polygon;
-            _selected_index_count.polygon = indexs.size();
+            _selected_index_count.polygon = indices.size();
             break;
         case Geo::Type::CIRCLE:
         case Geo::Type::ELLIPSE:
         case Geo::Type::ARC:
             IBO_index = _selected_ibo.circle;
-            _selected_index_count.circle = indexs.size();
+            _selected_index_count.circle = indices.size();
             break;
         case Geo::Type::BEZIER:
         case Geo::Type::BSPLINE:
             IBO_index = _selected_ibo.curve;
-            _selected_index_count.curve = indexs.size();
+            _selected_index_count.curve = indices.size();
             break;
         case Geo::Type::POINT:
             IBO_index = _selected_ibo.point;
-            _selected_index_count.point = indexs.size();
+            _selected_index_count.point = indices.size();
             break;
         default:
             break;
         }
-        if (!indexs.empty())
+        if (!indices.empty())
         {
             makeCurrent();
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO_index);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexs.size() * sizeof(unsigned int), indexs.data(), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_DYNAMIC_DRAW);
             doneCurrent();
         }
     }
@@ -2310,7 +2310,7 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::DObject *> &objects)
     visible_area_params.right = _visible_area.right + 2;
     visible_area_params.top = _visible_area.top + 2;
     visible_area_params.bottom = _visible_area.bottom - 2;
-    std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
+    std::vector<unsigned int> polyline_indices, polygon_indices, circle_indices, curve_indices, point_indices;
     for (const Geo::DObject *geo : objects)
     {
         if (!Geo::is_intersected(visible_area_params, geo->aabbrect()))
@@ -2322,33 +2322,33 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::DObject *> &objects)
         case Geo::Type::POLYLINE:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                polyline_indexs.push_back(index++);
+                polyline_indices.push_back(index++);
             }
-            polyline_indexs.push_back(UINT_MAX);
+            polyline_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::POLYGON:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                polygon_indexs.push_back(index++);
+                polygon_indices.push_back(index++);
             }
-            polygon_indexs.push_back(UINT_MAX);
+            polygon_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::CIRCLE:
         case Geo::Type::ELLIPSE:
         case Geo::Type::ARC:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                circle_indexs.push_back(index++);
+                circle_indices.push_back(index++);
             }
-            circle_indexs.push_back(UINT_MAX);
+            circle_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::BEZIER:
         case Geo::Type::BSPLINE:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                curve_indexs.push_back(index++);
+                curve_indices.push_back(index++);
             }
-            curve_indexs.push_back(UINT_MAX);
+            curve_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::COMBINATION:
             for (const Geo::DObject *item : *static_cast<const Combination *>(geo))
@@ -2358,36 +2358,36 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::DObject *> &objects)
                 case Geo::Type::POLYLINE:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        polyline_indexs.push_back(index++);
+                        polyline_indices.push_back(index++);
                     }
-                    polyline_indexs.push_back(UINT_MAX);
+                    polyline_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::POLYGON:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        polygon_indexs.push_back(index++);
+                        polygon_indices.push_back(index++);
                     }
-                    polygon_indexs.push_back(UINT_MAX);
+                    polygon_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::CIRCLE:
                 case Geo::Type::ELLIPSE:
                 case Geo::Type::ARC:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        circle_indexs.push_back(index++);
+                        circle_indices.push_back(index++);
                     }
-                    circle_indexs.push_back(UINT_MAX);
+                    circle_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::BEZIER:
                 case Geo::Type::BSPLINE:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        curve_indexs.push_back(index++);
+                        curve_indices.push_back(index++);
                     }
-                    curve_indexs.push_back(UINT_MAX);
+                    curve_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::POINT:
-                    point_indexs.push_back(item->point_index);
+                    point_indices.push_back(item->point_index);
                     break;
                 default:
                     break;
@@ -2395,44 +2395,44 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::DObject *> &objects)
             }
             break;
         case Geo::Type::POINT:
-            point_indexs.push_back(geo->point_index);
+            point_indices.push_back(geo->point_index);
             break;
         default:
             continue;
         }
     }
 
-    _selected_index_count.polyline = polyline_indexs.size();
-    _selected_index_count.polygon = polygon_indexs.size();
-    _selected_index_count.circle = circle_indexs.size();
-    _selected_index_count.curve = curve_indexs.size();
-    _selected_index_count.point = point_indexs.size();
+    _selected_index_count.polyline = polyline_indices.size();
+    _selected_index_count.polygon = polygon_indices.size();
+    _selected_index_count.circle = circle_indices.size();
+    _selected_index_count.curve = curve_indices.size();
+    _selected_index_count.point = point_indices.size();
 
     makeCurrent();
-    if (!polyline_indexs.empty())
+    if (!polyline_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polyline);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_indexs.size() * sizeof(unsigned int), polyline_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_indices.size() * sizeof(unsigned int), polyline_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!polygon_indexs.empty())
+    if (!polygon_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polygon);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_indexs.size() * sizeof(unsigned int), polygon_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_indices.size() * sizeof(unsigned int), polygon_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!circle_indexs.empty())
+    if (!circle_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.circle);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indexs.size() * sizeof(unsigned int), circle_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indices.size() * sizeof(unsigned int), circle_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!curve_indexs.empty())
+    if (!curve_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.curve);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_indexs.size() * sizeof(unsigned int), curve_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_indices.size() * sizeof(unsigned int), curve_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!point_indexs.empty())
+    if (!point_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.point);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_indexs.size() * sizeof(unsigned int), point_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_indices.size() * sizeof(unsigned int), point_indices.data(), GL_DYNAMIC_DRAW);
     }
     doneCurrent();
 }

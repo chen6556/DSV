@@ -608,13 +608,13 @@ Geo::AABBRect ContainerGroup::aabbrect() const
     }
     double r = 0, x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
     Geo::Point coord;
-    for (const Geo::DObject *continer : _containers)
+    for (const Geo::DObject *container : _containers)
     {
-        switch (continer->type())
+        switch (container->type())
         {
         case Geo::Type::TEXT:
             {
-                const Geo::AABBRect param = continer->aabbrect();
+                const Geo::AABBRect param = container->aabbrect();
                 x0 = std::min(x0, param.left);
                 y0 = std::min(y0, param.bottom);
                 x1 = std::max(x1, param.right);
@@ -622,7 +622,7 @@ Geo::AABBRect ContainerGroup::aabbrect() const
             }
             break;
         case Geo::Type::POLYGON:
-            for (const Geo::Point &point : *static_cast<const Geo::Polygon *>(continer))
+            for (const Geo::Point &point : *static_cast<const Geo::Polygon *>(container))
             {
                 x0 = std::min(x0, point.x);
                 y0 = std::min(y0, point.y);
@@ -631,9 +631,9 @@ Geo::AABBRect ContainerGroup::aabbrect() const
             }
             break;
         case Geo::Type::CIRCLE:
-            r = static_cast<const Geo::Circle *>(continer)->radius;
-            coord.x = static_cast<const Geo::Circle *>(continer)->x;
-            coord.y = static_cast<const Geo::Circle *>(continer)->y;
+            r = static_cast<const Geo::Circle *>(container)->radius;
+            coord.x = static_cast<const Geo::Circle *>(container)->x;
+            coord.y = static_cast<const Geo::Circle *>(container)->y;
             x0 = std::min(x0, coord.x - r);
             y0 = std::min(y0, coord.y - r);
             x1 = std::max(x1, coord.x + r);
@@ -641,7 +641,7 @@ Geo::AABBRect ContainerGroup::aabbrect() const
             break;
         case Geo::Type::ELLIPSE:
             {
-                const Geo::AABBRect rect(static_cast<const Geo::Ellipse *>(continer)->aabbrect());
+                const Geo::AABBRect rect(static_cast<const Geo::Ellipse *>(container)->aabbrect());
                 x0 = std::min(x0, rect.left);
                 y0 = std::min(y0, rect.bottom);
                 x1 = std::max(x1, rect.right);
@@ -650,7 +650,7 @@ Geo::AABBRect ContainerGroup::aabbrect() const
             break;
         case Geo::Type::COMBINATION:
             {
-                const Geo::AABBRect rect(static_cast<const Combination *>(continer)->aabbrect());
+                const Geo::AABBRect rect(static_cast<const Combination *>(container)->aabbrect());
                 x0 = std::min(x0, rect.left);
                 y0 = std::min(y0, rect.bottom);
                 x1 = std::max(x1, rect.right);
@@ -658,7 +658,7 @@ Geo::AABBRect ContainerGroup::aabbrect() const
             }
             break;
         case Geo::Type::POLYLINE:
-            for (const Geo::Point &point : *static_cast<const Geo::Polyline *>(continer))
+            for (const Geo::Point &point : *static_cast<const Geo::Polyline *>(container))
             {
                 x0 = std::min(x0, point.x);
                 y0 = std::min(y0, point.y);
@@ -667,7 +667,7 @@ Geo::AABBRect ContainerGroup::aabbrect() const
             }
             break;
         case Geo::Type::BEZIER:
-            for (const Geo::Point &point : static_cast<const Geo::CubicBezier *>(continer)->shape())
+            for (const Geo::Point &point : static_cast<const Geo::CubicBezier *>(container)->shape())
             {
                 x0 = std::min(x0, point.x);
                 y0 = std::min(y0, point.y);
@@ -676,7 +676,7 @@ Geo::AABBRect ContainerGroup::aabbrect() const
             }
             break;
         case Geo::Type::BSPLINE:
-            for (const Geo::Point &point : static_cast<const Geo::BSpline *>(continer)->shape())
+            for (const Geo::Point &point : static_cast<const Geo::BSpline *>(container)->shape())
             {
                 x0 = std::min(x0, point.x);
                 y0 = std::min(y0, point.y);
@@ -686,7 +686,7 @@ Geo::AABBRect ContainerGroup::aabbrect() const
             break;
         case Geo::Type::ARC:
             {
-                const Geo::AABBRect rect(static_cast<const Geo::Arc *>(continer)->aabbrect());
+                const Geo::AABBRect rect(static_cast<const Geo::Arc *>(container)->aabbrect());
                 x0 = std::min(x0, rect.left);
                 y0 = std::min(y0, rect.bottom);
                 x1 = std::max(x1, rect.right);
@@ -694,7 +694,7 @@ Geo::AABBRect ContainerGroup::aabbrect() const
             }
             break;
         case Geo::Type::POINT:
-            coord = *static_cast<const Geo::Point *>(continer);
+            coord = *static_cast<const Geo::Point *>(container);
             x0 = std::min(x0, coord.x);
             y0 = std::min(y0, coord.y);
             x1 = std::max(x1, coord.x);
@@ -702,7 +702,7 @@ Geo::AABBRect ContainerGroup::aabbrect() const
             break;
         case Geo::Type::DIMENSION:
             {
-                const Geo::AABBRect param = static_cast<const Dim::Dimension *>(continer)->aabbrect();
+                const Geo::AABBRect param = static_cast<const Dim::Dimension *>(container)->aabbrect();
                 x0 = std::min(x0, param.left);
                 y0 = std::min(y0, param.bottom);
                 x1 = std::max(x1, param.right);

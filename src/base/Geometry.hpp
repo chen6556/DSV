@@ -719,7 +719,7 @@ public:
     static double default_down_sampling_value;
 
 private:
-    // a[1]点绕中心点旋转角度,总是从arc_angle[0]逆时针旋转到arc_anlge[1]
+    // a[1]点绕中心点旋转角度,总是从arc_angle[0]逆时针旋转到arc_angle[1]
     double _arc_angle[2] = {0, 0};
     // 参数方程的初值和终值
     double _arc_param[2] = {0, 0};
@@ -817,12 +817,12 @@ public:
 
     Point c1() const;
 
-    // a[1]点绕中心点旋转角度,总是从arc_angle[0]逆时针旋转到arc_anlge[1]
+    // a[1]点绕中心点旋转角度,总是从arc_angle[0]逆时针旋转到arc_angle[1]
     double arc_angle0() const;
 
     Geo::Point arc_point0() const;
 
-    // a[1]点绕中心点旋转角度,总是从arc_angle[0]逆时针旋转到arc_anlge[1]
+    // a[1]点绕中心点旋转角度,总是从arc_angle[0]逆时针旋转到arc_angle[1]
     double arc_angle1() const;
 
     Geo::Point arc_point1() const;

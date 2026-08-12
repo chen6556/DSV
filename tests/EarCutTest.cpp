@@ -35,8 +35,8 @@ void EarCutTest::test_triangulate()
 
     {
         const Geo::Polygon polygon({Geo::Point(0, 0), Geo::Point(2, 0), Geo::Point(2, 2), Geo::Point(0, 2)});
-        std::vector<unsigned int> indexs = Geo::ear_cut_to_indexs(polygon);
-        TEST(indexs.size() == 6, "Quad -> 6 indices")
+        std::vector<unsigned int> indices = Geo::ear_cut_to_indices(polygon);
+        TEST(indices.size() == 6, "Quad -> 6 indices")
     }
 
     {

@@ -1570,21 +1570,21 @@ bool Editor::connect(const std::vector<Geo::DObject *> &objects, const double co
     }
 
     std::vector<Geo::Polyline *> polylines;
-    std::vector<size_t> indexs;
+    std::vector<size_t> indices;
     ContainerGroup &group = _graph->container_group(_current_group);
     for (Geo::DObject *object : objects)
     {
         if (object->type() == Geo::Type::POLYLINE)
         {
             polylines.push_back(static_cast<Geo::Polyline *>(object));
-            indexs.push_back(std::distance(group.begin(), std::find(group.begin(), group.end(), object)));
+            indices.push_back(std::distance(group.begin(), std::find(group.begin(), group.end(), object)));
         }
     }
     std::vector<bool> merged(polylines.size(), false);
 
     Geo::Polyline *polyline = nullptr;
     size_t index = 0;
-    for (size_t i = 0, count = indexs.size(); i < count; ++i)
+    for (size_t i = 0, count = indices.size(); i < count; ++i)
     {
         const Geo::Point front_i = polylines[i]->front();
         const Geo::Point back_i = polylines[i]->back();
@@ -1685,16 +1685,16 @@ bool Editor::connect(const std::vector<Geo::DObject *> &objects, const double co
     {
         if (!merged[i])
         {
-            indexs.erase(indexs.begin() + i);
+            indices.erase(indices.begin() + i);
         }
     }
     if (!merged.front())
     {
-        indexs.erase(indexs.begin());
+        indices.erase(indices.begin());
     }
-    std::sort(indexs.begin(), indexs.end(), std::greater<>());
+    std::sort(indices.begin(), indices.end(), std::greater<>());
     std::vector<std::tuple<Geo::DObject *, size_t>> items;
-    for (size_t i : indexs)
+    for (size_t i : indices)
     {
         _view_tree.remove(group[i]);
         items.emplace_back(group.pop(i), i);
