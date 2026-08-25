@@ -98,7 +98,7 @@ void Importer::store_arc()
             }
             else
             {
-                step = std::abs(std::acos(1 - _parameters[3] / dir.length()) * 2);
+                step = std::abs(std::acos(1 - _parameters[3] * _x_ratio / dir.length()) * 2);
             }
         }
         double rotated = 0;
@@ -421,15 +421,23 @@ void Importer::br()
         _points.emplace_back(_parameters[i - 1] * _x_ratio + _last_coord.x, _parameters[i] * _y_ratio + _last_coord.y);
         _last_coord = _points.back();
     }
-    if (_combination == nullptr)
+    if (_polygon_mode)
     {
-        _graph->container_groups().back().append(new Geo::CubicBezier(_points.cbegin(), _points.cend(), false));
+        const Geo::CubicBezier bezier(_points.cbegin(), _points.cend(), false);
+        _points.insert(_points.end(), bezier.shape().begin(), bezier.shape().end());
     }
     else
     {
-        _combination->append(new Geo::CubicBezier(_points.cbegin(), _points.cend(), false));
+        if (_combination == nullptr)
+        {
+            _graph->container_groups().back().append(new Geo::CubicBezier(_points.cbegin(), _points.cend(), false));
+        }
+        else
+        {
+            _combination->append(new Geo::CubicBezier(_points.cbegin(), _points.cend(), false));
+        }
+        _points.clear();
     }
-    _points.clear();
     _parameters.clear();
 }
 
@@ -445,33 +453,77 @@ void Importer::bz()
         _points.emplace_back(_parameters[i - 1] * _x_ratio, _parameters[i] * _y_ratio);
     }
     _last_coord = _points.back();
-    if (_combination == nullptr)
+    if (_polygon_mode)
     {
-        _graph->container_groups().back().append(new Geo::CubicBezier(_points.cbegin(), _points.cend(), false));
+        const Geo::CubicBezier bezier(_points.cbegin(), _points.cend(), false);
+        _points.insert(_points.end(), bezier.shape().begin(), bezier.shape().end());
     }
     else
     {
-        _combination->append(new Geo::CubicBezier(_points.cbegin(), _points.cend(), false));
+        if (_combination == nullptr)
+        {
+            _graph->container_groups().back().append(new Geo::CubicBezier(_points.cbegin(), _points.cend(), false));
+        }
+        else
+        {
+            _combination->append(new Geo::CubicBezier(_points.cbegin(), _points.cend(), false));
+        }
+        _points.clear();
     }
-    _points.clear();
     _parameters.clear();
 }
 
 void Importer::ci()
 {
-    if (_parameters.size() > 1)
+    if (_polygon_mode)
     {
-        _parameters.pop_back();
-    }
-    if (_combination == nullptr)
-    {
-        _graph->container_groups().back().append(new Geo::Circle(_points.front().x, _points.front().y, _parameters.back() * _x_ratio));
+        double step = Geo::PI / 72;
+        if (_parameters.size() > 1)
+        {
+            if (_ct_mode == ChordToleranceMode::ChordAngle)
+            {
+                step = Geo::degree_to_rad(_parameters.back());
+            }
+            else
+            {
+                step = std::abs(std::acos(1 - _parameters.back() / _parameters.front()) * 2);
+            }
+        }
+        if (double rotated = 0; step > 0)
+        {
+            Geo::Point start(_last_coord.x + _parameters.front() * _x_ratio, _last_coord.y);
+            _points.emplace_back(start);
+            while (rotated < Geo::PI * 2)
+            {
+                start.rotate(_last_coord.x, _last_coord.y, step);
+                _points.emplace_back(start);
+                rotated += step;
+            }
+        }
+        else
+        {
+            Geo::Point start(_last_coord.x + _parameters.front() * _x_ratio, _last_coord.y);
+            _points.emplace_back(start);
+            while (rotated > -Geo::PI * 2)
+            {
+                start.rotate(_last_coord.x, _last_coord.y, step);
+                _points.emplace_back(start);
+                rotated += step;
+            }
+        }
     }
     else
     {
-        _combination->append(new Geo::Circle(_points.front().x, _points.front().y, _parameters.back() * _x_ratio));
+        if (_combination == nullptr)
+        {
+            _graph->container_groups().back().append(new Geo::Circle(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio));
+        }
+        else
+        {
+            _combination->append(new Geo::Circle(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio));
+        }
+        _points.clear();
     }
-    _points.clear();
     _parameters.clear();
 }
 
