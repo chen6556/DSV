@@ -394,35 +394,9 @@ void Importer::ro()
     store_points();
     _rotate_coord = _parameters.front();
     _parameters.clear();
-    switch (_rotate_coord)
+    if (_rotate_coord != 90 && _rotate_coord != 180 && _rotate_coord != 270)
     {
-    case 90:
-        std::swap(_ip[0], _ip[1]);
-        _ip[0] = -_ip[0];
-        std::swap(_ip[2], _ip[3]);
-        _ip[2] = -_ip[2];
-        _ip[4] = std::min(_ip[0], _ip[2]) * Importer::plotter_unit;
-        _ip[5] = std::min(_ip[1], _ip[3]) * Importer::plotter_unit;
-        break;
-    case 180:
-        _ip[0] = -_ip[0];
-        _ip[1] = -_ip[1];
-        _ip[2] = -_ip[2];
-        _ip[3] = -_ip[3];
-        _ip[4] = std::min(_ip[0], _ip[2]) * Importer::plotter_unit;
-        _ip[5] = std::min(_ip[1], _ip[3]) * Importer::plotter_unit;
-        break;
-    case 270:
-        std::swap(_ip[0], _ip[1]);
-        _ip[1] = -_ip[1];
-        std::swap(_ip[2], _ip[3]);
-        _ip[3] = -_ip[3];
-        _ip[4] = std::min(_ip[0], _ip[2]) * Importer::plotter_unit;
-        _ip[5] = std::min(_ip[1], _ip[3]) * Importer::plotter_unit;
-        break;
-    default:
         _rotate_coord = 0;
-        break;
     }
 }
 
@@ -451,34 +425,13 @@ void Importer::x_coord(const double value)
     switch (_rotate_coord)
     {
     case 90:
-        if (_relative_coord)
-        {
-            // _points.emplace_back(0, _last_coord.x + value * _x_ratio);
-        }
-        else
-        {
-            // _points.emplace_back(0, _ip[4] + value * _x_ratio);
-        }
+        _points.emplace_back(0, _relative_coord ? calc_rx_coord(value) : calc_ax_coord(value));
         break;
     case 180:
-        if (_relative_coord)
-        {
-            // _points.emplace_back(_last_coord.x - value * _x_ratio, 0);
-        }
-        else
-        {
-            // _points.emplace_back(_ip[4] - value * _x_ratio, 0);
-        }
+        _points.emplace_back(-(_relative_coord ? calc_rx_coord(value) : calc_ax_coord(value)), 0);
         break;
     case 270:
-        if (_relative_coord)
-        {
-            // _points.emplace_back(0, _last_coord.x - value * _x_ratio);
-        }
-        else
-        {
-            // _points.emplace_back(0, _ip[4] - value * _x_ratio);
-        }
+        _points.emplace_back(0, -(_relative_coord ? calc_rx_coord(value) : calc_ax_coord(value)));
         break;
     default:
         _points.emplace_back(_relative_coord ? calc_rx_coord(value) : calc_ax_coord(value), 0);
@@ -491,34 +444,13 @@ void Importer::y_coord(const double value)
     switch (_rotate_coord)
     {
     case 90:
-        if (_relative_coord)
-        {
-            // _points.back().x = _last_coord.y - value * _y_ratio;
-        }
-        else
-        {
-            // _points.back().x = _ip[5] - value * _y_ratio;
-        }
+        _points.back().x = -(_relative_coord ? calc_ry_coord(value) : calc_ay_coord(value));
         break;
     case 180:
-        if (_relative_coord)
-        {
-            // _points.back().y = _last_coord.y - value * _y_ratio;
-        }
-        else
-        {
-            // _points.back().y = _ip[5] - value * _y_ratio;
-        }
+        _points.back().y = -(_relative_coord ? calc_ry_coord(value) : calc_ay_coord(value));
         break;
     case 270:
-        if (_relative_coord)
-        {
-            // _points.back().x = _last_coord.y + value * _y_ratio;
-        }
-        else
-        {
-            // _points.back().x = _ip[5] + value * _y_ratio;
-        }
+        _points.back().x = _relative_coord ? calc_ry_coord(value) : calc_ay_coord(value);
         break;
     default:
         _points.back().y = _relative_coord ? calc_ry_coord(value) : calc_ay_coord(value);
