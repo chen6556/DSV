@@ -22,12 +22,12 @@ void Importer::reset()
     _parameters.clear();
     _polygon_cache.clear();
     _last_coord.x = _last_coord.y = 0;
-    _rotate_coord = 0;
-    _ip[0] = _ip[1] = _ip[4] = _ip[5] = 0;
+    _rotate_coord = _scale_type = 0;
+    _ip[0] = _ip[1] = 0;
     _ip[2] = _ip[3] = 1;
     _sc[0] = _sc[2] = 0;
     _sc[1] = _sc[3] = 1;
-    _x_ratio = _y_ratio = Importer::plotter_unit;
+    _sc[4] = _sc[5] = 0.5;
     _pen_down = _relative_coord = _polygon_mode = false;
     _texts.clear();
     _combination = nullptr;
@@ -98,7 +98,7 @@ void Importer::store_arc()
             }
             else
             {
-                step = std::abs(std::acos(1 - _parameters[3] * _x_ratio / dir.length()) * 2);
+                step = std::abs(std::acos(1 - _parameters[3] / dir.length()) * 2);
             }
         }
         double rotated = 0;
@@ -141,6 +141,136 @@ void Importer::store_arc()
     }
 
     _parameters.clear();
+}
+
+double Importer::x_unit() const
+{
+    switch (_scale_type)
+    {
+    case 1:
+        {
+            const double x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]), y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]);
+            return std::min(std::abs(x_ratio), std::abs(y_ratio)) * Importer::plotter_unit;
+        }
+    case 2:
+        return _sc[1];
+    default:
+        return std::abs((_ip[2] - _ip[0]) / (_sc[1] - _sc[0]) * Importer::plotter_unit);
+    }
+}
+
+double Importer::y_unit() const
+{
+    switch (_scale_type)
+    {
+    case 1:
+        {
+            const double x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]), y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]);
+            return std::min(std::abs(x_ratio), std::abs(y_ratio)) * Importer::plotter_unit;
+        }
+    case 2:
+        return _sc[3];
+    default:
+        return std::abs((_ip[3] - _ip[1]) / (_sc[3] - _sc[2]) * Importer::plotter_unit);
+    }
+}
+
+double Importer::calc_ax_coord(const double value) const
+{
+    switch (_scale_type)
+    {
+    case 1:
+        if (const double x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]), y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]);
+            std::abs(x_ratio) < std::abs(y_ratio))
+        {
+            return (_ip[0] + (value - _sc[0]) * x_ratio) * Importer::plotter_unit;
+        }
+        else
+        {
+            const double hw_ratio = std::abs(_sc[3] - _sc[2]) / std::abs(_sc[1] - _sc[0]);
+            double offset = (std::abs(_ip[2] - _ip[0]) - std::abs(_ip[3] - _ip[1]) / hw_ratio) * _sc[4];
+            if (_ip[2] < _ip[0])
+            {
+                offset = -offset;
+            }
+            return (_ip[0] + offset + (value - _sc[0]) * x_ratio * hw_ratio) * Importer::plotter_unit;
+        }
+    case 2:
+        return (_ip[0] + (value - _sc[0]) * _sc[1]) * Importer::plotter_unit;
+    default:
+        return (_ip[0] + (value - _sc[0]) * (_ip[2] - _ip[0]) / (_sc[1] - _sc[0])) * Importer::plotter_unit;
+    }
+}
+
+double Importer::calc_ay_coord(const double value) const
+{
+    switch (_scale_type)
+    {
+    case 1:
+        if (const double x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]), y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]);
+            std::abs(y_ratio) < std::abs(x_ratio))
+        {
+            return (_ip[1] + (value - _sc[2]) * y_ratio) * Importer::plotter_unit;
+        }
+        else
+        {
+            const double wh_ratio = std::abs(_sc[1] - _sc[0]) / std::abs(_sc[3] - _sc[2]);
+            double offset = (std::abs(_ip[3] - _ip[1]) - std::abs(_ip[2] - _ip[0]) / wh_ratio) * _sc[4];
+            if (_ip[3] < _ip[1])
+            {
+                offset = -offset;
+            }
+            return (_ip[1] + offset + (value - _sc[2]) * y_ratio * wh_ratio) * Importer::plotter_unit;
+        }
+    case 2:
+        return (_ip[1] + (value - _sc[2]) * _sc[3]) * Importer::plotter_unit;
+    default:
+        return (_ip[1] + (value - _sc[2]) * (_ip[3] - _ip[1]) / (_sc[3] - _sc[2])) * Importer::plotter_unit;
+    }
+}
+
+double Importer::calc_rx_coord(const double value) const
+{
+    switch (_scale_type)
+    {
+    case 1:
+        if (const double x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]), y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]);
+            std::abs(x_ratio) < std::abs(y_ratio))
+        {
+            return _last_coord.x + (value - _sc[0]) * x_ratio * Importer::plotter_unit;
+        }
+        else
+        {
+            const double hw_ratio = std::abs(_sc[3] - _sc[2]) / std::abs(_sc[1] - _sc[0]);
+            return _last_coord.x + (value - _sc[0]) * x_ratio * hw_ratio * Importer::plotter_unit;
+        }
+    case 2:
+        return _last_coord.x + (value - _sc[0]) * _sc[1] * Importer::plotter_unit;
+    default:
+        return _last_coord.x + (value - _sc[0]) * (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]) * Importer::plotter_unit;
+    }
+}
+
+double Importer::calc_ry_coord(const double value) const
+{
+    switch (_scale_type)
+    {
+    case 1:
+        if (const double x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]), y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]);
+            std::abs(x_ratio) < std::abs(y_ratio))
+        {
+            return _last_coord.y + (value - _sc[2]) * y_ratio * Importer::plotter_unit;
+        }
+        else
+        {
+            const double wh_ratio = std::abs(_sc[1] - _sc[0]) / std::abs(_sc[3] - _sc[2]);
+            return _last_coord.y + (value - _sc[2]) * y_ratio * wh_ratio * Importer::plotter_unit;
+        }
+    case 2:
+        return _last_coord.y + (value - _sc[2]) * _sc[3] * Importer::plotter_unit;
+    default:
+        return _last_coord.y + (value - _sc[2]) * (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]) * Importer::plotter_unit;
+    }
 }
 
 
@@ -188,10 +318,6 @@ void Importer::ip()
         default:
             break;
         }
-        _x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]) * Importer::plotter_unit;
-        _y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]) * Importer::plotter_unit;
-        _ip[4] = std::min(_ip[0], _ip[2]) * Importer::plotter_unit;
-        _ip[5] = std::min(_ip[1], _ip[3]) * Importer::plotter_unit;
     }
     _parameters.clear();
 }
@@ -204,29 +330,27 @@ void Importer::sc()
         {
             _sc[i] = _parameters[i];
         }
-        _x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]) * Importer::plotter_unit;
-        _y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]) * Importer::plotter_unit;
+        _scale_type = 0;
     }
     else if (_parameters.size() >= 5)
     {
-        switch (static_cast<int>(_parameters[4]))
+        _scale_type = _parameters[4];
+        switch (_scale_type)
         {
+        case 1:
+            _sc[4] = _parameters.size() >= 6 ? _parameters[5] : 0.5;
+            _sc[5] = _parameters.size() >= 7 ? _parameters[6] : 0.5;
         case 0:
+        case 2:
             for (int i = 0; i < 4; ++i)
             {
                 _sc[i] = _parameters[i];
             }
-            _x_ratio = (_ip[2] - _ip[0]) / (_sc[1] - _sc[0]) * Importer::plotter_unit;
-            _y_ratio = (_ip[3] - _ip[1]) / (_sc[3] - _sc[2]) * Importer::plotter_unit;
-            break;
-        case 2:
-            _x_ratio = _parameters[1] * Importer::plotter_unit;
-            _y_ratio = _parameters[3] * Importer::plotter_unit;
             break;
         default:
             _sc[0] = _sc[2] = 0;
             _sc[1] = _sc[3] = 1;
-            _x_ratio = _y_ratio = Importer::plotter_unit;
+            _scale_type = 0;
             break;
         }
     }
@@ -234,7 +358,7 @@ void Importer::sc()
     {
         _sc[0] = _sc[2] = 0;
         _sc[1] = _sc[3] = 1;
-        _x_ratio = _y_ratio = Importer::plotter_unit;
+        _scale_type = 0;
     }
     _parameters.clear();
 }
@@ -303,42 +427,35 @@ void Importer::x_coord(const double value)
     case 90:
         if (_relative_coord)
         {
-            _points.emplace_back(0, _last_coord.x + value * _x_ratio);
+            // _points.emplace_back(0, _last_coord.x + value * _x_ratio);
         }
         else
         {
-            _points.emplace_back(0, _ip[4] + value * _x_ratio);
+            // _points.emplace_back(0, _ip[4] + value * _x_ratio);
         }
         break;
     case 180:
         if (_relative_coord)
         {
-            _points.emplace_back(_last_coord.x - value * _x_ratio, 0);
+            // _points.emplace_back(_last_coord.x - value * _x_ratio, 0);
         }
         else
         {
-            _points.emplace_back(_ip[4] - value * _x_ratio, 0);
+            // _points.emplace_back(_ip[4] - value * _x_ratio, 0);
         }
         break;
     case 270:
         if (_relative_coord)
         {
-            _points.emplace_back(0, _last_coord.x - value * _x_ratio);
+            // _points.emplace_back(0, _last_coord.x - value * _x_ratio);
         }
         else
         {
-            _points.emplace_back(0, _ip[4] - value * _x_ratio);
+            // _points.emplace_back(0, _ip[4] - value * _x_ratio);
         }
         break;
     default:
-        if (_relative_coord)
-        {
-            _points.emplace_back(_last_coord.x + value * _x_ratio, 0);
-        }
-        else
-        {
-            _points.emplace_back(_ip[4] + value * _x_ratio, 0);
-        }
+        _points.emplace_back(_relative_coord ? calc_rx_coord(value) : calc_ax_coord(value), 0);
         break;
     }
 }
@@ -350,42 +467,35 @@ void Importer::y_coord(const double value)
     case 90:
         if (_relative_coord)
         {
-            _points.back().x = _last_coord.y - value * _y_ratio;
+            // _points.back().x = _last_coord.y - value * _y_ratio;
         }
         else
         {
-            _points.back().x = _ip[5] - value * _y_ratio;
+            // _points.back().x = _ip[5] - value * _y_ratio;
         }
         break;
     case 180:
         if (_relative_coord)
         {
-            _points.back().y = _last_coord.y - value * _y_ratio;
+            // _points.back().y = _last_coord.y - value * _y_ratio;
         }
         else
         {
-            _points.back().y = _ip[5] - value * _y_ratio;
+            // _points.back().y = _ip[5] - value * _y_ratio;
         }
         break;
     case 270:
         if (_relative_coord)
         {
-            _points.back().x = _last_coord.y + value * _y_ratio;
+            // _points.back().x = _last_coord.y + value * _y_ratio;
         }
         else
         {
-            _points.back().x = _ip[5] + value * _y_ratio;
+            // _points.back().x = _ip[5] + value * _y_ratio;
         }
         break;
     default:
-        if (_relative_coord)
-        {
-            _points.back().y = _last_coord.y + value * _y_ratio;
-        }
-        else
-        {
-            _points.back().y = _ip[5] + value * _y_ratio;
-        }
+        _points.back().y = _relative_coord ? calc_ry_coord(value) : calc_ay_coord(value);
         break;
     }
 
@@ -412,15 +522,12 @@ void Importer::parameter(const double value)
 void Importer::br()
 {
     store_points();
-    if (_last_coord.x != _parameters[0] * _x_ratio || _last_coord.y != _parameters[1] * _y_ratio)
-    {
-        _points.emplace_back(_last_coord);
-    }
+    _points.emplace_back(_last_coord);
     for (size_t i = 1, count = _parameters.size(); i < count; i += 2)
     {
-        _points.emplace_back(_parameters[i - 1] * _x_ratio + _last_coord.x, _parameters[i] * _y_ratio + _last_coord.y);
-        _last_coord = _points.back();
+        _points.emplace_back(calc_rx_coord(_parameters[i - 1]), calc_ry_coord(_parameters[i]));
     }
+    _last_coord = _points.back();
     if (_polygon_mode)
     {
         const Geo::CubicBezier bezier(_points.cbegin(), _points.cend(), false);
@@ -444,13 +551,10 @@ void Importer::br()
 void Importer::bz()
 {
     store_points();
-    if (_last_coord.x != _parameters[0] * _x_ratio || _last_coord.y != _parameters[1] * _y_ratio)
-    {
-        _points.emplace_back(_last_coord);
-    }
+    _points.emplace_back(_last_coord);
     for (size_t i = 1, count = _parameters.size(); i < count; i += 2)
     {
-        _points.emplace_back(_parameters[i - 1] * _x_ratio, _parameters[i] * _y_ratio);
+        _points.emplace_back(calc_ax_coord(_parameters[i - 1]), calc_ry_coord(_parameters[i]));
     }
     _last_coord = _points.back();
     if (_polygon_mode)
@@ -491,7 +595,7 @@ void Importer::ci()
         }
         if (double rotated = 0; step > 0)
         {
-            Geo::Point start(_last_coord.x + _parameters.front() * _x_ratio, _last_coord.y);
+            Geo::Point start(_last_coord.x + _parameters.front() * x_unit(), _last_coord.y);
             _points.emplace_back(start);
             while (rotated < Geo::PI * 2)
             {
@@ -502,7 +606,7 @@ void Importer::ci()
         }
         else
         {
-            Geo::Point start(_last_coord.x + _parameters.front() * _x_ratio, _last_coord.y);
+            Geo::Point start(_last_coord.x + _parameters.front() * x_unit(), _last_coord.y);
             _points.emplace_back(start);
             while (rotated > -Geo::PI * 2)
             {
@@ -516,11 +620,11 @@ void Importer::ci()
     {
         if (_combination == nullptr)
         {
-            _graph->container_groups().back().append(new Geo::Circle(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio));
+            _graph->container_groups().back().append(new Geo::Circle(_last_coord.x, _last_coord.y, _parameters.front() * x_unit()));
         }
         else
         {
-            _combination->append(new Geo::Circle(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio));
+            _combination->append(new Geo::Circle(_last_coord.x, _last_coord.y, _parameters.front() * x_unit()));
         }
         _points.clear();
     }
@@ -557,26 +661,24 @@ void Importer::pr()
 
 void Importer::aa()
 {
-    _parameters[0] *= _x_ratio;
-    _parameters[1] *= _y_ratio;
+    _parameters[0] = calc_ax_coord(_parameters[0]);
+    _parameters[1] = calc_ay_coord(_parameters[1]);
     store_arc();
 }
 
 void Importer::ar()
 {
-    _parameters[0] *= _x_ratio;
-    _parameters[1] *= _y_ratio;
-    _parameters[0] += _last_coord.x;
-    _parameters[1] += _last_coord.y;
+    _parameters[0] = calc_rx_coord(_parameters[0]);
+    _parameters[1] = calc_ry_coord(_parameters[1]);
     store_arc();
 }
 
 void Importer::at()
 {
-    _parameters[0] *= _x_ratio;
-    _parameters[1] *= _y_ratio;
-    _parameters[2] *= _x_ratio;
-    _parameters[3] *= _y_ratio;
+    _parameters[0] = calc_ax_coord(_parameters[0]);
+    _parameters[1] = calc_ay_coord(_parameters[1]);
+    _parameters[2] = calc_ax_coord(_parameters[2]);
+    _parameters[3] = calc_ay_coord(_parameters[3]);
 
     Geo::Arc *arc = new Geo::Arc(_last_coord.x, _last_coord.y, _parameters[0], _parameters[1], _parameters[2], _parameters[3]);
     if (_combination == nullptr)
@@ -599,12 +701,12 @@ void Importer::ea()
         if (_combination == nullptr)
         {
             _graph->container_groups().back().append(new Geo::Polygon(
-                Geo::AABBRect(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio, _parameters.back() * _y_ratio)));
+                Geo::AABBRect(_last_coord.x, _last_coord.y, calc_ax_coord(_parameters.front()), calc_ay_coord(_parameters.back()))));
         }
         else
         {
             _combination->append(new Geo::Polygon(
-                Geo::AABBRect(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio, _parameters.back() * _y_ratio)));
+                Geo::AABBRect(_last_coord.x, _last_coord.y, calc_ax_coord(_parameters.front()), calc_ay_coord(_parameters.back()))));
         }
     }
     _points.clear();
@@ -618,15 +720,13 @@ void Importer::er()
         _parameters.erase(_parameters.begin(), _parameters.begin() + _parameters.size() - 2);
         if (_combination == nullptr)
         {
-            _graph->container_groups().back().append(
-                new Geo::Polygon(Geo::AABBRect(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio + _last_coord.x,
-                                               _parameters.back() * _y_ratio + _last_coord.y)));
+            _graph->container_groups().back().append(new Geo::Polygon(
+                Geo::AABBRect(_last_coord.x, _last_coord.y, calc_rx_coord(_parameters.front()), calc_ry_coord(_parameters.back()))));
         }
         else
         {
-            _combination->append(
-                new Geo::Polygon(Geo::AABBRect(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio + _last_coord.x,
-                                               _parameters.back() * _y_ratio + _last_coord.y)));
+            _combination->append(new Geo::Polygon(
+                Geo::AABBRect(_last_coord.x, _last_coord.y, calc_rx_coord(_parameters.front()), calc_ry_coord(_parameters.back()))));
         }
     }
     _points.clear();
@@ -740,50 +840,6 @@ void Importer::block_end()
 void Importer::end()
 {
     store_points();
-    /*const int text_size = GlobalSetting::setting().text_size;
-    std::vector<Geo::DObject *> group(_graph->container_group().begin(), _graph->container_group().end());
-    std::sort(group.begin(), group.end(), [](const Geo::DObject *a, const Geo::DObject *b)
-              { return a->bounding_rect().area() < b->bounding_rect().area(); });
-    for (Txt &text : _texts)
-    {
-        for (Geo::DObject *geo : group)
-        {
-            if (geo->type() == Geo::Type::POLYGON && Geo::is_inside(text.pos, dynamic_cast<Container<Geo::Polygon> *>(geo)->shape(), true))
-            {
-                if (dynamic_cast<Container<Geo::Polygon> *>(geo)->text().isEmpty())
-                {
-                    dynamic_cast<Container<Geo::Polygon> *>(geo)->set_text(QString::fromUtf8(text.txt));
-                }
-                else
-                {
-                    dynamic_cast<Container<Geo::Polygon> *>(geo)->set_text(dynamic_cast<Container<Geo::Polygon> *>(geo)->text() + '\n' +
-    QString::fromUtf8(text.txt));
-                }
-                text.marked = true;
-                break;
-            }
-            else if (geo->type() == Geo::Type::CIRCLE && Geo::is_inside(text.pos, dynamic_cast<Container<Geo::Circle> *>(geo)->shape(),
-    true))
-            {
-                if (dynamic_cast<Container<Geo::Circle> *>(geo)->text().isEmpty())
-                {
-                    dynamic_cast<Container<Geo::Circle> *>(geo)->set_text(QString::fromUtf8(text.txt));
-                }
-                else
-                {
-                    dynamic_cast<Container<Geo::Circle> *>(geo)->set_text(dynamic_cast<Container<Geo::Circle> *>(geo)->text() + '\n' +
-    QString::fromUtf8(text.txt));
-                }
-                text.marked = true;
-                break;
-            }
-        }
-        if (!text.marked)
-        {
-            _graph->container_group().append(new Text(text.pos.x, text.pos.y, text_size, QString::fromUtf8(text.txt)));
-        }
-    }
-    _texts.clear();*/
 }
 
 

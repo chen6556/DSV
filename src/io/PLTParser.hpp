@@ -23,8 +23,8 @@ private:
     bool _relative_coord = false;
     bool _polygon_mode = false;
     int _rotate_coord = 0;
-    double _x_ratio = 0.025, _y_ratio = 0.025;
-    double _ip[6] = {}, _sc[4] = {};
+    int _scale_type = 0;
+    double _ip[4] = {}, _sc[6] = {};
     enum class ChordToleranceMode { ChordAngle, DeviationDistance } _ct_mode = ChordToleranceMode::ChordAngle;
 
     struct Txt
@@ -45,6 +45,18 @@ private:
     void store_points();
 
     void store_arc();
+
+    double x_unit() const;
+
+    double y_unit() const;
+
+    double calc_ax_coord(const double value) const;
+
+    double calc_ay_coord(const double value) const;
+
+    double calc_rx_coord(const double value) const;
+
+    double calc_ry_coord(const double value) const;
 
 public:
 
