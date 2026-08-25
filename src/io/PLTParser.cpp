@@ -486,15 +486,13 @@ void Importer::ea()
         _parameters.erase(_parameters.begin(), _parameters.begin() + _parameters.size() - 2);
         if (_combination == nullptr)
         {
-            _graph->container_groups().back().append(
-                new Geo::Polygon(Geo::AABBRect(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio + _last_coord.x,
-                                               _parameters.back() * _y_ratio + _last_coord.y)));
+            _graph->container_groups().back().append(new Geo::Polygon(
+                Geo::AABBRect(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio, _parameters.back() * _y_ratio)));
         }
         else
         {
-            _combination->append(
-                new Geo::Polygon(Geo::AABBRect(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio + _last_coord.x,
-                                               _parameters.back() * _y_ratio + _last_coord.y)));
+            _combination->append(new Geo::Polygon(
+                Geo::AABBRect(_last_coord.x, _last_coord.y, _parameters.front() * _x_ratio, _parameters.back() * _y_ratio)));
         }
     }
     _points.clear();

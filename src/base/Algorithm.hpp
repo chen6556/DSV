@@ -11,6 +11,7 @@
 #include "algorithm/Fillet.hpp"
 #include "algorithm/Offset.hpp"
 #include "algorithm/Inside.hpp"
+#include "algorithm/ExtendClip.hpp"
 #include "algorithm/Intersection.hpp"
 #include "algorithm/TangencyPoint.hpp"
 #include "algorithm/ArchimedeanSpiral.hpp"
