@@ -193,7 +193,14 @@ double Importer::calc_ax_coord(const double value) const
             {
                 offset = -offset;
             }
-            return (_ip[0] + offset + (value - _sc[0]) * x_ratio * hw_ratio) * Importer::plotter_unit;
+            if (x_ratio < 0)
+            {
+                return (_ip[0] + offset + (_sc[0] - value) * std::abs(y_ratio)) * Importer::plotter_unit;
+            }
+            else
+            {
+                return (_ip[0] + offset + (value - _sc[0]) * std::abs(y_ratio)) * Importer::plotter_unit;
+            }
         }
     case 2:
         return (_ip[0] + (value - _sc[0]) * _sc[1]) * Importer::plotter_unit;
@@ -220,7 +227,14 @@ double Importer::calc_ay_coord(const double value) const
             {
                 offset = -offset;
             }
-            return (_ip[1] + offset + (value - _sc[2]) * y_ratio * wh_ratio) * Importer::plotter_unit;
+            if (y_ratio < 0)
+            {
+                return (_ip[1] + offset + (_sc[2] - value) * std::abs(x_ratio)) * Importer::plotter_unit;
+            }
+            else
+            {
+                return (_ip[1] + offset + (value - _sc[2]) * std::abs(x_ratio)) * Importer::plotter_unit;
+            }
         }
     case 2:
         return (_ip[1] + (value - _sc[2]) * _sc[3]) * Importer::plotter_unit;
@@ -241,8 +255,14 @@ double Importer::calc_rx_coord(const double value) const
         }
         else
         {
-            const double hw_ratio = std::abs(_sc[3] - _sc[2]) / std::abs(_sc[1] - _sc[0]);
-            return _last_coord.x + (value - _sc[0]) * x_ratio * hw_ratio * Importer::plotter_unit;
+            if (x_ratio < 0)
+            {
+                return _last_coord.x + (_sc[0] - value) * std::abs(y_ratio) * Importer::plotter_unit;
+            }
+            else
+            {
+                return _last_coord.x + (value - _sc[0]) * std::abs(y_ratio) * Importer::plotter_unit;
+            }
         }
     case 2:
         return _last_coord.x + (value - _sc[0]) * _sc[1] * Importer::plotter_unit;
@@ -263,8 +283,14 @@ double Importer::calc_ry_coord(const double value) const
         }
         else
         {
-            const double wh_ratio = std::abs(_sc[1] - _sc[0]) / std::abs(_sc[3] - _sc[2]);
-            return _last_coord.y + (value - _sc[2]) * y_ratio * wh_ratio * Importer::plotter_unit;
+            if (y_ratio < 0)
+            {
+                return _last_coord.y + (_sc[2] - value) * std::abs(x_ratio) * Importer::plotter_unit;
+            }
+            else
+            {
+                return _last_coord.y + (value - _sc[2]) * std::abs(x_ratio) * Importer::plotter_unit;
+            }
         }
     case 2:
         return _last_coord.y + (value - _sc[2]) * _sc[3] * Importer::plotter_unit;
