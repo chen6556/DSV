@@ -87,17 +87,59 @@ void Importer::store_arc()
     const Geo::Vector dir(_last_coord.x - _parameters[0], _last_coord.y - _parameters[1]);
     const double angle = Geo::degree_to_rad(_parameters[2]);
 
-    Geo::Arc *arc = new Geo::Arc(center + dir, center, std::abs(angle), Geo::Arc::ParameterType::StartCenterAngle, angle > 0);
-    if (_combination == nullptr)
+    if (_polygon_mode)
     {
-        _graph->container_groups().back().append(arc);
+        double step = Geo::PI / 72;
+        if (_parameters.size() > 3)
+        {
+            if (_ct_mode == ChordToleranceMode::ChordAngle)
+            {
+                step = Geo::degree_to_rad(std::abs(_parameters[3]));
+            }
+            else
+            {
+                step = std::abs(std::acos(1 - _parameters[3] / dir.length()) * 2);
+            }
+        }
+        double rotated = 0;
+        if (Geo::Point start(center + dir); angle > 0)
+        {
+            _points.emplace_back(start);
+            while (rotated < angle)
+            {
+                start.rotate(center.x, center.y, step);
+                _points.emplace_back(start);
+                rotated += step;
+            }
+        }
+        else
+        {
+            _points.emplace_back(start);
+            while (rotated > angle)
+            {
+                start.rotate(center.x, center.y, -step);
+                _points.emplace_back(start);
+                rotated -= step;
+            }
+        }
+        _last_coord = center + dir;
+        _last_coord.rotate(center.x, center.y, angle);
+        _points.emplace_back(_last_coord);
     }
     else
     {
-        _combination->append(arc);
+        Geo::Arc *arc = new Geo::Arc(center + dir, center, std::abs(angle), Geo::Arc::ParameterType::StartCenterAngle, angle > 0);
+        if (_combination == nullptr)
+        {
+            _graph->container_groups().back().append(arc);
+        }
+        else
+        {
+            _combination->append(arc);
+        }
+        _last_coord = arc->control_points[2];
     }
 
-    _last_coord = arc->control_points[2];
     _parameters.clear();
 }
 
@@ -433,6 +475,24 @@ void Importer::ci()
     _parameters.clear();
 }
 
+void Importer::ct(const int value)
+{
+    switch (value)
+    {
+    case 0:
+        _ct_mode = ChordToleranceMode::ChordAngle;
+        break;
+    case 1:
+        _ct_mode = ChordToleranceMode::DeviationDistance;
+        break;
+    }
+}
+
+void Importer::ct()
+{
+    return ct(0);
+}
+
 void Importer::pa()
 {
     _relative_coord = false;
@@ -688,6 +748,8 @@ static Action<int> sp_a(&importer, &Importer::sp);
 static Action<void> br_a(&importer, &Importer::br);
 static Action<void> bz_a(&importer, &Importer::bz);
 static Action<void> ci_a(&importer, &Importer::ci);
+static Action<int> ct_int_a(&importer, &Importer::ct);
+static Action<void> ct_void_a(&importer, &Importer::ct);
 static Action<void> aa_a(&importer, &Importer::aa);
 static Action<void> ar_a(&importer, &Importer::ar);
 static Action<void> at_a(&importer, &Importer::at);
@@ -723,6 +785,7 @@ static Parser<bool> sp = str_p("SP") >> int_p()[sp_a] >> *end;
 static Parser<bool> br = str_p("BR") >> list_p(parameter, separator)[br_a] >> *end;
 static Parser<bool> bz = str_p("BZ") >> list_p(parameter, separator)[bz_a] >> *end;
 static Parser<bool> ci = (str_p("CI") >> parameter >> !(separator >> parameter))[ci_a] >> *end;
+static Parser<bool> ct = ((str_p("CT") >> digit_p()[ct_int_a]) | str_p("CT")[ct_void_a]) >> *end;
 static Parser<bool> aa = (str_p("AA") >> list_p(parameter, separator))[aa_a] >> *end;
 static Parser<bool> ar = (str_p("AR") >> list_p(parameter, separator))[ar_a] >> *end;
 static Parser<bool> at = (str_p("AT") >> list_p(parameter, separator))[at_a] >> *end;
@@ -737,7 +800,7 @@ static Parser<bool> unknown_cmds =
     ((+alphaa_p())[unknown_a] >> !list_p(parameter, separator) >> *end) | confix_p(alphaa_p() | ch_p(28), +end)[unknown_a];
 static Parser<char> text_end = ch_p('\x3') | ch_p('\x4') | end;
 static Parser<std::string> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], text_end) >> !separator >> *end;
-static Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | br | bz | ci | aa | ar | at | ea | er | pm | ep | in | ip | sc | df | ro |
+static Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | br | bz | ci | ct | aa | ar | at | ea | er | pm | ep | in | ip | sc | df | ro |
                                block_end | block_start | unknown_cmds;
 
 static Parser<std::string> dci = confix_p(ch_p(27), +end);
