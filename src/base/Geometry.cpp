@@ -2437,7 +2437,7 @@ CubicBezier *CubicBezier::range(const size_t index0, const double t0, const size
     }
 
     // 如果t0为1则(index0, t0)应视为(index0 + 1, 0)
-    if (const size_t index2 = index1 - index0 - (t0 == 1 ? 1 : 0); 0 < t1 && t1 < 1)
+    if (const size_t index2 = index1 - index0 - (t0 >= 1 ? 1 : 0); 0 < t1 && t1 < 1)
     {
         // 如果是同一段曲线则需要对t1进行换算
         const double t2 = index0 == index1 ? (t1 - t0) / (1 - t0) : t1;
