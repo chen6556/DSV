@@ -1,3 +1,4 @@
+#include <cassert>
 #include "base/UndoStack.hpp"
 #include "io/GlobalSetting.hpp"
 
@@ -22,7 +23,14 @@ void CommandStack::push_command(Command *command)
         delete _commands.front();
         _commands.erase(_commands.begin());
     }
-    _commands.push_back(command);
+    if (_macro_model && !_commands.empty() && dynamic_cast<MacroCommand *>(_commands.back()) != nullptr)
+    {
+        static_cast<MacroCommand *>(_commands.back())->add_command(command);
+    }
+    else
+    {
+        _commands.push_back(command);
+    }
 }
 
 void CommandStack::clear()
@@ -48,6 +56,51 @@ void CommandStack::undo()
     updated = _commands.back()->updated;
     delete _commands.back();
     _commands.pop_back();
+}
+
+void CommandStack::begin_macro(const std::string &name)
+{
+    assert(!_macro_model);
+    if (!_macro_model)
+    {
+        _macro_model = true;
+        _commands.push_back(new MacroCommand(name));
+    }
+}
+
+void CommandStack::end_macro()
+{
+    _macro_model = false;
+}
+
+
+// MacroCommand
+MacroCommand::MacroCommand(const std::string &name) : name(name)
+{
+}
+
+MacroCommand::~MacroCommand()
+{
+    std::reverse(_commands.begin(), _commands.end());
+    for (Command *command : _commands)
+    {
+        delete command;
+    }
+}
+
+void MacroCommand::undo(Graph *graph)
+{
+    std::reverse(_commands.begin(), _commands.end());
+    for (Command *command : _commands)
+    {
+        command->undo(graph);
+        delete command;
+    }
+}
+
+void MacroCommand::add_command(Command *command)
+{
+    _commands.push_back(command);
 }
 
 

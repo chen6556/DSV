@@ -25,6 +25,7 @@ class CommandStack
 private:
     std::vector<Command *> _commands;
     size_t _count = 3;
+    bool _macro_model = false;
 
     Graph *_graph = nullptr;
 
@@ -41,6 +42,28 @@ public:
     void clear();
 
     void undo();
+
+    void begin_macro(const std::string &name);
+
+    void end_macro();
+};
+
+
+class MacroCommand : public Command
+{
+private:
+    std::vector<Command *> _commands;
+
+public:
+    std::string name;
+
+    MacroCommand(const std::string &name);
+
+    ~MacroCommand() override;
+
+    void undo(Graph *graph = nullptr) override;
+
+    void add_command(Command *command);
 };
 
 
