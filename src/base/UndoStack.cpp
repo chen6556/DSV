@@ -1,3 +1,4 @@
+#include <set>
 #include <cassert>
 #include "base/UndoStack.hpp"
 #include "io/GlobalSetting.hpp"
@@ -91,11 +92,31 @@ MacroCommand::~MacroCommand()
 void MacroCommand::undo(Graph *graph)
 {
     std::reverse(_commands.begin(), _commands.end());
+    std::set<Geo::DObject *> appended_objects, removed_objects, updated_objects;
     for (Command *command : _commands)
     {
+        appended_objects.insert(command->appended.begin(), command->appended.end());
+        removed_objects.insert(command->removed.begin(), command->removed.end());
+        updated_objects.insert(command->updated.begin(), command->updated.end());
         command->undo(graph);
         delete command;
     }
+    for (Geo::DObject *object : appended_objects)
+    {
+        if (removed_objects.find(object) == removed_objects.end())
+        {
+            appended.push_back(object);
+        }
+    }
+    removed.assign(removed_objects.begin(), removed_objects.end());
+    for (Geo::DObject *object : updated_objects)
+    {
+        if (removed_objects.find(object) == removed_objects.end())
+        {
+            updated.push_back(object);
+        }
+    }
+    _commands.clear();
 }
 
 void MacroCommand::add_command(Command *command)
