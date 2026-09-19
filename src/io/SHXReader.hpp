@@ -3,6 +3,8 @@
 #include <tuple>
 #include <string>
 #include <fstream>
+#include <cstdint>
+#include <algorithm>
 #include "base/Geometry.hpp"
 
 namespace SHXReader
