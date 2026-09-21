@@ -24,254 +24,29 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
 {
     if (!polygon.empty() && Geo::is_inside(point, polygon.aabbrect(), coincide))
     {
-        if (coincide)
+        for (size_t i = 1, len = polygon.size(); i < len; ++i)
         {
-            for (size_t i = 1, len = polygon.size(); i < len; ++i)
+            if (polygon[i - 1] != polygon[i] && Geo::is_inside(point, polygon[i - 1], polygon[i]))
             {
-                if (polygon[i - 1] != polygon[i] && Geo::is_inside(point, polygon[i - 1], polygon[i]))
-                {
-                    return true;
-                }
-            }
-        }
-        else
-        {
-            for (size_t i = 1, len = polygon.size(); i < len; ++i)
-            {
-                if (polygon[i - 1] != polygon[i] && Geo::is_inside(point, polygon[i - 1], polygon[i]))
-                {
-                    return false;
-                }
+                return coincide;
             }
         }
 
-        double x = (-DBL_MAX);
-        Geo::Polygon polygon0(polygon);
-        polygon0.remove_repeated_points();
-        std::vector<Geo::MarkedPoint> points;
-        for (const Geo::Point &p : polygon0)
+        size_t n = 0;
+        for (size_t i = 1, count = polygon.size(); i < count; ++i)
         {
-            x = std::max(x, p.x);
-            points.emplace_back(p.x, p.y);
-        }
-        // if (polygon.area() < 0)
-        // {
-        //     std::reverse(points.begin(), points.end());
-        // }
-
-        Geo::Point temp, end(x + 80, point.y); // 找到交点并计算其几何数
-        for (size_t i = 1, count = points.size(); i < count; ++i)
-        {
-            if (!Geo::is_parallel(point, end, points[i], points[i - 1]) && Geo::is_intersected(point, end, points[i], points[i - 1], temp))
-            {
-                points.insert(points.begin() + i++, MarkedPoint(temp.x, temp.y, false));
-                ++count;
-                if (Geo::cross(temp, end, points[i], points[i - 2]) >= 0) // 为交点计算几何数
-                {
-                    points[i - 1].value = -1;
-                }
-                else
-                {
-                    points[i - 1].value = 1;
-                }
-            }
-        }
-
-        if (points.size() == polygon0.size()) // 无交点
-        {
-            return false;
-        }
-
-        // 去除重复交点
-        {
-            const size_t i = points.size() - 1; // 对最后一个点进行处理
-            size_t j0 = 0, j1 = 0;
-            size_t count = points[i].original ? 0 : 1;
-            for (j0 = i; j0 > 0; --j0) // 向前查找与points[i]重合的点
-            {
-                if (std::abs(points[i].x - points[j0 - 1].x) > Geo::EPSILON || std::abs(points[i].y - points[j0 - 1].y) > Geo::EPSILON)
-                {
-                    break;
-                }
-                if (!points[j0 - 1].original)
-                {
-                    ++count;
-                }
-            }
-            for (j1 = 0; j1 < i; ++j1) // 向后查找与points[i]重合的点
-            {
-                if (std::abs(points[i].x - points[j1].x) > Geo::EPSILON || std::abs(points[i].y - points[j1].y) > Geo::EPSILON)
-                {
-                    break;
-                }
-                if (!points[j1].original)
-                {
-                    ++count;
-                }
-            }
-            if (count >= 2)
-            {
-                int value = 0;                  // 几何数之和
-                for (size_t k = i; k > j0; --k) // 计算前向几何数之和
-                {
-                    if (!points[k].original)
-                    {
-                        value += points[k].value;
-                    }
-                }
-                if (!points[j0].original)
-                {
-                    value += points[j0].value;
-                }
-                for (size_t k = 0; k <= j1; ++k) // 计算后向几何数之和
-                {
-                    if (!points[k].original)
-                    {
-                        value += points[k].value;
-                    }
-                }
-                if (value == 0) // 如果几何数之和为0,移除交点
-                {
-                    for (size_t k = i; k > j0; --k) // 移除前向交点
-                    {
-                        if (!points[k].original)
-                        {
-                            points.erase(points.begin() + k);
-                        }
-                    }
-                    if (!points[j0].original)
-                    {
-                        points.erase(points.begin() + j0);
-                    }
-                    for (size_t k = 0; k <= j1; ++k) // 移除后向交点
-                    {
-                        if (!points[k].original)
-                        {
-                            points.erase(points.begin() + k);
-                        }
-                    }
-                }
-                else
-                {
-                    bool flag = false;              // 标记是否包含原始点
-                    for (size_t k = i; k > j0; --k) // 移除前向交点
-                    {
-                        flag = (flag || points[k].original);
-                        points.erase(points.begin() + k);
-                    }
-                    flag = (flag || points[j0].original);
-                    points.erase(points.begin() + j0);
-                    for (size_t k = j1; k > 0; --k) // 移除后向交点
-                    {
-                        flag = (flag || points[k].original);
-                        points.erase(points.begin() + k);
-                    }
-                    points[0].value = value; // Polygon的front与back相同,所以移除back,直接更新front的几何数
-                    points[0].original = (flag || points[j0].original);
-                }
-            }
-        }
-        for (size_t count = 0, j = 0, i = points.size() - 2; i > 0; --i)
-        {
-            count = points[i].original ? 0 : 1;
-            for (j = i; j > 0; --j) // 向前查找与points[i]重合的点
-            {
-                if (std::abs(points[i].x - points[j - 1].x) > Geo::EPSILON || std::abs(points[i].y - points[j - 1].y) > Geo::EPSILON)
-                {
-                    break;
-                }
-                if (!points[j - 1].original)
-                {
-                    ++count;
-                }
-            }
-            if (count < 2)
+            if ((polygon[i].y > point.y) == (polygon[i - 1].y > point.y))
             {
                 continue;
             }
-
-            int value = 0;                 // 几何数之和
-            for (size_t k = i; k > j; --k) // 计算前向几何数之和
+            const double x = polygon[i - 1].x + (point.y - polygon[i - 1].y) / (polygon[i].x - polygon[i - 1].x) * (polygon[i].y - polygon[i - 1].y);
+            if (x > point.x)
             {
-                if (!points[k].original)
-                {
-                    value += points[k].value;
-                }
-            }
-            if (!points[j].original)
-            {
-                value += points[j].value;
-            }
-            if (value == 0) // 如果几何数之和为0,移除交点
-            {
-                for (size_t k = i; k > j; --k) // 移除前向交点
-                {
-                    if (!points[k].original)
-                    {
-                        points.erase(points.begin() + k);
-                    }
-                }
-                if (!points[j].original)
-                {
-                    points.erase(points.begin() + j);
-                }
-            }
-            else
-            {
-                bool flag = false;             // 标记是否包含原始点
-                for (size_t k = i; k > j; --k) // 移除前向交点
-                {
-                    flag = (flag || points[k].original);
-                    points.erase(points.begin() + k);
-                }
-                points[j].value = value; // 保留points[j],更新points[j]的几何数
-                points[j].original = (flag || points[j].original);
-            }
-            i = j > 0 ? j : 1; // 更新i的值，确保循环继续进行
-        }
-
-        // 处理重边上的交点
-        for (size_t i = 0, j = 1, count = points.size(); j < count; i = j)
-        {
-            while (i < count && points[i].value == 0) // 找到第一个非零几何数的点
-            {
-                ++i;
-            }
-            j = i + 1;
-            while (j < count && points[j].value == 0) // 找到下一个非零几何数的点
-            {
-                ++j;
-            }
-            if (j >= count) // 如果没有找到下一个非零几何数的点,跳出循环
-            {
-                break;
-            }
-            if (polygon0.index(points[i]) == SIZE_MAX || polygon0.index(points[j]) == SIZE_MAX)
-            {
-                continue; // 如果points[i]或points[j]不在polygon中,跳过
-            }
-
-            if (points[i].value > 0 && points[j].value > 0) // 如果两个点的几何数都为正,移除第二个点
-            {
-                points.erase(points.begin() + j);
-                --count;
-            }
-            else if (points[i].value < 0 && points[j].value < 0) // 如果两个点的几何数都为负,移除第一个点
-            {
-                points.erase(points.begin() + i);
-                --count;
-            }
-            else // 如果两个点的几何数符号不同,移除两个点
-            {
-                points.erase(points.begin() + j--);
-                points.erase(points.begin() + i);
-                --count;
-                --count;
+                ++n;
             }
         }
 
-        // 统计非零几何数的点的数量,判断是否为奇数
-        return std::count_if(points.begin(), points.end(), [](const Geo::MarkedPoint &p) { return p.value != 0; }) % 2 == 1;
+        return n % 2 == 1;
     }
     else
     {
