@@ -39,7 +39,7 @@ bool Geo::is_inside(const Point &point, const Polygon &polygon, const bool coinc
             {
                 continue;
             }
-            const double x = polygon[i - 1].x + (point.y - polygon[i - 1].y) / (polygon[i].x - polygon[i - 1].x) * (polygon[i].y - polygon[i - 1].y);
+            const double x = polygon[i - 1].x + (point.y - polygon[i - 1].y) * (polygon[i].x - polygon[i - 1].x) / (polygon[i].y - polygon[i - 1].y);
             if (x > point.x)
             {
                 ++n;
