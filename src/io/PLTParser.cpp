@@ -863,7 +863,7 @@ static Parser<std::string> block_start = str_p("Block")[block_start_a] >> *end;
 static Parser<std::string> block_end = str_p("BlockEnd")[block_end_a] >> *end;
 
 static Parser<bool> unknown_cmds =
-    ((+alphaa_p())[unknown_a] >> !list_p(parameter, separator) >> *end) | confix_p(alphaa_p() | ch_p(28), +end)[unknown_a];
+    ((+alphaa_p())[unknown_a] >> !list_p(float_p(), separator) >> *end) | confix_p(alphaa_p() | ch_p(28), +end)[unknown_a];
 static Parser<char> text_end = ch_p('\x3') | ch_p('\x4') | end;
 static Parser<std::string> lb = confix_p(str_p("LB"), (*anychar_p())[lb_a], text_end) >> !separator >> *end;
 static Parser<bool> all_cmds = pu | pd | lb | pa | pr | sp | br | bz | ci | ct | aa | ar | at | ea | er | pm | ep | in | ip | sc | df | ro |
