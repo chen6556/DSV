@@ -21,7 +21,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
     output << "IN;PA;SP1;" << '\n';
     for (const ContainerGroup &group : graph->container_groups())
     {
-        for (const Geo::Geometry *geo : group)
+        for (const Geo::DObject *geo : group)
         {
             switch (geo->type())
             {
@@ -65,7 +65,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                 break;
             case Geo::Type::COMBINATION:
                 output << "Block;" << '\n';
-                for (Geo::Geometry *item : *static_cast<const Combination *>(geo))
+                for (Geo::DObject *item : *static_cast<const Combination *>(geo))
                 {
                     switch (item->type())
                     {
@@ -129,7 +129,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                             break;
                         }
                         output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";BZ";
-                        for (const Geo::Point &point : *bezier)
+                        for (const Geo::Point &point : bezier->control_points)
                         {
                             output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                         }
@@ -198,7 +198,7 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     break;
                 }
                 output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";BZ";
-                for (const Geo::Point &point : *bezier)
+                for (const Geo::Point &point : bezier->control_points)
                 {
                     output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
                 }

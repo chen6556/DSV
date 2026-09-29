@@ -15,7 +15,7 @@ namespace RS274DParser
 
 double Importer::unit_scale(int value)
 {
-    return (double)value * (UNIT_SACLES[static_cast<int>(this->unit)]) / 10;
+    return (double)value * (UNIT_SCALES[static_cast<int>(this->unit)]) / 10;
 }
 
 void Importer::set_x_coord(const int value)
@@ -271,10 +271,10 @@ static Parser<bool> steps = ch_p('N') >> int_p() >> separator;
 static Action<void> end_a(&importer, &Importer::end);
 static Parser<std::string> end = str_p("M0")[end_a] >> separator;
 // 未知命令
-static Action<std::string> a_unkown(&importer, &Importer::print_symbol);
-static Parser<std::string> unkown_cmds = confix_p(alnum_p() | ch_p(' '), separator)[a_unkown];
+static Action<std::string> a_unknown(&importer, &Importer::print_symbol);
+static Parser<std::string> unknown_cmds = confix_p(alnum_p() | ch_p(' '), separator)[a_unknown];
 
-static Parser<bool> cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | text | skip_text | blank | skip_cmd | separator | end | unkown_cmds);
+static Parser<bool> cmd = *(eol_p() | coord | set_unit | pen_move | interp | circle | steps | text | skip_text | blank | skip_cmd | separator | end | unknown_cmds);
 
 static Action<std::string> table_text_a(&importer, &Importer::store_table_text);
 

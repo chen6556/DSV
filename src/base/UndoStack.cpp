@@ -1,3 +1,5 @@
+#include <set>
+#include <cassert>
 #include "base/UndoStack.hpp"
 #include "io/GlobalSetting.hpp"
 
@@ -22,7 +24,14 @@ void CommandStack::push_command(Command *command)
         delete _commands.front();
         _commands.erase(_commands.begin());
     }
-    _commands.push_back(command);
+    if (_macro_model && !_commands.empty() && dynamic_cast<MacroCommand *>(_commands.back()) != nullptr)
+    {
+        static_cast<MacroCommand *>(_commands.back())->add_command(command);
+    }
+    else
+    {
+        _commands.push_back(command);
+    }
 }
 
 void CommandStack::clear()
@@ -50,9 +59,74 @@ void CommandStack::undo()
     _commands.pop_back();
 }
 
+void CommandStack::begin_macro(const std::string &name)
+{
+    assert(!_macro_model);
+    if (!_macro_model)
+    {
+        _macro_model = true;
+        _commands.push_back(new MacroCommand(name));
+    }
+}
+
+void CommandStack::end_macro()
+{
+    _macro_model = false;
+}
+
+
+// MacroCommand
+MacroCommand::MacroCommand(const std::string &name) : name(name)
+{
+}
+
+MacroCommand::~MacroCommand()
+{
+    std::reverse(_commands.begin(), _commands.end());
+    for (Command *command : _commands)
+    {
+        delete command;
+    }
+}
+
+void MacroCommand::undo(Graph *graph)
+{
+    std::reverse(_commands.begin(), _commands.end());
+    std::set<Geo::DObject *> appended_objects, removed_objects, updated_objects;
+    for (Command *command : _commands)
+    {
+        appended_objects.insert(command->appended.begin(), command->appended.end());
+        removed_objects.insert(command->removed.begin(), command->removed.end());
+        updated_objects.insert(command->updated.begin(), command->updated.end());
+        command->undo(graph);
+        delete command;
+    }
+    for (Geo::DObject *object : appended_objects)
+    {
+        if (removed_objects.find(object) == removed_objects.end())
+        {
+            appended.push_back(object);
+        }
+    }
+    removed.assign(removed_objects.begin(), removed_objects.end());
+    for (Geo::DObject *object : updated_objects)
+    {
+        if (removed_objects.find(object) == removed_objects.end())
+        {
+            updated.push_back(object);
+        }
+    }
+    _commands.clear();
+}
+
+void MacroCommand::add_command(Command *command)
+{
+    _commands.push_back(command);
+}
+
 
 // ObjectCommand
-ObjectCommand::ObjectCommand(const std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> &objects, const bool add)
+ObjectCommand::ObjectCommand(const std::vector<std::tuple<Geo::DObject *, size_t, size_t>> &objects, const bool add)
 {
     if (add)
     {
@@ -64,7 +138,7 @@ ObjectCommand::ObjectCommand(const std::vector<std::tuple<Geo::Geometry *, size_
     }
 }
 
-ObjectCommand::ObjectCommand(Geo::Geometry *object, const size_t group, const size_t index, const bool add)
+ObjectCommand::ObjectCommand(Geo::DObject *object, const size_t group, const size_t index, const bool add)
 {
     if (add)
     {
@@ -76,15 +150,15 @@ ObjectCommand::ObjectCommand(Geo::Geometry *object, const size_t group, const si
     }
 }
 
-ObjectCommand::ObjectCommand(const std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> &add_items,
-                             const std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> &remove_items)
+ObjectCommand::ObjectCommand(const std::vector<std::tuple<Geo::DObject *, size_t, size_t>> &add_items,
+                             const std::vector<std::tuple<Geo::DObject *, size_t, size_t>> &remove_items)
     : _add_items(add_items), _remove_items(remove_items)
 {
 }
 
 ObjectCommand::~ObjectCommand()
 {
-    for (std::tuple<Geo::Geometry *, size_t, size_t> &item : _remove_items)
+    for (std::tuple<Geo::DObject *, size_t, size_t> &item : _remove_items)
     {
         delete std::get<0>(item);
     }
@@ -93,9 +167,9 @@ ObjectCommand::~ObjectCommand()
 void ObjectCommand::undo(Graph *graph)
 {
     std::sort(_add_items.begin(), _add_items.end(),
-              [](const std::tuple<Geo::Geometry *, size_t, size_t> &a, const std::tuple<Geo::Geometry *, size_t, size_t> &b)
+              [](const std::tuple<Geo::DObject *, size_t, size_t> &a, const std::tuple<Geo::DObject *, size_t, size_t> &b)
               { return std::get<1>(a) > std::get<1>(b) || (std::get<1>(a) == std::get<1>(b) && std::get<2>(a) > std::get<2>(b)); });
-    for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : _add_items)
+    for (const std::tuple<Geo::DObject *, size_t, size_t> &item : _add_items)
     {
         removed.push_back(std::get<0>(item));
         if (std::get<2>(item) >= graph->container_group(std::get<1>(item)).size())
@@ -108,9 +182,9 @@ void ObjectCommand::undo(Graph *graph)
         }
     }
     std::sort(_remove_items.begin(), _remove_items.end(),
-              [](const std::tuple<Geo::Geometry *, size_t, size_t> &a, const std::tuple<Geo::Geometry *, size_t, size_t> &b)
+              [](const std::tuple<Geo::DObject *, size_t, size_t> &a, const std::tuple<Geo::DObject *, size_t, size_t> &b)
               { return std::get<1>(a) < std::get<1>(b) || (std::get<1>(a) == std::get<1>(b) && std::get<2>(a) < std::get<2>(b)); });
-    for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : _remove_items)
+    for (const std::tuple<Geo::DObject *, size_t, size_t> &item : _remove_items)
     {
         appended.push_back(std::get<0>(item));
         if (std::get<2>(item) >= graph->container_group(std::get<1>(item)).size())
@@ -127,18 +201,18 @@ void ObjectCommand::undo(Graph *graph)
 
 
 // TranslateCommand
-TranslateCommand::TranslateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y)
+TranslateCommand::TranslateCommand(const std::vector<Geo::DObject *> &objects, const double x, const double y)
     : _items(objects), _dx(x), _dy(y)
 {
 }
 
-TranslateCommand::TranslateCommand(Geo::Geometry *object, const double x, const double y) : _items({object}), _dx(x), _dy(y)
+TranslateCommand::TranslateCommand(Geo::DObject *object, const double x, const double y) : _items({object}), _dx(x), _dy(y)
 {
 }
 
 void TranslateCommand::undo(Graph *graph)
 {
-    for (Geo::Geometry *object : _items)
+    for (Geo::DObject *object : _items)
     {
         object->translate(-_dx, -_dy);
     }
@@ -147,7 +221,7 @@ void TranslateCommand::undo(Graph *graph)
 
 
 // TransformCommand
-TransformCommand::TransformCommand(const std::vector<Geo::Geometry *> &objects, const double mat[6]) : _items(objects)
+TransformCommand::TransformCommand(const std::vector<Geo::DObject *> &objects, const double mat[6]) : _items(objects)
 {
     const double k = mat[0] * mat[4] - mat[1] * mat[3];
     _invmat[0] = mat[4] / k, _invmat[1] = -mat[1] / k;
@@ -156,7 +230,7 @@ TransformCommand::TransformCommand(const std::vector<Geo::Geometry *> &objects, 
     _invmat[5] = (mat[2] * mat[3] - mat[0] * mat[5]) / k;
 }
 
-TransformCommand::TransformCommand(Geo::Geometry *object, const double mat[6]) : _items({object})
+TransformCommand::TransformCommand(Geo::DObject *object, const double mat[6]) : _items({object})
 {
     const double k = mat[0] * mat[4] - mat[1] * mat[3];
     _invmat[0] = mat[4] / k, _invmat[1] = -mat[1] / k;
@@ -167,7 +241,7 @@ TransformCommand::TransformCommand(Geo::Geometry *object, const double mat[6]) :
 
 void TransformCommand::undo(Graph *graph)
 {
-    for (Geo::Geometry *object : _items)
+    for (Geo::DObject *object : _items)
     {
         object->transform(_invmat);
     }
@@ -176,7 +250,7 @@ void TransformCommand::undo(Graph *graph)
 
 
 // ChangeShapeCommand
-ChangeShapeCommand::ChangeShapeCommand(Geo::Geometry *object, const std::vector<std::tuple<double, double>> &shape)
+ChangeShapeCommand::ChangeShapeCommand(Geo::DObject *object, const std::vector<std::tuple<double, double>> &shape)
     : _object(object), _shape(shape)
 {
 }
@@ -207,7 +281,7 @@ void ChangeShapeCommand::undo(Graph *graph)
             bezier->clear();
             for (const std::tuple<double, double> &point : _shape)
             {
-                bezier->append(Geo::Point(std::get<0>(point), std::get<1>(point)));
+                bezier->control_points.emplace_back(std::get<0>(point), std::get<1>(point));
             }
             bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
         }
@@ -286,19 +360,19 @@ void ChangeShapeCommand::undo(Graph *graph)
 
 
 // RotateCommand
-RotateCommand::RotateCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad)
+RotateCommand::RotateCommand(const std::vector<Geo::DObject *> &objects, const double x, const double y, const double rad)
     : _items(objects), _x(x), _y(y), _rad(rad)
 {
 }
 
-RotateCommand::RotateCommand(Geo::Geometry *object, const double x, const double y, const double rad)
+RotateCommand::RotateCommand(Geo::DObject *object, const double x, const double y, const double rad)
     : _items({object}), _x(x), _y(y), _rad(rad)
 {
 }
 
 void RotateCommand::undo(Graph *graph)
 {
-    for (Geo::Geometry *object : _items)
+    for (Geo::DObject *object : _items)
     {
         object->rotate(_x, _y, -_rad);
     }
@@ -307,12 +381,12 @@ void RotateCommand::undo(Graph *graph)
 
 
 // ScaleCommand
-ScaleCommand::ScaleCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double k, const bool unitary)
+ScaleCommand::ScaleCommand(const std::vector<Geo::DObject *> &objects, const double x, const double y, const double k, const bool unitary)
     : _items(objects), _x(x), _y(y), _k(k), _unitary(unitary)
 {
 }
 
-ScaleCommand::ScaleCommand(Geo::Geometry *object, const double x, const double y, const double k)
+ScaleCommand::ScaleCommand(Geo::DObject *object, const double x, const double y, const double k)
     : _items({object}), _x(x), _y(y), _k(k), _unitary(true)
 {
 }
@@ -321,7 +395,7 @@ void ScaleCommand::undo(Graph *graph)
 {
     if (_unitary)
     {
-        for (Geo::Geometry *object : _items)
+        for (Geo::DObject *object : _items)
         {
             object->scale(_x, _y, 1.0 / _k);
         }
@@ -329,49 +403,47 @@ void ScaleCommand::undo(Graph *graph)
     else
     {
         Geo::AABBRect rect;
-        for (Geo::Geometry *object : _items)
+        for (Geo::DObject *object : _items)
         {
-            rect = object->bounding_rect();
-            object->scale((rect.left() + rect.right()) / 2, (rect.top() + rect.bottom()) / 2, 1.0 / _k);
+            rect = object->aabbrect();
+            object->scale((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2, 1.0 / _k);
         }
     }
     updated = _items;
 }
 
 
-// CombinateCommand
-CombinateCommand::CombinateCommand(const std::vector<std::tuple<Combination *, size_t>> &combinations, const size_t index)
-    : _group_index(index)
+// CombineCommand
+CombineCommand::CombineCommand(const std::vector<std::tuple<Combination *, size_t>> &combinations, const size_t index) : _group_index(index)
 {
     for (const std::tuple<Combination *, size_t> &combination : combinations)
     {
         _items.emplace_back(std::get<0>(combination), std::get<1>(combination),
-                            std::vector<Geo::Geometry *>(std::get<0>(combination)->begin(), std::get<0>(combination)->end()));
+                            std::vector<Geo::DObject *>(std::get<0>(combination)->begin(), std::get<0>(combination)->end()));
     }
 }
 
-CombinateCommand::CombinateCommand(Combination *combination,
-                                   const std::vector<std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>>> &items,
-                                   const size_t index)
+CombineCommand::CombineCommand(Combination *combination,
+                               const std::vector<std::tuple<Combination *, size_t, std::vector<Geo::DObject *>>> &items, const size_t index)
     : _combination(combination), _items(items), _group_index(index)
 {
 }
 
-CombinateCommand::~CombinateCommand()
+CombineCommand::~CombineCommand()
 {
-    for (std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>> &item : _items)
+    for (std::tuple<Combination *, size_t, std::vector<Geo::DObject *>> &item : _items)
     {
         delete std::get<0>(item);
     }
 }
 
-void CombinateCommand::undo(Graph *graph)
+void CombineCommand::undo(Graph *graph)
 {
     if (_combination == nullptr)
     {
-        for (std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>> &item : _items)
+        for (std::tuple<Combination *, size_t, std::vector<Geo::DObject *>> &item : _items)
         {
-            for (Geo::Geometry *object : std::get<2>(item))
+            for (Geo::DObject *object : std::get<2>(item))
             {
                 std::get<0>(item)->append(
                     graph->container_group(_group_index)
@@ -394,9 +466,9 @@ void CombinateCommand::undo(Graph *graph)
         graph->container_group(_group_index)
             .pop(std::find(graph->container_group(_group_index).begin(), graph->container_group(_group_index).end(), _combination));
         std::reverse(_combination->begin(), _combination->end());
-        for (std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>> &item : _items)
+        for (std::tuple<Combination *, size_t, std::vector<Geo::DObject *>> &item : _items)
         {
-            for (Geo::Geometry *object : std::get<2>(item))
+            for (Geo::DObject *object : std::get<2>(item))
             {
                 std::get<0>(item)->append(object);
                 _combination->pop(std::find(_combination->begin(), _combination->end(), object));
@@ -422,13 +494,13 @@ void CombinateCommand::undo(Graph *graph)
 
 
 // FlipCommand
-FlipCommand::FlipCommand(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const bool direction,
+FlipCommand::FlipCommand(const std::vector<Geo::DObject *> &objects, const double x, const double y, const bool direction,
                          const bool unitary)
     : _items(objects), _x(x), _y(y), _direction(direction), _unitary(unitary)
 {
 }
 
-FlipCommand::FlipCommand(Geo::Geometry *object, const double x, const double y, const bool direction)
+FlipCommand::FlipCommand(Geo::DObject *object, const double x, const double y, const bool direction)
     : _items({object}), _x(x), _y(y), _direction(direction), _unitary(true)
 {
 }
@@ -439,7 +511,7 @@ void FlipCommand::undo(Graph *graph)
     {
         if (_direction)
         {
-            for (Geo::Geometry *object : _items)
+            for (Geo::DObject *object : _items)
             {
                 object->translate(-_x, 0);
                 object->transform(-1, 0, 0, 0, 1, 0);
@@ -448,7 +520,7 @@ void FlipCommand::undo(Graph *graph)
         }
         else
         {
-            for (Geo::Geometry *object : _items)
+            for (Geo::DObject *object : _items)
             {
                 object->translate(0, -_y);
                 object->transform(1, 0, 0, 0, -1, 0);
@@ -461,9 +533,11 @@ void FlipCommand::undo(Graph *graph)
         Geo::Point coord;
         if (_direction)
         {
-            for (Geo::Geometry *object : _items)
+            for (Geo::DObject *object : _items)
             {
-                coord = object->bounding_rect().center();
+                const Geo::AABBRect rect(object->aabbrect());
+                coord.x = (rect.left + rect.right) / 2;
+                coord.y = (rect.top + rect.bottom) / 2;
                 object->translate(-coord.x, 0);
                 object->transform(-1, 0, 0, 0, 1, 0);
                 object->translate(coord.x, 0);
@@ -471,9 +545,11 @@ void FlipCommand::undo(Graph *graph)
         }
         else
         {
-            for (Geo::Geometry *object : _items)
+            for (Geo::DObject *object : _items)
             {
-                coord = object->bounding_rect().center();
+                const Geo::AABBRect rect(object->aabbrect());
+                coord.x = (rect.left + rect.right) / 2;
+                coord.y = (rect.top + rect.bottom) / 2;
                 object->translate(0, -coord.y);
                 object->transform(1, 0, 0, 0, -1, 0);
                 object->translate(0, coord.y);
@@ -485,7 +561,7 @@ void FlipCommand::undo(Graph *graph)
 
 
 // ConnectCommand
-ConnectCommand::ConnectCommand(const std::vector<std::tuple<Geo::Geometry *, size_t>> &polylines, const Geo::Polyline *polyline,
+ConnectCommand::ConnectCommand(const std::vector<std::tuple<Geo::DObject *, size_t>> &polylines, const Geo::Polyline *polyline,
                                const size_t index)
     : _items(polylines), _polyline(polyline), _group_index(index)
 {
@@ -493,9 +569,9 @@ ConnectCommand::ConnectCommand(const std::vector<std::tuple<Geo::Geometry *, siz
 
 ConnectCommand::~ConnectCommand()
 {
-    for (std::tuple<Geo::Geometry *, size_t> &item : _items)
+    for (std::tuple<Geo::DObject *, size_t> &item : _items)
     {
-        delete std::get<Geo::Geometry *>(item);
+        delete std::get<Geo::DObject *>(item);
     }
 }
 
@@ -504,9 +580,9 @@ void ConnectCommand::undo(Graph *graph)
     removed.push_back(const_cast<Geo::Polyline *>(_polyline));
     graph->container_group(_group_index)
         .remove(std::find(graph->container_group(_group_index).begin(), graph->container_group(_group_index).end(), _polyline));
-    for (std::tuple<Geo::Geometry *, size_t> &item : _items)
+    for (std::tuple<Geo::DObject *, size_t> &item : _items)
     {
-        graph->container_group(_group_index).insert(std::get<size_t>(item), std::get<Geo::Geometry *>(item));
+        graph->container_group(_group_index).insert(std::get<size_t>(item), std::get<Geo::DObject *>(item));
         appended.push_back(std::get<0>(item));
     }
     _items.clear();
@@ -581,7 +657,7 @@ void ReorderGroupCommand::undo(Graph *graph)
 
 
 // RenameGroupCommand
-RenameGroupCommand::RenameGroupCommand(const size_t index, QString old_name) : _index(index), _old_name(std::move(old_name))
+RenameGroupCommand::RenameGroupCommand(const size_t index, std::string old_name) : _index(index), _old_name(std::move(old_name))
 {
 }
 
@@ -605,14 +681,14 @@ void TextChangedCommand::undo(Graph *graph)
 
 
 // RevreseCommand
-ReverseCommand::ReverseCommand(const std::vector<Geo::Geometry *> &objects)
+ReverseCommand::ReverseCommand(const std::vector<Geo::DObject *> &objects)
 {
     _objects.assign(objects.begin(), objects.end());
 }
 
 void ReverseCommand::undo(Graph *graph)
 {
-    for (Geo::Geometry *object : _objects)
+    for (Geo::DObject *object : _objects)
     {
         switch (object->type())
         {
@@ -626,7 +702,7 @@ void ReverseCommand::undo(Graph *graph)
         case Geo::Type::BEZIER:
             {
                 Geo::CubicBezier *bezier = static_cast<Geo::CubicBezier *>(object);
-                std::reverse(bezier->begin(), bezier->end());
+                std::reverse(bezier->control_points.begin(), bezier->control_points.end());
                 bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
             }
             break;
@@ -634,6 +710,8 @@ void ReverseCommand::undo(Graph *graph)
             static_cast<Geo::BSpline *>(object)->reverse();
             break;
         case Geo::Type::POLYGON:
+            std::reverse(static_cast<Geo::Polygon *>(object)->begin(), static_cast<Geo::Polygon *>(object)->end());
+            break;
         case Geo::Type::POLYLINE:
             std::reverse(static_cast<Geo::Polyline *>(object)->begin(), static_cast<Geo::Polyline *>(object)->end());
             break;

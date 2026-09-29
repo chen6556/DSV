@@ -19,7 +19,7 @@ Canvas::~Canvas()
 {
     makeCurrent();
     {
-        unsigned int temp[4] = {_base_vbo.origin_and_select_rect, _base_vbo.catched_points, _base_vbo.operation_shape,
+        unsigned int temp[4] = {_base_vbo.origin_and_select_rect, _base_vbo.caught_points, _base_vbo.operation_shape,
                                 _base_vbo.operation_tool_lines};
         glDeleteBuffers(4, temp);
     }
@@ -51,11 +51,22 @@ Canvas::~Canvas()
         glDeleteBuffers(2, temp);
     }
     {
-        unsigned int temp[16] = {_vao.polyline, _vao.polygon, _vao.circle, _vao.curve, _vao.point,
-                                 _vao.circle_printable_points, _vao.curve_printable_points,
-                                 _vao.dim_lines, _vao.dim_arrows, _vao.dim_selected_lines, _vao.dim_selected_arrows,
-                                 _vao.operation_shape, _vao.operation_tool_lines, _vao.catched_points,
-                                 _vao.origin_and_select_rect, _vao.text};
+        unsigned int temp[16] = {_vao.polyline,
+                                 _vao.polygon,
+                                 _vao.circle,
+                                 _vao.curve,
+                                 _vao.point,
+                                 _vao.circle_printable_points,
+                                 _vao.curve_printable_points,
+                                 _vao.dim_lines,
+                                 _vao.dim_arrows,
+                                 _vao.dim_selected_lines,
+                                 _vao.dim_selected_arrows,
+                                 _vao.operation_shape,
+                                 _vao.operation_tool_lines,
+                                 _vao.caught_points,
+                                 _vao.origin_and_select_rect,
+                                 _vao.text};
         glDeleteVertexArrays(16, temp);
     }
     {
@@ -95,7 +106,6 @@ void Canvas::initializeGL()
     glEnable(GL_MULTISAMPLE); // 抗锯齿
     glEnable(GL_POINT_SMOOTH);
     glEnable(GL_LINE_SMOOTH);
-    glEnable(GL_POLYGON_SMOOTH);
 
     int maxUniformBlockSize = 0;
     glGetIntegerv(GL_MAX_VERTEX_ATTRIB_BINDINGS, &maxUniformBlockSize);
@@ -126,7 +136,7 @@ void Canvas::initializeGL()
         unsigned int temp[4];
         glCreateBuffers(4, temp);
         _base_vbo.origin_and_select_rect = temp[0];
-        _base_vbo.catched_points = temp[1];
+        _base_vbo.caught_points = temp[1];
         _base_vbo.operation_shape = temp[2];
         _base_vbo.operation_tool_lines = temp[3];
     }
@@ -198,7 +208,7 @@ void Canvas::initializeGL()
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.catched_points); // catcheline points
+    glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.caught_points); // catcheline points
     glBufferData(GL_ARRAY_BUFFER, 16 * sizeof(double), _catchline_points, GL_STREAM_DRAW);
 
     double data[16] = {-10, 0, 10, 0, 0, -10, 0, 10};
@@ -207,7 +217,8 @@ void Canvas::initializeGL()
 
     // 创建 VAO:仅位置属性(stride = 2*sizeof(double))。VAO 在此处记录 VBO 绑定与属性格式,
     // 之后 glBindBuffer + glBufferData 重新上传数据不会改变 VAO 的属性来源。
-    auto make_pos_vao = [this](unsigned int &vao, const unsigned int vbo) {
+    auto make_pos_vao = [this](unsigned int &vao, const unsigned int vbo)
+    {
         glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -227,7 +238,7 @@ void Canvas::initializeGL()
     make_pos_vao(_vao.dim_selected_arrows, _dimension_vbo.selected_arrows);
     make_pos_vao(_vao.operation_shape, _base_vbo.operation_shape);
     make_pos_vao(_vao.operation_tool_lines, _base_vbo.operation_tool_lines);
-    make_pos_vao(_vao.catched_points, _base_vbo.catched_points);
+    make_pos_vao(_vao.caught_points, _base_vbo.caught_points);
     make_pos_vao(_vao.origin_and_select_rect, _base_vbo.origin_and_select_rect);
 
     // 文本四边形:位置 + 纹理坐标(stride = 4*sizeof(double)),并绑定固定的 IBO。
@@ -269,14 +280,14 @@ void Canvas::resizeGL(int w, int h)
 
 void Canvas::paintGL()
 {
-    std::future<void> text_furture, dim_text_furture;
+    std::future<void> text_future, dim_text_future;
     if (GlobalSetting::setting().show_text)
     {
-        text_furture = std::async(std::launch::async, &Canvas::paint_text, this);
+        text_future = std::async(std::launch::async, &Canvas::paint_text, this);
     }
     if (CanvasOperations::CanvasOperation::current_dimension != nullptr || _point_count.dim_lines > 0 || _point_count.dim_arrows > 0)
     {
-        dim_text_furture = std::async(std::launch::async, &Canvas::paint_dim_text, this);
+        dim_text_future = std::async(std::launch::async, &Canvas::paint_dim_text, this);
     }
 
     glUseProgram(_shader_program);
@@ -449,10 +460,10 @@ void Canvas::paintGL()
         glDrawArrays(GL_TRIANGLES, 0, CanvasOperations::CanvasOperation::dim_arrows.size() / 2);
     }
 
-    if (_bool_flags.show_catched_points) // catched point
+    if (_bool_flags.show_caught_points) // caught point
     {
-        glBindVertexArray(_vao.catched_points);
-        glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.catched_points); // catched point
+        glBindVertexArray(_vao.caught_points);
+        glBindBuffer(GL_ARRAY_BUFFER, _base_vbo.caught_points); // caught point
         glBufferSubData(GL_ARRAY_BUFFER, 0, 16 * sizeof(double), _catchline_points);
 
         glUniform4f(_uniforms.color, 0.0f, 1.0f, 0.0f, 0.649f); // color
@@ -478,7 +489,7 @@ void Canvas::paintGL()
             glBufferSubData(GL_ARRAY_BUFFER, 8 * sizeof(double), 8 * sizeof(double), _select_rect);
 
             glUniform4f(_uniforms.color, 0.0f, 0.47f, 0.843f, 0.1f); // color
-            glDrawArrays(GL_POLYGON, 4, 4);
+            glDrawArrays(GL_TRIANGLE_FAN, 4, 4);
 
             glUniform4f(_uniforms.color, 0.0f, 1.0f, 0.0f, 0.549f); // color
             glDrawArrays(GL_LINE_LOOP, 4, 4);
@@ -493,9 +504,8 @@ void Canvas::paintGL()
         glBindTexture(GL_TEXTURE_2D, _texture.texture);
         glBindVertexArray(_vao.text);
 
-        text_furture.wait();
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _canvas_width, _canvas_height, GL_RGBA, GL_UNSIGNED_BYTE,
-                        _texture.text_image.constBits());
+        text_future.wait();
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _canvas_width, _canvas_height, GL_RGBA, GL_UNSIGNED_BYTE, _texture.text_image.constBits());
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
         glUniform1i(_uniforms.enable_tex, 0);
     }
@@ -506,9 +516,8 @@ void Canvas::paintGL()
         glBindTexture(GL_TEXTURE_2D, _texture.texture);
         glBindVertexArray(_vao.text);
 
-        dim_text_furture.wait();
-        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _canvas_width, _canvas_height, GL_RGBA, GL_UNSIGNED_BYTE,
-                        _texture.dim_image.constBits());
+        dim_text_future.wait();
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, _canvas_width, _canvas_height, GL_RGBA, GL_UNSIGNED_BYTE, _texture.dim_image.constBits());
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
         glUniform1i(_uniforms.enable_tex, 0);
     }
@@ -626,7 +635,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     const double real_y0 = _mouse_pos_0.x() * _view_ctm[1] + _mouse_pos_0.y() * _view_ctm[4] + _view_ctm[7];
     double canvas_x1 = real_x1 * _canvas_ctm[0] + real_y1 * _canvas_ctm[3] + _canvas_ctm[6];
     double canvas_y1 = real_x1 * _canvas_ctm[1] + real_y1 * _canvas_ctm[4] + _canvas_ctm[7];
-    const bool catched_point = _bool_flags.show_catched_points;
+    const bool catched_point = _bool_flags.show_caught_points;
     if (Geo::Point coord; catch_cursor(real_x1, real_y1, coord, _catch_distance, event->buttons() & Qt::MouseButton::LeftButton))
     {
         real_x1 = coord.x, real_y1 = coord.y;
@@ -640,7 +649,7 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     }
     else
     {
-        _bool_flags.show_catched_points = false;
+        _bool_flags.show_caught_points = false;
         if (catched_point)
         {
             update();
@@ -718,7 +727,7 @@ void Canvas::wheelEvent(QWheelEvent *event)
     }
     {
         Geo::Point pos(real_x, real_y);
-        refresh_catchline_points(_catched_objects, _catch_distance, pos);
+        refresh_catchline_points(_caught_objects, _catch_distance, pos);
     }
     makeCurrent();
     glUniformMatrix3dv(_uniforms.ctm, 1, GL_FALSE, _canvas_ctm); // ctm
@@ -771,7 +780,7 @@ void Canvas::mouseDoubleClickEvent(QMouseEvent *event)
 void Canvas::show_overview()
 {
     _editor.set_view_ratio(1.0);
-    _bool_flags.show_catched_points = false;
+    _bool_flags.show_caught_points = false;
 
     Graph *graph = _editor.graph();
     if (graph->empty())
@@ -798,10 +807,12 @@ void Canvas::show_overview()
         return;
     }
     // 获取graph的边界
-    Geo::AABBRect bounding_area = graph->bounding_rect();
+    const Geo::AABBRect bounding_area(graph->aabbrect());
+    const double width = bounding_area.right - bounding_area.left;
+    const double height = bounding_area.top - bounding_area.bottom;
     // 选择合适的缩放倍率
-    double height_ratio = _canvas_height / bounding_area.height();
-    double width_ratio = _canvas_width / bounding_area.width();
+    double height_ratio = _canvas_height / height;
+    double width_ratio = _canvas_width / width;
     _ratio = std::min(height_ratio, width_ratio);
     // 缩放减少2%，使其与边界留出一些空间
     _ratio = std::isinf(_ratio) ? 1 : _ratio * 0.98;
@@ -810,8 +821,8 @@ void Canvas::show_overview()
     CanvasOperations::CanvasOperation::view_ratio = _ratio;
 
     // 置于控件中间
-    double x_offset = (_canvas_width - bounding_area.width() * _ratio) / 2 - bounding_area.left() * _ratio;
-    double y_offset = (bounding_area.height() * _ratio - _canvas_height) / 2 + bounding_area.bottom() * _ratio + _canvas_height;
+    double x_offset = (_canvas_width - width * _ratio) / 2 - bounding_area.left * _ratio;
+    double y_offset = (height * _ratio - _canvas_height) / 2 + bounding_area.bottom * _ratio + _canvas_height;
 
     _canvas_ctm[0] = _ratio;
     _canvas_ctm[4] = -_ratio;
@@ -875,23 +886,23 @@ void Canvas::set_catch_distance(const double value)
     _catch_distance = value;
 }
 
-void Canvas::set_cursor_catch(const CatchedPointType type, const bool value)
+void Canvas::set_cursor_catch(const CaughtPointType type, const bool value)
 {
     switch (type)
     {
-    case CatchedPointType::Vertex:
+    case CaughtPointType::Vertex:
         _catch_types.vertex = value;
         break;
-    case CatchedPointType::Center:
+    case CaughtPointType::Center:
         _catch_types.center = value;
         break;
-    case CatchedPointType::Foot:
+    case CaughtPointType::Foot:
         _catch_types.foot = value;
         break;
-    case CatchedPointType::Tangency:
+    case CaughtPointType::Tangency:
         _catch_types.tangency = value;
         break;
-    case CatchedPointType::Intersection:
+    case CaughtPointType::Intersection:
         _catch_types.intersection = value;
         break;
     default:
@@ -910,13 +921,11 @@ Geo::Point Canvas::center() const
     double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
     for (const ContainerGroup &group : _editor.graph()->container_groups())
     {
-        for (const Geo::Point &point : group.bounding_rect())
-        {
-            x0 = std::min(x0, point.x);
-            y0 = std::min(y0, point.y);
-            x1 = std::max(x1, point.x);
-            y1 = std::max(y1, point.y);
-        }
+        const Geo::AABBRect rect(group.aabbrect());
+        x0 = std::min(x0, rect.left);
+        y0 = std::min(y0, rect.bottom);
+        x1 = std::max(x1, rect.right);
+        y1 = std::max(y1, rect.top);
     }
 
     return Geo::Point((x0 + x1) / 2, (y0 + y1) / 2);
@@ -933,13 +942,11 @@ Geo::AABBRect Canvas::bounding_rect() const
 
     for (const ContainerGroup &group : _editor.graph()->container_groups())
     {
-        for (const Geo::Point &point : group.bounding_rect())
-        {
-            x0 = std::min(x0, point.x);
-            y0 = std::min(y0, point.y);
-            x1 = std::max(x1, point.x);
-            y1 = std::max(y1, point.y);
-        }
+        const Geo::AABBRect rect(group.aabbrect());
+        x0 = std::min(x0, rect.left);
+        y0 = std::min(y0, rect.bottom);
+        x1 = std::max(x1, rect.right);
+        y1 = std::max(y1, rect.top);
     }
 
     return Geo::AABBRect(x0, y0, x1, y1);
@@ -977,7 +984,7 @@ void Canvas::set_info_labels(QLabel **labels)
     _info_labels = labels;
 }
 
-void Canvas::add_geometry(Geo::Geometry *object)
+void Canvas::add_object(Geo::DObject *object)
 {
     _editor.append(object);
     refresh_vbo(true, object->type());
@@ -985,11 +992,11 @@ void Canvas::add_geometry(Geo::Geometry *object)
     update();
 }
 
-void Canvas::add_geometry(const std::vector<Geo::Geometry *> &objects)
+void Canvas::add_object(const std::vector<Geo::DObject *> &objects)
 {
     _editor.append(objects);
     std::set<Geo::Type> types;
-    for (const Geo::Geometry *object : objects)
+    for (const Geo::DObject *object : objects)
     {
         types.insert(object->type());
     }
@@ -998,7 +1005,7 @@ void Canvas::add_geometry(const std::vector<Geo::Geometry *> &objects)
     update();
 }
 
-void Canvas::show_menu(Geo::Geometry *object)
+void Canvas::show_menu(Geo::DObject *object)
 {
     refresh_selected_ibo(object);
     _menu.exec(object);
@@ -1008,10 +1015,11 @@ void Canvas::show_menu(Geo::Geometry *object)
 void Canvas::show_text_edit(Text *text)
 {
     _edited_text = text;
-    Geo::AABBRect rect(text->bounding_rect());
+    Geo::AABBRect rect(text->aabbrect());
     rect.transform(_canvas_ctm[0], _canvas_ctm[3], _canvas_ctm[6], _canvas_ctm[1], _canvas_ctm[4], _canvas_ctm[7]);
-    _input_line.setMaximumSize(std::max(100.0, rect.width()), std::max(100.0, rect.height()));
-    _input_line.move(rect.center().x - _input_line.rect().center().x(), rect.center().y - _input_line.rect().center().y());
+    const double center_x = (rect.left + rect.right) / 2, center_y = (rect.top + rect.bottom) / 2;
+    _input_line.setMaximumSize(std::max(100.0, rect.right - rect.left), std::max(100.0, rect.top - rect.bottom));
+    _input_line.move(center_x - _input_line.rect().center().x(), center_y - _input_line.rect().center().y());
     _input_line.setFocus();
     _input_line.setText(text->text());
     _input_line.moveCursor(QTextCursor::End);
@@ -1052,11 +1060,11 @@ void Canvas::cut()
                                _mouse_pos_1.x() * _view_ctm[1] + _mouse_pos_1.y() * _view_ctm[4] + _view_ctm[7]);
     _editor.cut_selected();
     std::set<Geo::Type> types;
-    for (const Geo::Geometry *object : _editor.paste_table())
+    for (const Geo::DObject *object : _editor.paste_table())
     {
         if (const Combination *combination = dynamic_cast<const Combination *>(object))
         {
-            for (const Geo::Geometry *item : *combination)
+            for (const Geo::DObject *item : *combination)
             {
                 types.insert(item->type());
             }
@@ -1077,11 +1085,11 @@ void Canvas::paste()
     if (!_points_cache.empty() && _editor.paste(x - _points_cache.back().x, y - _points_cache.back().y))
     {
         std::set<Geo::Type> types;
-        for (const Geo::Geometry *object : _editor.paste_table())
+        for (const Geo::DObject *object : _editor.paste_table())
         {
             if (const Combination *combination = dynamic_cast<const Combination *>(object))
             {
-                for (const Geo::Geometry *item : *combination)
+                for (const Geo::DObject *item : *combination)
                 {
                     types.insert(item->type());
                 }
@@ -1102,11 +1110,11 @@ void Canvas::paste(const double x, const double y)
     if (!_points_cache.empty() && _editor.paste(x - _points_cache.back().x, y - _points_cache.back().y))
     {
         std::set<Geo::Type> types;
-        for (const Geo::Geometry *object : _editor.paste_table())
+        for (const Geo::DObject *object : _editor.paste_table())
         {
             if (const Combination *combination = dynamic_cast<const Combination *>(object))
             {
-                for (const Geo::Geometry *item : *combination)
+                for (const Geo::DObject *item : *combination)
                 {
                     types.insert(item->type());
                 }
@@ -1154,25 +1162,25 @@ Geo::Point Canvas::canvas_coord_to_real_coord(const double x, const double y) co
 
 bool Canvas::catch_cursor(const double x, const double y, Geo::Point &coord, const double distance, const bool skip_selected)
 {
-    _catched_objects.clear();
-    refresh_catached_points(x, y, distance, _catched_objects, skip_selected, !GlobalSetting::setting().to_all_layers);
+    _caught_objects.clear();
+    refresh_caught_points(x, y, distance, _caught_objects, skip_selected, !GlobalSetting::setting().to_all_layers);
     Geo::Point pos(x, y);
-    if (refresh_catchline_points(_catched_objects, distance, pos))
+    if (refresh_catchline_points(_caught_objects, distance, pos))
     {
         coord = pos;
-        _bool_flags.show_catched_points = true;
+        _bool_flags.show_caught_points = true;
     }
     else
     {
-        _bool_flags.show_catched_points = false;
+        _bool_flags.show_caught_points = false;
     }
-    return _bool_flags.show_catched_points;
+    return _bool_flags.show_caught_points;
 }
 
 
 void Canvas::refresh_vbo(const bool flush)
 {
-    _editor.refresh_visible_objects(_visible_area.aabbrect_params());
+    _editor.refresh_visible_objects(_visible_area);
     std::future<VBOData> polyline_vbo = std::async(std::launch::async, &Canvas::refresh_polyline_vbo, this, flush),
                          polygon_vbo = std::async(std::launch::async, &Canvas::refresh_polygon_vbo, this, flush),
                          circle_vbo = std::async(std::launch::async, &Canvas::refresh_circle_vbo, this, flush),
@@ -1261,7 +1269,7 @@ void Canvas::refresh_vbo(const bool flush)
 
 void Canvas::refresh_vbo(const bool flush, const Geo::Type type)
 {
-    _editor.refresh_visible_objects(_visible_area.aabbrect_params());
+    _editor.refresh_visible_objects(_visible_area);
     switch (type)
     {
     case Geo::Type::POLYLINE:
@@ -1382,7 +1390,7 @@ void Canvas::refresh_vbo(const bool flush, const std::set<Geo::Type> &types)
         return refresh_vbo(flush);
     }
 
-    _editor.refresh_visible_objects(_visible_area.aabbrect_params());
+    _editor.refresh_visible_objects(_visible_area);
     std::future<VBOData> polyline_vbo, polygon_vbo, circle_vbo, curve_vbo, circle_printable_points, curve_printable_points, point_vbo;
     std::future<DimVBOData> dimension_vbo;
 
@@ -1526,7 +1534,7 @@ Canvas::VBOData Canvas::refresh_polyline_vbo(const bool flush)
     VBOData result;
     _visible_objects[0].polyline = _visible_objects[1].polyline;
     _visible_objects[1].polyline.clear();
-    for (Geo::Geometry *geo : _editor.visible_objects())
+    for (Geo::DObject *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::POLYLINE)
         {
@@ -1534,7 +1542,7 @@ Canvas::VBOData Canvas::refresh_polyline_vbo(const bool flush)
         }
         else if (geo->type() == Geo::Type::COMBINATION)
         {
-            for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+            for (Geo::DObject *child : *static_cast<Combination *>(geo))
             {
                 if (child->type() == Geo::Type::POLYLINE)
                 {
@@ -1572,7 +1580,7 @@ Canvas::VBOData Canvas::refresh_polygon_vbo(const bool flush)
     VBOData result;
     _visible_objects[0].polygon = _visible_objects[1].polygon;
     _visible_objects[1].polygon.clear();
-    for (Geo::Geometry *geo : _editor.visible_objects())
+    for (Geo::DObject *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::POLYGON)
         {
@@ -1580,7 +1588,7 @@ Canvas::VBOData Canvas::refresh_polygon_vbo(const bool flush)
         }
         else if (geo->type() == Geo::Type::COMBINATION)
         {
-            for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+            for (Geo::DObject *child : *static_cast<Combination *>(geo))
             {
                 if (child->type() == Geo::Type::POLYGON)
                 {
@@ -1618,7 +1626,7 @@ Canvas::VBOData Canvas::refresh_circle_vbo(const bool flush)
     VBOData result;
     _visible_objects[0].circle = _visible_objects[1].circle;
     _visible_objects[1].circle.clear();
-    for (Geo::Geometry *geo : _editor.visible_objects())
+    for (Geo::DObject *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::CIRCLE || geo->type() == Geo::Type::ARC || geo->type() == Geo::Type::ELLIPSE)
         {
@@ -1626,7 +1634,7 @@ Canvas::VBOData Canvas::refresh_circle_vbo(const bool flush)
         }
         else if (geo->type() == Geo::Type::COMBINATION)
         {
-            for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+            for (Geo::DObject *child : *static_cast<Combination *>(geo))
             {
                 if (child->type() == Geo::Type::CIRCLE || child->type() == Geo::Type::ARC || child->type() == Geo::Type::ELLIPSE)
                 {
@@ -1642,7 +1650,7 @@ Canvas::VBOData Canvas::refresh_circle_vbo(const bool flush)
         return result;
     }
 
-    for (Geo::Geometry *item : _visible_objects[1].circle)
+    for (Geo::DObject *item : _visible_objects[1].circle)
     {
         switch (item->type())
         {
@@ -1702,7 +1710,7 @@ Canvas::VBOData Canvas::refresh_curve_vbo(const bool flush)
     VBOData result;
     _visible_objects[0].curve = _visible_objects[1].curve;
     _visible_objects[1].curve.clear();
-    for (Geo::Geometry *geo : _editor.visible_objects())
+    for (Geo::DObject *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::BEZIER || geo->type() == Geo::Type::BSPLINE)
         {
@@ -1710,7 +1718,7 @@ Canvas::VBOData Canvas::refresh_curve_vbo(const bool flush)
         }
         else if (geo->type() == Geo::Type::COMBINATION)
         {
-            for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+            for (Geo::DObject *child : *static_cast<Combination *>(geo))
             {
                 if (child->type() == Geo::Type::BEZIER || child->type() == Geo::Type::BSPLINE)
                 {
@@ -1726,7 +1734,7 @@ Canvas::VBOData Canvas::refresh_curve_vbo(const bool flush)
         return result;
     }
 
-    for (Geo::Geometry *item : _visible_objects[1].curve)
+    for (Geo::DObject *item : _visible_objects[1].curve)
     {
         switch (item->type())
         {
@@ -1770,11 +1778,11 @@ Canvas::VBOData Canvas::refresh_curve_vbo(const bool flush)
 Canvas::VBOData Canvas::refresh_point_vbo(const bool flush)
 {
     VBOData result;
-    Geo::AABBRectParams visible_area_params;
-    visible_area_params.left = _visible_area.left() - 2;
-    visible_area_params.right = _visible_area.right() + 2;
-    visible_area_params.bottom = _visible_area.bottom() - 2;
-    visible_area_params.top = _visible_area.top() + 2;
+    Geo::AABBRect visible_area_params;
+    visible_area_params.left = _visible_area.left - 2;
+    visible_area_params.right = _visible_area.right + 2;
+    visible_area_params.bottom = _visible_area.bottom - 2;
+    visible_area_params.top = _visible_area.top + 2;
     _visible_objects[0].point = _visible_objects[1].point;
     _visible_objects[1].point.clear();
 
@@ -1785,7 +1793,7 @@ Canvas::VBOData Canvas::refresh_point_vbo(const bool flush)
             continue;
         }
 
-        for (Geo::Geometry *geo : group)
+        for (Geo::DObject *geo : group)
         {
             if (geo->type() == Geo::Type::POINT)
             {
@@ -1796,7 +1804,7 @@ Canvas::VBOData Canvas::refresh_point_vbo(const bool flush)
             }
             else if (geo->type() == Geo::Type::COMBINATION)
             {
-                for (Geo::Geometry *item : *static_cast<Combination *>(geo))
+                for (Geo::DObject *item : *static_cast<Combination *>(geo))
                 {
                     if (item->type() == Geo::Type::POINT)
                     {
@@ -1832,8 +1840,8 @@ Canvas::VBOData Canvas::refresh_point_vbo(const bool flush)
 Canvas::VBOData Canvas::refresh_circle_printable_points()
 {
     VBOData result;
-    std::vector<Geo::Geometry *> output;
-    for (Geo::Geometry *geo : _editor.visible_objects())
+    std::vector<Geo::DObject *> output;
+    for (Geo::DObject *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::CIRCLE || geo->type() == Geo::Type::ELLIPSE || geo->type() == Geo::Type::ARC)
         {
@@ -1841,7 +1849,7 @@ Canvas::VBOData Canvas::refresh_circle_printable_points()
         }
         else if (geo->type() == Geo::Type::COMBINATION)
         {
-            for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+            for (Geo::DObject *child : *static_cast<Combination *>(geo))
             {
                 if (child->type() == Geo::Type::CIRCLE || child->type() == Geo::Type::ELLIPSE || child->type() == Geo::Type::ARC)
                 {
@@ -1851,7 +1859,7 @@ Canvas::VBOData Canvas::refresh_circle_printable_points()
         }
     }
 
-    for (const Geo::Geometry *geo : output)
+    for (const Geo::DObject *geo : output)
     {
         switch (geo->type())
         {
@@ -1913,11 +1921,11 @@ Canvas::VBOData Canvas::refresh_circle_printable_points()
 Canvas::VBOData Canvas::refresh_curve_printable_points()
 {
     VBOData result;
-    Geo::AABBRectParams visible_area_params;
-    visible_area_params.left = _visible_area.left() - 2;
-    visible_area_params.right = _visible_area.right() + 2;
-    visible_area_params.top = _visible_area.top() + 2;
-    visible_area_params.bottom = _visible_area.bottom() - 2;
+    Geo::AABBRect visible_area_params;
+    visible_area_params.left = _visible_area.left - 2;
+    visible_area_params.right = _visible_area.right + 2;
+    visible_area_params.top = _visible_area.top + 2;
+    visible_area_params.bottom = _visible_area.bottom - 2;
 
     for (ContainerGroup &group : _editor.graph()->container_groups())
     {
@@ -1926,12 +1934,12 @@ Canvas::VBOData Canvas::refresh_curve_printable_points()
             continue;
         }
 
-        for (Geo::Geometry *geo : group)
+        for (Geo::DObject *geo : group)
         {
             switch (geo->type())
             {
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *static_cast<Combination *>(geo))
+                for (Geo::DObject *item : *static_cast<Combination *>(geo))
                 {
                     if (const Geo::BSpline *bspline = dynamic_cast<const Geo::BSpline *>(item))
                     {
@@ -1971,7 +1979,7 @@ Canvas::DimVBOData Canvas::refresh_dimension_vbo(const bool flush)
     DimVBOData result;
     _visible_objects[0].dimensions = _visible_objects[1].dimensions;
     _visible_objects[1].dimensions.clear();
-    for (Geo::Geometry *geo : _editor.visible_objects())
+    for (Geo::DObject *geo : _editor.visible_objects())
     {
         if (geo->type() == Geo::Type::DIMENSION)
         {
@@ -1979,7 +1987,7 @@ Canvas::DimVBOData Canvas::refresh_dimension_vbo(const bool flush)
         }
         else if (geo->type() == Geo::Type::COMBINATION)
         {
-            for (Geo::Geometry *child : *static_cast<Combination *>(geo))
+            for (Geo::DObject *child : *static_cast<Combination *>(geo))
             {
                 if (child->type() == Geo::Type::DIMENSION)
                 {
@@ -2018,8 +2026,8 @@ void Canvas::refresh_selected_ibo()
 {
     refresh_selected_dimension_vbo();
 
-    std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
-    for (const Geo::Geometry *geo : _editor.visible_objects())
+    std::vector<unsigned int> polyline_indices, polygon_indices, circle_indices, curve_indices, point_indices;
+    for (const Geo::DObject *geo : _editor.visible_objects())
     {
         if (!geo->is_selected)
         {
@@ -2030,72 +2038,72 @@ void Canvas::refresh_selected_ibo()
         case Geo::Type::POLYLINE:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                polyline_indexs.push_back(index++);
+                polyline_indices.push_back(index++);
             }
-            polyline_indexs.push_back(UINT_MAX);
+            polyline_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::POLYGON:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                polygon_indexs.push_back(index++);
+                polygon_indices.push_back(index++);
             }
-            polygon_indexs.push_back(UINT_MAX);
+            polygon_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::CIRCLE:
         case Geo::Type::ELLIPSE:
         case Geo::Type::ARC:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                circle_indexs.push_back(index++);
+                circle_indices.push_back(index++);
             }
-            circle_indexs.push_back(UINT_MAX);
+            circle_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::BEZIER:
         case Geo::Type::BSPLINE:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                curve_indexs.push_back(index++);
+                curve_indices.push_back(index++);
             }
-            curve_indexs.push_back(UINT_MAX);
+            curve_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::COMBINATION:
-            for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
+            for (const Geo::DObject *item : *static_cast<const Combination *>(geo))
             {
                 switch (item->type())
                 {
                 case Geo::Type::POLYLINE:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        polyline_indexs.push_back(index++);
+                        polyline_indices.push_back(index++);
                     }
-                    polyline_indexs.push_back(UINT_MAX);
+                    polyline_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::POLYGON:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        polygon_indexs.push_back(index++);
+                        polygon_indices.push_back(index++);
                     }
-                    polygon_indexs.push_back(UINT_MAX);
+                    polygon_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::CIRCLE:
                 case Geo::Type::ELLIPSE:
                 case Geo::Type::ARC:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        circle_indexs.push_back(index++);
+                        circle_indices.push_back(index++);
                     }
-                    circle_indexs.push_back(UINT_MAX);
+                    circle_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::BEZIER:
                 case Geo::Type::BSPLINE:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        curve_indexs.push_back(index++);
+                        curve_indices.push_back(index++);
                     }
-                    curve_indexs.push_back(UINT_MAX);
+                    curve_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::POINT:
-                    point_indexs.push_back(item->point_index);
+                    point_indices.push_back(item->point_index);
                     break;
                 default:
                     break;
@@ -2103,137 +2111,137 @@ void Canvas::refresh_selected_ibo()
             }
             break;
         case Geo::Type::POINT:
-            point_indexs.push_back(geo->point_index);
+            point_indices.push_back(geo->point_index);
             break;
         default:
             continue;
         }
     }
 
-    _selected_index_count.polyline = polyline_indexs.size();
-    _selected_index_count.polygon = polygon_indexs.size();
-    _selected_index_count.circle = circle_indexs.size();
-    _selected_index_count.curve = curve_indexs.size();
-    _selected_index_count.point = point_indexs.size();
+    _selected_index_count.polyline = polyline_indices.size();
+    _selected_index_count.polygon = polygon_indices.size();
+    _selected_index_count.circle = circle_indices.size();
+    _selected_index_count.curve = curve_indices.size();
+    _selected_index_count.point = point_indices.size();
 
     makeCurrent();
-    if (!polyline_indexs.empty())
+    if (!polyline_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polyline);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_indexs.size() * sizeof(unsigned int), polyline_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_indices.size() * sizeof(unsigned int), polyline_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!polygon_indexs.empty())
+    if (!polygon_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polygon);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_indexs.size() * sizeof(unsigned int), polygon_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_indices.size() * sizeof(unsigned int), polygon_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!circle_indexs.empty())
+    if (!circle_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.circle);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indexs.size() * sizeof(unsigned int), circle_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indices.size() * sizeof(unsigned int), circle_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!curve_indexs.empty())
+    if (!curve_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.curve);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_indexs.size() * sizeof(unsigned int), curve_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_indices.size() * sizeof(unsigned int), curve_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!point_indexs.empty())
+    if (!point_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.point);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_indexs.size() * sizeof(unsigned int), point_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_indices.size() * sizeof(unsigned int), point_indices.data(), GL_DYNAMIC_DRAW);
     }
     doneCurrent();
 }
 
-void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
+void Canvas::refresh_selected_ibo(const Geo::DObject *object)
 {
     {
-        Geo::AABBRectParams visible_area_params;
-        visible_area_params.left = _visible_area.left() - 2;
-        visible_area_params.right = _visible_area.right() + 2;
-        visible_area_params.top = _visible_area.top() + 2;
-        visible_area_params.bottom = _visible_area.bottom() - 2;
-        if (!Geo::is_intersected(visible_area_params, object->aabbrect_params()))
+        Geo::AABBRect visible_area_params;
+        visible_area_params.left = _visible_area.left - 2;
+        visible_area_params.right = _visible_area.right + 2;
+        visible_area_params.top = _visible_area.top + 2;
+        visible_area_params.bottom = _visible_area.bottom - 2;
+        if (!Geo::is_intersected(visible_area_params, object->aabbrect()))
         {
             return;
         }
     }
     if (object->type() == Geo::Type::COMBINATION)
     {
-        std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
-        for (const Geo::Geometry *item : *static_cast<const Combination *>(object))
+        std::vector<unsigned int> polyline_indices, polygon_indices, circle_indices, curve_indices, point_indices;
+        for (const Geo::DObject *item : *static_cast<const Combination *>(object))
         {
             switch (item->type())
             {
             case Geo::Type::POLYLINE:
                 for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                 {
-                    polyline_indexs.push_back(index++);
+                    polyline_indices.push_back(index++);
                 }
-                polyline_indexs.push_back(UINT_MAX);
+                polyline_indices.push_back(UINT_MAX);
                 break;
             case Geo::Type::POLYGON:
                 for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                 {
-                    polygon_indexs.push_back(index++);
+                    polygon_indices.push_back(index++);
                 }
-                polygon_indexs.push_back(UINT_MAX);
+                polygon_indices.push_back(UINT_MAX);
                 break;
             case Geo::Type::CIRCLE:
             case Geo::Type::ELLIPSE:
             case Geo::Type::ARC:
                 for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                 {
-                    circle_indexs.push_back(index++);
+                    circle_indices.push_back(index++);
                 }
-                circle_indexs.push_back(UINT_MAX);
+                circle_indices.push_back(UINT_MAX);
                 break;
             case Geo::Type::BEZIER:
             case Geo::Type::BSPLINE:
                 for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                 {
-                    curve_indexs.push_back(index++);
+                    curve_indices.push_back(index++);
                 }
-                curve_indexs.push_back(UINT_MAX);
+                curve_indices.push_back(UINT_MAX);
                 break;
             case Geo::Type::POINT:
-                point_indexs.push_back(item->point_index);
+                point_indices.push_back(item->point_index);
                 break;
             default:
                 break;
             }
         }
 
-        _selected_index_count.polyline = polyline_indexs.size();
-        _selected_index_count.polygon = polygon_indexs.size();
-        _selected_index_count.circle = circle_indexs.size();
-        _selected_index_count.curve = curve_indexs.size();
-        _selected_index_count.point = point_indexs.size();
+        _selected_index_count.polyline = polyline_indices.size();
+        _selected_index_count.polygon = polygon_indices.size();
+        _selected_index_count.circle = circle_indices.size();
+        _selected_index_count.curve = curve_indices.size();
+        _selected_index_count.point = point_indices.size();
         makeCurrent();
-        if (!polyline_indexs.empty())
+        if (!polyline_indices.empty())
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polyline);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_indexs.size() * sizeof(unsigned int), polyline_indexs.data(), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_indices.size() * sizeof(unsigned int), polyline_indices.data(), GL_DYNAMIC_DRAW);
         }
-        if (!polygon_indexs.empty())
+        if (!polygon_indices.empty())
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polygon);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_indexs.size() * sizeof(unsigned int), polygon_indexs.data(), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_indices.size() * sizeof(unsigned int), polygon_indices.data(), GL_DYNAMIC_DRAW);
         }
-        if (!circle_indexs.empty())
+        if (!circle_indices.empty())
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.circle);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indexs.size() * sizeof(unsigned int), circle_indexs.data(), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indices.size() * sizeof(unsigned int), circle_indices.data(), GL_DYNAMIC_DRAW);
         }
-        if (!curve_indexs.empty())
+        if (!curve_indices.empty())
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.curve);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_indexs.size() * sizeof(unsigned int), curve_indexs.data(), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_indices.size() * sizeof(unsigned int), curve_indices.data(), GL_DYNAMIC_DRAW);
         }
-        if (!point_indexs.empty())
+        if (!point_indices.empty())
         {
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.point);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_indexs.size() * sizeof(unsigned int), point_indexs.data(), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_indices.size() * sizeof(unsigned int), point_indices.data(), GL_DYNAMIC_DRAW);
         }
         doneCurrent();
     }
@@ -2243,53 +2251,53 @@ void Canvas::refresh_selected_ibo(const Geo::Geometry *object)
     }
     else
     {
-        std::vector<unsigned int> indexs;
+        std::vector<unsigned int> indices;
         for (size_t i = 0, index = object->point_index, count = object->point_count; i < count; ++i)
         {
-            indexs.push_back(index++);
+            indices.push_back(index++);
         }
-        indexs.push_back(UINT_MAX);
+        indices.push_back(UINT_MAX);
         clear_selected_ibo();
         unsigned int IBO_index = 0;
         switch (object->type())
         {
         case Geo::Type::POLYLINE:
             IBO_index = _selected_ibo.polyline;
-            _selected_index_count.polyline = indexs.size();
+            _selected_index_count.polyline = indices.size();
             break;
         case Geo::Type::POLYGON:
             IBO_index = _selected_ibo.polygon;
-            _selected_index_count.polygon = indexs.size();
+            _selected_index_count.polygon = indices.size();
             break;
         case Geo::Type::CIRCLE:
         case Geo::Type::ELLIPSE:
         case Geo::Type::ARC:
             IBO_index = _selected_ibo.circle;
-            _selected_index_count.circle = indexs.size();
+            _selected_index_count.circle = indices.size();
             break;
         case Geo::Type::BEZIER:
         case Geo::Type::BSPLINE:
             IBO_index = _selected_ibo.curve;
-            _selected_index_count.curve = indexs.size();
+            _selected_index_count.curve = indices.size();
             break;
         case Geo::Type::POINT:
             IBO_index = _selected_ibo.point;
-            _selected_index_count.point = indexs.size();
+            _selected_index_count.point = indices.size();
             break;
         default:
             break;
         }
-        if (!indexs.empty())
+        if (!indices.empty())
         {
             makeCurrent();
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, IBO_index);
-            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexs.size() * sizeof(unsigned int), indexs.data(), GL_DYNAMIC_DRAW);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_DYNAMIC_DRAW);
             doneCurrent();
         }
     }
 }
 
-void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
+void Canvas::refresh_selected_ibo(const std::vector<Geo::DObject *> &objects)
 {
     if (objects.empty())
     {
@@ -2297,15 +2305,15 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
     }
 
     refresh_selected_dimension_vbo();
-    Geo::AABBRectParams visible_area_params;
-    visible_area_params.left = _visible_area.left() - 2;
-    visible_area_params.right = _visible_area.right() + 2;
-    visible_area_params.top = _visible_area.top() + 2;
-    visible_area_params.bottom = _visible_area.bottom() - 2;
-    std::vector<unsigned int> polyline_indexs, polygon_indexs, circle_indexs, curve_indexs, point_indexs;
-    for (const Geo::Geometry *geo : objects)
+    Geo::AABBRect visible_area_params;
+    visible_area_params.left = _visible_area.left - 2;
+    visible_area_params.right = _visible_area.right + 2;
+    visible_area_params.top = _visible_area.top + 2;
+    visible_area_params.bottom = _visible_area.bottom - 2;
+    std::vector<unsigned int> polyline_indices, polygon_indices, circle_indices, curve_indices, point_indices;
+    for (const Geo::DObject *geo : objects)
     {
-        if (!Geo::is_intersected(visible_area_params, geo->aabbrect_params()))
+        if (!Geo::is_intersected(visible_area_params, geo->aabbrect()))
         {
             continue;
         }
@@ -2314,72 +2322,72 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
         case Geo::Type::POLYLINE:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                polyline_indexs.push_back(index++);
+                polyline_indices.push_back(index++);
             }
-            polyline_indexs.push_back(UINT_MAX);
+            polyline_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::POLYGON:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                polygon_indexs.push_back(index++);
+                polygon_indices.push_back(index++);
             }
-            polygon_indexs.push_back(UINT_MAX);
+            polygon_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::CIRCLE:
         case Geo::Type::ELLIPSE:
         case Geo::Type::ARC:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                circle_indexs.push_back(index++);
+                circle_indices.push_back(index++);
             }
-            circle_indexs.push_back(UINT_MAX);
+            circle_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::BEZIER:
         case Geo::Type::BSPLINE:
             for (size_t index = geo->point_index, i = 0, count = geo->point_count; i < count; ++i)
             {
-                curve_indexs.push_back(index++);
+                curve_indices.push_back(index++);
             }
-            curve_indexs.push_back(UINT_MAX);
+            curve_indices.push_back(UINT_MAX);
             break;
         case Geo::Type::COMBINATION:
-            for (const Geo::Geometry *item : *static_cast<const Combination *>(geo))
+            for (const Geo::DObject *item : *static_cast<const Combination *>(geo))
             {
                 switch (item->type())
                 {
                 case Geo::Type::POLYLINE:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        polyline_indexs.push_back(index++);
+                        polyline_indices.push_back(index++);
                     }
-                    polyline_indexs.push_back(UINT_MAX);
+                    polyline_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::POLYGON:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        polygon_indexs.push_back(index++);
+                        polygon_indices.push_back(index++);
                     }
-                    polygon_indexs.push_back(UINT_MAX);
+                    polygon_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::CIRCLE:
                 case Geo::Type::ELLIPSE:
                 case Geo::Type::ARC:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        circle_indexs.push_back(index++);
+                        circle_indices.push_back(index++);
                     }
-                    circle_indexs.push_back(UINT_MAX);
+                    circle_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::BEZIER:
                 case Geo::Type::BSPLINE:
                     for (size_t i = 0, index = item->point_index, count = item->point_count; i < count; ++i)
                     {
-                        curve_indexs.push_back(index++);
+                        curve_indices.push_back(index++);
                     }
-                    curve_indexs.push_back(UINT_MAX);
+                    curve_indices.push_back(UINT_MAX);
                     break;
                 case Geo::Type::POINT:
-                    point_indexs.push_back(item->point_index);
+                    point_indices.push_back(item->point_index);
                     break;
                 default:
                     break;
@@ -2387,44 +2395,44 @@ void Canvas::refresh_selected_ibo(const std::vector<Geo::Geometry *> &objects)
             }
             break;
         case Geo::Type::POINT:
-            point_indexs.push_back(geo->point_index);
+            point_indices.push_back(geo->point_index);
             break;
         default:
             continue;
         }
     }
 
-    _selected_index_count.polyline = polyline_indexs.size();
-    _selected_index_count.polygon = polygon_indexs.size();
-    _selected_index_count.circle = circle_indexs.size();
-    _selected_index_count.curve = curve_indexs.size();
-    _selected_index_count.point = point_indexs.size();
+    _selected_index_count.polyline = polyline_indices.size();
+    _selected_index_count.polygon = polygon_indices.size();
+    _selected_index_count.circle = circle_indices.size();
+    _selected_index_count.curve = curve_indices.size();
+    _selected_index_count.point = point_indices.size();
 
     makeCurrent();
-    if (!polyline_indexs.empty())
+    if (!polyline_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polyline);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_indexs.size() * sizeof(unsigned int), polyline_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polyline_indices.size() * sizeof(unsigned int), polyline_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!polygon_indexs.empty())
+    if (!polygon_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.polygon);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_indexs.size() * sizeof(unsigned int), polygon_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, polygon_indices.size() * sizeof(unsigned int), polygon_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!circle_indexs.empty())
+    if (!circle_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.circle);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indexs.size() * sizeof(unsigned int), circle_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, circle_indices.size() * sizeof(unsigned int), circle_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!curve_indexs.empty())
+    if (!curve_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.curve);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_indexs.size() * sizeof(unsigned int), curve_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, curve_indices.size() * sizeof(unsigned int), curve_indices.data(), GL_DYNAMIC_DRAW);
     }
-    if (!point_indexs.empty())
+    if (!point_indices.empty())
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _selected_ibo.point);
-        glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_indexs.size() * sizeof(unsigned int), point_indexs.data(), GL_DYNAMIC_DRAW);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, point_indices.size() * sizeof(unsigned int), point_indices.data(), GL_DYNAMIC_DRAW);
     }
     doneCurrent();
 }
@@ -2435,7 +2443,7 @@ void Canvas::refresh_selected_vbo()
     bool refresh[5] = {false, false, false, false, false};
     for (const ContainerGroup &group : _editor.graph()->container_groups())
     {
-        for (const Geo::Geometry *object : group)
+        for (const Geo::DObject *object : group)
         {
             if (object->is_selected)
             {
@@ -2475,7 +2483,7 @@ void Canvas::refresh_selected_vbo()
                     }
                     break;
                 case Geo::Type::COMBINATION:
-                    for (const Geo::Geometry *item : *static_cast<const Combination *>(object))
+                    for (const Geo::DObject *item : *static_cast<const Combination *>(object))
                     {
                         switch (item->type())
                         {
@@ -2598,7 +2606,7 @@ void Canvas::refresh_selected_dimension_vbo()
         {
             continue;
         }
-        for (const Geo::Geometry *object : group)
+        for (const Geo::DObject *object : group)
         {
             if (object->is_selected && object->type() == Geo::Type::DIMENSION)
             {
@@ -2645,7 +2653,7 @@ void Canvas::paint_text()
             continue;
         }
 
-        for (Geo::Geometry *geo : group)
+        for (Geo::DObject *geo : group)
         {
             switch (geo->type())
             {
@@ -2668,7 +2676,7 @@ void Canvas::paint_text()
                 }
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *static_cast<const Combination *>(geo))
+                for (Geo::DObject *item : *static_cast<const Combination *>(geo))
                 {
                     if (Text *text = dynamic_cast<Text *>(item); text != nullptr)
                     {
@@ -2712,7 +2720,7 @@ void Canvas::paint_dim_text()
             continue;
         }
 
-        for (const Geo::Geometry *geo : group)
+        for (const Geo::DObject *geo : group)
         {
             switch (geo->type())
             {
@@ -2734,7 +2742,7 @@ void Canvas::paint_dim_text()
                 }
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *item : *static_cast<const Combination *>(geo))
+                for (Geo::DObject *item : *static_cast<const Combination *>(geo))
                 {
                     if (const Dim::Dimension *dim = dynamic_cast<Dim::Dimension *>(item); dim != nullptr)
                     {
@@ -2776,9 +2784,8 @@ void Canvas::paint_dim_text()
 }
 
 
-bool Canvas::refresh_catached_points(const double x, const double y, const double distance,
-                                     std::vector<const Geo::Geometry *> &catched_objects, const bool skip_selected,
-                                     const bool current_group_only) const
+bool Canvas::refresh_caught_points(const double x, const double y, const double distance, std::vector<const Geo::DObject *> &caught_objects,
+                                   const bool skip_selected, const bool current_group_only) const
 {
     if (!(_catch_types.vertex || _catch_types.center || _catch_types.foot || _catch_types.tangency || _catch_types.intersection))
     {
@@ -2787,17 +2794,17 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
 
     const Geo::AABBRect rect(x - distance / _ratio, y + distance / _ratio, x + distance / _ratio, y - distance / _ratio);
     const Geo::Point pos(x, y);
-    const size_t count = catched_objects.size();
+    const size_t count = caught_objects.size();
 
     if (current_group_only)
     {
-        std::vector<Geo::Geometry *> objects;
-        std::vector<Geo::Geometry *> current_group_objects(_editor.graph()->container_group(_editor.current_group()).begin(),
-                                                           _editor.graph()->container_group(_editor.current_group()).end());
+        std::vector<Geo::DObject *> objects;
+        std::vector<Geo::DObject *> current_group_objects(_editor.graph()->container_group(_editor.current_group()).begin(),
+                                                          _editor.graph()->container_group(_editor.current_group()).end());
         std::sort(current_group_objects.begin(), current_group_objects.end());
         std::set_intersection(_editor.visible_objects().begin(), _editor.visible_objects().end(), current_group_objects.begin(),
                               current_group_objects.end(), std::back_inserter(objects));
-        for (const Geo::Geometry *geo : objects)
+        for (const Geo::DObject *geo : objects)
         {
             if (skip_selected && geo->is_selected)
             {
@@ -2806,11 +2813,11 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
             switch (geo->type())
             {
             case Geo::Type::POLYGON:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect()))
                 {
                     if (Geo::distance(pos, *static_cast<const Geo::Polygon *>(geo)) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
@@ -2820,56 +2827,56 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                             _ratio <
                         distance)
                 {
-                    catched_objects.push_back(geo);
+                    caught_objects.push_back(geo);
                 }
                 break;
             case Geo::Type::ELLIPSE:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect()))
                 {
                     const Geo::Ellipse *e = static_cast<const Geo::Ellipse *>(geo);
                     if (Geo::distance(pos, e->center()) * _ratio < distance || Geo::distance(pos, *e) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
             case Geo::Type::POLYLINE:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect()))
                 {
                     if (Geo::distance(pos, *static_cast<const Geo::Polyline *>(geo)) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
             case Geo::Type::BSPLINE:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect()))
                 {
                     if (Geo::distance(pos, static_cast<const Geo::BSpline *>(geo)->shape()) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
             case Geo::Type::BEZIER:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect()))
                 {
                     if (Geo::distance(pos, static_cast<const Geo::CubicBezier *>(geo)->shape()) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
             case Geo::Type::ARC:
                 if (Geo::is_intersected(rect, *static_cast<const Geo::Arc *>(geo)))
                 {
-                    catched_objects.push_back(geo);
+                    caught_objects.push_back(geo);
                 }
                 break;
             case Geo::Type::POINT:
                 if (Geo::distance(pos, *static_cast<const Geo::Point *>(geo)) * _ratio < distance)
                 {
-                    catched_objects.push_back(geo);
+                    caught_objects.push_back(geo);
                 }
                 break;
             default:
@@ -2879,7 +2886,7 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
     }
     else
     {
-        for (const Geo::Geometry *geo : _editor.visible_objects())
+        for (const Geo::DObject *geo : _editor.visible_objects())
         {
             if (skip_selected && geo->is_selected)
             {
@@ -2888,11 +2895,11 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
             switch (geo->type())
             {
             case Geo::Type::POLYGON:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect()))
                 {
                     if (Geo::distance(pos, *static_cast<const Geo::Polygon *>(geo)) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
@@ -2902,56 +2909,56 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
                             _ratio <
                         distance)
                 {
-                    catched_objects.push_back(geo);
+                    caught_objects.push_back(geo);
                 }
                 break;
             case Geo::Type::ELLIPSE:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect()))
                 {
                     const Geo::Ellipse *e = static_cast<const Geo::Ellipse *>(geo);
                     if (Geo::distance(pos, e->center()) * _ratio < distance || Geo::distance(pos, *e) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
             case Geo::Type::POLYLINE:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect()))
                 {
                     if (Geo::distance(pos, *static_cast<const Geo::Polyline *>(geo)) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
             case Geo::Type::BEZIER:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect()))
                 {
                     if (Geo::distance(pos, static_cast<const Geo::CubicBezier *>(geo)->shape()) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
             case Geo::Type::BSPLINE:
-                if (Geo::is_intersected(rect, geo->bounding_rect()))
+                if (Geo::is_intersected(rect, geo->aabbrect()))
                 {
                     if (Geo::distance(pos, static_cast<const Geo::BSpline *>(geo)->shape()) * _ratio < distance)
                     {
-                        catched_objects.push_back(geo);
+                        caught_objects.push_back(geo);
                     }
                 }
                 break;
             case Geo::Type::ARC:
                 if (Geo::is_intersected(rect, *static_cast<const Geo::Arc *>(geo)))
                 {
-                    catched_objects.push_back(geo);
+                    caught_objects.push_back(geo);
                 }
                 break;
             case Geo::Type::POINT:
                 if (Geo::distance(pos, *static_cast<const Geo::Point *>(geo)) * _ratio < distance)
                 {
-                    catched_objects.push_back(geo);
+                    caught_objects.push_back(geo);
                 }
                 break;
             default:
@@ -2960,10 +2967,10 @@ bool Canvas::refresh_catached_points(const double x, const double y, const doubl
         }
     }
 
-    return catched_objects.size() > count;
+    return caught_objects.size() > count;
 }
 
-bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &objects, const double distance, Geo::Point &pos)
+bool Canvas::refresh_catchline_points(const std::vector<const Geo::DObject *> &objects, const double distance, Geo::Point &pos)
 {
     const CanvasOperations::Tool tool = CanvasOperations::CanvasOperation::tool[0];
     const bool catch_vertex = _catch_types.vertex;
@@ -2980,7 +2987,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
     double vertex_catch_distance = DBL_MAX, center_catch_distance = DBL_MAX, foot_catch_distance = DBL_MAX,
            tangency_catch_distance = DBL_MAX, intersection_catch_distance = DBL_MAX;
     const Geo::Point press_pos(CanvasOperations::CanvasOperation::press_pos[0], CanvasOperations::CanvasOperation::press_pos[1]);
-    for (const Geo::Geometry *object : objects)
+    for (const Geo::DObject *object : objects)
     {
         switch (object->type())
         {
@@ -3253,12 +3260,12 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
                 const Geo::CubicBezier &bezier = *static_cast<const Geo::CubicBezier *>(object);
                 if (catch_vertex)
                 {
-                    for (size_t i = 0, count = bezier.size(); i < count; i += 3)
+                    for (size_t i = 0, count = bezier.control_points.size(); i < count; i += 3)
                     {
-                        if (const double d = Geo::distance(pos, bezier[i]); d < vertex_catch_distance)
+                        if (const double d = Geo::distance(pos, bezier.control_points[i]); d < vertex_catch_distance)
                         {
                             vertex_catch_distance = d;
-                            vertex_catch_point = bezier[i];
+                            vertex_catch_point = bezier.control_points[i];
                         }
                     }
                 }
@@ -3401,10 +3408,10 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
 
     const double all_catch_distance[] = {vertex_catch_distance, center_catch_distance, foot_catch_distance, tangency_catch_distance,
                                          intersection_catch_distance};
-    switch (static_cast<CatchedPointType>(
+    switch (static_cast<CaughtPointType>(
         std::distance(all_catch_distance, std::min_element(all_catch_distance, all_catch_distance + Canvas::catch_count))))
     {
-    case CatchedPointType::Vertex:
+    case CaughtPointType::Vertex:
         {
             const double w = 6 / _ratio;
             pos = vertex_catch_point;
@@ -3421,7 +3428,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
             _catchline_points[14] = pos.x - w, _catchline_points[15] = pos.y + w;
         }
         break;
-    case CatchedPointType::Center:
+    case CaughtPointType::Center:
         {
             const double w = 4.8 / _ratio;
             pos = center_catch_point;
@@ -3438,7 +3445,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
             _catchline_points[14] = pos.x, _catchline_points[15] = pos.y + w * 2.5;
         }
         break;
-    case CatchedPointType::Foot:
+    case CaughtPointType::Foot:
         {
             const double w = 6 / _ratio;
             pos = foot_catch_point;
@@ -3455,7 +3462,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
             _catchline_points[14] = pos.x - w, _catchline_points[15] = pos.y + w * 1.2;
         }
         break;
-    case CatchedPointType::Tangency:
+    case CaughtPointType::Tangency:
         {
             const double w = 8 / _ratio, h = 3 / _ratio;
             pos = tangency_catch_point;
@@ -3472,7 +3479,7 @@ bool Canvas::refresh_catchline_points(const std::vector<const Geo::Geometry *> &
             _catchline_points[14] = pos.x - w, _catchline_points[15] = pos.y - h;
         }
         break;
-    case Canvas::CatchedPointType::Intersection:
+    case CaughtPointType::Intersection:
         {
             const double w = 7 / _ratio;
             pos = intersection_catch_point;

@@ -1,6 +1,4 @@
 #include <thread>
-#include <QDebug>
-#include <chrono>
 #include <algorithm>
 #include <unordered_map>
 #include "base/Editor.hpp"
@@ -15,7 +13,7 @@ Editor::~Editor()
     delete _graph;
     _graph = nullptr;
     _backup.clear();
-    for (Geo::Geometry *geo : _paste_table)
+    for (Geo::DObject *geo : _paste_table)
     {
         delete geo;
     }
@@ -99,12 +97,12 @@ const Graph *Editor::graph() const
     return _graph;
 }
 
-void Editor::refresh_visible_objects(const Geo::AABBRectParams &rect)
+void Editor::refresh_visible_objects(const Geo::AABBRect &rect)
 {
     return _view_tree.find_visible_objects(rect);
 }
 
-const std::vector<Geo::Geometry *> &Editor::visible_objects() const
+const std::vector<Geo::DObject *> &Editor::visible_objects() const
 {
     return _view_tree.visible_objects();
 }
@@ -131,7 +129,7 @@ void Editor::set_current_group(const size_t index)
         _current_group = index;
         for (ContainerGroup &group : *_graph)
         {
-            for (Geo::Geometry *object : group)
+            for (Geo::DObject *object : group)
             {
                 object->is_selected = false;
             }
@@ -149,7 +147,7 @@ void Editor::set_view_ratio(const double value)
     _view_ratio = value;
 }
 
-Geo::Geometry *Editor::select(const Geo::Point &point, const bool reset_others, const bool visible_only)
+Geo::DObject *Editor::select(const Geo::Point &point, const bool reset_others, const bool visible_only)
 {
     if (_graph == nullptr || _graph->empty())
     {
@@ -171,19 +169,19 @@ Geo::Geometry *Editor::select(const Geo::Point &point, const bool reset_others, 
     Geo::Arc *arc = nullptr;
     Combination *cb = nullptr;
 
-    std::vector<Geo::Geometry *> objects;
+    std::vector<Geo::DObject *> objects;
     if (visible_only)
     {
-        std::vector<Geo::Geometry *> current_group_objects(_graph->container_group(_current_group).begin(),
-                                                           _graph->container_group(_current_group).end());
+        std::vector<Geo::DObject *> current_group_objects(_graph->container_group(_current_group).begin(),
+                                                          _graph->container_group(_current_group).end());
         std::sort(current_group_objects.begin(), current_group_objects.end());
-        std::vector<Geo::Geometry *> visible_objects(_view_tree.visible_objects());
+        std::vector<Geo::DObject *> visible_objects(_view_tree.visible_objects());
         std::set_intersection(visible_objects.begin(), visible_objects.end(), current_group_objects.begin(), current_group_objects.end(),
                               std::back_inserter(objects));
-        objects.erase(std::remove_if(objects.begin(), objects.end(), [&](Geo::Geometry *object)
+        objects.erase(std::remove_if(objects.begin(), objects.end(), [&](Geo::DObject *object)
                                      { return object->type() != Geo::Type::BEZIER && object->type() != Geo::Type::BSPLINE; }),
                       objects.end());
-        Geo::AABBRectParams rect;
+        Geo::AABBRect rect;
         rect.left = point.x - catch_distance - 1;
         rect.right = point.x + catch_distance + 1;
         rect.bottom = point.y - catch_distance - 1;
@@ -192,21 +190,21 @@ Geo::Geometry *Editor::select(const Geo::Point &point, const bool reset_others, 
         _view_tree.find_visible_objects(rect, visible_objects);
         std::set_intersection(visible_objects.begin(), visible_objects.end(), current_group_objects.begin(), current_group_objects.end(),
                               std::back_inserter(objects));
-        std::unordered_map<const Geo::Geometry *, size_t> orders;
-        for (Geo::Geometry *object : objects)
+        std::unordered_map<const Geo::DObject *, size_t> orders;
+        for (Geo::DObject *object : objects)
         {
             orders.insert_or_assign(object, std::distance(_graph->container_group(_current_group).begin(),
                                                           std::find(_graph->container_group(_current_group).begin(),
                                                                     _graph->container_group(_current_group).end(), object)));
         }
-        std::sort(objects.begin(), objects.end(), [&](const Geo::Geometry *a, const Geo::Geometry *b) { return orders[a] > orders[b]; });
+        std::sort(objects.begin(), objects.end(), [&](const Geo::DObject *a, const Geo::DObject *b) { return orders[a] > orders[b]; });
     }
     else
     {
         objects.assign(_graph->container_group(_current_group).rbegin(), _graph->container_group(_current_group).rend());
     }
 
-    for (Geo::Geometry *it : objects)
+    for (Geo::DObject *it : objects)
     {
         switch (it->type())
         {
@@ -267,7 +265,7 @@ Geo::Geometry *Editor::select(const Geo::Point &point, const bool reset_others, 
             cb = static_cast<Combination *>(it);
             if (Geo::is_inside(point, cb->border(), true))
             {
-                for (Geo::Geometry *item : *cb)
+                for (Geo::DObject *item : *cb)
                 {
                     switch (item->type())
                     {
@@ -389,7 +387,7 @@ Geo::Geometry *Editor::select(const Geo::Point &point, const bool reset_others, 
             b = static_cast<Geo::CubicBezier *>(it);
             if (b->is_selected)
             {
-                for (const Geo::Point &inner_point : *b)
+                for (const Geo::Point &inner_point : b->control_points)
                 {
                     if (Geo::distance_square(point, inner_point) <= catch_distance * catch_distance * 2.25)
                     {
@@ -460,12 +458,12 @@ Geo::Geometry *Editor::select(const Geo::Point &point, const bool reset_others, 
     return nullptr;
 }
 
-Geo::Geometry *Editor::select(const double x, const double y, const bool reset_others, const bool visible_only)
+Geo::DObject *Editor::select(const double x, const double y, const bool reset_others, const bool visible_only)
 {
     return select(Geo::Point(x, y), reset_others, visible_only);
 }
 
-std::tuple<Geo::Geometry *, bool> Editor::select_with_state(const Geo::Point &point, const bool reset_others)
+std::tuple<Geo::DObject *, bool> Editor::select_with_state(const Geo::Point &point, const bool reset_others)
 {
     if (_graph == nullptr || _graph->empty())
     {
@@ -485,8 +483,8 @@ std::tuple<Geo::Geometry *, bool> Editor::select_with_state(const Geo::Point &po
     Geo::CubicBezier *b = nullptr;
     Geo::BSpline *bs = nullptr;
     Combination *cb = nullptr;
-    for (std::vector<Geo::Geometry *>::reverse_iterator it = _graph->container_group(_current_group).rbegin(),
-                                                        end = _graph->container_group(_current_group).rend();
+    for (std::vector<Geo::DObject *>::reverse_iterator it = _graph->container_group(_current_group).rbegin(),
+                                                       end = _graph->container_group(_current_group).rend();
          it != end; ++it)
     {
         switch ((*it)->type())
@@ -545,7 +543,7 @@ std::tuple<Geo::Geometry *, bool> Editor::select_with_state(const Geo::Point &po
             cb = static_cast<Combination *>(*it);
             if (Geo::is_inside(point, cb->border(), true))
             {
-                for (Geo::Geometry *item : *cb)
+                for (Geo::DObject *item : *cb)
                 {
                     switch (item->type())
                     {
@@ -646,7 +644,7 @@ std::tuple<Geo::Geometry *, bool> Editor::select_with_state(const Geo::Point &po
             b = static_cast<Geo::CubicBezier *>(*it);
             if (b->is_selected)
             {
-                for (const Geo::Point &inner_point : *b)
+                for (const Geo::Point &inner_point : b->control_points)
                 {
                     if (Geo::distance_square(point, inner_point) <= catch_distance * catch_distance * 2.25)
                     {
@@ -696,10 +694,10 @@ std::tuple<Geo::Geometry *, bool> Editor::select_with_state(const Geo::Point &po
     return std::make_tuple(nullptr, false);
 }
 
-std::vector<Geo::Geometry *> Editor::select(const Geo::AABBRect &rect, const bool reset_others, const bool visible_only)
+std::vector<Geo::DObject *> Editor::select(const Geo::AABBRect &rect, const bool reset_others, const bool visible_only)
 {
-    std::vector<Geo::Geometry *> result;
-    if (rect.empty() || _graph == nullptr || _graph->empty())
+    std::vector<Geo::DObject *> result;
+    if (_graph == nullptr || _graph->empty())
     {
         return result;
     }
@@ -709,11 +707,11 @@ std::vector<Geo::Geometry *> Editor::select(const Geo::AABBRect &rect, const boo
         reset_selected_mark();
     }
 
-    std::vector<Geo::Geometry *> objects;
+    std::vector<Geo::DObject *> objects;
     if (visible_only)
     {
-        std::vector<Geo::Geometry *> current_group_objects(_graph->container_group(_current_group).begin(),
-                                                           _graph->container_group(_current_group).end());
+        std::vector<Geo::DObject *> current_group_objects(_graph->container_group(_current_group).begin(),
+                                                          _graph->container_group(_current_group).end());
         std::sort(current_group_objects.begin(), current_group_objects.end());
         std::set_intersection(_view_tree.visible_objects().begin(), _view_tree.visible_objects().end(), current_group_objects.begin(),
                               current_group_objects.end(), std::back_inserter(objects));
@@ -723,7 +721,7 @@ std::vector<Geo::Geometry *> Editor::select(const Geo::AABBRect &rect, const boo
         objects.assign(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end());
     }
 
-    for (Geo::Geometry *container : objects)
+    for (Geo::DObject *container : objects)
     {
         if (container->is_selected)
         {
@@ -765,7 +763,7 @@ std::vector<Geo::Geometry *> Editor::select(const Geo::AABBRect &rect, const boo
             if (Geo::is_intersected(rect, static_cast<Combination *>(container)->border(), true))
             {
                 bool end = false;
-                for (Geo::Geometry *item : *static_cast<Combination *>(container))
+                for (Geo::DObject *item : *static_cast<Combination *>(container))
                 {
                     switch (item->type())
                     {
@@ -890,9 +888,9 @@ std::vector<Geo::Geometry *> Editor::select(const Geo::AABBRect &rect, const boo
     return result;
 }
 
-std::vector<Geo::Geometry *> Editor::selected(const bool visible_only) const
+std::vector<Geo::DObject *> Editor::selected(const bool visible_only) const
 {
-    std::vector<Geo::Geometry *> result;
+    std::vector<Geo::DObject *> result;
     if (_graph == nullptr)
     {
         return result;
@@ -905,7 +903,7 @@ std::vector<Geo::Geometry *> Editor::selected(const bool visible_only) const
             {
                 continue;
             }
-            for (Geo::Geometry *object : group)
+            for (Geo::DObject *object : group)
             {
                 if (object->is_selected)
                 {
@@ -918,7 +916,7 @@ std::vector<Geo::Geometry *> Editor::selected(const bool visible_only) const
     {
         for (ContainerGroup &group : _graph->container_groups())
         {
-            for (Geo::Geometry *object : group)
+            for (Geo::DObject *object : group)
             {
                 if (object->is_selected)
                 {
@@ -940,7 +938,7 @@ const size_t Editor::selected_count() const
     size_t count = 0;
     for (ContainerGroup &group : _graph->container_groups())
     {
-        for (Geo::Geometry *object : group)
+        for (Geo::DObject *object : group)
         {
             if (object->is_selected)
             {
@@ -957,13 +955,13 @@ void Editor::reset_selected_mark(const bool value)
     {
         return;
     }
-    for (Geo::Geometry *container : _graph->container_group(_current_group))
+    for (Geo::DObject *container : _graph->container_group(_current_group))
     {
         container->is_selected = value;
     }
 }
 
-const std::vector<Geo::Geometry *> &Editor::paste_table() const
+const std::vector<Geo::DObject *> &Editor::paste_table() const
 {
     return _paste_table;
 }
@@ -992,7 +990,7 @@ void Editor::push_backup_command(UndoStack::Command *command)
     return _backup.push_command(command);
 }
 
-void Editor::moved_objects(const std::vector<Geo::Geometry *> &objects, const double dx, const double dy)
+void Editor::moved_objects(const std::vector<Geo::DObject *> &objects, const double dx, const double dy)
 {
     _view_tree.update(objects);
     if (this->edited_shape.empty() || objects.size() > 1)
@@ -1024,7 +1022,7 @@ void Editor::remove_group(const size_t index)
     {
         _current_group--;
     }
-    _view_tree.remove(std::vector<Geo::Geometry *>(_graph->container_group(index).begin(), _graph->container_group(index).end()));
+    _view_tree.remove(std::vector<Geo::DObject *>(_graph->container_group(index).begin(), _graph->container_group(index).end()));
     _backup.push_command(new UndoStack::GroupCommand(index, false, _graph->container_group(index)));
     _graph->remove_group(index);
 }
@@ -1087,19 +1085,19 @@ void Editor::hide_group(const size_t index)
     _view_tree.build(_graph);
 }
 
-QString Editor::group_name(const size_t index) const
+std::string Editor::group_name(const size_t index) const
 {
     return _graph->container_group(index).name;
 }
 
-void Editor::set_group_name(const size_t index, const QString &name)
+void Editor::set_group_name(const size_t index, const std::string &name)
 {
     _backup.push_command(new UndoStack::RenameGroupCommand(index, _graph->container_group(index).name));
     _graph->container_group(index).name = name;
 }
 
 
-void Editor::append(Geo::Geometry *object)
+void Editor::append(Geo::DObject *object)
 {
     if (object->type() != Geo::Type::POINT && object->empty())
     {
@@ -1111,10 +1109,10 @@ void Editor::append(Geo::Geometry *object)
     _backup.push_command(new UndoStack::ObjectCommand(object, _current_group, _graph->container_group(_current_group).size(), true));
 }
 
-void Editor::append(const std::vector<Geo::Geometry *> &objects)
+void Editor::append(const std::vector<Geo::DObject *> &objects)
 {
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> items;
-    for (Geo::Geometry *object : objects)
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> items;
+    for (Geo::DObject *object : objects)
     {
         _graph->append(object, _current_group);
         items.emplace_back(object, _current_group, _graph->container_group(_current_group).size());
@@ -1124,7 +1122,7 @@ void Editor::append(const std::vector<Geo::Geometry *> &objects)
     _backup.push_command(new UndoStack::ObjectCommand(items, true));
 }
 
-void Editor::translate_points(Geo::Geometry *points, const double x0, const double y0, const double x1, const double y1,
+void Editor::translate_points(Geo::DObject *points, const double x0, const double y0, const double x1, const double y1,
                               const bool change_shape)
 {
     const double catch_distance = std::max(GlobalSetting::setting().catch_distance, std::pow(GlobalSetting::setting().catch_distance, 2));
@@ -1321,12 +1319,12 @@ void Editor::translate_points(Geo::Geometry *points, const double x0, const doub
     case Geo::Type::BEZIER:
         if (Geo::CubicBezier *temp = static_cast<Geo::CubicBezier *>(points); change_shape)
         {
-            size_t count = temp->size(), index = SIZE_MAX;
+            size_t count = temp->control_points.size(), index = SIZE_MAX;
             double distance = 0, min_distance = DBL_MAX;
             for (size_t i = 0; i < count; ++i)
             {
-                distance = std::min(Geo::distance_square(x0, y0, (*temp)[i].x, (*temp)[i].y),
-                                    Geo::distance_square(x1, y1, (*temp)[i].x, (*temp)[i].y));
+                distance = std::min(Geo::distance_square(x0, y0, temp->control_points[i].x, temp->control_points[i].y),
+                                    Geo::distance_square(x1, y1, temp->control_points[i].x, temp->control_points[i].y));
                 if (distance <= catch_distance * catch_distance && distance < min_distance)
                 {
                     index = i;
@@ -1337,27 +1335,29 @@ void Editor::translate_points(Geo::Geometry *points, const double x0, const doub
             {
                 if (edited_shape.empty())
                 {
-                    for (const Geo::Point &point : *temp)
+                    for (const Geo::Point &point : temp->control_points)
                     {
                         edited_shape.emplace_back(point.x, point.y);
                     }
                 }
 
-                temp->at(index).translate(x1 - x0, y1 - y0);
+                temp->control_points.at(index).translate(x1 - x0, y1 - y0);
                 if (const int order = 3; index > 2 && index % order == 1)
                 {
-                    (*temp)[index - 2] = (*temp)[index - 1] + ((*temp)[index - 1] - (*temp)[index]).normalize() *
-                                                                  Geo::distance((*temp)[index - 2], (*temp)[index - 1]);
+                    temp->control_points[index - 2] = temp->control_points[index - 1] +
+                                                      (temp->control_points[index - 1] - temp->control_points[index]).normalize() *
+                                                          Geo::distance(temp->control_points[index - 2], temp->control_points[index - 1]);
                 }
-                else if (index + 2 < temp->size() && index % order == order - 1)
+                else if (index + 2 < temp->control_points.size() && index % order == order - 1)
                 {
-                    (*temp)[index + 2] = (*temp)[index + 1] + ((*temp)[index + 1] - (*temp)[index]).normalize() *
-                                                                  Geo::distance((*temp)[index + 1], (*temp)[index + 2]);
+                    temp->control_points[index + 2] = temp->control_points[index + 1] +
+                                                      (temp->control_points[index + 1] - temp->control_points[index]).normalize() *
+                                                          Geo::distance(temp->control_points[index + 1], temp->control_points[index + 2]);
                 }
                 else if (index % order == 0 && index > 0 && index < count - 1)
                 {
-                    (*temp)[index - 1].translate(x1 - x0, y1 - y0);
-                    (*temp)[index + 1].translate(x1 - x0, y1 - y0);
+                    temp->control_points[index - 1].translate(x1 - x0, y1 - y0);
+                    temp->control_points[index + 1].translate(x1 - x0, y1 - y0);
                 }
                 temp->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
             }
@@ -1457,7 +1457,7 @@ bool Editor::remove_selected()
         return false;
     }
 
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> items;
     for (size_t i = _graph->container_group(_current_group).size() - 1; i > 0; --i)
     {
         if (_graph->container_group(_current_group)[i]->is_selected)
@@ -1489,7 +1489,7 @@ bool Editor::copy_selected()
         return false;
     }
 
-    for (const Geo::Geometry *container : _graph->container_group(_current_group))
+    for (const Geo::DObject *container : _graph->container_group(_current_group))
     {
         if (container->is_selected && container->type() != Geo::Type::DIMENSION)
         {
@@ -1513,7 +1513,7 @@ bool Editor::cut_selected()
         return false;
     }
 
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> items;
     for (size_t i = _graph->container_group(_current_group).size() - 1; i > 0; --i)
     {
         if (_graph->container_group(_current_group)[i]->is_selected &&
@@ -1546,9 +1546,9 @@ bool Editor::paste(const double tx, const double ty)
     }
 
     reset_selected_mark();
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> items;
     size_t index = _graph->container_group(_current_group).size();
-    for (Geo::Geometry *geo : _paste_table)
+    for (Geo::DObject *geo : _paste_table)
     {
         _graph->container_group(_current_group).append(geo->clone());
         _graph->container_group(_current_group).back()->translate(tx, ty);
@@ -1562,7 +1562,7 @@ bool Editor::paste(const double tx, const double ty)
     return true;
 }
 
-bool Editor::connect(const std::vector<Geo::Geometry *> &objects, const double connect_distance)
+bool Editor::connect(const std::vector<Geo::DObject *> &objects, const double connect_distance)
 {
     if (_graph == nullptr || objects.empty())
     {
@@ -1570,21 +1570,21 @@ bool Editor::connect(const std::vector<Geo::Geometry *> &objects, const double c
     }
 
     std::vector<Geo::Polyline *> polylines;
-    std::vector<size_t> indexs;
+    std::vector<size_t> indices;
     ContainerGroup &group = _graph->container_group(_current_group);
-    for (Geo::Geometry *object : objects)
+    for (Geo::DObject *object : objects)
     {
         if (object->type() == Geo::Type::POLYLINE)
         {
             polylines.push_back(static_cast<Geo::Polyline *>(object));
-            indexs.push_back(std::distance(group.begin(), std::find(group.begin(), group.end(), object)));
+            indices.push_back(std::distance(group.begin(), std::find(group.begin(), group.end(), object)));
         }
     }
     std::vector<bool> merged(polylines.size(), false);
 
     Geo::Polyline *polyline = nullptr;
     size_t index = 0;
-    for (size_t i = 0, count = indexs.size(); i < count; ++i)
+    for (size_t i = 0, count = indices.size(); i < count; ++i)
     {
         const Geo::Point front_i = polylines[i]->front();
         const Geo::Point back_i = polylines[i]->back();
@@ -1685,16 +1685,16 @@ bool Editor::connect(const std::vector<Geo::Geometry *> &objects, const double c
     {
         if (!merged[i])
         {
-            indexs.erase(indexs.begin() + i);
+            indices.erase(indices.begin() + i);
         }
     }
     if (!merged.front())
     {
-        indexs.erase(indexs.begin());
+        indices.erase(indices.begin());
     }
-    std::sort(indexs.begin(), indexs.end(), std::greater<>());
-    std::vector<std::tuple<Geo::Geometry *, size_t>> items;
-    for (size_t i : indexs)
+    std::sort(indices.begin(), indices.end(), std::greater<>());
+    std::vector<std::tuple<Geo::DObject *, size_t>> items;
+    for (size_t i : indices)
     {
         _view_tree.remove(group[i]);
         items.emplace_back(group.pop(i), i);
@@ -1716,7 +1716,7 @@ bool Editor::connect(const std::vector<Geo::Geometry *> &objects, const double c
     return true;
 }
 
-bool Editor::blend(const Geo::Geometry *object0, const Geo::Geometry *object1, const Geo::Point &pos0, const Geo::Point &pos1)
+bool Editor::blend(const Geo::DObject *object0, const Geo::DObject *object1, const Geo::Point &pos0, const Geo::Point &pos1)
 {
     Geo::Point pre0, point0, pre1, point1;
     switch (object0->type())
@@ -1753,12 +1753,12 @@ bool Editor::blend(const Geo::Geometry *object0, const Geo::Geometry *object1, c
             Geo::distance_square(bezier->front(), pos0) < Geo::distance_square(bezier->back(), pos0))
         {
             point0 = bezier->front();
-            pre0 = bezier->at(1);
+            pre0 = bezier->control_points.at(1);
         }
         else
         {
             point0 = bezier->back();
-            pre0 = bezier->at(bezier->size() - 2);
+            pre0 = bezier->control_points.at(bezier->control_points.size() - 2);
         }
         break;
     case Geo::Type::BSPLINE:
@@ -1873,12 +1873,12 @@ bool Editor::blend(const Geo::Geometry *object0, const Geo::Geometry *object1, c
             Geo::distance_square(bezier->front(), pos1) < Geo::distance_square(bezier->back(), pos1))
         {
             point1 = bezier->front();
-            pre1 = bezier->at(1);
+            pre1 = bezier->control_points.at(1);
         }
         else
         {
             point1 = bezier->back();
-            pre1 = bezier->at(bezier->size() - 2);
+            pre1 = bezier->control_points.at(bezier->control_points.size() - 2);
         }
         break;
     case Geo::Type::BSPLINE:
@@ -1975,17 +1975,17 @@ bool Editor::blend(const Geo::Geometry *object0, const Geo::Geometry *object1, c
     }
 }
 
-bool Editor::close_polyline(const std::vector<Geo::Geometry *> &objects)
+bool Editor::close_polyline(const std::vector<Geo::DObject *> &objects)
 {
     if (_graph == nullptr || objects.empty())
     {
         return false;
     }
 
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
     Geo::Polygon *shape = nullptr;
     ContainerGroup &group = _graph->container_group(_current_group);
-    for (Geo::Geometry *object : objects)
+    for (Geo::DObject *object : objects)
     {
         if (object->type() != Geo::Type::POLYLINE)
         {
@@ -2017,7 +2017,7 @@ bool Editor::close_polyline(const std::vector<Geo::Geometry *> &objects)
     }
 }
 
-bool Editor::combinate(const std::vector<Geo::Geometry *> &objects)
+bool Editor::combine(const std::vector<Geo::DObject *> &objects)
 {
     if (_graph == nullptr || objects.size() < 2)
     {
@@ -2026,8 +2026,8 @@ bool Editor::combinate(const std::vector<Geo::Geometry *> &objects)
 
     Combination *combination = new Combination();
     ContainerGroup &group = _graph->container_group(_current_group);
-    std::vector<std::tuple<Combination *, size_t, std::vector<Geo::Geometry *>>> items;
-    for (Geo::Geometry *object : objects)
+    std::vector<std::tuple<Combination *, size_t, std::vector<Geo::DObject *>>> items;
+    for (Geo::DObject *object : objects)
     {
         if (object->type() == Geo::Type::DIMENSION)
         {
@@ -2035,10 +2035,10 @@ bool Editor::combinate(const std::vector<Geo::Geometry *> &objects)
         }
         if (object->type() == Geo::Type::COMBINATION)
         {
-            std::vector<Geo::Geometry *>::iterator it = std::find(group.begin(), group.end(), object);
+            std::vector<Geo::DObject *>::iterator it = std::find(group.begin(), group.end(), object);
             size_t index = std::distance(group.begin(), it);
             Combination *temp = static_cast<Combination *>(group.pop(it));
-            items.emplace_back(temp, index, std::vector<Geo::Geometry *>(temp->begin(), temp->end()));
+            items.emplace_back(temp, index, std::vector<Geo::DObject *>(temp->begin(), temp->end()));
             combination->append(temp);
         }
         else
@@ -2054,13 +2054,13 @@ bool Editor::combinate(const std::vector<Geo::Geometry *> &objects)
     _graph->container_group(_current_group).append(combination);
     _view_tree.append(combination);
 
-    _backup.push_command(new UndoStack::CombinateCommand(combination, items, _current_group));
+    _backup.push_command(new UndoStack::CombineCommand(combination, items, _current_group));
     _graph->modified = true;
 
     return true;
 }
 
-bool Editor::detach(const std::vector<Geo::Geometry *> &objects)
+bool Editor::detach(const std::vector<Geo::DObject *> &objects)
 {
     if (_graph == nullptr || objects.empty())
     {
@@ -2069,7 +2069,7 @@ bool Editor::detach(const std::vector<Geo::Geometry *> &objects)
 
     std::vector<std::tuple<Combination *, size_t>> combiantions;
     ContainerGroup &group = _graph->container_group(_current_group);
-    for (Geo::Geometry *object : objects)
+    for (Geo::DObject *object : objects)
     {
         if (object->type() == Geo::Type::COMBINATION)
         {
@@ -2083,13 +2083,13 @@ bool Editor::detach(const std::vector<Geo::Geometry *> &objects)
     }
 
     std::reverse(combiantions.begin(), combiantions.end());
-    _backup.push_command(new UndoStack::CombinateCommand(combiantions, _current_group));
+    _backup.push_command(new UndoStack::CombineCommand(combiantions, _current_group));
     for (std::tuple<Combination *, size_t> &combination : combiantions)
     {
         std::reverse(std::get<0>(combination)->begin(), std::get<0>(combination)->end());
         group.pop(std::find(group.rbegin(), group.rend(), std::get<0>(combination)));
         _view_tree.remove(std::get<0>(combination));
-        _view_tree.append(std::vector<Geo::Geometry *>(std::get<0>(combination)->begin(), std::get<0>(combination)->end()));
+        _view_tree.append(std::vector<Geo::DObject *>(std::get<0>(combination)->begin(), std::get<0>(combination)->end()));
         group.append(*static_cast<ContainerGroup *>(std::get<0>(combination)));
     }
 
@@ -2098,7 +2098,7 @@ bool Editor::detach(const std::vector<Geo::Geometry *> &objects)
     return true;
 }
 
-bool Editor::mirror(const std::vector<Geo::Geometry *> &objects, const Geo::Point &start, const Geo::Point &end, const bool copy)
+bool Editor::mirror(const std::vector<Geo::DObject *> &objects, const Geo::Point &start, const Geo::Point &end, const bool copy)
 {
     if (objects.empty() || start == end)
     {
@@ -2113,9 +2113,9 @@ bool Editor::mirror(const std::vector<Geo::Geometry *> &objects, const Geo::Poin
 
     if (copy)
     {
-        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> items;
+        std::vector<std::tuple<Geo::DObject *, size_t, size_t>> items;
         size_t index = _graph->container_group(_current_group).size();
-        for (Geo::Geometry *obj : objects)
+        for (Geo::DObject *obj : objects)
         {
             if (obj->type() != Geo::Type::DIMENSION)
             {
@@ -2130,8 +2130,8 @@ bool Editor::mirror(const std::vector<Geo::Geometry *> &objects, const Geo::Poin
     }
     else
     {
-        std::vector<Geo::Geometry *> items;
-        for (Geo::Geometry *obj : objects)
+        std::vector<Geo::DObject *> items;
+        for (Geo::DObject *obj : objects)
         {
             if (obj->type() != Geo::Type::DIMENSION)
             {
@@ -2149,7 +2149,7 @@ bool Editor::mirror(const std::vector<Geo::Geometry *> &objects, const Geo::Poin
     return true;
 }
 
-bool Editor::offset(const std::vector<Geo::Geometry *> &objects, const double distance, const Geo::Offset::JoinType join_type,
+bool Editor::offset(const std::vector<Geo::DObject *> &objects, const double distance, const Geo::Offset::JoinType join_type,
                     const Geo::Offset::EndType end_type)
 {
     const size_t count = _graph->container_group(_current_group).size();
@@ -2159,9 +2159,9 @@ bool Editor::offset(const std::vector<Geo::Geometry *> &objects, const double di
     Geo::BSpline *bspline = nullptr;
     Geo::CubicBezier *bezier = nullptr;
     Geo::Arc *arc = nullptr;
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> items;
     size_t index = count;
-    for (Geo::Geometry *object : objects)
+    for (Geo::DObject *object : objects)
     {
         switch (object->type())
         {
@@ -2253,7 +2253,7 @@ bool Editor::offset(const std::vector<Geo::Geometry *> &objects, const double di
     else
     {
         _graph->modified = true;
-        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : items)
+        for (const std::tuple<Geo::DObject *, size_t, size_t> &item : items)
         {
             _view_tree.append(std::get<0>(item));
         }
@@ -2262,7 +2262,7 @@ bool Editor::offset(const std::vector<Geo::Geometry *> &objects, const double di
     }
 }
 
-bool Editor::scale(const std::vector<Geo::Geometry *> &objects, const bool unitary, const double k)
+bool Editor::scale(const std::vector<Geo::DObject *> &objects, const bool unitary, const double k)
 {
     if (objects.empty() || k == 0 || k == 1)
     {
@@ -2272,13 +2272,13 @@ bool Editor::scale(const std::vector<Geo::Geometry *> &objects, const bool unita
     if (unitary)
     {
         double top = -DBL_MAX, bottom = DBL_MAX, left = DBL_MAX, right = -DBL_MAX;
-        std::vector<Geo::Geometry *> items;
-        for (Geo::Geometry *object : objects)
+        std::vector<Geo::DObject *> items;
+        for (Geo::DObject *object : objects)
         {
             if (object->type() != Geo::Type::DIMENSION)
             {
                 items.push_back(object);
-                const Geo::AABBRectParams rect = object->aabbrect_params();
+                const Geo::AABBRect rect = object->aabbrect();
                 top = std::max(top, rect.top);
                 bottom = std::min(bottom, rect.bottom);
                 left = std::min(left, rect.left);
@@ -2292,7 +2292,7 @@ bool Editor::scale(const std::vector<Geo::Geometry *> &objects, const bool unita
         }
 
         const double x = (left + right) / 2, y = (top + bottom) / 2;
-        for (Geo::Geometry *object : items)
+        for (Geo::DObject *object : items)
         {
             object->scale(x, y, k);
             _view_tree.update(object);
@@ -2302,13 +2302,13 @@ bool Editor::scale(const std::vector<Geo::Geometry *> &objects, const bool unita
     }
     else
     {
-        std::vector<Geo::Geometry *> items;
-        for (Geo::Geometry *object : objects)
+        std::vector<Geo::DObject *> items;
+        for (Geo::DObject *object : objects)
         {
             if (object->type() != Geo::Type::DIMENSION)
             {
                 items.push_back(object);
-                const Geo::AABBRectParams rect = object->aabbrect_params();
+                const Geo::AABBRect rect = object->aabbrect();
                 object->scale((rect.left + rect.right) / 2, (rect.top + rect.bottom) / 2, k);
                 _view_tree.update(object);
             }
@@ -2327,14 +2327,14 @@ bool Editor::scale(const std::vector<Geo::Geometry *> &objects, const bool unita
     return true;
 }
 
-bool Editor::shape_union(Geo::Geometry *shape0, Geo::Geometry *shape1)
+bool Editor::shape_union(Geo::DObject *shape0, Geo::DObject *shape1)
 {
     if (_graph == nullptr || _graph->empty() || shape0 == nullptr || shape1 == nullptr || shape0 == shape1)
     {
         return false;
     }
 
-    std::vector<Geo::Geometry *> result;
+    std::vector<Geo::DObject *> result;
     switch (shape0->type())
     {
     case Geo::Type::POLYGON:
@@ -2507,7 +2507,7 @@ bool Editor::shape_union(Geo::Geometry *shape0, Geo::Geometry *shape1)
     else
     {
         ContainerGroup &group = _graph->container_group(_current_group);
-        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+        std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
         size_t index0 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape0));
         size_t index1 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape1));
         if (index0 < index1)
@@ -2550,14 +2550,14 @@ bool Editor::shape_union(Geo::Geometry *shape0, Geo::Geometry *shape1)
     }
 }
 
-bool Editor::shape_intersection(Geo::Geometry *shape0, Geo::Geometry *shape1)
+bool Editor::shape_intersection(Geo::DObject *shape0, Geo::DObject *shape1)
 {
     if (_graph == nullptr || _graph->empty() || shape0 == nullptr || shape1 == nullptr || shape0 == shape1)
     {
         return false;
     }
 
-    std::vector<Geo::Geometry *> result;
+    std::vector<Geo::DObject *> result;
     switch (shape0->type())
     {
     case Geo::Type::POLYGON:
@@ -2730,7 +2730,7 @@ bool Editor::shape_intersection(Geo::Geometry *shape0, Geo::Geometry *shape1)
     else
     {
         ContainerGroup &group = _graph->container_group(_current_group);
-        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+        std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
         size_t index0 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape0));
         size_t index1 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape1));
         if (index0 < index1)
@@ -2773,14 +2773,14 @@ bool Editor::shape_intersection(Geo::Geometry *shape0, Geo::Geometry *shape1)
     }
 }
 
-bool Editor::shape_difference(Geo::Geometry *shape0, const Geo::Geometry *shape1)
+bool Editor::shape_difference(Geo::DObject *shape0, const Geo::DObject *shape1)
 {
     if (shape0 == nullptr || shape1 == nullptr || shape0 == shape1)
     {
         return false;
     }
 
-    std::vector<Geo::Geometry *> result;
+    std::vector<Geo::DObject *> result;
     switch (shape0->type())
     {
     case Geo::Type::POLYGON:
@@ -2953,7 +2953,7 @@ bool Editor::shape_difference(Geo::Geometry *shape0, const Geo::Geometry *shape1
     else
     {
         ContainerGroup &group = _graph->container_group(_current_group);
-        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+        std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
         size_t index0 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape0));
         remove_items.emplace_back(shape0, _current_group, index0);
         _view_tree.remove(group.pop(index0));
@@ -2982,14 +2982,14 @@ bool Editor::shape_difference(Geo::Geometry *shape0, const Geo::Geometry *shape1
     }
 }
 
-bool Editor::shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1)
+bool Editor::shape_xor(Geo::DObject *shape0, Geo::DObject *shape1)
 {
     if (shape0 == nullptr || shape1 == nullptr || shape0 == shape1)
     {
         return false;
     }
 
-    std::vector<Geo::Geometry *> result;
+    std::vector<Geo::DObject *> result;
     switch (shape0->type())
     {
     case Geo::Type::POLYGON:
@@ -3162,7 +3162,7 @@ bool Editor::shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1)
     else
     {
         ContainerGroup &group = _graph->container_group(_current_group);
-        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+        std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
         size_t index0 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape0));
         size_t index1 = std::distance(group.begin(), std::find(group.begin(), group.end(), shape1));
         if (index0 < index1)
@@ -3208,7 +3208,7 @@ bool Editor::shape_xor(Geo::Geometry *shape0, Geo::Geometry *shape1)
 bool Editor::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Polyline *polyline1, const Geo::Point &point1,
                     const double radius0, const double radius1)
 {
-    if (polyline0 == polyline1)
+    if (polyline0 == nullptr || polyline1 == nullptr || polyline0 == polyline1)
     {
         return false;
     }
@@ -3229,7 +3229,7 @@ bool Editor::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
         return false;
     }
 
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
     for (size_t i = 0, k = 0, count = _graph->container_group(_current_group).size(); i < count && k < 2; ++i)
     {
         if (_graph->container_group(_current_group)[i] == polyline0)
@@ -3292,8 +3292,8 @@ bool Editor::fillet(Geo::Polyline *polyline0, const Geo::Point &point0, Geo::Pol
     return true;
 }
 
-bool Editor::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::Point &start, const Geo::Point &center,
-                    const Geo::Point &end, const std::vector<std::tuple<size_t, double, double, double>> &tvalues)
+bool Editor::fillet(Geo::DObject *object0, Geo::DObject *object1, const Geo::Point &start, const Geo::Point &center, const Geo::Point &end,
+                    const std::vector<std::tuple<size_t, double, double, double>> &tvalues)
 {
     if (object0 == object1 || start == center || center == end || start == end)
     {
@@ -3302,7 +3302,7 @@ bool Editor::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
 
     if (Geo::CubicBezier curve; Geo::angle_to_arc(start, center, end, curve))
     {
-        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
+        std::vector<std::tuple<Geo::DObject *, size_t, size_t>> remove, append;
         switch (object0->type())
         {
         case Geo::Type::ARC:
@@ -3356,7 +3356,7 @@ bool Editor::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
                     {
                         if (Geo::distance(bezier0.front(), start) < Geo::distance(bezier0.back(), start))
                         {
-                            if (Geo::is_on_left(bezier0[1], center, start))
+                            if (Geo::is_on_left(bezier0.control_points[1], center, start))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
@@ -3367,7 +3367,7 @@ bool Editor::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
                         }
                         else
                         {
-                            if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, start))
+                            if (Geo::is_on_left(bezier0.control_points[bezier0.control_points.size() - 2], center, start))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
@@ -3381,7 +3381,7 @@ bool Editor::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
                     {
                         if (Geo::distance(bezier0.front(), start) < Geo::distance(bezier0.back(), start))
                         {
-                            if (Geo::is_on_left(bezier0[1], center, start))
+                            if (Geo::is_on_left(bezier0.control_points[1], center, start))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
@@ -3392,7 +3392,7 @@ bool Editor::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
                         }
                         else
                         {
-                            if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, start))
+                            if (Geo::is_on_left(bezier0.control_points[bezier0.control_points.size() - 2], center, start))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
@@ -3652,7 +3652,7 @@ bool Editor::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
                     {
                         if (Geo::distance(bezier0.front(), end) < Geo::distance(bezier0.back(), end))
                         {
-                            if (Geo::is_on_left(bezier0[1], center, end))
+                            if (Geo::is_on_left(bezier0.control_points[1], center, end))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
@@ -3663,7 +3663,7 @@ bool Editor::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
                         }
                         else
                         {
-                            if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, end))
+                            if (Geo::is_on_left(bezier0.control_points[bezier0.control_points.size() - 2], center, end))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier0));
                             }
@@ -3677,7 +3677,7 @@ bool Editor::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
                     {
                         if (Geo::distance(bezier0.front(), end) < Geo::distance(bezier0.back(), end))
                         {
-                            if (Geo::is_on_left(bezier0[1], center, end))
+                            if (Geo::is_on_left(bezier0.control_points[1], center, end))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
@@ -3688,7 +3688,7 @@ bool Editor::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
                         }
                         else
                         {
-                            if (Geo::is_on_left(bezier0[bezier0.size() - 2], center, end))
+                            if (Geo::is_on_left(bezier0.control_points[bezier0.control_points.size() - 2], center, end))
                             {
                                 _graph->container_group(_current_group).insert(index, new Geo::CubicBezier(bezier1));
                             }
@@ -3899,11 +3899,11 @@ bool Editor::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
         _graph->container_group(_current_group).append(new Geo::CubicBezier(curve));
         append.emplace_back(_graph->container_group(_current_group).back(), _current_group,
                             _graph->container_group(_current_group).size() - 1);
-        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : remove)
+        for (const std::tuple<Geo::DObject *, size_t, size_t> &item : remove)
         {
             _view_tree.remove(std::get<0>(item));
         }
-        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : append)
+        for (const std::tuple<Geo::DObject *, size_t, size_t> &item : append)
         {
             _view_tree.append(std::get<0>(item));
         }
@@ -3916,9 +3916,9 @@ bool Editor::fillet(Geo::Geometry *object0, Geo::Geometry *object1, const Geo::P
     }
 }
 
-bool Editor::fillet(Geo::Geometry *object, const Geo::Point &point, const double radius)
+bool Editor::fillet(Geo::DObject *object, const Geo::Point &point, const double radius)
 {
-    std::vector<Geo::Geometry *> objects;
+    std::vector<Geo::DObject *> objects;
     switch (object->type())
     {
     case Geo::Type::POLYGON:
@@ -3984,12 +3984,12 @@ bool Editor::fillet(Geo::Geometry *object, const Geo::Point &point, const double
     {
         if (_graph->container_group(_current_group)[i] == object)
         {
-            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
             _view_tree.remove(_graph->container_group(_current_group).pop(i));
             object->is_selected = false;
             remove_items.emplace_back(object, _current_group, i);
             size_t j = i - 1;
-            for (Geo::Geometry *item : objects)
+            for (Geo::DObject *item : objects)
             {
                 add_items.emplace_back(item, _current_group, ++j);
                 _graph->container_group(_current_group).insert(i, item);
@@ -4004,9 +4004,9 @@ bool Editor::fillet(Geo::Geometry *object, const Geo::Point &point, const double
     return true;
 }
 
-bool Editor::fillet(Geo::Geometry *object, const Geo::Point &point, const double radius0, const double radius1)
+bool Editor::fillet(Geo::DObject *object, const Geo::Point &point, const double radius0, const double radius1)
 {
-    std::vector<Geo::Geometry *> objects;
+    std::vector<Geo::DObject *> objects;
     switch (object->type())
     {
     case Geo::Type::POLYGON:
@@ -4072,12 +4072,12 @@ bool Editor::fillet(Geo::Geometry *object, const Geo::Point &point, const double
     {
         if (_graph->container_group(_current_group)[i] == object)
         {
-            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
             _view_tree.remove(_graph->container_group(_current_group).pop(i));
             object->is_selected = false;
             remove_items.emplace_back(object, _current_group, i);
             size_t j = i - 1;
-            for (Geo::Geometry *item : objects)
+            for (Geo::DObject *item : objects)
             {
                 add_items.emplace_back(item, _current_group, ++j);
                 _graph->container_group(_current_group).insert(j, item);
@@ -4092,10 +4092,9 @@ bool Editor::fillet(Geo::Geometry *object, const Geo::Point &point, const double
     return true;
 }
 
-bool Editor::fillet(Geo::Geometry *object0, const Geo::Point &point0, Geo::Geometry *object1, const Geo::Point &point1, const double radius)
+bool Editor::fillet(Geo::DObject *object0, const Geo::Point &point0, Geo::DObject *object1, const Geo::Point &point1, const double radius)
 {
-    std::vector<Geo::Geometry *> objects;
-    std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
+    std::vector<Geo::DObject *> objects;
     switch (object0->type())
     {
     case Geo::Type::POLYLINE:
@@ -4407,15 +4406,13 @@ bool Editor::fillet(Geo::Geometry *object0, const Geo::Point &point0, Geo::Geome
     default:
         break;
     }
-    std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-    qDebug() << std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
     if (objects.empty())
     {
         return false;
     }
     bool added = false;
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
     for (size_t i = 0, k = 0, count = _graph->container_group(_current_group).size(); i < count && k < 2; ++i)
     {
         if (_graph->container_group(_current_group)[i] == object0)
@@ -4574,7 +4571,7 @@ bool Editor::chamfer(Geo::Polyline *polyline, const Geo::Point &point, const dou
     }
 }
 
-bool Editor::split(Geo::Geometry *object, const Geo::Point &pos)
+bool Editor::split(Geo::DObject *object, const Geo::Point &pos)
 {
     switch (object->type())
     {
@@ -4585,7 +4582,7 @@ bool Editor::split(Geo::Geometry *object, const Geo::Point &pos)
             Geo::closest_point(*polyline, pos, coords);
             if (Geo::Polyline polyline0, polyline1; Geo::split(*polyline, coords.front(), polyline0, polyline1))
             {
-                std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
+                std::vector<std::tuple<Geo::DObject *, size_t, size_t>> remove, append;
                 size_t index = std::distance(
                     _graph->container_group(_current_group).begin(),
                     std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), object));
@@ -4611,7 +4608,7 @@ bool Editor::split(Geo::Geometry *object, const Geo::Point &pos)
             if (Geo::CubicBezier bezier0, bezier1;
                 !tvalues.empty() && Geo::split(*bezier, std::get<0>(tvalues.front()), std::get<1>(tvalues.front()), bezier0, bezier1))
             {
-                std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
+                std::vector<std::tuple<Geo::DObject *, size_t, size_t>> remove, append;
                 size_t index = std::distance(
                     _graph->container_group(_current_group).begin(),
                     std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), object));
@@ -4642,7 +4639,7 @@ bool Editor::split(Geo::Geometry *object, const Geo::Point &pos)
                     !tvalues.empty() &&
                     Geo::split(*static_cast<Geo::BSpline *>(object), is_cubic, std::get<0>(tvalues.front()), bspline0, bspline1))
                 {
-                    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
+                    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> remove, append;
                     size_t index = std::distance(
                         _graph->container_group(_current_group).begin(),
                         std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), object));
@@ -4664,7 +4661,7 @@ bool Editor::split(Geo::Geometry *object, const Geo::Point &pos)
                     !tvalues.empty() &&
                     Geo::split(*static_cast<Geo::BSpline *>(object), is_cubic, std::get<0>(tvalues.front()), bspline0, bspline1))
                 {
-                    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
+                    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> remove, append;
                     size_t index = std::distance(
                         _graph->container_group(_current_group).begin(),
                         std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), object));
@@ -4689,7 +4686,7 @@ bool Editor::split(Geo::Geometry *object, const Geo::Point &pos)
             if (Geo::Point point0, point1;
                 Geo::is_intersected(pos, Geo::Point(arc->x, arc->y), *arc, point0, point1, false) && Geo::split(*arc, point0, arc0, arc1))
             {
-                std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
+                std::vector<std::tuple<Geo::DObject *, size_t, size_t>> remove, append;
                 size_t index = std::distance(
                     _graph->container_group(_current_group).begin(),
                     std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), object));
@@ -4713,7 +4710,7 @@ bool Editor::split(Geo::Geometry *object, const Geo::Point &pos)
             if (Geo::Point point0, point1; Geo::is_intersected(ellipse->center(), pos, *ellipse, point0, point1, false) &&
                                            Geo::split(*ellipse, point0, ellipse0, ellipse1))
             {
-                std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove, append;
+                std::vector<std::tuple<Geo::DObject *, size_t, size_t>> remove, append;
                 size_t index = std::distance(
                     _graph->container_group(_current_group).begin(),
                     std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), object));
@@ -4736,7 +4733,7 @@ bool Editor::split(Geo::Geometry *object, const Geo::Point &pos)
     return false;
 }
 
-bool Editor::line_array(const std::vector<Geo::Geometry *> &objects, int x, int y, double x_space, double y_space)
+bool Editor::line_array(const std::vector<Geo::DObject *> &objects, int x, int y, double x_space, double y_space)
 {
     if (objects.empty() || x == 0 || y == 0 || (x == 1 && y == 1))
     {
@@ -4744,11 +4741,11 @@ bool Editor::line_array(const std::vector<Geo::Geometry *> &objects, int x, int 
     }
 
     double left = DBL_MAX, right = -DBL_MAX, top = -DBL_MAX, bottom = DBL_MAX;
-    for (const Geo::Geometry *object : objects)
+    for (const Geo::DObject *object : objects)
     {
         if (object->type() != Geo::Type::DIMENSION)
         {
-            const Geo::AABBRectParams rect = object->aabbrect_params();
+            const Geo::AABBRect rect = object->aabbrect();
             left = std::min(rect.left, left);
             right = std::max(rect.right, right);
             top = std::max(rect.top, top);
@@ -4769,7 +4766,7 @@ bool Editor::line_array(const std::vector<Geo::Geometry *> &objects, int x, int 
         y = -y;
     }
 
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> items;
     size_t index = _graph->container_group(_current_group).size();
     for (int i = 0; i < x; ++i)
     {
@@ -4779,7 +4776,7 @@ bool Editor::line_array(const std::vector<Geo::Geometry *> &objects, int x, int 
             {
                 continue;
             }
-            for (Geo::Geometry *object : objects)
+            for (Geo::DObject *object : objects)
             {
                 if (object->type() != Geo::Type::DIMENSION)
                 {
@@ -4799,14 +4796,14 @@ bool Editor::line_array(const std::vector<Geo::Geometry *> &objects, int x, int 
     return true;
 }
 
-bool Editor::ring_array(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const int n)
+bool Editor::ring_array(const std::vector<Geo::DObject *> &objects, const double x, const double y, const int n)
 {
     if (n <= 1 || objects.empty())
     {
         return false;
     }
 
-    for (Geo::Geometry *obj : objects)
+    for (Geo::DObject *obj : objects)
     {
         if (obj->type() != Geo::Type::DIMENSION)
         {
@@ -4814,11 +4811,11 @@ bool Editor::ring_array(const std::vector<Geo::Geometry *> &objects, const doubl
         }
     }
 
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> items;
     size_t index = _graph->container_group(_current_group).size();
     for (int i = 1; i < n; ++i)
     {
-        for (Geo::Geometry *obj : objects)
+        for (Geo::DObject *obj : objects)
         {
             if (obj->type() != Geo::Type::DIMENSION)
             {
@@ -4837,7 +4834,7 @@ bool Editor::ring_array(const std::vector<Geo::Geometry *> &objects, const doubl
     return true;
 }
 
-void Editor::up(Geo::Geometry *item)
+void Editor::up(Geo::DObject *item)
 {
     for (size_t i = 0, count = _graph->container_group(_current_group).size() - 1; i < count; ++i)
     {
@@ -4850,7 +4847,7 @@ void Editor::up(Geo::Geometry *item)
     }
 }
 
-void Editor::down(Geo::Geometry *item)
+void Editor::down(Geo::DObject *item)
 {
     for (size_t i = 1, count = _graph->container_group(_current_group).size(); i < count; ++i)
     {
@@ -4863,10 +4860,10 @@ void Editor::down(Geo::Geometry *item)
     }
 }
 
-void Editor::rotate(const std::vector<Geo::Geometry *> &objects, const double x, const double y, const double rad)
+void Editor::rotate(const std::vector<Geo::DObject *> &objects, const double x, const double y, const double rad)
 {
-    std::vector<Geo::Geometry *> items;
-    for (Geo::Geometry *geo : objects)
+    std::vector<Geo::DObject *> items;
+    for (Geo::DObject *geo : objects)
     {
         if (geo->type() != Geo::Type::DIMENSION)
         {
@@ -4879,9 +4876,9 @@ void Editor::rotate(const std::vector<Geo::Geometry *> &objects, const double x,
     _backup.push_command(new UndoStack::RotateCommand(items, x, y, rad));
 }
 
-void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, const bool unitary, const bool all_layers)
+void Editor::flip(std::vector<Geo::DObject *> objects, const bool direction, const bool unitary, const bool all_layers)
 {
-    std::vector<Geo::Geometry *> items;
+    std::vector<Geo::DObject *> items;
     Geo::Point coord;
     if (objects.empty())
     {
@@ -4890,13 +4887,13 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
             if (all_layers)
             {
                 {
-                    const Geo::AABBRectParams rect = _graph->aabbrect_params();
+                    const Geo::AABBRect rect = _graph->aabbrect();
                     coord.x = (rect.left + rect.right) / 2;
                     coord.y = (rect.top + rect.bottom) / 2;
                 }
                 for (ContainerGroup &group : _graph->container_groups())
                 {
-                    for (Geo::Geometry *geo : group)
+                    for (Geo::DObject *geo : group)
                     {
                         if (geo->type() == Geo::Type::DIMENSION)
                         {
@@ -4924,11 +4921,11 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
             else
             {
                 {
-                    const Geo::AABBRectParams rect = _graph->container_group(_current_group).aabbrect_params();
+                    const Geo::AABBRect rect = _graph->container_group(_current_group).aabbrect();
                     coord.x = (rect.left + rect.right) / 2;
                     coord.y = (rect.top + rect.bottom) / 2;
                 }
-                for (Geo::Geometry *geo : _graph->container_group(_current_group))
+                for (Geo::DObject *geo : _graph->container_group(_current_group))
                 {
                     if (geo->type() == Geo::Type::DIMENSION)
                     {
@@ -4959,7 +4956,7 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
             {
                 for (ContainerGroup &group : _graph->container_groups())
                 {
-                    for (Geo::Geometry *geo : group)
+                    for (Geo::DObject *geo : group)
                     {
                         if (geo->type() == Geo::Type::DIMENSION)
                         {
@@ -4970,7 +4967,7 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
                             items.push_back(geo);
                         }
                         {
-                            const Geo::AABBRectParams rect = geo->aabbrect_params();
+                            const Geo::AABBRect rect = geo->aabbrect();
                             coord.x = (rect.left + rect.right) / 2;
                             coord.y = (rect.top + rect.bottom) / 2;
                         }
@@ -4992,7 +4989,7 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
             }
             else
             {
-                for (Geo::Geometry *geo : _graph->container_group(_current_group))
+                for (Geo::DObject *geo : _graph->container_group(_current_group))
                 {
                     if (geo->type() == Geo::Type::DIMENSION)
                     {
@@ -5003,7 +5000,7 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
                         items.push_back(geo);
                     }
                     {
-                        const Geo::AABBRectParams rect = geo->aabbrect_params();
+                        const Geo::AABBRect rect = geo->aabbrect();
                         coord.x = (rect.left + rect.right) / 2;
                         coord.y = (rect.top + rect.bottom) / 2;
                     }
@@ -5029,12 +5026,12 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
         if (unitary)
         {
             double left = DBL_MAX, top = -DBL_MAX, right = -DBL_MAX, bottom = DBL_MAX;
-            for (Geo::Geometry *geo : objects)
+            for (Geo::DObject *geo : objects)
             {
                 if (geo->type() != Geo::Type::DIMENSION)
                 {
                     items.push_back(geo);
-                    const Geo::AABBRectParams rect = geo->aabbrect_params();
+                    const Geo::AABBRect rect = geo->aabbrect();
                     left = std::min(left, rect.left);
                     top = std::max(top, rect.top);
                     right = std::max(right, rect.right);
@@ -5044,7 +5041,7 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
             coord.x = (left + right) / 2;
             coord.y = (top + bottom) / 2;
 
-            for (Geo::Geometry *geo : items)
+            for (Geo::DObject *geo : items)
             {
                 if (direction)
                 {
@@ -5062,7 +5059,7 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
         }
         else
         {
-            for (Geo::Geometry *geo : objects)
+            for (Geo::DObject *geo : objects)
             {
                 if (geo->type() == Geo::Type::DIMENSION)
                 {
@@ -5073,7 +5070,7 @@ void Editor::flip(std::vector<Geo::Geometry *> objects, const bool direction, co
                     items.push_back(geo);
                 }
                 {
-                    const Geo::AABBRectParams rect = geo->aabbrect_params();
+                    const Geo::AABBRect rect = geo->aabbrect();
                     coord.x = (rect.left + rect.right) / 2;
                     coord.y = (rect.top + rect.bottom) / 2;
                 }
@@ -5133,13 +5130,13 @@ void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
             }
         }
     }
-    for (const Geo::Geometry *object : _graph->container_group(_current_group))
+    for (const Geo::DObject *object : _graph->container_group(_current_group))
     {
         switch (object->type())
         {
         case Geo::Type::POLYGON:
             if (const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
-                Geo::is_intersected(polygon->bounding_rect(), head, tail))
+                Geo::is_intersected(polygon->aabbrect(), head, tail))
             {
                 for (size_t i = 1, count = polygon->size(); i < count; ++i)
                 {
@@ -5152,7 +5149,7 @@ void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
             break;
         case Geo::Type::POLYLINE:
             if (const Geo::Polyline *polyline2 = static_cast<const Geo::Polyline *>(object);
-                polyline2 != polyline && Geo::is_intersected(polyline2->bounding_rect(), head, tail))
+                polyline2 != polyline && Geo::is_intersected(polyline2->aabbrect(), head, tail))
             {
                 for (size_t i = 1, count = polyline2->size(); i < count; ++i)
                 {
@@ -5195,7 +5192,7 @@ void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
             break;
         case Geo::Type::BEZIER:
             if (const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
-                Geo::is_intersected(bezier->bounding_rect(), head, tail))
+                Geo::is_intersected(bezier->aabbrect(), head, tail))
             {
                 if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier, points))
                 {
@@ -5211,7 +5208,7 @@ void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
             break;
         case Geo::Type::BSPLINE:
             if (const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
-                Geo::is_intersected(bspline->bounding_rect(), head, tail))
+                Geo::is_intersected(bspline->aabbrect(), head, tail))
             {
                 if (std::vector<Geo::Point> points;
                     Geo::is_intersected(head, tail, *bspline, dynamic_cast<const Geo::CubicBSpline *>(bspline), points))
@@ -5279,7 +5276,7 @@ void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
             {
                 if (_graph->container_group(_current_group)[i] == polyline)
                 {
-                    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove_items;
+                    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(polyline);
                     _backup.push_command(new UndoStack::ObjectCommand(remove_items, false));
@@ -5313,7 +5310,7 @@ void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
         {
             Geo::Polyline *polyline0 = new Geo::Polyline(polyline->begin(), polyline->begin() + anchor_index);
             Geo::Polyline *polyline1 = new Geo::Polyline(polyline->begin() + anchor_index, polyline->end());
-            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
             for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
             {
                 if (_graph->container_group(_current_group)[i] == polyline)
@@ -5351,7 +5348,7 @@ void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
             Geo::Polyline *polyline0 = new Geo::Polyline(polyline->begin(), polyline->begin() + anchor_index);
             Geo::Polyline *polyline1 = new Geo::Polyline(polyline->begin() + anchor_index - 1, polyline->end());
             polyline1->front() = point1;
-            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
             for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
             {
                 if (_graph->container_group(_current_group)[i] == polyline)
@@ -5389,7 +5386,7 @@ void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
             Geo::Polyline *polyline0 = new Geo::Polyline(polyline->begin(), polyline->begin() + anchor_index + 1);
             Geo::Polyline *polyline1 = new Geo::Polyline(polyline->begin() + anchor_index, polyline->end());
             polyline0->back() = point0;
-            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
             for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
             {
                 if (_graph->container_group(_current_group)[i] == polyline)
@@ -5414,7 +5411,7 @@ void Editor::trim(Geo::Polyline *polyline, const double x, const double y)
         Geo::Polyline *polyline1 = new Geo::Polyline(polyline->begin() + anchor_index - 1, polyline->end());
         polyline0->back() = point0;
         polyline1->front() = point1;
-        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+        std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
         for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
         {
             if (_graph->container_group(_current_group)[i] == polyline)
@@ -5470,13 +5467,13 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
             }
         }
     }
-    for (const Geo::Geometry *object : _graph->container_group(_current_group))
+    for (const Geo::DObject *object : _graph->container_group(_current_group))
     {
         switch (object->type())
         {
         case Geo::Type::POLYGON:
             if (const Geo::Polygon *polygon2 = static_cast<const Geo::Polygon *>(object);
-                polygon2 != polygon && Geo::is_intersected(polygon2->bounding_rect(), head, tail))
+                polygon2 != polygon && Geo::is_intersected(polygon2->aabbrect(), head, tail))
             {
                 for (size_t i = 1, count = polygon2->size(); i < count; ++i)
                 {
@@ -5489,7 +5486,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
             break;
         case Geo::Type::POLYLINE:
             if (const Geo::Polyline *polyline2 = static_cast<const Geo::Polyline *>(object);
-                Geo::is_intersected(polyline2->bounding_rect(), head, tail))
+                Geo::is_intersected(polyline2->aabbrect(), head, tail))
             {
                 for (size_t i = 1, count = polyline2->size(); i < count; ++i)
                 {
@@ -5532,7 +5529,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
             break;
         case Geo::Type::BEZIER:
             if (const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
-                Geo::is_intersected(bezier->bounding_rect(), head, tail))
+                Geo::is_intersected(bezier->aabbrect(), head, tail))
             {
                 if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier, points))
                 {
@@ -5548,7 +5545,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
             break;
         case Geo::Type::BSPLINE:
             if (const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
-                Geo::is_intersected(bspline->bounding_rect(), head, tail))
+                Geo::is_intersected(bspline->aabbrect(), head, tail))
             {
                 if (std::vector<Geo::Point> points;
                     Geo::is_intersected(head, tail, *bspline, dynamic_cast<const Geo::CubicBSpline *>(bspline), points))
@@ -5616,7 +5613,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
             {
                 if (_graph->container_group(_current_group)[i] == polygon)
                 {
-                    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> remove_items;
+                    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(polygon);
                     _backup.push_command(new UndoStack::ObjectCommand(remove_items, false));
@@ -5631,7 +5628,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == polygon)
                 {
                     Geo::Polyline *polyline = new Geo::Polyline(polygon->begin() + 1, polygon->end());
-                    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+                    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(polygon);
                     _graph->container_group(_current_group).insert(i, polyline);
@@ -5649,7 +5646,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
                 if (_graph->container_group(_current_group)[i] == polygon)
                 {
                     Geo::Polyline *polyline = new Geo::Polyline(polygon->begin(), polygon->end() - 1);
-                    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+                    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(polygon);
                     _graph->container_group(_current_group).insert(i, polyline);
@@ -5664,7 +5661,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
         {
             Geo::Polyline *polyline0 = new Geo::Polyline(polygon->begin(), polygon->begin() + anchor_index);
             Geo::Polyline *polyline1 = new Geo::Polyline(polygon->begin() + anchor_index, polygon->end());
-            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
             for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
             {
                 if (_graph->container_group(_current_group)[i] == polygon)
@@ -5693,7 +5690,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
                 {
                     Geo::Polyline *polyline = new Geo::Polyline(polygon->begin(), polygon->end());
                     polyline->front() = point1;
-                    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+                    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(polygon);
                     _graph->container_group(_current_group).insert(i, polyline);
@@ -5713,7 +5710,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
                     Geo::Polyline *polyline = new Geo::Polyline(polygon->begin() + anchor_index - 1, polygon->end());
                     polyline->front() = point1;
                     polyline->append(polygon->begin(), polygon->begin() + anchor_index);
-                    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+                    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(polygon);
                     _graph->container_group(_current_group).insert(i, polyline);
@@ -5735,7 +5732,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
                 {
                     Geo::Polyline *polyline = new Geo::Polyline(polygon->begin(), polygon->end());
                     polyline->back() = point0;
-                    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+                    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(polygon);
                     _graph->container_group(_current_group).insert(i, polyline);
@@ -5755,7 +5752,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
                     Geo::Polyline *polyline = new Geo::Polyline(polygon->begin() + anchor_index, polygon->end());
                     polyline->append(polygon->begin(), polygon->begin() + anchor_index + 1);
                     polyline->back() = point0;
-                    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+                    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(polygon);
                     _graph->container_group(_current_group).insert(i, polyline);
@@ -5777,7 +5774,7 @@ void Editor::trim(Geo::Polygon *polygon, const double x, const double y)
                 polyline->append(polygon->begin(), polygon->begin() + anchor_index + 1);
                 polyline->back() = point0;
                 polyline->front() = point1;
-                std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+                std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
                 remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                 _view_tree.remove(polygon);
                 _graph->container_group(_current_group).insert(i, polyline);
@@ -5801,22 +5798,22 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
 
     {
         std::vector<std::tuple<size_t, double>> temp;
-        for (size_t i = 0, end = bezier->size() - order; i < end; i += order)
+        for (size_t i = 0, end = bezier->control_points.size() - order; i < end; i += order)
         {
             Geo::Polyline polyline;
-            polyline.append((*bezier)[i]);
+            polyline.append(bezier->control_points[i]);
             double t = 0;
             while (t <= 1)
             {
                 Geo::Point point;
                 for (int j = 0; j <= order; ++j)
                 {
-                    point += ((*bezier)[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                    point += (bezier->control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
                 polyline.append(point);
                 t += Geo::CubicBezier::default_step;
             }
-            polyline.append((*bezier)[i + order]);
+            polyline.append(bezier->control_points[i + order]);
             Geo::down_sampling(polyline, Geo::CubicBezier::default_down_sampling_value);
 
             std::vector<Geo::Point> points;
@@ -5837,7 +5834,7 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
                 Geo::Point coord;
                 for (int j = 0; j <= order; ++j)
                 {
-                    coord += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
+                    coord += (bezier->control_points[j + anchor_index] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
                 if (double dis = Geo::distance(anchor, coord); dis < min_dis[1])
                 {
@@ -5860,7 +5857,7 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
             Geo::Point coord;
             for (int j = 0; j <= order; ++j)
             {
-                coord += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                coord += (bezier->control_points[j + anchor_index] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             return Geo::distance(coord, anchor) * 1e9;
         };
@@ -5883,30 +5880,39 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
         anchor.clear();
         for (int j = 0; j <= order; ++j)
         {
-            anchor += ((*bezier)[j + anchor_index] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+            anchor += (bezier->control_points[j + anchor_index] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
         }
         anchor_t = t;
     }
 
     std::vector<std::tuple<size_t, double, double, double>> tvalues; // index, t, x, y
     // 找到自身交点
-    const Geo::CubicBezier anchor_bezier(bezier->begin() + anchor_index, bezier->begin() + anchor_index + order + 1, false);
-    /*for (size_t i = 0, end = bezier->size() - order; i < end; i += order)
+    const Geo::CubicBezier anchor_bezier(bezier->control_points.begin() + anchor_index,
+                                         bezier->control_points.begin() + anchor_index + order + 1, false);
+    /*for (size_t i = 0, end = bezier->control_points.size() - order; i < end; i += order)
     {
         if (i == anchor_index)
         {
             continue;
         }
-        Geo::Bezier temp_bezier(bezier->begin() + i, bezier->begin() + i + order + 1, order, false);
+        Geo::Bezier temp_bezier(bezier->control_points.begin() + i, bezier->control_points.begin() + i + order + 1, order, false);
         std::vector<Geo::Point> temp;
         Geo::is_intersected(anchor_bezier, temp_bezier, temp, &tvalues);
     }*/
-    for (const Geo::Geometry *object : _graph->container_group(_current_group))
+    for (const Geo::DObject *object : _graph->container_group(_current_group))
     {
         std::vector<Geo::Point> temp;
         switch (object->type())
         {
         case Geo::Type::POLYGON:
+            {
+                const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
+                for (size_t i = 1, count = polygon->size(); i < count; ++i)
+                {
+                    Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], anchor_bezier, temp, false, &tvalues);
+                }
+            }
+            break;
         case Geo::Type::POLYLINE:
             {
                 const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
@@ -5952,16 +5958,18 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
 
     if (tvalues.empty())
     {
-        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+        std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
         for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
         {
             if (_graph->container_group(_current_group)[i] == bezier)
             {
                 remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                 _view_tree.remove(bezier);
-                Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
-                Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier->begin() + anchor_index + order, bezier->end(), false);
-                if (bezier0->size() > order)
+                Geo::CubicBezier *bezier0 =
+                    new Geo::CubicBezier(bezier->control_points.begin(), bezier->control_points.begin() + anchor_index + 1, false);
+                Geo::CubicBezier *bezier1 =
+                    new Geo::CubicBezier(bezier->control_points.begin() + anchor_index + order, bezier->control_points.end(), false);
+                if (bezier0->control_points.size() > order)
                 {
                     _graph->container_group(_current_group).insert(i, bezier0);
                     _view_tree.append(bezier0);
@@ -5971,7 +5979,7 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
                 {
                     delete bezier0;
                 }
-                if (bezier1->size() > order)
+                if (bezier1->control_points.size() > order)
                 {
                     _graph->container_group(_current_group).insert(i, bezier1);
                     _view_tree.append(bezier1);
@@ -6002,28 +6010,30 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
     {
         Geo::CubicBezier bezier_left, bezier_right;
         Geo::split(anchor_bezier, 0, left_t, bezier_left, bezier_right);
-        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+        std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
         Geo::CubicBezier *bezier0 = nullptr, *bezier1 = nullptr;
         if (anchor_t < left_t)
         {
-            bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
+            bezier0 = new Geo::CubicBezier(bezier->control_points.begin(), bezier->control_points.begin() + anchor_index + 1, false);
             bezier1 = new Geo::CubicBezier(bezier_right);
-            bezier1->append(bezier->begin() + anchor_index + order + 1, bezier->end());
+            bezier1->control_points.insert(bezier1->control_points.end(), bezier->control_points.begin() + anchor_index + order + 1,
+                                           bezier->control_points.end());
             bezier1->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
         }
         else
         {
-            bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
-            bezier0->append(bezier_left.begin() + 1, bezier_left.end());
+            bezier0 = new Geo::CubicBezier(bezier->control_points.begin(), bezier->control_points.begin() + anchor_index + 1, false);
+            bezier0->control_points.insert(bezier0->control_points.end(), bezier_left.control_points.begin() + 1,
+                                           bezier_left.control_points.end());
             bezier0->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
-            bezier1 = new Geo::CubicBezier(bezier->begin() + anchor_index + order, bezier->end(), false);
+            bezier1 = new Geo::CubicBezier(bezier->control_points.begin() + anchor_index + order, bezier->control_points.end(), false);
         }
-        if (bezier0->size() <= order)
+        if (bezier0->control_points.size() <= order)
         {
             delete bezier0;
             bezier0 = nullptr;
         }
-        if (bezier1->size() <= order)
+        if (bezier1->control_points.size() <= order)
         {
             delete bezier1;
             bezier1 = nullptr;
@@ -6057,18 +6067,20 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
         {
             Geo::CubicBezier bezier_left, bezier_right;
             Geo::split(anchor_bezier, 0, left_t, bezier_left, bezier_right);
-            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
             for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
             {
                 if (_graph->container_group(_current_group)[i] == bezier)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(bezier);
-                    Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
+                    Geo::CubicBezier *bezier0 =
+                        new Geo::CubicBezier(bezier->control_points.begin(), bezier->control_points.begin() + anchor_index + 1, false);
                     Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier_right);
-                    bezier1->append(bezier->begin() + anchor_index + order + 1, bezier->end());
+                    bezier1->control_points.insert(bezier1->control_points.end(), bezier->control_points.begin() + anchor_index + order + 1,
+                                                   bezier->control_points.end());
                     bezier1->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
-                    if (bezier0->size() > order)
+                    if (bezier0->control_points.size() > order)
                     {
                         _graph->container_group(_current_group).insert(i, bezier0);
                         _view_tree.append(bezier0);
@@ -6078,7 +6090,7 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
                     {
                         delete bezier0;
                     }
-                    if (bezier1->size() > order)
+                    if (bezier1->control_points.size() > order)
                     {
                         _graph->container_group(_current_group).insert(i, bezier1);
                         _view_tree.append(bezier1);
@@ -6097,18 +6109,21 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
         {
             Geo::CubicBezier bezier_left, bezier_right;
             Geo::split(anchor_bezier, 0, right_t, bezier_left, bezier_right);
-            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
             for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
             {
                 if (_graph->container_group(_current_group)[i] == bezier)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(bezier);
-                    Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
-                    bezier0->append(bezier_left.begin() + 1, bezier_left.end());
+                    Geo::CubicBezier *bezier0 =
+                        new Geo::CubicBezier(bezier->control_points.begin(), bezier->control_points.begin() + anchor_index + 1, false);
+                    bezier0->control_points.insert(bezier0->control_points.end(), bezier_left.control_points.begin() + 1,
+                                                   bezier_left.control_points.end());
                     bezier0->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
-                    Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier->begin() + anchor_index + order, bezier->end(), false);
-                    if (bezier0->size() > order)
+                    Geo::CubicBezier *bezier1 =
+                        new Geo::CubicBezier(bezier->control_points.begin() + anchor_index + order, bezier->control_points.end(), false);
+                    if (bezier0->control_points.size() > order)
                     {
                         _graph->container_group(_current_group).insert(i, bezier0);
                         _view_tree.append(bezier0);
@@ -6118,7 +6133,7 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
                     {
                         delete bezier0;
                     }
-                    if (bezier1->size() > order)
+                    if (bezier1->control_points.size() > order)
                     {
                         _graph->container_group(_current_group).insert(i, bezier1);
                         _view_tree.append(bezier1);
@@ -6138,18 +6153,21 @@ void Editor::trim(Geo::CubicBezier *bezier, const double x, const double y)
             Geo::CubicBezier bezier_left, bezier_right, temp_bezier;
             Geo::split(anchor_bezier, 0, left_t, bezier_left, temp_bezier);
             Geo::split(anchor_bezier, 0, right_t, temp_bezier, bezier_right);
-            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
             for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
             {
                 if (_graph->container_group(_current_group)[i] == bezier)
                 {
                     remove_items.emplace_back(_graph->container_group(_current_group).pop(i), _current_group, i);
                     _view_tree.remove(bezier);
-                    Geo::CubicBezier *bezier0 = new Geo::CubicBezier(bezier->begin(), bezier->begin() + anchor_index + 1, false);
-                    bezier0->append(bezier_left.begin() + 1, bezier_left.end());
+                    Geo::CubicBezier *bezier0 =
+                        new Geo::CubicBezier(bezier->control_points.begin(), bezier->control_points.begin() + anchor_index + 1, false);
+                    bezier0->control_points.insert(bezier0->control_points.end(), bezier_left.control_points.begin() + 1,
+                                                   bezier_left.control_points.end());
                     bezier0->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
                     Geo::CubicBezier *bezier1 = new Geo::CubicBezier(bezier_right);
-                    bezier1->append(bezier->begin() + anchor_index + order + 1, bezier->end());
+                    bezier1->control_points.insert(bezier1->control_points.end(), bezier->control_points.begin() + anchor_index + order + 1,
+                                                   bezier->control_points.end());
                     bezier1->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
                     _graph->container_group(_current_group).insert(i, bezier1);
                     _graph->container_group(_current_group).insert(i, bezier0);
@@ -6238,7 +6256,7 @@ void Editor::trim(Geo::BSpline *bspline, const double x, const double y)
                 }
             } while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
-            lower = std::max(knots[0], anchor_t - 1e-3), upper = std::min(knots[nplusc - 1], anchor_t + 1e-3);
+            lower = std::max(knots[0], v - 1e-3), upper = std::min(knots[nplusc - 1], v + 1e-3);
             const std::function<double(const double)> f = [&](const double t)
             {
                 std::vector<double> nbasis;
@@ -6282,12 +6300,20 @@ void Editor::trim(Geo::BSpline *bspline, const double x, const double y)
     }
 
     std::vector<std::tuple<double, double, double>> tvalues; // t, x, y
-    for (const Geo::Geometry *object : _graph->container_group(_current_group))
+    for (const Geo::DObject *object : _graph->container_group(_current_group))
     {
         std::vector<Geo::Point> temp;
         switch (object->type())
         {
         case Geo::Type::POLYGON:
+            {
+                const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
+                for (size_t i = 1, count = polygon->size(); i < count; ++i)
+                {
+                    Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], *bspline, is_cubic, temp, false, &tvalues);
+                }
+            }
+            break;
         case Geo::Type::POLYLINE:
             {
                 const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
@@ -6370,7 +6396,7 @@ void Editor::trim(Geo::BSpline *bspline, const double x, const double y)
                 return;
             }
         }
-        std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+        std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
         for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
         {
             if (_graph->container_group(_current_group)[i] == bspline)
@@ -6416,7 +6442,7 @@ void Editor::trim(Geo::BSpline *bspline, const double x, const double y)
                     return;
                 }
             }
-            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
             for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
             {
                 if (_graph->container_group(_current_group)[i] == bspline)
@@ -6448,7 +6474,7 @@ void Editor::trim(Geo::BSpline *bspline, const double x, const double y)
                 Geo::split(*bspline, false, right_t, bspline_left, bspline_right);
                 result = new Geo::QuadBSpline(bspline_left);
             }
-            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
             for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
             {
                 if (_graph->container_group(_current_group)[i] == bspline)
@@ -6498,7 +6524,7 @@ void Editor::trim(Geo::BSpline *bspline, const double x, const double y)
                     return;
                 }
             }
-            std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+            std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
             for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
             {
                 if (_graph->container_group(_current_group)[i] == bspline)
@@ -6522,12 +6548,30 @@ void Editor::trim(Geo::BSpline *bspline, const double x, const double y)
 void Editor::trim(Geo::Circle *circle, const double x, const double y)
 {
     std::vector<Geo::Point> intersections;
-    for (const Geo::Geometry *object : _graph->container_group(_current_group))
+    for (const Geo::DObject *object : _graph->container_group(_current_group))
     {
         std::vector<Geo::Point> temp;
         switch (object->type())
         {
         case Geo::Type::POLYGON:
+            {
+                const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
+                Geo::Point point0, point1;
+                for (size_t i = 1, count = polygon->size(); i < count; ++i)
+                {
+                    switch (Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], *circle, point0, point1))
+                    {
+                    case 2:
+                        intersections.emplace_back(point1);
+                    case 1:
+                        intersections.emplace_back(point0);
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            break;
         case Geo::Type::POLYLINE:
             {
                 const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
@@ -6638,7 +6682,7 @@ void Editor::trim(Geo::Circle *circle, const double x, const double y)
                                  (anchor.x - intersections[index0].x) * (intersections[index1].y - anchor.y) <
                                      (anchor.y - intersections[index0].y) * (intersections[index1].x - anchor.x));
 
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
     for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
     {
         if (_graph->container_group(_current_group)[i] == circle)
@@ -6657,12 +6701,30 @@ void Editor::trim(Geo::Circle *circle, const double x, const double y)
 void Editor::trim(Geo::Arc *arc, const double x, const double y)
 {
     std::vector<Geo::Point> intersections;
-    for (const Geo::Geometry *object : _graph->container_group(_current_group))
+    for (const Geo::DObject *object : _graph->container_group(_current_group))
     {
         std::vector<Geo::Point> temp;
         switch (object->type())
         {
         case Geo::Type::POLYGON:
+            {
+                const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
+                Geo::Point point0, point1;
+                for (size_t i = 1, count = polygon->size(); i < count; ++i)
+                {
+                    switch (Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], *arc, point0, point1))
+                    {
+                    case 2:
+                        intersections.emplace_back(point1);
+                    case 1:
+                        intersections.emplace_back(point0);
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            break;
         case Geo::Type::POLYLINE:
             {
                 const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
@@ -6834,7 +6896,7 @@ void Editor::trim(Geo::Arc *arc, const double x, const double y)
     {
         return;
     }
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
     for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
     {
         if (_graph->container_group(_current_group)[i] == arc)
@@ -6862,12 +6924,30 @@ void Editor::trim(Geo::Arc *arc, const double x, const double y)
 void Editor::trim(Geo::Ellipse *ellipse, const double x, const double y)
 {
     std::vector<Geo::Point> intersections;
-    for (const Geo::Geometry *object : _graph->container_group(_current_group))
+    for (const Geo::DObject *object : _graph->container_group(_current_group))
     {
         std::vector<Geo::Point> temp;
         switch (object->type())
         {
         case Geo::Type::POLYGON:
+            {
+                const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
+                Geo::Point point0, point1;
+                for (size_t i = 1, count = polygon->size(); i < count; ++i)
+                {
+                    switch (Geo::is_intersected((*polygon)[i - 1], (*polygon)[i], *ellipse, point0, point1))
+                    {
+                    case 2:
+                        intersections.emplace_back(point1);
+                    case 1:
+                        intersections.emplace_back(point0);
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+            break;
         case Geo::Type::POLYLINE:
             {
                 const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
@@ -7085,7 +7165,7 @@ void Editor::trim(Geo::Ellipse *ellipse, const double x, const double y)
     {
         return;
     }
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
     for (size_t i = 0, count = _graph->container_group(_current_group).size(); i < count; ++i)
     {
         if (_graph->container_group(_current_group)[i] == ellipse)
@@ -7116,13 +7196,13 @@ void Editor::extend(Geo::Polyline *polyline, const double x, const double y)
     if (Geo::distance_square(polyline->front().x, polyline->front().y, x, y) <=
         Geo::distance_square(polyline->back().x, polyline->back().y, x, y)) // 延长头
     {
-        const Geo::AABBRectParams rect = _graph->container_group(_current_group).aabbrect_params();
+        const Geo::AABBRect rect = _graph->container_group(_current_group).aabbrect();
         head = polyline->front();
         tail = head + (head - (*polyline)[1]).normalize() * std::hypot(rect.right - rect.left, rect.top - rect.bottom);
     }
     else // 延长尾
     {
-        const Geo::AABBRectParams rect = _graph->container_group(_current_group).aabbrect_params();
+        const Geo::AABBRect rect = _graph->container_group(_current_group).aabbrect();
         head = polyline->back();
         tail = head + (head - (*polyline)[polyline->size() - 2]).normalize() * std::hypot(rect.right - rect.left, rect.top - rect.bottom);
     }
@@ -7137,13 +7217,13 @@ void Editor::extend(Geo::Polyline *polyline, const double x, const double y)
             intersections.emplace_back(point);
         }
     }
-    for (const Geo::Geometry *object : _graph->container_group(_current_group))
+    for (const Geo::DObject *object : _graph->container_group(_current_group))
     {
         switch (object->type())
         {
         case Geo::Type::POLYGON:
             if (const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
-                Geo::is_intersected(polygon->bounding_rect(), head, tail))
+                Geo::is_intersected(polygon->aabbrect(), head, tail))
             {
                 for (size_t i = 1, count = polygon->size(); i < count; ++i)
                 {
@@ -7156,7 +7236,7 @@ void Editor::extend(Geo::Polyline *polyline, const double x, const double y)
             break;
         case Geo::Type::POLYLINE:
             if (const Geo::Polyline *polyline2 = static_cast<const Geo::Polyline *>(object);
-                polyline2 != polyline && Geo::is_intersected(polyline2->bounding_rect(), head, tail))
+                polyline2 != polyline && Geo::is_intersected(polyline2->aabbrect(), head, tail))
             {
                 for (size_t i = 1, count = polyline2->size(); i < count; ++i)
                 {
@@ -7199,7 +7279,7 @@ void Editor::extend(Geo::Polyline *polyline, const double x, const double y)
             break;
         case Geo::Type::BEZIER:
             if (const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
-                Geo::is_intersected(bezier->bounding_rect(), head, tail))
+                Geo::is_intersected(bezier->aabbrect(), head, tail))
             {
                 if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier, points))
                 {
@@ -7215,7 +7295,7 @@ void Editor::extend(Geo::Polyline *polyline, const double x, const double y)
             break;
         case Geo::Type::BSPLINE:
             if (const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
-                Geo::is_intersected(bspline->bounding_rect(), head, tail))
+                Geo::is_intersected(bspline->aabbrect(), head, tail))
             {
                 if (std::vector<Geo::Point> points;
                     Geo::is_intersected(head, tail, *bspline, dynamic_cast<const Geo::CubicBSpline *>(bspline), points))
@@ -7297,15 +7377,16 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
     if (Geo::distance_square(bezier->front().x, bezier->front().y, x, y) <=
         Geo::distance_square(bezier->back().x, bezier->back().y, x, y)) // 延长头
     {
-        const Geo::AABBRect rect = _graph->container_group(_current_group).bounding_rect();
+        const Geo::AABBRect rect(_graph->container_group(_current_group).aabbrect());
         head = bezier->front();
-        tail = head + (head - (*bezier)[1]).normalize() * std::hypot(rect.width(), rect.height());
+        tail = head + (head - bezier->control_points[1]).normalize() * std::hypot(rect.right - rect.left, rect.bottom - rect.top);
     }
     else // 延长尾
     {
-        const Geo::AABBRect rect = _graph->container_group(_current_group).bounding_rect();
+        const Geo::AABBRect rect(_graph->container_group(_current_group).aabbrect());
         head = bezier->back();
-        tail = head + (head - (*bezier)[bezier->size() - 2]).normalize() * std::hypot(rect.width(), rect.height());
+        tail = head + (head - bezier->control_points[bezier->control_points.size() - 2]).normalize() *
+                          std::hypot(rect.right - rect.left, rect.bottom - rect.top);
     }
 
     std::vector<Geo::Point> intersections;
@@ -7316,13 +7397,13 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
             intersections.erase(std::remove(intersections.begin(), intersections.end(), head), intersections.end());
         }
     }
-    for (const Geo::Geometry *object : _graph->container_group(_current_group))
+    for (const Geo::DObject *object : _graph->container_group(_current_group))
     {
         switch (object->type())
         {
         case Geo::Type::POLYGON:
             if (const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
-                Geo::is_intersected(polygon->bounding_rect(), head, tail))
+                Geo::is_intersected(polygon->aabbrect(), head, tail))
             {
                 for (size_t i = 1, count = polygon->size(); i < count; ++i)
                 {
@@ -7335,7 +7416,7 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
             break;
         case Geo::Type::POLYLINE:
             if (const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
-                Geo::is_intersected(polyline->bounding_rect(), head, tail))
+                Geo::is_intersected(polyline->aabbrect(), head, tail))
             {
                 for (size_t i = 1, count = polyline->size(); i < count; ++i)
                 {
@@ -7378,7 +7459,7 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
             break;
         case Geo::Type::BEZIER:
             if (const Geo::CubicBezier *bezier2 = static_cast<const Geo::CubicBezier *>(object);
-                bezier2 != bezier && Geo::is_intersected(bezier2->bounding_rect(), head, tail))
+                bezier2 != bezier && Geo::is_intersected(bezier2->aabbrect(), head, tail))
             {
                 if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier2, points))
                 {
@@ -7394,7 +7475,7 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
             break;
         case Geo::Type::BSPLINE:
             if (const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(object);
-                Geo::is_intersected(bspline->bounding_rect(), head, tail))
+                Geo::is_intersected(bspline->aabbrect(), head, tail))
             {
                 if (std::vector<Geo::Point> points;
                     Geo::is_intersected(head, tail, *bspline, dynamic_cast<const Geo::CubicBSpline *>(bspline), points))
@@ -7454,7 +7535,7 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
     }
 
     std::vector<std::tuple<double, double>> shape;
-    for (const Geo::Point &point : *bezier)
+    for (const Geo::Point &point : bezier->control_points)
     {
         shape.emplace_back(point.x, point.y);
     }
@@ -7464,17 +7545,17 @@ void Editor::extend(Geo::CubicBezier *bezier, const double x, const double y)
     {
         const Geo::Point point0((bezier->front() + expoint * 2) / 3);
         const Geo::Point point1((bezier->front() * 2 + expoint) / 3);
-        bezier->insert(0, point0);
-        bezier->insert(0, point1);
-        bezier->insert(0, expoint);
+        bezier->control_points.insert(bezier->control_points.cbegin(), point0);
+        bezier->control_points.insert(bezier->control_points.cbegin(), point1);
+        bezier->control_points.insert(bezier->control_points.cbegin(), expoint);
     }
     else // 延长尾
     {
         const Geo::Point point0((bezier->back() + expoint * 2) / 3);
         const Geo::Point point1((bezier->back() * 2 + expoint) / 3);
-        bezier->append(point0);
-        bezier->append(point1);
-        bezier->append(expoint);
+        bezier->control_points.push_back(point0);
+        bezier->control_points.push_back(point1);
+        bezier->control_points.push_back(expoint);
     }
     bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
     _view_tree.update(bezier);
@@ -7486,13 +7567,13 @@ void Editor::extend(Geo::BSpline *bspline, const double x, const double y)
     if (Geo::distance_square(bspline->control_points.front().x, bspline->control_points.front().y, x, y) <=
         Geo::distance_square(bspline->control_points.back().x, bspline->control_points.back().y, x, y)) // 延长头
     {
-        const Geo::AABBRectParams rect = _graph->container_group(_current_group).aabbrect_params();
+        const Geo::AABBRect rect = _graph->container_group(_current_group).aabbrect();
         head = bspline->front();
         tail = head + (head - bspline->control_points[1]).normalize() * std::hypot(rect.right - rect.left, rect.top - rect.bottom);
     }
     else // 延长尾
     {
-        const Geo::AABBRectParams rect = _graph->container_group(_current_group).aabbrect_params();
+        const Geo::AABBRect rect = _graph->container_group(_current_group).aabbrect();
         head = bspline->back();
         tail = head + (head - bspline->control_points[bspline->control_points.size() - 2]).normalize() *
                           std::hypot(rect.right - rect.left, rect.top - rect.bottom);
@@ -7507,13 +7588,13 @@ void Editor::extend(Geo::BSpline *bspline, const double x, const double y)
             intersections.erase(std::remove(intersections.begin(), intersections.end(), head), intersections.end());
         }
     }
-    for (const Geo::Geometry *object : _graph->container_group(_current_group))
+    for (const Geo::DObject *object : _graph->container_group(_current_group))
     {
         switch (object->type())
         {
         case Geo::Type::POLYGON:
             if (const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(object);
-                Geo::is_intersected(polygon->bounding_rect(), head, tail))
+                Geo::is_intersected(polygon->aabbrect(), head, tail))
             {
                 for (size_t i = 1, count = polygon->size(); i < count; ++i)
                 {
@@ -7526,7 +7607,7 @@ void Editor::extend(Geo::BSpline *bspline, const double x, const double y)
             break;
         case Geo::Type::POLYLINE:
             if (const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
-                Geo::is_intersected(polyline->bounding_rect(), head, tail))
+                Geo::is_intersected(polyline->aabbrect(), head, tail))
             {
                 for (size_t i = 1, count = polyline->size(); i < count; ++i)
                 {
@@ -7569,7 +7650,7 @@ void Editor::extend(Geo::BSpline *bspline, const double x, const double y)
             break;
         case Geo::Type::BEZIER:
             if (const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(object);
-                Geo::is_intersected(bezier->bounding_rect(), head, tail))
+                Geo::is_intersected(bezier->aabbrect(), head, tail))
             {
                 if (std::vector<Geo::Point> points; Geo::is_intersected(head, tail, *bezier, points))
                 {
@@ -7585,7 +7666,7 @@ void Editor::extend(Geo::BSpline *bspline, const double x, const double y)
             break;
         case Geo::Type::BSPLINE:
             if (const Geo::BSpline *bspline2 = static_cast<const Geo::BSpline *>(object);
-                bspline2 != bspline && Geo::is_intersected(bspline2->bounding_rect(), head, tail))
+                bspline2 != bspline && Geo::is_intersected(bspline2->aabbrect(), head, tail))
             {
                 if (std::vector<Geo::Point> points;
                     Geo::is_intersected(head, tail, *bspline2, dynamic_cast<const Geo::CubicBSpline *>(bspline2), points))
@@ -7671,11 +7752,11 @@ void Editor::extend(Geo::BSpline *bspline, const double x, const double y)
     _view_tree.update(bspline);
 }
 
-bool Editor::divide_points_n(const std::vector<Geo::Geometry *> &objects, const size_t n)
+bool Editor::divide_points_n(const std::vector<Geo::DObject *> &objects, const size_t n)
 {
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items;
     ContainerGroup &group = _graph->container_group(_current_group);
-    for (const Geo::Geometry *object : objects)
+    for (const Geo::DObject *object : objects)
     {
         switch (object->type())
         {
@@ -7758,7 +7839,7 @@ bool Editor::divide_points_n(const std::vector<Geo::Geometry *> &objects, const 
     else
     {
         _graph->modified = true;
-        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : add_items)
+        for (const std::tuple<Geo::DObject *, size_t, size_t> &item : add_items)
         {
             _view_tree.append(std::get<0>(item));
         }
@@ -7767,11 +7848,11 @@ bool Editor::divide_points_n(const std::vector<Geo::Geometry *> &objects, const 
     }
 }
 
-bool Editor::divide_parts_n(const std::vector<Geo::Geometry *> &objects, const size_t n)
+bool Editor::divide_parts_n(const std::vector<Geo::DObject *> &objects, const size_t n)
 {
     ContainerGroup &group = _graph->container_group(_current_group);
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-    for (Geo::Geometry *object : objects)
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
+    for (Geo::DObject *object : objects)
     {
         switch (object->type())
         {
@@ -7802,7 +7883,8 @@ bool Editor::divide_parts_n(const std::vector<Geo::Geometry *> &objects, const s
                 {
                     const size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
                     remove_items.emplace_back(group.pop(index), _current_group, index);
-                    if (Geo::CubicBezier *p = bezier->range(std::get<0>(pos.back()), std::get<1>(pos.back()), bezier->size() / 3 - 1, 1))
+                    if (Geo::CubicBezier *p =
+                            bezier->range(std::get<0>(pos.back()), std::get<1>(pos.back()), bezier->control_points.size() / 3 - 1, 1))
                     {
                         add_items.emplace_back(p, _current_group, index);
                         group.insert(index, p);
@@ -7911,11 +7993,11 @@ bool Editor::divide_parts_n(const std::vector<Geo::Geometry *> &objects, const s
     else
     {
         _graph->modified = true;
-        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : remove_items)
+        for (const std::tuple<Geo::DObject *, size_t, size_t> &item : remove_items)
         {
             _view_tree.remove(std::get<0>(item));
         }
-        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : add_items)
+        for (const std::tuple<Geo::DObject *, size_t, size_t> &item : add_items)
         {
             _view_tree.append(std::get<0>(item));
         }
@@ -7924,11 +8006,11 @@ bool Editor::divide_parts_n(const std::vector<Geo::Geometry *> &objects, const s
     }
 }
 
-bool Editor::divide_points_measure(const std::vector<Geo::Geometry *> &objects, const double length)
+bool Editor::divide_points_measure(const std::vector<Geo::DObject *> &objects, const double length)
 {
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items;
     ContainerGroup &group = _graph->container_group(_current_group);
-    for (Geo::Geometry *object : objects)
+    for (Geo::DObject *object : objects)
     {
         switch (object->type())
         {
@@ -8014,7 +8096,7 @@ bool Editor::divide_points_measure(const std::vector<Geo::Geometry *> &objects, 
     else
     {
         _graph->modified = true;
-        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : add_items)
+        for (const std::tuple<Geo::DObject *, size_t, size_t> &item : add_items)
         {
             _view_tree.append(std::get<0>(item));
         }
@@ -8023,11 +8105,11 @@ bool Editor::divide_points_measure(const std::vector<Geo::Geometry *> &objects, 
     }
 }
 
-bool Editor::divide_parts_measure(const std::vector<Geo::Geometry *> &objects, const double length)
+bool Editor::divide_parts_measure(const std::vector<Geo::DObject *> &objects, const double length)
 {
     ContainerGroup &group = _graph->container_group(_current_group);
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
-    for (Geo::Geometry *object : objects)
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
+    for (Geo::DObject *object : objects)
     {
         switch (object->type())
         {
@@ -8063,7 +8145,8 @@ bool Editor::divide_parts_measure(const std::vector<Geo::Geometry *> &objects, c
                 {
                     const size_t index = std::distance(group.begin(), std::find(group.begin(), group.end(), object));
                     remove_items.emplace_back(group.pop(index), _current_group, index);
-                    if (Geo::CubicBezier *p = bezier->range(std::get<0>(pos.back()), std::get<1>(pos.back()), bezier->size() / 3 - 1, 1))
+                    if (Geo::CubicBezier *p =
+                            bezier->range(std::get<0>(pos.back()), std::get<1>(pos.back()), bezier->control_points.size() / 3 - 1, 1))
                     {
                         add_items.emplace_back(p, _current_group, index);
                         group.insert(index, p);
@@ -8172,11 +8255,11 @@ bool Editor::divide_parts_measure(const std::vector<Geo::Geometry *> &objects, c
     else
     {
         _graph->modified = true;
-        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : remove_items)
+        for (const std::tuple<Geo::DObject *, size_t, size_t> &item : remove_items)
         {
             _view_tree.remove(std::get<0>(item));
         }
-        for (const std::tuple<Geo::Geometry *, size_t, size_t> &item : add_items)
+        for (const std::tuple<Geo::DObject *, size_t, size_t> &item : add_items)
         {
             _view_tree.append(std::get<0>(item));
         }
@@ -8185,10 +8268,10 @@ bool Editor::divide_parts_measure(const std::vector<Geo::Geometry *> &objects, c
     }
 }
 
-void Editor::reverse(const std::vector<Geo::Geometry *> &objects)
+void Editor::reverse(const std::vector<Geo::DObject *> &objects)
 {
-    std::vector<Geo::Geometry *> reversed;
-    for (Geo::Geometry *object : objects)
+    std::vector<Geo::DObject *> reversed;
+    for (Geo::DObject *object : objects)
     {
         switch (object->type())
         {
@@ -8202,7 +8285,7 @@ void Editor::reverse(const std::vector<Geo::Geometry *> &objects)
         case Geo::Type::BEZIER:
             {
                 Geo::CubicBezier *bezier = static_cast<Geo::CubicBezier *>(object);
-                std::reverse(bezier->begin(), bezier->end());
+                std::reverse(bezier->control_points.begin(), bezier->control_points.end());
                 bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
             }
             break;
@@ -8210,6 +8293,8 @@ void Editor::reverse(const std::vector<Geo::Geometry *> &objects)
             static_cast<Geo::BSpline *>(object)->reverse();
             break;
         case Geo::Type::POLYGON:
+            std::reverse(static_cast<Geo::Polygon *>(object)->begin(), static_cast<Geo::Polygon *>(object)->end());
+            break;
         case Geo::Type::POLYLINE:
             std::reverse(static_cast<Geo::Polyline *>(object)->begin(), static_cast<Geo::Polyline *>(object)->end());
             break;
@@ -8226,15 +8311,15 @@ void Editor::reverse(const std::vector<Geo::Geometry *> &objects)
 }
 
 
-void Editor::auto_combinate()
+void Editor::auto_combine()
 {
     if (_graph == nullptr || _graph->empty())
     {
         return;
     }
 
-    std::vector<Geo::Geometry *> all_containers, all_polylines;
-    std::unordered_map<const Geo::Geometry *, double> areas, lengths;
+    std::vector<Geo::DObject *> all_containers, all_polylines;
+    std::unordered_map<const Geo::DObject *, double> areas, lengths;
     for (ContainerGroup &group : _graph->container_groups())
     {
         while (!group.empty())
@@ -8275,7 +8360,7 @@ void Editor::auto_combinate()
     if (all_containers.empty())
     {
         _graph->append_group();
-        for (Geo::Geometry *item : all_polylines)
+        for (Geo::DObject *item : all_polylines)
         {
             _graph->back().append(item);
         }
@@ -8284,18 +8369,18 @@ void Editor::auto_combinate()
     }
 
     std::sort(all_containers.begin(), all_containers.end(),
-              [&](const Geo::Geometry *a, const Geo::Geometry *b) { return areas[a] > areas[b]; });
+              [&](const Geo::DObject *a, const Geo::DObject *b) { return areas[a] > areas[b]; });
     std::sort(all_polylines.begin(), all_polylines.end(),
-              [&](const Geo::Geometry *a, const Geo::Geometry *b) { return lengths[a] > lengths[b]; });
+              [&](const Geo::DObject *a, const Geo::DObject *b) { return lengths[a] > lengths[b]; });
 
-    std::unordered_map<const Geo::Geometry *, Geo::AABBRect> container_rects, polyline_rects;
-    for (const Geo::Geometry *object : all_containers)
+    std::unordered_map<const Geo::DObject *, Geo::AABBRect> container_rects, polyline_rects;
+    for (const Geo::DObject *object : all_containers)
     {
-        container_rects.insert_or_assign(object, object->bounding_rect());
+        container_rects.insert_or_assign(object, object->aabbrect());
     }
-    for (const Geo::Geometry *object : all_polylines)
+    for (const Geo::DObject *object : all_polylines)
     {
-        polyline_rects.insert_or_assign(object, object->bounding_rect());
+        polyline_rects.insert_or_assign(object, object->aabbrect());
     }
 
     _graph->append_group();
@@ -8303,7 +8388,7 @@ void Editor::auto_combinate()
     {
         Geo::AABBRect current_rect = container_rects[all_containers[i]];
         std::vector<Geo::AABBRect> current_rects({current_rect});
-        std::vector<Geo::Geometry *> objects({all_containers[i]});
+        std::vector<Geo::DObject *> objects({all_containers[i]});
         for (size_t j = i + 1; j < count; ++j)
         {
             if (!Geo::is_intersected(current_rect, container_rects[all_containers[j]]))
@@ -8621,7 +8706,7 @@ void Editor::auto_combinate()
                         break;
                     case Geo::Type::TEXT:
                         if (Geo::is_intersected(static_cast<Text *>(all_polylines[k])->convex_hull(),
-                                                *static_cast<Geo::Circle *>(objects[j])))
+                                                *static_cast<Geo::Ellipse *>(objects[j])))
                         {
                             objects.push_back(all_polylines[k]);
                             all_polylines.erase(all_polylines.begin() + k--);
@@ -8658,7 +8743,7 @@ void Editor::auto_combinate()
         }
     }
 
-    for (Geo::Geometry *polyline : all_polylines)
+    for (Geo::DObject *polyline : all_polylines)
     {
         _graph->back().append(polyline);
     }
@@ -8672,8 +8757,8 @@ void Editor::auto_layering()
         return;
     }
 
-    std::vector<Geo::Geometry *> all_containers, all_polylines;
-    std::unordered_map<const Geo::Geometry *, Geo::AABBRect> rects;
+    std::vector<Geo::DObject *> all_containers, all_polylines;
+    std::unordered_map<const Geo::DObject *, Geo::AABBRect> rects;
     for (ContainerGroup &group : _graph->container_groups())
     {
         while (!group.empty())
@@ -8690,7 +8775,7 @@ void Editor::auto_layering()
                 break;
             default:
                 all_containers.emplace_back(group.pop_back());
-                rects.insert_or_assign(all_containers.back(), all_containers.back()->bounding_rect());
+                rects.insert_or_assign(all_containers.back(), all_containers.back()->aabbrect());
                 break;
             }
         }
@@ -8700,7 +8785,7 @@ void Editor::auto_layering()
     if (all_containers.empty())
     {
         _graph->append_group();
-        for (Geo::Geometry *item : all_polylines)
+        for (Geo::DObject *item : all_polylines)
         {
             _graph->back().append(item);
         }
@@ -8708,8 +8793,8 @@ void Editor::auto_layering()
     }
 
     {
-        std::unordered_map<const Geo::Geometry *, double> areas;
-        for (const Geo::Geometry *object : all_containers)
+        std::unordered_map<const Geo::DObject *, double> areas;
+        for (const Geo::DObject *object : all_containers)
         {
             switch (object->type())
             {
@@ -8728,7 +8813,7 @@ void Editor::auto_layering()
             }
         }
         std::sort(all_containers.begin(), all_containers.end(),
-                  [&](const Geo::Geometry *a, const Geo::Geometry *b) { return areas[a] > areas[b]; });
+                  [&](const Geo::DObject *a, const Geo::DObject *b) { return areas[a] > areas[b]; });
     }
 
     _graph->append_group();
@@ -8736,7 +8821,7 @@ void Editor::auto_layering()
     {
         _graph->back().append(all_containers.front());
         all_containers.erase(all_containers.begin());
-        std::unordered_map<const Geo::Geometry *, Geo::AABBRect> current_rects;
+        std::unordered_map<const Geo::DObject *, Geo::AABBRect> current_rects;
         current_rects.insert_or_assign(_graph->back().front(), rects[_graph->back().front()]);
         for (size_t i = 0, count = all_containers.size(); i < count; ++i)
         {
@@ -8747,7 +8832,7 @@ void Editor::auto_layering()
                 {
                     const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(all_containers[i]);
                     const Geo::AABBRect &rect = rects[polygon];
-                    for (Geo::Geometry *geo : _graph->back())
+                    for (Geo::DObject *geo : _graph->back())
                     {
                         switch (geo->type())
                         {
@@ -8783,7 +8868,7 @@ void Editor::auto_layering()
             case Geo::Type::CIRCLE:
                 {
                     const Geo::Circle *circle = static_cast<const Geo::Circle *>(all_containers[i]);
-                    for (Geo::Geometry *geo : _graph->back())
+                    for (Geo::DObject *geo : _graph->back())
                     {
                         switch (geo->type())
                         {
@@ -8818,7 +8903,7 @@ void Editor::auto_layering()
             case Geo::Type::ELLIPSE:
                 {
                     const Geo::Ellipse *ellipse = static_cast<const Geo::Ellipse *>(all_containers[i]);
-                    for (Geo::Geometry *geo : _graph->back())
+                    for (Geo::DObject *geo : _graph->back())
                     {
                         switch (geo->type())
                         {
@@ -8869,7 +8954,7 @@ void Editor::auto_layering()
         _graph->append_group();
     }
 
-    for (Geo::Geometry *geo : all_polylines)
+    for (Geo::DObject *geo : all_polylines)
     {
         _graph->back().append(geo);
     }
@@ -8902,8 +8987,8 @@ void Editor::text_to_polylines(Text *text)
     Combination *combination = new Combination();
     const std::string result = TextEncoding::utf8_to_gbk(text->text().toUtf8().toStdString());
     const int font_size = text->font().pointSize();
-    const double init_x = text->aabbrect_params().left;
-    double x = init_x, y = text->aabbrect_params().top - font_size;
+    const double init_x = text->aabbrect().left;
+    double x = init_x, y = text->aabbrect().top - font_size;
     for (size_t i = 0, count = result.length(); i < count; ++i)
     {
         if (result[i] < 0)
@@ -8966,7 +9051,7 @@ void Editor::text_to_polylines(Text *text)
     _graph->container_group(_current_group).insert(index, combination);
     _view_tree.append(combination);
     _graph->modified = true;
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
     add_items.emplace_back(combination, _current_group, index);
     remove_items.emplace_back(text, _current_group, index);
     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
@@ -8986,7 +9071,7 @@ void Editor::bezier_to_bspline(Geo::CubicBezier *bezier)
     _graph->container_group(_current_group).insert(index, bspline);
     _view_tree.append(bspline);
     _graph->modified = true;
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
     add_items.emplace_back(bspline, _current_group, index);
     remove_items.emplace_back(bezier, _current_group, index);
     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
@@ -9006,7 +9091,7 @@ void Editor::bspline_to_bezier(Geo::BSpline *bspline)
     _graph->container_group(_current_group).insert(index, bezier);
     _view_tree.append(bezier);
     _graph->modified = true;
-    std::vector<std::tuple<Geo::Geometry *, size_t, size_t>> add_items, remove_items;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
     add_items.emplace_back(bezier, _current_group, index);
     remove_items.emplace_back(bspline, _current_group, index);
     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));

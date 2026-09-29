@@ -26,12 +26,12 @@ void QuadTreeNode::clear()
     _rect.left = _rect.top = _rect.right = _rect.bottom = 0;
 }
 
-Geo::AABBRectParams &QuadTreeNode::rect()
+Geo::AABBRect &QuadTreeNode::rect()
 {
     return _rect;
 }
 
-void QuadTreeNode::find_visible_objects(const Geo::AABBRectParams &rect, std::vector<Geo::Geometry *> &visible_objects)
+void QuadTreeNode::find_visible_objects(const Geo::AABBRect &rect, std::vector<Geo::DObject *> &visible_objects)
 {
     if (!Geo::is_intersected(_rect, rect))
     {
@@ -53,9 +53,9 @@ void QuadTreeNode::find_visible_objects(const Geo::AABBRectParams &rect, std::ve
         }
         else
         {
-            for (Geo::Geometry *object : _objects)
+            for (Geo::DObject *object : _objects)
             {
-                if (Geo::is_intersected(rect, object->aabbrect_params()))
+                if (Geo::is_intersected(rect, object->aabbrect()))
                 {
                     visible_objects.push_back(object);
                 }
@@ -64,7 +64,7 @@ void QuadTreeNode::find_visible_objects(const Geo::AABBRectParams &rect, std::ve
     }
 }
 
-void QuadTreeNode::build(const Geo::AABBRectParams &rect, const std::vector<Geo::Geometry *> &objects)
+void QuadTreeNode::build(const Geo::AABBRect &rect, const std::vector<Geo::DObject *> &objects)
 {
     _rect = rect;
     _objects.clear();
@@ -81,7 +81,7 @@ void QuadTreeNode::build(const Geo::AABBRectParams &rect, const std::vector<Geo:
     if (const double width = rect.right - rect.left, height = rect.top - rect.bottom;
         _depth < max_depth && objects.size() > min_size && (width > min_width || height > min_height))
     {
-        Geo::AABBRectParams rects[4];
+        Geo::AABBRect rects[4];
         rects[0].left = rect.left, rects[0].top = rect.top, rects[0].right = (rect.left + rect.right) / 2,
         rects[0].bottom = (rect.top + rect.bottom) / 2;
         rects[1].left = (rect.left + rect.right) / 2, rects[1].top = rect.top, rects[1].right = rect.right,
@@ -91,10 +91,10 @@ void QuadTreeNode::build(const Geo::AABBRectParams &rect, const std::vector<Geo:
         rects[2].left = (rect.left + rect.right) / 2, rects[2].top = (rect.top + rect.bottom) / 2, rects[2].right = rect.right,
         rects[2].bottom = rect.bottom;
 
-        std::vector<Geo::Geometry *> children[4];
-        for (Geo::Geometry *object : objects)
+        std::vector<Geo::DObject *> children[4];
+        for (Geo::DObject *object : objects)
         {
-            const Geo::AABBRectParams params = object->aabbrect_params();
+            const Geo::AABBRect params = object->aabbrect();
             for (int i = 0; i < 4; ++i)
             {
                 if (Geo::is_intersected(rects[i], params))
@@ -115,7 +115,7 @@ void QuadTreeNode::build(const Geo::AABBRectParams &rect, const std::vector<Geo:
     }
 }
 
-void QuadTreeNode::update(const Geo::AABBRectParams &rect, Geo::Geometry *object)
+void QuadTreeNode::update(const Geo::AABBRect &rect, Geo::DObject *object)
 {
     if (_nodes[0] != nullptr || _nodes[1] != nullptr || _nodes[2] != nullptr || _nodes[3] != nullptr)
     {
@@ -148,7 +148,7 @@ void QuadTreeNode::update(const Geo::AABBRectParams &rect, Geo::Geometry *object
                 _objects.push_back(object);
                 if (_objects.size() > min_size && (_rect.top - _rect.bottom > min_height || _rect.right - _rect.left > min_width))
                 {
-                    std::vector<Geo::Geometry *> objects(_objects);
+                    std::vector<Geo::DObject *> objects(_objects);
                     build(_rect, objects);
                 }
             }
@@ -160,7 +160,7 @@ void QuadTreeNode::update(const Geo::AABBRectParams &rect, Geo::Geometry *object
     }
 }
 
-void QuadTreeNode::remove(Geo::Geometry *object)
+void QuadTreeNode::remove(Geo::DObject *object)
 {
     if (_nodes[0] != nullptr || _nodes[1] != nullptr || _nodes[2] != nullptr || _nodes[3] != nullptr)
     {
@@ -183,7 +183,7 @@ void QuadTreeNode::remove(Geo::Geometry *object)
     }
 }
 
-void QuadTreeNode::remove(const std::vector<Geo::Geometry *> &objects)
+void QuadTreeNode::remove(const std::vector<Geo::DObject *> &objects)
 {
     if (_nodes[0] != nullptr || _nodes[1] != nullptr || _nodes[2] != nullptr || _nodes[3] != nullptr)
     {
@@ -202,14 +202,14 @@ void QuadTreeNode::remove(const std::vector<Geo::Geometry *> &objects)
     }
     else
     {
-        for (Geo::Geometry *object : objects)
+        for (Geo::DObject *object : objects)
         {
             _objects.erase(std::remove(_objects.begin(), _objects.end(), object), _objects.end());
         }
     }
 }
 
-void QuadTreeNode::append(const Geo::AABBRectParams &rect, Geo::Geometry *object)
+void QuadTreeNode::append(const Geo::AABBRect &rect, Geo::DObject *object)
 {
     if (!Geo::is_intersected(_rect, rect))
     {
@@ -228,7 +228,7 @@ void QuadTreeNode::append(const Geo::AABBRectParams &rect, Geo::Geometry *object
     }
     else
     {
-        std::vector<Geo::Geometry *> objects(_objects);
+        std::vector<Geo::DObject *> objects(_objects);
         objects.push_back(object);
         build(_rect, objects);
     }
@@ -253,39 +253,39 @@ void QuadTree::clear()
     _objects.clear();
 }
 
-void QuadTree::find_visible_objects(const Geo::AABBRectParams &rect, std::vector<Geo::Geometry *> &visible_objects)
+void QuadTree::find_visible_objects(const Geo::AABBRect &rect, std::vector<Geo::DObject *> &visible_objects)
 {
     _root.find_visible_objects(rect, visible_objects);
-    std::unordered_set<Geo::Geometry *> temp(visible_objects.begin(), visible_objects.end());
+    std::unordered_set<Geo::DObject *> temp(visible_objects.begin(), visible_objects.end());
     visible_objects.assign(temp.begin(), temp.end());
     std::sort(visible_objects.begin(), visible_objects.end());
 }
 
-void QuadTree::find_visible_objects(const Geo::AABBRectParams &rect)
+void QuadTree::find_visible_objects(const Geo::AABBRect &rect)
 {
     _visible_objects.clear();
     find_visible_objects(rect, _visible_objects);
 }
 
-const std::vector<Geo::Geometry *> &QuadTree::visible_objects() const
+const std::vector<Geo::DObject *> &QuadTree::visible_objects() const
 {
     return _visible_objects;
 }
 
-void QuadTree::build(const std::vector<Geo::Geometry *> &objects)
+void QuadTree::build(const std::vector<Geo::DObject *> &objects)
 {
     if (objects.empty())
     {
-        Geo::AABBRectParams rect;
+        Geo::AABBRect rect;
         rect.left = rect.bottom = -100;
         rect.top = 600;
         rect.right = 1000;
         return _root.build(rect, objects);
     }
-    Geo::AABBRectParams rect = objects.front()->aabbrect_params();
-    for (Geo::Geometry *object : objects)
+    Geo::AABBRect rect = objects.front()->aabbrect();
+    for (Geo::DObject *object : objects)
     {
-        Geo::AABBRectParams temp = object->aabbrect_params();
+        Geo::AABBRect temp = object->aabbrect();
         if (temp.left < rect.left)
         {
             rect.left = temp.left;
@@ -314,10 +314,10 @@ void QuadTree::build(const std::vector<Geo::Geometry *> &objects)
 
 void QuadTree::build(const Graph *graph)
 {
-    std::vector<Geo::Geometry *> objects;
+    std::vector<Geo::DObject *> objects;
     for (const ContainerGroup &group : graph->container_groups())
     {
-        for (Geo::Geometry *geo : group)
+        for (Geo::DObject *geo : group)
         {
             geo->is_selected = false;
         }
@@ -329,10 +329,10 @@ void QuadTree::build(const Graph *graph)
     return build(objects);
 }
 
-void QuadTree::update(Geo::Geometry *object)
+void QuadTree::update(Geo::DObject *object)
 {
-    if (Geo::AABBRectParams rect = object->aabbrect_params(); rect.left >= _root.rect().left && rect.right <= _root.rect().right &&
-                                                              rect.bottom >= _root.rect().bottom && rect.top <= _root.rect().top)
+    if (Geo::AABBRect rect = object->aabbrect(); rect.left >= _root.rect().left && rect.right <= _root.rect().right &&
+                                                 rect.bottom >= _root.rect().bottom && rect.top <= _root.rect().top)
     {
         _root.update(rect, object);
     }
@@ -363,17 +363,17 @@ void QuadTree::update(Geo::Geometry *object)
     }
 }
 
-void QuadTree::update(const std::vector<Geo::Geometry *> &objects)
+void QuadTree::update(const std::vector<Geo::DObject *> &objects)
 {
     if (objects.empty())
     {
         return;
     }
-    Geo::AABBRectParams rect = objects.front()->aabbrect_params();
-    std::vector<Geo::AABBRectParams> rects({rect});
-    for (Geo::Geometry *object : objects)
+    Geo::AABBRect rect = objects.front()->aabbrect();
+    std::vector<Geo::AABBRect> rects({rect});
+    for (Geo::DObject *object : objects)
     {
-        const Geo::AABBRectParams temp = object->aabbrect_params();
+        const Geo::AABBRect temp = object->aabbrect();
         rects.emplace_back(temp);
         if (temp.left < rect.left)
         {
@@ -427,30 +427,30 @@ void QuadTree::update(const std::vector<Geo::Geometry *> &objects)
     }
 }
 
-void QuadTree::remove(Geo::Geometry *object)
+void QuadTree::remove(Geo::DObject *object)
 {
     _root.remove(object);
     _objects.erase(std::remove(_objects.begin(), _objects.end(), object), _objects.end());
 }
 
-void QuadTree::remove(const std::vector<Geo::Geometry *> &objects)
+void QuadTree::remove(const std::vector<Geo::DObject *> &objects)
 {
     if (objects.empty())
     {
         return;
     }
     _root.remove(objects);
-    for (Geo::Geometry *object : objects)
+    for (Geo::DObject *object : objects)
     {
         _objects.erase(std::remove(_objects.begin(), _objects.end(), object), _objects.end());
     }
 }
 
-void QuadTree::append(Geo::Geometry *object)
+void QuadTree::append(Geo::DObject *object)
 {
     _objects.push_back(object);
-    if (Geo::AABBRectParams rect = object->aabbrect_params(); rect.left >= _root.rect().left && rect.right <= _root.rect().right &&
-                                                              rect.bottom >= _root.rect().bottom && rect.top <= _root.rect().top)
+    if (Geo::AABBRect rect = object->aabbrect(); rect.left >= _root.rect().left && rect.right <= _root.rect().right &&
+                                                 rect.bottom >= _root.rect().bottom && rect.top <= _root.rect().top)
     {
         _root.append(rect, object);
     }
@@ -481,18 +481,18 @@ void QuadTree::append(Geo::Geometry *object)
     }
 }
 
-void QuadTree::append(const std::vector<Geo::Geometry *> &objects)
+void QuadTree::append(const std::vector<Geo::DObject *> &objects)
 {
     if (objects.empty())
     {
         return;
     }
     _objects.insert(_objects.end(), objects.begin(), objects.end());
-    Geo::AABBRectParams rect = objects.front()->aabbrect_params();
-    std::vector<Geo::AABBRectParams> rects;
-    for (Geo::Geometry *object : objects)
+    Geo::AABBRect rect = objects.front()->aabbrect();
+    std::vector<Geo::AABBRect> rects;
+    for (Geo::DObject *object : objects)
     {
-        Geo::AABBRectParams temp = object->aabbrect_params();
+        Geo::AABBRect temp = object->aabbrect();
         rects.emplace_back(temp);
         if (temp.left < rect.left)
         {

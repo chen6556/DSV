@@ -30,9 +30,9 @@ void GlobalSetting::load_setting()
     {
         this->auto_layering = values.value("auto_layering").toBool();
     }
-    if (values.contains("auto_combinate"))
+    if (values.contains("auto_combine"))
     {
-        this->auto_combinate = values.value("auto_combinate").toBool();
+        this->auto_combine = values.value("auto_combine").toBool();
     }
     if (values.contains("auto_save"))
     {
@@ -132,7 +132,7 @@ void GlobalSetting::save_setting()
 {
     QJsonObject values;
     values.insert("auto_layering", this->auto_layering);
-    values.insert("auto_combinate", this->auto_combinate);
+    values.insert("auto_combine", this->auto_combine);
     values.insert("auto_save", this->auto_save);
     values.insert("backup_times", this->backup_times);
     values.insert("catch_distance", this->catch_distance);

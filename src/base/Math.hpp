@@ -110,4 +110,7 @@ double min_x_trichotomy(const TartgetFunc &f, double l, double r);
 // 三分法计算函数取最大值时的参数
 double max_x_trichotomy(const TartgetFunc &f, double l, double r);
 
+// 二分法计算函数取零值时的参数
+double zero_x_bisection(const TartgetFunc &f, double l, double r);
+
 }; // namespace Math

@@ -17,7 +17,7 @@ enum class Type
     ORDINATE
 };
 
-class Dimension : public Geo::Geometry
+class Dimension : public Geo::DObject
 {
 public:
     Geo::Point anchor[2], label;
@@ -75,13 +75,10 @@ public:
     // 凸包
     Geo::Polygon convex_hull() const override;
 
-    // 外接AABB矩形
-    Geo::AABBRect bounding_rect() const override;
-
     // 最小外接矩形
     Geo::Polygon mini_bounding_rect() const override;
 
-    Geo::AABBRectParams aabbrect_params() const override;
+    Geo::AABBRect aabbrect() const override;
 
     void set_anchor(const int index, const double x, const double y);
 
@@ -115,13 +112,10 @@ public:
     // 凸包
     Geo::Polygon convex_hull() const override;
 
-    // 外接AABB矩形
-    Geo::AABBRect bounding_rect() const override;
-
     // 最小外接矩形
     Geo::Polygon mini_bounding_rect() const override;
 
-    Geo::AABBRectParams aabbrect_params() const override;
+    Geo::AABBRect aabbrect() const override;
 
     void set_anchor(const int index, const double x, const double y);
 
@@ -160,13 +154,10 @@ public:
     // 凸包
     Geo::Polygon convex_hull() const override;
 
-    // 外接AABB矩形
-    Geo::AABBRect bounding_rect() const override;
-
     // 最小外接矩形
     Geo::Polygon mini_bounding_rect() const override;
 
-    Geo::AABBRectParams aabbrect_params() const override;
+    Geo::AABBRect aabbrect() const override;
 
     void set_anchor(const int index, const double x, const double y);
 
@@ -228,13 +219,10 @@ public:
     // 凸包
     Geo::Polygon convex_hull() const override;
 
-    // 外接AABB矩形
-    Geo::AABBRect bounding_rect() const override;
-
     // 最小外接矩形
     Geo::Polygon mini_bounding_rect() const override;
 
-    Geo::AABBRectParams aabbrect_params() const override;
+    Geo::AABBRect aabbrect() const override;
 
     void paintable_lines(std::vector<double> &data) const override;
 
@@ -290,13 +278,10 @@ public:
     // 凸包
     Geo::Polygon convex_hull() const override;
 
-    // 外接AABB矩形
-    Geo::AABBRect bounding_rect() const override;
-
     // 最小外接矩形
     Geo::Polygon mini_bounding_rect() const override;
 
-    Geo::AABBRectParams aabbrect_params() const override;
+    Geo::AABBRect aabbrect() const override;
 
     void set_label(const double x, const double y);
 

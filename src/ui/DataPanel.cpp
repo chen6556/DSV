@@ -20,7 +20,7 @@ void DataPanel::load_draw_data(const Graph *graph)
            text_count = 0;
     for (const ContainerGroup &group : *graph)
     {
-        for (const Geo::Geometry *object : group)
+        for (const Geo::DObject *object : group)
         {
             switch (object->type())
             {
@@ -52,7 +52,7 @@ void DataPanel::load_draw_data(const Graph *graph)
                 point_count += static_cast<const Geo::BSpline *>(object)->shape().size();
                 break;
             case Geo::Type::COMBINATION:
-                for (Geo::Geometry *obj : *dynamic_cast<const Combination *>(object))
+                for (Geo::DObject *obj : *dynamic_cast<const Combination *>(object))
                 {
                     switch (obj->type())
                     {
@@ -103,10 +103,10 @@ void DataPanel::load_draw_data(const Graph *graph)
     ui->ellipse_label->setText(QString::number(ellipse_count));
     ui->text_label->setText(QString::number(text_count));
 
-    const Geo::AABBRect rect(graph->bounding_rect());
-    ui->width_label->setText(QString::number(rect.width()));
-    ui->height_label->setText(QString::number(rect.height()));
-    ui->area_label->setText(QString::number(rect.area(), 'f', 4));
+    const Geo::AABBRect rect(graph->aabbrect());
+    ui->width_label->setText(QString::number(rect.right - rect.left));
+    ui->height_label->setText(QString::number(rect.top - rect.bottom));
+    ui->area_label->setText(QString::number((rect.right - rect.left) * (rect.top - rect.bottom), 'f', 4));
 }
 
 int DataPanel::exec()

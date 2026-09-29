@@ -4,7 +4,7 @@
 
 namespace Geo
 {
-std::vector<unsigned int> ear_cut_to_indexs(const Polygon &polygon);
+std::vector<unsigned int> ear_cut_to_indices(const Polygon &polygon);
 
 std::vector<MarkedPoint> ear_cut_to_coords(const Polygon &polygon);
 

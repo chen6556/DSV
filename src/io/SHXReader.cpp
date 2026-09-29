@@ -75,9 +75,9 @@ SHXFileReader::SHXFileReader(std::ifstream *stream)
     _stream->seekg(0, std::ios::beg);
 }
 
-std::vector<uchar> SHXFileReader::read_bytes(const int length)
+std::vector<uint8_t> SHXFileReader::read_bytes(const int length)
 {
-    std::vector<uchar> data(length);
+    std::vector<uint8_t> data(length);
     _stream->read(reinterpret_cast<char *>(data.data()), length);
     return data;
 }
@@ -256,10 +256,10 @@ SHXShape SHXShapeParser::parse_and_scale(const int code, const ScalingOptions &o
     SHXShape shape;
     if (_shape_cache.find(code) == _shape_cache.end())
     {
-        std::map<int, std::vector<uchar>> &codes = _font_data.content.data;
+        std::map<int, std::vector<uint8_t>> &codes = _font_data.content.data;
         if (codes.find(code) != codes.end())
         {
-            const std::vector<uchar> &data = codes[code];
+            const std::vector<uint8_t> &data = codes[code];
             shape = parse_shape(data);
             _shape_data.insert_or_assign(code, shape);
             _shape_cache.insert_or_assign(code, shape);
@@ -326,12 +326,12 @@ void SHXShapeParser::scale(SHXShape &shape, const double height, const double wi
     }
 }
 
-SHXShape SHXShapeParser::parse_shape(const std::vector<uchar> &data)
+SHXShape SHXShapeParser::parse_shape(const std::vector<uint8_t> &data)
 {
     State state;
     for (int i = 0, count = data.size(); i < count; ++i)
     {
-        if (uchar cb = data[i]; cb <= 0x0f)
+        if (uint8_t cb = data[i]; cb <= 0x0f)
         {
             i = special_cmd(cb, data, i, state);
         }
@@ -346,7 +346,7 @@ SHXShape SHXShapeParser::parse_shape(const std::vector<uchar> &data)
     return shape;
 }
 
-int SHXShapeParser::special_cmd(const int cmd, const std::vector<uchar> &data, const int index, State &state)
+int SHXShapeParser::special_cmd(const int cmd, const std::vector<uint8_t> &data, const int index, State &state)
 {
     int i = index;
     switch (cmd)
@@ -520,7 +520,7 @@ Geo::Point SHXShapeParser::vector_direction(const int dir)
     return vec;
 }
 
-int SHXShapeParser::subshape_cmd(const std::vector<uchar> &data, const int index, State &state)
+int SHXShapeParser::subshape_cmd(const std::vector<uint8_t> &data, const int index, State &state)
 {
     int i = index, subcode = 0;
     double height = state.scale * _font_data.content.height;
@@ -577,7 +577,7 @@ int SHXShapeParser::subshape_cmd(const std::vector<uchar> &data, const int index
     return i;
 }
 
-int SHXShapeParser::xy_displacement(const std::vector<uchar> &data, const int index, State &state)
+int SHXShapeParser::xy_displacement(const std::vector<uint8_t> &data, const int index, State &state)
 {
     int i = index;
     Geo::Point vec;
@@ -598,7 +598,7 @@ int SHXShapeParser::xy_displacement(const std::vector<uchar> &data, const int in
     return i;
 }
 
-int SHXShapeParser::multiple_xy_displacement(const std::vector<uchar> &data, const int index, State &state)
+int SHXShapeParser::multiple_xy_displacement(const std::vector<uint8_t> &data, const int index, State &state)
 {
     int i = index;
     while (true)
@@ -627,7 +627,7 @@ int SHXShapeParser::multiple_xy_displacement(const std::vector<uchar> &data, con
     return i;
 }
 
-int SHXShapeParser::octant_arc(const std::vector<uchar> &data, const int index, State &state)
+int SHXShapeParser::octant_arc(const std::vector<uint8_t> &data, const int index, State &state)
 {
     int i = index;
     const double radius = data[++i] * state.scale;
@@ -689,7 +689,7 @@ int SHXShapeParser::octant_arc(const std::vector<uchar> &data, const int index, 
     return i;
 }
 
-int SHXShapeParser::fractional_arc(const std::vector<uchar> &data, const int index, State &state)
+int SHXShapeParser::fractional_arc(const std::vector<uint8_t> &data, const int index, State &state)
 {
     int i = index;
     const int start_offset = data[++i];
@@ -755,7 +755,7 @@ int SHXShapeParser::fractional_arc(const std::vector<uchar> &data, const int ind
     return i;
 }
 
-int SHXShapeParser::bulge_arc(const std::vector<uchar> &data, const int index, State &state)
+int SHXShapeParser::bulge_arc(const std::vector<uint8_t> &data, const int index, State &state)
 {
     int i = index;
     Geo::Point vec;
@@ -767,7 +767,7 @@ int SHXShapeParser::bulge_arc(const std::vector<uchar> &data, const int index, S
     return i;
 }
 
-int SHXShapeParser::multiple_bulge_arcs(const std::vector<uchar> &data, const int index, State &state)
+int SHXShapeParser::multiple_bulge_arcs(const std::vector<uint8_t> &data, const int index, State &state)
 {
     int i = index;
     while (true)
@@ -786,7 +786,7 @@ int SHXShapeParser::multiple_bulge_arcs(const std::vector<uchar> &data, const in
     return i;
 }
 
-int SHXShapeParser::skip_code(const std::vector<uchar> &data, int index)
+int SHXShapeParser::skip_code(const std::vector<uint8_t> &data, int index)
 {
     const int cb = data[index];
     switch (cb) 
@@ -943,11 +943,11 @@ SHXFontContentData SHXShapeContentParser::parse(SHXFileReader &reader)
 
     for (const auto &[code, length] : items)
     {
-        const std::vector<uchar> bytes = reader.read_bytes(length);
+        const std::vector<uint8_t> bytes = reader.read_bytes(length);
         if (bytes.size() == length) 
         {
             // Parse and skip the null-terminated label at the beginning of the data
-            const std::vector<uchar>::const_iterator nulit = std::find(bytes.begin(), bytes.end(), 0x00);
+            const std::vector<uint8_t>::const_iterator nulit = std::find(bytes.begin(), bytes.end(), 0x00);
             int startOfBytecode = 0;
             // Handle the null-terminated label header
             if (nulit != bytes.cend())
@@ -955,7 +955,7 @@ SHXFontContentData SHXShapeContentParser::parse(SHXFileReader &reader)
                 if (int index = std::distance(bytes.cbegin(), nulit) + 1; index < bytes.size())
                 {
                     // Only add if we got all the bytes and there's actual bytecode data
-                    result.data.insert_or_assign(code, std::vector<uchar>(bytes.begin() + index, bytes.end()));
+                    result.data.insert_or_assign(code, std::vector<uint8_t>(bytes.begin() + index, bytes.end()));
                 }
             }
         }

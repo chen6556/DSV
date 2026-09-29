@@ -11,7 +11,7 @@
 namespace RS274DParser
 {
 
-static constexpr double UNIT_SACLES[2] = {1, 2.54};
+static constexpr double UNIT_SCALES[2] = {1, 2.54};
 
 enum class Unit
 {

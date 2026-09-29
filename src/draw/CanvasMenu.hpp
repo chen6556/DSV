@@ -28,5 +28,5 @@ public:
 
     void init(Canvas *parent);
 
-    void exec(Geo::Geometry *object);
+    void exec(Geo::DObject *object);
 };

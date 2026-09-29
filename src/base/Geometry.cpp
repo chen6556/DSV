@@ -1,4 +1,3 @@
-#include <algorithm>
 #include <cassert>
 #include <algorithm>
 #include <cmath>
@@ -12,29 +11,87 @@
 using namespace Geo;
 
 
-double Geometry::length() const
+AABBRect::AABBRect(const double x0, const double y0, const double x1, const double y1)
+{
+    left = std::min(x0, x1);
+    right = std::max(x0, x1);
+    top = std::max(y0, y1);
+    bottom = std::min(y0, y1);
+}
+
+Point AABBRect::operator[](const int index) const
+{
+    switch (index)
+    {
+    case 1:
+        return Point(right, top);
+    case 2:
+        return Point(right, bottom);
+    case 3:
+        return Point(left, bottom);
+    case 0:
+        [[fallthrough]];
+    default:
+        return Point(left, top);
+    }
+}
+
+void AABBRect::translate(const double tx, const double ty)
+{
+    left += tx;
+    right += tx;
+    top += ty;
+    bottom += ty;
+}
+
+void AABBRect::transform(const double a, const double b, const double c, const double d, const double e, const double f)
+{
+    // 变换四个角点后重新计算外接矩形,避免反射/旋转后 top<bottom 或 left>right
+    const double x0 = a * left + b * top + c, y0 = d * left + e * top + f;
+    const double x1 = a * right + b * top + c, y1 = d * right + e * top + f;
+    const double x2 = a * right + b * bottom + c, y2 = d * right + e * bottom + f;
+    const double x3 = a * left + b * bottom + c, y3 = d * left + e * bottom + f;
+    left = std::min({x0, x1, x2, x3});
+    right = std::max({x0, x1, x2, x3});
+    top = std::max({y0, y1, y2, y3});
+    bottom = std::min({y0, y1, y2, y3});
+}
+
+void AABBRect::scale(const double x, const double y, const double k)
+{
+    left = k * left + x * (1 - k);
+    right = k * right + x * (1 - k);
+    top = k * top + y * (1 - k);
+    bottom = k * bottom + y * (1 - k);
+}
+
+void AABBRect::operator+=(const AABBRect &rect)
+{
+    this->left = std::min(this->left, rect.left);
+    this->top = std::max(this->top, rect.top);
+    this->right = std::max(this->right, rect.right);
+    this->bottom = std::min(this->bottom, rect.bottom);
+}
+
+
+double DObject::length() const
 {
     return 0;
 }
 
-Polygon Geometry::convex_hull() const
+Polygon DObject::convex_hull() const
 {
     return Polygon();
 }
 
-AABBRect Geometry::bounding_rect() const
+Polygon DObject::mini_bounding_rect() const
+{
+    return Polygon();
+}
+
+AABBRect DObject::aabbrect() const
 {
     return AABBRect();
-}
-
-Polygon Geometry::mini_bounding_rect() const
-{
-    return Polygon();
-}
-
-AABBRectParams Geometry::aabbrect_params() const
-{
-    return AABBRectParams();
 }
 
 
@@ -56,7 +113,7 @@ Point &Point::operator=(const Point &point)
 {
     if (this != &point)
     {
-        Geometry::operator=(point);
+        DObject::operator=(point);
         x = point.x;
         y = point.y;
     }
@@ -80,16 +137,26 @@ bool Point::operator!=(const Point &point) const
 
 Point &Point::normalize()
 {
-    const double len = std::hypot(x, y);
-    x /= len;
-    y /= len;
+    if (x != 0 || y != 0)
+    {
+        const double len = std::hypot(x, y);
+        x /= len;
+        y /= len;
+    }
     return *this;
 }
 
 Point Point::normalized() const
 {
-    const double len = std::hypot(x, y);
-    return Point(x / len, y / len);
+    if (x == 0 && y == 0)
+    {
+        return Point(0, 0);
+    }
+    else
+    {
+        const double len = std::hypot(x, y);
+        return Point(x / len, y / len);
+    }
 }
 
 Point Point::vertical() const
@@ -165,19 +232,14 @@ void Point::scale(const double x_, const double y_, const double k)
     y = k * y1 + y_ * (1 - k);
 }
 
-AABBRect Point::bounding_rect() const
-{
-    return AABBRect(x, y, x, y);
-}
-
 Polygon Point::mini_bounding_rect() const
 {
-    return AABBRect(x, y, x, y);
+    return Polygon({*this, *this, *this, *this});
 }
 
-AABBRectParams Point::aabbrect_params() const
+AABBRect Point::aabbrect() const
 {
-    AABBRectParams params;
+    AABBRect params;
     params.left = x;
     params.top = y;
     params.right = x;
@@ -270,12 +332,12 @@ bool Polyline::empty() const
 
 double Polyline::length() const
 {
-    double reuslt = 0;
+    double result = 0;
     for (size_t i = 1, count = _points.size(); i < count; ++i)
     {
-        reuslt += Geo::distance(_points[i], _points[i - 1]);
+        result += Geo::distance(_points[i], _points[i - 1]);
     }
-    return reuslt;
+    return result;
 }
 
 void Polyline::clear()
@@ -296,14 +358,7 @@ bool Polyline::is_self_intersected() const
     }
 
     Point point;
-    for (size_t j = 2, count = _points.size() - 2; j < count; ++j)
-    {
-        if (Geo::is_intersected(_points[0], _points[1], _points[j], _points[j + 1], point))
-        {
-            return true;
-        }
-    }
-    for (size_t i = 1, count = _points.size() - 1; i < count; ++i)
+    for (size_t i = 0, count = _points.size() - 1; i < count; ++i)
     {
         for (size_t j = i + 2; j < count; ++j)
         {
@@ -342,7 +397,7 @@ Polyline &Polyline::operator=(const Polyline &polyline)
 {
     if (this != &polyline)
     {
-        Geometry::operator=(polyline);
+        DObject::operator=(polyline);
         _points = polyline._points;
     }
     return *this;
@@ -660,24 +715,6 @@ Polygon Polyline::convex_hull() const
     return Polygon(hull.cbegin(), hull.cend());
 }
 
-AABBRect Polyline::bounding_rect() const
-{
-    if (_points.empty())
-    {
-        return AABBRect();
-    }
-
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
-    for (const Point &point : _points)
-    {
-        x0 = std::min(x0, point.x);
-        y0 = std::min(y0, point.y);
-        x1 = std::max(x1, point.x);
-        y1 = std::max(y1, point.y);
-    }
-    return AABBRect(x0, y1, x1, y0);
-}
-
 Polygon Polyline::mini_bounding_rect() const
 {
     if (_points.empty())
@@ -686,14 +723,14 @@ Polygon Polyline::mini_bounding_rect() const
     }
 
     double cs = 0, area = DBL_MAX;
-    AABBRect rect, temp;
+    Polygon rect, temp;
     const Polygon hull(convex_hull());
     for (size_t i = 1, count = hull.size(); i < count; ++i)
     {
         Polygon polygon(hull);
         cs = (polygon[i - 1].x * polygon[i].y - polygon[i].x * polygon[i - 1].y) / (polygon[i].length() * polygon[i - 1].length());
         polygon.rotate(polygon[i - 1].x, polygon[i - 1].y, std::acos(cs));
-        temp = polygon.bounding_rect();
+        temp = polygon.aabbrect();
         if (temp.area() < area)
         {
             rect = temp;
@@ -704,9 +741,9 @@ Polygon Polyline::mini_bounding_rect() const
     return rect;
 }
 
-AABBRectParams Polyline::aabbrect_params() const
+AABBRect Polyline::aabbrect() const
 {
-    AABBRectParams params;
+    AABBRect params;
     if (_points.empty())
     {
         return params;
@@ -772,418 +809,9 @@ Polyline *Polyline::range(const size_t index0, const double t0, const size_t ind
 }
 
 
-// AABBRect
-
-AABBRect::AABBRect()
-{
-    _points.assign({Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0), Point(0, 0)});
-}
-
-AABBRect::AABBRect(const double x0, const double y0, const double x1, const double y1)
-{
-    if (x0 < x1)
-    {
-        if (y0 > y1)
-        {
-            _points.assign({Point(x0, y0), Point(x1, y0), Point(x1, y1), Point(x0, y1), Point(x0, y0)});
-        }
-        else
-        {
-            _points.assign({Point(x0, y1), Point(x1, y1), Point(x1, y0), Point(x0, y0), Point(x0, y1)});
-        }
-    }
-    else
-    {
-        if (y0 > y1)
-        {
-            _points.assign({Point(x1, y0), Point(x0, y0), Point(x0, y1), Point(x1, y1), Point(x1, y0)});
-        }
-        else
-        {
-            _points.assign({Point(x1, y1), Point(x0, y1), Point(x0, y0), Point(x1, y0), Point(x1, y1)});
-        }
-    }
-}
-
-AABBRect::AABBRect(const Point &point0, const Point &point1)
-{
-    const double x0 = point0.x, y0 = point0.y, x1 = point1.x, y1 = point1.y;
-    if (x0 < x1)
-    {
-        if (y0 > y1)
-        {
-            _points.assign({Point(x0, y0), Point(x1, y0), Point(x1, y1), Point(x0, y1), Point(x0, y0)});
-        }
-        else
-        {
-            _points.assign({Point(x0, y1), Point(x1, y1), Point(x1, y0), Point(x0, y0), Point(x0, y1)});
-        }
-    }
-    else
-    {
-        if (y0 > y1)
-        {
-            _points.assign({Point(x1, y0), Point(x0, y0), Point(x0, y1), Point(x1, y1), Point(x1, y0)});
-        }
-        else
-        {
-            _points.assign({Point(x1, y1), Point(x0, y1), Point(x0, y0), Point(x1, y0), Point(x1, y1)});
-        }
-    }
-}
-
-Type AABBRect::type() const
-{
-    return Type::AABBRECT;
-}
-
-double AABBRect::left() const
-{
-    return _points.front().x;
-}
-
-double AABBRect::top() const
-{
-    return _points.front().y;
-}
-
-double AABBRect::right() const
-{
-    return _points[2].x;
-}
-
-double AABBRect::bottom() const
-{
-    return _points[2].y;
-}
-
-void AABBRect::set_left(const double value)
-{
-    _points.front().x = value;
-    _points[3].x = value;
-    _points.back().x = value;
-}
-
-void AABBRect::set_top(const double value)
-{
-    _points.front().y = value;
-    _points[1].y = value;
-    _points.back().y = value;
-}
-
-void AABBRect::set_right(const double value)
-{
-    _points[1].x = value;
-    _points[2].x = value;
-}
-
-void AABBRect::set_bottom(const double value)
-{
-    _points[2].y = value;
-    _points[3].y = value;
-}
-
-AABBRect &AABBRect::operator=(const AABBRect &rect)
-{
-    if (this != &rect)
-    {
-        Geometry::operator=(rect);
-        _points = rect._points;
-    }
-    return *this;
-}
-
-bool AABBRect::empty() const
-{
-    return _points.size() < 5;
-}
-
-double AABBRect::length() const
-{
-    double reuslt = 0;
-    for (size_t i = 1, count = _points.size(); i < count; ++i)
-    {
-        reuslt += Geo::distance(_points[i], _points[i - 1]);
-    }
-    return reuslt;
-}
-
-void AABBRect::clear()
-{
-    _points.clear();
-}
-
-AABBRect *AABBRect::clone() const
-{
-    return new AABBRect(*this);
-}
-
-double AABBRect::area() const
-{
-    if (empty())
-    {
-        return 0;
-    }
-    else
-    {
-        return distance(_points[0], _points[1]) * distance(_points[1], _points[2]);
-    }
-}
-
-double AABBRect::width() const
-{
-    if (!_points.empty())
-    {
-        return Geo::distance(_points.front(), _points[1]);
-    }
-    else
-    {
-        return -1;
-    }
-}
-
-double AABBRect::height() const
-{
-    if (!_points.empty())
-    {
-        return Geo::distance(_points[1], _points[2]);
-    }
-    else
-    {
-        return -1;
-    }
-}
-
-void AABBRect::set_width(const double value)
-{
-    const double d = (value - width()) / 2;
-    _points[0].x = _points[3].x = _points[4].x = _points[0].x - d;
-    _points[1].x = _points[2].x = _points[1].x + d;
-}
-
-void AABBRect::set_height(const double value)
-{
-    const double d = (value - height()) / 2;
-    _points[0].y = _points[1].y = _points[4].y = _points[0].y + d;
-    _points[2].y = _points[3].y = _points[2].y + d;
-}
-
-void AABBRect::transform(const double a, const double b, const double c, const double d, const double e, const double f)
-{
-    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.transform(a, b, c, d, e, f); });
-    if (_points[0].x > _points[1].x)
-    {
-        std::swap(_points[0], _points[1]);
-        std::swap(_points[2], _points[3]);
-    }
-    if (_points[0].y < _points[2].y)
-    {
-        std::swap(_points[0], _points[3]);
-        std::swap(_points[1], _points[2]);
-    }
-    _points[4] = _points[0];
-}
-
-void AABBRect::transform(const double mat[6])
-{
-    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.transform(mat); });
-    if (_points[0].x > _points[1].x)
-    {
-        std::swap(_points[0], _points[1]);
-        std::swap(_points[2], _points[3]);
-    }
-    if (_points[0].y < _points[2].y)
-    {
-        std::swap(_points[0], _points[3]);
-        std::swap(_points[1], _points[2]);
-    }
-    _points[4] = _points[0];
-}
-
-void AABBRect::translate(const double tx, const double ty)
-{
-    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.translate(tx, ty); });
-}
-
-void AABBRect::rotate(const double x, const double y, const double rad)
-{
-    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.rotate(x, y, rad); });
-}
-
-void AABBRect::scale(const double x, const double y, const double k)
-{
-    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.scale(x, y, k); });
-}
-
-Polygon AABBRect::convex_hull() const
-{
-    return Polygon(_points.cbegin(), _points.cend());
-}
-
-AABBRect AABBRect::bounding_rect() const
-{
-    if (_points.empty())
-    {
-        return AABBRect();
-    }
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
-    for (const Point &point : _points)
-    {
-        x0 = std::min(x0, point.x);
-        y0 = std::min(y0, point.y);
-        x1 = std::max(x1, point.x);
-        y1 = std::max(y1, point.y);
-    }
-    return AABBRect(x0, y0, x1, y1);
-}
-
-Polygon AABBRect::mini_bounding_rect() const
-{
-    return *this;
-}
-
-AABBRectParams AABBRect::aabbrect_params() const
-{
-    AABBRectParams params;
-    if (_points.empty())
-    {
-        return params;
-    }
-    params.left = params.right = _points.front().x;
-    params.bottom = params.top = _points.front().y;
-    for (const Point &point : _points)
-    {
-        params.left = std::min(params.left, point.x);
-        params.bottom = std::min(params.bottom, point.y);
-        params.right = std::max(params.right, point.x);
-        params.top = std::max(params.top, point.y);
-    }
-    return params;
-}
-
-std::vector<Point>::const_iterator AABBRect::begin() const
-{
-    return _points.cbegin();
-}
-
-std::vector<Point>::const_iterator AABBRect::cbegin() const
-{
-    return _points.cbegin();
-}
-
-std::vector<Point>::const_iterator AABBRect::end() const
-{
-    return _points.cend();
-}
-
-std::vector<Point>::const_iterator AABBRect::cend() const
-{
-    return _points.cend();
-}
-
-std::vector<Point>::const_reverse_iterator AABBRect::rbegin() const
-{
-    return _points.crbegin();
-}
-
-std::vector<Point>::const_reverse_iterator AABBRect::crbegin() const
-{
-    return _points.crbegin();
-}
-
-std::vector<Point>::const_reverse_iterator AABBRect::rend() const
-{
-    return _points.crend();
-}
-
-std::vector<Point>::const_reverse_iterator AABBRect::crend() const
-{
-    return _points.crend();
-}
-
-std::vector<Point>::const_iterator AABBRect::find(const Point &point) const
-{
-    return std::find(_points.cbegin(), _points.cend(), point);
-}
-
-AABBRect AABBRect::operator+(const Point &point) const
-{
-    return AABBRect(_points[0].x + point.x, _points[0].y + point.y, _points[2].x + point.x, _points[2].y + point.y);
-}
-
-AABBRect AABBRect::operator-(const Point &point) const
-{
-    return AABBRect(_points[0].x - point.x, _points[0].y - point.y, _points[2].x - point.x, _points[2].y - point.y);
-}
-
-AABBRect AABBRect::operator+(const AABBRect &rect) const
-{
-    return AABBRect(std::min(left(), rect.left()), std::max(top(), rect.top()), std::max(right(), rect.right()),
-                    std::min(bottom(), rect.bottom()));
-}
-
-void AABBRect::operator+=(const Point &point)
-{
-    for (Point &p : _points)
-    {
-        p += point;
-    }
-}
-
-void AABBRect::operator-=(const Point &point)
-{
-    for (Point &p : _points)
-    {
-        p -= point;
-    }
-}
-
-void AABBRect::operator+=(const AABBRect &rect)
-{
-    if (rect.empty())
-    {
-        return;
-    }
-    if (_points.empty())
-    {
-        _points.assign(rect._points.begin(), rect._points.end());
-    }
-    else
-    {
-        if (_points[0].x > rect[0].x)
-        {
-            _points[0].x = _points[3].x = _points[4].x = rect[0].x;
-        }
-        if (_points[0].y < rect[0].y)
-        {
-            _points[0].y = _points[1].y = _points[4].y = rect[0].y;
-        }
-        if (_points[2].x < rect[2].x)
-        {
-            _points[1].x = _points[2].x = rect[2].x;
-        }
-        if (_points[2].y > rect[2].y)
-        {
-            _points[2].y = _points[3].y = rect[2].y;
-        }
-    }
-}
-
-Point AABBRect::center() const
-{
-    return (_points[0] + _points[2]) / 2;
-}
-
-const Point &AABBRect::operator[](const size_t index) const
-{
-    assert(!_points.empty() && index <= 4);
-    return _points[index];
-}
-
-
 // Polygon
 
-Polygon::Polygon(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end) : Polyline(begin, end)
+Polygon::Polygon(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end) : _points(begin, end)
 {
     if (!_points.empty() && _points.back() != _points.front())
     {
@@ -1191,7 +819,7 @@ Polygon::Polygon(const std::vector<Point>::const_iterator &begin, const std::vec
     }
 }
 
-Polygon::Polygon(const std::initializer_list<Point> &points) : Polyline(points)
+Polygon::Polygon(const std::initializer_list<Point> &points) : _points(points)
 {
     if (!_points.empty() && _points.back() != _points.front())
     {
@@ -1199,7 +827,7 @@ Polygon::Polygon(const std::initializer_list<Point> &points) : Polyline(points)
     }
 }
 
-Polygon::Polygon(const Polyline &polyline) : Polyline(polyline)
+Polygon::Polygon(const Polyline &polyline) : _points(polyline.begin(), polyline.end())
 {
     if (!_points.empty() && _points.back() != _points.front())
     {
@@ -1207,8 +835,13 @@ Polygon::Polygon(const Polyline &polyline) : Polyline(polyline)
     }
 }
 
-Polygon::Polygon(const AABBRect &rect) : Polyline(rect.cbegin(), rect.cend())
+Polygon::Polygon(const AABBRect &rect)
 {
+    _points.emplace_back(rect.left, rect.top);
+    _points.emplace_back(rect.right, rect.top);
+    _points.emplace_back(rect.right, rect.bottom);
+    _points.emplace_back(rect.left, rect.bottom);
+    _points.emplace_back(rect.left, rect.top);
 }
 
 Polygon::Polygon(const double x, const double y, const double radius, const int n, const double rad, const bool circumscribed)
@@ -1246,7 +879,8 @@ Polygon &Polygon::operator=(const Polygon &polygon)
 {
     if (this != &polygon)
     {
-        Polyline::operator=(polygon);
+        DObject::operator=(polygon);
+        _points = polygon._points;
     }
     return *this;
 }
@@ -1259,6 +893,394 @@ Type Polygon::type() const
 Polygon *Polygon::clone() const
 {
     return new Polygon(*this);
+}
+
+size_t Polygon::size() const
+{
+    return _points.size();
+}
+
+bool Polygon::empty() const
+{
+    return _points.empty();
+}
+
+double Polygon::length() const
+{
+    double result = 0;
+    for (size_t i = 1, count = _points.size(); i < count; ++i)
+    {
+        result += Geo::distance(_points[i], _points[i - 1]);
+    }
+    return result;
+}
+
+void Polygon::clear()
+{
+    _points.clear();
+}
+
+bool Polygon::is_self_intersected() const
+{
+    if (_points.size() < 4)
+    {
+        return false;
+    }
+
+    Point point;
+    const size_t count = _points.size() - 1;
+    for (size_t i = 0; i < count; ++i)
+    {
+        for (size_t j = i + 2; j < count; ++j)
+        {
+            if (i == 0 && j == count - 1)
+            {
+                continue; // 跳过首尾相邻的闭合边
+            }
+            if (Geo::is_intersected(_points[i], _points[i + 1], _points[j], _points[j + 1], point))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+Point &Polygon::operator[](const size_t index)
+{
+    assert(index < _points.size());
+    return _points[index];
+}
+
+const Point &Polygon::operator[](const size_t index) const
+{
+    assert(index < _points.size());
+    return _points[index];
+}
+
+Point &Polygon::at(const size_t index)
+{
+    return _points.at(index);
+}
+
+const Point &Polygon::at(const size_t index) const
+{
+    return _points.at(index);
+}
+
+void Polygon::operator+=(const Point &point)
+{
+    for (Point &p : _points)
+    {
+        p += point;
+    }
+}
+
+void Polygon::operator-=(const Point &point)
+{
+    for (Point &p : _points)
+    {
+        p -= point;
+    }
+}
+
+void Polygon::flip()
+{
+    std::reverse(_points.begin(), _points.end());
+}
+
+Point &Polygon::front()
+{
+    assert(!_points.empty());
+    return _points.front();
+}
+
+const Point &Polygon::front() const
+{
+    assert(!_points.empty());
+    return _points.front();
+}
+
+Point &Polygon::back()
+{
+    assert(!_points.empty());
+    return _points.back();
+}
+
+const Point &Polygon::back() const
+{
+    assert(!_points.empty());
+    return _points.back();
+}
+
+std::vector<Point>::iterator Polygon::begin()
+{
+    return _points.begin();
+}
+
+std::vector<Point>::const_iterator Polygon::begin() const
+{
+    return _points.begin();
+}
+
+std::vector<Point>::const_iterator Polygon::cbegin() const
+{
+    return _points.cbegin();
+}
+
+std::vector<Point>::iterator Polygon::end()
+{
+    return _points.end();
+}
+
+std::vector<Point>::const_iterator Polygon::end() const
+{
+    return _points.end();
+}
+
+std::vector<Point>::const_iterator Polygon::cend() const
+{
+    return _points.cend();
+}
+
+std::vector<Point>::reverse_iterator Polygon::rbegin()
+{
+    return _points.rbegin();
+}
+
+std::vector<Point>::const_reverse_iterator Polygon::rbegin() const
+{
+    return _points.rbegin();
+}
+
+std::vector<Point>::const_reverse_iterator Polygon::crbegin() const
+{
+    return _points.crbegin();
+}
+
+std::vector<Point>::reverse_iterator Polygon::rend()
+{
+    return _points.rend();
+}
+
+std::vector<Point>::const_reverse_iterator Polygon::rend() const
+{
+    return _points.rend();
+}
+
+std::vector<Point>::const_reverse_iterator Polygon::crend() const
+{
+    return _points.crend();
+}
+
+std::vector<Point>::iterator Polygon::find(const Point &point)
+{
+    return std::find(_points.begin(), _points.end(), point);
+}
+
+std::vector<Point>::const_iterator Polygon::find(const Point &point) const
+{
+    return std::find(_points.cbegin(), _points.cend(), point);
+}
+
+void Polygon::transform(const double a, const double b, const double c, const double d, const double e, const double f)
+{
+    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.transform(a, b, c, d, e, f); });
+}
+
+void Polygon::transform(const double mat[6])
+{
+    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.transform(mat); });
+}
+
+void Polygon::translate(const double tx, const double ty)
+{
+    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.translate(tx, ty); });
+}
+
+void Polygon::rotate(const double x, const double y, const double rad)
+{
+    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.rotate(x, y, rad); });
+}
+
+void Polygon::scale(const double x, const double y, const double k)
+{
+    std::for_each(_points.begin(), _points.end(), [=](Point &point) { point.scale(x, y, k); });
+}
+
+Polygon Polygon::convex_hull() const
+{
+    std::vector<Point> points(_points);
+    std::sort(points.begin(), points.end(), [](const Point &a, const Point &b) { return a.y < b.y; });
+    const Point origin(points.front());
+    std::for_each(points.begin(), points.end(), [=](Point &p) { p -= origin; });
+    std::sort(points.begin() + 1, points.end(),
+              [](const Point &a, const Point &b)
+              {
+                  if (a.x / a.length() != b.x / b.length())
+                  {
+                      return a.x / a.length() > b.x / b.length();
+                  }
+                  else
+                  {
+                      return a.length() < b.length();
+                  }
+              });
+    std::for_each(points.begin(), points.end(), [=](Point &p) { p += origin; });
+
+    std::vector<Point> hull(points.begin(), points.begin() + 2);
+    size_t count = hull.size(), index = 0;
+    Geo::Vector vec0, vec1;
+    std::vector<bool> used(points.size(), false);
+    for (size_t i = 2, end = points.size(); i < end; ++i)
+    {
+        vec0 = hull.back() - hull[count - 2];
+        vec1 = vec0 + points[i] - hull.back();
+        while (count >= 2 && vec0.x * vec1.y - vec1.x * vec0.y < 0)
+        {
+            hull.pop_back();
+            --count;
+            vec0 = hull.back() - hull[count - 2];
+            vec1 = vec0 + points[i] - hull.back();
+        }
+        ++count;
+        hull.emplace_back(points[i]);
+        used[i] = true;
+    }
+
+    for (size_t i = 1; count < 2; ++i)
+    {
+        if (used[i])
+        {
+            continue;
+        }
+        hull.emplace_back(points[points.size() - i]);
+        ++count;
+        used[points.size() - i] = true;
+    }
+
+    for (size_t i = points.size() - 1; i > 0; --i)
+    {
+        if (used[i])
+        {
+            continue;
+        }
+
+        vec0 = hull.back() - hull[count - 2];
+        vec1 = vec0 + points[i] - hull.back();
+        while (count >= 2 && vec0.x * vec1.y - vec1.x * vec0.y < 0)
+        {
+            hull.pop_back();
+            --count;
+            vec0 = hull.back() - hull[count - 2];
+            vec1 = vec0 + points[i] - hull.back();
+        }
+        ++count;
+        hull.emplace_back(points[i]);
+    }
+
+    vec0 = hull.back() - hull[count - 2];
+    vec1 = vec0 + points.front() - hull.back();
+    if (count >= 2 && vec0.x * vec1.y - vec0.y * vec1.x < 0)
+    {
+        hull.pop_back();
+    }
+
+    hull.emplace_back(points.front());
+    return Polygon(hull.cbegin(), hull.cend());
+}
+
+Polygon Polygon::mini_bounding_rect() const
+{
+    if (_points.empty())
+    {
+        return Polygon();
+    }
+
+    double cs = 0, area = DBL_MAX;
+    Polygon rect, temp;
+    const Polygon hull(convex_hull());
+    for (size_t i = 1, count = hull.size(); i < count; ++i)
+    {
+        Polygon polygon(hull);
+        cs = (polygon[i - 1].x * polygon[i].y - polygon[i].x * polygon[i - 1].y) / (polygon[i].length() * polygon[i - 1].length());
+        polygon.rotate(polygon[i - 1].x, polygon[i - 1].y, std::acos(cs));
+        temp = polygon.aabbrect();
+        if (temp.area() < area)
+        {
+            rect = temp;
+            area = temp.area();
+            rect.rotate(polygon[i - 1].x, polygon[i - 1].y, -std::acos(cs));
+        }
+    }
+    return rect;
+}
+
+AABBRect Polygon::aabbrect() const
+{
+    AABBRect params;
+    if (_points.empty())
+    {
+        return params;
+    }
+    params.left = params.right = _points.front().x;
+    params.top = params.bottom = _points.front().y;
+    for (const Point &point : _points)
+    {
+        params.left = std::min(params.left, point.x);
+        params.bottom = std::min(params.bottom, point.y);
+        params.right = std::max(params.right, point.x);
+        params.top = std::max(params.top, point.y);
+    }
+    return params;
+}
+
+void Polygon::remove_repeated_points()
+{
+    if (_points.empty())
+    {
+        return;
+    }
+    for (size_t i = _points.size() - 1; i > 0; --i)
+    {
+        if (_points[i] == _points[i - 1])
+        {
+            _points.erase(_points.begin() + i);
+        }
+    }
+}
+
+Point Polygon::shape_point(const size_t index, const double t) const
+{
+    if (index + 1 >= _points.size() || t < 0 || t > 1)
+    {
+        return Point();
+    }
+    return _points[index] + (_points[index + 1] - _points[index]) * t;
+}
+
+Polyline *Polygon::range(const size_t index0, const double t0, const size_t index1, const double t1) const
+{
+    if (index0 > index1 || (index0 == index1 && t0 >= t1) || index1 + 1 >= _points.size() || index1 + 2 > _points.size() || t0 < 0 ||
+        t0 > 1 || t1 < 0 || t1 > 1)
+    {
+        return nullptr;
+    }
+
+    Geo::Polyline *polyline = new Geo::Polyline();
+    if (t0 < 1)
+    {
+        polyline->append(_points[index0] + (_points[index0 + 1] - _points[index0]) * t0);
+    }
+    for (size_t i = index0 + 1; i <= index1; ++i)
+    {
+        polyline->append(_points[i]);
+    }
+    if (t1 > 0)
+    {
+        polyline->append(_points[index1] + (_points[index1 + 1] - _points[index1]) * t1);
+    }
+    return polyline;
 }
 
 void Polygon::reorder_points(const bool cw)
@@ -1308,13 +1330,13 @@ void Polygon::append(const Point &point)
 {
     if (size() < 2)
     {
-        Polyline::append(point);
+        _points.emplace_back(point);
     }
     else
     {
         if (_points.front() == _points.back())
         {
-            Polyline::insert(size() - 1, point);
+            _points.insert(_points.end() - 1, point);
         }
         else
         {
@@ -1328,13 +1350,13 @@ void Polygon::append(const double x, const double y)
 {
     if (size() < 2)
     {
-        Polyline::append(x, y);
+        _points.emplace_back(x, y);
     }
     else
     {
         if (_points.front() == _points.back())
         {
-            Polyline::insert(size() - 1, Geo::Point(x, y));
+            _points.insert(_points.end() - 1, Geo::Point(x, y));
         }
         else
         {
@@ -1348,7 +1370,7 @@ void Polygon::append(const Polyline &polyline)
 {
     if (empty())
     {
-        Polyline::append(polyline);
+        _points.insert(_points.end(), polyline.begin(), polyline.end());
         if (_points.front() != _points.back())
         {
             _points.emplace_back(_points.front());
@@ -1358,11 +1380,11 @@ void Polygon::append(const Polyline &polyline)
     {
         if (_points.front() == _points.back())
         {
-            Polyline::insert(size() - 1, polyline);
+            _points.insert(_points.end() - 1, polyline.begin(), polyline.end());
         }
         else
         {
-            Polyline::append(polyline);
+            _points.insert(_points.end(), polyline.begin(), polyline.end());
             _points.emplace_back(_points.front());
         }
     }
@@ -1372,7 +1394,7 @@ void Polygon::append(const std::vector<Point>::const_iterator &begin, const std:
 {
     if (empty())
     {
-        Polyline::append(begin, end);
+        _points.insert(_points.end(), begin, end);
         if (_points.front() != _points.back())
         {
             _points.emplace_back(_points.front());
@@ -1382,7 +1404,7 @@ void Polygon::append(const std::vector<Point>::const_iterator &begin, const std:
     {
         if (_points.front() == _points.back())
         {
-            Polyline::insert(size() - 1, begin, end);
+            _points.insert(_points.end() - 1, begin, end);
         }
         else
         {
@@ -1396,7 +1418,7 @@ void Polygon::append(const std::vector<Point>::const_reverse_iterator &rbegin, c
 {
     if (empty())
     {
-        Polyline::append(rbegin, rend);
+        _points.insert(_points.end(), rbegin, rend);
         if (_points.front() != _points.back())
         {
             _points.emplace_back(_points.front());
@@ -1406,7 +1428,7 @@ void Polygon::append(const std::vector<Point>::const_reverse_iterator &rbegin, c
     {
         if (_points.front() == _points.back())
         {
-            Polyline::insert(size() - 1, rbegin, rend);
+            _points.insert(_points.end() - 1, rbegin, rend);
         }
         else
         {
@@ -1418,7 +1440,8 @@ void Polygon::append(const std::vector<Point>::const_reverse_iterator &rbegin, c
 
 void Polygon::insert(const size_t index, const Point &point)
 {
-    Polyline::insert(index, point);
+    assert(index < _points.size());
+    _points.insert(_points.begin() + index, point);
     if (index == 0)
     {
         _points.back() = _points.front();
@@ -1427,7 +1450,8 @@ void Polygon::insert(const size_t index, const Point &point)
 
 void Polygon::insert(const size_t index, const Polyline &polyline)
 {
-    Polyline::insert(index, polyline);
+    assert(index < _points.size());
+    _points.insert(_points.begin() + index, polyline.begin(), polyline.end());
     if (index == 0)
     {
         _points.back() = _points.front();
@@ -1436,7 +1460,8 @@ void Polygon::insert(const size_t index, const Polyline &polyline)
 
 void Polygon::insert(const size_t index, const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end)
 {
-    Polyline::insert(index, begin, end);
+    assert(index < _points.size());
+    _points.insert(_points.begin() + index, begin, end);
     if (index == 0)
     {
         _points.back() = _points.front();
@@ -1446,7 +1471,8 @@ void Polygon::insert(const size_t index, const std::vector<Point>::const_iterato
 void Polygon::insert(const size_t index, const std::vector<Point>::const_reverse_iterator &rbegin,
                      const std::vector<Point>::const_reverse_iterator &rend)
 {
-    Polyline::insert(index, rbegin, rend);
+    assert(index < _points.size());
+    _points.insert(_points.begin() + index, rbegin, rend);
     if (index == 0)
     {
         _points.back() = _points.front();
@@ -1455,7 +1481,8 @@ void Polygon::insert(const size_t index, const std::vector<Point>::const_reverse
 
 void Polygon::remove(const size_t index)
 {
-    Polyline::remove(index);
+    assert(index < _points.size());
+    _points.erase(_points.begin() + index);
     if (index == 0)
     {
         _points.back() = _points.front();
@@ -1468,7 +1495,8 @@ void Polygon::remove(const size_t index)
 
 void Polygon::remove(const size_t index, const size_t count)
 {
-    Polyline::remove(index, count);
+    assert(index < _points.size());
+    _points.erase(_points.begin() + index, _points.begin() + index + count);
     if (size() > 2)
     {
         if (index == 0)
@@ -1484,7 +1512,9 @@ void Polygon::remove(const size_t index, const size_t count)
 
 Point Polygon::pop(const size_t index)
 {
-    Geo::Point point = Polyline::pop(index);
+    assert(index < _points.size());
+    Geo::Point point(_points[index]);
+    _points.erase(_points.begin() + index);
     if (index == 0)
     {
         _points.back() = _points.front();
@@ -1674,13 +1704,6 @@ Triangle::Triangle(const double x0, const double y0, const double x1, const doub
     _vecs[2].y = y2;
 }
 
-Triangle::Triangle(const Triangle &triangle) : Geometry(triangle)
-{
-    _vecs[0] = triangle._vecs[0];
-    _vecs[1] = triangle._vecs[1];
-    _vecs[2] = triangle._vecs[2];
-}
-
 Type Triangle::type() const
 {
     return Type::TRIANGLE;
@@ -1786,7 +1809,7 @@ Triangle &Triangle::operator=(const Triangle &triangle)
 {
     if (this != &triangle)
     {
-        Geometry::operator=(triangle);
+        DObject::operator=(triangle);
         _vecs[0] = triangle._vecs[0];
         _vecs[1] = triangle._vecs[1];
         _vecs[2] = triangle._vecs[2];
@@ -1873,20 +1896,6 @@ Polygon Triangle::convex_hull() const
     }
 }
 
-AABBRect Triangle::bounding_rect() const
-{
-    if (empty())
-    {
-        return AABBRect();
-    }
-
-    const double left = std::min({_vecs[0].x, _vecs[1].x, _vecs[2].x});
-    const double right = std::max({_vecs[0].x, _vecs[1].x, _vecs[2].x});
-    const double top = std::max({_vecs[0].y, _vecs[1].y, _vecs[2].y});
-    const double bottom = std::min({_vecs[0].y, _vecs[1].y, _vecs[2].y});
-    return AABBRect(left, top, right, bottom);
-}
-
 Polygon Triangle::mini_bounding_rect() const
 {
     if (empty())
@@ -1895,14 +1904,14 @@ Polygon Triangle::mini_bounding_rect() const
     }
 
     double cs = 0, area = DBL_MAX;
-    AABBRect rect, temp;
+    Polygon rect, temp;
     for (size_t i = 0; i < 3; ++i)
     {
         Triangle triangle(*this);
         cs = (triangle[i].x * triangle[i < 2 ? i + 1 : 0].y - triangle[i < 2 ? i + 1 : 0].x * triangle[i].y) /
              (triangle[i < 2 ? i + 1 : 0].length() * triangle[i].length());
         triangle.rotate(triangle[i].x, triangle[i].y, std::acos(cs));
-        temp = triangle.bounding_rect();
+        temp = triangle.aabbrect();
         if (temp.area() < area)
         {
             rect = temp;
@@ -1913,9 +1922,9 @@ Polygon Triangle::mini_bounding_rect() const
     return rect;
 }
 
-AABBRectParams Triangle::aabbrect_params() const
+AABBRect Triangle::aabbrect() const
 {
-    AABBRectParams params;
+    AABBRect params;
     params.left = params.right = _vecs[0].x;
     params.bottom = params.top = _vecs[0].y;
     for (int i = 1; i < 3; ++i)
@@ -1992,6 +2001,7 @@ Circle &Circle::operator=(const Circle &circle)
 {
     if (this != &circle)
     {
+        DObject::operator=(circle);
         x = circle.x;
         y = circle.y;
         radius = circle.radius;
@@ -2112,18 +2122,6 @@ Polygon Circle::convex_hull() const
     }
 }
 
-AABBRect Circle::bounding_rect() const
-{
-    if (radius == 0)
-    {
-        return AABBRect();
-    }
-    else
-    {
-        return AABBRect(x - radius, y + radius, x + radius, y - radius);
-    }
-}
-
 Polygon Circle::mini_bounding_rect() const
 {
     if (radius == 0)
@@ -2136,9 +2134,9 @@ Polygon Circle::mini_bounding_rect() const
     }
 }
 
-AABBRectParams Circle::aabbrect_params() const
+AABBRect Circle::aabbrect() const
 {
-    AABBRectParams params;
+    AABBRect params;
     params.left = x - radius;
     params.top = y + radius;
     params.right = x + radius;
@@ -2173,7 +2171,7 @@ double CubicBezier::default_down_sampling_value = 0.02;
 
 CubicBezier::CubicBezier(const std::vector<Point>::const_iterator &begin, const std::vector<Point>::const_iterator &end,
                          const bool is_path_points)
-    : Polyline(begin, end)
+    : control_points(begin, end)
 {
     if (is_path_points)
     {
@@ -2182,7 +2180,7 @@ CubicBezier::CubicBezier(const std::vector<Point>::const_iterator &begin, const 
     update_shape(CubicBezier::default_step, CubicBezier::default_down_sampling_value);
 }
 
-CubicBezier::CubicBezier(const std::initializer_list<Point> &points, const bool is_path_points) : Polyline(points)
+CubicBezier::CubicBezier(const std::initializer_list<Point> &points, const bool is_path_points) : control_points(points)
 {
     if (is_path_points)
     {
@@ -2201,52 +2199,62 @@ const Polyline &CubicBezier::shape() const
     return _shape;
 }
 
+const Point &CubicBezier::front() const
+{
+    return control_points.front();
+}
+
+const Point &CubicBezier::back() const
+{
+    return control_points.back();
+}
+
 void CubicBezier::update_control_points()
 {
-    std::vector<Geo::Point> paths(_points);
-    _points.erase(_points.begin() + 1, _points.end());
+    std::vector<Geo::Point> paths(control_points);
+    control_points.erase(control_points.begin() + 1, control_points.end());
     Geo::Point mid0((paths[1] + paths[2]) / 2), mid1((paths[0] + paths[1]) / 2);
-    _points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
+    control_points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
     for (size_t i = 1, count = paths.size() - 1; i < count; ++i)
     {
         mid0 = mid1;
         mid1 = (paths[i] + paths[i + 1]) / 2;
-        _points.emplace_back(paths[i] + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) / 2);
-        _points.emplace_back(paths[i]);
-        _points.emplace_back(paths[i] + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
+        control_points.emplace_back(paths[i] + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) / 2);
+        control_points.emplace_back(paths[i]);
+        control_points.emplace_back(paths[i] + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
     }
-    _points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
-    _points.emplace_back(paths.back());
-    _points[1] = (_points[0] + _points[2]) / 2;
-    _points[_points.size() - 2] = (_points.back() + _points[_points.size() - 3]) / 2;
+    control_points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
+    control_points.emplace_back(paths.back());
+    control_points[1] = (control_points[0] + control_points[2]) / 2;
+    control_points[control_points.size() - 2] = (control_points.back() + control_points[control_points.size() - 3]) / 2;
 }
 
 void CubicBezier::update_shape(const double step, const double down_sampling_value)
 {
     assert(0 < step && step < 1);
     _shape.clear();
-    if (_points.size() <= 3)
+    if (control_points.size() <= 3)
     {
         return;
     }
     const int nums[4] = {1, 3, 3, 1};
 
-    for (size_t i = 0, end = _points.size() - 3; i < end; i += 3)
+    for (size_t i = 0, end = control_points.size() - 3; i < end; i += 3)
     {
-        _shape.append(_points[i]);
+        _shape.append(control_points[i]);
         double t = 0;
         while (t <= 1)
         {
             Geo::Point point;
             for (int j = 0; j <= 3; ++j)
             {
-                point += (_points[j + i] * (nums[j] * std::pow(1 - t, 3 - j) * std::pow(t, j)));
+                point += (control_points[j + i] * (nums[j] * std::pow(1 - t, 3 - j) * std::pow(t, j)));
             }
             _shape.append(point);
             t += step;
         }
     }
-    _shape.append(_points.back());
+    _shape.append(control_points.back());
     _shape.remove_repeated_points();
     Geo::down_sampling(_shape, down_sampling_value);
 }
@@ -2254,7 +2262,7 @@ void CubicBezier::update_shape(const double step, const double down_sampling_val
 double CubicBezier::length() const
 {
     double result = 0;
-    for (size_t i = 0, count = _points.size() / 3; i < count; ++i)
+    for (size_t i = 0, count = control_points.size() / 3; i < count; ++i)
     {
         Math::CurveNorm f = [this, i](const double t) { return tangent(i, t).length(); };
         result += Math::adaptive_simpson_3_8(f, 0, 1);
@@ -2262,10 +2270,15 @@ double CubicBezier::length() const
     return result;
 }
 
+bool CubicBezier::empty() const
+{
+    return control_points.empty();
+}
+
 void CubicBezier::clear()
 {
     _shape.clear();
-    Polyline::clear();
+    control_points.clear();
 }
 
 CubicBezier *CubicBezier::clone() const
@@ -2277,7 +2290,8 @@ CubicBezier &CubicBezier::operator=(const CubicBezier &bezier)
 {
     if (this != &bezier)
     {
-        Polyline::operator=(bezier);
+        DObject::operator=(bezier);
+        control_points = bezier.control_points;
         _shape = bezier._shape;
     }
     return *this;
@@ -2285,32 +2299,32 @@ CubicBezier &CubicBezier::operator=(const CubicBezier &bezier)
 
 void CubicBezier::transform(const double a, const double b, const double c, const double d, const double e, const double f)
 {
-    Polyline::transform(a, b, c, d, e, f);
     _shape.transform(a, b, c, d, e, f);
+    std::for_each(control_points.begin(), control_points.end(), [=](Point &point) { point.transform(a, b, c, d, e, f); });
 }
 
 void CubicBezier::transform(const double mat[6])
 {
-    Polyline::transform(mat);
     _shape.transform(mat);
+    std::for_each(control_points.begin(), control_points.end(), [=](Point &point) { point.transform(mat); });
 }
 
 void CubicBezier::translate(const double tx, const double ty)
 {
-    Polyline::translate(tx, ty);
     _shape.translate(tx, ty);
+    std::for_each(control_points.begin(), control_points.end(), [=](Point &point) { point.translate(tx, ty); });
 }
 
 void CubicBezier::rotate(const double x, const double y, const double rad)
 {
-    Polyline::rotate(x, y, rad);
     _shape.rotate(x, y, rad);
+    std::for_each(control_points.begin(), control_points.end(), [=](Point &point) { point.rotate(x, y, rad); });
 }
 
 void CubicBezier::scale(const double x, const double y, const double k)
 {
-    Polyline::scale(x, y, k);
     _shape.scale(x, y, k);
+    std::for_each(control_points.begin(), control_points.end(), [=](Point &point) { point.scale(x, y, k); });
 }
 
 Polygon CubicBezier::convex_hull() const
@@ -2318,31 +2332,27 @@ Polygon CubicBezier::convex_hull() const
     return _shape.convex_hull();
 }
 
-AABBRect CubicBezier::bounding_rect() const
-{
-    return _shape.bounding_rect();
-}
-
 Polygon CubicBezier::mini_bounding_rect() const
 {
     return _shape.mini_bounding_rect();
 }
 
-AABBRectParams CubicBezier::aabbrect_params() const
+AABBRect CubicBezier::aabbrect() const
 {
-    return _shape.aabbrect_params();
+    return _shape.aabbrect();
 }
 
 Point CubicBezier::tangent(const size_t index, const double t) const
 {
-    if (_points.size() < 3 * (index + 1) + 1)
+    if (control_points.size() < 3 * (index + 1) + 1)
     {
         return Point();
     }
 
     const int nums[3] = {1, 2, 1};
-    const Geo::Point points[3] = {(_points[1 + index * 3] - _points[index * 3]) * 3, (_points[2 + index * 3] - _points[1 + index * 3]) * 3,
-                                  (_points[3 + index * 3] - _points[2 + index * 3]) * 3};
+    const Geo::Point points[3] = {(control_points[1 + index * 3] - control_points[index * 3]) * 3,
+                                  (control_points[2 + index * 3] - control_points[1 + index * 3]) * 3,
+                                  (control_points[3 + index * 3] - control_points[2 + index * 3]) * 3};
     Geo::Point vec;
     for (int i = 0; i < 3; ++i)
     {
@@ -2359,7 +2369,7 @@ Point CubicBezier::vertical(const size_t index, const double t) const
 
 Point CubicBezier::shape_point(const size_t index, const double t) const
 {
-    if (_points.size() < 3 * (index + 1) + 1)
+    if (control_points.size() < 3 * (index + 1) + 1)
     {
         return Point();
     }
@@ -2368,7 +2378,7 @@ Point CubicBezier::shape_point(const size_t index, const double t) const
     Geo::Point point;
     for (int j = 0; j <= 3; ++j)
     {
-        point += (_points[j + index * 3] * (nums[j] * std::pow(1 - t, 3 - j) * std::pow(t, j)));
+        point += (control_points[j + index * 3] * (nums[j] * std::pow(1 - t, 3 - j) * std::pow(t, j)));
     }
     return point;
 }
@@ -2376,7 +2386,7 @@ Point CubicBezier::shape_point(const size_t index, const double t) const
 CubicBezier *CubicBezier::range(const size_t index0, const double t0, const size_t index1, const double t1) const
 {
     const int order = 3;
-    if (index0 > index1 || (index0 == index1 && t0 >= t1) || index1 >= _points.size() / order)
+    if (index0 > index1 || (index0 == index1 && t0 >= t1) || index1 >= control_points.size() / order)
     {
         return nullptr;
     }
@@ -2385,32 +2395,32 @@ CubicBezier *CubicBezier::range(const size_t index0, const double t0, const size
     std::vector<Geo::Point> result_controls;
     if (0 < t0 && t0 < 1)
     {
-        std::vector<Geo::Point> control_points, temp_points, result_points;
+        std::vector<Geo::Point> temp_controls, temp_points, result_points;
         Geo::Point pos;
         for (int i = 0; i <= order; ++i)
         {
-            control_points.emplace_back(_points[i + index0 * order]);
-            pos += (control_points.back() * (nums[i] * std::pow(1 - t0, order - i) * std::pow(t0, i)));
+            temp_controls.emplace_back(control_points[i + index0 * order]);
+            pos += (temp_controls.back() * (nums[i] * std::pow(1 - t0, order - i) * std::pow(t0, i)));
         }
         for (int i = 0; i < order; ++i)
         {
-            for (size_t j = 1, count = control_points.size(); j < count; ++j)
+            for (size_t j = 1, count = temp_controls.size(); j < count; ++j)
             {
-                temp_points.emplace_back(control_points[j - 1] + (control_points[j] - control_points[j - 1]) * t0);
+                temp_points.emplace_back(temp_controls[j - 1] + (temp_controls[j] - temp_controls[j - 1]) * t0);
             }
             result_points.emplace_back(temp_points.back());
-            control_points.assign(temp_points.begin(), temp_points.end());
+            temp_controls.assign(temp_points.begin(), temp_points.end());
             temp_points.clear();
         }
         result_points.back() = pos;
         std::reverse(result_points.begin(), result_points.end());
-        if (result_points.empty() || result_points.back() != _points[index0 * order])
+        if (result_points.empty() || result_points.back() != control_points[index0 * order])
         {
-            result_points.insert(result_points.end(), _points.begin() + index0 * order + order, _points.end());
+            result_points.insert(result_points.end(), control_points.begin() + index0 * order + order, control_points.end());
         }
         else
         {
-            result_points.insert(result_points.end(), _points.begin() + index0 * order + order + 1, _points.end());
+            result_points.insert(result_points.end(), control_points.begin() + index0 * order + order + 1, control_points.end());
         }
         result_controls.assign(result_points.begin(), result_points.end());
     }
@@ -2418,34 +2428,34 @@ CubicBezier *CubicBezier::range(const size_t index0, const double t0, const size
     {
         if (t0 == 0)
         {
-            result_controls.assign(_points.begin() + index0 * order, _points.end());
+            result_controls.assign(control_points.begin() + index0 * order, control_points.end());
         }
         else
         {
-            result_controls.assign(_points.begin() + index0 * order + order, _points.end());
+            result_controls.assign(control_points.begin() + index0 * order + order, control_points.end());
         }
     }
 
     // 如果t0为1则(index0, t0)应视为(index0 + 1, 0)
-    if (const size_t index2 = index1 - index0 - (t0 == 1 ? 1 : 0); 0 < t1 && t1 < 1)
+    if (const size_t index2 = index1 - index0 - (t0 >= 1 ? 1 : 0); 0 < t1 && t1 < 1)
     {
         // 如果是同一段曲线则需要对t1进行换算
         const double t2 = index0 == index1 ? (t1 - t0) / (1 - t0) : t1;
-        std::vector<Geo::Point> control_points, temp_points, result_points;
+        std::vector<Geo::Point> temp_controls, temp_points, result_points;
         Geo::Point pos;
         for (int i = 0; i <= order; ++i)
         {
-            control_points.emplace_back(result_controls[i + index2 * order]);
-            pos += (control_points.back() * (nums[i] * std::pow(1 - t2, order - i) * std::pow(t2, i)));
+            temp_controls.emplace_back(result_controls[i + index2 * order]);
+            pos += (temp_controls.back() * (nums[i] * std::pow(1 - t2, order - i) * std::pow(t2, i)));
         }
         for (int i = 0; i < order; ++i)
         {
-            for (size_t j = 1, count = control_points.size(); j < count; ++j)
+            for (size_t j = 1, count = temp_controls.size(); j < count; ++j)
             {
-                temp_points.emplace_back(control_points[j - 1] + (control_points[j] - control_points[j - 1]) * t2);
+                temp_points.emplace_back(temp_controls[j - 1] + (temp_controls[j] - temp_controls[j - 1]) * t2);
             }
             result_points.emplace_back(temp_points.front());
-            control_points.assign(temp_points.begin(), temp_points.end());
+            temp_controls.assign(temp_points.begin(), temp_points.end());
             temp_points.clear();
         }
         result_points.back() = pos;
@@ -2482,18 +2492,18 @@ Point CubicBezier::derivative(const size_t index, const double t, const int n) c
     {
     case 3:
         {
-            const Geo::Point points[3] = {(_points[1 + index * 3] - _points[index * 3]) * 3,
-                                          (_points[2 + index * 3] - _points[1 + index * 3]) * 3,
-                                          (_points[3 + index * 3] - _points[2 + index * 3]) * 3};
-            result = (points[2] - points[1] * 2 + points[0]) * 2 * t;
+            const Geo::Point points[3] = {(control_points[1 + index * 3] - control_points[index * 3]) * 3,
+                                          (control_points[2 + index * 3] - control_points[1 + index * 3]) * 3,
+                                          (control_points[3 + index * 3] - control_points[2 + index * 3]) * 3};
+            result = (points[2] - points[1] * 2 + points[0]) * 2;
         }
         break;
     case 2:
         {
-            const Geo::Point points[3] = {(_points[1 + index * 3] - _points[index * 3]) * 3,
-                                          (_points[2 + index * 3] - _points[1 + index * 3]) * 3,
-                                          (_points[3 + index * 3] - _points[2 + index * 3]) * 3};
-            result = (points[1] - points[0]) * 2 * t + (points[2] - points[1]) * 2 * (1 - t);
+            const Geo::Point points[3] = {(control_points[1 + index * 3] - control_points[index * 3]) * 3,
+                                          (control_points[2 + index * 3] - control_points[1 + index * 3]) * 3,
+                                          (control_points[3 + index * 3] - control_points[2 + index * 3]) * 3};
+            result = (points[1] - points[0]) * 2 * (1 - t) + (points[2] - points[1]) * 2 * t;
         }
         break;
     case 1:
@@ -2578,7 +2588,7 @@ Ellipse::Ellipse(const Point &a0, const Point &a1, const Point &b0, const Point 
     update_shape(Geo::Ellipse::default_down_sampling_value);
 }
 
-Ellipse::Ellipse(const Ellipse &ellipse) : Geometry(ellipse), _shape(ellipse._shape)
+Ellipse::Ellipse(const Ellipse &ellipse) : DObject(ellipse), _shape(ellipse._shape)
 {
     _a[0] = ellipse._a[0];
     _a[1] = ellipse._a[1];
@@ -2594,7 +2604,7 @@ Ellipse &Ellipse::operator=(const Ellipse &ellipse)
 {
     if (this != &ellipse)
     {
-        Geometry::operator=(ellipse);
+        DObject::operator=(ellipse);
         _a[0] = ellipse._a[0];
         _a[1] = ellipse._a[1];
         _b[0] = ellipse._b[0];
@@ -2799,20 +2809,6 @@ Polygon Ellipse::convex_hull() const
     return polygon;
 }
 
-AABBRect Ellipse::bounding_rect() const
-{
-    const Geo::Point center = (_a[0] + _a[1] + _b[0] + _b[1]) / 4;
-    const double aa = Geo::distance_square(_a[0], _a[1]) / 4, bb = Geo::distance_square(_b[0], _b[1]) / 4;
-    const Geo::Vector vec = _a[0] - _a[1];
-    const double cc = std::pow(vec.x, 2) / (std::pow(vec.x, 2) + std::pow(vec.y, 2));
-    const double ss = 1 - cc;
-    const double left = center.x - std::sqrt(aa * cc + bb * ss);
-    const double top = center.y + std::sqrt(aa * ss + bb * cc);
-    const double right = center.x + std::sqrt(aa * cc + bb * ss);
-    const double bottom = center.y - std::sqrt(aa * ss + bb * cc);
-    return AABBRect(left, top, right, bottom);
-}
-
 Polygon Ellipse::mini_bounding_rect() const
 {
     const Geo::Point center = (_a[0] + _a[1] + _b[0] + _b[1]) / 4;
@@ -2823,14 +2819,14 @@ Polygon Ellipse::mini_bounding_rect() const
     return polygon;
 }
 
-AABBRectParams Ellipse::aabbrect_params() const
+AABBRect Ellipse::aabbrect() const
 {
     const Geo::Point center = (_a[0] + _a[1] + _b[0] + _b[1]) / 4;
     const double aa = Geo::distance_square(_a[0], _a[1]) / 4, bb = Geo::distance_square(_b[0], _b[1]) / 4;
     const Geo::Vector vec = _a[0] - _a[1];
     const double cc = std::pow(vec.x, 2) / (std::pow(vec.x, 2) + std::pow(vec.y, 2));
     const double ss = 1 - cc;
-    AABBRectParams params;
+    AABBRect params;
     params.left = center.x - std::sqrt(aa * cc + bb * ss);
     params.top = center.y + std::sqrt(aa * ss + bb * cc);
     params.right = center.x + std::sqrt(aa * cc + bb * ss);
@@ -2925,11 +2921,11 @@ void Ellipse::set_center(const double x, const double y)
 }
 
 void Ellipse::reset_parameter(const Geo::Point &a0, const Geo::Point &a1, const Geo::Point &b0, const Geo::Point &b1,
-                              const double start_anlge, const double end_angle)
+                              const double start_angle, const double end_angle)
 {
     _a[0] = a0, _a[1] = a1;
     _b[0] = b0, _b[1] = b1;
-    _arc_angle[0] = start_anlge, _arc_angle[1] = end_angle;
+    _arc_angle[0] = start_angle, _arc_angle[1] = end_angle;
     for (int i = 0; i < 2; ++i)
     {
         while (_arc_angle[i] > Geo::PI * 2)
@@ -3161,7 +3157,7 @@ BSpline &BSpline::operator=(const BSpline &bspline)
 {
     if (this != &bspline)
     {
-        Geometry::operator=(bspline);
+        DObject::operator=(bspline);
         _shape = bspline._shape;
         controls_model = bspline.controls_model;
         control_points = bspline.control_points;
@@ -3241,19 +3237,14 @@ Polygon BSpline::convex_hull() const
     return _shape.convex_hull();
 }
 
-AABBRect BSpline::bounding_rect() const
-{
-    return _shape.bounding_rect();
-}
-
 Polygon BSpline::mini_bounding_rect() const
 {
     return _shape.mini_bounding_rect();
 }
 
-AABBRectParams BSpline::aabbrect_params() const
+AABBRect BSpline::aabbrect() const
 {
-    return _shape.aabbrect_params();
+    return _shape.aabbrect();
 }
 
 const Point &BSpline::front() const
@@ -3779,10 +3770,10 @@ void QuadBSpline::insert(const double t)
     control_points.insert(control_points.begin() + k, array[1]);
     _knots.insert(_knots.begin() + k + 1, t);
 
-    std::vector<double> lenghts({0});
+    std::vector<double> lengths({0});
     for (size_t i = 1, count = _shape.size(); i < count; ++i)
     {
-        lenghts.push_back(lenghts.back() + Geo::distance(_shape[i - 1], _shape[i]));
+        lengths.push_back(lengths.back() + Geo::distance(_shape[i - 1], _shape[i]));
     }
     std::vector<double> distances;
     for (const Geo::Point &point : path_points)
@@ -3797,7 +3788,7 @@ void QuadBSpline::insert(const double t)
                 index = i;
             }
         }
-        distances.push_back(lenghts[index]);
+        distances.push_back(lengths[index]);
     }
 
     double anchor_dis = 0;
@@ -3812,7 +3803,7 @@ void QuadBSpline::insert(const double t)
                 index = i;
             }
         }
-        anchor_dis = lenghts[index];
+        anchor_dis = lengths[index];
     }
 
     for (size_t i = 1, count = path_points.size(); i < count; ++i)
@@ -3949,19 +3940,28 @@ QuadBSpline *QuadBSpline::range(const double t0, const double t1) const
 Geo::Point QuadBSpline::derivative(const double t, const int n) const
 {
     Geo::Point result;
-    if (n > 2)
+    if (n < 0 || n > 2)
     {
         return result;
     }
     const size_t npts = control_points.size() - n;
     std::vector<double> nbasis;
-    const std::vector<double> knots(_knots.begin() + n, _knots.end() - n); // 二阶导数的节点矢量
+    const std::vector<double> knots(_knots.begin() + n, _knots.end() - n); // 导数的节点矢量
     rbasis(2 - n, t, npts, knots, nbasis);
-    std::vector<Geo::Point> points;
-    for (size_t i = 0; i < npts; ++i)
+    // 递推求 n 阶导数的控制点: 第 k 阶对第 k-1 阶控制点做差分, 而非对原始控制点只差分一次
+    // P^(k)_i = (3 - k) / (u[i+3] - u[i+k]) * (P^(k-1)_[i+1] - P^(k-1)_i)
+    std::vector<Geo::Point> points(control_points);
+    for (int k = 1; k <= n; ++k)
     {
-        const double denom = knots[i + 3 - n] - knots[i];
-        points.emplace_back((control_points[i + 1] - control_points[i]) * (3 - n) / denom);
+        const size_t count = points.size() - 1;
+        std::vector<Geo::Point> next;
+        next.reserve(count);
+        for (size_t i = 0; i < count; ++i)
+        {
+            const double denom = _knots[i + 3] - _knots[i + k];
+            next.emplace_back((points[i + 1] - points[i]) * (3 - k) / denom);
+        }
+        points = std::move(next);
     }
     for (size_t i = 0; i < npts; ++i)
     {
@@ -4282,10 +4282,10 @@ void CubicBSpline::insert(const double t)
     control_points.insert(control_points.begin() + k, array[2]);
     _knots.insert(_knots.begin() + k + 1, t);
 
-    std::vector<double> lenghts({0});
+    std::vector<double> lengths({0});
     for (size_t i = 1, count = _shape.size(); i < count; ++i)
     {
-        lenghts.push_back(lenghts.back() + Geo::distance(_shape[i - 1], _shape[i]));
+        lengths.push_back(lengths.back() + Geo::distance(_shape[i - 1], _shape[i]));
     }
     std::vector<double> distances;
     for (const Geo::Point &point : path_points)
@@ -4300,7 +4300,7 @@ void CubicBSpline::insert(const double t)
                 index = i;
             }
         }
-        distances.push_back(lenghts[index]);
+        distances.push_back(lengths[index]);
     }
 
     double anchor_dis = 0;
@@ -4315,7 +4315,7 @@ void CubicBSpline::insert(const double t)
                 index = i;
             }
         }
-        anchor_dis = lenghts[index];
+        anchor_dis = lengths[index];
     }
 
     for (size_t i = 1, count = path_points.size(); i < count; ++i)
@@ -4458,7 +4458,7 @@ CubicBSpline *CubicBSpline::range(const double t0, const double t1) const
 Geo::Point CubicBSpline::derivative(const double t, const int n) const
 {
     Geo::Point result;
-    if (n > 3)
+    if (n < 0 || n > 3)
     {
         return result;
     }
@@ -4466,11 +4466,20 @@ Geo::Point CubicBSpline::derivative(const double t, const int n) const
     std::vector<double> nbasis;
     const std::vector<double> knots(_knots.begin() + n, _knots.end() - n); // 导数的节点矢量
     rbasis(3 - n, t, npts, knots, nbasis);
-    std::vector<Geo::Point> points;
-    for (size_t i = 0; i < npts; ++i)
+    // 递推求 n 阶导数的控制点: 第 k 阶对第 k-1 阶控制点做差分, 而非对原始控制点只差分一次
+    // P^(k)_i = (4 - k) / (u[i+4] - u[i+k]) * (P^(k-1)_[i+1] - P^(k-1)_i)
+    std::vector<Geo::Point> points(control_points);
+    for (int k = 1; k <= n; ++k)
     {
-        const double denom = knots[i + 4 - n] - knots[i];
-        points.emplace_back((control_points[i + 1] - control_points[i]) * (4 - n) / denom);
+        const size_t count = points.size() - 1;
+        std::vector<Geo::Point> next;
+        next.reserve(count);
+        for (size_t i = 0; i < count; ++i)
+        {
+            const double denom = _knots[i + 4] - _knots[i + k];
+            next.emplace_back((points[i + 1] - points[i]) * (4 - k) / denom);
+        }
+        points = std::move(next);
     }
     for (size_t i = 0; i < npts; ++i)
     {
@@ -4577,7 +4586,7 @@ Arc::Arc(const Point &point0, const Point &point1, const double param, const Par
 }
 
 Arc::Arc(const double startx, const double starty, const double endx, const double endy, const double radius_, const bool left_center,
-        const bool counterclockwise)
+         const bool counterclockwise)
 {
     control_points[0].x = startx, control_points[0].y = starty;
     control_points[2].x = endx, control_points[2].y = endy;
@@ -4677,7 +4686,7 @@ Arc::Arc(const Point &point0, const Point &point1, const double bulge) : Arc(poi
 {
 }
 
-Arc::Arc(const Arc &arc) : Geometry(arc), x(arc.x), y(arc.y), radius(arc.radius), _shape(arc._shape)
+Arc::Arc(const Arc &arc) : DObject(arc), x(arc.x), y(arc.y), radius(arc.radius), _shape(arc._shape)
 {
     control_points[0] = arc.control_points[0];
     control_points[1] = arc.control_points[1];
@@ -4688,7 +4697,7 @@ Arc &Arc::operator=(const Arc &arc)
 {
     if (this != &arc)
     {
-        Geometry::operator=(arc);
+        DObject::operator=(arc);
         x = arc.x;
         y = arc.y;
         radius = arc.radius;
@@ -4854,49 +4863,36 @@ Polygon Arc::convex_hull() const
     return mini_bounding_rect();
 }
 
-AABBRect Arc::bounding_rect() const
-{
-    double left = std::min({control_points[0].x, control_points[1].x, control_points[2].x});
-    if (Geo::distance(Geo::Point(x - radius, y), *this) < Geo::EPSILON)
-    {
-        left = x - radius;
-    }
-    double right = std::max({control_points[0].x, control_points[1].x, control_points[2].x});
-    if (Geo::distance(Geo::Point(x + radius, y), *this) < Geo::EPSILON)
-    {
-        right = x + radius;
-    }
-    double top = std::max({control_points[0].y, control_points[1].y, control_points[2].y});
-    if (Geo::distance(Geo::Point(x, y + radius), *this) < Geo::EPSILON)
-    {
-        top = y + radius;
-    }
-    double bottom = std::min({control_points[0].y, control_points[1].y, control_points[2].y});
-    if (Geo::distance(Geo::Point(x, y - radius), *this) < Geo::EPSILON)
-    {
-        bottom = y - radius;
-    }
-    return AABBRect(left, top, right, bottom);
-}
-
 Polygon Arc::mini_bounding_rect() const
 {
     const double a = Geo::distance(control_points[0], control_points[2]) / 2;
     const double b = std::sqrt(radius * radius - a * a);
     const Geo::Vector vec = (control_points[1] - Geo::Point(x, y)).normalize();
+    std::vector<Point> points;
     if (Geo::distance(control_points[1], control_points[0], control_points[2]) <= radius)
     {
-        return AABBRect(control_points[0] + vec * b, control_points[2]);
+        points.emplace_back(control_points[0]);
+        points.emplace_back(control_points[0] + vec * b);
+        points.emplace_back(control_points[2]);
+        points.emplace_back(control_points[2] + vec * b);
+        points.emplace_back(control_points[0]);
     }
     else
     {
-        return AABBRect(control_points[0] + vec * (b + radius), control_points[2]);
+        const Point left(Point(x, y) + (control_points[0] - control_points[2]).normalize() * radius);
+        const Point right(Point(x, y) + (control_points[2] - control_points[1]).normalize() * radius);
+        points.emplace_back(left - vec * b);
+        points.emplace_back(left + vec * radius);
+        points.emplace_back(right + vec * radius);
+        points.emplace_back(right - vec * b);
+        points.emplace_back(points.front());
     }
+    return Polygon(points.begin(), points.end());
 }
 
-AABBRectParams Arc::aabbrect_params() const
+AABBRect Arc::aabbrect() const
 {
-    AABBRectParams params;
+    AABBRect params;
     params.left = std::min({control_points[0].x, control_points[1].x, control_points[2].x});
     if (Geo::distance(Geo::Point(x - radius, y), *this) < Geo::EPSILON)
     {

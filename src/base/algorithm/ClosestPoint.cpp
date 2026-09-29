@@ -5,7 +5,7 @@
 
 int Geo::closest_point(const Polyline &polyline, const Point &point, std::vector<Point> &output)
 {
-    std::vector<size_t> min_indexs({1});
+    std::vector<size_t> min_indices({1});
     double min_dis = Geo::distance(point, polyline[0], polyline[1], false);
     for (size_t i = 2, count = polyline.size(); i < count; ++i)
     {
@@ -15,17 +15,17 @@ int Geo::closest_point(const Polyline &polyline, const Point &point, std::vector
         }
         if (double dis = Geo::distance(point, polyline[i - 1], polyline[i], false); dis == min_dis)
         {
-            min_indexs.push_back(i);
+            min_indices.push_back(i);
         }
         else if (dis < min_dis)
         {
-            min_indexs.clear();
+            min_indices.clear();
             min_dis = dis;
-            min_indexs.push_back(i);
+            min_indices.push_back(i);
         }
     }
     std::vector<Point> temp;
-    for (size_t i : min_indexs)
+    for (size_t i : min_indices)
     {
         if (Geo::Point foot; Geo::foot_point(polyline[i - 1], polyline[i], point, foot, false))
         {
@@ -49,7 +49,7 @@ int Geo::closest_point(const Polyline &polyline, const Point &point, std::vector
 
 int Geo::closest_point(const Polygon &polygon, const Point &point, std::vector<Point> &output)
 {
-    std::vector<size_t> min_indexs({1});
+    std::vector<size_t> min_indices({1});
     double min_dis = Geo::distance(point, polygon[0], polygon[1], false);
     for (size_t i = 2, count = polygon.size(); i < count; ++i)
     {
@@ -59,17 +59,17 @@ int Geo::closest_point(const Polygon &polygon, const Point &point, std::vector<P
         }
         if (double dis = Geo::distance(point, polygon[i - 1], polygon[i], false); dis == min_dis)
         {
-            min_indexs.push_back(i);
+            min_indices.push_back(i);
         }
         else if (dis < min_dis)
         {
-            min_indexs.clear();
+            min_indices.clear();
             min_dis = dis;
-            min_indexs.push_back(i);
+            min_indices.push_back(i);
         }
     }
     std::vector<Point> temp;
-    for (size_t i : min_indexs)
+    for (size_t i : min_indices)
     {
         if (Geo::Point foot; Geo::foot_point(polygon[i - 1], polygon[i], point, foot, false))
         {
@@ -235,7 +235,7 @@ int Geo::closest_point(const Ellipse &ellipse, const Point &point, std::vector<P
         double degree0 = Geo::angle(Geo::Point(0, 0), coord) - Geo::PI / 2, degree1 = Geo::angle(Geo::Point(0, 0), coord) + Geo::PI / 2;
         double last_degree0 = degree0 - 1, last_degree1 = degree1 - 1;
         double m0, m1, x0 = 0, y0 = 0, x1 = 0, y1 = 0;
-        while (degree1 * 1e16 - degree0 * 1e16 > 1 && (last_degree0 != degree0 || last_degree1 != degree1))
+        while ((degree1 - degree0) > 1e-15 && (last_degree0 != degree0 || last_degree1 != degree1))
         {
             last_degree0 = degree0, last_degree1 = degree1;
             m0 = (degree1 - degree0) / 3 + degree0, m1 = degree1 - (degree1 - degree0) / 3;
@@ -332,22 +332,22 @@ int Geo::closest_point(const CubicBezier &bezier, const Point &point, std::vecto
     const int nums[4] = {1, 3, 3, 1};
     // index, points, distance
     std::vector<std::tuple<size_t, std::vector<Geo::Point>, double>> temp;
-    for (size_t i = 0, end = bezier.size() - order; i < end; i += order)
+    for (size_t i = 0, end = bezier.control_points.size() - order; i < end; i += order)
     {
         Geo::Polyline polyline;
-        polyline.append(bezier[i]);
+        polyline.append(bezier.control_points[i]);
         double t = 0;
         while (t <= 1)
         {
             Geo::Point point;
             for (int j = 0; j <= order; ++j)
             {
-                point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                point += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             polyline.append(point);
             t += Geo::CubicBezier::default_step;
         }
-        polyline.append(bezier[i + order]);
+        polyline.append(bezier.control_points[i + order]);
         Geo::down_sampling(polyline, Geo::CubicBezier::default_down_sampling_value);
 
         std::vector<Geo::Point> points;
@@ -381,7 +381,7 @@ int Geo::closest_point(const CubicBezier &bezier, const Point &point, std::vecto
                 Geo::Point coord;
                 for (int j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
+                    coord += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                 }
                 if (double dis = Geo::distance(point, coord); dis < min_dis[1])
                 {
@@ -404,7 +404,7 @@ int Geo::closest_point(const CubicBezier &bezier, const Point &point, std::vecto
             Geo::Point coord;
             for (int j = 0; j <= order; ++j)
             {
-                coord += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                coord += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             return Geo::distance(coord, point) * 1e9;
         };
@@ -428,7 +428,7 @@ int Geo::closest_point(const CubicBezier &bezier, const Point &point, std::vecto
         Geo::Point coord;
         for (int j = 0; j <= order; ++j)
         {
-            coord += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+            coord += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
         }
         result.emplace_back(i, t, coord);
     }
@@ -503,7 +503,8 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
     for (double v : temp)
     {
         step = 1e-3;
-        double lower = knots[0], upper = knots[nplusc - 1];
+        const double domain_min = knots[0], domain_max = knots[nplusc - 1];
+        double lower = domain_min, upper = domain_max;
         min_dis[0] = min_dis[1] = DBL_MAX;
         do
         {
@@ -523,8 +524,8 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
                     v = x;
                 }
             }
-            lower = std::max(0.0, v - step);
-            upper = std::min(1.0, v + step);
+            lower = std::max(domain_min, v - step);
+            upper = std::min(domain_max, v + step);
             step = (upper - lower) / 100;
             if (min_dis[0] > min_dis[1])
             {
@@ -532,7 +533,7 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
             }
         } while (std::abs(min_dis[0] - min_dis[1]) > 1e-4 && step > 1e-12);
 
-        t = v, lower = std::max(knots[0], t - 0.001), upper = std::min(knots[nplusc - 1], t + 0.001);
+        t = v, lower = std::max(domain_min, t - 0.001), upper = std::min(domain_max, t + 0.001);
         const std::function<double(const double)> f = [&](const double t)
         {
             std::vector<double> nbasis;
@@ -545,13 +546,13 @@ int Geo::closest_point(const BSpline &bspline, const bool is_cubic, const Point 
             return Geo::distance(coord, point) * 1e9;
         };
         min_dis[0] = f(lower), min_dis[1] = f(t);
-        while (lower > 0.0 && min_dis[0] < min_dis[1])
+        while (lower > domain_min && min_dis[0] < min_dis[1])
         {
             lower -= 0.001;
             min_dis[0] = f(lower);
         }
         min_dis[0] = f(upper);
-        while (upper < 1.0 && min_dis[0] < min_dis[1])
+        while (upper < domain_max && min_dis[0] < min_dis[1])
         {
             upper += 0.001;
             min_dis[0] = f(upper);

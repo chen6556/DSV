@@ -41,7 +41,7 @@ void CanvasMenu::init(Canvas *parent)
     _menu->addAction(_change_bspline_model);
 }
 
-void CanvasMenu::exec(Geo::Geometry *object)
+void CanvasMenu::exec(Geo::DObject *object)
 {
     _text_to_polylines->setVisible(dynamic_cast<Text *>(object) != nullptr);
     _bezier_to_bspline->setVisible(dynamic_cast<Geo::CubicBezier *>(object) != nullptr);

@@ -79,7 +79,7 @@ public:
     static double view_ratio;
     static QString info;
     static Dim::Dimension *current_dimension;
-    static Geo::Geometry *clicked_object;
+    static Geo::DObject *clicked_object;
     static bool absolute_coord;
 
 protected:
@@ -110,7 +110,7 @@ public:
 
     CanvasOperation *operator[](const Tool tool);
 
-    static void refresh_tool_lines(const Geo::Geometry *object);
+    static void refresh_tool_lines(const Geo::DObject *object);
 
     virtual bool mouse_press(QMouseEvent *event);
 
@@ -562,7 +562,7 @@ public:
 class ShapeDifferenceOperation : public CanvasOperation
 {
 private:
-    Geo::Geometry *_shape = nullptr;
+    Geo::DObject *_shape = nullptr;
 
 public:
     bool mouse_press(QMouseEvent *event) override;
@@ -577,8 +577,8 @@ class FilletOperation : public CanvasOperation
 {
 private:
     double _radius0 = 0, _radius1 = 0;
-    Geo::Geometry *_object0 = nullptr;
-    Geo::Geometry *_object1 = nullptr;
+    Geo::DObject *_object0 = nullptr;
+    Geo::DObject *_object1 = nullptr;
     Geo::Point _pos0, _pos1;
 
 public:
@@ -596,8 +596,8 @@ class FreeFilletOperation : public CanvasOperation
 {
 private:
     double _pos[2] = {0, 0};
-    Geo::Geometry *_object0 = nullptr;
-    Geo::Geometry *_object1 = nullptr;
+    Geo::DObject *_object0 = nullptr;
+    Geo::DObject *_object1 = nullptr;
     std::vector<Geo::Point> _points;
     std::vector<std::tuple<size_t, double, double, double>> _tvalues;
 
@@ -671,8 +671,8 @@ public:
 class BlendOperation : public CanvasOperation
 {
 private:
-    Geo::Geometry *_object0 = nullptr;
-    Geo::Geometry *_object1 = nullptr;
+    Geo::DObject *_object0 = nullptr;
+    Geo::DObject *_object1 = nullptr;
     Geo::Point _pos[2];
 
 public:
@@ -755,7 +755,7 @@ class AngleDimOperation : public CanvasOperation
 private:
     int _index = 0;
     Dim::DimAngle *_dim = nullptr;
-    const Geo::Geometry *_object = nullptr;
+    const Geo::DObject *_object = nullptr;
     Geo::Point _points[4];
 
 public:
@@ -773,7 +773,7 @@ class ArcDimOperation : public CanvasOperation
 private:
     int _index = 0;
     Dim::DimArc *_dim = nullptr;
-    const Geo::Geometry *_object = nullptr;
+    const Geo::DObject *_object = nullptr;
     Geo::Point _points[2];
 
 public:

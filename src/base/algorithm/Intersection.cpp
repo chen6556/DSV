@@ -1,3 +1,4 @@
+#include <cassert>
 #include <algorithm>
 #include "base/Algorithm.hpp"
 #include "base/Math.hpp"
@@ -398,25 +399,25 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const CubicBez
     const int order = 3;
     const int nums[4] = {1, 3, 3, 1};
     std::vector<Geo::Point> result;
-    for (size_t i = 0, end = bezier.size() - order; i < end; i += order)
+    for (size_t i = 0, end = bezier.control_points.size() - order; i < end; i += order)
     {
         Geo::Polyline polyline;
-        polyline.append(bezier[i]);
+        polyline.append(bezier.control_points[i]);
         double t = 0;
         while (t <= 1)
         {
             Geo::Point point;
             for (int j = 0; j <= order; ++j)
             {
-                point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                point += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             polyline.append(point);
             t += Geo::CubicBezier::default_step;
         }
-        polyline.append(bezier[i + order]);
+        polyline.append(bezier.control_points[i + order]);
         Geo::down_sampling(polyline, Geo::CubicBezier::default_down_sampling_value);
 
-        if (!infinite && !Geo::is_intersected(polyline.bounding_rect(), point0, point1))
+        if (!infinite && !Geo::is_intersected(polyline.aabbrect(), point0, point1))
         {
             continue;
         }
@@ -444,7 +445,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const CubicBez
                     Geo::Point coord;
                     for (int j = 0; j <= order; ++j)
                     {
-                        coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
+                        coord += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                     }
                     if (double dis = Geo::distance(point, coord); dis < min_dis)
                     {
@@ -463,7 +464,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const CubicBez
                 Geo::Point coord;
                 for (int j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                    coord += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
                 return Geo::distance(coord, point0, point1, infinite) * 1e9;
             };
@@ -487,7 +488,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const CubicBez
             point.clear();
             for (int j = 0; j <= order; ++j)
             {
-                point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                point += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             if (std::find(result.begin(), result.end(), point) == result.end() && Geo::is_inside(point, point0, point1, infinite))
             {
@@ -515,7 +516,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const CubicBez
         intersections.emplace_back(bezier.back());
         if (tvalues != nullptr)
         {
-            tvalues->emplace_back(bezier.size() / order - 1, 1, bezier.back().x, bezier.back().y);
+            tvalues->emplace_back(bezier.control_points.size() / order - 1, 1, bezier.back().x, bezier.back().y);
         }
     }
 
@@ -664,32 +665,7 @@ int Geo::is_intersected(const Point &point0, const Point &point1, const BSpline 
     return result.size();
 }
 
-bool Geo::is_intersected(const AABBRect &rect0, const AABBRect &rect1, const bool inside)
-{
-    if (rect0.empty() || rect1.empty())
-    {
-        return false;
-    }
-
-    if (rect0.right() < rect1.left() || rect0.left() > rect1.right() || rect0.bottom() > rect1.top() || rect0.top() < rect1.bottom())
-    {
-        return false;
-    }
-
-    if (inside)
-    {
-        return true;
-    }
-    else
-    {
-        return !(
-            (rect0.top() < rect1.top() && rect0.right() < rect1.right() && rect0.bottom() > rect1.bottom() &&
-             rect0.left() > rect1.left()) ||
-            (rect1.top() < rect0.top() && rect1.right() < rect0.right() && rect1.bottom() > rect0.bottom() && rect1.left() > rect0.left()));
-    }
-}
-
-bool Geo::is_intersected(const AABBRectParams &params0, const AABBRectParams &params1, const bool inside)
+bool Geo::is_intersected(const AABBRect &params0, const AABBRect &params1, const bool inside)
 {
     if (params0.right < params1.left || params0.left > params1.right || params0.bottom > params1.top || params0.top < params1.bottom)
     {
@@ -711,7 +687,7 @@ bool Geo::is_intersected(const AABBRectParams &params0, const AABBRectParams &pa
 
 bool Geo::is_intersected(const Polyline &polyline0, const Polyline &polyline1)
 {
-    if (polyline0.empty() || polyline1.empty() || !Geo::is_intersected(polyline0.aabbrect_params(), polyline1.aabbrect_params()))
+    if (polyline0.empty() || polyline1.empty() || !Geo::is_intersected(polyline0.aabbrect(), polyline1.aabbrect()))
     {
         return false;
     }
@@ -732,7 +708,7 @@ bool Geo::is_intersected(const Polyline &polyline0, const Polyline &polyline1)
 
 bool Geo::is_intersected(const Polyline &polyline, const Polygon &polygon, const bool inside)
 {
-    if (polyline.empty() || polygon.empty() || !Geo::is_intersected(polygon.aabbrect_params(), polyline.aabbrect_params()))
+    if (polyline.empty() || polygon.empty() || !Geo::is_intersected(polygon.aabbrect(), polyline.aabbrect()))
     {
         return false;
     }
@@ -789,7 +765,7 @@ bool Geo::is_intersected(const Polyline &polyline, const Circle &circle)
 
 bool Geo::is_intersected(const Polyline &polyline, const Ellipse &ellipse, const bool inside)
 {
-    if (polyline.empty() || ellipse.empty() || !Geo::is_intersected(polyline.aabbrect_params(), ellipse.aabbrect_params()))
+    if (polyline.empty() || ellipse.empty() || !Geo::is_intersected(polyline.aabbrect(), ellipse.aabbrect()))
     {
         return false;
     }
@@ -831,7 +807,7 @@ bool Geo::is_intersected(const Polyline &polyline, const Arc &arc)
 
 bool Geo::is_intersected(const Polygon &polygon0, const Polygon &polygon1, const bool inside)
 {
-    if (polygon0.empty() || polygon1.empty() || !Geo::is_intersected(polygon0.aabbrect_params(), polygon1.aabbrect_params()))
+    if (polygon0.empty() || polygon1.empty() || !Geo::is_intersected(polygon0.aabbrect(), polygon1.aabbrect()))
     {
         return false;
     }
@@ -894,7 +870,7 @@ bool Geo::is_intersected(const Polygon &polygon, const Circle &circle, const boo
 
 bool Geo::is_intersected(const Polygon &polygon, const Ellipse &ellipse, const bool inside)
 {
-    if (polygon.empty() || ellipse.empty() || !Geo::is_intersected(polygon.aabbrect_params(), ellipse.aabbrect_params()))
+    if (polygon.empty() || ellipse.empty() || !Geo::is_intersected(polygon.aabbrect(), ellipse.aabbrect()))
     {
         return false;
     }
@@ -1015,7 +991,7 @@ int Geo::is_intersected(const Circle &circle, const Arc &arc, Point &output0, Po
 
 int Geo::is_intersected(const Ellipse &ellipse0, const Ellipse &ellipse1, Point &point0, Point &point1, Point &point2, Point &point3)
 {
-    if (!Geo::is_intersected(ellipse0.aabbrect_params(), ellipse1.aabbrect_params()))
+    if (!Geo::is_intersected(ellipse0.aabbrect(), ellipse1.aabbrect()))
     {
         return 0;
     }
@@ -1205,7 +1181,7 @@ int Geo::is_intersected(const Ellipse &ellipse0, const Ellipse &ellipse1, Point 
 
 int Geo::is_intersected(const Circle &circle, const Ellipse &ellipse, Point &point0, Point &point1, Point &point2, Point &point3)
 {
-    if (!Geo::is_intersected(circle.aabbrect_params(), ellipse.aabbrect_params()))
+    if (!Geo::is_intersected(circle.aabbrect(), ellipse.aabbrect()))
     {
         return 0;
     }
@@ -1507,25 +1483,25 @@ int Geo::is_intersected(const Circle &circle, const CubicBezier &bezier, std::ve
     const int nums[4] = {1, 3, 3, 1};
     const size_t size = intersections.size();
     std::vector<Geo::Point> result;
-    for (size_t i = 0, end = bezier.size() - order; i < end; i += order)
+    for (size_t i = 0, end = bezier.control_points.size() - order; i < end; i += order)
     {
         Geo::Polyline polyline;
-        polyline.append(bezier[i]);
+        polyline.append(bezier.control_points[i]);
         double t = 0;
         while (t <= 1)
         {
             Geo::Point point;
             for (int j = 0; j <= order; ++j)
             {
-                point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                point += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             polyline.append(point);
             t += Geo::CubicBezier::default_step;
         }
-        polyline.append(bezier[i + order]);
+        polyline.append(bezier.control_points[i + order]);
         Geo::down_sampling(polyline, Geo::CubicBezier::default_down_sampling_value);
 
-        if (!Geo::is_intersected(polyline.aabbrect_params(), circle.aabbrect_params()))
+        if (!Geo::is_intersected(polyline.aabbrect(), circle.aabbrect()))
         {
             continue;
         }
@@ -1566,7 +1542,7 @@ int Geo::is_intersected(const Circle &circle, const CubicBezier &bezier, std::ve
                     Geo::Point coord;
                     for (int j = 0; j <= order; ++j)
                     {
-                        coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
+                        coord += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                     }
                     if (double dis = Geo::distance(point, coord); dis < min_dis)
                     {
@@ -1585,7 +1561,7 @@ int Geo::is_intersected(const Circle &circle, const CubicBezier &bezier, std::ve
                 Geo::Point coord;
                 for (int j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                    coord += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
                 return std::abs(Geo::distance(coord, circle) - circle.radius) * 1e9;
             };
@@ -1609,7 +1585,7 @@ int Geo::is_intersected(const Circle &circle, const CubicBezier &bezier, std::ve
             point.clear();
             for (int j = 0; j <= order; ++j)
             {
-                point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                point += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             if (std::find(result.begin(), result.end(), point) == result.end() &&
                 std::abs(Geo::distance(point, circle) - circle.radius) < Geo::EPSILON)
@@ -1637,7 +1613,7 @@ int Geo::is_intersected(const Circle &circle, const CubicBezier &bezier, std::ve
         result.emplace_back(bezier.back());
         if (tvalues != nullptr)
         {
-            tvalues->emplace_back(bezier.size() / order - 1, 1, bezier.back().x, bezier.back().y);
+            tvalues->emplace_back(bezier.control_points.size() / order - 1, 1, bezier.back().x, bezier.back().y);
         }
     }
 
@@ -1819,22 +1795,22 @@ int Geo::is_intersected(const Ellipse &ellipse, const CubicBezier &bezier, std::
     const double eps = Geo::EPSILON;
     const size_t size = intersections.size();
     std::vector<Geo::Point> result;
-    for (size_t i = 0, end = bezier.size() - order; i < end; i += order)
+    for (size_t i = 0, end = bezier.control_points.size() - order; i < end; i += order)
     {
         Geo::Polyline polyline;
-        polyline.append(bezier[i]);
+        polyline.append(bezier.control_points[i]);
         double t = 0;
         while (t <= 1)
         {
             Geo::Point point;
             for (int j = 0; j <= order; ++j)
             {
-                point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                point += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             polyline.append(point);
             t += Geo::CubicBezier::default_step;
         }
-        polyline.append(bezier[i + order]);
+        polyline.append(bezier.control_points[i + order]);
         Geo::down_sampling(polyline, Geo::CubicBezier::default_down_sampling_value);
 
         std::vector<Geo::Point> temp;
@@ -1873,7 +1849,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const CubicBezier &bezier, std::
                     Geo::Point coord;
                     for (int j = 0; j <= order; ++j)
                     {
-                        coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
+                        coord += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                     }
                     if (double dis = Geo::distance(point, coord); dis < min_dis)
                     {
@@ -1892,7 +1868,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const CubicBezier &bezier, std::
                 Geo::Point coord;
                 for (int j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                    coord += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
                 return Geo::distance(coord, ellipse) * 1e18;
             };
@@ -1916,7 +1892,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const CubicBezier &bezier, std::
             point.clear();
             for (int j = 0; j <= order; ++j)
             {
-                point += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                point += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             if (std::find(result.begin(), result.end(), point) == result.end() && Geo::distance(point, ellipse) < eps)
             {
@@ -1941,7 +1917,7 @@ int Geo::is_intersected(const Ellipse &ellipse, const CubicBezier &bezier, std::
         result.emplace_back(bezier.back());
         if (tvalues != nullptr)
         {
-            tvalues->emplace_back(bezier.size() / order - 1, 1, bezier.back().x, bezier.back().y);
+            tvalues->emplace_back(bezier.control_points.size() / order - 1, 1, bezier.back().x, bezier.back().y);
         }
     }
 
@@ -2182,7 +2158,7 @@ int Geo::is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, 
     const int order = 3;
     const int nums[4] = {1, 3, 3, 1};
     const size_t count = intersections.size();
-    for (size_t p = 0, end0 = bezier0.size() - order; p < end0; p += order)
+    for (size_t p = 0, end0 = bezier0.control_points.size() - order; p < end0; p += order)
     {
         Geo::Polyline polyline0;
         for (double t = 0; t <= 1; t += Geo::CubicBezier::default_step)
@@ -2190,14 +2166,14 @@ int Geo::is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, 
             Geo::Point point;
             for (int j = 0; j <= order; ++j)
             {
-                point += (bezier0[j + p] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                point += (bezier0.control_points[j + p] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
             }
             polyline0.append(point);
         }
-        polyline0.append(bezier0[p + order]);
+        polyline0.append(bezier0.control_points[p + order]);
         Geo::down_sampling(polyline0, Geo::CubicBezier::default_down_sampling_value);
 
-        for (size_t q = 0, end1 = bezier1.size() - order; q < end1; q += order)
+        for (size_t q = 0, end1 = bezier1.control_points.size() - order; q < end1; q += order)
         {
             Geo::Polyline polyline1;
             for (double t = 0; t <= 1; t += Geo::CubicBezier::default_step)
@@ -2205,14 +2181,14 @@ int Geo::is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, 
                 Geo::Point point;
                 for (int j = 0; j <= order; ++j)
                 {
-                    point += (bezier1[j + q] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                    point += (bezier1.control_points[j + q] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
                 polyline1.append(point);
             }
-            polyline1.append(bezier1[q + order]);
+            polyline1.append(bezier1.control_points[q + order]);
             Geo::down_sampling(polyline1, Geo::CubicBezier::default_down_sampling_value);
 
-            if (!Geo::is_intersected(polyline0.aabbrect_params(), polyline1.aabbrect_params(), true))
+            if (!Geo::is_intersected(polyline0.aabbrect(), polyline1.aabbrect(), true))
             {
                 continue;
             }
@@ -2237,7 +2213,7 @@ int Geo::is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, 
                             Geo::Point coord;
                             for (int j = 0; j <= order; ++j)
                             {
-                                coord += (bezier0[j + p] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
+                                coord += (bezier0.control_points[j + p] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                             }
                             if (double dis = Geo::distance(point, coord); dis < min_dis)
                             {
@@ -2260,7 +2236,7 @@ int Geo::is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, 
                             Geo::Point coord;
                             for (int j = 0; j <= order; ++j)
                             {
-                                coord += (bezier1[j + q] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
+                                coord += (bezier1.control_points[j + q] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                             }
                             if (double dis = Geo::distance(point, coord); dis < min_dis)
                             {
@@ -2280,8 +2256,8 @@ int Geo::is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, 
                     params[0].points = points0;
                     for (int k = 0; k <= order; ++k)
                     {
-                        points0[k * 2] = bezier0[k + p].x;
-                        points0[k * 2 + 1] = bezier0[k + p].y;
+                        points0[k * 2] = bezier0.control_points[k + p].x;
+                        points0[k * 2 + 1] = bezier0.control_points[k + p].y;
                     }
                     params[1].order = order;
                     params[1].values = nums;
@@ -2289,8 +2265,8 @@ int Geo::is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, 
                     params[1].points = points1;
                     for (int k = 0; k <= order; ++k)
                     {
-                        points1[k * 2] = bezier1[k + q].x;
-                        points1[k * 2 + 1] = bezier1[k + q].y;
+                        points1[k * 2] = bezier1.control_points[k + q].x;
+                        points1[k * 2 + 1] = bezier1.control_points[k + q].y;
                     }
                     std::tuple<double, double> res = Math::solve_curve_intersection(params, Math::CurveIntersectType::BezierBezier, t0, t1);
                     t0 = std::get<0>(res), t1 = std::get<1>(res);
@@ -2305,8 +2281,8 @@ int Geo::is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, 
                     Geo::Point point0, point1;
                     for (int j = 0; j <= order; ++j)
                     {
-                        point0 += (bezier0[j + p] * (nums[j] * std::pow(1 - t0, order - j) * std::pow(t0, j)));
-                        point1 += (bezier1[j + q] * (nums[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
+                        point0 += (bezier0.control_points[j + p] * (nums[j] * std::pow(1 - t0, order - j) * std::pow(t0, j)));
+                        point1 += (bezier1.control_points[j + q] * (nums[j] * std::pow(1 - t1, order - j) * std::pow(t1, j)));
                     }
                     intersections.emplace_back((point0 + point1) / 2);
                     if (tvalues0 != nullptr)
@@ -2347,7 +2323,7 @@ int Geo::is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, 
             }
             if (tvalues1 != nullptr)
             {
-                tvalues1->emplace_back(bezier1.size() / order - 1, 1, bezier1.back().x, bezier1.back().y);
+                tvalues1->emplace_back(bezier1.control_points.size() / order - 1, 1, bezier1.back().x, bezier1.back().y);
             }
         }
     }
@@ -2358,7 +2334,7 @@ int Geo::is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, 
             intersections.emplace_back(bezier0.back());
             if (tvalues0 != nullptr)
             {
-                tvalues0->emplace_back(bezier0.size() / order - 1, 1, bezier0.back().x, bezier0.back().y);
+                tvalues0->emplace_back(bezier0.control_points.size() / order - 1, 1, bezier0.back().x, bezier0.back().y);
             }
             if (tvalues1 != nullptr)
             {
@@ -2373,11 +2349,11 @@ int Geo::is_intersected(const CubicBezier &bezier0, const CubicBezier &bezier1, 
             intersections.emplace_back(bezier0.back());
             if (tvalues0 != nullptr)
             {
-                tvalues0->emplace_back(bezier0.size() / order - 1, 1, bezier0.back().x, bezier0.back().y);
+                tvalues0->emplace_back(bezier0.control_points.size() / order - 1, 1, bezier0.back().x, bezier0.back().y);
             }
             if (tvalues1 != nullptr)
             {
-                tvalues1->emplace_back(bezier1.size() / order - 1, 1, bezier1.back().x, bezier1.back().y);
+                tvalues1->emplace_back(bezier1.control_points.size() / order - 1, 1, bezier1.back().x, bezier1.back().y);
             }
         }
     }
@@ -2673,14 +2649,14 @@ int Geo::is_intersected(const CubicBezier &bezier, const BSpline &bspline, const
     std::vector<std::tuple<size_t, double>> bezier_values(temp_points.size(), std::make_tuple(0, 0.0));
     {
         std::vector<double> min_dis(temp_points.size(), DBL_MAX);
-        for (size_t i = 0, end = bezier.size() - order; i < end; i += order)
+        for (size_t i = 0, end = bezier.control_points.size() - order; i < end; i += order)
         {
             for (double t = 0; t <= 1; t += 1e-4)
             {
                 Geo::Point coord;
                 for (int j = 0; j <= order; ++j)
                 {
-                    coord += (bezier[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
+                    coord += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - t, order - j) * std::pow(t, j)));
                 }
                 for (size_t j = 0, count = temp_points.size(); j < count; ++j)
                 {
@@ -2706,7 +2682,7 @@ int Geo::is_intersected(const CubicBezier &bezier, const BSpline &bspline, const
                     Geo::Point coord;
                     for (int j = 0; j <= order; ++j)
                     {
-                        coord += (bezier[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
+                        coord += (bezier.control_points[j + i] * (nums[j] * std::pow(1 - x, order - j) * std::pow(x, j)));
                     }
                     if (double dis = Geo::distance(temp_points[k], coord); dis < min_dis)
                     {
@@ -2771,8 +2747,8 @@ int Geo::is_intersected(const CubicBezier &bezier, const BSpline &bspline, const
         std::vector<double> bezier_points;
         for (size_t j = 0, k = std::get<0>(bezier_values[i]); j <= order; ++j)
         {
-            bezier_points.push_back(bezier[j + k].x);
-            bezier_points.push_back(bezier[j + k].y);
+            bezier_points.push_back(bezier.control_points[j + k].x);
+            bezier_points.push_back(bezier.control_points[j + k].y);
         }
         param.bezier.points = bezier_points.data();
         auto [t0, t1] = Math::solve_curve_intersection(&param, Math::CurveIntersectType::BezierBSpline, std::get<1>(bezier_values[i]),
@@ -2780,7 +2756,7 @@ int Geo::is_intersected(const CubicBezier &bezier, const BSpline &bspline, const
         Geo::Point point0;
         for (size_t j = 0, k = std::get<0>(bezier_values[i]); j <= order; ++j)
         {
-            point0 += (bezier[j + k] * param.bezier.values[j] * std::pow(1 - t0, order - j) * std::pow(t0, j));
+            point0 += (bezier.control_points[j + k] * param.bezier.values[j] * std::pow(1 - t0, order - j) * std::pow(t0, j));
         }
         std::vector<double> nbasis;
         Geo::BSpline::rbasis(is_cubic ? 3 : 2, t1, npts, knots, nbasis);
@@ -2825,7 +2801,7 @@ int Geo::is_intersected(const CubicBezier &bezier, const BSpline &bspline, const
             intersections.emplace_back(bezier.back());
             if (tvalues0 != nullptr)
             {
-                tvalues0->emplace_back(bezier.size() / order - 1, 1, bezier.back().x, bezier.back().y);
+                tvalues0->emplace_back(bezier.control_points.size() / order - 1, 1, bezier.back().x, bezier.back().y);
             }
             if (tvalues1 != nullptr)
             {
@@ -2855,7 +2831,7 @@ int Geo::is_intersected(const CubicBezier &bezier, const BSpline &bspline, const
             intersections.emplace_back(bezier.back());
             if (tvalues0 != nullptr)
             {
-                tvalues0->emplace_back(bezier.size() / order - 1, 1, bezier.back().x, bezier.back().y);
+                tvalues0->emplace_back(bezier.control_points.size() / order - 1, 1, bezier.back().x, bezier.back().y);
             }
             if (tvalues1 != nullptr)
             {
@@ -2880,13 +2856,13 @@ bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const Point 
     const double y_max = std::max(point0.y, point1.y);
     const double y_min = std::min(point0.y, point1.y);
 
-    if (x_max < rect.left() || x_min > rect.right() || y_max < rect.bottom() || y_min > rect.top())
+    if (x_max < rect.left || x_min > rect.right || y_max < rect.bottom || y_min > rect.top)
     {
         return false;
     }
     else
     {
-        if ((x_min >= rect.left() && x_max <= rect.right()) || (y_min >= rect.bottom() && y_max <= rect.top()))
+        if ((x_min >= rect.left && x_max <= rect.right) || (y_min >= rect.bottom && y_max <= rect.top))
         {
             return true;
         }
@@ -2901,7 +2877,7 @@ bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const Point 
 
 bool Geo::is_intersected(const AABBRect &rect, const Polyline &polyline)
 {
-    if (polyline.empty() || !Geo::is_intersected(rect.aabbrect_params(), polyline.aabbrect_params()))
+    if (polyline.empty() || !Geo::is_intersected(rect, polyline.aabbrect()))
     {
         return false;
     }
@@ -2925,7 +2901,7 @@ bool Geo::is_intersected(const AABBRect &rect, const Polyline &polyline)
 
 bool Geo::is_intersected(const AABBRect &rect, const Polygon &polygon)
 {
-    if (polygon.empty() || !Geo::is_intersected(rect.aabbrect_params(), polygon.aabbrect_params()))
+    if (polygon.empty() || !Geo::is_intersected(rect, polygon.aabbrect()))
     {
         return false;
     }
@@ -2949,7 +2925,7 @@ bool Geo::is_intersected(const AABBRect &rect, const Polygon &polygon)
 
 bool Geo::is_intersected(const AABBRect &rect, const Circle &circle)
 {
-    if (circle.empty() || !Geo::is_intersected(rect.aabbrect_params(), circle.aabbrect_params()))
+    if (circle.empty() || !Geo::is_intersected(rect, circle.aabbrect()))
     {
         return false;
     }
@@ -2974,7 +2950,7 @@ bool Geo::is_intersected(const AABBRect &rect, const Circle &circle)
 
 bool Geo::is_intersected(const AABBRect &rect, const Ellipse &ellipse)
 {
-    if (ellipse.empty() || !Geo::is_intersected(rect.aabbrect_params(), ellipse.aabbrect_params()))
+    if (ellipse.empty() || !Geo::is_intersected(rect, ellipse.aabbrect()))
     {
         return false;
     }
@@ -3018,7 +2994,7 @@ bool Geo::is_intersected(const AABBRect &rect, const Ellipse &ellipse)
 
 bool Geo::is_intersected(const AABBRect &rect, const Arc &arc)
 {
-    if (!Geo::is_intersected(rect.aabbrect_params(), arc.aabbrect_params()))
+    if (!Geo::is_intersected(rect, arc.aabbrect()))
     {
         return false;
     }
@@ -3065,7 +3041,7 @@ bool Geo::is_intersected(const AABBRect &rect, const Point &point0, const Point 
 
 bool Geo::is_intersected(const Point &start, const Point &end, const Triangle &triangle, Point &output0, Point &output1)
 {
-    if (Geo::is_inside(start, end, triangle) || !Geo::is_intersected(triangle.bounding_rect(), start, end))
+    if (Geo::is_inside(start, end, triangle) || !Geo::is_intersected(triangle.aabbrect(), start, end))
     {
         return false;
     }
@@ -3517,7 +3493,7 @@ bool Geo::find_intersections(const Geo::Ellipse &ellipse, const Geo::Circle &cir
     }
 }
 
-bool Geo::find_intersections(const Geo::Geometry *object0, const Geo::Geometry *object1, const Geo::Point &pos, const double distance,
+bool Geo::find_intersections(const Geo::DObject *object0, const Geo::DObject *object1, const Geo::Point &pos, const double distance,
                              std::vector<Geo::Point> &intersections)
 {
     switch (object0->type())

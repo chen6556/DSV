@@ -17,7 +17,6 @@
         <file>icons/mirror_btn.png</file>
         <file>icons/flipy_btn.png</file>
         <file>icons/rotate_btn.png</file>
-        <file>icons/combinate_btn.png</file>
         <file>icons/connect_btn.png</file>
         <file>icons/close_btn.png</file>
         <file>DSV2.ico</file>
@@ -65,5 +64,6 @@
         <file>icons/boolean/intersection_btn.png</file>
         <file>icons/boolean/union_btn.png</file>
         <file>icons/boolean/xor_btn.png</file>
+        <file>icons/combine_btn.png</file>
     </qresource>
 </RCC>

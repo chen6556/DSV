@@ -28,10 +28,7 @@ int is_intersected(const Point &point0, const Point &point1, const BSpline &bspl
                    const bool infinite = false, std::vector<std::tuple<double, double, double>> *tvalues = nullptr);
 
 // 判断两个AABB矩形是否相交,inside决定完全在AABB矩形内部是否算相交
-bool is_intersected(const AABBRect &rect0, const AABBRect &rect1, const bool inside = true);
-
-// 判断两个AABB矩形是否相交,inside决定完全在AABB矩形内部是否算相交
-bool is_intersected(const AABBRectParams &params0, const AABBRectParams &params1, const bool inside = true);
+bool is_intersected(const AABBRect &params0, const AABBRect &params1, const bool inside = true);
 
 // 判断两多段线是否相交
 bool is_intersected(const Polyline &polyline0, const Polyline &polyline1);
@@ -194,6 +191,6 @@ bool find_intersections(const Ellipse &ellipse, const Circle &circle, const Poin
                         std::vector<Point> &intersections);
 
 // 找到pos附近的交点
-bool find_intersections(const Geometry *object0, const Geometry *object1, const Point &pos, const double distance,
+bool find_intersections(const DObject *object0, const DObject *object1, const Point &pos, const double distance,
                         std::vector<Point> &intersections);
 } // namespace Geo

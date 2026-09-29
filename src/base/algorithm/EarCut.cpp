@@ -4,7 +4,7 @@
 #include "base/Algorithm.hpp"
 
 
-std::vector<unsigned int> Geo::ear_cut_to_indexs(const Geo::Polygon &polygon)
+std::vector<unsigned int> Geo::ear_cut_to_indices(const Geo::Polygon &polygon)
 {
     std::vector<std::vector<std::array<double, 2>>> points;
     points.emplace_back();
@@ -18,7 +18,7 @@ std::vector<unsigned int> Geo::ear_cut_to_indexs(const Geo::Polygon &polygon)
 std::vector<Geo::MarkedPoint> Geo::ear_cut_to_coords(const Geo::Polygon &polygon)
 {
     std::vector<MarkedPoint> result;
-    for (const unsigned int i : Geo::ear_cut_to_indexs(polygon))
+    for (const unsigned int i : Geo::ear_cut_to_indices(polygon))
     {
         result.emplace_back(polygon[i].x, polygon[i].y);
     }
@@ -28,7 +28,7 @@ std::vector<Geo::MarkedPoint> Geo::ear_cut_to_coords(const Geo::Polygon &polygon
 std::vector<Geo::Point> Geo::ear_cut_to_points(const Geo::Polygon &polygon)
 {
     std::vector<Point> result;
-    for (const unsigned int i : Geo::ear_cut_to_indexs(polygon))
+    for (const unsigned int i : Geo::ear_cut_to_indices(polygon))
     {
         result.emplace_back(polygon[i]);
     }
@@ -37,36 +37,36 @@ std::vector<Geo::Point> Geo::ear_cut_to_points(const Geo::Polygon &polygon)
 
 std::vector<Geo::Triangle> Geo::ear_cut_to_triangles(const Geo::Polygon &polygon)
 {
-    std::vector<unsigned int> indexs;
+    std::vector<unsigned int> indices;
     if (polygon.is_cw())
     {
         for (size_t i = 0, count = polygon.size() - 1; i < count; ++i)
         {
-            indexs.push_back(count - i);
+            indices.push_back(count - i);
         }
     }
     else
     {
         for (size_t i = 0, count = polygon.size() - 1; i < count; ++i)
         {
-            indexs.push_back(i);
+            indices.push_back(i);
         }
     }
 
     std::vector<Geo::Triangle> triangles;
     bool is_ear = false, is_cut = false;
-    while (indexs.size() > 3)
+    while (indices.size() > 3)
     {
         is_cut = false;
-        for (size_t pre = 0, cur = 0, nxt = 0, i = 0, count = indexs.size(); i < count; ++i)
+        for (size_t pre = 0, cur = 0, nxt = 0, i = 0, count = indices.size(); i < count; ++i)
         {
-            pre = i > 0 ? indexs[i - 1] : indexs[count - 1];
-            cur = indexs[i];
-            nxt = i < count - 1 ? indexs[i + 1] : indexs[0];
+            pre = i > 0 ? indices[i - 1] : indices[count - 1];
+            cur = indices[i];
+            nxt = i < count - 1 ? indices[i + 1] : indices[0];
             if ((polygon[cur] - polygon[pre]).cross(polygon[nxt] - polygon[cur]) > 0)
             {
                 is_ear = true;
-                for (size_t index : indexs)
+                for (size_t index : indices)
                 {
                     if (index == pre || index == cur || index == nxt)
                     {
@@ -81,7 +81,7 @@ std::vector<Geo::Triangle> Geo::ear_cut_to_triangles(const Geo::Polygon &polygon
                 if (is_ear)
                 {
                     triangles.emplace_back(polygon[pre], polygon[cur], polygon[nxt]);
-                    indexs.erase(indexs.begin() + i--);
+                    indices.erase(indices.begin() + i--);
                     --count;
                     is_cut = true;
                 }
@@ -95,9 +95,9 @@ std::vector<Geo::Triangle> Geo::ear_cut_to_triangles(const Geo::Polygon &polygon
         }
     }
 
-    if (indexs.size() == 3)
+    if (indices.size() == 3)
     {
-        triangles.emplace_back(polygon[indexs[0]], polygon[indexs[1]], polygon[indexs[2]]);
+        triangles.emplace_back(polygon[indices[0]], polygon[indices[1]], polygon[indices[2]]);
     }
 
     return triangles;

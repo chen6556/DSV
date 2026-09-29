@@ -10,15 +10,15 @@
 class DSVReaderWriter
 {
 private:
-    static constexpr int code_type = 0, code_hanlde = 1, code_name = 2, code_layer = 3, code_pathx = 10, code_pathy = 11,
-                         code_controlx = 12, code_controly = 13, code_labelx = 14, code_labley = 15, code_xlength = 20, code_ylength = 21,
+    static constexpr int code_type = 0, code_handle = 1, code_name = 2, code_layer = 3, code_pathx = 10, code_pathy = 11,
+                         code_controlx = 12, code_controly = 13, code_labelx = 14, code_labely = 15, code_xlength = 20, code_ylength = 21,
                          code_rotateangle = 30, code_startangle = 31, code_endangle = 32, code_intvalue = 40, code_floatvalue = 41,
                          code_strvalue = 42, code_minor_arc = 43, code_pointer = 80;
 
     Graph *_graph = nullptr;
     int _global_handle = 0;
-    std::unordered_map<int, Geo::Geometry *> _handle_to_object;
-    std::unordered_map<Geo::Geometry *, int> _object_to_handle;
+    std::unordered_map<int, Geo::DObject *> _handle_to_object;
+    std::unordered_map<Geo::DObject *, int> _object_to_handle;
     std::unordered_map<int, std::vector<int>> _parent_to_children;
     std::unordered_map<int, int> _child_to_parent;
     std::unordered_map<std::string, size_t> _group_name_to_index;
@@ -34,7 +34,7 @@ private:
     std::vector<std::vector<Pair>> _data;
     struct Info
     {
-        int hanlde = 0;
+        int handle = 0;
         std::string name;
         std::string layer;
         std::string type;

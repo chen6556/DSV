@@ -13,7 +13,7 @@ public:
     bool translated_points = false; // user input
 
     bool auto_layering = false;
-    bool auto_combinate = false;
+    bool auto_combine = false;
     bool auto_save = false;
 
     bool catch_center = false;

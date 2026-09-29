@@ -148,8 +148,8 @@ void PropertyWidget::init_bezier_widget()
             {
                 ui->bezier_pointX->blockSignals(true);
                 ui->bezier_pointY->blockSignals(true);
-                ui->bezier_pointX->setValue(_bezier->at(index).x);
-                ui->bezier_pointY->setValue(_bezier->at(index).y);
+                ui->bezier_pointX->setValue(_bezier->control_points.at(index).x);
+                ui->bezier_pointY->setValue(_bezier->control_points.at(index).y);
                 ui->bezier_pointX->blockSignals(false);
                 ui->bezier_pointY->blockSignals(false);
             });
@@ -157,17 +157,17 @@ void PropertyWidget::init_bezier_widget()
             [this](double value)
             {
                 const int index = ui->bezier_point->value();
-                const double x0 = _bezier->at(index).x;
-                _bezier->at(index).x = value;
-                move_bezier_point(index, x0, _bezier->at(index).y);
+                const double x0 = _bezier->control_points.at(index).x;
+                _bezier->control_points.at(index).x = value;
+                move_bezier_point(index, x0, _bezier->control_points.at(index).y);
             });
     connect(ui->bezier_pointY, &QDoubleSpinBox::valueChanged,
             [this](double value)
             {
                 const int index = ui->bezier_point->value();
-                const double y0 = _bezier->at(index).y;
-                _bezier->at(index).y = value;
-                move_bezier_point(index, _bezier->at(index).x, y0);
+                const double y0 = _bezier->control_points.at(index).y;
+                _bezier->control_points.at(index).y = value;
+                move_bezier_point(index, _bezier->control_points.at(index).x, y0);
             });
 }
 
@@ -270,7 +270,7 @@ void PropertyWidget::init_combination_widget()
     connect(ui->combination_centerX, &QDoubleSpinBox::valueChanged,
             [this](double value)
             {
-                const Geo::AABBRectParams rect = _combination->aabbrect_params();
+                const Geo::AABBRect rect = _combination->aabbrect();
                 _combination->translate(value - (rect.left + rect.right) / 2, 0);
                 _canvas->refresh_vbo(true, Geo::Type::COMBINATION);
                 _canvas->update();
@@ -278,7 +278,7 @@ void PropertyWidget::init_combination_widget()
     connect(ui->combination_centerY, &QDoubleSpinBox::valueChanged,
             [this](double value)
             {
-                const Geo::AABBRectParams rect = _combination->aabbrect_params();
+                const Geo::AABBRect rect = _combination->aabbrect();
                 _combination->translate(0, value - (rect.top + rect.bottom) / 2);
                 _canvas->refresh_vbo(true, Geo::Type::COMBINATION);
                 _canvas->update();
@@ -501,7 +501,7 @@ void PropertyWidget::init_dimension_widget()
             });
 }
 
-void PropertyWidget::show(Geo::Geometry *object)
+void PropertyWidget::show(Geo::DObject *object)
 {
     read(object);
 
@@ -513,7 +513,7 @@ void PropertyWidget::show(Geo::Geometry *object)
     check(object);
 }
 
-void PropertyWidget::read(Geo::Geometry *object)
+void PropertyWidget::read(Geo::DObject *object)
 {
     _shape.clear();
     CanvasOperations::CanvasOperation::refresh_tool_lines(object);
@@ -588,18 +588,18 @@ void PropertyWidget::read(Geo::CubicBezier *bezier)
     _bezier = bezier;
     ui->stackedWidget->setCurrentIndex(1);
     ui->object_type_lb->setText("Cubic Bezier");
-    ui->bezier_pointCount->setValue(bezier->size());
+    ui->bezier_pointCount->setValue(bezier->control_points.size());
     ui->bezier_point->setValue(0);
-    ui->bezier_point->setRange(0, bezier->size() - 1);
+    ui->bezier_point->setRange(0, bezier->control_points.size() - 1);
     ui->bezier_pointX->blockSignals(true);
     ui->bezier_pointY->blockSignals(true);
-    ui->bezier_pointX->setValue(bezier->at(0).x);
-    ui->bezier_pointY->setValue(bezier->at(0).y);
+    ui->bezier_pointX->setValue(bezier->control_points.at(0).x);
+    ui->bezier_pointY->setValue(bezier->control_points.at(0).y);
     ui->bezier_pointX->blockSignals(false);
     ui->bezier_pointY->blockSignals(false);
     ui->bezier_length->setValue(bezier->length());
 
-    for (const Geo::Point &point : *bezier)
+    for (const Geo::Point &point : bezier->control_points)
     {
         _shape.emplace_back(point.x, point.y);
     }
@@ -673,7 +673,7 @@ void PropertyWidget::read(Combination *combination)
     ui->stackedWidget->setCurrentIndex(4);
     ui->object_type_lb->setText("Combination");
     ui->combination_itemCount->setValue(combination->size());
-    const Geo::AABBRectParams rect = combination->aabbrect_params();
+    const Geo::AABBRect rect = combination->aabbrect();
     ui->combination_centerX->blockSignals(true);
     ui->combination_centerY->blockSignals(true);
     ui->combination_centerX->setValue((rect.left + rect.right) / 2);
@@ -853,7 +853,7 @@ void PropertyWidget::read(Dim::Dimension *dim)
     ui->dim_arrowSize->blockSignals(false);
 }
 
-void PropertyWidget::check(Geo::Geometry *object)
+void PropertyWidget::check(Geo::DObject *object)
 {
     switch (object->type())
     {
@@ -912,7 +912,7 @@ void PropertyWidget::check(Geo::Arc *arc)
 void PropertyWidget::check(Geo::CubicBezier *bezier)
 {
     std::vector<std::tuple<double, double>> data;
-    for (const Geo::Point &point : *bezier)
+    for (const Geo::Point &point : bezier->control_points)
     {
         data.emplace_back(point.x, point.y);
     }
@@ -962,7 +962,7 @@ void PropertyWidget::check(Geo::Circle *circle)
 
 void PropertyWidget::check(Combination *combination)
 {
-    const Geo::AABBRectParams rect = combination->aabbrect_params();
+    const Geo::AABBRect rect = combination->aabbrect();
     const double x = (rect.left + rect.right) / 2, y = (rect.top + rect.bottom) / 2;
     if (std::get<0>(_shape.front()) == x && std::get<1>(_shape.front()) == y)
     {
@@ -1052,22 +1052,24 @@ void PropertyWidget::check(Text *text)
 
 void PropertyWidget::move_bezier_point(int index, double x0, double y0)
 {
-    const double x1 = _bezier->at(index).x;
-    const double y1 = _bezier->at(index).y;
+    const double x1 = _bezier->control_points.at(index).x;
+    const double y1 = _bezier->control_points.at(index).y;
     if (const int order = 3; index > 2 && index % order == 1)
     {
-        (*_bezier)[index - 2] = (*_bezier)[index - 1] + ((*_bezier)[index - 1] - (*_bezier)[index]).normalize() *
-                                                            Geo::distance((*_bezier)[index - 2], (*_bezier)[index - 1]);
+        _bezier->control_points[index - 2] =
+            _bezier->control_points[index - 1] + (_bezier->control_points[index - 1] - _bezier->control_points[index]).normalize() *
+                                                     Geo::distance(_bezier->control_points[index - 2], _bezier->control_points[index - 1]);
     }
-    else if (index + 2 < _bezier->size() && index % order == order - 1)
+    else if (index + 2 < _bezier->control_points.size() && index % order == order - 1)
     {
-        (*_bezier)[index + 2] = (*_bezier)[index + 1] + ((*_bezier)[index + 1] - (*_bezier)[index]).normalize() *
-                                                            Geo::distance((*_bezier)[index + 1], (*_bezier)[index + 2]);
+        _bezier->control_points[index + 2] =
+            _bezier->control_points[index + 1] + (_bezier->control_points[index + 1] - _bezier->control_points[index]).normalize() *
+                                                     Geo::distance(_bezier->control_points[index + 1], _bezier->control_points[index + 2]);
     }
-    else if (index % order == 0 && index > 0 && index < _bezier->size() - 1)
+    else if (index % order == 0 && index > 0 && index < _bezier->control_points.size() - 1)
     {
-        (*_bezier)[index - 1].translate(x1 - x0, y1 - y0);
-        (*_bezier)[index + 1].translate(x1 - x0, y1 - y0);
+        _bezier->control_points[index - 1].translate(x1 - x0, y1 - y0);
+        _bezier->control_points[index + 1].translate(x1 - x0, y1 - y0);
     }
     _bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
 

@@ -48,8 +48,8 @@ private:
 
     const double _flip_by_y_mat[6] = {-1, 0, 0, 0, 1, 0};
     std::vector<Combination *> _block_store;
-    std::unordered_map<const Geo::Geometry *, int> _object_map;
-    std::unordered_map<int, Geo::Geometry *> _handle_map;
+    std::unordered_map<const Geo::DObject *, int> _object_map;
+    std::unordered_map<int, Geo::DObject *> _handle_map;
     std::unordered_map<Combination *, int> _block_map;
     std::unordered_map<Combination *, std::string> _block_names;
     std::unordered_map<std::string, Combination *> _block_name_map;
@@ -239,7 +239,7 @@ public:
     void writeAppId() override;
 
 private:
-    void write_geometry_object(const Geo::Geometry *object);
+    void write_dobject(const Geo::DObject *object);
 
     void write_bezier(const Geo::CubicBezier *bezier);
 

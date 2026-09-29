@@ -496,7 +496,7 @@ bool Geo::polygon_union(const Geo::Polygon &polygon0, const Geo::Polygon &polygo
     }
 
     // 找到交点并计算其几何数
-    calc_polygon_points(points0, points1, polygon1.bounding_rect());
+    calc_polygon_points(points0, points1, polygon1.aabbrect());
 
     if (points0.size() == polygon0.size()) // 无交点
     {
@@ -711,7 +711,7 @@ bool Geo::polygon_intersection(const Geo::Polygon &polygon0, const Geo::Polygon 
     }
 
     // 找到交点并计算其几何数
-    calc_polygon_points(points0, points1, polygon1.bounding_rect());
+    calc_polygon_points(points0, points1, polygon1.aabbrect());
 
     if (points0.size() == polygon0.size()) // 无交点
     {
@@ -926,7 +926,7 @@ bool Geo::polygon_difference(const Geo::Polygon &polygon0, const Geo::Polygon &p
     }
 
     // 找到交点并计算其几何数
-    calc_polygon_points(points0, points1, polygon1.bounding_rect());
+    calc_polygon_points(points0, points1, polygon1.aabbrect());
 
     if (points0.size() == polygon0.size()) // 无交点
     {
@@ -1128,7 +1128,7 @@ bool Geo::polygon_xor(const Polygon &polygon0, const Polygon &polygon1, std::vec
     }
 
     // 找到交点并计算其几何数
-    calc_polygon_points(points0, points1, polygon1.bounding_rect());
+    calc_polygon_points(points0, points1, polygon1.aabbrect());
 
     if (points0.size() == polygon0.size()) // 无交点
     {
@@ -2352,6 +2352,7 @@ bool Geo::polygon_circle_intersection(const Polygon &polygon, const Circle &circ
                 points0[i - 1].value = -1;
                 points1.back().value = 1;
             }
+            [[fallthrough]];
         case 1:
             points0.insert(points0.begin() + i++, MarkedPoint(point0.x, point0.y, false));
             points1.emplace_back(point0.x, point0.y, false);

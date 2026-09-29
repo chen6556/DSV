@@ -1,7 +1,7 @@
 #include "base/Graph.hpp"
 
 
-Graph::Graph(const Graph &graph) : Geo::Geometry(graph), modified(graph.modified)
+Graph::Graph(const Graph &graph) : Geo::DObject(graph), modified(graph.modified)
 {
     for (const ContainerGroup &group : graph._container_groups)
     {
@@ -50,7 +50,7 @@ Graph &Graph::operator=(const Graph &graph)
 {
     if (this != &graph)
     {
-        Geo::Geometry::operator=(graph);
+        Geo::DObject::operator=(graph);
         modified = graph.modified;
         _container_groups.clear();
         for (const ContainerGroup &group : graph._container_groups)
@@ -184,12 +184,12 @@ size_t Graph::size() const
     return _container_groups.size();
 }
 
-size_t Graph::count(const Geo::Type type, const bool include_combinated) const
+size_t Graph::count(const Geo::Type type, const bool include_combined) const
 {
     size_t num = 0;
     for (const ContainerGroup &group : _container_groups)
     {
-        num += group.count(type, include_combinated);
+        num += group.count(type, include_combined);
     }
     return num;
 }
@@ -253,29 +253,9 @@ void Graph::rescale(const double x, const double y)
     }
 }
 
-Geo::AABBRect Graph::bounding_rect() const
+Geo::AABBRect Graph::aabbrect() const
 {
-    double x0 = DBL_MAX, y0 = DBL_MAX, x1 = (-DBL_MAX), y1 = (-DBL_MAX);
-    for (const ContainerGroup &group : _container_groups)
-    {
-        if (group.empty())
-        {
-            continue;
-        }
-        for (const Geo::Point &point : group.bounding_rect())
-        {
-            x0 = std::min(x0, point.x);
-            y0 = std::min(y0, point.y);
-            x1 = std::max(x1, point.x);
-            y1 = std::max(y1, point.y);
-        }
-    }
-    return Geo::AABBRect(x0, y0, x1, y1);
-}
-
-Geo::AABBRectParams Graph::aabbrect_params() const
-{
-    Geo::AABBRectParams param;
+    Geo::AABBRect param;
     param.left = param.bottom = DBL_MAX;
     param.right = param.top = -DBL_MAX;
     for (const ContainerGroup &group : _container_groups)
@@ -284,7 +264,7 @@ Geo::AABBRectParams Graph::aabbrect_params() const
         {
             continue;
         }
-        const Geo::AABBRectParams rect = group.aabbrect_params();
+        const Geo::AABBRect rect = group.aabbrect();
         param.left = std::min(param.left, rect.left);
         param.bottom = std::min(param.bottom, rect.bottom);
         param.right = std::max(param.right, rect.right);
@@ -378,7 +358,7 @@ const ContainerGroup &Graph::back() const
 }
 
 
-void Graph::append(Geo::Geometry *object, const size_t index)
+void Graph::append(Geo::DObject *object, const size_t index)
 {
     assert(index < _container_groups.size());
     container_group(index).append(object);
@@ -395,7 +375,7 @@ void Graph::append_group(const ContainerGroup &group)
     _container_groups.push_back(group);
 }
 
-void Graph::append_group(const QString &name)
+void Graph::append_group(const std::string &name)
 {
     _container_groups.emplace_back();
     _container_groups.back().name = name;
@@ -446,7 +426,7 @@ void Graph::remove_group(const size_t index)
 }
 
 
-bool Graph::has_group(const QString &name) const
+bool Graph::has_group(const std::string &name) const
 {
     for (const ContainerGroup &group : _container_groups)
     {
@@ -458,22 +438,7 @@ bool Graph::has_group(const QString &name) const
     return false;
 }
 
-bool Graph::has_object(const QString &name) const
-{
-    for (const ContainerGroup &group : _container_groups)
-    {
-        for (const Geo::Geometry *object : group)
-        {
-            if (object->name == name)
-            {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-bool Graph::remove_object(const Geo::Geometry *object)
+bool Graph::remove_object(const Geo::DObject *object)
 {
     for (ContainerGroup &group : _container_groups)
     {
@@ -494,7 +459,7 @@ void Graph::update_curve_shape(const double step, const double down_sampling_val
 {
     for (ContainerGroup &group : _container_groups)
     {
-        for (Geo::Geometry *object : group)
+        for (Geo::DObject *object : group)
         {
             switch (object->type())
             {
@@ -520,13 +485,13 @@ void Graph::update_curve_shape(const double step, const double down_sampling_val
     }
 }
 
-std::tuple<size_t, size_t> Graph::index(const Geo::Geometry *object) const
+std::tuple<size_t, size_t> Graph::index(const Geo::DObject *object) const
 {
     size_t group_index = 0;
     for (const ContainerGroup &group : _container_groups)
     {
         size_t object_index = 0;
-        for (const Geo::Geometry *geo : group)
+        for (const Geo::DObject *geo : group)
         {
             if (geo == object)
             {

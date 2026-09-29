@@ -1,5 +1,5 @@
 #pragma once
-
+#include <cmath>
 #include "base/Geometry.hpp"
 #include "algorithm/Boolean.hpp"
 #include "algorithm/Conversion.hpp"
@@ -11,6 +11,7 @@
 #include "algorithm/Fillet.hpp"
 #include "algorithm/Offset.hpp"
 #include "algorithm/Inside.hpp"
+#include "algorithm/ExtendClip.hpp"
 #include "algorithm/Intersection.hpp"
 #include "algorithm/TangencyPoint.hpp"
 #include "algorithm/ArchimedeanSpiral.hpp"
@@ -104,6 +105,8 @@ double degree_to_rad(double value);
 
 
 void down_sampling(Geo::Polyline &points, const double distance);
+
+void down_sampling(Geo::Polygon &points, const double distance);
 
 
 void remove_repeated_point(std::vector<Geo::Point> &points);

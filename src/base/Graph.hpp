@@ -5,7 +5,7 @@
 #include "base/Container.hpp"
 
 
-class Graph : public Geo::Geometry
+class Graph : public Geo::DObject
 {
 private:
     std::list<ContainerGroup> _container_groups;
@@ -46,7 +46,7 @@ public:
 
     size_t size() const;
 
-    size_t count(const Geo::Type type, const bool include_combinated) const;
+    size_t count(const Geo::Type type, const bool include_combined) const;
 
     void clear() override;
 
@@ -64,9 +64,7 @@ public:
 
     void rescale(const double x, const double y);
 
-    Geo::AABBRect bounding_rect() const override;
-
-    Geo::AABBRectParams aabbrect_params() const override;
+    Geo::AABBRect aabbrect() const override;
 
     std::list<ContainerGroup>::iterator begin();
 
@@ -101,13 +99,13 @@ public:
     const ContainerGroup &back() const;
 
 
-    void append(Geo::Geometry *object, const size_t index = 0);
+    void append(Geo::DObject *object, const size_t index = 0);
 
     void append_group();
 
     void append_group(const ContainerGroup &group);
 
-    void append_group(const QString &name);
+    void append_group(const std::string &name);
 
     void insert_group(const size_t index);
 
@@ -118,14 +116,12 @@ public:
     void remove_group(const size_t index);
 
 
-    bool has_group(const QString &name) const;
+    bool has_group(const std::string &name) const;
 
-    bool has_object(const QString &name) const;
-
-    bool remove_object(const Geo::Geometry *object);
+    bool remove_object(const Geo::DObject *object);
 
 
     void update_curve_shape(const double step, const double down_sampling_value);
 
-    std::tuple<size_t, size_t> index(const Geo::Geometry *object) const;
+    std::tuple<size_t, size_t> index(const Geo::DObject *object) const;
 };

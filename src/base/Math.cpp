@@ -113,7 +113,7 @@ void Math::mul(const double *mat0, const size_t m0, const size_t n0, const doubl
 {
     gsl_matrix_const_view a = gsl_matrix_const_view_array(mat0, m0, n0);
     gsl_matrix_const_view b = gsl_matrix_const_view_array(mat1, n0, n1);
-    gsl_matrix_view c = gsl_matrix_view_array(output, n0, n1);
+    gsl_matrix_view c = gsl_matrix_view_array(output, m0, n1);
     gsl_blas_dgemm(CblasNoTrans, CblasNoTrans, 1.0, &a.matrix, &b.matrix, 0.0, &c.matrix);
 }
 
@@ -386,55 +386,28 @@ double Math::ellipse_arc_length(const double a, const double b, const double sta
     double length[2] = {0, 0}, angle[2] = {start, end};
     if (a > b)
     {
-        for (int i = 0; i < 2; ++i)
+        angle[0] += Math::PI / 2;
+        angle[1] += Math::PI / 2;
+    }
+    for (int i = 0; i < 2; ++i)
+    {
+        while (angle[i] > 2 * Math::PI)
         {
-            angle[i] += Math::PI / 2;
-            while (angle[i] > 2 * Math::PI)
-            {
-                angle[i] -= 2 * Math::PI;
-            }
-            while (angle[i] < 0)
-            {
-                angle[i] += 2 * Math::PI;
-            }
+            angle[i] -= 2 * Math::PI;
+        }
+        while (angle[i] < 0)
+        {
+            angle[i] += 2 * Math::PI;
         }
     }
 
-    for (int i = 0; i < 2; ++i)
+    if (angle[0] == angle[1])
     {
-        if (angle[i] == 0 || angle[i] == Math::PI * 2)
-        {
-            length[i] = 0;
-        }
-        else if (angle[i] < Math::PI / 2)
-        {
-            length[i] = gsl_sf_ellint_E(angle[i], k, GSL_PREC_DOUBLE);
-        }
-        else if (angle[i] == Math::PI / 2)
-        {
-            length[i] = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE);
-        }
-        else if (angle[i] < Math::PI)
-        {
-            length[i] = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 2 - gsl_sf_ellint_E(Math::PI - angle[i], k, GSL_PREC_DOUBLE);
-        }
-        else if (angle[i] == Math::PI)
-        {
-            length[i] = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 2;
-        }
-        else if (angle[i] < Math::PI * 3 / 2)
-        {
-            length[i] = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 2 + gsl_sf_ellint_E(angle[i] - Math::PI, k, GSL_PREC_DOUBLE);
-        }
-        else if (angle[i] == Math::PI * 3 / 2)
-        {
-            length[i] = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 3;
-        }
-        else
-        {
-            length[i] = gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 4 - gsl_sf_ellint_E(Math::PI * 2 - angle[i], k, GSL_PREC_DOUBLE);
-        }
+        return 0;
     }
+
+    length[0] = gsl_sf_ellint_E(angle[0], k, GSL_PREC_DOUBLE);
+    length[1] = gsl_sf_ellint_E(angle[1], k, GSL_PREC_DOUBLE);
 
     return std::max(a, b) *
            (angle[0] < angle[1] ? (length[1] - length[0]) : (gsl_sf_ellint_Ecomp(k, GSL_PREC_DOUBLE) * 4 + length[1] - length[0]));
@@ -464,17 +437,38 @@ double Math::max_x_trichotomy(const TartgetFunc &f, double l, double r)
 {
     while (r - l > Math::EPSILON)
     {
-        const double ml = (l * l + r) / 3;
+        const double ml = (l + l + r) / 3;
         const double mr = (l + r + r) / 3;
         const double lvalue = f(ml);
         const double rvalue = f(mr);
         if (lvalue < rvalue)
         {
-            r = mr;
+            l = ml;
         }
         else
         {
-            l = ml;
+            r = mr;
+        }
+    }
+    return (l + r) / 2;
+}
+
+double Math::zero_x_bisection(const TartgetFunc &f, double l, double r)
+{
+    while (r - l > Math::EPSILON)
+    {
+        const double m = (l + r) / 2;
+        if (const double mvalue = f(m); mvalue == 0)
+        {
+            return m;
+        }
+        else if (f(l) * mvalue < 0)
+        {
+            r = m;
+        }
+        else
+        {
+            l = m;
         }
     }
     return (l + r) / 2;
