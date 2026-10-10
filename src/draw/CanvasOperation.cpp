@@ -3925,6 +3925,7 @@ bool FreeFilletOperation::mouse_move(QMouseEvent *event)
             }
         }
 
+        tool_lines.clear();
         if (_points.size() > 0)
         {
             tool_lines.push_back(_pos[0]);
@@ -3949,6 +3950,7 @@ void FreeFilletOperation::reset()
     _object0 = _object1 = nullptr;
     _tvalues.clear();
     _points.clear();
+    tool_lines.clear();
 }
 
 bool FreeFilletOperation::read_parameters(const double *params, const int count)
