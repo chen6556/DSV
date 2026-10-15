@@ -129,9 +129,9 @@ void File::write_plt(const std::string &path, const Graph *graph)
                             break;
                         }
                         output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";BZ";
-                        for (const Geo::Point &point : bezier->control_points)
+                        for (size_t i = 1, count = bezier->control_points.size(); i < count; ++i)
                         {
-                            output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
+                            output << bezier->control_points[i].x * x_ratio << ',' << bezier->control_points[i].y * y_ratio << ',';
                         }
                         output.seekp(-1, std::ios::cur);
                         output << ';' << '\n';
@@ -198,9 +198,9 @@ void File::write_plt(const std::string &path, const Graph *graph)
                     break;
                 }
                 output << "PU" << bezier->front().x * x_ratio << ',' << bezier->front().y * y_ratio << ";BZ";
-                for (const Geo::Point &point : bezier->control_points)
+                for (size_t i = 1, count = bezier->control_points.size(); i < count; ++i)
                 {
-                    output << point.x * x_ratio << ',' << point.y * y_ratio << ',';
+                    output << bezier->control_points[i].x * x_ratio << ',' << bezier->control_points[i].y * y_ratio << ',';
                 }
                 output.seekp(-1, std::ios::cur);
                 output << ';' << '\n';

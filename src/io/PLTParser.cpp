@@ -512,7 +512,7 @@ void Importer::bz()
     _points.emplace_back(_last_coord);
     for (size_t i = 1, count = _parameters.size(); i < count; i += 2)
     {
-        _points.emplace_back(calc_ax_coord(_parameters[i - 1]), calc_ry_coord(_parameters[i]));
+        _points.emplace_back(calc_ax_coord(_parameters[i - 1]), calc_ay_coord(_parameters[i]));
     }
     _last_coord = _points.back();
     if (_polygon_mode)
