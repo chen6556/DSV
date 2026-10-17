@@ -117,7 +117,6 @@ void MainWindow::connect_btn_to_cmd()
     connect(ui->text_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Text_CMD); });
     connect(ui->close_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Close_CMD); });
 
-    connect(ui->split_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Split_CMD); });
     connect(ui->rotate_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Rotate_CMD); });
     connect(ui->scale_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Scale_CMD); });
     connect(ui->offset_btn, &QPushButton::clicked, [this]() { ui->cmd_widget->work(CMDWidget::CMD::Offset_CMD); });
@@ -1101,6 +1100,22 @@ void MainWindow::actiongroup_callback(const ActionGroup::MenuType menu, const in
             break;
         case 3: // BSpline
             ui->cmd_widget->work(CMDWidget::CMD::BSplineSpiralN_CMD);
+            break;
+        default:
+            break;
+        }
+        break;
+    case ActionGroup::MenuType::SplitMenu:
+        switch (index)
+        {
+        case 0: // split
+            ui->cmd_widget->work(CMDWidget::CMD::Split_CMD);
+            break;
+        case 1: // delete point
+            ui->cmd_widget->work(CMDWidget::CMD::DeletePoint_CMD);
+            break;
+        case 2: // insert point
+            ui->cmd_widget->work(CMDWidget::CMD::InsertPoint_CMD);
             break;
         default:
             break;

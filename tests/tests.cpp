@@ -13,6 +13,7 @@
 #include "EarCutTest.hpp"
 #include "TangencyPointTest.hpp"
 #include "ArchimedeanSpiralTest.hpp"
+#include "InsertPointTest.hpp"
 
 int main()
 {
@@ -38,6 +39,7 @@ int main()
     EarCutTest::run_tests();
     TangencyPointTest::run_tests();
     ArchimedeanSpiralTest::run_tests();
+    InsertPointTest::run_tests();
 
     {
         const std::chrono::system_clock::time_point now = std::chrono::system_clock::now();

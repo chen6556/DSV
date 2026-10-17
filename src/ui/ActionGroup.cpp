@@ -27,6 +27,7 @@ void ActionGroup::init()
     init_angle_dimension_menu();
     init_spiral_step_menu();
     init_spiral_n_menu();
+    init_split_menu();
 }
 
 void ActionGroup::init_polygon_menu()
@@ -459,4 +460,28 @@ void ActionGroup::init_spiral_n_menu()
 
     QAction *bspline = new QAction(QIcon(":/icons/spiral/spiral_n_curve_btn.png"), "BSpline Spiral by N", ui->spiral_n_btn);
     _spiral_n_menu->addAction(bspline);
+}
+
+void ActionGroup::init_split_menu()
+{
+    _split_menu = new QMenu(ui->split_btn);
+    _split_menu->connect(_split_menu, &QMenu::triggered,
+                      [this](QAction *action)
+                      {
+                          _callback(MenuType::SplitMenu, _split_menu->actions().indexOf(action));
+                          ui->split_btn->setIcon(action->icon());
+                          ui->split_btn->setToolTip(action->text());
+                          ui->split_btn->setDefaultAction(action);
+                      });
+    ui->split_btn->setMenu(_split_menu);
+
+    QAction *split = new QAction(QIcon(":/icons/split/split_btn.png"), "Split", ui->split_btn);
+    _split_menu->addAction(split);
+    ui->split_btn->setDefaultAction(split);
+
+    QAction *delete_point = new QAction(QIcon(":/icons/split/delete_point_btn.png"), "Delete Point", ui->split_btn);
+    _split_menu->addAction(delete_point);
+
+    QAction *insert_point = new QAction(QIcon(":/icons/split/insert_point_btn.png"), "Insert Point", ui->split_btn);
+    _split_menu->addAction(insert_point);
 }

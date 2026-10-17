@@ -91,7 +91,9 @@ public:
         PointsSpiralN_CMD,
         PolylineSpiralN_CMD,
         BezierSpiralN_CMD,
-        BSplineSpiralN_CMD
+        BSplineSpiralN_CMD,
+        DeletePoint_CMD,
+        InsertPoint_CMD
     };
 
     enum class SETTING

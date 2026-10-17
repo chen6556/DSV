@@ -121,14 +121,22 @@ void SplitTest::test_bspline()
     {
         const Geo::CubicBSpline bspline({Geo::Point(0, 0), Geo::Point(1, 2), Geo::Point(2, 2), Geo::Point(3, 0)}, true);
         Geo::CubicBSpline output0, output1;
-        bool result = Geo::split(bspline, true, Geo::Point(1.5, 2), output0, output1);
+        const Geo::Point point(1.5, 2);
+        std::vector<Geo::Point> coords;
+        std::vector<std::tuple<double, double, double>> tvalues;
+        Geo::closest_point(bspline, true, point, coords, &tvalues);
+        bool result = Geo::split(bspline, true, std::get<0>(tvalues.front()), output0, output1);
         TEST(result, "Split cubic bspline at point")
     }
 
     {
         const Geo::QuadBSpline bspline({Geo::Point(0, 0), Geo::Point(1, 2), Geo::Point(2, 2), Geo::Point(3, 0)}, true);
         Geo::QuadBSpline output0, output1;
-        bool result = Geo::split(bspline, false, Geo::Point(1.5, 2), output0, output1);
+        const Geo::Point point(1.5, 2);
+        std::vector<Geo::Point> coords;
+        std::vector<std::tuple<double, double, double>> tvalues;
+        Geo::closest_point(bspline, false, point, coords, &tvalues);
+        bool result = Geo::split(bspline, false, std::get<0>(tvalues.front()), output0, output1);
         TEST(result, "Split quad bspline at point")
     }
 
@@ -136,7 +144,11 @@ void SplitTest::test_bspline()
         const Geo::CubicBSpline bspline({Geo::Point(0, 0), Geo::Point(1, 2), Geo::Point(2, 2), Geo::Point(3, 0),
                                           Geo::Point(4, 1), Geo::Point(5, 0)}, true);
         Geo::CubicBSpline output0, output1;
-        bool result = Geo::split(bspline, true, Geo::Point(2.5, 1.5), output0, output1);
+        const Geo::Point point(2.5, 1.5);
+        std::vector<Geo::Point> coords;
+        std::vector<std::tuple<double, double, double>> tvalues;
+        Geo::closest_point(bspline, true, point, coords, &tvalues);
+        bool result = Geo::split(bspline, true, std::get<0>(tvalues.front()), output0, output1);
         TEST(result, "Split longer cubic bspline")
     }
 }

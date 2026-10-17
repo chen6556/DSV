@@ -52,6 +52,8 @@ enum class Tool
     PolylineSpiralN,
     BezierSpiralN,
     BSplineSpiralN,
+    DeletePoint,
+    InsertPoint,
 
     AlignedDim,
     LinearDim,
@@ -952,6 +954,20 @@ public:
     bool read_parameters(const double *params, const int count) override;
 
     QString cmd_tips() const override;
+};
+
+
+class DeletePointOperation : public CanvasOperation
+{
+public:
+    bool mouse_press(QMouseEvent *event) override;
+};
+
+
+class InsertPointOperation : public CanvasOperation
+{   
+public:
+    bool mouse_press(QMouseEvent *event) override;
 };
 
 } // namespace CanvasOperations

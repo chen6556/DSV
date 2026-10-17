@@ -162,6 +162,10 @@ public:
 
     bool split(Geo::DObject *object, const Geo::Point &pos);
 
+    bool remove_point(Geo::DObject *object, const Geo::Point &point);
+
+    bool insert_point(Geo::DObject *object, const Geo::Point &point);
+
     bool line_array(const std::vector<Geo::DObject *> &objects, int x, int y, double x_space, double y_space);
 
     bool ring_array(const std::vector<Geo::DObject *> &objects, const double x, const double y, const int n);

@@ -80,6 +80,8 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::AngleDim)] = new AngleDimOperation();
     operations[static_cast<int>(Tool::ArcDim)] = new ArcDimOperation();
     operations[static_cast<int>(Tool::OrdinateDim)] = new OrdinateDimOperation();
+    operations[static_cast<int>(Tool::DeletePoint)] = new DeletePointOperation();
+    operations[static_cast<int>(Tool::InsertPoint)] = new InsertPointOperation();
 }
 
 void CanvasOperation::clear()
@@ -6457,4 +6459,40 @@ QString BSplineSpiralNOperation::cmd_tips() const
     default:
         return QString();
     }
+}
+
+
+bool DeletePointOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        if ((clicked_object = Canvas::canvas->editor().select(real_pos[0], real_pos[1], true, true)))
+        {
+            if (Canvas::canvas->editor().remove_point(clicked_object, Geo::Point(real_pos[0], real_pos[1])))
+            {
+                Canvas::canvas->refresh_vbo(true, clicked_object->type());
+                Canvas::canvas->refresh_selected_ibo();
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+
+bool InsertPointOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        if ((clicked_object = Canvas::canvas->editor().select(real_pos[0], real_pos[1], true, true)))
+        {
+            if (Canvas::canvas->editor().insert_point(clicked_object, Geo::Point(real_pos[0], real_pos[1])))
+            {
+                Canvas::canvas->refresh_vbo(true, clicked_object->type());
+                Canvas::canvas->refresh_selected_ibo();
+                return true;
+            }
+        }
+    }
+    return false;
 }

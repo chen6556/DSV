@@ -69,7 +69,7 @@ set_target_properties(DSV PROPERTIES
 
 qt_finalize_executable(DSV)
 
-aux_source_directory(tests _TEST_FILES)
+file(GLOB _TEST_FILES CONFIGURE_DEPENDS tests/*.cpp)
 add_executable(tests
     tests/tests.cpp
     ${_TEST_FILES}

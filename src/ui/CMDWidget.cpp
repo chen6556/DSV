@@ -30,17 +30,17 @@ void CMDWidget::init()
               << "ARCDIMENSION" << "BEZIER" << "BSPLINE" << "BLEND" << "ABSOLUTE" << "RELATIVE"
               << "CCIRCLE" << "CHAMFER" << "CLOSE" << "COMBINE" << "CONNECT" << "COPY"
               << "CPOLYGON" << "CUT" << "DCIRCLE" << "DELETE" << "DETACH" << "DIAMETERDIMENSION" << "DIFFERENCE"
-              << "DIVIDEPARTSN" << "DIVIDEPOINTSN" << "DIVIDEPARTSMEASURE" << "DIVIDEPOINTSMEASURE"
-              << "ELLIPSE" << "ELLIPSEARC"
-              << "EXTEND" << "FILLET" << "FREEFILLET" << "FLIPX" << "FLIPY"
-              << "IPOLYGON" << "INTERSECTION" << "LENGTH" << "LINEARRAY"
+              << "DIVIDEPARTSN" << "DIVIDEPOINTSN" << "DIVIDEPARTSMEASURE" << "DIVIDEPOINTSMEASURE" << "DELETEPOINT"
+              << "ELLIPSE" << "ELLIPSEARC" << "EXTEND"
+              << "FILLET" << "FREEFILLET" << "FLIPX" << "FLIPY"
+              << "IPOLYGON" << "INTERSECTION" << "INSERTPOINT" << "LENGTH" << "LINEARRAY"
               << "LINEARDIMENSION" << "MAIN" << "MIRROR" << "OFFSET" << "ORDINATEDIMENSION"
               << "PASTE" << "PARC" << "PCIRCLE" << "POLYLINE" << "POINT"
               << "POINTSSPIRALSTEP" << "POLYLINESSPIRALSTEP" << "BEZIERSPIRALSTEP" << "BSPLINESPIRALSTEP"
               << "POINTSSPIRALN" << "POLYLINESSPIRALN" << "BEZIERSPIRALN" << "BSPLINESPIRALN"
               << "RADIUSDIMENSION" << "RECTANGLE" << "REVERSE" << "SEAARC" << "SERARC"
-              << "RINGARRAY" << "ROTATE" << "SCALE" << "SCAARC" << "SAVE" << "SPLIT" << "TEXT"
-              << "TRIM" << "UNDO" << "UNION" << "XOR";
+              << "RINGARRAY" << "ROTATE" << "SCALE" << "SCAARC" << "SAVE" << "SPLIT"
+              << "TEXT" << "TRIM" << "UNDO" << "UNION" << "XOR";
     _cmd_list.sort();
 
     _cmd_dict = {{"LENGTH", CMD::Length_CMD},
@@ -98,6 +98,8 @@ void CMDWidget::init()
                  {"FILLET", CMD::Fillet_CMD},
                  {"CHAMFER", CMD::Chamfer_CMD},
                  {"SPLIT", CMD::Split_CMD},
+                 {"INSERTPOINT", CMD::InsertPoint_CMD},
+                 {"DELETEPOINT", CMD::DeletePoint_CMD},
                  {"UNION", CMD::Union_CMD},
                  {"INTERSECTION", CMD::Intersection_CMD},
                  {"DIFFERENCE", CMD::Difference_CMD},
@@ -145,6 +147,8 @@ void CMDWidget::init()
                       {CMD::Chamfer_CMD, CanvasOperations::Tool::Chamfer},
                       {CMD::Split_CMD, CanvasOperations::Tool::Split},
                       {CMD::Difference_CMD, CanvasOperations::Tool::ShapeDifference},
+                      {CMD::DeletePoint_CMD, CanvasOperations::Tool::DeletePoint},
+                      {CMD::InsertPoint_CMD, CanvasOperations::Tool::InsertPoint},
                       {CMD::AlignedDim_CMD, CanvasOperations::Tool::AlignedDim},
                       {CMD::LinearDim_CMD, CanvasOperations::Tool::LinearDim},
                       {CMD::RadiusDim_CMD, CanvasOperations::Tool::RadiusDim},
@@ -184,6 +188,8 @@ void CMDWidget::init()
                       {CanvasOperations::Tool::Extend, CMD::Extend_CMD},
                       {CanvasOperations::Tool::Trim, CMD::Trim_CMD},
                       {CanvasOperations::Tool::Split, CMD::Split_CMD},
+                      {CanvasOperations::Tool::DeletePoint, CMD::DeletePoint_CMD},
+                      {CanvasOperations::Tool::InsertPoint, CMD::InsertPoint_CMD},
                       {CanvasOperations::Tool::Fillet, CMD::Fillet_CMD},
                       {CanvasOperations::Tool::FreeFillet, CMD::FreeFillet_CMD},
                       {CanvasOperations::Tool::Chamfer, CMD::Chamfer_CMD},
@@ -244,6 +250,8 @@ void CMDWidget::init()
                       {CMD::Rotate_CMD, "Rotate"},
                       {CMD::Scale_CMD, "Scale"},
                       {CMD::Split_CMD, "Split"},
+                      {CMD::InsertPoint_CMD, "Insert Point"},
+                      {CMD::DeletePoint_CMD, "Delete Point"},
                       {CMD::Blend_CMD, "Blend"},
                       {CMD::Text_CMD, "Text"},
                       {CMD::Trim_CMD, "Trim"},

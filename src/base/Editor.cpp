@@ -4733,6 +4733,163 @@ bool Editor::split(Geo::DObject *object, const Geo::Point &pos)
     return false;
 }
 
+bool Editor::remove_point(Geo::DObject *object, const Geo::Point &point)
+{
+    switch (object->type())
+    {
+    case Geo::Type::POLYLINE:
+        if (Geo::Polyline *polyline = static_cast<Geo::Polyline *>(object); polyline->size() > 2)
+        {
+            size_t index = 0;
+            double dis = DBL_MAX;
+            for (size_t i = 0, count = polyline->size(); i < count; ++i)
+            {
+                if (const double d = Geo::distance(polyline->at(i), point); d < dis)
+                {
+                    dis = d;
+                    index = i;
+                }
+            }
+            if (std::vector<std::tuple<double, double>> points; dis < DBL_MAX)
+            {
+                for (const Geo::Point &point : *polyline)
+                {
+                    points.emplace_back(point.x, point.y);
+                }
+                polyline->remove(index);
+                _backup.push_command(new UndoStack::ChangeShapeCommand(polyline, points));
+                return true;
+            }
+        }
+        break;
+    case Geo::Type::POLYGON:
+        if (Geo::Polygon *polygon = static_cast<Geo::Polygon *>(object); polygon->size() > 3)
+        {
+            size_t index = 0;
+            double dis = DBL_MAX;
+            for (size_t i = 0, count = polygon->size(); i < count; ++i)
+            {
+                if (const double d = Geo::distance(polygon->at(i), point); d < dis)
+                {
+                    dis = d;
+                    index = i;
+                }
+            }
+            if (std::vector<std::tuple<double, double>> points; dis < DBL_MAX)
+            {
+                for (const Geo::Point &point : *polygon)
+                {
+                    points.emplace_back(point.x, point.y);
+                }
+                polygon->remove(index);
+                _backup.push_command(new UndoStack::ChangeShapeCommand(polygon, points));
+                return true;
+            }
+        }
+        break;
+    case Geo::Type::BEZIER:
+        if (Geo::CubicBezier *bezier = static_cast<Geo::CubicBezier *>(object); bezier->control_points.size() >= 7)
+        {
+            size_t index = 0;
+            double dis = DBL_MAX;
+            for (size_t i = 0, count = bezier->control_points.size(); i < count; i += 3)
+            {
+                if (const double d = Geo::distance(bezier->control_points[i], point); d < dis)
+                {
+                    dis = d;
+                    index = i;
+                }
+            }
+            if (std::vector<std::tuple<double, double>> points; dis < DBL_MAX)
+            {
+                for (const Geo::Point &point : bezier->control_points)
+                {
+                    points.emplace_back(point.x, point.y);
+                }
+                if (index == 0)
+                {
+                    bezier->control_points.erase(bezier->control_points.begin(), bezier->control_points.begin() + 3);
+                }
+                else if (index == bezier->control_points.size() - 1)
+                {
+                    bezier->control_points.erase(bezier->control_points.end() - 3, bezier->control_points.end());
+                }
+                else
+                {
+                    bezier->control_points.erase(bezier->control_points.begin() + index - 1, bezier->control_points.begin() + index + 2);
+                }
+                bezier->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
+                _backup.push_command(new UndoStack::ChangeShapeCommand(bezier, points));
+                return true;
+            }
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+bool Editor::insert_point(Geo::DObject *object, const Geo::Point &point)
+{
+    switch (object->type())
+    {
+    case Geo::Type::POLYLINE:
+        if (Geo::Polyline *polyline = static_cast<Geo::Polyline *>(object);
+            Geo::distance(point, *polyline) < GlobalSetting::setting().catch_distance)
+        {
+            std::vector<std::tuple<double, double>> points;
+            for (const Geo::Point &p : *polyline)
+            {
+                points.emplace_back(p.x, p.y);
+            }
+            if (Geo::insert_point(*polyline, point))
+            {
+                _backup.push_command(new UndoStack::ChangeShapeCommand(polyline, points));
+                return true;
+            }
+        }
+        break;
+    case Geo::Type::POLYGON:
+        if (Geo::Polygon *polygon = static_cast<Geo::Polygon *>(object);
+            Geo::distance(point, *polygon) < GlobalSetting::setting().catch_distance)
+        {
+            std::vector<std::tuple<double, double>> points;
+            for (const Geo::Point &p : *polygon)
+            {
+                points.emplace_back(p.x, p.y);
+            }
+            if (Geo::insert_point(*polygon, point))
+            {
+                _backup.push_command(new UndoStack::ChangeShapeCommand(polygon, points));
+                return true;
+            }
+        }
+        break;
+    case Geo::Type::BEZIER:
+        if (Geo::CubicBezier *bezier = static_cast<Geo::CubicBezier *>(object);
+            Geo::distance(point, *bezier) < GlobalSetting::setting().catch_distance)
+        {
+            std::vector<std::tuple<double, double>> points;
+            for (const Geo::Point &p : bezier->control_points)
+            {
+                points.emplace_back(p.x, p.y);
+            }
+            std::vector<std::tuple<size_t, double, double, double>> tvalues;
+            if (std::vector<Geo::Point> coords; Geo::closest_point(*bezier, point, coords, &tvalues) > 0
+                && Geo::insert_point(*bezier, std::get<0>(tvalues.front()), std::get<1>(tvalues.front())))
+            {
+                _backup.push_command(new UndoStack::ChangeShapeCommand(bezier, points));
+                return true;
+            }
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
 bool Editor::line_array(const std::vector<Geo::DObject *> &objects, int x, int y, double x_space, double y_space)
 {
     if (objects.empty() || x == 0 || y == 0 || (x == 1 && y == 1))

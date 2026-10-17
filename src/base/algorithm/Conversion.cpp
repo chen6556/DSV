@@ -455,12 +455,13 @@ Geo::CubicBezier Geo::ellipse_to_bezier(const Geo::Ellipse &ellipse)
         Geo::CubicBezier bezier(points.begin(), points.end(), false);
         if (std::vector<Geo::Point> output; ellipse.arc_angle0() < ellipse.arc_angle1())
         {
-            if (Geo::CubicBezier b0, b1;
-                Geo::closest_point(bezier, ellipse.arc_point0(), output) && Geo::split(bezier, output.front(), b0, b1))
+            std::vector<std::tuple<size_t, double, double, double>> tvalues;
+            if (Geo::CubicBezier b0, b1; Geo::closest_point(bezier, ellipse.arc_point0(), output, &tvalues)
+                && Geo::split(bezier, std::get<0>(tvalues.front()), std::get<1>(tvalues.front()), b0, b1))
             {
                 output.clear();
-                if (Geo::CubicBezier b2, b3;
-                    Geo::closest_point(b1, ellipse.arc_point1(), output) && Geo::split(b1, output.front(), b2, b3))
+                if (Geo::CubicBezier b2, b3; Geo::closest_point(b1, ellipse.arc_point1(), output, &tvalues)
+                    && Geo::split(b1, std::get<0>(tvalues.front()), std::get<1>(tvalues.front()), b2, b3))
                 {
                     points.assign(b2.control_points.begin(), b2.control_points.end());
                 }
@@ -468,12 +469,14 @@ Geo::CubicBezier Geo::ellipse_to_bezier(const Geo::Ellipse &ellipse)
         }
         else
         {
-            if (Geo::CubicBezier b0, b1;
-                Geo::closest_point(bezier, ellipse.arc_point0(), output) && Geo::split(bezier, output.front(), b0, b1))
+            std::vector<std::tuple<size_t, double, double, double>> tvalues;
+            if (Geo::CubicBezier b0, b1; Geo::closest_point(bezier, ellipse.arc_point0(), output, &tvalues)
+                && Geo::split(bezier, std::get<0>(tvalues.front()), std::get<1>(tvalues.front()), b0, b1))
             {
                 output.clear();
-                if (Geo::CubicBezier b2, b3;
-                    Geo::closest_point(b0, ellipse.arc_point1(), output) && Geo::split(b0, output.front(), b2, b3))
+                tvalues.clear();
+                if (Geo::CubicBezier b2, b3; Geo::closest_point(b0, ellipse.arc_point1(), output, &tvalues)
+                    && Geo::split(b0, std::get<0>(tvalues.front()), std::get<1>(tvalues.front()), b2, b3))
                 {
                     points.assign(b1.control_points.begin(), b1.control_points.end());
                     points.insert(points.end(), b2.control_points.begin(), b2.control_points.end());

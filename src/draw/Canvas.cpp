@@ -1952,6 +1952,18 @@ Canvas::VBOData Canvas::refresh_curve_printable_points()
                             }
                         }
                     }
+                    else if (const Geo::CubicBezier *bezier = dynamic_cast<const Geo::CubicBezier *>(item))
+                    {
+                        for (size_t i = 0, count = bezier->control_points.size(); i < count; i += 3)
+                        {
+                            if (const Geo::Point &point = bezier->control_points[i];
+                                Geo::is_inside(point, visible_area_params))
+                            {
+                                result.vbo_data.push_back(point.x);
+                                result.vbo_data.push_back(point.y);
+                            }
+                        }
+                    }
                 }
                 break;
             case Geo::Type::BSPLINE:
@@ -1961,6 +1973,20 @@ Canvas::VBOData Canvas::refresh_curve_printable_points()
                     {
                         result.vbo_data.push_back(point.x);
                         result.vbo_data.push_back(point.y);
+                    }
+                }
+                break;
+            case Geo::Type::BEZIER:
+                {
+                    const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(geo);
+                    for (size_t i = 0, count = bezier->control_points.size(); i < count; i += 3)
+                    {
+                        if (const Geo::Point &point = bezier->control_points[i];
+                            Geo::is_inside(point, visible_area_params))
+                        {
+                            result.vbo_data.push_back(point.x);
+                            result.vbo_data.push_back(point.y);
+                        }
                     }
                 }
                 break;
