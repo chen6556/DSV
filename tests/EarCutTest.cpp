@@ -5,7 +5,7 @@
 
 static bool all_passed = true;
 
-void EarCutTest::run_tests()
+void EarCutTest::run_tests(bool &success)
 {
     test_triangulate();
     test_merge();

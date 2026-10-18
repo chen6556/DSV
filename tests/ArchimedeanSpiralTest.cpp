@@ -5,7 +5,7 @@
 
 static bool all_passed = true;
 
-void ArchimedeanSpiralTest::run_tests()
+void ArchimedeanSpiralTest::run_tests(bool &success)
 {
     test_length();
     test_points();

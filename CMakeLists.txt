@@ -80,6 +80,7 @@ add_executable(tests
     ${_LIBRARY_SOURCES}
 )
 target_link_libraries(tests PRIVATE Qt6::Core Qt6::Gui Qt6::Widgets Qt6::OpenGLWidgets Qt6::OpenGL GSL::gsl)
+add_test(NAME tests COMMAND tests)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

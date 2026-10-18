@@ -5,7 +5,7 @@
 
 static bool all_passed = true;
 
-void ConversionTest::run_tests()
+void ConversionTest::run_tests(bool &success)
 {
     test_to_coord();
     test_arc_to_polyline();

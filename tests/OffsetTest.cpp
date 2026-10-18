@@ -6,7 +6,7 @@
 
 static bool all_passed = true;
 
-void OffsetTest::run_tests()
+void OffsetTest::run_tests(bool &success)
 {
     test_polyline();
     test_polygon();

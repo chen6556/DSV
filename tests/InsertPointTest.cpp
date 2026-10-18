@@ -5,7 +5,7 @@
 
 static bool all_passed = true;
 
-void InsertPointTest::run_tests()
+void InsertPointTest::run_tests(bool &success)
 {
     test_polyline();
     test_polygon();

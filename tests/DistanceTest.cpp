@@ -5,7 +5,7 @@
 
 static bool all_passed = true;
 
-void DistanceTest::run_tests()
+void DistanceTest::run_tests(bool &success)
 {
     test_point_to_point();
     test_point_to_line();

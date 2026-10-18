@@ -14,6 +14,7 @@
     } \
     else { \
         all_passed = true; \
+        success = false; \
     }
 
 

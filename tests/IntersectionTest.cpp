@@ -5,7 +5,7 @@
 
 static bool all_passed = true;
 
-void IntersectionTest::run_tests()
+void IntersectionTest::run_tests(bool &success)
 {
     test_line_line();
     test_line_circle();

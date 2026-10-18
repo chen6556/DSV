@@ -3,7 +3,7 @@
 
 namespace EarCutTest
 {
-    void run_tests();
+    void run_tests(bool &success);
 
     void test_triangulate();
 

@@ -5,7 +5,7 @@
 
 static bool all_passed = true;
 
-void BooleanTest::run_tests()
+void BooleanTest::run_tests(bool &success)
 {
     test_polygon_boolean();
     test_circle_boolean();

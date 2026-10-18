@@ -5,7 +5,7 @@
 
 static bool all_passed = true;
 
-void TangencyPointTest::run_tests()
+void TangencyPointTest::run_tests(bool &success)
 {
     test_circle();
     test_ellipse();

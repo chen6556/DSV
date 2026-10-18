@@ -4,7 +4,7 @@
 
 static bool all_passed = true;
 
-void FootTest::run_tests()
+void FootTest::run_tests(bool &success)
 {
     test_line();
     test_circle();

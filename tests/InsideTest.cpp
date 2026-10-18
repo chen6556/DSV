@@ -4,7 +4,7 @@
 
 static bool all_passed = true;
 
-void InsideTest::run_tests()
+void InsideTest::run_tests(bool &success)
 {
     test_point_line();
     test_point_polyline();

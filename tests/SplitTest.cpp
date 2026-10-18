@@ -5,7 +5,7 @@
 
 static bool all_passed = true;
 
-void SplitTest::run_tests()
+void SplitTest::run_tests(bool &success)
 {
     test_polyline();
     test_arc();

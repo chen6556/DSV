@@ -2,7 +2,7 @@
 
 namespace InsertPointTest
 {
-    void run_tests();
+    void run_tests(bool &success);
 
     void test_polyline();
 

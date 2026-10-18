@@ -5,7 +5,7 @@
 
 static bool all_passed = true;
 
-void ClosestPointTest::run_tests()
+void ClosestPointTest::run_tests(bool &success)
 {
     test_polyline();
     test_polygon();
