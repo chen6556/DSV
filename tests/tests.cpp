@@ -13,6 +13,7 @@
 #include "TangencyPointTest.hpp"
 #include "ArchimedeanSpiralTest.hpp"
 #include "InsertPointTest.hpp"
+#include "RegressionTest.hpp"
 
 int main()
 {
@@ -31,6 +32,7 @@ int main()
     TangencyPointTest::run_tests(success);
     ArchimedeanSpiralTest::run_tests(success);
     InsertPointTest::run_tests(success);
+    RegressionTest::run_tests(success);
 
     return success ? 0 : 1;
 }
