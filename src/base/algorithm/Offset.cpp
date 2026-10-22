@@ -601,5 +601,41 @@ bool Geo::offset(const Geo::CubicBezier &bezier, std::vector<Geo::CubicBezier> &
         }
     }
 
+    // 移除在另一曲线凸包内的曲线
+    std::vector<Geo::Polygon> convex_hulls;
+    for (const Geo::CubicBezier &bezier : result)
+    {
+        convex_hulls.emplace_back(bezier.shape().convex_hull());
+    }
+    for (size_t i = 0, count = result.size(); i < count; ++i)
+    {
+        for (size_t j = 0; j < count; ++j)
+        {
+            if (i == j)
+            {
+                continue;
+            }
+            size_t inside_count = 0, outside_count = 0;
+            for (const Geo::Point &point : result[i].shape())
+            {
+                if (Geo::is_inside(point, convex_hulls[j]))
+                {
+                    ++inside_count;
+                }
+                else
+                {
+                    ++outside_count;
+                }
+            }
+            if (inside_count > outside_count)
+            {
+                --count;
+                convex_hulls.erase(convex_hulls.begin() + i);
+                result.erase(result.begin() + i--);
+                break;
+            }
+        }
+    }
+
     return !result.empty();
 }
