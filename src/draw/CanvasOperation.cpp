@@ -8,6 +8,7 @@
 using namespace CanvasOperations;
 
 std::vector<double> CanvasOperation::shape;
+std::vector<int> CanvasOperation::shape_index;
 std::vector<double> CanvasOperation::tool_lines;
 std::vector<double> CanvasOperation::dim_lines;
 std::vector<double> CanvasOperation::dim_arrows;
@@ -65,6 +66,7 @@ void CanvasOperation::init()
     operations[static_cast<int>(Tool::Extend)] = new ExtendOperation();
     operations[static_cast<int>(Tool::Split)] = new SplitOperation();
     operations[static_cast<int>(Tool::Blend)] = new BlendOperation();
+    operations[static_cast<int>(Tool::Offset)] = new OffsetOperation();
     operations[static_cast<int>(Tool::PointsSpiralStep)] = new PointsSpiralStepOperation();
     operations[static_cast<int>(Tool::PolylineSpiralStep)] = new PolylineSpiralStepOperation();
     operations[static_cast<int>(Tool::BezierSpiralStep)] = new BezierSpiralStepOperation();
@@ -96,6 +98,8 @@ void CanvasOperation::clear()
     }
     shape.clear();
     shape.shrink_to_fit();
+    shape_index.clear();
+    shape_index.shrink_to_fit();
     tool_lines.clear();
     tool_lines.shrink_to_fit();
     dim_lines.clear();
@@ -535,17 +539,15 @@ bool Circle0Operation::mouse_press(QMouseEvent *event)
             tool_lines.resize(4);
             tool_lines[0] = tool_lines[2] = real_pos[0];
             tool_lines[1] = tool_lines[3] = real_pos[1];
+            _set_center = false;
         }
         else
         {
             _parameters[2] = Geo::distance(_parameters[0], _parameters[1], real_pos[0], real_pos[1]);
             Canvas::canvas->add_object(new Geo::Circle(_parameters[0], _parameters[1], _parameters[2]));
-            info.clear();
+            reset();
             tool[0] = Tool::Select;
-            shape.clear();
-            tool_lines.clear();
         }
-        _set_center = !_set_center;
         return true;
     }
     else
@@ -580,6 +582,9 @@ bool Circle0Operation::mouse_move(QMouseEvent *event)
 void Circle0Operation::reset()
 {
     _set_center = true;
+    this->info.clear();
+    this->shape.clear();
+    this->tool_lines.clear();
 }
 
 bool Circle0Operation::read_parameters(const double *params, const int count)
@@ -614,11 +619,8 @@ bool Circle0Operation::read_parameters(const double *params, const int count)
         {
             _parameters[2] = params[0];
             Canvas::canvas->add_object(new Geo::Circle(_parameters[0], _parameters[1], _parameters[2]));
-            info.clear();
+            reset();
             tool[0] = Tool::Select;
-            shape.clear();
-            tool_lines.clear();
-            _set_center = true;
             return true;
         }
     }
@@ -642,17 +644,15 @@ bool Circle1Operation::mouse_press(QMouseEvent *event)
             tool_lines.resize(4);
             tool_lines[0] = tool_lines[2] = real_pos[0];
             tool_lines[1] = tool_lines[3] = real_pos[1];
+            _set_first_point = false;
         }
         else
         {
             _parameters[2] = real_pos[0], _parameters[3] = real_pos[1];
             Canvas::canvas->add_object(new Geo::Circle(_parameters[0], _parameters[1], _parameters[2], _parameters[3]));
-            shape.clear();
-            tool_lines.clear();
+            reset();
             tool[0] = Tool::Select;
-            info.clear();
         }
-        _set_first_point = !_set_first_point;
         return true;
     }
     else
@@ -690,6 +690,9 @@ bool Circle1Operation::mouse_move(QMouseEvent *event)
 void Circle1Operation::reset()
 {
     _set_first_point = true;
+    this->info.clear();
+    this->shape.clear();
+    this->tool_lines.clear();
 }
 
 bool Circle1Operation::read_parameters(const double *params, const int count)
@@ -744,11 +747,8 @@ bool Circle1Operation::read_parameters(const double *params, const int count)
             Canvas::canvas->add_object(new Geo::Circle(_parameters[0], _parameters[1], _parameters[2], _parameters[3]));
             release_pos[0] = press_pos[0] = _parameters[2];
             release_pos[1] = press_pos[1] = _parameters[3];
-            shape.clear();
-            tool_lines.clear();
+            reset();
             tool[0] = Tool::Select;
-            info.clear();
-            _set_first_point = true;
             return true;
         }
     }
@@ -803,11 +803,8 @@ bool Circle2Operation::mouse_press(QMouseEvent *event)
             _parameters[4] = real_pos[0], _parameters[5] = real_pos[1];
             Canvas::canvas->add_object(
                 new Geo::Circle(_parameters[0], _parameters[1], _parameters[2], _parameters[3], _parameters[4], _parameters[5]));
-            shape.clear();
-            tool_lines.clear();
-            _index = 0;
+            reset();
             tool[0] = Tool::Select;
-            info.clear();
             break;
         default:
             break;
@@ -860,6 +857,9 @@ bool Circle2Operation::mouse_move(QMouseEvent *event)
 void Circle2Operation::reset()
 {
     _index = 0;
+    this->info.clear();
+    this->shape.clear();
+    this->tool_lines.clear();
 }
 
 bool Circle2Operation::read_parameters(const double *params, const int count)
@@ -954,13 +954,10 @@ bool Circle2Operation::read_parameters(const double *params, const int count)
             }
             Canvas::canvas->add_object(
                 new Geo::Circle(_parameters[0], _parameters[1], _parameters[2], _parameters[3], _parameters[4], _parameters[5]));
-            shape.clear();
-            tool_lines.clear();
-            _index = 0;
+            reset();
             release_pos[0] = press_pos[0] = _parameters[4];
             release_pos[1] = press_pos[1] = _parameters[5];
             tool[0] = Tool::Select;
-            info.clear();
             return true;
         }
         break;
@@ -1098,10 +1095,8 @@ bool PolythingOperation::mouse_double_click(QMouseEvent *event)
             _points.pop_back();
             Canvas::canvas->add_object(new Geo::Polyline(_points.begin(), _points.end()));
         }
-        _points.clear();
+        reset();
         tool[0] = Tool::Select;
-        info.clear();
-        shape.clear();
         return true;
     }
     else
@@ -1113,6 +1108,8 @@ bool PolythingOperation::mouse_double_click(QMouseEvent *event)
 void PolythingOperation::reset()
 {
     _points.clear();
+    this->info.clear();
+    this->shape.clear();
 }
 
 bool PolythingOperation::read_parameters(const double *params, const int count)
@@ -1137,10 +1134,8 @@ bool PolythingOperation::read_parameters(const double *params, const int count)
         {
             Canvas::canvas->add_object(new Geo::Polyline(_points.begin(), _points.end()));
         }
-        _points.clear();
+        reset();
         tool[0] = Tool::Select;
-        info.clear();
-        shape.clear();
         return true;
     }
     else if (count >= 2)
@@ -1233,11 +1228,8 @@ bool Arc0Operation::mouse_press(QMouseEvent *event)
             _parameters[4] = real_pos[0], _parameters[5] = real_pos[1];
             Canvas::canvas->add_object(
                 new Geo::Arc(_parameters[0], _parameters[1], _parameters[2], _parameters[3], _parameters[4], _parameters[5]));
-            shape.clear();
-            tool_lines.clear();
-            _index = 0;
+            reset();
             tool[0] = Tool::Select;
-            info.clear();
             break;
         default:
             break;
@@ -1289,6 +1281,9 @@ bool Arc0Operation::mouse_move(QMouseEvent *event)
 void Arc0Operation::reset()
 {
     _index = 0;
+    this->info.clear();
+    this->shape.clear();
+    this->tool_lines.clear();
 }
 
 bool Arc0Operation::read_parameters(const double *params, const int count)
@@ -1383,13 +1378,10 @@ bool Arc0Operation::read_parameters(const double *params, const int count)
             }
             Canvas::canvas->add_object(
                 new Geo::Arc(_parameters[0], _parameters[1], _parameters[2], _parameters[3], _parameters[4], _parameters[5]));
-            shape.clear();
-            tool_lines.clear();
-            _index = 0;
+            reset();
             release_pos[0] = press_pos[0] = _parameters[0];
             release_pos[1] = press_pos[1] = _parameters[1];
             tool[0] = Tool::Select;
-            info.clear();
             return true;
         }
         break;
@@ -1449,11 +1441,8 @@ bool Arc1Operation::mouse_press(QMouseEvent *event)
             Canvas::canvas->add_object(new Geo::Arc(_parameters[0], _parameters[1], _parameters[2], _parameters[3], _parameters[4],
                                                     Geo::Arc::ParameterType::StartCenterAngle,
                                                     event->modifiers() != Qt::KeyboardModifier::ControlModifier));
-            shape.clear();
-            tool_lines.clear();
-            _index = 0;
+            reset();
             tool[0] = Tool::Select;
-            info.clear();
             break;
         default:
             break;
@@ -1504,6 +1493,9 @@ bool Arc1Operation::mouse_move(QMouseEvent *event)
 void Arc1Operation::reset()
 {
     _index = 0;
+    this->info.clear();
+    this->shape.clear();
+    this->tool_lines.clear();
 }
 
 bool Arc1Operation::read_parameters(const double *params, const int count)
@@ -1569,11 +1561,8 @@ bool Arc1Operation::read_parameters(const double *params, const int count)
             _parameters[4] = std::abs(Geo::degree_to_rad(params[0]));
             Canvas::canvas->add_object(new Geo::Arc(_parameters[0], _parameters[1], _parameters[2], _parameters[3], _parameters[4],
                                                     Geo::Arc::ParameterType::StartCenterAngle, params[0] > 0));
-            shape.clear();
-            tool_lines.clear();
-            _index = 0;
+            reset();
             tool[0] = Tool::Select;
-            info.clear();
             return true;
         }
         break;
@@ -1663,6 +1652,9 @@ bool Arc2Operation::mouse_move(QMouseEvent *event)
 void Arc2Operation::reset()
 {
     _index = 0;
+    this->info.clear();
+    this->shape.clear();
+    this->tool_lines.clear();
 }
 
 bool Arc2Operation::read_parameters(const double *params, const int count)
@@ -1728,11 +1720,8 @@ bool Arc2Operation::read_parameters(const double *params, const int count)
             _parameters[4] = std::abs(Geo::degree_to_rad(params[0]));
             Canvas::canvas->add_object(new Geo::Arc(_parameters[0], _parameters[1], _parameters[2], _parameters[3], _parameters[4],
                                                     Geo::Arc::ParameterType::StartEndAngle, params[0] > 0));
-            shape.clear();
-            tool_lines.clear();
-            _index = 0;
+            reset();
             tool[0] = Tool::Select;
-            info.clear();
             return true;
         }
         break;
@@ -1796,11 +1785,8 @@ bool Arc3Operation::mouse_press(QMouseEvent *event)
                 const Geo::Point start(_parameters[0], _parameters[1]), end(_parameters[2], _parameters[3]);
                 Canvas::canvas->add_object(
                     new Geo::Arc(start, end, std::abs(_parameters[4]), Geo::is_on_left(pos, start, end), _parameters[4] > 0));
-                shape.clear();
-                tool_lines.clear();
-                _index = 0;
+                reset();
                 tool[0] = Tool::Select;
-                info.clear();
             }
             break;
         default:
@@ -1831,6 +1817,9 @@ bool Arc3Operation::mouse_move(QMouseEvent *event)
 void Arc3Operation::reset()
 {
     _index = 0;
+    this->info.clear();
+    this->shape.clear();
+    this->tool_lines.clear();
 }
 
 bool Arc3Operation::read_parameters(const double *params, const int count)
@@ -1946,6 +1935,7 @@ bool RectangleOperation::mouse_press(QMouseEvent *event)
             shape.resize(10);
             shape[0] = shape[2] = shape[4] = shape[6] = shape[8] = real_pos[0];
             shape[1] = shape[3] = shape[5] = shape[7] = shape[9] = real_pos[1];
+            _set_first_point = false;
         }
         else
         {
@@ -1985,11 +1975,9 @@ bool RectangleOperation::mouse_press(QMouseEvent *event)
                 _parameters[3] = real_pos[1];
             }
             Canvas::canvas->add_object(new Geo::Polygon(Geo::AABBRect(_parameters[0], _parameters[1], _parameters[2], _parameters[3])));
-            shape.clear();
+            reset();
             tool[0] = Tool::Select;
-            info.clear();
         }
-        _set_first_point = !_set_first_point;
         return true;
     }
     else
@@ -2054,6 +2042,8 @@ bool RectangleOperation::mouse_move(QMouseEvent *event)
 void RectangleOperation::reset()
 {
     _set_first_point = true;
+    this->info.clear();
+    this->shape.clear();
 }
 
 bool RectangleOperation::read_parameters(const double *params, const int count)
@@ -2069,6 +2059,7 @@ bool RectangleOperation::read_parameters(const double *params, const int count)
             shape[1] = shape[3] = shape[5] = shape[7] = shape[9] = params[1];
             release_pos[0] = press_pos[0] = _parameters[0];
             release_pos[1] = press_pos[1] = _parameters[1];
+            _set_first_point = false;
         }
         else
         {
@@ -2091,11 +2082,9 @@ bool RectangleOperation::read_parameters(const double *params, const int count)
             Canvas::canvas->add_object(new Geo::Polygon(Geo::AABBRect(_parameters[0], _parameters[1], _parameters[2], _parameters[3])));
             release_pos[0] = press_pos[0] = _parameters[2];
             release_pos[1] = press_pos[1] = _parameters[3];
-            shape.clear();
+            reset();
             tool[0] = Tool::Select;
-            info.clear();
         }
-        _set_first_point = !_set_first_point;
         return true;
     }
     return false;
@@ -2126,20 +2115,16 @@ bool CircumscribedPolygonOperation::mouse_press(QMouseEvent *event)
             tool_lines.resize(4);
             tool_lines[0] = tool_lines[2] = real_pos[0];
             tool_lines[1] = tool_lines[3] = real_pos[1];
+            _set_n = _set_center = false;
         }
         else
         {
             _parameters[2] = Geo::distance(_parameters[0], _parameters[1], real_pos[0], real_pos[1]);
             _parameters[3] = Geo::angle(Geo::Point(_parameters[0], _parameters[1]), Geo::Point(real_pos[0], real_pos[1]));
             Canvas::canvas->add_object(new Geo::Polygon(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], true));
-            info.clear();
+            reset();
             tool[0] = Tool::Select;
-            shape.clear();
-            tool_lines.clear();
-            _set_n = _set_center = true;
         }
-        _set_center = !_set_center;
-        _set_n = !_set_n;
         return true;
     }
     else
@@ -2174,6 +2159,9 @@ bool CircumscribedPolygonOperation::mouse_move(QMouseEvent *event)
 void CircumscribedPolygonOperation::reset()
 {
     _set_n = _set_center = true;
+    this->info.clear();
+    this->shape.clear();
+    this->tool_lines.clear();
 }
 
 bool CircumscribedPolygonOperation::read_parameters(const double *params, const int count)
@@ -2237,11 +2225,8 @@ bool CircumscribedPolygonOperation::read_parameters(const double *params, const 
             {
                 _parameters[2] = params[0], _parameters[3] = Geo::degree_to_rad(params[1]);
                 Canvas::canvas->add_object(new Geo::Polygon(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], true));
-                info.clear();
+                reset();
                 tool[0] = Tool::Select;
-                shape.clear();
-                tool_lines.clear();
-                _set_n = _set_center = true;
                 return true;
             }
         }
@@ -2274,20 +2259,16 @@ bool InscribedPolygonOperation::mouse_press(QMouseEvent *event)
             tool_lines.resize(4);
             tool_lines[0] = tool_lines[2] = real_pos[0];
             tool_lines[1] = tool_lines[3] = real_pos[1];
+            _set_n = _set_center = false;
         }
         else
         {
             _parameters[2] = Geo::distance(_parameters[0], _parameters[1], real_pos[0], real_pos[1]);
             _parameters[3] = Geo::angle(Geo::Point(_parameters[0], _parameters[1]), Geo::Point(real_pos[0], real_pos[1]));
             Canvas::canvas->add_object(new Geo::Polygon(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], false));
-            info.clear();
+            reset();
             tool[0] = Tool::Select;
-            shape.clear();
-            tool_lines.clear();
-            _set_n = _set_center = true;
         }
-        _set_center = !_set_center;
-        _set_n = !_set_n;
         return true;
     }
     else
@@ -2322,6 +2303,9 @@ bool InscribedPolygonOperation::mouse_move(QMouseEvent *event)
 void InscribedPolygonOperation::reset()
 {
     _set_n = _set_center = true;
+    this->info.clear();
+    this->shape.clear();
+    this->tool_lines.clear();
 }
 
 bool InscribedPolygonOperation::read_parameters(const double *params, const int count)
@@ -2374,22 +2358,16 @@ bool InscribedPolygonOperation::read_parameters(const double *params, const int 
             {
                 _parameters[2] = params[0];
                 Canvas::canvas->add_object(new Geo::Polygon(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], false));
-                info.clear();
+                reset();
                 tool[0] = Tool::Select;
-                shape.clear();
-                tool_lines.clear();
-                _set_n = _set_center = true;
                 return true;
             }
             else if (count >= 2 && params[0] > 0)
             {
                 _parameters[2] = params[0], _parameters[3] = Geo::degree_to_rad(params[1]);
                 Canvas::canvas->add_object(new Geo::Polygon(_parameters[0], _parameters[1], _parameters[2], _n, _parameters[3], false));
-                info.clear();
+                reset();
                 tool[0] = Tool::Select;
-                shape.clear();
-                tool_lines.clear();
-                _set_n = _set_center = true;
                 return true;
             }
         }
@@ -2555,10 +2533,7 @@ bool BSplineOperation::mouse_double_click(QMouseEvent *event)
             }
         }
         tool[0] = Tool::Select;
-        shape.clear();
-        tool_lines.clear();
-        _points.clear();
-        info.clear();
+        reset();
         return true;
     }
     else
@@ -2570,6 +2545,9 @@ bool BSplineOperation::mouse_double_click(QMouseEvent *event)
 void BSplineOperation::reset()
 {
     _points.clear();
+    this->info.clear();
+    this->shape.clear();
+    this->tool_lines.clear();
 }
 
 bool BSplineOperation::read_parameters(const double *params, const int count)
@@ -2589,10 +2567,7 @@ bool BSplineOperation::read_parameters(const double *params, const int count)
             }
         }
         tool[0] = Tool::Select;
-        shape.clear();
-        tool_lines.clear();
-        _points.clear();
-        info.clear();
+        reset();
         return true;
     }
     else if (count == 1 && _points.empty())
@@ -2799,10 +2774,7 @@ bool BezierOperation::mouse_double_click(QMouseEvent *event)
             Canvas::canvas->add_object(new Geo::CubicBezier(_points.begin(), _points.end(), true));
         }
         tool[0] = Tool::Select;
-        shape.clear();
-        tool_lines.clear();
-        _points.clear();
-        info.clear();
+        reset();
         return true;
     }
     else
@@ -2814,6 +2786,9 @@ bool BezierOperation::mouse_double_click(QMouseEvent *event)
 void BezierOperation::reset()
 {
     _points.clear();
+    this->info.clear();
+    this->shape.clear();
+    this->tool_lines.clear();
 }
 
 bool BezierOperation::read_parameters(const double *params, const int count)
@@ -2826,10 +2801,7 @@ bool BezierOperation::read_parameters(const double *params, const int count)
             Canvas::canvas->add_object(new Geo::CubicBezier(_points.begin(), _points.end(), true));
         }
         tool[0] = Tool::Select;
-        shape.clear();
-        tool_lines.clear();
-        _points.clear();
-        info.clear();
+        reset();
         return true;
     }
     else if (count >= 2)
@@ -2994,11 +2966,8 @@ bool Ellipse0Operation::mouse_press(QMouseEvent *event)
                 Geo::Ellipse *ellipse = new Geo::Ellipse(_parameters[0], _parameters[1], _parameters[2], _parameters[3]);
                 ellipse->rotate(_parameters[0], _parameters[1], _parameters[4]);
                 Canvas::canvas->add_object(ellipse);
-                shape.clear();
-                tool_lines.clear();
-                _index = 0;
+                reset();
                 tool[0] = Tool::Select;
-                info.clear();
             }
             break;
         default:
@@ -3071,6 +3040,9 @@ bool Ellipse0Operation::mouse_move(QMouseEvent *event)
 void Ellipse0Operation::reset()
 {
     _index = 0;
+    this->info.clear();
+    this->shape.clear();
+    this->tool_lines.clear();
 }
 
 bool Ellipse0Operation::read_parameters(const double *params, const int count)
@@ -3111,11 +3083,8 @@ bool Ellipse0Operation::read_parameters(const double *params, const int count)
             Geo::Ellipse *ellipse = new Geo::Ellipse(_parameters[0], _parameters[1], _parameters[2], _parameters[3]);
             ellipse->rotate(_parameters[0], _parameters[1], _parameters[4]);
             Canvas::canvas->add_object(ellipse);
-            shape.clear();
-            tool_lines.clear();
-            _index = 0;
+            reset();
             tool[0] = Tool::Select;
-            info.clear();
             return true;
         }
         break;
@@ -3417,8 +3386,7 @@ bool MirrorOperation::mouse_press(QMouseEvent *event)
         else
         {
             tool[0] = Tool::Select;
-            _set_first_point = true;
-            tool_lines.clear();
+            reset();
             if (std::vector<Geo::DObject *> selected_objects = Canvas::canvas->editor().selected();
                 Canvas::canvas->editor().mirror(selected_objects, _pos[0], _pos[1], event->modifiers() == Qt::ControlModifier))
             {
@@ -3482,6 +3450,7 @@ bool MirrorOperation::mouse_move(QMouseEvent *event)
 void MirrorOperation::reset()
 {
     _set_first_point = true;
+    this->tool_lines.clear();
 }
 
 QString MirrorOperation::cmd_tips() const
@@ -3928,6 +3897,7 @@ bool FreeFilletOperation::mouse_move(QMouseEvent *event)
         }
 
         tool_lines.clear();
+        this->shape.clear();
         if (_points.size() > 0)
         {
             tool_lines.push_back(_pos[0]);
@@ -3941,6 +3911,15 @@ bool FreeFilletOperation::mouse_move(QMouseEvent *event)
             tool_lines.push_back(_pos[1]);
             tool_lines.push_back(_points.back().x);
             tool_lines.push_back(_points.back().y);
+            if (Geo::CubicBezier curve;
+                Geo::angle_to_arc(_points.front(), Geo::Point(_pos[0], _pos[1]), _points.back(), curve))
+            {
+                for (const Geo::Point &point : curve.shape())
+                {
+                    this->shape.push_back(point.x);
+                    this->shape.push_back(point.y);
+                }
+            }
         }
         return true;
     }
@@ -3953,6 +3932,7 @@ void FreeFilletOperation::reset()
     _tvalues.clear();
     _points.clear();
     tool_lines.clear();
+    this->shape.clear();
 }
 
 bool FreeFilletOperation::read_parameters(const double *params, const int count)
@@ -4129,14 +4109,13 @@ bool RotateOperation::mouse_press(QMouseEvent *event)
                 _pos[2].x = tool_lines[4] = real_pos[0];
                 _pos[2].y = tool_lines[5] = real_pos[1];
             }
-            _index = 0;
             if (std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected(); !objects.empty())
             {
                 const double angle = Geo::angle(_pos[0], _pos[1], _pos[2]);
                 Canvas::canvas->editor().rotate(objects, _pos[1].x, _pos[1].y, angle);
                 Canvas::canvas->refresh_selected_vbo();
             }
-            tool_lines.clear();
+            reset();
             tool[0] = Tool::Select;
             break;
         default:
@@ -4204,6 +4183,8 @@ bool RotateOperation::mouse_move(QMouseEvent *event)
 void RotateOperation::reset()
 {
     _index = 0;
+    this->info.clear();
+    this->tool_lines.clear();
 }
 
 bool RotateOperation::read_parameters(const double *params, const int count)
@@ -4224,14 +4205,13 @@ bool RotateOperation::read_parameters(const double *params, const int count)
     {
         if (count >= 1)
         {
-            _index = 0;
             if (std::vector<Geo::DObject *> objects = Canvas::canvas->editor().selected(); !objects.empty())
             {
                 const double angle = Geo::degree_to_rad(params[0]);
                 Canvas::canvas->editor().rotate(objects, _pos[1].x, _pos[1].y, angle);
                 Canvas::canvas->refresh_selected_vbo();
             }
-            tool_lines.clear();
+            reset();
             tool[0] = Tool::Select;
             return true;
         }
@@ -5403,6 +5383,7 @@ bool PointsSpiralStepOperation::mouse_move(QMouseEvent *event)
 void PointsSpiralStepOperation::reset()
 {
     _index = 0;
+    this->info.clear();
 }
 
 bool PointsSpiralStepOperation::read_parameters(const double *params, const int count)
@@ -5439,7 +5420,6 @@ bool PointsSpiralStepOperation::read_parameters(const double *params, const int 
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const double step = params[2];
-            _index = 0;
             std::vector<Geo::DObject *> points;
             for (const Geo::Point &point : Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start),
                                                                           Geo::distance(_center, _end), step, turns, clockwise))
@@ -5448,7 +5428,7 @@ bool PointsSpiralStepOperation::read_parameters(const double *params, const int 
             }
             Canvas::canvas->add_object(points);
             tool[0] = Tool::Select;
-            info.clear();
+            reset();
         }
         break;
     default:
@@ -5548,6 +5528,7 @@ bool PolylineSpiralStepOperation::mouse_move(QMouseEvent *event)
 void PolylineSpiralStepOperation::reset()
 {
     _index = 0;
+    this->info.clear();
 }
 
 bool PolylineSpiralStepOperation::read_parameters(const double *params, const int count)
@@ -5584,12 +5565,11 @@ bool PolylineSpiralStepOperation::read_parameters(const double *params, const in
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const double step = params[2];
-            _index = 0;
             std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start),
                                                                           Geo::distance(_center, _end), step, turns, clockwise));
             Canvas::canvas->add_object(new Geo::Polyline(points.begin(), points.end()));
             tool[0] = Tool::Select;
-            info.clear();
+            reset();
         }
         break;
     default:
@@ -5686,6 +5666,7 @@ bool BezierSpiralStepOperation::mouse_move(QMouseEvent *event)
 void BezierSpiralStepOperation::reset()
 {
     _index = 0;
+    this->info.clear();
 }
 
 bool BezierSpiralStepOperation::read_parameters(const double *params, const int count)
@@ -5722,13 +5703,12 @@ bool BezierSpiralStepOperation::read_parameters(const double *params, const int 
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const double step = params[2];
-            _index = 0;
             std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start),
                                                                           Geo::distance(_center, _end), step, turns, clockwise));
             std::vector<Geo::Point> controls(Geo::archimedean_spiral_bezier(points));
             Canvas::canvas->add_object(new Geo::CubicBezier(controls.begin(), controls.end(), false));
             tool[0] = Tool::Select;
-            info.clear();
+            reset();
         }
         break;
     default:
@@ -5828,6 +5808,7 @@ bool BSplineSpiralStepOperation::mouse_move(QMouseEvent *event)
 void BSplineSpiralStepOperation::reset()
 {
     _index = 0;
+    this->info.clear();
 }
 
 bool BSplineSpiralStepOperation::read_parameters(const double *params, const int count)
@@ -5864,12 +5845,11 @@ bool BSplineSpiralStepOperation::read_parameters(const double *params, const int
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const double step = params[2];
-            _index = 0;
             std::vector<Geo::Point> points(Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start),
                                                                           Geo::distance(_center, _end), step, turns, clockwise));
             Canvas::canvas->add_object(new Geo::CubicBSpline(points.begin(), points.end(), true));
             tool[0] = Tool::Select;
-            info.clear();
+            reset();
         }
         break;
     default:
@@ -5966,6 +5946,7 @@ bool PointsSpiralNOperation::mouse_move(QMouseEvent *event)
 void PointsSpiralNOperation::reset()
 {
     _index = 0;
+    this->info.clear();
 }
 
 bool PointsSpiralNOperation::read_parameters(const double *params, const int count)
@@ -6002,7 +5983,6 @@ bool PointsSpiralNOperation::read_parameters(const double *params, const int cou
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const size_t n = params[2];
-            _index = 0;
             std::vector<Geo::DObject *> points;
             for (const Geo::Point &point :
                  Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise))
@@ -6011,7 +5991,7 @@ bool PointsSpiralNOperation::read_parameters(const double *params, const int cou
             }
             Canvas::canvas->add_object(points);
             tool[0] = Tool::Select;
-            info.clear();
+            reset();
         }
         break;
     default:
@@ -6111,6 +6091,7 @@ bool PolylineSpiralNOperation::mouse_move(QMouseEvent *event)
 void PolylineSpiralNOperation::reset()
 {
     _index = 0;
+    this->info.clear();
 }
 
 bool PolylineSpiralNOperation::read_parameters(const double *params, const int count)
@@ -6147,12 +6128,11 @@ bool PolylineSpiralNOperation::read_parameters(const double *params, const int c
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const size_t n = params[2];
-            _index = 0;
             std::vector<Geo::Point> points(
                 Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise));
             Canvas::canvas->add_object(new Geo::Polyline(points.begin(), points.end()));
             tool[0] = Tool::Select;
-            info.clear();
+            reset();
         }
         break;
     default:
@@ -6252,6 +6232,7 @@ bool BezierSpiralNOperation::mouse_move(QMouseEvent *event)
 void BezierSpiralNOperation::reset()
 {
     _index = 0;
+    this->info.clear();
 }
 
 bool BezierSpiralNOperation::read_parameters(const double *params, const int count)
@@ -6288,13 +6269,12 @@ bool BezierSpiralNOperation::read_parameters(const double *params, const int cou
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const size_t n = params[2];
-            _index = 0;
             std::vector<Geo::Point> points(
                 Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise));
             std::vector<Geo::Point> controls(Geo::archimedean_spiral_bezier(points));
             Canvas::canvas->add_object(new Geo::CubicBezier(controls.begin(), controls.end(), false));
             tool[0] = Tool::Select;
-            info.clear();
+            reset();
         }
         break;
     default:
@@ -6394,6 +6374,7 @@ bool BSplineSpiralNOperation::mouse_move(QMouseEvent *event)
 void BSplineSpiralNOperation::reset()
 {
     _index = 0;
+    this->info.clear();
 }
 
 bool BSplineSpiralNOperation::read_parameters(const double *params, const int count)
@@ -6430,12 +6411,11 @@ bool BSplineSpiralNOperation::read_parameters(const double *params, const int co
             const bool clockwise = params[0] != 0;
             const size_t turns = params[1];
             const size_t n = params[2];
-            _index = 0;
             std::vector<Geo::Point> points(
                 Geo::archimedean_spiral_points(_center, Geo::distance(_center, _start), Geo::distance(_center, _end), n, turns, clockwise));
             Canvas::canvas->add_object(new Geo::CubicBSpline(points.begin(), points.end(), true));
             tool[0] = Tool::Select;
-            info.clear();
+            reset();
         }
         break;
     default:
@@ -6495,4 +6475,369 @@ bool InsertPointOperation::mouse_press(QMouseEvent *event)
         }
     }
     return false;
+}
+
+
+bool OffsetOperation::mouse_press(QMouseEvent *event)
+{
+    if (event->button() == Qt::MouseButton::LeftButton)
+    {
+        if (_object == nullptr)
+        {
+            if (_object = Canvas::canvas->editor().select(real_pos[0], real_pos[1], true, true);
+                _object != nullptr && (_object->type() == Geo::Type::ARC ||
+                _object->type() == Geo::Type::BSPLINE || _object->type() == Geo::Type::BEZIER ||
+                _object->type() == Geo::Type::CIRCLE || _object->type() == Geo::Type::ELLIPSE ||
+                _object->type() == Geo::Type::POLYGON || _object->type() == Geo::Type::POLYLINE))
+            {
+                _object->is_selected = true;
+                Canvas::canvas->refresh_selected_ibo();
+                return true;
+            }
+            else
+            {
+                _object = nullptr;
+            }
+        }
+        else
+        {
+            const Geo::Point anchor(real_pos[0], real_pos[1]);
+            std::vector<Geo::DObject *> offseted;
+            switch (_object->type())
+            {
+            case Geo::Type::POLYGON:
+                {
+                    const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(_object);
+                    double distance = Geo::distance(anchor, *polygon);
+                    if (Geo::is_inside(anchor, *polygon))
+                    {
+                        distance = -distance;
+                    }
+                    if (std::vector<Geo::Polygon> result; Geo::offset(*polygon, result, distance,
+                        static_cast<Geo::Offset::JoinType>(GlobalSetting::setting().offset_join_type),
+                        static_cast<Geo::Offset::EndType>(GlobalSetting::setting().offset_end_type)))
+                    {
+                        for (const Geo::Polygon &poly : result)
+                        {
+                            this->shape_index.push_back(this->shape.size() / 2);
+                            offseted.push_back(new Geo::Polygon(poly));
+                        }
+                    }
+                }
+                break;
+            case Geo::Type::CIRCLE:
+                {
+                    const Geo::Circle *circle = static_cast<const Geo::Circle *>(_object);
+                    const double distance = Geo::distance(anchor.x, anchor.y, circle->x, circle->y);
+                    offseted.push_back(new Geo::Circle(circle->x, circle->y, distance));
+                }
+                break;
+            case Geo::Type::ELLIPSE:
+                {
+                    const Geo::Ellipse *ellipse = static_cast<const Geo::Ellipse *>(_object);
+                    double distance = Geo::distance(anchor, *ellipse);
+                    if (Geo::is_inside(anchor, *ellipse))
+                    {
+                        distance = -distance;
+                    }
+                    Geo::Ellipse *temp = new Geo::Ellipse(ellipse->center(), ellipse->lengtha() + distance, ellipse->lengthb() + distance);
+                    temp->rotate(ellipse->center().x, ellipse->center().y, ellipse->angle());
+                    offseted.push_back(temp);
+                }
+                break;
+            case Geo::Type::POLYLINE:
+                {
+                    const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(_object);
+                    const double distance = Geo::distance(anchor, *polyline);
+                    Geo::Polyline shape0, shape1;
+                    Geo::offset(*polyline, shape0, distance);
+                    Geo::offset(*polyline, shape1, -distance);
+                    if (Geo::distance(anchor, shape1) < Geo::distance(anchor, shape0))
+                    {
+                        offseted.push_back(new Geo::Polyline(shape1));
+                    }
+                    else
+                    {
+                        offseted.push_back(new Geo::Polyline(shape0));
+                    }
+                }
+                break;
+            case Geo::Type::BSPLINE:
+                {
+                    const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(_object);
+                    const Geo::CubicBezier beziershape = Geo::bspline_to_bezier(*bspline);
+                    double distance = Geo::distance(anchor, beziershape);
+                    {
+                        Geo::Polyline shape0, shape1;
+                        Geo::offset(beziershape.shape(), shape0, distance);
+                        Geo::offset(beziershape.shape(), shape1, -distance);
+                        if (Geo::distance(anchor, shape1) < Geo::distance(anchor, shape0))
+                        {
+                            distance = -distance;
+                        }
+                    }
+                    if (std::vector<Geo::CubicBezier> shapes;
+                        Geo::offset(beziershape, shapes, distance, GlobalSetting::setting().offset_tolerance,
+                                    GlobalSetting::setting().offset_sample_count))
+                    {
+                        for (const Geo::CubicBezier &temp : shapes)
+                        {
+                            offseted.push_back(new Geo::CubicBSpline(Geo::bezier_to_bspline(temp)));
+                        }
+                    }
+                }
+                break;
+            case Geo::Type::BEZIER:
+                {
+                    const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(_object);
+                    const Geo::Point anchor(real_pos[0], real_pos[1]);
+                    double distance = Geo::distance(anchor, *bezier);
+                    {
+                        Geo::Polyline shape0, shape1;
+                        Geo::offset(bezier->shape(), shape0, distance);
+                        Geo::offset(bezier->shape(), shape1, -distance);
+                        if (Geo::distance(anchor, shape1) < Geo::distance(anchor, shape0))
+                        {
+                            distance = -distance;
+                        }
+                    }
+                    if (std::vector<Geo::CubicBezier> shapes; Geo::offset(*bezier, shapes, distance,
+                        GlobalSetting::setting().offset_tolerance, GlobalSetting::setting().offset_sample_count))
+                    {
+                        for (const Geo::CubicBezier &temp : shapes)
+                        {
+                            offseted.push_back(new Geo::CubicBezier(temp));
+                        }
+                    }
+                }
+                break;
+            case Geo::Type::ARC:
+                {
+                    const Geo::Arc *arc = static_cast<const Geo::Arc *>(_object);
+                    const Geo::Point center(arc->x, arc->y);
+                    const double distance = Geo::distance(anchor.x, anchor.y, arc->x, arc->y);
+                    offseted.push_back(new Geo::Arc(arc->x, arc->y, distance, Geo::angle(center, arc->control_points[0]),
+                                                    Geo::angle(center, arc->control_points[2]), !arc->is_cw()));
+                }
+                break;
+            default:
+                break;
+            }
+            if (!offseted.empty())
+            {
+                Canvas::canvas->add_object(offseted);
+                reset();
+                this->tool[0] = Tool::Select;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool OffsetOperation::mouse_move(QMouseEvent *event)
+{
+    if (_object != nullptr)
+    {
+        this->shape.clear();
+        this->shape_index.clear();
+        const Geo::Point anchor(real_pos[0], real_pos[1]);
+        switch (_object->type())
+        {
+        case Geo::Type::POLYGON:
+            {
+                const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(_object);
+                double distance = Geo::distance(anchor, *polygon);
+                if (Geo::is_inside(anchor, *polygon))
+                {
+                    distance = -distance;
+                }
+                if (std::vector<Geo::Polygon> result; Geo::offset(*polygon, result, distance,
+                    static_cast<Geo::Offset::JoinType>(GlobalSetting::setting().offset_join_type),
+                    static_cast<Geo::Offset::EndType>(GlobalSetting::setting().offset_end_type)))
+                {
+                    for (const Geo::Polygon &poly : result)
+                    {
+                        this->shape_index.push_back(this->shape.size() / 2);
+                        for (const Geo::Point &point : poly)
+                        {
+                            this->shape.push_back(point.x);
+                            this->shape.push_back(point.y);
+                        }
+                    }
+                    this->info = QString("distance: %1").arg(distance);
+                }
+            }
+            break;
+        case Geo::Type::CIRCLE:
+            {
+                const Geo::Circle *circle = static_cast<const Geo::Circle *>(_object);
+                const double distance = Geo::distance(anchor.x, anchor.y, circle->x, circle->y);
+                const Geo::Circle temp(circle->x, circle->y, distance);
+                for (const Geo::Point &point : temp.shape())
+                {
+                    this->shape.push_back(point.x);
+                    this->shape.push_back(point.y);
+                }
+                this->info = QString("distance: %1").arg(distance - circle->radius);
+            }
+            break;
+        case Geo::Type::ELLIPSE:
+            {
+                const Geo::Ellipse *ellipse = static_cast<const Geo::Ellipse *>(_object);
+                double distance = Geo::distance(anchor, *ellipse);
+                if (Geo::is_inside(anchor, *ellipse))
+                {
+                    distance = -distance;
+                }
+                Geo::Ellipse temp(ellipse->center(), ellipse->lengtha() + distance, ellipse->lengthb() + distance);
+                temp.rotate(ellipse->center().x, ellipse->center().y, ellipse->angle());
+                for (const Geo::Point &point : temp.shape())
+                {
+                    this->shape.push_back(point.x);
+                    this->shape.push_back(point.y);
+                }
+                this->info = QString("distance: %1").arg(distance);
+            }
+            break;
+        case Geo::Type::POLYLINE:
+            {
+                const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(_object);
+                const double distance = Geo::distance(anchor, *polyline);
+                Geo::Polyline shape0, shape1;
+                Geo::offset(*polyline, shape0, distance);
+                Geo::offset(*polyline, shape1, -distance);
+                if (Geo::distance(anchor, shape1) < Geo::distance(anchor, shape0))
+                {
+                    for (const Geo::Point &point : shape1)
+                    {
+                        this->shape.push_back(point.x);
+                        this->shape.push_back(point.y);
+                    }
+                    this->info = QString("distance: %1").arg(-distance);
+                }
+                else
+                {
+                    for (const Geo::Point &point : shape0)
+                    {
+                        this->shape.push_back(point.x);
+                        this->shape.push_back(point.y);
+                    }
+                    this->info = QString("distance: %1").arg(distance);
+                }
+            }
+            break;
+        case Geo::Type::BSPLINE:
+            {
+                const Geo::BSpline *bspline = static_cast<const Geo::BSpline *>(_object);
+                const Geo::CubicBezier beziershape = Geo::bspline_to_bezier(*bspline);
+                double distance = Geo::distance(anchor, beziershape);
+                {
+                    Geo::Polyline shape0, shape1;
+                    Geo::offset(beziershape.shape(), shape0, distance);
+                    Geo::offset(beziershape.shape(), shape1, -distance);
+                    if (Geo::distance(anchor, shape1) < Geo::distance(anchor, shape0))
+                    {
+                        distance = -distance;
+                    }
+                }
+                if (std::vector<Geo::CubicBezier> shapes;
+                    Geo::offset(beziershape, shapes, distance, GlobalSetting::setting().offset_tolerance,
+                                GlobalSetting::setting().offset_sample_count))
+                {
+                    this->info = QString("distance: %1").arg(distance);
+                    for (const Geo::CubicBezier &temp : shapes)
+                    {
+                        this->shape_index.push_back(this->shape.size() / 2);
+                        for (const Geo::Point &point : temp.shape())
+                        {
+                            this->shape.push_back(point.x);
+                            this->shape.push_back(point.y);
+                        
+                        }
+                    }
+                }
+            }
+            break;
+        case Geo::Type::BEZIER:
+            {
+                const Geo::CubicBezier *bezier = static_cast<const Geo::CubicBezier *>(_object);
+                const Geo::Point anchor(real_pos[0], real_pos[1]);
+                double distance = Geo::distance(anchor, *bezier);
+                {
+                    Geo::Polyline shape0, shape1;
+                    Geo::offset(bezier->shape(), shape0, distance);
+                    Geo::offset(bezier->shape(), shape1, -distance);
+                    if (Geo::distance(anchor, shape1) < Geo::distance(anchor, shape0))
+                    {
+                        distance = -distance;
+                    }
+                }
+                if (std::vector<Geo::CubicBezier> shapes; Geo::offset(*bezier, shapes, distance,
+                    GlobalSetting::setting().offset_tolerance, GlobalSetting::setting().offset_sample_count))
+                {
+                    this->info = QString("distance: %1").arg(distance);
+                    for (const Geo::CubicBezier &temp : shapes)
+                    {
+                        this->shape_index.push_back(this->shape.size() / 2);
+                        for (const Geo::Point &point : temp.shape())
+                        {
+                            this->shape.push_back(point.x);
+                            this->shape.push_back(point.y);
+                        }
+                    }
+                }
+            }
+            break;
+        case Geo::Type::ARC:
+            {
+                const Geo::Arc *arc = static_cast<const Geo::Arc *>(_object);
+                const Geo::Point center(arc->x, arc->y);
+                const double distance = Geo::distance(anchor.x, anchor.y, arc->x, arc->y);
+                const Geo::Arc temp(arc->x, arc->y, distance, Geo::angle(center, arc->control_points[0]),
+                                    Geo::angle(center, arc->control_points[2]), !arc->is_cw());
+                for (const Geo::Point &point : temp.shape())
+                {
+                    this->shape.push_back(point.x);
+                    this->shape.push_back(point.y);
+                }
+                this->info = QString("distance: %1").arg(distance - arc->radius);
+            }
+            break;
+        default:
+            break;
+        }
+        return true;
+    }
+    return false;
+}
+
+void OffsetOperation::reset()
+{
+    _object = nullptr;
+    this->info.clear();
+    this->shape.clear();
+    this->shape_index.clear();
+}
+
+bool OffsetOperation::read_parameters(const double *params, const int count)
+{
+    if (count > 0 && params[0] > 0 && _object != nullptr)
+    {
+        if (Canvas::canvas->editor().offset({_object}, params[0],
+            static_cast<Geo::Offset::JoinType>(GlobalSetting::setting().offset_join_type),
+            static_cast<Geo::Offset::EndType>(GlobalSetting::setting().offset_end_type)))
+        {
+            Canvas::canvas->refresh_vbo(false, _object->type());
+            reset();
+            this->tool[0] = Tool::Select;
+            return true;
+        }
+    }
+    return false;
+}
+
+QString OffsetOperation::cmd_tips() const
+{
+    return _object == nullptr ? "Select an object to offset." : "Offset distance:";
 }

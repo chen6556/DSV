@@ -44,6 +44,7 @@ enum class Tool
     Extend,
     Split,
     Blend,
+    Offset,
     PointsSpiralStep,
     PolylineSpiralStep,
     BezierSpiralStep,
@@ -70,6 +71,7 @@ class CanvasOperation
 {
 public:
     static std::vector<double> shape;
+    static std::vector<int> shape_index;
     static std::vector<double> tool_lines;
     static std::vector<double> dim_lines, dim_arrows;
     static float tool_line_width;
@@ -968,6 +970,24 @@ class InsertPointOperation : public CanvasOperation
 {   
 public:
     bool mouse_press(QMouseEvent *event) override;
+};
+
+
+class OffsetOperation : public CanvasOperation
+{
+private:
+    Geo::DObject *_object = nullptr;
+
+public:
+    bool mouse_press(QMouseEvent *event) override;
+
+    bool mouse_move(QMouseEvent *event) override;
+
+    void reset() override;
+
+    bool read_parameters(const double *params, const int count) override;
+
+    QString cmd_tips() const override;
 };
 
 } // namespace CanvasOperations

@@ -11,16 +11,6 @@ bool Geo::offset(const Geo::Polyline &input, Geo::Polyline &result, const double
         Polyline temp(input);
         temp.remove_repeated_points();
         result.clear();
-        double area = 0;
-        for (size_t i = 1, count = temp.size(); i < count; ++i)
-        {
-            area += (temp[i].x * (temp[i + 1 != count ? i + 1 : 0].y - temp[i - 1].y));
-        }
-        area += (temp.front().x * (temp[1].y - temp.back().y));
-        if (area > 0)
-        {
-            temp.flip();
-        }
         Point a, b;
         result.append(temp.front() + (temp[1] - temp[0]).vertical().normalize() * distance);
         for (size_t i = 1, end = temp.size() - 1; i < end; ++i)

@@ -426,7 +426,21 @@ void Canvas::paintGL()
                      CanvasOperations::CanvasOperation::shape.data(), GL_STREAM_DRAW);
 
         glUniform4f(_uniforms.color, 1.0f, 1.0f, 1.0f, 1.0f); // color 绘制线
-        glDrawArrays(GL_LINE_STRIP, 0, CanvasOperations::CanvasOperation::shape.size() / 2);
+        if (CanvasOperations::CanvasOperation::shape_index.empty())
+        {
+            glDrawArrays(GL_LINE_STRIP, 0, CanvasOperations::CanvasOperation::shape.size() / 2);
+        }
+        else
+        {
+            std::vector<int> count;
+            for (size_t i = 1, n = CanvasOperations::CanvasOperation::shape_index.size(); i < n; ++i)
+            {
+                count.push_back(CanvasOperations::CanvasOperation::shape_index[i]
+                    - CanvasOperations::CanvasOperation::shape_index[i - 1]);
+            }
+            count.push_back(CanvasOperations::CanvasOperation::shape.size() / 2 - CanvasOperations::CanvasOperation::shape_index.back());
+            glMultiDrawArrays(GL_LINE_STRIP, CanvasOperations::CanvasOperation::shape_index.data(), count.data(), count.size());
+        }
     }
     if (!CanvasOperations::CanvasOperation::tool_lines.empty())
     {
