@@ -599,7 +599,6 @@ public:
 class FreeFilletOperation : public CanvasOperation
 {
 private:
-    double _pos[2] = {0, 0};
     Geo::DObject *_object0 = nullptr;
     Geo::DObject *_object1 = nullptr;
     std::vector<Geo::Point> _points;
@@ -615,6 +614,12 @@ public:
     bool read_parameters(const double *params, const int count) override;
 
     QString cmd_tips() const override;
+
+private:
+    static bool arc_fillet(const Geo::DObject *object0, const Geo::Point &point0, 
+        const Geo::DObject *object1, const Geo::Point &point1, const double radius, Geo::Arc &shape);
+
+    static bool arc_fillet(const Geo::DObject *object, const size_t index, const double radius, Geo::Arc &shape);
 };
 
 

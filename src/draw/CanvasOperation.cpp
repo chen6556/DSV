@@ -3748,6 +3748,49 @@ bool FreeFilletOperation::mouse_press(QMouseEvent *event)
         }
         if (_object0 == nullptr)
         {
+            if (event->modifiers() == Qt::KeyboardModifier::ControlModifier)
+            {
+                double dis = DBL_MAX;
+                size_t index = 0, target_index = 0;
+                switch (clicked_object->type())
+                {
+                case Geo::Type::POLYLINE:
+                    for (const Geo::Point &p : *static_cast<Geo::Polyline *>(clicked_object))
+                    {
+                        if (Geo::distance(p.x, p.y, real_pos[0], real_pos[1]) < dis)
+                        {
+                            dis = Geo::distance(p.x, p.y, real_pos[0], real_pos[1]);
+                            target_index = index;
+                        }
+                        ++index;
+                    }
+                    if (0 < target_index && target_index < static_cast<Geo::Polyline *>(clicked_object)->size() - 1)
+                    {
+                        _points.emplace_back((*static_cast<Geo::Polyline *>(clicked_object))[target_index]);
+                    }
+                    break;
+                case Geo::Type::POLYGON:
+                    for (const Geo::Point &p : *static_cast<Geo::Polygon *>(clicked_object))
+                    {
+                        if (Geo::distance(p.x, p.y, real_pos[0], real_pos[1]) < dis)
+                        {
+                            dis = Geo::distance(p.x, p.y, real_pos[0], real_pos[1]);
+                            target_index = index;
+                        }
+                        ++index;
+                    }
+                    _points.emplace_back(static_cast<Geo::Polygon *>(clicked_object)->at(target_index));
+                    break;
+                default:
+                    break;
+                }
+                if (!_points.empty())
+                {
+                    _object1 = _object0 = clicked_object;
+                    Canvas::canvas->refresh_selected_ibo();
+                    return true;
+                }
+            }
             if (const Geo::Type type = clicked_object->type();
                 type == Geo::Type::ARC || type == Geo::Type::BEZIER || type == Geo::Type::BSPLINE || type == Geo::Type::POLYLINE ||
                 (type == Geo::Type::ELLIPSE && static_cast<Geo::Ellipse *>(clicked_object)->is_arc()))
@@ -3772,15 +3815,56 @@ bool FreeFilletOperation::mouse_press(QMouseEvent *event)
         }
         else
         {
-            if (_points.size() > 1 && Canvas::canvas->editor().fillet(_object0, _object1, _points.front(), Geo::Point(_pos[0], _pos[1]),
-                                                                      _points.back(), _tvalues))
+            if (const Geo::Point anchor(real_pos[0], real_pos[1]); _points.size() > 1 && _object0 != _object1)
             {
-                std::set<Geo::Type> types;
-                types.insert(Geo::Type::BEZIER);
-                types.insert(_object0->type());
-                types.insert(_object1->type());
-                Canvas::canvas->refresh_vbo(true, types);
+                if (event->modifiers() == Qt::KeyboardModifier::ControlModifier)
+                {
+                    const double radius = std::max(Geo::distance(anchor, _points.front()), Geo::distance(anchor, _points.back()));
+                    if (Canvas::canvas->editor().fillet(_object0, _points.front(), _object1, _points.back(), radius))
+                    {
+                        std::set<Geo::Type> types;
+                        types.insert(Geo::Type::ARC);
+                        types.insert(_object0->type());
+                        types.insert(_object1->type());
+                        Canvas::canvas->refresh_vbo(true, types);
+                    }
+                }
+                else if (Canvas::canvas->editor().fillet(_object0, _object1, _points.front(), anchor, _points.back(), _tvalues))
+                {
+                    std::set<Geo::Type> types;
+                    types.insert(Geo::Type::BEZIER);
+                    types.insert(_object0->type());
+                    types.insert(_object1->type());
+                    Canvas::canvas->refresh_vbo(true, types);
+                }
                 Canvas::canvas->refresh_selected_ibo();
+            }
+            else if (_points.size() == 3 && _object0 == _object1)
+            {
+                if (std::set<Geo::Type> types; event->modifiers() == Qt::KeyboardModifier::ControlModifier)
+                {
+                    if (Canvas::canvas->editor().fillet(_object0, _points[0],
+                        std::max(Geo::distance(anchor, _points[1]), Geo::distance(anchor, _points[2]))))
+                    {
+                        types.insert(Geo::Type::ARC);
+                        types.insert(Geo::Type::POLYLINE);
+                        types.insert(_object0->type());
+                        Canvas::canvas->refresh_vbo(true, types);
+                        Canvas::canvas->refresh_selected_ibo();
+                    }
+                }
+                else
+                {
+                    if (_points.size() == 3 && Canvas::canvas->editor().fillet(_object0, _points[0],
+                        Geo::distance(anchor, _points[1]), Geo::distance(anchor, _points[2])))
+                    {
+                        types.insert(Geo::Type::BEZIER);
+                        types.insert(Geo::Type::POLYLINE);
+                        types.insert(_object0->type());
+                        Canvas::canvas->refresh_vbo(true, types);
+                        Canvas::canvas->refresh_selected_ibo();
+                    }
+                }
             }
             reset();
             tool[0] = Tool::Select;
@@ -3794,130 +3878,247 @@ bool FreeFilletOperation::mouse_move(QMouseEvent *event)
 {
     if (_object0 != nullptr && _object1 != nullptr)
     {
-        _pos[0] = real_pos[0], _pos[1] = real_pos[1];
-
         _tvalues.clear();
-        _points.clear();
-        const Geo::Point anchor(_pos[0], _pos[1]);
-        const Geo::DObject *objects[2] = {_object0, _object1};
-        for (const Geo::DObject *object : objects)
+        this->tool_lines.clear();
+        this->shape.clear();
+        if (const Geo::Point anchor(real_pos[0], real_pos[1]); _object0 == _object1)
         {
-            switch (object->type())
+            if (_points.size() > 1)
             {
-            case Geo::Type::ARC:
+                _points.erase(_points.begin() + 1, _points.end());
+            }
+            size_t index = 0;
+            switch (_object0->type())
+            {
+            case Geo::Type::POLYGON:
                 {
-                    const Geo::Arc *arc = static_cast<const Geo::Arc *>(object);
-                    const Geo::Circle circle(arc->x, arc->y, arc->radius);
-                    if (Geo::Point point0, point1; Geo::foot_point(circle, anchor, point0, point1))
+                    const Geo::Polygon *polygon = static_cast<const Geo::Polygon *>(_object0);
+                    for (size_t i = 0, count = polygon->size(); i < count; ++i)
                     {
-                        if (Geo::is_inside(point0, *arc) && Geo::is_inside(point1, *arc))
+                        if (polygon->at(i) == _points.front())
                         {
-                            _points.emplace_back(Geo::distance(anchor, point0) <= Geo::distance(anchor, point1) ? point0 : point1);
-                        }
-                        else if (Geo::is_inside(point0, *arc))
-                        {
-                            _points.emplace_back(point0);
-                        }
-                        else if (Geo::is_inside(point1, *arc))
-                        {
-                            _points.emplace_back(point1);
+                            index = i;
+                            if (Geo::Point point0, point1;
+                                Geo::foot_point(polygon->last_point(i), polygon->at(i), anchor, point0, false)
+                                && Geo::foot_point(polygon->at(i), polygon->next_point(i), anchor, point1, false))
+                            {
+                                _points.emplace_back(point0);
+                                _points.emplace_back(point1);
+                            }
+                            break;
                         }
                     }
-                    break;
-                }
-            case Geo::Type::BEZIER:
-                {
-                    std::vector<std::tuple<size_t, double, double, double>> tvalues;
-                    if (std::vector<Geo::Point> points;
-                        Geo::foot_point(anchor, *static_cast<const Geo::CubicBezier *>(object), points, &tvalues) && !points.empty())
-                    {
-                        _tvalues.emplace_back(
-                            *std::min_element(tvalues.begin(), tvalues.end(),
-                                              [&](const auto &a, const auto &b)
-                                              {
-                                                  return Geo::distance(std::get<2>(a), std::get<3>(a), anchor.x, anchor.y) <
-                                                         Geo::distance(std::get<2>(b), std::get<3>(b), anchor.x, anchor.y);
-                                              }));
-                        _points.emplace_back(std::get<2>(_tvalues.back()), std::get<3>(_tvalues.back()));
-                    }
-                    break;
-                }
-            case Geo::Type::BSPLINE:
-                {
-                    std::vector<std::tuple<double, double, double>> tvalues;
-                    if (std::vector<Geo::Point> points;
-                        Geo::foot_point(anchor, *static_cast<const Geo::BSpline *>(object), points, &tvalues) && !points.empty())
-                    {
-                        const auto it = std::min_element(tvalues.begin(), tvalues.end(),
-                                                         [&](const auto &a, const auto &b)
-                                                         {
-                                                             return Geo::distance(std::get<1>(a), std::get<2>(a), anchor.x, anchor.y) <
-                                                                    Geo::distance(std::get<1>(b), std::get<2>(b), anchor.x, anchor.y);
-                                                         });
-                        _tvalues.emplace_back(0, std::get<0>(*it), std::get<1>(*it), std::get<2>(*it));
-                        _points.emplace_back(std::get<2>(_tvalues.back()), std::get<3>(_tvalues.back()));
-                    }
-                    break;
-                }
-            case Geo::Type::ELLIPSE:
-                if (std::vector<Geo::Point> points; Geo::foot_point(*static_cast<const Geo::Ellipse *>(object), anchor, points))
-                {
-                    const auto it = std::min_element(points.begin(), points.end(), [&](const Geo::Point &a, const Geo::Point &b)
-                                                     { return Geo::distance_square(a, anchor) < Geo::distance_square(b, anchor); });
-                    _points.emplace_back(*it);
                 }
                 break;
             case Geo::Type::POLYLINE:
                 {
-                    const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
-                    std::vector<std::tuple<size_t, double, double>> points;
-                    for (size_t i = 1, count = polyline->size(); i < count; ++i)
+                    const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(_object0);
+                    for (size_t i = 0, count = polyline->size(); i < count; ++i)
                     {
-                        if (Geo::Point point; Geo::foot_point(polyline->at(i - 1), polyline->at(i), anchor, point, false))
+                        if (polyline->at(i) == _points.front())
                         {
-                            points.emplace_back(i, point.x, point.y);
+                            index = i;
+                            if (Geo::Point point0, point1;
+                                Geo::foot_point(polyline->at(i - 1), polyline->at(i), anchor, point0, false)
+                                && Geo::foot_point(polyline->at(i), polyline->at(i + 1), anchor, point1, false))
+                            {
+                                _points.emplace_back(point0);
+                                _points.emplace_back(point1);
+                            }
+                            break;
                         }
                     }
-                    if (!points.empty())
-                    {
-                        const auto it = std::min_element(points.begin(), points.end(),
-                                                         [&](const auto &a, const auto &b)
-                                                         {
-                                                             return Geo::distance(std::get<1>(a), std::get<2>(a), anchor.x, anchor.y) <
-                                                                    Geo::distance(std::get<1>(b), std::get<2>(b), anchor.x, anchor.y);
-                                                         });
-                        _points.emplace_back(std::get<1>(*it), std::get<2>(*it));
-                        _tvalues.emplace_back(std::get<0>(*it), 0, std::get<1>(*it), std::get<2>(*it));
-                    }
-                    break;
                 }
+                break;
             default:
                 break;
             }
-        }
-
-        tool_lines.clear();
-        this->shape.clear();
-        if (_points.size() > 0)
-        {
-            tool_lines.push_back(_pos[0]);
-            tool_lines.push_back(_pos[1]);
-            tool_lines.push_back(_points.front().x);
-            tool_lines.push_back(_points.front().y);
-        }
-        if (_points.size() > 1)
-        {
-            tool_lines.push_back(_pos[0]);
-            tool_lines.push_back(_pos[1]);
-            tool_lines.push_back(_points.back().x);
-            tool_lines.push_back(_points.back().y);
-            if (Geo::CubicBezier curve;
-                Geo::angle_to_arc(_points.front(), Geo::Point(_pos[0], _pos[1]), _points.back(), curve))
+            if (_points.size() == 3)
             {
-                for (const Geo::Point &point : curve.shape())
+                if (event->modifiers() == Qt::KeyboardModifier::ControlModifier)
                 {
-                    this->shape.push_back(point.x);
-                    this->shape.push_back(point.y);
+                    const double radius = std::max(Geo::distance(anchor, _points[1]), Geo::distance(anchor, _points[2]));
+                    if (Geo::Arc arc; arc_fillet(_object0, index, radius, arc))
+                    {
+                        this->tool_lines.push_back(arc.x);
+                        this->tool_lines.push_back(arc.y);
+                        this->tool_lines.push_back(arc.control_points[0].x);
+                        this->tool_lines.push_back(arc.control_points[0].y);
+                        this->tool_lines.push_back(arc.x);
+                        this->tool_lines.push_back(arc.y);
+                        this->tool_lines.push_back(arc.control_points[2].x);
+                        this->tool_lines.push_back(arc.control_points[2].y);
+                        for (const Geo::Point &point : arc.shape())
+                        {
+                            this->shape.push_back(point.x);
+                            this->shape.push_back(point.y);
+                        }
+                    }
+                }
+                else
+                {
+                    this->tool_lines.push_back(real_pos[0]);
+                    this->tool_lines.push_back(real_pos[1]);
+                    this->tool_lines.push_back(_points[1].x);
+                    this->tool_lines.push_back(_points[1].y);
+                    this->tool_lines.push_back(_points[2].x);
+                    this->tool_lines.push_back(_points[2].y);
+                    this->tool_lines.push_back(real_pos[0]);
+                    this->tool_lines.push_back(real_pos[1]);
+                    if (Geo::CubicBezier curve; Geo::angle_to_arc(_points[1], anchor, _points[2], curve))
+                    {
+                        for (const Geo::Point &point : curve.shape())
+                        {
+                            this->shape.push_back(point.x);
+                            this->shape.push_back(point.y);
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            _points.clear();
+            const Geo::DObject *objects[2] = {_object0, _object1};
+            for (const Geo::DObject *object : objects)
+            {
+                switch (object->type())
+                {
+                case Geo::Type::ARC:
+                    {
+                        const Geo::Arc *arc = static_cast<const Geo::Arc *>(object);
+                        const Geo::Circle circle(arc->x, arc->y, arc->radius);
+                        if (Geo::Point point0, point1; Geo::foot_point(circle, anchor, point0, point1))
+                        {
+                            if (Geo::is_inside(point0, *arc) && Geo::is_inside(point1, *arc))
+                            {
+                                _points.emplace_back(Geo::distance(anchor, point0) <= Geo::distance(anchor, point1) ? point0 : point1);
+                            }
+                            else if (Geo::is_inside(point0, *arc))
+                            {
+                                _points.emplace_back(point0);
+                            }
+                            else if (Geo::is_inside(point1, *arc))
+                            {
+                                _points.emplace_back(point1);
+                            }
+                        }
+                        break;
+                    }
+                case Geo::Type::BEZIER:
+                    {
+                        std::vector<std::tuple<size_t, double, double, double>> tvalues;
+                        if (std::vector<Geo::Point> points;
+                            Geo::foot_point(anchor, *static_cast<const Geo::CubicBezier *>(object), points, &tvalues) && !points.empty())
+                        {
+                            _tvalues.emplace_back(
+                                *std::min_element(tvalues.begin(), tvalues.end(),
+                                                [&](const auto &a, const auto &b)
+                                                {
+                                                    return Geo::distance(std::get<2>(a), std::get<3>(a), anchor.x, anchor.y) <
+                                                            Geo::distance(std::get<2>(b), std::get<3>(b), anchor.x, anchor.y);
+                                                }));
+                            _points.emplace_back(std::get<2>(_tvalues.back()), std::get<3>(_tvalues.back()));
+                        }
+                        break;
+                    }
+                case Geo::Type::BSPLINE:
+                    {
+                        std::vector<std::tuple<double, double, double>> tvalues;
+                        if (std::vector<Geo::Point> points;
+                            Geo::foot_point(anchor, *static_cast<const Geo::BSpline *>(object), points, &tvalues) && !points.empty())
+                        {
+                            const auto it = std::min_element(tvalues.begin(), tvalues.end(),
+                                                            [&](const auto &a, const auto &b)
+                                                            {
+                                                                return Geo::distance(std::get<1>(a), std::get<2>(a), anchor.x, anchor.y) <
+                                                                        Geo::distance(std::get<1>(b), std::get<2>(b), anchor.x, anchor.y);
+                                                            });
+                            _tvalues.emplace_back(0, std::get<0>(*it), std::get<1>(*it), std::get<2>(*it));
+                            _points.emplace_back(std::get<2>(_tvalues.back()), std::get<3>(_tvalues.back()));
+                        }
+                        break;
+                    }
+                case Geo::Type::ELLIPSE:
+                    if (std::vector<Geo::Point> points; Geo::foot_point(*static_cast<const Geo::Ellipse *>(object), anchor, points))
+                    {
+                        const auto it = std::min_element(points.begin(), points.end(), [&](const Geo::Point &a, const Geo::Point &b)
+                                                        { return Geo::distance_square(a, anchor) < Geo::distance_square(b, anchor); });
+                        _points.emplace_back(*it);
+                    }
+                    break;
+                case Geo::Type::POLYLINE:
+                    {
+                        const Geo::Polyline *polyline = static_cast<const Geo::Polyline *>(object);
+                        std::vector<std::tuple<size_t, double, double>> points;
+                        for (size_t i = 1, count = polyline->size(); i < count; ++i)
+                        {
+                            if (Geo::Point point; Geo::foot_point(polyline->at(i - 1), polyline->at(i), anchor, point, false))
+                            {
+                                points.emplace_back(i, point.x, point.y);
+                            }
+                        }
+                        if (!points.empty())
+                        {
+                            const auto it = std::min_element(points.begin(), points.end(),
+                                                            [&](const auto &a, const auto &b)
+                                                            {
+                                                                return Geo::distance(std::get<1>(a), std::get<2>(a), anchor.x, anchor.y) <
+                                                                        Geo::distance(std::get<1>(b), std::get<2>(b), anchor.x, anchor.y);
+                                                            });
+                            _points.emplace_back(std::get<1>(*it), std::get<2>(*it));
+                            _tvalues.emplace_back(std::get<0>(*it), 0, std::get<1>(*it), std::get<2>(*it));
+                        }
+                        break;
+                    }
+                default:
+                    break;
+                }
+            }
+
+            if (event->modifiers() == Qt::KeyboardModifier::ControlModifier)
+            {
+                const double radius = std::max(Geo::distance(anchor, _points.front()), Geo::distance(anchor, _points.back()));
+                if (Geo::Arc arc; arc_fillet(_object0, _points.front(), _object1, _points.back(), radius, arc))
+                {
+                    this->tool_lines.push_back(arc.x);
+                    this->tool_lines.push_back(arc.y);
+                    this->tool_lines.push_back(arc.control_points[0].x);
+                    this->tool_lines.push_back(arc.control_points[0].y);
+                    this->tool_lines.push_back(arc.x);
+                    this->tool_lines.push_back(arc.y);
+                    this->tool_lines.push_back(arc.control_points[2].x);
+                    this->tool_lines.push_back(arc.control_points[2].y);
+                    for (const Geo::Point &point : arc.shape())
+                    {
+                        this->shape.push_back(point.x);
+                        this->shape.push_back(point.y);
+                    }
+                }
+            }
+            else
+            {
+                if (_points.size() > 0)
+                {
+                    tool_lines.push_back(real_pos[0]);
+                    tool_lines.push_back(real_pos[1]);
+                    tool_lines.push_back(_points.front().x);
+                    tool_lines.push_back(_points.front().y);
+                }
+                if (_points.size() > 1)
+                {
+                    tool_lines.push_back(real_pos[0]);
+                    tool_lines.push_back(real_pos[1]);
+                    tool_lines.push_back(_points.back().x);
+                    tool_lines.push_back(_points.back().y);
+                    if (Geo::CubicBezier curve; Geo::angle_to_arc(_points.front(), anchor, _points.back(), curve))
+                    {
+                        for (const Geo::Point &point : curve.shape())
+                        {
+                            this->shape.push_back(point.x);
+                            this->shape.push_back(point.y);
+                        }
+                    }
                 }
             }
         }
@@ -3977,6 +4178,145 @@ QString FreeFilletOperation::cmd_tips() const
     else
     {
         return "(x, y):";
+    }
+}
+
+bool FreeFilletOperation::arc_fillet(const Geo::DObject *object0, const Geo::Point &point0,
+    const Geo::DObject *object1, const Geo::Point &point1, const double radius, Geo::Arc &shape)
+{
+    switch (object0->type())
+    {
+    case Geo::Type::POLYLINE:
+        switch (object1->type())
+        {
+        case Geo::Type::POLYLINE:
+            {
+                Geo::Polyline polylines[4];
+                return Geo::fillet(*static_cast<const Geo::Polyline *>(object0), point0,
+                    *static_cast<const Geo::Polyline *>(object1), point1, radius,
+                    shape, polylines[0], polylines[1], polylines[2], polylines[3]);
+            }
+        case Geo::Type::ARC:
+            {
+                Geo::Polyline polylines[2];
+                Geo::Arc temp;
+                return Geo::fillet(*static_cast<const Geo::Polyline *>(object0), point0,
+                    *static_cast<const Geo::Arc *>(object1), point1, radius,
+                    shape, polylines[0], polylines[1], temp);
+            }
+        case Geo::Type::BEZIER:
+            {
+                Geo::Polyline polylines[2];
+                Geo::CubicBezier bezier;
+                return Geo::fillet(*static_cast<const Geo::Polyline *>(object0), point0,
+                    *static_cast<const Geo::CubicBezier *>(object1), point1, radius,
+                    shape, polylines[0], polylines[1], bezier);
+            }
+        case Geo::Type::BSPLINE:
+            {
+                if (Geo::Polyline polylines[2]; dynamic_cast<const Geo::CubicBSpline *>(object1) != nullptr)
+                {
+                    Geo::CubicBSpline bspline;
+                    return Geo::fillet(*static_cast<const Geo::Polyline *>(object0), point0,
+                        *static_cast<const Geo::BSpline *>(object1), point1, true,
+                        radius, shape, polylines[0], polylines[1], bspline);
+                }
+                else
+                {
+                    Geo::QuadBSpline bspline;
+                    return Geo::fillet(*static_cast<const Geo::Polyline *>(object0), point0,
+                        *static_cast<const Geo::BSpline *>(object1), point1, false,
+                        radius, shape, polylines[0], polylines[1], bspline);
+                }
+            }
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::ARC:
+        switch (object1->type())
+        {
+        case Geo::Type::POLYLINE:
+            {
+                Geo::Polyline polylines[2];
+                Geo::Arc temp;
+                return Geo::fillet(*static_cast<const Geo::Polyline *>(object1), point1,
+                    *static_cast<const Geo::Arc *>(object0), point0, radius,
+                    shape, polylines[0], polylines[1], temp);
+            }
+        case Geo::Type::ARC:
+            {
+                Geo::Arc arcs[2];
+                return Geo::fillet(*static_cast<const Geo::Arc *>(object0), point0,
+                    *static_cast<const Geo::Arc *>(object1), point1, radius, shape, arcs[0], arcs[1]);
+            }
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::BEZIER:
+        switch (object1->type())
+        {
+        case Geo::Type::POLYLINE:
+            {
+                Geo::Polyline polylines[2];
+                Geo::CubicBezier bezier;
+                return Geo::fillet(*static_cast<const Geo::Polyline *>(object1), point1,
+                    *static_cast<const Geo::CubicBezier *>(object0), point0, radius,
+                    shape, polylines[0], polylines[1], bezier);
+            }
+        case Geo::Type::BEZIER:
+            {
+                Geo::CubicBezier beziers[2];
+                return Geo::fillet(*static_cast<const Geo::CubicBezier *>(object0), point0,
+                    *static_cast<const Geo::CubicBezier *>(object1), point1,
+                    radius, shape, beziers[0], beziers[1]);
+            }
+        default:
+            break;
+        }
+        break;
+    case Geo::Type::BSPLINE:
+        switch (object1->type())
+        {
+        case Geo::Type::POLYLINE:
+            {
+                if (Geo::Polyline polylines[2]; dynamic_cast<const Geo::CubicBSpline *>(object0) != nullptr)
+                {
+                    Geo::CubicBSpline bspline;
+                    return Geo::fillet(*static_cast<const Geo::Polyline *>(object1), point1,
+                        *static_cast<const Geo::BSpline *>(object0), point0, true,
+                        radius, shape, polylines[0], polylines[1], bspline);
+                }
+                else
+                {
+                    Geo::QuadBSpline bspline;
+                    return Geo::fillet(*static_cast<const Geo::Polyline *>(object1), point1,
+                        *static_cast<const Geo::BSpline *>(object0), point0, false,
+                        radius, shape, polylines[0], polylines[1], bspline);
+                }
+            }
+        default:
+            break;
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+
+bool FreeFilletOperation::arc_fillet(const Geo::DObject *object, const size_t index, const double radius, Geo::Arc &shape)
+{
+    Geo::Polyline polylines[2];
+    switch (object->type())
+    {
+    case Geo::Type::POLYGON:
+        return Geo::fillet(*static_cast<const Geo::Polygon *>(object), index, radius, shape, polylines[0]);
+    case Geo::Type::POLYLINE:
+        return Geo::fillet(*static_cast<const Geo::Polyline *>(object), index, radius, shape, polylines[0], polylines[1]);
+    default:
+        return false;
     }
 }
 
