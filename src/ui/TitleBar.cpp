@@ -67,6 +67,8 @@ void TitleBar::max_normal_window()
         _window->showMaximized();
         ui->btn_max->setIcon(QIcon(":/icons/titlebar/normal_btn.png"));
     }
+    QEvent leave(QEvent::Type::Leave);
+    QApplication::sendEvent(ui->btn_max, &leave);
 }
 
 void TitleBar::close_window()

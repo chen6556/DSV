@@ -27,9 +27,6 @@
     <pointsize>10</pointsize>
    </font>
   </property>
-  <property name="mouseTracking">
-   <bool>true</bool>
-  </property>
   <property name="autoFillBackground">
    <bool>false</bool>
   </property>
@@ -123,8 +120,8 @@ padding-left: 8px;</string>
        <height>28</height>
       </size>
      </property>
-     <property name="mouseTracking">
-      <bool>true</bool>
+     <property name="focusPolicy">
+      <enum>Qt::FocusPolicy::ClickFocus</enum>
      </property>
      <property name="icon">
       <iconset resource="../../res/Icons.qrc">
@@ -146,8 +143,8 @@ padding-left: 8px;</string>
        <height>28</height>
       </size>
      </property>
-     <property name="mouseTracking">
-      <bool>true</bool>
+     <property name="focusPolicy">
+      <enum>Qt::FocusPolicy::ClickFocus</enum>
      </property>
      <property name="icon">
       <iconset resource="../../res/Icons.qrc">
@@ -168,6 +165,12 @@ padding-left: 8px;</string>
        <width>28</width>
        <height>28</height>
       </size>
+     </property>
+     <property name="mouseTracking">
+      <bool>false</bool>
+     </property>
+     <property name="focusPolicy">
+      <enum>Qt::FocusPolicy::ClickFocus</enum>
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton:hover, QPushButton:pressed
