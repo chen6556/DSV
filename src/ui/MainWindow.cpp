@@ -42,6 +42,11 @@ MainWindow::~MainWindow()
 
 void MainWindow::init()
 {
+    ui->titlebar->bind_window(this);
+    setWindowFlags(Qt::WindowType::Window | Qt::WindowType::CustomizeWindowHint);
+    static_cast<QHBoxLayout *>(ui->centralwidget->layout())->insertWidget(1, ui->menubar);
+    ui->menubar->setLayoutDirection(Qt::LayoutDirection::LeftToRight);
+
     _actiongroup = new ActionGroup(ui, [this](const ActionGroup::MenuType menu, const int index) { actiongroup_callback(menu, index); });
 
     ui->canvas->editor().load_graph(new Graph());
