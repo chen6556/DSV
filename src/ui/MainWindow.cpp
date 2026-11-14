@@ -5,7 +5,6 @@
 
 #include "ui/MainWindow.hpp"
 #include "./ui_MainWindow.h"
-#include "ui/WinUITool.hpp"
 #include "ui/MessageBox.hpp"
 #include "io/File.hpp"
 #include "io/PLTParser.hpp"
@@ -43,9 +42,9 @@ MainWindow::~MainWindow()
 void MainWindow::init()
 {
     ui->titlebar->bind_window(this);
-    setWindowFlags(Qt::WindowType::Window | Qt::WindowType::CustomizeWindowHint);
+    setWindowFlags(Qt::WindowType::Window | Qt::WindowType::FramelessWindowHint);
     static_cast<QHBoxLayout *>(ui->centralwidget->layout())->insertWidget(1, ui->menubar);
-    ui->menubar->setLayoutDirection(Qt::LayoutDirection::LeftToRight);
+    static_cast<QHBoxLayout *>(ui->centralwidget->layout())->addWidget(ui->statusBar);
 
     _actiongroup = new ActionGroup(ui, [this](const ActionGroup::MenuType menu, const int index) { actiongroup_callback(menu, index); });
 
@@ -101,10 +100,6 @@ void MainWindow::init()
                 ui->canvas->refresh_selected_ibo();
                 ui->canvas->update();
             });
-
-#ifdef _WIN64
-    WinUITool::set_caption_color(winId(), 0x3C3C3D);
-#endif
 }
 
 void MainWindow::connect_btn_to_cmd()

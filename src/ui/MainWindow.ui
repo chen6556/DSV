@@ -21,9 +21,6 @@
     <pointsize>10</pointsize>
    </font>
   </property>
-  <property name="focusPolicy">
-   <enum>Qt::FocusPolicy::StrongFocus</enum>
-  </property>
   <property name="acceptDrops">
    <bool>true</bool>
   </property>
@@ -94,9 +91,6 @@ QCheckBox::indicator:unchecked
    <enum>Qt::ToolButtonStyle::ToolButtonTextOnly</enum>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <property name="layoutDirection">
-    <enum>Qt::LayoutDirection::RightToLeft</enum>
-   </property>
    <property name="styleSheet">
     <string notr="true">Widget#centralWidget{background:rgb(60, 60, 61);}</string>
    </property>
@@ -105,16 +99,16 @@ QCheckBox::indicator:unchecked
      <number>0</number>
     </property>
     <property name="leftMargin">
-     <number>0</number>
+     <number>4</number>
     </property>
     <property name="topMargin">
-     <number>0</number>
+     <number>4</number>
     </property>
     <property name="rightMargin">
-     <number>0</number>
+     <number>4</number>
     </property>
     <property name="bottomMargin">
-     <number>0</number>
+     <number>4</number>
     </property>
     <item>
      <widget class="TitleBar" name="titlebar" native="true">
@@ -130,54 +124,18 @@ QCheckBox::indicator:unchecked
         <height>30</height>
        </size>
       </property>
-      <property name="layoutDirection">
-       <enum>Qt::LayoutDirection::LeftToRight</enum>
-      </property>
      </widget>
     </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
-      <item>
-       <layout class="QVBoxLayout" name="verticalLayout_5">
-        <property name="spacing">
-         <number>2</number>
-        </property>
-        <item>
-         <widget class="Canvas" name="canvas">
-          <property name="cursor">
-           <cursorShape>CrossCursor</cursorShape>
-          </property>
-          <property name="mouseTracking">
-           <bool>true</bool>
-          </property>
-          <property name="focusPolicy">
-           <enum>Qt::FocusPolicy::ClickFocus</enum>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="CMDWidget" name="cmd_widget" native="true">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>24</height>
-           </size>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
+      <property name="spacing">
+       <number>2</number>
+      </property>
       <item>
        <widget class="QStackedWidget" name="tool_widget">
         <property name="maximumSize">
          <size>
-          <width>120</width>
+          <width>122</width>
           <height>16777215</height>
          </size>
         </property>
@@ -297,9 +255,6 @@ QScrollArea
           <property name="leftMargin">
            <number>0</number>
           </property>
-          <property name="topMargin">
-           <number>0</number>
-          </property>
           <property name="rightMargin">
            <number>0</number>
           </property>
@@ -335,10 +290,10 @@ QScrollArea
             <widget class="QWidget" name="scrollAreaWidgetContents_2">
              <property name="geometry">
               <rect>
-               <x>0</x>
+               <x>1</x>
                <y>0</y>
                <width>120</width>
-               <height>618</height>
+               <height>601</height>
               </rect>
              </property>
              <property name="maximumSize">
@@ -1458,9 +1413,6 @@ QScrollArea
             <property name="focusPolicy">
              <enum>Qt::FocusPolicy::NoFocus</enum>
             </property>
-            <property name="layoutDirection">
-             <enum>Qt::LayoutDirection::RightToLeft</enum>
-            </property>
             <property name="frameShape">
              <enum>QFrame::Shape::NoFrame</enum>
             </property>
@@ -1479,14 +1431,11 @@ QScrollArea
             <widget class="QWidget" name="scrollAreaWidgetContents">
              <property name="geometry">
               <rect>
-               <x>-13</x>
+               <x>0</x>
                <y>0</y>
                <width>107</width>
                <height>360</height>
               </rect>
-             </property>
-             <property name="layoutDirection">
-              <enum>Qt::LayoutDirection::LeftToRight</enum>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_4">
               <property name="leftMargin">
@@ -1896,6 +1845,42 @@ QScrollArea
          </layout>
         </widget>
        </widget>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <property name="spacing">
+         <number>2</number>
+        </property>
+        <item>
+         <widget class="Canvas" name="canvas">
+          <property name="cursor">
+           <cursorShape>CrossCursor</cursorShape>
+          </property>
+          <property name="mouseTracking">
+           <bool>true</bool>
+          </property>
+          <property name="focusPolicy">
+           <enum>Qt::FocusPolicy::ClickFocus</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="CMDWidget" name="cmd_widget" native="true">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>16777215</width>
+            <height>24</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </item>
