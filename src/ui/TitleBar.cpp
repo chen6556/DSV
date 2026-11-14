@@ -18,6 +18,12 @@ void TitleBar::bind_window(QWidget *window)
     _window = window;
 }
 
+void TitleBar::update_icon()
+{
+    ui->btn_max->setIcon(QIcon(_window->isMaximized() ?
+        ":/icons/titlebar/normal_btn.png" : ":/icons/titlebar/max_btn.png"));
+}
+
 void TitleBar::mousePressEvent(QMouseEvent *event)
 {
     QWidget::mousePressEvent(event);
@@ -43,7 +49,8 @@ void TitleBar::mouseMoveEvent(QMouseEvent *event)
     {
         if (_window->isMaximized())
         {
-            max_normal_window();
+            _window->showNormal();
+            ui->btn_max->setIcon(QIcon(":/icons/titlebar/max_btn.png"));
         }
     }
     else if (_mouse_left_button_pressed)
@@ -51,7 +58,8 @@ void TitleBar::mouseMoveEvent(QMouseEvent *event)
         _window->move((event->globalPosition() - _start_pos).toPoint());
         if (_window->isMaximized())
         {
-            max_normal_window();
+            _window->showNormal();
+            ui->btn_max->setIcon(QIcon(":/icons/titlebar/max_btn.png"));
         }
     }
 }

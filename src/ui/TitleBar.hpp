@@ -23,6 +23,8 @@ public:
 
     void bind_window(QWidget *window);
 
+    void update_icon();
+
 protected:
     void mousePressEvent(QMouseEvent *event) override;
 

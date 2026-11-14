@@ -432,6 +432,7 @@ void MainWindow::resizeEvent(QResizeEvent *event)
     QMainWindow::resizeEvent(event);
     ui->cmd_widget->move(ui->cmd_widget->mapToParent(
         QPoint((width() - ui->cmd_widget->width()) / 2, height() - 33 - ui->cmd_widget->height()) - ui->cmd_widget->pos()));
+    ui->titlebar->update_icon();
 }
 
 
