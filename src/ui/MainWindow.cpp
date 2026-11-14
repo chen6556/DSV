@@ -2,6 +2,7 @@
 #include <QAbstractItemView>
 #include <QListView>
 #include <QMimeData>
+#include <QWindow>
 
 #include "ui/MainWindow.hpp"
 #include "./ui_MainWindow.h"
@@ -175,11 +176,116 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
             ui->canvas->update();
         }
         break;
+    case Qt::MouseButton::LeftButton:
+        // 检查当前光标是否为缩放光标，以此判断是否在边缘按下
+        if (const Qt::CursorShape shape = cursor().shape(); shape != Qt::ArrowCursor)
+        {
+            // 根据光标形状推断要缩放的边
+            Qt::Edges edges;
+            if (shape == Qt::CursorShape::SizeHorCursor)
+            {
+                // 需要进一步判断是左还是右，这里简化处理，实际可根据按下位置精确判断
+                edges = (event->pos().x() < width() / 2) ? Qt::Edge::LeftEdge : Qt::Edge::RightEdge;
+            }
+            else if (shape == Qt::CursorShape::SizeVerCursor)
+            {
+                edges = (event->pos().y() < height() / 2) ? Qt::Edge::TopEdge : Qt::Edge::BottomEdge;
+            }
+            else if (shape == Qt::CursorShape::SizeFDiagCursor)
+            {
+                edges = (event->pos().x() < width() / 2) ? Qt::Edge::LeftEdge : Qt::Edge::RightEdge;
+                edges |= (event->pos().y() < height() / 2) ? Qt::Edge::TopEdge : Qt::Edge::BottomEdge;
+            }
+            else if (shape == Qt::CursorShape::SizeBDiagCursor)
+            {
+                edges = (event->pos().x() < width() / 2) ? Qt::Edge::LeftEdge : Qt::Edge::RightEdge;
+                edges |= (event->pos().y() < height() / 2) ? Qt::Edge::TopEdge : Qt::Edge::BottomEdge;
+            }
+
+            // 触发系统级缩放
+            if (QWindow *window = windowHandle())
+            {
+                window->startSystemResize(edges);
+                return event->accept();
+            }
+        }
+        break;
     default:
         break;
     }
 
     return QMainWindow::mousePressEvent(event);
+}
+
+void MainWindow::mouseMoveEvent(QMouseEvent *event)
+{
+    // 如果鼠标左键已按下，通常是在拖动窗口，不处理缩放光标
+    if (event->buttons() & Qt::LeftButton)
+    {
+        return QMainWindow::mouseMoveEvent(event);
+    }
+
+    // 获取鼠标在窗口内的位置
+    const QPoint pos = event->pos();
+    Qt::Edges edges;
+
+    const int RESIZE_MARGIN = 4;
+    // 判断鼠标是否在左/右边缘
+    if (pos.x() <= RESIZE_MARGIN)
+    {
+        edges |= Qt::Edge::LeftEdge;
+    }
+    else if (pos.x() >= width() - RESIZE_MARGIN)
+    {
+        edges |= Qt::Edge::RightEdge;
+    }
+    // 判断鼠标是否在上/下边缘
+    if (pos.y() <= RESIZE_MARGIN)
+    {
+        edges |= Qt::Edge::TopEdge;
+    }
+    else if (pos.y() >= height() - RESIZE_MARGIN)
+    {
+        edges |= Qt::Edge::BottomEdge;
+    }
+
+    // 根据边缘设置对应的光标形状
+    if ((edges & Qt::Edge::LeftEdge) && (edges & Qt::Edge::TopEdge))
+    {
+        setCursor(Qt::CursorShape::SizeFDiagCursor); // 左上角
+    }
+    else if ((edges & Qt::Edge::RightEdge) && (edges & Qt::Edge::TopEdge))
+    {
+        setCursor(Qt::CursorShape::SizeBDiagCursor); // 右上角
+    }
+    else if ((edges & Qt::Edge::LeftEdge) && (edges & Qt::Edge::BottomEdge))
+    {
+        setCursor(Qt::CursorShape::SizeBDiagCursor); // 左下角
+    }
+    else if ((edges & Qt::Edge::RightEdge) && (edges & Qt::Edge::BottomEdge))
+    {
+        setCursor(Qt::CursorShape::SizeFDiagCursor); // 右下角
+    }
+    else if (edges & Qt::Edge::LeftEdge || edges & Qt::Edge::RightEdge)
+    {
+        setCursor(Qt::CursorShape::SizeHorCursor);   // 左右边缘
+    }
+    else if (edges & Qt::Edge::TopEdge || edges & Qt::Edge::BottomEdge)
+    {
+        setCursor(Qt::CursorShape::SizeVerCursor);   // 上下边缘
+    }
+    else
+    {
+        unsetCursor(); // 非边缘区域，恢复默认光标
+    }
+
+    QMainWindow::mouseMoveEvent(event);
+}
+
+void MainWindow::leaveEvent(QEvent *event)
+{
+    unsetCursor(); // 鼠标离开窗口时，重置光标形状，避免光标“卡”在缩放形状
+    QMainWindow::leaveEvent(event);
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)

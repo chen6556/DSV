@@ -45,6 +45,10 @@ private:
 protected:
     void mousePressEvent(QMouseEvent *event) override;
 
+    void mouseMoveEvent(QMouseEvent *event) override;
+
+    void leaveEvent(QEvent *event) override;
+
     void keyPressEvent(QKeyEvent *event) override;
 
     void closeEvent(QCloseEvent *event) override;

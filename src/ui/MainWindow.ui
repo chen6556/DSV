@@ -21,6 +21,12 @@
     <pointsize>10</pointsize>
    </font>
   </property>
+  <property name="mouseTracking">
+   <bool>true</bool>
+  </property>
+  <property name="focusPolicy">
+   <enum>Qt::FocusPolicy::StrongFocus</enum>
+  </property>
   <property name="acceptDrops">
    <bool>true</bool>
   </property>
@@ -91,6 +97,9 @@ QCheckBox::indicator:unchecked
    <enum>Qt::ToolButtonStyle::ToolButtonTextOnly</enum>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <property name="mouseTracking">
+    <bool>true</bool>
+   </property>
    <property name="styleSheet">
     <string notr="true">Widget#centralWidget{background:rgb(60, 60, 61);}</string>
    </property>
