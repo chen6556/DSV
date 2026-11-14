@@ -5,7 +5,11 @@
 TitleBar::TitleBar(QWidget *parent) : QWidget(parent), ui(new Ui::TitleBar)
 {
     ui->setupUi(this);
-    init();
+}
+
+TitleBar::~TitleBar()
+{
+    delete ui;
 }
 
 void TitleBar::bind_window(QWidget *window)
@@ -27,7 +31,6 @@ void TitleBar::mouseMoveEvent(QMouseEvent *event)
     if (_mouse_left_button_pressed)
     {
         _window->move((event->globalPosition() - _start_pos).toPoint());
-        // _start_pos = event->globalPosition();
     }
 }
 
@@ -45,11 +48,6 @@ void TitleBar::mouseDoubleClickEvent(QMouseEvent *event)
     {
         max_normal_window();
     }
-}
-
-void TitleBar::init()
-{
-    
 }
 
 void TitleBar::min_window()

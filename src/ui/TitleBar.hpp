@@ -19,6 +19,8 @@ class TitleBar : public QWidget
 public:
     TitleBar(QWidget *parent = nullptr);
 
+    ~TitleBar() override;
+
     void bind_window(QWidget *window);
 
 protected:
@@ -29,9 +31,6 @@ protected:
     void mouseReleaseEvent(QMouseEvent *event) override;
 
     void mouseDoubleClickEvent(QMouseEvent *event) override;
-
-private:
-    void init();
 
 private slots:
     void min_window();

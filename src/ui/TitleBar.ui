@@ -27,17 +27,38 @@
     <pointsize>10</pointsize>
    </font>
   </property>
+  <property name="mouseTracking">
+   <bool>true</bool>
+  </property>
   <property name="autoFillBackground">
    <bool>false</bool>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(60, 60, 61);
-color:rgb(230, 230, 230);</string>
+   <string notr="true">QWidget
+{
+	color:rgb(230, 230, 230);
+	background: rgb(60, 60, 61);
+	border: none;
+	outline: none;
+}
+QPushButton
+{
+	color:rgb(230, 230, 230);
+	background: rgb(60, 60, 61);
+	padding: 4px;
+}
+QPushButton:hover, QPushButton:pressed
+{
+	background-color:rgb(20, 20, 21);
+}</string>
   </property>
   <property name="locale">
    <locale language="English" country="UnitedStates"/>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout_2">
+   <property name="spacing">
+    <number>0</number>
+   </property>
    <property name="topMargin">
     <number>0</number>
    </property>
@@ -68,8 +89,9 @@ color:rgb(230, 230, 230);</string>
    </item>
    <item>
     <widget class="QLabel" name="lb_version">
-     <property name="autoFillBackground">
-      <bool>false</bool>
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(60, 60, 61);
+padding-left: 8px;</string>
      </property>
      <property name="text">
       <string>DSV 0.5.2</string>
@@ -103,8 +125,8 @@ color:rgb(230, 230, 230);</string>
        <height>28</height>
       </size>
      </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
+     <property name="mouseTracking">
+      <bool>true</bool>
      </property>
      <property name="icon">
       <iconset resource="../../res/Icons.qrc">
@@ -126,8 +148,8 @@ color:rgb(230, 230, 230);</string>
        <height>28</height>
       </size>
      </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
+     <property name="mouseTracking">
+      <bool>true</bool>
      </property>
      <property name="icon">
       <iconset resource="../../res/Icons.qrc">
@@ -149,8 +171,11 @@ color:rgb(230, 230, 230);</string>
        <height>28</height>
       </size>
      </property>
-     <property name="autoFillBackground">
-      <bool>false</bool>
+     <property name="styleSheet">
+      <string notr="true">QPushButton:hover, QPushButton:pressed
+{
+background-color: rgb(232, 17, 35);
+}</string>
      </property>
      <property name="icon">
       <iconset resource="../../res/Icons.qrc">
@@ -165,13 +190,13 @@ color:rgb(230, 230, 230);</string>
  </resources>
  <connections>
   <connection>
-   <sender>btn_min</sender>
+   <sender>btn_close</sender>
    <signal>clicked()</signal>
    <receiver>TitleBar</receiver>
-   <slot>min_window()</slot>
+   <slot>close_window()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>353</x>
+     <x>538</x>
      <y>15</y>
     </hint>
     <hint type="destinationlabel">
@@ -187,7 +212,7 @@ color:rgb(230, 230, 230);</string>
    <slot>max_normal_window()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>434</x>
+     <x>504</x>
      <y>15</y>
     </hint>
     <hint type="destinationlabel">
@@ -197,13 +222,13 @@ color:rgb(230, 230, 230);</string>
    </hints>
   </connection>
   <connection>
-   <sender>btn_close</sender>
+   <sender>btn_min</sender>
    <signal>clicked()</signal>
    <receiver>TitleBar</receiver>
-   <slot>close_window()</slot>
+   <slot>min_window()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>515</x>
+     <x>470</x>
      <y>15</y>
     </hint>
     <hint type="destinationlabel">
