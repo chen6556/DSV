@@ -37,7 +37,7 @@
   <property name="styleSheet">
    <string notr="true">QMainWindow#MainWindow
 {
-	background-color: rgb(38, 38, 38);
+	background-color: rgb(60, 60, 61);
 }
 
 QMenuBar

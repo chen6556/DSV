@@ -43,13 +43,11 @@
 }
 QPushButton
 {
-	color:rgb(230, 230, 230);
-	background: rgb(60, 60, 61);
 	padding: 4px;
 }
 QPushButton:hover, QPushButton:pressed
 {
-	background-color:rgb(20, 20, 21);
+	background-color:rgb(50, 50, 51);
 }</string>
   </property>
   <property name="locale">
