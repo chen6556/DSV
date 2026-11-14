@@ -120,9 +120,6 @@ padding-left: 8px;</string>
        <height>28</height>
       </size>
      </property>
-     <property name="focusPolicy">
-      <enum>Qt::FocusPolicy::ClickFocus</enum>
-     </property>
      <property name="icon">
       <iconset resource="../../res/Icons.qrc">
        <normaloff>:/icons/titlebar/min_btn.png</normaloff>:/icons/titlebar/min_btn.png</iconset>
@@ -142,9 +139,6 @@ padding-left: 8px;</string>
        <width>28</width>
        <height>28</height>
       </size>
-     </property>
-     <property name="focusPolicy">
-      <enum>Qt::FocusPolicy::ClickFocus</enum>
      </property>
      <property name="icon">
       <iconset resource="../../res/Icons.qrc">
@@ -168,9 +162,6 @@ padding-left: 8px;</string>
      </property>
      <property name="mouseTracking">
       <bool>false</bool>
-     </property>
-     <property name="focusPolicy">
-      <enum>Qt::FocusPolicy::ClickFocus</enum>
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton:hover, QPushButton:pressed

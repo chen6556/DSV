@@ -43,5 +43,6 @@ private:
     Ui::TitleBar *ui = nullptr;
     QWidget *_window = nullptr;
     bool _mouse_left_button_pressed = false;
+    bool _has_handle = false;
     QPointF _start_pos;
 };
