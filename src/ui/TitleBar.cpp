@@ -72,15 +72,7 @@ void TitleBar::mousePressEvent(QMouseEvent *event)
 void TitleBar::mouseMoveEvent(QMouseEvent *event)
 {
     QWidget::mouseMoveEvent(event);
-    if (_has_handle)
-    {
-        if (_window->isMaximized())
-        {
-            _window->showNormal();
-            ui->btn_max->setIcon(QIcon(":/icons/titlebar/max_btn.png"));
-        }
-    }
-    else if (_mouse_left_button_pressed)
+    if (_mouse_left_button_pressed)
     {
         _window->move((event->globalPosition() - _start_pos).toPoint());
         if (_window->isMaximized())
