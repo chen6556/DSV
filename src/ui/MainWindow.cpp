@@ -229,7 +229,7 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event)
     const QPoint pos = event->pos();
     Qt::Edges edges;
 
-    const int RESIZE_MARGIN = 4;
+    const int RESIZE_MARGIN = 6;
     // 判断鼠标是否在左/右边缘
     if (pos.x() <= RESIZE_MARGIN)
     {

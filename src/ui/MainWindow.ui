@@ -108,16 +108,16 @@ QCheckBox::indicator:unchecked
      <number>0</number>
     </property>
     <property name="leftMargin">
-     <number>4</number>
+     <number>1</number>
     </property>
     <property name="topMargin">
      <number>4</number>
     </property>
     <property name="rightMargin">
-     <number>4</number>
+     <number>1</number>
     </property>
     <property name="bottomMargin">
-     <number>4</number>
+     <number>1</number>
     </property>
     <item>
      <widget class="TitleBar" name="titlebar" native="true">
@@ -302,7 +302,7 @@ QScrollArea
                <x>1</x>
                <y>0</y>
                <width>120</width>
-               <height>601</height>
+               <height>604</height>
               </rect>
              </property>
              <property name="maximumSize">
