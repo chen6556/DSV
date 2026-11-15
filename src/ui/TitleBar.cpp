@@ -24,6 +24,33 @@ void TitleBar::update_icon()
         ":/icons/titlebar/normal_btn.png" : ":/icons/titlebar/max_btn.png"));
 }
 
+void TitleBar::set_button(const int value)
+{
+    value & static_cast<int>(Button::close) ? ui->btn_close->show() : ui->btn_close->hide();
+    value & static_cast<int>(Button::max) ? ui->btn_max->show() : ui->btn_max->hide();
+    value & static_cast<int>(Button::min) ? ui->btn_min->show() : ui->btn_min->hide(); 
+}
+
+void TitleBar::set_text(const QString &txt)
+{
+    ui->lb_version->setText(txt);
+}
+
+void TitleBar::set_text_visible(const bool visible)
+{
+    visible ? ui->lb_version->show() : ui->lb_version->hide();
+}
+
+void TitleBar::set_icon(const QPixmap &icon)
+{
+    ui->lb_icon->setPixmap(icon);
+}
+
+void TitleBar::set_icon_visible(const bool visible)
+{
+    visible ? ui->lb_icon->show() : ui->lb_version->hide();
+}
+
 void TitleBar::mousePressEvent(QMouseEvent *event)
 {
     QWidget::mousePressEvent(event);

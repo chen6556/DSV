@@ -25,6 +25,16 @@ public:
 
     void update_icon();
 
+    void set_button(const int value);
+
+    void set_text(const QString &txt);
+
+    void set_text_visible(const bool visible);
+
+    void set_icon(const QPixmap &icon);
+
+    void set_icon_visible(const bool visible);
+
 protected:
     void mousePressEvent(QMouseEvent *event) override;
 
@@ -40,6 +50,9 @@ private slots:
     void max_normal_window();
 
     void close_window();
+
+public:
+    enum class Button { close = 1, max = 2, min = 4 };
 
 private:
     Ui::TitleBar *ui = nullptr;
