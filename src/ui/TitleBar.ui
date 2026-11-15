@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>562</width>
-    <height>30</height>
+    <height>36</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,7 +19,7 @@
   <property name="maximumSize">
    <size>
     <width>16777215</width>
-    <height>30</height>
+    <height>36</height>
    </size>
   </property>
   <property name="font">
@@ -55,10 +55,10 @@ QPushButton:hover, QPushButton:pressed
     <number>0</number>
    </property>
    <property name="topMargin">
-    <number>0</number>
+    <number>4</number>
    </property>
    <property name="bottomMargin">
-    <number>0</number>
+    <number>4</number>
    </property>
    <item>
     <widget class="QLabel" name="lb_icon">
@@ -161,7 +161,7 @@ padding-left: 8px;</string>
       </size>
      </property>
      <property name="mouseTracking">
-      <bool>false</bool>
+      <bool>true</bool>
      </property>
      <property name="styleSheet">
       <string notr="true">QPushButton:hover, QPushButton:pressed

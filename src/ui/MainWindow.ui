@@ -111,7 +111,7 @@ QCheckBox::indicator:unchecked
      <number>1</number>
     </property>
     <property name="topMargin">
-     <number>4</number>
+     <number>1</number>
     </property>
     <property name="rightMargin">
      <number>1</number>
@@ -302,7 +302,7 @@ QScrollArea
                <x>1</x>
                <y>0</y>
                <width>120</width>
-               <height>604</height>
+               <height>607</height>
               </rect>
              </property>
              <property name="maximumSize">
