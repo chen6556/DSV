@@ -97,6 +97,7 @@ void TitleBar::mouseReleaseEvent(QMouseEvent *event)
     if (event->button() == Qt::MouseButton::LeftButton)
     {
         _mouse_left_button_pressed = _has_handle = false;
+        update_icon();
     }
 }
 
