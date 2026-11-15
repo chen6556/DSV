@@ -108,7 +108,7 @@ QCheckBox::indicator:unchecked
      <widget class="QStackedWidget" name="tool_widget">
       <property name="maximumSize">
        <size>
-        <width>120</width>
+        <width>122</width>
         <height>16777215</height>
        </size>
       </property>
@@ -242,9 +242,6 @@ QScrollArea
           <property name="focusPolicy">
            <enum>Qt::FocusPolicy::NoFocus</enum>
           </property>
-          <property name="layoutDirection">
-           <enum>Qt::LayoutDirection::RightToLeft</enum>
-          </property>
           <property name="frameShape">
            <enum>QFrame::Shape::NoFrame</enum>
           </property>
@@ -266,7 +263,7 @@ QScrollArea
           <widget class="QWidget" name="scrollAreaWidgetContents_2">
            <property name="geometry">
             <rect>
-             <x>0</x>
+             <x>1</x>
              <y>0</y>
              <width>120</width>
              <height>641</height>
@@ -277,9 +274,6 @@ QScrollArea
              <width>120</width>
              <height>16777215</height>
             </size>
-           </property>
-           <property name="layoutDirection">
-            <enum>Qt::LayoutDirection::LeftToRight</enum>
            </property>
            <layout class="QVBoxLayout" name="verticalLayout_2">
             <property name="leftMargin">
@@ -1389,9 +1383,6 @@ QScrollArea
           <property name="focusPolicy">
            <enum>Qt::FocusPolicy::NoFocus</enum>
           </property>
-          <property name="layoutDirection">
-           <enum>Qt::LayoutDirection::RightToLeft</enum>
-          </property>
           <property name="frameShape">
            <enum>QFrame::Shape::NoFrame</enum>
           </property>
@@ -1410,10 +1401,10 @@ QScrollArea
           <widget class="QWidget" name="scrollAreaWidgetContents">
            <property name="geometry">
             <rect>
-             <x>-13</x>
+             <x>0</x>
              <y>0</y>
-             <width>107</width>
-             <height>360</height>
+             <width>120</width>
+             <height>641</height>
             </rect>
            </property>
            <property name="layoutDirection">
