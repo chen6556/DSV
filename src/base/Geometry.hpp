@@ -672,7 +672,7 @@ public:
 
     const Point &back() const;
 
-    void update_control_points();
+    void update_control_points(const double hard = 0.265);
 
     void update_shape(const double step = 0.01, const double down_sampling_value = 0.02);
 

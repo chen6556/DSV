@@ -2209,21 +2209,21 @@ const Point &CubicBezier::back() const
     return control_points.back();
 }
 
-void CubicBezier::update_control_points()
+void CubicBezier::update_control_points(const double hard)
 {
     std::vector<Geo::Point> paths(control_points);
     control_points.erase(control_points.begin() + 1, control_points.end());
     Geo::Point mid0((paths[1] + paths[2]) / 2), mid1((paths[0] + paths[1]) / 2);
-    control_points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
+    control_points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) * hard);
     for (size_t i = 1, count = paths.size() - 1; i < count; ++i)
     {
         mid0 = mid1;
         mid1 = (paths[i] + paths[i + 1]) / 2;
-        control_points.emplace_back(paths[i] + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) / 2);
+        control_points.emplace_back(paths[i] + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) * hard);
         control_points.emplace_back(paths[i]);
-        control_points.emplace_back(paths[i] + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
+        control_points.emplace_back(paths[i] + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) * hard);
     }
-    control_points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) / 2);
+    control_points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) * hard);
     control_points.emplace_back(paths.back());
     control_points[1] = (control_points[0] + control_points[2]) / 2;
     control_points[control_points.size() - 2] = (control_points.back() + control_points[control_points.size() - 3]) / 2;

@@ -1321,7 +1321,7 @@ void Editor::translate_points(Geo::DObject *points, const double x0, const doubl
         {
             size_t count = temp->control_points.size(), index = SIZE_MAX;
             double distance = 0, min_distance = DBL_MAX;
-            for (size_t i = 0; i < count; ++i)
+            for (size_t i = 0; i < count; i += 3)
             {
                 distance = std::min(Geo::distance_square(x0, y0, temp->control_points[i].x, temp->control_points[i].y),
                                     Geo::distance_square(x1, y1, temp->control_points[i].x, temp->control_points[i].y));
@@ -1342,23 +1342,13 @@ void Editor::translate_points(Geo::DObject *points, const double x0, const doubl
                 }
 
                 temp->control_points.at(index).translate(x1 - x0, y1 - y0);
-                if (const int order = 3; index > 2 && index % order == 1)
+                std::vector<Geo::Point> path;
+                for (size_t i = 0, count = temp->control_points.size(); i < count; i += 3)
                 {
-                    temp->control_points[index - 2] = temp->control_points[index - 1] +
-                                                      (temp->control_points[index - 1] - temp->control_points[index]).normalize() *
-                                                          Geo::distance(temp->control_points[index - 2], temp->control_points[index - 1]);
+                    path.emplace_back(temp->control_points[i]);
                 }
-                else if (index + 2 < temp->control_points.size() && index % order == order - 1)
-                {
-                    temp->control_points[index + 2] = temp->control_points[index + 1] +
-                                                      (temp->control_points[index + 1] - temp->control_points[index]).normalize() *
-                                                          Geo::distance(temp->control_points[index + 1], temp->control_points[index + 2]);
-                }
-                else if (index % order == 0 && index > 0 && index < count - 1)
-                {
-                    temp->control_points[index - 1].translate(x1 - x0, y1 - y0);
-                    temp->control_points[index + 1].translate(x1 - x0, y1 - y0);
-                }
+                temp->control_points.assign(path.begin(), path.end());
+                temp->update_control_points();
                 temp->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
             }
         }

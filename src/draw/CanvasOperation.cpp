@@ -7166,7 +7166,7 @@ void OffsetOperation::reset()
 
 bool OffsetOperation::read_parameters(const double *params, const int count)
 {
-    if (count > 0 && params[0] > 0 && _object != nullptr)
+    if (count > 0 && params[0] != 0 && _object != nullptr)
     {
         if (Canvas::canvas->editor().offset({_object}, params[0],
             static_cast<Geo::Offset::JoinType>(GlobalSetting::setting().offset_join_type),
