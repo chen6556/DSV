@@ -1348,7 +1348,7 @@ void Editor::translate_points(Geo::DObject *points, const double x0, const doubl
                     path.emplace_back(temp->control_points[i]);
                 }
                 temp->control_points.assign(path.begin(), path.end());
-                temp->update_control_points();
+                temp->update_control_points(Geo::CubicBezier::default_hard);
                 temp->update_shape(Geo::CubicBezier::default_step, Geo::CubicBezier::default_down_sampling_value);
             }
         }

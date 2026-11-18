@@ -42,6 +42,7 @@ public:
     double sampling_step = 0.01;
     double down_sampling = 0.02;
     double offset_tolerance = 0.001;
+    double bezier_hard = 0.265;
 
     double array_x_space = 10; // user input
     double array_y_space = 10; // user input

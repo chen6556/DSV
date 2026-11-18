@@ -2166,6 +2166,7 @@ const Polygon &Circle::shape() const
 
 
 // Bezier
+double CubicBezier::default_hard = 0.265;
 double CubicBezier::default_step = 0.01;
 double CubicBezier::default_down_sampling_value = 0.02;
 
@@ -2175,7 +2176,7 @@ CubicBezier::CubicBezier(const std::vector<Point>::const_iterator &begin, const 
 {
     if (is_path_points)
     {
-        update_control_points();
+        update_control_points(CubicBezier::default_hard);
     }
     update_shape(CubicBezier::default_step, CubicBezier::default_down_sampling_value);
 }
@@ -2184,7 +2185,7 @@ CubicBezier::CubicBezier(const std::initializer_list<Point> &points, const bool 
 {
     if (is_path_points)
     {
-        update_control_points();
+        update_control_points(CubicBezier::default_hard);
     }
     update_shape(CubicBezier::default_step, CubicBezier::default_down_sampling_value);
 }

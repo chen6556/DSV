@@ -16,6 +16,7 @@ private:
     Ui::Setting *ui = nullptr;
     int _text_size = 24;
     double _down_sampling_value = 0.02;
+    double _bezier_hard = 0.265;
 
 private:
     void init();

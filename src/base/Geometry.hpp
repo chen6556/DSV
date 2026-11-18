@@ -652,6 +652,7 @@ private:
 
 public:
     std::vector<Point> control_points;
+    static double default_hard;
     static double default_step;
     static double default_down_sampling_value;
 

@@ -42,6 +42,10 @@ void GlobalSetting::load_setting()
     {
         this->backup_times = values.value("backup_times").toInt();
     }
+    if (values.contains("bezier_hard"))
+    {
+        this->bezier_hard = values.value("bezier_hard").toDouble();
+    }
     if (values.contains("catch_distance"))
     {
         this->catch_distance = values.value("catch_distance").toDouble();
@@ -135,6 +139,7 @@ void GlobalSetting::save_setting()
     values.insert("auto_combine", this->auto_combine);
     values.insert("auto_save", this->auto_save);
     values.insert("backup_times", this->backup_times);
+    values.insert("bezier_hard", this->bezier_hard);
     values.insert("catch_distance", this->catch_distance);
     values.insert("catch_center", this->catch_center);
     values.insert("catch_foot", this->catch_foot);

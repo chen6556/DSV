@@ -562,6 +562,7 @@ void MainWindow::refresh_settings()
             Geo::Circle::default_down_sampling_value = Geo::Ellipse::default_down_sampling_value = value;
         const double step = GlobalSetting::setting().sampling_step;
         Geo::BSpline::default_step = step, Geo::CubicBezier::default_step = step;
+        Geo::CubicBezier::default_hard = GlobalSetting::setting().bezier_hard;
         ui->canvas->editor().graph()->update_curve_shape(step, value);
         ui->canvas->refresh_vbo(true);
     }

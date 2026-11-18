@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>400</height>
+    <height>421</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -63,7 +63,7 @@ color: rgb(230, 230, 230);</string>
         <x>0</x>
         <y>0</y>
         <width>380</width>
-        <height>350</height>
+        <height>371</height>
        </rect>
       </property>
       <property name="font">
@@ -362,6 +362,9 @@ QComboBox QAbstractItemView::item:selected
            <property name="maximum">
             <double>1.000000000000000</double>
            </property>
+           <property name="singleStep">
+            <double>0.001000000000000</double>
+           </property>
            <property name="value">
             <double>0.020000000000000</double>
            </property>
@@ -638,6 +641,57 @@ QComboBox QAbstractItemView::item:selected
            </property>
            <property name="value">
             <number>10</number>
+           </property>
+          </widget>
+         </item>
+         <item row="9" column="0">
+          <widget class="QLabel" name="label_7">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Bezier Hard</string>
+           </property>
+          </widget>
+         </item>
+         <item row="9" column="1">
+          <widget class="QDoubleSpinBox" name="bezier_hard">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>22</height>
+            </size>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>10</pointsize>
+            </font>
+           </property>
+           <property name="contextMenuPolicy">
+            <enum>Qt::ContextMenuPolicy::NoContextMenu</enum>
+           </property>
+           <property name="frame">
+            <bool>false</bool>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignmentFlag::AlignCenter</set>
+           </property>
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+           </property>
+           <property name="decimals">
+            <number>3</number>
+           </property>
+           <property name="singleStep">
+            <double>0.001000000000000</double>
            </property>
           </widget>
          </item>

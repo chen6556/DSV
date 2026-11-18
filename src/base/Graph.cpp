@@ -464,7 +464,17 @@ void Graph::update_curve_shape(const double step, const double down_sampling_val
             switch (object->type())
             {
             case Geo::Type::BEZIER:
-                static_cast<Geo::CubicBezier *>(object)->update_shape(step, down_sampling_value);
+                {
+                    Geo::CubicBezier *bezier = static_cast<Geo::CubicBezier *>(object);
+                    std::vector<Geo::Point> paths;
+                    for (size_t i = 0, count = bezier->control_points.size(); i < count; i += 3)
+                    {
+                        paths.emplace_back(bezier->control_points[i]);
+                    }
+                    bezier->control_points.assign(paths.begin(), paths.end());
+                    bezier->update_control_points(Geo::CubicBezier::default_hard);
+                    bezier->update_shape(step, down_sampling_value);
+                }
                 break;
             case Geo::Type::BSPLINE:
                 static_cast<Geo::BSpline *>(object)->update_shape(step, down_sampling_value);
