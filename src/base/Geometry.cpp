@@ -2233,54 +2233,54 @@ void CubicBezier::update_control_points(const double hard)
     {
         hvalues[i - 1] = Geo::distance(paths[i - 1], paths[i]);
     }
-    const size_t internal_count = n - 2;
-    std::vector<double> deltax(internal_count, 0.0), deltay(internal_count, 0.0);
-    std::vector<double> slopes_x(n - 1, 0.0), slopes_y(n - 1, 0.0);
-    for (size_t i = 0; i < n - 1; ++i)
+    const size_t m = n - 2;
+    std::vector<double> deltax(m + 1, 0.0), deltay(m + 1, 0.0);
+    for (size_t i = 0; i < m + 1; ++i)
     {
-        slopes_x[i] = (paths[i + 1].x - paths[i].x) / hvalues[i];
-        slopes_y[i] = (paths[i + 1].y - paths[i].y) / hvalues[i];
+        deltax[i] = (paths[i + 1].x - paths[i].x) / hvalues[i];
+        deltay[i] = (paths[i + 1].y - paths[i].y) / hvalues[i];
     }
-    for (size_t i = 0; i < internal_count; ++i)
+    for (size_t i = 0; i < m; ++i)
     {
-        deltax[i] = (slopes_x[i + 1] - slopes_x[i]) * 6;
-        deltay[i] = (slopes_y[i + 1] - slopes_y[i]) * 6;
+        deltax[i] = (deltax[i + 1] - deltax[i]) * 6;
+        deltay[i] = (deltay[i + 1] - deltay[i]) * 6;
     }
-    std::vector<double> main(internal_count, 0.0), upper(internal_count, 0.0), lower(internal_count, 0.0);
-    for (size_t row = 0; row < internal_count; ++row)
+    deltax.pop_back();
+    deltay.pop_back();
+
+    std::vector<double> main(m, 0.0), upper(m, 0.0), lower(m, 0.0);
+    upper[0] = hvalues[1];
+    main[0] = (hvalues[0] + hvalues[1]) * 2;
+    lower[m - 1] = hvalues[n - 3];
+    main[m - 1] = (hvalues[n - 3] + hvalues[n - 2]) * 2;
+    for (size_t row = 1; row < m - 1; ++row)
     {
-        const size_t i = row + 1;
-        main[row] = (hvalues[i - 1] + hvalues[i]) * 2;
-        if (row > 0)
-        {
-            lower[row] = hvalues[i - 1];
-        }
-        if (row + 1 < internal_count)
-        {
-            upper[row] = hvalues[i];
-        }
+        main[row] = (hvalues[row] + hvalues[row + 1]) * 2;
+        lower[row] = hvalues[row];
+        upper[row] = hvalues[row + 1];
     }
 
-    for (size_t row = 1; row < internal_count; ++row)
+    for (size_t row = 1; row < m; ++row)
     {
         const double factor = lower[row] / main[row - 1];
         main[row] -= factor * upper[row - 1];
         deltax[row] -= factor * deltax[row - 1];
         deltay[row] -= factor * deltay[row - 1];
     }
-    deltax[internal_count - 1] /= main[internal_count - 1];
-    deltay[internal_count - 1] /= main[internal_count - 1];
-    for (size_t row = internal_count - 1; row > 0; --row)
+    deltax[m - 1] /= main[m - 1];
+    deltay[m - 1] /= main[m - 1];
+    for (size_t row = m - 1; row > 0; --row)
     {
         const size_t i = row - 1;
-        deltax[i] = (deltax[i] - upper[i] * deltax[i + 1]) / main[i];
-        deltay[i] = (deltay[i] - upper[i] * deltay[i + 1]) / main[i];
+        deltax[i] = (deltax[i] - upper[i] * deltax[row]) / main[i];
+        deltay[i] = (deltay[i] - upper[i] * deltay[row]) / main[i];
     }
 
     std::vector<Geo::Point> mpoints(n, Geo::Point(0, 0));
-    for (size_t i = 0; i < internal_count; ++i)
+    for (size_t i = 0; i < m; ++i)
     {
-        mpoints[i + 1] = Geo::Point(deltax[i], deltay[i]);
+        mpoints[i + 1].x = deltax[i];
+        mpoints[i + 1].y = deltay[i];
     }
     control_points.emplace_back(paths.front());
     for (size_t i = 1; i < n; ++i)
