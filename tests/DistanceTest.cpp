@@ -107,6 +107,16 @@ void DistanceTest::test_point_to_bezier()
         const Geo::CubicBezier bezier({Geo::Point(1, 1), Geo::Point(2, 2), Geo::Point(3, 0), Geo::Point(4, 1)}, true);
         TEST(fequal(std::sqrt(2.0), Geo::distance(zero, bezier)), "Point to curved bezier")
     }
+
+    {
+        const Geo::CubicBezier bezier({Geo::Point(0, 0), Geo::Point(2, 0), Geo::Point(2, 1), Geo::Point(5, 1)}, true);
+        TEST(bezier.control_points.size() == 10, "Natural spline has three cubic segments")
+        if (bezier.control_points.size() == 10)
+        {
+            TEST(fequal(130.0 / 141.0, bezier.control_points[1].x), "Natural spline first control x")
+            TEST(fequal(-12.0 / 47.0, bezier.control_points[1].y), "Natural spline first control y")
+        }
+    }
 }
 
 void DistanceTest::test_point_to_bspline()

@@ -183,7 +183,8 @@ void ClosestPointTest::test_bezier()
         std::vector<Geo::Point> output;
         int count = Geo::closest_point(bezier, Geo::Point(1.5, 3), output);
         TEST(count > 0, "Above bezier count")
-        TEST(fequal(Geo::distance(Geo::Point(1.5, 3), Geo::Point(1.5, 2.375)), Geo::distance(Geo::Point(1.5, 3), output[0])), "Closest near top")
+        const Geo::Point expected(1.5, 2.0 + 3.0 / (20.0 + 6.0 * std::sqrt(5.0)));
+        TEST(fequal(Geo::distance(Geo::Point(1.5, 3), expected), Geo::distance(Geo::Point(1.5, 3), output[0])), "Closest near top")
     }
 
     {
@@ -191,7 +192,7 @@ void ClosestPointTest::test_bezier()
         std::vector<Geo::Point> output;
         int count = Geo::closest_point(bezier, Geo::Point(1.5, 1), output);
         TEST(count > 0, "Inside bezier arch count")
-        TEST(fequal(Geo::distance(Geo::Point(1.5, 1), Geo::Point(1.5, 2.375)), Geo::distance(Geo::Point(1.5, 1), output[0])), "Closest at arch top")
+        TEST(fequal(Geo::distance(Geo::Point(1.5, 1), Geo::Point(1.5, 131.0 / 52.0)), Geo::distance(Geo::Point(1.5, 1), output[0])), "Closest at arch top")
     }
 
     {

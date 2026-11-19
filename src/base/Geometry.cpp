@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <numeric>
 #include <future>
-
+#include <QDebug>
 #include "base/Algorithm.hpp"
 #include "base/Math.hpp"
 
@@ -2213,21 +2213,85 @@ const Point &CubicBezier::back() const
 void CubicBezier::update_control_points(const double hard)
 {
     std::vector<Geo::Point> paths(control_points);
-    control_points.erase(control_points.begin() + 1, control_points.end());
-    Geo::Point mid0((paths[1] + paths[2]) / 2), mid1((paths[0] + paths[1]) / 2);
-    control_points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) * hard);
-    for (size_t i = 1, count = paths.size() - 1; i < count; ++i)
+    control_points.clear();
+    const size_t n = paths.size();
+    if (n == 0 || n == 1)
     {
-        mid0 = mid1;
-        mid1 = (paths[i] + paths[i + 1]) / 2;
-        control_points.emplace_back(paths[i] + (mid0 - mid1).normalize() * Geo::distance(mid0, mid1) * hard);
-        control_points.emplace_back(paths[i]);
-        control_points.emplace_back(paths[i] + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) * hard);
+        return;
     }
-    control_points.emplace_back(mid1 + (mid1 - mid0).normalize() * Geo::distance(mid0, mid1) * hard);
-    control_points.emplace_back(paths.back());
-    control_points[1] = (control_points[0] + control_points[2]) / 2;
-    control_points[control_points.size() - 2] = (control_points.back() + control_points[control_points.size() - 3]) / 2;
+    else if (n == 2)
+    {
+        control_points.emplace_back(paths.front());
+        control_points.emplace_back((paths.front() * 2 - paths.back()) / 3);
+        control_points.emplace_back((paths.back() * 2 - paths.front()) / 3);
+        control_points.emplace_back(paths.back());
+        return;
+    }
+
+    std::vector<double> hvalues(n - 1, 0.0);
+    for (size_t i = 1; i < n; ++i)
+    {
+        hvalues[i - 1] = Geo::distance(paths[i - 1], paths[i]);
+    }
+    const size_t internal_count = n - 2;
+    std::vector<double> deltax(internal_count, 0.0), deltay(internal_count, 0.0);
+    std::vector<double> slopes_x(n - 1, 0.0), slopes_y(n - 1, 0.0);
+    for (size_t i = 0; i < n - 1; ++i)
+    {
+        slopes_x[i] = (paths[i + 1].x - paths[i].x) / hvalues[i];
+        slopes_y[i] = (paths[i + 1].y - paths[i].y) / hvalues[i];
+    }
+    for (size_t i = 0; i < internal_count; ++i)
+    {
+        deltax[i] = (slopes_x[i + 1] - slopes_x[i]) * 6;
+        deltay[i] = (slopes_y[i + 1] - slopes_y[i]) * 6;
+    }
+    std::vector<double> main(internal_count, 0.0), upper(internal_count, 0.0), lower(internal_count, 0.0);
+    for (size_t row = 0; row < internal_count; ++row)
+    {
+        const size_t i = row + 1;
+        main[row] = (hvalues[i - 1] + hvalues[i]) * 2;
+        if (row > 0)
+        {
+            lower[row] = hvalues[i - 1];
+        }
+        if (row + 1 < internal_count)
+        {
+            upper[row] = hvalues[i];
+        }
+    }
+
+    for (size_t row = 1; row < internal_count; ++row)
+    {
+        const double factor = lower[row] / main[row - 1];
+        main[row] -= factor * upper[row - 1];
+        deltax[row] -= factor * deltax[row - 1];
+        deltay[row] -= factor * deltay[row - 1];
+    }
+    deltax[internal_count - 1] /= main[internal_count - 1];
+    deltay[internal_count - 1] /= main[internal_count - 1];
+    for (size_t row = internal_count - 1; row > 0; --row)
+    {
+        const size_t i = row - 1;
+        deltax[i] = (deltax[i] - upper[i] * deltax[i + 1]) / main[i];
+        deltay[i] = (deltay[i] - upper[i] * deltay[i + 1]) / main[i];
+    }
+
+    std::vector<Geo::Point> mpoints(n, Geo::Point(0, 0));
+    for (size_t i = 0; i < internal_count; ++i)
+    {
+        mpoints[i + 1] = Geo::Point(deltax[i], deltay[i]);
+    }
+    control_points.emplace_back(paths.front());
+    for (size_t i = 1; i < n; ++i)
+    {
+        const double k = std::pow(hvalues[i - 1], 2) / 18;
+        control_points.emplace_back(paths[i - 1] * 2 / 3 + paths[i] / 3 -
+                                    (mpoints[i - 1] * 2 + mpoints[i]) * k);
+        control_points.emplace_back(paths[i - 1] / 3 + paths[i] * 2 / 3 -
+                                    (mpoints[i - 1] + mpoints[i] * 2) * k);
+        control_points.emplace_back(paths[i]);
+    }
 }
 
 void CubicBezier::update_shape(const double step, const double down_sampling_value)
