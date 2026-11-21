@@ -2176,6 +2176,13 @@ CubicBezier::CubicBezier(const std::vector<Point>::const_iterator &begin, const 
 {
     if (is_path_points)
     {
+        for (size_t i = control_points.size() - 1; i > 1; --i)
+        {
+            if (control_points[i] == control_points[i - 1])
+            {
+                control_points.erase(control_points.begin() + i);
+            }
+        }
         update_control_points(CubicBezier::default_hard);
     }
     update_shape(CubicBezier::default_step, CubicBezier::default_down_sampling_value);
@@ -2185,6 +2192,13 @@ CubicBezier::CubicBezier(const std::initializer_list<Point> &points, const bool 
 {
     if (is_path_points)
     {
+        for (size_t i = control_points.size() - 1; i > 1; --i)
+        {
+            if (control_points[i] == control_points[i - 1])
+            {
+                control_points.erase(control_points.begin() + i);
+            }
+        }
         update_control_points(CubicBezier::default_hard);
     }
     update_shape(CubicBezier::default_step, CubicBezier::default_down_sampling_value);
