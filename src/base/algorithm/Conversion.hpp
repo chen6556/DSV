@@ -29,12 +29,16 @@ Polyline arc_to_polyline(const Arc &arc, const double down_sampling_value = 0.02
 
 CubicBezier arc_to_bezier(const Arc &arc);
 
+CubicBezier arc_to_bezier2(const Arc &arc);
+
 
 Polygon circle_to_polygon(const double x, const double y, const double r, const double down_sampling_value = 0.02);
 
 Polygon circle_to_polygon(const Circle &circle, const double down_sampling_value = 0.02);
 
 CubicBezier circle_to_bezier(const Circle &circle);
+
+CubicBezier circle_to_bezier2(const Circle &circle);
 
 
 Polygon ellipse_to_polygon(const double x, const double y, const double a, const double b, const double rad,
@@ -49,6 +53,8 @@ Polyline ellipse_to_polyline(const double x, const double y, const double a, con
 Polyline ellipse_to_polyline(const Ellipse &ellipse, const double down_sampling_value = 0.02);
 
 CubicBezier ellipse_to_bezier(const Ellipse &ellipse);
+
+CubicBezier ellipse_to_bezier2(const Ellipse &ellipse);
 
 
 CubicBSpline bezier_to_bspline(const CubicBezier &bezier);

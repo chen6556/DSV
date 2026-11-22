@@ -282,6 +282,21 @@ Geo::CubicBezier Geo::arc_to_bezier(const Geo::Arc &arc)
     return Geo::CubicBezier(points.begin(), points.end(), false);
 }
 
+Geo::CubicBezier Geo::arc_to_bezier2(const Geo::Arc &arc)
+{
+    std::vector<Geo::Point> paths;
+    paths.emplace_back(arc.control_points[0]);
+    const double angle = arc.angle();
+    const int n = std::ceil(std::abs(angle) / Geo::PI * 16);
+    const double step = angle / n;
+    for (int i = 1; i < n; ++i)
+    {
+        paths.emplace_back(paths.back().rotated(arc.x, arc.y, step));
+    }
+    paths.emplace_back(arc.control_points[2]);
+    return Geo::CubicBezier(paths.begin(), paths.end(), true);
+}
+
 
 Geo::Polygon Geo::circle_to_polygon(const double x, const double y, const double r, const double down_sampling_value)
 {
@@ -338,6 +353,18 @@ Geo::CubicBezier Geo::circle_to_bezier(const Geo::Circle &circle)
     points.emplace_back(point0.x, point0.y - k);
     points.emplace_back(point0);
     return Geo::CubicBezier(points.begin(), points.end(), false);
+}
+
+Geo::CubicBezier Geo::circle_to_bezier2(const Geo::Circle &circle)
+{
+    std::vector<Geo::Point> paths;
+    paths.emplace_back(circle.x + circle.radius, circle.y);
+    for (int i = 1; i < 32; ++i)
+    {
+        paths.emplace_back(paths.back().rotated(circle.x, circle.y, Geo::PI / 16));
+    }
+    paths.emplace_back(circle.x + circle.radius, circle.y);
+    return Geo::CubicBezier(paths.begin(), paths.end(), true);
 }
 
 
@@ -485,6 +512,36 @@ Geo::CubicBezier Geo::ellipse_to_bezier(const Geo::Ellipse &ellipse)
         }
     }
     return Geo::CubicBezier(points.begin(), points.end(), false);
+}
+
+Geo::CubicBezier Geo::ellipse_to_bezier2(const Geo::Ellipse &ellipse)
+{
+    std::vector<Geo::Point> paths;
+    const double angle = ellipse.arc_param1() >= ellipse.arc_param0() ?
+                         ellipse.arc_param1() - ellipse.arc_param0() :
+                         Geo::PI + ellipse.arc_param0() - ellipse.arc_param1();
+    const int n = angle > 0 ? std::ceil(angle / Geo::PI * 16) : 32;
+    const double step = angle > 0 ? angle / n : Geo::PI / 16;
+    double value = ellipse.arc_param0();
+    if (angle == 0)
+    {
+        for (int i = 0; i < n; ++i)
+        {
+            paths.emplace_back(ellipse.param_point(value));
+            value += step;
+        }
+        paths.emplace_back(paths.front());
+    }
+    else
+    {
+        for (int i = 0; i < n; ++i)
+        {
+            paths.emplace_back(ellipse.param_point(value));
+            value += step;
+        }
+        paths.emplace_back(ellipse.arc_point1());
+    }
+    return Geo::CubicBezier(paths.begin(), paths.end(), true);
 }
 
 

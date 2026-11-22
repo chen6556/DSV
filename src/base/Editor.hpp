@@ -220,4 +220,6 @@ public:
     void bezier_to_bspline(Geo::CubicBezier *bezier);
 
     void bspline_to_bezier(Geo::BSpline *bspline);
+
+    bool to_bezier(Geo::DObject *object);
 };

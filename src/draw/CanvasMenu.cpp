@@ -31,6 +31,7 @@ void CanvasMenu::init(Canvas *parent)
     _bezier_to_bspline = new QAction("To BSpline");
     _bspline_to_bezier = new QAction("To Bezier");
     _change_bspline_model = new QAction("Show Controls");
+    _to_bezier = new QAction("To Bezier");
 
     _menu->addAction(_up);
     _menu->addAction(_down);
@@ -39,6 +40,7 @@ void CanvasMenu::init(Canvas *parent)
     _menu->addAction(_bezier_to_bspline);
     _menu->addAction(_bspline_to_bezier);
     _menu->addAction(_change_bspline_model);
+    _menu->addAction(_to_bezier);
 }
 
 void CanvasMenu::exec(Geo::DObject *object)
@@ -46,6 +48,8 @@ void CanvasMenu::exec(Geo::DObject *object)
     _text_to_polylines->setVisible(dynamic_cast<Text *>(object) != nullptr);
     _bezier_to_bspline->setVisible(dynamic_cast<Geo::CubicBezier *>(object) != nullptr);
     _bspline_to_bezier->setVisible(dynamic_cast<Geo::BSpline *>(object) != nullptr);
+    _to_bezier->setVisible(object->type() == Geo::Type::ARC ||
+        object->type() == Geo::Type::CIRCLE || object->type() == Geo::Type::ELLIPSE);
     if (const Geo::BSpline *bspline = dynamic_cast<const Geo::BSpline *>(object))
     {
         _change_bspline_model->setVisible(true);
@@ -101,5 +105,14 @@ void CanvasMenu::exec(Geo::DObject *object)
         CanvasOperations::CanvasOperation::tool_lines.clear();
         _canvas->refresh_vbo(true, {Geo::Type::BEZIER, Geo::Type::BSPLINE});
         _canvas->refresh_selected_ibo();
+    }
+    else if (a == _to_bezier)
+    {
+        if (_canvas->editor().to_bezier(object))
+        {
+            CanvasOperations::CanvasOperation::tool_lines.clear();
+            _canvas->refresh_vbo(true, {Geo::Type::BEZIER, object->type()});
+            _canvas->refresh_selected_ibo();
+        }
     }
 }

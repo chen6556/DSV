@@ -20,6 +20,7 @@ private:
     QAction *_bezier_to_bspline = nullptr;
     QAction *_bspline_to_bezier = nullptr;
     QAction *_change_bspline_model = nullptr;
+    QAction *_to_bezier = nullptr;
 
 public:
     CanvasMenu(Canvas *parent);

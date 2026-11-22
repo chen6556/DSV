@@ -9243,3 +9243,34 @@ void Editor::bspline_to_bezier(Geo::BSpline *bspline)
     remove_items.emplace_back(bspline, _current_group, index);
     _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
 }
+
+bool Editor::to_bezier(Geo::DObject *object)
+{
+    Geo::CubicBezier *bezier = nullptr;
+    switch (object->type())
+    {
+    case Geo::Type::ARC:
+        bezier = new Geo::CubicBezier(Geo::arc_to_bezier2(*static_cast<Geo::Arc *>(object)));
+        break;
+    case Geo::Type::CIRCLE:
+        bezier = new Geo::CubicBezier(Geo::circle_to_bezier2(*static_cast<Geo::Circle *>(object)));
+        break;
+    case Geo::Type::ELLIPSE:
+        bezier = new Geo::CubicBezier(Geo::ellipse_to_bezier2(*static_cast<Geo::Ellipse *>(object)));
+        break;
+    default:
+        return false;
+    }
+    const size_t index =
+        std::distance(_graph->container_group(_current_group).begin(),
+                      std::find(_graph->container_group(_current_group).begin(), _graph->container_group(_current_group).end(), object));
+    _view_tree.remove(_graph->container_group(_current_group).pop(index));
+    _graph->container_group(_current_group).insert(index, bezier);
+    _view_tree.append(bezier);
+    _graph->modified = true;
+    std::vector<std::tuple<Geo::DObject *, size_t, size_t>> add_items, remove_items;
+    add_items.emplace_back(bezier, _current_group, index);
+    remove_items.emplace_back(object, _current_group, index);
+    _backup.push_command(new UndoStack::ObjectCommand(add_items, remove_items));
+    return true;
+}
