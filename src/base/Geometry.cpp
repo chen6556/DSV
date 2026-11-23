@@ -2299,7 +2299,8 @@ void CubicBezier::update_control_points(const double hard)
     std::vector<Geo::Point> mpoints(n);
     for (size_t i = 0; i < n; ++i)
     {
-        mpoints[i] = Geo::Point(mx[i], my[i]);
+        mpoints[i].x = mx[i];
+        mpoints[i].y = my[i];
     }
 
     control_points.emplace_back(paths.front());
