@@ -2228,12 +2228,21 @@ void CubicBezier::update_control_points(const double hard)
 {
     std::vector<Geo::Point> paths(control_points);
     control_points.clear();
-    const size_t n = paths.size();
+    size_t n = paths.size();
     if (n == 0 || n == 1)
     {
         return;
     }
-    else if (n == 2)
+
+    // 闭合曲线(首尾点重合)使用周期边界条件,保证接缝处二阶连续
+    const bool closed = paths.front() == paths.back();
+    if (closed)
+    {
+        paths.pop_back();
+        --n;
+    }
+
+    if (n == 2)
     {
         control_points.emplace_back(paths.front());
         control_points.emplace_back((paths.front() * 2 - paths.back()) / 3);
@@ -2242,69 +2251,67 @@ void CubicBezier::update_control_points(const double hard)
         return;
     }
 
-    std::vector<double> hvalues(n - 1, 0.0);
-    for (size_t i = 1; i < n; ++i)
-    {
-        hvalues[i - 1] = Geo::distance(paths[i - 1], paths[i]);
-    }
-    const size_t m = n - 2;
-    std::vector<double> deltax(m + 1, 0.0), deltay(m + 1, 0.0);
-    for (size_t i = 0; i < m + 1; ++i)
-    {
-        deltax[i] = (paths[i + 1].x - paths[i].x) / hvalues[i];
-        deltay[i] = (paths[i + 1].y - paths[i].y) / hvalues[i];
-    }
-    for (size_t i = 0; i < m; ++i)
-    {
-        deltax[i] = (deltax[i + 1] - deltax[i]) * 6;
-        deltay[i] = (deltay[i + 1] - deltay[i]) * 6;
-    }
-    deltax.pop_back();
-    deltay.pop_back();
+    // 段数:闭合曲线有 n 段(末段回连首点),开曲线有 n-1 段
+    const size_t segments = closed ? n : n - 1;
 
-    std::vector<double> main(m, 0.0), upper(m, 0.0), lower(m, 0.0);
-    upper[0] = hvalues[1];
-    main[0] = (hvalues[0] + hvalues[1]) * 2;
-    lower[m - 1] = hvalues[n - 3];
-    main[m - 1] = (hvalues[n - 3] + hvalues[n - 2]) * 2;
-    for (size_t row = 1; row < m - 1; ++row)
+    // 每段弦长 h[i] 与斜率 d[i]
+    std::vector<double> h(segments, 0.0), dx(segments, 0.0), dy(segments, 0.0);
+    for (size_t i = 0; i < segments; ++i)
     {
-        main[row] = (hvalues[row] + hvalues[row + 1]) * 2;
-        lower[row] = hvalues[row];
-        upper[row] = hvalues[row + 1];
+        const size_t j = (i + 1) % n;
+        h[i] = Geo::distance(paths[i], paths[j]);
+        dx[i] = (paths[j].x - paths[i].x) / h[i];
+        dy[i] = (paths[j].y - paths[i].y) / h[i];
     }
 
-    for (size_t row = 1; row < m; ++row)
+    // 求解各点二阶导数 M[i]:
+    //   h[i-1]*M[i-1] + 2*(h[i-1]+h[i])*M[i] + h[i]*M[i+1] = 6*(d[i]-d[i-1])
+    std::vector<double> matrix(n * n, 0.0), bx(n, 0.0), by(n, 0.0);
+    if (closed)
     {
-        const double factor = lower[row] / main[row - 1];
-        main[row] -= factor * upper[row - 1];
-        deltax[row] -= factor * deltax[row - 1];
-        deltay[row] -= factor * deltay[row - 1];
+        for (size_t i = 0; i < n; ++i)
+        {
+            const size_t im1 = (i + n - 1) % n, ip1 = (i + 1) % n;
+            matrix[i * n + im1] = h[im1];
+            matrix[i * n + i] = 2 * (h[im1] + h[i]);
+            matrix[i * n + ip1] = h[i];
+            bx[i] = 6 * (dx[i] - dx[im1]);
+            by[i] = 6 * (dy[i] - dy[im1]);
+        }
     }
-    deltax[m - 1] /= main[m - 1];
-    deltay[m - 1] /= main[m - 1];
-    for (size_t row = m - 1; row > 0; --row)
+    else
     {
-        const size_t i = row - 1;
-        deltax[i] = (deltax[i] - upper[i] * deltax[row]) / main[i];
-        deltay[i] = (deltay[i] - upper[i] * deltay[row]) / main[i];
+        // 开曲线采用自然边界条件 M[0] = M[n-1] = 0
+        matrix[0] = matrix[n * n - 1] = 1;
+        for (size_t i = 1; i < n - 1; ++i)
+        {
+            matrix[i * n + i - 1] = h[i - 1];
+            matrix[i * n + i] = 2 * (h[i - 1] + h[i]);
+            matrix[i * n + i + 1] = h[i];
+            bx[i] = 6 * (dx[i] - dx[i - 1]);
+            by[i] = 6 * (dy[i] - dy[i - 1]);
+        }
     }
 
-    std::vector<Geo::Point> mpoints(n, Geo::Point(0, 0));
-    for (size_t i = 0; i < m; ++i)
+    std::vector<double> mx(n, 0.0), my(n, 0.0);
+    Math::solve(matrix.data(), n, bx.data(), mx.data());
+    Math::solve(matrix.data(), n, by.data(), my.data());
+    std::vector<Geo::Point> mpoints(n);
+    for (size_t i = 0; i < n; ++i)
     {
-        mpoints[i + 1].x = deltax[i];
-        mpoints[i + 1].y = deltay[i];
+        mpoints[i] = Geo::Point(mx[i], my[i]);
     }
+
     control_points.emplace_back(paths.front());
-    for (size_t i = 1; i < n; ++i)
+    for (size_t i = 0; i < segments; ++i)
     {
-        const double k = std::pow(hvalues[i - 1], 2) / 18;
-        control_points.emplace_back(paths[i - 1] * 2 / 3 + paths[i] / 3 -
-                                    (mpoints[i - 1] * 2 + mpoints[i]) * k);
-        control_points.emplace_back(paths[i - 1] / 3 + paths[i] * 2 / 3 -
-                                    (mpoints[i - 1] + mpoints[i] * 2) * k);
-        control_points.emplace_back(paths[i]);
+        const size_t j = (i + 1) % n;
+        const double k = std::pow(h[i], 2) / 18;
+        control_points.emplace_back(paths[i] * 2 / 3 + paths[j] / 3 -
+                                    (mpoints[i] * 2 + mpoints[j]) * k);
+        control_points.emplace_back(paths[i] / 3 + paths[j] * 2 / 3 -
+                                    (mpoints[i] + mpoints[j] * 2) * k);
+        control_points.emplace_back(paths[j]);
     }
 }
 
