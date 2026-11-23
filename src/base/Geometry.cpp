@@ -2273,6 +2273,7 @@ void solve_cyclic_tridiagonal(const std::vector<double> &lower, std::vector<doub
 void CubicBezier::update_control_points(const double hard)
 {
     std::vector<Geo::Point> paths(control_points);
+    remove_repeated_point(paths);
     control_points.clear();
     size_t n = paths.size();
     if (n == 0 || n == 1)
