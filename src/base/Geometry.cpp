@@ -2224,6 +2224,52 @@ const Point &CubicBezier::back() const
     return control_points.back();
 }
 
+namespace
+{
+// Thomas 算法求解三对角方程组 A x = d
+// lower[i](i>=1)、diag[i]、upper[i](i<=n-2) 分别为下对角线、主对角线、上对角线
+void solve_tridiagonal(const std::vector<double> &lower, std::vector<double> diag,
+                       const std::vector<double> &upper, std::vector<double> d, std::vector<double> &x)
+{
+    const size_t n = diag.size();
+    x.assign(n, 0.0);
+    for (size_t i = 1; i < n; ++i)
+    {
+        const double m = lower[i] / diag[i - 1];
+        diag[i] -= m * upper[i - 1];
+        d[i] -= m * d[i - 1];
+    }
+    x[n - 1] = d[n - 1] / diag[n - 1];
+    for (size_t i = n - 1; i > 0; --i)
+    {
+        x[i - 1] = (d[i - 1] - upper[i - 1] * x[i]) / diag[i - 1];
+    }
+}
+
+// Sherman-Morrison 法求解循环三对角方程组(周期边界条件)
+// alpha:第 0 行与 x[n-1] 的耦合项;beta:第 n-1 行与 x[0] 的耦合项
+void solve_cyclic_tridiagonal(const std::vector<double> &lower, std::vector<double> diag,
+                              const std::vector<double> &upper, const double alpha, const double beta,
+                              std::vector<double> d, std::vector<double> &x)
+{
+    const size_t n = diag.size();
+    const double gamma = -diag[0];
+    diag[0] -= gamma;
+    diag[n - 1] -= alpha * beta / gamma;
+    std::vector<double> u(n, 0.0);
+    u[0] = gamma;
+    u[n - 1] = alpha;
+    std::vector<double> z;
+    solve_tridiagonal(lower, diag, upper, d, x);
+    solve_tridiagonal(lower, diag, upper, u, z);
+    const double fact = (x[0] + beta * x[n - 1] / gamma) / (1.0 + z[0] + beta * z[n - 1] / gamma);
+    for (size_t i = 0; i < n; ++i)
+    {
+        x[i] -= fact * z[i];
+    }
+}
+}
+
 void CubicBezier::update_control_points(const double hard)
 {
     std::vector<Geo::Point> paths(control_points);
@@ -2266,36 +2312,48 @@ void CubicBezier::update_control_points(const double hard)
 
     // 求解各点二阶导数 M[i]:
     //   h[i-1]*M[i-1] + 2*(h[i-1]+h[i])*M[i] + h[i]*M[i+1] = 6*(d[i]-d[i-1])
-    std::vector<double> matrix(n * n, 0.0), bx(n, 0.0), by(n, 0.0);
+    std::vector<double> mx(n, 0.0), my(n, 0.0);
     if (closed)
     {
+        std::vector<double> lower(n, 0.0), diag(n, 0.0), upper(n, 0.0), bx(n, 0.0), by(n, 0.0);
         for (size_t i = 0; i < n; ++i)
         {
-            const size_t im1 = (i + n - 1) % n, ip1 = (i + 1) % n;
-            matrix[i * n + im1] = h[im1];
-            matrix[i * n + i] = 2 * (h[im1] + h[i]);
-            matrix[i * n + ip1] = h[i];
+            const size_t im1 = (i + n - 1) % n;
+            lower[i] = h[im1];
+            diag[i] = 2 * (h[im1] + h[i]);
+            upper[i] = h[i];
             bx[i] = 6 * (dx[i] - dx[im1]);
             by[i] = 6 * (dy[i] - dy[im1]);
         }
+        solve_cyclic_tridiagonal(lower, diag, upper, h[n - 1], h[n - 1], bx, mx);
+        solve_cyclic_tridiagonal(lower, diag, upper, h[n - 1], h[n - 1], by, my);
     }
     else
     {
-        // 开曲线采用自然边界条件 M[0] = M[n-1] = 0
-        matrix[0] = matrix[n * n - 1] = 1;
-        for (size_t i = 1; i < n - 1; ++i)
+        // 开曲线采用自然边界条件 M[0] = M[n-1] = 0,仅求解内部点 M[1..n-2]
+        const size_t k = n - 2;
+        std::vector<double> lower(k, 0.0), diag(k, 0.0), upper(k, 0.0), bx(k, 0.0), by(k, 0.0);
+        for (size_t j = 0; j < k; ++j)
         {
-            matrix[i * n + i - 1] = h[i - 1];
-            matrix[i * n + i] = 2 * (h[i - 1] + h[i]);
-            matrix[i * n + i + 1] = h[i];
-            bx[i] = 6 * (dx[i] - dx[i - 1]);
-            by[i] = 6 * (dy[i] - dy[i - 1]);
+            lower[j] = h[j];
+            diag[j] = 2 * (h[j] + h[j + 1]);
+            upper[j] = h[j + 1];
+            bx[j] = 6 * (dx[j + 1] - dx[j]);
+            by[j] = 6 * (dy[j + 1] - dy[j]);
+        }
+        std::vector<double> tmp;
+        solve_tridiagonal(lower, diag, upper, bx, tmp);
+        for (size_t j = 0; j < k; ++j)
+        {
+            mx[j + 1] = tmp[j];
+        }
+        solve_tridiagonal(lower, diag, upper, by, tmp);
+        for (size_t j = 0; j < k; ++j)
+        {
+            my[j + 1] = tmp[j];
         }
     }
 
-    std::vector<double> mx(n, 0.0), my(n, 0.0);
-    Math::solve(matrix.data(), n, bx.data(), mx.data());
-    Math::solve(matrix.data(), n, by.data(), my.data());
     std::vector<Geo::Point> mpoints(n);
     for (size_t i = 0; i < n; ++i)
     {
